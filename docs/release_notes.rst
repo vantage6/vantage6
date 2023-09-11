@@ -1,6 +1,19 @@
 Release notes
 =============
 
+3.11.1
+------
+
+*11 September 2023*
+
+- **Bugfix**
+
+ - Setting up the host network for VPN did not work properly if the host had
+   ``iptables-legacy`` installed rather than ``iptables``. Now, the code has
+   been made compatible with both
+   (`Issue#725 <https://github.com/vantage6/vantage6/issues/725>`_,
+   `PR#802 <https://github.com/vantage6/vantage6/pull/802>`_).
+
 3.11.0
 ------
 
