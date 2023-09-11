@@ -7,6 +7,8 @@
   font-size: 0.875rem;
   line-height: 1rem;
   background-color: rgb(224, 224, 224);
+  font-weight: 400;
+  color: $dark-primary-text;
 
   &--small {
     padding: $spacing-px-1 $spacing-px-3;

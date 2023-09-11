@@ -43,7 +43,7 @@ export interface Task {
   runs: TaskRun[];
 }
 
-interface TaskRun {
+export interface TaskRun {
   id: number;
   status: TaskStatus;
   input: string;
@@ -52,6 +52,7 @@ interface TaskRun {
   started_at?: string;
   finished_at?: string;
   log?: string;
+  result?: string;
 }
 
 //Not compatible with BaseNode

@@ -12,14 +12,14 @@
     </button>
   </mat-menu>
 </app-page-header>
-<mat-card *ngIf="!isLoading && task && task.runs.length > 0">
+<mat-card *ngIf="!isLoading && shouldShowStatusInfo()">
   <mat-card-header>
     <mat-card-title>{{ "task-read.card-status.title" | translate }}</mat-card-title>
   </mat-card-header>
   <mat-card-content>
     <div class="status-info-container">
       <app-status-info
-        *ngFor="let run of task.runs"
+        *ngFor="let run of task?.runs"
         [type]="getStatusInfoTypeForStatus(run.status)"
         title="{{ run.node.name }}"
         [subTitle]="getTaskStatusTranslation(run.status)"
@@ -31,6 +31,17 @@
           "task-run.alert-node-offline" | translate
         }}</span>
       </app-status-info>
+    </div>
+  </mat-card-content>
+</mat-card>
+<mat-card *ngIf="!isLoading && hasCompletedRuns">
+  <mat-card-header>
+    <mat-card-title>{{ "task-read.card-results.title" | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div *ngFor="let run of getCompletedRuns()">
+      <b>{{ run.node.name }}</b>
+      <div>{{ run.result }}</div>
     </div>
   </mat-card-content>
 </mat-card>
@@ -51,7 +62,12 @@
         </div>
         <div class="data-list__item">
           <b>{{ "task.status" | translate }}</b>
-          <app-chip *ngIf="this.task" [label]="getTaskStatusTranslation(task.status)" [type]="getChipTypeForStatus(task.status)"></app-chip>
+          <app-chip
+            *ngIf="this.task"
+            [label]="getTaskStatusTranslation(task.status)"
+            [type]="getChipTypeForStatus(task.status)"
+            [small]="true"
+          ></app-chip>
         </div>
         <div class="data-list__item data-list__item--full">
           <b>{{ "task.description" | translate }}</b>

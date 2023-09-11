@@ -53,6 +53,9 @@
         "card-status": {
             "title": "Status"
         },
+        "card-results": {
+            "title": "Results"
+        },
         "card-algorithm": {
             "title": "Algorithm"
         },

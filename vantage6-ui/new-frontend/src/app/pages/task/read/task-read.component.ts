@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { getChipTypeForStatus, getStatusInfoTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
-import { Task, TaskLazyProperties, TaskStatus } from 'src/app/models/api/task.models';
+import { Task, TaskLazyProperties, TaskRun, TaskStatus } from 'src/app/models/api/task.models';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { TaskService } from 'src/app/services/task.service';
@@ -60,6 +60,23 @@ export class TaskReadComponent implements OnInit {
 
   getStatusInfoTypeForStatus(status: TaskStatus) {
     return getStatusInfoTypeForStatus(status);
+  }
+
+  shouldShowStatusInfo(): boolean {
+    if (!this.task) return false;
+    if (this.task.runs.length <= 0) return false;
+    if (this.task.runs.every((run) => run.status === TaskStatus.Completed)) return false;
+    return true;
+  }
+
+  hasCompletedRuns(): boolean {
+    if (!this.task) return false;
+    return this.task.runs.some((run) => run.status === TaskStatus.Completed);
+  }
+
+  getCompletedRuns(): TaskRun[] {
+    if (!this.task) return [];
+    return this.task.runs.filter((run) => run.status === TaskStatus.Completed);
   }
 
   isFailedRun(status: TaskStatus): boolean {
