@@ -2,7 +2,7 @@
 # this Makefile
 
 # docker image tag
-TAG ?= petronas
+TAG ?= cotopaxi
 REGISTRY ?= harbor2.vantage6.ai
 
 # infrastructure base image version

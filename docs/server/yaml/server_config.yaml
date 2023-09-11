@@ -139,8 +139,8 @@ vpn_server:
 # components.
 # OPTIONAL
 images:
-  server: harbor2.vantage6.ai/infrastructure/server:petronas
-  ui: harbor2.vantage6.ai/infrastructure/ui:petronas
+  server: harbor2.vantage6.ai/infrastructure/server:cotopaxi
+  ui: harbor2.vantage6.ai/infrastructure/ui:cotopaxi
 
 # options for starting the User Interface when starting the server
 ui:
