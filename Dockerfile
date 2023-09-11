@@ -1,4 +1,4 @@
-FROM harbor.vantage6.ai/infrastructure/base
+FROM harbor2.vantage6.ai/infrastructure/base
 
 LABEL version="2.0"
 LABEL infrastructure_version = "2.0.0"
