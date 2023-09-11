@@ -24,7 +24,7 @@
         title="{{ run.node.name }}"
         [subTitle]="getTaskStatusTranslation(run.status)"
       >
-        <button actions mat-raised-button *ngIf="run.log && !isActiveRun(run.status)" (click)="openLog(run.log)">
+        <button actions mat-raised-button *ngIf="run.log && isFailedRun(run.status)" (click)="openLog(run.log)">
           {{ "task-run.show-log" | translate }}
         </button>
         <span actionText *ngIf="run.node.status !== 'online' && isActiveRun(run.status)">{{
@@ -132,7 +132,7 @@
           </div>
         </div>
         <div class="run__actions">
-          <button mat-flat-button color="warn" *ngIf="run.log && !isActiveRun(run.status)" (click)="openLog(run.log)">
+          <button mat-flat-button color="warn" *ngIf="run.log && isFailedRun(run.status)" (click)="openLog(run.log)">
             {{ "task-run.show-log" | translate }}
           </button>
         </div>

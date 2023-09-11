@@ -62,6 +62,15 @@ export class TaskReadComponent implements OnInit {
     return getStatusInfoTypeForStatus(status);
   }
 
+  isFailedRun(status: TaskStatus): boolean {
+    return (
+      status === TaskStatus.Failed ||
+      status === TaskStatus.Crashed ||
+      status === TaskStatus.NoDockerImage ||
+      status === TaskStatus.StartFailed
+    );
+  }
+
   isActiveRun(status: TaskStatus): boolean {
     return status === TaskStatus.Pending || status === TaskStatus.Initializing || status === TaskStatus.Active;
   }
