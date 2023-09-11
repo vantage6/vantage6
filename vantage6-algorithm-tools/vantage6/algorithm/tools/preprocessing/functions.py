@@ -823,3 +823,77 @@ def assign_column(
 
     new_df[column_name] = new_df.eval(expression)
     return new_df
+
+
+def discretize_column(
+    df: pd.DataFrame,
+    column_name: str,
+    bins: Union[int, List[Union[int, float]]],
+    labels: List[str] = None,
+    right: bool = True,
+    include_lowest: bool = False,
+    output_column_name: str = None,
+) -> pd.DataFrame:
+    """
+    Discretize a column in a new DataFrame based on the given bin edges or
+    number of bins.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The DataFrame from which a new DataFrame will be created.
+    column_name : str
+        The name of the column to discretize.
+    bins : int or list of int or float
+        The number of bins to create or the specific bin edges.
+    labels : list of str, optional
+        Labels to assign to the bins.
+    right : bool, optional
+        Indicates whether bins include the rightmost edge or not (default is
+        True).
+    include_lowest : bool, optional
+        Whether the first interval should include the lowest value or not
+        (default is False).
+    output_column_name : str, optional
+        The name of the output column that contains the discretized data.
+        If not specified, the original column will be replaced.
+
+    Returns
+    -------
+    pandas.DataFrame
+        A new DataFrame with the discretized column.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({"Age": [25, 35, 45, 55]})
+    >>> discretize_column(df, "Age", [20, 30, 40, 50, 60])
+            Age
+    0  (20, 30]
+    1  (30, 40]
+    2  (40, 50]
+    3  (50, 60]
+
+    >>> discretize_column(df, "Age", [20, 30, 40, 50, 60], labels=["Young",
+    ... "Middle", "Senior", "Old"], output_column_name="AgeCategory")
+       Age AgeCategory
+    0   25       Young
+    1   35      Middle
+    2   45      Senior
+    3   55         Old
+    """
+
+    new_df = df.copy()
+    new_column = pd.cut(
+        df[column_name],
+        bins=bins,
+        labels=labels,
+        right=right,
+        include_lowest=include_lowest,
+    )
+
+    if output_column_name is None:
+        output_column_name = column_name
+
+    new_df[output_column_name] = new_column
+    return new_df
