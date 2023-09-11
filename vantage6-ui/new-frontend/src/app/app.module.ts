@@ -38,7 +38,8 @@ import { PageHeaderComponent } from './components/page-header/page-header.compon
 import { ChipComponent } from './components/chip/chip.component';
 import { AlertComponent } from './components/alert/alert.component';
 import { StatusInfoComponent } from './components/status-info/status-info.component';
-import { LogDialog } from './components/dialogs/log-dialog.component';
+import { LogDialog } from './components/dialogs/log/log-dialog.component';
+import { ConfirmDialog } from './components/dialogs/confirm/confirm-dialog.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -60,7 +61,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     ChipComponent,
     AlertComponent,
     StatusInfoComponent,
-    LogDialog
+    LogDialog,
+    ConfirmDialog
   ],
   imports: [
     BrowserModule,

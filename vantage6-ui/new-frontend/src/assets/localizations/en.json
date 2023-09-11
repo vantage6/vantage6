@@ -3,7 +3,10 @@
         "back": "Back",
         "next": "Next",
         "submit": "Submit",
-        "close": "Close"
+        "close": "Close",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "confirm": "Confirm"
     },
     "task": {
         "algorithm": "Algorithm",
@@ -52,6 +55,10 @@
         },
         "card-runs": {
             "title": "Runs"
+        },
+        "delete-dialog": {
+            "title": "Are you sure you want to delete the task '{{name}}'?",
+            "content": "Note, this will also delete all subtasks and results.\nThis operation cannot be undone."
         }
     },
     "task-list": {

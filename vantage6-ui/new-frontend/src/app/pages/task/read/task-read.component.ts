@@ -6,11 +6,12 @@ import { Task, TaskLazyProperties, TaskStatus } from 'src/app/models/api/task.mo
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { TaskService } from 'src/app/services/task.service';
-import { LogDialog } from '../../../components/dialogs/log-dialog.component';
+import { LogDialog } from '../../../components/dialogs/log/log-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { AuthService } from 'src/app/services/auth.service';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { Router } from '@angular/router';
+import { ConfirmDialog } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 
 @Component({
   selector: 'app-task-read',
@@ -79,9 +80,23 @@ export class TaskReadComponent implements OnInit {
   }
 
   async handleDelete(): Promise<void> {
-    if (this.task) {
-      await this.taskService.delete(this.task.id);
-      this.router.navigate([routePaths.tasks]);
-    }
+    if (!this.task) return;
+
+    const dialogRef = this.dialog.open(ConfirmDialog, {
+      data: {
+        title: this.translateService.instant('task-read.delete-dialog.title', { name: this.task.name }),
+        content: this.translateService.instant('task-read.delete-dialog.content'),
+        confirmButtonText: this.translateService.instant('general.delete'),
+        confirmButtonType: 'warn'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(async (result) => {
+      if (result === true) {
+        if (!this.task) return;
+        await this.taskService.delete(this.task.id);
+        this.router.navigate([routePaths.tasks]);
+      }
+    });
   }
 }
