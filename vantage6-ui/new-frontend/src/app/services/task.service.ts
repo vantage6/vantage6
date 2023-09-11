@@ -54,4 +54,8 @@ export class TaskService {
   async create(createTask: CreateTask): Promise<BaseTask> {
     return await this.apiService.postForApi<BaseTask>('/task', createTask);
   }
+
+  async delete(id: number): Promise<void> {
+    return await this.apiService.deleteForApi(`/task/${id}`);
+  }
 }

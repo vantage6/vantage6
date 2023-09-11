@@ -41,6 +41,14 @@ export class ApiService {
     );
   }
 
+  async deleteForApi(path: string): Promise<any> {
+    return await this.handleResult(
+      this.http.delete(environment.api_url + path, {
+        headers: this.getApiAuthenticationHeaders()
+      })
+    );
+  }
+
   async getForAlgorithmApi<T = null>(path: string): Promise<T> {
     return await this.handleResult(this.http.get<T>(environment.algorithm_server_url + path));
   }

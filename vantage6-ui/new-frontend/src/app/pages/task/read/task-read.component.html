@@ -2,6 +2,15 @@
   <button actions mat-flat-button color="primary" [routerLink]="routes.tasks">
     <mat-icon>arrow_back</mat-icon>{{ "task-list.title" | translate }}
   </button>
+  <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="canDelete">
+    <mat-icon>more_vert</mat-icon>
+  </button>
+  <mat-menu #menu="matMenu">
+    <button mat-menu-item *ngIf="canDelete" (click)="handleDelete()">
+      <mat-icon>delete</mat-icon>
+      <span>Delete</span>
+    </button>
+  </mat-menu>
 </app-page-header>
 <mat-card *ngIf="!isLoading && task && task.runs.length > 0">
   <mat-card-header>

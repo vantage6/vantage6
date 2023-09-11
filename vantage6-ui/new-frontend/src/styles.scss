@@ -194,3 +194,8 @@ mat-card {
     margin: $spacing-px-4 0 $spacing-px-1 0;
   }
 }
+
+//TODO: Dirty fix for the page header slotted component, find a better way to do this
+.page-header__more {
+  margin: -6px -6px -12px 0;
+}

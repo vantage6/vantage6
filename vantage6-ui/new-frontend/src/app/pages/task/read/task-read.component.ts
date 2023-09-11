@@ -8,6 +8,9 @@ import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { TaskService } from 'src/app/services/task.service';
 import { LogDialog } from '../../../components/dialogs/log-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
+import { AuthService } from 'src/app/services/auth.service';
+import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-task-read',
@@ -23,13 +26,18 @@ export class TaskReadComponent implements OnInit {
   task: Task | null = null;
   algorithm: Algorithm | null = null;
   isLoading = true;
+  canDelete = false;
 
   constructor(
     public dialog: MatDialog,
+    private router: Router,
     private translateService: TranslateService,
     private taskService: TaskService,
-    private algorithmService: AlgorithmService
-  ) {}
+    private algorithmService: AlgorithmService,
+    authService: AuthService
+  ) {
+    this.canDelete = authService.isOperationAllowed(ResourceType.TASK, ScopeType.COLLABORATION, OperationType.DELETE);
+  }
 
   ngOnInit(): void {
     this.initData();
@@ -68,5 +76,12 @@ export class TaskReadComponent implements OnInit {
         log: log
       }
     });
+  }
+
+  async handleDelete(): Promise<void> {
+    if (this.task) {
+      await this.taskService.delete(this.task.id);
+      this.router.navigate([routePaths.tasks]);
+    }
   }
 }
