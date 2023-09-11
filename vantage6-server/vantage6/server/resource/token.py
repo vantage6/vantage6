@@ -4,6 +4,7 @@ Resources below '/<api_base>/token'
 """
 import logging
 import pyotp
+import json
 
 from flask import request, g
 from flask_jwt_extended import (
@@ -329,7 +330,10 @@ class ContainerToken(ServicesResources):
             "collaboration_id": g.node.collaboration_id,
             "task_id": task_id,
             "image": claim_image,
-            "databases": [db_entry.database for db_entry in db_task.databases]
+            "databases": [
+                json.loads(db_entry.parameters) | {"label": db_entry.database}
+                for db_entry in db_task.databases
+            ]
         }
         token = create_access_token(container, expires_delta=False)
 

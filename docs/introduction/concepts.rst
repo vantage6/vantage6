@@ -125,10 +125,8 @@ Data Station
 
 **database**
     The database may be in any format that the algorithms relevant to your use
-    case support. There is tooling available for CSV, `Parquet <https://parquet.apache.org/>`_
-    and `SPARQL <https://en.wikipedia.org/wiki/SPARQL>`_. There are other
-    data-adapters (e.g. `OMOP <https://www.ohdsi.org/data-standardization/>`_ and
-    `FHIR <https://hl7.org/fhir/>`_) in development.
+    case support. The currently supported database types are listed
+    :ref:`here <wrapper-function-docs>`.
 
 
 User or Application

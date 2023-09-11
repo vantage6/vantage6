@@ -1,6 +1,13 @@
 .. todo rewrite this to a modern version, taking into account the description
    in the develop.rst file.
 
+.. warning::
+
+    This classic tutorial was written for vantage6 version 2.x. The commands
+    below have not been updated and therefore might not work anymore. We are
+    leaving this here for reference, as it includes some useful information
+    about concepts that may not be included elsewhere in this documentation.
+
 .. _classic-algo-tutorial:
 
 Classic Tutorial
