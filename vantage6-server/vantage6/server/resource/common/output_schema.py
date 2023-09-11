@@ -171,6 +171,9 @@ class TaskSchema(HATEOASModelSchema):
     runs = fields.Function(lambda obj: create_one_to_many_link(
         obj, link_to="run", link_from="task_id"
     ))
+    results = fields.Function(lambda obj: create_one_to_many_link(
+        obj, link_to="result", link_from="task_id"
+    ))
     parent = fields.Method("parent_")
     children = fields.Function(lambda obj: create_one_to_many_link(
         obj, link_to="task", link_from="parent_id"
@@ -201,10 +204,25 @@ class ResultSchema(HATEOASModelSchema):
         }
 
 
-# /task/{id}?include=results
-class TaskIncludedSchema(TaskSchema):
+# /task/{id}?include=runs
+class TaskWithRunSchema(TaskSchema):
     """Returns the TaskSchema plus the correspoding runs."""
-    runs = fields.Nested('TaskRunSchema', many=True)
+    runs = fields.Nested('RunSchema', many=True)
+
+
+# /task/{id}?include=results
+class TaskWithResultSchema(TaskSchema):
+    """Returns the TaskSchema plus the correspoding results."""
+    results = fields.Nested('ResultSchema', many=True)
+
+
+# /task/{id}?include=runs,results
+class TaskWithRunAndResultSchema(TaskSchema):
+    """Returns the TaskSchema plus the correspoding runs and results."""
+    runs = fields.Nested('RunSchema', many=True)
+    results = fields.Nested('ResultSchema', many=True)
+
+
 
 
 class RunSchema(HATEOASModelSchema):
@@ -229,16 +247,6 @@ class RunSchema(HATEOASModelSchema):
             "link": url_for("result_with_id", id=obj.id),
             "methods": ["GET", "PATCH"]
         }
-
-
-# /task/{id}/run
-class TaskRunSchema(RunSchema):
-    node = fields.Function(
-        serialize=lambda obj: RunNodeSchema().dump(obj.node, many=False)
-    )
-    ports = fields.Function(
-        serialize=lambda obj: RunPortSchema().dump(obj.ports, many=True)
-    )
 
 
 class RunTaskIncludedSchema(RunSchema):
