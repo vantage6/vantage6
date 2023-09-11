@@ -36,6 +36,12 @@
     color: $warning-700;
   }
 
+  &--active {
+    background-color: $active-50;
+    border-color: $active-200;
+    color: $active-900;
+  }
+
   &--success {
     background-color: $success-50;
     border-color: $success-200;
