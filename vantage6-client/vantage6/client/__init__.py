@@ -439,11 +439,9 @@ class UserClient(ClientBase):
                 'encrypted': encrypted, 'organization_id': organization,
             }
             if scope == 'organization':
-                self.parent.log.info('pagination for scope `organization` '
-                                     'not available')
                 org_id = self.parent.whoami.organization_id
                 return self.parent.request(
-                    f'organization/{org_id}/collaboration'
+                    'collaboration', params={'organization_id': org_id}
                 )
             elif scope == 'global':
                 return self.parent.request('collaboration', params=params)
@@ -1579,3 +1577,7 @@ class UserClient(ClientBase):
                 'operation': operation, 'scope': scope, 'role_id': role
             }
             return self.parent.request('rule', params=params)
+
+
+# Alias the UserClient to Client for easy usage for Python users
+Client = UserClient
