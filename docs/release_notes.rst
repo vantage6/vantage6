@@ -70,6 +70,10 @@ Release notes
    created by a user and are thus not subtasks
    (`Issue#583 <https://github.com/vantage6/vantage6/issues/583>`_,
    `PR#599 <https://github.com/vantage6/vantage6/pull/599>`_).
+ - Users can now assign rules to other users that they don't have themselves
+   if they do have higher permisions on the same resource
+   (`Issue#443 <https://github.com/vantage6/vantage6/issues/443>`_,
+   `PR#781 <https://github.com/vantage6/vantage6/pull/781>`_).
 
 - **Change**
 
