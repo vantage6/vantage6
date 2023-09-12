@@ -18,7 +18,7 @@ Release notes
  - Users allowed to view collaborations but not allowed to view tasks may be
    able to view them via ``/api/collaboration/<id>/task`` (
    `CVE#CVE-2023-41882 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-41882>`_,
-   `PR#622 <https://github.com/vantage6/vantage6/pull/622>`_).
+   `PR#741 <https://github.com/vantage6/vantage6/pull/741>`_).
  - Users allowed to view tasks but not results may be able to view them via
    ``/api/task?include=results`` (
    `CVE#CVE-2023-41882 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-41882>`_,
