@@ -901,19 +901,23 @@ def discretize_column(
 
 def to_datetime(
     df: pd.DataFrame,
-    column: str,
+    column: Optional[str] = None,
     format: Optional[str] = None,
     errors: str = "raise",
+    input_value: Optional[str] = None,
+    output_column: Optional[str] = None,
 ) -> pd.DataFrame:
     """
-    Convert a string column to a datetime column in a new DataFrame.
+    Convert a string column or a string input to a datetime column in a new
+    DataFrame.
 
     Parameters
     ----------
     df : pd.DataFrame
         Input DataFrame.
-    column : str
-        The name of the column to convert.
+    column : str or None, default None
+        The name of the column to convert. If None, `input_value` must be
+        provided.
     format : str, optional
         String to use as date format. See the following link for more
         information: https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior
@@ -922,6 +926,10 @@ def to_datetime(
         * If 'raise', then invalid parsing will raise an exception.
         * If 'coerce', then invalid parsing will be set as NaT.
         * If 'ignore', then invalid parsing will return the input.
+    input_value : str, optional
+        String input to be converted to datetime if `column` is None.
+    output_column : str, optional
+        Output column name when `input_value` is used.
 
     Returns
     -------
@@ -930,6 +938,22 @@ def to_datetime(
 
     Examples
     --------
+    # Converting an existing column
+    >>> df = pd.DataFrame({"date_str": ["2021-01-01", "2021-02-01",
+    ... "2021-03-01"]})
+    >>> to_datetime(df, "date_str")
+        date_str
+    0 2021-01-01
+    1 2021-02-01
+    2 2021-03-01
+
+    # Adding a new column with a fixed date
+    >>> to_datetime(df, input_value="2021-04-01", output_column="new_date")
+         date_str   new_date
+    0  2021-01-01 2021-04-01
+    1  2021-02-01 2021-04-01
+    2  2021-03-01 2021-04-01
+
     >>> import pandas as pd
     >>> df = pd.DataFrame({"date_str": ["2021-01-01", "2021-02-01",
     ... "2021-03-01"]})
@@ -967,12 +991,117 @@ def to_datetime(
     0 2021-01-01
     1 2021-02-01
     2        NaT
-
     """
 
     new_df = df.copy()
-    new_df[column] = pd.to_datetime(
-        new_df[column], format=format, errors=errors
-    )
+
+    if column is None:
+        if input_value is None or output_column is None:
+            raise ValueError(
+                "If `column` is None, both `input_value` and `output_column` must be provided."
+            )
+        new_df[output_column] = pd.to_datetime(
+            input_value, format=format, errors=errors
+        )
+    else:
+        new_df[column] = pd.to_datetime(
+            new_df[column], format=format, errors=errors
+        )
+
+    return new_df
+
+
+def to_timedelta(
+    df: pd.DataFrame,
+    input_column: Optional[str] = None,
+    duration: Optional[Union[str, int]] = None,
+    unit: str = "days",
+    output_column: Optional[str] = None,
+    errors: str = "raise",
+) -> pd.DataFrame:
+    """
+    Convert a string column or apply a fixed duration to a new timedelta column
+    in a new DataFrame.
+
+    For more information see: https://pandas.pydata.org/docs/reference/api/pandas.Timedelta.html
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input DataFrame.
+    input_column : str, optional
+        The name of the column to convert.
+    duration : str or int, optional
+        A fixed duration to apply to all rows. Could be either a string like
+        '1 days' or an integer.
+    unit : str, default 'days'
+        The unit for the fixed duration, applicable when `duration` is an
+        integer.
+
+        Possible values:
+        * W, D, T, S, L, U, or N
+        * days or day
+        * hours, hour, hr, or h
+
+    output_column : str, optional
+        The name of the output column. Required if using the `duration`
+        parameter.
+    errors : str, default 'raise'
+        Errors handling if a string cannot be converted:
+        * If 'raise', then invalid parsing will raise an exception.
+        * If 'coerce', then invalid parsing will be set as NaT.
+        * If 'ignore', then invalid parsing will return the input.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with the new converted or created column, retaining the
+        original column.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({"time_str": ["1 days", "2 days", "3 days"]})
+    >>> to_timedelta(df, input_column="time_str", output_column="new_column")
+      time_str new_column
+    0   1 days     1 days
+    1   2 days     2 days
+    2   3 days     3 days
+
+    >>> to_timedelta(df, duration=4, unit='W', output_column="fixed_timedelta")
+      time_str fixed_timedelta
+    0   1 days         28 days
+    1   2 days         28 days
+    2   3 days         28 days
+
+    >>> to_timedelta(df, duration=48, unit='hours', output_column="duration")
+      time_str duration
+    0   1 days   2 days
+    1   2 days   2 days
+    2   3 days   2 days
+    """
+
+    new_df = df.copy()
+
+    if input_column is not None:
+        if output_column is None:
+            raise ValueError(
+                "The `output_column` must be specified when using `column`."
+            )
+        new_df[output_column] = pd.to_timedelta(
+            new_df[input_column], errors=errors
+        )
+
+    if duration is not None:
+        if output_column is None:
+            raise ValueError(
+                "The `output_column` must be specified when using `duration`."
+            )
+        if isinstance(duration, int):
+            duration = f"{duration} {unit}"
+        new_df[output_column] = pd.to_timedelta(duration, errors=errors)
+
+    if input_column is None and duration is None:
+        raise ValueError("Either `column` or `duration` must be specified.")
 
     return new_df
