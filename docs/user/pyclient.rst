@@ -471,7 +471,7 @@ and then retrieve the results
 
 .. code:: python
 
-   result_info = client.result.list(task=task_id)
+   result_info = client.result.from_task(task_id=task_id)
 
 The number of results may be different depending on what you run, but
 for the central average algorithm in this example, the results would be:
