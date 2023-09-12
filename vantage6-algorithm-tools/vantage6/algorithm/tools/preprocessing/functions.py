@@ -897,3 +897,82 @@ def discretize_column(
 
     new_df[output_column_name] = new_column
     return new_df
+
+
+def to_datetime(
+    df: pd.DataFrame,
+    column: str,
+    format: Optional[str] = None,
+    errors: str = "raise",
+) -> pd.DataFrame:
+    """
+    Convert a string column to a datetime column in a new DataFrame.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input DataFrame.
+    column : str
+        The name of the column to convert.
+    format : str, optional
+        String to use as date format. See the following link for more
+        information: https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior
+    errors : str, default 'raise'
+        Errors handling if a string cannot be converted:
+        * If 'raise', then invalid parsing will raise an exception.
+        * If 'coerce', then invalid parsing will be set as NaT.
+        * If 'ignore', then invalid parsing will return the input.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with the converted column.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({"date_str": ["2021-01-01", "2021-02-01",
+    ... "2021-03-01"]})
+    >>> to_datetime(df, "date_str")
+        date_str
+    0 2021-01-01
+    1 2021-02-01
+    2 2021-03-01
+
+    >>> to_datetime(df, "date_str", format='%Y-%m-%d')
+        date_str
+    0 2021-01-01
+    1 2021-02-01
+    2 2021-03-01
+
+    >>> df = pd.DataFrame({"date_str": ["01-2021-01", "01-2021-02",
+    ... "01-2021-03"]})
+    >>> to_datetime(df, "date_str", format='%d-%Y-%m')
+        date_str
+    0 2021-01-01
+    1 2021-02-01
+    2 2021-03-01
+
+    >>> df = pd.DataFrame({"date_str": ["Jan 01, 2021", "Feb 01, 2021",
+    ... "Mar 01, 2021"]})
+    >>> to_datetime(df, "date_str", format='%b %d, %Y')
+        date_str
+    0 2021-01-01
+    1 2021-02-01
+    2 2021-03-01
+
+    >>> df = pd.DataFrame({"date_str": ["01-2021-01", "01-2021-02", "Invalid"]})
+    >>> to_datetime(df, "date_str", format='%d-%Y-%m', errors='coerce')
+        date_str
+    0 2021-01-01
+    1 2021-02-01
+    2        NaT
+
+    """
+
+    new_df = df.copy()
+    new_df[column] = pd.to_datetime(
+        new_df[column], format=format, errors=errors
+    )
+
+    return new_df
