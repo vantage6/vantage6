@@ -4,7 +4,7 @@ Release notes
 4.0.0
 -----
 
-*27 July 2023*
+*14 September 2023*
 
 - **Security**
 
@@ -17,17 +17,15 @@ Release notes
    `PR#744 <https://github.com/vantage6/vantage6/pull/744>`_).
  - Users allowed to view collaborations but not allowed to view tasks may be
    able to view them via ``/api/collaboration/<id>/task`` (
-   `CVE#CVE-2023-28635 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-28635>`_,
+   `CVE#CVE-2023-41882 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-41882>`_,
    `PR#622 <https://github.com/vantage6/vantage6/pull/622>`_).
  - Users allowed to view tasks but not results may be able to view them via
    ``/api/task?include=results`` (
-   `CVE#CVE-2023-28635 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-28635>`_,
+   `CVE#CVE-2023-41882 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-41882>`_,
    `PR#711 <https://github.com/vantage6/vantage6/pull/711>`_).
  - Deleting all linked tasks when a collaboration is deleted (
    `CVE#CVE-2023-41881 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-41881>`_,
    `PR#748 <https://github.com/vantage6/vantage6/pull/748>`_).
-
-.. TODO update the 3rd and 4th CVE's with the correct CVE numbers
 
 - **Feature**
 
