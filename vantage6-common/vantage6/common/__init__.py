@@ -259,16 +259,15 @@ def check_config_writeable(system_folders: bool = False) -> bool:
         file or not.
     """
     dirs = appdirs.AppDirs()
-    dirs_to_check = get_config_path(dirs, system_folders=system_folders)
+    config_dir = get_config_path(dirs, system_folders=system_folders)
     w_ok = True
-    for dir_ in dirs_to_check:
-        if not os.path.isdir(dir_):
-            warning(f"Target directory '{dir_}' for configuration file does "
-                    "not exist.")
-            w_ok = False
-        elif not os.access(dir_, os.W_OK):
-            warning(f"No write permissions at '{dir_}'.")
-            w_ok = False
+    if not os.path.isdir(config_dir):
+        warning(f"Target directory '{config_dir}' for configuration file does "
+                "not exist.")
+        w_ok = False
+    elif not os.access(config_dir, os.W_OK):
+        warning(f"No write permissions at '{config_dir}'.")
+        w_ok = False
 
     return w_ok
 
