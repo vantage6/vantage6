@@ -127,7 +127,8 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
                 image=image,
                 collaboration=collaboration,
                 job_id=db.Task.next_job_id(),
-                init_org=init_org
+                init_org=init_org,
+                init_user=db.User.get()[0]
             )
 
             for organization in collaboration.organizations:
