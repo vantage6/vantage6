@@ -186,11 +186,12 @@ def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
         Wether to attach the server logs to the console after starting the
         server.
     """
+    # will print an error if not
+    check_docker_running()
+
     info("Starting server...")
     info("Finding Docker daemon.")
     docker_client = docker.from_env()
-    # will print an error if not
-    check_docker_running()
 
     # check if name is allowed for docker volume, else exit
     check_config_name_allowed(ctx.name)
@@ -355,8 +356,8 @@ def cli_server_configuration_list() -> None:
     """
     Print the available server configurations.
     """
-    client = docker.from_env()
     check_docker_running()
+    client = docker.from_env()
 
     running_server = client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
@@ -514,11 +515,12 @@ def vserver_import(ctx: ServerContext, file: str, drop_all: bool,
     wait : bool
         Wether to wait for the import to finish before exiting this function
     """
+    # will print an error if not
+    check_docker_running()
+
     info("Starting server...")
     info("Finding Docker daemon.")
     docker_client = docker.from_env()
-    # will print an error if not
-    check_docker_running()
 
     # check if name is allowed for docker volume, else exit
     check_config_name_allowed(ctx.name)
@@ -628,9 +630,10 @@ def cli_server_shell(ctx: ServerContext) -> None:
     the changes that you make. It is better to use the Python client or a
     graphical user interface instead.
     """
-    docker_client = docker.from_env()
     # will print an error if not
     check_docker_running()
+
+    docker_client = docker.from_env()
 
     running_servers = docker_client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
@@ -676,8 +679,8 @@ def vserver_stop(name: str, system_folders: bool, all_servers: bool) -> None:
     all_servers : bool
         Wether to stop all servers or not
     """
-    client = docker.from_env()
     check_docker_running()
+    client = docker.from_env()
 
     running_servers = client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
@@ -720,8 +723,8 @@ def cli_server_attach(name: str, system_folders: bool) -> None:
     """
     Show the server logs in the current console.
     """
-    client = docker.from_env()
     check_docker_running()
+    client = docker.from_env()
 
     running_servers = client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
@@ -762,8 +765,8 @@ def cli_server_version(name: str, system_folders: bool) -> None:
     """
     Print the version of the vantage6 server.
     """
-    client = docker.from_env()
     check_docker_running()
+    client = docker.from_env()
 
     running_servers = client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
