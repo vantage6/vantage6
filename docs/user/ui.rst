@@ -5,8 +5,8 @@ User interface
 
 The User Interface (UI) is a website where you can login with your vantage6
 user account. Which website this is, depends on the vantage6 server you are
-using. If you are using the Petronas server, go to
-https://portal.petronas.vantage6.ai and login with your user account.
+using. If you are using the Cotopaxi server, go to
+https://portal.cotopaxi.vantage6.ai and login with your user account.
 
 Using the UI should be relatively straightforward. There are buttons
 that should help you e.g. create a task or change your password. If
