@@ -1,8 +1,8 @@
 import questionary as q
-import uuid
 
 from pathlib import Path
 
+from vantage6.common import generate_apikey
 from vantage6.common.globals import DATABASE_TYPES
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common import error, warning
@@ -205,7 +205,7 @@ def server_configuration_questionaire(instance_name: str) -> dict:
 
     constant_jwt_secret = q.confirm("Do you want a constant JWT secret?").ask()
     if constant_jwt_secret:
-        config["jwt_secret_key"] = str(uuid.uuid1())
+        config["jwt_secret_key"] = generate_apikey()
 
     res = q.select("Which level of logging would you like?",
                    choices=["DEBUG", "INFO", "WARNING", "ERROR",
@@ -261,7 +261,13 @@ def server_configuration_questionaire(instance_name: str) -> dict:
         rabbit_uri = q.text(
             message='Enter the URI for your RabbitMQ:'
         ).ask()
-        config['rabbitmq_uri'] = rabbit_uri
+        run_rabbit_locally = q.confirm(
+            "Do you want to run RabbitMQ locally? (Use only for testing)"
+        ).ask()
+        config['rabbitmq'] = {
+            'uri': rabbit_uri,
+            'start_with_server': run_rabbit_locally
+        }
 
     config["logging"] = {
         "level": res,

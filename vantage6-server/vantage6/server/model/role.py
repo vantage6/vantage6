@@ -7,7 +7,7 @@ from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
 class Role(Base):
-    """Collection of :class:`.~vantage6.server.model.rule.Rule`s
+    """Collection of :class:`.~vantage6.server.model.rule.Rule` permissions
 
     Attributes
     ----------

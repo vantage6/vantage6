@@ -123,7 +123,7 @@ You can download this file :download:`here <yaml/batch_import.yaml>`.
    <details>
    <summary><a>Example batch import</a></summary>
 
-.. literalinclude :: yaml/server_config.yaml
+.. literalinclude :: yaml/batch_import.yaml
     :language: yaml
 
 .. raw:: html
@@ -136,3 +136,29 @@ You can download this file :download:`here <yaml/batch_import.yaml>`.
     background info refer to this
     `issue <https://github.com/vantage6/vantage6/issues/71>`__.
 
+
+Testing
+"""""""
+
+You can test the infrastructure via the ``vdev`` commands. The purpose of this
+functionality is to easily setup and run a test server accompanied by `N` nodes
+locally. For example, if you have `N = 10` datasets to test a particular
+algorithm on, then you can spawn a server and 10 nodes with a single command.
+
+You can view all available commands in the table below, or alternatively, use
+``vdev --help``. By using ``--help`` with the individual commands (e.g.
+``vdev start-demo-network --help``), you can view more details on how to execute
+them.
+
+
++------------------------------+--------------------------------------------+
+| **Command**                  | **Description**                            |
++==============================+============================================+
+| ``vdev create-demo-network`` | Create a new network with server and nodes |
++------------------------------+--------------------------------------------+
+| ``vdev start-demo-network``  | Start the network                          |
++------------------------------+--------------------------------------------+
+| ``vdev stop-demo-network``   | Stop the network                           |
++------------------------------+--------------------------------------------+
+| ``vdev remove-demo-network`` | Remove the network completely              |
++------------------------------+--------------------------------------------+

@@ -5,9 +5,9 @@ import traceback
 from typing import Any
 
 from vantage6.common.client import deserialization
-from vantage6.tools import serialization
-from vantage6.tools.util import info, error
-from vantage6.tools.exceptions import DeserializationException
+from vantage6.common import serialization
+from vantage6.algorithm.tools.util import info, error
+from vantage6.algorithm.tools.exceptions import DeserializationException
 
 
 def wrap_algorithm(module: str, log_traceback: bool = True) -> None:
@@ -70,8 +70,7 @@ def _run_algorithm_method(input_data: dict, module: str,
     input_data : dict
         The input data that is passed to the algorithm. This should at least
         contain the key 'method' which is the name of the method that should be
-        called. Another often used key is 'master' which indicates that this
-        container is a master container. Other keys depend on the algorithm.
+        called. Other keys depend on the algorithm.
     module : str
         The module that contains the algorithm.
     log_traceback: bool, optional

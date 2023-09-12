@@ -346,7 +346,7 @@ class TaskInputSchema(_NameValidationSchema):
     image = fields.String(required=True, validate=Length(min=1))
     collaboration_id = fields.Integer(required=True, validate=Range(min=1))
     organizations = fields.List(fields.Dict(), required=True)
-    databases = fields.List(fields.String())
+    databases = fields.List(fields.Dict())
 
     @validates('organizations')
     def validate_organizations(self, organizations: list[dict]):
@@ -370,6 +370,46 @@ class TaskInputSchema(_NameValidationSchema):
             if 'id' not in organization:
                 raise ValidationError(
                     'Organization id is required for each organization')
+
+    @validates('databases')
+    def validate_databases(self, databases: list[dict]):
+        """
+        Validate the databases in the input.
+
+        Parameters
+        ----------
+        databases : list[dict]
+            List of databases to validate. Each database must have at
+            least a database label.
+
+        Raises
+        ------
+        ValidationError
+            If the databases are not valid.
+        """
+        for database in databases:
+            if 'label' not in database:
+                raise ValidationError(
+                    'Database label is required for each database')
+            if 'preprocessing' in database:
+                if not isinstance(database['preprocessing'], list):
+                    raise ValidationError(
+                        'Database preprocessing must be a list of dictionaries'
+                    )
+                # TODO we may add further validation on the preprocessing
+                # parameters when that is completed
+                for prepro in database['preprocessing']:
+                    if 'type' not in prepro:
+                        raise ValidationError(
+                            f"Database preprocessing {prepro} is missing a "
+                            "'type'"
+                        )
+            allowed_keys = {'label', 'preprocessing', 'query', 'sheet_name'}
+            if not set(database.keys()).issubset(set(allowed_keys)):
+                raise ValidationError(
+                    f"Database {database} contains unknown keys. Allowed keys "
+                    f"are {allowed_keys}."
+                )
 
 
 class TokenUserInputSchema(Schema):

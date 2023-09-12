@@ -1,9 +1,3 @@
-"""
-vantage6 clients
-
-This module is contains a base client. From this base client the container
-client (client used by master algorithms) and the user client are derived.
-"""
 from __future__ import annotations
 
 import logging
@@ -20,7 +14,7 @@ from pathlib import Path
 from vantage6.common.globals import APPNAME
 from vantage6.common.encryption import RSACryptor
 from vantage6.common import WhoAmI
-from vantage6.tools import serialization
+from vantage6.common.serialization import serialize
 from vantage6.client.filter import post_filtering
 from vantage6.common.client.utils import print_qr_code
 from vantage6.client.utils import LogLevel
@@ -408,8 +402,7 @@ class UserClient(ClientBase):
         def list(self, scope: str = 'organization',
                  name: str = None, encrypted: bool = None,
                  organization: int = None, page: int = 1,
-                 per_page: int = 20, include_metadata: bool = True,
-                 ) -> dict:
+                 per_page: int = 20) -> dict:
             """View your collaborations
 
             Parameters
@@ -429,10 +422,6 @@ class UserClient(ClientBase):
                 Pagination page, by default 1
             per_page: int, optional
                 Number of items on a single page, by default 20
-            include_metadata: bool, optional
-                Whenever to include the pagination metadata. If this is
-                set to False the output is no longer wrapped in a
-                dictonairy, by default True
 
             Returns
             -------
@@ -445,11 +434,9 @@ class UserClient(ClientBase):
               `organization` as pagination is missing at endpoint
               /organization/<id>/collaboration
             """
-            includes = ['metadata'] if include_metadata else []
             params = {
-                'page': page, 'per_page': per_page, 'include': includes,
-                'name': name, 'encrypted': encrypted,
-                'organization_id': organization,
+                'page': page, 'per_page': per_page, 'name': name,
+                'encrypted': encrypted, 'organization_id': organization,
             }
             if scope == 'organization':
                 self.parent.log.info('pagination for scope `organization` '
@@ -531,7 +518,6 @@ class UserClient(ClientBase):
                  collaboration: int = None, is_online: bool = None,
                  ip: str = None, last_seen_from: str = None,
                  last_seen_till: str = None, page: int = 1, per_page: int = 20,
-                 include_metadata: bool = True,
                  ) -> list[dict]:
             """List nodes
 
@@ -555,10 +541,6 @@ class UserClient(ClientBase):
                 Pagination page, by default 1
             per_page: int, optional
                 Number of items on a single page, by default 20
-            include_metadata: bool, optional
-                Whenever to include the pagination metadata. If this is
-                set to False the output is no longer wrapped in a
-                dictonairy, by default True
 
             Returns
             -------
@@ -566,9 +548,8 @@ class UserClient(ClientBase):
             list of dicts
                 Containing meta-data of the nodes
             """
-            includes = ['metadata'] if include_metadata else []
             params = {
-                'page': page, 'per_page': per_page, 'include': includes,
+                'page': page, 'per_page': per_page,
                 'name': name, 'organization_id': organization,
                 'collaboration_id': collaboration, 'ip': ip,
                 'last_seen_from': last_seen_from,
@@ -677,7 +658,6 @@ class UserClient(ClientBase):
         def list(
             self, name: str = None, country: int = None,
             collaboration: int = None, page: int = None, per_page: int = None,
-            include_metadata: bool = True
         ) -> list[dict]:
             """List organizations
 
@@ -693,21 +673,15 @@ class UserClient(ClientBase):
                 Pagination page, by default 1
             per_page: int, optional
                 Number of items on a single page, by default 20
-            include_metadata: bool, optional
-                Whenever to include the pagination metadata. If this is
-                set to False the output is no longer wrapped in a
-                dictonairy, by default True
 
             Returns
             -------
             list[dict]
                 Containing meta-data information of the organizations
             """
-            includes = ['metadata'] if include_metadata else []
             params = {
-                'page': page, 'per_page': per_page, 'include': includes,
-                'name': name, 'country': country,
-                'collaboration_id': collaboration
+                'page': page, 'per_page': per_page, 'name': name,
+                'country': country, 'collaboration_id': collaboration
             }
             return self.parent.request('organization', params=params)
 
@@ -832,8 +806,7 @@ class UserClient(ClientBase):
                  firstname: str = None, lastname: str = None,
                  email: str = None, role: int = None, rule: int = None,
                  last_seen_from: str = None, last_seen_till: str = None,
-                 page: int = 1, per_page: int = 20,
-                 include_metadata: bool = True) -> list:
+                 page: int = 1, per_page: int = 20) -> list:
             """List users
 
             Parameters
@@ -860,19 +833,14 @@ class UserClient(ClientBase):
                 Pagination page, by default 1
             per_page: int, optional
                 Number of items on a single page, by default 20
-            include_metadata: bool, optional
-                Whenever to include the pagination metadata. If this is
-                set to False the output is no longer wrapped in a
-                dictonairy, by default True
 
             Returns
             -------
             list of dicts
                 Containing the meta-data of the users
             """
-            includes = ['metadata'] if include_metadata else []
             params = {
-                'page': page, 'per_page': per_page, 'include': includes,
+                'page': page, 'per_page': per_page,
                 'username': username, 'organization_id': organization,
                 'firstname': firstname, 'lastname': lastname, 'email': email,
                 'role_id': role, 'rule_id': rule,
@@ -1004,7 +972,7 @@ class UserClient(ClientBase):
         def list(self, name: str = None, description: str = None,
                  organization: int = None, rule: int = None, user: int = None,
                  include_root: bool = None, page: int = 1, per_page: int = 20,
-                 include_metadata: bool = True) -> list[dict]:
+                 ) -> list[dict]:
             """List of roles
 
             Parameters
@@ -1026,19 +994,14 @@ class UserClient(ClientBase):
                 Pagination page, by default 1
             per_page: int, optional
                 Number of items on a single page, by default 20
-            include_metadata: bool, optional
-                Whenever to include the pagination metadata. If this is
-                set to False the output is no longer wrapped in a
-                dictonairy, by default True
 
             Returns
             -------
             list[dict]
                 Containing roles meta-data
             """
-            includes = ['metadata'] if include_metadata else []
             params = {
-                'page': page, 'per_page': per_page, 'include': includes,
+                'page': page, 'per_page': per_page,
                 'name': name, 'description': description,
                 'organization_id': organization, 'rule_id': rule,
                 'include_root': include_root, 'user_id': user,
@@ -1168,7 +1131,7 @@ class UserClient(ClientBase):
             job: int = None, name: str = None, include_results: bool = False,
             description: str = None, database: str = None, run: int = None,
             status: str = None, user_created: bool = None, page: int = 1,
-            per_page: int = 20, include_metadata: bool = True
+            per_page: int = 20
         ) -> dict:
             """List tasks
 
@@ -1209,10 +1172,6 @@ class UserClient(ClientBase):
                 Pagination page, by default 1
             per_page: int, optional
                 Number of items on a single page, by default 20
-            include_metadata: bool, optional
-                Whenever to include the pagination metadata. If this is
-                set to False the output is no longer wrapped in a
-                dictonairy, by default True
 
             Returns
             -------
@@ -1220,13 +1179,6 @@ class UserClient(ClientBase):
                 dictonairy containing the key 'data' which contains the
                 tasks and a key 'links' containing the pagination
                 metadata
-
-            OR
-
-            list
-                when 'include_metadata' is set to false, it removes the
-                metadata wrapper. I.e. directly returning the 'data'
-                key.
             """
             # if the param is None, it will not be passed on to the
             # request
@@ -1241,8 +1193,6 @@ class UserClient(ClientBase):
             includes = []
             if include_results:
                 includes.append('results')
-            if include_metadata:
-                includes.append('metadata')
             params['include'] = includes
             if user_created is not None:
                 params['is_user_created'] = 1 if user_created else 0
@@ -1252,7 +1202,7 @@ class UserClient(ClientBase):
         @post_filtering(iterable=False)
         def create(self, collaboration: int, organizations: list, name: str,
                    image: str, description: str, input_: dict,
-                   databases: list[str] = None) -> dict:
+                   databases: list[dict] = None) -> dict:
             """Create a new task
 
             Parameters
@@ -1270,8 +1220,11 @@ class UserClient(ClientBase):
                 Human readable description
             input_ : dict
                 Algorithm input
-            databases: list[str], optional
-                Database names to be used at the node
+            databases: list[dict], optional
+                Databases to be used at the node. Each dict should contain
+                at least a 'label' key. Additional keys are 'query' (if using
+                SQL/SPARQL databases), 'sheet_name' (if using Excel databases),
+                and 'preprocessing' information.
 
             Returns
             -------
@@ -1282,16 +1235,18 @@ class UserClient(ClientBase):
             assert self.parent.cryptor, "Encryption has not yet been setup!"
 
             if organizations is None:
-                organizations = []
-            if databases is None:
-                databases = ['default']
-            elif isinstance(databases, str):
+                raise ValueError(
+                    'No organizations specified! Cannot create task without '
+                    'assigning it to at least one organization.'
+                )
+
+            if isinstance(databases, str):
                 # it is not unlikely that users specify a single database as a
                 # str, in that case we convert it to a list
-                databases = [databases]
+                databases = [{'label': databases}]
 
             # Data will be serialized in JSON.
-            serialized_input = serialization.serialize(input_)
+            serialized_input = serialize(input_)
 
             # Encrypt the input per organization using that organization's
             # public key.
@@ -1389,7 +1344,7 @@ class UserClient(ClientBase):
                  assigned: tuple[str, str] = None,
                  finished: tuple[str, str] = None, port: int = None,
                  page: int = None, per_page: int = None,
-                 include_metadata: bool = True) -> dict | list[dict]:
+                 ) -> dict | list[dict]:
             """List runs
 
             Parameters
@@ -1416,23 +1371,14 @@ class UserClient(ClientBase):
                 Pagination page number, defaults to 1
             per_page: int, optional
                 Number of items per page, defaults to 20
-            include_metedata: bool, optional
-                Whenevet to include pagination metadata, defaults to
-                True
 
             Returns
             -------
             dict | list[dict]
-                If include_metadata is True, a dictionary is returned
-                containing the key 'data' which contains a list of
-                runs, and a key 'links' which contains the pagination
-                metadata.
-                When include_metadata is False, the metadata wrapper
-                is stripped and only a list of runs is returned
+                A dictionary containing the key 'data' which contains a list of
+                runs, and a key 'links' which contains the pagination metadata.
             """
             includes = []
-            if include_metadata:
-                includes.append('metadata')
             if include_task:
                 includes.append('task')
 
@@ -1460,7 +1406,7 @@ class UserClient(ClientBase):
 
         def from_task(
             self, task_id: int, include_task: bool = False
-        ) -> typing.List[dict]:
+        ) -> list[dict]:
             """
             Get all algorithm runs from a specific task
 
@@ -1540,9 +1486,24 @@ class UserClient(ClientBase):
             return result['result']
 
         def from_task(self, task_id: int):
+            """
+            Get all results from a specific task
+
+            Parameters
+            ----------
+            task_id : int
+                Id of the task to get results from
+
+            Returns
+            -------
+            list[dict]
+                Containing the results
+            """
             self.parent.log.info('--> Attempting to decrypt results!')
 
-            results = self.parent.request('result', {'task_id': task_id})
+            results = self.parent.request(
+                'result', params={'task_id': task_id}
+            )
             results = self._decrypt_result(results, False)
             return results
 
@@ -1590,7 +1551,7 @@ class UserClient(ClientBase):
         @post_filtering()
         def list(self, name: str = None, operation: str = None,
                  scope: str = None, role: int = None, page: int = 1,
-                 per_page: int = 20, include_metadata: bool = True) -> list:
+                 per_page: int = 20) -> list:
             """List of all available rules
 
             Parameters
@@ -1607,20 +1568,14 @@ class UserClient(ClientBase):
                 Pagination page, by default 1
             per_page: int, optional
                 Number of items on a single page, by default 20
-            include_metadata: bool, optional
-                Whenever to include the pagination metadata. If this is
-                set to False the output is no longer wrapped in a
-                dictonairy, by default True
 
             Returns
             -------
             list of dicts
                 Containing all the rules from the vantage6 server
             """
-            includes = ['metadata'] if include_metadata else []
             params = {
-                'page': page, 'per_page': per_page, 'include': includes,
-                'name': name, 'operation': operation, 'scope': scope,
-                'role_id': role
+                'page': page, 'per_page': per_page, 'name': name,
+                'operation': operation, 'scope': scope, 'role_id': role
             }
             return self.parent.request('rule', params=params)

@@ -4,6 +4,7 @@ Resources below '/<api_base>/token'
 """
 import logging
 import pyotp
+import json
 
 from flask import request, g
 from flask_jwt_extended import (
@@ -291,7 +292,7 @@ class ContainerToken(ServicesResources):
         if not db_task:
             log.warning(f"Node {g.node.id} attempts to generate key for task "
                         f"{task_id} that does not exist")
-            return {"msg": "Master task does not exist!"}, \
+            return {"msg": "Parent task does not exist!"}, \
                 HTTPStatus.BAD_REQUEST
 
         # verify that task the token is requested for exists
@@ -329,7 +330,10 @@ class ContainerToken(ServicesResources):
             "collaboration_id": g.node.collaboration_id,
             "task_id": task_id,
             "image": claim_image,
-            "databases": [db_entry.database for db_entry in db_task.databases]
+            "databases": [
+                json.loads(db_entry.parameters) | {"label": db_entry.database}
+                for db_entry in db_task.databases
+            ]
         }
         token = create_access_token(container, expires_delta=False)
 

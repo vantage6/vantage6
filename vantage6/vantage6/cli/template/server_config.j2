@@ -1,0 +1,14 @@
+allow_drop_all: 'False'
+api_path: /api
+description: 'defaultserver'
+ip: 0.0.0.0
+logging:
+  backup_count: 5
+  datefmt: '%Y-%m-%d %H:%M:%S'
+  file: test-server.log
+  format: '%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s'
+  level: DEBUG
+  max_size: 1024
+  use_console: true
+port: {{ port }}
+uri: sqlite:///default.sqlite

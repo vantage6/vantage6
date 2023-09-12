@@ -68,6 +68,8 @@ where ``__init__.py`` contains the following:
 and where ``central.py`` and ``partial.py`` obviously contain the implementation
 of those functions.
 
+.. _implementing-decorators:
+
 Implementing the algorithm functions
 ------------------------------------
 
@@ -89,6 +91,7 @@ can be provided to your algorithm function in the following way:
 .. code:: python
 
     import pandas as pd
+    from vantage6.algorithm.tools.decorators import data
 
     @data(2)
     def my_function(df1: pd.DataFrame, df2: pd.DataFrame, column_name: str):
@@ -110,6 +113,7 @@ A second useful decorator is the ``@algorithm_client`` decorator:
 
     import pandas as pd
     from vantage6.client.algorithm_client import AlgorithmClient
+    from vantage6.algorithm.tools.decorators import algorithm_client, data
 
     @data()
     @algorithm_client
@@ -135,7 +139,7 @@ can be found in the :ref:`algorithm client documentation <algo-client-api-ref>`.
 
 
 Algorithm wrappers
-----------------
+------------------
 
 The vantage6 :ref:`wrappers <wrapper-concepts>` are used to simplify the
 interaction between the algorithm and the node. The wrappers are responsible
@@ -148,7 +152,7 @@ your ``Dockerfile``:
 
 .. code:: docker
 
-    CMD python -c "from vantage6.tools.wrap import wrap_algorithm; wrap_algorithm('${PKG_NAME}')"
+    CMD python -c "from vantage6.algorithm.tools.wrap import wrap_algorithm; wrap_algorithm('${PKG_NAME}')"
 
 where ``${PKG_NAME}`` is the name of your algorithm package. The ``wrap_algorithm``
 function will wrap your algorithm.
@@ -301,8 +305,11 @@ Central function
 
 .. code:: python
 
+  from vantage6.algorithm.tools.decorators import algorithm_client
+  from vantage6.client.algorithm_client import AlgorithmClient
+
    @algorithm_client
-   def main(client, *args, **kwargs):
+   def main(client: AlgorithmClient, *args, **kwargs):
       # Run partial function.
       task = client.task.create(
          {
@@ -325,6 +332,7 @@ Partial function
 .. code:: python
 
    import pandas as pd
+   from vantage6.algorithm.tools.decorators import data
 
    @data(1)
    def my_partial_function(data: pd.DataFrame, column_name: str):

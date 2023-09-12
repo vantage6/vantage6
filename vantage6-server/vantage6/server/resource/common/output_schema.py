@@ -9,7 +9,7 @@ from flask import url_for
 from vantage6.server import db
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING
-from vantage6.server.model import Base
+from vantage6.server.model import Base, User
 from vantage6.server.resource.common.pagination import Pagination
 
 log = logging.getLogger(logger_name(__name__))
@@ -166,9 +166,13 @@ class TaskSchema(HATEOASModelSchema):
         model = db.Task
 
     status = fields.String()
+    finished_at = fields.DateTime()
     collaboration = fields.Method("collaboration")
     runs = fields.Function(lambda obj: create_one_to_many_link(
         obj, link_to="run", link_from="task_id"
+    ))
+    results = fields.Function(lambda obj: create_one_to_many_link(
+        obj, link_to="result", link_from="task_id"
     ))
     parent = fields.Method("parent_")
     children = fields.Function(lambda obj: create_one_to_many_link(
@@ -180,16 +184,22 @@ class TaskSchema(HATEOASModelSchema):
 
     @staticmethod
     def databases_(obj):
-        return [db.database for db in obj.databases]
+        return [
+            {
+                "label": db.database,
+                "parameters": db.parameters
+            } for db in obj.databases
+        ]
 
 
 class ResultSchema(HATEOASModelSchema):
     class Meta:
         model = db.Run
         exclude = ("assigned_at", "started_at", "finished_at", "status",
-                   "task", "ports", "organization", "log", "input",)
+                   "ports", "organization", "log", "input",)
 
     run = fields.Method("make_run_link")
+    task = fields.Method("task")
 
     @staticmethod
     def make_run_link(obj):
@@ -200,10 +210,25 @@ class ResultSchema(HATEOASModelSchema):
         }
 
 
-# /task/{id}?include=results
-class TaskIncludedSchema(TaskSchema):
+# /task/{id}?include=runs
+class TaskWithRunSchema(TaskSchema):
     """Returns the TaskSchema plus the correspoding runs."""
-    runs = fields.Nested('TaskRunSchema', many=True)
+    runs = fields.Nested('RunSchema', many=True)
+
+
+# /task/{id}?include=results
+class TaskWithResultSchema(TaskSchema):
+    """Returns the TaskSchema plus the correspoding results."""
+    results = fields.Nested('ResultSchema', many=True)
+
+
+# /task/{id}?include=runs,results
+class TaskWithRunAndResultSchema(TaskSchema):
+    """Returns the TaskSchema plus the correspoding runs and results."""
+    runs = fields.Nested('RunSchema', many=True)
+    results = fields.Nested('ResultSchema', many=True)
+
+
 
 
 class RunSchema(HATEOASModelSchema):
@@ -228,16 +253,6 @@ class RunSchema(HATEOASModelSchema):
             "link": url_for("result_with_id", id=obj.id),
             "methods": ["GET", "PATCH"]
         }
-
-
-# /task/{id}/run
-class TaskRunSchema(RunSchema):
-    node = fields.Function(
-        serialize=lambda obj: RunNodeSchema().dump(obj.node, many=False)
-    )
-    ports = fields.Function(
-        serialize=lambda obj: RunPortSchema().dump(obj.ports, many=True)
-    )
 
 
 class RunTaskIncludedSchema(RunSchema):
@@ -346,6 +361,49 @@ class UserSchema(HATEOASModelSchema):
     ))
 
     organization = fields.Method("organization")
+
+
+class UserWithPermissionDetailsSchema(UserSchema):
+    """
+    A schema for API responses that contains regular user details plus
+    additional permission details for the user to be used by the UI.
+    """
+    permissions = fields.Method("permissions_")
+
+    @staticmethod
+    def permissions_(obj: User) -> dict:
+        """
+        Returns a dictionary containing permission details for the user to be
+        used by the UI.
+
+        Parameters
+        ----------
+        obj : User
+            The user to get permission details for.
+
+        Returns
+        -------
+        dict
+            A dictionary containing permission details for the user.
+        """
+        role_ids = [role.id for role in obj.roles]
+        rule_ids = list(set(
+            [rule.id for rule in obj.rules] + \
+            [rule.id for role in obj.roles for rule in role.rules]
+        ))
+        # Return which organizations the user is in collaboration with so that
+        # UI knows which organizations user has access to if they have
+        # collaboration scope permissions
+        orgs_in_collabs = list(set([
+            org.id
+            for collab in obj.organization.collaborations
+            for org in collab.organizations
+        ]))
+        return {
+            "roles": role_ids,
+            "rules": rule_ids,
+            "orgs_in_collabs": orgs_in_collabs
+        }
 
 
 class RoleSchema(HATEOASModelSchema):

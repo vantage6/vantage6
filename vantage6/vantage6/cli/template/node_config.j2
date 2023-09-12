@@ -1,0 +1,22 @@
+api_key: {{ api_key }}
+api_path: /api
+databases:
+  {% for label, path in databases.items() %}
+  - label: {{ label }}
+    uri: {{ path }}
+    type: csv
+  {% endfor %}
+encryption:
+  enabled: false
+  private_key: null
+logging:
+  backup_count: 5
+  datefmt: '%Y-%m-%d %H:%M:%S'
+  file: {{ logging["file"] }}
+  format: '%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s'
+  level: DEBUG
+  max_size: 1024
+  use_console: true
+port: {{ port }}
+server_url: {{ server_url }}
+task_dir: {{ task_dir}}

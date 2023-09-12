@@ -41,8 +41,6 @@ orchestration.
 In vantage6, we refer to the orchestration part as the **central function** and
 the federated part as the **partial function**.
 
-.. _wrapper-central-functions:
-
 A common pattern for a central function would be:
 
 1. Request partial models from all participants
@@ -139,7 +137,7 @@ between algorithm and node. The algorithm wrapper does the following:
 -  select the appropriate algorithm function to run. In more detail, this means
    that it provides an
    `entrypoint <https://docs.docker.com/engine/reference/builder/#entrypoint>`_
-   for the docker container
+   for the Docker container
 -  write the output of your algorithm to the output file
 
 Using the wrappers allows algorithm developers to write a single algorithm for
@@ -170,8 +168,8 @@ container. These algorithm containers can create new tasks themselves.
 
 Every algorithm is supplied with a JWT token (see `Input & output`_).
 This token can be used to communicate with the vantage6-server. In case
-you use a algorithm wrapper, you simply can use the supplied ``Client``
-in case you use a :ref:`wrapper-central-functions`.
+you use an algorithm wrapper, you can supply an ``AlgorithmClient`` using
+the :ref:`appropriate decorator <implementing-decorators>`.
 
 A child container can be a parent container itself. There is no limit to
 the amount of task layers that can be created. It is common to have only

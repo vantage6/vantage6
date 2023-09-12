@@ -1,3 +1,5 @@
+.. _contribute:
+
 Contribute
 ==========
 
@@ -35,7 +37,7 @@ us to manage them.
     as they should not be publically visible. To see how we deal with security
     vulnerabilities read our `policy <https://github.com/vantage6/vantage6/blob/main/SECURITY.md>`_.
 
-    See the :ref:`Security vulnerabilities` section when you want to release a
+    See the :ref:`security-vulnerabilities` section when you want to release a
     security patch yourself.
 
 We distibute the open issues in sprints and hotfixes.
@@ -57,8 +59,11 @@ If you would like to fix an existing bug or create a new feature, check
 environment and how the release process works. We prefer that
 you let us know you what are working on so we prevent duplicate work.
 
+.. _security-vulnerabilities:
+
 Security vulnerabilities
------------------------
+------------------------
+
 If you are a member of the Vantage6 Github organization, you can create an
 security advisory in the `Security <https://github.com/vantage6/vantage6/security/
 advisories>`_ tab. See :numref:`advisory` on what to fill in.
@@ -85,10 +90,10 @@ advisory for you.
        the patch is released.
    * - Severity
      - Determine severity score using `this <https://nvd.nist.gov/vuln-metrics/
-       cvss/v3-calculator>`_ tool. Then use table :numref:`severity` to
+       cvss/v3-calculator>`__ tool. Then use table :numref:`severity` to
        determine the level from this score.
    * - Common weakness enumerator (CWE)
-     - Find the CWE (or multiple) on `this <https://cwe.mitre.org/>`_ website.
+     - Find the CWE (or multiple) on `this <https://cwe.mitre.org/>`__ website.
 
 .. list-table:: Severity
    :name: severity
@@ -257,8 +262,8 @@ Pull Request
 
 Please consider first which branch you want to merge your contribution into.
 **Patches** are usually directly merged into ``main``, but **features** are
-usually merged into a development branch (e.g. ``dev3`` for version 3) before
-being merged into the ``main`` branch.
+usually merged into a release branch (e.g. ``release/4.1`` for version 4.1.0)
+before being merged into the ``main`` branch.
 
 Before the PR is merged, it should pass the following requirements:
 

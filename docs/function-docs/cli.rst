@@ -46,7 +46,7 @@ vantage6.cli.configuration_wizard
    :show-inheritance:
 
 vanatge6.cli.rabbitmq.queue_manager
-----------------------
+-----------------------------------
 
 .. automodule:: vantage6.cli.rabbitmq.queue_manager
    :members:

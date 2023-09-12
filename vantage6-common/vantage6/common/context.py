@@ -7,7 +7,9 @@ import logging.handlers
 from pathlib import Path
 from typing import Tuple
 
-from vantage6.common import Singleton, error, Fore, Style, logger_name
+from vantage6.common import (
+    Singleton, error, Fore, Style, get_config_path, logger_name
+)
 from vantage6.common.colors import ColorStreamHandler
 from vantage6.common.globals import APPNAME
 from vantage6.common.configuration_manager import (
@@ -220,13 +222,15 @@ class AppContext(metaclass=Singleton):
             return {
                 "log": Path(d.site_data_dir) / instance_type,
                 "data": Path(d.site_data_dir) / instance_type / instance_name,
-                "config": Path(d.site_config_dir) / instance_type
+                "config": Path(get_config_path(d, system_folders)) \
+                    / instance_type
             }
         else:
             return {
                 "log": Path(d.user_log_dir) / instance_type,
                 "data": Path(d.user_data_dir) / instance_type / instance_name,
-                "config": Path(d.user_config_dir) / instance_type
+                "config": Path(d.user_config_dir) / instance_type,
+                "dev": Path(d.user_config_dir) / "dev"
             }
 
     @classmethod

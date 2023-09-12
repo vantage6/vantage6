@@ -2,7 +2,7 @@
 api_key: ***
 
 # URL of the vantage6 server
-server_url: https://petronas.vantage6.ai
+server_url: https://cotopaxi.vantage6.ai
 
 # port the server listens to
 port: 443
@@ -31,7 +31,7 @@ algorithm_env:
 # components.
 # OPTIONAL
 images:
-  node: harbor2.vantage6.ai/infrastructure/node:petronas
+  node: harbor2.vantage6.ai/infrastructure/node:cotopaxi
   alpine: harbor2.vantage6.ai/infrastructure/alpine
   vpn_client: harbor2.vantage6.ai/infrastructure/vpn_client
   network_config: harbor2.vantage6.ai/infrastructure/vpn_network
@@ -144,6 +144,13 @@ whitelist:
     - 8.8.8.8
   ports:
     - 443
+
+# Containers that are defined here are linked to the algorithm containers and
+# can therefore be accessed when by the algorithm when it is running. Note that
+# for using this option, the container with 'container_name' should already be
+# started before the node is started.
+docker_services:
+    container_label: container_name
 
 # Settings for the logger
 logging:

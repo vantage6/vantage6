@@ -1,4 +1,6 @@
-from sqlalchemy import Column, String, ForeignKey, Integer, sql
+import datetime
+
+from sqlalchemy import Column, String, ForeignKey, Integer, sql, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -58,14 +60,34 @@ class Task(Base):
     parent_id = Column(Integer, ForeignKey("task.id"))
     init_org_id = Column(Integer, ForeignKey("organization.id"))
     init_user_id = Column(Integer, ForeignKey("user.id"))
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     # relationships
     collaboration = relationship("Collaboration", back_populates="tasks")
     parent = relationship("Task", remote_side="Task.id", backref="children")
     runs = relationship("Run", back_populates="task")
+    # This second relationship is needed when constructing output JSON (
+    # including results with the task). It is marked 'view_only' to prevent
+    # write conflicts with the runs relationship.
+    results = relationship("Run", back_populates="task", viewonly=True)
     init_org = relationship("Organization", back_populates="tasks")
     init_user = relationship("User", back_populates="created_tasks")
     databases = relationship("TaskDatabase", back_populates="task")
+
+    # TODO update in v4+, with renaming to 'run'
+    @hybrid_property
+    def finished_at(self) -> datetime.datetime | None:
+        """
+        Determine the time at which a task was completed. This is the time at
+        which the last algorithm run was completed.
+
+        Returns
+        -------
+        datetime.datetime | None
+            Time at which task was completed, None if task is not completed
+        """
+        return max([r.finished_at for r in self.results]) \
+            if self.complete and self.results else None
 
     @hybrid_property
     def status(self) -> str:

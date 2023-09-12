@@ -1,5 +1,5 @@
 SocketIO connection
-------------------
+-------------------
 
 A `SocketIO connection <https://socket.io/docs/v4/>`_ is a bidirectional,
 persistent, event-based communication line. In vantage6, it is used for example

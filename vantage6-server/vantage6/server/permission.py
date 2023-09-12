@@ -21,6 +21,75 @@ log = logging.getLogger(module_name)
 RuleNeed = namedtuple("RuleNeed", ["name", "scope", "operation"])
 
 
+# TODO BvB 2023-07-27 this utility is a bit superfluous with the definition
+# of the operation and scope enums. We should remove it but then add longer
+# values to the enums, which leads to many other changes
+def print_operation(operation: Operation) -> str:
+    """
+    String representation of the operation, that is readable by humans.
+
+    Parameters
+    ----------
+    operation : Operation
+        Operation to be printed
+
+    Returns
+    -------
+    str
+        String representation of the operation
+
+    Raises
+    ------
+    ValueError
+        If the operation is not known
+    """
+    if operation.VIEW:
+        return "view"
+    elif operation.EDIT:
+        return "edit"
+    elif operation.CREATE:
+        return "create"
+    elif operation.DELETE:
+        return "delete"
+    elif operation.SEND:
+        return "send"
+    elif operation.RECEIVE:
+        return "receive"
+    else:
+        raise ValueError(f"Unknown operation {operation}")
+
+
+def print_scope(scope: Scope) -> str:
+    """
+    String representation of the scope, that is readable by humans.
+
+    Parameters
+    ----------
+    scope : Scope
+        Scope to be printed
+
+    Returns
+    -------
+    str
+        String representation of the scope
+
+    Raises
+    ------
+    ValueError
+        If the scope is not known
+    """
+    if scope.ORGANIZATION:
+        return "organization"
+    elif scope.COLLABORATION:
+        return "collaboration"
+    elif scope.GLOBAL:
+        return "global"
+    elif scope.OWN:
+        return "own"
+    else:
+        raise ValueError(f"Unknown scope {scope}")
+
+
 class RuleCollection(dict):
     """
     Class that tracks a set of all rules for a certain resource name
@@ -48,7 +117,8 @@ class RuleCollection(dict):
         permission = Permission(RuleNeed(self.name, scope, operation))
         self.__setattr__(f'{operation}_{scope}', permission)
 
-    def can_for_org(self, operation: Operation, subject_org_id: int) -> bool:
+    def can_for_org(self, operation: Operation,
+                    subject_org_id: int | str) -> bool:
         """
         Check if an operation is allowed on a certain organization
 
@@ -56,8 +126,9 @@ class RuleCollection(dict):
         ----------
         operation: Operation
             Operation to check if allowed
-        subject_org_id: int
-            Organization id on which the operation should be allowed
+        subject_org_id: int | str
+            Organization id on which the operation should be allowed. If a
+            string is given, it will be converted to an int
 
         Returns
         -------
@@ -65,6 +136,9 @@ class RuleCollection(dict):
             True if the operation is allowed on the organization, False
             otherwise
         """
+        if isinstance(subject_org_id, str):
+            subject_org_id = int(subject_org_id)
+
         auth_org = obtain_auth_organization()
 
         # check if the entity has global permission
@@ -89,7 +163,8 @@ class RuleCollection(dict):
         # no permission found
         return False
 
-    def can_for_col(self, operation: Operation, collaboration_id: int) -> bool:
+    def can_for_col(self, operation: Operation,
+                    collaboration_id: int | str) -> bool:
         """
         Check if the user or node can perform the operation on a certain
         collaboration
@@ -98,9 +173,13 @@ class RuleCollection(dict):
         ----------
         operation: Operation
             Operation to check if allowed
-        collaboration_id: int
-            Collaboration id on which the operation should be allowed
+        collaboration_id: int | str
+            Collaboration id on which the operation should be allowed. If a
+            string is given, it will be converted to an int
         """
+        if isinstance(collaboration_id, str):
+            collaboration_id = int(collaboration_id)
+
         auth_collabs = obtain_auth_collaborations()
 
         # check if the entity has global permission
@@ -225,7 +304,7 @@ class PermissionManager:
     """
 
     def __init__(self) -> None:
-        self.collections = {}
+        self.collections: dict[str, RuleCollection] = {}
         log.info("Loading permission system...")
         self.load_rules_from_resources()
 
@@ -467,8 +546,7 @@ class PermissionManager:
         session.commit()
         return result
 
-    @staticmethod
-    def check_user_rules(rules: list[Rule]) -> dict | bool:
+    def check_user_rules(self, rules: list[Rule]) -> dict | None:
         """
         Check if a user, node or container has all the `rules` in a list
 
@@ -479,14 +557,14 @@ class PermissionManager:
 
         Returns
         -------
-        dict | bool
+        dict | None
             Dict with a message which rule is missing, else None
         """
         for rule in rules:
-            requires = RuleNeed(rule.name, rule.scope, rule.operation)
-            try:
-                Permission(requires).test()
-            except PermissionDenied:
+            if not self.collections[rule.name].has_at_least_scope(
+                rule.scope, rule.operation
+            ):
                 return {"msg": f"You don't have the rule ({rule.name}, "
-                        f"{rule.scope}, {rule.operation})"}
+                        f"{print_scope(rule.scope)}, "
+                        f"{print_operation(rule.operation)})"}
         return None

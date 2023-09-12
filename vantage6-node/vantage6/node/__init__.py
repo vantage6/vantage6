@@ -16,7 +16,7 @@ The node application runs four threads:
 *Proxy server thread*
     Algorithm containers are isolated from the internet for security reasons.
     The local proxy server provides an interface to the central server for
-    *master* containers to create subtasks and retrieve their results.
+    algorithm containers to create subtasks and retrieve their results.
 
 The node connects to the server using a websocket connection. This connection
 is mainly used for sharing status updates. This avoids the need for polling to
@@ -355,7 +355,7 @@ class Node:
             docker_input=task_incl_run['input'],
             tmp_vol_name=vol_name,
             token=token,
-            databases_to_use=task.get('databases', ['default'])
+            databases_to_use=task.get('databases', [])
         )
 
         # save task status to the server
@@ -402,11 +402,11 @@ class Node:
             # to the algorithm container. First delete any existing port
             # assignments in case algorithm has crashed
             self.client.request(
-                'port', params={'result_id': task_incl_run['id']},
+                'port', params={'run_id': task_incl_run['id']},
                 method="DELETE"
             )
             for port in vpn_ports:
-                port['result_id'] = task_incl_run['id']
+                port['run_id'] = task_incl_run['id']
                 self.client.request('port', method='POST', json=port)
 
     def __listening_worker(self) -> None:
@@ -647,18 +647,18 @@ class Node:
 
         Expects the configuration in the following format:
 
-        ```yaml
-        whitelist:
-            domains:
-                - domain1
-                - domain2
-            ips:
-                - ip1
-                - ip2
-            ports:
-                - port1
-                - port2
-        ```
+        .. code:: yaml
+
+            whitelist:
+                domains:
+                    - domain1
+                    - domain2
+                ips:
+                    - ip1
+                    - ip2
+                ports:
+                    - port1
+                    - port2
 
         Parameters
         ----------

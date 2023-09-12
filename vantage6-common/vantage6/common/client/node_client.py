@@ -87,10 +87,11 @@ class NodeClient(ClientBase):
         """ Request a container-token at the central server.
 
         This token is used by algorithm containers that run on this
-        node. These algorithms can then post tasks and retrieve
-        child-results (usually refered to as a master container).
+        node. These algorithms can then create subtasks and retrieve
+        subresults.
+
         The server performs a few checks (e.g. if the task you
-        request the key for is still open) before handing out this
+        request the key for is in progress) before handing out this
         token.
 
         Parameters

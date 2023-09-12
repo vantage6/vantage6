@@ -1,7 +1,14 @@
-.. _algo-tutorial:
-
 .. todo rewrite this to a modern version, taking into account the description
    in the develop.rst file.
+
+.. warning::
+
+    This classic tutorial was written for vantage6 version 2.x. The commands
+    below have not been updated and therefore might not work anymore. We are
+    leaving this here for reference, as it includes some useful information
+    about concepts that may not be included elsewhere in this documentation.
+
+.. _classic-algo-tutorial:
 
 Classic Tutorial
 ================
@@ -88,8 +95,8 @@ A federated algorithm consist of two parts:
     is the preferred method.
 
     In case the researcher runs this part, he/she needs to have a proper
-    setup to do so (i.e. Python 3.5+ and the necessary dependencies). This
-    can be useful when developing new algorithms.
+    setup to do so (i.e. a Python environment with the necessary dependencies).
+    This can be useful when developing new algorithms.
 
 Federated part
 ~~~~~~~~~~~~~~
@@ -190,7 +197,7 @@ algorithm with a JWT token so that the central part of the algorithm has
 access to the server to post these subtasks.
 
 📂Algorithm Structure
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 The algorithm needs to be structured as a Python
 `package <https://packaging.python.org/tutorials/packaging-projects/>`__.
@@ -237,7 +244,7 @@ requires.
        long_description_content_type='text/markdown',
        url='https://github.com/IKNL/v6-average-py',
        packages=find_packages(),
-       python_requires='>=3.6',
+       python_requires='>=3.10',
        install_requires=[
            'vantage6-client',
            # list your dependencies here:
@@ -405,8 +412,6 @@ For our average algorithm the implementation will look as follows:
            "sum": local_sum,
            "count": local_count
        }
-
-.. _local-testing-1:
 
 Local testing
 ~~~~~~~~~~~~~

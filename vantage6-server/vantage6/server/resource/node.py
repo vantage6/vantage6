@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
-import uuid
 
 from http import HTTPStatus
 from flask import g, request
 from flask_restful import Api
 
+from vantage6.common import generate_apikey
 from vantage6.server.resource import with_user_or_node, with_user
 from vantage6.server.resource import ServicesResources
 from vantage6.server.resource.common.pagination import Pagination
@@ -216,12 +216,13 @@ class Nodes(NodeBase):
             q = q.filter(db.Node.organization_id == args['organization_id'])
 
         if 'collaboration_id' in args:
-            if not self.r.can_for_col(P.VIEW, int(args['collaboration_id'])):
+            collaboration_id = int(args['collaboration_id'])
+            if not self.r.can_for_col(P.VIEW, collaboration_id):
                 return {
                     'msg': 'You lack the permission view nodes from the '
-                    f'collaboration with id {args["collaboration_id"]}!'
+                    f'collaboration with id {collaboration_id}!'
                 }, HTTPStatus.UNAUTHORIZED
-            q = q.filter(db.Node.collaboration_id == args['collaboration_id'])
+            q = q.filter(db.Node.collaboration_id == collaboration_id)
 
         for param in ['status', 'ip']:
             if param in args:
@@ -351,7 +352,7 @@ class Nodes(NodeBase):
                         HTTPStatus.BAD_REQUEST
 
         # verify that this node does not already exist
-        if db.Node.exists(organization.id, collaboration.id):
+        if db.Node.exists_by_id(organization.id, collaboration.id):
             return {'msg': f'Organization id={organization.id} already has a '
                     f'node for collaboration id={collaboration.id}'}, \
                         HTTPStatus.BAD_REQUEST
@@ -361,11 +362,11 @@ class Nodes(NodeBase):
             f"{organization.name} - {collaboration.name} Node"
         if db.Node.exists("name", name):
             return {
-                "msg": f"Node name '{name}' already exists!"
+                "msg": f"Node with name '{name}' already exists!"
             }, HTTPStatus.BAD_REQUEST
 
         # Ok we're good to go!
-        api_key = str(uuid.uuid4())
+        api_key = generate_apikey()
         node = db.Node(
             name=name,
             collaboration=collaboration,
@@ -599,10 +600,10 @@ class Node(NodeBase):
         col_id = data.get('collaboration_id')
         updated_col = col_id and col_id != node.collaboration.id
         if updated_col:
-            collaboration = db.Collaboration.get(data['collaboration_id'])
+            collaboration = db.Collaboration.get(col_id)
             if not collaboration:
-                return {'msg': f'collaboration id={data["collaboration_id"]}'
-                        'not found!'}, HTTPStatus.NOT_FOUND
+                return {'msg': f'collaboration id={col_id} not found!'}, \
+                    HTTPStatus.NOT_FOUND
 
             if not self.r.e_glo.can():
                 if auth.organization not in collaboration.organizations:
@@ -615,7 +616,8 @@ class Node(NodeBase):
         # validate that node does not already exist when we change either
         # the organization and/or collaboration
         if updated_org or updated_col:
-            if db.Node.exists(node.organization.id, node.collaboration.id):
+            if db.Node.exists_by_id(node.organization.id,
+                                    node.collaboration.id):
                 return {'msg': 'A node with organization id='
                         f'{node.organization.id} and collaboration id='
                         f'{node.collaboration.id} already exists!'}, \

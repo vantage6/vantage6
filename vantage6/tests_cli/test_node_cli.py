@@ -1,5 +1,6 @@
 import unittest
 import logging
+import os
 import contextlib
 
 from unittest.mock import MagicMock, patch
@@ -80,8 +81,8 @@ class NodeCLITest(unittest.TestCase):
             result.output,
             "\nName                     Status          System/User\n"
             "-----------------------------------------------------\n"
-            "iknl                     Offline         System \n"
-            "iknl                     Online          User   \n"
+            "iknl                     Not running     System \n"
+            "iknl                     Running         User   \n"
             "-----------------------------------------------------\n"
         )
 
@@ -305,6 +306,9 @@ class NodeCLITest(unittest.TestCase):
 
         result = runner.invoke(cli_node_create_private_key,
                                ["--name", "application"])
+
+        # remove the private key file again
+        os.remove("privkey_Test.pem")
 
         self.assertEqual(result.exit_code, 0)
 

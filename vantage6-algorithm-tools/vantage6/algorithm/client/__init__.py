@@ -6,9 +6,9 @@ from typing import Any
 
 from vantage6.common.client.client_base import ClientBase
 from vantage6.common import base64s_to_bytes, bytes_to_base64s
-from vantage6.common.task_status import TaskStatus
-from vantage6.tools.serialization import serialize
-from vantage6.tools.util import info
+from vantage6.common.task_status import has_task_finished
+from vantage6.common.serialization import serialize
+from vantage6.algorithm.tools.util import info
 
 
 class AlgorithmClient(ClientBase):
@@ -83,6 +83,42 @@ class AlgorithmClient(ClientBase):
         """
         return super().request(*args, **kwargs, retry=False)
 
+    def authenticate(self, credentials: dict = None, path: str = None) -> None:
+        """
+        Overwrite base authenticate function to prevent algorithm containers
+        from trying to authenticate, which they would be unable to do (they are
+        already provided with a token on container startup).
+
+        Function parameters have only been included to make the interface
+        identical to the parent class. They are not used.
+
+        Parameters
+        ----------
+        credentials: dict
+            Credentials to authenticate with.
+        path: str
+            Path to the credentials file.
+
+        Raises
+        ------
+        NotImplementedError
+            Always.
+        """
+        return NotImplementedError("Algorithm containers cannot authenticate!")
+
+    def refresh_token(self) -> None:
+        """
+        Overwrite base refresh_token function to prevent algorithm containers
+        from trying to refresh their token, which they would be unable to do.
+
+        Raises
+        ------
+        NotImplementedError
+            Always.
+        """
+        return NotImplementedError(
+            "Algorithm containers cannot refresh their token!")
+
     def wait_for_results(self, task_id: int, interval: float = 1) -> list:
         """
         Poll the central server until results are available and then return
@@ -100,9 +136,11 @@ class AlgorithmClient(ClientBase):
         list
             List of task results.
         """
-        while self.task.get(task_id)['status'] != TaskStatus.COMPLETED:
+        status = self.task.get(task_id).get('status')
+        while not has_task_finished(status):
             info(f"Waiting for results of task {task_id}...")
             time.sleep(interval)
+            status = self.task.get(task_id).get('status')
         info("Done!")
 
         return self.result.from_task(task_id)

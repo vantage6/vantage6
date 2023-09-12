@@ -16,6 +16,7 @@ class TaskDatabase(Base):
     # fields
     task_id = Column('task_id', Integer, ForeignKey('task.id'))
     database = Column(String)
+    parameters = Column(String)
 
     # relationships
     task = relationship("Task", back_populates="databases")

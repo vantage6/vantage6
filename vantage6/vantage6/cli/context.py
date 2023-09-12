@@ -16,7 +16,7 @@ case of the node with a local database URIs.
     the node package. Normally the node uses the
     `vantage6.node.context.DockerNodeContext` which provides the same
     functionality but is tailored to the Docker environment.
--------------------------------------------------------------------------------
+
 """
 # TODO BvB 2023-01-10 we should have a look at all context classes and define
 # them in the same place. Now the DockerNodeContext is defined in the node, but

@@ -31,7 +31,7 @@ setup(
     long_description_content_type='text/markdown',
     url='https://github.com/vantage6/vantage6',
     packages=find_namespace_packages(),
-    python_requires='>=3.6',
+    python_requires='>=3.10',
     install_requires=[
         'bcrypt==4.0.1',
         'flasgger==0.9.5',
@@ -45,7 +45,6 @@ setup(
         'Flask-SocketIO==5.3.2',
         'gevent==22.10.2',
         'ipython==8.10.0',
-        'jinja2==3.1.2',
         'kombu==5.2.4',
         'marshmallow==3.19.0',
         'marshmallow-sqlalchemy==0.29.0',

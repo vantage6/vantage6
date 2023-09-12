@@ -1,7 +1,5 @@
 """RabbitMQ utilities."""
 
-from vantage6.common import is_ip_address
-
 
 def split_rabbitmq_uri(rabbit_uri: str) -> dict:
     """
@@ -28,21 +26,3 @@ def split_rabbitmq_uri(rabbit_uri: str) -> dict:
         'port': port,
         'vhost': vhost,
     }
-
-
-def is_local_address(rabbit_uri: str) -> bool:
-    """
-    Test if the host of a RabbitMQ uri is an external IP address or not
-
-    Parameters
-    ----------
-    rabbit_uri: str
-        The connection URI to the RabbitMQ service from the configuration
-
-    Returns
-    -------
-    bool:
-        Whether or not the rabbit_uri points to a service to be set up locally
-    """
-    uri_info = split_rabbitmq_uri(rabbit_uri=rabbit_uri)
-    return not is_ip_address(uri_info['host'])

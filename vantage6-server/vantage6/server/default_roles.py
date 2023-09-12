@@ -58,6 +58,7 @@ def get_default_roles(db) -> list[dict]:
         db.Rule.get_by_('collaboration', Scope.ORGANIZATION, Operation.VIEW),
         db.Rule.get_by_('role', Scope.ORGANIZATION, Operation.VIEW),
         db.Rule.get_by_('node', Scope.ORGANIZATION, Operation.VIEW),
+        db.Rule.get_by_('node', Scope.COLLABORATION, Operation.VIEW),
         db.Rule.get_by_('task', Scope.COLLABORATION, Operation.VIEW),
         db.Rule.get_by_('run', Scope.COLLABORATION, Operation.VIEW),
         db.Rule.get_by_('port', Scope.ORGANIZATION, Operation.VIEW),

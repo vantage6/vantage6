@@ -1,14 +1,15 @@
+import json
 import os
+from functools import wraps
+
 import pandas as pd
 
-from functools import wraps
-from typing import Any
 
-from vantage6.client.algorithm_client import AlgorithmClient
-from vantage6.tools.mock_client import MockAlgorithmClient
-from vantage6.tools.wrap import load_input
-from vantage6.tools.util import info, error, warn
-from vantage6.tools.wrappers import select_wrapper
+from vantage6.algorithm.client import AlgorithmClient
+from vantage6.algorithm.tools.mock_client import MockAlgorithmClient
+from vantage6.algorithm.tools.util import info, error, warn
+from vantage6.algorithm.tools.wrappers import load_data
+from vantage6.algorithm.tools.preprocessing import preprocess_data
 
 
 def algorithm_client(func: callable) -> callable:
@@ -34,8 +35,8 @@ def algorithm_client(func: callable) -> callable:
     callable
         Decorated function
     """
-    def wrap_function(mock_client: MockAlgorithmClient = None,
-                      *args, **kwargs) -> callable:
+    def wrap_function(*args, mock_client: MockAlgorithmClient = None,
+                      **kwargs) -> callable:
         """
         Wrap the function with the client object
 
@@ -60,6 +61,8 @@ def algorithm_client(func: callable) -> callable:
         client = AlgorithmClient(token=token, host=host, port=port,
                                  path=api_path)
         return func(client, *args, **kwargs)
+    # set attribute that this function is wrapped in an algorithm client
+    wrap_function.wrapped_in_algorithm_client_decorator = True
     return wrap_function
 
 
@@ -99,7 +102,7 @@ def data(number_of_databases: int = 1) -> callable:
     """
     def protection_decorator(func: callable, *args, **kwargs) -> callable:
         @wraps(func)
-        def decorator(mock_data: list[pd.DataFrame] = None, *args,
+        def decorator(*args, mock_data: list[pd.DataFrame] = None,
                       **kwargs) -> callable:
             """
             Wrap the function with the data
@@ -114,7 +117,6 @@ def data(number_of_databases: int = 1) -> callable:
             # query to execute on the database
             input_file = os.environ["INPUT_FILE"]
             info(f"Reading input file {input_file}")
-            input_data = load_input(input_file)
 
             # read the labels that the user requested, which is a comma
             # separated list of labels.
@@ -133,15 +135,29 @@ def data(number_of_databases: int = 1) -> callable:
 
             for i in range(number_of_databases):
                 label = labels[i]
-                data_ = _get_data_from_label(label, input_data)
+                # read the data from the database
+                info("Reading data from database")
+                data_ = _get_data_from_label(label)
+
+                # do any data preprocessing here
+                info(f"Applying preprocessing for database '{label}'")
+                preprocess = json.loads(
+                    os.environ.get(f"{label.upper()}_PREPROCESSING")
+                )
+                if preprocess:
+                    data_ = preprocess_data(data_, preprocess)
+
+                # add the data to the arguments
                 args = (data_, *args)
 
             return func(*args, **kwargs)
+        # set attribute that this function is wrapped in a data decorator
+        decorator.wrapped_in_data_decorator = True
         return decorator
     return protection_decorator
 
 
-def _get_data_from_label(label: str, input_data: Any) -> pd.DataFrame:
+def _get_data_from_label(label: str) -> pd.DataFrame:
     """
     Load data from a database based on the label
 
@@ -149,8 +165,6 @@ def _get_data_from_label(label: str, input_data: Any) -> pd.DataFrame:
     ----------
     label : str
         Label of the database to load
-    input_data : Any
-        Input data from the input file
 
     Returns
     -------
@@ -166,13 +180,11 @@ def _get_data_from_label(label: str, input_data: Any) -> pd.DataFrame:
     database_type = os.environ.get(
         f"{label.upper()}_DATABASE_TYPE", "csv").lower()
 
-    # Create the correct wrapper based on the database type, note that the
-    # multi database wrapper is not available.
-    wrapper = select_wrapper(database_type)
-    if wrapper is None:
-        error(f"Unknown database type '{database_type}' for database with "
-              f"label '{label}'. Please check the node configuration.")
-        exit(1)
-
-    # Load the data from the database
-    return wrapper.load_data(database_uri, input_data)
+    # Load the data based on the database type. Try to provide environment
+    # variables that should be available for some data types.
+    return load_data(
+        database_uri,
+        database_type,
+        query=os.environ.get(f"{label.upper()}_QUERY"),
+        sheet_name=os.environ.get(f"{label.upper()}_SHEET_NAME")
+    )

@@ -39,7 +39,7 @@ class RabbitMQManager:
     def __init__(self, ctx: ServerContext, network_mgr: NetworkManager,
                  image: str = None) -> None:
         self.ctx = ctx
-        self.queue_uri = self.ctx.config.get('rabbitmq_uri')
+        self.queue_uri = self.ctx.config['rabbitmq'].get('uri')
         rabbit_splitted = split_rabbitmq_uri(self.queue_uri)
         self.rabbit_user = rabbit_splitted['user']
         self.rabbit_pass = rabbit_splitted['password']
@@ -89,7 +89,7 @@ class RabbitMQManager:
             ports=ports,
             detach=True,
             restart_policy={"Name": "always"},
-            hostname=f'{APPNAME}-{self.ctx.name}-rabbitmq',
+            hostname=self.host,
             labels={
                 f"{APPNAME}-type": "rabbitmq",
             },

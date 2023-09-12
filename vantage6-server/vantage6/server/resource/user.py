@@ -21,7 +21,9 @@ from vantage6.server.resource import (
 )
 from vantage6.server.resource.common.input_schema import UserInputSchema
 from vantage6.server.resource.common.pagination import Pagination
-from vantage6.server.resource.common.output_schema import UserSchema
+from vantage6.server.resource.common.output_schema import (
+    UserSchema, UserWithPermissionDetailsSchema
+)
 
 
 module_name = logger_name(__name__)
@@ -107,7 +109,7 @@ def permissions(permissions: PermissionManager) -> None:
 # ------------------------------------------------------------------------------
 user_schema = UserSchema()
 user_input_schema = UserInputSchema()
-
+user_schema_with_permissions = UserWithPermissionDetailsSchema()
 
 class UserBase(ServicesResources):
 
@@ -260,7 +262,10 @@ class Users(UserBase):
                 return {
                     'msg': f'Role with id={args["role_id"]} does not exist!'
                 }, HTTPStatus.BAD_REQUEST
-            elif not self.r.can_for_org(P.VIEW, role.organization_id):
+            # note: We check if role has organization to ensure that users
+            # with limited permissions can still see who have default roles
+            elif not self.r.can_for_org(P.VIEW, role.organization_id) and \
+                    role.organization:
                 return {
                     'msg': 'You lack the permission view users from the '
                     f'organization that role with id={role.organization_id} '
@@ -495,6 +500,12 @@ class User(UserBase):
                 type: integer
               description: User id
               required: true
+            - in: path
+              name: include_permissions
+              schema:
+                type: boolean
+              description: Whether or not to include extra permission info for
+                the user. By default false.
 
         responses:
             200:
@@ -513,13 +524,17 @@ class User(UserBase):
         if not user:
             return {"msg": f"user id={id} is not found"}, HTTPStatus.NOT_FOUND
 
-        same_user = g.user.id == user.id
+        schema = user_schema
+
+        if request.args.get('include_permissions', False):
+              schema = user_schema_with_permissions
 
         # allow user to be returned if authenticated user can view users from
         # that organization or if the user is the same as the authenticated
         # user.
+        same_user = g.user.id == user.id
         if (same_user or self.r.can_for_org(P.VIEW, user.organization_id)):
-            return user_schema.dump(user, many=False), HTTPStatus.OK
+            return schema.dump(user, many=False), HTTPStatus.OK
         else:
             return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED

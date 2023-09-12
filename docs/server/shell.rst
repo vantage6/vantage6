@@ -12,6 +12,8 @@ Shell
     Instead, we recommend using the :ref:`user interface <ui>`, the
     :ref:`Python client <python-client>` or the :ref:`API <server-api>`.
 
+    The commands in this page have not been updated to match version 4.0.
+
 The shell allows a server admin to manage all server entities. To start
 the shell, use ``vserver shell [options]``.
 
@@ -251,7 +253,7 @@ new node can be created as follows:
 
    # we'll use a uuid as the API-key, but you can use anything as
    # API key
-   from uuid import uuid1
+   from uuid import uuid4
 
    # nodes always belong to an organization *and* a collaboration,
    # this combination needs to be unique!
@@ -259,7 +261,7 @@ new node can be created as follows:
    collab = iknl.collaborations[0]
 
    # generate and save
-   api_key = str(uuid1())
+   api_key = str(uuid4())
    print(api_key)
 
    node = db.Node(

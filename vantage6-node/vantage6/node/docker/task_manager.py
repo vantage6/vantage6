@@ -479,7 +479,7 @@ class DockerTaskManager(DockerBaseManager):
             environment_variables["no_proxy"] = ', '.join(no_proxy)
 
         for database in databases_to_use:
-            if database not in self.databases:
+            if database['label'] not in self.databases:
                 # In this case the algorithm might crash if it tries to access
                 # the DATABASE_LABEL environment variable
                 self.log.warning("A user specified a database that does not "
@@ -487,9 +487,21 @@ class DockerTaskManager(DockerBaseManager):
                                  f"{self.databases.keys()}. This is likely to "
                                  "result in an algorithm crash.")
                 self.log.debug(f"User specified database: {database}")
+            # define env vars for the preprocessing and extra parameters such
+            # as query and sheet_name
+            extra_params = json.loads(database.get("parameters")) \
+                if database.get("parameters") else {}
+            for optional_key in ['query', 'sheet_name', 'preprocessing']:
+                if optional_key in extra_params:
+                    env_var_value = extra_params[optional_key] \
+                        if optional_key != 'preprocessing' \
+                        else json.dumps(extra_params[optional_key])
+                    environment_variables[f"{database['label'].upper()}_"
+                                          f"{optional_key.upper()}"] = \
+                        env_var_value
 
         environment_variables["USER_REQUESTED_DATABASE_LABELS"] = \
-            ",".join(databases_to_use)
+            ",".join([db['label'] for db in databases_to_use])
 
         # Only prepend the data_folder is it is a file-based database
         # This allows algorithms to access multiple data sources at the
@@ -507,7 +519,7 @@ class DockerTaskManager(DockerBaseManager):
             environment_variables[type_var_name] = db['type']
 
             db_labels.append(label)
-        environment_variables['DB_LABELS'] = json.dumps(db_labels)
+        environment_variables['DB_LABELS'] = ','.join(db_labels)
 
         self.log.debug(f"environment: {environment_variables}")
 

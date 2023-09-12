@@ -6,6 +6,7 @@ from flask import g, request, url_for
 from flask_restful import Api
 from http import HTTPStatus
 from sqlalchemy import desc
+from sqlalchemy.sql import visitors
 
 from vantage6.common.globals import STRING_ENCODING
 from vantage6.common.task_status import TaskStatus, has_task_finished
@@ -19,7 +20,9 @@ from vantage6.server.permission import (
 from vantage6.server.resource import only_for, ServicesResources, with_user
 from vantage6.server.resource.common.output_schema import (
     TaskSchema,
-    TaskIncludedSchema,
+    TaskWithResultSchema,
+    TaskWithRunSchema,
+    TaskWithRunAndResultSchema,
 )
 from vantage6.server.resource.common.input_schema import TaskInputSchema
 from vantage6.server.resource.common.pagination import Pagination
@@ -108,7 +111,10 @@ def permissions(permissions: PermissionManager) -> None:
 # Resources / API's
 # ------------------------------------------------------------------------------
 task_schema = TaskSchema()
-task_result_schema = TaskIncludedSchema()
+task_run_schema = TaskWithRunSchema()
+task_result_schema = TaskWithResultSchema()
+task_result_run_schema = TaskWithRunAndResultSchema()
+
 task_input_schema = TaskInputSchema()
 
 
@@ -121,6 +127,23 @@ class TaskBase(ServicesResources):
         # resource as they are sometimes included
         self.r_run: RuleCollection = getattr(self.permissions, 'run')
 
+    def _select_schema(self) -> TaskSchema:
+        """
+        Select the schema to use for serialization.
+
+        Returns
+        -------
+        TaskSchema
+            Schema to use for serialization
+        """
+        if self.is_included('runs') and self.is_included('results'):
+            return task_result_run_schema
+        elif self.is_included('runs'):
+            return task_run_schema
+        elif self.is_included('results'):
+            return task_result_schema
+        else:
+            return task_schema
 
 class Tasks(TaskBase):
 
@@ -226,7 +249,9 @@ class Tasks(TaskBase):
               type: array
               items:
                 type: string
-            description: Include 'results' to get task results.
+            description: Include 'results' to include the task's results,
+              'runs' to include details on algorithm runs. For including
+               multiple, do either `include=x,y` or `include=x&include=y`.
           - in: query
             name: status
             schema:
@@ -294,35 +319,47 @@ class Tasks(TaskBase):
                 }, HTTPStatus.UNAUTHORIZED
 
         if 'collaboration_id' in args:
-            if not self.r.can_for_col(P.VIEW, args['collaboration_id']):
+            collaboration_id = int(args['collaboration_id'])
+            if not self.r.can_for_col(P.VIEW, collaboration_id):
                 return {'msg': 'You lack the permission to view tasks '
-                        f'from collaboration {args["collaboration_id"]}!'}, \
+                        f'from collaboration {collaboration_id}!'}, \
                     HTTPStatus.UNAUTHORIZED
-            q = q.join(db.Collaboration).filter(
-                db.Collaboration.id == args['collaboration_id'])
+            # dont join collaboration table if it is already joined
+            # FIXME refactor this after moving to SQLAlchemy 2.0
+            has_already_joined_collab = False
+            for visitor in visitors.iterate(q.statement):
+                if visitor.__visit_name__ == 'table' and \
+                        visitor.name == 'collaboration':
+                    has_already_joined_collab = True
+            if not has_already_joined_collab:
+                q = q.join(db.Collaboration)
+            q = q.filter(db.Collaboration.id == collaboration_id)
 
         if 'init_org_id' in args:
-            if not self.r.can_for_org(P.VIEW, args['init_org_id']):
+            init_org_id = int(args['init_org_id'])
+            if not self.r.can_for_org(P.VIEW, init_org_id):
                 return {'msg': 'You lack the permission to view tasks '
-                        f'from organization id={args["init_org_id"]}!'}, \
+                        f'from organization id={init_org_id}!'}, \
                     HTTPStatus.UNAUTHORIZED
-            q = q.filter(db.Task.init_org_id == args['init_org_id'])
+            q = q.filter(db.Task.init_org_id == init_org_id)
 
         if 'init_user_id' in args:
-            init_user = db.User.get(args['init_user_id'])
+            init_user_id = int(args['init_user_id'])
+            init_user = db.User.get(init_user_id)
             if not init_user:
-                return {'msg': f'User id={args["init_user_id"]} does not '
+                return {'msg': f'User id={init_user_id} does not '
                         'exist!'}, HTTPStatus.BAD_REQUEST
             elif not self.r.can_for_org(P.VIEW, init_user.organization_id) \
                     and not (self.r.v_own.can() and g.user and
                              init_user.id == g.user.id):
                 return {'msg': 'You lack the permission to view tasks '
-                        f'from user id={args["init_user_id"]}!'}, \
+                        f'from user id={init_user_id}!'}, \
                     HTTPStatus.UNAUTHORIZED
-            q = q.filter(db.Task.init_user_id == args['init_user_id'])
+            q = q.filter(db.Task.init_user_id == init_user_id)
 
         if 'parent_id' in args:
-            parent = db.Task.get(args['parent_id'])
+            parent_id = int(args['parent_id'])
+            parent = db.Task.get(parent_id)
             if not parent:
                 return {'msg': f'Parent task id={args["parent_id"]} does not '
                         'exist!'}, HTTPStatus.BAD_REQUEST
@@ -331,11 +368,12 @@ class Tasks(TaskBase):
                         'from the collaboration that the task with parent_id='
                         f'{parent.collaboration_id} belongs to!'}, \
                     HTTPStatus.UNAUTHORIZED
-            q = q.filter(db.Task.parent_id == args['parent_id'])
+            q = q.filter(db.Task.parent_id == int(parent_id))
 
         if 'job_id' in args:
+            job_id = int(args['job_id'])
             task_in_job = q.session.query(db.Task).filter(
-                db.Task.job_id == args['job_id']).first()
+                db.Task.job_id == job_id).first()
             if not task_in_job:
                 return {'msg': f'Job id={args["job_id"]} does not exist!'}, \
                     HTTPStatus.BAD_REQUEST
@@ -344,14 +382,15 @@ class Tasks(TaskBase):
                         'from the collaboration that the task with job_id='
                         f'{task_in_job.collaboration_id} belongs to!'}, \
                     HTTPStatus.UNAUTHORIZED
-            q = q.filter(db.Task.job_id == args['job_id'])
+            q = q.filter(db.Task.job_id == job_id)
 
         for param in ['name', 'image', 'description', 'status']:
             if param in args:
                 q = q.filter(getattr(db.Task, param).like(args[param]))
 
         if 'run_id' in args:
-            run = db.Run.get(args['run_id'])
+            run_id = int(args['run_id'])
+            run = db.Run.get(run_id)
             if not run:
                 return {'msg': f'Run id={args["run_id"]} does not exist!'}, \
                     HTTPStatus.BAD_REQUEST
@@ -360,7 +399,7 @@ class Tasks(TaskBase):
                         'from the collaboration that the run with id='
                         f'{run.collaboration_id} belongs to!'}, \
                     HTTPStatus.UNAUTHORIZED
-            q = q.join(db.Run).filter(db.Run.id == args['run_id'])
+            q = q.join(db.Run).filter(db.Run.id == run_id)
 
         if 'database' in args:
             q = q.join(db.TaskDatabase)\
@@ -389,8 +428,7 @@ class Tasks(TaskBase):
             return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # serialization schema
-        schema = task_result_schema if self.is_included('results') else\
-            task_schema
+        schema = self._select_schema()
 
         return self.response(page, schema)
 
@@ -544,16 +582,31 @@ class Tasks(TaskBase):
             task.init_user_id = parent.init_user_id
             log.debug(f"Sub task from parent_id={task.parent_id}")
 
-        # ok commit session...
-        task.save()
-
         # save the databases that the task uses
         databases = data.get('databases')
-        if not isinstance(databases, list):
-            databases = [databases]
+        if isinstance(databases, str):
+            databases = [{'label': databases}]
+        elif databases is None:
+            databases = []
+        db_records = []
         for database in databases:
-            db_record = db.TaskDatabase(task_id=task.id, database=database)
-            db_record.save()
+            if 'label' not in database:
+                return {'msg': "Database label missing! The dictionary "
+                        f"{database} should contain a 'label' key"}, \
+                    HTTPStatus.BAD_REQUEST
+            # remove label from the database dictionary, which apart from it
+            # may only contain some optional parameters . Save optional
+            # parameters as JSON without spaces to database
+            label = database.pop('label')
+            db_records.append(db.TaskDatabase(
+                task_id=task.id,
+                database=label,
+                parameters=json.dumps(database, separators=(',', ':'))
+            ))
+
+        # All checks completed, save task to database
+        task.save()
+        [db_record.save() for db_record in db_records] # pylint: disable=W0106
 
         # send socket event that task has been created
         self.socketio.emit(
@@ -565,33 +618,10 @@ class Tasks(TaskBase):
             }, room=f"collaboration_{collaboration_id}", namespace='/tasks'
         )
 
-        # if the 'master'-flag is set to true the (master) task is executed on
-        # a node in the collaboration from the organization to which the user
-        # belongs. If also organization_ids are supplied, then these are
-        # ignored.
-        # TODO in this case the user *must* have a node attached to this
-        # collaboration
-        # TODO this does not make a lot of sense as the `organizations` input
-        # should only contain the organization where the master container
-        # shoudl run
-        assign_orgs = []
-        if data.get("master", False) and g.user:
-            for org in organizations_json_list:
-                if org['id'] == g.user.organization_id:
-                    assign_orgs = [org]
-                    break
-            if not assign_orgs:
-                return {'msg': 'You\'re trying to create a master task. '
-                        'However you do not have a node yourself in this '
-                        'collaboration!'}, HTTPStatus.BAD_REQUEST
-        else:
-            assign_orgs = organizations_json_list
-
-        # now we need to create runs for the nodes to fill. Each node
-        # receives their instructions from an algorithm run record, not from
-        # the task itself
-        log.debug(f"Assigning task to {len(assign_orgs)} nodes.")
-        for org in assign_orgs:
+        # now we need to create results for the nodes to fill. Each node
+        # receives their instructions from a result, not from the task itself
+        log.debug(f"Assigning task to {len(organizations_json_list)} nodes.")
+        for org in organizations_json_list:
             organization = db.Organization.get(org['id'])
             log.debug(f"Assigning task to '{organization.name}'.")
             input_ = org.get('input')
@@ -620,7 +650,7 @@ class Tasks(TaskBase):
         else:
             log.debug(f" created by container on node_id="
                       f"{g.container['node_id']}"
-                      f" for (master) task_id={g.container['task_id']}")
+                      f" for (parent) task_id={g.container['task_id']}")
 
         log.debug(f" url: '{url_for('task_with_id', id=task.id)}'")
         log.debug(f" name: '{task.name}'")
@@ -641,7 +671,7 @@ class Tasks(TaskBase):
             log.warning(f"  container image: {container['image']}")
             return False
 
-        # check master task is not completed yet
+        # check that parent task is not completed yet
         if has_task_finished(db.Task.get(container["task_id"]).status):
             log.warning(
                 f"Container from node={container['node_id']} "
@@ -730,7 +760,9 @@ class Task(TaskBase):
             name: include
             schema:
               type: string
-            description: Include 'results' to include the task's results.
+            description: Include 'results' to include the task's results,
+              'runs' to include details on algorithm runs. For including
+              multiple, do either `include=x,y` or `include=x&include=y`.
 
         responses:
           200:
@@ -750,8 +782,7 @@ class Task(TaskBase):
             return {"msg": f"task id={id} is not found"}, HTTPStatus.NOT_FOUND
 
         # obtain schema
-        schema = task_result_schema if request.args.get('include') == \
-            'results' else task_schema
+        schema = self._select_schema()
 
         # check permissions
         if not self.r.can_for_org(P.VIEW, task.init_org_id) \

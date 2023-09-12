@@ -29,7 +29,7 @@ Install
 
 It is important to install the Python client with the same version as the
 vantage6 server you are talking to. Check your server version by going to
-``https://<server_url>/version`` (e.g. `https://petronas.vantage6.ai/version`
+``https://<server_url>/version`` (e.g. `https://cotopaxi.vantage6.ai/version`
 or `http://localhost:5000/api/version`) to find its version.
 
 Then you can install the ``vantage6-client`` with:
@@ -135,7 +135,7 @@ submitting particular tasks) that you might want to share publicly.
 
    # config.py
 
-   server_url = "https://MY VANTAGE6 SERVER" # e.g. https://petronas.vantage6.ai or
+   server_url = "https://MY VANTAGE6 SERVER" # e.g. https://cotopaxi.vantage6.ai or
                                              # http://localhost for a local dev server
    server_port = 443 # This is specified when you first created the server
    server_api = "" # This is specified when you first created the server
@@ -317,21 +317,24 @@ Here we assume that
 
 In this manual, we'll use the averaging algorithm from
 ``harbor2.vantage6.ai/demo/average``, so the second requirement is met.
-This container assumes a comma-separated (\*.csv) file as input, and will
-compute the average over one of the named columns. We'll assume the
-nodes in your collaboration have been configured to look at a
-comma-separated database, i.e. their config contains something like
+We'll assume the nodes in your collaboration have been configured to look as
+something like:
 
-::
+.. code:: yaml
 
      databases:
-         default: /path/to/my/example.csv
-         my_other_database: /path/to/my/example2.csv
+        - label: default
+          uri: /path/to/my/example.csv
+          type: csv
+        - label: my_other_database
+          uri: /path/to/my/example2.csv
+          type: excel
 
-so that the third requirement is also met. As an end-user running the
+The third requirement is met when all nodes have the same labels in their
+configuration. As an end-user running the
 algorithm, you'll need to align with the node owner about which database
 name is used for the database you are interested in. For more details, see
-how to :ref:`configure-node` your node.
+:ref:`how to configure <configure-node>` your node.
 
 **Determining which collaboration / organizations to create a task for**
 
@@ -368,31 +371,36 @@ i.e. this collaboration consists of the organizations ``example_org1``
 
 .. _pyclient-create-task:
 
-**Creating a task that runs the master algorithm**
+**Creating a task that runs the central algorithm**
 
-Now, we have two options: create a task that will run the master
+Now, we have two options: create a task that will run the central part of an
 algorithm (which runs on one node and may spawns subtasks on other nodes),
-or create a task that will (only) run the so-called Remote Procedure Call (RPC)
-methods (which are run
-on each node). Typically, the RPC methods only run the node local analysis
-(e.g. compute the averages per node), whereas the master algorithms
-performs aggregation of those results as well (e.g. starts the node
-local analyses and then also computes the overall average). First, let
-us create a task that runs the master algorithm of the
-``harbor2.vantage6.ai/demo/average`` container
+or create a task that will (only) run the partial methods (which are run
+on each node). Typically, the partial methods only run the node local analysis
+(e.g. compute the averages per node), whereas the central methods
+performs aggregation of those results as well (e.g. starts the partial
+analyses and then computes the overall average). First, let
+us create a task that runs the central part of the
+``harbor2.vantage6.ai/demo/average`` algorithm:
 
 .. code:: python
 
-   input_ = {'method': 'master',
-             'kwargs': {'column_name': 'age'},
-             'master': True}
+   input_ = {
+       'method': 'central_average',
+       'kwargs': {'column_name': 'age'}
+   }
 
-   average_task = client.task.create(collaboration=1,
-                                     organizations=[2,3],
-                                     name="an-awesome-task",
-                                     image="harbor2.vantage6.ai/demo/average",
-                                     description='',
-                                     input=input_)
+   average_task = client.task.create(
+      collaboration=1,
+      organizations=[2,3],
+      name="an-awesome-task",
+      image="harbor2.vantage6.ai/demo/average",
+      description='',
+      input=input_,
+      databases=[
+         {'label': 'default'}
+      ]
+   )
 
 Note that the ``kwargs`` we specified in the ``input_`` are specific to
 this algorithm: this algorithm expects an argument ``column_name`` to be
@@ -401,25 +409,38 @@ Furthermore, note that here we created a task for collaboration with id
 ``1`` (i.e. our ``example_collab1``) and the organizations with id ``2``
 and ``3`` (i.e. ``example_org1`` and ``example_org2``). I.e. the
 algorithm need not necessarily be run on *all* the organizations
-involved in the collaboration. Finally, note that
-``client.task.create()`` has an optional argument called ``database``.
-Suppose that we would have wanted to run this analysis on the database
-called ``my_other_database`` instead of the ``default`` database, we
-could have specified an additional ``database = 'my_other_database'``
-argument. Check ``help(client.task.create)`` for more information.
+involved in the collaboration.
 
-**Creating a task that runs the RPC algorithm**
-
-You might be interested to know output of the RPC algorithm (in this
-example: the averages for the 'age' column for each node). In that case,
-you can run only the RPC algorithm, omitting the aggregation that the
-master algorithm will normally do:
+Finally, note that you should provide any
+databases that you want to use via the ``databases`` argument. In the example
+above, we use the ``default`` database; using the ``my_other_database`` database
+can be done by simply specifying that label in the dictionary. If you have
+a SQL, SPARQL or OMOP database, you should also provide a ``query`` argument,
+e.g.
 
 .. code:: python
 
-   input_ = {'method': 'average_partial',
-             'kwargs': {'column_name': 'age'},
-             'master': False}
+   databases=[
+      {'label': 'default', 'query': 'SELECT * FROM my_table'}
+   ]
+
+Similarly, you can define a ``sheet_name`` for Excel databases if you want to
+read data from a specific worksheet. Check ``help(client.task.create)`` for
+more information.
+
+**Creating a task that runs the partial algorithm**
+
+You might be interested to know output of the partial algorithm (in this
+example: the averages for the 'age' column for each node). In that case,
+you can run only the partial algorithm, omitting the aggregation that the
+central part of the algorithm will normally do:
+
+.. code:: python
+
+   input_ = {
+       'method': 'partial_average',
+       'kwargs': {'column_name': 'age'},
+   }
 
    average_task = client.task.create(collaboration=1,
                                      organizations=[2,3],

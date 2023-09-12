@@ -1,18 +1,19 @@
 Install optional components
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 There are several optional components that you can set up apart from the
 vantage6 server itself.
 
-:ref:`UI`
+:ref:`install-ui`
   An application that will allow your server's users to interact more easily
   with your vantage6 server.
 
-:ref:`eduvpn`
+:ref:`eduvpn-install`
   If you want to enable algorithm containers that are running on different
   nodes, to directly communicate with one another, you require a VPN
   server.
 
-:ref:`rabbitmq`
+:ref:`rabbitmq-install`
   If you have a server with a high workload whose performance you want to
   improve, you may want to set up a RabbitMQ service which enables horizontal
   scaling of the Vantage6 server.
@@ -51,7 +52,7 @@ The UI is not compatible with older versions (<3.3) of vantage6.
 
     Screenshot of the vantage6 UI
 
-.. _eduvpn:
+.. _eduvpn-install:
 
 EduVPN
 """"""
@@ -283,7 +284,7 @@ vantage6-server configuration file.
    </details>
 
 
-.. _rabbitmq:
+.. _rabbitmq-install:
 
 RabbitMQ
 """"""""
@@ -301,7 +302,7 @@ by adding the following to the server configuration:
 
 ::
 
-   rabbitmq_uri: amqp://<username>:<password@<hostname>:5672/<vhost>
+   rabbitmq_uri: amqp://<username>:<password>@<hostname>:5672/<vhost>
 
 Be sure to create the user and vhost that you specify exist! Otherwise,
 you can add them via the `RabbitMQ management

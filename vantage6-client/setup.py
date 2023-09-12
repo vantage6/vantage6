@@ -32,22 +32,16 @@ setup(
     long_description_content_type='text/markdown',
     url='https://github.com/vantage6/vantage6',
     packages=find_namespace_packages(),
-    python_requires='>=3.6',
+    python_requires='>=3.10',
     install_requires=[
-        'pandas==1.5.3',
         'PyJWT==2.6.0',
         'pyfiglet==0.8.post1',
-        'SPARQLWrapper==2.0.0',
-        'qrcode==7.3.1',
         f'vantage6-common=={version_ns["__version__"]}',
     ],
     tests_require=["pytest"],
     package_data={
         'vantage6.client': [
             '__build__',
-        ],
-        'vantage6.tools': [
-            '__build__'
-        ],
+        ]
     }
 )

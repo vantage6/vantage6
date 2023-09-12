@@ -31,11 +31,12 @@ setup(
     long_description_content_type='text/markdown',
     url='https://github.com/vantage6/vantage6',
     packages=find_namespace_packages(),
-    python_requires='>=3.6',
+    python_requires='>=3.10',
     install_requires=[
         'click==8.1.3',
         'docker==6.1.2',
         'gevent==22.10.2',
+        'jinja2==3.1.2',
         'python-socketio==5.7.2',
         'requests==2.31.0',
         f'vantage6 == {version_ns["__version__"]}',
