@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { getChipTypeForStatus, getStatusInfoTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
-import { Algorithm } from 'src/app/models/api/algorithm.model';
+import { Algorithm, Function } from 'src/app/models/api/algorithm.model';
 import { Task, TaskLazyProperties, TaskRun, TaskStatus } from 'src/app/models/api/task.models';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
@@ -26,6 +26,7 @@ export class TaskReadComponent implements OnInit {
 
   task: Task | null = null;
   algorithm: Algorithm | null = null;
+  function: Function | null = null;
   isLoading = true;
   canDelete = false;
 
@@ -47,6 +48,7 @@ export class TaskReadComponent implements OnInit {
   async initData(): Promise<void> {
     this.task = await this.taskService.getTask(this.id, [TaskLazyProperties.InitOrg, TaskLazyProperties.InitUser]);
     this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image);
+    this.function = this.algorithm?.functions.find((_) => _.name === this.task?.input?.method) || null;
     this.isLoading = false;
   }
 

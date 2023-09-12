@@ -40,6 +40,8 @@ import { AlertComponent } from './components/alert/alert.component';
 import { StatusInfoComponent } from './components/status-info/status-info.component';
 import { LogDialog } from './components/dialogs/log/log-dialog.component';
 import { ConfirmDialog } from './components/dialogs/confirm/confirm-dialog.component';
+import { VisualizeResultComponent } from './components/visualize-result/visualize-result.component';
+import { VisualizeTableComponent } from './components/visualize-table/visualize-table.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -62,7 +64,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     AlertComponent,
     StatusInfoComponent,
     LogDialog,
-    ConfirmDialog
+    ConfirmDialog,
+    VisualizeResultComponent,
+    VisualizeTableComponent
   ],
   imports: [
     BrowserModule,

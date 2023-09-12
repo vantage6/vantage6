@@ -1,0 +1,6 @@
+<ng-container *ngIf="functionOutput?.visualize === null || functionOutput?.visualize === undefined">
+  <div>{{ result }}</div>
+</ng-container>
+<ng-container *ngIf="functionOutput?.visualize === outputVisualizeType.Table">
+  <app-visualize-table [columns]="columns" [data]="data"></app-visualize-table>
+</ng-container>

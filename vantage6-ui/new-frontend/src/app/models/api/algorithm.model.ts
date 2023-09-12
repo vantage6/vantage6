@@ -4,6 +4,15 @@ export enum ArgumentType {
   Float = 'float'
 }
 
+export enum OutputType {
+  Int = 'int',
+  Dict = 'dict'
+}
+
+export enum OutputVisualizeType {
+  Table = 'table'
+}
+
 export interface Algorithm {
   id: number;
   name: string;
@@ -16,6 +25,7 @@ export interface Function {
   is_central: boolean;
   arguments: Argument[];
   databases: Database[];
+  output: Output;
 }
 
 interface Argument {
@@ -26,4 +36,9 @@ interface Argument {
 
 interface Database {
   name: string;
+}
+export interface Output {
+  type: OutputType;
+  keys?: string[] | null;
+  visualize?: OutputVisualizeType | null;
 }
