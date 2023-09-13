@@ -19,8 +19,6 @@ from vantage6.common.globals import APPNAME
 
 log = logging.getLogger(logger_name(__name__))
 
-docker_client = docker.from_env()
-
 
 class ContainerKillListener:
     """Listen for signals that the docker container should be shut down """
@@ -40,6 +38,7 @@ def check_docker_running() -> None:
     Check if docker engine is running. If not, exit the program.
     """
     try:
+        docker_client = docker.from_env()
         docker_client.ping()
     except Exception as e:
         log.error("Cannot reach the Docker engine! Please make sure Docker "
@@ -442,6 +441,7 @@ def get_num_nonempty_networks(container: Container) -> int:
         also other containers
     """
     count_non_empty_networks = 0
+    docker_client = docker.from_env()
 
     networks = get_networks_of_container(container)
     for network_properties in networks.values():

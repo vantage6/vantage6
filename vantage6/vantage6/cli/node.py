@@ -83,8 +83,8 @@ def cli_node_list() -> None:
     directories.
     """
 
-    client = docker.from_env()
     check_docker_running()
+    client = docker.from_env()
 
     running_node_names = _find_running_node_names(client)
 
@@ -258,10 +258,10 @@ def vnode_start(name: str, config: str, system_folders: bool,
     force_db_mount : bool
         Skip the check of the existence of the DB (always try to mount).
     """
+    check_docker_running()
     info("Starting node...")
     info("Finding Docker daemon")
     docker_client = docker.from_env()
-    check_docker_running()
     NodeContext.LOGGING_ENABLED = False
     if config:
         name = Path(config).stem
@@ -513,8 +513,8 @@ def vnode_stop(name: str, system_folders: bool, all_nodes: bool,
     force : bool
         If set to true, the node will not be stopped gracefully.
     """
-    client = docker.from_env()
     check_docker_running()
+    client = docker.from_env()
 
     running_node_names = _find_running_node_names(client)
 
@@ -572,8 +572,8 @@ def cli_node_attach(name: str, system_folders: bool) -> None:
     """
     Show the node logs in the current console.
     """
-    client = docker.from_env()
     check_docker_running()
+    client = docker.from_env()
 
     running_node_names = _find_running_node_names(client)
 
@@ -747,8 +747,8 @@ def cli_node_clean() -> None:
     """
     Erase temporary Docker volumes.
     """
-    client = docker.from_env()
     check_docker_running()
+    client = docker.from_env()
 
     # retrieve all volumes
     volumes = client.volumes.list()
@@ -891,8 +891,8 @@ def cli_node_version(name: str, system_folders: bool) -> None:
     """
     Returns current version of a vantage6 node.
     """
-    client = docker.from_env()
     check_docker_running()
+    client = docker.from_env()
 
     running_node_names = _find_running_node_names(client)
 
