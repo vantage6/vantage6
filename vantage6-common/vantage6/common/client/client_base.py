@@ -457,13 +457,17 @@ class ClientBase(object):
             Data on the algorithm run(s) with decrypted input
         """
         if is_single_resource:
-            data[field] = self._decrypt_input(data[field]).decode(
-                STRING_ENCODING)
+            if data.get(field):
+                data[field] = self._decrypt_input(
+                    data[field]
+                ).decode(STRING_ENCODING)
         else:
             # for multiple resources, data is in a 'data' field of a dict
             for resource in data['data']:
-                resource[field] = self._decrypt_input(resource[field]).decode(
-                    STRING_ENCODING)
+                if resource.get(field):
+                    resource[field] = self._decrypt_input(
+                        resource[field]
+                    ).decode(STRING_ENCODING)
 
         return data
 
