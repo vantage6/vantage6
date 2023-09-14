@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import time
-import typing
 import jwt
 import pyfiglet
 import itertools
@@ -180,12 +179,8 @@ class UserClient(ClientBase):
         """
         # Disable logging (additional logging would prevent the 'wait' message
         # from being printed on a single line)
-        if isinstance(self.log, logging.Logger):
-            prev_level = self.log.level
-            self.log.setLevel(logging.WARN)
-        elif isinstance(self.log, UserClient.Log):
-            prev_level = self.log.enabled
-            self.log.enabled = False
+        prev_level = self.log.level
+        self.log.setLevel(logging.WARN)
 
         animation = itertools.cycle(['|', '/', '-', '\\'])
         t = time.time()
@@ -200,10 +195,7 @@ class UserClient(ClientBase):
         sys.stdout.write('\rDone!                  ')
 
         # Re-enable logging
-        if isinstance(self.log, logging.Logger):
-            self.log.setLevel(prev_level)
-        elif isinstance(self.log, UserClient.Log):
-            self.log.enabled = prev_level
+        self.log.setLevel(prev_level)
 
         result = self.request('result', params={'task_id': task_id})
         result = self.result._decrypt_result(result, is_single_result=False)

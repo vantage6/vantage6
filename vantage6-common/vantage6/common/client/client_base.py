@@ -10,7 +10,6 @@ from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.encryption import RSACryptor, DummyCryptor
 from vantage6.common.globals import STRING_ENCODING
 from vantage6.common.client.utils import print_qr_code
-from vantage6.common.client import deserialization
 
 module_name = __name__.split('.')[1]
 
