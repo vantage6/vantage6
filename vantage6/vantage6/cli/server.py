@@ -209,16 +209,6 @@ def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
     # Then we check if the image has been specified in the config file, and
     # finally we use the default settings from the package.
     if image is None:
-
-        # FIXME: remove me in version 4+, as this is to support older
-        # configuration files. So the outer `image` key is no longer supported
-        # Note that this was implicitly supported in version 3.* for server as
-        # well
-        if ctx.config.get('image'):
-            warning('Using the `image` option in the config file is to be '
-                    'removed in version 4+.')
-            image = ctx.config.get('image')
-
         custom_images: dict = ctx.config.get('images')
         if custom_images:
             image = custom_images.get('server')
