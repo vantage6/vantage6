@@ -218,6 +218,10 @@ class ClientBase(object):
                 f'Server responded with error code: {response.status_code}')
             try:
                 self.log.error("msg:"+response.json().get("msg", ""))
+                if response.json().get("errors"):
+                    self.log.error(
+                        "errors:"+str(response.json().get("errors"))
+                    )
             except json_lib.JSONDecodeError:
                 self.log.error('Did not find a message from the server')
                 self.log.debug(response.content)

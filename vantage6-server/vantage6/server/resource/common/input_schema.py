@@ -346,7 +346,7 @@ class TaskInputSchema(_NameValidationSchema):
     image = fields.String(required=True, validate=Length(min=1))
     collaboration_id = fields.Integer(required=True, validate=Range(min=1))
     organizations = fields.List(fields.Dict(), required=True)
-    databases = fields.List(fields.Dict())
+    databases = fields.List(fields.Dict(), allow_none=True)
 
     @validates('organizations')
     def validate_organizations(self, organizations: list[dict]):
@@ -387,6 +387,8 @@ class TaskInputSchema(_NameValidationSchema):
         ValidationError
             If the databases are not valid.
         """
+        if databases is None:
+            return  # some algorithms don't use any database
         for database in databases:
             if 'label' not in database:
                 raise ValidationError(
