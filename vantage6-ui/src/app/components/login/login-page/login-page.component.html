@@ -1,4 +1,4 @@
-<div class="background-img" style="background-image: {{getBackgroundImage()}};">
+<div class="background-img" aria-label="awefawefwaef" style="background-image: {{getBackgroundImage()}}; {{getAdditionalStyling()}}">
   <div class="col-md-12">
     <div class="card card-container">
       <div *ngIf="router.url === '/login'">
@@ -25,3 +25,4 @@
     </div>
   </div>
 </div>
+<div class="attribution-text" [innerHTML]="getAttributionText()"></div>

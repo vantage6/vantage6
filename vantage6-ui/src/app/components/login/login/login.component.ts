@@ -5,14 +5,6 @@ import { AuthService } from 'src/app/auth/services/auth.service';
 import { TokenStorageService } from 'src/app/services/common/token-storage.service';
 import { environment } from 'src/environments/environment';
 
-let BACKGROUND_IMAGES = [
-  'cuppolone.jpg',
-  'taipei101.png',
-  'trolltunga.jpg',
-  // 'harukas2.jpg',
-  'petronas.jpg',
-];
-
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
@@ -26,7 +18,6 @@ export class LoginComponent implements OnInit {
   isLoggedIn = false;
   isLoginFailed = false;
   errorMessage = '';
-  background_img = '';
   server_url: string;
 
   constructor(
@@ -42,7 +33,6 @@ export class LoginComponent implements OnInit {
       this.isLoggedIn = true;
       this.router.navigateByUrl('/home');
     }
-    this.background_img = this._pickBackgroundImage();
   }
 
   onSubmit(): void {
@@ -90,13 +80,6 @@ export class LoginComponent implements OnInit {
 
   reloadPage(): void {
     window.location.reload();
-  }
-
-  private _pickBackgroundImage(): string {
-    // pick random background image
-    return BACKGROUND_IMAGES[
-      Math.floor(Math.random() * BACKGROUND_IMAGES.length)
-    ];
   }
 
   private setServerURL(): void {

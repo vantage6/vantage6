@@ -20,12 +20,13 @@ This is a web application that allows you to communicate easily with your **vant
 
 For instructions on how to run your own user interface, see the instructions below.
 
-If you are using our Petronas server you can use this user interface by logging
-on to https://portal.petronas.vantage6.ai/. Contact us if you would like to have
+If you are using our Cotopaxi server you can use this user interface by logging
+on to https://portal.cotopaxi.vantage6.ai/. Contact us if you would like to have
 a user account.
 
 Note that the user interface is not available for older **vantage6** servers
-such as Harukas. Please consider upgrading your project to Petronas.
+such as Harukas (v2). Please consider upgrading your project to Petronas (v3),
+or rather Cotopaxi (v4).
 
 ### Running the UI
 
@@ -65,8 +66,8 @@ to run a UI on port 8080 that communicates with your own server. For instance,
 you can point to a local server with default settings if you set
 SERVER_URL=`http://localhost:5000` and API_PATH=`/api`.
 If you don't enter environment variables, the UI points to
-`https://petronas.vantage6.ai` by default.
+`https://cotopaxi.vantage6.ai` by default.
 
 Note that you can also use another UI image tag than `ui:latest`. For example,
 you can specify a version of the UI such as `ui:3.6.0`. Another option is
-to use the tag `ui:petronas`, which defaults to the latest v3 version.
+to use the tag `ui:cotopaxi`, which defaults to the latest v4 version.
