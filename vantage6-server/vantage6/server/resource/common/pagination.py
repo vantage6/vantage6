@@ -186,13 +186,8 @@ class Pagination:
 
         # check if pagination is desired, else return all records
         if paginate:
-            page_id = request.args.get('page')
-            if not page_id:
-                page_id = 1
-                per_page = total or 1
-            else:
-                page_id = int(page_id)
-                per_page = int(request.args.get('per_page', 10))
+            page_id = int(request.args.get('page', 1))
+            per_page = int(request.args.get('per_page', 10))
 
             if page_id <= 0:
                 raise AttributeError('page needs to be >= 1')
