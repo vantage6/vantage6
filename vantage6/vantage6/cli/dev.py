@@ -235,7 +235,10 @@ def create_vserver_config(server_name: str, port: int) -> Path:
         loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
         trim_blocks=True, lstrip_blocks=True, autoescape=True)
     template = environment.get_template("server_config.j2")
-    server_config = template.render(port=port)
+    server_config = template.render(
+        port=port,
+        jwt_secret_key=generate_apikey()
+    )
     folders = ServerContext.instance_folders(
         instance_type='server', instance_name=server_name,
         system_folders=True)
