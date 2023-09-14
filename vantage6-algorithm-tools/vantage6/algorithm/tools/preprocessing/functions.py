@@ -654,7 +654,6 @@ def one_hot_encode(
     ...     'color': ['red', 'green', 'blue', 'yellow']
     ... })
 
-    # Basic one-hot encoding
     >>> one_hot_encode(df, 'color', ['red', 'green', 'blue'])
        blue  green  red  unknown
     0     0      0    1        0
@@ -662,7 +661,6 @@ def one_hot_encode(
     2     1      0    0        0
     3     0      0    0        1
 
-    # Keep the original column
     >>> one_hot_encode(df, 'color', ['red', 'green'], drop_original=False)
         color  green  red  unknown
     0     red      0    1        0
@@ -670,7 +668,6 @@ def one_hot_encode(
     2    blue      0    0        1
     3  yellow      0    0        1
 
-    # Custom unknown category label and prefix
     >>> one_hot_encode(df, 'color', ['red', 'green'], unknown_category='other', prefix='col')
        col_green  col_other  col_red
     0          0          0        1
