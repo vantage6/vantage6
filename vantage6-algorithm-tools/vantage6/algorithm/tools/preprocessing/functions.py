@@ -3,8 +3,10 @@ This module contains several preprocessing functions that may be used to
 prepare the data for the algorithm.
 """
 
+from datetime import date
+from typing import Dict, List, Optional, Union
+
 import pandas as pd
-from typing import Union, List, Dict, Optional
 
 
 def _extract_columns(
@@ -902,7 +904,7 @@ def discretize_column(
 def to_datetime(
     df: pd.DataFrame,
     column: Optional[str] = None,
-    format: Optional[str] = None,
+    fmt: Optional[str] = None,
     errors: str = "raise",
     input_value: Optional[str] = None,
     output_column: Optional[str] = None,
@@ -918,7 +920,7 @@ def to_datetime(
     column : str or None, default None
         The name of the column to convert. If None, `input_value` must be
         provided.
-    format : str, optional
+    fmt : str, optional
         String to use as date format. See the following link for more
         information: https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior
     errors : str, default 'raise'
@@ -963,7 +965,7 @@ def to_datetime(
     1 2021-02-01
     2 2021-03-01
 
-    >>> to_datetime(df, "date_str", format='%Y-%m-%d')
+    >>> to_datetime(df, "date_str", fmt='%Y-%m-%d')
         date_str
     0 2021-01-01
     1 2021-02-01
@@ -971,7 +973,7 @@ def to_datetime(
 
     >>> df = pd.DataFrame({"date_str": ["01-2021-01", "01-2021-02",
     ... "01-2021-03"]})
-    >>> to_datetime(df, "date_str", format='%d-%Y-%m')
+    >>> to_datetime(df, "date_str", fmt='%d-%Y-%m')
         date_str
     0 2021-01-01
     1 2021-02-01
@@ -979,14 +981,14 @@ def to_datetime(
 
     >>> df = pd.DataFrame({"date_str": ["Jan 01, 2021", "Feb 01, 2021",
     ... "Mar 01, 2021"]})
-    >>> to_datetime(df, "date_str", format='%b %d, %Y')
+    >>> to_datetime(df, "date_str", fmt='%b %d, %Y')
         date_str
     0 2021-01-01
     1 2021-02-01
     2 2021-03-01
 
     >>> df = pd.DataFrame({"date_str": ["01-2021-01", "01-2021-02", "Invalid"]})
-    >>> to_datetime(df, "date_str", format='%d-%Y-%m', errors='coerce')
+    >>> to_datetime(df, "date_str", fmt='%d-%Y-%m', errors='coerce')
         date_str
     0 2021-01-01
     1 2021-02-01
@@ -1001,11 +1003,11 @@ def to_datetime(
                 "If `column` is None, both `input_value` and `output_column` must be provided."
             )
         new_df[output_column] = pd.to_datetime(
-            input_value, format=format, errors=errors
+            input_value, format=fmt, errors=errors
         )
     else:
         new_df[column] = pd.to_datetime(
-            new_df[column], format=format, errors=errors
+            new_df[column], format=fmt, errors=errors
         )
 
     return new_df
@@ -1103,5 +1105,127 @@ def to_timedelta(
 
     if input_column is None and duration is None:
         raise ValueError("Either `column` or `duration` must be specified.")
+
+    return new_df
+
+
+def timedelta(
+    df: pd.DataFrame,
+    column: str,
+    output_column: str,
+    reference_date: Optional[pd.Timestamp] = None,
+) -> pd.DataFrame:
+    """
+    Convert a datetime column to a timedelta column in days in a new DataFrame,
+    where the result is the number of days since the date in the column to the
+    reference date, which defaults to today.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input DataFrame.
+    column : str
+        The name of the datetime column to convert to a timedelta.
+    output_column : str
+        Output column name.
+    reference_date : pd.Timestamp, optional
+        The date to which the timedelta is calculated. Defaults to today.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with the timedelta column in days.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({"date": [pd.Timestamp("2021-01-01"),
+    ... pd.Timestamp("2021-02-01")]})
+    >>> timedelta(df, "date", "days_to_jan15",
+    ... reference_date=pd.Timestamp("2021-01-15"))
+            date  days_to_jan15
+    0 2021-01-01             14
+    1 2021-02-01            -17
+
+    >>> today = pd.to_datetime("today")
+    >>> df = pd.DataFrame({"birthdate": [today - pd.Timedelta(days=300),
+    ... today - pd.Timedelta(days=250)]})
+    >>> df['birthdate'] = df['birthdate'].dt.date
+    >>> df = timedelta(df, "birthdate", "age_in_days")
+    >>> df[['age_in_days']]
+       age_in_days
+    0          300
+    1          250
+
+    """
+
+    if reference_date is None:
+        reference_date = pd.to_datetime("today")
+    else:
+        reference_date = pd.Timestamp(reference_date)
+
+    new_df = df.copy()
+    duration_col = (reference_date - pd.to_datetime(new_df[column])).dt.days
+
+    new_df[output_column] = duration_col
+
+    return new_df
+
+
+def calculate_age(
+    df: pd.DataFrame,
+    birthdate_column: str,
+    output_column: str,
+    reference_date: Optional[date] = None,
+) -> pd.DataFrame:
+    """
+    Calculate the calendar age in years from the birthdate column to a reference
+    date (defaults to today).
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input DataFrame.
+    birthdate_column : str
+        The name of the column containing birthdate information.
+    output_column : str
+        The name of the column to store the age.
+    reference_date : date, optional
+        The date to use as the reference for calculating age. Defaults to
+        today's date.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with the calculated age column.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({"birthdate": [pd.Timestamp("2000-01-01"),
+    ... pd.Timestamp("1980-05-15")]})
+    >>> df['birthdate'] = df['birthdate'].dt.date
+    >>> calculate_age(df, "birthdate", "age", reference_date=date(2025, 1, 1))
+        birthdate  age
+    0  2000-01-01   25
+    1  1980-05-15   44
+    """
+
+    new_df = df.copy()
+
+    if reference_date is None:
+        reference_date = date.today()
+
+    def compute_age(birthdate):
+        return (
+            reference_date.year
+            - birthdate.year
+            - (
+                (reference_date.month, reference_date.day)
+                < (birthdate.month, birthdate.day)
+            )
+        )
+
+    new_df[output_column] = new_df[birthdate_column].apply(compute_age)
 
     return new_df

@@ -1,5 +1,5 @@
 import inspect
-from sys import exit
+import sys
 
 import pandas as pd
 
@@ -35,7 +35,7 @@ def preprocess_data(
                 "Preprocessing step does not contain a 'function' to run. "
                 "Exiting..."
             )
-            exit(1)
+            sys.exit(1)
 
         func_name = preprocess_step["function"]
 
@@ -47,7 +47,7 @@ def preprocess_data(
                 f"Unknown preprocessing type '{func_name}' defined. Please "
                 "check your preprocessing input. Exiting..."
             )
-            exit(1)
+            sys.exit(1)
 
         # extract the parameters
         parameters = preprocess_step.get("parameters", {})
@@ -67,7 +67,7 @@ def preprocess_data(
                     f"Parameter '{param.name}' not provided for "
                     f"preprocessing step '{func_name}'. Exiting..."
                 )
-                exit(1)
+                sys.exit(1)
 
         # execute the preprocessing function
         data = func(data, **parameters)
