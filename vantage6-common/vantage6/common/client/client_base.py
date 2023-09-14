@@ -163,7 +163,7 @@ class ClientBase(object):
 
     def request(self, endpoint: str, json: dict = None, method: str = 'get',
                 params: dict = None, first_try: bool = True,
-                retry: bool = True) -> dict:
+                retry: bool = True, attempts_on_timeout: int = None) -> dict:
         """Create http(s) request to the vantage6 server
 
         Parameters
@@ -180,6 +180,9 @@ class ClientBase(object):
             Whether this is the first attempt of this request. Default True.
         retry: bool, optional
             Try request again after refreshing the token. Default True.
+        attempts_on_timeout: int, optional
+            Number of attempts to make when a timeout occurs. Default None
+            which leads to unlimited amount of attempts.
 
         Returns
         -------
@@ -200,16 +203,22 @@ class ClientBase(object):
         url = self.generate_path_to(endpoint)
         self.log.debug(f'Making request: {method.upper()} | {url} | {params}')
 
-        try:
-            response = rest_method(url, json=json, headers=self.headers,
-                                   params=params)
-        except requests.exceptions.ConnectionError as e:
-            # we can safely retry as this is a connection error. And we
-            # keep trying!
-            self.log.error('Connection error... Retrying')
-            self.log.debug(e)
-            time.sleep(1)
-            return self.request(endpoint, json, method, params)
+        timeout_attempts = 0
+        while True:
+            try:
+                response = rest_method(url, json=json, headers=self.headers,
+                                       params=params)
+                break
+            except requests.exceptions.ConnectionError as exc:
+                # we can safely retry as this is a connection error. And we
+                # keep trying (unless a max number of attempts is given)!
+                timeout_attempts += 1
+                if attempts_on_timeout is not None \
+                        and timeout_attempts > attempts_on_timeout:
+                    return {'msg': 'Connection error'}
+                self.log.error('Connection error... Retrying')
+                self.log.debug(exc)
+                time.sleep(1)
 
         # TODO: should check for a non 2xx response
         if response.status_code > 210:
@@ -228,8 +237,10 @@ class ClientBase(object):
             if retry:
                 if first_try:
                     self.refresh_token()
-                    return self.request(endpoint, json, method, params,
-                                        first_try=False)
+                    return self.request(
+                        endpoint, json, method, params, first_try=False,
+                        attempts_on_timeout=attempts_on_timeout
+                    )
                 else:
                     self.log.error("Nope, refreshing the token didn't fix it.")
 

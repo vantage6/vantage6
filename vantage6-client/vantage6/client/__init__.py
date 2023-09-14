@@ -204,15 +204,21 @@ class UserClient(ClientBase):
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
 
-        def get_server_version(self) -> dict:
+        def get_server_version(self, attempts_on_timeout: int = None) -> dict:
             """View the version number of the vantage6-server
-
+            Parameters
+            ----------
+            attempts_on_timeout : int
+                Number of attempts to make when the server is not responding.
+                Default is unlimited.
             Returns
             -------
             dict
                 A dict containing the version number
             """
-            return self.parent.request('version')
+            return self.parent.request(
+                'version', attempts_on_timeout=attempts_on_timeout
+            )
 
         def get_server_health(self) -> dict:
             """View the health of the vantage6-server

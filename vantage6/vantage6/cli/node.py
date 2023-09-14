@@ -36,7 +36,8 @@ from vantage6.common.globals import (
     STRING_ENCODING,
     APPNAME,
     DEFAULT_DOCKER_REGISTRY,
-    DEFAULT_NODE_IMAGE
+    DEFAULT_NODE_IMAGE,
+    DEFAULT_NODE_IMAGE_WO_TAG,
 )
 from vantage6.common.globals import VPN_CONFIG_FILE
 from vantage6.common.docker.addons import (
@@ -312,6 +313,32 @@ def vnode_start(name: str, config: str, system_folders: bool,
         custom_images: dict = ctx.config.get('images')
         if custom_images:
             image = custom_images.get("node")
+
+        # if no custom image is specified, find the server version and use
+        # the latest images from that minor version
+        client = _create_client(ctx)
+        major_minor = None
+        try:
+            # try to get server version, skip if can't get a connection
+            version = client.util.get_server_version(
+                attempts_on_timeout=3
+            )['version']
+            major_minor = '.'.join(version.split('.')[:2])
+            image = (f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_NODE_IMAGE_WO_TAG}"
+                     f":{major_minor}")
+        except Exception:
+            warning("Could not determine server version. Using default node "
+                    "image")
+            pass  # simply use the default image
+
+        if major_minor and not __version__.startswith(major_minor):
+            warning(
+                "Version mismatch between CLI and server/node. CLI is running "
+                f"on version {__version__}, while node and server are on "
+                f"version {major_minor}. This might cause unexpected issues; "
+                f"changing to {major_minor}.<latest> is recommended."
+            )
+
         if not image:
             image = f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_NODE_IMAGE}"
 
@@ -970,6 +997,30 @@ def _print_log_worker(logs_stream: Iterable[bytes]) -> None:
         print(log.decode(STRING_ENCODING), end="")
 
 
+def _create_client(ctx: NodeContext) -> UserClient:
+    """
+    Create a client instance.
+
+    Parameters
+    ----------
+    ctx : NodeContext
+        Context of the node loaded from the configuration file
+    Returns
+    -------
+    UserClient
+        vantage6 client
+    """
+    host = ctx.config['server_url']
+    # if the server is run locally, we need to use localhost here instead of
+    # the host address of docker
+    if host in ['http://host.docker.internal', 'http://172.17.0.1']:
+        host = 'http://localhost'
+    port = ctx.config['port']
+    api_path = ctx.config['api_path']
+    info(f"Connecting to server at '{host}:{port}{api_path}'")
+    return UserClient(host, port, api_path, log_level='warn')
+
+
 def _create_client_and_authenticate(ctx: NodeContext) -> UserClient:
     """
     Generate a client and authenticate with the server.
@@ -984,22 +1035,17 @@ def _create_client_and_authenticate(ctx: NodeContext) -> UserClient:
     UserClient
         vantage6 client
     """
-    host = ctx.config['server_url']
-    port = ctx.config['port']
-    api_path = ctx.config['api_path']
+    client = _create_client(ctx)
 
-    info(f"Connecting to server at '{host}:{port}{api_path}'")
     username = q.text("Username:").ask()
     password = q.password("Password:").ask()
-
-    client = UserClient(host, port, api_path)
 
     try:
         client.authenticate(username, password)
 
-    except Exception as e:
+    except Exception as exc:
         error("Could not authenticate with server!")
-        debug(e)
+        debug(exc)
         exit(1)
 
     return client
