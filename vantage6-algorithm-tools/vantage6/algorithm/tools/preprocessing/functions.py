@@ -1333,3 +1333,75 @@ def collapse(
         ]
 
     return agg_df.reset_index()
+
+
+def group_statistics(
+    df: pd.DataFrame,
+    group_column: str,
+    target_columns: List[str],
+    aggregation: Union[str, callable],
+) -> pd.DataFrame:
+    """
+    Adds statistical information to a DataFrame based on a grouping column.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The input DataFrame.
+    group_column : str
+        The column by which the DataFrame will be grouped.
+    target_columns : List[str]
+        The columns on which the aggregation will be performed.
+    aggregation : Union[str, Callable]
+        The aggregation strategy to apply.
+
+    Returns
+    -------
+    pd.DataFrame
+        The DataFrame enriched with the statistical information.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({
+    ...     'patient_id': [1, 2, 3, 4, 5, 6, 7, 8],
+    ...     'age_group': ['young', 'young', 'old', 'old', 'young', 'old', 'young', 'old'],
+    ...     'value': [10, 20, 25, 30, 5, 50, 15, 40]
+    ... })
+
+    >>> result = group_statistics(df, 'age_group', ['value'], 'mean')
+    >>> group_statistics(result, 'age_group', ['value'], 'std')
+       patient_id age_group  value  age_group_value_mean  age_group_value_std
+    0           1     young     10                 12.50             6.454972
+    1           2     young     20                 12.50             6.454972
+    2           3       old     25                 36.25            11.086779
+    3           4       old     30                 36.25            11.086779
+    4           5     young      5                 12.50             6.454972
+    5           6       old     50                 36.25            11.086779
+    6           7     young     15                 12.50             6.454972
+    7           8       old     40                 36.25            11.086779
+
+    >>> df = pd.DataFrame({
+    ...     'patient_id': [1, 2, 3, 4],
+    ...     'age_group': ['young', 'young', 'old', 'old'],
+    ...     'value': [10, 20, 25, 30],
+    ...     'weight': [50, 60, 70, 80]
+    ... })
+
+    >>> group_statistics(df, 'age_group', ['value', 'weight'], 'mean')
+       patient_id age_group  value  weight  age_group_value_mean  age_group_weight_mean
+    0           1     young     10      50                  15.0                   55.0
+    1           2     young     20      60                  15.0                   55.0
+    2           3       old     25      70                  27.5                   75.0
+    3           4       old     30      80                  27.5                   75.0
+
+    """
+
+    # Compute the statistics and reset index
+    stats = df.groupby(group_column)[target_columns].transform(aggregation)
+    stats.columns = [
+        f"{group_column}_{col}_{aggregation}" for col in stats.columns
+    ]
+
+    # Add the statistics back to the original DataFrame
+    return pd.concat([df, stats], axis=1)
