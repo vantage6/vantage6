@@ -1383,17 +1383,17 @@ def group_statistics(
 
     >>> df = pd.DataFrame({
     ...     'patient_id': [1, 2, 3, 4],
-    ...     'age_group': ['young', 'young', 'old', 'old'],
+    ...     'ag': ['young', 'young', 'old', 'old'],
     ...     'value': [10, 20, 25, 30],
     ...     'weight': [50, 60, 70, 80]
     ... })
 
-    >>> group_statistics(df, 'age_group', ['value', 'weight'], 'mean')
-       patient_id age_group  value  weight  age_group_value_mean  age_group_weight_mean
-    0           1     young     10      50                  15.0                   55.0
-    1           2     young     20      60                  15.0                   55.0
-    2           3       old     25      70                  27.5                   75.0
-    3           4       old     30      80                  27.5                   75.0
+    >>> group_statistics(df, 'ag', ['value', 'weight'], 'mean')
+       patient_id     ag  value  weight  ag_value_mean  ag_weight_mean
+    0           1  young     10      50           15.0            55.0
+    1           2  young     20      60           15.0            55.0
+    2           3    old     25      70           27.5            75.0
+    3           4    old     30      80           27.5            75.0
 
     """
 
