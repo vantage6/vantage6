@@ -1,1 +1,1 @@
-<div [ngClass]="['chip', getTypeClass()]">{{ label }}</div>
+<div [ngClass]="['chip', getTypeClass()]" [tabindex]="clickable ? 0 : -1">{{ label }}</div>

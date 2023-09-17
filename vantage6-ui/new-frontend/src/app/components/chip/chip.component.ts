@@ -9,6 +9,7 @@ export class ChipComponent {
   @Input() label: string = '';
   @Input() type: 'default' | 'active' | 'success' | 'warning' | 'error' = 'default';
   @Input() small: boolean = false;
+  @Input() clickable: boolean = false;
 
   getTypeClass(): string {
     const classNames: string[] = [];
@@ -17,6 +18,9 @@ export class ChipComponent {
     }
     if (this.small) {
       classNames.push('chip--small');
+    }
+    if (this.clickable) {
+      classNames.push('chip--clickable');
     }
     return classNames.join(' ');
   }
