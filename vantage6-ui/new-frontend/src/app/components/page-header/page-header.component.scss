@@ -12,4 +12,8 @@
     gap: $spacing-px-2;
     margin-left: auto;
   }
+
+  &__content:not(:empty) {
+    margin-top: $spacing-px-2;
+  }
 }
