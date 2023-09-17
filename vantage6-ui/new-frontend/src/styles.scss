@@ -116,6 +116,10 @@ mat-card {
 }
 
 .clickable-table {
+  &.mdc-data-table__table {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  }
+
   .mat-mdc-cell {
     position: relative;
     cursor: pointer;
