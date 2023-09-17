@@ -6,7 +6,7 @@
         "close": "Close",
         "cancel": "Cancel",
         "delete": "Delete",
-        "confirm": "Confirm"
+        "offline": "Offline"
     },
     "task": {
         "algorithm": "Algorithm",
@@ -65,6 +65,29 @@
         "delete-dialog": {
             "title": "Are you sure you want to delete the task '{{name}}'?",
             "content": "Note, this will also delete all subtasks and results.\nThis operation cannot be undone."
+        }
+    },
+    "organization": {
+        "name": "Name",
+        "address1": "Address 1",
+        "address2": "Address 2",
+        "country": "Country",
+        "domain": "Domain"
+    },
+    "organization-read": {
+        "title": "Organizations",
+        "actions": {
+            "create": "Create organization",
+            "select": "Select organization"
+        },
+        "card-details": {
+            "title": "Details"
+        },
+        "card-collaborations": {
+            "title": "Collaborations"
+        },
+        "card-nodes": {
+            "title": "Nodes"
         }
     },
     "task-list": {

@@ -17,14 +17,16 @@ export class OrganizationService {
   async getOrganization(id: string, lazyProperties: OrganizationLazyProperties[] = []): Promise<Organization> {
     const result = await this.apiService.getForApi<BaseOrganization>(`/organization/${id}`);
 
-    const organization: Organization = { ...result, nodes: [] };
+    const organization: Organization = { ...result, nodes: [], collaborations: [] };
 
-    lazyProperties.forEach(async (lazyProperty) => {
-      if (!result[lazyProperty]) return;
+    await Promise.all(
+      lazyProperties.map(async (lazyProperty) => {
+        if (!result[lazyProperty]) return;
 
-      const resultProperty = await this.apiService.getForApi<Pagination<any>>(result[lazyProperty]);
-      organization[lazyProperty] = resultProperty.data;
-    });
+        const resultProperty = await this.apiService.getForApi<Pagination<any>>(result[lazyProperty]);
+        organization[lazyProperty] = resultProperty.data;
+      })
+    );
 
     return organization;
   }

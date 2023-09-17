@@ -5,6 +5,7 @@ import { Login } from '../models/api/login.model';
 import { OperationType, ResourceType, Rule, ScopeType } from '../models/api/rule.model';
 import { Pagination } from '../models/api/pagination.model';
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_ID } from '../models/constants/sessionStorage';
+import { BaseUser } from '../models/api/user.model';
 
 @Injectable({
   providedIn: 'root'
@@ -40,11 +41,20 @@ export class AuthService {
     return !isExpired;
   }
 
-  hasResourceInScope(resource: ResourceType, scope: ScopeType): boolean {
+  async getUser(): Promise<BaseUser> {
+    const userId = sessionStorage.getItem(USER_ID);
+    return await this.apiService.getForApi<BaseUser>(`/user/${userId}`);
+  }
+
+  hasResourceInScope(scope: ScopeType, resource: ResourceType): boolean {
+    if (scope === ScopeType.ANY) {
+      return !!this.activeRules?.some((rule) => rule.name.toLowerCase() === resource);
+    }
+
     return !!this.activeRules?.some((rule) => rule.name.toLowerCase() === resource && rule.scope.toLowerCase() === scope);
   }
 
-  isOperationAllowed(resource: ResourceType, scope: ScopeType, operation: OperationType): boolean {
+  isOperationAllowed(scope: ScopeType, resource: ResourceType, operation: OperationType): boolean {
     return !!this.activeRules?.some(
       (rule) => rule.name.toLowerCase() === resource && rule.scope.toLowerCase() === scope && rule.operation.toLowerCase() === operation
     );

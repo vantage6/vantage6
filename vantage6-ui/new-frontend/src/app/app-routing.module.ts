@@ -6,7 +6,7 @@ import { LayoutLoginComponent } from './layouts/layout-login/layout-login.compon
 import { LayoutDefaultComponent } from './layouts/layout-default/layout-default.component';
 import { HomeComponent } from './pages/home/home.component';
 import { authenticationGuard } from './guards/authentication.guard';
-import { OrganizationComponent } from './pages/organization/organization.component';
+import { OrganizationReadComponent } from './pages/organization/read/organization-read.component';
 import { TaskCreateComponent } from './pages/task/create/task-create.component';
 import { StartComponent } from './pages/start/start.component';
 import { TaskListComponent } from './pages/task/list/task-list.component';
@@ -65,7 +65,7 @@ const routes: Routes = [
       },
       {
         path: routerConfig.organization,
-        component: OrganizationComponent,
+        component: OrganizationReadComponent,
         canActivate: [authenticationGuard()]
       }
     ]

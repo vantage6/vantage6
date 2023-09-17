@@ -15,5 +15,6 @@
 
   &__content:not(:empty) {
     margin-top: $spacing-px-2;
+    display: inline-flex;
   }
 }

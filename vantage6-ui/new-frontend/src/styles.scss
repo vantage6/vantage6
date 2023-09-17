@@ -203,3 +203,8 @@ mat-card {
 .page-header__more {
   margin: -6px -6px -12px 0;
 }
+
+.chip-container {
+  display: flex;
+  gap: $spacing-px-2;
+}

@@ -38,7 +38,7 @@ export class TaskListComponent implements OnInit {
     private taskService: TaskService,
     authService: AuthService
   ) {
-    this.canCreateTask = authService.isOperationAllowed(ResourceType.TASK, ScopeType.COLLABORATION, OperationType.CREATE);
+    this.canCreateTask = authService.isOperationAllowed(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.CREATE);
   }
 
   ngOnInit() {

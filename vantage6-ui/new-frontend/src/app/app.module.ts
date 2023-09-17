@@ -29,7 +29,7 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { LayoutLoginComponent } from './layouts/layout-login/layout-login.component';
 import { HomeComponent } from './pages/home/home.component';
 import { LayoutDefaultComponent } from './layouts/layout-default/layout-default.component';
-import { OrganizationComponent } from './pages/organization/organization.component';
+import { OrganizationReadComponent } from './pages/organization/read/organization-read.component';
 import { TaskCreateComponent } from './pages/task/create/task-create.component';
 import { StartComponent } from './pages/start/start.component';
 import { TaskListComponent } from './pages/task/list/task-list.component';
@@ -55,7 +55,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     LoginComponent,
     HomeComponent,
     LayoutDefaultComponent,
-    OrganizationComponent,
+    OrganizationReadComponent,
     TaskCreateComponent,
     StartComponent,
     TaskListComponent,
