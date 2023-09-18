@@ -141,10 +141,9 @@ def data(number_of_databases: int = 1) -> callable:
 
                 # do any data preprocessing here
                 info(f"Applying preprocessing for database '{label}'")
-                preprocess = json.loads(
-                    os.environ.get(f"{label.upper()}_PREPROCESSING")
-                )
-                if preprocess:
+                env_prepro = os.environ.get(f"{label.upper()}_PREPROCESSING")
+                if env_prepro is not None:
+                    preprocess = json.loads(env_prepro)
                     data_ = preprocess_data(data_, preprocess)
 
                 # add the data to the arguments
