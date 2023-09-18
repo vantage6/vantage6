@@ -3,6 +3,11 @@ import { BaseOrganization } from './organization.model';
 import { BaseUser } from './user.model';
 import { NodeStatus } from './node.model';
 
+export enum TaskListParameters {
+  collaboration = 'collaboration_id',
+  user = 'init_user_id'
+}
+
 export enum TaskLazyProperties {
   InitOrg = 'init_org',
   InitUser = 'init_user'

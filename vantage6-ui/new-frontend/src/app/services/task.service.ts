@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { BaseTask, CreateTask, Task, TaskLazyProperties } from '../models/api/task.models';
+import { BaseTask, CreateTask, Task, TaskLazyProperties, TaskListParameters } from '../models/api/task.models';
 import { Pagination } from '../models/api/pagination.model';
 
 @Injectable({
@@ -9,8 +9,8 @@ import { Pagination } from '../models/api/pagination.model';
 export class TaskService {
   constructor(private apiService: ApiService) {}
 
-  async getTasks(currentPage: number): Promise<Pagination<BaseTask>> {
-    const result = await this.apiService.getForApiWithPagination<BaseTask>('/task', currentPage);
+  async getTasks(currentPage: number, parameters?: Map<TaskListParameters, string>): Promise<Pagination<BaseTask>> {
+    const result = await this.apiService.getForApiWithPagination<BaseTask>(`/task`, currentPage, parameters);
     return result;
   }
 

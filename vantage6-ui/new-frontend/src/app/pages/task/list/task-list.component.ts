@@ -5,7 +5,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { getChipTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
-import { BaseTask, TaskStatus } from 'src/app/models/api/task.models';
+import { BaseTask, TaskListParameters, TaskStatus } from 'src/app/models/api/task.models';
+import { CHOSEN_COLLABORATION, USER_ID } from 'src/app/models/constants/sessionStorage';
 import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
 import { TaskService } from 'src/app/services/task.service';
@@ -74,7 +75,17 @@ export class TaskListComponent implements OnInit {
   }
 
   private async getTasks() {
-    const taskData = await this.taskService.getTasks(this.currentPage);
+    const collaborationID = sessionStorage.getItem(CHOSEN_COLLABORATION);
+    const userID = sessionStorage.getItem(USER_ID);
+    if (!collaborationID || !userID) return;
+
+    const taskData = await this.taskService.getTasks(
+      this.currentPage,
+      new Map([
+        [TaskListParameters.collaboration, collaborationID],
+        [TaskListParameters.user, userID]
+      ])
+    );
     this.tasks = taskData.data;
     this.pagination = taskData.links;
   }
