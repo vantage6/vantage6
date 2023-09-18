@@ -217,7 +217,10 @@ class ClientBase(object):
             self.log.error(
                 f'Server responded with error code: {response.status_code}')
             try:
-                self.log.error("msg:"+response.json().get("msg", ""))
+                self.log.error(
+                    "msg: %s. Endpoint: %s", response.json().get("msg", ""),
+                    endpoint
+                )
                 if response.json().get("errors"):
                     self.log.error(
                         "errors:"+str(response.json().get("errors"))

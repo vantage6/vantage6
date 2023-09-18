@@ -229,7 +229,8 @@ class PortInputSchema(Schema):
     """ Schema for validating input for a creating a port. """
     port = fields.Integer(required=True)
     run_id = fields.Integer(required=True, validate=Range(min=1))
-    label = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
+    label = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT),
+                          allow_none=True)
 
     @validates('port')
     def validate_port(self, port):
@@ -401,10 +402,10 @@ class TaskInputSchema(_NameValidationSchema):
                 # TODO we may add further validation on the preprocessing
                 # parameters when that is completed
                 for prepro in database['preprocessing']:
-                    if 'type' not in prepro:
+                    if 'function' not in prepro:
                         raise ValidationError(
                             f"Database preprocessing {prepro} is missing a "
-                            "'type'"
+                            "'function'"
                         )
             allowed_keys = {'label', 'preprocessing', 'query', 'sheet_name'}
             if not set(database.keys()).issubset(set(allowed_keys)):
