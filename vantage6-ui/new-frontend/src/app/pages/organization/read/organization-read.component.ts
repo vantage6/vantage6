@@ -30,7 +30,7 @@ export class OrganizationReadComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.canAdministerMultiple = this.authService.hasResourceInScope(ScopeType.GLOBAL, ResourceType.ORGANIZATION);
-    this.canCreate = this.authService.isOperationAllowed(ScopeType.ORGANIZATION, ResourceType.ORGANIZATION, OperationType.CREATE);
+    this.canCreate = this.authService.isOperationAllowed(ScopeType.GLOBAL, ResourceType.ORGANIZATION, OperationType.CREATE);
     this.initData();
   }
 

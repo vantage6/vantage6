@@ -6,8 +6,8 @@ export const routePaths = {
   organization: '/admin/organization',
   collaborations: '/admin/collaborations',
   collaboration: '/admin/collaborations',
-  task: '/task/read',
   collaborationCreate: '/admin/collaborations/create',
+  task: '/task',
   taskCreate: '/task/create',
   tasks: '/task'
 };
@@ -22,7 +22,7 @@ export const routerConfig = {
   collaborations: 'collaborations',
   collaborationCreate: 'collaborations/create',
   collaboration: 'collaborations/:id',
-  task: 'task/read/:id',
+  task: 'task/:id',
   taskCreate: 'task/create',
   tasks: 'task'
 };
