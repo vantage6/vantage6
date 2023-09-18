@@ -7,6 +7,7 @@ export const routePaths = {
   collaborations: '/admin/collaborations',
   collaboration: '/admin/collaborations',
   task: '/task/read',
+  collaborationCreate: '/admin/collaborations/create',
   taskCreate: '/task/create',
   tasks: '/task'
 };
@@ -19,6 +20,7 @@ export const routerConfig = {
   adminHome: '',
   organization: 'organization',
   collaborations: 'collaborations',
+  collaborationCreate: 'collaborations/create',
   collaboration: 'collaborations/:id',
   task: 'task/read/:id',
   taskCreate: 'task/create',

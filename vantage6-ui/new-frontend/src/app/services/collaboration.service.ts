@@ -14,6 +14,11 @@ export class CollaborationService {
     return result.data;
   }
 
+  async getPaginatedCollaborations(currentPage: number): Promise<Pagination<BaseCollaboration>> {
+    const result = await this.apiService.getForApiWithPagination<BaseCollaboration>(`/collaboration`, currentPage);
+    return result;
+  }
+
   async getCollaboration(id: string, lazyProperties: CollaborationLazyProperties[] = []): Promise<Collaboration> {
     const result = await this.apiService.getForApi<BaseCollaboration>(`/collaboration/${id}`);
 

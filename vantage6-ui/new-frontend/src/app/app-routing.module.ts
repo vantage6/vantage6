@@ -40,8 +40,8 @@ const routes: Routes = [
         canActivate: [authenticationGuard()]
       },
       {
-        path: routerConfig.task,
-        component: TaskReadComponent,
+        path: routerConfig.tasks,
+        component: TaskListComponent,
         canActivate: [authenticationGuard()]
       },
       {
@@ -50,8 +50,8 @@ const routes: Routes = [
         canActivate: [authenticationGuard()]
       },
       {
-        path: routerConfig.tasks,
-        component: TaskListComponent,
+        path: routerConfig.task,
+        component: TaskReadComponent,
         canActivate: [authenticationGuard()]
       }
     ]
@@ -73,6 +73,11 @@ const routes: Routes = [
       {
         path: routerConfig.collaborations,
         component: CollaborationListComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
+        path: routerConfig.collaborationCreate,
+        component: HomeComponent,
         canActivate: [authenticationGuard()]
       },
       {

@@ -1,1 +1,35 @@
-<p>collaboration-list works!</p>
+<app-page-header title="{{ 'collaboration-list.title' | translate }}">
+  <button actions mat-flat-button color="primary" *ngIf="canCreate" [routerLink]="routes.collaborationCreate">
+    <mat-icon>add</mat-icon>{{ "collaboration-create.title" | translate }}
+  </button>
+</app-page-header>
+<mat-card *ngIf="!isLoading; else loading">
+  <mat-card-content>
+    <table mat-table class="clickable-table" [dataSource]="collaborations">
+      <ng-container [matColumnDef]="'id'">
+        <th mat-header-cell *matHeaderCellDef>ID</th>
+        <td mat-cell *matCellDef="let collaboration">{{ collaboration.id }}</td>
+      </ng-container>
+      <ng-container [matColumnDef]="tableRows.Name">
+        <th mat-header-cell *matHeaderCellDef>{{ "collaboration.name" | translate }}</th>
+        <td mat-cell *matCellDef="let collaboration">{{ collaboration.name }}</td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr
+        mat-row
+        *matRowDef="let row; columns: displayedColumns"
+        (click)="handleRowClick(row)"
+        (keypress)="handleRowKeyPress($event, row)"
+        tabindex="0"
+      ></tr>
+    </table>
+    <mat-paginator (page)="handlePageEvent($event)" [length]="pagination?.total" pageSize="10" [hidePageSize]="true"></mat-paginator>
+  </mat-card-content>
+</mat-card>
+<ng-template #loading>
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-template>

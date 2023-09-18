@@ -99,6 +99,9 @@
         "encrypted": "Encrypted",
         "organizations": "Organizations"
     },
+    "collaboration-create": {
+        "title": "Create collaboration"
+    },
     "collaboration-list": {
         "title": "Collaborations"
     },
