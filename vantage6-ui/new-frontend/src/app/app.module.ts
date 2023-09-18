@@ -45,6 +45,7 @@ import { VisualizeTableComponent } from './components/visualize-table/visualize-
 import { TableComponent } from './components/table/table.component';
 import { CollaborationReadComponent } from './pages/collaboration/read/collaboration-read.component';
 import { CollaborationListComponent } from './pages/collaboration/list/collaboration-list.component';
+import { UserListComponent } from './pages/user/list/user-list.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -72,7 +73,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     VisualizeTableComponent,
     TableComponent,
     CollaborationReadComponent,
-    CollaborationListComponent
+    CollaborationListComponent,
+    UserListComponent
   ],
   imports: [
     BrowserModule,

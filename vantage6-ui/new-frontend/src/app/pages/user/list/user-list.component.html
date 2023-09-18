@@ -1,0 +1,43 @@
+<app-page-header title="{{ 'user-list.title' | translate }}">
+  <button actions mat-flat-button color="primary" *ngIf="canCreate" [routerLink]="routes.userCreate">
+    <mat-icon>add</mat-icon>{{ "user-create.title" | translate }}
+  </button>
+</app-page-header>
+<mat-card *ngIf="!isLoading; else loading">
+  <mat-card-content>
+    <table mat-table class="clickable-table" [dataSource]="users">
+      <ng-container [matColumnDef]="tableRows.Username">
+        <th mat-header-cell *matHeaderCellDef>{{ "user.username" | translate }}</th>
+        <td mat-cell *matCellDef="let user">{{ user.username || "-" }}</td>
+      </ng-container>
+      <ng-container [matColumnDef]="tableRows.FirstName">
+        <th mat-header-cell *matHeaderCellDef>{{ "user.first-name" | translate }}</th>
+        <td mat-cell *matCellDef="let user">{{ user.firstname || "-" }}</td>
+      </ng-container>
+      <ng-container [matColumnDef]="tableRows.LastName">
+        <th mat-header-cell *matHeaderCellDef>{{ "user.first-name" | translate }}</th>
+        <td mat-cell *matCellDef="let user">{{ user.firstname || "-" }}</td>
+      </ng-container>
+      <ng-container [matColumnDef]="tableRows.Email">
+        <th mat-header-cell *matHeaderCellDef>{{ "user.email" | translate }}</th>
+        <td mat-cell *matCellDef="let user">{{ user.email || "-" }}</td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr
+        mat-row
+        *matRowDef="let row; columns: displayedColumns"
+        (click)="handleRowClick(row)"
+        (keypress)="handleRowKeyPress($event, row)"
+        tabindex="0"
+      ></tr>
+    </table>
+    <mat-paginator (page)="handlePageEvent($event)" [length]="pagination?.total" pageSize="10" [hidePageSize]="true"></mat-paginator>
+  </mat-card-content>
+</mat-card>
+<ng-template #loading>
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-template>

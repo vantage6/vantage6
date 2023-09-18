@@ -13,6 +13,7 @@ import { TaskListComponent } from './pages/task/list/task-list.component';
 import { TaskReadComponent } from './pages/task/read/task-read.component';
 import { CollaborationReadComponent } from './pages/collaboration/read/collaboration-read.component';
 import { CollaborationListComponent } from './pages/collaboration/list/collaboration-list.component';
+import { UserListComponent } from './pages/user/list/user-list.component';
 
 const routes: Routes = [
   {
@@ -83,6 +84,11 @@ const routes: Routes = [
       {
         path: routerConfig.collaboration,
         component: CollaborationReadComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
+        path: routerConfig.users,
+        component: UserListComponent,
         canActivate: [authenticationGuard()]
       }
     ]

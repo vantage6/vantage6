@@ -83,15 +83,28 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
     const newLinks: NavigationLink[] = [];
 
     if (this.isAdministration) {
+      //Home
       newLinks.push({ route: routePaths.adminHome, label: 'Home', icon: 'home', shouldBeExact: true });
+      //Organizations
       if (this.authService.hasResourceInScope(ScopeType.ANY, ResourceType.ORGANIZATION)) {
         newLinks.push({ route: routePaths.organization, label: 'Organizations', icon: 'location_city' });
       }
-      if (this.authService.hasResourceInScope(ScopeType.ANY, ResourceType.COLLABORATION)) {
+      //Collaborations
+      if (this.authService.isOperationAllowed(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.VIEW)) {
         newLinks.push({ route: routePaths.collaborations, label: 'Collaborations', icon: 'train' });
       }
+      //Users
+      if (
+        this.authService.isOperationAllowed(ScopeType.ORGANIZATION, ResourceType.USER, OperationType.VIEW) ||
+        this.authService.isOperationAllowed(ScopeType.COLLABORATION, ResourceType.USER, OperationType.VIEW) ||
+        this.authService.isOperationAllowed(ScopeType.GLOBAL, ResourceType.USER, OperationType.VIEW)
+      ) {
+        newLinks.push({ route: routePaths.users, label: 'Users', icon: 'people' });
+      }
     } else {
+      //Home
       newLinks.push({ route: routePaths.home, label: 'Home', icon: 'home', shouldBeExact: true });
+      //Tasks
       if (this.authService.isOperationAllowed(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.VIEW)) {
         newLinks.push({ route: routePaths.tasks, label: 'Tasks', icon: 'science' });
       }

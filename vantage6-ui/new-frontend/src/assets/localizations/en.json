@@ -35,6 +35,9 @@
         "show-log": "Show logs",
         "alert-node-offline": "Task can't start, node is offline."
     },
+    "task-list": {
+        "title": "Tasks"
+    },
     "task-create": {
         "title": "Create task",
         "step-package": {
@@ -117,8 +120,17 @@
             "content": "Note, this will also delete all nodes and tasks related to this collaboration.\nThis operation cannot be undone."
         }
     },
-    "task-list": {
-        "title": "Tasks"
+    "user": {
+        "username": "Username",
+        "email": "Email",
+        "first-name": "First name",
+        "last-name": "Last name"
+    },
+    "user-list": {
+        "title": "Users"
+    },
+    "user-create": {
+        "title": "Create user"
     },
     "task-status": {
         "Active": "Active",
