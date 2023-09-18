@@ -36,12 +36,11 @@ export class TaskReadComponent implements OnInit {
     private translateService: TranslateService,
     private taskService: TaskService,
     private algorithmService: AlgorithmService,
-    authService: AuthService
-  ) {
-    this.canDelete = authService.isOperationAllowed(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.DELETE);
-  }
+    private authService: AuthService
+  ) {}
 
   ngOnInit(): void {
+    this.canDelete = this.authService.isOperationAllowed(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.DELETE);
     this.initData();
   }
 

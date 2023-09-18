@@ -31,13 +31,7 @@ export class OrganizationReadComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     this.canAdministerMultiple = this.authService.hasResourceInScope(ScopeType.GLOBAL, ResourceType.ORGANIZATION);
     this.canCreate = this.authService.isOperationAllowed(ScopeType.ORGANIZATION, ResourceType.ORGANIZATION, OperationType.CREATE);
-
-    if (this.canAdministerMultiple) {
-      this.organizations = await this.organizationService.getOrganizations();
-    } else {
-      const user = await this.authService.getUser();
-      this.handleOrganizationChange(user.organization.id.toString());
-    }
+    this.initData();
   }
 
   async handleOrganizationSelect(e: MatSelectChange): Promise<void> {
@@ -65,5 +59,14 @@ export class OrganizationReadComponent implements OnInit {
   handleNodeClick(id: number): void {
     //TODO: Add navigation to node page
     console.log(id);
+  }
+
+  private async initData() {
+    if (this.canAdministerMultiple) {
+      this.organizations = await this.organizationService.getOrganizations();
+    } else {
+      const user = await this.authService.getUser();
+      this.handleOrganizationChange(user.organization.id.toString());
+    }
   }
 }

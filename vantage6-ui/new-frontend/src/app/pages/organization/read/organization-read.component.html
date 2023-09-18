@@ -11,7 +11,7 @@
     </mat-select>
   </mat-form-field>
 </app-page-header>
-<ng-container *ngIf="!isLoading && selectedOrganization">
+<ng-container *ngIf="!isLoading && selectedOrganization; else loading">
   <mat-card>
     <mat-card-header>
       <mat-card-title>{{ "organization-read.card-details.title" | translate }}</mat-card-title>
@@ -66,8 +66,10 @@
     </mat-card-content>
   </mat-card>
 </ng-container>
-<mat-card *ngIf="isLoading">
-  <mat-card-content>
-    <mat-spinner diameter="48"></mat-spinner>
-  </mat-card-content>
-</mat-card>
+<ng-template #loading>
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-template>

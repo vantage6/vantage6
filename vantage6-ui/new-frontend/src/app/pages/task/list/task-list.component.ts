@@ -31,18 +31,17 @@ export class TaskListComponent implements OnInit {
   isLoading: boolean = true;
   pagination: PaginationLinks | null = null;
   currentPage: number = 1;
-  canCreateTask: boolean = false;
+  canCreate: boolean = false;
 
   constructor(
     private router: Router,
     private translateService: TranslateService,
     private taskService: TaskService,
-    authService: AuthService
-  ) {
-    this.canCreateTask = authService.isOperationAllowed(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.CREATE);
-  }
+    private authService: AuthService
+  ) {}
 
   ngOnInit() {
+    this.canCreate = this.authService.isOperationAllowed(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.CREATE);
     this.initData();
   }
 
