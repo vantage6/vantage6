@@ -234,6 +234,7 @@ jobs:
       version: ${{ needs.version.outputs.version }}
       major: ${{ needs.version.outputs.major }}
       minor: ${{ needs.version.outputs.minor }}
+      patch: ${{ needs.version.outputs.patch }}
       stage: ${{ needs.version.outputs.stage }}
       major_name: ${{ needs.version.outputs.major_name }}
     steps:
@@ -246,7 +247,6 @@ jobs:
           docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
 
       - name: Pull docker images
-        if: ${{  env.stage == ''  &&  env.major_name != '' }}
         run: |
           docker pull harbor2.vantage6.ai/infrastructure/server:${version}
           docker pull harbor2.vantage6.ai/infrastructure/node:${version}
@@ -262,7 +262,7 @@ jobs:
         # non-candidate release or if no non-candidate release has been made yet
         # for the current minor version
         name: Build latest node minor image
-        if: ${{ env.stage == 0 || env.minor == 0 }}
+        if: ${{ env.stage == '' || env.patch == 0 }}
         run: |
           docker tag harbor2.vantage6.ai/infrastructure/node:${version} harbor2.vantage6.ai/infrastructure/node:${major}.${minor}
           docker push harbor2.vantage6.ai/infrastructure/node:${major}.${minor}
