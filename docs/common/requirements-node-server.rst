@@ -9,16 +9,13 @@ as much).
 -  1 GB memory
 -  50GB+ storage
 -  Stable and fast (1 Mbps+ internet connection)
--  Public IP address
+|requirement-public-ip|
 
 **Software**
 
--  Operating system:
-   -  Ubuntu 18.04+
-   -  MacOS Big Sur+ (only for node)
-   -  Windows 10+ (only for node)
--  :ref:`python`
--  :ref:`docker`
+-  Operating system: Ubuntu 18.04+ |requirement-OS|
+-  Python
+-  Docker
 
 .. note::
     For the server, Ubuntu is highly recommended. It is possible to run a
