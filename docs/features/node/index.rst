@@ -1,7 +1,7 @@
 Node features
 ---------------
 
-The following pages each describe one feature of the vantage6 node.
+The following pages each describe one feature of the Vantage6 node.
 
 
 ** Under construction **

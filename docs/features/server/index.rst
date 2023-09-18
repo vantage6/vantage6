@@ -1,7 +1,7 @@
 Server features
 ---------------
 
-The following pages each describe one feature of the vantage6 server.
+The following pages each describe one feature of the Vantage6 server.
 
 .. toctree::
    :maxdepth: 1
