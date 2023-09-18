@@ -43,6 +43,8 @@ import { ConfirmDialog } from './components/dialogs/confirm/confirm-dialog.compo
 import { VisualizeResultComponent } from './components/visualize-result/visualize-result.component';
 import { VisualizeTableComponent } from './components/visualize-table/visualize-table.component';
 import { TableComponent } from './components/table/table.component';
+import { CollaborationReadComponent } from './pages/collaboration/read/collaboration-read.component';
+import { CollaborationListComponent } from './pages/collaboration/list/collaboration-list.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -68,7 +70,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     ConfirmDialog,
     VisualizeResultComponent,
     VisualizeTableComponent,
-    TableComponent
+    TableComponent,
+    CollaborationReadComponent,
+    CollaborationListComponent
   ],
   imports: [
     BrowserModule,

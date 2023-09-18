@@ -1,0 +1,68 @@
+<ng-container *ngIf="!isLoading && collaboration; else loading">
+  <app-page-header [title]="collaboration.name">
+    <button actions mat-flat-button color="primary" [routerLink]="routes.collaborations">
+      <mat-icon>arrow_back</mat-icon>{{ "collaboration-list.title" | translate }}
+    </button>
+    <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="canDelete">
+      <mat-icon>more_vert</mat-icon>
+    </button>
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item *ngIf="canEdit" (click)="handleEdit()">
+        <mat-icon>edit</mat-icon>
+        <span>{{ "general.edit" | translate }}</span>
+      </button>
+      <button mat-menu-item *ngIf="canDelete" (click)="handleDelete()">
+        <mat-icon>delete</mat-icon>
+        <span>{{ "general.delete" | translate }}</span>
+      </button>
+    </mat-menu>
+  </app-page-header>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ "collaboration-read.card-details.title" | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="data-list">
+        <div class="data-list__item data-list__item--big">
+          <b>{{ "collaboration.name" | translate }}</b>
+          <span>{{ collaboration.name || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "collaboration.encrypted" | translate }}</b>
+          <span>{{ collaboration.encrypted ? ("general.yes" | translate) : ("general.no" | translate) }}</span>
+        </div>
+        <div class="data-list__item data-list__item--full">
+          <b>{{ "collaboration.organizations" | translate }}</b>
+          <span>
+            <div class="chip-container">
+              <app-chip *ngFor="let organization of collaboration.organizations" [label]="organization.name"></app-chip>
+            </div>
+          </span>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ "collaboration-read.card-nodes.title" | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="chip-container">
+        <app-chip
+          *ngFor="let node of collaboration.nodes"
+          label="{{ node.status === nodeStatus.Online ? node.name : node.name + ' (' + ('general.offline' | translate) + ')' }}"
+          [type]="node.status === nodeStatus.Online ? 'success' : 'error'"
+          [clickable]="true"
+          (click)="handleNodeClick(node.id)"
+        ></app-chip>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
+<ng-template #loading>
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-template>

@@ -11,6 +11,8 @@ import { TaskCreateComponent } from './pages/task/create/task-create.component';
 import { StartComponent } from './pages/start/start.component';
 import { TaskListComponent } from './pages/task/list/task-list.component';
 import { TaskReadComponent } from './pages/task/read/task-read.component';
+import { CollaborationReadComponent } from './pages/collaboration/read/collaboration-read.component';
+import { CollaborationListComponent } from './pages/collaboration/list/collaboration-list.component';
 
 const routes: Routes = [
   {
@@ -66,6 +68,16 @@ const routes: Routes = [
       {
         path: routerConfig.organization,
         component: OrganizationReadComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
+        path: routerConfig.collaborations,
+        component: CollaborationListComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
+        path: routerConfig.collaboration,
+        component: CollaborationReadComponent,
         canActivate: [authenticationGuard()]
       }
     ]

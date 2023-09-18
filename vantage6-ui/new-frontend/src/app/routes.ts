@@ -4,6 +4,8 @@ export const routePaths = {
   home: '/',
   adminHome: '/admin',
   organization: '/admin/organization',
+  collaborations: '/admin/collaborations',
+  collaboration: '/admin/collaborations',
   task: '/task/read',
   taskCreate: '/task/create',
   tasks: '/task'
@@ -16,6 +18,8 @@ export const routerConfig = {
   admin: 'admin',
   adminHome: '',
   organization: 'organization',
+  collaborations: 'collaborations',
+  collaboration: 'collaborations/:id',
   task: 'task/read/:id',
   taskCreate: 'task/create',
   tasks: 'task'

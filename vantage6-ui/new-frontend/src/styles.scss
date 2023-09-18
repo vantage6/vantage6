@@ -189,6 +189,10 @@ mat-card {
     padding-bottom: $spacing-px-1;
     border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 
+    &--big {
+      grid-column: span 2;
+    }
+
     &--full {
       grid-column: span 3;
     }

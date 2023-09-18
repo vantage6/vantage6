@@ -17,15 +17,21 @@ export class CollaborationService {
   async getCollaboration(id: string, lazyProperties: CollaborationLazyProperties[] = []): Promise<Collaboration> {
     const result = await this.apiService.getForApi<BaseCollaboration>(`/collaboration/${id}`);
 
-    const collaboration: Collaboration = { ...result, organizations: [] };
+    const collaboration: Collaboration = { ...result, organizations: [], nodes: [], tasks: [] };
 
-    lazyProperties.forEach(async (lazyProperty) => {
-      if (!result[lazyProperty]) return;
+    await Promise.all(
+      lazyProperties.map(async (lazyProperty) => {
+        if (!result[lazyProperty]) return;
 
-      const resultProperty = await this.apiService.getForApi<Pagination<any>>(result[lazyProperty]);
-      collaboration[lazyProperty] = resultProperty.data;
-    });
+        const resultProperty = await this.apiService.getForApi<Pagination<any>>(result[lazyProperty]);
+        collaboration[lazyProperty] = resultProperty.data;
+      })
+    );
 
     return collaboration;
+  }
+
+  async delete(id: number): Promise<void> {
+    return await this.apiService.deleteForApi(`/collaboration/${id}`);
   }
 }

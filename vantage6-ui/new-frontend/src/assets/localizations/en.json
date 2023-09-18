@@ -6,6 +6,10 @@
         "close": "Close",
         "cancel": "Cancel",
         "delete": "Delete",
+        "edit": "Edit",
+        "confirm": "Confirm",
+        "yes": "Yes",
+        "no": "No",
         "offline": "Offline"
     },
     "task": {
@@ -88,6 +92,26 @@
         },
         "card-nodes": {
             "title": "Nodes"
+        }
+    },
+    "collaboration": {
+        "name": "Name",
+        "encrypted": "Encrypted",
+        "organizations": "Organizations"
+    },
+    "collaboration-list": {
+        "title": "Collaborations"
+    },
+    "collaboration-read": {
+        "card-details": {
+            "title": "Details"
+        },
+        "card-nodes": {
+            "title": "Nodes"
+        },
+        "delete-dialog": {
+            "title": "Are you sure you want to delete the collaboration '{{name}}'?",
+            "content": "Note, this will also delete all nodes and tasks related to this collaboration.\nThis operation cannot be undone."
         }
     },
     "task-list": {

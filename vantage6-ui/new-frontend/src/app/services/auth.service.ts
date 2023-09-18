@@ -55,8 +55,12 @@ export class AuthService {
   }
 
   isOperationAllowed(scope: ScopeType, resource: ResourceType, operation: OperationType): boolean {
+    if (scope === ScopeType.ANY) {
+      return !!this.activeRules?.some((rule) => rule.name.toLowerCase() === resource && rule.operation.toLowerCase() === operation);
+    }
+
     return !!this.activeRules?.some(
-      (rule) => rule.name.toLowerCase() === resource && rule.scope.toLowerCase() === scope && rule.operation.toLowerCase() === operation
+      (rule) => rule.scope.toLowerCase() === scope && rule.name.toLowerCase() === resource && rule.operation.toLowerCase() === operation
     );
   }
 
