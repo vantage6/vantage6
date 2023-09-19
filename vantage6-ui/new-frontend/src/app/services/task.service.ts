@@ -22,7 +22,7 @@ export class TaskService {
       (lazyProperties as string[]).map(async (lazyProperty) => {
         if (!(result as any)[lazyProperty]) return;
 
-        if ((result as any)[lazyProperty].link) {
+        if ((result as any)[lazyProperty].hasOwnProperty('link') && (result as any)[lazyProperty].link) {
           const resultProperty = await this.apiService.getForApi<any>((result as any)[lazyProperty].link);
           (task as any)[lazyProperty] = resultProperty;
         } else {

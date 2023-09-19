@@ -121,6 +121,7 @@ export class TaskReadComponent implements OnInit {
     dialogRef.afterClosed().subscribe(async (result) => {
       if (result === true) {
         if (!this.task) return;
+        this.isLoading = true;
         await this.taskService.delete(this.task.id);
         this.router.navigate([routePaths.tasks]);
       }

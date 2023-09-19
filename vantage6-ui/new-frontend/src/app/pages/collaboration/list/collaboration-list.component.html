@@ -6,10 +6,6 @@
 <mat-card *ngIf="!isLoading; else loading">
   <mat-card-content>
     <table mat-table class="clickable-table" [dataSource]="collaborations">
-      <ng-container [matColumnDef]="'id'">
-        <th mat-header-cell *matHeaderCellDef>ID</th>
-        <td mat-cell *matCellDef="let collaboration">{{ collaboration.id }}</td>
-      </ng-container>
       <ng-container [matColumnDef]="tableRows.Name">
         <th mat-header-cell *matHeaderCellDef>{{ "collaboration.name" | translate }}</th>
         <td mat-cell *matCellDef="let collaboration">{{ collaboration.name }}</td>

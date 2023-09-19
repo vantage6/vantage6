@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ConfirmDialog } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { Collaboration, CollaborationLazyProperties } from 'src/app/models/api/Collaboration.model';
@@ -28,6 +29,7 @@ export class CollaborationReadComponent implements OnInit {
 
   constructor(
     private dialog: MatDialog,
+    private router: Router,
     private authService: AuthService,
     private collaborationService: CollaborationService,
     private translateService: TranslateService
@@ -71,8 +73,9 @@ export class CollaborationReadComponent implements OnInit {
     dialogRef.afterClosed().subscribe(async (result) => {
       if (result === true) {
         if (!this.collaboration) return;
+        this.isLoading = true;
         await this.collaborationService.delete(this.collaboration.id);
-        // this.router.navigate([routePaths.tasks]);
+        this.router.navigate([routePaths.tasks]);
       }
     });
   }
