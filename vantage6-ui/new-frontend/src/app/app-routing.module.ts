@@ -14,6 +14,7 @@ import { TaskReadComponent } from './pages/task/read/task-read.component';
 import { CollaborationReadComponent } from './pages/collaboration/read/collaboration-read.component';
 import { CollaborationListComponent } from './pages/collaboration/list/collaboration-list.component';
 import { UserListComponent } from './pages/user/list/user-list.component';
+import { UserReadComponent } from './pages/user/read/user-read.component';
 
 const routes: Routes = [
   {
@@ -89,6 +90,11 @@ const routes: Routes = [
       {
         path: routerConfig.users,
         component: UserListComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
+        path: routerConfig.user,
+        component: UserReadComponent,
         canActivate: [authenticationGuard()]
       }
     ]

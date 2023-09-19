@@ -124,13 +124,24 @@
         "username": "Username",
         "email": "Email",
         "first-name": "First name",
-        "last-name": "Last name"
+        "last-name": "Last name",
+        "organization": "Organization",
+        "roles": "Roles"
     },
     "user-list": {
         "title": "Users"
     },
     "user-create": {
         "title": "Create user"
+    },
+    "user-read": {
+        "card-details": {
+            "title": "Details"
+        },
+        "delete-dialog": {
+            "title": "Are you sure you want to delete the user '{{name}}'?",
+            "content": "Note, this will also delete all tasks this user created.\nThis operation cannot be undone."
+        }
     },
     "task-status": {
         "Active": "Active",
