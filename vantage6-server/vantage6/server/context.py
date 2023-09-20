@@ -29,8 +29,7 @@ class TestContext(AppContext):
             Context object
         """
         return super().from_external_config_file(
-            cls.test_config_location(),
-            "unittest", "application", True
+            cls.test_config_location(), "unittest", True
         )
 
     @staticmethod

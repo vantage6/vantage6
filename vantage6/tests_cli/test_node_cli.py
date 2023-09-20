@@ -1,5 +1,6 @@
 import unittest
 import logging
+import os
 import contextlib
 
 from unittest.mock import MagicMock, patch
@@ -59,7 +60,7 @@ class NodeCLITest(unittest.TestCase):
 
         # returns a list of configurations and failed inports
         def side_effect(system_folders):
-            config = MagicMock(available_environments=["Application"])
+            config = MagicMock()
             config.name = "iknl"
             if not system_folders:
                 return [[config], []]
@@ -78,11 +79,11 @@ class NodeCLITest(unittest.TestCase):
         # check printed lines
         self.assertEqual(
             result.output,
-            "\nName                     Environments                    Status          System/User\n"
-            "-------------------------------------------------------------------------------------\n"
-            "iknl                     ['Application']                 Not running      System \n"
-            "iknl                     ['Application']                 Running          User   \n"
-            "-------------------------------------------------------------------------------------\n"
+            "\nName                     Status          System/User\n"
+            "-----------------------------------------------------\n"
+            "iknl                     Not running     System \n"
+            "iknl                     Running         User   \n"
+            "-----------------------------------------------------\n"
         )
 
     @patch("vantage6.cli.node.configuration_wizard")
@@ -97,7 +98,6 @@ class NodeCLITest(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(cli_node_new_configuration, [
             "--name", "some-name",
-            "--environment", "application"
         ])
 
         # check that info message is produced
@@ -113,7 +113,6 @@ class NodeCLITest(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(cli_node_new_configuration, [
             "--name", "some name",
-            "--environment", "application"
         ])
 
         self.assertEqual(
@@ -130,7 +129,6 @@ class NodeCLITest(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(cli_node_new_configuration, [
             "--name", "some-name",
-            "--environment", "application"
         ])
 
         # check that error is produced
@@ -150,7 +148,6 @@ class NodeCLITest(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(cli_node_new_configuration, [
             "--name", "some-name",
-            "--environment", "application"
         ])
 
         # check that error is produced
@@ -172,7 +169,7 @@ class NodeCLITest(unittest.TestCase):
         )
         context.return_value.databases.items.return_value = \
             [["label", "/file.db"]]
-        select_config.return_value = ["iknl", "application"]
+        select_config.return_value = "iknl"
 
         runner = CliRunner()
         result = runner.invoke(cli_node_files, [])
@@ -216,7 +213,11 @@ class NodeCLITest(unittest.TestCase):
             data_dir=Path("data"),
             log_dir=Path("logs"),
             config_dir=Path("configs"),
-            databases={"default": "data.csv"}
+            databases=[{
+                "label": "some-label",
+                "uri": "data.csv",
+                "type": "csv"
+            }]
         )
         ctx.get_data_file.return_value = "data.csv"
         ctx.name = 'some-name'
@@ -306,6 +307,9 @@ class NodeCLITest(unittest.TestCase):
         result = runner.invoke(cli_node_create_private_key,
                                ["--name", "application"])
 
+        # remove the private key file again
+        os.remove("privkey_Test.pem")
+
         self.assertEqual(result.exit_code, 0)
 
     @patch("vantage6.cli.node.RSACryptor")
@@ -392,7 +396,7 @@ class NodeCLITest(unittest.TestCase):
     @patch("vantage6.cli.node.info")
     @patch("vantage6.cli.node.debug")
     @patch("vantage6.cli.node.error")
-    @patch("vantage6.cli.node.Client")
+    @patch("vantage6.cli.node.UserClient")
     @patch("vantage6.cli.node.q")
     def test_client(self, q, client, error, debug, info):
 

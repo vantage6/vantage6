@@ -34,21 +34,22 @@ class Organization(Base):
         Country of the organization
     _public_key : bytes
         Public key of the organization
-    collaborations : list[Collaboration]
+    collaborations :
+            list[:class:`~vantage6.server.model.collaboration.Collaboration`]
         List of collaborations that this organization is part of
-    results : list[:class:`~vantage6.server.model.result.Result`]
+    results : list[:class:`~vantage6.server.model.run.Run`]
         List of results that are part of this organization
     nodes : list[:class:`~vantage6.server.model.node.Node`]
         List of nodes that are part of this organization
-    users : list[User]
+    users : list[:class:`~vantage6.server.model.user.User`]
         List of users that are part of this organization
-    created_tasks : list[Task]
+    tasks : list[:class:`~vantage6.server.model.task.Task`]
         List of tasks that are created by this organization
-    roles : list[Role]
+    roles : list[:class:`~vantage6.server.model.role.Role`]
 
     """
     # fields
-    name = Column(String)
+    name = Column(String, unique=True)
     domain = Column(String)
     address1 = Column(String)
     address2 = Column(String)
@@ -59,30 +60,11 @@ class Organization(Base):
     # relations
     collaborations = relationship("Collaboration", secondary="Member",
                                   back_populates="organizations")
-    results = relationship("Result", back_populates="organization")
+    runs = relationship("Run", back_populates="organization")
     nodes = relationship("Node", back_populates="organization")
     users = relationship("User", back_populates="organization")
-    created_tasks = relationship("Task", back_populates="initiator")
+    tasks = relationship("Task", back_populates="init_org")
     roles = relationship("Role", back_populates="organization")
-
-    def get_result_ids(self) -> list[int]:
-        """
-        Returns a list of result ids that are part of this organization.
-
-        Returns
-        -------
-        list[int]
-            List of result ids
-        """
-        # FIXME this should be removed in version 4.0 and above
-        # note that the import below is required since this file (Organization)
-        # is already imported in model.Result
-        from vantage6.server.model.result import Result
-        session = DatabaseSessionManager.get_session()
-        result_ids = session.query(Result.id)\
-                            .filter(Result.organization_id == self.id).all()
-        session.commit()
-        return result_ids
 
     @classmethod
     def get_by_name(cls, name) -> Organization | None:

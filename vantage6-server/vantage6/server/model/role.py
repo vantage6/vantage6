@@ -7,7 +7,7 @@ from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
 class Role(Base):
-    """Collection of Rules
+    """Collection of :class:`.~vantage6.server.model.rule.Rule` permissions
 
     Attributes
     ----------
@@ -17,11 +17,11 @@ class Role(Base):
         Description of the role
     organization_id : int
         Id of the organization this role belongs to
-    rules : list[Rule]
+    rules : list[:class:`.~vantage6.server.model.rule.Rule`]
         List of rules that belong to this role
-    organization : Organization
+    organization : :class:`.~vantage6.server.model.organization.Organization`
         Organization this role belongs to
-    users : list[User]
+    users : list[:class:`.~vantage6.server.model.user.User`]
         List of users that belong to this role
     """
 
@@ -49,7 +49,7 @@ class Role(Base):
 
         Returns
         -------
-        Role | None
+        :class:`.~vantage6.server.model.role.Role` | None
             Role with the given name or None if no role with the given name
             exists
         """

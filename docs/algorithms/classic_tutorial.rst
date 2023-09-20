@@ -1,4 +1,14 @@
-.. _algo-tutorial:
+.. todo rewrite this to a modern version, taking into account the description
+   in the develop.rst file.
+
+.. warning::
+
+    This classic tutorial was written for vantage6 version 2.x. The commands
+    below have not been updated and therefore might not work anymore. We are
+    leaving this here for reference, as it includes some useful information
+    about concepts that may not be included elsewhere in this documentation.
+
+.. _classic-algo-tutorial:
 
 Classic Tutorial
 ================
@@ -85,8 +95,8 @@ A federated algorithm consist of two parts:
     is the preferred method.
 
     In case the researcher runs this part, he/she needs to have a proper
-    setup to do so (i.e. Python 3.5+ and the necessary dependencies). This
-    can be useful when developing new algorithms.
+    setup to do so (i.e. a Python environment with the necessary dependencies).
+    This can be useful when developing new algorithms.
 
 Federated part
 ~~~~~~~~~~~~~~
@@ -187,7 +197,7 @@ algorithm with a JWT token so that the central part of the algorithm has
 access to the server to post these subtasks.
 
 📂Algorithm Structure
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 The algorithm needs to be structured as a Python
 `package <https://packaging.python.org/tutorials/packaging-projects/>`__.
@@ -234,7 +244,7 @@ requires.
        long_description_content_type='text/markdown',
        url='https://github.com/IKNL/v6-average-py',
        packages=find_packages(),
-       python_requires='>=3.6',
+       python_requires='>=3.10',
        install_requires=[
            'vantage6-client',
            # list your dependencies here:
@@ -263,7 +273,7 @@ This name should be the same as as the name you specified in the
    # different image here (e.g. python:3). In that case it is important that
    # `vantage6-client` is a dependancy of you project as this contains the wrapper
    # we are using in this example.
-   FROM harbor.vantage6.ai/algorithms/algorithm-base
+   FROM harbor2.vantage6.ai/algorithms/algorithm-base
 
    # Change this to the package name of your project. This needs to be the same
    # as what you specified for the name in the `setup.py`.
@@ -370,16 +380,7 @@ For our average algorithm the implementation will look as follows:
        # also possible to subscribe to a websocket channel to get status
        # updates.
        info("Waiting for results")
-       task_id = task.get("id")
-       task = client.get_task(task_id)
-       while not task.get("complete"):
-           task = client.get_task(task_id)
-           info("Waiting for results")
-           time.sleep(1)
-
-       # Once we now the partials are complete, we can collect them.
-       info("Obtaining results")
-       results = client.get_results(task_id=task.get("id"))
+       results = client.wait_for_results(task_id=task.get("id"))
 
        # Now we can combine the partials to a global average.
        global_sum = 0
@@ -411,8 +412,6 @@ For our average algorithm the implementation will look as follows:
            "sum": local_sum,
            "count": local_count
        }
-
-.. _local-testing-1:
 
 Local testing
 ~~~~~~~~~~~~~
@@ -468,7 +467,7 @@ Then create a script to test the algorithm:
 
    # You can directly obtain the result (we dont have to wait for nodes to
    # complete the tasks)
-   results = client.get_results(average_partial_task.get("id"))
+   results = client.result.from_task(average_partial_task.get("id"))
    print(results)
 
    # To trigger the master method you also need to supply the `master`-flag
@@ -485,7 +484,7 @@ Then create a script to test the algorithm:
        },
        organization_ids=[org_ids[0]]
    )
-   results = client.get_results(average_task.get("id"))
+   results = client.result.from_task(average_task.get("id"))
    print(results)
 
 Building and Distributing
@@ -518,30 +517,4 @@ address (harbor2.vantage6.ai) and the project name (demo).
 
 .. note::
     Reach out to us on `Discord <https://discord.gg/yAyFf6Y>`__ if you want to
-    use our registries (harbor.vantage6.ai and harbor2.vantage6.ai).
-
-Cross-language serialization
-----------------------------
-
-It is possible that a vantage6 algorithm is developed in one programming
-language, but you would like to run the task from another language. For
-these use-cases, the Python algorithm wrapper and client support
-cross-language serialization. By default, input to the algorithms and
-output back to the client are serialized using pickle. However, it is
-possible to define a different serialization format.
-
-Input and output serialization can be specified as follows:
-
-.. code:: python
-
-   client.post_task(
-       name='mytask',
-       image='harbor2.vantage6.ai/testing/v6-test-py',
-       collaboration_id=COLLABORATION_ID,
-       organization_ids=ORGANIZATION_IDS,
-       data_format='json', # Specify input format to the algorithm
-       input_={
-           'method': 'column_names',
-           'kwargs': {'data_format': 'json'}, # Specify output format
-       }
-   )
+    use our registries (harbor2.vantage6.ai and harbor2.vantage6.ai).

@@ -36,7 +36,7 @@ Initialization of the R client can be done by:
      username <- "username@example.com"
      password <- "password"
 
-     host <- 'https://petronas.vantage6.ai:443'
+     host <- 'https://cotopaxi.vantage6.ai:443'
      api_path <- ''
 
      # Create the client & authenticate

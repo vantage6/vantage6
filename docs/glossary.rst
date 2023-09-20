@@ -77,9 +77,9 @@ The following is a list of definitions used in vantage6.
 -  **Server**: Public access point of the vantage6 infrastructure. Contains at
    least the **vantage6-server** application but can also host the optional
    components: Docker registry, VPN server and RabbitMQ. In this documentation
-   space we try to be explicit when we talk about _server_ and
-   _vantage6-server_, however you might encounter _server_ where
-   _vantage6-server_ should have been.
+   space we try to be explicit when we talk about *server* and
+   *vantage6 server*, however you might encounter *server* where
+   *vantage6 server* should have been.
 
 **V**
 

@@ -1,7 +1,7 @@
 .. _function-docs:
 
 Function documentation
-==============
+======================
 
 This part of the documentation documents the code of the vantage6
 infrastructure. It lists all the functions and classes and describes what they
@@ -16,4 +16,5 @@ below represents a distinct PyPi package.
    server
    cli
    client
+   algorithm-tools
    common

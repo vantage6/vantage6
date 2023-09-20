@@ -31,7 +31,7 @@ setup(
     long_description_content_type='text/markdown',
     url='https://github.com/vantage6/vantage6',
     packages=find_namespace_packages(),
-    python_requires='>=3.6',
+    python_requires='>=3.10',
     install_requires=[
         'click==8.1.3',
         'docker==6.1.2',
@@ -49,7 +49,6 @@ setup(
             'SQLAlchemy==1.4.46',
             'schema==0.7.5',
             'appdirs==1.4.4',
-            'PyJWT==2.6.0',
             'flask==2.2.5'
         ]
     },

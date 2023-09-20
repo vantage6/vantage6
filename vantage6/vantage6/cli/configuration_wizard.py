@@ -4,6 +4,8 @@ from pathlib import Path
 
 from vantage6.common import generate_apikey
 from vantage6.common.globals import DATABASE_TYPES
+from vantage6.common.client.node_client import NodeClient
+from vantage6.common import error, warning
 from vantage6.cli.context import NodeContext, ServerContext
 from vantage6.cli.configuration_manager import (
     NodeConfigurationManager,
@@ -114,7 +116,28 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
         ]
     }
 
-    encryption = q.confirm("Enable encryption?", default=True).ask()
+    # Check if we can login to the server to retrieve collaboration settings
+    client = NodeClient(config['server_url'], config['port'],
+                        config['api_path'])
+    try:
+        client.authenticate(config['api_key'])
+    except Exception as e:
+        error(f"Could not authenticate with server: {e}")
+        error("Please check (1) your API key and (2) if your server is online")
+        warning("If you continue, you should provide your collaboration "
+                "settings manually.")
+        if q.confirm("Do you want to abort?", default=True).ask():
+            exit(0)
+
+    if client.whoami is not None:
+        encryption = client.is_encrypted_collaboration()
+        # TODO when we build collaboration policies, update this to provide
+        # the node admin with a list of all policies, and whether or not
+        # to accept them
+        q.confirm(f"Encryption is {'enabled' if encryption else 'disabled'}"
+                  f" for this collaboration. Accept?", default=True).ask()
+    else:
+        encryption = q.confirm("Enable encryption?", default=True).ask()
 
     private_key = "" if not encryption else \
         q.text("Path to private key file:").ask()
@@ -238,7 +261,13 @@ def server_configuration_questionaire(instance_name: str) -> dict:
         rabbit_uri = q.text(
             message='Enter the URI for your RabbitMQ:'
         ).ask()
-        config['rabbitmq_uri'] = rabbit_uri
+        run_rabbit_locally = q.confirm(
+            "Do you want to run RabbitMQ locally? (Use only for testing)"
+        ).ask()
+        config['rabbitmq'] = {
+            'uri': rabbit_uri,
+            'start_with_server': run_rabbit_locally
+        }
 
     config["logging"] = {
         "level": res,
@@ -261,7 +290,7 @@ def server_configuration_questionaire(instance_name: str) -> dict:
     return config
 
 
-def configuration_wizard(type_: str, instance_name: str, environment: str,
+def configuration_wizard(type_: str, instance_name: str,
                          system_folders: bool) -> Path:
     """
     Create a configuration file for a node or server instance.
@@ -272,8 +301,6 @@ def configuration_wizard(type_: str, instance_name: str, environment: str,
         Type of the instance. Either "node" or "server"
     instance_name : str
         Name of the instance
-    environment : str
-        Name of the environment
     system_folders : bool
         Whether to use the system folders or not
 
@@ -303,14 +330,13 @@ def configuration_wizard(type_: str, instance_name: str, environment: str,
     else:
         config_manager = conf_manager(instance_name)
 
-    config_manager.put(environment, config)
+    config_manager.put(config)
     config_manager.save(config_file)
 
     return config_file
 
 
-def select_configuration_questionaire(
-        type_: str, system_folders: bool) -> tuple[str, str]:
+def select_configuration_questionaire(type_: str, system_folders: bool) -> str:
     """
     Ask which configuration the user wants to use. It shows only configurations
     that are in the default folder.
@@ -324,28 +350,24 @@ def select_configuration_questionaire(
 
     Returns
     -------
-    tuple[str, str]
-        Name of the configuration and the environment
+    str
+        Name of the configuration
     """
     context = NodeContext if type_ == "node" else ServerContext
-    configs, f = context.available_configurations(system_folders)
+    configs, _ = context.available_configurations(system_folders)
 
     # each collection (file) can contain multiple configs. (e.g. test,
     # dev)
     choices = []
     for config_collection in configs:
-
-        envs = config_collection.available_environments
-        for env in envs:
-            choices.append(q.Choice(
-                title=f"{config_collection.name:25} {env}",
-                value=(config_collection.name, env)))
+        choices.append(q.Choice(
+            title=f"{config_collection.name:25}",
+            value=config_collection.name
+        ))
 
     if not choices:
         raise Exception("No configurations could be found!")
 
     # pop the question
-    name, env = q.select("Select the configuration you want to use:",
-                         choices=choices).ask()
-
-    return name, env
+    return q.select("Select the configuration you want to use:",
+                    choices=choices).ask()

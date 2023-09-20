@@ -1,9 +1,10 @@
 import logging
 import os
 import inspect as class_inspect
+from typing import Any
 from flask.globals import g
 
-from sqlalchemy import Column, Integer, inspect, Table
+from sqlalchemy import Column, Integer, inspect, Table, exists
 from sqlalchemy.orm.session import Session
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm.clsregistry import _ModuleMarker
@@ -380,6 +381,29 @@ class ModelBase:
 
         session.delete(self)
         session.commit()
+
+    @classmethod
+    def exists(cls, field: str, value: Any) -> bool:
+        """
+        Check if a value exists for a given field in the database model.
+
+        Parameters
+        ----------
+        field: str
+            The field to check
+        value: Any
+            The value to check
+
+        Returns
+        -------
+        bool
+            True if the value exists, False otherwise
+        """
+        session = DatabaseSessionManager.get_session()
+        result = session.query(exists().where(getattr(cls, field) == value))\
+            .scalar()
+        session.commit()
+        return result
 
     @classmethod
     def help(cls) -> None:

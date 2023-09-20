@@ -42,18 +42,16 @@ def cli_node_list() -> None:
     """Lists all nodes in the default configuration directories."""
 
     # FIXME: use package 'table' for this.
-    click.echo("\nName"+(21*" ")+"Environments"+(21*" ")+"System/User")
+    click.echo("\nName"+(21*" ")+"System/User")
     click.echo("-" * 70)
 
     configs, f1 = NodeContext.available_configurations(system_folders=True)
     for config in configs:
-        click.echo(f"{config.name:25}{str(config.available_environments):32} "
-                   f"System ")
+        click.echo(f"{config.name:25} System ")
 
     configs, f2 = NodeContext.available_configurations(system_folders=False)
     for config in configs:
-        click.echo(f"{config.name:25}{str(config.available_environments):32} "
-                   f"User   ")
+        click.echo(f"{config.name:25} User   ")
 
     click.echo("-"*70)
     warning(f"Number of failed imports: "
@@ -65,16 +63,12 @@ def cli_node_list() -> None:
 #
 @cli_node.command(name="new")
 @click.option("-n", "--name", default=None, help="Configuration name")
-@click.option('-e', '--environment',
-              default=None,
-              help='Configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True,
               help="Use configuration from system folders (default)")
 @click.option('--user', 'system_folders', flag_value=False,
               default=constants.DEFAULT_NODE_SYSTEM_FOLDERS,
               help="Use configuration from user folders")
-def cli_node_new_configuration(name: str, environment: str,
-                               system_folders: bool) -> None:
+def cli_node_new_configuration(name: str, system_folders: bool) -> None:
     """Create a new configation file.
 
     Checks if the configuration already exists. If this is not the case
@@ -88,24 +82,17 @@ def cli_node_new_configuration(name: str, environment: str,
             info(f"Replaced spaces from configuration name: {name}")
             name = name_new
 
-    if not environment:
-        environment = q.select(
-            "Please select the environment you want to configure:",
-            ["application", "prod", "acc", "test", "dev"]
-        ).ask()
-
     # Check that we can write in this folder
     if not check_config_writeable(system_folders):
         error("Your user does not have write access to all folders. Exiting")
         exit(1)
 
     # check that this config does not exist
-    if NodeContext.config_exists(name, environment, system_folders):
-        raise FileExistsError(f"Configuration {name} and environment"
-                              f"{environment} already exists!")
+    if NodeContext.config_exists(name, system_folders):
+        raise FileExistsError(f"Configuration {name} already exists!")
 
     # create config in ctx location
-    cfg_file = configuration_wizard("node", name, environment, system_folders)
+    cfg_file = configuration_wizard("node", name, system_folders)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
 
 
@@ -114,31 +101,27 @@ def cli_node_new_configuration(name: str, environment: str,
 #
 @cli_node.command(name="files")
 @click.option("-n", "--name", default=None, help="Configuration name")
-@click.option('-e', '--environment',
-              default=constants.DEFAULT_NODE_ENVIRONMENT,
-              help='Configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True,
               help="Use configuration from system folders (default)")
 @click.option('--user', 'system_folders', flag_value=False,
               default=constants.DEFAULT_NODE_SYSTEM_FOLDERS,
               help="Use configuration from user folders")
-def cli_node_files(name: str, environment: str, system_folders: bool) -> None:
+def cli_node_files(name: str, system_folders: bool) -> None:
     """Print out the paths of important files.
 
     If the specified configuration cannot be found, it exits. Otherwise
     it returns the absolute path to the output.
     """
     # select configuration name if none supplied
-    name, environment = (name, environment) if name else \
+    name = name if name else \
         select_configuration_questionaire("node", system_folders)
 
     # raise error if config could not be found
-    if not NodeContext.config_exists(name, environment, system_folders):
+    if not NodeContext.config_exists(name, system_folders):
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), name)
 
     # create node context
-    ctx = NodeContext(name, environment=environment,
-                      system_folders=system_folders)
+    ctx = NodeContext(name, system_folders=system_folders)
 
     # return path of the configuration
     click.echo(f"Configuration file = {ctx.config_file}")
@@ -156,9 +139,6 @@ def cli_node_files(name: str, environment: str, system_folders: bool) -> None:
 @click.option("-n", "--name", default=None, help="Configuration name")
 @click.option("-c", "--config", default=None,
               help='Absolute path to configuration-file; overrides "name"')
-@click.option('-e', '--environment',
-              default=constants.DEFAULT_NODE_ENVIRONMENT,
-              help='Configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True,
               help="Use configuration from system folders (default)")
 @click.option('--user', 'system_folders', flag_value=False,
@@ -167,15 +147,13 @@ def cli_node_files(name: str, environment: str, system_folders: bool) -> None:
 @click.option('--dockerized/-non-dockerized', default=False,
               help=("Whether to use DockerNodeContext or regular NodeContext "
                     "(default)"))
-def cli_node_start(name: str, config: str, environment: str,
-                   system_folders: bool, dockerized: bool) -> None:
+def cli_node_start(name: str, config: str, system_folders: bool,
+                   dockerized: bool) -> None:
     """Start the node instance.
 
     If no name or config is specified the default.yaml configuation is used.
-    In case the configuration file not excists, a questionaire is
-    invoked to create one. Note that in this case it is not possible to
-    specify specific environments for the configuration (e.g. test,
-    prod, acc).
+    In case the configuration file not exists, a questionaire is
+    invoked to create one.
     """
     ContextClass = DockerNodeContext if dockerized else NodeContext
 
@@ -183,32 +161,29 @@ def cli_node_start(name: str, config: str, environment: str,
     # stuff since you know what you are doing
     if config:
         name = Path(config).stem
-        ctx = ContextClass(name, environment, system_folders, config)
+        ctx = ContextClass(name, system_folders, config)
 
     else:
         # in case no name is supplied, ask user to select one
         if not name:
-            name, environment = select_configuration_questionaire(
-                "node",
-                system_folders
-            )
+            name = select_configuration_questionaire("node", system_folders)
 
         # check that config exists in the APP, if not a questionaire will
         # be invoked
-        if not ContextClass.config_exists(name, environment, system_folders):
+        if not ContextClass.config_exists(name, system_folders):
             question = (
-                f"Configuration '{name}' using environment '{environment}' "
-                "does not exist.\n  Do you want to create this config now?"
+                f"Configuration '{name}' does not exist.\n  Do you want to "
+                "create this config now?"
             )
 
             if q.confirm(question).ask():
-                configuration_wizard("node", name, environment, system_folders)
+                configuration_wizard("node", name, system_folders)
 
             else:
                 sys.exit(0)
 
         # create dummy node context
-        ctx = ContextClass(name, environment, system_folders)
+        ctx = ContextClass(name, system_folders)
 
     # run the node application
     node.run(ctx)

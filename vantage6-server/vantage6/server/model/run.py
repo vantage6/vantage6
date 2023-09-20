@@ -4,7 +4,6 @@ import logging
 from sqlalchemy import Column, Text, DateTime, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-from sqlalchemy.ext.hybrid import hybrid_property
 
 from vantage6.common import logger_name
 from vantage6.server.model.base import Base
@@ -19,12 +18,12 @@ from vantage6.server.model.base import DatabaseSessionManager
 log_ = logging.getLogger(logger_name(__name__))
 
 
-class Result(Base):
+class Run(Base):
     """
-    Table that describes which results are available. A Result is the
-    description of a Task as executed by a Node.
+    A Run is the description of a :class:`.~vantage6.server.model.task.Task` as
+    executed by a Node.
 
-    The result (and the input) is encrypted and can be only read by the
+    The input and result fields will be encrypted and can be only read by the
     intended receiver of the message.
 
     Attributes
@@ -47,11 +46,11 @@ class Result(Base):
         Status of the task
     log : str
         Log of the task
-    task : Task
+    task : :class:`.~vantage6.server.model.task.Task`
         Task that was executed
-    organization : Organization
+    organization : :class:`.~vantage6.server.model.organization.Organization`
         Organization that executed the task
-    ports : list[AlgorithmPort]
+    ports : list[:class:`.~vantage6.server.model.algorithm_port.AlgorithmPort`]
         List of ports that are part of this result
     """
 
@@ -67,9 +66,9 @@ class Result(Base):
     log = Column(Text)
 
     # relationships
-    task = relationship("Task", back_populates="results")
-    organization = relationship("Organization", back_populates="results")
-    ports = relationship("AlgorithmPort", back_populates="result")
+    task = relationship("Task", back_populates="runs")
+    organization = relationship("Organization", back_populates="runs")
+    ports = relationship("AlgorithmPort", back_populates="run")
 
     @property
     def node(self) -> Node:
@@ -86,9 +85,9 @@ class Result(Base):
             node = session.query(Node)\
                 .join(Collaboration)\
                 .join(Organization)\
-                .join(Result)\
+                .join(Run)\
                 .join(Task)\
-                .filter(Result.id == self.id)\
+                .filter(Run.id == self.id)\
                 .filter(self.organization_id == Node.organization_id)\
                 .filter(Task.collaboration_id == Node.collaboration_id)\
                 .one()
@@ -106,18 +105,6 @@ class Result(Base):
             raise
         return node
 
-    @hybrid_property
-    def complete(self) -> bool:
-        """
-        Returns whether the algorithm run has completed or not.
-
-        Returns
-        -------
-        bool
-            True if the algorithm run has completed, False otherwise.
-        """
-        return self.finished_at is not None
-
     def __repr__(self) -> str:
         """
         Returns a string representation of the result.
@@ -128,10 +115,10 @@ class Result(Base):
             String representation of the result.
         """
         return (
-            "<Result "
+            "<Run "
             f"{self.id}: '{self.task.name}', "
             f"organization: {self.organization.name}, "
             f"collaboration: {self.task.collaboration.name}, "
-            f"is_complete: {self.complete}"
+            f"status: {self.status}"
             ">"
         )

@@ -6,9 +6,13 @@ from flask_principal import Permission, PermissionDenied
 
 from vantage6.server.globals import RESOURCES
 from vantage6.server.default_roles import DefaultRole
+from vantage6.server.model.base import Base
 from vantage6.server.model.role import Role
 from vantage6.server.model.rule import Rule, Operation, Scope
 from vantage6.server.model.base import DatabaseSessionManager
+from vantage6.server.utils import (
+    obtain_auth_collaborations, obtain_auth_organization
+)
 from vantage6.common import logger_name
 
 module_name = logger_name(__name__)
@@ -17,7 +21,76 @@ log = logging.getLogger(module_name)
 RuleNeed = namedtuple("RuleNeed", ["name", "scope", "operation"])
 
 
-class RuleCollection:
+# TODO BvB 2023-07-27 this utility is a bit superfluous with the definition
+# of the operation and scope enums. We should remove it but then add longer
+# values to the enums, which leads to many other changes
+def print_operation(operation: Operation) -> str:
+    """
+    String representation of the operation, that is readable by humans.
+
+    Parameters
+    ----------
+    operation : Operation
+        Operation to be printed
+
+    Returns
+    -------
+    str
+        String representation of the operation
+
+    Raises
+    ------
+    ValueError
+        If the operation is not known
+    """
+    if operation.VIEW:
+        return "view"
+    elif operation.EDIT:
+        return "edit"
+    elif operation.CREATE:
+        return "create"
+    elif operation.DELETE:
+        return "delete"
+    elif operation.SEND:
+        return "send"
+    elif operation.RECEIVE:
+        return "receive"
+    else:
+        raise ValueError(f"Unknown operation {operation}")
+
+
+def print_scope(scope: Scope) -> str:
+    """
+    String representation of the scope, that is readable by humans.
+
+    Parameters
+    ----------
+    scope : Scope
+        Scope to be printed
+
+    Returns
+    -------
+    str
+        String representation of the scope
+
+    Raises
+    ------
+    ValueError
+        If the scope is not known
+    """
+    if scope.ORGANIZATION:
+        return "organization"
+    elif scope.COLLABORATION:
+        return "collaboration"
+    elif scope.GLOBAL:
+        return "global"
+    elif scope.OWN:
+        return "own"
+    else:
+        raise ValueError(f"Unknown scope {scope}")
+
+
+class RuleCollection(dict):
     """
     Class that tracks a set of all rules for a certain resource name
 
@@ -42,7 +115,186 @@ class RuleCollection:
             What operation the rule applies to
         """
         permission = Permission(RuleNeed(self.name, scope, operation))
-        self.__setattr__(f'{operation.value}_{scope.value}', permission)
+        self.__setattr__(f'{operation}_{scope}', permission)
+
+    def can_for_org(self, operation: Operation,
+                    subject_org_id: int | str) -> bool:
+        """
+        Check if an operation is allowed on a certain organization
+
+        Parameters
+        ----------
+        operation: Operation
+            Operation to check if allowed
+        subject_org_id: int | str
+            Organization id on which the operation should be allowed. If a
+            string is given, it will be converted to an int
+
+        Returns
+        -------
+        bool
+            True if the operation is allowed on the organization, False
+            otherwise
+        """
+        if isinstance(subject_org_id, str):
+            subject_org_id = int(subject_org_id)
+
+        auth_org = obtain_auth_organization()
+
+        # check if the entity has global permission
+        global_perm = getattr(self, f'{operation}_{Scope.GLOBAL}')
+        if global_perm and global_perm.can():
+            return True
+
+        # check if the entity has organization permission and organization is
+        # the same as the subject organization
+        org_perm = getattr(self, f'{operation}_{Scope.ORGANIZATION}')
+        if auth_org.id == subject_org_id and org_perm and org_perm.can():
+            return True
+
+        # check if the entity has collaboration permission and the subject
+        # organization is in the collaboration of the own organization
+        col_perm = getattr(self, f'{operation}_{Scope.COLLABORATION}')
+        if col_perm and col_perm.can():
+            for col in auth_org.collaborations:
+                if subject_org_id in [org.id for org in col.organizations]:
+                    return True
+
+        # no permission found
+        return False
+
+    def can_for_col(self, operation: Operation,
+                    collaboration_id: int | str) -> bool:
+        """
+        Check if the user or node can perform the operation on a certain
+        collaboration
+
+        Parameters
+        ----------
+        operation: Operation
+            Operation to check if allowed
+        collaboration_id: int | str
+            Collaboration id on which the operation should be allowed. If a
+            string is given, it will be converted to an int
+        """
+        if isinstance(collaboration_id, str):
+            collaboration_id = int(collaboration_id)
+
+        auth_collabs = obtain_auth_collaborations()
+
+        # check if the entity has global permission
+        global_perm = getattr(self, f'{operation}_{Scope.GLOBAL}')
+        if global_perm and global_perm.can():
+            return True
+
+        # check if the entity has collaboration permission and the subject
+        # collaboration is in the collaborations of the user/node
+        col_perm = getattr(self, f'{operation}_{Scope.COLLABORATION}')
+        if col_perm and col_perm.can() and \
+                self._id_in_list(collaboration_id, auth_collabs):
+            return True
+
+        # no permission found
+        return False
+
+    def get_max_scope(self, operation: Operation) -> Scope | None:
+        """
+        Get the highest scope that the entity has for a certain operation
+
+        Parameters
+        ----------
+        operation: Operation
+            Operation to check
+
+        Returns
+        -------
+        Scope | None
+            Highest scope that the entity has for the operation. None if the
+            entity has no permission for the operation
+        """
+        if getattr(self, f'{operation}_{Scope.GLOBAL}'):
+            return Scope.GLOBAL
+        elif getattr(self, f'{operation}_{Scope.COLLABORATION}'):
+            return Scope.COLLABORATION
+        elif getattr(self, f'{operation}_{Scope.ORGANIZATION}'):
+            return Scope.ORGANIZATION
+        elif getattr(self, f'{operation}_{Scope.OWN}'):
+            return Scope.OWN
+        else:
+            return None
+
+    def has_at_least_scope(self, scope: Scope, operation: Operation) -> bool:
+        """
+        Check if the entity has at least a certain scope for a certain
+        operation
+
+        Parameters
+        ----------
+        scope: Scope
+            Scope to check if the entity has at least
+        operation: Operation
+            Operation to check
+
+        Returns
+        -------
+        bool
+            True if the entity has at least the scope, False otherwise
+        """
+        scopes: list[Scope] = self._get_scopes_from(scope)
+        for s in scopes:
+            perm = getattr(self, f'{operation}_{s}')
+            if perm and perm.can():
+                return True
+        return False
+
+    def _id_in_list(self, id_: int, resource_list: list[Base]) -> bool:
+        """
+        Check if resource list contains a resource with a certain ID
+
+        Parameters
+        ----------
+        id_ : int
+            ID of the resource
+        resource_list : list[db.Base]
+            List of resources
+
+        Returns
+        -------
+        bool
+            True if resource is in list, False otherwise
+        """
+        return any(r.id == id_ for r in resource_list)
+
+    def _get_scopes_from(self, minimal_scope: Scope) -> list[Scope]:
+        """
+        Get scopes that are at least equal to a certain scope
+
+        Parameters
+        ----------
+        minimal_scope: Scope
+            Minimal scope
+
+        Returns
+        -------
+        list[Scope]
+            List of scopes that are at least equal to the minimal scope
+
+        Raises
+        ------
+        ValueError
+            If the minimal scope is not known
+        """
+        if minimal_scope == Scope.ORGANIZATION:
+            return [Scope.ORGANIZATION, Scope.COLLABORATION, Scope.GLOBAL]
+        elif minimal_scope == Scope.COLLABORATION:
+            return [Scope.COLLABORATION, Scope.GLOBAL]
+        elif minimal_scope == Scope.GLOBAL:
+            return [Scope.GLOBAL]
+        elif minimal_scope == Scope.OWN:
+            return [Scope.OWN, Scope.ORGANIZATION, Scope.COLLABORATION,
+                    Scope.GLOBAL]
+        else:
+            raise ValueError(f"Unknown scope '{minimal_scope}'")
 
 
 class PermissionManager:
@@ -52,7 +304,7 @@ class PermissionManager:
     """
 
     def __init__(self) -> None:
-        self.collections = {}
+        self.collections: dict[str, RuleCollection] = {}
         log.info("Loading permission system...")
         self.load_rules_from_resources()
 
@@ -294,26 +546,25 @@ class PermissionManager:
         session.commit()
         return result
 
-    @staticmethod
-    def check_user_rules(rules: list[Rule]) -> dict | bool:
+    def check_user_rules(self, rules: list[Rule]) -> dict | None:
         """
         Check if a user, node or container has all the `rules` in a list
 
         Parameters
         ----------
-        rules: List[Rule]
+        rules: list[:class:`~vantage6.server.model.rule.Rule`]
             List of rules that user is checked to have
 
         Returns
         -------
-        dict | bool
+        dict | None
             Dict with a message which rule is missing, else None
         """
         for rule in rules:
-            requires = RuleNeed(rule.name, rule.scope, rule.operation)
-            try:
-                Permission(requires).test()
-            except PermissionDenied:
+            if not self.collections[rule.name].has_at_least_scope(
+                rule.scope, rule.operation
+            ):
                 return {"msg": f"You don't have the rule ({rule.name}, "
-                        f"{rule.scope}, {rule.operation})"}
+                        f"{print_scope(rule.scope)}, "
+                        f"{print_operation(rule.operation)})"}
         return None

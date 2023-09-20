@@ -46,26 +46,6 @@ configuration options.
 You can download this file here: :download:`node_config.yaml`
 
 .. literalinclude :: node_config.yaml
-    :language: yaml
-
-.. note::
-    We use `DTAP for key environments <https://en.wikipedia.org/wiki/Development,_testing,_acceptance_and_production>`__.
-    In short:
-
-    - ``dev``: Development environment. It is ok to break things here
-    - ``test``: Testing environment. Here, you can verify that everything
-      works as expected. This environment should resemble the target
-      environment where the final solution will be deployed as much as
-      possible.
-    - ``acc``: Acceptance environment. If the tests were successful, you can
-      try this environment, where the final user will test his/her analysis
-      to verify if everything meets his/her expectations.
-    - ``prod``: Production environment. The version of the proposed solution
-      where the final analyses are executed.
-
-    You can also specify the key ``application`` if you do not want to specify
-    one of the environments. This is also done in the example configuration
-    shown above.
 
 .. _node-configure-location:
 
@@ -120,9 +100,9 @@ Once you approved the algorithm, it is important that you can verify
 that the approved algorithm is the algorithm that runs on your data.
 There are two important steps to be taken to accomplish this:
 
--  Set the (optional) ``allowed_images`` option in the
-   node-configuration file. You can specify a list of regex expressions here.
-   Some examples of what you could define:
+-  Set the (optional) ``allowed_algorithms`` option in the ``policies`` section
+   of the node-configuration file. You can specify a list of regex expressions
+   here. Some examples of what you could define:
 
    1. ``^harbor2.vantage6.ai/[a-zA-Z]+/[a-zA-Z]+``: allow all images
       from the vantage6 registry
@@ -140,9 +120,6 @@ There are two important steps to be taken to accomplish this:
     By enabling ``DOCKER_CONTENT_TRUST`` you might not be able to use
     certain algorithms. You can check this by verifying that the images you want
     to be used are signed.
-
-    In case you are using our Docker repository you need to use
-    harbor\ **2**.vantage6.ai as harbor.vantage6.ai does not have a notary.
 
 .. _node-logging:
 

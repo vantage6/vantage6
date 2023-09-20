@@ -15,7 +15,7 @@ from vantage6.server.model import (
     Organization,
     Collaboration,
     Task,
-    Result,
+    Run,
     Node,
     Rule,
     Role
@@ -225,40 +225,40 @@ class TestOrganizationModel(TestBaseModel):
                 self.assertIsInstance(collaboration, Collaboration)
             for user in organization.users:
                 self.assertIsInstance(user, User)
-            for result in organization.results:
-                self.assertIsInstance(result, Result)
+            for run in organization.runs:
+                self.assertIsInstance(run, Run)
 
 
-class TestResultModel(TestBaseModel):
+class TestRunModel(TestBaseModel):
 
     def test_read(self):
-        for result in Result.get():
-            self.assertIsInstance(result, Result)
-            self.assertIsNone(result.result)
-            self.assertIsInstance(result.assigned_at, datetime.datetime)
-            self.assertIsNone(result.started_at)
-            self.assertIsNone(result.finished_at)
+        for run in Run.get():
+            self.assertIsInstance(run, Run)
+            self.assertIsNone(run.result)
+            self.assertIsInstance(run.assigned_at, datetime.datetime)
+            self.assertIsNone(run.started_at)
+            self.assertIsNone(run.finished_at)
 
     def test_insert(self):
         task = Task(name="unit_task")
-        result = Result(
+        run = Run(
             task=task,
             organization=Organization.get()[0],
             input="something"
         )
-        result.save()
-        self.assertEqual(result, result)
+        run.save()
+        self.assertEqual(run, run)
 
-    def test_methods(self):
-        for result in Result.get():
-            self.assertFalse(result.complete)
+    # def test_methods(self):
+    #     for result in Result.get():
+    #         self.assertFalse(result.complete)
 
     def test_relations(self):
-        result = Result.get()[0]
-        self.assertIsInstance(result.organization, Organization)
-        for user in result.organization.users:
+        run = Run.get()[0]
+        self.assertIsInstance(run.organization, Organization)
+        for user in run.organization.users:
             self.assertIsInstance(user, User)
-        self.assertIsInstance(result.task, Task)
+        self.assertIsInstance(run.task, Task)
 
 
 class TestTaskModel(TestBaseModel):
@@ -271,17 +271,17 @@ class TestTaskModel(TestBaseModel):
             # self.assertIsInstance(task.description, str)
             self.assertIsInstance(task.image, str)
             self.assertIsInstance(task.collaboration, Collaboration)
-            self.assertIsInstance(task.run_id, int)
+            self.assertIsInstance(task.job_id, int)
             # self.assertIsInstance(task.database, str)
-            for result in task.results:
-                self.assertIsInstance(result, Result)
+            for run in task.runs:
+                self.assertIsInstance(run, Run)
 
     def test_insert(self):
         task = Task(
             name="unit_task",
             image="some-image",
             collaboration=Collaboration.get()[0],
-            run_id=1
+            job_id=1
         )
         task.save()
         db_task = None
@@ -302,10 +302,8 @@ class TestTaskModel(TestBaseModel):
         for task in db_task:
             self.assertIsInstance(task, Task)
             self.assertIsInstance(task.collaboration, Collaboration)
-            for result in task.results:
-                self.assertIsInstance(result, Result)
-            for result in task.results:
-                self.assertIsInstance(result, Result)
+            for run in task.runs:
+                self.assertIsInstance(run, Run)
             for user in task.collaboration.organizations[0].users:
                 self.assertIsInstance(user, User)
 

@@ -13,14 +13,12 @@ monkey.patch_all()
 
 import importlib
 import logging
-import os
 import uuid
 import json
 import time
 import datetime as dt
 import traceback
 
-from typing import Any
 from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
 from flasgger import Swagger
@@ -42,14 +40,12 @@ from vantage6.common import logger_name
 from vantage6.common.globals import PING_INTERVAL_SECONDS
 from vantage6.server import db
 from vantage6.cli.context import ServerContext
-from vantage6.cli.globals import DEFAULT_SERVER_ENVIRONMENT
 from vantage6.server.model.base import DatabaseSessionManager, Database
-from vantage6.server.resource.common._schema import HATEOASModelSchema
+from vantage6.server.resource.common.output_schema import HATEOASModelSchema
 from vantage6.server.permission import RuleNeed, PermissionManager
 from vantage6.server.globals import (
     APPNAME,
     ACCESS_TOKEN_EXPIRES_HOURS,
-    JWT_TEST_ACCESS_TOKEN_EXPIRES,
     RESOURCES,
     SUPER_USER_INFO,
     REFRESH_TOKENS_EXPIRE_HOURS,
@@ -145,7 +141,7 @@ class ServerApp:
             SocketIO object
         """
 
-        msg_queue = self.ctx.config.get('rabbitmq_uri')
+        msg_queue = self.ctx.config.get('rabbitmq', {}).get('uri')
         if msg_queue:
             log.debug(f'Connecting to msg queue: {msg_queue}')
 
@@ -214,15 +210,6 @@ class ServerApp:
             longer_than=token_expiry_seconds + MIN_REFRESH_TOKEN_EXPIRY_DELTA,
             is_refresh=True
         )
-
-        # Set an extra long expiration time on access tokens for testing
-        # TODO: this does not seem needed...
-        environment = self.ctx.config.get('type')
-        self.app.config['environment'] = environment
-        if environment == 'test':
-            log.warning("Setting 'JWT_ACCESS_TOKEN_EXPIRES' to one day!")
-            self.app.config['JWT_ACCESS_TOKEN_EXPIRES'] = \
-                JWT_TEST_ACCESS_TOKEN_EXPIRES
 
         # Open Api Specification (f.k.a. swagger)
         self.app.config['SWAGGER'] = {
@@ -663,8 +650,7 @@ class ServerApp:
                 time.sleep(PING_INTERVAL_SECONDS)
 
 
-def run_server(config: str, environment: str = DEFAULT_SERVER_ENVIRONMENT,
-               system_folders: bool = True) -> ServerApp:
+def run_server(config: str, system_folders: bool = True) -> ServerApp:
     """
     Run a vantage6 server.
 
@@ -672,8 +658,6 @@ def run_server(config: str, environment: str = DEFAULT_SERVER_ENVIRONMENT,
     ----------
     config: str
         Configuration file path
-    environment: str
-        Configuration environment to use.
     system_folders: bool
         Whether to use system or user folders. Default is True.
 
@@ -684,7 +668,6 @@ def run_server(config: str, environment: str = DEFAULT_SERVER_ENVIRONMENT,
     """
     ctx = ServerContext.from_external_config_file(
         config,
-        environment,
         system_folders
     )
     allow_drop_all = ctx.config["allow_drop_all"]

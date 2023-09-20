@@ -3,14 +3,13 @@ import logging
 import datetime
 
 import enum
-import json
 import sqlalchemy as sql
 
 # TODO this file is akward...
 from vantage6.server.model import (
     Base,
     Task,
-    Result,
+    Run,
     Organization,
     User,
     Node,
@@ -23,7 +22,8 @@ from vantage6.server.model import (
     UserPermission,
     role_rule_association,
     AlgorithmPort,
-    NodeConfig
+    NodeConfig,
+    TaskDatabase,
 )
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING

@@ -31,6 +31,7 @@ jobs:
           echo "stage=${PARTS2[1]}" >> $GITHUB_OUTPUT
           echo "build=${PARTS2[2]}" >> $GITHUB_OUTPUT
           MAJOR_NAME=''
+          if [[ $MAJOR == '4' ]]; then MAJOR_NAME="cotopaxi"; fi
           if [[ $MAJOR == '3' ]]; then MAJOR_NAME="petronas"; fi
           if [[ $MAJOR == '2' ]]; then MAJOR_NAME="harukas"; fi
           if [[ $MAJOR == '1' ]]; then MAJOR_NAME="trolltunga"; fi
@@ -231,6 +232,9 @@ jobs:
     needs: [version, infrastructure-images]
     env:
       version: ${{ needs.version.outputs.version }}
+      major: ${{ needs.version.outputs.major }}
+      minor: ${{ needs.version.outputs.minor }}
+      patch: ${{ needs.version.outputs.patch }}
       stage: ${{ needs.version.outputs.stage }}
       major_name: ${{ needs.version.outputs.major_name }}
     steps:
@@ -243,7 +247,6 @@ jobs:
           docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
 
       - name: Pull docker images
-        if: ${{  env.stage == ''  &&  env.major_name != '' }}
         run: |
           docker pull harbor2.vantage6.ai/infrastructure/server:${version}
           docker pull harbor2.vantage6.ai/infrastructure/node:${version}
@@ -254,6 +257,15 @@ jobs:
           docker tag harbor2.vantage6.ai/infrastructure/server:${version} harbor2.vantage6.ai/infrastructure/server:${major_name}
           docker tag harbor2.vantage6.ai/infrastructure/server:${version} harbor2.vantage6.ai/infrastructure/server:${major_name}-live
           docker tag harbor2.vantage6.ai/infrastructure/node:${version} harbor2.vantage6.ai/infrastructure/node:${major_name}
+
+      - # Release a node image for major.minor. This is released for any
+        # non-candidate release or if no non-candidate release has been made yet
+        # for the current minor version
+        name: Build latest node minor image
+        if: ${{ env.stage == '' || env.patch == 0 }}
+        run: |
+          docker tag harbor2.vantage6.ai/infrastructure/node:${version} harbor2.vantage6.ai/infrastructure/node:${major}.${minor}
+          docker push harbor2.vantage6.ai/infrastructure/node:${major}.${minor}
 
       - name: Push docker images
         if: ${{  env.stage == ''  &&  env.major_name != '' }}

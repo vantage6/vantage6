@@ -1,5 +1,7 @@
 .. include:: <isonum.txt>
 
+.. _node-admin-guide:
+
 Node admin guide
 ================
 

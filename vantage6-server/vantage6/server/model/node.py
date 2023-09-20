@@ -30,7 +30,7 @@ class Node(Authenticatable):
     id = Column(Integer, ForeignKey('authenticatable.id'), primary_key=True)
 
     # fields
-    name = Column(String)
+    name = Column(String, unique=True)
     api_key = Column(String)
     collaboration_id = Column(Integer, ForeignKey("collaboration.id"))
     organization_id = Column(Integer, ForeignKey("organization.id"))
@@ -127,7 +127,7 @@ class Node(Authenticatable):
         return result
 
     @classmethod
-    def exists(cls, organization_id: int, collaboration_id: int) -> bool:
+    def exists_by_id(cls, organization_id: int, collaboration_id: int) -> bool:
         """
         Check if a node exists for the given organization and collaboration.
 
