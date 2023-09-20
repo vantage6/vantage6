@@ -4,7 +4,7 @@ Release notes
 4.0.0
 -----
 
-*18 September 2023*
+*20 September 2023*
 
 - **Security**
 
