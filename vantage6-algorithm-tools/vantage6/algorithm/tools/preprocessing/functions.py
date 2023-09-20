@@ -7,6 +7,7 @@ from datetime import date
 from typing import Dict, List, Optional, Union
 
 import pandas as pd
+import numpy as np
 
 
 def _extract_columns(
@@ -1405,3 +1406,156 @@ def group_statistics(
 
     # Add the statistics back to the original DataFrame
     return pd.concat([df, stats], axis=1)
+
+
+def impute(
+    df: pd.DataFrame,
+    missing_values: Union[str, int, float] = np.nan,
+    strategy: str = "mean",
+    fill_value: Optional[Union[str, int, float]] = None,
+    columns: Optional[List[str]] = None,
+) -> pd.DataFrame:
+    """
+    Impute missing values in a DataFrame. Note that this function will impute
+    only using local information, i.e. the imputed values will be calculated
+    based on the values in the dataset at the node. It will not calculate
+    global statistics and impute based on those.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The input DataFrame.
+    missing_values : Union[str, int, float], default='NaN'
+        The placeholder for the missing values.
+    strategy : str, default='mean'
+        The imputation strategy. Options include "mean", "median", "most_frequent", and "constant".
+    fill_value : Union[str, int, float], default=None
+        When strategy == "constant", fill_value is used to replace all missing values.
+    columns : List[str], default=None
+        List of columns to apply the imputation to. If None, imputation is applied to all columns.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with imputed values.
+
+    Example
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> df = pd.DataFrame({
+    ...     'A': [1, 2, np.nan, 4, 5],
+    ...     'B': [5, 4, 3, 2, np.nan],
+    ...     'C': [3, np.nan, np.nan, np.nan, np.nan]
+    ... })
+    >>> impute(df)
+         A    B    C
+    0  1.0  5.0  3.0
+    1  2.0  4.0  3.0
+    2  3.0  3.0  3.0
+    3  4.0  2.0  3.0
+    4  5.0  3.5  3.0
+    """
+
+    if columns is None:
+        columns = df.columns
+
+    for col in columns:
+        if strategy == "mean":
+            imputed_value = df[col].mean()
+        elif strategy == "median":
+            imputed_value = df[col].median()
+        elif strategy == "most_frequent":
+            imputed_value = df[col].mode().iloc[0]
+        elif strategy == "constant":
+            imputed_value = fill_value
+        else:
+            raise ValueError(f"Invalid strategy: {strategy}")
+
+        df[col].replace({missing_values: imputed_value}, inplace=True)
+
+    return df
+
+
+def filter_by_date(
+    df: pd.DataFrame,
+    datetime_column: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    keep_between: bool = True,
+    fmt: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Filters a DataFrame based on a datetime column within a given start and end date.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The input DataFrame.
+    datetime_column : str
+        The column containing datetime information.
+    start_date : Optional[str]
+        The start date for filtering. Format should follow `fmt`.
+    end_date : Optional[str]
+        The end date for filtering. Format should follow `fmt`.
+    keep_between : bool, default=True
+        If True, keep rows between start and end date. If False, keep rows outside the interval.
+    fmt : Optional[str]
+        The datetime format to use for parsing dates.
+
+    Returns
+    -------
+    pd.DataFrame
+        The filtered DataFrame.
+
+    Example
+    -------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({
+    ...     'date': ['2021-01-01', '2021-01-02', '2021-01-03', '2021-01-04'],
+    ...     'value': [1, 2, 3, 4]
+    ... })
+    >>> filter_by_date(df, 'date', start_date='2021-01-02', end_date='2021-01-03')
+            date  value
+    1 2021-01-02      2
+    2 2021-01-03      3
+    >>> filter_by_date(df, 'date', start_date='2021-01-02', end_date='2021-01-03',
+    ... keep_between=False)
+            date  value
+    0 2021-01-01      1
+    3 2021-01-04      4
+    """
+    if start_date is None and end_date is None:
+        raise ValueError(
+            "At least one of start_date or end_date must be provided."
+        )
+
+    # Convert the datetime_column to datetime type
+    df[datetime_column] = pd.to_datetime(df[datetime_column], format=fmt)
+
+    if start_date:
+        start_date = pd.Timestamp(start_date)
+
+    if end_date:
+        end_date = pd.Timestamp(end_date)
+
+    if keep_between:
+        if start_date and end_date:
+            mask = (df[datetime_column] >= start_date) & (
+                df[datetime_column] <= end_date
+            )
+        elif start_date:
+            mask = df[datetime_column] >= start_date
+        else:
+            mask = df[datetime_column] <= end_date
+    else:
+        if start_date and end_date:
+            mask = (df[datetime_column] < start_date) | (
+                df[datetime_column] > end_date
+            )
+        elif start_date:
+            mask = df[datetime_column] < start_date
+        else:
+            mask = df[datetime_column] > end_date
+
+    return df[mask]
