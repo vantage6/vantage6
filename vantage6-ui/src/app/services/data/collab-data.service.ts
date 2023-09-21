@@ -11,11 +11,19 @@ import { ConvertJsonService } from '../common/convert-json.service';
 import { BaseDataService } from './base-data.service';
 import { arrayContains, deepcopy } from 'src/app/shared/utils';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
-import { OpsType, ResType } from 'src/app/shared/enum';
-import { NodeDataService } from './node-data.service';
-import { OrgDataService } from './org-data.service';
+import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { Resource } from 'src/app/shared/types';
+import {
+  Pagination,
+  allPages,
+  defaultFirstPage,
+} from 'src/app/interfaces/utils';
+import { OrgDataService } from './org-data.service';
+import { NodeDataService } from './node-data.service';
 
+/**
+ * Service for retrieving and updating collaboration data.
+ */
 @Injectable({
   providedIn: 'root',
 })
@@ -27,92 +35,93 @@ export class CollabDataService extends BaseDataService {
     protected collabApiService: CollabApiService,
     protected convertJsonService: ConvertJsonService,
     private userPermission: UserPermissionService,
+    private orgDataService: OrgDataService,
     private nodeDataService: NodeDataService,
-    private orgDataService: OrgDataService
   ) {
     super(collabApiService, convertJsonService);
-    this.resource_list.subscribe((resources) => {
-      // When the list of all resources is updated, ensure that sublists of
-      // observables are also updated
-
-      // update the observables per org
-      this.updateObsPerOrg(resources);
-
-      // update observables that are gotten one by one
-      this.updateObsById(resources);
-
-      // update the observables per collab
-      this.updateObsPerCollab(resources);
-    });
   }
 
-  async getDependentResources() {
-    (await this.nodeDataService.list()).subscribe((nodes) => {
-      this.nodes = nodes;
-      this.updateNodes();
-    });
-    (await this.orgDataService.list()).subscribe((orgs) => {
-      this.organizations = orgs;
-      this.updateOrganizations();
-    });
-    return [this.organizations, this.nodes];
-  }
-
-  updateObsPerOrg(resources: Resource[]) {
-    // collaborations should be updated in slightly different way from super
-    // function as they contain multiple organizations and also (as consequence)
-    // we could also have incomplete data for specific organizations
-    if (!this.requested_org_lists) return;
-    for (let org_id of this.requested_org_lists) {
-      if (org_id in this.resources_per_org) {
-        this.resources_per_org[org_id].next(
-          this.getCollabsForOrgId(resources as Collaboration[], org_id)
-        );
-      } else {
-        this.resources_per_org[org_id] = new BehaviorSubject<Resource[]>(
-          this.getCollabsForOrgId(resources as Collaboration[], org_id)
-        );
-      }
-    }
-  }
-
-  private getCollabsForOrgId(
-    resources: Collaboration[],
-    org_id: number
-  ): Resource[] {
-    let org_resources: Resource[] = [];
-    for (let r of resources) {
-      if (arrayContains(r.organization_ids, org_id)) {
-        org_resources.push(r);
-      }
-    }
-    return org_resources;
-  }
-
+  /**
+   * Get a collaboration by id. If the collaboration is not in the cache,
+   * it will be requested from the vantage6 server.
+   *
+   * @param id The id of the collaboration to get.
+   * @param include_links Whether to include the organizations and nodes
+   * associated with the collaboration.
+   * @param force_refresh Whether to force a refresh of the cache.
+   * @returns An observable of the collaboration.
+   */
   async get(
     id: number,
+    include_links: boolean = false,
     force_refresh: boolean = false
   ): Promise<Observable<Collaboration>> {
-    return (await super.get_base(
-      id,
-      this.convertJsonService.getCollaboration,
-      force_refresh
-    )) as Observable<Collaboration>;
+    let collab = (
+      await super.get_base(
+        id,
+        this.convertJsonService.getCollaboration,
+        force_refresh
+      )
+    ) as BehaviorSubject<Collaboration>;
+    if (include_links) {
+      let collab_val = collab.value;
+      // request the organizations for the current collaboration
+      if (this.userPermission.hasMininimalPermission(
+        OpsType.VIEW, ResType.ORGANIZATION, ScopeType.COLLABORATION)
+      ){
+        (await this.orgDataService.list_with_params(
+          allPages(),
+          { collaboration_id: collab_val.id }
+        )).subscribe((orgs) => {
+          collab_val.organizations = orgs;
+        });
+      }
+      if (this.userPermission.hasMininimalPermission(
+        OpsType.VIEW, ResType.NODE, ScopeType.COLLABORATION)
+      ){
+        // request the nodes for the current collaboration
+        (await this.nodeDataService.list_with_params(allPages(), {
+          collaboration_id: collab_val.id,
+        })).subscribe((nodes) => {
+          this.addNodesToCollaboration(collab_val, nodes);
+        });
+      }
+    }
+    return collab.asObservable() as Observable<Collaboration>;
   }
 
+  /**
+   * Get all collaborations. If the collaborations are not in the cache,
+   * they will be requested from the vantage6 server.
+   *
+   * @param force_refresh Whether to force a refresh of the cache.
+   * @param pagination The pagination parameters.
+   * @returns An observable of the collaborations.
+   */
   async list(
-    force_refresh: boolean = false
+    force_refresh: boolean = false,
+    pagination: Pagination = defaultFirstPage()
   ): Promise<Observable<Collaboration[]>> {
-    let collaborations = (await super.list_base(
+    return (await super.list_base(
       this.convertJsonService.getCollaboration,
+      pagination,
       force_refresh
-    )) as Observable<Collaboration[]>;
-    return collaborations;
+    )).asObservable() as Observable<Collaboration[]>;
   }
 
+  /**
+   * Get all collaborations for an organization. If the collaborations are
+   * not in the cache, they will be requested from the vantage6 server.
+   *
+   * @param organization_id The id of the organization.
+   * @param force_refresh Whether to force a refresh of the cache.
+   * @param pagination The pagination parameters.
+   * @returns An observable of the organization's collaborations.
+   */
   async org_list(
     organization_id: number,
-    force_refresh: boolean = false
+    force_refresh: boolean = false,
+    pagination: Pagination = allPages()
   ): Promise<Observable<Collaboration[]>> {
     // TODO when is following if statement necessary?
     if (
@@ -127,24 +136,56 @@ export class CollabDataService extends BaseDataService {
     return (await super.org_list_base(
       organization_id,
       this.convertJsonService.getCollaboration,
+      pagination,
       force_refresh
-    )) as Observable<Collaboration[]>;
+    )).asObservable() as Observable<Collaboration[]>;
   }
 
-  updateNodes(): void {
-    let collabs = deepcopy(this.resource_list.value);
+  /**
+   * Get all collaborations with the given parameters. If the collaborations
+   * are not in the cache, they will be requested from the vantage6 server.
+   *
+   * @param pagination The pagination parameters.
+   * @param request_params The parameters to filter the collaborations by.
+   * @returns An observable of the collaborations.
+   */
+  async list_with_params(
+    pagination: Pagination = allPages(),
+    request_params: any = {}
+  ): Promise<Observable<Collaboration[]>> {
+    return (await super.list_with_params_base(
+      this.convertJsonService.getCollaboration,
+      request_params,
+      pagination,
+    )).asObservable() as Observable<Collaboration[]>;
+  }
+
+  /**
+   * Update the nodes of the given collaborations.
+   *
+   * @param collabs The collaborations to update.
+   */
+  updateNodes(collabs: Collaboration[]): void {
     this.deleteNodesFromCollaborations(collabs);
     this.addNodesToCollaborations(collabs, this.nodes);
-    this.resource_list.next(collabs);
   }
 
-  updateOrganizations(): void {
-    let collabs = deepcopy(this.resource_list.value);
+  /**
+   * Update the organizations of the given collaborations.
+   *
+   * @param collabs The collaborations to update.
+   */
+  updateOrganizations(collabs: Collaboration[]): void {
     this.deleteOrgsFromCollaborations(collabs);
     this.addOrgsToCollaborations(collabs, this.organizations);
-    this.resource_list.next(collabs);
   }
 
+  /**
+   * Add the given organizations to the given collaborations.
+   *
+   * @param collabs The collaborations to add the organizations to.
+   * @param orgs The organizations to add to the collaborations.
+   */
   addOrgsToCollaborations(
     collabs: Collaboration[],
     orgs: OrganizationInCollaboration[]
@@ -154,6 +195,12 @@ export class CollabDataService extends BaseDataService {
     }
   }
 
+  /**
+   * Add the given organizations to the given collaboration.
+   *
+   * @param c The collaboration to add the organizations to.
+   * @param orgs The organizations to add to the collaboration.
+   */
   addOrgsToCollaboration(
     c: Collaboration,
     orgs: OrganizationInCollaboration[]
@@ -167,12 +214,24 @@ export class CollabDataService extends BaseDataService {
     }
   }
 
+  /**
+   * Add the given nodes to the given collaborations.
+   *
+   * @param collabs The collaborations to add the nodes to.
+   * @param nodes The nodes to add to the collaborations.
+   */
   addNodesToCollaborations(collabs: Collaboration[], nodes: Node[]): void {
     for (let c of collabs) {
       this.addNodesToCollaboration(c, nodes);
     }
   }
 
+  /**
+   * Add the given nodes to the given collaboration.
+   *
+   * @param c The collaboration to add the nodes to.
+   * @param nodes The nodes to add to the collaboration.
+   */
   addNodesToCollaboration(c: Collaboration, nodes: Node[]): void {
     for (let o of c.organizations) {
       for (let n of nodes) {
@@ -183,22 +242,42 @@ export class CollabDataService extends BaseDataService {
     }
   }
 
+  /**
+   * Delete the organizations from the given collaborations.
+   *
+   * @param collabs The collaborations to delete the organizations from.
+   */
   deleteOrgsFromCollaborations(collabs: Collaboration[]): void {
     for (let c of collabs) {
       this.deleteOrgsFromCollaboration(c);
     }
   }
 
+  /**
+   * Delete the organizations from the given collaboration.
+   *
+   * @param c The collaboration to delete the organizations from.
+   */
   deleteOrgsFromCollaboration(c: Collaboration): void {
     c.organizations = [];
   }
 
+  /**
+   * Delete the nodes from the given collaborations.
+   *
+   * @param collabs The collaborations to delete the nodes from.
+   */
   deleteNodesFromCollaborations(collabs: Collaboration[]): void {
     for (let c of collabs) {
       this.deleteNodesFromCollaboration(c);
     }
   }
 
+  /**
+   * Delete the nodes from the given collaboration.
+   *
+   * @param c The collaboration to delete the nodes from.
+   */
   deleteNodesFromCollaboration(c: Collaboration): void {
     for (let o of c.organizations) {
       o.node = undefined;

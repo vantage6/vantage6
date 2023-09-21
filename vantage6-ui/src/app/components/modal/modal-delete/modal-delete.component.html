@@ -2,9 +2,9 @@
     <p><strong>
         Are you sure you want to delete {{ getDeleteText() }}?
     </strong></p>
-    <p *ngIf="extra_message!==null">
-        {{extra_message}}
-    </p>
+    <div *ngIf="extra_message!==null">
+        <p [innerHTML]="extra_message"></p>
+    </div>
     <p>
         This operation cannot be undone.
     </p>

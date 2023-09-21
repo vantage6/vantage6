@@ -87,11 +87,11 @@ export class TaskViewSingleComponent
   }
 
   async setInitiatingUser() {
-    (await this.userDataService.get(this.task.init_user_id)).subscribe(
-      (user) => {
-        this.task.init_user = user;
-      }
-    );
+    (
+      await this.userDataService.get(this.task.init_user_id, true)
+    ).subscribe((user) => {
+      this.task.init_user = user;
+    });
   }
 
   async setCollaboration() {

@@ -6,6 +6,7 @@ import { OrganizationInCollaboration } from 'src/app/interfaces/organization';
 import { ModalService } from 'src/app/services/common/modal.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { TableComponent } from '../base-table/table.component';
+import { Pagination, defaultFirstPage } from 'src/app/interfaces/utils';
 
 @Component({
   selector: 'app-collaboration-table',
@@ -28,22 +29,26 @@ export class CollaborationTableComponent
     private collabDataService: CollabDataService,
     protected modalService: ModalService
   ) {
-    super(activatedRoute, userPermission, modalService);
+    super(activatedRoute, userPermission, modalService, collabDataService);
   }
 
   async init() {
     this.readRoute();
   }
 
-  async setResources(): Promise<void> {
+  async setResources(force_refresh: boolean = false): Promise<void> {
     if (this.isShowingSingleOrg()) {
       (
-        await this.collabDataService.org_list(this.route_org_id as number)
+        await this.collabDataService.org_list(
+          this.route_org_id as number,
+          force_refresh,
+          this.page
+        )
       ).subscribe((collabs) => {
         this.resources = collabs;
       });
     } else {
-      (await this.collabDataService.list()).subscribe(
+      (await this.collabDataService.list(force_refresh, this.page)).subscribe(
         (collabs: Collaboration[]) => {
           this.resources = collabs;
         }

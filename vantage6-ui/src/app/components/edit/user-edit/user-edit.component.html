@@ -96,14 +96,18 @@
     </tr>
     <tr *ngIf="user.organization">
       <td>Organization:</td>
-      <td>{{user.organization.name}}</td>
+      <td>
+        <button mat-button class="btn btn-link inline">
+          {{user.organization.name}}
+        </button>
+      </td>
     </tr>
   </table>
   <div *ngIf="user.id!==loggedin_user.id && can_assign_roles_rules">
     <app-permission-table
         [given_roles]="user.roles"
         [given_rules]="user.rules"
-        [loggedin_user_rules]="userPermission.userRules"
+        [loggedin_user_rules]="userPermission.user.rules"
         [is_edit_mode]="true"
         (addedRulesChangeEvent)="updateAddedRules($event)"
     ></app-permission-table>

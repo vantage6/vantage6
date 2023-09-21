@@ -107,7 +107,7 @@
       </td>
       <td>
         <input type="text" [(ngModel)]="task_input.args[idx]"
-          (ngModelChange)="checkAddArgsBox()"/>
+          (ngModelChange)="checkAddBox(task_input.args)"/>
       </td>
     </tr>
     <tr *ngFor="let kwarg of task_input.kwargs; let idx = index; trackBy: trackArgsFunc">
@@ -121,29 +121,15 @@
         <input type="text" [(ngModel)]="kwarg.value" (ngModelChange)="checkAddKwargsBox()"/>
       </td>
     </tr>
-    <tr>
-      <td>Database:</td>
-      <td><input [(ngModel)]="task.database"/></td>
+    <tr *ngFor="let arg of task.databases; let idx = index; trackBy: trackArgsFunc">
+      <td>
+        <div *ngIf="idx===0">Databases:</div>
+      </td>
+      <td>
+        <input type="text" [(ngModel)]="task.databases[idx]"
+        (ngModelChange)="checkAddBox(task.databases)"/>
+      </td>
     </tr>
-    <!-- <tr>
-      <td>Output format:</td>
-      <td>
-        <mat-radio-group class="serialize-radio-group" [(ngModel)]="task_input.output_format">
-          <mat-radio-button class="serialize-radio-button1" value="json" name="json">JSON</mat-radio-button>
-          <mat-radio-button class="serialize-radio-button2" value="pickle" name="pickle">Pickle</mat-radio-button>
-        </mat-radio-group>
-      </td>
-    </tr> -->
-    <!-- TODO enable serialization choice here? Cannot serialize (at least to pickle as that requires python) -->
-    <!-- <tr>
-      <td>Data serialization:</td>
-      <td>
-        <mat-radio-group class="serialize-radio-group" [(ngModel)]="task.data_format">
-          <mat-radio-button class="serialize-radio-button1" value="legacy" name="legacy">Pickle (default)</mat-radio-button>
-          <mat-radio-button class="serialize-radio-button2" value="json" name="json">JSON</mat-radio-button>
-        </mat-radio-group>
-      </td>
-    </tr> -->
   </table>
   <div class="warning">
     {{ warning_message_master }}

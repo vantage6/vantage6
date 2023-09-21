@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Result } from 'src/app/interfaces/result';
+import { Run } from 'src/app/interfaces/run';
 import { ResType } from 'src/app/shared/enum';
 import { environment } from 'src/environments/environment';
 import { ConvertJsonService } from '../common/convert-json.service';
@@ -9,18 +9,18 @@ import { BaseApiService } from './base-api.service';
 import { Observable } from 'rxjs';
 
 /**
- * Service for interacting with the result endpoints of the API
+ * Service for interacting with the run endpoints of the API
  */
 @Injectable({
   providedIn: 'root',
 })
-export class ResultApiService extends BaseApiService {
+export class RunApiService extends BaseApiService {
   constructor(
     protected http: HttpClient,
     protected modalService: ModalService,
     private convertJsonService: ConvertJsonService
   ) {
-    super(ResType.RESULT, http, modalService);
+    super(ResType.RUN, http, modalService);
   }
 
   /**
@@ -30,7 +30,7 @@ export class ResultApiService extends BaseApiService {
    * @returns An observable for the request response.
    */
   get_by_task_id(task_id: number): Observable<any> {
-    return this.http.get(environment.api_url + '/result', {
+    return this.http.get(environment.api_url + '/run', {
       params: { task_id: task_id },
     });
   }
@@ -40,9 +40,9 @@ export class ResultApiService extends BaseApiService {
    * useful for algorithm runs, since they should not be updated via this
    * user interface.
    */
-  get_data(result: Result): any {
+  get_data(run: Run): any {
     // raise error if this function is called
-    throw new Error('Algorithm results cannot be updated by the user.');
+    throw new Error('Algorithm runs cannot be updated by the user interface.');
   }
 
   /**
@@ -51,15 +51,15 @@ export class ResultApiService extends BaseApiService {
    * @param task_id The id of the task for which to get the algorithm runs.
    * @returns An array of algorithm runs.
    */
-  async getResourcesByTaskId(task_id: number): Promise<Result[]> {
+  async getResourcesByTaskId(task_id: number): Promise<Run[]> {
     // get data of resources that logged-in user is allowed to view
     let response: any = await this.get_by_task_id(task_id).toPromise();
     let json_data = response.data;
 
-    let results: Result[] = [];
+    let runs: Run[] = [];
     for (let dic of json_data) {
-      results.push(this.convertJsonService.getAlgorithmResult(dic));
+      runs.push(this.convertJsonService.getAlgorithmRun(dic));
     }
-    return results;
+    return runs;
   }
 }

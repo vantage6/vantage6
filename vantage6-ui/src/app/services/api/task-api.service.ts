@@ -4,8 +4,10 @@ import { BaseApiService } from './base-api.service';
 import { Task } from 'src/app/interfaces/task';
 import { HttpClient } from '@angular/common/http';
 import { ModalService } from '../common/modal.service';
-import { getIdsFromArray } from 'src/app/shared/utils';
 
+/**
+ * Service for interacting with the task endpoints of the API
+ */
 @Injectable({
   providedIn: 'root',
 })
@@ -17,6 +19,12 @@ export class TaskApiService extends BaseApiService {
     super(ResType.TASK, http, modalService);
   }
 
+  /**
+   * Get data for creating a task in the API.
+   *
+   * @param task The task object to get the data for.
+   * @returns A dictionary with the data for creating the task.
+   */
   get_data(task: Task): any {
     if (!task.input || !task.organizations) {
       return; // this is only for creating tasks, which requires input
@@ -44,8 +52,16 @@ export class TaskApiService extends BaseApiService {
     for (let org of task.organizations) {
       org_input.push({
         id: org.id,
-        input: btoa('json.' + JSON.stringify(input)),
+        input: btoa(JSON.stringify(input)),
       });
+    }
+
+    let databases: string[] = task.databases;
+    if (!databases) {
+      databases = ['default'];
+    } else {
+      // delete any empty strings
+      databases = databases.filter((db) => db);
     }
 
     // TODO add encryption option
@@ -55,8 +71,7 @@ export class TaskApiService extends BaseApiService {
       image: task.image,
       organizations: org_input,
       collaboration_id: collab_id,
-      database: task.database,
-      input: input,
+      databases: databases,
     };
     return data;
   }

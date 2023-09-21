@@ -32,7 +32,7 @@
   <app-permission-table
     [given_roles]="[]"
     [given_rules]="role.rules"
-    [loggedin_user_rules]="userPermission.userRules"
+    [loggedin_user_rules]="userPermission.user.rules"
     [is_edit_mode]="true"
     (addedRulesChangeEvent)="updateAddedRules($event)"
   ></app-permission-table>

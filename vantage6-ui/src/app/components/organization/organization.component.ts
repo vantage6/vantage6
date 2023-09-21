@@ -28,11 +28,11 @@ import { UtilsService } from 'src/app/services/common/utils.service';
 import { OrgDataService } from 'src/app/services/data/org-data.service';
 import { RoleDataService } from 'src/app/services/data/role-data.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
-import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { Collaboration } from 'src/app/interfaces/collaboration';
 import { FileService } from 'src/app/services/common/file.service';
+import { allPages, defaultFirstPage } from 'src/app/interfaces/utils';
 
 @Component({
   selector: 'app-organization',
@@ -49,8 +49,6 @@ export class OrganizationComponent implements OnInit {
   loggedin_user: User = EMPTY_USER;
   users: User[] = [];
   roles: Role[] = [];
-  rules: Rule[] = [];
-  nodes: Node[] = [];
   organization_nodes: Node[] = [];
   collaborations: Collaboration[] = [];
   MAX_ITEMS_DISPLAY: number = 5;
@@ -63,7 +61,6 @@ export class OrganizationComponent implements OnInit {
     private orgDataService: OrgDataService,
     private userDataService: UserDataService,
     public roleDataService: RoleDataService,
-    private ruleDataService: RuleDataService,
     private nodeDataService: NodeDataService,
     private collabDataService: CollabDataService,
     private modalService: ModalService,
@@ -82,10 +79,6 @@ export class OrganizationComponent implements OnInit {
 
   async init(): Promise<void> {
     this.loggedin_user = this.userPermission.user;
-    // get rules
-    (await this.ruleDataService.list()).subscribe((rules) => {
-      this.rules = rules;
-    });
     this.activatedRoute.paramMap.subscribe((params) => {
       let new_id = this.utilsService.getId(params, ResType.ORGANIZATION);
       if (new_id === EMPTY_ORGANIZATION.id) {
@@ -99,9 +92,11 @@ export class OrganizationComponent implements OnInit {
   }
 
   async setup() {
-    (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
-      this.organizations = orgs;
-    });
+    (await this.orgDataService.list(false, allPages())).subscribe(
+      (orgs: Organization[]) => {
+        this.organizations = orgs;
+      }
+    );
 
     // get all organizations that the user is allowed to see
     this.current_organization = getById(this.organizations, this.route_org_id);
@@ -147,6 +142,9 @@ export class OrganizationComponent implements OnInit {
       this.onRenewalRoles();
     });
 
+    // collect users for current organization
+    await this.setUsers();
+
     // collect collaborations for current organization
     await this.setCollaborations();
 
@@ -156,13 +154,11 @@ export class OrganizationComponent implements OnInit {
     this.modalService.closeLoadingModal();
   }
 
-  async onRenewalRoles() {
-    this.roles = await this.sortRoles(this.roles);
-    // collect users for current organization // TODO can we not set these separately?
-    this.setUsers();
+  onRenewalRoles() {
+    this.roles = this.sortRoles(this.roles);
   }
 
-  async sortRoles(roles: Role[]): Promise<Role[]> {
+  sortRoles(roles: Role[]): Role[] {
     //sort roles: put roles of current organization first, then generic roles
     roles.sort((a, b) => b.organization_id - a.organization_id);
     return roles;
@@ -186,27 +182,12 @@ export class OrganizationComponent implements OnInit {
         this.organization_nodes = org_nodes;
       }
     );
-
-    // obtain the nodes relevant to the collaborations
-    this.nodes = [];
-    for (let collab of this.collaborations) {
-      (await this.nodeDataService.collab_list(collab.id)).subscribe((nodes) => {
-        this.nodes = filterArrayByProperty(
-          this.nodes,
-          'collaboration_id',
-          collab.id,
-          false
-        );
-        this.nodes.push(...nodes);
-      });
-    }
-    this.nodes = removeDuplicateIds(this.nodes);
   }
 
   async setCollaborations(): Promise<void> {
-    (
-      await this.collabDataService.org_list(this.current_organization.id)
-    ).subscribe((collabs) => {
+    (await this.collabDataService.list_with_params(
+      defaultFirstPage(), {'organization_id': this.route_org_id}
+    )).subscribe((collabs) => {
       this.collaborations = collabs;
     });
   }
@@ -217,10 +198,6 @@ export class OrganizationComponent implements OnInit {
 
   deleteUser(user: User): void {
     this.users = removeMatchedIdFromArray(this.users, user.id);
-  }
-
-  deleteNode(node: Node): void {
-    this.nodes = removeMatchedIdFromArray(this.nodes, node.id);
   }
 
   async deleteRole(role: Role): Promise<void> {
@@ -241,7 +218,8 @@ export class OrganizationComponent implements OnInit {
     // delete nodes of collaboration
     for (let org of col.organizations) {
       if (org.node) {
-        removeMatchedIdFromArray(this.nodes, org.node.id);
+        this.organization_nodes = removeMatchedIdFromArray(
+          this.organization_nodes, org.node.id);
       }
     }
     // delete collaboration

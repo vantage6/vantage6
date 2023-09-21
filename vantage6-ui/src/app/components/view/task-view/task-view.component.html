@@ -31,12 +31,12 @@
     </td>
   </tr>
   <tr>
-    <td>Run id:</td>
-    <td>{{task.run_id}}</td>
+    <td>Job id:</td>
+    <td>{{task.job_id}}</td>
   </tr>
   <tr>
-      <td>Database:</td>
-      <td>{{getDatabaseName()}}</td>
+      <td>Databases:</td>
+      <td>{{getDatabaseNames()}}</td>
   </tr>
   <tr>
       <td>Status:</td>
@@ -110,28 +110,28 @@
         (click)="askConfirmKill()">
   Kill this task
 </button>
-<h5>Results</h5>
-<ng-container *ngIf="results.length > 1; else singleResultBlock">
-  <div *ngFor="let result of results">
+<h5>Algorithm runs</h5>
+<ng-container *ngIf="runs.length > 1; else singleRunBlock">
+  <div *ngFor="let run of runs">
     <mat-expansion-panel>
       <mat-expansion-panel-header>
         <mat-panel-title>
-          {{getResultPanelTitle(result)}}
+          {{getRunPanelTitle(run)}}
         </mat-panel-title>
       </mat-expansion-panel-header>
-      <app-result-view
-        [result]="result"
-      ></app-result-view>
+      <app-run-view
+        [run]="run"
+      ></app-run-view>
     </mat-expansion-panel>
   </div>
 </ng-container>
-<ng-template #singleResultBlock>
-  <ng-container *ngIf="results.length === 1; else noResultBlock">
-    <app-result-view
-      [result]="results[0]"
-    ></app-result-view>
+<ng-template #singleRunBlock>
+  <ng-container *ngIf="runs.length === 1; else noRunBlock">
+    <app-run-view
+      [run]="runs[0]"
+    ></app-run-view>
   </ng-container>
 </ng-template>
-<ng-template #noResultBlock>
-    There are no results available for this task!
+<ng-template #noRunBlock>
+    There are no algorithm runs available for this task!
 </ng-template>

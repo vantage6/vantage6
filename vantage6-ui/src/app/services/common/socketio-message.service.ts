@@ -12,6 +12,7 @@ import { Sentiment, TaskStatus } from 'src/app/shared/enum';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { TaskDataService } from '../data/task-data.service';
 import { take } from 'rxjs/operators';
+import { allPages } from 'src/app/interfaces/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -56,12 +57,14 @@ export class SocketioMessageService {
   }
 
   async setupResources() {
-    (await this.orgDataService.list()).subscribe((orgs) => {
+    (await this.orgDataService.list(false, allPages())).subscribe((orgs) => {
       this.organizations = orgs;
     });
-    (await this.collabDataService.list()).subscribe((collabs) => {
-      this.collaborations = collabs;
-    });
+    (await this.collabDataService.list(false, allPages())).subscribe(
+      (collabs) => {
+        this.collaborations = collabs;
+      }
+    );
   }
 
   getSocketMessages() {
@@ -122,12 +125,12 @@ export class SocketioMessageService {
     let collab_name = this.getCollabName(data.collaboration_id);
     if (status === TaskStatus.ACTIVE) {
       return (
-        `An algorithm (result_id ${data.result_id}) was just started on ` +
+        `An algorithm (run_id ${data.run_id}) was just started on ` +
         `a node of organization ${org_name} in collaboration ${collab_name}`
       );
     } else if (status === TaskStatus.COMPLETED) {
       return (
-        `An algorithm (result_id ${data.result_id}) just finished for collaboration` +
+        `An algorithm (run_id ${data.run_id}) just finished for collaboration` +
         ` ${collab_name} (organization ${org_name})`
       );
     } else if (
@@ -135,7 +138,7 @@ export class SocketioMessageService {
       status !== TaskStatus.INITIALIZING
     ) {
       return (
-        `An algorithm (result_id ${data.result_id}) just failed for collaboration` +
+        `An algorithm (run_id ${data.run_id}) just failed for collaboration` +
         ` ${collab_name} (organization ${org_name}) with status: ${status}`
       );
     }

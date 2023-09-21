@@ -1,4 +1,4 @@
-import { Result } from 'src/app/interfaces/result';
+import { Run } from 'src/app/interfaces/run';
 import { ResType } from '../shared/enum';
 import { deepcopy } from '../shared/utils';
 import { Collaboration } from './collaboration';
@@ -13,17 +13,17 @@ export interface Task {
   image: string;
   collaboration_id: number;
   collaboration?: Collaboration;
-  run_id: number;
+  job_id: number;
   parent_id: number | null;
   parent?: Task;
-  database: string;
+  databases: string[];
   initiator_id: number;
   init_org?: Organization;
   init_user_id: number;
   init_user?: User;
   children_ids: number[];
   children?: Task[];
-  results?: Result[];
+  runs?: Run[];
   complete: boolean;
   // data_format?: string;
   input?: TaskInput;
@@ -51,11 +51,11 @@ export const EMPTY_TASK: Task = {
   name: '',
   description: '',
   image: '',
-  database: '',
+  databases: [],
   collaboration_id: -1,
   initiator_id: -1,
   init_user_id: -1,
-  run_id: -1,
+  job_id: -1,
   parent_id: -1,
   children_ids: [],
   complete: false,

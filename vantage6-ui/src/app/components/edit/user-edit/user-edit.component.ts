@@ -21,6 +21,7 @@ import {
   removeMatchedIdsFromArray,
 } from 'src/app/shared/utils';
 import { BaseEditComponent } from '../base-edit/base-edit.component';
+import { allPages } from 'src/app/interfaces/utils';
 
 @Component({
   selector: 'app-user-edit',
@@ -74,19 +75,18 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
   }
 
   async async_init() {
-    // collect roles and rules (which is required to collect users)
-    await this.setRoles();
-
     this.readRoute();
   }
 
   async setupCreate() {
     // collect roles and rules (which is required to collect users)
-    await this.setAssignableRoles();
+    await this.setRoles();
     if (!this.organization_id) {
-      (await this.orgDataService.list()).subscribe((orgs: Organization[]) => {
-        this.organizations = orgs;
-      });
+      (await this.orgDataService.list(false, allPages())).subscribe(
+        (orgs: Organization[]) => {
+          this.organizations = orgs;
+        }
+      );
     } else {
       (await this.orgDataService.get(this.organization_id)).subscribe((org) => {
         this.user.organization = org;
@@ -94,24 +94,36 @@ export class UserEditComponent extends BaseEditComponent implements OnInit {
     }
   }
 
-  async setRoles(): Promise<void> {
-    (await this.roleDataService.list()).subscribe((roles: Role[]) => {
+  async setRoles(org_id: number | null = null): Promise<void> {
+    let request;
+    if (org_id === null) {
+      request = await this.roleDataService.list(allPages(), true);
+    } else {
+      request = await this.roleDataService.org_list(org_id, true);
+    }
+    request.subscribe(async (roles: Role[]) => {
       this.roles_all = roles;
-      this.setAssignableRoles();
+      await this.setAssignableRoles();
     });
   }
 
   async setupEdit(id: number) {
     // collect roles and rules (which is required to collect users)
-    (await this.userDataService.get(id)).subscribe((user) => {
+    (await this.userDataService.get(id, true, true)).subscribe((user) => {
       if (user) {
         this.user = user;
         this.user_orig_name = this.user.username;
         this.organization_id = this.user.organization_id;
-        this.setAssignableRoles();
-        this.setOrganization();
+        this.setupEditSecondaryResources();
       }
     });
+  }
+
+  private async setupEditSecondaryResources(): Promise<void> {
+    await Promise.all([
+      this.setRoles(this.organization_id),
+      this.setOrganization(),
+    ]);
   }
 
   async setOrganization() {

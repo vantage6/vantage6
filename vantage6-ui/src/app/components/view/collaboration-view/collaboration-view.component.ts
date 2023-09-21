@@ -22,10 +22,12 @@ import { ConvertJsonService } from 'src/app/services/common/convert-json.service
 import { ModalService } from 'src/app/services/common/modal.service';
 import { CollabDataService } from 'src/app/services/data/collab-data.service';
 import { NodeDataService } from 'src/app/services/data/node-data.service';
-import { OpsType, ResType } from 'src/app/shared/enum';
-import { removeMatchedIdFromArray } from 'src/app/shared/utils';
+import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
+import { getIdsFromArray, removeMatchedIdFromArray } from 'src/app/shared/utils';
 import { BaseViewComponent } from '../base-view/base-view.component';
 import { TaskDataService } from 'src/app/services/data/task-data.service';
+import { OrgDataService } from 'src/app/services/data/org-data.service';
+import { allPages } from 'src/app/interfaces/utils';
 
 @Component({
   selector: 'app-collaboration-view',
@@ -54,15 +56,50 @@ export class CollaborationViewComponent
     protected collabApiService: CollabApiService,
     protected modalService: ModalService,
     private convertJsonService: ConvertJsonService,
-    private taskDataService: TaskDataService
+    private taskDataService: TaskDataService,
+    private orgDataService: OrgDataService,
   ) {
     super(collabApiService, collabDataService, modalService);
   }
 
   ngOnChanges(): void {
     if (this.collaboration !== undefined) {
-      this.setMissingNodes();
       this.setTasks();
+      this.addNodesAndOrgs();
+    }
+  }
+
+  private async addNodesAndOrgs() {
+    await this.setOrganizations();
+    await this.setNodes();
+    this.setMissingNodes();
+  }
+
+  private async setOrganizations() {
+    (await this.orgDataService.list_with_params(
+      allPages(), {collaboration_id: this.collaboration.id}
+    )).subscribe((orgs) => {
+      this.collaboration.organizations = orgs;
+      this.collaboration.organization_ids =
+        getIdsFromArray(this.collaboration.organizations);
+    });
+  }
+
+  private async setNodes() {
+    if (this.userPermission.hasMininimalPermission(
+      OpsType.VIEW, ResType.NODE, ScopeType.COLLABORATION)
+    ){
+      (await this.nodeDataService.list_with_params(
+        allPages(), {collaboration_id: this.collaboration.id}
+      )).subscribe((nodes) => {
+        for (let node of nodes){
+          for (let org of this.collaboration.organizations){
+            if (node.organization_id === org.id){
+              org.node = node;
+            }
+          }
+        }
+      });
     }
   }
 
@@ -167,21 +204,14 @@ configuration file for the node using 'vnode new'.`,
   }
 
   async delete(): Promise<void> {
-    // delete nodes
-    for (let org of this.collaboration.organizations) {
-      if (org.node) {
-        await this.nodeApiService.delete(org.node).toPromise();
-        this.nodeDataService.remove(org.node);
-      }
-    }
-    super.delete(this.collaboration);
+    super.delete(this.collaboration, {delete_dependents: true});
   }
 
   askConfirmDelete(): void {
     super.askConfirmDelete(
       this.collaboration,
       ResType.COLLABORATION,
-      'Note that any registered nodes in this collaboration will also be deleted.'
+      'Note that nodes and tasks from this collaboration will also be deleted!'
     );
   }
 }

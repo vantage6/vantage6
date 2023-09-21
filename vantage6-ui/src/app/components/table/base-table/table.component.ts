@@ -14,7 +14,9 @@ import { ActivatedRoute } from '@angular/router';
 import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { Organization } from 'src/app/interfaces/organization';
 import { EMPTY_USER, User } from 'src/app/interfaces/user';
+import { Pagination, defaultFirstPage } from 'src/app/interfaces/utils';
 import { ModalService } from 'src/app/services/common/modal.service';
+import { BaseDataService } from 'src/app/services/data/base-data.service';
 import { Resource, ResourceWithOrg } from 'src/app/shared/types';
 import {
   arrayContainsObjWithId,
@@ -43,6 +45,7 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
   current_organization: Organization | null = null;
   route_org_id: number | null = null;
   resources: Resource[] = [];
+  page: Pagination = defaultFirstPage();
 
   public dataSource = new MatTableDataSource<Resource>();
   selection = new SelectionModel<Resource>(true, []);
@@ -62,7 +65,8 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
   constructor(
     protected activatedRoute: ActivatedRoute,
     public userPermission: UserPermissionService,
-    protected modalService: ModalService
+    protected modalService: ModalService,
+    protected dataService: BaseDataService
   ) {}
 
   ngOnInit(): void {
@@ -77,15 +81,17 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
   }
 
   protected abstract init(): void;
-  protected abstract setResources(force_refresh: boolean): void;
+  protected abstract setResources(
+    force_refresh: boolean,
+    pagination: Pagination
+  ): void;
 
   async setup(force_refresh: boolean = false) {
-    await this.setResources(force_refresh);
+    await this.setResources(force_refresh, this.page);
 
     // TODO remove call when all setResources() subfunctions call this
     this.renewTable();
@@ -97,6 +103,15 @@ export abstract class TableComponent implements OnInit, AfterViewInit {
     this.dataSource.data = this.resources;
 
     this.modalService.closeLoadingModal();
+  }
+
+  async getPage(event: any) {
+    this.page = {
+      all_pages: false,
+      page: event.pageIndex + 1,
+      page_size: event.pageSize,
+    };
+    await this.setup();
   }
 
   async readRoute() {

@@ -3,16 +3,7 @@ import { Router } from '@angular/router';
 
 import { AuthService } from 'src/app/auth/services/auth.service';
 import { TokenStorageService } from 'src/app/services/common/token-storage.service';
-import { UserPermissionService } from 'src/app/auth/services/user-permission.service';
 import { environment } from 'src/environments/environment';
-
-let BACKGROUND_IMAGES = [
-  'cuppolone.jpg',
-  'taipei101.png',
-  'trolltunga.jpg',
-  // 'harukas2.jpg',
-  'petronas.jpg',
-];
 
 @Component({
   selector: 'app-login',
@@ -27,21 +18,21 @@ export class LoginComponent implements OnInit {
   isLoggedIn = false;
   isLoginFailed = false;
   errorMessage = '';
-  background_img = '';
+  server_url: string;
 
   constructor(
     private authService: AuthService,
     private tokenStorage: TokenStorageService,
-    private userPermission: UserPermissionService,
     private router: Router
-  ) {}
+  ) {
+    this.setServerURL();
+  }
 
   ngOnInit(): void {
     if (this.tokenStorage.getToken()) {
       this.isLoggedIn = true;
       this.router.navigateByUrl('/home');
     }
-    this.background_img = this._pickBackgroundImage();
   }
 
   onSubmit(): void {
@@ -91,14 +82,14 @@ export class LoginComponent implements OnInit {
     window.location.reload();
   }
 
-  private _pickBackgroundImage(): string {
-    // pick random background image
-    return BACKGROUND_IMAGES[
-      Math.floor(Math.random() * BACKGROUND_IMAGES.length)
-    ];
-  }
-
-  _getBackgroundImage() {
-    return `url('../assets/images/login_backgrounds/${this.background_img}')`;
+  private setServerURL(): void {
+    // find the server url. Take into account that the UI may be served from
+    // the same machine as the server, but remote from the user.
+    if (environment.api_url.includes('localhost') &&
+        window.location.hostname !== 'localhost'){
+      this.server_url = window.location.hostname + environment.api_path;
+    } else {
+      this.server_url = environment.api_url;
+    }
   }
 }

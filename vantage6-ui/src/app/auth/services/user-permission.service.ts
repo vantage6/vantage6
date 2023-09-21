@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
-import { arrayContainsObjWithId, deepcopy } from 'src/app/shared/utils';
+import { arrayContainsObjWithId } from 'src/app/shared/utils';
 
 import { TokenStorageService } from 'src/app/services/common/token-storage.service';
 import { Rule } from 'src/app/interfaces/rule';
@@ -11,6 +11,7 @@ import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { RuleDataService } from 'src/app/services/data/rule-data.service';
 import { UserDataService } from 'src/app/services/data/user-data.service';
 import { SocketioConnectService } from 'src/app/services/common/socketio-connect.service';
+import { allPages } from 'src/app/interfaces/utils';
 
 const PERMISSION_KEY = 'permissions-user';
 
@@ -20,7 +21,6 @@ const PERMISSION_KEY = 'permissions-user';
 export class UserPermissionService {
   user: User = EMPTY_USER;
   userBhs = new BehaviorSubject<User>(this.user);
-  userRules: Rule[] = [];
   userExtraRules: Rule[] = [];
   all_rules: Rule[] = [];
   ready = new BehaviorSubject<boolean>(false);
@@ -38,7 +38,7 @@ export class UserPermissionService {
 
   async setup(): Promise<void> {
     // request rules and roles
-    (await this.ruleDataService.list()).subscribe((rules: Rule[]) => {
+    (await this.ruleDataService.list(allPages())).subscribe((rules: Rule[]) => {
       this.all_rules = rules;
     });
 
@@ -175,31 +175,15 @@ export class UserPermissionService {
       return;
     }
 
-    // request the rules for the current user
-    (await this.userDataService.get(user_id)).subscribe((user) => {
+    // request the current user
+    (await this.userDataService.get(user_id, true)).subscribe((user) => {
       this.user = user;
       this.user.is_logged_in = true;
     });
 
-    await this._setPermissions(this.user);
+    await this.savePermissions(this.user.rules);
 
     this.userBhs.next(this.user);
-  }
-
-  private async _setPermissions(user: User) {
-    // remove any existing rules that may be present
-    this.userRules = [];
-
-    // add rules from the user rules and roles
-    this.userRules.push(...deepcopy(user.rules));
-    for (let role of user.roles) {
-      this.userRules.push(...role.rules);
-    }
-    // remove double rules
-    this.userRules = [...new Set(this.userRules)];
-
-    // save permissions
-    await this.savePermissions(this.userRules);
   }
 
   canAssignRole(role: Role): boolean {
@@ -219,7 +203,7 @@ export class UserPermissionService {
   }
 
   canAssignRule(rule: Rule): boolean {
-    return arrayContainsObjWithId(rule.id, this.userRules);
+    return arrayContainsObjWithId(rule.id, this.user.rules);
   }
 
   async getAssignableRoles(available_roles: Role[]): Promise<Role[]> {
@@ -250,7 +234,6 @@ export class UserPermissionService {
   clear(): void {
     this.user = EMPTY_USER;
     this.userBhs.next(this.user);
-    this.userRules = [];
     this.userExtraRules = [];
     this.ready.next(false);
   }

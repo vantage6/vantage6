@@ -2,13 +2,14 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
 import { Node } from 'src/app/interfaces/node';
-
 import { ModalService } from 'src/app/services/common/modal.service';
 import { ResType } from 'src/app/shared/enum';
 import { BaseApiService } from 'src/app/services/api/base-api.service';
 import { environment } from 'src/environments/environment';
-import { ModalMessageComponent } from 'src/app/components/modal/modal-message/modal-message.component';
 
+/**
+ * Service for interacting with the node endpoints of the API
+ */
 @Injectable({
   providedIn: 'root',
 })
@@ -20,6 +21,12 @@ export class NodeApiService extends BaseApiService {
     super(ResType.NODE, http, modalService);
   }
 
+  /**
+   * Reset the api key of a node via the API.
+   *
+   * @param node The node to reset the api key for.
+   * @returns The new api key, or null if the request failed.
+   */
   async reset_api_key(node: Node): Promise<string | null> {
     let data = { id: node.id };
     try {
@@ -33,6 +40,12 @@ export class NodeApiService extends BaseApiService {
     }
   }
 
+  /**
+   * Get the data to send to the API for updating or creating a node.
+   *
+   * @param node The node to get the data for.
+   * @returns The data to send to the API.
+   */
   get_data(node: Node): any {
     let data: any = {
       name: node.name,

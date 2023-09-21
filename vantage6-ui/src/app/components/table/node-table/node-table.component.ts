@@ -10,6 +10,11 @@ import { Collaboration } from 'src/app/interfaces/collaboration';
 import { deepcopy, getById, parseId } from 'src/app/shared/utils';
 import { OpsType, ResType, ScopeType } from 'src/app/shared/enum';
 import { ModalService } from 'src/app/services/common/modal.service';
+import {
+  Pagination,
+  allPages,
+  defaultFirstPage,
+} from 'src/app/interfaces/utils';
 
 export enum DisplayMode {
   COL = 'collaboration',
@@ -44,15 +49,16 @@ export class NodeTableComponent
     private collabDataService: CollabDataService,
     protected modalService: ModalService
   ) {
-    super(activatedRoute, userPermission, modalService);
+    super(activatedRoute, userPermission, modalService, nodeDataService);
   }
 
   async init(): Promise<void> {
-    (await this.orgDataService.list()).subscribe((orgs) => {
+    // TODO only get collabs and orgs that are in the nodes
+    (await this.orgDataService.list(false, allPages())).subscribe((orgs) => {
       this.organizations = orgs;
     });
 
-    (await this.collabDataService.list()).subscribe((cols) => {
+    (await this.collabDataService.list(false, allPages())).subscribe((cols) => {
       this.collaborations = cols;
     });
 
@@ -108,8 +114,8 @@ export class NodeTableComponent
     });
   }
 
-  async setup() {
-    await this.setResources();
+  async setup(force_refresh: boolean = false): Promise<void> {
+    await this.setResources(force_refresh);
 
     await this.addHelperResources();
 
@@ -127,26 +133,36 @@ export class NodeTableComponent
     this.dataSource.data = this.resources;
   }
 
-  protected async setResources() {
+  protected async setResources(force_refresh: boolean = false) {
     if (this.displayMode === DisplayMode.ORG) {
       (
-        await this.nodeDataService.org_list(this.route_org_id as number)
+        await this.nodeDataService.org_list(
+          this.route_org_id as number,
+          force_refresh,
+          this.page
+        )
       ).subscribe((org_nodes: Node[]) => {
         this.resources = deepcopy(org_nodes);
         this.addHelperResources();
       });
     } else if (this.displayMode === DisplayMode.COL) {
       (
-        await this.nodeDataService.collab_list(this.route_org_id as number)
+        await this.nodeDataService.collab_list(
+          this.route_org_id as number,
+          force_refresh,
+          this.page
+        )
       ).subscribe((nodes) => {
         this.resources = deepcopy(nodes);
         this.addHelperResources();
       });
     } else {
-      (await this.nodeDataService.list()).subscribe((nodes: Node[]) => {
-        this.resources = deepcopy(nodes);
-        this.addHelperResources();
-      });
+      (await this.nodeDataService.list(force_refresh, this.page)).subscribe(
+        (nodes: Node[]) => {
+          this.resources = deepcopy(nodes);
+          this.addHelperResources();
+        }
+      );
     }
   }
 

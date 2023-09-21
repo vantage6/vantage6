@@ -25,6 +25,7 @@ import {
   removeValueFromArray,
 } from 'src/app/shared/utils';
 import { BaseEditComponent } from '../base-edit/base-edit.component';
+import { allPages } from 'src/app/interfaces/utils';
 
 @Component({
   selector: 'app-collaboration-edit',
@@ -71,16 +72,18 @@ export class CollaborationEditComponent
 
   async init(): Promise<void> {
     // first obtain organizations, which are required to get the collaboration
-    (await this.orgDataService.list()).subscribe((organizations) => {
-      this.all_organizations = organizations;
-      this.organizations_not_in_collab = deepcopy(organizations);
-    });
+    (await this.orgDataService.list(false, allPages())).subscribe(
+      (organizations) => {
+        this.all_organizations = organizations;
+        this.organizations_not_in_collab = deepcopy(organizations);
+      }
+    );
 
     this.readRoute();
   }
 
   async setupEdit(id: number) {
-    (await this.collabDataService.get(id)).subscribe((collab) => {
+    (await this.collabDataService.get(id, true)).subscribe((collab) => {
       this.collaboration = collab;
       this.collaboration_orig_name = this.collaboration.name;
       // remove organizations that are already in collaboration from the
@@ -114,10 +117,14 @@ export class CollaborationEditComponent
   }
 
   async addNewCollaboration(new_collab_json: any) {
+    // retain the organizations that were assigned in the collaboration as
+    // these are not in the JSON returned by the API
+    let collab_orgs = this.collaboration.organizations;
     this.collaboration = this.convertJsonService.getCollaboration(
       new_collab_json,
       this.all_organizations
     );
+    this.collaboration.organizations = collab_orgs;
     // create the nodes for the new collaboration, and add them to it
     let nodes = await this.createNodes(this.collaboration.organizations);
     this.collabDataService.addNodesToCollaboration(this.collaboration, nodes);

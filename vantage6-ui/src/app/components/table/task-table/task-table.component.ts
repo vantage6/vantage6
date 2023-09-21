@@ -23,6 +23,11 @@ import { UserDataService } from 'src/app/services/data/user-data.service';
 import { User } from 'src/app/interfaces/user';
 import { Role } from 'src/app/interfaces/role';
 import { Rule } from 'src/app/interfaces/rule';
+import {
+  Pagination,
+  allPages,
+  defaultFirstPage,
+} from 'src/app/interfaces/utils';
 
 export enum TaskInitator {
   ALL = 'All',
@@ -77,15 +82,16 @@ export class TaskTableComponent extends TableComponent implements OnInit {
     private userDataService: UserDataService,
     protected modalService: ModalService
   ) {
-    super(activatedRoute, userPermission, modalService);
+    super(activatedRoute, userPermission, modalService, taskDataService);
   }
 
   async init(): Promise<void> {
-    (await this.orgDataService.list()).subscribe((orgs) => {
+    // TODO get only orgs and collabs involved in tasks?
+    (await this.orgDataService.list(false, allPages())).subscribe((orgs) => {
       this.organizations = orgs;
     });
 
-    (await this.collabDataService.list()).subscribe((cols) => {
+    (await this.collabDataService.list(false, allPages())).subscribe((cols) => {
       this.collaborations = cols;
     });
 
@@ -167,7 +173,11 @@ export class TaskTableComponent extends TableComponent implements OnInit {
       for (let collab_id of (this.current_organization as Organization)
         .collaboration_ids) {
         (
-          await this.taskDataService.collab_list(collab_id, force_refresh)
+          await this.taskDataService.collab_list(
+            collab_id,
+            force_refresh,
+            this.page
+          )
         ).subscribe((tasks) => {
           this.resources = filterArrayByProperty(
             this.resources,
@@ -182,13 +192,14 @@ export class TaskTableComponent extends TableComponent implements OnInit {
       (
         await this.taskDataService.collab_list(
           this.route_org_id as number,
-          force_refresh
+          force_refresh,
+          this.page
         )
       ).subscribe((tasks) => {
         this.resources = tasks;
       });
     } else {
-      (await this.taskDataService.list(force_refresh)).subscribe(
+      (await this.taskDataService.list(force_refresh, this.page)).subscribe(
         (tasks: Task[]) => {
           this.resources = tasks;
         }
@@ -264,7 +275,7 @@ export class TaskTableComponent extends TableComponent implements OnInit {
   }
 
   protected async addInitiatingUsersToTasks() {
-    (await this.userDataService.list()).subscribe((users) => {
+    (await this.userDataService.list(allPages())).subscribe((users) => {
       this.users = users;
       // add users to tasks
       for (let r of this.resources as Task[]) {
@@ -315,7 +326,11 @@ export class TaskTableComponent extends TableComponent implements OnInit {
   askConfirmDelete(): void {
     // open modal window to ask for confirmation of irreversible delete action
     this.modalService
-      .openDeleteModal(this.selection.selected, ResType.TASK)
+      .openDeleteModal(
+        this.selection.selected,
+        ResType.TASK,
+        "Note that this will also delete all associated subtasks and results."
+      )
       .result.then((exit_mode) => {
         if (exit_mode === ExitMode.DELETE) {
           this.deleteSelectedTasks();

@@ -9,6 +9,7 @@ import { Organization } from 'src/app/interfaces/organization';
 import { deepcopy, getById } from 'src/app/shared/utils';
 import { Collaboration } from 'src/app/interfaces/collaboration';
 import { ResType } from 'src/app/shared/enum';
+import { Run } from 'src/app/interfaces/run';
 import { Result } from 'src/app/interfaces/result';
 
 @Injectable({
@@ -29,13 +30,7 @@ export class ConvertJsonService {
     };
   }
 
-  getRole(role_json: any, all_rules: Rule[]): Role {
-    let rules: Rule[] = [];
-    if (role_json.rules) {
-      for (let rule of role_json.rules) {
-        rules.push(getById(all_rules, rule.id));
-      }
-    }
+  getRole(role_json: any): Role {
     return {
       id: role_json.id,
       type: ResType.ROLE,
@@ -44,27 +39,27 @@ export class ConvertJsonService {
       organization_id: role_json.organization
         ? role_json.organization.id
         : null,
-      rules: rules,
+      rules: [], // rules are added later
     };
   }
 
   getUser(user_json: any, roles: Role[], rules: Rule[]): User {
     let user_roles: Role[] = [];
-    if (user_json.roles) {
-      user_json.roles.forEach((role: any) => {
-        let r = getById(roles, role.id);
-        if (r !== undefined) {
-          user_roles.push(r);
-        }
-      });
-    }
+    // if (user_json.roles) {
+    //   user_json.roles.forEach((role: any) => {
+    //     let r = getById(roles, role.id);
+    //     if (r !== undefined) {
+    //       user_roles.push(r);
+    //     }
+    //   });
+    // }
     let user_rules: Rule[] = [];
-    if (user_json.rules) {
-      user_json.rules.forEach((rule: any) => {
-        let r = getById(rules, rule.id);
-        user_rules.push(r);
-      });
-    }
+    // if (user_json.rules) {
+    //   user_json.rules.forEach((rule: any) => {
+    //     let r = getById(rules, rule.id);
+    //     user_rules.push(r);
+    //   });
+    // }
     return {
       id: user_json.id,
       type: ResType.USER,
@@ -80,11 +75,11 @@ export class ConvertJsonService {
 
   getOrganization(org_json: any): Organization {
     let col_ids: number[] = [];
-    if (org_json.collaborations) {
-      for (let col of org_json.collaborations) {
-        col_ids.push(col.id);
-      }
-    }
+    // if (org_json.collaborations) {
+    //   for (let col of org_json.collaborations) {
+    //     col_ids.push(col.id);
+    //   }
+    // }
     return {
       id: org_json.id,
       type: ResType.ORGANIZATION,
@@ -109,25 +104,25 @@ export class ConvertJsonService {
   ): Collaboration {
     let orgs: Organization[] = [];
     let org_ids: number[] = [];
-    if (coll_json.organizations) {
-      coll_json.organizations.forEach((org_json: any) => {
-        let org = getById(organizations, org_json.id);
-        if (org) {
-          org = deepcopy(org);
-          for (let node of nodes) {
-            if (
-              node.organization_id === org.id &&
-              node.collaboration_id === coll_json.id
-            ) {
-              org.node = node;
-              break;
-            }
-          }
-          orgs.push(org);
-        }
-        org_ids.push(org_json.id);
-      });
-    }
+    // if (coll_json.organizations) {
+    //   coll_json.organizations.forEach((org_json: any) => {
+    //     let org = getById(organizations, org_json.id);
+    //     if (org) {
+    //       org = deepcopy(org);
+    //       for (let node of nodes) {
+    //         if (
+    //           node.organization_id === org.id &&
+    //           node.collaboration_id === coll_json.id
+    //         ) {
+    //           org.node = node;
+    //           break;
+    //         }
+    //       }
+    //       orgs.push(org);
+    //     }
+    //     org_ids.push(org_json.id);
+    //   });
+    // }
     return {
       id: coll_json.id,
       name: coll_json.name,
@@ -170,12 +165,6 @@ export class ConvertJsonService {
   }
 
   getTask(json: any): Task {
-    let child_ids = [];
-    if (json.children) {
-      for (let child of json.children) {
-        child_ids.push(child.id);
-      }
-    }
     return {
       id: json.id,
       type: ResType.TASK,
@@ -183,18 +172,18 @@ export class ConvertJsonService {
       description: json.description,
       image: json.image,
       collaboration_id: json.collaboration.id,
-      initiator_id: json.initiator,
-      init_user_id: json.init_user,
-      run_id: json.run_id,
+      initiator_id: json.init_org.id,
+      init_user_id: json.init_user.id,
+      job_id: json.job_id,
       parent_id: json.parent ? json.parent.id : null,
-      database: json.database,
+      databases: json.databases,
       complete: json.complete,
-      children_ids: child_ids,
+      children_ids: [],
       status: json.status,
     };
   }
 
-  getResult(json: any): Result {
+  getAlgorithmRun(json: any): Run {
     let port_ids = [];
     if (json.port_ids) {
       for (let port of json.port_ids) {
@@ -217,7 +206,7 @@ export class ConvertJsonService {
 
     return {
       id: json.id,
-      type: ResType.RESULT,
+      type: ResType.RUN,
       input: json.input,
       result: json.result,
       log: json.log,
@@ -228,6 +217,14 @@ export class ConvertJsonService {
       assigned_at: json.assigned_at,
       finished_at: json.finished_at,
       status: json.status,
+    };
+  }
+
+  getAlgorithmResult(json: any): Result {
+    return {
+      id: json.id,
+      type: ResType.RESULT,
+      result: json.result,
     };
   }
 }
