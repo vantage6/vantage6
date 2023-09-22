@@ -68,6 +68,9 @@ port_input_schema = PortInputSchema()
 # -----------------------------------------------------------------------------
 # Permissions
 # -----------------------------------------------------------------------------
+# TODO v5+ remove these rules as they are not used anymore - all endpoints are
+# only accessible for nodes and/or containers, not by users. The logic for
+# permissions is not based on rules but on node and container IDs.
 def permissions(permissions: PermissionManager) -> None:
     """
     Define the permissions for this resource.
