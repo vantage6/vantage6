@@ -473,18 +473,30 @@ class ClientBase(object):
         dict
             Data on the algorithm run(s) with decrypted input
         """
+        def _decrypt_and_decode(value: str, field: str):
+            decrypted = self._decrypt_input(value)
+            if not isinstance(decrypted, bytes):
+                self.log.error(
+                    "The field %s is not properly encoded. Expected bytes, got"
+                    " %s.", field, type(decrypted)
+                )
+                if isinstance(decrypted, str):
+                    self.log.error(
+                        "Skipping decoding as string is detected for %s", field
+                    )
+                    return decrypted
+            return decrypted.decode(STRING_ENCODING)
+
         if is_single_resource:
             if data.get(field):
-                data[field] = self._decrypt_input(
-                    data[field]
-                ).decode(STRING_ENCODING)
+                data[field] = _decrypt_and_decode(data[field], field)
         else:
             # for multiple resources, data is in a 'data' field of a dict
             for resource in data['data']:
                 if resource.get(field):
-                    resource[field] = self._decrypt_input(
-                        resource[field]
-                    ).decode(STRING_ENCODING)
+                    resource[field] = _decrypt_and_decode(
+                        resource[field], field
+                    )
 
         return data
 
