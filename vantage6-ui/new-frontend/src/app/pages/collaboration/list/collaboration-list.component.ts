@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
-import { BaseCollaboration } from 'src/app/models/api/Collaboration.model';
+import { BaseCollaboration } from 'src/app/models/api/collaboration.model';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { routePaths } from 'src/app/routes';

@@ -1,4 +1,4 @@
-import { BaseCollaboration } from './Collaboration.model';
+import { BaseCollaboration } from './collaboration.model';
 import { BaseNode } from './node.model';
 
 export enum OrganizationLazyProperties {
@@ -26,4 +26,12 @@ export interface Organization {
   domain: string;
   nodes: BaseNode[];
   collaborations: BaseCollaboration[];
+}
+
+export interface OrganizationCreate {
+  name: string;
+  address1?: string | null;
+  address2?: string | null;
+  country?: string | null;
+  domain?: string | null;
 }

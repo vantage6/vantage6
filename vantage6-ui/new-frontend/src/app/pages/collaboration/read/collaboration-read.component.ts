@@ -3,7 +3,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ConfirmDialog } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
-import { Collaboration, CollaborationLazyProperties } from 'src/app/models/api/Collaboration.model';
+import { Collaboration, CollaborationLazyProperties } from 'src/app/models/api/collaboration.model';
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { routePaths } from 'src/app/routes';

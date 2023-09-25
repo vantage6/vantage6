@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { BaseCollaboration } from 'src/app/models/api/Collaboration.model';
+import { BaseCollaboration } from 'src/app/models/api/collaboration.model';
 import { routePaths } from 'src/app/routes';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { CollaborationService } from 'src/app/services/collaboration.service';

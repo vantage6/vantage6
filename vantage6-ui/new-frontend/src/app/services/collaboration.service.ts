@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import { Pagination } from '../models/api/pagination.model';
-import { BaseCollaboration, Collaboration, CollaborationLazyProperties } from '../models/api/Collaboration.model';
+import { BaseCollaboration, Collaboration, CollaborationLazyProperties } from '../models/api/collaboration.model';
 
 @Injectable({
   providedIn: 'root'
