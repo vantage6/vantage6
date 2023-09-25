@@ -25,3 +25,9 @@ export interface Collaboration {
   nodes: BaseNode[];
   tasks: BaseTask[];
 }
+
+export interface CollaborationCreate {
+  name: string;
+  encrypted: boolean;
+  organization_ids: number[];
+}

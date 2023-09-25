@@ -75,7 +75,7 @@ export class CollaborationReadComponent implements OnInit {
         if (!this.collaboration) return;
         this.isLoading = true;
         await this.collaborationService.delete(this.collaboration.id);
-        this.router.navigate([routePaths.tasks]);
+        this.router.navigate([routePaths.collaborations]);
       }
     });
   }

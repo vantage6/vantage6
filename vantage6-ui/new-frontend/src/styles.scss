@@ -212,3 +212,15 @@ mat-card {
   display: flex;
   gap: $spacing-px-2;
 }
+
+.form {
+  mat-form-field,
+  mat-checkbox {
+    margin-bottom: $spacing-px-4;
+  }
+
+  mat-checkbox {
+    margin-top: $spacing-px-minus-1;
+    margin-bottom: $spacing-px-3;
+  }
+}

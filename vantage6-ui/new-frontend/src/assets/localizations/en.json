@@ -1,163 +1,164 @@
 {
-    "general": {
-        "back": "Back",
-        "next": "Next",
-        "submit": "Submit",
-        "close": "Close",
-        "cancel": "Cancel",
-        "delete": "Delete",
-        "edit": "Edit",
-        "confirm": "Confirm",
-        "yes": "Yes",
-        "no": "No",
-        "offline": "Offline"
+  "general": {
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "close": "Close",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "offline": "Offline"
+  },
+  "task": {
+    "algorithm": "Algorithm",
+    "database": "Database",
+    "description": "Description",
+    "function": "Function",
+    "id": "ID",
+    "parameters": "Parameters",
+    "organization": "Organization",
+    "name": "Name",
+    "query": "Query",
+    "sheet": "Sheet name",
+    "status": "Status",
+    "user": "user",
+    "alert-node-offline": "The node '{{name}}' is offline. This task will be handled when the node is back online."
+  },
+  "task-run": {
+    "assigned-at": "Created",
+    "started-at": "Started",
+    "finished-at": "Finished",
+    "node": "Assigned node",
+    "show-log": "Show logs",
+    "alert-node-offline": "Task can't start, node is offline."
+  },
+  "task-list": {
+    "title": "Tasks"
+  },
+  "task-create": {
+    "title": "Create task",
+    "step-package": {
+      "title": "Select package"
     },
-    "task": {
-        "algorithm": "Algorithm",
-        "database": "Database",
-        "description": "Description",
-        "function": "Function",
-        "id": "ID",
-        "parameters": "Parameters",
-        "organization": "Organization",
-        "name": "Name",
-        "query": "Query",
-        "sheet": "Sheet name",
-        "status": "Status",
-        "user": "user",
-        "alert-node-offline": "The node '{{name}}' is offline. This task will be handled when the node is back online."
+    "step-function": {
+      "title": "Select function"
     },
-    "task-run": {
-        "assigned-at": "Created",
-        "started-at": "Started",
-        "finished-at": "Finished",
-        "node": "Assigned node",
-        "show-log": "Show logs",
-        "alert-node-offline": "Task can't start, node is offline."
+    "step-database": {
+      "title": "Select databases"
     },
-    "task-list": {
-        "title": "Tasks"
-    },
-    "task-create": {
-        "title": "Create task",
-        "step-package": {
-            "title": "Select package"
-        },
-        "step-function": {
-            "title": "Select function"
-        },
-        "step-database": {
-            "title": "Select databases"
-        },
-        "step-parameters": {
-            "title": "Function parameters"
-        }
-    },
-    "task-read": {
-        "card-general": {
-            "title": "General"
-        },
-        "card-status": {
-            "title": "Status"
-        },
-        "card-results": {
-            "title": "Results"
-        },
-        "card-algorithm": {
-            "title": "Algorithm"
-        },
-        "card-runs": {
-            "title": "Runs"
-        },
-        "delete-dialog": {
-            "title": "Are you sure you want to delete the task '{{name}}'?",
-            "content": "Note, this will also delete all subtasks and results.\nThis operation cannot be undone."
-        }
-    },
-    "organization": {
-        "name": "Name",
-        "address1": "Address 1",
-        "address2": "Address 2",
-        "country": "Country",
-        "domain": "Domain"
-    },
-    "organization-read": {
-        "title": "Organizations",
-        "actions": {
-            "create": "Create organization",
-            "select": "Select organization"
-        },
-        "card-details": {
-            "title": "Details"
-        },
-        "card-collaborations": {
-            "title": "Collaborations"
-        },
-        "card-nodes": {
-            "title": "Nodes"
-        }
-    },
-    "organization-create": {
-        "title": "Create organization"
-    },
-    "collaboration": {
-        "name": "Name",
-        "encrypted": "Encrypted",
-        "organizations": "Organizations"
-    },
-    "collaboration-create": {
-        "title": "Create collaboration"
-    },
-    "collaboration-list": {
-        "title": "Collaborations"
-    },
-    "collaboration-read": {
-        "card-details": {
-            "title": "Details"
-        },
-        "card-nodes": {
-            "title": "Nodes"
-        },
-        "delete-dialog": {
-            "title": "Are you sure you want to delete the collaboration '{{name}}'?",
-            "content": "Note, this will also delete all nodes and tasks related to this collaboration.\nThis operation cannot be undone."
-        }
-    },
-    "user": {
-        "username": "Username",
-        "email": "Email",
-        "first-name": "First name",
-        "last-name": "Last name",
-        "organization": "Organization",
-        "roles": "Roles"
-    },
-    "user-list": {
-        "title": "Users"
-    },
-    "user-create": {
-        "title": "Create user"
-    },
-    "user-read": {
-        "card-details": {
-            "title": "Details"
-        },
-        "delete-dialog": {
-            "title": "Are you sure you want to delete the user '{{name}}'?",
-            "content": "Note, this will also delete all tasks this user created.\nThis operation cannot be undone."
-        }
-    },
-    "task-status": {
-        "Active": "Active",
-        "Completed": "Completed",
-        "Crashed": "Crashed",
-        "Failed": "Failed",
-        "Initializing": "Initializing",
-        "Killed": "Killed by user",
-        "NoDockerImage": "Non-existing Docker image",
-        "Pending": "Pending",
-        "StartFailed": "Start failed"
-    },
-    "log-dialog": {
-        "title": "Log"
+    "step-parameters": {
+      "title": "Function parameters"
     }
+  },
+  "task-read": {
+    "card-general": {
+      "title": "General"
+    },
+    "card-status": {
+      "title": "Status"
+    },
+    "card-results": {
+      "title": "Results"
+    },
+    "card-algorithm": {
+      "title": "Algorithm"
+    },
+    "card-runs": {
+      "title": "Runs"
+    },
+    "delete-dialog": {
+      "title": "Are you sure you want to delete the task '{{name}}'?",
+      "content": "Note, this will also delete all subtasks and results.\nThis operation cannot be undone."
+    }
+  },
+  "organization": {
+    "name": "Name",
+    "address1": "Address 1",
+    "address2": "Address 2",
+    "country": "Country",
+    "domain": "Domain"
+  },
+  "organization-read": {
+    "title": "Organizations",
+    "actions": {
+      "create": "Create organization",
+      "select": "Select organization"
+    },
+    "card-details": {
+      "title": "Details"
+    },
+    "card-collaborations": {
+      "title": "Collaborations"
+    },
+    "card-nodes": {
+      "title": "Nodes"
+    }
+  },
+  "organization-create": {
+    "title": "Create organization"
+  },
+  "collaboration": {
+    "name": "Name",
+    "encrypted": "Encrypted",
+    "organizations": "Organizations"
+  },
+  "collaboration-create": {
+    "title": "Create collaboration",
+    "register-nodes": "Register nodes"
+  },
+  "collaboration-list": {
+    "title": "Collaborations"
+  },
+  "collaboration-read": {
+    "card-details": {
+      "title": "Details"
+    },
+    "card-nodes": {
+      "title": "Nodes"
+    },
+    "delete-dialog": {
+      "title": "Are you sure you want to delete the collaboration '{{name}}'?",
+      "content": "Note, this will also delete all nodes and tasks related to this collaboration.\nThis operation cannot be undone."
+    }
+  },
+  "user": {
+    "username": "Username",
+    "email": "Email",
+    "first-name": "First name",
+    "last-name": "Last name",
+    "organization": "Organization",
+    "roles": "Roles"
+  },
+  "user-list": {
+    "title": "Users"
+  },
+  "user-create": {
+    "title": "Create user"
+  },
+  "user-read": {
+    "card-details": {
+      "title": "Details"
+    },
+    "delete-dialog": {
+      "title": "Are you sure you want to delete the user '{{name}}'?",
+      "content": "Note, this will also delete all tasks this user created.\nThis operation cannot be undone."
+    }
+  },
+  "task-status": {
+    "Active": "Active",
+    "Completed": "Completed",
+    "Crashed": "Crashed",
+    "Failed": "Failed",
+    "Initializing": "Initializing",
+    "Killed": "Killed by user",
+    "NoDockerImage": "Non-existing Docker image",
+    "Pending": "Pending",
+    "StartFailed": "Start failed"
+  },
+  "log-dialog": {
+    "title": "Log"
+  }
 }

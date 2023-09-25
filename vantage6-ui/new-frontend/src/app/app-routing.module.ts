@@ -16,6 +16,7 @@ import { CollaborationListComponent } from './pages/collaboration/list/collabora
 import { UserListComponent } from './pages/user/list/user-list.component';
 import { UserReadComponent } from './pages/user/read/user-read.component';
 import { OrganizationCreateComponent } from './pages/organization/create/organization-create.component';
+import { CollaborationCreateComponent } from './pages/collaboration/create/collaboration-create.component';
 
 const routes: Routes = [
   {
@@ -85,7 +86,7 @@ const routes: Routes = [
       },
       {
         path: routerConfig.collaborationCreate,
-        component: HomeComponent,
+        component: CollaborationCreateComponent,
         canActivate: [authenticationGuard()]
       },
       {

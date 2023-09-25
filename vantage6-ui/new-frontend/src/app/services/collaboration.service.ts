@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import { Pagination } from '../models/api/pagination.model';
-import { BaseCollaboration, Collaboration, CollaborationLazyProperties } from '../models/api/collaboration.model';
+import { BaseCollaboration, Collaboration, CollaborationCreate, CollaborationLazyProperties } from '../models/api/collaboration.model';
 
 @Injectable({
   providedIn: 'root'
@@ -34,6 +34,10 @@ export class CollaborationService {
     );
 
     return collaboration;
+  }
+
+  async createCollaboration(collaboration: CollaborationCreate): Promise<BaseCollaboration> {
+    return await this.apiService.postForApi<BaseCollaboration>(`/collaboration`, collaboration);
   }
 
   async delete(id: number): Promise<void> {

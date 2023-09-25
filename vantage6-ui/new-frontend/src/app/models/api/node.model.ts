@@ -32,3 +32,9 @@ export interface Database {
   name: string;
   type: DatabaseType;
 }
+
+export interface NodeCreate {
+  name: string;
+  organization_id: number;
+  collaboration_id: number;
+}

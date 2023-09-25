@@ -5,6 +5,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -48,6 +49,7 @@ import { CollaborationListComponent } from './pages/collaboration/list/collabora
 import { UserListComponent } from './pages/user/list/user-list.component';
 import { UserReadComponent } from './pages/user/read/user-read.component';
 import { OrganizationCreateComponent } from './pages/organization/create/organization-create.component';
+import { CollaborationCreateComponent } from './pages/collaboration/create/collaboration-create.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -78,7 +80,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     CollaborationListComponent,
     UserListComponent,
     UserReadComponent,
-    OrganizationCreateComponent
+    OrganizationCreateComponent,
+    CollaborationCreateComponent
   ],
   imports: [
     BrowserModule,
@@ -96,6 +99,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     }),
     MatButtonModule,
     MatCardModule,
+    MatCheckboxModule,
     MatDialogModule,
     MatExpansionModule,
     MatFormFieldModule,
