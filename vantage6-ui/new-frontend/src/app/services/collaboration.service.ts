@@ -41,6 +41,6 @@ export class CollaborationService {
   }
 
   async delete(id: number): Promise<void> {
-    return await this.apiService.deleteForApi(`/collaboration/${id}`);
+    return await this.apiService.deleteForApi(`/collaboration/${id}?delete_dependents=true`);
   }
 }
