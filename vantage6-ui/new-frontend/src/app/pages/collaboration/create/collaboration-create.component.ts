@@ -45,10 +45,12 @@ export class CollaborationCreateComponent implements OnInit {
 
       const collaboration = await this.collaborationService.createCollaboration(this.form.getRawValue());
       if (collaboration?.id) {
-        if (this.registerNodes.value) {
-          this.form.value.organization_ids?.forEach(async (organizationID: number) => {
-            this.nodeService.createNode(collaboration, organizationID);
-          });
+        if (this.registerNodes.value && this.form.value.organization_ids) {
+          await Promise.all(
+            this.form.value.organization_ids.map(async (organizationID: number) => {
+              await this.nodeService.createNode(collaboration, organizationID);
+            })
+          );
         }
         this.router.navigate([routePaths.collaborations]);
       } else {
