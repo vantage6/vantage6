@@ -15,6 +15,7 @@ import { CollaborationReadComponent } from './pages/collaboration/read/collabora
 import { CollaborationListComponent } from './pages/collaboration/list/collaboration-list.component';
 import { UserListComponent } from './pages/user/list/user-list.component';
 import { UserReadComponent } from './pages/user/read/user-read.component';
+import { OrganizationCreateComponent } from './pages/organization/create/organization-create.component';
 
 const routes: Routes = [
   {
@@ -70,6 +71,11 @@ const routes: Routes = [
       {
         path: routerConfig.organization,
         component: OrganizationReadComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
+        path: routerConfig.organizationCreate,
+        component: OrganizationCreateComponent,
         canActivate: [authenticationGuard()]
       },
       {

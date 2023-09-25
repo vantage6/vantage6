@@ -1,5 +1,5 @@
 <app-page-header title="{{ 'organization-read.title' | translate }}">
-  <button *ngIf="canCreate" actions mat-flat-button color="primary">
+  <button *ngIf="canCreate" actions mat-flat-button color="primary" [routerLink]="routes.organizationCreate">
     <mat-icon>add</mat-icon>{{ "organization-read.actions.create" | translate }}
   </button>
   <mat-form-field content *ngIf="canAdministerMultiple" subscriptSizing="dynamic">

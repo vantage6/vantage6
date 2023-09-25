@@ -47,6 +47,7 @@ import { CollaborationReadComponent } from './pages/collaboration/read/collabora
 import { CollaborationListComponent } from './pages/collaboration/list/collaboration-list.component';
 import { UserListComponent } from './pages/user/list/user-list.component';
 import { UserReadComponent } from './pages/user/read/user-read.component';
+import { OrganizationCreateComponent } from './pages/organization/create/organization-create.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -76,7 +77,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     CollaborationReadComponent,
     CollaborationListComponent,
     UserListComponent,
-    UserReadComponent
+    UserReadComponent,
+    OrganizationCreateComponent
   ],
   imports: [
     BrowserModule,

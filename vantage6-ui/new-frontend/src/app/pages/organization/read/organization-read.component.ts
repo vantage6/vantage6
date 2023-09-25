@@ -4,6 +4,7 @@ import { NodeStatus } from 'src/app/models/api/node.model';
 import { BaseOrganization, Organization, OrganizationLazyProperties } from 'src/app/models/api/organization.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { TableData } from 'src/app/models/application/table.model';
+import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
 import { OrganizationService } from 'src/app/services/organization.service';
 
@@ -14,6 +15,7 @@ import { OrganizationService } from 'src/app/services/organization.service';
   host: { '[class.card-container]': 'true' }
 })
 export class OrganizationReadComponent implements OnInit {
+  routes = routePaths;
   nodeStatus = NodeStatus;
 
   isLoading = false;

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import { Pagination } from '../models/api/pagination.model';
-import { BaseOrganization, Organization, OrganizationLazyProperties } from '../models/api/organization.model';
+import { BaseOrganization, Organization, OrganizationCreate, OrganizationLazyProperties } from '../models/api/organization.model';
 
 @Injectable({
   providedIn: 'root'
@@ -29,5 +29,13 @@ export class OrganizationService {
     );
 
     return organization;
+  }
+
+  async createOrganization(organization: OrganizationCreate): Promise<BaseOrganization | null> {
+    try {
+      return await this.apiService.postForApi<BaseOrganization>('/organization', organization);
+    } catch {
+      return null;
+    }
   }
 }
