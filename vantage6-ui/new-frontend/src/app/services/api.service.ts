@@ -74,6 +74,7 @@ export class ApiService {
         },
         (error) => {
           //TODO: handle error
+          console.log(error.error?.msg ? error.error?.msg : 'A error occurred');
           reject(error);
         }
       );
@@ -93,6 +94,7 @@ export class ApiService {
         },
         (error) => {
           //TODO: handle error
+          console.log(error.msg ? error.msg : 'A error occurred');
           reject(error);
         }
       );
