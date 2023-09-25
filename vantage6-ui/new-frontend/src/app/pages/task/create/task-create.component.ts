@@ -31,7 +31,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   packageForm = this.fb.nonNullable.group({
     algorithmID: ['', Validators.required],
     name: ['', Validators.required],
-    description: ['']
+    description: ''
   });
 
   functionForm = this.fb.nonNullable.group({
