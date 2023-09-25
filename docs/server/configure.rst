@@ -60,24 +60,7 @@ You can download this file here: :download:`server_config.yaml <yaml/server_conf
 .. literalinclude :: yaml/server_config.yaml
     :language: yaml
 
-.. note::
-    We use `DTAP for key environments <https://en.wikipedia.org/wiki/Development,_testing,_acceptance_and_production>`__.
-    In short:
-
-    - ``dev`` Development environment. It is ok to break things here
-    - ``test`` Testing environment. Here, you can verify that everything
-      works as expected. This environment should resemble the target
-      environment where the final solution will be deployed as much as
-      possible.
-    - ``acc`` Acceptance environment. If the tests were successful, you can
-      try this environment, where the final user will test his/her analysis
-      to verify if everything meets his/her expectations.
-    - ``prod`` Production environment. The version of the proposed solution
-      where the final analyses are executed.
-
-    You can also specify the key ``application`` if you do not want to specify
-    one of the environments.
-
+.. todo this section is close duplicate of docs/node/configure -- merge?
 
 .. _server-configure-location:
 

@@ -31,12 +31,9 @@ REFRESH_TOKENS_EXPIRE_HOURS = 48
 # refresh token.
 MIN_REFRESH_TOKEN_EXPIRY_DELTA = 1
 
-# Expiretime of JWT token in a test environment
-JWT_TEST_ACCESS_TOKEN_EXPIRES = datetime.timedelta(days=1)
-
 # Which resources should be initialized. These names correspond to the
 # file-names in the resource directory
-RESOURCES = ['node', 'collaboration', 'organization', 'task', 'result',
+RESOURCES = ['node', 'collaboration', 'organization', 'task', 'run',
              'token', 'user', 'version', 'recover', 'role',
              'rule', 'health', 'vpn', 'port', 'event']
 
@@ -52,3 +49,7 @@ DEFAULT_SUPPORT_EMAIL_ADDRESS = 'support@vantage6.ai'
 
 # default time that token is valid in minutes
 DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES = 60
+
+# pagination settings
+DEFAULT_PAGE = 1
+DEFAULT_PAGE_SIZE = 10

@@ -61,7 +61,7 @@ class ServerCLITest(unittest.TestCase):
         container1.name = f"{APPNAME}-iknl-system"
         containers.list.return_value = [container1]
 
-        config = MagicMock(available_environments=["application"])
+        config = MagicMock()
         config.name = "iknl"
         context.available_configurations.return_value = ([config], [])
 

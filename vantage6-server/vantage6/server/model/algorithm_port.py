@@ -29,7 +29,7 @@ class AlgorithmPort(Base):
 
     # fields
     port = Column(Integer)
-    result_id = Column(Integer, ForeignKey("result.id"))
+    run_id = Column(Integer, ForeignKey("run.id"))
     label = Column(String)
 
-    result = relationship("Result", back_populates="ports")
+    run = relationship("Run", back_populates="ports")

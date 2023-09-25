@@ -39,5 +39,5 @@
 #         schema = CollaborationSchemaSimple(many=True)
 
 #         return {
-#             'collaborations': schema.dump(db.Collaboration.get()).data
+#             'collaborations': schema.dump(db.Collaboration.get())
 #         }, HTTPStatus.OK

@@ -9,8 +9,8 @@ import time
 from threading import Thread
 
 from vantage6.common import WhoAmI
-from vantage6.client import ClientBase
-from vantage6.node.globals import REFRESH_BEFORE_EXPIRES_SECONDS
+from vantage6.common.client.client_base import ClientBase
+from vantage6.common.globals import NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS
 
 
 class NodeClient(ClientBase):
@@ -22,6 +22,8 @@ class NodeClient(ClientBase):
         # self.name = None
         self.collaboration_id = None
         self.whoami = None
+
+        self.run = self.Run(self)
 
     def authenticate(self, api_key: str) -> None:
         """
@@ -39,15 +41,8 @@ class NodeClient(ClientBase):
         super().authenticate({"api_key": api_key}, path="token/node")
 
         # obtain the server authenticatable id
-        jwt_payload = jwt.decode(self.token,
-                                 options={"verify_signature": False})
-
-        # FIXME: 'identity' is no longer needed in version 4+. So this if
-        # statement can be removed
-        if 'sub' in jwt_payload:
-            id_ = jwt_payload['sub']
-        elif 'identity' in jwt_payload:
-            id_ = jwt_payload['identity']
+        id_ = jwt.decode(
+            self.token, options={"verify_signature": False})['sub']
 
         # get info on how the server sees me
         node = self.request(f"node/{id_}")
@@ -80,21 +75,23 @@ class NodeClient(ClientBase):
             expiry_time = jwt.decode(
                 self.token, options={"verify_signature": False})["exp"]
             time_until_expiry = expiry_time - time.time()
-            if time_until_expiry < REFRESH_BEFORE_EXPIRES_SECONDS:
+            if time_until_expiry < NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS:
                 self.refresh_token()
             else:
                 time.sleep(
-                    int(time_until_expiry - REFRESH_BEFORE_EXPIRES_SECONDS + 1)
+                    int(time_until_expiry -
+                        NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS + 1)
                 )
 
     def request_token_for_container(self, task_id: int, image: str) -> dict:
         """ Request a container-token at the central server.
 
         This token is used by algorithm containers that run on this
-        node. These algorithms can then post tasks and retrieve
-        child-results (usually refered to as a master container).
+        node. These algorithms can then create subtasks and retrieve
+        subresults.
+
         The server performs a few checks (e.g. if the task you
-        request the key for is still open) before handing out this
+        request the key for is in progress) before handing out this
         token.
 
         Parameters
@@ -118,39 +115,107 @@ class NodeClient(ClientBase):
             "image": image
         })
 
-    def get_results(
-        self, id_: int = None, state: str = None, include_task: bool = False,
-        task_id: int = None
-    ) -> dict:
-        """
-        Obtain the results for a specific task.
+    class Run(ClientBase.SubClient):
+        """ Subclient for the run endpoint. """
+        def list(
+            self, state: str, include_task: bool, task_id: int = None
+        ) -> dict | list:
+            """
+            Obtain algorithm runs.
 
-        Overload the definition of the parent by entering the
-        task_id automatically.
+            Parameters
+            ----------
+            state : str
+                State of the desired algorithm runs.
+            include_task : bool, optional
+                Include the task
+            task_id : int, optional
+                ID of the task, by default None. If None, all tasks are
+                returned.
 
-        Parameters
-        ----------
-        id_ : int, optional
-            ID of the result, by default None
-        state : str, optional
-            State of the result, by default None
-        include_task : bool, optional
-            Include the task in the result, by default False
-        task_id : int, optional
-            ID of the task, by default None
+            Returns
+            -------
+            dict | list
+                The algorithm runs as json.
+            """
+            params = {
+                'state': state,
+                'node_id': self.parent.whoami.id_
+            }
+            if include_task:
+                params['include'] = 'task'
+            if task_id:
+                params['task_id'] = task_id
+            run_data = self.parent.request(endpoint='run', params=params)
 
-        Returns
-        -------
-        dict
-            The results.
-        """
-        return super().get_results(
-            id_=id_,
-            state=state,
-            include_task=include_task,
-            task_id=task_id,
-            node_id=self.whoami.id_
-        )
+            if isinstance(run_data, str):
+                self.parent.log.warn("Requesting algorithm runs failed")
+                self.parent.log.debug(f"Fail message: {run_data}")
+                return {}
+
+            # if there are multiple pages of algorithm runs, get them all
+            links = run_data.get('links')
+            page = 1
+            while links and links.get('next'):
+                page += 1
+                run_data['data'] += self.parent.request(
+                    endpoint='run',
+                    params={**params, 'page': page}
+                )['data']
+                links = run_data.get('links')
+
+            # strip pagination links
+            run_data = run_data['data']
+
+            # Multiple runs
+            for run in run_data:
+                run['input'] = self.parent._decrypt_input(run['input'])
+
+            return run_data
+
+        def patch(self, id_: int, data: dict, init_org_id: int = None) -> None:
+            """
+            Update the algorithm run data at the central server.
+
+            Typically used for task status updates (started, finished, etc)
+
+            Parameters
+            ----------
+            id_: int
+                ID of the run to patch
+            data: Dict
+                Dictionary of fields that are to be patched
+            init_org_id: int, optional
+                Organization id of the origin of the task. This is required
+                when the run dict includes results, because then results have
+                to be encrypted specifically for them
+            """
+            if "result" in data:
+                if not init_org_id:
+                    self.parent.log.critical(
+                        "Organization id is not provided: cannot send results "
+                        "to server as they cannot be encrypted"
+                    )
+                msg = f"Retrieving public key from organization={init_org_id}"
+                self.parent.log.debug(msg)
+
+                org = self.parent.request(f"organization/{init_org_id}")
+                public_key = None
+                try:
+                    public_key = org["public_key"]
+                except KeyError:
+                    self.parent.log.critical(
+                        'Public key could not be retrieved... Does the '
+                        'initiating organization belong to your organization?'
+                    )
+
+                data["result"] = self.parent.cryptor.encrypt_bytes_to_str(
+                    data["result"],
+                    public_key
+                )
+
+            self.parent.log.debug("Sending algorithm run update to server")
+            return self.parent.request(f"run/{id_}", json=data, method='patch')
 
     def is_encrypted_collaboration(self) -> bool:
         """
@@ -181,59 +246,9 @@ class NodeClient(ClientBase):
         id_ : int
             ID of the task.
         """
-        self.patch_results(id_, result={
+        self.run.patch(id_, data={
             "started_at": datetime.datetime.now().isoformat()
         })
-
-    def patch_results(self, id_: int, result: dict,
-                      init_org_id: int = None) -> None:
-        """
-        Update the results at the central server.
-
-        Typically used when to algorithm container is finished or
-        when a status-update is posted (started, finished)
-
-        Parameters
-        ----------
-        id: int
-            ID of the result to patch
-        result: dict
-            Dictionary of fields that are to be patched
-        init_org_id: int, optional
-            Organization id of the origin of the task. This is required
-            when the result dict includes results, because then results have
-            to be encrypted specifically for them
-        """
-        # TODO: the key `result` is not always present, e.g. when
-        #     only the timestamps are updated
-        # FIXME: public keys should be cached
-        if "result" in result:
-            if not init_org_id:
-                self.log.critical(
-                    "Organization id is not provided: cannot send results to "
-                    "server as they cannot be encrypted")
-            msg = f"Retrieving public key from organization={init_org_id}"
-            self.log.debug(msg)
-
-            org = self.request(f"organization/{init_org_id}")
-            public_key = None
-            try:
-                public_key = org["public_key"]
-            except KeyError:
-                self.log.critical('Public key could not be retrieved...')
-                self.log.critical('Does the initiating organization belong to '
-                                  'your organization?')
-
-            result["result"] = self.cryptor.encrypt_bytes_to_str(
-                result["result"],
-                public_key
-            )
-
-            self.log.debug("Sending results to server")
-        else:
-            self.log.debug("Just patchin'")
-
-        return self.request(f"result/{id_}", json=result, method='patch')
 
     def get_vpn_config(self) -> tuple[bool, str]:
         """
@@ -294,7 +309,7 @@ class NodeClient(ClientBase):
 
     def check_user_allowed_to_send_task(
         self, allowed_users: list[str], allowed_orgs: list[str],
-        initiator_id: int, init_user_id: int
+        init_org_id: int, init_user_id: int
     ) -> bool:
         """
         Check if the user is allowed to send a task to this node
@@ -305,7 +320,7 @@ class NodeClient(ClientBase):
             List of allowed user IDs or usernames
         allowed_orgs: list[str]
             List of allowed organization IDs or names
-        initiator_id: int
+        init_org_id: int
             ID of the organization that initiated the task
         init_user_id: int
             ID of the user that initiated the task
@@ -320,7 +335,7 @@ class NodeClient(ClientBase):
             return True
 
         # check if task-initiating org id is in allowed orgs
-        if any(str(initiator_id) == org for org in allowed_orgs):
+        if any(str(init_org_id) == org for org in allowed_orgs):
             return True
 
         # TODO it would be nicer to check all users in a single request
@@ -337,12 +352,12 @@ class NodeClient(ClientBase):
         #         if d.get("username") == user and d.get("id") == init_user_id:
         #             return True
 
-        # TODO rename initiator_id to init_org_id in v4+
         # check if task-initiating org name is in allowed orgs
-        for org in allowed_orgs:
-            resp = self.request("organization", params={"name": org})
-            for d in resp:
-                if d.get("name") == org and d.get("id") == initiator_id:
+        for allowed_org in allowed_orgs:
+            resp = self.request("organization", params={"name": allowed_org})
+            for org in resp:
+                if org.get("name") == allowed_org and \
+                        org.get("id") == init_org_id:
                     return True
 
         # not in any of the allowed users or orgs

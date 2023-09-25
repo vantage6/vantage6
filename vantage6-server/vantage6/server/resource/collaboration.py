@@ -2,24 +2,28 @@
 import logging
 
 from flask import request, g
-from flask_restful import reqparse, Api
+from flask_restful import Api
 from http import HTTPStatus
 
 from vantage6.server import db
-from vantage6.server.resource.pagination import Pagination
+from vantage6.server.resource.common.pagination import Pagination
+from vantage6.server.resource.common.input_schema import (
+    CollaborationAddNodeSchema,
+    CollaborationAddOrganizationSchema,
+    CollaborationInputSchema
+)
 from vantage6.server.permission import (
+    RuleCollection,
     Scope as S,
     Operation as P,
     PermissionManager
 )
-from vantage6.server.resource.common._schema import (
+from vantage6.server.resource.common.output_schema import (
     CollaborationSchema,
-    TaskSchema,
     OrganizationSchema,
     NodeSchemaSimple
 )
 from vantage6.server.resource import (
-    with_user_or_node,
     with_user,
     only_for,
     ServicesResources
@@ -64,30 +68,25 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         CollaborationOrganization,
         path+'/<int:id>/organization',
         endpoint='collaboration_with_id_organization',
-        methods=('GET', 'POST', 'DELETE'),
+        methods=('POST', 'DELETE'),
         resource_class_kwargs=services
     )
     api.add_resource(
         CollaborationNode,
         path+'/<int:id>/node',
         endpoint='collaboration_with_id_node',
-        methods=('GET', 'POST', 'DELETE'),
-        resource_class_kwargs=services
-    )
-    api.add_resource(
-        CollaborationTask,
-        path+'/<int:id>/task',
-        endpoint='collaboration_with_id_task',
-        methods=('GET',),
+        methods=('POST', 'DELETE'),
         resource_class_kwargs=services
     )
 
 
 # Schemas
 collaboration_schema = CollaborationSchema()
-tasks_schema = TaskSchema()
 org_schema = OrganizationSchema()
 node_schema = NodeSchemaSimple()
+collaboration_input_schema = CollaborationInputSchema()
+collaboration_add_organization_schema = CollaborationAddOrganizationSchema()
+collaboration_add_node_schema = CollaborationAddNodeSchema()
 
 
 # -----------------------------------------------------------------------------
@@ -114,12 +113,18 @@ def permissions(permissions: PermissionManager) -> None:
 
     add(scope=S.GLOBAL, operation=P.EDIT,
         description="edit any collaboration")
+    add(scope=S.COLLABORATION, operation=P.EDIT,
+        description="edit any collaboration that your organization "
+                    "participates in")
 
     add(scope=S.GLOBAL, operation=P.CREATE,
         description="create a new collaboration")
 
     add(scope=S.GLOBAL, operation=P.DELETE,
         description="delete a collaboration")
+    add(scope=S.COLLABORATION, operation=P.DELETE,
+        description="delete any collaboration that your organization "
+                    "participates in")
 
 
 # ------------------------------------------------------------------------------
@@ -129,12 +134,12 @@ class CollaborationBase(ServicesResources):
 
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
-        self.r = getattr(self.permissions, module_name)
+        self.r: RuleCollection = getattr(self.permissions, module_name)
 
 
 class Collaborations(CollaborationBase):
 
-    @with_user
+    @only_for(['user', 'node'])
     def get(self):
         """Returns a list of collaborations
         ---
@@ -174,27 +179,30 @@ class Collaborations(CollaborationBase):
               type: integer
             description: Organization id
           - in: query
-            name: include
-            schema:
-              type: string
-            description: Include 'metadata' to get pagination metadata. Note
-              that this will put the actual data in an envelope.
-          - in: query
             name: page
             schema:
               type: integer
-            description: Page number for pagination
+            description: Page number for pagination (default=1)
           - in: query
             name: per_page
             schema:
               type: integer
-            description: Number of items per page
+            description: Number of items per page (default=10)
+          - in: query
+            name: sort
+            schema:
+              type: string
+            description: >-
+              Sort by one or more fields, separated by a comma. Use a minus
+              sign (-) in front of the field to sort in descending order.
 
         responses:
           200:
             description: Ok
           401:
             description: Unauthorized
+          400:
+            description: Improper values for pagination or sorting parameters
 
         security:
           - bearerAuth: []
@@ -237,9 +245,12 @@ class Collaborations(CollaborationBase):
                     HTTPStatus.UNAUTHORIZED
 
         # paginate the results
-        page = Pagination.from_query(query=q, request=request)
+        try:
+            page = Pagination.from_query(q, request)
+        except ValueError as e:
+            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
-        # serialize models, include metadata if requested
+        # serialize models
         return self.response(page, collaboration_schema)
 
     @with_user
@@ -289,16 +300,15 @@ class Collaborations(CollaborationBase):
 
         tags: ["Collaboration"]
         """
-        parser = reqparse.RequestParser()
-        parser.add_argument('name', type=str, required=True,
-                            help="This field cannot be left blank!")
-        parser.add_argument('organization_ids', type=int, required=True,
-                            action='append')
-        parser.add_argument('encrypted', type=int, required=False)
-        data = parser.parse_args()
+        data = request.get_json()
+        # validate request body
+        errors = collaboration_input_schema.validate(data)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
 
         name = data["name"]
-        if db.Collaboration.name_exists(name):
+        if db.Collaboration.exists("name", name):
             return {"msg": f"Collaboration name '{name}' already exists!"}, \
                 HTTPStatus.BAD_REQUEST
 
@@ -319,7 +329,7 @@ class Collaborations(CollaborationBase):
         )
 
         collaboration.save()
-        return collaboration_schema.dump(collaboration).data, HTTPStatus.OK
+        return collaboration_schema.dump(collaboration), HTTPStatus.OK
 
 
 class Collaboration(CollaborationBase):
@@ -381,7 +391,7 @@ class Collaboration(CollaborationBase):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
 
-        return collaboration_schema.dump(collaboration, many=False).data, \
+        return collaboration_schema.dump(collaboration, many=False), \
             HTTPStatus.OK  # 200
 
     @with_user
@@ -395,6 +405,8 @@ class Collaboration(CollaborationBase):
           Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Edit|❌|❌|Update a collaboration|\n\n
+          |Collaboration|Collaboration|Edit|❌|❌|Update a collaboration that
+          you are already a member of|\n\n
 
           Accessible to users.
 
@@ -430,6 +442,8 @@ class Collaboration(CollaborationBase):
             description: Collaboration with specified id is not found
           401:
             description: Unauthorized
+          400:
+            description: Collaboration name already exists
 
         security:
           - bearerAuth: []
@@ -444,14 +458,26 @@ class Collaboration(CollaborationBase):
                     "can not be found"}, HTTPStatus.NOT_FOUND  # 404
 
         # verify permissions
-        if not self.r.e_glo.can():
+        if not self.r.can_for_col(P.EDIT, collaboration.id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
-        # only update fields that are provided
         data = request.get_json()
+        # validate request body
+        errors = collaboration_input_schema.validate(data, partial=True)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+
+        # only update fields that are provided
         if "name" in data:
-            collaboration.name = data["name"]
+            name = data["name"]
+            if collaboration.name != name and \
+                    db.Collaboration.exists("name", name):
+                return {
+                    "msg": f"Collaboration name '{name}' already exists!"
+                }, HTTPStatus.BAD_REQUEST
+            collaboration.name = name
         if "organization_ids" in data:
             collaboration.organizations = [
                 db.Organization.get(org_id)
@@ -463,7 +489,7 @@ class Collaboration(CollaborationBase):
 
         collaboration.save()
 
-        return collaboration_schema.dump(collaboration, many=False).data, \
+        return collaboration_schema.dump(collaboration, many=False), \
             HTTPStatus.OK  # 200
 
     @with_user
@@ -478,6 +504,8 @@ class Collaboration(CollaborationBase):
           Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Delete|❌|❌|Remove collaboration|\n\n
+          |Collaboration|Collaboration|Delete|❌|❌|Remove collaborations
+          that you are part of yourself|\n\n
 
           Accessible to users.
 
@@ -488,6 +516,12 @@ class Collaboration(CollaborationBase):
               type: integer
             description: Collaboration id
             required: true
+          - in: query
+            name: delete_dependents
+            schema:
+              type: boolean
+            description: If set to true, the collaboratio will be deleted along
+              with all its tasks and nodes (default=False)
 
         responses:
           200:
@@ -509,9 +543,27 @@ class Collaboration(CollaborationBase):
                 HTTPStatus.NOT_FOUND
 
         # verify permissions
-        if not self.r.d_glo.can():
+        if not self.r.can_for_col(P.DELETE, collaboration.id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
+
+        if collaboration.tasks or collaboration.nodes:
+            delete_dependents = request.args.get('delete_dependents', False)
+            if not delete_dependents:
+                return {
+                    "msg": f"Collaboration id={id} has "
+                    f"{len(collaboration.tasks)} tasks and "
+                    f"{len(collaboration.nodes)} nodes. Please delete them "
+                    "separately or set delete_dependents=True"
+                }, HTTPStatus.BAD_REQUEST
+            else:
+                log.warn(f"Deleting collaboration id={id} along with "
+                         f"{len(collaboration.tasks)} tasks and "
+                         f"{len(collaboration.nodes)} nodes")
+                for task in collaboration.tasks:
+                    task.delete()
+                for node in collaboration.nodes:
+                    node.delete()
 
         collaboration.delete()
         return {"msg": f"Collaboration id={id} successfully deleted"}, \
@@ -523,80 +575,7 @@ class CollaborationOrganization(ServicesResources):
 
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
-        self.r = getattr(self.permissions, module_name)
-
-    @only_for(("node", "user", "container"))
-    def get(self, id):
-        """ Returns organizations that participate in the collaboration
-        ---
-        description: >-
-          Returns a list of all organizations that belong to the specified
-          collaboration.
-
-          ### Permission Table\n
-          |Rulename|Scope|Operation|Assigned to Node|Assigned to Container|
-          Description|\n
-          |--|--|--|--|--|--|\n
-          |Collaboration|Global|View|❌|❌|All collaborations|\n
-          |Collaboration|Organization|View|✅|✅|Collaborations
-          in which your organization participates|\n\n
-
-          Accessible to users.
-
-        parameters:
-          - in: path
-            name: id
-            schema:
-              type: integer
-            description: Collaboration id
-            required: true
-          - in: query
-            name: include
-            schema:
-              type: string
-            description: Include 'metadata' to get pagination metadata. Note
-              that this will put the actual data in an envelope.
-          - in: query
-            name: page
-            schema:
-              type: integer
-            description: Page number for pagination
-          - in: query
-            name: per_page
-            schema:
-              type: integer
-            description: Number of items per page
-
-        responses:
-            200:
-                description: Ok
-            404:
-                description: Collaboration specified by id does not exists
-            401:
-                description: Unauthorized
-
-        security:
-            - bearerAuth: []
-
-        tags: ["Collaboration"]
-        """
-        col = db.Collaboration.get(id)
-        if not col:
-            return {'msg': f'collaboration (id={id}) can not be found'},\
-                HTTPStatus.NOT_FOUND
-
-        # check permission
-        if not self.r.v_glo.can():
-            auth_org = self.obtain_auth_organization()
-            if not (self.r.v_org.can() and auth_org in col.organizations):
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
-
-        # paginate organizations
-        page = Pagination.from_list(col.organizations, request)
-
-        # model serialization
-        return self.response(page, org_schema)
+        self.r: RuleCollection = getattr(self.permissions, module_name)
 
     @with_user
     def post(self, id):
@@ -611,6 +590,8 @@ class CollaborationOrganization(ServicesResources):
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Edit|❌|❌|Add organization to a
           collaboration|\n\n
+          |Collaboration|Collaboration|Edit|❌|❌|Add organization to a
+          collaboration that your organization is already a member of|\n\n
 
           Accessible to users.
 
@@ -651,12 +632,18 @@ class CollaborationOrganization(ServicesResources):
                     "not be found"}, HTTPStatus.NOT_FOUND
 
         # verify permissions
-        if not self.r.e_glo.can():
+        if not self.r.can_for_col(P.EDIT, collaboration.id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
-        # get the organization
+        # validate request body
         data = request.get_json()
+        errors = collaboration_add_organization_schema.validate(data)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+
+        # get the organization
         organization = db.Organization.get(data['id'])
         if not organization:
             return {"msg": f"organization with id={id} is not found"}, \
@@ -665,7 +652,7 @@ class CollaborationOrganization(ServicesResources):
         # append organization to the collaboration
         collaboration.organizations.append(organization)
         collaboration.save()
-        return org_schema.dump(collaboration.organizations, many=True).data, \
+        return org_schema.dump(collaboration.organizations, many=True), \
             HTTPStatus.OK
 
     @with_user
@@ -681,6 +668,8 @@ class CollaborationOrganization(ServicesResources):
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Edit|❌|❌|Remove an organization from an
           existing collaboration|\n\n
+          |Collaboration|Collaboration|Edit|❌|❌|Remove an organization from
+          an existing collaboration that your organization is a member of|\n\n
 
           Accessible to users.
 
@@ -714,24 +703,24 @@ class CollaborationOrganization(ServicesResources):
         # get collaboration from which organization should be removed
         collaboration = db.Collaboration.get(id)
         if not collaboration:
-            return {"msg": f"collaboration having collaboration_id={id} can "
+            return {"msg": f"Collaboration with collaboration_id={id} can "
                     "not be found"}, HTTPStatus.NOT_FOUND
 
         # get organization which should be deleted
         data = request.get_json()
         organization = db.Organization.get(data['id'])
         if not organization:
-            return {"msg": f"organization with id={id} is not found"}, \
+            return {"msg": f"Organization with id={id} is not found"}, \
                 HTTPStatus.NOT_FOUND
 
-        if not self.r.d_glo.can():
+        if not self.r.can_for_col(P.EDIT, collaboration.id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
         # delete organization and update
         collaboration.organizations.remove(organization)
         collaboration.save()
-        return org_schema.dump(collaboration.organizations, many=True).data, \
+        return org_schema.dump(collaboration.organizations, many=True), \
             HTTPStatus.OK
 
 
@@ -740,78 +729,7 @@ class CollaborationNode(ServicesResources):
 
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
-        self.r = getattr(self.permissions, module_name)
-
-    @with_user
-    def get(self, id):
-        """ List nodes in collaboration.
-        ---
-        description: >-
-          Returns a list of node(s) which belong to the specified
-          collaboration.\n
-
-          ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-          Description|\n
-          |--|--|--|--|--|--|\n
-          |Collaboration|Global|View|❌|❌|List nodes in a specified
-          collaboration|\n
-          |Collaboration|Organization|View|✅|✅|List nodes in a specified
-          collaboration|\n
-
-          Accessible to users.
-
-        parameters:
-          - in: path
-            name: id
-            schema:
-              type: integer
-            description: Collaboration id
-            required: true
-          - in: query
-            name: include
-            schema:
-              type: string
-            description: Include 'metadata' to get pagination metadata. Note
-              that this will put the actual data in an envelope.
-          - in: query
-            name: page
-            schema:
-              type: integer
-            description: Page number for pagination
-          - in: query
-            name: per_page
-            schema:
-              type: integer
-            description: Number of items per page
-
-        responses:
-          200:
-            description: Ok
-          404:
-            description: Collaboration not found
-          401:
-            description: Unauthorized
-
-        tags: ["Collaboration"]
-        """
-        col = db.Collaboration.get(id)
-        if not col:
-            return {"msg": f"collaboration id={id} can not be found"},\
-                HTTPStatus.NOT_FOUND
-
-        # check permission
-        if not self.r.v_glo.can():
-            auth_org = self.obtain_auth_organization()
-            if not (self.r.v_org.can() and auth_org in col.organizations):
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
-
-        # paginate nodes
-        page = Pagination.from_list(col.nodes, request)
-
-        # model serialization
-        return self.response(page, node_schema)
+        self.r: RuleCollection = getattr(self.permissions, module_name)
 
     @with_user
     def post(self, id):
@@ -824,7 +742,9 @@ class CollaborationNode(ServicesResources):
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Collaboration|Global|Create|❌|❌|Add node to collaboration|\n
+          |Collaboration|Global|Edit|❌|❌|Add node to collaboration|\n
+          |Collaboration|Collaboration|Edit|❌|❌|Add node to collaboration
+          that your organization is a member of|\n
 
           Accessible to users.
 
@@ -865,22 +785,35 @@ class CollaborationNode(ServicesResources):
             return {"msg": f"collaboration having collaboration_id={id} can "
                     "not be found"}, HTTPStatus.NOT_FOUND
 
-        if not self.r.e_glo.can():
+        if not self.r.can_for_col(P.EDIT, collaboration.id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
+        # validate request body
         data = request.get_json()
+        errors = collaboration_add_node_schema.validate(data)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+
         node = db.Node.get(data['id'])
         if not node:
             return {"msg": f"node id={data['id']} not found"}, \
                 HTTPStatus.NOT_FOUND
+
         if node in collaboration.nodes:
             return {"msg": f"node id={data['id']} is already in collaboration "
                     f"id={id}"}, HTTPStatus.BAD_REQUEST
+        elif node.organization not in collaboration.organizations:
+            return {
+                "msg": f"Node id={data['id']} belongs to an organization that "
+                f"is not part of collaboration id={id}. Please add the "
+                "organization to the collaboration first"
+            }, HTTPStatus.BAD_REQUEST
 
         collaboration.nodes.append(node)
         collaboration.save()
-        return node_schema.dump(collaboration.nodes, many=True).data,\
+        return node_schema.dump(collaboration.nodes, many=True),\
             HTTPStatus.CREATED
 
     @with_user
@@ -895,6 +828,8 @@ class CollaborationNode(ServicesResources):
           Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Edit|❌|❌|Remove node from collaboration|\n
+          |Collaboration|Collaboration|Edit|❌|❌|Remove node from
+          collaboration that your organization is a member of|\n
 
           Accessible to users.
 
@@ -932,7 +867,7 @@ class CollaborationNode(ServicesResources):
             return {"msg": f"collaboration having collaboration_id={id} can "
                     "not be found"}, HTTPStatus.NOT_FOUND
 
-        if not self.r.e_glo.can():
+        if not self.r.can_for_col(P.EDIT, collaboration.id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
@@ -940,6 +875,7 @@ class CollaborationNode(ServicesResources):
         node = db.Node.get(data['id'])
         if not node:
             return {"msg": f"node id={id} not found"}, HTTPStatus.NOT_FOUND
+
         if node not in collaboration.nodes:
             return {"msg": f"node id={data['id']} is not part of "
                     f"collaboration id={id}"}, HTTPStatus.BAD_REQUEST
@@ -948,85 +884,3 @@ class CollaborationNode(ServicesResources):
         collaboration.save()
         return {"msg": f"node id={data['id']} removed from collaboration "
                 f"id={id}"}, HTTPStatus.OK
-
-
-class CollaborationTask(ServicesResources):
-    """Resource for /api/collaboration/<int:id>/task."""
-
-    def __init__(self, socketio, mail, api, permissions, config):
-        super().__init__(socketio, mail, api, permissions, config)
-        self.r = getattr(self.permissions, 'task')
-
-    @with_user_or_node
-    def get(self, id):
-        """List tasks from collaboration
-        ---
-        description: >-
-            Returns a list of all tasks that belong to the collaboration.\n
-
-            ### Permission Table\n
-            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-            Description|\n
-            |--|--|--|--|--|--|\n
-            |Task|Global|View|❌|❌|View tasks of collaboration|\n
-            |Task|Organization|View|✅|✅|View tasks only when your
-            organization participates in the collaboration|\n
-
-            Accessible to users.
-
-        parameters:
-          - in: path
-            name: id
-            schema:
-              type: integer
-            description: Collaboration id
-            required: true
-          - in: query
-            name: include
-            schema:
-              type: string
-            description: Include 'metadata' to get pagination metadata. Note
-              that this will put the actual data in an envelope.
-          - in: query
-            name: page
-            schema:
-              type: integer
-            description: Page number for pagination
-          - in: query
-            name: per_page
-            schema:
-              type: integer
-            description: Number of items per page
-
-        responses:
-          200:
-            description: Ok
-          401:
-            description: Unauthorized
-          404:
-            description: Collaboration not found
-
-        security:
-            - bearerAuth: []
-
-        tags: ["Collaboration"]
-
-        """
-        col = db.Collaboration.get(id)
-        if not col:
-            return {"msg": f"Collaboration id={id} can not be found"},\
-                HTTPStatus.NOT_FOUND
-
-        # obtain auth's organization id
-        auth_org = self.obtain_auth_organization()
-
-        if not self.r.v_glo.can():
-            if not (self.r.v_org.can() and auth_org in col.organizations):
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
-
-        # paginate tasks
-        page = Pagination.from_list(col.tasks, request)
-
-        # model serialization
-        return self.response(page, tasks_schema)

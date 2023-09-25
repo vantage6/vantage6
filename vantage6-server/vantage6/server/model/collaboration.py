@@ -1,5 +1,5 @@
 from __future__ import annotations
-from sqlalchemy import Column, String, Boolean, exists
+from sqlalchemy import Column, String, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -13,10 +13,11 @@ class Collaboration(Base):
     Table that describes which collaborations are available.
 
     Collaborations are combinations of one or more organizations
-    that do studies together. Each :class:`.Organization` has a
+    that do studies together. Each
+    :class:`~vantage6.server.model.organization.Organization` has a
     :class:`~vantage6.server.model.node.Node` for
     each collaboration that it is part of. Within a collaboration multiple
-    :class:`.Task` can be executed.
+    :class:`~vantage6.server.model.task.Task` can be executed.
 
     Attributes
     ----------
@@ -24,11 +25,12 @@ class Collaboration(Base):
         Name of the collaboration
     encrypted : bool
         Whether the collaboration is encrypted or not
-    organizations : list[:class:`.Organization`]
+    organizations :
+            list[:class:`~vantage6.server.model.organization.Organization`]
         List of organizations that are part of this collaboration
     nodes : list[:class:`~vantage6.server.model.node.Node`]
         List of nodes that are part of this collaboration
-    tasks : list[:class:`.Task`]
+    tasks : list[:class:`~vantage6.server.model.task.Task`]
         List of tasks that are part of this collaboration
     """
 
@@ -83,16 +85,17 @@ class Collaboration(Base):
     def get_node_from_organization(
             self, organization: Organization) -> Node | None:
         """
-        Returns the node that is part of the given :class:`.Organization`.
+        Returns the node that is part of the given
+        :class:`~vantage6.server.model.organization.Organization`.
 
         Parameters
         ----------
-        organization: Organization
-            Organization
+        organization: :class:`~vantage6.server.model.organization.Organization`
+            Organization to get node from
 
         Returns
         -------
-        Union[:class:`~vantage6.server.model.node.Node`, None]
+        :class:`~vantage6.server.model.node.Node` | None
             Node for the given organization for this collaboration, or None if
             there is no node for the given organization.
         """
@@ -106,11 +109,6 @@ class Collaboration(Base):
         """
         Find :class:`.Collaboration` by its name.
 
-        Note
-        ----
-        If multiple collaborations share the same name, the first
-        collaboration found is returned.
-
         Parameters
         ----------
         name: str
@@ -122,8 +120,6 @@ class Collaboration(Base):
             Collaboration with the given name, or None if no collaboration
             with the given name exists.
         """
-        # FIXME BvB 2022-01-18. From v4+ there shouldn't be any collisions
-        # in collab names anymore, so correct docstring above
         session = DatabaseSessionManager.get_session()
         try:
             result = session.query(cls).filter_by(name=name).first()
@@ -132,27 +128,7 @@ class Collaboration(Base):
         except NoResultFound:
             return None
 
-    @classmethod
-    def name_exists(cls, name: str) -> bool:
-        """
-        Check if a collaboration with the given name exists.
-
-        Parameters
-        ----------
-        name: str
-            Name of the collaboration
-
-        Returns
-        -------
-        bool
-            True if a collaboration with the given name exists, else False
-        """
-        session = DatabaseSessionManager.get_session()
-        result = session.query(exists().where(cls.name == name)).scalar()
-        session.commit()
-        return result
-
-    def __repr__(self) -> str:
+    def __repr__(self):
         """
         Returns a string representation of the collaboration.
 

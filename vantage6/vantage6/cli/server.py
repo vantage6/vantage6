@@ -31,7 +31,7 @@ from vantage6.common.globals import (
 from vantage6.cli.rabbitmq import split_rabbitmq_uri
 
 from vantage6.cli.globals import (
-    DEFAULT_SERVER_ENVIRONMENT, DEFAULT_SERVER_SYSTEM_FOLDERS, DEFAULT_UI_PORT
+    DEFAULT_SERVER_SYSTEM_FOLDERS, DEFAULT_UI_PORT
 )
 from vantage6.cli.context import ServerContext
 from vantage6.cli.configuration_wizard import (
@@ -44,7 +44,7 @@ from vantage6.cli.utils import (
     remove_file
 )
 from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
-from vantage6.cli import __version__, rabbitmq
+from vantage6.cli import __version__
 
 
 def click_insert_context(func: callable) -> callable:
@@ -66,9 +66,6 @@ def click_insert_context(func: callable) -> callable:
                   help="Name of the configuration you want to use.")
     @click.option('-c', '--config', default=None,
                   help='Absolute path to configuration-file; overrides NAME')
-    @click.option('-e', '--environment',
-                  default=DEFAULT_SERVER_ENVIRONMENT,
-                  help='Configuration environment to use')
     @click.option('--system', 'system_folders', flag_value=True,
                   help='Use system folders instead of user folders. This is '
                   'the default')
@@ -76,8 +73,8 @@ def click_insert_context(func: callable) -> callable:
                   default=DEFAULT_SERVER_SYSTEM_FOLDERS,
                   help='Use user folders instead of system folders')
     @wraps(func)
-    def func_with_context(name: str, config: str, environment: str,
-                          system_folders: bool, *args, **kwargs) -> callable:
+    def func_with_context(name: str, config: str, system_folders: bool, *args,
+                          **kwargs) -> callable:
         """
         Decorator function that adds the context to the function.
 
@@ -90,7 +87,6 @@ def click_insert_context(func: callable) -> callable:
         if config:
             ctx = ServerContext.from_external_config_file(
                 config,
-                environment,
                 system_folders
             )
             return func(ctx, *args, **kwargs)
@@ -99,14 +95,14 @@ def click_insert_context(func: callable) -> callable:
         if not name:
             try:
                 # select configuration if none supplied
-                name, environment = select_configuration_questionaire(
+                name = select_configuration_questionaire(
                     "server", system_folders
                 )
             except Exception:
                 error("No configurations could be found!")
                 exit(1)
 
-        ctx = get_server_context(name, environment, system_folders)
+        ctx = get_server_context(name, system_folders)
         return func(ctx, *args, **kwargs)
 
     return func_with_context
@@ -130,6 +126,9 @@ def cli_server() -> None:
               help="Start the graphical User Interface as well")
 @click.option('--ui-port', default=None, type=int,
               help="Port to listen on for the User Interface")
+@click.option('--with-rabbitmq', 'start_rabbitmq', flag_value=True,
+              default=False, help="Start RabbitMQ message broker as local "
+              "container - use in development only")
 @click.option('--rabbitmq-image', default=None,
               help="RabbitMQ docker image to use")
 @click.option('--keep/--auto-remove', default=False,
@@ -141,18 +140,20 @@ def cli_server() -> None:
               help="Print server logs to the console after start")
 @click_insert_context
 def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
-                     start_ui: bool, ui_port: int, rabbitmq_image: str,
-                     keep: bool, mount_src: str, attach: bool) -> None:
+                     start_ui: bool, ui_port: int, start_rabbitmq: bool,
+                     rabbitmq_image: str, keep: bool, mount_src: str,
+                     attach: bool) -> None:
     """
     Start the server.
     """
-    vserver_start(ctx, ip, port, image, start_ui, ui_port, rabbitmq_image,
-                  keep, mount_src, attach)
+    vserver_start(ctx, ip, port, image, start_ui, ui_port, start_rabbitmq,
+                  rabbitmq_image, keep, mount_src, attach)
 
 
 def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
-                  start_ui: bool, ui_port: int, rabbitmq_image: str,
-                  keep: bool, mount_src: str, attach: bool) -> None:
+                  start_ui: bool, ui_port: int, start_rabbitmq: bool,
+                  rabbitmq_image: str, keep: bool, mount_src: str,
+                  attach: bool) -> None:
     """
     Start the server in a Docker container.
 
@@ -166,6 +167,13 @@ def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
         port to listen on
     image : str
         Server Docker image to use
+    start_ui : bool
+        Start the graphical User Interface as well
+    ui_port : int
+        Port to listen on for the User Interface
+    start_rabbitmq : bool
+        Start RabbitMQ message broker as local container - use only in
+        development
     rabbitmq_image : str
         RabbitMQ docker image to use
     keep : bool
@@ -178,11 +186,12 @@ def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
         Wether to attach the server logs to the console after starting the
         server.
     """
+    # will print an error if not
+    check_docker_running()
+
     info("Starting server...")
     info("Finding Docker daemon.")
     docker_client = docker.from_env()
-    # will print an error if not
-    check_docker_running()
 
     # check if name is allowed for docker volume, else exit
     check_config_name_allowed(ctx.name)
@@ -200,16 +209,6 @@ def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
     # Then we check if the image has been specified in the config file, and
     # finally we use the default settings from the package.
     if image is None:
-
-        # FIXME: remove me in version 4+, as this is to support older
-        # configuration files. So the outer `image` key is no longer supported
-        # Note that this was implicitly supported in version 3.* for server as
-        # well
-        if ctx.config.get('image'):
-            warning('Using the `image` option in the config file is to be '
-                    'removed in version 4+.')
-            image = ctx.config.get('image')
-
         custom_images: dict = ctx.config.get('images')
         if custom_images:
             image = custom_images.get('server')
@@ -277,10 +276,18 @@ def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
     )
     server_network_mgr.create_network(is_internal=False)
 
-    # Note that ctx.data_dir has been created at this point, which is required
-    # for putting some RabbitMQ configuration files inside
-    info('Starting RabbitMQ container')
-    _start_rabbitmq(ctx, rabbitmq_image, server_network_mgr)
+    if start_rabbitmq or ctx.config.get('rabbitmq') and \
+            ctx.config['rabbitmq'].get('start_with_server', False):
+        # Note that ctx.data_dir has been created at this point, which is
+        # required for putting some RabbitMQ configuration files inside
+        info('Starting RabbitMQ container')
+        _start_rabbitmq(ctx, rabbitmq_image, server_network_mgr)
+    elif ctx.config.get('rabbitmq'):
+        info("RabbitMQ is provided in the config file as external service. "
+             "Assuming this service is up and running.")
+    else:
+        warning('Message queue disabled! This means that the vantage6 server '
+                'cannot be scaled horizontally!')
 
     # start the UI if requested
     if start_ui or ctx.config.get('ui') and ctx.config['ui'].get('enabled'):
@@ -339,8 +346,8 @@ def cli_server_configuration_list() -> None:
     """
     Print the available server configurations.
     """
-    client = docker.from_env()
     check_docker_running()
+    client = docker.from_env()
 
     running_server = client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
@@ -350,7 +357,6 @@ def cli_server_configuration_list() -> None:
 
     header = \
         "\nName"+(21*" ") + \
-        "Environments"+(20*" ") + \
         "Status"+(10*" ") + \
         "System/User"
 
@@ -361,26 +367,22 @@ def cli_server_configuration_list() -> None:
     stopped = Fore.RED + "Not running" + Style.RESET_ALL
 
     # system folders
-    configs, f1 = ServerContext.available_configurations(
-        system_folders=True)
+    configs, f1 = ServerContext.available_configurations(system_folders=True)
     for config in configs:
         status = running if f"{APPNAME}-{config.name}-system-server" in \
             running_node_names else stopped
         click.echo(
             f"{config.name:25}"
-            f"{str(config.available_environments):32}"
             f"{status:25} System "
         )
 
     # user folders
-    configs, f2 = ServerContext.available_configurations(
-        system_folders=False)
+    configs, f2 = ServerContext.available_configurations(system_folders=False)
     for config in configs:
         status = running if f"{APPNAME}-{config.name}-user-server" in \
             running_node_names else stopped
         click.echo(
             f"{config.name:25}"
-            f"{str(config.available_environments):32}"
             f"{status:25} User   "
         )
 
@@ -410,12 +412,10 @@ def cli_server_files(ctx: ServerContext) -> None:
 @cli_server.command(name='new')
 @click.option('-n', '--name', default=None,
               help="name of the configuration you want to use.")
-@click.option('-e', '--environment', default=DEFAULT_SERVER_ENVIRONMENT,
-              help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False,
               default=DEFAULT_SERVER_SYSTEM_FOLDERS)
-def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
+def cli_server_new(name: str, system_folders: bool) -> None:
     """
     Create a new server configuration.
     """
@@ -426,12 +426,9 @@ def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
 
     # check that this config does not exist
     try:
-        if ServerContext.config_exists(name, environment, system_folders):
-            error(
-                f"Configuration {Fore.RED}{name}{Style.RESET_ALL} with "
-                f"environment {Fore.RED}{environment}{Style.RESET_ALL} "
-                f"already exists!"
-            )
+        if ServerContext.config_exists(name, system_folders):
+            error(f"Configuration {Fore.RED}{name}{Style.RESET_ALL} already "
+                  "exists!")
             exit(1)
     except Exception as e:
         error(e)
@@ -445,8 +442,7 @@ def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
         exit(1)
 
     # create config in ctx location
-    cfg_file = configuration_wizard("server", name, environment=environment,
-                                    system_folders=system_folders)
+    cfg_file = configuration_wizard("server", name, system_folders)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
 
     # info(f"root user created.")
@@ -460,7 +456,7 @@ def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
 #
 # TODO this method has a lot of duplicated code from `start`
 @cli_server.command(name='import')
-@click.argument('file_', type=click.Path(exists=True))
+@click.argument('file', type=click.Path(exists=True))
 @click.option('--drop-all', is_flag=True, default=False,
               help="Drop all existing data before importing")
 @click.option('-i', '--image', default=None, help="Node Docker image to use")
@@ -469,9 +465,12 @@ def cli_server_new(name: str, environment: str, system_folders: bool) -> None:
                    " code in this path")
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing. Useful for debugging")
+@click.option('--wait', default=False, help="Wait for the import to finish")
 @click_insert_context
-def cli_server_import(ctx: ServerContext, file_: str, drop_all: bool,
-                      image: str, mount_src: str, keep: bool) -> None:
+def cli_server_import(
+    ctx: ServerContext, file: str, drop_all: bool, image: str, mount_src: str,
+    keep: bool, wait: bool
+) -> None:
     """
     Import vantage6 resources, such as organizations, collaborations, users and
     tasks into a server instance.
@@ -479,18 +478,19 @@ def cli_server_import(ctx: ServerContext, file_: str, drop_all: bool,
     The FILE_ argument should be a path to a yaml file containing the vantage6
     formatted data to import.
     """
-    vserver_import(ctx, file_, drop_all, image, mount_src, keep)
+    vserver_import(ctx, file, drop_all, image, mount_src, keep,
+                   wait)
 
 
-def vserver_import(ctx: ServerContext, file_: str, drop_all: bool,
-                   image: str, mount_src: str, keep: bool) -> None:
+def vserver_import(ctx: ServerContext, file: str, drop_all: bool,
+                   image: str, mount_src: str, keep: bool, wait: bool) -> None:
     """Batch import organizations/collaborations/users and tasks.
 
     Parameters
     ----------
     ctx : ServerContext
         Server context object
-    file_ : str
+    file : str
         Yaml file containing the vantage6 formatted data to import
     drop_all : bool
         Wether to drop all data before importing
@@ -502,12 +502,15 @@ def vserver_import(ctx: ServerContext, file_: str, drop_all: bool,
     keep : bool
         Wether to keep the image after finishing/crashing. Useful for
         debugging.
+    wait : bool
+        Wether to wait for the import to finish before exiting this function
     """
+    # will print an error if not
+    check_docker_running()
+
     info("Starting server...")
     info("Finding Docker daemon.")
     docker_client = docker.from_env()
-    # will print an error if not
-    check_docker_running()
 
     # check if name is allowed for docker volume, else exit
     check_config_name_allowed(ctx.name)
@@ -533,7 +536,7 @@ def vserver_import(ctx: ServerContext, file_: str, drop_all: bool,
             "/mnt/config.yaml", str(ctx.config_file), type="bind"
         ),
         docker.types.Mount(
-            "/mnt/import.yaml", str(file_), type="bind"
+            "/mnt/import.yaml", str(file), type="bind"
         )
     ]
 
@@ -574,8 +577,8 @@ def vserver_import(ctx: ServerContext, file_: str, drop_all: bool,
         info("Consider using the docker-compose method to start a server")
 
     drop_all_ = "--drop-all" if drop_all else ""
-    cmd = f'vserver-local import -c /mnt/config.yaml -e {ctx.environment} ' \
-          f'{drop_all_} /mnt/import.yaml'
+    cmd = (f'vserver-local import -c /mnt/config.yaml {drop_all_} '
+           '/mnt/import.yaml')
 
     info(cmd)
 
@@ -598,6 +601,10 @@ def vserver_import(ctx: ServerContext, file_: str, drop_all: bool,
 
     info(f"Success! container id = {container.id}")
 
+    if wait:
+        container.wait()
+        info("Container finished!")
+
 
 #
 #   shell
@@ -613,9 +620,10 @@ def cli_server_shell(ctx: ServerContext) -> None:
     the changes that you make. It is better to use the Python client or a
     graphical user interface instead.
     """
-    docker_client = docker.from_env()
     # will print an error if not
     check_docker_running()
+
+    docker_client = docker.from_env()
 
     running_servers = docker_client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
@@ -637,22 +645,18 @@ def cli_server_shell(ctx: ServerContext) -> None:
 #
 @cli_server.command(name='stop')
 @click.option("-n", "--name", default=None, help="Configuration name")
-@click.option('-e', '--environment', default=DEFAULT_SERVER_ENVIRONMENT,
-              help='configuration environment to use')
 @click.option('--system', 'system_folders', flag_value=True)
 @click.option('--user', 'system_folders', flag_value=False,
               default=DEFAULT_SERVER_SYSTEM_FOLDERS)
 @click.option('--all', 'all_servers', flag_value=True, help="Stop all servers")
-def cli_server_stop(name: str, environment: str, system_folders: bool,
-                    all_servers: bool):
+def cli_server_stop(name: str, system_folders: bool, all_servers: bool):
     """
     Stop one or all running server(s).
     """
-    vserver_stop(name, environment, system_folders, all_servers)
+    vserver_stop(name, system_folders, all_servers)
 
 
-def vserver_stop(name: str, environment: str, system_folders: bool,
-                 all_servers: bool) -> None:
+def vserver_stop(name: str, system_folders: bool, all_servers: bool) -> None:
     """
     Stop one or all running server(s).
 
@@ -660,15 +664,13 @@ def vserver_stop(name: str, environment: str, system_folders: bool,
     ----------
     name : str
         Name of the server to stop
-    environment : str
-        DTAP environment to use
     system_folders : bool
         Wether to use system folders or not
     all_servers : bool
         Wether to stop all servers or not
     """
-    client = docker.from_env()
     check_docker_running()
+    client = docker.from_env()
 
     running_servers = client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
@@ -681,8 +683,7 @@ def vserver_stop(name: str, environment: str, system_folders: bool,
 
     if all_servers:
         for container_name in running_server_names:
-            _stop_server_containers(client, container_name, environment,
-                                    system_folders)
+            _stop_server_containers(client, container_name, system_folders)
         return
 
     # make sure we have a configuration name to work with
@@ -697,8 +698,7 @@ def vserver_stop(name: str, environment: str, system_folders: bool,
         error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running!")
         return
 
-    _stop_server_containers(client, container_name, environment,
-                            system_folders)
+    _stop_server_containers(client, container_name, system_folders)
 
 
 #
@@ -713,8 +713,8 @@ def cli_server_attach(name: str, system_folders: bool) -> None:
     """
     Show the server logs in the current console.
     """
-    client = docker.from_env()
     check_docker_running()
+    client = docker.from_env()
 
     running_servers = client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
@@ -755,8 +755,8 @@ def cli_server_version(name: str, system_folders: bool) -> None:
     """
     Print the version of the vantage6 server.
     """
-    client = docker.from_env()
     check_docker_running()
+    client = docker.from_env()
 
     running_servers = client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
@@ -786,7 +786,7 @@ def cli_server_version(name: str, system_folders: bool) -> None:
 #
 # helper functions
 #
-def get_server_context(name: str, environment: str, system_folders: bool) \
+def get_server_context(name: str, system_folders: bool) \
         -> ServerContext:
     """
     Load the server context from the configuration file.
@@ -795,8 +795,6 @@ def get_server_context(name: str, environment: str, system_folders: bool) \
     ----------
     name : str
         Name of the server to inspect
-    environment : str
-        DTAP environment to use
     system_folders : bool
         Wether to use system folders or if False, the user folders
 
@@ -805,13 +803,12 @@ def get_server_context(name: str, environment: str, system_folders: bool) \
     ServerContext
         Server context object
     """
-    if not ServerContext.config_exists(name, environment, system_folders):
+    if not ServerContext.config_exists(name, system_folders):
         scope = "system" if system_folders else "user"
         error(
-                f"Configuration {Fore.RED}{name}{Style.RESET_ALL} with "
-                f"{Fore.RED}{environment}{Style.RESET_ALL} does not exist "
-                f"in the {Fore.RED}{scope}{Style.RESET_ALL} folders!"
-            )
+            f"Configuration {Fore.RED}{name}{Style.RESET_ALL} does not "
+            f"exist in the {Fore.RED}{scope}{Style.RESET_ALL} folders!"
+        )
         exit(1)
 
     # We do not want to log this here, we do this in the container and not on
@@ -819,8 +816,7 @@ def get_server_context(name: str, environment: str, system_folders: bool) \
     ServerContext.LOGGING_ENABLED = False
 
     # create server context, and initialize db
-    ctx = ServerContext(name, environment=environment,
-                        system_folders=system_folders)
+    ctx = ServerContext(name, system_folders=system_folders)
 
     return ctx
 
@@ -839,22 +835,19 @@ def _start_rabbitmq(ctx: ServerContext, rabbitmq_image: str,
     network_mgr : NetworkManager
         Network manager object
     """
-    rabbit_uri = ctx.config.get('rabbitmq_uri')
+    rabbit_uri = ctx.config['rabbitmq'].get('uri')
     if not rabbit_uri:
-        warning('Message queue disabled! This means that the server '
-                'application cannot scale horizontally!')
-    elif rabbitmq.is_local_address(rabbit_uri):
-        # kick off RabbitMQ container
-        rabbit_mgr = RabbitMQManager(
-            ctx=ctx, network_mgr=network_mgr, image=rabbitmq_image)
-        rabbit_mgr.start()
-    else:
-        info("Detected that the RabbitMQ service is a external service. "
-             "Assuming this service is up and running.")
+        error("No RabbitMQ URI found in the configuration file! Please add"
+              "a 'uri' key to the 'rabbitmq' section of the configuration.")
+        exit(1)
+    # kick off RabbitMQ container
+    rabbit_mgr = RabbitMQManager(
+        ctx=ctx, network_mgr=network_mgr, image=rabbitmq_image)
+    rabbit_mgr.start()
 
 
 def _stop_server_containers(client: DockerClient, container_name: str,
-                            environment: str, system_folders: bool) -> None:
+                            system_folders: bool) -> None:
     """
     Given a server's name, kill its docker container and related (RabbitMQ)
     containers.
@@ -865,8 +858,6 @@ def _stop_server_containers(client: DockerClient, container_name: str,
         Docker client
     container_name : str
         Name of the server to stop
-    environment : str
-        DTAP environment to use
     system_folders : bool
         Wether to use system folders or not
     """
@@ -879,7 +870,7 @@ def _stop_server_containers(client: DockerClient, container_name: str,
     scope = "system" if system_folders else "user"
     config_name = get_server_config_name(container_name, scope)
 
-    ctx = get_server_context(config_name, environment, system_folders)
+    ctx = get_server_context(config_name, system_folders)
 
     # kill the UI container (if it exists)
     _stop_ui(client, ctx)
@@ -891,7 +882,7 @@ def _stop_server_containers(client: DockerClient, container_name: str,
 
     # kill RabbitMQ if it exists and no other servers are using to it (i.e. it
     # is not in other docker networks with other containers)
-    rabbit_uri = ctx.config.get('rabbitmq_uri')
+    rabbit_uri = ctx.config.get('rabbitmq', {}).get('uri')
     if rabbit_uri:
         rabbit_container_name = split_rabbitmq_uri(
             rabbit_uri=rabbit_uri)['host']
@@ -916,8 +907,8 @@ def _print_log_worker(logs_stream: Iterable[bytes]) -> None:
         print(log.decode(STRING_ENCODING), end="")
 
 
-def vserver_remove(ctx: ServerContext, name: str, environment: str,
-                   system_folders: bool) -> None:
+def vserver_remove(ctx: ServerContext, name: str, system_folders: bool,
+                   force: bool) -> None:
     """
     Function to remove a server.
 
@@ -927,22 +918,23 @@ def vserver_remove(ctx: ServerContext, name: str, environment: str,
         Server context object
     name : str
         Name of the server to remove
-    environment : str
-        DTAP environment to use
     system_folders : bool
-        Wether to use system folders or not
+        Whether to use system folders or not
+    force : bool
+        Whether to ask for confirmation before removing or not
     """
     check_docker_running()
 
     # first stop server
-    vserver_stop(name, environment, system_folders, False)
+    vserver_stop(name, system_folders, False)
 
-    if not q.confirm(
-        "This server will be deleted permanently including its configuration. "
-        "Are you sure?", default=False
-    ).ask():
-        info("Server will not be deleted")
-        exit(0)
+    if not force:
+        if not q.confirm(
+            "This server will be deleted permanently including its "
+            "configuration. Are you sure?", default=False
+        ).ask():
+            info("Server will not be deleted")
+            exit(0)
 
     # now remove the folders...
     info(f"Removing configuration file {ctx.config_file}")

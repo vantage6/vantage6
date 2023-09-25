@@ -34,7 +34,14 @@ class WizardTest(unittest.TestCase):
 
         with patch(f"{module_path}.q") as q:
             q.prompt.side_effect = self.prompts
-            q.confirm.return_value.ask.side_effect = [True, False, True, True]
+            q.confirm.return_value.ask.side_effect = [
+                True,  # add a database
+                False,  # don't enable two-factor authentication
+                True,  # add VPN server
+                False,  # don't abort if no server connection is made to pull
+                        # collaboration settings
+                True  # Enable encryption
+            ]
             dirs = MagicMock(data="/")
             config = node_configuration_questionaire(dirs, "iknl")
 
@@ -47,13 +54,15 @@ class WizardTest(unittest.TestCase):
 
         with patch(f"{module_path}.q") as q:
             q.prompt.side_effect = self.prompts
-            q.confirm.return_value.ask.side_effect = [True, True, True, True]
+            q.confirm.return_value.ask.side_effect = [
+                True, True, True, True, True
+            ]
 
             config = server_configuration_questionaire("vantage6")
 
             keys = ["description", "ip", "port", "api_path", "uri",
                     "allow_drop_all", "jwt_secret_key", "logging",
-                    "vpn_server", "rabbitmq_uri", "two_factor_auth"]
+                    "vpn_server", "rabbitmq", "two_factor_auth"]
 
             for key in keys:
                 self.assertIn(key, config)
@@ -69,10 +78,10 @@ class WizardTest(unittest.TestCase):
             "config": "/some/path/"
         }
 
-        file_ = configuration_wizard("node", "vtg6", "application", False)
+        file_ = configuration_wizard("node", "vtg6", False)
         self.assertEqual(Path("/some/path/vtg6.yaml"), file_)
 
-        file_ = configuration_wizard("server", "vtg6", "application", True)
+        file_ = configuration_wizard("server", "vtg6", True)
         self.assertEqual(Path("/some/path/vtg6.yaml"), file_)
 
     @patch(f"{module_path}.NodeContext")
@@ -81,14 +90,12 @@ class WizardTest(unittest.TestCase):
 
         config = MagicMock()
         config.name = "vtg6"
-        config.available_environments = ["application"]
 
         server_c.available_configurations.return_value = [[config], []]
         node_c.available_configurations.return_value = [[config], []]
 
         with patch(f"{module_path}.q") as q:
-            q.select.return_value.ask.return_value = ["vtg6", "application"]
-            name, env = select_configuration_questionaire("node", True)
+            q.select.return_value.ask.return_value = "vtg6"
+            name = select_configuration_questionaire("node", True)
 
         self.assertEqual(name, "vtg6")
-        self.assertEqual(env, "application")

@@ -50,7 +50,7 @@ vantage6.node.docker.docker_base
 .. _docker-manager-class:
 
 vantage6.node.docker.docker_manager
-----------------------------------
+-----------------------------------
 
 .. autoclass:: vantage6.node.docker.docker_manager.DockerManager
    :members:

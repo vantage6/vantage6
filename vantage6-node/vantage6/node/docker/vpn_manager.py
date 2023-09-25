@@ -17,7 +17,7 @@ from vantage6.node.globals import (
     MAX_CHECK_VPN_ATTEMPTS, NETWORK_CONFIG_IMAGE, VPN_CLIENT_IMAGE,
     FREE_PORT_RANGE, DEFAULT_ALGO_VPN_PORT, ALPINE_IMAGE
 )
-from vantage6.node.node_client import NodeClient
+from vantage6.common.client.node_client import NodeClient
 from vantage6.node.docker.docker_base import DockerBaseManager
 
 

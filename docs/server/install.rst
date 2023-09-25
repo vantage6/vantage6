@@ -4,9 +4,10 @@ Install
 -------
 
 Local (test) Installation
-^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
 To install the **vantage6 server**, make sure you have met the
-:ref:`requirements <requirements-server>`. Then, we provide a command-line
+:ref:`requirements <server-requirements>`. Then, we provide a command-line
 interface (CLI) with which you can manage your server. The CLI is a Python
 package that can be installed using pip. We always recommend to install the CLI
 in a `virtual environment <https://docs.python.org/3/tutorial/venv.html>`_ or

@@ -1,5 +1,5 @@
 Concepts
-=======
+========
 
 .. _architectureoverview:
 
@@ -60,8 +60,8 @@ relationships.
    also be assigned to a user.
 -  Users can create **tasks** for one or more organizations within a
    collaboration.
--  A task should produce a **result** for each organization involved in
-   the task.
+-  A task should produce an algorithm **run** for each organization involved in
+   the task. The results are part of such an algorithm run.
 
 The following schema is a *simplified* version of the database:
 
@@ -81,7 +81,7 @@ Server
 ++++++
 
 .. note::
-    When we refer to the server, this is not just the *vantage6-server*, but
+    When we refer to the server, this is not just the *vantage6 server*, but
     also other infrastructure components that the vantage6 server relies on.
 
 The server is responsible for coordinating all communication in the vantage6
@@ -91,7 +91,6 @@ network. It consists of several components:
     Contains the users, organizations, collaborations, tasks and their results.
     It handles authentication and authorization to the system and is the
     central point of contact for clients and nodes.
-    .. todo For more details see `vantage6-server`_.
 
 **Docker registry**
     Contains algorithms stored in `Images <https://en.wikipedia.org/wiki/OS-level_virtualization>`_
@@ -126,10 +125,8 @@ Data Station
 
 **database**
     The database may be in any format that the algorithms relevant to your use
-    case support. There is tooling available for CSV, `Parquet <https://parquet.apache.org/>`_
-    and `SPARQL <https://en.wikipedia.org/wiki/SPARQL>`_. There are other
-    data-adapters (e.g. `OMOP <https://www.ohdsi.org/data-standardization/>`_ and
-    `FHIR <https://hl7.org/fhir/>`_) in development.
+    case support. The currently supported database types are listed
+    :ref:`here <wrapper-function-docs>`.
 
 
 User or Application
@@ -137,14 +134,14 @@ User or Application
 
 .. todo add refs for client/UI
 
-A user or application interacts with the *vantage6-server*. They can create
+A user or application interacts with the *vantage6 server*. They can create
 tasks and retrieve their results, or manage entities at the server (i.e.
 creating or editing users, organizations and collaborations). This can be done
 using clients or via the user interface.
 
 
 End to end encryption
--------------
+---------------------
 
 Encryption in vantage6 is handled at organization level. Whether
 encryption is used or not, is set at collaboration level. All the nodes
@@ -165,7 +162,7 @@ Other metadata (e.g. time started, finished, etc), can be read by the
 server.
 
 The encryption module uses RSA keys. The public key is uploaded to the
-vantage6-server. Tasks and other users can use this public key (this is
+vantage6 server. Tasks and other users can use this public key (this is
 automatically handled by the python-client and R-client) to send
 messages to the other parties.
 

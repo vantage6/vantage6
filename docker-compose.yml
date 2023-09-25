@@ -1,9 +1,9 @@
-version: '3'
+version: '4'
 services:
 
   vantage6-server:
     # build: .
-    image: harbor.vantage6.ai/infrastructure/server:2.0.0a1
+    image: harbor2.vantage6.ai/infrastructure/server:latest
     dockerfile: server.Dockerfile
     ports:
       - "5000:5000"
@@ -12,7 +12,12 @@ services:
     volumes:
       # - ./configs/sqlite.yaml:/mnt/config.yaml
       - ./configs/postgress.yaml:/mnt/config.yaml
-    command: ["vserver-local start --config /mnt/config.yaml"]
+    command: [
+      "uwsgi --http :5000 --gevent 1000 --http-websockets
+        --master --callable app --disable-logging
+        --wsgi-file /vantage6/vantage6-server/vantage6/server/wsgi.py
+        --pyargv /mnt/config.yaml"
+    ]
 
   database:
     image: postgres:10

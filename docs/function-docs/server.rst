@@ -1,8 +1,5 @@
 .. _server-api-refs:
 
-.. this removes all the class members from the right sidebar
-:tocdepth: 3
-
 Server
 ======
 
@@ -83,7 +80,7 @@ API endpoints
 
 .. warning::
     The API endpoints are also documented on the ``/apidocs`` endpoint of the
-    server (e.g. ``https://petronas.vantage6.ai/apidocs``). That documentation
+    server (e.g. ``https://cotopaxi.vantage6.ai/apidocs``). That documentation
     requires a different format than the one used here. We are therefore
     not including the API documentation here. Instead, we merely list the
     supporting functions and classes.
@@ -94,14 +91,14 @@ vantage6.server.resource
 .. automodule:: vantage6.server.resource
     :members:
 
-vantage6.server.resource.common._schema
-+++++++++++++++++++++++++++++++++++++++
+vantage6.server.resource.common.output_schema
++++++++++++++++++++++++++++++++++++++++++++++
 
 .. todo This output isn't pretty at the moment, check in v4.0 if this is
     still the case (there that module is rewritten)
 
-.. automodule:: vantage6.server.resource.common._schema
-    :members:
+.. automodule:: vantage6.server.resource.common.output_schema
+    :members: HATEOASModelSchema, create_one_to_many_link
 
 vantage6.server.resource.common.auth_helper
 +++++++++++++++++++++++++++++++++++++++++++
@@ -113,7 +110,6 @@ vantage6.server.resource.common.swagger_template
 +++++++++++++++++++++++++++++++++++++++++++++++++
 
 This module contains the template for the OAS3 documentation of the API.
-
 
 SQLAlchemy models
 -----------------
@@ -166,10 +162,10 @@ vantage6.server.model.organization.Organization
     :members:
     :exclude-members: id
 
-vantage6.server.model.result.Result
+vantage6.server.model.run.Run
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: vantage6.server.model.result.Result
+.. autoclass:: vantage6.server.model.run.Run
     :members:
     :exclude-members: id
 
@@ -228,7 +224,7 @@ vantage6.server.model.permission
     :members:
 
 vantage6.server.model.role_rule_association
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: vantage6.server.model.role_rule_association
 
@@ -262,8 +258,8 @@ vantage6.server.default_roles
 
 .. autofunction:: vantage6.server.default_roles.get_default_roles
 
-Custom exceptions
------------------
+Custom server exceptions
+------------------------
 
 vantage6.server.exceptions
 ++++++++++++++++++++++++++
@@ -271,15 +267,6 @@ vantage6.server.exceptions
 .. automodule:: vantage6.server.exceptions
     :members:
 
-
-vantage6.server.cli
--------------------
-
-This section contains the documentation of the `vserver-local` CLI commands.
-
-.. click:: vantage6.server.cli.server:cli_server
-    :prog: vserver-local
-    :nested: full
 
 .. todo add files in vantage6.server.controller?
 .. todo add files in vantage6.server.configuration?

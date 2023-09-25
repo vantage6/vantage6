@@ -16,7 +16,7 @@ The node application runs four threads:
 *Proxy server thread*
     Algorithm containers are isolated from the internet for security reasons.
     The local proxy server provides an interface to the central server for
-    *master* containers to create subtasks and retrieve their results.
+    algorithm containers to create subtasks and retrieve their results.
 
 The node connects to the server using a websocket connection. This connection
 is mainly used for sharing status updates. This avoids the need for polling to
@@ -54,7 +54,7 @@ from vantage6.node.globals import (
     NODE_PROXY_SERVER_HOSTNAME, SLEEP_BTWN_NODE_LOGIN_TRIES,
     TIME_LIMIT_RETRY_CONNECT_NODE, TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET
 )
-from vantage6.node.node_client import NodeClient
+from vantage6.common.client.node_client import NodeClient
 from vantage6.node import proxy_server
 from vantage6.node.util import get_parent_id
 from vantage6.node.docker.docker_manager import DockerManager
@@ -263,7 +263,7 @@ class Node:
         assert self.client.cryptor, "Encrpytion has not been setup"
 
         # request open tasks from the server
-        task_results = self.client.get_results(state="open", include_task=True)
+        task_results = self.client.run.list(state="open", include_task=True)
         self.log.debug(task_results)
 
         # add the tasks to the queue
@@ -281,7 +281,7 @@ class Node:
             Task identifier
         """
         # fetch (open) result for the node with the task_id
-        task_results = self.client.get_results(
+        task_results = self.client.run.list(
             include_task=True,
             state='open',
             task_id=task_id
@@ -313,21 +313,21 @@ class Node:
             except Exception:
                 self.log.exception("Error while syncing task queue")
 
-    def __start_task(self, taskresult: dict) -> None:
+    def __start_task(self, task_incl_run: dict) -> None:
         """
         Start the docker image and notify the server that the task has been
         started.
 
         Parameters
         ----------
-        taskresult : dict
+        task_incl_run : dict
             A dictionary with information required to run the algorithm
         """
-        task = taskresult['task']
+        task = task_incl_run['task']
         self.log.info("Starting task {id} - {name}".format(**task))
 
         # notify that we are processing this task
-        self.client.set_task_start_time(taskresult["id"])
+        self.client.set_task_start_time(task_incl_run["id"])
 
         token = self.client.request_token_for_container(
             task["id"],
@@ -335,27 +335,27 @@ class Node:
         )
         token = token["container_token"]
 
-        # create a temporary volume for each run_id
-        vol_name = self.ctx.docker_temporary_volume_name(task["run_id"])
+        # create a temporary volume for each job_id
+        vol_name = self.ctx.docker_temporary_volume_name(task["job_id"])
         self.__docker.create_volume(vol_name)
 
         # For some reason, if the key 'input' consists of JSON, it is
         # automatically marshalled? This causes trouble, so we'll serialize it
         # again.
         # FIXME: should probably find & fix the root cause?
-        if type(taskresult['input']) == dict:
-            taskresult['input'] = json.dumps(taskresult['input'])
+        if type(task_incl_run['input']) == dict:
+            task_incl_run['input'] = json.dumps(task_incl_run['input'])
 
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
         task_status, vpn_ports = self.__docker.run(
-            result_id=taskresult["id"],
+            run_id=task_incl_run["id"],
             task_info=task,
             image=task["image"],
-            docker_input=taskresult['input'],
+            docker_input=task_incl_run['input'],
             tmp_vol_name=vol_name,
             token=token,
-            database=task.get('database', 'default')
+            databases_to_use=task.get('databases', [])
         )
 
         # save task status to the server
@@ -365,7 +365,9 @@ class Node:
             # (as the task is not started at all, unlike other crashes, it will
             # never finish and hence not be set to finished)
             update['finished_at'] = datetime.datetime.now().isoformat()
-        self.client.patch_results(id_=taskresult['id'], result=update)
+        self.client.run.patch(
+            id_=task_incl_run['id'], data=update
+        )
 
         # ensure that the /tasks namespace is connected. This may take a while
         # (usually < 5s) when the socket just (re)connected
@@ -386,7 +388,7 @@ class Node:
             data={
                 'node_id': self.client.whoami.id_,
                 'status': task_status,
-                'result_id': taskresult['id'],
+                'run_id': task_incl_run['id'],
                 'task_id': task['id'],
                 'collaboration_id': self.client.collaboration_id,
                 'organization_id': self.client.whoami.organization_id,
@@ -400,10 +402,11 @@ class Node:
             # to the algorithm container. First delete any existing port
             # assignments in case algorithm has crashed
             self.client.request(
-                'port', params={'result_id': taskresult['id']}, method="DELETE"
+                'port', params={'run_id': task_incl_run['id']},
+                method="DELETE"
             )
             for port in vpn_ports:
-                port['result_id'] = taskresult['id']
+                port['run_id'] = task_incl_run['id']
                 self.client.request('port', method='POST', json=port)
 
     def __listening_worker(self) -> None:
@@ -448,7 +451,7 @@ class Node:
                     data={
                         'node_id': self.client.whoami.id_,
                         'status': results.status,
-                        'result_id': results.result_id,
+                        'run_id': results.run_id,
                         'task_id': results.task_id,
                         'collaboration_id': self.client.collaboration_id,
                         'organization_id':
@@ -459,41 +462,41 @@ class Node:
                 )
 
                 self.log.info(
-                    f"Sending result (id={results.result_id}) to the server!")
+                    f"Sending result (run={results.run_id}) to the server!")
 
                 # FIXME: why are we retrieving the result *again*? Shouldn't we
                 # just store the task_id when retrieving the task the first
                 # time?
                 response = self.client.request(
-                    f"result/{results.result_id}"
+                    f"run/{results.run_id}"
                 )
                 task_id = response.get("task").get("id")
 
                 if not task_id:
                     self.log.error(
-                        f"task_id of result (id={results.result_id}) "
+                        f"task_id of run (id={results.run_id}) "
                         f"could not be retrieved"
                     )
                     return
 
                 response = self.client.request(f"task/{task_id}")
 
-                init_org_id = response.get("initiator")
-                if not init_org_id:
+                init_org = response.get("init_org")
+                if not init_org:
                     self.log.error(
-                        f"Initiator organization from task (id={task_id})could"
-                        " not be retrieved!"
+                        f"Initiator organization from task (id={task_id}) "
+                        "could not be retrieved!"
                     )
 
-                self.client.patch_results(
-                    id_=results.result_id,
-                    result={
+                self.client.run.patch(
+                    id_=results.run_id,
+                    data={
                         'result': results.data,
                         'log': results.logs,
                         'status': results.status,
                         'finished_at': datetime.datetime.now().isoformat(),
                     },
-                    init_org_id=init_org_id,
+                    init_org_id=init_org.get("id"),
                 )
             except Exception:
                 self.log.exception('Speaking thread had an exception')
@@ -644,18 +647,18 @@ class Node:
 
         Expects the configuration in the following format:
 
-        ```yaml
-        whitelist:
-            domains:
-                - domain1
-                - domain2
-            ips:
-                - ip1
-                - ip2
-            ports:
-                - port1
-                - port2
-        ```
+        .. code:: yaml
+
+            whitelist:
+                domains:
+                    - domain1
+                    - domain2
+                ips:
+                    - ip1
+                    - ip2
+                ports:
+                    - port1
+                    - port2
 
         Parameters
         ----------
@@ -773,10 +776,6 @@ class Node:
         vpn_volume_name = self.ctx.docker_vpn_volume_name \
             if ctx.running_in_docker else self.__vpn_dir
 
-        # FIXME: remove me in 4+. alpine image has been moved into the `images`
-        # key. This is to support older configuration files.
-        legacy_alpine = self.config.get('alpine')
-
         # user can specify custom images in the configuration file
         custom_alpine = self.config['images'].get('alpine') \
             if 'images' in self.config else None
@@ -791,7 +790,7 @@ class Node:
             node_client=self.client,
             vpn_volume_name=vpn_volume_name,
             vpn_subnet=self.config.get('vpn_subnet'),
-            alpine_image=custom_alpine or legacy_alpine,
+            alpine_image=custom_alpine,
             vpn_client_image=custom_vpn_client,
             network_config_image=custom_network
         )
@@ -993,7 +992,7 @@ class Node:
         -------
         list[dict]:
             List of dictionaries with information on killed task (keys:
-            result_id, task_id and parent_id)
+            run_id, task_id and parent_id)
         """
         if kill_info['collaboration_id'] != self.client.collaboration_id:
             self.log.debug(
@@ -1014,8 +1013,8 @@ class Node:
         )
         # update status of killed tasks
         for killed_algo in killed_algos:
-            self.client.patch_results(
-                id_=killed_algo.result_id, result={'status': TaskStatus.KILLED}
+            self.client.run.patch(
+                id_=killed_algo.run_id, data={'status': TaskStatus.KILLED}
             )
         return killed_algos
 
@@ -1040,12 +1039,6 @@ class Node:
                 config_to_share['encryption'] = \
                     encryption_config.get('enabled')
 
-        # TODO v4+ remove the old 'allowed_images' key, it's now inside
-        # 'policies'. It's now overwritten below if 'policies' is set.
-        allowed_algos = self.config.get('allowed_images')
-        config_to_share['allowed_algorithms'] = allowed_algos \
-            if allowed_algos else 'all'
-
         # share node policies (e.g. who can run which algorithms)
         policies = self.config.get('policies', {})
         config_to_share['allowed_algorithms'] = \
@@ -1055,6 +1048,17 @@ class Node:
         if policies.get('allowed_organizations') is not None:
             config_to_share['allowed_orgs'] = \
                 policies.get('allowed_organizations')
+
+        # share node database labels and types
+        labels = []
+        types = {}
+        for db in self.config.get('databases', []):
+            label = db.get('label')
+            type_ = db.get('type')
+            labels.append(label)
+            types[f"db_type_{label}"] = type_
+        config_to_share['database_labels'] = labels
+        config_to_share['database_types'] = types
 
         self.log.debug(f"Sharing node configuration: {config_to_share}")
         self.socketIO.emit(

@@ -12,6 +12,8 @@ Shell
     Instead, we recommend using the :ref:`user interface <ui>`, the
     :ref:`Python client <python-client>` or the :ref:`API <server-api>`.
 
+    The commands in this page have not been updated to match version 4.0.
+
 The shell allows a server admin to manage all server entities. To start
 the shell, use ``vserver shell [options]``.
 
@@ -81,8 +83,8 @@ the organization or see which collaborations it is participating in.
    # get all created tasks (from all users)
    tasks = organization.created_tasks
 
-   # get the results of all these tasks
-   results = organization.results
+   # get the runs of all these tasks
+   runs = organization.runs
 
    # get all nodes of this organization (for each collaboration
    # an organization participates in, it needs a node)
@@ -286,9 +288,9 @@ Tasks and Results
     this way. We therefore recommend sending tasks via the Python client.
 
 A task is intended for one or more organizations. For each organization
-the task is intended for, a corresponding (initially empty) result
-should be created. Each task can have multiple results, for example a
-result from each organization.
+the task is intended for, a corresponding (initially empty) run
+should be created. Each task can have multiple runs, for example a
+run from each organization.
 
 .. code:: python
 
@@ -298,21 +300,21 @@ result from each organization.
    # obtain collaboration for which we want to create a task
    collaboration = db.Collaboration.get(1)
 
-   # obtain the next run_id. Tasks sharing the same run_id
+   # obtain the next job_id. Tasks sharing the same job_id
    # can share the temporary volumes at the nodes. Usually this
-   # run_id is assigned through the API (as the user is not allowed
+   # job_id is assigned through the API (as the user is not allowed
    # to do so). All tasks from a master-container share the
-   # same run_id
-   run_id = db.Task.next_run_id()
+   # same job_id
+   job_id = db.Task.next_job_id()
 
    task = db.Task(
        name="some-name",
        description="some human readable description",
        image="docker-registry.org/image-name",
        collaboration=collaboration,
-       run_id=run_id,
+       job_id=job_id,
        database="default",
-       initiator=iknl,
+       init_org=iknl,
    )
    task.save()
 
@@ -323,10 +325,10 @@ result from each organization.
 
    import datetime
 
-   # now create a result model for each organization within the
+   # now create a Run model for each organization within the
    # collaboration. This could also be a subset
    for org in collaboration.organizations:
-       res = db.Result(
+       res = db.Run(
            input=input_,
            organization=org,
            task=task,
@@ -334,7 +336,7 @@ result from each organization.
        )
        res.save()
 
-Tasks can have a child/parent relationship. Note that the ``run_id`` is
+Tasks can have a child/parent relationship. Note that the ``job_id`` is
 for parent and child tasks the same.
 
 .. code:: python
@@ -348,27 +350,27 @@ for parent and child tasks the same.
        description="some human readable description",
        image="docker-registry.org/image-name",
        collaboration=collaboration,
-       run_id=parent_task.run_id,
+       job_id=parent_task.job_id,
        database="default",
-       initiator=iknl,
+       init_org=iknl,
        parent=parent_task
    )
    child_task.save()
 
 .. note::
-    Tasks that share a ``run_id`` have access to the same temporary folder at
+    Tasks that share a ``job_id`` have access to the same temporary folder at
     the node. This allows for multi-stage algorithms.
 
-Obtaining results:
+Obtaining algorithm Runs:
 
 .. code:: python
 
-   # obtain all Results
-   db.Result.get()
+   # obtain all Runs
+   db.Run.get()
 
-   # obtain only completed results
-   [result for result in db.Result.get() if result.complete]
+   # obtain only completed runs
+   [run for run in db.Run.get() if run.complete]
 
-   # obtain result by its unique id
-   db.Result.get(1)
+   # obtain run by its unique id
+   db.Run.get(1)
 

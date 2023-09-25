@@ -1,158 +1,15 @@
-import pickle
-import pandas as pd
+import json
 import logging
 
+from typing import Any
 from importlib import import_module
 from copy import deepcopy
 
-from vantage6.tools.wrapper import select_wrapper
+from vantage6.algorithm.tools.wrappers import load_data
+from vantage6.algorithm.tools.util import info
+from vantage6.algorithm.tools.preprocessing import preprocess_data
 
 module_name = __name__.split('.')[1]
-
-
-class ClientMockProtocol:
-    """
-    The ClientMockProtocol is used to test your algorithm locally. It
-    mimics the behaviour of the client and its communication with the server.
-
-    Parameters
-    ----------
-    datasets : list[str]
-        A list of paths to the datasets that are used in the algorithm.
-    module : str
-        The name of the module that contains the algorithm.
-    """
-    def __init__(self, datasets: list[str], module: str) -> None:
-        self.n = len(datasets)
-        self.datasets = []
-        for dataset in datasets:
-            self.datasets.append(
-                pd.read_csv(dataset)
-            )
-
-        self.lib = import_module(module)
-        self.tasks = []
-
-    # TODO in v4+, don't provide a default value for list? There is no use
-    # in calling this function with 0 organizations as the task will never
-    # be executed in that case.
-    def create_new_task(self, input_: dict,
-                        organization_ids: list[int] = None) -> int:
-        """
-        Create a new task with the MockProtocol and return the task id.
-
-        Parameters
-        ----------
-        input_ : dict
-            The input data that is passed to the algorithm. This should at
-            least  contain the key 'method' which is the name of the method
-            that should be called. Another often used key is 'master' which
-            indicates that this container is a master container. Other keys
-            depend on the algorithm.
-        organization_ids : list[int], optional
-            A list of organization ids that should run the algorithm.
-
-        Returns
-        -------
-        int
-            The id of the task.
-        """
-        if organization_ids is None:
-            organization_ids = []
-
-        # extract method from lib and input
-        master = input_.get("master")
-
-        method_name = input_.get("method")
-        if master:
-            method = getattr(self.lib, method_name)
-        else:
-            method = getattr(self.lib, f"RPC_{method_name}")
-
-        # get input
-        args = input_.get("args", [])
-        kwargs = input_.get("kwargs", {})
-
-        # get data for organization
-        results = []
-        for org_id in organization_ids:
-            data = self.datasets[org_id]
-            if master:
-                result = method(self, data, *args, **kwargs)
-            else:
-                result = method(data, *args, **kwargs)
-
-            # TODO remove pickle in v4+
-            idx = 999  # we dont need this now
-            results.append(
-                {"id": idx, "result": pickle.dumps(result)}
-            )
-
-        id_ = len(self.tasks)
-        task = {
-            "id": id_,
-            "results": results,
-            "complete": "true"
-        }
-        self.tasks.append(task)
-        return task
-
-    def get_task(self, task_id: int) -> dict:
-        """
-        Return the task with the given id.
-
-        Parameters
-        ----------
-        task_id : int
-            The id of the task.
-
-        Returns
-        -------
-        dict
-            The task details.
-        """
-        return self.tasks[task_id]
-
-    def get_results(self, task_id: int) -> list[dict]:
-        """
-        Return the results of the task with the given id.
-
-        Parameters
-        ----------
-        task_id : int
-            The id of the task.
-
-        Returns
-        -------
-        list[dict]
-            The results of the task.
-        """
-        task = self.tasks[task_id]
-        results = []
-        for result in task.get("results"):
-            print(result)
-            res = pickle.loads(result.get("result"))
-            results.append(res)
-
-        return results
-
-    def get_organizations_in_my_collaboration(self) -> list[dict]:
-        """
-        Get mocked organizations.
-
-        Returns
-        -------
-        list[dict]
-            A list of mocked organizations.
-        """
-        organizations = []
-        for i in range(self.n):
-            organizations.append({
-                "id": i,
-                "name": f"mock-{i}",
-                "domain": f"mock-{i}.org",
-            })
-        return organizations
 
 
 class MockAlgorithmClient:
@@ -163,18 +20,22 @@ class MockAlgorithmClient:
 
     Parameters
     ----------
-    datasets : list[dict]
-        A list of dictionaries that contain the datasets that are used in the
-        mocked algorithm. The dictionaries should contain the following:
-        {
-            "database": str | pd.DataFrame,
-            "type": str,
-            "db_input": dict, # optional, depends on database type
-        }
-        where database is the path/URI to the database, type is the database
-        type (as listed in node configuration) and db_input is the input
-        that is given to the algorithm wrapper (this is e.g. a sheet name for
-        an excel file or a query for a SQL database).
+    datasets : list[list[dict]]
+        A list that contains the datasets that are used in the mocked
+        algorithm. The inner list contains the datasets for each organization;
+        the outer list is for each organization. A single dataset should be
+        described as a dictionary with the same keys as in a node
+        configuration:
+
+        - database: str (path to file or SQL connection string) or pd.DataFrame
+        - db_type (str, e.g. "csv" or "sql")
+
+        There are also a number of keys that are optional but may be required
+        depending on the database type:
+        - query: str (required for SQL/Sparql/OMOP databases)
+        - sheet_name: str (optional for Excel databases)
+        - preprocessing: dict (optional, see the documentation for
+            preprocessing for more information)
 
         Note that if the database is a pandas DataFrame, the type and
         input_data keys are not required.
@@ -184,19 +45,18 @@ class MockAlgorithmClient:
         Sets the mocked collaboration id to this value. Defaults to 1.
     organization_ids : list[int], optional
         Set the organization ids to this value. The first value is used for
-        this organization, the rest for child tasks. Defaults to [0, 1, 2, ...].
+        this organization, the rest for child tasks. Defaults to [0, 1, 2, ..].
     node_ids: list[int], optional
         Set the node ids to this value. The first value is used for this node,
         the rest for child tasks. Defaults to [0, 1, 2, ...].
     """
     def __init__(
-        self, datasets: list[dict], module: str, collaboration_id: int = None,
-        organization_ids: int = None, node_ids: int = None,
+        self, datasets: list[list[dict]], module: str,
+        collaboration_id: int = None, organization_ids: int = None,
+        node_ids: int = None,
     ) -> None:
         self.log = logging.getLogger(module_name)
         self.n = len(datasets)
-        self.datasets = {}
-        self.organizations_with_data = []
 
         if organization_ids and len(organization_ids) == self.n:
             self.all_organization_ids = organization_ids
@@ -204,8 +64,9 @@ class MockAlgorithmClient:
             default_organization_ids = list(range(self.n))
             if organization_ids:
                 self.log.warning(
-                    "The number of organization ids (%s) does not match the number "
-                    "of datasets (#=%s), using default values (%s) instead",
+                    "The number of organization ids (%s) does not match the "
+                    "number of datasets (#=%s), using default values (%s) "
+                    "instead",
                     organization_ids,
                     self.n,
                     default_organization_ids,
@@ -214,7 +75,6 @@ class MockAlgorithmClient:
 
         self.organization_id = self.all_organization_ids[0]
 
-        # TODO v4+ rename host_node_id to node_id
         if node_ids and len(node_ids) == self.n:
             self.all_node_ids = node_ids
         else:
@@ -228,33 +88,63 @@ class MockAlgorithmClient:
                     default_node_ids,
                 )
             self.all_node_ids = default_node_ids
-        self.host_node_id = self.all_node_ids[0]
+        self.node_id = self.all_node_ids[0]
 
-        for idx, dataset in enumerate(datasets):
+        self.datasets_per_org = {}
+        self.organizations_with_data = []
+        for idx, org_datasets in enumerate(datasets):
             org_id = self.all_organization_ids[idx]
             self.organizations_with_data.append(org_id)
-            if isinstance(dataset["database"], pd.DataFrame):
-                self.datasets[org_id] = dataset["database"]
-            else:
-                wrapper = select_wrapper(dataset["type"])
-                self.datasets[org_id] = wrapper.load_data(
-                    dataset["database"],
-                    dataset["db_input"] if "db_input" in dataset
-                    else {}
+            org_data = []
+            for dataset in org_datasets:
+                df = load_data(
+                    database_uri=dataset.get("database"),
+                    db_type=dataset.get("db_type"),
+                    query=dataset.get("query"),
+                    sheet_name=dataset.get("sheet_name")
                 )
+                df = preprocess_data(df, dataset.get("preprocessing", []))
+                org_data.append(df)
+            self.datasets_per_org[org_id] = org_data
 
         self.collaboration_id = collaboration_id if collaboration_id else 1
         self.module_name = module
+        self.tasks = []
+        self.runs = []
+        self.results = []
 
         self.image = 'mock_image'
         self.database = 'mock_database'
-        self.tasks = []
 
         self.task = self.Task(self)
         self.result = self.Result(self)
+        self.run = self.Run(self)
         self.organization = self.Organization(self)
         self.collaboration = self.Collaboration(self)
         self.node = self.Node(self)
+
+    # pylint: disable=unused-argument
+    def wait_for_results(self, task_id: int, interval: float = 1) -> list:
+        """
+        Mock waiting for results - just return the results as tasks are
+        completed synchronously in the mock client.
+
+        Parameters
+        ----------
+        task_id: int
+            ID of the task for which the results should be obtained.
+        interval: float
+            Interval in seconds between checking for new results. This is
+            ignored in the mock client but included to match the signature of
+            the AlgorithmClient.
+
+        Returns
+        -------
+        list
+            List of task results.
+        """
+        info('Mocking waiting for results')
+        return self.result.from_task(task_id)
 
     class SubClient:
         """
@@ -272,9 +162,13 @@ class MockAlgorithmClient:
         """
         Task subclient for the MockAlgorithmClient
         """
+        def __init__(self, parent) -> None:
+            super().__init__(parent)
+            self.last_result_id = 0
+
         def create(
-            self, input_: dict, organization_ids: list[int],
-            name: str = "mock", description: str = "mock", *args, **kwargs
+            self, input_: dict, organizations: list[int], name: str = "mock",
+            description: str = "mock"
         ) -> int:
             """
             Create a new task with the MockProtocol and return the task id.
@@ -284,10 +178,8 @@ class MockAlgorithmClient:
             input_ : dict
                 The input data that is passed to the algorithm. This should at
                 least  contain the key 'method' which is the name of the method
-                that should be called. Another often used key is 'master' which
-                indicates that this container is a master container. Other keys
-                depend on the algorithm.
-            organization_ids : list[int]
+                that should be called. Other keys depend on the algorithm.
+            organizations : list[int]
                 A list of organization ids that should run the algorithm.
             name : str, optional
                 The name of the task, by default "mock"
@@ -296,75 +188,122 @@ class MockAlgorithmClient:
 
             Returns
             -------
-            int
-                The id of the task.
+            task
+                A dictionary with information on the created task.
             """
-            if not len(organization_ids):
+            if not organizations:
                 raise ValueError(
                     "No organization ids provided. Cannot create a task for "
                     "zero organizations."
                 )
 
-            # extract method from lib and input
-            # TODO in v4+, there is no master and this should be removed
-            master = input_.get("master")
-
             module = import_module(self.parent.module_name)
 
+            # extract method from lib and input
             method_name = input_.get("method")
-            if master:
-                method = getattr(module, method_name)
-            else:
-                method = getattr(module, f"RPC_{method_name}")
+            method = getattr(module, method_name)
 
             # get input
             args = input_.get("args", [])
             kwargs = input_.get("kwargs", {})
 
+            new_task_id = len(self.parent.tasks) + 1
+
             # get data for organization
-            results = []
-            for org_id in organization_ids:
-                data = self.parent.datasets[org_id]
-                if master:
-                    # ensure that a task has a node_id and organization id that
-                    # is unique compared to other tasks.
-                    client_copy = deepcopy(self.parent)
-                    client_copy.host_node_id = self._select_node(org_id)
-                    client_copy.organization_id = org_id
-                    result = method(client_copy, data, *args, **kwargs)
-                else:
-                    result = method(data, *args, **kwargs)
+            for org_id in organizations:
+                # When creating a child task, pass the parent's datasets and
+                # client to the child. By passing also the client, the child
+                # has access to the same IDs specified
+                data = self.parent.datasets_per_org[org_id]
+                client_copy = deepcopy(self.parent)
+                client_copy.node_id = self._select_node(org_id)
+                client_copy.organization_id = org_id
 
-                idx = 999  # we dont need this now
-                results.append(
-                    {"id": idx, "result": pickle.dumps(result)}
-                )
+                # detect which decorators are used and provide the mock client
+                # and/or mocked data that is required to the method
+                mocked_kwargs = {}
+                if getattr(method, 'wrapped_in_algorithm_client_decorator',
+                           False):
+                    mocked_kwargs['mock_client'] = client_copy
+                if getattr(method, 'wrapped_in_data_decorator', False):
+                    mocked_kwargs['mock_data'] = data
 
-            id_ = len(self.parent.tasks)
+                result = method(*args, **kwargs, **mocked_kwargs)
+
+                self.last_result_id += 1
+                self.parent.results.append({
+                    "id": self.last_result_id,
+                    "result": json.dumps(result),
+                    "run": {
+                        "id": self.last_result_id,
+                        "link": f"/api/run/{self.last_result_id}",
+                        "methods": ["GET", "PATCH"]
+                    },
+                    "task": {
+                        "id": new_task_id,
+                        "link": f"/api/task/{new_task_id}",
+                        "methods": ["GET", "PATCH"]
+                    },
+                })
+                self.parent.runs.append({
+                    "id": self.last_result_id,
+                    "started_at": "2021-01-01T00:00:00.000000",
+                    "assigned_at": "2021-01-01T00:00:00.000000",
+                    "finished_at": "2021-01-01T00:00:00.000000",
+                    "log": "mock_log",
+                    "ports": [],
+                    "status": "completed",
+                    "input": json.dumps(input_),
+                    "results": {
+                        "id": self.last_result_id,
+                        "link": f"/api/result/{self.last_result_id}",
+                        "methods": ["GET", "PATCH"]
+                    },
+                    "node": {
+                        "id": org_id,
+                        "ip": None,
+                        "name": "mock_node",
+                        "status": "online",
+                    },
+                    "organization": {
+                        "id": org_id,
+                        "link": f"/api/organization/{org_id}",
+                        "methods": ["GET", "PATCH"]
+                    },
+                    "task": {
+                        "id": new_task_id,
+                        "link": f"/api/task/{new_task_id}",
+                        "methods": ["GET", "PATCH"]
+                    },
+                })
+
             collab_id = self.parent.collaboration_id
-            # TODO adapt fields in v4+
             task = {
-                "id": id_,
-                "results": results,
-                "complete": "true",  # TODO remove in v4+.
+                "id": new_task_id,
+                "runs": f"/api/run?task_id={new_task_id}",
+                "results": f"/api/results?task_id={new_task_id}",
                 "status": "completed",
                 "name": name,
-                "database": "mock",
+                "databases": ["mock"],
                 "description": description,
                 "image": "mock_image",
-                "init_user": 1,
-                "initiator": 1,
+                "init_user": {
+                    "id": 1,
+                    "link": "/api/user/1",
+                    "methods": ["GET", "DELETE", "PATCH"]
+                },
+                "init_org": {
+                    "id": self.parent.organization_id,
+                    "link": f"/api/organization/{self.parent.organization_id}",
+                    "methods": ["GET", "PATCH"]
+                },
                 "parent": None,
                 "collaboration": {
                     "id": collab_id,
                     "link": f"/api/collaboration/{collab_id}",
-                    "methods": [
-                        "DELETE",
-                        "PATCH",
-                        "GET"
-                    ]
+                    "methods": ["DELETE", "PATCH", "GET"]
                 },
-                "run_id": 1,
+                "job_id": 1,
                 "children": None,
             }
             self.parent.tasks.append(task)
@@ -384,6 +323,10 @@ class MockAlgorithmClient:
             dict
                 The task details.
             """
+            if task_id >= len(self.parent.tasks):
+                return {
+                    "msg": f"Could not find task with id {task_id}"
+                }
             return self.parent.tasks[task_id]
 
         def _select_node(self, org_id: int) -> int:
@@ -407,12 +350,77 @@ class MockAlgorithmClient:
             org_idx = self.parent.all_organization_ids.index(org_id)
             return self.parent.all_node_ids[org_idx]
 
-    # TODO for v4+, add a Run class
+    class Run(SubClient):
+        """
+        Run subclient for the MockAlgorithmClient
+        """
+        def get(self, id_: int) -> dict:
+            """
+            Get mocked run by ID
+
+            Parameters
+            ----------
+            id_ : int
+                The id of the run.
+
+            Returns
+            -------
+            dict
+                A mocked run.
+            """
+            for run in self.parent.runs:
+                if run.get("id") == id_:
+                    return run
+            return {
+                "msg": f"Could not find run with id {id_}"
+            }
+
+        def from_task(self, task_id: int) -> list[dict]:
+            """
+            Get mocked runs by task ID
+
+            Parameters
+            ----------
+            task_id : int
+                The id of the task.
+
+            Returns
+            -------
+            list[dict]
+                A list of mocked runs.
+            """
+            runs = []
+            for run in self.parent.runs:
+                if run.get("task").get("id") == task_id:
+                    runs.append(run)
+            return runs
+
     class Result(SubClient):
         """
         Result subclient for the MockAlgorithmClient
         """
-        def get(self, task_id: int) -> list[dict]:
+        def get(self, id_: int) -> Any:
+            """
+            Get mocked result by ID
+
+            Parameters
+            ----------
+            id_ : int
+                The id of the result.
+
+            Returns
+            -------
+            Any
+                A mocked result.
+            """
+            for result in self.parent.results:
+                if result.get("id") == id_:
+                    return json.loads(result.get("result"))
+            return {
+                "msg": f"Could not find result with id {id_}"
+            }
+
+        def from_task(self, task_id: int) -> list[Any]:
             """
             Return the results of the task with the given id.
 
@@ -423,16 +431,13 @@ class MockAlgorithmClient:
 
             Returns
             -------
-            list[dict]
+            list[Any]
                 The results of the task.
             """
-            task = self.parent.tasks[task_id]
             results = []
-            for result in task.get("results"):
-                # TODO in v4+, this is no longer a pickle
-                res = pickle.loads(result.get("result"))
-                results.append(res)
-
+            for result in self.parent.results:
+                if result.get("task").get("id") == task_id:
+                    results.append(json.loads(result.get("result")))
             return results
 
     class Organization(SubClient):
@@ -535,7 +540,7 @@ class MockAlgorithmClient:
             dict
                 A mocked node.
             """
-            node_id = self.parent.host_node_id
+            node_id = self.parent.node_id
             collab_id = self.parent.collaboration_id
             return {
                 "id": node_id,

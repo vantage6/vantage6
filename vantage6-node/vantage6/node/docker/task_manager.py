@@ -1,8 +1,7 @@
-""" TODO the task folder is also created by this class. This folder needs
-to be cleaned at some point. """
+# TODO the task folder is also created by this class. This folder needs
+# to be cleaned at some point.
 import logging
 import os
-import pickle
 import docker.errors
 import json
 
@@ -38,7 +37,7 @@ class DockerTaskManager(DockerBaseManager):
     """
 
     def __init__(self, image: str, vpn_manager: VPNManager, node_name: str,
-                 result_id: int, task_info: dict, tasks_dir: Path,
+                 run_id: int, task_info: dict, tasks_dir: Path,
                  isolated_network_mgr: NetworkManager,
                  databases: dict, docker_volume_name: str,
                  alpine_image: str | None = None, proxy: Squid | None = None,
@@ -54,8 +53,8 @@ class DockerTaskManager(DockerBaseManager):
             VPN manager required to set up traffic forwarding via VPN
         node_name: str
             Name of the node, to track running algorithms
-        result_id: int
-            Server result identifier
+        run_id: int
+            Algorithm run identifier
         task_info: dict
             Dictionary with info about the task
         tasks_dir: Path
@@ -78,7 +77,8 @@ class DockerTaskManager(DockerBaseManager):
         super().__init__(isolated_network_mgr)
         self.image = image
         self.__vpn_manager = vpn_manager
-        self.result_id = result_id
+        self.run_id = run_id
+        self.task_id = task_info['id']
         self.parent_id = get_parent_id(task_info)
         self.__tasks_dir = tasks_dir
         self.databases = databases
@@ -95,7 +95,7 @@ class DockerTaskManager(DockerBaseManager):
         self.labels = {
             f"{APPNAME}-type": "algorithm",
             "node": node_name,
-            "result_id": str(result_id)
+            "run_id": str(run_id)
         }
         self.helper_labels = self.labels.copy()
         self.helper_labels[f"{APPNAME}-type"] = "algorithm-helper"
@@ -186,8 +186,10 @@ class DockerTaskManager(DockerBaseManager):
             self.status = TaskStatus.FAILED
             raise PermanentAlgorithmStartFail
 
-    def run(self, docker_input: bytes, tmp_vol_name: str, token: str,
-            algorithm_env: dict, database: str) -> list[dict] | None:
+    def run(
+        self, docker_input: bytes, tmp_vol_name: str, token: str,
+        algorithm_env: dict, databases_to_use: list[str]
+    ) -> list[dict] | None:
         """
         Runs the docker-image in detached mode.
 
@@ -204,6 +206,8 @@ class DockerTaskManager(DockerBaseManager):
             Bearer token that the container can use
         algorithm_env: dict
             Dictionary with additional environment variables to set
+        databases_to_use: list[str]
+            List of labels of databases to use in the task
 
         Returns
         -------
@@ -222,7 +226,7 @@ class DockerTaskManager(DockerBaseManager):
         # setup environment variables
         self.environment_variables = \
             self._setup_environment_vars(algorithm_env=algorithm_env,
-                                         database=database)
+                                         databases_to_use=databases_to_use)
 
         # run the algorithm as docker container
         vpn_ports = self._run_algorithm()
@@ -233,7 +237,7 @@ class DockerTaskManager(DockerBaseManager):
         remove_container(self.helper_container, kill=True)
         remove_container(self.container, kill=True)
 
-    def _run_algorithm(self) -> list[dict]:
+    def _run_algorithm(self) -> list[dict] | None:
         """
         Run the algorithm container
 
@@ -247,7 +251,7 @@ class DockerTaskManager(DockerBaseManager):
             the algo container. None if VPN is inactive
         """
         vpn_ports = None
-        container_name = f'{APPNAME}-{self.node_name}-result-{self.result_id}'
+        container_name = f'{APPNAME}-{self.node_name}-run-{self.run_id}'
         helper_container_name = container_name + '-helper'
 
         # Try to pull the latest image
@@ -285,11 +289,13 @@ class DockerTaskManager(DockerBaseManager):
             )
 
         # try reading docker input
+        # FIXME BvB 2023-02-03: why do we read docker input here? It is never
+        # really used below. Should it?
         deserialized_input = None
         if self.docker_input:
             self.log.debug("Deserialize input")
             try:
-                deserialized_input = pickle.loads(self.docker_input)
+                deserialized_input = json.loads(self.docker_input)
             except Exception:
                 pass
 
@@ -354,7 +360,7 @@ class DockerTaskManager(DockerBaseManager):
         # Alternatively, if we're not running in docker it should point to the
         # folder on the host that can act like a data volume. In both cases,
         # we can just copy the required files to it
-        self.task_folder_name = f"task-{self.result_id:09d}"
+        self.task_folder_name = f"task-{self.run_id:09d}"
         self.task_folder_path = \
             os.path.join(self.__tasks_dir, self.task_folder_name)
         os.makedirs(self.task_folder_path, exist_ok=True)
@@ -406,7 +412,7 @@ class DockerTaskManager(DockerBaseManager):
         return volumes
 
     def _setup_environment_vars(self, algorithm_env: dict,
-                                database: str = 'default') -> dict:
+                                databases_to_use: list[str]) -> dict:
         """"
         Set environment variables required to run the algorithm
 
@@ -414,8 +420,8 @@ class DockerTaskManager(DockerBaseManager):
         ----------
         algorithm_env: dict
             Dictionary with additional environment variables to set
-        database: str
-            Label of the database to use
+        databases_to_use: list[str]
+            Labels of the databases to use
 
         Returns
         -------
@@ -472,16 +478,30 @@ class DockerTaskManager(DockerBaseManager):
             environment_variables["NO_PROXY"] = ', '.join(no_proxy)
             environment_variables["no_proxy"] = ', '.join(no_proxy)
 
-        if database in self.databases:
-            environment_variables["USER_REQUESTED_DATABASE_LABEL"] = database
-        else:
-            # In this case the algorithm might crash if it tries to access
-            # the DATABASE_LABEL environment variable
-            self.log.warning("A user specified a database that does not "
-                             "exist. Available databases are: "
-                             f"{', '.join(list(self.databases.keys()))}. This "
-                             "is likely to result in an algorithm crash.")
-            self.log.debug(f"User specified database: {database}")
+        for database in databases_to_use:
+            if database['label'] not in self.databases:
+                # In this case the algorithm might crash if it tries to access
+                # the DATABASE_LABEL environment variable
+                self.log.warning("A user specified a database that does not "
+                                 "exist. Available databases are: "
+                                 f"{self.databases.keys()}. This is likely to "
+                                 "result in an algorithm crash.")
+                self.log.debug(f"User specified database: {database}")
+            # define env vars for the preprocessing and extra parameters such
+            # as query and sheet_name
+            extra_params = json.loads(database.get("parameters")) \
+                if database.get("parameters") else {}
+            for optional_key in ['query', 'sheet_name', 'preprocessing']:
+                if optional_key in extra_params:
+                    env_var_value = extra_params[optional_key] \
+                        if optional_key != 'preprocessing' \
+                        else json.dumps(extra_params[optional_key])
+                    environment_variables[f"{database['label'].upper()}_"
+                                          f"{optional_key.upper()}"] = \
+                        env_var_value
+
+        environment_variables["USER_REQUESTED_DATABASE_LABELS"] = \
+            ",".join([db['label'] for db in databases_to_use])
 
         # Only prepend the data_folder is it is a file-based database
         # This allows algorithms to access multiple data sources at the
@@ -499,19 +519,7 @@ class DockerTaskManager(DockerBaseManager):
             environment_variables[type_var_name] = db['type']
 
             db_labels.append(label)
-        environment_variables['DB_LABELS'] = json.dumps(db_labels)
-
-        # Support legacy algorithms
-        # TODO remove in v4+
-        try:
-            environment_variables["DATABASE_URI"] = (
-                f"{self.data_folder}/"
-                f"{os.path.basename(self.databases[database]['uri'])}"
-            )
-        except KeyError as e:
-            self.log.error(f"'{database}' database missing! This could crash "
-                           "legacy algorithms")
-            self.log.debug(e)
+        environment_variables['DB_LABELS'] = ','.join(db_labels)
 
         self.log.debug(f"environment: {environment_variables}")
 

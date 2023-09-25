@@ -6,7 +6,7 @@
 # * harbor2.vantage6.ai/infrastructure/server:x.x.x
 #
 ARG TAG=latest
-ARG BASE=3.8
+ARG BASE=4.0
 FROM harbor2.vantage6.ai/infrastructure/infrastructure-base:${BASE}
 
 LABEL version=${TAG}
@@ -41,6 +41,7 @@ RUN pip install -r /vantage6/requirements.txt \
 # install individual packages
 RUN pip install -e /vantage6/vantage6-common
 RUN pip install -e /vantage6/vantage6-client
+RUN pip install -e /vantage6/vantage6-algorithm-tools
 RUN pip install -e /vantage6/vantage6
 RUN pip install -e /vantage6/vantage6-node
 RUN pip install -e /vantage6/vantage6-server

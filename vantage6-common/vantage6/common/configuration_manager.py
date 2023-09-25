@@ -81,24 +81,6 @@ class Configuration(collections.UserDict):
 class ConfigurationManager(object):
     """Class to maintain valid configuration settings.
 
-    A configuration file contains at top level an `application` and/or
-    `environments` key. The `environments` key can contain up to four
-    keys: `dev`, `test`, `acc`, `prod`. e.g.:
-
-    application:
-        ...
-    environments:
-        dev:
-            ...
-        test:
-            ...
-        acc:
-            ...
-        prod:
-            ...
-
-    Note that this structure is the same for the node and server.
-
     Parameters
     ----------
     conf_class: Configuration
@@ -106,65 +88,41 @@ class ConfigurationManager(object):
     name: str
         The name of the configuration.
     """
-    ENVS = ("application", "prod", "acc", "test", "dev")
-
     def __init__(self, conf_class: Configuration = Configuration,
                  name: str = None) -> None:
-        self.application = ""
-        self.prod = ""
-        self.acc = ""
-        self.test = ""
-        self.dev = ""
+        self.config = {}
 
         self.name = name
         self.conf_class = conf_class
 
-    def put(self, env: str, config: dict) -> None:
+    def put(self, config: dict) -> None:
         """
         Add a configuration to the configuration manager.
 
         Parameters
         ----------
-        env: str
-            The environment to add the configuration to.
         config: dict
             The configuration to add.
 
         Raises
         ------
         AssertionError
-            If the environment is not valid.
+            If the configuration is not valid.
         """
-        assert env in self.ENVS
         configuration = self.conf_class(config)
-        # only set valid configs
         if configuration.is_valid:
-            self.__setattr__(env, configuration)
-        # else:
-        #      print(f"config={config}")
-        #      print(self.conf_class)
+            self.config = config
 
-    def get(self, env: str) -> Configuration:
+    def get(self) -> Configuration:
         """
         Get a configuration from the configuration manager.
-
-        Parameters
-        ----------
-        env: str
-            The environment to get the configuration from.
 
         Returns
         -------
         Configuration
             The configuration.
-
-        Raises
-        ------
-        AssertionError
-            If the environment is not valid.
         """
-        assert env in self.ENVS
-        return self.__getattribute__(env)
+        return self.config
 
     @property
     def is_empty(self) -> bool:
@@ -176,86 +134,7 @@ class ConfigurationManager(object):
         bool
             Whether or not the configuration manager is empty.
         """
-        return not (self.application or self.prod or self.acc
-                    or self.test or self.dev)
-
-    @property
-    def environments(self) -> dict:
-        """
-        Get all environments.
-
-        Returns
-        -------
-        dict
-            A dictionary containing all environments.
-        """
-        return {"prod": self.prod, "acc": self.acc, "test": self.test,
-                "dev": self.dev, "application": self.application}
-
-    @property
-    def has_application(self) -> bool:
-        """
-        Check if the configuration manager has an application configuration.
-
-        Returns
-        -------
-        bool
-            Whether or not the configuration manager has an application
-            configuration.
-        """
-        return bool(self.application)
-
-    @property
-    def has_environments(self) -> bool:
-        """
-        Check if the configuration manager has any environment configurations.
-
-        Returns
-        -------
-        bool
-            Whether or not the configuration manager has any environment
-            configurations.
-        """
-        return any([bool(env) for key, env in self.environments])
-
-    @property
-    def available_environments(self) -> list[str]:
-        """
-        Get a list of available environments.
-
-        Returns
-        -------
-        list[str]
-            A list of available environments.
-        """
-        return [key for key, env in self.environments.items() if env]
-
-    def _get_environment_from_dict(self, dic: dict, env: str) -> dict:
-        """
-        Get a configuration from a dictionary.
-
-        Parameters
-        ----------
-        dic: dict
-            The dictionary to get the configuration from.
-        env: str
-            The environment to get the configuration from.
-
-        Returns
-        -------
-        dict
-            The configuration.
-
-        Raises
-        ------
-        AssertionError
-            If the environment is not valid.
-        """
-        assert env in self.ENVS
-        if env == "application":
-            return dic.get("application", {})
-        else:
-            return dic.get("environments", {}).get(env, {})
+        return not self.config
 
     def load(self, path: Path | str) -> None:
         """
@@ -269,8 +148,7 @@ class ConfigurationManager(object):
         with open(str(path), 'r') as f:
             config = yaml.safe_load(f)
 
-        for env in self.ENVS:
-            self.put(env, self._get_environment_from_dict(config, env))
+        self.put(config)
 
     @classmethod
     def from_file(
@@ -313,13 +191,6 @@ class ConfigurationManager(object):
         path: Path | str
             The path to the file to save the configuration to.
         """
-        config = {"application": dict(self.application), "environments": {
-            "prod": dict(self.prod),
-            "acc": dict(self.acc),
-            "test": dict(self.test),
-            "dev": dict(self.dev)}
-        }
-
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         with open(path, 'w') as f:
-            yaml.dump(config, f, default_flow_style=False)
+            yaml.dump(self.config, f, default_flow_style=False)

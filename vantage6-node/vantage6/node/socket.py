@@ -56,7 +56,8 @@ class NodeTaskNamespace(ClientNamespace):
 
         else:
             self.log.critical(
-                'Task Master Node reference not set is socket namespace'
+                'Node reference is not set in socket namespace; cannot create '
+                'new task!'
             )
 
     def on_algorithm_status_change(self, data):
@@ -68,19 +69,19 @@ class NodeTaskNamespace(ClientNamespace):
         ----------
         data: Dict
             Dictionary with relevant data to the status change. Should include:
-            run_id: int
-                run_id of the algorithm container that changed status
+            job_id: int
+                job_id of the algorithm container that changed status
             status: str
                 New status of the algorithm container
         """
         status = data.get('status')
-        run_id = data.get('run_id')
+        job_id = data.get('job_id')
         if has_task_failed(status):
             # TODO handle run sequence at this node. Maybe terminate all
-            #     containers with the same run_id?
+            #     containers with the same job_id?
             self.log.critical(
                 f"A container on a node within your collaboration part of "
-                f"run_id={run_id} has exited with status '{status}'"
+                f"job_id={job_id} has exited with status '{status}'"
             )
         # else: no need to do anything when a task has started/finished/... on
         # another node
@@ -116,7 +117,7 @@ class NodeTaskNamespace(ClientNamespace):
             self.emit(
                 "algorithm_status_change",
                 {
-                    'result_id': killed.result_id,
+                    'run_id': killed.run_id,
                     'task_id': killed.task_id,
                     'collaboration_id':
                         self.node_worker_ref.client.collaboration_id,

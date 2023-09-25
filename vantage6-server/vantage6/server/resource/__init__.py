@@ -12,13 +12,17 @@ from flask_jwt_extended import (
     get_jwt, get_jwt_identity, jwt_required
 )
 from flask_socketio import SocketIO
-from marshmallow_sqlalchemy import ModelSchema
 
 
 from vantage6.common import logger_name
 from vantage6.server import db
+from vantage6.server.utils import (
+    obtain_auth_collaborations, obtain_auth_organization
+)
+from vantage6.server.model.authenticatable import Authenticatable
+from vantage6.server.resource.common.output_schema import HATEOASModelSchema
 from vantage6.server.permission import PermissionManager
-from vantage6.server.resource.pagination import Page
+from vantage6.server.resource.common.pagination import Page
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -66,9 +70,15 @@ class ServicesResources(Resource):
         bool
             True if the field is included, False otherwise
         """
-        return field in request.args.getlist('include')
+        # The logic below intends to find 'x' both in 'include=y&include=x' and
+        # 'include=x,y'.
+        return field in [
+            val
+            for item in request.args.getlist('include')
+            for val in item.split(',')
+        ]
 
-    def dump(self, page: Page, schema: ModelSchema) -> dict:
+    def dump(self, page: Page, schema: HATEOASModelSchema) -> dict:
         """
         Dump based on the request context (to paginate or not)
 
@@ -76,7 +86,7 @@ class ServicesResources(Resource):
         ----------
         page : Page
             Page object to dump
-        schema : ModelSchema
+        schema : HATEOASModelSchema
             Schema to use for dumping
 
         Returns
@@ -84,12 +94,9 @@ class ServicesResources(Resource):
         dict
             Dumped page
         """
-        if self.is_included('metadata'):
-            return schema.meta_dump(page)
-        else:
-            return schema.default_dump(page)
+        return schema.meta_dump(page)
 
-    def response(self, page: Page, schema: ModelSchema):
+    def response(self, page: Page, schema: HATEOASModelSchema):
         """
         Prepare a valid HTTP OK response from a page object
 
@@ -97,7 +104,7 @@ class ServicesResources(Resource):
         ----------
         page : Page
             Page object to dump
-        schema : ModelSchema
+        schema : HATEOASModelSchema
             Schema to use for dumping
 
         Returns
@@ -152,13 +159,25 @@ class ServicesResources(Resource):
         db.Organization
             Organization model
         """
-        return db.Organization.get(cls.obtain_organization_id())
+        return obtain_auth_organization()
+
+    @staticmethod
+    def obtain_auth_collaborations() -> list[db.Collaboration]:
+        """
+        Obtain the collaborations that the auth is part of.
+
+        Returns
+        -------
+        list[db.Collaboration]
+            List of collaborations
+        """
+        return obtain_auth_collaborations()
 
 
 # ------------------------------------------------------------------------------
 # Helper functions/decoraters ...
 # ------------------------------------------------------------------------------
-def only_for(types: tuple[str] = ('user', 'node', 'container')):
+def only_for(types: tuple[str] = ('user', 'node', 'container')) -> callable:
     """
     JWT endpoint protection decorator
 
@@ -270,3 +289,37 @@ def parse_datetime(dt: str = None, default: datetime = None) -> datetime:
     if dt:
         return datetime.datetime.strptime(dt, '%Y-%m-%dT%H:%M:%S.%f')
     return default
+
+
+def get_org_ids_from_collabs(auth: Authenticatable,
+                             collab_id: int = None) -> list[int]:
+    """
+    Get all organization ids from the collaborations the user or node is in.
+
+    Parameters
+    ----------
+    auth : Authenticatable
+        User or node
+    collab_id : int, optional
+        Collaboration id. If given, only return the organization ids of this
+        collaboration. If not given, return all organization ids of all
+        collaborations the user or node is in.
+
+    Returns
+    -------
+    list[int]
+        List of organization ids
+    """
+    if collab_id:
+        return [
+            org.id
+            for col in auth.organization.collaborations
+            for org in col.organizations
+            if col.id == collab_id
+        ]
+    else:
+        return [
+            org.id
+            for col in auth.organization.collaborations
+            for org in col.organizations
+        ]

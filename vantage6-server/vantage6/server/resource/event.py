@@ -16,6 +16,10 @@ from vantage6.server.permission import (
     Operation,
     PermissionManager
 )
+from vantage6.server.resource.common.input_schema import (
+    KillNodeTasksInputSchema,
+    KillTaskInputSchema
+)
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -66,22 +70,24 @@ def permissions(permissions: PermissionManager) -> None:
     permissions : PermissionManager
         Permission manager instance to which permissions are added
     """
-    # TODO in v4, change the operations below to 'SEND' and 'RECEIVE' as these
-    # are permissions to do stuff via socket connections
     add = permissions.appender(module_name)
 
-    add(scope=Scope.ORGANIZATION, operation=Operation.VIEW,
+    add(scope=Scope.ORGANIZATION, operation=Operation.RECEIVE,
         description="view websocket events of your organization")
-    add(scope=Scope.COLLABORATION, operation=Operation.VIEW,
+    add(scope=Scope.COLLABORATION, operation=Operation.RECEIVE,
         description="view websocket events of your collaborations")
-    add(scope=Scope.GLOBAL, operation=Operation.VIEW,
+    add(scope=Scope.GLOBAL, operation=Operation.RECEIVE,
         description="view websocket events")
-    add(scope=Scope.ORGANIZATION, operation=Operation.CREATE,
+    add(scope=Scope.ORGANIZATION, operation=Operation.SEND,
         description="send websocket events for your organization")
-    add(scope=Scope.COLLABORATION, operation=Operation.CREATE,
+    add(scope=Scope.COLLABORATION, operation=Operation.SEND,
         description="send websocket events for your collaborations")
-    add(scope=Scope.GLOBAL, operation=Operation.CREATE,
+    add(scope=Scope.GLOBAL, operation=Operation.SEND,
         description="send websocket events to all collaborations")
+
+
+kill_task_schema = KillTaskInputSchema()
+kill_node_tasks_schema = KillNodeTasksInputSchema()
 
 
 # ------------------------------------------------------------------------------
@@ -132,12 +138,15 @@ class KillTask(ServicesResources):
 
         tags: ["Task"]
         """
-        # obtain task id or node id from request
         body = request.get_json()
-        id_ = body.get("id")
-        if not id_:
-            return {"msg": "No task id provided!"}, HTTPStatus.BAD_REQUEST
 
+        # validate request body
+        errors = kill_task_schema.validate(body)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+
+        id_ = body.get("id")
         task = db.Task.get(id_)
         if not task:
             return {"msg": f"Task id={id_} not found"}, HTTPStatus.NOT_FOUND
@@ -150,9 +159,9 @@ class KillTask(ServicesResources):
 
         # Check permissions. If someone doesn't have global permissions, we
         # check if their organization is part of the appropriate collaboration.
-        if not self.r.c_glo.can():
+        if not self.r.s_glo.can():
             orgs = task.collaboration.organizations
-            if not (self.r.c_org.can() and g.user.organization in orgs):
+            if not (self.r.s_col.can() and g.user.organization in orgs):
                 return {'msg': 'You lack the permission to do that!'}, \
                     HTTPStatus.UNAUTHORIZED
 
@@ -213,12 +222,14 @@ class KillNodeTasks(ServicesResources):
 
         tags: ["Task"]
         """
-        # obtain task id or node id from request
         body = request.get_json()
-        id_ = body.get("id")
-        if not id_:
-            return {"msg": "No node id provided!"}, HTTPStatus.BAD_REQUEST
+        # validate request body
+        errors = kill_node_tasks_schema.validate(body)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
 
+        id_ = body.get("id")
         node = db.Node.get(id_)
         if not node:
             return {"msg": f"Node id={id_} not found"}, HTTPStatus.NOT_FOUND
@@ -230,11 +241,11 @@ class KillNodeTasks(ServicesResources):
 
         # Check permissions. If someone doesn't have global permissions, we
         # check if their organization is part of the appropriate collaboration.
-        if not self.r.c_glo.can():
+        if not self.r.s_glo.can():
             collab_orgs = node.collaboration.organizations
             if not (
-                (self.r.c_col.can() and g.user.organization in collab_orgs) or
-                (self.r.c_org.can() and
+                (self.r.s_col.can() and g.user.organization in collab_orgs) or
+                (self.r.s_org.can() and
                     node.organization_id == g.user.organization_id)
             ):
                 return {'msg': 'You lack the permission to do that!'}, \
@@ -266,17 +277,17 @@ def kill_task(task: db.Task, socket: SocketIO) -> None:
     socket: SocketIO
         SocketIO connection object to communicate kill instructions to node
     """
-    # Gather results and task ids of current task and child tasks
-    child_results = [r for child in task.children for r in child.results]
-    all_results = task.results + child_results
+    # Gather runs and task ids of current task and child tasks
+    child_runs = [r for child in task.children for r in child.runs]
+    all_runs = task.runs + child_runs
     child_task_ids = [child.id for child in task.children]
     all_task_ids = [task.id] + child_task_ids
 
     kill_list = [{
         'task_id': task_id,
-        'result_id': result.id,
-        'organization_id': result.organization_id
-    } for result, task_id in zip(all_results, all_task_ids)]
+        'run_id': run.id,
+        'organization_id': run.organization_id
+    } for run, task_id in zip(all_runs, all_task_ids)]
 
     # emit socket event to the node to execute the container kills
     socket.emit(
@@ -290,10 +301,10 @@ def kill_task(task: db.Task, socket: SocketIO) -> None:
 
     # set tasks and subtasks status to killed
     def set_killed(task: db.Task):
-        for result in task.results:
-            result.status = TaskStatus.KILLED
-            result.finished_at = dt.datetime.now()
-            result.save()
+        for run in task.runs:
+            run.status = TaskStatus.KILLED
+            run.finished_at = dt.datetime.now()
+            run.save()
 
     set_killed(task)
     for subtask in task.children:

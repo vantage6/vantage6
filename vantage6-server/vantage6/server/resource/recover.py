@@ -22,6 +22,14 @@ from vantage6.server.resource import ServicesResources, with_user
 from vantage6.server.resource.common.auth_helper import (
     create_qr_uri, user_login
 )
+from vantage6.server.resource.common.input_schema import (
+    ChangePasswordInputSchema,
+    RecoverPasswordInputSchema,
+    ResetPasswordInputSchema,
+    Recover2FAInputSchema,
+    Reset2FAInputSchema,
+    ResetAPIKeyInputSchema
+)
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -92,6 +100,14 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     )
 
 
+recover_pw_schema = RecoverPasswordInputSchema()
+reset_pw_schema = ResetPasswordInputSchema()
+recover_2fa_schema = Recover2FAInputSchema()
+reset_2fa_schema = Reset2FAInputSchema()
+reset_api_key_schema = ResetAPIKeyInputSchema()
+change_pw_schema = ChangePasswordInputSchema()
+
+
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
@@ -124,14 +140,15 @@ class ResetPassword(ServicesResources):
 
         tags: ["Account recovery"]
         """
-        # retrieve user based on email or username
         body = request.get_json()
+        # validate request body
+        errors = reset_pw_schema.validate(body)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+
         reset_token = body.get("reset_token")
         password = body.get("password")
-
-        if not reset_token or not password:
-            return {"msg": "The reset token and/or password is missing!"}, \
-                HTTPStatus.BAD_REQUEST
 
         # obtain user
         try:
@@ -191,14 +208,17 @@ class RecoverPassword(ServicesResources):
         # default return string
         ret = {"msg": "If the username or email is in our database you "
                       "will soon receive an email."}
-
-        # obtain username/email from request'
         body = request.get_json()
+
+        # validate request body
+        errors = recover_pw_schema.validate(body)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+
+        # obtain username/email from request
         username = body.get("username")
         email = body.get("email")
-        if not (email or username):
-            return {"msg": "No username or email provided!"}, \
-                HTTPStatus.BAD_REQUEST
 
         # find user in the database, if not here we stop!
         try:
@@ -280,12 +300,15 @@ class ResetTwoFactorSecret(ServicesResources):
         """
         # retrieve user based on email or username
         body = request.get_json()
-        reset_token = body.get("reset_token")
-        if not reset_token:
-            return {"msg": "The reset token is missing!"}, \
+
+        # validate request body
+        errors = reset_2fa_schema.validate(body)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
                 HTTPStatus.BAD_REQUEST
 
         # obtain user
+        reset_token = body.get("reset_token")
         try:
             user_id = decode_token(reset_token)['sub'].get('id')
         except DecodeError:
@@ -335,16 +358,18 @@ class RecoverTwoFactorSecret(ServicesResources):
         ret = {"msg": "If you sent a correct combination of username/email and"
                       "password, you will soon receive an email."}
 
-        # obtain parameters from request'
+        # obtain parameters from request
         body = request.get_json()
+
+        # validate request body
+        errors = recover_2fa_schema.validate(body)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+
         username = body.get("username")
         email = body.get("email")
-        if not (email or username):
-            return {"msg": "No username or email provided!"}, \
-                HTTPStatus.BAD_REQUEST
         password = body.get("password")
-        if not password:
-            return {"msg": "No password provided!"}, HTTPStatus.BAD_REQUEST
 
         # find user in the database, if not here we stop!
         try:
@@ -447,15 +472,14 @@ class ChangePassword(ServicesResources):
         tags: ["Account recovery"]
         """
         body = request.get_json()
+        # validate request body
+        errors = change_pw_schema.validate(body)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+
         old_password = body.get("current_password")
         new_password = body.get("new_password")
-
-        if not old_password:
-            return {"msg": "Your current password is missing"},  \
-                HTTPStatus.BAD_REQUEST
-        elif not new_password:
-            return {"msg": "Your new password is missing!"}, \
-                HTTPStatus.BAD_REQUEST
 
         user = g.user
         log.debug(f"Changing password for user {user.id}")
@@ -513,7 +537,7 @@ class ResetAPIKey(ServicesResources):
               schema:
                 properties:
                   id:
-                    type: int
+                    type: integer
                     description: ID of node whose API key is to be reset
 
         responses:
@@ -531,22 +555,20 @@ class ResetAPIKey(ServicesResources):
 
         tags: ["Account recovery"]
         """
-        if not request.is_json:
-            log.warning('Authentication failed because no JSON body was '
-                        'provided!')
-            return {"msg": "Missing JSON in request"}, HTTPStatus.BAD_REQUEST
+        body = request.get_json()
 
-        # check which node should have its API key modified
-        id = request.json.get('id', None)
-        if not id:
-            msg = "ID missing in JSON body"
-            log.error(msg)
-            return {"msg": msg}, HTTPStatus.BAD_REQUEST
+        # validate request body
+        errors = reset_api_key_schema.validate(body)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
 
-        # find the node
-        node = db.Node.get(id)
+        id_ = body['id']
+        node = db.Node.get(id_)
         if not node:
-            return {'msg': f'Node id={id} is not found!'}, HTTPStatus.NOT_FOUND
+            return {
+                'msg': f'Node id={id_} is not found!'
+            }, HTTPStatus.NOT_FOUND
 
         # check if user is allowed to edit the node
         if not self.r.e_glo.can():

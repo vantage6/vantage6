@@ -7,15 +7,17 @@ from sqlalchemy.orm.exc import NoResultFound
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
-class Operation(Enumerate):
+class Operation(str, Enumerate):
     """ Enumerator of all available operations """
     VIEW = "v"
     EDIT = "e"
     CREATE = "c"
     DELETE = "d"
+    SEND = "s"
+    RECEIVE = "r"
 
 
-class Scope(Enumerate):
+class Scope(str, Enumerate):
     """ Enumerator of all available scopes """
     OWN = "own"
     ORGANIZATION = "org"
@@ -41,9 +43,9 @@ class Rule(Base):
         Scope of the rule
     description : str
         Description of the rule
-    roles : list[Role]
+    roles : list[:class:`.~vantage6.server.model.role.Role`]
         Roles that have this rule
-    users : list[User]
+    users : list[:class:`.~vantage6.server.model.user.User`]
         Users that have this rule
     """
 

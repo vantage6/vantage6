@@ -1,31 +1,24 @@
-"""
-vantage6 clients
+from __future__ import annotations
 
-This module is contains a base client. From this base client the container
-client (client used by master algorithms) and the user client are derived.
-"""
 import logging
-import pickle
 import time
-import typing
 import jwt
-import requests
 import pyfiglet
-import json as json_lib
 import itertools
 import sys
 import traceback
 
 from pathlib import Path
 
-from vantage6.common.exceptions import AuthenticationException
-from vantage6.common import bytes_to_base64s, base64s_to_bytes
 from vantage6.common.globals import APPNAME
-from vantage6.common.encryption import RSACryptor, DummyCryptor
+from vantage6.common.encryption import RSACryptor
 from vantage6.common import WhoAmI
-from vantage6.client import serialization, deserialization
+from vantage6.common.serialization import serialize
 from vantage6.client.filter import post_filtering
-from vantage6.client.utils import print_qr_code, LogLevel
+from vantage6.common.client.utils import print_qr_code
+from vantage6.client.utils import LogLevel
+from vantage6.common.task_status import has_task_finished
+from vantage6.common.client.client_base import ClientBase
 
 
 module_name = __name__.split('.')[1]
@@ -33,643 +26,30 @@ module_name = __name__.split('.')[1]
 LEGACY = 'legacy'
 
 
-class ServerInfo(typing.NamedTuple):
-    """
-    Data-class to store the server info.
-
-    Attributes
-    ----------
-    host : str
-        Adress (including protocol, e.g. `https://`) of the vantage6 server
-    port : int
-        Port numer to which the server listens
-    path : str
-        Path of the api, e.g. '/api'
-    """
-    host: str
-    port: int
-    path: str
-
-
-class ClientBase(object):
-    """Common interface to the central server.
-
-    Contains the basis for all other clients, e.g. UserClient, NodeClient and
-    AlgorithmClient. This includes a basic interface to authenticate, send
-    generic requests, create tasks and retrieve results.
-    """
-
-    def __init__(self, host: str, port: int, path: str = '/api') -> None:
-        """Basic setup for the client
-
-        Parameters
-        ----------
-        host : str
-            Adress (including protocol, e.g. `https://`) of the vantage6 server
-        port : int
-            port numer to which the server listens
-        path : str, optional
-            path of the api, by default '/api'
-        """
-
-        self.log = logging.getLogger(module_name)
-
-        # server settings
-        self.__host = host
-        self.__port = port
-        self.__api_path = path
-
-        # tokens
-        self._access_token = None
-        self.__refresh_token = None
-        self.__refresh_url = None
-
-        self.cryptor = None
-        self.whoami = None
-
-    @property
-    def name(self) -> str:
-        """
-        Return the node's/client's name
-
-        Returns
-        -------
-        str
-            Name of the user or node
-        """
-        return self.whoami.name
-
-    @property
-    def headers(self) -> dict:
-        """
-        Defines headers that are sent with each request. This includes the
-        authorization token.
-
-        Returns
-        -------
-        dict
-            Headers
-        """
-        if self._access_token:
-            return {'Authorization': 'Bearer ' + self._access_token}
-        else:
-            return {}
-
-    @property
-    def token(self) -> str:
-        """
-        JWT Authorization token
-
-        Returns
-        -------
-        str
-            JWT token
-        """
-        return self._access_token
-
-    @property
-    def host(self) -> str:
-        """
-        Host including protocol (HTTP/HTTPS)
-
-        Returns
-        -------
-        str
-            Host address of the vantage6 server
-        """
-        return self.__host
-
-    @property
-    def port(self) -> int:
-        """
-        Port on which vantage6 server listens
-
-        Returns
-        -------
-        int
-            Port number
-        """
-        return self.__port
-
-    @property
-    def path(self) -> str:
-        """
-        Path/endpoint at the server where the api resides
-
-        Returns
-        -------
-        str
-            Path to the api
-        """
-        return self.__api_path
-
-    @property
-    def base_path(self) -> str:
-        """
-        Full path to the server URL. Combination of host, port and api-path
-
-        Returns
-        -------
-        str
-            Server URL
-        """
-        if self.__port:
-            return f"{self.host}:{self.port}{self.__api_path}"
-
-        return f"{self.host}{self.__api_path}"
-
-    def generate_path_to(self, endpoint: str) -> str:
-        """Generate URL to endpoint using host, port and endpoint
-
-        Parameters
-        ----------
-        endpoint : str
-            endpoint to which a fullpath needs to be generated
-
-        Returns
-        -------
-        str
-            URL to the endpoint
-        """
-        if endpoint.startswith('/'):
-            path = self.base_path + endpoint
-        else:
-            path = self.base_path + '/' + endpoint
-
-        return path
-
-    def request(self, endpoint: str, json: dict = None, method: str = 'get',
-                params: dict = None, first_try: bool = True,
-                retry: bool = True) -> dict:
-        """Create http(s) request to the vantage6 server
-
-        Parameters
-        ----------
-        endpoint : str
-            Endpoint of the server
-        json : dict, optional
-            payload, by default None
-        method : str, optional
-            Http verb, by default 'get'
-        params : dict, optional
-            URL parameters, by default None
-        first_try : bool, optional
-            Whether this is the first attempt of this request. Default True.
-        retry: bool, optional
-            Try request again after refreshing the token. Default True.
-
-        Returns
-        -------
-        dict
-            Response of the server
-        """
-
-        # get appropiate method
-        rest_method = {
-            'get': requests.get,
-            'post': requests.post,
-            'put': requests.put,
-            'patch': requests.patch,
-            'delete': requests.delete
-        }.get(method.lower(), requests.get)
-
-        # send request to server
-        url = self.generate_path_to(endpoint)
-        self.log.debug(f'Making request: {method.upper()} | {url} | {params}')
-
-        try:
-            response = rest_method(url, json=json, headers=self.headers,
-                                   params=params)
-        except requests.exceptions.ConnectionError as e:
-            # we can safely retry as this is a connection error. And we
-            # keep trying!
-            self.log.error('Connection error... Retrying')
-            self.log.debug(e)
-            time.sleep(1)
-            return self.request(endpoint, json, method, params)
-
-        # TODO: should check for a non 2xx response
-        if response.status_code > 210:
-            self.log.error(
-                f'Server responded with error code: {response.status_code}')
-            try:
-                self.log.error("msg:"+response.json().get("msg", ""))
-            except json_lib.JSONDecodeError:
-                self.log.error('Did not find a message from the server')
-                self.log.debug(response.content)
-
-            if retry:
-                if first_try:
-                    self.refresh_token()
-                    return self.request(endpoint, json, method, params,
-                                        first_try=False)
-                else:
-                    self.log.error("Nope, refreshing the token didn't fix it.")
-
-        return response.json()
-
-    def setup_encryption(self, private_key_file: str) -> None:
-        """Enable the encryption module fot the communication
-
-        This will attach a Crypter object to the client. It will also
-        verify that the public key at the server matches the local
-        private key. In case they differ, the local public key is uploaded
-        to the server.
-
-        Parameters
-        ----------
-        private_key_file : str
-            File path of the private key file
-
-        Raises
-        ------
-        AssertionError
-            If the client is not authenticated
-        """
-        assert self._access_token, \
-            "Encryption can only be setup after authentication"
-        assert self.whoami.organization_id, \
-            "Organization unknown... Did you authenticate?"
-
-        if private_key_file is None:
-            self.cryptor = DummyCryptor()
-            return
-
-        if isinstance(private_key_file, str):
-            private_key_file = Path(private_key_file)
-
-        cryptor = RSACryptor(private_key_file)
-
-        # check if the public-key is the same on the server. If this is
-        # not the case, this node will not be able to read any messages
-        # that are send to him! If this is the case, the new public_key
-        # will be uploaded to the central server
-        organization = self.request(
-            f"organization/{self.whoami.organization_id}")
-        pub_key = organization.get("public_key")
-        upload_pub_key = False
-
-        if pub_key:
-            if cryptor.verify_public_key(pub_key):
-                self.log.info("Public key matches the server key! Good to go!")
-
-            else:
-                self.log.critical(
-                    "Local public key does not match server public key. "
-                    "You will not able to read any messages that are intended "
-                    "for you!"
-                )
-                upload_pub_key = True
-        else:
-            upload_pub_key = True
-
-        # upload public key if required
-        if upload_pub_key:
-            self.request(
-                f"organization/{self.whoami.organization_id}",
-                method="patch",
-                json={"public_key": cryptor.public_key_str}
-            )
-            self.log.info("The public key on the server is updated!")
-
-        self.cryptor = cryptor
-
-    def authenticate(self, credentials: dict,
-                     path: str = "token/user") -> bool:
-        """Authenticate to the vantage6-server
-
-        It allows users, nodes and containers to sign in. Credentials can
-        either be a username/password combination or a JWT authorization
-        token.
-
-        Parameters
-        ----------
-        credentials : dict
-            Credentials used to authenticate
-        path : str, optional
-            Endpoint used for authentication. This differs for users, nodes and
-            containers, by default "token/user"
-
-        Raises
-        ------
-        Exception
-            Failed to authenticate
-
-        Returns
-        -------
-        Bool
-            Whether or not user is authenticated. Alternative is that user is
-            redirected to set up two-factor authentication
-        """
-        if 'username' in credentials:
-            self.log.debug(
-                f"Authenticating user {credentials['username']}...")
-        elif 'api_key' in credentials:
-            self.log.debug('Authenticating node...')
-
-        # authenticate to the central server
-        url = self.generate_path_to(path)
-        response = requests.post(url, json=credentials)
-        data = response.json()
-
-        # handle negative responses
-        if response.status_code > 200:
-            self.log.critical(f"Failed to authenticate: {data.get('msg')}")
-            if response.status_code == 401:
-                raise AuthenticationException("Failed to authenticate")
-            else:
-                raise Exception("Failed to authenticate")
-
-        if 'qr_uri' in data:
-            print_qr_code(data)
-            return False
-        else:
-            # Check if there is an access token. If not, there is a problem
-            # with authenticating
-            if 'access_token' not in data:
-                if 'msg' in data:
-                    raise Exception(data['msg'])
-                else:
-                    raise Exception(
-                        "No access token in authentication response!")
-
-            # store tokens in object
-            self.log.info("Successfully authenticated")
-            self._access_token = data.get("access_token")
-            self.__refresh_token = data.get("refresh_token")
-            self.__refresh_url = data.get("refresh_url")
-            return True
-
-    def refresh_token(self) -> None:
-        """Refresh an expired token using the refresh token
-
-        Raises
-        ------
-        Exception
-            Authentication Error!
-        AssertionError
-            Refresh URL not found
-        """
-        self.log.info("Refreshing token")
-        assert self.__refresh_url, \
-            "Refresh URL not found, did you authenticate?"
-
-        # if no port is specified explicit, then it should be omit the
-        # colon : in the path. Similar (but different) to the property
-        # base_path
-        if self.__port:
-            url = f"{self.__host}:{self.__port}{self.__refresh_url}"
-        else:
-            url = f"{self.__host}{self.__refresh_url}"
-
-        # send request to server
-        response = requests.post(url, headers={
-            'Authorization': 'Bearer ' + self.__refresh_token
-        })
-
-        # server says no!
-        if response.status_code != 200:
-            self.log.critical("Could not refresh token")
-            raise Exception("Authentication Error!")
-
-        self._access_token = response.json()["access_token"]
-        self.__refresh_token = response.json()["refresh_token"]
-
-    # TODO BvB 23-01-23 remove this method in v4+. It is only here for
-    # backwards compatibility
-    def post_task(self, name: str, image: str, collaboration_id: int,
-                  input_='', description='',
-                  organization_ids: list = None,
-                  data_format=LEGACY, database: str = 'default') -> dict:
-        """Post a new task at the server
-
-        It will also encrypt `input_` for each receiving organization.
-
-        Parameters
-        ----------
-        name : str
-            Human readable name for the task
-        image : str
-            Docker image name containing the algorithm
-        collaboration_id : int
-            Collaboration `id` of the collaboration for which the task is
-            intended
-        input_ : str, optional
-            Task input, by default ''
-        description : str, optional
-            Human readable description of the task, by default ''
-        organization_ids : list, optional
-            Ids of organizations (within the collaboration) that need to
-            execute this task, by default None
-        data_format : str, optional
-            Type of data format to use to send and receive
-            data. possible values: 'json', 'pickle', 'legacy'. 'legacy'
-            will use pickle serialization. Default is 'legacy'., by default
-            LEGACY
-        database : str, optional
-            Database label to use for the task, by default 'default'
-
-        Returns
-        -------
-        dict
-            Containing the task meta-data
-
-        Raises
-        ------
-        AssertionError
-            Encryption has not yet been setup.
-        """
-        assert self.cryptor, "Encryption has not yet been setup!"
-
-        if organization_ids is None:
-            organization_ids = []
-
-        if data_format == LEGACY:
-            serialized_input = pickle.dumps(input_)
-        else:
-            # Data will be serialized to bytes in the specified data format.
-            # It will be prepended with 'DATA_FORMAT.' in unicode.
-            serialized_input = data_format.encode() + b'.' \
-                + serialization.serialize(input_, data_format)
-
-        organization_json_list = []
-        for org_id in organization_ids:
-            pub_key = self.request(f"organization/{org_id}").get("public_key")
-            # pub_key = base64s_to_bytes(pub_key)
-            # self.log.debug(pub_key)
-
-            organization_json_list.append({
-                "id": org_id,
-                "input": self.cryptor.encrypt_bytes_to_str(serialized_input,
-                                                           pub_key)
-            })
-
-        return self.request('task', method='post', json={
-            "name": name,
-            "image": image,
-            "collaboration_id": collaboration_id,
-            "description": description,
-            "organizations": organization_json_list,
-            'database': database
-        })
-
-    # TODO BvB 23-01-23 remove this method in v4+ (or make it private?). It is
-    # only here for backwards compatibility.
-    def get_results(self, id_: int = None, state: str = None,
-                    include_task: bool = False, task_id: int = None,
-                    node_id: int = None, params: dict = {}) -> dict:
-        """Get task result(s) from the central server
-
-        Depending if a `id` is specified or not, either a single or a
-        list of results is returned. The input and result field of the
-        result are attempted te be decrypted. This fails if the public
-        key at the server is not derived from the currently private key
-        or when the result is not from your organization.
-
-        Parameters
-        ----------
-        id : int, optional
-            Id of the result, by default None
-        state : str, optional
-            The state of the task (e.g. `open`), by default None
-        include_task : bool, optional
-            Whenever to include the originating task, by default False
-        task_id : int, optional
-            The id of the originating task, this will return all results
-            belonging to this task, by default None
-        node_id : int, optional
-            The id of the node at which this result has been produced,
-            this will return all results from this node, by default None
-        params : dict, optional
-            Additional query parameters, by default {}
-
-        Returns
-        -------
-        dict
-            Containing the result(s)
-        """
-        # Determine endpoint and create dict with query parameters
-        endpoint = 'result' if not id_ else f'result/{id_}'
-
-        extended_params = params.copy()
-        if state:
-            extended_params['state'] = state
-        if include_task:
-            extended_params['include'] = 'task'
-        if task_id:
-            extended_params['task_id'] = task_id
-        if node_id:
-            extended_params['node_id'] = node_id
-
-        # self.log.debug(f"Retrieving results using query parameters:{params}")
-        results = self.request(endpoint=endpoint, params=extended_params)
-
-        if isinstance(results, str):
-            self.log.warn("Requesting results failed")
-            self.log.debug(f"Results message: {results}")
-            return {}
-
-        # hack: in the case that the pagination metadata is included we
-        # need to strip that for decrypting
-        if isinstance(results, dict) and 'data' in results:
-            wrapper = results
-            results = results['data']
-
-        if id_:
-            # Single result
-            self._decrypt_result(results)
-
-        else:
-            # Multiple results
-            for result in results:
-                self._decrypt_result(result)
-
-        if 'wrapper' in locals():
-            wrapper['data'] = results
-            results = wrapper
-
-        return results
-
-    def _decrypt_result(self, result: dict) -> None:
-        """
-        Helper to decrypt the keys 'input' and 'result' in dict.
-
-        Keys are replaced, but object reference remains intact: changes are
-        made *in-place*.
-
-        Parameters
-        ----------
-        result : dict
-            The result dict to decrypt
-
-        Raises
-        ------
-        AssertionError
-            Encryption has not been initialized
-        """
-        assert self.cryptor, "Encryption has not been initialized"
-        cryptor = self.cryptor
-        try:
-            self.log.info('Decrypting input')
-            # TODO this only works when the results belong to the
-            # same organization... We should make different implementation
-            # of get_results
-            result["input"] = cryptor.decrypt_str_to_bytes(result["input"])
-
-        except Exception as e:
-            self.log.debug(e)
-
-        try:
-            if result["result"]:
-                self.log.info('Decrypting result')
-                result["result"] = \
-                    cryptor.decrypt_str_to_bytes(result["result"])
-
-        except ValueError as e:
-            self.log.error("Could not decrypt/decode input or result.")
-            self.log.error(e)
-            # raise
-
-    class SubClient:
-        """
-        Create sub groups of commands using this SubClient
-
-        Parameters
-        ----------
-        parent : UserClient
-            The parent client
-        """
-        def __init__(self, parent) -> None:
-            self.parent: UserClient = parent
-
-
 class UserClient(ClientBase):
     """User interface to the vantage6-server"""
 
-    def __init__(self, *args, verbose=False, log_level='debug',
-                 **kwargs) -> None:
+    def __init__(self, *args, log_level='debug', **kwargs) -> None:
         """Create user client
 
         All paramters from `ClientBase` can be used here.
 
         Parameters
         ----------
-        verbose : bool, optional
-            Whenever to print (info) messages, by default False
         log_level : str, optional
             The log level to use, by default 'debug'
         """
         super(UserClient, self).__init__(*args, **kwargs)
 
         # Replace logger by print logger
-        # TODO in v4+, remove the verbose option and only keep log_level
-        self.log = self._get_logger(verbose, log_level)
+        self.log = self._get_logger(log_level)
 
         # attach sub-clients
         self.util = self.Util(self)
         self.collaboration = self.Collaboration(self)
         self.organization = self.Organization(self)
         self.user = self.User(self)
+        self.run = self.Run(self)
         self.result = self.Result(self)
         self.task = self.Task(self)
         self.role = self.Role(self)
@@ -691,14 +71,12 @@ class UserClient(ClientBase):
         self.log.info("-" * 60)
 
     @staticmethod
-    def _get_logger(enabled: bool, level: str) -> logging.Logger:
+    def _get_logger(level: str) -> logging.Logger:
         """
         Create print-logger
 
         Parameters
         ----------
-        enabled: bool
-            If true, logging at most detailed level
         level: str
             Desired logging level
 
@@ -714,9 +92,7 @@ class UserClient(ClientBase):
 
         # set log level
         level = level.upper()
-        if enabled:
-            logger.setLevel(LogLevel.DEBUG.value)
-        elif level not in [lvl.value for lvl in LogLevel]:
+        if level not in [lvl.value for lvl in LogLevel]:
             default_lvl = LogLevel.DEBUG.value
             logger.setLevel(default_lvl)
             logger.warn(
@@ -759,15 +135,8 @@ class UserClient(ClientBase):
         # belongs. This is usefull for some client side checks
         try:
             type_ = "user"
-            jwt_payload = jwt.decode(self.token,
-                                     options={"verify_signature": False})
-
-            # FIXME: 'identity' is no longer needed in version 4+. So this if
-            # statement can be removed
-            if 'sub' in jwt_payload:
-                id_ = jwt_payload['sub']
-            elif 'identity' in jwt_payload:
-                id_ = jwt_payload['identity']
+            id_ = jwt.decode(
+                self.token, options={"verify_signature": False})['sub']
 
             user = self.request(f"user/{id_}")
             name = user.get("firstname")
@@ -791,7 +160,7 @@ class UserClient(ClientBase):
             self.log.info('--> Retrieving additional user info failed!')
             self.log.error(traceback.format_exc())
 
-    def wait_for_results(self, task_id: int, sleep: float = 1) -> dict:
+    def wait_for_results(self, task_id: int, interval: float = 1) -> dict:
         """
         Polls the server to check when results are ready, and returns the
         results when the task is completed.
@@ -800,7 +169,7 @@ class UserClient(ClientBase):
         ----------
         task_id: int
             ID of the task that you are waiting for
-        sleep: float
+        interval: float
             Interval in seconds between checks if task is finished. Default 1.
 
         Returns
@@ -810,45 +179,46 @@ class UserClient(ClientBase):
         """
         # Disable logging (additional logging would prevent the 'wait' message
         # from being printed on a single line)
-        if isinstance(self.log, logging.Logger):
-            prev_level = self.log.level
-            self.log.setLevel(logging.WARN)
-        elif isinstance(self.log, UserClient.Log):
-            prev_level = self.log.enabled
-            self.log.enabled = False
+        prev_level = self.log.level
+        self.log.setLevel(logging.WARN)
 
         animation = itertools.cycle(['|', '/', '-', '\\'])
         t = time.time()
 
-        while not self.task.get(task_id)['complete']:
+        while not has_task_finished(self.task.get(task_id).get('status')):
             frame = next(animation)
             sys.stdout.write(
                 f'\r{frame} Waiting for task {task_id} ({int(time.time()-t)}s)'
             )
             sys.stdout.flush()
-            time.sleep(sleep)
+            time.sleep(interval)
         sys.stdout.write('\rDone!                  ')
 
         # Re-enable logging
-        if isinstance(self.log, logging.Logger):
-            self.log.setLevel(prev_level)
-        elif isinstance(self.log, UserClient.Log):
-            self.log.enabled = prev_level
+        self.log.setLevel(prev_level)
 
-        return self.get_results(task_id=task_id)
+        result = self.request('result', params={'task_id': task_id})
+        result = self.result._decrypt_result(result, is_single_result=False)
+        return result
 
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
 
-        def get_server_version(self) -> dict:
+        def get_server_version(self, attempts_on_timeout: int = None) -> dict:
             """View the version number of the vantage6-server
-
+            Parameters
+            ----------
+            attempts_on_timeout : int
+                Number of attempts to make when the server is not responding.
+                Default is unlimited.
             Returns
             -------
             dict
                 A dict containing the version number
             """
-            return self.parent.request('version')
+            return self.parent.request(
+                'version', attempts_on_timeout=attempts_on_timeout
+            )
 
         def get_server_health(self) -> dict:
             """View the health of the vantage6-server
@@ -1030,8 +400,7 @@ class UserClient(ClientBase):
         def list(self, scope: str = 'organization',
                  name: str = None, encrypted: bool = None,
                  organization: int = None, page: int = 1,
-                 per_page: int = 20, include_metadata: bool = True,
-                 ) -> dict:
+                 per_page: int = 20) -> dict:
             """View your collaborations
 
             Parameters
@@ -1051,10 +420,6 @@ class UserClient(ClientBase):
                 Pagination page, by default 1
             per_page: int, optional
                 Number of items on a single page, by default 20
-            include_metadata: bool, optional
-                Whenever to include the pagination metadata. If this is
-                set to False the output is no longer wrapped in a
-                dictonairy, by default True
 
             Returns
             -------
@@ -1067,18 +432,14 @@ class UserClient(ClientBase):
               `organization` as pagination is missing at endpoint
               /organization/<id>/collaboration
             """
-            includes = ['metadata'] if include_metadata else []
             params = {
-                'page': page, 'per_page': per_page, 'include': includes,
-                'name': name, 'encrypted': encrypted,
-                'organization_id': organization,
+                'page': page, 'per_page': per_page, 'name': name,
+                'encrypted': encrypted, 'organization_id': organization,
             }
             if scope == 'organization':
-                self.parent.log.info('pagination for scope `organization` '
-                                     'not available')
                 org_id = self.parent.whoami.organization_id
                 return self.parent.request(
-                    f'organization/{org_id}/collaboration'
+                    'collaboration', params={'organization_id': org_id}
                 )
             elif scope == 'global':
                 return self.parent.request('collaboration', params=params)
@@ -1153,7 +514,6 @@ class UserClient(ClientBase):
                  collaboration: int = None, is_online: bool = None,
                  ip: str = None, last_seen_from: str = None,
                  last_seen_till: str = None, page: int = 1, per_page: int = 20,
-                 include_metadata: bool = True,
                  ) -> list[dict]:
             """List nodes
 
@@ -1177,10 +537,6 @@ class UserClient(ClientBase):
                 Pagination page, by default 1
             per_page: int, optional
                 Number of items on a single page, by default 20
-            include_metadata: bool, optional
-                Whenever to include the pagination metadata. If this is
-                set to False the output is no longer wrapped in a
-                dictonairy, by default True
 
             Returns
             -------
@@ -1188,9 +544,8 @@ class UserClient(ClientBase):
             list of dicts
                 Containing meta-data of the nodes
             """
-            includes = ['metadata'] if include_metadata else []
             params = {
-                'page': page, 'per_page': per_page, 'include': includes,
+                'page': page, 'per_page': per_page,
                 'name': name, 'organization_id': organization,
                 'collaboration_id': collaboration, 'ip': ip,
                 'last_seen_from': last_seen_from,
@@ -1299,7 +654,6 @@ class UserClient(ClientBase):
         def list(
             self, name: str = None, country: int = None,
             collaboration: int = None, page: int = None, per_page: int = None,
-            include_metadata: bool = True
         ) -> list[dict]:
             """List organizations
 
@@ -1315,21 +669,15 @@ class UserClient(ClientBase):
                 Pagination page, by default 1
             per_page: int, optional
                 Number of items on a single page, by default 20
-            include_metadata: bool, optional
-                Whenever to include the pagination metadata. If this is
-                set to False the output is no longer wrapped in a
-                dictonairy, by default True
 
             Returns
             -------
             list[dict]
                 Containing meta-data information of the organizations
             """
-            includes = ['metadata'] if include_metadata else []
             params = {
-                'page': page, 'per_page': per_page, 'include': includes,
-                'name': name, 'country': country,
-                'collaboration_id': collaboration
+                'page': page, 'per_page': per_page, 'name': name,
+                'country': country, 'collaboration_id': collaboration
             }
             return self.parent.request('organization', params=params)
 
@@ -1454,8 +802,7 @@ class UserClient(ClientBase):
                  firstname: str = None, lastname: str = None,
                  email: str = None, role: int = None, rule: int = None,
                  last_seen_from: str = None, last_seen_till: str = None,
-                 page: int = 1, per_page: int = 20,
-                 include_metadata: bool = True) -> list:
+                 page: int = 1, per_page: int = 20) -> list:
             """List users
 
             Parameters
@@ -1482,19 +829,14 @@ class UserClient(ClientBase):
                 Pagination page, by default 1
             per_page: int, optional
                 Number of items on a single page, by default 20
-            include_metadata: bool, optional
-                Whenever to include the pagination metadata. If this is
-                set to False the output is no longer wrapped in a
-                dictonairy, by default True
 
             Returns
             -------
             list of dicts
                 Containing the meta-data of the users
             """
-            includes = ['metadata'] if include_metadata else []
             params = {
-                'page': page, 'per_page': per_page, 'include': includes,
+                'page': page, 'per_page': per_page,
                 'username': username, 'organization_id': organization,
                 'firstname': firstname, 'lastname': lastname, 'email': email,
                 'role_id': role, 'rule_id': rule,
@@ -1626,7 +968,7 @@ class UserClient(ClientBase):
         def list(self, name: str = None, description: str = None,
                  organization: int = None, rule: int = None, user: int = None,
                  include_root: bool = None, page: int = 1, per_page: int = 20,
-                 include_metadata: bool = True) -> list[dict]:
+                 ) -> list[dict]:
             """List of roles
 
             Parameters
@@ -1648,19 +990,14 @@ class UserClient(ClientBase):
                 Pagination page, by default 1
             per_page: int, optional
                 Number of items on a single page, by default 20
-            include_metadata: bool, optional
-                Whenever to include the pagination metadata. If this is
-                set to False the output is no longer wrapped in a
-                dictonairy, by default True
 
             Returns
             -------
             list[dict]
                 Containing roles meta-data
             """
-            includes = ['metadata'] if include_metadata else []
             params = {
-                'page': page, 'per_page': per_page, 'include': includes,
+                'page': page, 'per_page': per_page,
                 'name': name, 'description': description,
                 'organization_id': organization, 'rule_id': rule,
                 'include_root': include_root, 'user_id': user,
@@ -1784,13 +1121,14 @@ class UserClient(ClientBase):
             return self.parent.request(f'task/{id_}', params=params)
 
         @post_filtering()
-        def list(self, initiator: int = None, initiating_user: int = None,
-                 collaboration: int = None, image: str = None,
-                 parent: int = None, run: int = None,
-                 name: str = None, include_results: bool = False,
-                 description: str = None, database: str = None,
-                 result: int = None, status: str = None, page: int = 1,
-                 per_page: int = 20, include_metadata: bool = True) -> dict:
+        def list(
+            self, initiating_org: int = None, initiating_user: int = None,
+            collaboration: int = None, image: str = None, parent: int = None,
+            job: int = None, name: str = None, include_results: bool = False,
+            description: str = None, database: str = None, run: int = None,
+            status: str = None, user_created: bool = None, page: int = 1,
+            per_page: int = 20
+        ) -> dict:
             """List tasks
 
             Parameters
@@ -1799,7 +1137,7 @@ class UserClient(ClientBase):
                 Filter by the name of the task. It will match with a
                 Like operator. I.e. E% will search for task names that
                 start with an 'E'.
-            initiator: int, optional
+            initiating_org: int, optional
                 Filter by initiating organization
             initiating_user: int, optional
                 Filter by initiating user
@@ -1809,8 +1147,8 @@ class UserClient(ClientBase):
                 Filter by Docker image name (with LIKE operator)
             parent: int, optional
                 Filter by parent task
-            run: int, optional
-                Filter by run
+            job: int, optional
+                Filter by job id
             include_results : bool, optional
                 Whenever to include the results in the tasks, by default
                 False
@@ -1818,19 +1156,18 @@ class UserClient(ClientBase):
                 Filter by description (with LIKE operator)
             database: str, optional
                 Filter by database (with LIKE operator)
-            result: int, optional
-                Only show task that contains this result id
+            run: int, optional
+                Only show task that contains this run id
             status: str, optional
                 Filter by task status (e.g. 'active', 'pending', 'completed',
                 'crashed')
+            user_created: bool, optional
+                If True, show only top-level tasks created by users. If False,
+                show only subtasks created by algorithm containers.
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional
                 Number of items on a single page, by default 20
-            include_metadata: bool, optional
-                Whenever to include the pagination metadata. If this is
-                set to False the output is no longer wrapped in a
-                dictonairy, by default True
 
             Returns
             -------
@@ -1838,41 +1175,30 @@ class UserClient(ClientBase):
                 dictonairy containing the key 'data' which contains the
                 tasks and a key 'links' containing the pagination
                 metadata
-
-            OR
-
-            list
-                when 'include_metadata' is set to false, it removes the
-                metadata wrapper. I.e. directly returning the 'data'
-                key.
             """
             # if the param is None, it will not be passed on to the
             # request
-            # TODO in v4+, we should change the 'initiator' argument to
-            # a name that distinguishes it better from the initiating user.
-            # Then, we should also change it in the server
             params = {
-                'initiator_id': initiator, 'init_user_id': initiating_user,
+                'init_org_id': initiating_org, 'init_user_id': initiating_user,
                 'collaboration_id': collaboration,
-                'image': image, 'parent_id': parent, 'run_id': run,
+                'image': image, 'parent_id': parent, 'job_id': job,
                 'name': name, 'page': page, 'per_page': per_page,
                 'description': description, 'database': database,
-                'result_id': result, 'status': status,
+                'run_id': run, 'status': status,
             }
             includes = []
             if include_results:
                 includes.append('results')
-            if include_metadata:
-                includes.append('metadata')
             params['include'] = includes
+            if user_created is not None:
+                params['is_user_created'] = 1 if user_created else 0
 
             return self.parent.request('task', params=params)
 
         @post_filtering(iterable=False)
         def create(self, collaboration: int, organizations: list, name: str,
-                   image: str, description: str, input: dict,
-                   data_format: str = LEGACY,
-                   database: str = 'default') -> dict:
+                   image: str, description: str, input_: dict,
+                   databases: list[dict] = None) -> dict:
             """Create a new task
 
             Parameters
@@ -1888,26 +1214,61 @@ class UserClient(ClientBase):
                 Docker image name which contains the algorithm
             description : str
                 Human readable description
-            input : dict
+            input_ : dict
                 Algorithm input
-            data_format : str, optional
-                IO data format used, by default LEGACY
-            database: str, optional
-                Database name to be used at the node
+            databases: list[dict], optional
+                Databases to be used at the node. Each dict should contain
+                at least a 'label' key. Additional keys are 'query' (if using
+                SQL/SPARQL databases), 'sheet_name' (if using Excel databases),
+                and 'preprocessing' information.
 
             Returns
             -------
             dict
-                [description]
+                A dictionairy containing data on the created task, or a message
+                from the server if the task could not be created
             """
-            return self.parent.post_task(name, image, collaboration, input,
-                                         description, organizations,
-                                         data_format, database)
+            assert self.parent.cryptor, "Encryption has not yet been setup!"
+
+            if organizations is None:
+                raise ValueError(
+                    'No organizations specified! Cannot create task without '
+                    'assigning it to at least one organization.'
+                )
+
+            if isinstance(databases, str):
+                # it is not unlikely that users specify a single database as a
+                # str, in that case we convert it to a list
+                databases = [{'label': databases}]
+
+            # Data will be serialized in JSON.
+            serialized_input = serialize(input_)
+
+            # Encrypt the input per organization using that organization's
+            # public key.
+            organization_json_list = []
+            for org_id in organizations:
+                pub_key = self.parent.request(f"organization/{org_id}")\
+                    .get("public_key")
+                organization_json_list.append({
+                    "id": org_id,
+                    "input": self.parent.cryptor.encrypt_bytes_to_str(
+                        serialized_input, pub_key)
+                })
+
+            return self.parent.request('task', method='post', json={
+                "name": name,
+                "image": image,
+                "collaboration_id": collaboration,
+                "description": description,
+                "organizations": organization_json_list,
+                'databases': databases
+            })
 
         def delete(self, id_: int) -> dict:
             """Delete a task
 
-            Also removes the related results.
+            Also removes the related runs.
 
             Parameters
             ----------
@@ -1943,38 +1304,34 @@ class UserClient(ClientBase):
             })
             self.parent.log.info(f'--> {msg}')
 
-    class Result(ClientBase.SubClient):
+    class Run(ClientBase.SubClient):
 
         @post_filtering(iterable=False)
         def get(self, id_: int, include_task: bool = False) -> dict:
-            """View a specific result
+            """View a specific run
 
             Parameters
             ----------
             id_ : int
-                id of the result you want to inspect
+                id of the run you want to inspect
             include_task : bool, optional
                 Whenever to include the task or not, by default False
 
             Returns
             -------
             dict
-                Containing the result data
+                Containing the run data
             """
             self.parent.log.info('--> Attempting to decrypt results!')
 
-            # get_results also handles decryption
-            result = self.parent.get_results(id_=id_,
-                                             include_task=include_task)
-            result_data = result.get('result')
-            if result_data:
-                try:
-                    result['result'] = deserialization.load_data(result_data)
-                except Exception as e:
-                    self.parent.log.warn('--> Failed to deserialize')
-                    self.parent.log.debug(e)
+            # get run from the API
+            params = {'include': 'task'} if include_task else {}
+            run = self.parent.request(endpoint=f'run/{id_}', params=params)
 
-            return result
+            # decrypt input
+            run = self._decrypt_input(run_data=run, is_single_run=True)
+
+            return run
 
         @post_filtering()
         def list(self, task: int = None, organization: int = None,
@@ -1983,8 +1340,8 @@ class UserClient(ClientBase):
                  assigned: tuple[str, str] = None,
                  finished: tuple[str, str] = None, port: int = None,
                  page: int = None, per_page: int = None,
-                 include_metadata: bool = True) -> dict | list[dict]:
-            """List results
+                 ) -> dict | list[dict]:
+            """List runs
 
             Parameters
             ----------
@@ -2005,28 +1362,19 @@ class UserClient(ClientBase):
             finished: tuple[str, str], optional
                 Filter on a range of finished times (format: yyyy-mm-dd)
             port: int, optional
-                Port on which result was computed
+                Port on which run was computed
             page: int, optional
                 Pagination page number, defaults to 1
             per_page: int, optional
                 Number of items per page, defaults to 20
-            include_metedata: bool, optional
-                Whenevet to include pagination metadata, defaults to
-                True
 
             Returns
             -------
             dict | list[dict]
-                If include_metadata is True, a dictionary is returned
-                containing the key 'data' which contains a list of
-                results, and a key 'links' which contains the pagination
-                metadata.
-                When include_metadata is False, the metadata wrapper
-                is stripped and only a list of results is returned
+                A dictionary containing the key 'data' which contains a list of
+                runs, and a key 'links' which contains the pagination metadata.
             """
             includes = []
-            if include_metadata:
-                includes.append('metadata')
             if include_task:
                 includes.append('task')
 
@@ -2044,39 +1392,19 @@ class UserClient(ClientBase):
                 'port': port
             }
 
-            results = self.parent.get_results(params=params)
+            # get runs from the API
+            runs = self.parent.request(endpoint='run', params=params)
 
-            if isinstance(results, dict):
-                wrapper = results
-                results = results['data']
+            # decrypt input data
+            runs = self._decrypt_input(run_data=runs, is_single_run=False)
 
-            cleaned_results = []
-            for result in results:
-                if result.get('result'):
-                    try:
-                        des_res = deserialization.load_data(
-                            result.get('result')
-                        )
-                    except Exception as e:
-                        id_ = result.get('id')
-                        self.parent.log.warn('Could not deserialize result id='
-                                             f'{id_}')
-                        self.parent.log.debug(e)
-                        continue
-                    result['result'] = des_res
-                cleaned_results.append(result)
-
-            if 'wrapper' in locals():
-                wrapper['data'] = cleaned_results
-                cleaned_results = wrapper
-
-            return cleaned_results
+            return runs
 
         def from_task(
             self, task_id: int, include_task: bool = False
-        ) -> typing.List[dict]:
+        ) -> list[dict]:
             """
-            Get all results from a specific task
+            Get all algorithm runs from a specific task
 
             Parameters
             ----------
@@ -2092,17 +1420,111 @@ class UserClient(ClientBase):
             """
             self.parent.log.info('--> Attempting to decrypt results!')
 
-            # get_results also handles decryption
-            results = self.parent.get_results(task_id=task_id,
-                                              include_task=include_task)
-            cleaned_results = []
-            for result in results:
-                if result.get('result'):
-                    des_res = deserialization.load_data(result.get('result'))
-                    result['result'] = des_res
-                cleaned_results.append(result)
+            # get all algorithm runs from a specific task
+            params = {}
+            if include_task:
+                params['include'] = 'task'
+            if task_id:
+                params['task_id'] = task_id
+            runs = self.parent.request(endpoint='run', params=params)
 
-            return cleaned_results
+            # decrypt input data
+            runs = self._decrypt_input(run_data=runs, is_single_run=False)
+
+            return runs
+
+        def _decrypt_input(self, run_data: dict, is_single_run: bool) -> dict:
+            """
+            Wrapper function to decrypt and deserialize the input of one or
+            more runs
+
+            Parameters
+            ----------
+            run_data : dict
+                The data of the run(s) to decrypt
+            is_single_run : bool
+                Whether the run_data is a single run or a list of runs
+
+            Returns
+            -------
+            dict
+                Data on the algorithm run(s) with decrypted input
+            """
+            return self.parent._decrypt_field(
+                data=run_data, field='input', is_single_resource=is_single_run
+            )
+
+    class Result(ClientBase.SubClient):
+        """
+        Client to get the results of one or multiple algorithm runs
+        """
+        @post_filtering(iterable=False)
+        def get(self, id_: int) -> dict:
+            """View a specific result
+
+            Parameters
+            ----------
+            id_ : int
+                id of the run you want to inspect
+
+            Returns
+            -------
+            dict
+                Containing the run data
+            """
+            self.parent.log.info('--> Attempting to decrypt results!')
+
+            result = self.parent.request(endpoint=f'result/{id_}')
+            result = self._decrypt_result(
+                result_data=result, is_single_result=True
+            )
+
+            return result['result']
+
+        def from_task(self, task_id: int):
+            """
+            Get all results from a specific task
+
+            Parameters
+            ----------
+            task_id : int
+                Id of the task to get results from
+
+            Returns
+            -------
+            list[dict]
+                Containing the results
+            """
+            self.parent.log.info('--> Attempting to decrypt results!')
+
+            results = self.parent.request(
+                'result', params={'task_id': task_id}
+            )
+            results = self._decrypt_result(results, False)
+            return results
+
+        def _decrypt_result(self, result_data: dict,
+                            is_single_result: bool) -> dict:
+            """
+            Wrapper function to decrypt and deserialize the input of one or
+            more runs
+
+            Parameters
+            ----------
+            result_data : dict
+                The data of the run(s) to decrypt
+            is_single_result : bool
+                Whether the result_data is a single result or a list of results
+
+            Returns
+            -------
+            dict
+                Data on the algorithm run(s) with decrypted input
+            """
+            return self.parent._decrypt_field(
+                data=result_data, field='result',
+                is_single_resource=is_single_result
+            )
 
     class Rule(ClientBase.SubClient):
 
@@ -2125,7 +1547,7 @@ class UserClient(ClientBase):
         @post_filtering()
         def list(self, name: str = None, operation: str = None,
                  scope: str = None, role: int = None, page: int = 1,
-                 per_page: int = 20, include_metadata: bool = True) -> list:
+                 per_page: int = 20) -> list:
             """List of all available rules
 
             Parameters
@@ -2142,235 +1564,18 @@ class UserClient(ClientBase):
                 Pagination page, by default 1
             per_page: int, optional
                 Number of items on a single page, by default 20
-            include_metadata: bool, optional
-                Whenever to include the pagination metadata. If this is
-                set to False the output is no longer wrapped in a
-                dictonairy, by default True
 
             Returns
             -------
             list of dicts
                 Containing all the rules from the vantage6 server
             """
-            includes = ['metadata'] if include_metadata else []
             params = {
-                'page': page, 'per_page': per_page, 'include': includes,
-                'name': name, 'operation': operation, 'scope': scope,
-                'role_id': role
+                'page': page, 'per_page': per_page, 'name': name,
+                'operation': operation, 'scope': scope, 'role_id': role
             }
             return self.parent.request('rule', params=params)
 
 
-# TODO remove in v4+ (deprecated for AlgorithmClient but still kept for
-# backwards compatibility)
-class ContainerClient(ClientBase):
-    """ Container interface to the local proxy server (central server).
-
-        An algorithm container should never communicate directly to the
-        central server. Therefore the algorithm container has no
-        internet connection. The algorithm can, however, talk to a local
-        proxy server which has interface to the central server. This way
-        we make sure that the algorithm container does not share stuff
-        with others, and we also can encrypt the results for a specific
-        receiver. Thus this not a interface to the central server but to
-        the local proxy server. However the interface is identical thus
-        we are happy that we can ignore this detail.
-    """
-
-    def __init__(self, token: str, *args, **kwargs):
-        """Container client.
-        A client which can be used by algorithms. All permissions of the
-        container are derived from the token.
-
-        Parameters
-        ----------
-        token : str
-            JWT (container) token, generated by the node
-                the algorithm container runs on
-        """
-        super().__init__(*args, **kwargs)
-
-        # obtain the identity from the token
-        jwt_payload = jwt.decode(
-            token, options={"verify_signature": False})
-
-        # FIXME: 'identity' is no longer needed in version 4+. So this if
-        # statement can be removed
-        if 'sub' in jwt_payload:
-            container_identity = jwt_payload['sub']
-        elif 'identity' in jwt_payload:
-            container_identity = jwt_payload['identity']
-
-        self.image = container_identity.get("image")
-        self.database = container_identity.get('database')
-        self.host_node_id = container_identity.get("node_id")
-        self.collaboration_id = container_identity.get("collaboration_id")
-        self.log.info(
-            f"Container in collaboration_id={self.collaboration_id} \n"
-            f"Key created by node_id {self.host_node_id} \n"
-            f"Can only use image={self.image}"
-        )
-
-        self._access_token = token
-        self.log.debug(f"Access token={self._access_token}")
-
-    def authenticate(self):
-        """ Containers obtain their key via their host Node."""
-        self.log.warn("Containers do not authenticate?!")
-        return
-
-    def refresh_token(self):
-        """ Containers cannot refresh their token.
-
-            TODO we might want to notify node/server about this...
-            TODO make a more usefull exception
-        """
-        raise Exception("Containers cannot refresh!")
-
-    def get_results(self, task_id: int):
-        """ Obtain results from a specific task at the server
-
-            Containers are allowed to obtain the results of their
-            children (having the same run_id at the server). The
-            permissions are checked at te central server.
-
-            :param task_id: id of the task from which you want to obtain
-                the results
-        """
-        results = self.request(
-            f"task/{task_id}/result"
-        )
-
-        res = []
-        # Encryption is not done at the client level for the container.
-        # Although I am not completely sure that the format is always
-        # a pickle.
-        # for result in results:
-        #     self._decrypt_result(result)
-        #     res.append(result.get("result"))
-        #
-        try:
-            res = [pickle.loads(base64s_to_bytes(result.get("result")))
-                   for result in results if result.get("result")]
-        except Exception as e:
-            self.log.error('Unable to unpickle result')
-            self.log.debug(e)
-
-        return res
-
-    def get_algorithm_addresses(self, task_id: int):
-        """
-        Return IP address and port number of other algorithm containers
-        involved in a task so that VPN can be used for communication
-        """
-        results = self.request(f"task/{task_id}/result")
-
-        algorithm_addresses = []
-        for result in results:
-            for port in result['ports']:
-                algorithm_addresses.append({
-                    'ip': result['node']['ip'],
-                    'port': port['port'],
-                    'label': port['label']
-                })
-        return algorithm_addresses
-
-    def get_algorithm_address_by_label(self, task_id: int, label: str) -> str:
-        """
-        Return the IP address plus port number of a given port label
-        """
-        algorithm_addresses = self.get_algorithm_addresses(task_id=task_id)
-        for address in algorithm_addresses:
-            if address['label'] == label:
-                return f"{address['ip']}:{address['port']}"
-        return None
-
-    def get_task(self, task_id: int):
-        return self.request(
-            f"task/{task_id}"
-        )
-
-    def create_new_task(self, input_, organization_ids=[]):
-        """ Create a new (child) task at the central server.
-
-            Containers are allowed to create child tasks (having the
-            same run_id) at the central server. The docker image must
-            be the same as the docker image of this container self.
-
-            :param input_: input to the task
-            :param organization_ids: organization ids which need to
-                execute this task
-        """
-        self.log.debug(f"create new task for {organization_ids}")
-
-        return self.post_task(
-            name="subtask",
-            description=f"task from container on node_id={self.host_node_id}",
-            collaboration_id=self.collaboration_id,
-            organization_ids=organization_ids,
-            input_=input_,
-            image=self.image,
-            database=self.database
-        )
-
-    def get_organizations_in_my_collaboration(self):
-        """ Obtain all organization in the collaboration.
-
-            The container runs in a Node which is part of a single
-            collaboration. This method retrieves all organization data
-            that are within that collaboration. This can be used to
-            target specific organizations in a collaboration.
-        """
-        organizations = self.request(
-            f"collaboration/{self.collaboration_id}/organization")
-        return organizations
-
-    def post_task(self, name: str, image: str, collaboration_id: int,
-                  input_: str = '', description='',
-                  organization_ids: list = [], database='default') -> dict:
-        """ Post a new task at the central server.
-
-            ! To create a new task from the algorithm container you
-            should use the `create_new_task` function !
-
-            Creating a task from a container does need to be encrypted.
-            This is done because the container should never have access
-            to the private key of this organization. The encryption
-            takes place in the local proxy server to which the algorithm
-            communicates (indirectly to the central server). Therefore
-            we needed to overload the post_task function.
-
-            :param name: human-readable name
-            :param image: docker image name of the task
-            :param collaboration_id: id of the collaboration in which
-                the task should run
-            :param input_: input to the task
-            :param description: human-readable description
-            :param organization_ids: ids of the organizations where this
-                task should run
-        """
-        self.log.debug("post task without encryption (is handled by proxy)")
-
-        serialized_input = bytes_to_base64s(pickle.dumps(input_))
-
-        organization_json_list = []
-        for org_id in organization_ids:
-            organization_json_list.append(
-                {
-                    "id": org_id,
-                    "input": serialized_input
-                }
-            )
-
-        return self.request('task', method='post', json={
-            "name": name,
-            "image": image,
-            "collaboration_id": collaboration_id,
-            "description": description,
-            "organizations": organization_json_list,
-            "database": database
-        })
-
-
-# For backwards compatibility
+# Alias the UserClient to Client for easy usage for Python users
 Client = UserClient

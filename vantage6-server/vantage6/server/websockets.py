@@ -129,18 +129,18 @@ class DefaultSocketNamespace(Namespace):
         """
         # check for which collab rooms the user has permission to enter
         session.user = db.User.get(session.auth_id)
-        if session.user.can('event', Scope.GLOBAL, Operation.VIEW):
+        if session.user.can('event', Scope.GLOBAL, Operation.RECEIVE):
             # user joins all collaboration rooms
             collabs = db.Collaboration.get()
             for collab in collabs:
                 session.rooms.append(f'collaboration_{collab.id}')
         elif session.user.can(
-                'event', Scope.COLLABORATION, Operation.VIEW):
+                'event', Scope.COLLABORATION, Operation.RECEIVE):
             # user joins all collaboration rooms that their organization
             # participates in
             for collab in user.organization.collaborations:
                 session.rooms.append(f'collaboration_{collab.id}')
-        elif session.user.can('event', Scope.ORGANIZATION, Operation.VIEW):
+        elif session.user.can('event', Scope.ORGANIZATION, Operation.RECEIVE):
             # user joins collaboration subrooms that include only messages
             # relevant to their own node
             for collab in user.organization.collaborations:
@@ -157,6 +157,10 @@ class DefaultSocketNamespace(Namespace):
         be alerted to that. Also, any information on the node (e.g.
         configuration) is removed from the database.
         """
+        if not self.__is_identified_client():
+            self.log.debug('Client disconnected before identification')
+            return
+
         for room in session.rooms:
             # self.__leave_room_and_notify(room)
             self.__leave_room_and_notify(room)
@@ -216,16 +220,18 @@ class DefaultSocketNamespace(Namespace):
             Dictionary containing parameters on the updated algorithm status.
             It should look as follows:
 
-            {
-                # node_id where algorithm container was running
-                "node_id": 1,
-                # new status of algorithm container
-                "status": "active",
-                # result_id for which the algorithm was running
-                "result_id": 1,
-                # collaboration_id for which the algorithm was running
-                "collaboration_id": 1
-            }
+            .. code:: python
+
+                {
+                    # node_id where algorithm container was running
+                    "node_id": 1,
+                    # new status of algorithm container
+                    "status": "active",
+                    # result_id for which the algorithm was running
+                    "result_id": 1,
+                    # collaboration_id for which the algorithm was running
+                    "collaboration_id": 1
+                }
         """
         # only allow nodes to send this event
         if session.type != 'node':
@@ -233,7 +239,7 @@ class DefaultSocketNamespace(Namespace):
                           f'{session.type} {session.auth_id} is not allowed.')
             return
 
-        result_id = data.get('result_id')
+        run_id = data.get('run_id')
         task_id = data.get('task_id')
         collaboration_id = data.get('collaboration_id')
         status = data.get('status')
@@ -241,10 +247,10 @@ class DefaultSocketNamespace(Namespace):
         organization_id = data.get('organization_id')
         parent_id = data.get('parent_id')
 
-        run_id = db.Result.get(result_id).task.run_id
+        job_id = db.Run.get(run_id).task.job_id
 
         # log event in server logs
-        msg = (f"A container for run_id={run_id} and result_id={result_id} "
+        msg = (f"A container for job_id={job_id} and run_id={run_id} "
                f"in collaboration_id={collaboration_id} on node_id={node_id}")
         if has_task_failed(status):
             self.log.critical(f"{msg} exited with status={status}.")
@@ -255,9 +261,9 @@ class DefaultSocketNamespace(Namespace):
         emit(
             "algorithm_status_change", {
                 "status": status,
-                "result_id": result_id,
-                "task_id": task_id,
                 "run_id": run_id,
+                "task_id": task_id,
+                "job_id": job_id,
                 "collaboration_id": collaboration_id,
                 "node_id": node_id,
                 "organization_id": organization_id,
@@ -294,13 +300,19 @@ class DefaultSocketNamespace(Namespace):
         to_store = []
         for k, v in node_config.items():
             # add single item or list of items
-            if not isinstance(v, list):
-                to_store.append(db.NodeConfig(node_id=node.id, key=k, value=v))
-            else:
+            if isinstance(v, list):
                 to_store.extend([
                     db.NodeConfig(node_id=node.id, key=k, value=i)
                     for i in v
                 ])
+            elif isinstance(v, dict):
+                to_store.extend([
+                    db.NodeConfig(node_id=node.id, key=inner_key,
+                                  value=inner_val)
+                    for inner_key, inner_val in v.items()
+                ])
+            else:
+                to_store.append(db.NodeConfig(node_id=node.id, key=k, value=v))
 
         node.config = to_store
         node.save()
@@ -381,6 +393,18 @@ class DefaultSocketNamespace(Namespace):
                 namespace='/tasks',
                 room=room
             )
+
+    @staticmethod
+    def __is_identified_client() -> bool:
+        """
+        Check if client has been identified as an authenticated user or node
+
+        Returns
+        -------
+        bool
+            True if client has been identified, False otherwise
+        """
+        return hasattr(session, 'auth_id')
 
     @staticmethod
     def __clean_node_data(node: db.Node) -> None:
