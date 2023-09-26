@@ -1107,16 +1107,22 @@ def to_timedelta(
     return new_df
 
 
+import pandas as pd
+from typing import Optional
+
+
 def timedelta(
     df: pd.DataFrame,
     column: str,
-    output_column: str,
-    reference_date: Optional[pd.Timestamp] = None,
+    output_column: str = "timedelta",
+    to_date: Optional[pd.Timestamp] = None,
+    to_date_column: Optional[str] = None,
+    fmt: Optional[str] = None,
 ) -> pd.DataFrame:
     """
     Convert a datetime column to a timedelta column in days in a new DataFrame,
     where the result is the number of days since the date in the column to the
-    reference date, which defaults to today.
+    reference date or reference column, which defaults to today.
 
     Parameters
     ----------
@@ -1126,8 +1132,10 @@ def timedelta(
         The name of the datetime column to convert to a timedelta.
     output_column : str
         Output column name.
-    reference_date : pd.Timestamp, optional
+    to_date : pd.Timestamp, optional
         The date to which the timedelta is calculated. Defaults to today.
+    to_date_column : str, optional
+        A column containing dates to which the timedelta is calculated for each row.
 
     Returns
     -------
@@ -1138,12 +1146,12 @@ def timedelta(
     --------
     >>> import pandas as pd
     >>> df = pd.DataFrame({"date": [pd.Timestamp("2021-01-01"),
-    ... pd.Timestamp("2021-02-01")]})
-    >>> timedelta(df, "date", "days_to_jan15",
-    ... reference_date=pd.Timestamp("2021-01-15"))
-            date  days_to_jan15
-    0 2021-01-01             14
-    1 2021-02-01            -17
+    ... pd.Timestamp("2021-02-01")], "ref": [pd.Timestamp("2021-01-15"),
+    ... pd.Timestamp("2021-02-15")]})
+    >>> timedelta(df, "date", "days_to_ref", to_date_column="ref")
+            date        ref  days_to_ref
+    0 2021-01-01 2021-01-15           14
+    1 2021-02-01 2021-02-15           14
 
     >>> today = pd.to_datetime("today")
     >>> df = pd.DataFrame({"birthdate": [today - pd.Timedelta(days=300),
@@ -1156,24 +1164,30 @@ def timedelta(
     1          250
 
     """
+    dates = pd.to_datetime(df[column], format=fmt)
 
-    if reference_date is None:
-        reference_date = pd.to_datetime("today")
+    if to_date_column:
+        duration_col = (
+            pd.to_datetime(df[to_date_column], format=fmt) - dates
+        ).dt.days
+    elif to_date:
+        to_date = pd.Timestamp(to_date)
+        duration_col = (to_date - dates).dt.days
     else:
-        reference_date = pd.Timestamp(reference_date)
+        to_date = pd.to_datetime("today")
+        duration_col = (to_date - dates).dt.days
 
-    new_df = df.copy()
-    duration_col = (reference_date - pd.to_datetime(new_df[column])).dt.days
+    df[output_column] = duration_col
 
-    new_df[output_column] = duration_col
-
-    return new_df
+    return df
 
 
 def calculate_age(
     df: pd.DataFrame,
-    birthdate_column: str,
-    output_column: str,
+    column: str,
+    output_column: str = "age",
+    fmt: Optional[str] = None,
+    keep_original: bool = True,
     reference_date: Optional[date] = None,
 ) -> pd.DataFrame:
     """
@@ -1184,7 +1198,7 @@ def calculate_age(
     ----------
     df : pd.DataFrame
         Input DataFrame.
-    birthdate_column : str
+    column : str
         The name of the column containing birthdate information.
     output_column : str
         The name of the column to store the age.
@@ -1208,9 +1222,6 @@ def calculate_age(
     0  2000-01-01   25
     1  1980-05-15   44
     """
-
-    new_df = df.copy()
-
     if reference_date is None:
         reference_date = date.today()
 
@@ -1224,19 +1235,24 @@ def calculate_age(
             )
         )
 
-    new_df[output_column] = new_df[birthdate_column].apply(compute_age)
+    birthdates = pd.to_datetime(df[column], format=fmt)
+    df[output_column] = birthdates.apply(compute_age)
 
-    return new_df
+    if not keep_original:
+        df.drop(columns=[column], inplace=True)
+
+    return df
 
 
 def collapse(
     df: pd.DataFrame,
-    groupby_columns: List[str],
+    group_columns: Union[str, List[str]],
     aggregation: Union[
         str,
         callable,
         Dict[str, Union[str, callable, List[Union[str, callable]]]],
     ],
+    default_aggregation: Optional[Union[str, callable]] = None,
     strict_mode: bool = True,
 ) -> pd.DataFrame:
     """
@@ -1247,7 +1263,7 @@ def collapse(
     ----------
     df : pd.DataFrame
         The input DataFrame.
-    groupby_columns : List[str]
+    group_columns : List[str]
         Columns by which the DataFrame will be grouped.
     aggregation : Union[str, callable, Dict[str, Union[str, callable, List[Union[str, callable]]]]]
         The aggregation strategy to apply. Can be a string to apply to all columns,
@@ -1283,9 +1299,9 @@ def collapse(
             * to concatenate strings: lambda x: ''.join(x)
 
     strict_mode : bool, optional
-        If True, all columsn not in groupby must have an aggregation definition.
+        If True, all columns not in groupby must have an aggregation definition.
         It then raises an error if any column in the DataFrame is not in the
-        groupby_columns or aggregation definition. Defaults to True.
+        group_columns or aggregation definition. Defaults to True.
 
     Returns
     -------
@@ -1311,9 +1327,17 @@ def collapse(
     1           2         [A, A]         40            2
 
     """
-    if strict_mode and isinstance(aggregation, dict):
+    assert default_aggregation is None or isinstance(
+        aggregation, dict
+    ), "If default_aggregation is not None, aggregation must be a dictionary."
+
+    if (
+        strict_mode
+        and isinstance(aggregation, dict)
+        and default_aggregation is None
+    ):
         all_columns = set(df.columns)
-        groupby_set = set(groupby_columns)
+        groupby_set = set(group_columns)
         aggregation_set = set(aggregation.keys())
 
         # Check for columns that are neither in groupby nor in aggregation
@@ -1324,8 +1348,16 @@ def collapse(
                 f"from the aggregation definition: {undefined_columns}"
             )
 
+    # Set default aggregation if not specified
+    if isinstance(aggregation, dict) and default_aggregation is not None:
+        aggregation = {
+            col: aggregation.get(col, default_aggregation)
+            for col in df.columns
+            if col not in group_columns
+        }
+
     # Perform the aggregation
-    agg_df = df.groupby(groupby_columns).agg(aggregation)
+    agg_df = df.groupby(group_columns).agg(aggregation)
 
     # Flatten multi-level column index if present
     if isinstance(agg_df.columns, pd.MultiIndex):
@@ -1338,9 +1370,10 @@ def collapse(
 
 def group_statistics(
     df: pd.DataFrame,
-    group_column: str,
+    group_columns: str,
     target_columns: List[str],
     aggregation: Union[str, callable],
+    prefix: str = None,
 ) -> pd.DataFrame:
     """
     Adds statistical information to a DataFrame based on a grouping column.
@@ -1349,10 +1382,10 @@ def group_statistics(
     ----------
     df : pd.DataFrame
         The input DataFrame.
-    group_column : str
-        The column by which the DataFrame will be grouped.
-    target_columns : List[str]
-        The columns on which the aggregation will be performed.
+    group_columns : str, List[str]
+        The column(s) by which the DataFrame will be grouped.
+    target_columns : str, List[str]
+        The column(s) on which the aggregation will be performed.
     aggregation : Union[str, Callable]
         The aggregation strategy to apply.
 
@@ -1399,10 +1432,14 @@ def group_statistics(
     """
 
     # Compute the statistics and reset index
-    stats = df.groupby(group_column)[target_columns].transform(aggregation)
-    stats.columns = [
-        f"{group_column}_{col}_{aggregation}" for col in stats.columns
-    ]
+    stats = pd.DataFrame(
+        df.groupby(group_columns)[target_columns].transform(aggregation)
+    )
+
+    prefix = group_columns if prefix is None else prefix
+    if prefix:
+        prefix = f"{prefix}_" if not prefix.endswith("_") else prefix
+    stats.columns = [f"{prefix}{col}_{aggregation}" for col in stats.columns]
 
     # Add the statistics back to the original DataFrame
     return pd.concat([df, stats], axis=1)
@@ -1479,7 +1516,7 @@ def impute(
 
 def filter_by_date(
     df: pd.DataFrame,
-    datetime_column: str,
+    column: str,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     keep_between: bool = True,
@@ -1492,7 +1529,7 @@ def filter_by_date(
     ----------
     df : pd.DataFrame
         The input DataFrame.
-    datetime_column : str
+    column : str
         The column containing datetime information.
     start_date : Optional[str]
         The start date for filtering. Format should follow `fmt`.
@@ -1516,22 +1553,22 @@ def filter_by_date(
     ...     'value': [1, 2, 3, 4]
     ... })
     >>> filter_by_date(df, 'date', start_date='2021-01-02', end_date='2021-01-03')
-            date  value
-    1 2021-01-02      2
-    2 2021-01-03      3
+             date  value
+    1  2021-01-02      2
+    2  2021-01-03      3
     >>> filter_by_date(df, 'date', start_date='2021-01-02', end_date='2021-01-03',
     ... keep_between=False)
-            date  value
-    0 2021-01-01      1
-    3 2021-01-04      4
+             date  value
+    0  2021-01-01      1
+    3  2021-01-04      4
     """
     if start_date is None and end_date is None:
         raise ValueError(
             "At least one of start_date or end_date must be provided."
         )
 
-    # Convert the datetime_column to datetime type
-    df[datetime_column] = pd.to_datetime(df[datetime_column], format=fmt)
+    # Convert the column to datetime type
+    datetimes = pd.to_datetime(df[column], format=fmt)
 
     if start_date:
         start_date = pd.Timestamp(start_date)
@@ -1541,22 +1578,18 @@ def filter_by_date(
 
     if keep_between:
         if start_date and end_date:
-            mask = (df[datetime_column] >= start_date) & (
-                df[datetime_column] <= end_date
-            )
+            mask = (datetimes >= start_date) & (datetimes <= end_date)
         elif start_date:
-            mask = df[datetime_column] >= start_date
+            mask = datetimes >= start_date
         else:
-            mask = df[datetime_column] <= end_date
+            mask = datetimes <= end_date
     else:
         if start_date and end_date:
-            mask = (df[datetime_column] < start_date) | (
-                df[datetime_column] > end_date
-            )
+            mask = (datetimes < start_date) | (datetimes > end_date)
         elif start_date:
-            mask = df[datetime_column] < start_date
+            mask = datetimes < start_date
         else:
-            mask = df[datetime_column] > end_date
+            mask = datetimes > end_date
 
     return df[mask]
 
