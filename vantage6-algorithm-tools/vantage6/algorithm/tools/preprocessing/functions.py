@@ -1559,3 +1559,58 @@ def filter_by_date(
             mask = df[datetime_column] > end_date
 
     return df[mask]
+
+
+def extract_from_string(
+    df: pd.DataFrame,
+    column: str,
+    pattern: str,
+    not_found: Optional[str] = None,
+    keep_original: bool = True,
+    new_column_name: str = "extracted",
+) -> pd.DataFrame:
+    """
+    Extracts specific patterns from a string column in a DataFrame.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The input DataFrame.
+    column : str
+        The name of the column containing the string to be processed.
+    pattern : str
+        The regex pattern to extract.
+    not_found : Optional[str], default=None
+        The value to insert if the pattern is not found.
+    keep_original : bool, default=True
+        If True, retains the original column. If False, removes the original column.
+    new_column_name : str, default='extracted'
+        The name for the new column containing extracted data.
+
+    Returns
+    -------
+    pd.DataFrame
+        The DataFrame with extracted information.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({
+    ...     'text': ['apple_123', 'banana_456', 'cherry']
+    ... })
+    >>> extract_from_string(df, 'text', r'_(\d+)', not_found=0,
+    ... new_column_name='numbers')
+             text numbers
+    0   apple_123     123
+    1  banana_456     456
+    2      cherry       0
+    """
+    extracted_data = (
+        df[column].str.extract(pattern, expand=False).fillna(not_found)
+    )
+    df[new_column_name] = extracted_data
+
+    if not keep_original:
+        df.drop(columns=[column], inplace=True)
+
+    return df
