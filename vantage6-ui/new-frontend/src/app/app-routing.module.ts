@@ -18,6 +18,7 @@ import { UserReadComponent } from './pages/user/read/user-read.component';
 import { OrganizationCreateComponent } from './pages/organization/create/organization-create.component';
 import { CollaborationCreateComponent } from './pages/collaboration/create/collaboration-create.component';
 import { UserCreateComponent } from './pages/user/create/user-create.component';
+import { OrganizationListComponent } from './pages/organization/list/organization-list.component';
 
 const routes: Routes = [
   {
@@ -71,13 +72,18 @@ const routes: Routes = [
         canActivate: [authenticationGuard()]
       },
       {
-        path: routerConfig.organization,
-        component: OrganizationReadComponent,
+        path: routerConfig.organizations,
+        component: OrganizationListComponent,
         canActivate: [authenticationGuard()]
       },
       {
         path: routerConfig.organizationCreate,
         component: OrganizationCreateComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
+        path: routerConfig.organization,
+        component: OrganizationReadComponent,
         canActivate: [authenticationGuard()]
       },
       {

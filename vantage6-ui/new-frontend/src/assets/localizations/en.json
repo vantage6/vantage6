@@ -85,6 +85,9 @@
     "country": "Country",
     "domain": "Domain"
   },
+  "organization-list": {
+    "title": "Organizations"
+  },
   "organization-read": {
     "title": "Organizations",
     "actions": {

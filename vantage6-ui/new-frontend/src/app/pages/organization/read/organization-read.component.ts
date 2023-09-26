@@ -1,16 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { MatSelectChange } from '@angular/material/select';
+import { Component, Input, OnInit } from '@angular/core';
 import { NodeStatus } from 'src/app/models/api/node.model';
-import {
-  BaseOrganization,
-  Organization,
-  OrganizationLazyProperties,
-  OrganizationSortProperties
-} from 'src/app/models/api/organization.model';
-import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
+import { Organization, OrganizationLazyProperties } from 'src/app/models/api/organization.model';
 import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
-import { AuthService } from 'src/app/services/auth.service';
 import { OrganizationService } from 'src/app/services/organization.service';
 
 @Component({
@@ -23,39 +15,16 @@ export class OrganizationReadComponent implements OnInit {
   routes = routePaths;
   nodeStatus = NodeStatus;
 
-  isLoading = false;
-  organizations: BaseOrganization[] = [];
-  selectedOrganization?: Organization;
-  collaborationTable?: TableData;
-  canAdministerMultiple: boolean = false;
-  canCreate: boolean = false;
+  @Input() id = '';
 
-  constructor(
-    private organizationService: OrganizationService,
-    private authService: AuthService
-  ) {}
+  isLoading = true;
+  organization?: Organization;
+  collaborationTable?: TableData;
+
+  constructor(private organizationService: OrganizationService) {}
 
   async ngOnInit(): Promise<void> {
-    this.canAdministerMultiple = this.authService.hasResourceInScope(ScopeType.GLOBAL, ResourceType.ORGANIZATION);
-    this.canCreate = this.authService.isOperationAllowed(ScopeType.GLOBAL, ResourceType.ORGANIZATION, OperationType.CREATE);
     this.initData();
-  }
-
-  async handleOrganizationSelect(e: MatSelectChange): Promise<void> {
-    this.handleOrganizationChange(e.value);
-  }
-
-  async handleOrganizationChange(id: string): Promise<void> {
-    this.isLoading = true;
-    this.selectedOrganization = await this.organizationService.getOrganization(id, [
-      OrganizationLazyProperties.Collaborations,
-      OrganizationLazyProperties.Nodes
-    ]);
-    this.collaborationTable = {
-      columns: [{ id: 'name', label: 'Name' }],
-      rows: this.selectedOrganization.collaborations.map((_) => ({ id: _.id.toString(), columnData: { name: _.name } }))
-    };
-    this.isLoading = false;
   }
 
   handleCollaborationClick(id: string): void {
@@ -69,11 +38,14 @@ export class OrganizationReadComponent implements OnInit {
   }
 
   private async initData() {
-    if (this.canAdministerMultiple) {
-      this.organizations = await this.organizationService.getOrganizations(OrganizationSortProperties.Name);
-    } else {
-      const user = await this.authService.getUser();
-      this.handleOrganizationChange(user.organization.id.toString());
-    }
+    this.organization = await this.organizationService.getOrganization(this.id, [
+      OrganizationLazyProperties.Collaborations,
+      OrganizationLazyProperties.Nodes
+    ]);
+    this.collaborationTable = {
+      columns: [{ id: 'name', label: 'Name' }],
+      rows: this.organization.collaborations.map((_) => ({ id: _.id.toString(), columnData: { name: _.name } }))
+    };
+    this.isLoading = false;
   }
 }

@@ -51,6 +51,7 @@ import { UserReadComponent } from './pages/user/read/user-read.component';
 import { OrganizationCreateComponent } from './pages/organization/create/organization-create.component';
 import { CollaborationCreateComponent } from './pages/collaboration/create/collaboration-create.component';
 import { UserCreateComponent } from './pages/user/create/user-create.component';
+import { OrganizationListComponent } from './pages/organization/list/organization-list.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -63,6 +64,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     LoginComponent,
     HomeComponent,
     LayoutDefaultComponent,
+    OrganizationListComponent,
+    OrganizationCreateComponent,
     OrganizationReadComponent,
     TaskCreateComponent,
     StartComponent,
@@ -81,7 +84,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     CollaborationListComponent,
     UserListComponent,
     UserReadComponent,
-    OrganizationCreateComponent,
     CollaborationCreateComponent,
     UserCreateComponent
   ],

@@ -1,17 +1,9 @@
 <app-page-header title="{{ 'organization-read.title' | translate }}">
-  <button *ngIf="canCreate" actions mat-flat-button color="primary" [routerLink]="routes.organizationCreate">
-    <mat-icon>add</mat-icon>{{ "organization-read.actions.create" | translate }}
+  <button actions mat-flat-button color="primary" [routerLink]="routes.collaborations">
+    <mat-icon>arrow_back</mat-icon>{{ "organization-list.title" | translate }}
   </button>
-  <mat-form-field content *ngIf="canAdministerMultiple" subscriptSizing="dynamic">
-    <mat-label>{{ "organization-read.actions.select" | translate }}</mat-label>
-    <mat-select (selectionChange)="handleOrganizationSelect($event)">
-      <mat-option *ngFor="let organization of organizations" [value]="organization.id">
-        {{ organization.name }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
 </app-page-header>
-<ng-container *ngIf="!isLoading && selectedOrganization">
+<ng-container *ngIf="!isLoading && organization">
   <mat-card>
     <mat-card-header>
       <mat-card-title>{{ "organization-read.card-details.title" | translate }}</mat-card-title>
@@ -20,23 +12,23 @@
       <div class="data-list">
         <div class="data-list__item">
           <b>{{ "organization.name" | translate }}</b>
-          <span>{{ selectedOrganization.name || "-" }}</span>
+          <span>{{ organization.name || "-" }}</span>
         </div>
         <div class="data-list__item">
           <b>{{ "organization.address1" | translate }}</b>
-          <span>{{ selectedOrganization.address1 || "-" }}</span>
+          <span>{{ organization.address1 || "-" }}</span>
         </div>
         <div class="data-list__item">
           <b>{{ "organization.address2" | translate }}</b>
-          <span>{{ selectedOrganization.address2 || "-" }}</span>
+          <span>{{ organization.address2 || "-" }}</span>
         </div>
         <div class="data-list__item">
           <b>{{ "organization.country" | translate }}</b>
-          <span>{{ selectedOrganization.country || "-" }}</span>
+          <span>{{ organization.country || "-" }}</span>
         </div>
         <div class="data-list__item">
           <b>{{ "organization.domain" | translate }}</b>
-          <span>{{ selectedOrganization.domain || "-" }}</span>
+          <span>{{ organization.domain || "-" }}</span>
         </div>
       </div>
     </mat-card-content>
@@ -56,7 +48,7 @@
     <mat-card-content>
       <div class="chip-container">
         <app-chip
-          *ngFor="let node of selectedOrganization.nodes"
+          *ngFor="let node of organization.nodes"
           label="{{ node.status === nodeStatus.Online ? node.name : node.name + ' (' + ('general.offline' | translate) + ')' }}"
           [type]="node.status === nodeStatus.Online ? 'success' : 'error'"
           [clickable]="true"

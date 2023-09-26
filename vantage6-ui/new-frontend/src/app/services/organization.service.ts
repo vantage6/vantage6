@@ -21,6 +21,11 @@ export class OrganizationService {
     return result.data;
   }
 
+  async getPaginatedOrganizations(currentPage: number): Promise<Pagination<BaseOrganization>> {
+    const result = await this.apiService.getForApiWithPagination<BaseOrganization>(`/organization`, currentPage);
+    return result;
+  }
+
   async getOrganization(id: string, lazyProperties: OrganizationLazyProperties[] = []): Promise<Organization> {
     const result = await this.apiService.getForApi<BaseOrganization>(`/organization/${id}`);
 
