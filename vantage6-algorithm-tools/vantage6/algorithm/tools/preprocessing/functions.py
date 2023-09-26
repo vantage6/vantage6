@@ -832,7 +832,7 @@ def discretize_column(
     labels: List[str] = None,
     right: bool = True,
     include_lowest: bool = False,
-    output_column_name: str = None,
+    output_column: str = None,
 ) -> pd.DataFrame:
     """
     Discretize a column in a new DataFrame based on the given bin edges or
@@ -854,7 +854,7 @@ def discretize_column(
     include_lowest : bool, optional
         Whether the first interval should include the lowest value or not
         (default is False).
-    output_column_name : str, optional
+    output_column : str, optional
         The name of the output column that contains the discretized data.
         If not specified, the original column will be replaced.
 
@@ -875,7 +875,7 @@ def discretize_column(
     3  (50, 60]
 
     >>> discretize_column(df, "Age", [20, 30, 40, 50, 60], labels=["Young",
-    ... "Middle", "Senior", "Old"], output_column_name="AgeCategory")
+    ... "Middle", "Senior", "Old"], output_column="AgeCategory")
        Age AgeCategory
     0   25       Young
     1   35      Middle
@@ -892,10 +892,10 @@ def discretize_column(
         include_lowest=include_lowest,
     )
 
-    if output_column_name is None:
-        output_column_name = column_name
+    if output_column is None:
+        output_column = column_name
 
-    new_df[output_column_name] = new_column
+    new_df[output_column] = new_column
     return new_df
 
 
@@ -1447,25 +1447,26 @@ def group_statistics(
 
 def impute(
     df: pd.DataFrame,
+    columns: Optional[List[str]] = None,
     missing_values: Union[str, int, float] = np.nan,
     strategy: str = "mean",
+    group_columns: Optional[List[str]] = None,
     fill_value: Optional[Union[str, int, float]] = None,
-    columns: Optional[List[str]] = None,
 ) -> pd.DataFrame:
     """
-    Impute missing values in a DataFrame. Note that this function will impute
-    only using local information, i.e. the imputed values will be calculated
-    based on the values in the dataset at the node. It will not calculate
-    global statistics and impute based on those.
+    Impute missing values in a DataFrame. If group_columns are provided, the imputation
+    is done within the groups defined by those columns.
 
     Parameters
     ----------
     df : pd.DataFrame
         The input DataFrame.
-    missing_values : Union[str, int, float], default='NaN'
+    missing_values : Union[str, int, float], default=np.nan
         The placeholder for the missing values.
     strategy : str, default='mean'
         The imputation strategy. Options include "mean", "median", "most_frequent", and "constant".
+    group_columns : List[str], default=None
+        List of columns to group by for imputation.
     fill_value : Union[str, int, float], default=None
         When strategy == "constant", fill_value is used to replace all missing values.
     columns : List[str], default=None
@@ -1492,24 +1493,47 @@ def impute(
     2  3.0  3.0  3.0
     3  4.0  2.0  3.0
     4  5.0  3.5  3.0
-    """
 
+    >>> df = pd.DataFrame({
+    ...     'Group': ['A', 'A', 'B', 'B', 'B'],
+    ...     'Value': [1, np.nan, 2, np.nan, 3],
+    ... })
+    >>> impute(df, strategy='mean', group_columns=['Group'], columns=['Value'])
+      Group  Value
+    0     A    1.0
+    1     A    1.0
+    2     B    2.0
+    3     B    2.5
+    4     B    3.0
+    """
+    columns = [columns] if isinstance(columns, str) else columns
     if columns is None:
         columns = df.columns
 
-    for col in columns:
-        if strategy == "mean":
-            imputed_value = df[col].mean()
-        elif strategy == "median":
-            imputed_value = df[col].median()
-        elif strategy == "most_frequent":
-            imputed_value = df[col].mode().iloc[0]
-        elif strategy == "constant":
-            imputed_value = fill_value
-        else:
-            raise ValueError(f"Invalid strategy: {strategy}")
+    def impute_group(group):
+        for col in columns:
+            if col not in group.columns:
+                continue
 
-        df[col].replace({missing_values: imputed_value}, inplace=True)
+            if strategy == "mean":
+                imputed_value = group[col].mean()
+            elif strategy == "median":
+                imputed_value = group[col].median()
+            elif strategy == "most_frequent":
+                imputed_value = group[col].mode().iloc[0]
+            elif strategy == "constant":
+                imputed_value = fill_value
+            else:
+                raise ValueError(f"Invalid strategy: {strategy}")
+
+            group[col].replace({missing_values: imputed_value}, inplace=True)
+        return group
+
+    # Apply the imputation
+    if group_columns:
+        df = df.groupby(group_columns, group_keys=False).apply(impute_group)
+    else:
+        df = impute_group(df)
 
     return df
 
@@ -1598,9 +1622,9 @@ def extract_from_string(
     df: pd.DataFrame,
     column: str,
     pattern: str,
-    not_found: Optional[str] = None,
+    not_found: Optional[str] = np.nan,
     keep_original: bool = True,
-    new_column_name: str = "extracted",
+    output_column: str = "extracted",
 ) -> pd.DataFrame:
     """
     Extracts specific patterns from a string column in a DataFrame.
@@ -1617,7 +1641,7 @@ def extract_from_string(
         The value to insert if the pattern is not found.
     keep_original : bool, default=True
         If True, retains the original column. If False, removes the original column.
-    new_column_name : str, default='extracted'
+    output_column : str, default='extracted'
         The name for the new column containing extracted data.
 
     Returns
@@ -1632,7 +1656,7 @@ def extract_from_string(
     ...     'text': ['apple_123', 'banana_456', 'cherry']
     ... })
     >>> extract_from_string(df, 'text', r'_(\d+)', not_found=0,
-    ... new_column_name='numbers')
+    ... output_column='numbers')
              text numbers
     0   apple_123     123
     1  banana_456     456
@@ -1641,7 +1665,7 @@ def extract_from_string(
     extracted_data = (
         df[column].str.extract(pattern, expand=False).fillna(not_found)
     )
-    df[new_column_name] = extracted_data
+    df[output_column] = extracted_data
 
     if not keep_original:
         df.drop(columns=[column], inplace=True)

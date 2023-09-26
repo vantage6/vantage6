@@ -256,6 +256,175 @@ class TestPreprocessing(unittest.TestCase):
         self.assertTrue(result["age"].min() > 50)
         self.assertTrue(result.shape[1] == 2)
 
+    def test_preprocessing_larger(self):
+        datasets = [generate_treatment_example_df(10, 3, 42, date_as_str=True)]
+        datasets = [
+            [
+                {
+                    "database": dataset,
+                    "type_": "csv",
+                    "preprocessing": [
+                        {  # birth date to age
+                            "function": "calculate_age",
+                            "parameters": {
+                                "column": "birthdate",
+                                "keep_original": False,
+                            },
+                        },
+                        {  # filter by start date after 2020-06-01
+                            "function": "filter_by_date",
+                            "parameters": {
+                                "column": "start_date",
+                                "start_date": "2020-06-01",
+                            },
+                        },
+                        {  # add min bloodpressure
+                            "function": "group_statistics",
+                            "parameters": {
+                                "group_columns": "patient_id",
+                                "target_columns": "blood_pressure",
+                                "aggregation": "min",
+                                "prefix": "",
+                            },
+                        },
+                        {  # add max bloodpressure
+                            "function": "group_statistics",
+                            "parameters": {
+                                "group_columns": "patient_id",
+                                "target_columns": "blood_pressure",
+                                "aggregation": "max",
+                                "prefix": "",
+                            },
+                        },
+                        {  # add number of diseases and meds
+                            "function": "group_statistics",
+                            "parameters": {
+                                "group_columns": "patient_id",
+                                "target_columns": [
+                                    "diagnosis_desc",
+                                    "medication",
+                                ],
+                                "aggregation": "count",
+                                "prefix": "",
+                            },
+                        },
+                        {  # add treatment duration
+                            "function": "timedelta",
+                            "parameters": {
+                                "column": "start_date",
+                                "to_date_column": "end_date",
+                                "output_column": "treatment_duration",
+                            },
+                        },
+                        {  # extract treatment code
+                            "function": "extract_from_string",
+                            "parameters": {
+                                "column": "treatment_name",
+                                "pattern": r"(\d+)",
+                                "output_column": "treatment_code",
+                                "keep_original": False,
+                            },
+                        },
+                        {  # collapse to patient
+                            "function": "collapse",
+                            "parameters": {
+                                "group_columns": "patient_id",
+                                "aggregation": {
+                                    "medication": list,
+                                    "diagnosis_desc": list,
+                                    "dosage": "mean",
+                                    "blood_pressure": "mean",
+                                    "heart_rate": "mean",
+                                    "weight": "mean",
+                                },
+                                "default_aggregation": "last",
+                            },
+                        },
+                        {  # impute weight by median patient weight
+                            "function": "impute",
+                            "parameters": {
+                                "strategy": "median",
+                                "columns": "weight",
+                            },
+                        },
+                        {  # impute weight by median patient weight
+                            "function": "impute",
+                            "parameters": {
+                                "strategy": "median",
+                                "columns": "weight",
+                            },
+                        },
+                        {  # recode education_level
+                            "function": "encode",
+                            "parameters": {
+                                "columns": ["education_level"],
+                                "mapping": {
+                                    "Masters": 4,
+                                    "Associate Degree": 2,
+                                    "Doctorate": 5,
+                                    "Bachelor Degree": 3,
+                                    "High School": 1,
+                                },
+                            },
+                        },
+                        {  # recode gender
+                            "function": "encode",
+                            "parameters": {
+                                "columns": ["gender"],
+                                "mapping": {"Female": 2, "Male": 1},
+                            },
+                        },
+                        {  # drop some columns
+                            "function": "drop_columns",
+                            "parameters": {
+                                "columns": [
+                                    "patient_id",
+                                    "diagnosis_desc",
+                                    "start_date",
+                                    "end_date",
+                                    "medication",
+                                ]
+                            },
+                        },
+                    ],
+                }
+                for dataset in datasets
+            ]
+        ]
+
+        mockclient = MockAlgorithmClient(
+            datasets=datasets, module="mock_package"
+        )
+        org_ids = [org["id"] for org in mockclient.organization.list()]
+        input_ = {"method": "execute", "kwargs": {}}
+        child_task = mockclient.task.create(
+            organizations=org_ids,
+            input_=input_,
+        )
+        result = pd.read_json(mockclient.result.get(id_=child_task.get("id")))
+
+        self.assertTrue(result.shape == (9, 13))
+        self.assertTrue(
+            np.array_equal(
+                result.columns,
+                [
+                    "gender",
+                    "education_level",
+                    "dosage",
+                    "blood_pressure",
+                    "heart_rate",
+                    "weight",
+                    "age",
+                    "blood_pressure_min",
+                    "blood_pressure_max",
+                    "diagnosis_desc_count",
+                    "medication_count",
+                    "treatment_duration",
+                    "treatment_code",
+                ],
+            )
+        )
+
 
 class TestSelectRows(unittest.TestCase):
     def test_query(self):
