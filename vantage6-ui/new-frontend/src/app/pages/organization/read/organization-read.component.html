@@ -1,9 +1,9 @@
-<app-page-header title="{{ 'organization-read.title' | translate }}">
-  <button actions mat-flat-button color="primary" [routerLink]="routes.collaborations">
-    <mat-icon>arrow_back</mat-icon>{{ "organization-list.title" | translate }}
-  </button>
-</app-page-header>
 <ng-container *ngIf="!isLoading && organization">
+  <app-page-header title="{{ organization.name }}">
+    <button actions mat-flat-button color="primary" [routerLink]="routes.collaborations">
+      <mat-icon>arrow_back</mat-icon>{{ "organization-list.title" | translate }}
+    </button>
+  </app-page-header>
   <mat-card>
     <mat-card-header>
       <mat-card-title>{{ "organization-read.card-details.title" | translate }}</mat-card-title>

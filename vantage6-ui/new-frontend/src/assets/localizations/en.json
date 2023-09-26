@@ -89,11 +89,6 @@
     "title": "Organizations"
   },
   "organization-read": {
-    "title": "Organizations",
-    "actions": {
-      "create": "Create organization",
-      "select": "Select organization"
-    },
     "card-details": {
       "title": "Details"
     },

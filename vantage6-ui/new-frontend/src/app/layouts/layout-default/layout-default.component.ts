@@ -87,7 +87,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
       newLinks.push({ route: routePaths.adminHome, label: 'Home', icon: 'home', shouldBeExact: true });
       //Organizations
       if (this.authService.hasResourceInScope(ScopeType.ANY, ResourceType.ORGANIZATION)) {
-        newLinks.push({ route: routePaths.organization, label: 'Organizations', icon: 'location_city' });
+        newLinks.push({ route: routePaths.organizations, label: 'Organizations', icon: 'location_city' });
       }
       //Collaborations
       if (this.authService.isOperationAllowed(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.VIEW)) {
