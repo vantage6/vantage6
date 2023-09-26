@@ -1,0 +1,62 @@
+<app-page-header title="{{ 'user-create.title' | translate }}"></app-page-header>
+<mat-card *ngIf="!isLoading && !isSubmitting; else loading">
+  <mat-card-content>
+    <form [formGroup]="form" (ngSubmit)="handleSubmit()">
+      <mat-form-field>
+        <mat-label>{{ "user.username" | translate }}</mat-label>
+        <input matInput type="text" formControlName="username" />
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>{{ "user.email" | translate }}</mat-label>
+        <input matInput type="text" formControlName="email" />
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>{{ "user.password" | translate }}</mat-label>
+        <input matInput type="password" formControlName="password" />
+        <mat-error *ngIf="form.controls.password.hasError('minlength')">{{ "general.validation.password-length" | translate }}</mat-error>
+        <mat-error *ngIf="form.controls.password.hasError('pattern')">{{ "general.validation.password-pattern" | translate }}</mat-error>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>{{ "user.password-repeat" | translate }}</mat-label>
+        <input matInput type="password" formControlName="passwordRepeat" />
+        <mat-error *ngIf="form.hasError('compare')">{{ "user-create.validation.password-compare" | translate }}</mat-error>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>{{ "user.first-name" | translate }}</mat-label>
+        <input matInput type="text" formControlName="firstName" />
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>{{ "user.last-name" | translate }}</mat-label>
+        <input matInput type="text" formControlName="lastName" />
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>{{ "user.organization" | translate }}</mat-label>
+        <mat-select formControlName="organizationID">
+          <mat-option *ngFor="let organization of organizations" [value]="organization.id">
+            {{ organization.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>{{ "user.roles" | translate }}</mat-label>
+        <mat-select formControlName="roleIDs" multiple>
+          <mat-option *ngFor="let role of roles" [value]="role.id">
+            {{ role.name }}
+          </mat-option>
+        </mat-select>
+        <mat-hint *ngIf="form.controls.organizationID.invalid">{{ "user-create.validation.roles-unavailable" | translate }}</mat-hint>
+      </mat-form-field>
+      <div class="button-container">
+        <button mat-flat-button type="submit" color="primary">{{ "general.submit" | translate }}</button>
+        <button mat-flat-button [routerLink]="routes.users">{{ "general.cancel" | translate }}</button>
+      </div>
+    </form>
+  </mat-card-content>
+</mat-card>
+<ng-template #loading>
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-template>

@@ -10,7 +10,11 @@
     "confirm": "Confirm",
     "yes": "Yes",
     "no": "No",
-    "offline": "Offline"
+    "offline": "Offline",
+    "validation": {
+      "password-length": "Password must be at least 8 characters long",
+      "password-pattern": "Password must contain a lowercase letter, uppercase letter, number and special character"
+    }
   },
   "task": {
     "algorithm": "Algorithm",
@@ -127,6 +131,8 @@
   "user": {
     "username": "Username",
     "email": "Email",
+    "password": "Password",
+    "password-repeat": "Repeat password",
     "first-name": "First name",
     "last-name": "Last name",
     "organization": "Organization",
@@ -136,7 +142,11 @@
     "title": "Users"
   },
   "user-create": {
-    "title": "Create user"
+    "title": "Create user",
+    "validation": {
+      "password-compare": "Passwords do not match",
+      "roles-unavailable": "Select an organization to determine available roles"
+    }
   },
   "user-read": {
     "card-details": {

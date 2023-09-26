@@ -28,7 +28,7 @@ export const routerConfig = {
   collaborationCreate: 'collaborations/create',
   collaboration: 'collaborations/:id',
   users: 'users',
-  userCreate: '/users/create',
+  userCreate: 'users/create',
   user: 'users/:id',
   tasks: 'tasks',
   taskCreate: 'tasks/create',

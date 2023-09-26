@@ -6,6 +6,11 @@ export enum OrganizationLazyProperties {
   Collaborations = 'collaborations'
 }
 
+export enum OrganizationSortProperties {
+  ID = 'id',
+  Name = 'name'
+}
+
 export interface BaseOrganization {
   id: number;
   name: string;

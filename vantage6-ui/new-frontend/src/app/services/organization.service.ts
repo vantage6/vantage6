@@ -1,7 +1,14 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import { Pagination } from '../models/api/pagination.model';
-import { BaseOrganization, Organization, OrganizationCreate, OrganizationLazyProperties } from '../models/api/organization.model';
+import {
+  BaseOrganization,
+  Organization,
+  OrganizationCreate,
+  OrganizationLazyProperties,
+  OrganizationSortProperties
+} from '../models/api/organization.model';
+import { Role } from '../models/api/role.model';
 
 @Injectable({
   providedIn: 'root'
@@ -9,8 +16,8 @@ import { BaseOrganization, Organization, OrganizationCreate, OrganizationLazyPro
 export class OrganizationService {
   constructor(private apiService: ApiService) {}
 
-  async getOrganizations(): Promise<BaseOrganization[]> {
-    const result = await this.apiService.getForApi<Pagination<BaseOrganization>>('/organization');
+  async getOrganizations(sortProperty: OrganizationSortProperties = OrganizationSortProperties.ID): Promise<BaseOrganization[]> {
+    const result = await this.apiService.getForApi<Pagination<BaseOrganization>>('/organization', { sort: sortProperty });
     return result.data;
   }
 
@@ -29,6 +36,16 @@ export class OrganizationService {
     );
 
     return organization;
+  }
+
+  async getRolesForOrganization(organizationID: string): Promise<Role[]> {
+    const result = await this.apiService.getForApi<Pagination<Role>>(`/role`, {
+      organization_id: organizationID,
+      include_root: true,
+      sort: 'name'
+    });
+    const filteredRoles = result.data.filter((role) => role.name !== 'node' && role.name !== 'container');
+    return filteredRoles;
   }
 
   async createOrganization(organization: OrganizationCreate): Promise<BaseOrganization | null> {

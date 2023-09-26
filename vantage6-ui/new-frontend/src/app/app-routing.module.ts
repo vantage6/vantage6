@@ -17,6 +17,7 @@ import { UserListComponent } from './pages/user/list/user-list.component';
 import { UserReadComponent } from './pages/user/read/user-read.component';
 import { OrganizationCreateComponent } from './pages/organization/create/organization-create.component';
 import { CollaborationCreateComponent } from './pages/collaboration/create/collaboration-create.component';
+import { UserCreateComponent } from './pages/user/create/user-create.component';
 
 const routes: Routes = [
   {
@@ -97,6 +98,11 @@ const routes: Routes = [
       {
         path: routerConfig.users,
         component: UserListComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
+        path: routerConfig.userCreate,
+        component: UserCreateComponent,
         canActivate: [authenticationGuard()]
       },
       {

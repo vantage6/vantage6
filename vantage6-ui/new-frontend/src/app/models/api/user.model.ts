@@ -26,3 +26,13 @@ export interface User {
   organization?: Organization;
   roles: Role[];
 }
+
+export interface UserCreate {
+  username: string;
+  email: string;
+  password: string;
+  firstname: string;
+  lastname: string;
+  organization_id: number;
+  roles: number[];
+}
