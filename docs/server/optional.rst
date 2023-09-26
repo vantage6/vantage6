@@ -302,7 +302,7 @@ by adding the following to the server configuration:
 
 ::
 
-   rabbitmq_uri: amqp://<username>:<password@<hostname>:5672/<vhost>
+   rabbitmq_uri: amqp://<username>:<password>@<hostname>:5672/<vhost>
 
 Be sure to create the user and vhost that you specify exist! Otherwise,
 you can add them via the `RabbitMQ management

@@ -95,8 +95,8 @@ A federated algorithm consist of two parts:
     is the preferred method.
 
     In case the researcher runs this part, he/she needs to have a proper
-    setup to do so (i.e. Python 3.5+ and the necessary dependencies). This
-    can be useful when developing new algorithms.
+    setup to do so (i.e. a Python environment with the necessary dependencies).
+    This can be useful when developing new algorithms.
 
 Federated part
 ~~~~~~~~~~~~~~

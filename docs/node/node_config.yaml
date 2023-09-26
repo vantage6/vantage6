@@ -2,7 +2,7 @@
 api_key: ***
 
 # URL of the vantage6 server
-server_url: https://petronas.vantage6.ai
+server_url: https://cotopaxi.vantage6.ai
 
 # port the server listens to
 port: 443
@@ -31,7 +31,7 @@ algorithm_env:
 # components.
 # OPTIONAL
 images:
-  node: harbor2.vantage6.ai/infrastructure/node:petronas
+  node: harbor2.vantage6.ai/infrastructure/node:cotopaxi
   alpine: harbor2.vantage6.ai/infrastructure/alpine
   vpn_client: harbor2.vantage6.ai/infrastructure/vpn_client
   network_config: harbor2.vantage6.ai/infrastructure/vpn_network

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import time
-import typing
 import jwt
 import pyfiglet
 import itertools
@@ -18,7 +17,7 @@ from vantage6.common.serialization import serialize
 from vantage6.client.filter import post_filtering
 from vantage6.common.client.utils import print_qr_code
 from vantage6.client.utils import LogLevel
-from vantage6.common.task_status import TaskStatus
+from vantage6.common.task_status import has_task_finished
 from vantage6.common.client.client_base import ClientBase
 
 
@@ -180,17 +179,13 @@ class UserClient(ClientBase):
         """
         # Disable logging (additional logging would prevent the 'wait' message
         # from being printed on a single line)
-        if isinstance(self.log, logging.Logger):
-            prev_level = self.log.level
-            self.log.setLevel(logging.WARN)
-        elif isinstance(self.log, UserClient.Log):
-            prev_level = self.log.enabled
-            self.log.enabled = False
+        prev_level = self.log.level
+        self.log.setLevel(logging.WARN)
 
         animation = itertools.cycle(['|', '/', '-', '\\'])
         t = time.time()
 
-        while self.task.get(task_id)['status'] != TaskStatus.COMPLETED:
+        while not has_task_finished(self.task.get(task_id).get('status')):
             frame = next(animation)
             sys.stdout.write(
                 f'\r{frame} Waiting for task {task_id} ({int(time.time()-t)}s)'
@@ -200,10 +195,7 @@ class UserClient(ClientBase):
         sys.stdout.write('\rDone!                  ')
 
         # Re-enable logging
-        if isinstance(self.log, logging.Logger):
-            self.log.setLevel(prev_level)
-        elif isinstance(self.log, UserClient.Log):
-            self.log.enabled = prev_level
+        self.log.setLevel(prev_level)
 
         result = self.request('result', params={'task_id': task_id})
         result = self.result._decrypt_result(result, is_single_result=False)
@@ -212,15 +204,21 @@ class UserClient(ClientBase):
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
 
-        def get_server_version(self) -> dict:
+        def get_server_version(self, attempts_on_timeout: int = None) -> dict:
             """View the version number of the vantage6-server
-
+            Parameters
+            ----------
+            attempts_on_timeout : int
+                Number of attempts to make when the server is not responding.
+                Default is unlimited.
             Returns
             -------
             dict
                 A dict containing the version number
             """
-            return self.parent.request('version')
+            return self.parent.request(
+                'version', attempts_on_timeout=attempts_on_timeout
+            )
 
         def get_server_health(self) -> dict:
             """View the health of the vantage6-server
@@ -439,11 +437,9 @@ class UserClient(ClientBase):
                 'encrypted': encrypted, 'organization_id': organization,
             }
             if scope == 'organization':
-                self.parent.log.info('pagination for scope `organization` '
-                                     'not available')
                 org_id = self.parent.whoami.organization_id
                 return self.parent.request(
-                    f'organization/{org_id}/collaboration'
+                    'collaboration', params={'organization_id': org_id}
                 )
             elif scope == 'global':
                 return self.parent.request('collaboration', params=params)
@@ -1579,3 +1575,7 @@ class UserClient(ClientBase):
                 'operation': operation, 'scope': scope, 'role_id': role
             }
             return self.parent.request('rule', params=params)
+
+
+# Alias the UserClient to Client for easy usage for Python users
+Client = UserClient

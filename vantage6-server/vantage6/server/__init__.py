@@ -141,7 +141,7 @@ class ServerApp:
             SocketIO object
         """
 
-        msg_queue = self.ctx.config.get('rabbitmq_uri')
+        msg_queue = self.ctx.config.get('rabbitmq', {}).get('uri')
         if msg_queue:
             log.debug(f'Connecting to msg queue: {msg_queue}')
 

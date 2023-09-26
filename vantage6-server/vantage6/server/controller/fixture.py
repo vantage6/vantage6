@@ -3,6 +3,9 @@ import logging
 
 import vantage6.server.model as db
 from vantage6.server.model.base import Database
+from vantage6.server.permission import PermissionManager
+from vantage6.common.task_status import TaskStatus
+
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -45,6 +48,13 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
     if drop_all:
         Database().drop_all()
 
+    # If the server has never been started yet, no rules have been created yet.
+    # In that case, create them here so that the created users have
+    # permissions.
+    if not db.Rule.get():
+        permissions = PermissionManager()
+        permissions.load_rules_from_resources()
+
     log.info("Create Organizations and Users")
     for org in fixtures.get("organizations", {}):
         # print(org)
@@ -58,6 +68,7 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
         log.debug(f"processed organization={organization.name}")
         superuserrole = db.Role(name="super", description="Super user",
                                 rules=db.Rule.get(), organization=organization)
+        superuserrole.save()
         # create users
         for usr in org.get("users", {}):
             user = db.User(**usr)
@@ -118,14 +129,16 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
                 image=image,
                 collaboration=collaboration,
                 job_id=db.Task.next_job_id(),
-                init_org=init_org
+                init_org=init_org,
+                init_user=db.User.get()[0]
             )
 
             for organization in collaboration.organizations:
                 run = db.Run(
                     task=task,
                     input="something",
-                    organization=organization
+                    organization=organization,
+                    status=TaskStatus.PENDING
                 )
                 run.save()
 

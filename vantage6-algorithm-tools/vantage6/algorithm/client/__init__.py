@@ -83,6 +83,42 @@ class AlgorithmClient(ClientBase):
         """
         return super().request(*args, **kwargs, retry=False)
 
+    def authenticate(self, credentials: dict = None, path: str = None) -> None:
+        """
+        Overwrite base authenticate function to prevent algorithm containers
+        from trying to authenticate, which they would be unable to do (they are
+        already provided with a token on container startup).
+
+        Function parameters have only been included to make the interface
+        identical to the parent class. They are not used.
+
+        Parameters
+        ----------
+        credentials: dict
+            Credentials to authenticate with.
+        path: str
+            Path to the credentials file.
+
+        Raises
+        ------
+        NotImplementedError
+            Always.
+        """
+        return NotImplementedError("Algorithm containers cannot authenticate!")
+
+    def refresh_token(self) -> None:
+        """
+        Overwrite base refresh_token function to prevent algorithm containers
+        from trying to refresh their token, which they would be unable to do.
+
+        Raises
+        ------
+        NotImplementedError
+            Always.
+        """
+        return NotImplementedError(
+            "Algorithm containers cannot refresh their token!")
+
     def wait_for_results(self, task_id: int, interval: float = 1) -> list:
         """
         Poll the central server until results are available and then return

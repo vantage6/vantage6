@@ -8,7 +8,7 @@ import uuid
 
 from colorama import init, Fore, Style
 
-from vantage6.common.globals import STRING_ENCODING
+from vantage6.common.globals import APPNAME, STRING_ENCODING
 
 
 # init colorstuff
@@ -259,25 +259,46 @@ def check_config_writeable(system_folders: bool = False) -> bool:
         file or not.
     """
     dirs = appdirs.AppDirs()
-    if system_folders:
-        dirs_to_check = [
-            dirs.site_config_dir
-        ]
-    else:
-        dirs_to_check = [
-            dirs.user_config_dir
-        ]
+    config_dir = get_config_path(dirs, system_folders=system_folders)
     w_ok = True
-    for dir_ in dirs_to_check:
-        if not os.path.isdir(dir_):
-            warning(f"Target directory '{dir_}' for configuration file does "
-                    "not exist.")
-            w_ok = False
-        elif not os.access(dir_, os.W_OK):
-            warning(f"No write permissions at '{dir_}'.")
-            w_ok = False
+    if not os.path.isdir(config_dir):
+        warning(f"Target directory '{config_dir}' for configuration file does "
+                "not exist.")
+        w_ok = False
+    elif not os.access(config_dir, os.W_OK):
+        warning(f"No write permissions at '{config_dir}'.")
+        w_ok = False
 
     return w_ok
+
+
+def get_config_path(dirs: appdirs.AppDirs,
+                    system_folders: bool = False) -> str:
+    """
+    Get the path to the configuration directory.
+
+    Parameters
+    ----------
+    dirs: appdirs.AppDirs
+        The appdirs object.
+    system_folders: bool
+        Whether to get path to the system folders or the user folders.
+
+    Returns
+    -------
+    str
+        The path to the configuration directory.
+    """
+    if system_folders:
+        config_dir = dirs.site_config_dir
+        # the Appdirs package prefers to store the config in /etc/xdg, but
+        # we chose instead to put it in /etc/vantage6. We think this is more
+        # in accordance with the Unix File Hierarchy Standard for config files.
+        if 'xdg' in config_dir:
+            config_dir = f'/etc/{APPNAME}'
+        return config_dir
+    else:
+        return dirs.user_config_dir
 
 
 def is_ip_address(ip: str) -> bool:

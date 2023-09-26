@@ -44,7 +44,7 @@ from vantage6.cli.utils import (
     remove_file
 )
 from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
-from vantage6.cli import __version__, rabbitmq
+from vantage6.cli import __version__
 
 
 def click_insert_context(func: callable) -> callable:
@@ -126,6 +126,9 @@ def cli_server() -> None:
               help="Start the graphical User Interface as well")
 @click.option('--ui-port', default=None, type=int,
               help="Port to listen on for the User Interface")
+@click.option('--with-rabbitmq', 'start_rabbitmq', flag_value=True,
+              default=False, help="Start RabbitMQ message broker as local "
+              "container - use in development only")
 @click.option('--rabbitmq-image', default=None,
               help="RabbitMQ docker image to use")
 @click.option('--keep/--auto-remove', default=False,
@@ -137,18 +140,20 @@ def cli_server() -> None:
               help="Print server logs to the console after start")
 @click_insert_context
 def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
-                     start_ui: bool, ui_port: int, rabbitmq_image: str,
-                     keep: bool, mount_src: str, attach: bool) -> None:
+                     start_ui: bool, ui_port: int, start_rabbitmq: bool,
+                     rabbitmq_image: str, keep: bool, mount_src: str,
+                     attach: bool) -> None:
     """
     Start the server.
     """
-    vserver_start(ctx, ip, port, image, start_ui, ui_port, rabbitmq_image,
-                  keep, mount_src, attach)
+    vserver_start(ctx, ip, port, image, start_ui, ui_port, start_rabbitmq,
+                  rabbitmq_image, keep, mount_src, attach)
 
 
 def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
-                  start_ui: bool, ui_port: int, rabbitmq_image: str,
-                  keep: bool, mount_src: str, attach: bool) -> None:
+                  start_ui: bool, ui_port: int, start_rabbitmq: bool,
+                  rabbitmq_image: str, keep: bool, mount_src: str,
+                  attach: bool) -> None:
     """
     Start the server in a Docker container.
 
@@ -162,6 +167,13 @@ def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
         port to listen on
     image : str
         Server Docker image to use
+    start_ui : bool
+        Start the graphical User Interface as well
+    ui_port : int
+        Port to listen on for the User Interface
+    start_rabbitmq : bool
+        Start RabbitMQ message broker as local container - use only in
+        development
     rabbitmq_image : str
         RabbitMQ docker image to use
     keep : bool
@@ -174,11 +186,12 @@ def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
         Wether to attach the server logs to the console after starting the
         server.
     """
+    # will print an error if not
+    check_docker_running()
+
     info("Starting server...")
     info("Finding Docker daemon.")
     docker_client = docker.from_env()
-    # will print an error if not
-    check_docker_running()
 
     # check if name is allowed for docker volume, else exit
     check_config_name_allowed(ctx.name)
@@ -196,16 +209,6 @@ def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
     # Then we check if the image has been specified in the config file, and
     # finally we use the default settings from the package.
     if image is None:
-
-        # FIXME: remove me in version 4+, as this is to support older
-        # configuration files. So the outer `image` key is no longer supported
-        # Note that this was implicitly supported in version 3.* for server as
-        # well
-        if ctx.config.get('image'):
-            warning('Using the `image` option in the config file is to be '
-                    'removed in version 4+.')
-            image = ctx.config.get('image')
-
         custom_images: dict = ctx.config.get('images')
         if custom_images:
             image = custom_images.get('server')
@@ -273,10 +276,18 @@ def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
     )
     server_network_mgr.create_network(is_internal=False)
 
-    # Note that ctx.data_dir has been created at this point, which is required
-    # for putting some RabbitMQ configuration files inside
-    info('Starting RabbitMQ container')
-    _start_rabbitmq(ctx, rabbitmq_image, server_network_mgr)
+    if start_rabbitmq or ctx.config.get('rabbitmq') and \
+            ctx.config['rabbitmq'].get('start_with_server', False):
+        # Note that ctx.data_dir has been created at this point, which is
+        # required for putting some RabbitMQ configuration files inside
+        info('Starting RabbitMQ container')
+        _start_rabbitmq(ctx, rabbitmq_image, server_network_mgr)
+    elif ctx.config.get('rabbitmq'):
+        info("RabbitMQ is provided in the config file as external service. "
+             "Assuming this service is up and running.")
+    else:
+        warning('Message queue disabled! This means that the vantage6 server '
+                'cannot be scaled horizontally!')
 
     # start the UI if requested
     if start_ui or ctx.config.get('ui') and ctx.config['ui'].get('enabled'):
@@ -335,8 +346,8 @@ def cli_server_configuration_list() -> None:
     """
     Print the available server configurations.
     """
-    client = docker.from_env()
     check_docker_running()
+    client = docker.from_env()
 
     running_server = client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
@@ -454,9 +465,12 @@ def cli_server_new(name: str, system_folders: bool) -> None:
                    " code in this path")
 @click.option('--keep/--auto-remove', default=False,
               help="Keep image after finishing. Useful for debugging")
+@click.option('--wait', default=False, help="Wait for the import to finish")
 @click_insert_context
-def cli_server_import(ctx: ServerContext, file: str, drop_all: bool,
-                      image: str, mount_src: str, keep: bool) -> None:
+def cli_server_import(
+    ctx: ServerContext, file: str, drop_all: bool, image: str, mount_src: str,
+    keep: bool, wait: bool
+) -> None:
     """
     Import vantage6 resources, such as organizations, collaborations, users and
     tasks into a server instance.
@@ -464,11 +478,12 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool,
     The FILE_ argument should be a path to a yaml file containing the vantage6
     formatted data to import.
     """
-    vserver_import(ctx, file, drop_all, image, mount_src, keep)
+    vserver_import(ctx, file, drop_all, image, mount_src, keep,
+                   wait)
 
 
 def vserver_import(ctx: ServerContext, file: str, drop_all: bool,
-                   image: str, mount_src: str, keep: bool) -> None:
+                   image: str, mount_src: str, keep: bool, wait: bool) -> None:
     """Batch import organizations/collaborations/users and tasks.
 
     Parameters
@@ -487,12 +502,15 @@ def vserver_import(ctx: ServerContext, file: str, drop_all: bool,
     keep : bool
         Wether to keep the image after finishing/crashing. Useful for
         debugging.
+    wait : bool
+        Wether to wait for the import to finish before exiting this function
     """
+    # will print an error if not
+    check_docker_running()
+
     info("Starting server...")
     info("Finding Docker daemon.")
     docker_client = docker.from_env()
-    # will print an error if not
-    check_docker_running()
 
     # check if name is allowed for docker volume, else exit
     check_config_name_allowed(ctx.name)
@@ -583,6 +601,10 @@ def vserver_import(ctx: ServerContext, file: str, drop_all: bool,
 
     info(f"Success! container id = {container.id}")
 
+    if wait:
+        container.wait()
+        info("Container finished!")
+
 
 #
 #   shell
@@ -598,9 +620,10 @@ def cli_server_shell(ctx: ServerContext) -> None:
     the changes that you make. It is better to use the Python client or a
     graphical user interface instead.
     """
-    docker_client = docker.from_env()
     # will print an error if not
     check_docker_running()
+
+    docker_client = docker.from_env()
 
     running_servers = docker_client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
@@ -646,8 +669,8 @@ def vserver_stop(name: str, system_folders: bool, all_servers: bool) -> None:
     all_servers : bool
         Wether to stop all servers or not
     """
-    client = docker.from_env()
     check_docker_running()
+    client = docker.from_env()
 
     running_servers = client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
@@ -690,8 +713,8 @@ def cli_server_attach(name: str, system_folders: bool) -> None:
     """
     Show the server logs in the current console.
     """
-    client = docker.from_env()
     check_docker_running()
+    client = docker.from_env()
 
     running_servers = client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
@@ -732,8 +755,8 @@ def cli_server_version(name: str, system_folders: bool) -> None:
     """
     Print the version of the vantage6 server.
     """
-    client = docker.from_env()
     check_docker_running()
+    client = docker.from_env()
 
     running_servers = client.containers.list(
         filters={"label": f"{APPNAME}-type=server"})
@@ -812,18 +835,15 @@ def _start_rabbitmq(ctx: ServerContext, rabbitmq_image: str,
     network_mgr : NetworkManager
         Network manager object
     """
-    rabbit_uri = ctx.config.get('rabbitmq_uri')
+    rabbit_uri = ctx.config['rabbitmq'].get('uri')
     if not rabbit_uri:
-        warning('Message queue disabled! This means that the server '
-                'application cannot scale horizontally!')
-    elif rabbitmq.is_local_address(rabbit_uri):
-        # kick off RabbitMQ container
-        rabbit_mgr = RabbitMQManager(
-            ctx=ctx, network_mgr=network_mgr, image=rabbitmq_image)
-        rabbit_mgr.start()
-    else:
-        info("Detected that the RabbitMQ service is a external service. "
-             "Assuming this service is up and running.")
+        error("No RabbitMQ URI found in the configuration file! Please add"
+              "a 'uri' key to the 'rabbitmq' section of the configuration.")
+        exit(1)
+    # kick off RabbitMQ container
+    rabbit_mgr = RabbitMQManager(
+        ctx=ctx, network_mgr=network_mgr, image=rabbitmq_image)
+    rabbit_mgr.start()
 
 
 def _stop_server_containers(client: DockerClient, container_name: str,
@@ -862,7 +882,7 @@ def _stop_server_containers(client: DockerClient, container_name: str,
 
     # kill RabbitMQ if it exists and no other servers are using to it (i.e. it
     # is not in other docker networks with other containers)
-    rabbit_uri = ctx.config.get('rabbitmq_uri')
+    rabbit_uri = ctx.config.get('rabbitmq', {}).get('uri')
     if rabbit_uri:
         rabbit_container_name = split_rabbitmq_uri(
             rabbit_uri=rabbit_uri)['host']
@@ -887,8 +907,8 @@ def _print_log_worker(logs_stream: Iterable[bytes]) -> None:
         print(log.decode(STRING_ENCODING), end="")
 
 
-def vserver_remove(ctx: ServerContext, name: str,
-                   system_folders: bool) -> None:
+def vserver_remove(ctx: ServerContext, name: str, system_folders: bool,
+                   force: bool) -> None:
     """
     Function to remove a server.
 
@@ -899,19 +919,22 @@ def vserver_remove(ctx: ServerContext, name: str,
     name : str
         Name of the server to remove
     system_folders : bool
-        Wether to use system folders or not
+        Whether to use system folders or not
+    force : bool
+        Whether to ask for confirmation before removing or not
     """
     check_docker_running()
 
     # first stop server
     vserver_stop(name, system_folders, False)
 
-    if not q.confirm(
-        "This server will be deleted permanently including its configuration. "
-        "Are you sure?", default=False
-    ).ask():
-        info("Server will not be deleted")
-        exit(0)
+    if not force:
+        if not q.confirm(
+            "This server will be deleted permanently including its "
+            "configuration. Are you sure?", default=False
+        ).ask():
+            info("Server will not be deleted")
+            exit(0)
 
     # now remove the folders...
     info(f"Removing configuration file {ctx.config_file}")

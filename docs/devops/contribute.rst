@@ -262,8 +262,8 @@ Pull Request
 
 Please consider first which branch you want to merge your contribution into.
 **Patches** are usually directly merged into ``main``, but **features** are
-usually merged into a development branch (e.g. ``dev3`` for version 3) before
-being merged into the ``main`` branch.
+usually merged into a release branch (e.g. ``release/4.1`` for version 4.1.0)
+before being merged into the ``main`` branch.
 
 Before the PR is merged, it should pass the following requirements:
 

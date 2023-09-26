@@ -70,7 +70,13 @@ class ServicesResources(Resource):
         bool
             True if the field is included, False otherwise
         """
-        return field in request.args.getlist('include')
+        # The logic below intends to find 'x' both in 'include=y&include=x' and
+        # 'include=x,y'.
+        return field in [
+            val
+            for item in request.args.getlist('include')
+            for val in item.split(',')
+        ]
 
     def dump(self, page: Page, schema: HATEOASModelSchema) -> dict:
         """

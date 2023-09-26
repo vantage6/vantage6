@@ -29,6 +29,14 @@ Finally, a node can be stopped again with:
 
    vnode stop --name <your_node>
 
+.. note::
+
+   Before the node is started, it is attempted to obtain the server version.
+   For a server of version ``x.y.z``, a node of version ``x.y.<latest>`` is
+   started - this is the latest available node version for the server version.
+   If no server version can be obtained, the latest node of the same major
+   version as the command-line interface installation is started.
+
 Available commands
 ^^^^^^^^^^^^^^^^^^
 
