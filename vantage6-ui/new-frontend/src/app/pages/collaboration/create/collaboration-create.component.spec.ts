@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CollaboartionCreateComponent } from './collaboration-create.component';
+import { CollaborationCreateComponent } from './collaboration-create.component';
 
-describe('CollaboartionCreateComponent', () => {
-  let component: CollaboartionCreateComponent;
-  let fixture: ComponentFixture<CollaboartionCreateComponent>;
+describe('CollaborationCreateComponent', () => {
+  let component: CollaborationCreateComponent;
+  let fixture: ComponentFixture<CollaborationCreateComponent>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [CollaboartionCreateComponent]
+      declarations: [CollaborationCreateComponent]
     });
-    fixture = TestBed.createComponent(CollaboartionCreateComponent);
+    fixture = TestBed.createComponent(CollaborationCreateComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

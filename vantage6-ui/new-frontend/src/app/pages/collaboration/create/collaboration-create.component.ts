@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NodeCreate } from 'src/app/models/api/node.model';
-import { BaseOrganization } from 'src/app/models/api/organization.model';
+import { BaseOrganization, OrganizationSortProperties } from 'src/app/models/api/organization.model';
 import { routePaths } from 'src/app/routes';
 import { CollaborationService } from 'src/app/services/collaboration.service';
 import { NodeService } from 'src/app/services/node.service';
@@ -60,7 +60,7 @@ export class CollaborationCreateComponent implements OnInit {
   }
 
   private async initData(): Promise<void> {
-    this.organizations = await this.organizationService.getOrganizations();
+    this.organizations = await this.organizationService.getOrganizations(OrganizationSortProperties.Name);
     this.isLoading = false;
   }
 }

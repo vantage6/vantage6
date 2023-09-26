@@ -1,7 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { MatSelectChange } from '@angular/material/select';
 import { NodeStatus } from 'src/app/models/api/node.model';
-import { BaseOrganization, Organization, OrganizationLazyProperties } from 'src/app/models/api/organization.model';
+import {
+  BaseOrganization,
+  Organization,
+  OrganizationLazyProperties,
+  OrganizationSortProperties
+} from 'src/app/models/api/organization.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
@@ -65,7 +70,7 @@ export class OrganizationReadComponent implements OnInit {
 
   private async initData() {
     if (this.canAdministerMultiple) {
-      this.organizations = await this.organizationService.getOrganizations();
+      this.organizations = await this.organizationService.getOrganizations(OrganizationSortProperties.Name);
     } else {
       const user = await this.authService.getUser();
       this.handleOrganizationChange(user.organization.id.toString());

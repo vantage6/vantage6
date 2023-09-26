@@ -15,8 +15,8 @@
         <td mat-cell *matCellDef="let user">{{ user.firstname || "-" }}</td>
       </ng-container>
       <ng-container [matColumnDef]="tableRows.LastName">
-        <th mat-header-cell *matHeaderCellDef>{{ "user.first-name" | translate }}</th>
-        <td mat-cell *matCellDef="let user">{{ user.firstname || "-" }}</td>
+        <th mat-header-cell *matHeaderCellDef>{{ "user.last-name" | translate }}</th>
+        <td mat-cell *matCellDef="let user">{{ user.lastname || "-" }}</td>
       </ng-container>
       <ng-container [matColumnDef]="tableRows.Email">
         <th mat-header-cell *matHeaderCellDef>{{ "user.email" | translate }}</th>
