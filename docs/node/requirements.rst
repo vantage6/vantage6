@@ -4,7 +4,7 @@ Requirements
 ------------
 
 .. note::
-    This section is the same as the :ref:`server requirements <server-requirements>` section - their
+    This section is almost the same as the :ref:`server requirements <server-requirements>` section - their
     requirements are very similar.
 
 .. |requirement-public-ip| replace:: \
