@@ -29,7 +29,7 @@ Install
 
 It is important to install the Python client with the same version as the
 vantage6 server you are talking to. Check your server version by going to
-``https://<server_url>/version`` (e.g. `https://petronas.vantage6.ai/version`
+``https://<server_url>/version`` (e.g. `https://cotopaxi.vantage6.ai/version`
 or `http://localhost:5000/api/version`) to find its version.
 
 Then you can install the ``vantage6-client`` with:
@@ -135,7 +135,7 @@ submitting particular tasks) that you might want to share publicly.
 
    # config.py
 
-   server_url = "https://MY VANTAGE6 SERVER" # e.g. https://petronas.vantage6.ai or
+   server_url = "https://MY VANTAGE6 SERVER" # e.g. https://cotopaxi.vantage6.ai or
                                              # http://localhost for a local dev server
    server_port = 443 # This is specified when you first created the server
    server_api = "" # This is specified when you first created the server
@@ -471,7 +471,7 @@ and then retrieve the results
 
 .. code:: python
 
-   result_info = client.result.list(task=task_id)
+   result_info = client.result.from_task(task_id=task_id)
 
 The number of results may be different depending on what you run, but
 for the central average algorithm in this example, the results would be:

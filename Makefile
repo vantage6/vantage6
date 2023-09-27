@@ -2,11 +2,11 @@
 # this Makefile
 
 # docker image tag
-TAG ?= petronas
+TAG ?= cotopaxi
 REGISTRY ?= harbor2.vantage6.ai
 
 # infrastructure base image version
-BASE ?= 3
+BASE ?= 4
 
 help:
 	@echo "Available commands to 'make':"

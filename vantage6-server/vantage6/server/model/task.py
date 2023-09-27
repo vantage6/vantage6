@@ -45,7 +45,7 @@ class Task(Base):
         Parent task (if any)
     results : list[:class:`~.model.result.Result`]
         List of results that are part of this task
-    initiator : :class:`~.model.organization.Organization`
+    init_org : :class:`~.model.organization.Organization`
         Organization that created this task
     init_user : :class:`~.model.user.User`
         User that created this task

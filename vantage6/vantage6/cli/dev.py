@@ -7,8 +7,8 @@ instance(s). The following commands are available:
     * vdev start-demo-network
     * vdev stop-demo-network
 """
-import pandas as pd
 import click
+import csv
 import subprocess
 import itertools
 
@@ -49,11 +49,25 @@ def create_dummy_data(node_name: str, dev_folder: Path) -> Path:
     Path
         Directory the data is saved in.
     """
-    df = pd.DataFrame({'name': ['Raphael', 'Donatello'],
-                       'mask': ['red', 'purple'],
-                       'weapon': ['sai', 'bo staff']})
+    header = ['name', 'mask', 'weapon', 'age']
+    data = [
+        ['Raphael', 'red', 'sai', 44],
+        ['Donatello', 'purple', 'bo staff', 60],
+    ]
+
     data_file = dev_folder / f"df_{node_name}.csv"
-    df.to_csv(data_file)
+    with open(data_file, 'w', encoding='UTF8', newline='') as f:
+        writer = csv.writer(f)
+
+        # write the header
+        writer.writerow(header)
+
+        # write the data
+        for row in data:
+            writer.writerow(row)
+
+        f.close()
+
     info(f"Spawned dataset for {Fore.GREEN}{node_name}{Style.RESET_ALL}, "
          f"writing to {Fore.GREEN}{data_file}{Style.RESET_ALL}")
     return data_file
@@ -235,7 +249,10 @@ def create_vserver_config(server_name: str, port: int) -> Path:
         loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
         trim_blocks=True, lstrip_blocks=True, autoescape=True)
     template = environment.get_template("server_config.j2")
-    server_config = template.render(port=port)
+    server_config = template.render(
+        port=port,
+        jwt_secret_key=generate_apikey()
+    )
     folders = ServerContext.instance_folders(
         instance_type='server', instance_name=server_name,
         system_folders=True)
@@ -354,8 +371,19 @@ def start_demo_network(
     create one.
     """
     # run the server
-    vserver_start(ctx, None, None, server_image, False, None, None, True, '',
-                  False)
+    vserver_start(
+        ctx=ctx,
+        ip=None,
+        port=None,
+        image=server_image,
+        start_ui=False,
+        ui_port=None,
+        start_rabbitmq=False,
+        rabbitmq_image=None,
+        keep=True,
+        mount_src='',
+        attach=False
+    )
 
     # run all nodes that belong to this server
     configs, _ = NodeContext.available_configurations(system_folders=False)

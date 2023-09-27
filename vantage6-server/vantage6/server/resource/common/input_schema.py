@@ -229,7 +229,8 @@ class PortInputSchema(Schema):
     """ Schema for validating input for a creating a port. """
     port = fields.Integer(required=True)
     run_id = fields.Integer(required=True, validate=Range(min=1))
-    label = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
+    label = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT),
+                          allow_none=True)
 
     @validates('port')
     def validate_port(self, port):
@@ -346,7 +347,7 @@ class TaskInputSchema(_NameValidationSchema):
     image = fields.String(required=True, validate=Length(min=1))
     collaboration_id = fields.Integer(required=True, validate=Range(min=1))
     organizations = fields.List(fields.Dict(), required=True)
-    databases = fields.List(fields.Dict())
+    databases = fields.List(fields.Dict(), allow_none=True)
 
     @validates('organizations')
     def validate_organizations(self, organizations: list[dict]):
@@ -387,6 +388,8 @@ class TaskInputSchema(_NameValidationSchema):
         ValidationError
             If the databases are not valid.
         """
+        if databases is None:
+            return  # some algorithms don't use any database
         for database in databases:
             if 'label' not in database:
                 raise ValidationError(
@@ -399,10 +402,10 @@ class TaskInputSchema(_NameValidationSchema):
                 # TODO we may add further validation on the preprocessing
                 # parameters when that is completed
                 for prepro in database['preprocessing']:
-                    if 'type' not in prepro:
+                    if 'function' not in prepro:
                         raise ValidationError(
                             f"Database preprocessing {prepro} is missing a "
-                            "'type'"
+                            "'function'"
                         )
             allowed_keys = {'label', 'preprocessing', 'query', 'sheet_name'}
             if not set(database.keys()).issubset(set(allowed_keys)):
