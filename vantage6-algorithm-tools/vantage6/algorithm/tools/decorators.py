@@ -63,6 +63,10 @@ def algorithm_client(func: callable) -> callable:
         return func(client, *args, **kwargs)
     # set attribute that this function is wrapped in an algorithm client
     wrap_function.wrapped_in_algorithm_client_decorator = True
+    # FIXME BvB 2023-09-29 it is not nice to have to re-set this attribute
+    # here. Find a way to not have to set it separately here somehow.
+    if hasattr(func, 'wrapped_in_data_decorator'):
+        wrap_function.wrapped_in_data_decorator = True
     return wrap_function
 
 
@@ -114,9 +118,6 @@ def data(number_of_databases: int = 1) -> callable:
             """
             if mock_data is not None:
                 return func(*mock_data, *args, **kwargs)
-            # query to execute on the database
-            input_file = os.environ["INPUT_FILE"]
-            info(f"Reading input file {input_file}")
 
             # read the labels that the user requested, which is a comma
             # separated list of labels.
