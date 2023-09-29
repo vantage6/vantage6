@@ -1,9 +1,10 @@
 import json
 import logging
-
 from typing import Any
 from importlib import import_module
 from copy import deepcopy
+
+import pandas as pd
 
 from vantage6.algorithm.tools.wrappers import load_data
 from vantage6.algorithm.tools.util import info
@@ -97,12 +98,16 @@ class MockAlgorithmClient:
             self.organizations_with_data.append(org_id)
             org_data = []
             for dataset in org_datasets:
-                df = load_data(
-                    database_uri=dataset.get("database"),
-                    db_type=dataset.get("db_type"),
-                    query=dataset.get("query"),
-                    sheet_name=dataset.get("sheet_name")
-                )
+                db_handle = dataset.get("database")
+                if isinstance(db_handle, pd.DataFrame):
+                    df = db_handle
+                else:
+                    df = load_data(
+                        database_uri=dataset.get("database"),
+                        db_type=dataset.get("db_type"),
+                        query=dataset.get("query"),
+                        sheet_name=dataset.get("sheet_name")
+                    )
                 df = preprocess_data(df, dataset.get("preprocessing", []))
                 org_data.append(df)
             self.datasets_per_org[org_id] = org_data
