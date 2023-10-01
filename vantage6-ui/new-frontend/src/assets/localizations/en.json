@@ -155,6 +155,19 @@
       "content": "Note, this will also delete all tasks this user created.\nThis operation cannot be undone."
     }
   },
+  "node": {
+    "name": "Name",
+    "status": "Status",
+    "last-seen": "Last seen",
+    "organization": "Organization",
+    "collaboration": "Collaboration"
+  },
+  "node-read": {
+    "title": "Nodes",
+    "actions": {
+      "filter": "Filter"
+    }
+  },
   "task-status": {
     "Active": "Active",
     "Completed": "Completed",

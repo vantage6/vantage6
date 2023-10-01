@@ -101,6 +101,14 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
       ) {
         newLinks.push({ route: routePaths.users, label: 'Users', icon: 'people' });
       }
+      //Nodes
+      if (
+        this.authService.isOperationAllowed(ScopeType.ORGANIZATION, ResourceType.NODE, OperationType.VIEW) ||
+        this.authService.isOperationAllowed(ScopeType.COLLABORATION, ResourceType.NODE, OperationType.VIEW) ||
+        this.authService.isOperationAllowed(ScopeType.GLOBAL, ResourceType.NODE, OperationType.VIEW)
+      ) {
+        newLinks.push({ route: routePaths.nodes, label: 'Nodes', icon: 'data_object' });
+      }
     } else {
       //Home
       newLinks.push({ route: routePaths.home, label: 'Home', icon: 'home', shouldBeExact: true });

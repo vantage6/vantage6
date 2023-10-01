@@ -1,0 +1,67 @@
+<app-page-header title="{{ 'node-read.title' | translate }}">
+  <mat-form-field *ngIf="!isLoading" content subscriptSizing="dynamic">
+    <mat-label>{{ "node-read.actions.filter" | translate }}</mat-label>
+    <mat-select (selectionChange)="handleFilterChange($event)">
+      <mat-optgroup *ngIf="organizations.length > 0" label="{{ 'node.organization' | translate }}">
+        <mat-option *ngFor="let organization of organizations" [value]="'organization;' + organization.id">
+          {{ organization.name }}
+        </mat-option>
+      </mat-optgroup>
+      <mat-optgroup *ngIf="collaborations.length > 0" label="{{ 'node.collaboration' | translate }}">
+        <mat-option *ngFor="let collaboration of collaborations" [value]="'collaboration;' + collaboration.id">
+          {{ collaboration.name }}
+        </mat-option>
+      </mat-optgroup>
+    </mat-select>
+  </mat-form-field>
+</app-page-header>
+<ng-container *ngIf="!isLoading; else loading">
+  <mat-card>
+    <mat-card-content>
+      <mat-accordion class="card-accordion">
+        <mat-expansion-panel *ngFor="let node of nodes" (click)="handleNodeChange(node.id)">
+          <mat-expansion-panel-header>
+            <mat-panel-title>{{ node.name }}</mat-panel-title>
+          </mat-expansion-panel-header>
+          <ng-template matExpansionPanelContent>
+            <mat-spinner *ngIf="!selectedNode" diameter="48"></mat-spinner>
+            <div class="data-list" *ngIf="selectedNode">
+              <div class="data-list__item data-list__item--big">
+                <b>{{ "node.name" | translate }}</b>
+                <span>{{ selectedNode.name || "-" }}</span>
+              </div>
+              <div class="data-list__item">
+                <b>{{ "node.status" | translate }}</b>
+                <app-chip
+                  label="{{ selectedNode.status === nodeStatus.Online ? ('general.online' | translate) : ('general.offline' | translate) }}"
+                  [type]="selectedNode.status === nodeStatus.Online ? 'success' : 'error'"
+                ></app-chip>
+              </div>
+              <div class="data-list__item">
+                <b>{{ "node.organization" | translate }}</b>
+                <app-chip *ngIf="selectedNode.organization" label="{{ selectedNode.organization.name }}"></app-chip>
+                <span *ngIf="!selectedNode.organization">-</span>
+              </div>
+              <div class="data-list__item">
+                <b>{{ "node.collaboration" | translate }}</b>
+                <app-chip *ngIf="selectedNode.collaboration" label="{{ selectedNode.collaboration.name }}"></app-chip>
+                <span *ngIf="!selectedNode.collaboration">-</span>
+              </div>
+              <div class="data-list__item">
+                <b>{{ "node.last-seen" | translate }}</b>
+                <span>{{ selectedNode.last_seen ? (selectedNode.last_seen | date: "MMMM d, y, HH:mm:ss") : "Never" }}</span>
+              </div>
+            </div>
+          </ng-template>
+        </mat-expansion-panel>
+      </mat-accordion>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
+<ng-template #loading>
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-template>

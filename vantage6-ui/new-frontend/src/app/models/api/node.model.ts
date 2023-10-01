@@ -1,4 +1,11 @@
-import { BaseOrganization } from './organization.model';
+import { BaseLink } from './base.model';
+import { BaseCollaboration, Collaboration } from './collaboration.model';
+import { BaseOrganization, Organization } from './organization.model';
+
+export enum NodeLazyProperties {
+  Organization = 'organization',
+  Collaboration = 'collaboration'
+}
 
 export enum DatabaseType {
   CSV = 'csv',
@@ -17,10 +24,12 @@ export enum NodeStatus {
 
 export interface BaseNode {
   id: number;
-  organization: BaseOrganization;
   name: string;
+  organization: BaseLink;
+  collaboration: BaseLink;
   config: Config[];
   status?: string;
+  last_seen?: string;
 }
 
 interface Config {
@@ -31,6 +40,16 @@ interface Config {
 export interface Database {
   name: string;
   type: DatabaseType;
+}
+
+export interface Node {
+  id: number;
+  name: string;
+  organization?: BaseOrganization;
+  collaboration?: BaseCollaboration;
+  config: Config[];
+  status?: string;
+  last_seen?: string;
 }
 
 export interface NodeCreate {

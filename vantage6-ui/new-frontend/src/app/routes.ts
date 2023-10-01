@@ -12,6 +12,7 @@ export const routePaths = {
   users: '/admin/users',
   userCreate: '/admin/users/create',
   user: '/admin/users',
+  nodes: '/admin/nodes',
   tasks: '/tasks',
   taskCreate: '/tasks/create',
   task: '/tasks'
@@ -32,6 +33,7 @@ export const routerConfig = {
   users: 'users',
   userCreate: 'users/create',
   user: 'users/:id',
+  nodes: 'nodes',
   tasks: 'tasks',
   taskCreate: 'tasks/create',
   task: 'tasks/:id'
