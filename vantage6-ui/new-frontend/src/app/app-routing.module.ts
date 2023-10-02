@@ -21,6 +21,7 @@ import { UserCreateComponent } from './pages/user/create/user-create.component';
 import { OrganizationListComponent } from './pages/organization/list/organization-list.component';
 import { NodeReadComponent } from './pages/node/read/node-read.component';
 import { OrganizationEditComponent } from './pages/organization/edit/organization-edit.component';
+import { CollaborationEditComponent } from './pages/collaboration/edit/collaboration-edit.component';
 
 const routes: Routes = [
   {
@@ -101,6 +102,11 @@ const routes: Routes = [
       {
         path: routerConfig.collaborationCreate,
         component: CollaborationCreateComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
+        path: routerConfig.collaborationEdit,
+        component: CollaborationEditComponent,
         canActivate: [authenticationGuard()]
       },
       {

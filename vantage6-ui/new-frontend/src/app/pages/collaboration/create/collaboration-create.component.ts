@@ -1,12 +1,9 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormControl, Validators } from '@angular/forms';
+import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { NodeCreate } from 'src/app/models/api/node.model';
-import { BaseOrganization, OrganizationSortProperties } from 'src/app/models/api/organization.model';
+import { CollaborationCreate, CollaborationForm } from 'src/app/models/api/collaboration.model';
 import { routePaths } from 'src/app/routes';
 import { CollaborationService } from 'src/app/services/collaboration.service';
 import { NodeService } from 'src/app/services/node.service';
-import { OrganizationService } from 'src/app/services/organization.service';
 
 @Component({
   selector: 'app-collaboration-create',
@@ -14,53 +11,37 @@ import { OrganizationService } from 'src/app/services/organization.service';
   styleUrls: ['./collaboration-create.component.scss'],
   host: { '[class.card-container]': 'true' }
 })
-export class CollaborationCreateComponent implements OnInit {
+export class CollaborationCreateComponent {
   routes = routePaths;
 
-  form = this.fb.nonNullable.group({
-    name: ['', [Validators.required]],
-    encrypted: false,
-    organization_ids: [[] as number[], [Validators.required]]
-  });
-  registerNodes = new FormControl(false);
-  isLoading = true;
   isSubmitting = false;
-  organizations: BaseOrganization[] = [];
 
   constructor(
-    private fb: FormBuilder,
     private router: Router,
-    private organizationService: OrganizationService,
     private collaborationService: CollaborationService,
     private nodeService: NodeService
   ) {}
 
-  ngOnInit(): void {
-    this.initData();
-  }
+  async handleSubmit(collaborationForm: CollaborationForm) {
+    this.isSubmitting = true;
 
-  async handleSubmit() {
-    if (this.form.valid) {
-      this.isSubmitting = true;
-
-      const collaboration = await this.collaborationService.createCollaboration(this.form.getRawValue());
-      if (collaboration?.id) {
-        if (this.registerNodes.value && this.form.value.organization_ids) {
-          await Promise.all(
-            this.form.value.organization_ids.map(async (organizationID: number) => {
-              await this.nodeService.createNode(collaboration, organizationID);
-            })
-          );
-        }
-        this.router.navigate([routePaths.collaborations]);
-      } else {
-        this.isSubmitting = false;
+    const collaborationCreate: CollaborationCreate = (({ registerNodes, ...data }) => data)(collaborationForm); //
+    const collaboration = await this.collaborationService.createCollaboration(collaborationCreate);
+    if (collaboration?.id) {
+      if (collaborationForm.registerNodes && collaborationForm.organization_ids) {
+        await Promise.all(
+          collaborationForm.organization_ids.map(async (organizationID: number) => {
+            await this.nodeService.createNode(collaboration, organizationID);
+          })
+        );
       }
+      this.router.navigate([routePaths.collaborations]);
+    } else {
+      this.isSubmitting = false;
     }
   }
 
-  private async initData(): Promise<void> {
-    this.organizations = await this.organizationService.getOrganizations(OrganizationSortProperties.Name);
-    this.isLoading = false;
+  handleCancel(): void {
+    this.router.navigate([routePaths.collaborations]);
   }
 }

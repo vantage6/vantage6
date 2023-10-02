@@ -26,8 +26,11 @@ export interface Collaboration {
   tasks: BaseTask[];
 }
 
-export interface CollaborationCreate {
+export interface CollaborationForm {
   name: string;
   encrypted: boolean;
   organization_ids: number[];
+  registerNodes: boolean;
 }
+
+export type CollaborationCreate = Omit<CollaborationForm, 'registerNodes'>;

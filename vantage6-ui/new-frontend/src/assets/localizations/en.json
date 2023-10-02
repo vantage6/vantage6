@@ -109,7 +109,8 @@
   },
   "collaboration-create": {
     "title": "Create collaboration",
-    "register-nodes": "Register nodes"
+    "register-nodes": "Register nodes",
+    "register-nodes-edit": "Register nodes for new organizations: {{organizations}}"
   },
   "collaboration-list": {
     "title": "Collaborations"

@@ -19,8 +19,8 @@ export class CollaborationService {
     return result;
   }
 
-  async getCollaboration(id: string, lazyProperties: CollaborationLazyProperties[] = []): Promise<Collaboration> {
-    const result = await this.apiService.getForApi<BaseCollaboration>(`/collaboration/${id}`);
+  async getCollaboration(collaborationID: string, lazyProperties: CollaborationLazyProperties[] = []): Promise<Collaboration> {
+    const result = await this.apiService.getForApi<BaseCollaboration>(`/collaboration/${collaborationID}`);
 
     const collaboration: Collaboration = { ...result, organizations: [], nodes: [], tasks: [] };
 
@@ -40,7 +40,11 @@ export class CollaborationService {
     return await this.apiService.postForApi<BaseCollaboration>(`/collaboration`, collaboration);
   }
 
-  async delete(id: number): Promise<void> {
-    return await this.apiService.deleteForApi(`/collaboration/${id}?delete_dependents=true`);
+  async editCollaboration(collaborationID: string, collaboration: CollaborationCreate): Promise<BaseCollaboration> {
+    return await this.apiService.patchForApi<BaseCollaboration>(`/collaboration/${collaborationID}`, collaboration);
+  }
+
+  async deleteCollaboration(collaborationID: string): Promise<void> {
+    return await this.apiService.deleteForApi(`/collaboration/${collaborationID}?delete_dependents=true`);
   }
 }

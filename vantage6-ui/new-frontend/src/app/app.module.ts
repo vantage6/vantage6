@@ -55,6 +55,8 @@ import { OrganizationListComponent } from './pages/organization/list/organizatio
 import { NodeReadComponent } from './pages/node/read/node-read.component';
 import { OrganizationEditComponent } from './pages/organization/edit/organization-edit.component';
 import { OrganizationFormComponent } from './components/organization-form/organization-form/organization-form.component';
+import { CollaborationFormComponent } from './components/collaboration-form/collaboration-form/collaboration-form.component';
+import { CollaborationEditComponent } from './pages/collaboration/edit/collaboration-edit.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -91,7 +93,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     UserCreateComponent,
     NodeReadComponent,
     OrganizationEditComponent,
-    OrganizationFormComponent
+    OrganizationFormComponent,
+    CollaborationFormComponent,
+    CollaborationEditComponent
   ],
   imports: [
     BrowserModule,

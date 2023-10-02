@@ -54,10 +54,6 @@ export class CollaborationReadComponent implements OnInit {
     this.isLoading = false;
   }
 
-  handleEdit(): void {
-    //TODO: Add navigation to edit page
-  }
-
   async handleDelete(): Promise<void> {
     if (!this.collaboration) return;
 
@@ -74,7 +70,7 @@ export class CollaborationReadComponent implements OnInit {
       if (result === true) {
         if (!this.collaboration) return;
         this.isLoading = true;
-        await this.collaborationService.delete(this.collaboration.id);
+        await this.collaborationService.deleteCollaboration(this.collaboration.id.toString());
         this.router.navigate([routePaths.collaborations]);
       }
     });

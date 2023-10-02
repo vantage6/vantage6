@@ -3,11 +3,11 @@
     <button actions mat-flat-button color="primary" [routerLink]="routes.collaborations">
       <mat-icon>arrow_back</mat-icon>{{ "collaboration-list.title" | translate }}
     </button>
-    <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="canDelete">
+    <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="canDelete || canDelete">
       <mat-icon>more_vert</mat-icon>
     </button>
     <mat-menu #menu="matMenu">
-      <button mat-menu-item *ngIf="canEdit" (click)="handleEdit()">
+      <button mat-menu-item *ngIf="canEdit" [routerLink]="[routes.collaborationEdit, id]">
         <mat-icon>edit</mat-icon>
         <span>{{ "general.edit" | translate }}</span>
       </button>

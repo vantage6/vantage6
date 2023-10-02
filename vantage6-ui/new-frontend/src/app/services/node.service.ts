@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import { BaseNode, Node, NodeCreate, NodeLazyProperties } from '../models/api/node.model';
-import { BaseCollaboration } from '../models/api/collaboration.model';
+import { BaseCollaboration, Collaboration } from '../models/api/collaboration.model';
 import { OrganizationService } from './organization.service';
 import { Pagination } from '../models/api/pagination.model';
 
@@ -51,7 +51,7 @@ export class NodeService {
     return node;
   }
 
-  async createNode(collaboration: BaseCollaboration, organizationID: number): Promise<BaseNode> {
+  async createNode(collaboration: BaseCollaboration | Collaboration, organizationID: number): Promise<BaseNode> {
     const organization = await this.organizationService.getOrganization(organizationID.toString());
 
     const node: NodeCreate = {
