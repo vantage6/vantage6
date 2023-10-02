@@ -63,7 +63,9 @@ export class UserFormComponent implements OnInit, OnDestroy {
     }
     this.setupForm();
     await this.initData();
-    await this.getRoles(this.form.controls.organization_id.value);
+    if (this.isEdit) {
+      await this.getRoles(this.form.controls.organization_id.value);
+    }
     this.isLoading = false;
   }
 
