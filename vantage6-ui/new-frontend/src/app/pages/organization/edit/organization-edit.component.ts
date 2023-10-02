@@ -24,11 +24,14 @@ export class OrganizationEditComponent {
 
   async ngOnInit(): Promise<void> {
     await this.initData();
+    this.isLoading = false;
   }
 
   async handleSubmit(organizationCreate: OrganizationCreate) {
+    if (!this.organization) return;
+
     this.isSubmitting = true;
-    const result = await this.organizationService.editOrganization(this.id, organizationCreate);
+    const result = await this.organizationService.editOrganization(this.organization?.id.toString(), organizationCreate);
     if (result?.id) {
       this.router.navigate([routePaths.organization, this.id]);
     } else {
@@ -42,6 +45,5 @@ export class OrganizationEditComponent {
 
   private async initData(): Promise<void> {
     this.organization = await this.organizationService.getOrganization(this.id);
-    this.isLoading = false;
   }
 }

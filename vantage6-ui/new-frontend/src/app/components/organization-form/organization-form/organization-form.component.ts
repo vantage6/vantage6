@@ -8,9 +8,9 @@ import { Organization, OrganizationCreate } from 'src/app/models/api/organizatio
   styleUrls: ['./organization-form.component.scss']
 })
 export class OrganizationFormComponent implements OnInit {
+  @Input() organization?: Organization;
   @Output() onCancel: EventEmitter<void> = new EventEmitter();
   @Output() onSubmit: EventEmitter<OrganizationCreate> = new EventEmitter();
-  @Input() organization?: Organization;
 
   form = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
@@ -28,7 +28,7 @@ export class OrganizationFormComponent implements OnInit {
     }
   }
 
-  async handleSubmit() {
+  handleSubmit() {
     if (this.form.valid) {
       this.onSubmit.emit(this.form.getRawValue());
     }

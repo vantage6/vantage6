@@ -33,4 +33,4 @@ export interface CollaborationForm {
   registerNodes: boolean;
 }
 
-export type CollaborationCreate = Omit<CollaborationForm, 'registerNodes'>;
+export type CollaborationCreate = Pick<CollaborationForm, 'name' | 'encrypted' | 'organization_ids'>;
