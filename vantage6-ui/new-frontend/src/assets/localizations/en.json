@@ -169,6 +169,11 @@
       "filter": "Filter"
     }
   },
+  "node-edit": {
+    "actions": {
+      "edit": "Change name"
+    }
+  },
   "task-status": {
     "Active": "Active",
     "Completed": "Completed",

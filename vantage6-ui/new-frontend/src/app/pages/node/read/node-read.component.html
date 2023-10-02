@@ -19,39 +19,58 @@
   <mat-card>
     <mat-card-content>
       <mat-accordion class="card-accordion">
-        <mat-expansion-panel *ngFor="let node of nodes" (click)="handleNodeChange(node.id)">
+        <mat-expansion-panel *ngFor="let node of nodes" (opened)="handleNodeChange(node.id)">
           <mat-expansion-panel-header>
             <mat-panel-title>{{ node.name }}</mat-panel-title>
           </mat-expansion-panel-header>
           <ng-template matExpansionPanelContent>
             <mat-spinner *ngIf="!selectedNode" diameter="48"></mat-spinner>
-            <div class="data-list" *ngIf="selectedNode">
-              <div class="data-list__item data-list__item--big">
-                <b>{{ "node.name" | translate }}</b>
-                <span>{{ selectedNode.name || "-" }}</span>
+            <ng-container *ngIf="selectedNode">
+              <div class="data-list">
+                <div class="data-list__item data-list__item--big">
+                  <ng-container *ngIf="!isEdit">
+                    <b>{{ "node.name" | translate }}</b>
+                    <span>{{ selectedNode.name || "-" }}</span>
+                  </ng-container>
+                  <mat-form-field *ngIf="isEdit">
+                    <mat-label>{{ "node.name" | translate }}</mat-label>
+                    <input matInput type="text" [formControl]="name" />
+                  </mat-form-field>
+                </div>
+                <div class="data-list__item">
+                  <b>{{ "node.status" | translate }}</b>
+                  <app-chip
+                    label="{{
+                      selectedNode.status === nodeStatus.Online ? ('general.online' | translate) : ('general.offline' | translate)
+                    }}"
+                    [type]="selectedNode.status === nodeStatus.Online ? 'success' : 'error'"
+                  ></app-chip>
+                </div>
+                <div class="data-list__item">
+                  <b>{{ "node.organization" | translate }}</b>
+                  <app-chip *ngIf="selectedNode.organization" label="{{ selectedNode.organization.name }}"></app-chip>
+                  <span *ngIf="!selectedNode.organization">-</span>
+                </div>
+                <div class="data-list__item">
+                  <b>{{ "node.collaboration" | translate }}</b>
+                  <app-chip *ngIf="selectedNode.collaboration" label="{{ selectedNode.collaboration.name }}"></app-chip>
+                  <span *ngIf="!selectedNode.collaboration">-</span>
+                </div>
+                <div class="data-list__item">
+                  <b>{{ "node.last-seen" | translate }}</b>
+                  <span>{{ selectedNode.last_seen ? (selectedNode.last_seen | date: "MMMM d, y, HH:mm:ss") : "Never" }}</span>
+                </div>
               </div>
-              <div class="data-list__item">
-                <b>{{ "node.status" | translate }}</b>
-                <app-chip
-                  label="{{ selectedNode.status === nodeStatus.Online ? ('general.online' | translate) : ('general.offline' | translate) }}"
-                  [type]="selectedNode.status === nodeStatus.Online ? 'success' : 'error'"
-                ></app-chip>
-              </div>
-              <div class="data-list__item">
-                <b>{{ "node.organization" | translate }}</b>
-                <app-chip *ngIf="selectedNode.organization" label="{{ selectedNode.organization.name }}"></app-chip>
-                <span *ngIf="!selectedNode.organization">-</span>
-              </div>
-              <div class="data-list__item">
-                <b>{{ "node.collaboration" | translate }}</b>
-                <app-chip *ngIf="selectedNode.collaboration" label="{{ selectedNode.collaboration.name }}"></app-chip>
-                <span *ngIf="!selectedNode.collaboration">-</span>
-              </div>
-              <div class="data-list__item">
-                <b>{{ "node.last-seen" | translate }}</b>
-                <span>{{ selectedNode.last_seen ? (selectedNode.last_seen | date: "MMMM d, y, HH:mm:ss") : "Never" }}</span>
-              </div>
-            </div>
+              <ng-container *ngIf="canEdit">
+                <div class="node-actions button-container" *ngIf="!isEdit">
+                  <button mat-flat-button color="primary" (click)="handleEditStart()">{{ "node-edit.actions.edit" | translate }}</button>
+                </div>
+                <div class="node-actions button-container" *ngIf="isEdit">
+                  <button mat-flat-button color="primary" (click)="handleEditSubmit()">{{ "general.submit" | translate }}</button>
+                  <button mat-flat-button (click)="handleEditCancel()">{{ "general.cancel" | translate }}</button>
+                </div>
+              </ng-container>
+            </ng-container>
           </ng-template>
         </mat-expansion-panel>
       </mat-accordion>

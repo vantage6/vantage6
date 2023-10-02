@@ -1,10 +1,15 @@
 import { BaseLink } from './base.model';
-import { BaseCollaboration, Collaboration } from './collaboration.model';
-import { BaseOrganization, Organization } from './organization.model';
+import { BaseCollaboration } from './collaboration.model';
+import { BaseOrganization } from './organization.model';
 
 export enum NodeLazyProperties {
   Organization = 'organization',
   Collaboration = 'collaboration'
+}
+
+export enum NodeSortProperties {
+  ID = 'id',
+  Name = 'name'
 }
 
 export enum DatabaseType {
@@ -56,4 +61,8 @@ export interface NodeCreate {
   name: string;
   organization_id: number;
   collaboration_id: number;
+}
+
+export interface NodeEdit {
+  name: string;
 }

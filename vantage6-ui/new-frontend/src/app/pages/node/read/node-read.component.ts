@@ -1,11 +1,15 @@
 import { Component, OnInit } from '@angular/core';
-import { BaseNode, Node, NodeLazyProperties, NodeStatus } from '../../../models/api/node.model';
+import { BaseNode, Node, NodeEdit, NodeLazyProperties, NodeSortProperties, NodeStatus } from '../../../models/api/node.model';
 import { NodeService } from 'src/app/services/node.service';
 import { BaseOrganization } from 'src/app/models/api/organization.model';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { MatSelectChange } from '@angular/material/select';
 import { CollaborationService } from 'src/app/services/collaboration.service';
 import { BaseCollaboration } from 'src/app/models/api/collaboration.model';
+import { MatDialog } from '@angular/material/dialog';
+import { FormControl, Validators } from '@angular/forms';
+import { AuthService } from 'src/app/services/auth.service';
+import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 
 @Component({
   selector: 'app-node-read',
@@ -16,7 +20,10 @@ import { BaseCollaboration } from 'src/app/models/api/collaboration.model';
 export class NodeReadComponent implements OnInit {
   nodeStatus = NodeStatus;
 
-  isLoading = true;
+  name = new FormControl<string>('', [Validators.required]);
+  isLoading: boolean = true;
+  canEdit: boolean = false;
+  isEdit: boolean = false;
   nodes: BaseNode[] = [];
   organizations: BaseOrganization[] = [];
   collaborations: BaseCollaboration[] = [];
@@ -25,10 +32,12 @@ export class NodeReadComponent implements OnInit {
   constructor(
     private nodeService: NodeService,
     private organizationService: OrganizationService,
-    private collaborationService: CollaborationService
+    private collaborationService: CollaborationService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
+    this.canEdit = this.authService.isOperationAllowed(ScopeType.ANY, ResourceType.NODE, OperationType.EDIT);
     this.initData();
   }
 
@@ -42,7 +51,30 @@ export class NodeReadComponent implements OnInit {
   }
 
   async handleNodeChange(nodeID: number): Promise<void> {
+    this.isEdit = false;
     await this.getNode(nodeID);
+  }
+
+  handleEditStart(): void {
+    this.isEdit = true;
+  }
+
+  async handleEditSubmit(): Promise<void> {
+    if (!this.selectedNode || !this.name.value) return;
+
+    this.isEdit = false;
+    const nodeEdit: NodeEdit = {
+      name: this.name.value
+    };
+    const result = await this.nodeService.editNode(this.selectedNode.id.toString(), nodeEdit);
+    if (result.id) {
+      this.selectedNode.name = result.name;
+      this.nodes.find((node) => node.id === result.id)!.name = result.name;
+    }
+  }
+
+  handleEditCancel(): void {
+    this.isEdit = false;
   }
 
   private async initData(): Promise<void> {
@@ -50,7 +82,7 @@ export class NodeReadComponent implements OnInit {
 
     this.organizations = await this.organizationService.getOrganizations();
     this.collaborations = await this.collaborationService.getCollaborations();
-    this.nodes = await this.nodeService.getNodes();
+    this.nodes = await this.nodeService.getNodes(NodeSortProperties.Name);
     this.isLoading = false;
   }
 
@@ -60,5 +92,6 @@ export class NodeReadComponent implements OnInit {
       NodeLazyProperties.Organization,
       NodeLazyProperties.Collaboration
     ]);
+    this.name.setValue(this.selectedNode.name);
   }
 }

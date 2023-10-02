@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { BaseNode, Node, NodeCreate, NodeLazyProperties } from '../models/api/node.model';
+import { BaseNode, Node, NodeCreate, NodeEdit, NodeLazyProperties, NodeSortProperties } from '../models/api/node.model';
 import { BaseCollaboration, Collaboration } from '../models/api/collaboration.model';
 import { OrganizationService } from './organization.service';
 import { Pagination } from '../models/api/pagination.model';
@@ -14,8 +14,8 @@ export class NodeService {
     private organizationService: OrganizationService
   ) {}
 
-  async getNodes(): Promise<BaseNode[]> {
-    const result = await this.apiService.getForApi<Pagination<BaseNode>>('/node');
+  async getNodes(sortProperty: NodeSortProperties = NodeSortProperties.ID): Promise<BaseNode[]> {
+    const result = await this.apiService.getForApi<Pagination<BaseNode>>('/node', { sort: sortProperty });
     return result.data;
   }
 
@@ -61,5 +61,9 @@ export class NodeService {
     };
 
     return await this.apiService.postForApi<BaseNode>(`/node`, node);
+  }
+
+  async editNode(nodeID: string, nodeEdit: NodeEdit): Promise<BaseNode> {
+    return await this.apiService.patchForApi<BaseNode>(`/node/${nodeID}`, nodeEdit);
   }
 }
