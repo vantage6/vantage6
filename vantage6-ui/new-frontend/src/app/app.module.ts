@@ -53,6 +53,8 @@ import { CollaborationCreateComponent } from './pages/collaboration/create/colla
 import { UserCreateComponent } from './pages/user/create/user-create.component';
 import { OrganizationListComponent } from './pages/organization/list/organization-list.component';
 import { NodeReadComponent } from './pages/node/read/node-read.component';
+import { OrganizationEditComponent } from './pages/organization/edit/organization-edit.component';
+import { OrganizationFormComponent } from './components/organization-form/organization-form/organization-form.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -87,7 +89,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     UserReadComponent,
     CollaborationCreateComponent,
     UserCreateComponent,
-    NodeReadComponent
+    NodeReadComponent,
+    OrganizationEditComponent,
+    OrganizationFormComponent
   ],
   imports: [
     BrowserModule,

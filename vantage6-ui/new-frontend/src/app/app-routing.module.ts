@@ -20,6 +20,7 @@ import { CollaborationCreateComponent } from './pages/collaboration/create/colla
 import { UserCreateComponent } from './pages/user/create/user-create.component';
 import { OrganizationListComponent } from './pages/organization/list/organization-list.component';
 import { NodeReadComponent } from './pages/node/read/node-read.component';
+import { OrganizationEditComponent } from './pages/organization/edit/organization-edit.component';
 
 const routes: Routes = [
   {
@@ -80,6 +81,11 @@ const routes: Routes = [
       {
         path: routerConfig.organizationCreate,
         component: OrganizationCreateComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
+        path: routerConfig.organizationEdit,
+        component: OrganizationEditComponent,
         canActivate: [authenticationGuard()]
       },
       {

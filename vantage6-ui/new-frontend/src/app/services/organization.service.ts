@@ -60,4 +60,12 @@ export class OrganizationService {
       return null;
     }
   }
+
+  async editOrganization(organizationID: string, organization: OrganizationCreate): Promise<BaseOrganization | null> {
+    try {
+      return await this.apiService.patchForApi<BaseOrganization>(`/organization/${organizationID}`, organization);
+    } catch {
+      return null;
+    }
+  }
 }

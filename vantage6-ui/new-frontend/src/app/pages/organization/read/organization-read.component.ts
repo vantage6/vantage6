@@ -1,8 +1,11 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { Organization, OrganizationLazyProperties } from 'src/app/models/api/organization.model';
+import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
+import { AuthService } from 'src/app/services/auth.service';
 import { OrganizationService } from 'src/app/services/organization.service';
 
 @Component({
@@ -15,16 +18,24 @@ export class OrganizationReadComponent implements OnInit {
   routes = routePaths;
   nodeStatus = NodeStatus;
 
-  @Input() id = '';
+  @Input() id: string = '';
 
-  isLoading = true;
+  isLoading: boolean = true;
+  canEdit: boolean = false;
   organization?: Organization;
   collaborationTable?: TableData;
 
-  constructor(private organizationService: OrganizationService) {}
+  constructor(
+    private organizationService: OrganizationService,
+    private authService: AuthService
+  ) {}
 
   async ngOnInit(): Promise<void> {
-    this.initData();
+    this.canEdit =
+      this.authService.isOperationAllowed(ScopeType.GLOBAL, ResourceType.ORGANIZATION, OperationType.EDIT) ||
+      this.authService.isOperationAllowed(ScopeType.ORGANIZATION, ResourceType.ORGANIZATION, OperationType.EDIT) ||
+      this.authService.isOperationAllowed(ScopeType.COLLABORATION, ResourceType.ORGANIZATION, OperationType.EDIT);
+    await this.initData();
   }
 
   handleCollaborationClick(id: string): void {

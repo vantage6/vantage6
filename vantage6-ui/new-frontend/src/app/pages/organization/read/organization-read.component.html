@@ -3,6 +3,15 @@
     <button actions mat-flat-button color="primary" [routerLink]="routes.collaborations">
       <mat-icon>arrow_back</mat-icon>{{ "organization-list.title" | translate }}
     </button>
+    <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="canEdit">
+      <mat-icon>more_vert</mat-icon>
+    </button>
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item *ngIf="canEdit" [routerLink]="[routes.organizationEdit, id]">
+        <mat-icon>edit</mat-icon>
+        <span>{{ "general.edit" | translate }}</span>
+      </button>
+    </mat-menu>
   </app-page-header>
   <mat-card>
     <mat-card-header>

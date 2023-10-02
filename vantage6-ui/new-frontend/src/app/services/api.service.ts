@@ -46,6 +46,14 @@ export class ApiService {
     );
   }
 
+  async patchForApi<T>(path: string, body: any): Promise<T> {
+    return await this.handleResult(
+      this.http.patch<T>(environment.api_url + path, body, {
+        headers: this.getApiAuthenticationHeaders()
+      })
+    );
+  }
+
   async deleteForApi(path: string): Promise<any> {
     return await this.handleResult(
       this.http.delete(environment.api_url + path, {
