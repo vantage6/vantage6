@@ -50,10 +50,6 @@ export class UserReadComponent implements OnInit {
     this.isLoading = false;
   }
 
-  handleEdit(): void {
-    //TODO: Add navigation to edit page
-  }
-
   async handleDelete(): Promise<void> {
     if (!this.user) return;
 

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { BaseUser, User, UserCreate, UserLazyProperties } from '../models/api/user.model';
+import { BaseUser, User, UserCreate, UserEdit, UserLazyProperties } from '../models/api/user.model';
 import { Pagination } from '../models/api/pagination.model';
 
 @Injectable({
@@ -37,6 +37,10 @@ export class UserService {
 
   async createUser(user: UserCreate): Promise<BaseUser> {
     return await this.apiService.postForApi<BaseUser>(`/user`, user);
+  }
+
+  async editUser(userID: string, user: UserEdit): Promise<BaseUser> {
+    return await this.apiService.patchForApi<BaseUser>(`/user/${userID}`, user);
   }
 
   async delete(id: number): Promise<void> {

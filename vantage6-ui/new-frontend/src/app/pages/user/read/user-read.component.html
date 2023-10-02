@@ -7,7 +7,7 @@
       <mat-icon>more_vert</mat-icon>
     </button>
     <mat-menu #menu="matMenu">
-      <button mat-menu-item *ngIf="canEdit" (click)="handleEdit()">
+      <button mat-menu-item *ngIf="canEdit" [routerLink]="[routes.userEdit, id]">
         <mat-icon>edit</mat-icon>
         <span>{{ "general.edit" | translate }}</span>
       </button>

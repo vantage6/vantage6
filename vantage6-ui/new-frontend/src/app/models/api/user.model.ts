@@ -27,12 +27,17 @@ export interface User {
   roles: Role[];
 }
 
-export interface UserCreate {
+export interface UserForm {
   username: string;
   email: string;
   password: string;
+  passwordRepeat: string;
   firstname: string;
   lastname: string;
   organization_id: number;
   roles: number[];
 }
+
+export type UserCreate = Pick<UserForm, 'username' | 'email' | 'password' | 'firstname' | 'lastname' | 'organization_id' | 'roles'>;
+
+export type UserEdit = Pick<UserForm, 'username' | 'email' | 'firstname' | 'lastname' | 'roles'>;

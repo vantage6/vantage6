@@ -34,10 +34,12 @@ export class CollaborationEditComponent {
   }
 
   async handleSubmit(collaborationForm: CollaborationForm) {
+    if (!this.collaboration) return;
+
     this.isSubmitting = true;
 
     const collaborationCreate: CollaborationCreate = (({ registerNodes, ...data }) => data)(collaborationForm);
-    const result = await this.collaborationService.editCollaboration(this.id, collaborationCreate);
+    const result = await this.collaborationService.editCollaboration(this.collaboration?.id.toString(), collaborationCreate);
 
     if (result?.id) {
       if (collaborationForm.registerNodes && collaborationForm.organization_ids) {
