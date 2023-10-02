@@ -114,23 +114,21 @@ def data(number_of_databases: int = 1) -> callable:
             """
             if mock_data is not None:
                 return func(*mock_data, *args, **kwargs)
-            # query to execute on the database
-            input_file = os.environ["INPUT_FILE"]
-            info(f"Reading input file {input_file}")
 
             # read the labels that the user requested, which is a comma
-            # separated list of labels.
+            # separated list of labels. Be sure to keep only non-empty labels
             labels = os.environ["USER_REQUESTED_DATABASE_LABELS"]
-            labels = labels.split(',')
+            labels = [label for label in labels.split(',') if label != '']
 
             # check if user provided enough databases
             if len(labels) < number_of_databases:
-                error(f"User provided {len(labels)} databases, but algorithm "
-                      f"requires {number_of_databases} databases. Exiting...")
+                error(f"Algorithm requires {number_of_databases} databases "
+                      f"but only {len(labels)} were provided. "
+                      "Exiting...")
                 exit(1)
             elif len(labels) > number_of_databases:
-                warn(f"User provided {len(labels)} databases, but algorithm "
-                     f"requires {number_of_databases} databases. Using the "
+                warn(f"Algorithm requires only {number_of_databases} databases"
+                     f", but {len(labels)} were provided. Using the "
                      f"first {number_of_databases} databases.")
 
             for i in range(number_of_databases):
