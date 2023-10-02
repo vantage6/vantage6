@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
-import { BaseUser } from 'src/app/models/api/user.model';
+import { BaseUser, UserSortProperties } from 'src/app/models/api/user.model';
 import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
 import { UserService } from 'src/app/services/user.service';
@@ -79,7 +79,7 @@ export class UserListComponent implements OnInit, OnDestroy {
   }
 
   private async getUsers() {
-    const result = await this.userService.getPaginatedUsers(this.currentPage);
+    const result = await this.userService.getPaginatedUsers(this.currentPage, UserSortProperties.Username);
     this.users = result.data;
     this.pagination = result.links;
   }

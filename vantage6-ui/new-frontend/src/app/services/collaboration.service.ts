@@ -1,7 +1,13 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import { Pagination } from '../models/api/pagination.model';
-import { BaseCollaboration, Collaboration, CollaborationCreate, CollaborationLazyProperties } from '../models/api/collaboration.model';
+import {
+  BaseCollaboration,
+  Collaboration,
+  CollaborationCreate,
+  CollaborationLazyProperties,
+  CollaborationSortProperties
+} from '../models/api/collaboration.model';
 
 @Injectable({
   providedIn: 'root'
@@ -9,13 +15,16 @@ import { BaseCollaboration, Collaboration, CollaborationCreate, CollaborationLaz
 export class CollaborationService {
   constructor(private apiService: ApiService) {}
 
-  async getCollaborations(): Promise<BaseCollaboration[]> {
-    const result = await this.apiService.getForApi<Pagination<BaseCollaboration>>('/collaboration');
+  async getCollaborations(sortProperty: CollaborationSortProperties = CollaborationSortProperties.ID): Promise<BaseCollaboration[]> {
+    const result = await this.apiService.getForApi<Pagination<BaseCollaboration>>('/collaboration', { sort: sortProperty });
     return result.data;
   }
 
-  async getPaginatedCollaborations(currentPage: number): Promise<Pagination<BaseCollaboration>> {
-    const result = await this.apiService.getForApiWithPagination<BaseCollaboration>(`/collaboration`, currentPage);
+  async getPaginatedCollaborations(
+    currentPage: number,
+    sortProperty: CollaborationSortProperties = CollaborationSortProperties.ID
+  ): Promise<Pagination<BaseCollaboration>> {
+    const result = await this.apiService.getForApiWithPagination<BaseCollaboration>(`/collaboration`, currentPage, { sort: sortProperty });
     return result;
   }
 

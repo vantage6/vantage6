@@ -3,14 +3,14 @@ import { BaseOrganization } from './organization.model';
 import { BaseUser } from './user.model';
 import { NodeStatus } from './node.model';
 
-export enum TaskListParameters {
-  collaboration = 'collaboration_id',
-  user = 'init_user_id'
-}
-
 export enum TaskLazyProperties {
   InitOrg = 'init_org',
   InitUser = 'init_user'
+}
+
+export enum TaskSortProperties {
+  ID = 'id',
+  Name = 'name'
 }
 
 export enum TaskStatus {
@@ -23,6 +23,12 @@ export enum TaskStatus {
   NoDockerImage = 'non-existing Docker image',
   Crashed = 'crashed',
   Killed = 'killed by user'
+}
+
+export interface GetTaskParameters {
+  collaboration_id?: string;
+  init_user_id?: string;
+  sort?: TaskSortProperties;
 }
 
 export interface BaseTask {

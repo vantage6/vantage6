@@ -20,17 +20,13 @@ export class ApiService {
     );
   }
 
-  async getForApiWithPagination<T>(path: string, currentPage: number, parameters?: Map<string, string>): Promise<Pagination<T>> {
-    const params = parameters ? new URLSearchParams() : null;
-    parameters?.forEach((value, key) => {
-      params?.append(key, value);
-    });
-
+  async getForApiWithPagination<T>(path: string, currentPage: number, parameters: object | null = null): Promise<Pagination<T>> {
     return await this.handleResultForPagination(
-      this.http.get<Pagination<T>>(`${environment.api_url}${path}${params ? '?' + params.toString() : ''}`, {
+      this.http.get<Pagination<T>>(`${environment.api_url}${path}`, {
         headers: this.getApiAuthenticationHeaders(),
         observe: 'response',
         params: {
+          ...parameters,
           page: currentPage,
           per_page: '10'
         }

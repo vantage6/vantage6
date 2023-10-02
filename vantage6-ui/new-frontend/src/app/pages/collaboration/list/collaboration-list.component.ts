@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
-import { BaseCollaboration } from 'src/app/models/api/collaboration.model';
+import { BaseCollaboration, CollaborationSortProperties } from 'src/app/models/api/collaboration.model';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { routePaths } from 'src/app/routes';
@@ -61,7 +61,7 @@ export class CollaborationListComponent implements OnInit {
   }
 
   private async getCollaborations() {
-    const result = await this.collaborationService.getPaginatedCollaborations(this.currentPage);
+    const result = await this.collaborationService.getPaginatedCollaborations(this.currentPage, CollaborationSortProperties.Name);
     this.collaborations = result.data;
     this.pagination = result.links;
   }

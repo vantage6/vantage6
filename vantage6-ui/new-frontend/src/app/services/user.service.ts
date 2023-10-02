@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { BaseUser, User, UserCreate, UserEdit, UserLazyProperties } from '../models/api/user.model';
+import { BaseUser, User, UserCreate, UserEdit, UserLazyProperties, UserSortProperties } from '../models/api/user.model';
 import { Pagination } from '../models/api/pagination.model';
 
 @Injectable({
@@ -9,8 +9,8 @@ import { Pagination } from '../models/api/pagination.model';
 export class UserService {
   constructor(private apiService: ApiService) {}
 
-  async getPaginatedUsers(currentPage: number): Promise<Pagination<BaseUser>> {
-    const result = await this.apiService.getForApiWithPagination<BaseUser>(`/user`, currentPage);
+  async getPaginatedUsers(currentPage: number, sortProperty: UserSortProperties = UserSortProperties.ID): Promise<Pagination<BaseUser>> {
+    const result = await this.apiService.getForApiWithPagination<BaseUser>(`/user`, currentPage, { sort: sortProperty });
     return result;
   }
 

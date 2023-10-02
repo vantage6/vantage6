@@ -8,6 +8,11 @@ export enum CollaborationLazyProperties {
   Tasks = 'tasks'
 }
 
+export enum CollaborationSortProperties {
+  ID = 'id',
+  Name = 'name'
+}
+
 export interface BaseCollaboration {
   id: number;
   name: string;

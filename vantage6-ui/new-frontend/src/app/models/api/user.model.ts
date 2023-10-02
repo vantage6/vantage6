@@ -7,6 +7,11 @@ export enum UserLazyProperties {
   Roles = 'roles'
 }
 
+export enum UserSortProperties {
+  ID = 'id',
+  Username = 'username'
+}
+
 export interface BaseUser {
   id: number;
   username: string;

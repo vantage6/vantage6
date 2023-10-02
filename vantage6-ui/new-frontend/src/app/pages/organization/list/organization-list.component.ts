@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
-import { BaseOrganization } from 'src/app/models/api/organization.model';
+import { BaseOrganization, OrganizationSortProperties } from 'src/app/models/api/organization.model';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { routePaths } from 'src/app/routes';
@@ -61,7 +61,7 @@ export class OrganizationListComponent implements OnInit {
   }
 
   private async getOrganizations() {
-    const result = await this.organizationService.getPaginatedOrganizations(this.currentPage);
+    const result = await this.organizationService.getPaginatedOrganizations(this.currentPage, OrganizationSortProperties.Name);
     this.organizations = result.data;
     this.pagination = result.links;
   }

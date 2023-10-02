@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { BaseNode, Node, NodeEdit, NodeLazyProperties, NodeSortProperties, NodeStatus } from '../../../models/api/node.model';
 import { NodeService } from 'src/app/services/node.service';
-import { BaseOrganization } from 'src/app/models/api/organization.model';
+import { BaseOrganization, OrganizationSortProperties } from 'src/app/models/api/organization.model';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { MatSelectChange } from '@angular/material/select';
 import { CollaborationService } from 'src/app/services/collaboration.service';
-import { BaseCollaboration } from 'src/app/models/api/collaboration.model';
+import { BaseCollaboration, CollaborationSortProperties } from 'src/app/models/api/collaboration.model';
 import { MatDialog } from '@angular/material/dialog';
 import { FormControl, Validators } from '@angular/forms';
 import { AuthService } from 'src/app/services/auth.service';
@@ -80,8 +80,8 @@ export class NodeReadComponent implements OnInit {
   private async initData(): Promise<void> {
     this.isLoading = true;
 
-    this.organizations = await this.organizationService.getOrganizations();
-    this.collaborations = await this.collaborationService.getCollaborations();
+    this.organizations = await this.organizationService.getOrganizations(OrganizationSortProperties.Name);
+    this.collaborations = await this.collaborationService.getCollaborations(CollaborationSortProperties.Name);
     this.nodes = await this.nodeService.getNodes(NodeSortProperties.Name);
     this.isLoading = false;
   }
