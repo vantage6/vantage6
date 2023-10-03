@@ -11,11 +11,6 @@
   color: $dark-primary-text;
   outline: none;
 
-  &:focus-visible,
-  &:hover {
-    background-color: #e0e0e0;
-  }
-
   &--small {
     padding: $spacing-px-1 $spacing-px-3;
   }
@@ -23,7 +18,8 @@
   &--active {
     background-color: $active-500;
 
-    &:focus-visible {
+    &.chip--clickable:hover,
+    &.chip--clickable:focus-visible {
       background-color: $active-600;
     }
   }
@@ -31,8 +27,8 @@
   &--success {
     background-color: $success-500;
 
-    &:focus-visible,
-    &:hover {
+    &.chip--clickable:hover,
+    &.chip--clickable:focus-visible {
       background-color: $success-600;
     }
   }
@@ -40,8 +36,8 @@
   &--warning {
     background-color: $warning-500;
 
-    &:focus-visible,
-    &:hover {
+    &.chip--clickable:hover,
+    &.chip--clickable:focus-visible {
       background-color: $warning-600;
     }
   }
@@ -50,13 +46,18 @@
     background-color: $error-500;
     color: $light-primary-text;
 
-    &:focus-visible,
-    &:hover {
+    &.chip--clickable:hover,
+    &.chip--clickable:focus-visible {
       background-color: $error-600;
     }
   }
 
   &--clickable {
     cursor: pointer;
+
+    &:focus-visible,
+    &:hover {
+      background-color: #e0e0e0;
+    }
   }
 }
