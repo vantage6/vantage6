@@ -41,11 +41,6 @@ export class CollaborationReadComponent implements OnInit {
     this.initData();
   }
 
-  handleNodeClick(id: number): void {
-    //TODO: Add navigation to node page
-    console.log(id);
-  }
-
   private async initData(): Promise<void> {
     this.collaboration = await this.collaborationService.getCollaboration(this.id, [
       CollaborationLazyProperties.Organizations,

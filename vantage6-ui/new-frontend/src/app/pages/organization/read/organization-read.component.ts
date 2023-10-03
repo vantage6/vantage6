@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { downloadFile } from 'src/app/helpers/file.helper';
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { Organization, OrganizationLazyProperties } from 'src/app/models/api/organization.model';
@@ -27,6 +27,7 @@ export class OrganizationReadComponent implements OnInit {
   collaborationTable?: TableData;
 
   constructor(
+    private router: Router,
     private organizationService: OrganizationService,
     private authService: AuthService
   ) {}
@@ -44,13 +45,7 @@ export class OrganizationReadComponent implements OnInit {
   }
 
   handleCollaborationClick(id: string): void {
-    //TODO: Add navigation to collaboration page
-    console.log(id);
-  }
-
-  handleNodeClick(id: number): void {
-    //TODO: Add navigation to node page
-    console.log(id);
+    this.router.navigate([routePaths.collaboration, id]);
   }
 
   private async initData() {

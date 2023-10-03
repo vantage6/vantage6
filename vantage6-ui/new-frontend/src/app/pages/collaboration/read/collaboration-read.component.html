@@ -52,8 +52,6 @@
           *ngFor="let node of collaboration.nodes"
           label="{{ node.status === nodeStatus.Online ? node.name : node.name + ' (' + ('general.offline' | translate) + ')' }}"
           [type]="node.status === nodeStatus.Online ? 'success' : 'error'"
-          [clickable]="true"
-          (click)="handleNodeClick(node.id)"
         ></app-chip>
       </div>
     </mat-card-content>
