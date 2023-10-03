@@ -197,5 +197,10 @@
       "admin-leave": "Leave administration",
       "logout": "Logout"
     }
+  },
+  "login": {
+    "title": "Login",
+    "username": "Username",
+    "password": "Password"
   }
 }
