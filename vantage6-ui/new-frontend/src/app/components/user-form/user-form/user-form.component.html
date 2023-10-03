@@ -1,33 +1,33 @@
 <ng-container *ngIf="!isLoading; else loading">
-  <form [formGroup]="form" (ngSubmit)="handleSubmit()">
-    <mat-form-field>
+  <form class="form" [formGroup]="form" (ngSubmit)="handleSubmit()">
+    <mat-form-field subscriptSizing="dynamic">
       <mat-label>{{ "user.username" | translate }}</mat-label>
       <input matInput type="text" formControlName="username" />
     </mat-form-field>
-    <mat-form-field>
+    <mat-form-field subscriptSizing="dynamic">
       <mat-label>{{ "user.email" | translate }}</mat-label>
       <input matInput type="text" formControlName="email" />
     </mat-form-field>
-    <mat-form-field *ngIf="!isEdit">
+    <mat-form-field *ngIf="!isEdit" subscriptSizing="dynamic">
       <mat-label>{{ "user.password" | translate }}</mat-label>
       <input matInput type="password" formControlName="password" />
       <mat-error *ngIf="form.controls.password.hasError('minlength')">{{ "general.validation.password-length" | translate }}</mat-error>
       <mat-error *ngIf="form.controls.password.hasError('pattern')">{{ "general.validation.password-pattern" | translate }}</mat-error>
     </mat-form-field>
-    <mat-form-field *ngIf="!isEdit">
+    <mat-form-field *ngIf="!isEdit" subscriptSizing="dynamic">
       <mat-label>{{ "user.password-repeat" | translate }}</mat-label>
       <input matInput type="password" formControlName="passwordRepeat" />
       <mat-error *ngIf="form.hasError('compare')">{{ "user-create.validation.password-compare" | translate }}</mat-error>
     </mat-form-field>
-    <mat-form-field>
+    <mat-form-field subscriptSizing="dynamic">
       <mat-label>{{ "user.first-name" | translate }}</mat-label>
       <input matInput type="text" formControlName="firstname" />
     </mat-form-field>
-    <mat-form-field>
+    <mat-form-field subscriptSizing="dynamic">
       <mat-label>{{ "user.last-name" | translate }}</mat-label>
       <input matInput type="text" formControlName="lastname" />
     </mat-form-field>
-    <mat-form-field *ngIf="!isEdit">
+    <mat-form-field *ngIf="!isEdit" subscriptSizing="dynamic">
       <mat-label>{{ "user.organization" | translate }}</mat-label>
       <mat-select formControlName="organization_id">
         <mat-option *ngFor="let organization of organizations" [value]="organization.id">
@@ -35,7 +35,7 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
-    <mat-form-field>
+    <mat-form-field subscriptSizing="dynamic">
       <mat-label>{{ "user.roles" | translate }}</mat-label>
       <mat-select formControlName="roles" multiple>
         <mat-option *ngFor="let role of roles" [value]="role.id">

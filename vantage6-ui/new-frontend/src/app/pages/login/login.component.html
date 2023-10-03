@@ -3,12 +3,12 @@
     <mat-card-title>Login</mat-card-title>
   </mat-card-header>
   <mat-card-content>
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-      <mat-form-field>
+    <form class="form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>Username</mat-label>
         <input matInput type="text" formControlName="username" />
       </mat-form-field>
-      <mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>Password</mat-label>
         <input matInput type="password" formControlName="password" />
       </mat-form-field>

@@ -7,9 +7,9 @@
   <mat-card-content>
     <mat-stepper [linear]="true" orientation="vertical" #stepper>
       <mat-step [stepControl]="packageForm">
-        <form [formGroup]="packageForm">
+        <form class="form" [formGroup]="packageForm">
           <ng-template matStepLabel>{{ "task-create.step-package.title" | translate }}</ng-template>
-          <mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
             <mat-label>{{ "task.algorithm" | translate }}</mat-label>
             <mat-select formControlName="algorithmID">
               <mat-option *ngFor="let algorithm of algorithms" [value]="algorithm.id">
@@ -17,11 +17,11 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
-          <mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
             <mat-label>{{ "task.name" | translate }}</mat-label>
             <input matInput type="text" formControlName="name" />
           </mat-form-field>
-          <mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
             <mat-label>{{ "task.description" | translate }}</mat-label>
             <input matInput type="text" formControlName="description" />
           </mat-form-field>
@@ -31,9 +31,9 @@
         </form>
       </mat-step>
       <mat-step [stepControl]="functionForm">
-        <form [formGroup]="functionForm">
+        <form class="form" [formGroup]="functionForm">
           <ng-template matStepLabel>{{ "task-create.step-package.title" | translate }}</ng-template>
-          <mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
             <mat-label>{{ "task.function" | translate }}</mat-label>
             <mat-select formControlName="functionName">
               <mat-option *ngFor="let function of algorithm?.functions" [value]="function.name">
@@ -41,7 +41,7 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
-          <mat-form-field *ngIf="function">
+          <mat-form-field *ngIf="function" subscriptSizing="dynamic">
             <mat-label>{{ "task.organization" | translate }}</mat-label>
             <mat-select *ngIf="function.is_central" formControlName="organizationIDs">
               <mat-option
@@ -72,11 +72,11 @@
         </form>
       </mat-step>
       <mat-step [stepControl]="databaseForm">
-        <form [formGroup]="databaseForm">
+        <form class="form" [formGroup]="databaseForm">
           <ng-template matStepLabel>{{ "task-create.step-database.title" | translate }}</ng-template>
           <ng-container *ngFor="let database of function?.databases">
             <h4>{{ database.name }}</h4>
-            <mat-form-field>
+            <mat-form-field subscriptSizing="dynamic">
               <mat-label>{{ "task.database" | translate }}</mat-label>
               <mat-select [formControlName]="database.name + '_name'">
                 <mat-option *ngFor="let database of databases" [value]="database.name">
@@ -84,11 +84,11 @@
                 </mat-option>
               </mat-select>
             </mat-form-field>
-            <mat-form-field *ngIf="databaseForm.get(database.name + '_query')">
+            <mat-form-field *ngIf="databaseForm.get(database.name + '_query')" subscriptSizing="dynamic">
               <mat-label>{{ "task.query" | translate }}</mat-label>
               <textarea matInput type="text" [formControlName]="database.name + '_query'" rows="4"></textarea>
             </mat-form-field>
-            <mat-form-field *ngIf="databaseForm.get(database.name + '_sheet')">
+            <mat-form-field *ngIf="databaseForm.get(database.name + '_sheet')" subscriptSizing="dynamic">
               <mat-label>{{ "task.sheet" | translate }}</mat-label>
               <input matInput type="text" [formControlName]="database.name + '_sheet'" />
             </mat-form-field>
@@ -100,11 +100,11 @@
         </form>
       </mat-step>
       <mat-step [stepControl]="parameterForm">
-        <form [formGroup]="parameterForm">
+        <form class="form" [formGroup]="parameterForm">
           <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
           <ng-container *ngFor="let argument of function?.arguments">
             <b>{{ argument.description }}</b>
-            <mat-form-field>
+            <mat-form-field subscriptSizing="dynamic">
               <mat-label>{{ argument.name }}</mat-label>
               <input
                 matInput

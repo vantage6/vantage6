@@ -33,7 +33,7 @@
                     <b>{{ "node.name" | translate }}</b>
                     <span>{{ selectedNode.name || "-" }}</span>
                   </ng-container>
-                  <mat-form-field *ngIf="isEdit">
+                  <mat-form-field *ngIf="isEdit" subscriptSizing="dynamic">
                     <mat-label>{{ "node.name" | translate }}</mat-label>
                     <input matInput type="text" [formControl]="name" />
                   </mat-form-field>

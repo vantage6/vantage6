@@ -2,6 +2,7 @@
   <button actions mat-flat-button color="primary" *ngIf="canCreate" [routerLink]="routes.userCreate">
     <mat-icon>add</mat-icon>{{ "user-create.title" | translate }}
   </button>
+  <!-- TODO: Add organization filter -->
 </app-page-header>
 <mat-card *ngIf="!isLoading; else loading">
   <mat-card-content>
