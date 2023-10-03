@@ -50,6 +50,9 @@ class NodeTaskNamespace(ClientNamespace):
             Whether or not the connection is authenticated
         """
         if not authenticated:
+            # Note that if this happens, the server also triggers the
+            # 'on_invalid_token' event defined below. That will reconnect the
+            # node and print warnings, so we don't need to do anything here.
             return
         self.log.info('(Re)Connected to the /tasks namespace')
         self.node_worker_ref.sync_task_queue_with_server()
