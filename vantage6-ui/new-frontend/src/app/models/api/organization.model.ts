@@ -18,6 +18,7 @@ export interface BaseOrganization {
   address2: string;
   country: string;
   domain: string;
+  public_key: string;
   nodes: string;
   collaborations: string;
 }
@@ -29,6 +30,7 @@ export interface Organization {
   address2: string;
   country: string;
   domain: string;
+  public_key: string;
   nodes: BaseNode[];
   collaborations: BaseCollaboration[];
 }
@@ -39,4 +41,5 @@ export interface OrganizationCreate {
   address2?: string | null;
   country?: string | null;
   domain?: string | null;
+  public_key?: string | null;
 }

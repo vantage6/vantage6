@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
+import { readFile } from 'src/app/helpers/file.helper';
 import { Organization, OrganizationCreate } from 'src/app/models/api/organization.model';
 
 @Component({
@@ -17,14 +18,21 @@ export class OrganizationFormComponent implements OnInit {
     address1: '',
     address2: '',
     country: '',
-    domain: ''
+    domain: '',
+    public_key: ''
   });
+  selectedFile: File | null = null;
 
   constructor(private fb: FormBuilder) {}
 
   ngOnInit(): void {
     if (this.organization) {
-      this.form.patchValue(this.organization);
+      this.form.controls.name.setValue(this.organization.name);
+      this.form.controls.address1.setValue(this.organization.address1);
+      this.form.controls.address2.setValue(this.organization.address2);
+      this.form.controls.country.setValue(this.organization.country);
+      this.form.controls.domain.setValue(this.organization.domain);
+      this.form.controls.public_key.setValue(this.organization.public_key || '');
     }
   }
 
@@ -36,5 +44,14 @@ export class OrganizationFormComponent implements OnInit {
 
   handleCancel() {
     this.onCancel.emit();
+  }
+
+  async selectFile(event: Event) {
+    this.selectedFile = (event.target as HTMLInputElement).files?.item(0) || null;
+
+    if (!this.selectedFile) return;
+    const fileData = await readFile(this.selectedFile);
+
+    this.form.controls.public_key.setValue(fileData || '');
   }
 }

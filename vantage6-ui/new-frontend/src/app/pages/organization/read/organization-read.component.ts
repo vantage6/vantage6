@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { downloadFile } from 'src/app/helpers/file.helper';
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { Organization, OrganizationLazyProperties } from 'src/app/models/api/organization.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
@@ -36,6 +37,10 @@ export class OrganizationReadComponent implements OnInit {
       this.authService.isOperationAllowed(ScopeType.ORGANIZATION, ResourceType.ORGANIZATION, OperationType.EDIT) ||
       this.authService.isOperationAllowed(ScopeType.COLLABORATION, ResourceType.ORGANIZATION, OperationType.EDIT);
     await this.initData();
+  }
+
+  handleDownload(): void {
+    downloadFile(this.organization?.public_key || '', `public_key_organization_${this.organization?.name}.txt`);
   }
 
   handleCollaborationClick(id: string): void {

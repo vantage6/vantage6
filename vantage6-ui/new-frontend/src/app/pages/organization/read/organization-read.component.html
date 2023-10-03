@@ -40,6 +40,9 @@
           <span>{{ organization.domain || "-" }}</span>
         </div>
       </div>
+      <div class="details-actions">
+        <button mat-flat-button color="primary" (click)="handleDownload()">Download public key</button>
+      </div>
     </mat-card-content>
   </mat-card>
   <mat-card>
