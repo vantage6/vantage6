@@ -16,7 +16,10 @@ export class CollaborationService {
   constructor(private apiService: ApiService) {}
 
   async getCollaborations(sortProperty: CollaborationSortProperties = CollaborationSortProperties.ID): Promise<BaseCollaboration[]> {
-    const result = await this.apiService.getForApi<Pagination<BaseCollaboration>>('/collaboration', { sort: sortProperty });
+    const result = await this.apiService.getForApi<Pagination<BaseCollaboration>>('/collaboration', {
+      //TODO: Sorting causes backend error
+      //sort: sortProperty
+    });
     return result.data;
   }
 
@@ -24,7 +27,10 @@ export class CollaborationService {
     currentPage: number,
     sortProperty: CollaborationSortProperties = CollaborationSortProperties.ID
   ): Promise<Pagination<BaseCollaboration>> {
-    const result = await this.apiService.getForApiWithPagination<BaseCollaboration>(`/collaboration`, currentPage, { sort: sortProperty });
+    const result = await this.apiService.getForApiWithPagination<BaseCollaboration>(`/collaboration`, currentPage, {
+      //TODO: Sorting causes backend error
+      //sort: sortProperty
+    });
     return result;
   }
 

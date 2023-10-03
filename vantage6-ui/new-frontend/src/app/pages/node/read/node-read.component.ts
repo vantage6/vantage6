@@ -6,10 +6,11 @@ import { OrganizationService } from 'src/app/services/organization.service';
 import { MatSelectChange } from '@angular/material/select';
 import { CollaborationService } from 'src/app/services/collaboration.service';
 import { BaseCollaboration, CollaborationSortProperties } from 'src/app/models/api/collaboration.model';
-import { MatDialog } from '@angular/material/dialog';
 import { FormControl, Validators } from '@angular/forms';
 import { AuthService } from 'src/app/services/auth.service';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
+import { Pagination, PaginationLinks } from 'src/app/models/api/pagination.model';
+import { PageEvent } from '@angular/material/paginator';
 
 @Component({
   selector: 'app-node-read',
@@ -28,6 +29,10 @@ export class NodeReadComponent implements OnInit {
   organizations: BaseOrganization[] = [];
   collaborations: BaseCollaboration[] = [];
   selectedNode?: Node;
+  pagination: PaginationLinks | null = null;
+  currentPage: number = 1;
+  filterType: string = '';
+  filterValue: string = '';
 
   constructor(
     private nodeService: NodeService,
@@ -42,12 +47,20 @@ export class NodeReadComponent implements OnInit {
   }
 
   async handleFilterChange(e: MatSelectChange): Promise<void> {
-    const values = e.value.split(';');
-    if (values[0] === 'organization') {
-      this.nodeService.getNodesForOrganization(e.value[1]);
-    } else if (values[0] === 'collaboration') {
-      this.nodeService.getNodesForCollaboration(e.value[1]);
+    if (e.value) {
+      const values = e.value.split(';');
+      this.filterType = values[0];
+      this.filterValue = values[1];
+    } else {
+      this.filterType = '';
+      this.filterValue = '';
     }
+    await this.getNodes();
+  }
+
+  async handlePageEvent(e: PageEvent) {
+    this.currentPage = e.pageIndex + 1;
+    await this.getNodes();
   }
 
   async handleNodeChange(nodeID: number): Promise<void> {
@@ -80,9 +93,13 @@ export class NodeReadComponent implements OnInit {
   private async initData(): Promise<void> {
     this.isLoading = true;
 
-    this.organizations = await this.organizationService.getOrganizations(OrganizationSortProperties.Name);
-    this.collaborations = await this.collaborationService.getCollaborations(CollaborationSortProperties.Name);
-    this.nodes = await this.nodeService.getNodes(NodeSortProperties.Name);
+    const loadOrganizations = this.organizationService.getOrganizations(OrganizationSortProperties.Name);
+    const loadCollaborations = await this.collaborationService.getCollaborations(CollaborationSortProperties.Name);
+    await Promise.all([loadOrganizations, loadCollaborations, this.getNodes()]).then((values) => {
+      this.organizations = values[0];
+      this.collaborations = values[1];
+    });
+
     this.isLoading = false;
   }
 
@@ -93,5 +110,25 @@ export class NodeReadComponent implements OnInit {
       NodeLazyProperties.Collaboration
     ]);
     this.name.setValue(this.selectedNode.name);
+  }
+
+  private async getNodes(): Promise<void> {
+    let result: Pagination<BaseNode> | null = null;
+    if (this.filterType === 'organization') {
+      result = await this.nodeService.getPaginatedNodes(this.currentPage, {
+        organization_id: this.filterValue,
+        sort: NodeSortProperties.Name
+      });
+    } else if (this.filterType === 'collaboration') {
+      result = await this.nodeService.getPaginatedNodes(this.currentPage, {
+        collaboration_id: this.filterValue,
+        sort: NodeSortProperties.Name
+      });
+    } else {
+      result = await this.nodeService.getPaginatedNodes(this.currentPage, { sort: NodeSortProperties.Name });
+    }
+
+    this.nodes = result.data;
+    this.pagination = result.links;
   }
 }

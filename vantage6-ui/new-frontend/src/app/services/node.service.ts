@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { BaseNode, Node, NodeCreate, NodeEdit, NodeLazyProperties, NodeSortProperties } from '../models/api/node.model';
+import { BaseNode, GetNodeParameters, Node, NodeCreate, NodeEdit, NodeLazyProperties, NodeSortProperties } from '../models/api/node.model';
 import { BaseCollaboration, Collaboration } from '../models/api/collaboration.model';
 import { OrganizationService } from './organization.service';
 import { Pagination } from '../models/api/pagination.model';
@@ -19,14 +19,9 @@ export class NodeService {
     return result.data;
   }
 
-  async getNodesForOrganization(organizationID: string): Promise<BaseNode[]> {
-    const result = await this.apiService.getForApi<Pagination<BaseNode>>('/node', { organization_id: organizationID });
-    return result.data;
-  }
-
-  async getNodesForCollaboration(collaborationID: string): Promise<BaseNode[]> {
-    const result = await this.apiService.getForApi<Pagination<BaseNode>>('/node', { collaboration_id: collaborationID });
-    return result.data;
+  async getPaginatedNodes(currentPage: number, parameters: GetNodeParameters): Promise<Pagination<BaseNode>> {
+    const result = await this.apiService.getForApiWithPagination<BaseNode>('/node', currentPage, parameters);
+    return result;
   }
 
   async getNode(id: string, lazyProperties: NodeLazyProperties[] = []): Promise<Node> {

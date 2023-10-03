@@ -1,7 +1,8 @@
 <app-page-header title="{{ 'node-read.title' | translate }}">
-  <mat-form-field *ngIf="!isLoading" content subscriptSizing="dynamic">
+  <mat-form-field *ngIf="organizations.length > 0 && organizations.length > 0" content subscriptSizing="dynamic">
     <mat-label>{{ "node-read.actions.filter" | translate }}</mat-label>
     <mat-select (selectionChange)="handleFilterChange($event)">
+      <mat-option>{{ "general.none" | translate }}</mat-option>
       <mat-optgroup *ngIf="organizations.length > 0" label="{{ 'node.organization' | translate }}">
         <mat-option *ngFor="let organization of organizations" [value]="'organization;' + organization.id">
           {{ organization.name }}
@@ -74,6 +75,7 @@
           </ng-template>
         </mat-expansion-panel>
       </mat-accordion>
+      <mat-paginator (page)="handlePageEvent($event)" [length]="pagination?.total" pageSize="10" [hidePageSize]="true"></mat-paginator>
     </mat-card-content>
   </mat-card>
 </ng-container>

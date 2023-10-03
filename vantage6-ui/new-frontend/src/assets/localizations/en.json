@@ -11,6 +11,7 @@
     "yes": "Yes",
     "no": "No",
     "offline": "Offline",
+    "none": "None",
     "validation": {
       "password-length": "Password must be at least 8 characters long",
       "password-pattern": "Password must contain a lowercase letter, uppercase letter, number and special character"

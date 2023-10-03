@@ -27,6 +27,12 @@ export enum NodeStatus {
   Offline = 'offline'
 }
 
+export interface GetNodeParameters {
+  organization_id?: string;
+  collaboration_id?: string;
+  sort?: NodeSortProperties;
+}
+
 export interface BaseNode {
   id: number;
   name: string;
