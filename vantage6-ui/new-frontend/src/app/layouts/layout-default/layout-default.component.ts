@@ -28,7 +28,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
   sideNav!: MatSidenav;
 
   constructor(
-    router: Router,
+    private router: Router,
     private breakpointObserver: BreakpointObserver,
     private authService: AuthService,
     public chosenCollaborationService: ChosenCollaborationService
@@ -119,5 +119,10 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
     }
 
     this.navigationLinks = newLinks;
+  }
+
+  handleLogout() {
+    this.authService.logout();
+    this.router.navigate([routePaths.login]);
   }
 }

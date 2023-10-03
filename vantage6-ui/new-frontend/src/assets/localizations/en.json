@@ -190,5 +190,12 @@
   },
   "log-dialog": {
     "title": "Log"
+  },
+  "header": {
+    "actions": {
+      "admin": "Administration",
+      "admin-leave": "Leave administration",
+      "logout": "Logout"
+    }
   }
 }

@@ -6,6 +6,7 @@ import { OperationType, ResourceType, Rule, ScopeType } from '../models/api/rule
 import { Pagination } from '../models/api/pagination.model';
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_ID } from '../models/constants/sessionStorage';
 import { BaseUser } from '../models/api/user.model';
+import { routePaths } from '../routes';
 
 @Injectable({
   providedIn: 'root'
@@ -62,6 +63,10 @@ export class AuthService {
     return !!this.activeRules?.some(
       (rule) => rule.scope.toLowerCase() === scope && rule.name.toLowerCase() === resource && rule.operation.toLowerCase() === operation
     );
+  }
+
+  logout(): void {
+    this.clearSession();
   }
 
   private async getUserRules() {
