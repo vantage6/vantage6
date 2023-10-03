@@ -3,12 +3,13 @@ import { ApiService } from './api.service';
 import { Pagination } from '../models/api/pagination.model';
 import {
   BaseOrganization,
+  GetOrganizationParameters,
   Organization,
   OrganizationCreate,
-  OrganizationLazyProperties,
-  OrganizationSortProperties
+  OrganizationLazyProperties
 } from '../models/api/organization.model';
 import { Role } from '../models/api/role.model';
+import { getLazyProperties } from '../helpers/api.helper';
 
 @Injectable({
   providedIn: 'root'
@@ -16,16 +17,14 @@ import { Role } from '../models/api/role.model';
 export class OrganizationService {
   constructor(private apiService: ApiService) {}
 
-  async getOrganizations(sortProperty: OrganizationSortProperties = OrganizationSortProperties.ID): Promise<BaseOrganization[]> {
-    const result = await this.apiService.getForApi<Pagination<BaseOrganization>>('/organization', { sort: sortProperty });
+  async getOrganizations(parameters?: GetOrganizationParameters): Promise<BaseOrganization[]> {
+    //TODO: Add backend no pagination instead of page size 9999
+    const result = await this.apiService.getForApi<Pagination<BaseOrganization>>('/organization', { ...parameters, per_page: 9999 });
     return result.data;
   }
 
-  async getPaginatedOrganizations(
-    currentPage: number,
-    sortProperty: OrganizationSortProperties = OrganizationSortProperties.ID
-  ): Promise<Pagination<BaseOrganization>> {
-    const result = await this.apiService.getForApiWithPagination<BaseOrganization>(`/organization`, currentPage, { sort: sortProperty });
+  async getPaginatedOrganizations(currentPage: number, parameters?: GetOrganizationParameters): Promise<Pagination<BaseOrganization>> {
+    const result = await this.apiService.getForApiWithPagination<BaseOrganization>(`/organization`, currentPage, parameters);
     return result;
   }
 
@@ -33,15 +32,7 @@ export class OrganizationService {
     const result = await this.apiService.getForApi<BaseOrganization>(`/organization/${id}`);
 
     const organization: Organization = { ...result, nodes: [], collaborations: [] };
-
-    await Promise.all(
-      lazyProperties.map(async (lazyProperty) => {
-        if (!result[lazyProperty]) return;
-
-        const resultProperty = await this.apiService.getForApi<Pagination<any>>(result[lazyProperty]);
-        organization[lazyProperty] = resultProperty.data;
-      })
-    );
+    await getLazyProperties(result, organization, lazyProperties, this.apiService);
 
     return organization;
   }

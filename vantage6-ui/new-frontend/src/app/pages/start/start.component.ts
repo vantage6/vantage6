@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { BaseCollaboration } from 'src/app/models/api/collaboration.model';
+import { BaseCollaboration, CollaborationSortProperties } from 'src/app/models/api/collaboration.model';
 import { routePaths } from 'src/app/routes';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { CollaborationService } from 'src/app/services/collaboration.service';
@@ -21,7 +21,7 @@ export class StartComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
-    this.collaborations = await this.collaborationService.getCollaborations();
+    this.collaborations = await this.collaborationService.getCollaborations({ sort: CollaborationSortProperties.Name });
   }
 
   handleCollaborationClick(collaboration: BaseCollaboration) {

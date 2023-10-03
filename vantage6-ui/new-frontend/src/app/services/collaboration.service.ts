@@ -6,8 +6,9 @@ import {
   Collaboration,
   CollaborationCreate,
   CollaborationLazyProperties,
-  CollaborationSortProperties
+  GetCollaborationParameters
 } from '../models/api/collaboration.model';
+import { getLazyProperties } from '../helpers/api.helper';
 
 @Injectable({
   providedIn: 'root'
@@ -15,22 +16,14 @@ import {
 export class CollaborationService {
   constructor(private apiService: ApiService) {}
 
-  async getCollaborations(sortProperty: CollaborationSortProperties = CollaborationSortProperties.ID): Promise<BaseCollaboration[]> {
-    const result = await this.apiService.getForApi<Pagination<BaseCollaboration>>('/collaboration', {
-      //TODO: Sorting causes backend error
-      //sort: sortProperty
-    });
+  async getCollaborations(parameters?: GetCollaborationParameters): Promise<BaseCollaboration[]> {
+    //TODO: Add backend no pagination instead of page size 9999
+    const result = await this.apiService.getForApi<Pagination<BaseCollaboration>>('/collaboration', { ...parameters, per_page: 9999 });
     return result.data;
   }
 
-  async getPaginatedCollaborations(
-    currentPage: number,
-    sortProperty: CollaborationSortProperties = CollaborationSortProperties.ID
-  ): Promise<Pagination<BaseCollaboration>> {
-    const result = await this.apiService.getForApiWithPagination<BaseCollaboration>(`/collaboration`, currentPage, {
-      //TODO: Sorting causes backend error
-      //sort: sortProperty
-    });
+  async getPaginatedCollaborations(currentPage: number, parameters?: GetCollaborationParameters): Promise<Pagination<BaseCollaboration>> {
+    const result = await this.apiService.getForApiWithPagination<BaseCollaboration>(`/collaboration`, currentPage, parameters);
     return result;
   }
 
@@ -38,15 +31,7 @@ export class CollaborationService {
     const result = await this.apiService.getForApi<BaseCollaboration>(`/collaboration/${collaborationID}`);
 
     const collaboration: Collaboration = { ...result, organizations: [], nodes: [], tasks: [] };
-
-    await Promise.all(
-      lazyProperties.map(async (lazyProperty) => {
-        if (!result[lazyProperty]) return;
-
-        const resultProperty = await this.apiService.getForApi<Pagination<any>>(result[lazyProperty]);
-        collaboration[lazyProperty] = resultProperty.data;
-      })
-    );
+    await getLazyProperties(result, collaboration, lazyProperties, this.apiService);
 
     return collaboration;
   }

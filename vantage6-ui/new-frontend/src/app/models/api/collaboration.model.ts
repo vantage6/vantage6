@@ -13,6 +13,11 @@ export enum CollaborationSortProperties {
   Name = 'name'
 }
 
+export interface GetCollaborationParameters {
+  organization_id?: string;
+  sort?: CollaborationSortProperties;
+}
+
 export interface BaseCollaboration {
   id: number;
   name: string;

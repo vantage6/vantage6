@@ -26,6 +26,7 @@ export class ChosenCollaborationService {
     this.collaboration$.next(collaboration);
   }
 
+  //TODO: Should be in node service
   async getNodes(): Promise<BaseNode[]> {
     const result = await this.apiService.getForApi<Pagination<BaseNode>>(`/node?collaboration_id=${this.collaboration$.value?.id}`);
 

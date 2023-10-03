@@ -66,7 +66,7 @@ export class UserReadComponent implements OnInit {
       if (result === true) {
         if (!this.user) return;
         this.isLoading = true;
-        await this.userService.delete(this.user.id);
+        await this.userService.deleteUser(this.user.id);
         this.router.navigate([routePaths.users]);
       }
     });

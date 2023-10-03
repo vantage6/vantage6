@@ -61,7 +61,7 @@ export class OrganizationListComponent implements OnInit {
   }
 
   private async getOrganizations() {
-    const result = await this.organizationService.getPaginatedOrganizations(this.currentPage, OrganizationSortProperties.Name);
+    const result = await this.organizationService.getPaginatedOrganizations(this.currentPage, { sort: OrganizationSortProperties.Name });
     this.organizations = result.data;
     this.pagination = result.links;
   }

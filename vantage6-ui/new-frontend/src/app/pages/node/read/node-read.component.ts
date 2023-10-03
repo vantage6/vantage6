@@ -93,8 +93,8 @@ export class NodeReadComponent implements OnInit {
   private async initData(): Promise<void> {
     this.isLoading = true;
 
-    const loadOrganizations = this.organizationService.getOrganizations(OrganizationSortProperties.Name);
-    const loadCollaborations = await this.collaborationService.getCollaborations(CollaborationSortProperties.Name);
+    const loadOrganizations = this.organizationService.getOrganizations({ sort: OrganizationSortProperties.Name });
+    const loadCollaborations = await this.collaborationService.getCollaborations({ sort: CollaborationSortProperties.Name });
     await Promise.all([loadOrganizations, loadCollaborations, this.getNodes()]).then((values) => {
       this.organizations = values[0];
       this.collaborations = values[1];

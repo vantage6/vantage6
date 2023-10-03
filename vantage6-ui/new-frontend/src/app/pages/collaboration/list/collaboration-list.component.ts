@@ -61,7 +61,7 @@ export class CollaborationListComponent implements OnInit {
   }
 
   private async getCollaborations() {
-    const result = await this.collaborationService.getPaginatedCollaborations(this.currentPage, CollaborationSortProperties.Name);
+    const result = await this.collaborationService.getPaginatedCollaborations(this.currentPage, { sort: CollaborationSortProperties.Name });
     this.collaborations = result.data;
     this.pagination = result.links;
   }

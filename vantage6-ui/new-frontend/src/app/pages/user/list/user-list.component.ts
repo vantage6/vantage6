@@ -79,7 +79,7 @@ export class UserListComponent implements OnInit, OnDestroy {
   }
 
   private async getUsers() {
-    const result = await this.userService.getPaginatedUsers(this.currentPage, UserSortProperties.Username);
+    const result = await this.userService.getPaginatedUsers(this.currentPage, { sort: UserSortProperties.Username });
     this.users = result.data;
     this.pagination = result.links;
   }

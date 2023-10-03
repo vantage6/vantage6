@@ -12,6 +12,12 @@ export enum UserSortProperties {
   Username = 'username'
 }
 
+export interface GetUserParameters {
+  organization_id?: string;
+  collaboration_id?: string;
+  sort?: UserSortProperties;
+}
+
 export interface BaseUser {
   id: number;
   username: string;

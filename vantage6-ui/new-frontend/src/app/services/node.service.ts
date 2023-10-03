@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { BaseNode, GetNodeParameters, Node, NodeCreate, NodeEdit, NodeLazyProperties, NodeSortProperties } from '../models/api/node.model';
+import { BaseNode, GetNodeParameters, Node, NodeCreate, NodeEdit, NodeLazyProperties } from '../models/api/node.model';
 import { BaseCollaboration, Collaboration } from '../models/api/collaboration.model';
 import { OrganizationService } from './organization.service';
 import { Pagination } from '../models/api/pagination.model';
+import { getLazyProperties } from '../helpers/api.helper';
 
 @Injectable({
   providedIn: 'root'
@@ -14,12 +15,13 @@ export class NodeService {
     private organizationService: OrganizationService
   ) {}
 
-  async getNodes(sortProperty: NodeSortProperties = NodeSortProperties.ID): Promise<BaseNode[]> {
-    const result = await this.apiService.getForApi<Pagination<BaseNode>>('/node', { sort: sortProperty });
+  async getNodes(parameters?: GetNodeParameters): Promise<BaseNode[]> {
+    //TODO: Add backend no pagination instead of page size 9999
+    const result = await this.apiService.getForApi<Pagination<BaseNode>>('/node', { ...parameters, per_page: 9999 });
     return result.data;
   }
 
-  async getPaginatedNodes(currentPage: number, parameters: GetNodeParameters): Promise<Pagination<BaseNode>> {
+  async getPaginatedNodes(currentPage: number, parameters?: GetNodeParameters): Promise<Pagination<BaseNode>> {
     const result = await this.apiService.getForApiWithPagination<BaseNode>('/node', currentPage, parameters);
     return result;
   }
@@ -28,20 +30,7 @@ export class NodeService {
     const result = await this.apiService.getForApi<BaseNode>(`/node/${id}`);
 
     const node: Node = { ...result, organization: undefined, collaboration: undefined };
-
-    await Promise.all(
-      (lazyProperties as string[]).map(async (lazyProperty) => {
-        if (!(result as any)[lazyProperty]) return;
-
-        if ((result as any)[lazyProperty].hasOwnProperty('link') && (result as any)[lazyProperty].link) {
-          const resultProperty = await this.apiService.getForApi<any>((result as any)[lazyProperty].link);
-          (node as any)[lazyProperty] = resultProperty;
-        } else {
-          const resultProperty = await this.apiService.getForApi<Pagination<any>>((result as any)[lazyProperty] as string);
-          (node as any)[lazyProperty] = resultProperty.data;
-        }
-      })
-    );
+    await getLazyProperties(result, node, lazyProperties, this.apiService);
 
     return node;
   }

@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { BaseUser, User, UserCreate, UserEdit, UserLazyProperties, UserSortProperties } from '../models/api/user.model';
+import { BaseUser, GetUserParameters, User, UserCreate, UserEdit, UserLazyProperties, UserSortProperties } from '../models/api/user.model';
 import { Pagination } from '../models/api/pagination.model';
+import { getLazyProperties } from '../helpers/api.helper';
 
 @Injectable({
   providedIn: 'root'
@@ -9,8 +10,8 @@ import { Pagination } from '../models/api/pagination.model';
 export class UserService {
   constructor(private apiService: ApiService) {}
 
-  async getPaginatedUsers(currentPage: number, sortProperty: UserSortProperties = UserSortProperties.ID): Promise<Pagination<BaseUser>> {
-    const result = await this.apiService.getForApiWithPagination<BaseUser>(`/user`, currentPage, { sort: sortProperty });
+  async getPaginatedUsers(currentPage: number, parameters?: GetUserParameters): Promise<Pagination<BaseUser>> {
+    const result = await this.apiService.getForApiWithPagination<BaseUser>(`/user`, currentPage, { ...parameters });
     return result;
   }
 
@@ -18,19 +19,7 @@ export class UserService {
     const result = await this.apiService.getForApi<BaseUser>(`/user/${id}`);
 
     const user: User = { ...result, organization: undefined, roles: [] };
-    await Promise.all(
-      (lazyProperties as string[]).map(async (lazyProperty) => {
-        if (!(result as any)[lazyProperty]) return;
-
-        if ((result as any)[lazyProperty].hasOwnProperty('link') && (result as any)[lazyProperty].link) {
-          const resultProperty = await this.apiService.getForApi<any>((result as any)[lazyProperty].link);
-          (user as any)[lazyProperty] = resultProperty;
-        } else {
-          const resultProperty = await this.apiService.getForApi<Pagination<any>>((result as any)[lazyProperty] as string);
-          (user as any)[lazyProperty] = resultProperty.data;
-        }
-      })
-    );
+    await getLazyProperties(result, user, lazyProperties, this.apiService);
 
     return user;
   }
@@ -43,7 +32,7 @@ export class UserService {
     return await this.apiService.patchForApi<BaseUser>(`/user/${userID}`, user);
   }
 
-  async delete(id: number): Promise<void> {
+  async deleteUser(id: number): Promise<void> {
     return await this.apiService.deleteForApi(`/user/${id}`);
   }
 }

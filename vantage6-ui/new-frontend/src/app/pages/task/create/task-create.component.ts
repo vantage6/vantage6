@@ -99,7 +99,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
       })
     };
 
-    const newTask = await this.taskService.create(createTask);
+    const newTask = await this.taskService.createTask(createTask);
     if (newTask) {
       this.router.navigate([routePaths.task, newTask.id]);
     }

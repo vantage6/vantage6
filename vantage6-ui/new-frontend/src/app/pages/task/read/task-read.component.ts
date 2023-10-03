@@ -122,7 +122,7 @@ export class TaskReadComponent implements OnInit {
       if (result === true) {
         if (!this.task) return;
         this.isLoading = true;
-        await this.taskService.delete(this.task.id);
+        await this.taskService.deleteTask(this.task.id);
         this.router.navigate([routePaths.tasks]);
       }
     });

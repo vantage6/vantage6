@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import { BaseTask, CreateTask, GetTaskParameters, Task, TaskLazyProperties } from '../models/api/task.models';
 import { Pagination } from '../models/api/pagination.model';
+import { getLazyProperties } from '../helpers/api.helper';
 
 @Injectable({
   providedIn: 'root'
@@ -18,19 +19,7 @@ export class TaskService {
     const result = await this.apiService.getForApi<BaseTask>(`/task/${id}`, { include: 'results' });
 
     const task: Task = { ...result, init_org: undefined, init_user: undefined };
-    await Promise.all(
-      (lazyProperties as string[]).map(async (lazyProperty) => {
-        if (!(result as any)[lazyProperty]) return;
-
-        if ((result as any)[lazyProperty].hasOwnProperty('link') && (result as any)[lazyProperty].link) {
-          const resultProperty = await this.apiService.getForApi<any>((result as any)[lazyProperty].link);
-          (task as any)[lazyProperty] = resultProperty;
-        } else {
-          const resultProperty = await this.apiService.getForApi<Pagination<any>>((result as any)[lazyProperty] as string);
-          (task as any)[lazyProperty] = resultProperty.data;
-        }
-      })
-    );
+    await getLazyProperties(result, task, lazyProperties, this.apiService);
 
     //Handle base64 input
     const input = JSON.parse(atob(task.runs[0].input));
@@ -51,11 +40,11 @@ export class TaskService {
     return task;
   }
 
-  async create(createTask: CreateTask): Promise<BaseTask> {
+  async createTask(createTask: CreateTask): Promise<BaseTask> {
     return await this.apiService.postForApi<BaseTask>('/task', createTask);
   }
 
-  async delete(id: number): Promise<void> {
+  async deleteTask(id: number): Promise<void> {
     return await this.apiService.deleteForApi(`/task/${id}`);
   }
 }

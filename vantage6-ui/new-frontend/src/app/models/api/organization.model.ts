@@ -11,6 +11,11 @@ export enum OrganizationSortProperties {
   Name = 'name'
 }
 
+export interface GetOrganizationParameters {
+  collaboration_id?: string;
+  sort?: OrganizationSortProperties;
+}
+
 export interface BaseOrganization {
   id: number;
   name: string;

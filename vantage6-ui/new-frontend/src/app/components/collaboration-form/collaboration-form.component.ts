@@ -67,6 +67,6 @@ export class CollaborationFormComponent implements OnInit {
   }
 
   private async initData(): Promise<void> {
-    this.organizations = await this.organizationService.getOrganizations(OrganizationSortProperties.Name);
+    this.organizations = await this.organizationService.getOrganizations({ sort: OrganizationSortProperties.Name });
   }
 }

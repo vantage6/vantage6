@@ -96,7 +96,7 @@ export class UserFormComponent implements OnInit, OnDestroy {
   }
 
   private async initData(): Promise<void> {
-    this.organizations = await this.organizationService.getOrganizations(OrganizationSortProperties.Name);
+    this.organizations = await this.organizationService.getOrganizations({ sort: OrganizationSortProperties.Name });
   }
 
   private async getRoles(organizationID: number): Promise<void> {
