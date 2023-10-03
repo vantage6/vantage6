@@ -485,7 +485,14 @@ class ClientBase(object):
                         "Skipping decoding as string is detected for %s", field
                     )
                     return decrypted
-            return decrypted.decode(STRING_ENCODING)
+            try:
+                return decrypted.decode(STRING_ENCODING)
+            except Exception:
+                self.log.error(
+                    "Failed to decode the field %s. Skipping decoding, "
+                    "returning bytes object.", field
+                )
+                return decrypted
 
         if is_single_resource:
             if data.get(field):
