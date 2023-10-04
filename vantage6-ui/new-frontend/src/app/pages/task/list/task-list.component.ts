@@ -79,8 +79,7 @@ export class TaskListComponent implements OnInit {
     if (!collaborationID || !userID) return;
 
     const taskData = await this.taskService.getTasks(this.currentPage, {
-      collaboration_id: collaborationID,
-      init_user_id: userID
+      collaboration_id: collaborationID
       //TODO: Sorting causes backend error
       //sort: TaskSortProperties.ID
     });
