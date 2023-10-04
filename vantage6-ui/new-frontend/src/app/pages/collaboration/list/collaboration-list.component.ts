@@ -1,16 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
-import { BaseCollaboration, CollaborationSortProperties } from 'src/app/models/api/collaboration.model';
+import { TranslateService } from '@ngx-translate/core';
+import { CollaborationSortProperties } from 'src/app/models/api/collaboration.model';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
+import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
 import { CollaborationService } from 'src/app/services/collaboration.service';
-
-enum TableRows {
-  Name = 'name'
-}
 
 @Component({
   selector: 'app-collaboration-list',
@@ -19,18 +17,17 @@ enum TableRows {
   host: { '[class.card-container]': 'true' }
 })
 export class CollaborationListComponent implements OnInit {
-  tableRows = TableRows;
   routes = routePaths;
 
   isLoading: boolean = true;
   canCreate: boolean = false;
-  displayedColumns: string[] = [TableRows.Name];
-  collaborations: BaseCollaboration[] = [];
+  table?: TableData;
   pagination: PaginationLinks | null = null;
   currentPage: number = 1;
 
   constructor(
     private router: Router,
+    private translateService: TranslateService,
     private collaborationService: CollaborationService,
     private authService: AuthService
   ) {}
@@ -40,19 +37,13 @@ export class CollaborationListComponent implements OnInit {
     this.initData();
   }
 
-  handleRowClick(collaboration: BaseCollaboration) {
-    this.router.navigate([routePaths.collaboration, collaboration.id]);
-  }
-
-  handleRowKeyPress(event: KeyboardEvent, collaboration: BaseCollaboration) {
-    if (event.key === 'Enter' || event.key === ' ') {
-      this.handleRowClick(collaboration);
-    }
-  }
-
   async handlePageEvent(e: PageEvent) {
     this.currentPage = e.pageIndex + 1;
     await this.getCollaborations();
+  }
+
+  handleTableClick(id: string): void {
+    this.router.navigate([routePaths.collaboration, id]);
   }
 
   private async initData() {
@@ -62,7 +53,20 @@ export class CollaborationListComponent implements OnInit {
 
   private async getCollaborations() {
     const result = await this.collaborationService.getPaginatedCollaborations(this.currentPage, { sort: CollaborationSortProperties.Name });
-    this.collaborations = result.data;
+
+    this.table = {
+      columns: [
+        { id: 'name', label: this.translateService.instant('collaboration.name') },
+        { id: 'encrypted', label: this.translateService.instant('collaboration.encrypted') }
+      ],
+      rows: result.data.map((_) => ({
+        id: _.id.toString(),
+        columnData: {
+          name: _.name,
+          encrypted: _.encrypted ? this.translateService.instant('general.yes') : this.translateService.instant('general.no')
+        }
+      }))
+    };
     this.pagination = result.links;
   }
 }

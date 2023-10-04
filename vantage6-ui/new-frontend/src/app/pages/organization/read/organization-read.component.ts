@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { downloadFile } from 'src/app/helpers/file.helper';
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { Organization, OrganizationLazyProperties } from 'src/app/models/api/organization.model';
@@ -28,6 +29,7 @@ export class OrganizationReadComponent implements OnInit {
 
   constructor(
     private router: Router,
+    private translateService: TranslateService,
     private organizationService: OrganizationService,
     private authService: AuthService
   ) {}
@@ -54,7 +56,7 @@ export class OrganizationReadComponent implements OnInit {
       OrganizationLazyProperties.Nodes
     ]);
     this.collaborationTable = {
-      columns: [{ id: 'name', label: 'Name' }],
+      columns: [{ id: 'name', label: this.translateService.instant('collaboration.name') }],
       rows: this.organization.collaborations.map((_) => ({ id: _.id.toString(), columnData: { name: _.name } }))
     };
     this.isLoading = false;

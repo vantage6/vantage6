@@ -2,20 +2,15 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
-import { BaseUser, UserSortProperties } from 'src/app/models/api/user.model';
+import { UserSortProperties } from 'src/app/models/api/user.model';
+import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
 import { UserService } from 'src/app/services/user.service';
-
-enum TableRows {
-  Username = 'username',
-  Email = 'email',
-  FirstName = 'firstName',
-  LastName = 'lastName'
-}
 
 @Component({
   selector: 'app-user-list',
@@ -25,29 +20,45 @@ enum TableRows {
 })
 export class UserListComponent implements OnInit, OnDestroy {
   destroy$ = new Subject();
-  tableRows = TableRows;
   routes = routePaths;
 
   isLoading: boolean = true;
   canCreate: boolean = false;
-  displayedColumns: string[] = [];
-  users: BaseUser[] = [];
+  table?: TableData;
   pagination: PaginationLinks | null = null;
   currentPage: number = 1;
 
   constructor(
     private router: Router,
+    private translateService: TranslateService,
     private userService: UserService,
     private authService: AuthService,
     private breakpointObserver: BreakpointObserver
   ) {}
 
   ngOnInit(): void {
+    //TODO: Implement responsive columns in table component
     this.breakpointObserver.observe([Breakpoints.Medium, Breakpoints.Large, Breakpoints.XLarge]).subscribe((result) => {
+      if (!this.table) return;
+
       if (result.matches) {
-        this.displayedColumns = [TableRows.Username, TableRows.FirstName, TableRows.LastName, TableRows.Email];
+        this.table = {
+          ...this.table,
+          columns: [
+            { id: 'username', label: this.translateService.instant('user.username') },
+            { id: 'firsname', label: this.translateService.instant('user.first-name') },
+            { id: 'lastname', label: this.translateService.instant('user.last-name') },
+            { id: 'email', label: this.translateService.instant('user.email') }
+          ]
+        };
       } else {
-        this.displayedColumns = [TableRows.Username, TableRows.FirstName, TableRows.LastName];
+        this.table = {
+          ...this.table,
+          columns: [
+            { id: 'username', label: this.translateService.instant('user.username') },
+            { id: 'email', label: this.translateService.instant('user.email') }
+          ]
+        };
       }
     });
     this.canCreate = this.authService.isOperationAllowed(ScopeType.ANY, ResourceType.USER, OperationType.CREATE);
@@ -58,19 +69,13 @@ export class UserListComponent implements OnInit, OnDestroy {
     this.destroy$.next(true);
   }
 
-  handleRowClick(user: BaseUser) {
-    this.router.navigate([routePaths.user, user.id]);
-  }
-
-  handleRowKeyPress(event: KeyboardEvent, user: BaseUser) {
-    if (event.key === 'Enter' || event.key === ' ') {
-      this.handleRowClick(user);
-    }
-  }
-
   async handlePageEvent(e: PageEvent) {
     this.currentPage = e.pageIndex + 1;
     await this.getUsers();
+  }
+
+  handleTableClick(id: string) {
+    this.router.navigate([routePaths.user, id]);
   }
 
   private async initData() {
@@ -80,7 +85,22 @@ export class UserListComponent implements OnInit, OnDestroy {
 
   private async getUsers() {
     const result = await this.userService.getPaginatedUsers(this.currentPage, { sort: UserSortProperties.Username });
-    this.users = result.data;
+    this.table = {
+      columns: [
+        { id: 'username', label: this.translateService.instant('user.username') },
+        { id: 'firsname', label: this.translateService.instant('user.first-name') },
+        { id: 'lastname', label: this.translateService.instant('user.last-name') },
+        { id: 'email', label: this.translateService.instant('user.email') }
+      ],
+      rows: result.data.map((_) => ({
+        id: _.id.toString(),
+        columnData: {
+          username: _.username,
+          firstname: _.firstname,
+          email: _.email
+        }
+      }))
+    };
     this.pagination = result.links;
   }
 }
