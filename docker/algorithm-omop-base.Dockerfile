@@ -29,7 +29,9 @@ RUN Rscript -e "remotes::install_github('ohdsi/CirceR')"
 RUN Rscript -e "remotes::install_github('OHDSI/CohortDiagnostics')"
 RUN Rscript -e "remotes::install_github('OHDSI/CohortGenerator')"
 
-
+# Required for OHDSI R package to find the correct shared libs for Java.
+# FIXME FM 5-9-2023: This is a bit to broad, it would be better to figure out
+# a way to only set this for the OHDSI R packages.
 ENV LD_LIBRARY_PATH=/usr/lib/jvm/java-17-openjdk-amd64/lib/server/
 
 RUN pip install psycopg2-binary
