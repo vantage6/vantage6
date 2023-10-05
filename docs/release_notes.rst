@@ -1,6 +1,36 @@
 Release notes
 =============
 
+4.0.1
+-----
+
+*5 October 2023*
+
+- **Security**
+
+ - Updating dependencies ``cryptography``, ``gevent``, and ``urllib3`` to fix
+   vulnerabilities (`PR#889 <https://github.com/vantage6/vantage6/pull/889>`_)
+
+- **Bugfix**
+
+ - Fix node connection issues if server without constant JWT secret key is
+   restarted (`Issue#840 <https://github.com/vantage6/vantage6/issues/840>`_,
+   `PR#866 <https://github.com/vantage6/vantage6/pull/866>`_).
+ - Improved algorithm_client decorator with ``@wraps`` decorator. This fixes
+   an issue with the data decorator in the AlgorithmMockClient
+   (`Issue#874 <https://github.com/vantage6/vantage6/issues/874>`_,
+   `PR#882 <https://github.com/vantage6/vantage6/pull/882>`_).
+ - Decoding the algorithm results and algorithm input has been made more robust,
+   and input from ``vserver import`` is now properly encoded
+   (`Issue#836 <https://github.com/vantage6/vantage6/issues/836>`_,
+   `PR#864 <https://github.com/vantage6/vantage6/pull/864>`_).
+ - Improve error message if user forgot to specify ``databases`` when creating a
+   task (`Issue#854 <https://github.com/vantage6/vantage6/issues/854>`_,
+   `PR#865 <https://github.com/vantage6/vantage6/pull/865>`_).
+ - Fix data loading in AlgorithmMockClient
+   (`Issue#872 <https://github.com/vantage6/vantage6/issues/872>`_,
+   `PR#881 <https://github.com/vantage6/vantage6/pull/881>`_).
+
 4.0.0
 -----
 
