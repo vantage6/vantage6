@@ -81,6 +81,15 @@ algorithm-base-image:
 		-f ./docker/algorithm-base.Dockerfile \
 		--push .
 
+algorithm-omop-base-image:
+	@echo "Building ${REGISTRY}/algorithms/algorithm-base:${TAG}"
+	docker buildx build \
+		--tag ${REGISTRY}/infrastructure/algorithm-omop-base:${TAG} \
+		--tag ${REGISTRY}/infrastructure/algorithm-omop-base:latest \
+		--platform linux/arm64,linux/amd64 \
+		-f ./docker/algorithm-omop-base.Dockerfile \
+		--push .
+
 support-image:
 	@echo "Building support images"
 	@echo "All support images are also tagged with `latest`"
