@@ -11,6 +11,12 @@ from vantage6.algorithm.tools.util import info, error, warn
 from vantage6.algorithm.tools.wrappers import load_data
 from vantage6.algorithm.tools.preprocessing import preprocess_data
 
+OHDSI_AVAILABLE = True
+try:
+    from ohdsi.database_connector import connect as connect_to_omop
+except ImportError:
+    OHDSI_AVAILABLE = False
+
 
 def algorithm_client(func: callable) -> callable:
     """
@@ -114,14 +120,9 @@ def data(number_of_databases: int = 1) -> callable:
             """
             if mock_data is not None:
                 return func(*mock_data, *args, **kwargs)
-            # query to execute on the database
-            input_file = os.environ["INPUT_FILE"]
-            info(f"Reading input file {input_file}")
 
-            # read the labels that the user requested, which is a comma
-            # separated list of labels.
-            labels = os.environ["USER_REQUESTED_DATABASE_LABELS"]
-            labels = labels.split(',')
+            # read the labels that the user requested
+            labels = _get_user_database_labels()
 
             # check if user provided enough databases
             if len(labels) < number_of_databases:
@@ -156,6 +157,64 @@ def data(number_of_databases: int = 1) -> callable:
     return protection_decorator
 
 
+def database_connection(type: str) -> callable:
+    """
+
+    Example
+    -------
+    >>> @database_connection(type="OMOP")
+    >>> def my_algorithm(connection: Connection, <other arguments>):
+    >>>     pass
+    """
+    def connection_decorator(func: callable, *args, **kwargs) -> callable:
+        @wraps(func)
+        def decorator(*args, **kwargs) -> callable:
+            """
+            Wrap the function with the database connection
+            """
+            labels = _get_user_database_labels()
+            if len(labels) != 1:
+                error(f"User provided {len(labels)} databases, but algorithm "
+                      f"requires 1 database connection. Exiting...")
+                exit(1)
+
+            match type:
+                case "OMOP":
+                    info("Creating OMOP database connection")
+                    connection = _create_omop_database_connection(labels[0])
+                # case "FHIRE":
+                #     connection = _create_fhire_database_connection()
+
+            return func(connection, *args, **kwargs)
+
+        return decorator
+    return connection_decorator
+
+
+def _create_omop_database_connection(label) -> callable:
+
+    # check that the OHDSI package is available in this container
+    if not OHDSI_AVAILABLE:
+        error("OHDSI/DatabaseConnector is not available.")
+        error("Did you use the correct algorithm-base image to "
+              "build this algorithm?")
+        exit(1)
+
+    info("Reading OHDSI environment variables")
+    # TODO these are not actually supplied by the node yet...
+    dbms = os.environ["OMOP_DBMS"]
+    uri = os.environ[f"{label.upper()}_DATABASE_URI"]
+    user = os.environ["OMOP_USER"]
+    password = os.environ["OMOP_PASSWORD"]
+    info(f' - dbms: {dbms}')
+    info(f' - uri: {uri}')
+    info(f' - user: {user}')
+
+    info("Creating connection object")
+    return connect_to_omop(dbms=dbms, connection_string=uri, password=password,
+                           user=user)
+
+
 def _get_data_from_label(label: str) -> pd.DataFrame:
     """
     Load data from a database based on the label
@@ -187,3 +246,18 @@ def _get_data_from_label(label: str) -> pd.DataFrame:
         query=os.environ.get(f"{label.upper()}_QUERY"),
         sheet_name=os.environ.get(f"{label.upper()}_SHEET_NAME")
     )
+
+
+def _get_user_database_labels() -> list[str]:
+    """
+    Get the database labels from the environment
+
+    Returns
+    -------
+    list[str]
+        List of database labels
+    """
+    # read the labels that the user requested, which is a comma
+    # separated list of labels.
+    labels = os.environ["USER_REQUESTED_DATABASE_LABELS"]
+    return labels.split(',')

@@ -47,8 +47,22 @@ images:
 # data source you can specify 'other'.
 databases:
   - label: default
-    uri: D:\data\datafile.csv
+    uri: C:\data\datafile.csv
     type: csv
+
+  - label: omop
+    uri: jdbc:postgresql://host.docker.internal:5454/postgres
+    # additional environment variables that are passed to the algorithm
+    # containers (or their wrapper). This can be used to for usernames
+    # and passwords for example.
+    env:
+      username: admin@admin.com
+      password: admin
+      dbms: postgresql
+      cdm_database: postgres
+      cdm_schema: public
+      result_schema: results
+
 
 # end-to-end encryption settings
 encryption:
