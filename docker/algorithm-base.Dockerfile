@@ -1,4 +1,4 @@
-FROM python:3.11-slim-bullseye
+FROM python:3.10-slim-bullseye
 
 # we need to copy the readme for the setup.py from the vantage6-algorithm-tools
 # as it uses the top-level readme.
