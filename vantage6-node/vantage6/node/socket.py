@@ -30,7 +30,30 @@ class NodeTaskNamespace(ClientNamespace):
         self.log.info(msg)
 
     def on_connect(self):
-        """ Actions to be taken on socket connect (or reconnect) event """
+        """
+        Actions to be taken on socket connect (or reconnect) event
+
+        It checks if the connection is proper and if so, it will sync the
+        task queue with the server and share the node details with the server.
+        """
+        self.emit('check_proper_connection',
+                  callback=self.authenticated_connection)
+
+    def authenticated_connection(self, authenticated: bool):
+        """
+        If the connection is authenticated, sync the task queue with the server
+        and share the node details with the server.
+
+        Parameters
+        ----------
+        authenticated: bool
+            Whether or not the connection is authenticated
+        """
+        if not authenticated:
+            # Note that if this happens, the server also triggers the
+            # 'on_invalid_token' event defined below. That will reconnect the
+            # node and print warnings, so we don't need to do anything here.
+            return
         self.log.info('(Re)Connected to the /tasks namespace')
         self.node_worker_ref.sync_task_queue_with_server()
         self.log.debug("Tasks synced again with the server...")
@@ -100,6 +123,20 @@ class NodeTaskNamespace(ClientNamespace):
         self.log.debug("Connected to socket")
         self.node_worker_ref.sync_task_queue_with_server()
         self.log.debug("Tasks synced again with the server...")
+
+    def on_invalid_token(self) -> None:
+        """
+        The server indicates that this node has an invalid token. We should
+        reauthenticate.
+        """
+        self.log.warning('Node has invalid token. Reauthenticating...')
+        self.node_worker_ref.socketIO.disconnect()
+        self.log.debug("Old socket connection terminated")
+        self.log.debug("Reauthenticating the node...")
+        self.node_worker_ref.authenticate()
+        self.node_worker_ref.connect_to_socket()
+        self.log.debug("Connected to socket")
+        # note that the tasks will sync automatically when the node reconnects
 
     def on_kill_containers(self, kill_info: dict):
         """

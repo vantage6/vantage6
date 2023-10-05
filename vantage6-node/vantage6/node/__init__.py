@@ -919,8 +919,8 @@ class Node:
         self.log.info(f'Connected to host={self.client.host} on port='
                       f'{self.client.port}')
 
-        self.log.debug("Starting thread for to ping the server to notify this"
-                       " node is online.")
+        self.log.debug("Starting thread to ping the server to notify this node"
+                       " is online.")
         self.socketIO.start_background_task(self.__socket_ping_worker)
 
     def __socket_ping_worker(self) -> None:
