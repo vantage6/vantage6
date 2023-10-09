@@ -1,6 +1,17 @@
 Release notes
 =============
 
+4.0.2
+-----
+
+*9 October 2023*
+
+- **Bugfix**
+
+ - Fix socket connection from node to server due to faulty callback, which
+   occurred when server was deployed. This bug was introduced in v4.0.1
+   (`PR#892 <https://github.com/vantage6/vantage6/pull/892>`_).
+
 4.0.1
 -----
 

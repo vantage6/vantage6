@@ -31,29 +31,15 @@ class NodeTaskNamespace(ClientNamespace):
 
     def on_connect(self):
         """
-        Actions to be taken on socket connect (or reconnect) event
-
-        It checks if the connection is proper and if so, it will sync the
-        task queue with the server and share the node details with the server.
+        Alert the node that the websocket connection has been established.
         """
-        self.emit('check_proper_connection',
-                  callback=self.authenticated_connection)
+        self.log.info("Websocket connection established")
 
-    def authenticated_connection(self, authenticated: bool):
+    def on_sync(self):
         """
-        If the connection is authenticated, sync the task queue with the server
-        and share the node details with the server.
-
-        Parameters
-        ----------
-        authenticated: bool
-            Whether or not the connection is authenticated
+        Actions to be taken on socket sync event. This event is triggered by
+        the server when the node connects to the socket namespace.
         """
-        if not authenticated:
-            # Note that if this happens, the server also triggers the
-            # 'on_invalid_token' event defined below. That will reconnect the
-            # node and print warnings, so we don't need to do anything here.
-            return
         self.log.info('(Re)Connected to the /tasks namespace')
         self.node_worker_ref.sync_task_queue_with_server()
         self.log.debug("Tasks synced again with the server...")
