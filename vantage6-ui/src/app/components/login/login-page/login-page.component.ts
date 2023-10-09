@@ -20,4 +20,12 @@ export class LoginPageComponent implements OnInit {
   getBackgroundImage() {
     return this.backgroundImageService.get();
   }
+
+  getAdditionalStyling() {
+    return this.backgroundImageService.getAdditionalStyling();
+  }
+
+  getAttributionText() {
+    return this.backgroundImageService.getAttributionText();
+  }
 }
