@@ -13,7 +13,7 @@ export class ApiService {
 
   async getForApi<T = null>(path: string, params: object | null = null): Promise<T> {
     return await this.handleResult(
-      this.http.get<T>(environment.api_url + path, {
+      this.http.get<T>(this.getApiPath(path), {
         headers: this.getApiAuthenticationHeaders(),
         params: { ...params }
       })
@@ -22,7 +22,7 @@ export class ApiService {
 
   async getForApiWithPagination<T>(path: string, currentPage: number, parameters: object | null = null): Promise<Pagination<T>> {
     return await this.handleResultForPagination(
-      this.http.get<Pagination<T>>(`${environment.api_url}${path}`, {
+      this.http.get<Pagination<T>>(this.getApiPath(path), {
         headers: this.getApiAuthenticationHeaders(),
         observe: 'response',
         params: {
@@ -36,7 +36,7 @@ export class ApiService {
 
   async postForApi<T>(path: string, body: any): Promise<T> {
     return await this.handleResult(
-      this.http.post<T>(environment.api_url + path, body, {
+      this.http.post<T>(this.getApiPath(path), body, {
         headers: this.getApiAuthenticationHeaders()
       })
     );
@@ -44,7 +44,7 @@ export class ApiService {
 
   async patchForApi<T>(path: string, body: any): Promise<T> {
     return await this.handleResult(
-      this.http.patch<T>(environment.api_url + path, body, {
+      this.http.patch<T>(this.getApiPath(path), body, {
         headers: this.getApiAuthenticationHeaders()
       })
     );
@@ -52,7 +52,7 @@ export class ApiService {
 
   async deleteForApi(path: string): Promise<any> {
     return await this.handleResult(
-      this.http.delete(environment.api_url + path, {
+      this.http.delete(this.getApiPath(path), {
         headers: this.getApiAuthenticationHeaders()
       })
     );
@@ -103,5 +103,12 @@ export class ApiService {
         }
       );
     });
+  }
+
+  private getApiPath(path: string): string {
+    if (path.startsWith('/') && path.startsWith(environment.api_path)) {
+      return environment.server_url + path;
+    }
+    return environment.api_url + path;
   }
 }
