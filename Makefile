@@ -4,6 +4,7 @@
 # docker image tag
 TAG ?= cotopaxi
 REGISTRY ?= harbor2.vantage6.ai
+PLATFORMS ?= linux/arm64,linux/amd64
 
 # infrastructure base image version
 BASE ?= 4
@@ -68,7 +69,7 @@ base-image:
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/infrastructure-base:${TAG} \
 		--tag ${REGISTRY}/infrastructure/infrastructure-base:latest \
-		--platform linux/arm64,linux/amd64 \
+		--platform ${PLATFORMS} \
 		-f ./docker/infrastructure-base.Dockerfile \
 		--push .
 
@@ -77,7 +78,7 @@ algorithm-base-image:
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/algorithm-base:${TAG} \
 		--tag ${REGISTRY}/infrastructure/algorithm-base:latest \
-		--platform linux/arm64,linux/amd64 \
+		--platform ${PLATFORMS} \
 		-f ./docker/algorithm-base.Dockerfile \
 		--push .
 
@@ -86,7 +87,7 @@ algorithm-omop-base-image:
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/algorithm-omop-base:${TAG} \
 		--tag ${REGISTRY}/infrastructure/algorithm-omop-base:latest \
-		--platform linux/arm64,linux/amd64 \
+		--platform ${PLATFORMS} \
 		-f ./docker/algorithm-omop-base.Dockerfile \
 		--push .
 
@@ -104,7 +105,7 @@ support-squid-image:
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/squid:${TAG} \
 		--tag ${REGISTRY}/infrastructure/squid:latest \
-		--platform linux/arm64,linux/amd64 \
+		--platform ${PLATFORMS} \
 		-f ./docker/squid.Dockerfile \
 		--push .
 
@@ -113,7 +114,7 @@ support-alpine-image:
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/alpine:${TAG} \
 		--tag ${REGISTRY}/infrastructure/alpine:latest \
-		--platform linux/arm64,linux/amd64 \
+		--platform ${PLATFORMS} \
 		-f ./docker/alpine.Dockerfile \
 		--push .
 
@@ -122,7 +123,7 @@ support-vpn-client-image:
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/vpn-client:${TAG} \
 		--tag ${REGISTRY}/infrastructure/vpn-client:latest \
-		--platform linux/arm64,linux/amd64 \
+		--platform ${PLATFORMS} \
 		-f ./docker/vpn-client.Dockerfile \
 		--push .
 
@@ -131,7 +132,7 @@ support-vpn-configurator-image:
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/vpn-configurator:${TAG} \
 		--tag ${REGISTRY}/infrastructure/vpn-configurator:latest \
-		--platform linux/arm64,linux/amd64 \
+		--platform ${PLATFORMS} \
 		-f ./docker/vpn-configurator.Dockerfile \
 		--push .
 
@@ -140,7 +141,7 @@ support-ssh-tunnel-image:
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/ssh-tunnel:${TAG} \
 		--tag ${REGISTRY}/infrastructure/ssh-tunnel:latest \
-		--platform linux/arm64,linux/amd64 \
+		--platform ${PLATFORMS} \
 		-f ./docker/ssh-tunnel.Dockerfile \
 		--push .
 
@@ -152,7 +153,7 @@ image:
 		--tag ${REGISTRY}/infrastructure/server:${TAG} \
 		--build-arg TAG=${TAG} \
 		--build-arg BASE=${BASE} \
-		--platform linux/arm64,linux/amd64 \
+		--platform ${PLATFORMS} \
 		-f ./docker/node-and-server.Dockerfile \
 		--push .
 

@@ -89,6 +89,9 @@ class DefaultSocketNamespace(Namespace):
         # join appropiate rooms
         session.rooms = []
         if session.type == 'node':
+            # Ensure that node syncs on initial connection
+            emit("sync", room=request.sid)
+            # Add node to rooms and alert other clients of that
             self._add_node_to_rooms(auth)
             self.__alert_node_status(online=True, node=auth)
         elif session.type == 'user':
@@ -99,16 +102,6 @@ class DefaultSocketNamespace(Namespace):
 
         # cleanup (e.g. database session)
         self.__cleanup()
-
-    def on_check_proper_connection(self) -> bool:
-        """
-        Check if a node is properly connected to the server.
-        """
-        try:
-            verify_jwt_in_request()
-        except Exception:
-            return False
-        return True
 
     @staticmethod
     def _add_node_to_rooms(node: Authenticatable) -> None:
