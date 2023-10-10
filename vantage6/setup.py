@@ -62,9 +62,10 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'vnode=vantage6.cli.node:cli_node',
-            'vserver=vantage6.cli.server:cli_server',
-            'vdev=vantage6.cli.dev:cli_dev'
+            'vnode=vantage6.cli.node.cli:cli_node',
+            'vserver=vantage6.cli.server.cli:cli_server',
+            'vdev=vantage6.cli.dev.cli:cli_dev',
+            'v6=vantage6.cli.cli:cli_complete'
         ]
     }
 )
