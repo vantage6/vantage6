@@ -71,7 +71,10 @@ export class AuthService {
 
   private async getUserRules() {
     const userId = sessionStorage.getItem(USER_ID);
-    const result = await this.apiService.getForApi<Pagination<Rule>>(`/rule?user_id=${userId}`);
+    const result = await this.apiService.getForApi<Pagination<Rule>>('/rule', {
+      user_id: userId,
+      no_pagination: 1
+    });
     this.activeRules = result.data;
   }
 
