@@ -469,4 +469,4 @@ Once your infrastructure is set up, you can create a task for your algorithm.
 You can do this either via the :ref:`UI <ui>` or via the
 :ref:`Python client <pyclient-create-task>`.
 
-.. todo Add example with ``vdev``
+.. todo Add example with ``v6 dev``

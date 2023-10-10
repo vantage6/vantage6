@@ -1,12 +1,3 @@
-"""
-This module contains the CLI commands for generating dummy server and node
-instance(s). The following commands are available:
-
-    * vdev create-demo-network
-    * vdev remove-demo-network
-    * vdev start-demo-network
-    * vdev stop-demo-network
-"""
 import subprocess
 import itertools
 from shutil import rmtree

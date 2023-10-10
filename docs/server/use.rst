@@ -140,25 +140,25 @@ You can download this file :download:`here <yaml/batch_import.yaml>`.
 Testing
 """""""
 
-You can test the infrastructure via the ``vdev`` commands. The purpose of this
+You can test the infrastructure via the ``v6 dev`` commands. The purpose of this
 functionality is to easily setup and run a test server accompanied by `N` nodes
 locally. For example, if you have `N = 10` datasets to test a particular
 algorithm on, then you can spawn a server and 10 nodes with a single command.
 
 You can view all available commands in the table below, or alternatively, use
-``vdev --help``. By using ``--help`` with the individual commands (e.g.
-``vdev start-demo-network --help``), you can view more details on how to execute
-them.
+``v6 dev --help``. By using ``--help`` with the individual commands (e.g.
+``v6 dev start-demo-network --help``), you can view more details on how to
+execute them.
 
 
-+------------------------------+--------------------------------------------+
-| **Command**                  | **Description**                            |
-+==============================+============================================+
-| ``vdev create-demo-network`` | Create a new network with server and nodes |
-+------------------------------+--------------------------------------------+
-| ``vdev start-demo-network``  | Start the network                          |
-+------------------------------+--------------------------------------------+
-| ``vdev stop-demo-network``   | Stop the network                           |
-+------------------------------+--------------------------------------------+
-| ``vdev remove-demo-network`` | Remove the network completely              |
-+------------------------------+--------------------------------------------+
++--------------------------------+--------------------------------------------+
+| **Command**                    | **Description**                            |
++================================+============================================+
+| ``v6 dev create-demo-network`` | Create a new network with server and nodes |
++--------------------------------+--------------------------------------------+
+| ``v6 dev start-demo-network``  | Start the network                          |
++--------------------------------+--------------------------------------------+
+| ``v6 dev stop-demo-network``   | Stop the network                           |
++--------------------------------+--------------------------------------------+
+| ``v6 dev remove-demo-network`` | Remove the network completely              |
++--------------------------------+--------------------------------------------+
