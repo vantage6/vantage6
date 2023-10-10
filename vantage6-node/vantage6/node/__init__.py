@@ -974,7 +974,7 @@ class Node:
                     self.log.exception(e)
 
         except (KeyboardInterrupt, InterruptedError):
-            self.log.info("Vnode is interrupted, shutting down...")
+            self.log.info("Node is interrupted, shutting down...")
             self.cleanup()
             sys.exit()
 

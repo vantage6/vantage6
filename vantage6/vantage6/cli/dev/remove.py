@@ -63,7 +63,9 @@ def remove_demo_network(ctx: ServerContext, force: bool) -> None:
         for handler in itertools.chain(node_ctx.log.handlers,
                                        node_ctx.log.root.handlers):
             handler.close()
-        subprocess.run(["vnode", "remove", "-n", name, "--user", "--force"])
+        subprocess.run(
+            ["v6", "node", "remove", "-n", name, "--user", "--force"]
+        )
 
     # remove data files attached to the network
     data_dirs_nodes = NodeContext.instance_folders('node', '', False)['dev']

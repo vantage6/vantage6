@@ -1,18 +1,3 @@
-"""
-The node module contains the CLI commands for the node manager. The following
-commands are available:
-
-    * vnode new
-    * vnode list
-    * vnode files
-    * vnode start
-    * vnode stop
-    * vnode attach
-    * vnode clean
-    * vnode remove
-    * vnode version
-    * vnode create-private-key
-"""
 from pathlib import Path
 import click
 from colorama import Fore, Style

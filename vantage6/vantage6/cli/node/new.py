@@ -43,4 +43,4 @@ def cli_node_new_configuration(name: str, system_folders: bool) -> None:
     cfg_file = configuration_wizard("node", name, system_folders)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
     info(f"You can start the node by running "
-         f"{Fore.GREEN}vnode start {flag}{Style.RESET_ALL}")
+         f"{Fore.GREEN}v6 node start {flag}{Style.RESET_ALL}")

@@ -334,5 +334,5 @@ def vnode_start(name: str, config: str, system_folders: bool,
             except KeyboardInterrupt:
                 info("Closing log file. Keyboard Interrupt.")
                 info("Note that your node is still running! Shut it down with "
-                     f"'{Fore.RED}vnode stop{Style.RESET_ALL}'")
+                     f"'{Fore.RED}v6 node stop{Style.RESET_ALL}'")
                 exit(0)

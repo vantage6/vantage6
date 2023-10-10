@@ -49,7 +49,7 @@ def vnode_remove(name: str, system_folders: bool, force: bool):
     """
     Delete a node permanently
 
-    * if the node is still running, exit and tell user to run vnode stop first
+    * if the node is still running, exit and tell user to run 'v6 node stop'
     * remove configuration file
     * remove log file
     * remove docker volumes attached to the node

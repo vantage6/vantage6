@@ -52,7 +52,7 @@ def start_demo_network(
         config.name for config in configs if f'{ctx.name}_node_' in config.name
     ]
     for name in node_names:
-        cmd = ["vnode", "start", "--name", name]
+        cmd = ["v6", "node", "start", "--name", name]
         if node_image:
             cmd.extend(["--image", node_image])
         subprocess.run(cmd)

@@ -1,18 +1,3 @@
-"""
-The node module contains the CLI commands for the node manager. The following
-commands are available:
-
-    * vnode new
-    * vnode list
-    * vnode files
-    * vnode start
-    * vnode stop
-    * vnode attach
-    * vnode clean
-    * vnode remove
-    * vnode version
-    * vnode create-private-key
-"""
 import time
 from threading import Thread
 import click
@@ -67,7 +52,7 @@ def cli_node_attach(name: str, system_folders: bool) -> None:
             except KeyboardInterrupt:
                 info("Closing log file. Keyboard Interrupt.")
                 info("Note that your node is still running! Shut it down with "
-                     f"'{Fore.RED}vnode stop{Style.RESET_ALL}'")
+                     f"'{Fore.RED}v6 node stop{Style.RESET_ALL}'")
                 exit(0)
     else:
         error(f"{Fore.RED}{name}{Style.RESET_ALL} was not running!?")
