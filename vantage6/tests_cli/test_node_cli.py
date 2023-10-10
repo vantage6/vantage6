@@ -20,7 +20,7 @@ from vantage6.cli.node import (
     cli_node_attach,
     cli_node_create_private_key,
     cli_node_clean,
-    _print_log_worker,
+    print_log_worker,
     _create_client_and_authenticate,
 )
 
@@ -251,7 +251,7 @@ class NodeCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
 
     @patch("vantage6.cli.node.time")
-    @patch("vantage6.cli.node._print_log_worker")
+    @patch("vantage6.cli.node.print_log_worker")
     @patch("docker.DockerClient.containers")
     @patch("vantage6.cli.node.check_docker_running", return_value=True)
     def test_attach(self, check_docker, containers, log_worker, time_):
@@ -385,11 +385,11 @@ class NodeCLITest(unittest.TestCase):
         # check exit code
         self.assertEqual(result.exit_code, 1)
 
-    def test__print_log_worker(self):
+    def test_print_log_worker(self):
         stream = BytesIO("Hello!".encode(STRING_ENCODING))
         temp_stdout = StringIO()
         with contextlib.redirect_stdout(temp_stdout):
-            _print_log_worker(stream)
+            print_log_worker(stream)
         output = temp_stdout.getvalue().strip()
         self.assertEqual(output, "Hello!")
 

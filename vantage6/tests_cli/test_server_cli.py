@@ -88,7 +88,7 @@ class ServerCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
 
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.server._print_log_worker")
+    @patch("vantage6.cli.server.print_log_worker")
     @patch("vantage6.cli.server.click.Path")
     @patch("vantage6.cli.server.check_docker_running", return_value=True)
     @patch("vantage6.cli.server.ServerContext")

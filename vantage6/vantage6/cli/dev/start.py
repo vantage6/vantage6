@@ -41,7 +41,7 @@ def start_demo_network(
         image=server_image,
         start_ui=False,
         ui_port=None,
-        start_rabbitmq=False,
+        _start_rabbitmq=False,
         rabbitmq_image=None,
         keep=True,
         mount_src='',
