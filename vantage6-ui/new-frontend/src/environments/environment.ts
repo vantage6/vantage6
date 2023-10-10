@@ -6,5 +6,4 @@ let env: any = {
   algorithm_server_url: (window as any).env?.algorithm_server_url || '' //TODO: add default algorithm server url
 };
 
-env.api_url = (window as any).env?.api_url || `${env.server_url}${env.api_path}`;
 export const environment = env;

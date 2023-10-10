@@ -6,6 +6,4 @@ let env: any = {
   algorithm_server_url: 'http://localhost:3002'
 };
 
-env.api_url = `${env['server_url']}${env['api_path']}`;
-
 export const environment = env;

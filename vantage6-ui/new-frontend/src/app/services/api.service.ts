@@ -106,9 +106,10 @@ export class ApiService {
   }
 
   private getApiPath(path: string): string {
+    //TODO: Lazy loaded calls already include API path
     if (path.startsWith('/') && path.startsWith(environment.api_path)) {
       return environment.server_url + path;
     }
-    return environment.api_url + path;
+    return environment.server_url + environment.api_path + path;
   }
 }
