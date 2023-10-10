@@ -28,7 +28,7 @@ from vantage6.cli.server.version import cli_server_version
 @click.group(name='server')
 def cli_server() -> None:
     """
-    The `vserver` commands allow you to manage your vantage6 server instances.
+    Manage your vantage6 server instances.
     """
 
 

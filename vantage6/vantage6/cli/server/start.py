@@ -37,7 +37,7 @@ from vantage6.cli.server.common import (
               help="Start the graphical User Interface as well")
 @click.option('--ui-port', default=None, type=int,
               help="Port to listen on for the User Interface")
-@click.option('--with-rabbitmq', '_start_rabbitmq', flag_value=True,
+@click.option('--with-rabbitmq', 'start_rabbitmq', flag_value=True,
               default=False, help="Start RabbitMQ message broker as local "
               "container - use in development only")
 @click.option('--rabbitmq-image', default=None,
@@ -51,18 +51,18 @@ from vantage6.cli.server.common import (
               help="Print server logs to the console after start")
 @click_insert_context
 def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
-                     start_ui: bool, ui_port: int, _start_rabbitmq: bool,
+                     start_ui: bool, ui_port: int, start_rabbitmq: bool,
                      rabbitmq_image: str, keep: bool, mount_src: str,
                      attach: bool) -> None:
     """
     Start the server.
     """
-    vserver_start(ctx, ip, port, image, start_ui, ui_port, _start_rabbitmq,
+    vserver_start(ctx, ip, port, image, start_ui, ui_port, start_rabbitmq,
                   rabbitmq_image, keep, mount_src, attach)
 
 
 def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
-                  start_ui: bool, ui_port: int, _start_rabbitmq: bool,
+                  start_ui: bool, ui_port: int, start_rabbitmq: bool,
                   rabbitmq_image: str, keep: bool, mount_src: str,
                   attach: bool) -> None:
     """
@@ -82,7 +82,7 @@ def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
         Start the graphical User Interface as well
     ui_port : int
         Port to listen on for the User Interface
-    _start_rabbitmq : bool
+    start_rabbitmq : bool
         Start RabbitMQ message broker as local container - use only in
         development
     rabbitmq_image : str
@@ -187,7 +187,7 @@ def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
     )
     server_network_mgr.create_network(is_internal=False)
 
-    if _start_rabbitmq or ctx.config.get('rabbitmq') and \
+    if start_rabbitmq or ctx.config.get('rabbitmq') and \
             ctx.config['rabbitmq'].get('start_with_server', False):
         # Note that ctx.data_dir has been created at this point, which is
         # required for putting some RabbitMQ configuration files inside

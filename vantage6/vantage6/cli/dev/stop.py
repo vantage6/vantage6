@@ -1,10 +1,8 @@
 import click
 
 from vantage6.cli.context import ServerContext, NodeContext
-from vantage6.cli.server.cli import (
-    click_insert_context,
-    vserver_stop,
-)
+from vantage6.cli.server.common import click_insert_context
+from vantage6.cli.server.stop import vserver_stop
 from vantage6.cli.node.stop import vnode_stop
 
 

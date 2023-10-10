@@ -31,7 +31,7 @@ from vantage6.cli.node.version import cli_node_version
 @click.group(name="node")
 def cli_node() -> None:
     """
-    The `vnode` commands allow you to manage your vantage6 node instances.
+    Manage your vantage6 node instances.
     """
 
 

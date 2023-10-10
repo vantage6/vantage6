@@ -16,8 +16,8 @@ import click
 
 from vantage6.common import info
 from vantage6.cli.context import ServerContext, NodeContext
-from vantage6.cli.server.cli import click_insert_context
-from vantage6.cli.server.cli.stop import vserver_remove
+from vantage6.cli.server.common import click_insert_context
+from vantage6.cli.server.stop import vserver_remove
 from vantage6.cli.utils import remove_file
 
 

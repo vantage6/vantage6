@@ -11,10 +11,8 @@ import subprocess
 import click
 
 from vantage6.cli.context import ServerContext, NodeContext
-from vantage6.cli.server.cli import (
-    click_insert_context,
-    vserver_start,
-)
+from vantage6.cli.server.common import click_insert_context
+from vantage6.cli.server.start import vserver_start
 
 
 @click.command()
@@ -41,7 +39,7 @@ def start_demo_network(
         image=server_image,
         start_ui=False,
         ui_port=None,
-        _start_rabbitmq=False,
+        start_rabbitmq=False,
         rabbitmq_image=None,
         keep=True,
         mount_src='',

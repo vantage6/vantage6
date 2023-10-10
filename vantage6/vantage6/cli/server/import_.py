@@ -35,8 +35,10 @@ def cli_server_import(
     keep: bool, wait: bool
 ) -> None:
     """
-    Import vantage6 resources, such as organizations, collaborations, users and
-    tasks into a server instance.
+    Import vantage6 resources into a server instance.
+
+    This allows you to create organizations, collaborations, users, tasks, etc
+    from a yaml file.
 
     The FILE_ argument should be a path to a yaml file containing the vantage6
     formatted data to import.

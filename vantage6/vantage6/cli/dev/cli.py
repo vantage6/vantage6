@@ -18,8 +18,9 @@ from vantage6.cli.dev.stop import stop_demo_network
 @click.group(name="dev")
 def cli_dev() -> None:
     """
-    The `vdev` commands can be used to quickly manage a network with a server
-    and several nodes for local testing.
+    Quickly manage a test network with a server and several nodes.
+
+    These commands are helpful for local testing of your vantage6 environment.
     """
 
 
