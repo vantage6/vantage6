@@ -68,16 +68,6 @@ cli_node.add_command(cli_node_stop, name="stop")
 cli_node.add_command(cli_node_version, name="version")
 
 
-# Define the overall group
-@click.group(name='cli')
-def cli_complete() -> None:
-    """
-    The `v6` command line interface allows you to manage your vantage6
-    infrastructure.
-    It provides a number of subcommands to help you with this task.
-    """
-
-
 # Define the dev group
 @click.group(name="dev")
 def cli_dev() -> None:
@@ -93,6 +83,16 @@ cli_dev.add_command(create_demo_network, name="create-demo-network")
 cli_dev.add_command(remove_demo_network, name="remove-demo-network")
 cli_dev.add_command(start_demo_network, name="start-demo-network")
 cli_dev.add_command(stop_demo_network, name="stop-demo-network")
+
+
+# Define the overall group
+@click.group(name='cli')
+def cli_complete() -> None:
+    """
+    The `v6` command line interface allows you to manage your vantage6
+    infrastructure.
+    It provides a number of subcommands to help you with this task.
+    """
 
 
 # Add the subcommands to the overall group
