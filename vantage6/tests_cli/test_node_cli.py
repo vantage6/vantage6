@@ -11,17 +11,16 @@ from docker.errors import APIError
 
 from vantage6.cli.globals import APPNAME
 from vantage6.common import STRING_ENCODING
-from vantage6.cli.node import (
-    cli_node_list,
-    cli_node_new_configuration,
-    cli_node_files,
-    cli_node_start,
-    cli_node_stop,
-    cli_node_attach,
-    cli_node_create_private_key,
-    cli_node_clean,
-    print_log_worker,
-    _create_client_and_authenticate,
+from vantage6.cli.node.list import cli_node_list
+from vantage6.cli.node.new import cli_node_new_configuration
+from vantage6.cli.node.files import cli_node_files
+from vantage6.cli.node.start import cli_node_start
+from vantage6.cli.node.stop import cli_node_stop
+from vantage6.cli.node.attach import cli_node_attach
+from vantage6.cli.node.create_private_key import cli_node_create_private_key
+from vantage6.cli.node.clean import cli_node_clean
+from vantage6.cli.node.common import (
+    create_client_and_authenticate, print_log_worker
 )
 
 
@@ -86,9 +85,9 @@ class NodeCLITest(unittest.TestCase):
             "-----------------------------------------------------\n"
         )
 
-    @patch("vantage6.cli.node.configuration_wizard")
-    @patch("vantage6.cli.node.check_config_writeable")
-    @patch("vantage6.cli.node.NodeContext")
+    @patch("vantage6.cli.node.new.configuration_wizard")
+    @patch("vantage6.cli.node.new.check_config_writeable")
+    @patch("vantage6.cli.node.common.NodeContext")
     def test_new_config(self, context, permissions, wizard):
         """No error produced when creating new configuration."""
         context.config_exists.return_value = False
@@ -106,7 +105,7 @@ class NodeCLITest(unittest.TestCase):
         # check OK exit code
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.node.configuration_wizard")
+    @patch("vantage6.cli.node.new.configuration_wizard")
     def test_new_config_replace_whitespace_in_name(self, _):
         """Whitespaces are replaced in the name."""
 
@@ -120,7 +119,7 @@ class NodeCLITest(unittest.TestCase):
             "[info ] - Replaced spaces from configuration name: some-name"
         )
 
-    @patch("vantage6.cli.node.NodeContext")
+    @patch("vantage6.cli.node.new.NodeContext")
     def test_new_config_already_exists(self, context):
         """No duplicate configurations are allowed."""
 
@@ -137,8 +136,8 @@ class NodeCLITest(unittest.TestCase):
         # check non-zero exit code
         self.assertEqual(result.exit_code, 1)
 
-    @patch("vantage6.cli.node.check_config_writeable")
-    @patch("vantage6.cli.node.NodeContext")
+    @patch("vantage6.cli.node.new.check_config_writeable")
+    @patch("vantage6.cli.node.common.NodeContext")
     def test_new_write_permissions(self, context, permissions):
         """User needs write permissions."""
 
@@ -156,12 +155,13 @@ class NodeCLITest(unittest.TestCase):
         # check non-zero exit code
         self.assertEqual(result.exit_code, 1)
 
-    @patch("vantage6.cli.node.NodeContext")
-    @patch("vantage6.cli.node.select_configuration_questionaire")
-    def test_files(self, select_config, context):
+    @patch("vantage6.cli.node.common.NodeContext")
+    @patch("vantage6.cli.node.files.NodeContext")
+    @patch("vantage6.cli.node.common.select_configuration_questionaire")
+    def test_files(self, select_config, context, common_context):
         """No errors produced when retrieving filepaths."""
 
-        context.config_exists.return_value = True
+        common_context.config_exists.return_value = True
         context.return_value = MagicMock(
             config_file="/file.yaml",
             log_file="/log.log",
@@ -180,7 +180,7 @@ class NodeCLITest(unittest.TestCase):
         # check status code is OK
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.node.NodeContext")
+    @patch("vantage6.cli.node.common.NodeContext")
     def test_files_non_existing_config(self, context):
         """An error is produced when a non existing config is used."""
 
@@ -196,10 +196,10 @@ class NodeCLITest(unittest.TestCase):
         self.assertNotEqual(result.exit_code, 0)
 
     @patch("docker.DockerClient.volumes")
-    @patch("vantage6.cli.node.pull_if_newer")
-    @patch("vantage6.cli.node.NodeContext")
+    @patch("vantage6.cli.node.start.pull_if_newer")
+    @patch("vantage6.cli.node.start.NodeContext")
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.node.check_docker_running", return_value=True)
+    @patch("vantage6.cli.node.start.check_docker_running", return_value=True)
     def test_start(self, check_docker, client, context, pull, volumes):
 
         # client.containers = MagicMock(name="docker.DockerClient.containers")
@@ -231,7 +231,7 @@ class NodeCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
 
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.node.check_docker_running",
+    @patch("vantage6.cli.node.stop.check_docker_running",
            return_value=True)
     def test_stop(self, check_docker, containers):
 
@@ -250,10 +250,10 @@ class NodeCLITest(unittest.TestCase):
 
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.node.time")
-    @patch("vantage6.cli.node.print_log_worker")
+    @patch("vantage6.cli.node.attach.time")
+    @patch("vantage6.cli.node.attach.print_log_worker")
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.node.check_docker_running", return_value=True)
+    @patch("vantage6.cli.node.attach.check_docker_running", return_value=True)
     def test_attach(self, check_docker, containers, log_worker, time_):
         """Attach docker logs without errors."""
         container1 = MagicMock()
@@ -270,13 +270,13 @@ class NodeCLITest(unittest.TestCase):
             result.output,
             "[info ] - Closing log file. Keyboard Interrupt.\n"
             "[info ] - Note that your node is still running! Shut it down "
-            "with 'vnode stop'\n"
+            "with 'v6 node stop'\n"
         )
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.node.q")
+    @patch("vantage6.cli.node.clean.q")
     @patch("docker.DockerClient.volumes")
-    @patch("vantage6.cli.node.check_docker_running", return_value=True)
+    @patch("vantage6.cli.node.clean.check_docker_running", return_value=True)
     def test_clean(self, check_docker, volumes, q):
         """Clean Docker volumes without errors."""
         volume1 = MagicMock()
@@ -293,10 +293,12 @@ class NodeCLITest(unittest.TestCase):
         # check exit code
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.node._create_client_and_authenticate")
-    @patch("vantage6.cli.node.NodeContext")
-    def test_create_private_key(self, context, client):
-        context.config_exists.return_value = True
+    @patch(
+        "vantage6.cli.node.create_private_key.create_client_and_authenticate")
+    @patch("vantage6.cli.node.common.NodeContext")
+    @patch("vantage6.cli.node.create_private_key.NodeContext")
+    def test_create_private_key(self, context, common_context, client):
+        common_context.config_exists.return_value = True
         context.return_value.type_data_folder.return_value = Path(".")
         client.return_value = MagicMock(
             whoami=MagicMock(organization_name="Test")
@@ -307,16 +309,19 @@ class NodeCLITest(unittest.TestCase):
         result = runner.invoke(cli_node_create_private_key,
                                ["--name", "application"])
 
+        self.assertEqual(result.exit_code, 0)
+
         # remove the private key file again
         os.remove("privkey_Test.pem")
 
-        self.assertEqual(result.exit_code, 0)
-
-    @patch("vantage6.cli.node.RSACryptor")
-    @patch("vantage6.cli.node._create_client_and_authenticate")
-    @patch("vantage6.cli.node.NodeContext")
-    def test_create_private_key_overwite(self, context, client, cryptor):
-        context.config_exists.return_value = True
+    @patch("vantage6.cli.node.create_private_key.RSACryptor")
+    @patch(
+        "vantage6.cli.node.create_private_key.create_client_and_authenticate")
+    @patch("vantage6.cli.node.common.NodeContext")
+    @patch("vantage6.cli.node.create_private_key.NodeContext")
+    def test_create_private_key_overwite(self, context, common_context, client,
+                                         cryptor):
+        common_context.config_exists.return_value = True
         context.return_value.type_data_folder.return_value = Path(".")
         client.return_value = MagicMock(
             whoami=MagicMock(organization_name="Test")
@@ -356,7 +361,7 @@ class NodeCLITest(unittest.TestCase):
 
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.node.NodeContext")
+    @patch("vantage6.cli.node.common.NodeContext")
     def test_create_private_key_config_not_found(self, context):
         context.config_exists.return_value = False
 
@@ -366,7 +371,7 @@ class NodeCLITest(unittest.TestCase):
 
         self.assertEqual(result.exit_code, 1)
 
-    @patch("vantage6.cli.node.q")
+    @patch("vantage6.cli.node.clean.q")
     @patch("docker.DockerClient.volumes")
     @patch("vantage6.common.docker.addons.check_docker_running")
     def test_clean_docker_error(self, check_docker, volumes, q):
@@ -393,11 +398,11 @@ class NodeCLITest(unittest.TestCase):
         output = temp_stdout.getvalue().strip()
         self.assertEqual(output, "Hello!")
 
-    @patch("vantage6.cli.node.info")
-    @patch("vantage6.cli.node.debug")
-    @patch("vantage6.cli.node.error")
-    @patch("vantage6.cli.node.UserClient")
-    @patch("vantage6.cli.node.q")
+    @patch("vantage6.cli.node.common.info")
+    @patch("vantage6.cli.node.common.debug")
+    @patch("vantage6.cli.node.common.error")
+    @patch("vantage6.cli.node.common.UserClient")
+    @patch("vantage6.cli.node.common.q")
     def test_client(self, q, client, error, debug, info):
 
         ctx = MagicMock(
@@ -410,14 +415,14 @@ class NodeCLITest(unittest.TestCase):
 
         # should not trigger an exception
         try:
-            _create_client_and_authenticate(ctx)
+            create_client_and_authenticate(ctx)
         except Exception:
             self.fail("Raised an exception!")
 
         # client raises exception
         client.side_effect = Exception("Boom!")
         with self.assertRaises(Exception):
-            _create_client_and_authenticate(ctx)
+            create_client_and_authenticate(ctx)
 
     # TODO this function has been moved to the common package. A test should
     # be added there instead of here

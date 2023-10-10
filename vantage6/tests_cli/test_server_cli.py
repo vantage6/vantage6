@@ -5,26 +5,24 @@ from pathlib import Path
 from click.testing import CliRunner
 
 from vantage6.cli.globals import APPNAME
-from vantage6.cli.server import (
-    cli_server_start,
-    cli_server_configuration_list,
-    cli_server_files,
-    cli_server_import,
-    cli_server_new,
-    cli_server_stop,
-    cli_server_attach
-)
+from vantage6.cli.server.start import cli_server_start
+from vantage6.cli.server.list import cli_server_configuration_list
+from vantage6.cli.server.files import cli_server_files
+from vantage6.cli.server.import_ import cli_server_import
+from vantage6.cli.server.new import cli_server_new
+from vantage6.cli.server.stop import cli_server_stop
+from vantage6.cli.server.attach import cli_server_attach
 
 
 class ServerCLITest(unittest.TestCase):
 
-    @patch("vantage6.cli.server.NetworkManager")
-    @patch("vantage6.cli.server.docker.types.Mount")
+    @patch("vantage6.cli.server.start.NetworkManager")
+    @patch("vantage6.cli.server.start.docker.types.Mount")
     @patch("os.makedirs")
-    @patch("vantage6.cli.server.pull_if_newer")
-    @patch("vantage6.cli.server.ServerContext")
-    @patch("vantage6.cli.server.docker.from_env")
-    @patch("vantage6.cli.server.check_docker_running", return_value=True)
+    @patch("vantage6.cli.server.start.pull_if_newer")
+    @patch("vantage6.cli.server.common.ServerContext")
+    @patch("vantage6.cli.server.start.docker.from_env")
+    @patch("vantage6.cli.server.start.check_docker_running", return_value=True)
     def test_start(self, docker_check, containers, context,
                    pull, os_makedirs, mount, network_manager):
         """Start server without errors"""
@@ -52,9 +50,9 @@ class ServerCLITest(unittest.TestCase):
 
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.server.ServerContext")
+    @patch("vantage6.cli.server.common.ServerContext")
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.server.check_docker_running", return_value=True)
+    @patch("vantage6.cli.server.list.check_docker_running", return_value=True)
     def test_configuration_list(self, docker_check, containers, context):
         """Configuration list without errors."""
         container1 = MagicMock()
@@ -71,7 +69,7 @@ class ServerCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertIsNone(result.exception)
 
-    @patch("vantage6.cli.server.ServerContext")
+    @patch("vantage6.cli.server.common.ServerContext")
     def test_files(self, context):
         """Configuration files without errors."""
 
@@ -88,10 +86,11 @@ class ServerCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
 
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.server.print_log_worker")
-    @patch("vantage6.cli.server.click.Path")
-    @patch("vantage6.cli.server.check_docker_running", return_value=True)
-    @patch("vantage6.cli.server.ServerContext")
+    @patch("vantage6.cli.server.import_.print_log_worker")
+    @patch("vantage6.cli.server.import_.click.Path")
+    @patch("vantage6.cli.server.import_.check_docker_running",
+           return_value=True)
+    @patch("vantage6.cli.server.common.ServerContext")
     def test_import(self, context, docker_check, click_path, log, containers):
         """Import entities without errors."""
         click_path.return_value = MagicMock()
@@ -111,9 +110,9 @@ class ServerCLITest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.server.configuration_wizard")
-    @patch("vantage6.cli.server.check_config_writeable")
-    @patch("vantage6.cli.server.ServerContext")
+    @patch("vantage6.cli.server.new.configuration_wizard")
+    @patch("vantage6.cli.server.new.check_config_writeable")
+    @patch("vantage6.cli.server.new.ServerContext")
     def test_new(self, context, permissions, wizard):
         """New configuration without errors."""
 
@@ -127,9 +126,9 @@ class ServerCLITest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.server.ServerContext")
-    @patch("vantage6.cli.server.docker.from_env")
-    @patch("vantage6.cli.server.check_docker_running", return_value=True)
+    @patch("vantage6.cli.server.stop.ServerContext")
+    @patch("vantage6.cli.server.stop.docker.from_env")
+    @patch("vantage6.cli.server.stop.check_docker_running", return_value=True)
     def test_stop(self, docker_check, containers, context):
         """Stop server without errors."""
 
@@ -150,9 +149,10 @@ class ServerCLITest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.server.time.sleep")
+    @patch("vantage6.cli.server.attach.time.sleep")
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.server.check_docker_running", return_value=True)
+    @patch("vantage6.cli.server.attach.check_docker_running",
+           return_value=True)
     def test_attach(self, docker_check, containers, sleep):
         """Attach log to the console without errors."""
         container1 = MagicMock()

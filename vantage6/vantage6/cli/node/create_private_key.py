@@ -52,14 +52,6 @@ def cli_node_create_private_key(
         # retrieve context
         name = select_node(name, system_folders)
 
-        # raise error if config could not be found
-        if not NodeContext.config_exists(name, system_folders):
-            error(
-                f"The configuration {Fore.RED}{name}{Style.RESET_ALL} could "
-                "not be found."
-            )
-            exit(1)
-
         # Create node context
         ctx = NodeContext(name, system_folders)
 
