@@ -245,7 +245,7 @@ def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
             except KeyboardInterrupt:
                 info("Closing log file. Keyboard Interrupt.")
                 info("Note that your server is still running! Shut it down "
-                     f"with {Fore.RED}vserver stop{Style.RESET_ALL}")
+                     f"with {Fore.RED}v6 server stop{Style.RESET_ALL}")
                 exit(0)
 
 

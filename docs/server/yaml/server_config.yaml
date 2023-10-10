@@ -145,7 +145,7 @@ images:
 # options for starting the User Interface when starting the server
 ui:
   # set this to true to start the UI when starting the server with
-  # `vserver start`
+  # `v6 server start`
   enabled: true
 
   # port at which the UI will be available on your local machine

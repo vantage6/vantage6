@@ -15,7 +15,7 @@ Shell
     The commands in this page have not been updated to match version 4.0.
 
 The shell allows a server admin to manage all server entities. To start
-the shell, use ``vserver shell [options]``.
+the shell, use ``v6 server shell [options]``.
 
 In the next sections the different database models that are available
 are explained. You can retrieve any record and edit any property of it.

@@ -36,7 +36,7 @@ def cli_server_new(name: str, system_folders: bool) -> None:
     # Check that we can write in this folder
     if not check_config_writeable(system_folders):
         error("Your user does not have write access to all folders. Exiting")
-        info(f"Create a new server using '{Fore.GREEN}vserver new "
+        info(f"Create a new server using '{Fore.GREEN}v6 server new "
              f"--user{Style.RESET_ALL}' instead!")
         exit(1)
 
@@ -46,5 +46,5 @@ def cli_server_new(name: str, system_folders: bool) -> None:
 
     # info(f"root user created.")
     flag = "" if system_folders else "--user"
-    info(f"You can start the server by running {Fore.GREEN}vserver start "
+    info(f"You can start the server by running {Fore.GREEN}v6 server start "
          f"{flag}{Style.RESET_ALL}")

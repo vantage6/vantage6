@@ -162,9 +162,9 @@ def generate_node_configs(num_nodes: int, server_url: str, port: int,
 
 def create_vserver_import_config(node_configs: list[dict], server_name: str) \
         -> Path:
-    """Creates vserver configuration import file (YAML).
+    """Create server configuration import file (YAML).
 
-    Utilized by the ``vserver import`` command.
+    Utilized by the ``v6 server import`` command.
 
     Parameters
     ----------
@@ -221,7 +221,7 @@ def create_vserver_import_config(node_configs: list[dict], server_name: str) \
 
 
 def create_vserver_config(server_name: str, port: int) -> Path:
-    """Creates vserver configuration file (YAML).
+    """Creates server configuration file (YAML).
 
     Parameters
     ----------

@@ -27,7 +27,7 @@ vantage6.server.run_server
     Note that the ``run_server`` function is normally not used directly to
     start the server, but is used as utility function in places that start the
     server. The recommended way to start a server is using uWSGI as is done in
-    ``vserver start``.
+    ``v6 server start``.
 
 .. todo and in wsgi.py!
 .. todo add refs for statement above

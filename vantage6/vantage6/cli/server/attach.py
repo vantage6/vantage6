@@ -48,7 +48,7 @@ def cli_server_attach(name: str, system_folders: bool) -> None:
             except KeyboardInterrupt:
                 info("Closing log file. Keyboard Interrupt.")
                 info("Note that your server is still running! Shut it down "
-                     f"with {Fore.RED}vserver stop{Style.RESET_ALL}")
+                     f"with {Fore.RED}v6 server stop{Style.RESET_ALL}")
                 exit(0)
     else:
         error(f"{Fore.RED}{name}{Style.RESET_ALL} was not running!?")

@@ -91,6 +91,7 @@ def cli_complete() -> None:
     """
     The `v6` command line interface allows you to manage your vantage6
     infrastructure.
+
     It provides a number of subcommands to help you with this task.
     """
 
