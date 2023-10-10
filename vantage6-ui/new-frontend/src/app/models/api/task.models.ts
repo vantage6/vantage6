@@ -5,7 +5,8 @@ import { NodeStatus } from './node.model';
 
 export enum TaskLazyProperties {
   InitOrg = 'init_org',
-  InitUser = 'init_user'
+  InitUser = 'init_user',
+  Runs = 'runs'
 }
 
 export enum TaskSortProperties {

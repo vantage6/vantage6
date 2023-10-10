@@ -22,19 +22,21 @@ export class TaskService {
     await getLazyProperties(result, task, lazyProperties, this.apiService);
 
     //Handle base64 input
-    const input = JSON.parse(atob(task.runs[0].input));
-    if (input) {
-      task.input = {
-        method: input.method || '',
-        parameters: input.kwargs
-          ? Object.keys(input.kwargs).map((key) => {
-              return {
-                label: key,
-                value: input.kwargs[key] || ''
-              };
-            })
-          : []
-      };
+    if (Array.isArray(task.runs) && task.runs.length > 0) {
+      const input = JSON.parse(atob(task.runs[0].input));
+      if (input) {
+        task.input = {
+          method: input.method || '',
+          parameters: input.kwargs
+            ? Object.keys(input.kwargs).map((key) => {
+                return {
+                  label: key,
+                  value: input.kwargs[key] || ''
+                };
+              })
+            : []
+        };
+      }
     }
 
     return task;

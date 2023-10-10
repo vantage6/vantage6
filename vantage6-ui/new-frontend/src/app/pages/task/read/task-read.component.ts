@@ -45,7 +45,7 @@ export class TaskReadComponent implements OnInit {
   }
 
   async initData(): Promise<void> {
-    this.task = await this.taskService.getTask(this.id, [TaskLazyProperties.InitOrg, TaskLazyProperties.InitUser]);
+    this.task = await this.taskService.getTask(this.id, [TaskLazyProperties.InitOrg, TaskLazyProperties.InitUser, TaskLazyProperties.Runs]);
     this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image);
     this.function = this.algorithm?.functions.find((_) => _.name === this.task?.input?.method) || null;
     this.isLoading = false;

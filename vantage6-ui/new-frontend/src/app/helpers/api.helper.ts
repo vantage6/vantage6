@@ -1,7 +1,7 @@
 import { Pagination } from '../models/api/pagination.model';
 import { ApiService } from '../services/api.service';
 
-export const getLazyProperties = async (result: any, data: any, lazyProperties: string[], apiService: ApiService) => {
+export const getLazyProperties = async (result: any, data: any, lazyProperties: string[], apiService: ApiService): Promise<void> => {
   await Promise.all(
     lazyProperties.map(async (lazyProperty) => {
       if (!result[lazyProperty]) return;
