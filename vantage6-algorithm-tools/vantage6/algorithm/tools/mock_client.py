@@ -1,11 +1,17 @@
 import json
 import logging
+from typing import Any
+from importlib import import_module
 from copy import deepcopy
 from importlib import import_module
 from typing import Any
 
 import pandas as pd
 
+import pandas as pd
+
+from vantage6.algorithm.tools.wrappers import load_data
+from vantage6.algorithm.tools.util import info
 from vantage6.algorithm.tools.preprocessing import preprocess_data
 from vantage6.algorithm.tools.util import info
 from vantage6.algorithm.tools.wrappers import load_data
@@ -103,9 +109,9 @@ class MockAlgorithmClient:
             org_data = []
 
             for dataset in org_datasets:
-                database_handle = dataset.get("database")
-                if isinstance(database_handle, pd.DataFrame):
-                    df = database_handle
+                db_handle = dataset.get("database")
+                if isinstance(db_handle, pd.DataFrame):
+                    df = db_handle
                 else:
                     df = load_data(
                         database_uri=dataset.get("database"),

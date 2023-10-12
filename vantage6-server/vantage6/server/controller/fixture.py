@@ -5,7 +5,8 @@ import vantage6.server.model as db
 from vantage6.server.model.base import Database
 from vantage6.server.permission import PermissionManager
 from vantage6.common.task_status import TaskStatus
-
+from vantage6.common.serialization import serialize
+from vantage6.common import bytes_to_base64s
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -136,7 +137,7 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
             for organization in collaboration.organizations:
                 run = db.Run(
                     task=task,
-                    input="something",
+                    input=bytes_to_base64s(serialize({"a": "b"})),
                     organization=organization,
                     status=TaskStatus.PENDING
                 )

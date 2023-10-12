@@ -57,14 +57,14 @@ class DefaultSocketNamespace(Namespace):
             emit("expired_token", room=request.sid)
             return
 
-        except Exception as e:
-            self.log.error("Couldn't connect client! No or Invalid JWT token?")
-            self.log.exception(e)
-            session.name = "not-sure-yet"
-            self.__join_room_and_notify(request.sid)
+        except jwt.exceptions.InvalidSignatureError:
+            self.log.error("Invalid JWT signature")
+            emit("invalid_token", room=request.sid)
+            return
 
-            # FIXME: expired probably doesn't cover it ...
-            emit("expired_token", room=request.sid)
+        except Exception as exc:
+            self.log.error("Couldn't connect client! No or Invalid JWT token?")
+            self.log.exception(exc)
             return
 
         # get identity from token.
@@ -89,6 +89,9 @@ class DefaultSocketNamespace(Namespace):
         # join appropiate rooms
         session.rooms = []
         if session.type == 'node':
+            # Ensure that node syncs on initial connection
+            emit("sync", room=request.sid)
+            # Add node to rooms and alert other clients of that
             self._add_node_to_rooms(auth)
             self.__alert_node_status(online=True, node=auth)
         elif session.type == 'user':

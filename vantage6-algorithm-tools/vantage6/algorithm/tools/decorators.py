@@ -12,7 +12,7 @@ from vantage6.algorithm.tools.wrappers import load_data
 from vantage6.algorithm.tools.preprocessing import preprocess_data
 
 
-def algorithm_client(func: callable) -> callable:
+def _algorithm_client() -> callable:
     """
     Decorator that adds an algorithm client object to a function
 
@@ -34,36 +34,50 @@ def algorithm_client(func: callable) -> callable:
     -------
     callable
         Decorated function
+
+    Examples
+    --------
+    >>> @algorithm_client
+    >>> def my_algorithm(algorithm_client: AlgorithmClient, <other arguments>):
+    >>>     pass
     """
-    def wrap_function(*args, mock_client: MockAlgorithmClient = None,
+    def protection_decorator(func: callable, *args, **kwargs) -> callable:
+        @wraps(func)
+        def decorator(*args, mock_client: MockAlgorithmClient = None,
                       **kwargs) -> callable:
-        """
-        Wrap the function with the client object
+            """
+            Wrap the function with the client object
 
-        Parameters
-        ----------
-        mock_client : MockAlgorithmClient
-            Mock client to use instead of the regular client
-        """
-        if mock_client is not None:
-            return func(mock_client, *args, **kwargs)
-        # read server address from the environment
-        host = os.environ["HOST"]
-        port = os.environ["PORT"]
-        api_path = os.environ["API_PATH"]
+            Parameters
+            ----------
+            mock_client : MockAlgorithmClient
+                Mock client to use instead of the regular client
+            """
+            if mock_client is not None:
+                return func(mock_client, *args, **kwargs)
+            # read server address from the environment
+            host = os.environ["HOST"]
+            port = os.environ["PORT"]
+            api_path = os.environ["API_PATH"]
 
-        # read token from the environment
-        token_file = os.environ["TOKEN_FILE"]
-        info("Reading token")
-        with open(token_file) as fp:
-            token = fp.read().strip()
+            # read token from the environment
+            token_file = os.environ["TOKEN_FILE"]
+            info("Reading token")
+            with open(token_file) as fp:
+                token = fp.read().strip()
 
-        client = AlgorithmClient(token=token, host=host, port=port,
-                                 path=api_path)
-        return func(client, *args, **kwargs)
-    # set attribute that this function is wrapped in an algorithm client
-    wrap_function.wrapped_in_algorithm_client_decorator = True
-    return wrap_function
+            client = AlgorithmClient(token=token, host=host, port=port,
+                                     path=api_path)
+            return func(client, *args, **kwargs)
+        # set attribute that this function is wrapped in an algorithm client
+        decorator.wrapped_in_algorithm_client_decorator = True
+        return decorator
+    return protection_decorator
+
+
+# alias for algorithm_client so that algorithm developers can do
+# @algorithm_client instead of @algorithm_client()
+algorithm_client = _algorithm_client()
 
 
 def data(number_of_databases: int = 1) -> callable:
@@ -114,23 +128,21 @@ def data(number_of_databases: int = 1) -> callable:
             """
             if mock_data is not None:
                 return func(*mock_data, *args, **kwargs)
-            # query to execute on the database
-            input_file = os.environ["INPUT_FILE"]
-            info(f"Reading input file {input_file}")
 
             # read the labels that the user requested, which is a comma
-            # separated list of labels.
+            # separated list of labels. Be sure to keep only non-empty labels
             labels = os.environ["USER_REQUESTED_DATABASE_LABELS"]
-            labels = labels.split(',')
+            labels = [label for label in labels.split(',') if label != '']
 
             # check if user provided enough databases
             if len(labels) < number_of_databases:
-                error(f"User provided {len(labels)} databases, but algorithm "
-                      f"requires {number_of_databases} databases. Exiting...")
+                error(f"Algorithm requires {number_of_databases} databases "
+                      f"but only {len(labels)} were provided. "
+                      "Exiting...")
                 exit(1)
             elif len(labels) > number_of_databases:
-                warn(f"User provided {len(labels)} databases, but algorithm "
-                     f"requires {number_of_databases} databases. Using the "
+                warn(f"Algorithm requires only {number_of_databases} databases"
+                     f", but {len(labels)} were provided. Using the "
                      f"first {number_of_databases} databases.")
 
             for i in range(number_of_databases):
