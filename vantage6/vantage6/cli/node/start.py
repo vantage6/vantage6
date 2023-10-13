@@ -66,37 +66,6 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
     """
     Start the node.
     """
-    vnode_start(name, config, system_folders, image, keep, mount_src, attach,
-                force_db_mount)
-
-
-def vnode_start(name: str, config: str, system_folders: bool,
-                image: str, keep: bool, mount_src: str, attach: bool,
-                force_db_mount: bool) -> None:
-    """
-    Start the node instance inside a Docker container.
-
-    Parameters
-    ----------
-    name : str
-        Name of the configuration file.
-    config : str
-        Absolute path to configuration-file; overrides NAME
-    system_folders : bool
-        Is this configuration stored in the system or in the user folders.
-    image : str
-        Node Docker image to use.
-    keep : bool
-        Keep container when finished or in the event of a crash. This is useful
-        for debugging.
-    mount_src : str
-        Mount vantage6 package source that replaces the source inside the
-        container. This is useful for debugging.
-    attach : bool
-        Attach node logs to the console after start.
-    force_db_mount : bool
-        Skip the check of the existence of the DB (always try to mount).
-    """
     check_docker_running()
     info("Starting node...")
     info("Finding Docker daemon")

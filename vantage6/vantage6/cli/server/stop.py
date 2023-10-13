@@ -31,22 +31,6 @@ def cli_server_stop(name: str, system_folders: bool, all_servers: bool):
     """
     Stop one or all running server(s).
     """
-    vserver_stop(name, system_folders, all_servers)
-
-
-def vserver_stop(name: str, system_folders: bool, all_servers: bool) -> None:
-    """
-    Stop one or all running server(s).
-
-    Parameters
-    ----------
-    name : str
-        Name of the server to stop
-    system_folders : bool
-        Wether to use system folders or not
-    all_servers : bool
-        Wether to stop all servers or not
-    """
     check_docker_running()
     client = docker.from_env()
 
@@ -129,8 +113,11 @@ def _stop_server_containers(client: DockerClient, container_name: str,
 
 # TODO this should be refactored into its own module and get a click command
 # attached
-def vserver_remove(ctx: ServerContext, name: str, system_folders: bool,
-                   force: bool) -> None:
+@click.pass_context
+def vserver_remove(
+    click_ctx: click.Context, ctx: ServerContext, name: str,
+    system_folders: bool, force: bool
+) -> None:
     """
     Function to remove a server.
 
@@ -148,7 +135,10 @@ def vserver_remove(ctx: ServerContext, name: str, system_folders: bool,
     check_docker_running()
 
     # first stop server
-    vserver_stop(name, system_folders, False)
+    click_ctx.invoke(
+        cli_server_stop, name=name, system_folders=system_folders,
+        all_servers=False
+    )
 
     if not force:
         if not q.confirm(

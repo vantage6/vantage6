@@ -29,25 +29,6 @@ def cli_node_stop(name: str, system_folders: bool, all_nodes: bool,
     """
     Stop one or all running nodes.
     """
-    vnode_stop(name, system_folders, all_nodes, force)
-
-
-def vnode_stop(name: str, system_folders: bool, all_nodes: bool,
-               force: bool) -> None:
-    """
-    Stop a running node container.
-
-    Parameters
-    ----------
-    name : str
-        Name of the configuration file.
-    system_folders : bool
-        Is this configuration stored in the system or in the user folders.
-    all_nodes : bool
-        If set to true, all running nodes will be stopped.
-    force : bool
-        If set to true, the node will not be stopped gracefully.
-    """
     check_docker_running()
     client = docker.from_env()
 

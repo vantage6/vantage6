@@ -3,7 +3,7 @@ import click
 
 from vantage6.cli.context import ServerContext, NodeContext
 from vantage6.cli.server.common import click_insert_context
-from vantage6.cli.server.start import vserver_start
+from vantage6.cli.server.start import cli_server_start
 
 
 @click.command()
@@ -12,8 +12,10 @@ from vantage6.cli.server.start import vserver_start
               help='Server Docker image to use')
 @click.option('--node-image', type=str, default=None,
               help='Node Docker image to use')
+@click.pass_context
 def start_demo_network(
-    ctx: ServerContext, server_image: str, node_image: str
+    click_ctx: click.Context, ctx: ServerContext, server_image: str,
+    node_image: str
 ) -> None:
     """Starts running a demo-network.
 
@@ -23,7 +25,8 @@ def start_demo_network(
     create one.
     """
     # run the server
-    vserver_start(
+    click_ctx.invoke(
+        cli_server_start,
         ctx=ctx,
         ip=None,
         port=None,

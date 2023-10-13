@@ -11,7 +11,7 @@ from vantage6.common import info, error, generate_apikey
 from vantage6.cli.globals import PACKAGE_FOLDER
 from vantage6.cli.context import ServerContext, NodeContext
 from vantage6.cli.server.common import get_server_context
-from vantage6.cli.server.import_ import vserver_import
+from vantage6.cli.server.import_ import cli_server_import
 from vantage6.cli.utils import prompt_config_name
 
 
@@ -298,8 +298,11 @@ def demo_network(num_nodes: int, server_url: str, server_port: int,
 @click.option('-i', '--image', type=str, default=None,
               help='Server docker image to use when setting up resources for '
               'the development server')
-def create_demo_network(name: str, num_nodes: int, server_url: str,
-                        server_port: int, image: str = None) -> dict:
+@click.pass_context
+def create_demo_network(
+    click_ctx: click.Context, name: str, num_nodes: int, server_url: str,
+    server_port: int, image: str = None
+) -> dict:
     """Creates a demo network.
 
     Creates server instance as well as its import configuration file. Server
@@ -319,7 +322,10 @@ def create_demo_network(name: str, num_nodes: int, server_url: str,
         exit(1)
     (node_config, server_import_config, server_config) = demo
     ctx = get_server_context(server_name, True)
-    vserver_import(ctx, server_import_config, False, image, '', False, True)
+    click_ctx.invoke(
+        cli_server_import, ctx=ctx, file=server_import_config, drop_all=False,
+        image=image, mount_src='', keep=False, wait=True
+    )
     return {
         "node_configs": node_config,
         "server_import_config": server_import_config,

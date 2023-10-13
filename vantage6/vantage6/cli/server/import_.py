@@ -43,33 +43,6 @@ def cli_server_import(
     The FILE_ argument should be a path to a yaml file containing the vantage6
     formatted data to import.
     """
-    vserver_import(ctx, file, drop_all, image, mount_src, keep,
-                   wait)
-
-
-def vserver_import(ctx: ServerContext, file: str, drop_all: bool,
-                   image: str, mount_src: str, keep: bool, wait: bool) -> None:
-    """Batch import organizations/collaborations/users and tasks.
-
-    Parameters
-    ----------
-    ctx : ServerContext
-        Server context object
-    file : str
-        Yaml file containing the vantage6 formatted data to import
-    drop_all : bool
-        Wether to drop all data before importing
-    image : str
-        Node Docker image to use which contains the import script
-    mount_src : str
-        Vantage6 source location, this will overwrite the source code in the
-        container. Useful for debugging/development.
-    keep : bool
-        Wether to keep the image after finishing/crashing. Useful for
-        debugging.
-    wait : bool
-        Wether to wait for the import to finish before exiting this function
-    """
     # will print an error if not
     check_docker_running()
 

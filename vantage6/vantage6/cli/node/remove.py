@@ -42,27 +42,6 @@ def cli_node_remove(name: str, system_folders: bool, force: bool) -> None:
     Remove the configuration file, log file, and docker volumes attached to
     the node.
     """
-    vnode_remove(name, system_folders, force)
-
-
-def vnode_remove(name: str, system_folders: bool, force: bool):
-    """
-    Delete a node permanently
-
-    * if the node is still running, exit and tell user to run 'v6 node stop'
-    * remove configuration file
-    * remove log file
-    * remove docker volumes attached to the node
-
-    Parameters
-    ----------
-    name : str
-        Configuration name
-    system_folders : bool
-        If True, use system folders, otherwise use user folders
-    force : bool
-        If True, don't ask for confirmation before removing the node
-    """
     # select configuration name if none supplied
     name = select_node(name, system_folders)
 

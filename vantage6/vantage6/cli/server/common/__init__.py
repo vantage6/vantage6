@@ -56,20 +56,24 @@ def click_insert_context(func: callable) -> callable:
                 config,
                 system_folders
             )
-            return func(ctx, *args, **kwargs)
+        elif 'ctx' in kwargs:
+            # if ctx is already in kwargs (typically when one click command
+            # calls another internally), use that existing ctx
+            ctx = kwargs.pop('ctx')
+        else:
+            # in case no name, ctx or config file is supplied, ask the user to
+            # select an existing config by name
+            if not name:
+                try:
+                    # select configuration if none supplied
+                    name = select_configuration_questionaire(
+                        "server", system_folders
+                    )
+                except Exception:
+                    error("No configurations could be found!")
+                    exit(1)
 
-        # in case no name is supplied, ask the user to select one
-        if not name:
-            try:
-                # select configuration if none supplied
-                name = select_configuration_questionaire(
-                    "server", system_folders
-                )
-            except Exception:
-                error("No configurations could be found!")
-                exit(1)
-
-        ctx = get_server_context(name, system_folders)
+            ctx = get_server_context(name, system_folders)
         return func(ctx, *args, **kwargs)
 
     return func_with_context

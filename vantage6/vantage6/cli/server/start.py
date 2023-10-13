@@ -57,46 +57,6 @@ def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
     """
     Start the server.
     """
-    vserver_start(ctx, ip, port, image, start_ui, ui_port, start_rabbitmq,
-                  rabbitmq_image, keep, mount_src, attach)
-
-
-def vserver_start(ctx: ServerContext, ip: str, port: int, image: str,
-                  start_ui: bool, ui_port: int, start_rabbitmq: bool,
-                  rabbitmq_image: str, keep: bool, mount_src: str,
-                  attach: bool) -> None:
-    """
-    Start the server in a Docker container.
-
-    Parameters
-    ----------
-    ctx : ServerContext
-        Server context object
-    ip : str
-        ip interface to listen on
-    port : int
-        port to listen on
-    image : str
-        Server Docker image to use
-    start_ui : bool
-        Start the graphical User Interface as well
-    ui_port : int
-        Port to listen on for the User Interface
-    start_rabbitmq : bool
-        Start RabbitMQ message broker as local container - use only in
-        development
-    rabbitmq_image : str
-        RabbitMQ docker image to use
-    keep : bool
-        Wether to keep the image after the server has finished, useful for
-        debugging
-    mount_src : str
-        Path to the vantage6 package source, this overrides the source code in
-        the container. This is useful when developing and testing the server.
-    attach : bool
-        Wether to attach the server logs to the console after starting the
-        server.
-    """
     # will print an error if not
     check_docker_running()
 
