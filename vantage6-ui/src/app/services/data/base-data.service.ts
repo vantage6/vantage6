@@ -119,6 +119,33 @@ export abstract class BaseDataService {
           );
         }
       }
+      // check if new resources have to be added to the list
+      for (let params in this.resources_by_params) {
+        let param_obj = JSON.parse(params);
+        let params_resources = this.resources_by_params[params];
+        for (let resource of resources){
+          if (!arrayContainsObjWithId(resource.id, params_resources.value)) {
+            // check if new resource has to be added to the list
+            // this is
+            // 1. if organization id is in params and matches
+            // 2. if collaboration id is in params and matches
+            // 3. if complete list is requested
+            if ((
+              "collaboration_id" in resource && "collaboration_id" in param_obj
+              && resource.collaboration_id === param_obj.collaboration_id
+             ) || (
+              "organization_id" in resource && "organization_id" in param_obj
+              && resource.organization_id === param_obj.organization_id
+             ) || (
+              Object.keys(param_obj).length === 0
+             )){
+              params_resources.next(
+                addOrReplace(params_resources.value, resource)
+              );
+            }
+          }
+        }
+      }
     }
   }
 
