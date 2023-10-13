@@ -24,6 +24,7 @@ from vantage6.cli.dev.create import create_demo_network
 from vantage6.cli.dev.remove import remove_demo_network
 from vantage6.cli.dev.start import start_demo_network
 from vantage6.cli.dev.stop import stop_demo_network
+from vantage6.cli.algorithm.create import cli_algorithm_create
 
 
 # Define the server group
@@ -85,6 +86,18 @@ cli_dev.add_command(start_demo_network, name="start-demo-network")
 cli_dev.add_command(stop_demo_network, name="stop-demo-network")
 
 
+# Define the algorithm group
+@click.group(name="algorithm")
+def cli_algorithm() -> None:
+    """
+    Manage your vantage6 algorithms.
+    """
+
+
+# Define the commands for the algorithm group
+cli_algorithm.add_command(cli_algorithm_create, name="create")
+
+
 # Define the overall group
 @click.group(name='cli')
 def cli_complete() -> None:
@@ -100,3 +113,4 @@ def cli_complete() -> None:
 cli_complete.add_command(cli_node)
 cli_complete.add_command(cli_server)
 cli_complete.add_command(cli_dev)
+cli_complete.add_command(cli_algorithm)
