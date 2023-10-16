@@ -17,4 +17,5 @@ below represents a distinct PyPi package.
    cli
    client
    algorithm-tools
+   preprocessing
    common

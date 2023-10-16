@@ -4,13 +4,22 @@ Preprocessing
 With preprocessing you can transform your data before it is passed to an algorithm.
 
 Setting up preprocessing
-+++++++++++++++++++++++
-You can set up preprocessing for your datasets in the task creation by adding the
-preprocessing field in the dataset dictionary. The preprocessing field is a list
-of preprocessing steps. Each step is a dictionary with a function and parameters
-field. The function field is a string with the name of the function you want to
-use. The parameters field is a dictionary with the parameters for the function.
-The steps are executed in the order they are defined in the list.
+++++++++++++++++++++++++
+Before being able to use an algorithm on your date you may need to do
+preprocessing. Vantage6 supports with by adding a "preprocessing"
+field to your dataset's configuration dictionary. This field should contain an
+ordered list of preprocessingsteps to be taken, each represented as its own
+dictionary.
+
+Within each step's dictionary, you'll find two key-value pairs:
+
+1. function: A string specifying the function to be used for preprocessing.
+2. parameters: Another dictionary that contains all the necessary parameters
+   for the aforementioned function.
+
+The steps will be carried out sequentially, in the order they appear in the list.
+
+
 
 An example of a task with dataset preprocessing:
 
