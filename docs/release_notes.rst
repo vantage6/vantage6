@@ -1,6 +1,18 @@
 Release notes
 =============
 
+4.0.3
+-----
+
+*16 October 2023*
+
+- **Bugfix**
+
+ - Fix where custom Docker image for node was defined in config file but not
+   used in practice (`PR#896 <https://github.com/vantage6/vantage6/pull/896>`_).
+ - Fixed getting VPN algorithm addresses from ``AlgorithmClient``
+   (`PR#898 <https://github.com/vantage6/vantage6/pull/898>`_).
+
 4.0.2
 -----
 
