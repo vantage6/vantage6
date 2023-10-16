@@ -210,16 +210,15 @@ def _create_omop_database_connection(label) -> callable:
     # check that the OHDSI package is available in this container
     if not OHDSI_AVAILABLE:
         error("OHDSI/DatabaseConnector is not available.")
-        error("Did you use the correct algorithm-base image to "
+        error("Did you use the correct algorithm base image to "
               "build this algorithm?")
         exit(1)
 
     info("Reading OHDSI environment variables")
-    # TODO these are not actually supplied by the node yet...
-    dbms = os.environ["OMOP_DBMS"]
+    dbms = os.environ["DBMS"]
     uri = os.environ[f"{label.upper()}_DATABASE_URI"]
-    user = os.environ["OMOP_USER"]
-    password = os.environ["OMOP_PASSWORD"]
+    user = os.environ["USER"]
+    password = os.environ["PASSWORD"]
     info(f' - dbms: {dbms}')
     info(f' - uri: {uri}')
     info(f' - user: {user}')
