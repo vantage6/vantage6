@@ -25,6 +25,7 @@ from vantage6.cli.dev.remove import remove_demo_network
 from vantage6.cli.dev.start import start_demo_network
 from vantage6.cli.dev.stop import stop_demo_network
 from vantage6.cli.algorithm.create import cli_algorithm_create
+from vantage6.cli.algorithm.update import cli_algorithm_update
 
 
 # Define the server group
@@ -96,6 +97,7 @@ def cli_algorithm() -> None:
 
 # Define the commands for the algorithm group
 cli_algorithm.add_command(cli_algorithm_create, name="create")
+cli_algorithm.add_command(cli_algorithm_update, name="update")
 
 
 # Define the overall group
