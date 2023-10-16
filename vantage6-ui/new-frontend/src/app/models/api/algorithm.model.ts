@@ -10,7 +10,8 @@ export enum OutputType {
 }
 
 export enum OutputVisualizeType {
-  Table = 'table'
+  Table = 'table',
+  TableGrouped = 'table_grouped'
 }
 
 export interface Algorithm {
@@ -25,7 +26,7 @@ export interface Function {
   is_central: boolean;
   arguments: Argument[];
   databases: Database[];
-  output: Output;
+  output: Output[];
 }
 
 interface Argument {
@@ -38,7 +39,10 @@ interface Database {
   name: string;
 }
 export interface Output {
+  visualize?: OutputVisualizeType | null;
+  title?: string;
   type: OutputType;
   keys?: string[] | null;
-  visualize?: OutputVisualizeType | null;
+  filter_property?: string;
+  filter_value?: string;
 }

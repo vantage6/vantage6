@@ -64,7 +64,7 @@ export interface TaskRun {
   started_at?: string;
   finished_at?: string;
   log?: string;
-  result?: string;
+  result?: any;
 }
 
 //Not compatible with BaseNode
