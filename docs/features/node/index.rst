@@ -12,6 +12,7 @@ The following pages each describe one feature of the vantage6 node.
 
    whitelisting
    ssh_tunnel
+   linked_docker_service
 .. TODO
 .. Overview
 .. Core

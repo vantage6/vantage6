@@ -35,7 +35,7 @@ setup(
     install_requires=[
         'click==8.1.3',
         'docker==6.1.2',
-        'gevent==22.10.2',
+        'gevent==23.9.1',
         'jinja2==3.1.2',
         'python-socketio==5.7.2',
         'requests==2.31.0',

@@ -23,10 +23,30 @@ from. You can find such a template in the Github repository
 
    git clone https://github.com/IKNL/v6-boilerplate-py
 
+then install the requirements:
+
+.. code:: bash
+
+   # This code is just a suggestion - there are many ways of doing this.
+
+   # go to the boilerplate directory
+   cd v6-boilerplate-py/
+
+   # create a Python environment. Be sure to replace <my-algorithm-env> with
+   # the name of your environment.
+   conda create -n <my-algorithm-env> python=3.10
+   conda activate <my-algorithm-env>
+
+   # install the requirements. This will install the vantage6 algorithm tools
+   # package, which we will use later on in this guide to import from
+   # 'vantage6.algorithm.tools' and 'vantage6.algorithm.client'.
+   pip install -r requirements.txt
+
 and you are ready to start!
 
-Note that there is also a `boilerplate for R <https://github.com/IKNL/vtg.tpl>`_,
-but it not updated as frequently as the Python boilerplate.
+.. note::
+   There is also a `boilerplate for R <https://github.com/IKNL/vtg.tpl>`_,
+   but it not updated as frequently as the Python boilerplate.
 
 .. note::
 

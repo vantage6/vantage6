@@ -54,8 +54,12 @@ This will install the CLI which enables you to use the commands:
 
 You can find more (user) documentation at [Gitbook (docs.vantage6.ai)](https://docs.vantage6.ai). If you have any questions, suggestions or just want to chat about federated learning: join our [Dircord (https://discord.gg/yAyFf6Y)](https://discord.gg/yAyFf6Y) channel.
 
-## :gift_heart: Contributing
+## :gift_heart: Join the community!
 We hope to continue developing, improving, and supporting **vantage6** with the help of the federated learning community. If you are interested in contributing, first of all, thank you! Second, please take a look at our [contributing guidelines](https://docs.vantage6.ai/en/main/devops/contribute.html)
+
+<a href="https://github.com/vantage6/vantage6/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=vantage6/vantage6" />
+</a>
 
 ## :black_nib: References
 If you are using **vantage6**, please cite this repository as well as the accompanying papers as follows:

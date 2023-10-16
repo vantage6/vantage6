@@ -30,7 +30,16 @@ class NodeTaskNamespace(ClientNamespace):
         self.log.info(msg)
 
     def on_connect(self):
-        """ Actions to be taken on socket connect (or reconnect) event """
+        """
+        Alert the node that the websocket connection has been established.
+        """
+        self.log.info("Websocket connection established")
+
+    def on_sync(self):
+        """
+        Actions to be taken on socket sync event. This event is triggered by
+        the server when the node connects to the socket namespace.
+        """
         self.log.info('(Re)Connected to the /tasks namespace')
         self.node_worker_ref.sync_task_queue_with_server()
         self.log.debug("Tasks synced again with the server...")
@@ -100,6 +109,20 @@ class NodeTaskNamespace(ClientNamespace):
         self.log.debug("Connected to socket")
         self.node_worker_ref.sync_task_queue_with_server()
         self.log.debug("Tasks synced again with the server...")
+
+    def on_invalid_token(self) -> None:
+        """
+        The server indicates that this node has an invalid token. We should
+        reauthenticate.
+        """
+        self.log.warning('Node has invalid token. Reauthenticating...')
+        self.node_worker_ref.socketIO.disconnect()
+        self.log.debug("Old socket connection terminated")
+        self.log.debug("Reauthenticating the node...")
+        self.node_worker_ref.authenticate()
+        self.node_worker_ref.connect_to_socket()
+        self.log.debug("Connected to socket")
+        # note that the tasks will sync automatically when the node reconnects
 
     def on_kill_containers(self, kill_info: dict):
         """
