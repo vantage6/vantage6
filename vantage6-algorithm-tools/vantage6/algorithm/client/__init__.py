@@ -432,13 +432,24 @@ class AlgorithmClient(ClientBase):
                 the VPN addresses from the server fails, a dictionary with a
                 'message' key is returned instead.
             """
-            results = self.parent.request("vpn/algorithm/addresses", params={
-                "only_children": only_children,
-                "only_parent": only_parent,
-                "include_children": include_children,
-                "include_parent": include_parent,
-                "label": label
-            })
+            # Only pass the parameters if they are not the default value - this
+            # prevents that they are interpreted as string, which goes wrong
+            # for 'False' or 'None' values in the proxy server
+            params = {}
+            if only_children:
+                params['only_children'] = 1
+            if only_parent:
+                params['only_parent'] = 1
+            if include_children:
+                params['include_children'] = 1
+            if include_parent:
+                params['include_parent'] = 1
+            if label:
+                params['label'] = label
+
+            results = self.parent.request(
+                "vpn/algorithm/addresses", params=params
+            )
 
             if 'addresses' not in results:
                 return {'message': 'Obtaining VPN addresses failed!'}
