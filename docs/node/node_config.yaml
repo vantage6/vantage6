@@ -61,7 +61,7 @@ databases:
       dbms: postgresql
       cdm_database: postgres
       cdm_schema: public
-      result_schema: results
+      results_schema: results
 
 
 # end-to-end encryption settings
