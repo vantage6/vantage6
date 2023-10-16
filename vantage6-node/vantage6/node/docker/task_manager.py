@@ -522,7 +522,7 @@ class DockerTaskManager(DockerBaseManager):
             # the algorithm (wrapper).
             if 'env' in db:
                 for key in db['env']:
-                    environment_variables[key] = db['env'][key]
+                    environment_variables[key] = db['env'][key.upper()]
 
             db_labels.append(label)
         environment_variables['DB_LABELS'] = ','.join(db_labels)
