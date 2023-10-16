@@ -115,8 +115,8 @@ export class TaskViewComponent
   }
 
   getDatabaseNames(): string {
-    let databases = this.task.databases ? this.task.databases : ['default'];
-    return databases.join(', ');
+    let databases = this.task.databases ? this.task.databases : [{'label': 'default'}];
+    return databases.map(db => db.label).join(', ');
   }
 
   getRunPanelTitle(run: Run): string {

@@ -303,7 +303,8 @@ export class TaskCreateComponent extends BaseEditComponent implements OnInit {
       this.modalService.openMessageModal([
         'The task has been created!',
         'Note that you do not have permissions to view if all required ' +
-          'nodes are online. If they are not, the task will not complete.',
+          'nodes are online. If they are not, the task will probably not ' +
+          'be completed.',
       ]);
       return;
     }
