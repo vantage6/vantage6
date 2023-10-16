@@ -45,7 +45,3 @@ def cli_algorithm_create(
     )
     info("Template created!")
     info(f"You can find your new algorithm in: {directory}")
-
-
-
-# TODO add click command to update an existing template
