@@ -17,6 +17,7 @@ try:
 except ImportError:
     OHDSI_AVAILABLE = False
 
+
 def _algorithm_client() -> callable:
     """
     Decorator that adds an algorithm client object to a function
@@ -173,6 +174,16 @@ def data(number_of_databases: int = 1) -> callable:
 
 def database_connection(type: str) -> callable:
     """
+    Decorator that adds a database connection to a function
+
+    By adding @database_connection to a function, a database connection will
+    be added to the front of the argument list. This connection can be used to
+    communicate with the database.
+
+    Parameters
+    ----------
+    type : str
+        Type of database to connect to. Currently only "OMOP" is supported.
 
     Example
     -------
@@ -196,8 +207,8 @@ def database_connection(type: str) -> callable:
                 case "OMOP":
                     info("Creating OMOP database connection")
                     connection = _create_omop_database_connection(labels[0])
-                # case "FHIRE":
-                #     connection = _create_fhire_database_connection()
+                # case "FHIR":
+                #     connection = _create_fhir_database_connection()
 
             return func(connection, *args, **kwargs)
 
@@ -205,13 +216,54 @@ def database_connection(type: str) -> callable:
     return connection_decorator
 
 
-def _create_omop_database_connection(label) -> callable:
+def _create_omop_database_connection(label: str) -> callable:
+    """
+    Create a connection to an OMOP database.
+
+    It expects that the following environment variables are set:
+    - DBMS: type of database to connect to
+    - USER: username to connect to the database
+    - PASSWORD: password to connect to the database
+
+    These should be profided by the vantage6 node in the `env` key of the
+    `database` section. For example:
+
+    ```yaml
+    databases:
+      - label: my_database
+        type: OMOP
+        uri: jdbc:postgresql://host.docker.internal:5454/postgres
+        env:
+            DBMS: "postgresql"
+            USER: "my_user"
+            PASSWORD: "my_password"
+    ```
+
+    Parameters
+    ----------
+    label : str
+        Label of the database to connect to
+
+    Returns
+    -------
+    callable
+        OHDSI Database Connection object
+    """
 
     # check that the OHDSI package is available in this container
     if not OHDSI_AVAILABLE:
         error("OHDSI/DatabaseConnector is not available.")
         error("Did you use the correct algorithm base image to "
               "build this algorithm?")
+        exit(1)
+
+    # check that the required environment variables are set
+    if "DBMS" not in os.environ:
+        error("Environment variable 'DBMS' is not set. Exiting...")
+        exit(1)
+    if "USER" not in os.environ or "PASSWORD" not in os.environ:
+        error("Environment variable 'USER' or 'PASSWORD' is not set. "
+              "Exiting...")
         exit(1)
 
     info("Reading OHDSI environment variables")
@@ -223,7 +275,7 @@ def _create_omop_database_connection(label) -> callable:
     info(f' - uri: {uri}')
     info(f' - user: {user}')
 
-    info("Creating connection object")
+    info("Creating OHDSI database connection")
     return connect_to_omop(dbms=dbms, connection_string=uri, password=password,
                            user=user)
 
