@@ -120,31 +120,35 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
         custom_images: dict = ctx.config.get('images')
         if custom_images:
             image = custom_images.get("node")
+        else:
+            # if no custom image is specified, find the server version and use
+            # the latest images from that minor version
+            client = create_client(ctx)
+            major_minor = None
+            try:
+                # try to get server version, skip if can't get a connection
+                version = client.util.get_server_version(
+                    attempts_on_timeout=3
+                )['version']
+                major_minor = '.'.join(version.split('.')[:2])
+                image = (f"{DEFAULT_DOCKER_REGISTRY}/"
+                         f"{DEFAULT_NODE_IMAGE_WO_TAG}"
+                         f":{major_minor}")
+            except Exception:
+                warning("Could not determine server version. Using default "
+                        "node image")
 
-        # if no custom image is specified, find the server version and use
-        # the latest images from that minor version
-        client = create_client(ctx)
-        major_minor = None
-        try:
-            # try to get server version, skip if can't get a connection
-            version = client.util.get_server_version(
-                attempts_on_timeout=3
-            )['version']
-            major_minor = '.'.join(version.split('.')[:2])
-            image = (f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_NODE_IMAGE_WO_TAG}"
-                     f":{major_minor}")
-        except Exception:
-            warning("Could not determine server version. Using default node "
-                    "image")
+            if major_minor and not __version__.startswith(major_minor):
+                warning(
+                    "Version mismatch between CLI and server/node. CLI is "
+                    f"running on version {__version__}, while node and server "
+                    f"are on version {major_minor}. This might cause "
+                    f"unexpected issues; changing to {major_minor}.<latest> "
+                    "is recommended."
+                )
 
-        if major_minor and not __version__.startswith(major_minor):
-            warning(
-                "Version mismatch between CLI and server/node. CLI is running "
-                f"on version {__version__}, while node and server are on "
-                f"version {major_minor}. This might cause unexpected issues; "
-                f"changing to {major_minor}.<latest> is recommended."
-            )
-
+        # fail safe, in case no custom image is specified and we can't get the
+        # server version
         if not image:
             image = f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_NODE_IMAGE}"
 
