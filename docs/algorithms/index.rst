@@ -22,7 +22,6 @@ in the :ref:`classic-algo-tutorial`, an FL algorithm is build from scratch.
 
    concepts
    develop
-   code_details
    classic_tutorial
 ..    Tutorial
 

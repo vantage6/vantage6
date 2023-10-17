@@ -37,7 +37,6 @@ setup(
     install_requires=[
         'click==8.1.3',
         'colorama==0.4.6',
-        'copier==8.3.0',
         'docker==6.1.2',
         'ipython==8.10.0',
         'jinja2==3.1.2',

@@ -33,6 +33,3 @@ RABBIT_TIMEOUT = 300
 
 # Default port to start the UI on
 DEFAULT_UI_PORT = 5001
-
-# Location of repository to create new algorithm templates from
-ALGORITHM_TEMPLATE_REPO = "gh:vantage6/v6-algorithm-template.git"
