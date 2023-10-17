@@ -10,4 +10,11 @@
   <ng-container *ngIf="visualizeResult.output.visualize === outputVisualizeType.TableGrouped">
     <app-visualize-table [output]="visualizeResult.output" [results]="visualizeResult.results"></app-visualize-table>
   </ng-container>
+  <ng-container *ngIf="visualizeResult.output.visualize === outputVisualizeType.Histogram">
+    <app-visualize-histogram
+      *ngFor="let result of visualizeResult.results"
+      [output]="visualizeResult.output"
+      [result]="result"
+    ></app-visualize-histogram>
+  </ng-container>
 </ng-container>

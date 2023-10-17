@@ -11,7 +11,8 @@ export enum OutputType {
 
 export enum OutputVisualizeType {
   Table = 'table',
-  TableGrouped = 'table_grouped'
+  TableGrouped = 'table_grouped',
+  Histogram = 'histogram'
 }
 
 export interface Algorithm {
