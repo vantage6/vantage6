@@ -437,8 +437,9 @@ class AlgorithmClient(ClientBase):
             Returns
             -------
             list[dict] | dict
-                List of dictionaries containing the IP address and port number,
-                and other information to identify the containers. If obtaining
+                List of dictionaries containing the IP address and port
+                number(s) of the different communication channels, and
+                additional data to identify them. If obtaining
                 the VPN addresses from the server fails, a dictionary with a
                 'message' key is returned instead.
             """
@@ -470,6 +471,9 @@ class AlgorithmClient(ClientBase):
 
             return results['addresses']
 
+        # FIXME consider renaming this and similar functions in v5+: users
+        # reported they expected a '{ip}:{port}' string, not a dict - we should
+        # evaluate what is most effective though complete
         def get_parent_address(self) -> dict:
             """
             Get the IP address and port number of the parent of the current
@@ -477,11 +481,12 @@ class AlgorithmClient(ClientBase):
 
             Returns
             -------
-            dict
-                Dictionary containing the IP address and port number, and other
-                information to identify the containers. If obtaining the VPN
-                addresses from the server fails, a dictionary with a 'message'
-                key is returned instead.
+            list[dict]
+                List of dictionaries containing the IP address and port
+                number(s) of the different channels on the parent algorithm
+                run, and other information to identify the containers. If
+                obtaining the VPN addresses from the server fails, a dictionary
+                with a 'message' key is returned instead.
             """
             return self.get_addresses(only_parent=True)
 
@@ -492,10 +497,11 @@ class AlgorithmClient(ClientBase):
 
             Returns
             -------
-            List[dict]
-                List of dictionaries containing the IP address and port number,
-                and other information to identify the containers. If obtaining
-                the VPN addresses from the server fails, a dictionary with a
+            list[dict]
+                List of dictionaries containing the IP address and port
+                number(s) of the different communication channels of the child
+                run, and additional data to identify them. If obtaining the
+                VPN addresses from the server fails, a dictionary with a
                 'message' key is returned instead.
             """
             return self.get_addresses(only_children=True)
@@ -507,9 +513,10 @@ class AlgorithmClient(ClientBase):
 
             Returns
             -------
-            List[dict]
-                List of dictionaries containing the IP address and port number,
-                and other information to identify the containers. If obtaining
+            list[dict]
+                List of dictionaries containing the IP address and port
+                number(s) of the different communication channels of the
+                sibling, and additional data to identify them. If obtaining
                 the VPN addresses from the server fails, a dictionary with a
                 'message' key is returned instead.
             """
@@ -521,11 +528,12 @@ class AlgorithmClient(ClientBase):
 
             Returns
             -------
-            dict
-                Dictionary containing the IP address and port number, and other
-                information to identify the containers. If obtaining the VPN
-                addresses from the server fails, a dictionary with a 'message'
-                key is returned instead.
+            list[dict]
+                Dictionary containing the IP address and port number(s) of the
+                different communication channels to this algorithm run, and
+                other information to identify the containers. If obtaining the
+                VPN addresses from the server fails, a dictionary with a
+                'message' key is returned instead.
             """
             return self.get_addresses(only_self=True)
 
