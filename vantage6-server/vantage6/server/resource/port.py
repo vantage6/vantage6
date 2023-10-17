@@ -150,7 +150,7 @@ class Ports(PortBase):
         run_id = data['run_id']
         linked_run = g.session.query(Run).filter(Run.id == run_id).one()
         if g.node.id != linked_run.node.id:
-            return {'msg': 'You lack the permissions to do that!'},\
+            return {'msg': 'You lack the permissions to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
         port = AlgorithmPort(
@@ -207,7 +207,7 @@ class Ports(PortBase):
         run_id = args['run_id']
         linked_run = g.session.query(Run).filter(Run.id == run_id).one()
         if g.node.id != linked_run.node.id:
-            return {'msg': 'You lack the permissions to do that!'},\
+            return {'msg': 'You lack the permissions to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
         # all checks passed: delete the port entries
@@ -253,27 +253,41 @@ class VPNAddress(ServicesResources):
             schema:
               type: boolean
             description: Only include the addresses of subtasks, not those at
-              the same level. Incompatible with 'only_parent'.
+              the same level. Incompatible with other 'only_*' parameters.
           - in: path
             name: only_parent
             schema:
               type: boolean
             description: Only send the address of the parent task, not those at
-              the same level. Incompatible with 'only_children'.
+              the same level. Incompatible with other 'only_*' parameters.
+          - in: path
+            name: only_siblings
+            schema:
+              type: boolean
+            description: Only send the addresses of tasks at the same level,
+              not the parent or children. Incompatible with other 'only_*'
+              parameters.
+          - in: path
+            name: only_self
+            schema:
+              type: boolean
+            description: Only send the address of the container that is
+              requesting the addresses. Incompatible with other 'only_*'
+              parameters.
           - in: path
             name: include_children
             schema:
               type: boolean
             description: Include the addresses of subtasks. Ignored if
-              'only_children' is True. Incompatible with 'only_parent',
-              superseded by 'only_children'.
+              'only_children' is True. Incompatible with other 'only_*'
+              parameters.
           - in: path
             name: include_parent
             schema:
               type: boolean
             description: Include the addresses of parent tasks. Ignored if
-              'only_parent' is True. Incopatible with 'only_children',
-              superseded by 'only_parent'.
+              'only_parent' is True. Incompatible with other 'only_*'
+              parameters.
 
         responses:
           200:
@@ -291,25 +305,36 @@ class VPNAddress(ServicesResources):
 
         task = db.Task.get(task_id)
 
-        include_children = request.args.get('include_children', False)
-        include_parent = request.args.get('include_parent', False)
-        only_children = request.args.get('only_children', False)
-        only_parent = request.args.get('only_parent', False)
+        args = request.args
+        include_children = True if args.get('include_children') else False
+        include_parent = True if args.get('include_parent') else False
 
-        if only_children and only_parent:
+        only_children = True if args.get('only_children') else False
+        only_parent = True if args.get('only_parent') else False
+        only_siblings = True if args.get('only_siblings') else False
+        only_self = True if args.get('only_self') else False
+
+        # check that args are compatible
+        # Note that siblings and self are included by default, so that's why
+        # they are not included in the list of args to check.
+        include_args = [
+            include_children, include_parent, False, False
+        ]
+        only_args = [
+            only_children, only_parent, only_siblings, only_self
+        ]
+        combined_args = [
+            include and only for include, only in zip(include_args, only_args)
+        ]
+        if only_args.count(True) > 1:
             return {
-                'msg': 'Using only_children and only_parent simultaneously is '
-                'not possible! Specify one or the other.'
+                'msg': 'You can only specify one of the only_<...> parameters!'
             }, HTTPStatus.BAD_REQUEST
-        elif only_children and include_parent:
+        elif combined_args.count(True) > 1:
             return {
-                'msg': 'Using only_children and include_parent simultaneously '
-                'is not possible! Specify one or the other.'
-            }, HTTPStatus.BAD_REQUEST
-        elif only_parent and include_children:
-            return {
-                'msg': 'Using only_parent and include_children simultaneously '
-                'is not possible! Specify one or the other.'
+                'msg': "You are using incompatible 'only_<...>' and "
+                "'include_<...>' parameters! You can only combine them for the"
+                " same level of the task hierarchy."
             }, HTTPStatus.BAD_REQUEST
 
         # include child tasks if requested
@@ -333,10 +358,21 @@ class VPNAddress(ServicesResources):
                 else:
                     task_ids.append(parent.id)
 
+        # if only sibling or self tasks, select only current task
+        if only_siblings or only_self:
+            task_ids = [task_id]
+
         # get all ports for the tasks requested
         q = g.session.query(AlgorithmPort)\
                      .join(Run)\
-                     .filter(Run.task_id.in_(task_ids))\
+                     .filter(Run.task_id.in_(task_ids))
+
+        # apply sibling and self filters
+        org_id = g.container['organization_id']
+        if only_siblings:
+            q = q.filter(Run.organization_id != org_id)
+        elif only_self:
+            q = q.filter(Run.organization_id == org_id)
 
         # filter by label if requested
         filter_label = request.args.get('label')
