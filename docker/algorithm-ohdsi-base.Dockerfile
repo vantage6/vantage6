@@ -1,4 +1,11 @@
-FROM harbor2.vantage6.ai/infrastructure/algorithm-base:latest
+ARG TAG=latest
+ARG BASE=4.0
+# ARG OHDSI_VERSION=0.3.2
+FROM harbor2.vantage6.ai/infrastructure/algorithm-base:${BASE}
+
+LABEL version=${TAG}
+# LABEL ohdsi_version=${OHDSI_VERSION}
+LABEL maintainer="F.C.Martin <f.martin@iknl.nl>"
 
 # install dependencies for the ohdsi tools part of the wrapper
 RUN apt-get update
@@ -21,6 +28,7 @@ RUN apt-get install -y openjdk-17-jdk
 
 RUN R CMD javareconf
 
+# TODO FM 17-10-2023: We should pin the package versions.
 RUN Rscript -e "install.packages('DatabaseConnector')"
 RUN Rscript -e "install.packages('drat')"
 RUN Rscript -e "drat::addRepo('OHDSI'); install.packages('FeatureExtraction')"
@@ -29,9 +37,20 @@ RUN Rscript -e "remotes::install_github('ohdsi/CirceR')"
 RUN Rscript -e "remotes::install_github('OHDSI/CohortDiagnostics')"
 RUN Rscript -e "remotes::install_github('OHDSI/CohortGenerator')"
 
+# Install python OHDSI packages
+# TODO FM 17-10-2023: We should pin the package versions. We could do this by
+# supplying an environment var or store a requirements.txt file in the repo.
+# however for now lets always use the latest in a build.
+RUN pip install ohdsi-database-connector
+RUN pip install ohdsi-feature-extraction
+RUN pip install ohdsi-circe
+RUN pip install ohdsi-cohort-diagnostics
+RUN pip install ohdsi-cohort-generator
+
+RUN pip install psycopg2-binary
+
 # Required for OHDSI R package to find the correct shared libs for Java.
 # FIXME FM 5-9-2023: This is a bit to broad, it would be better to figure out
 # a way to only set this for the OHDSI R packages.
 ENV LD_LIBRARY_PATH=/usr/lib/jvm/java-17-openjdk-amd64/lib/server/
 
-RUN pip install psycopg2-binary
