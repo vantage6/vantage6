@@ -18,8 +18,9 @@ algorithm_device_requests:
   gpu: false
 
 # Add additional environment variables to the algorithm containers. In case
-# you want to supply database specific environment you should use `env` key in
-# the `database` settings.
+# you want to supply database specific environment (e.g. usernames and
+# passwords) you should use `env` key in the `database` section of this
+# configuration file.
 # OPTIONAL
 algorithm_env:
 

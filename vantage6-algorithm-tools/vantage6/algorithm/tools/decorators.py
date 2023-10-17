@@ -117,7 +117,7 @@ def data(number_of_databases: int = 1) -> callable:
     """
     Decorator that adds algorithm data to a function
 
-    By adding `@data` to a function, one or several pandas dataframes will be
+    By adding `@data()` to a function, one or several pandas dataframes will be
     added to the front of the argument list. This data will be read from the
     databases that the user who creates the task provides.
 
@@ -230,7 +230,7 @@ def database_connection(type_: str) -> callable:
                       f"requires 1 database connection. Exiting...")
                 exit(1)
 
-            match type_:
+            match type_.upper():
                 case "OMOP":
                     info("Creating OMOP database connection")
                     connection = _create_omop_database_connection(labels[0])
@@ -381,18 +381,13 @@ def _create_omop_database_connection(label: str) -> callable:
     # check that the OHDSI package is available in this container
     if not OHDSI_AVAILABLE:
         error("OHDSI/DatabaseConnector is not available.")
-        error("Did you use the correct algorithm base image to "
-              "build this algorithm?")
+        error("Did you use 'algorithm-ohdsi-base' image to build this "
+              "algorithm?")
         exit(1)
 
     # check that the required environment variables are set
-    if "DBMS" not in os.environ:
-        error("Environment variable 'DBMS' is not set. Exiting...")
-        exit(1)
-    if "USER" not in os.environ or "PASSWORD" not in os.environ:
-        error("Environment variable 'USER' or 'PASSWORD' is not set. "
-              "Exiting...")
-        exit(1)
+    for var in ("DBMS", "USER", "PASSWORD"):
+        _check_environment_var_exists_or_exit(var)
 
     info("Reading OHDSI environment variables")
     dbms = os.environ["DBMS"]
@@ -406,6 +401,20 @@ def _create_omop_database_connection(label: str) -> callable:
     info("Creating OHDSI database connection")
     return connect_to_omop(dbms=dbms, connection_string=uri, password=password,
                            user=user)
+
+
+def _check_environment_var_exists_or_exit(var: str):
+    """
+    Check if the environment variable 'var' exists or print and exit.
+
+    Parameters
+    ----------
+    var : str
+        Environment variable name to check
+    """
+    if var not in os.environ:
+        error(f"Environment variable '{var}' is not set. Exiting...")
+        exit(1)
 
 
 def _get_data_from_label(label: str) -> pd.DataFrame:

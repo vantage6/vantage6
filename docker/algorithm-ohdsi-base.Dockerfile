@@ -1,5 +1,8 @@
 ARG TAG=latest
 ARG BASE=4.0
+# TODO FM 17-10-2023: We should pin the python OHDSI package versions.
+# We could do this by supplying an environment var or store a requirements.txt
+# file in the repo.however for now lets always use the latest in a build.
 # ARG OHDSI_VERSION=0.3.2
 FROM harbor2.vantage6.ai/infrastructure/algorithm-base:${BASE}
 
@@ -38,9 +41,6 @@ RUN Rscript -e "remotes::install_github('OHDSI/CohortDiagnostics')"
 RUN Rscript -e "remotes::install_github('OHDSI/CohortGenerator')"
 
 # Install python OHDSI packages
-# TODO FM 17-10-2023: We should pin the package versions. We could do this by
-# supplying an environment var or store a requirements.txt file in the repo.
-# however for now lets always use the latest in a build.
 RUN pip install ohdsi-database-connector
 RUN pip install ohdsi-feature-extraction
 RUN pip install ohdsi-circe
