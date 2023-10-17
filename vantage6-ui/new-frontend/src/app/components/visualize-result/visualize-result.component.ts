@@ -15,7 +15,7 @@ export class VisualizeResultComponent implements OnChanges {
   outputVisualizeType = OutputVisualizeType;
 
   @Input() functionOutput?: Output[];
-  @Input() result?: any;
+  @Input() result?: string;
 
   visualizeResults: VisualizeResult[] = [];
 
@@ -33,15 +33,16 @@ export class VisualizeResultComponent implements OnChanges {
 
   private getFilteredResults(output: Output): any[] {
     const filteredResults: any[] = [];
+    const decodedResult: any = JSON.parse(atob(this.result || ''));
 
-    Object.keys(this.result).forEach((key) => {
-      if (this.result[key]) {
+    Object.keys(decodedResult).forEach((key) => {
+      if (decodedResult[key]) {
         if (output.filter_property) {
-          if (this.result[key][output.filter_property] === output.filter_value) {
-            filteredResults.push({ _row: key, ...this.result[key] });
+          if (decodedResult[key][output.filter_property] === output.filter_value) {
+            filteredResults.push({ _row: key, ...decodedResult[key] });
           }
         } else {
-          filteredResults.push({ _row: key, ...this.result[key] });
+          filteredResults.push({ _row: key, ...decodedResult[key] });
         }
       }
     });

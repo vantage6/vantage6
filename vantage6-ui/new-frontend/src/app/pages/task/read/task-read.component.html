@@ -35,14 +35,16 @@
       </div>
     </mat-card-content>
   </mat-card>
-  <mat-card *ngIf="!isLoading && hasCompletedRuns">
+  <mat-card *ngIf="!isLoading && task.results && task.results.length > 0">
     <mat-card-header>
       <mat-card-title>{{ "task-read.card-results.title" | translate }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <div *ngFor="let run of getCompletedRuns()">
-        <b *ngIf="task.runs.length > 1">{{ run.node.name }}</b>
-        <app-visualize-result *ngIf="run.result" [result]="run.result" [functionOutput]="function?.output"></app-visualize-result>
+      <div *ngFor="let result of task.results">
+        <ng-container *ngIf="result.result">
+          <b>{{ getRunForResult(result.id)?.node?.name }}</b>
+          <app-visualize-result [result]="result.result" [functionOutput]="function?.output"></app-visualize-result>
+        </ng-container>
       </div>
     </mat-card-content>
   </mat-card>

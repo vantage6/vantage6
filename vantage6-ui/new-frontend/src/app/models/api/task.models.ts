@@ -53,6 +53,7 @@ export interface Task {
   init_org?: BaseOrganization;
   init_user?: BaseUser;
   runs: TaskRun[];
+  results?: TaskResult[];
 }
 
 export interface TaskRun {
@@ -82,6 +83,11 @@ interface TaskInput {
 interface TaskParameter {
   label: string;
   value: string;
+}
+
+interface TaskResult {
+  id: number;
+  result?: string;
 }
 
 export interface CreateTask {

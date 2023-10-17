@@ -70,16 +70,6 @@ export class TaskReadComponent implements OnInit {
     return true;
   }
 
-  hasCompletedRuns(): boolean {
-    if (!this.task) return false;
-    return this.task.runs.some((run) => run.status === TaskStatus.Completed);
-  }
-
-  getCompletedRuns(): TaskRun[] {
-    if (!this.task) return [];
-    return this.task.runs.filter((run) => run.status === TaskStatus.Completed);
-  }
-
   isFailedRun(status: TaskStatus): boolean {
     return (
       status === TaskStatus.Failed ||
@@ -104,6 +94,10 @@ export class TaskReadComponent implements OnInit {
         log: log
       }
     });
+  }
+
+  getRunForResult(id: number): TaskRun | undefined {
+    return this.task?.runs.find((_) => _.id === id);
   }
 
   async handleDelete(): Promise<void> {
