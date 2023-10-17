@@ -38,12 +38,20 @@
   <mat-card *ngIf="!isLoading && task.results && task.results.length > 0">
     <mat-card-header>
       <mat-card-title>{{ "task-read.card-results.title" | translate }}</mat-card-title>
+      <mat-form-field class="select-visualization">
+        <mat-label>{{ "task-read.card-results.actions.visualization" | translate }}</mat-label>
+        <mat-select [formControl]="visualization">
+          <mat-option *ngFor="let output of function?.output; index as index" [value]="index">
+            {{ output.title || ("general.visualization" | translate) + " " + index + 1 }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
     </mat-card-header>
     <mat-card-content>
       <div *ngFor="let result of task.results">
         <ng-container *ngIf="result.result">
           <b>{{ getRunForResult(result.id)?.node?.name }}</b>
-          <app-visualize-result [result]="result.result" [functionOutput]="function?.output"></app-visualize-result>
+          <app-visualize-result [result]="result.result" [functionOutput]="selectedOutput"></app-visualize-result>
         </ng-container>
       </div>
     </mat-card-content>
@@ -53,34 +61,32 @@
       <mat-card-title>{{ "task-read.card-general.title" | translate }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <ng-container>
-        <div class="data-list">
-          <div class="data-list__item">
-            <b>{{ "task.id" | translate }}</b>
-            <span>{{ this.task.id || "-" }}</span>
-          </div>
-          <div class="data-list__item">
-            <b>{{ "task.name" | translate }}</b>
-            <span>{{ this.task.name || "-" }}</span>
-          </div>
-          <div class="data-list__item">
-            <b>{{ "task.status" | translate }}</b>
-            <app-chip [label]="getTaskStatusTranslation(task.status)" [type]="getChipTypeForStatus(task.status)" [small]="true"></app-chip>
-          </div>
-          <div class="data-list__item data-list__item--full">
-            <b>{{ "task.description" | translate }}</b>
-            <span>{{ this.task.description || "-" }}</span>
-          </div>
-          <div class="data-list__item">
-            <b>{{ "task.organization" | translate }}</b>
-            <span>{{ this.task.init_org?.name || "-" }}</span>
-          </div>
-          <div class="data-list__item">
-            <b>{{ "task.user" | translate }}</b>
-            <span>{{ this.task.init_user?.username || "-" }}</span>
-          </div>
+      <div class="data-list">
+        <div class="data-list__item">
+          <b>{{ "task.id" | translate }}</b>
+          <span>{{ this.task.id || "-" }}</span>
         </div>
-      </ng-container>
+        <div class="data-list__item">
+          <b>{{ "task.name" | translate }}</b>
+          <span>{{ this.task.name || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "task.status" | translate }}</b>
+          <app-chip [label]="getTaskStatusTranslation(task.status)" [type]="getChipTypeForStatus(task.status)" [small]="true"></app-chip>
+        </div>
+        <div class="data-list__item data-list__item--full">
+          <b>{{ "task.description" | translate }}</b>
+          <span>{{ this.task.description || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "task.organization" | translate }}</b>
+          <span>{{ this.task.init_org?.name || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "task.user" | translate }}</b>
+          <span>{{ this.task.init_user?.username || "-" }}</span>
+        </div>
+      </div>
     </mat-card-content>
   </mat-card>
   <mat-card *ngIf="!isLoading">

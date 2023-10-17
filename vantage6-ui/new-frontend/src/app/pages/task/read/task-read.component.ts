@@ -1,8 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { getChipTypeForStatus, getStatusInfoTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
-import { Algorithm, Function } from 'src/app/models/api/algorithm.model';
-import { Task, TaskLazyProperties, TaskRun, TaskStatus } from 'src/app/models/api/task.models';
+import { Algorithm, Function, Output } from 'src/app/models/api/algorithm.model';
+import { Task, TaskRun, TaskStatus } from 'src/app/models/api/task.models';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { TaskService } from 'src/app/services/task.service';
@@ -12,6 +12,7 @@ import { AuthService } from 'src/app/services/auth.service';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { Router } from '@angular/router';
 import { ConfirmDialog } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
+import { FormControl } from '@angular/forms';
 
 @Component({
   selector: 'app-task-read',
@@ -24,9 +25,12 @@ export class TaskReadComponent implements OnInit {
 
   routes = routePaths;
 
+  visualization = new FormControl(0);
+
   task: Task | null = null;
   algorithm: Algorithm | null = null;
   function: Function | null = null;
+  selectedOutput: Output | null = null;
   isLoading = true;
   canDelete = false;
 
@@ -41,6 +45,9 @@ export class TaskReadComponent implements OnInit {
 
   ngOnInit(): void {
     this.canDelete = this.authService.isOperationAllowed(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.DELETE);
+    this.visualization.valueChanges.subscribe((value) => {
+      this.selectedOutput = this.function?.output?.[value || 0] || null;
+    });
     this.initData();
   }
 
@@ -48,6 +55,7 @@ export class TaskReadComponent implements OnInit {
     this.task = await this.taskService.getTask(this.id, [TaskLazyProperties.InitOrg, TaskLazyProperties.InitUser, TaskLazyProperties.Runs]);
     this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image);
     this.function = this.algorithm?.functions.find((_) => _.name === this.task?.input?.method) || null;
+    this.selectedOutput = this.function?.output?.[0] || null;
     this.isLoading = false;
   }
 

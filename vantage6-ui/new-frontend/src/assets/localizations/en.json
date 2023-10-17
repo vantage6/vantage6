@@ -12,6 +12,7 @@
     "no": "No",
     "offline": "Offline",
     "none": "None",
+    "visualization": "Visualization",
     "validation": {
       "password-length": "Password must be at least 8 characters long",
       "password-pattern": "Password must contain a lowercase letter, uppercase letter, number and special character"
@@ -66,7 +67,10 @@
       "title": "Status"
     },
     "card-results": {
-      "title": "Results"
+      "title": "Results",
+      "actions": {
+        "visualization": "Visualization"
+      }
     },
     "card-algorithm": {
       "title": "Algorithm"

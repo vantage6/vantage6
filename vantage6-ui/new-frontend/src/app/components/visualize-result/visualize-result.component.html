@@ -1,5 +1,4 @@
 <ng-container *ngFor="let visualizeResult of visualizeResults">
-  <h4 class="visualize-title">{{ visualizeResult.output.title }}</h4>
   <ng-container *ngIf="visualizeResult.output.visualize === outputVisualizeType.Table">
     <app-visualize-table
       *ngFor="let result of visualizeResult.results"

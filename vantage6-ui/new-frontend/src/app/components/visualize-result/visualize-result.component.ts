@@ -14,21 +14,20 @@ interface VisualizeResult {
 export class VisualizeResultComponent implements OnChanges {
   outputVisualizeType = OutputVisualizeType;
 
-  @Input() functionOutput?: Output[];
-  @Input() result?: string;
+  @Input() functionOutput: Output | null = null;
+  @Input() result: string = '';
 
   visualizeResults: VisualizeResult[] = [];
 
   ngOnChanges(): void {
+    if (!this.functionOutput || !this.result) return;
     this.visualizeResults = [];
 
-    this.functionOutput?.forEach((output) => {
-      const visualizeResult = {
-        output: output,
-        results: this.getFilteredResults(output)
-      };
-      this.visualizeResults.push(visualizeResult);
-    });
+    const visualizeResult = {
+      output: this.functionOutput,
+      results: this.getFilteredResults(this.functionOutput)
+    };
+    this.visualizeResults.push(visualizeResult);
   }
 
   private getFilteredResults(output: Output): any[] {
