@@ -15,7 +15,7 @@ How to create a configuration file
 """"""""""""""""""""""""""""""""""
 
 The easiest way to create an initial
-configuration file is via: ``vnode new``. This allows you to configure the
+configuration file is via: ``v6 node new``. This allows you to configure the
 basic settings. For more advanced configuration options, which are listed below,
 you can view the :ref:`example configuration file <node-configure-structure>`.
 
@@ -27,7 +27,7 @@ command
 
 .. code:: bash
 
-    vnode files
+    v6 node files
 
 .. warning::
     This command will not work if you have put your configuration file in a
@@ -79,14 +79,14 @@ The default directories per OS are as follows:
 .. |lin_usr| replace:: ``/home/<user>/.config/vantage6/node/``
 
 .. note::
-    The command ``vnode`` looks in these directories by default. However, it is
+    The command ``v6 node`` looks in these directories by default. However, it is
     possible to use any directory and specify the location with the ``--config``
     flag. But note that doing that requires you to specify the ``--config``
-    flag every time you execute a ``vnode`` command!
+    flag every time you execute a ``v6 node`` command!
 
     Similarly, you can put your node configuration file in the system folder
     by using the ``--system`` flag. Note that in that case, you have to specify
-    the ``--system`` flag for all ``vnode`` commands.
+    the ``--system`` flag for all ``v6 node`` commands.
 
 Security
 """"""""
@@ -131,7 +131,7 @@ in the example configuration file in :ref:`node-configure-structure`.
 
 Useful commands:
 
-1. ``vnode files``: shows you where the log file is stored
-2. ``vnode attach``: shows live logs of a running server in your current
+1. ``v6 node files``: shows you where the log file is stored
+2. ``v6 node attach``: shows live logs of a running server in your current
    console. This can also be achieved when starting the node with
-   ``vnode start --attach``
+   ``v6 node start --attach``

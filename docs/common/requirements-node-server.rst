@@ -19,7 +19,7 @@ as much).
 
 .. note::
     For the server, Ubuntu is highly recommended. It is possible to run a
-    development server (using `vserver start`) on Windows or MacOS, but for
+    development server (using `v6 server start`) on Windows or MacOS, but for
     production purposes we recommend using Ubuntu.
 
 .. warning::

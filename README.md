@@ -47,10 +47,11 @@ These docker images are used by the _vantage6 CLI_ package, which can be install
 
 `pip install vantage6`
 
-This will install the CLI which enables you to use the commands:
+This will install the CLI which enables you to use (among others) the commands
+to manage your nodes and servers:
 
-* `vnode CMD [OPTIONS]`
-* `vserver CMD [OPTIONS]`
+* `v6 node CMD [OPTIONS]`
+* `v6 server CMD [OPTIONS]`
 
 You can find more (user) documentation at [Gitbook (docs.vantage6.ai)](https://docs.vantage6.ai). If you have any questions, suggestions or just want to chat about federated learning: join our [Dircord (https://discord.gg/yAyFf6Y)](https://discord.gg/yAyFf6Y) channel.
 

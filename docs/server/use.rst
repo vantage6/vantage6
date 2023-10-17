@@ -15,7 +15,7 @@ that allows you to set up a server configuration file.
 
 ::
 
-   vserver new
+   v6 server new
 
 For more details, check out the :ref:`server-configure` section.
 
@@ -24,7 +24,7 @@ copy log output to the console.
 
 ::
 
-   vserver start --name <your_server> --attach
+   v6 server start --name <your_server> --attach
 
 .. warning::
     When the server is run for the first time, the following user is created:
@@ -38,43 +38,43 @@ Finally, a server can be stopped again with:
 
 ::
 
-   vserver stop --name <your_server>
+   v6 server stop --name <your_server>
 
 Available commands
 """"""""""""""""""
 
 The following commands are available in your environment. To see all the
 options that are available per command use the ``--help`` flag,
-e.g. ``vserver start --help``.
+e.g. ``v6 server start --help``.
 
 +----------------+-----------------------------------------------------+
 | **Command**    | **Description**                                     |
 +================+=====================================================+
-| ``vserver      | Create a new server configuration file              |
+| ``v6 server    | Create a new server configuration file              |
 | new``          |                                                     |
 +----------------+-----------------------------------------------------+
-| ``vserver      | Start a server                                      |
+| ``v6 server    | Start a server                                      |
 | start``        |                                                     |
 +----------------+-----------------------------------------------------+
-| ``vserver      | Stop a server                                       |
+| ``v6 server    | Stop a server                                       |
 | stop``         |                                                     |
 +----------------+-----------------------------------------------------+
-| ``vserver      | List the files that a server is using               |
+| ``v6 server    | List the files that a server is using               |
 | files``        |                                                     |
 +----------------+-----------------------------------------------------+
-| ``vserver      | Show a server's logs in the current terminal        |
+| ``v6 server    | Show a server's logs in the current terminal        |
 | attach``       |                                                     |
 +----------------+-----------------------------------------------------+
-| ``vserver      | List the available server instances                 |
+| ``v6 server    | List the available server instances                 |
 | list``         |                                                     |
 +----------------+-----------------------------------------------------+
-| ``vserver      | Run a server instance python shell                  |
+| ``v6 server    | Run a server instance python shell                  |
 | shell``        |                                                     |
 +----------------+-----------------------------------------------------+
-| ``vserver      | Import server entities as a batch                   |
+| ``v6 server    | Import server entities as a batch                   |
 | import``       |                                                     |
 +----------------+-----------------------------------------------------+
-| ``vserver      | Shows the versions of all the components of the     |
+| ``v6 server    | Shows the versions of all the components of the     |
 | version``      | running server                                      |
 +----------------+-----------------------------------------------------+
 
@@ -112,7 +112,7 @@ Batch import
 
 You can easily create a set of test users, organizations and collaborations by
 using a batch import. To do this, use the
-``vserver import /path/to/file.yaml`` command. An example ``yaml`` file is
+``v6 server import /path/to/file.yaml`` command. An example ``yaml`` file is
 provided below.
 
 You can download this file :download:`here <yaml/batch_import.yaml>`.
@@ -131,7 +131,7 @@ You can download this file :download:`here <yaml/batch_import.yaml>`.
    </details>
 
 .. warning::
-    All users that are imported using ``vserver import`` receive the superuser
+    All users that are imported using ``v6 server import`` receive the superuser
     role. We are looking into ways to also be able to import roles. For more
     background info refer to this
     `issue <https://github.com/vantage6/vantage6/issues/71>`__.
@@ -140,25 +140,25 @@ You can download this file :download:`here <yaml/batch_import.yaml>`.
 Testing
 """""""
 
-You can test the infrastructure via the ``vdev`` commands. The purpose of this
+You can test the infrastructure via the ``v6 dev`` commands. The purpose of this
 functionality is to easily setup and run a test server accompanied by `N` nodes
 locally. For example, if you have `N = 10` datasets to test a particular
 algorithm on, then you can spawn a server and 10 nodes with a single command.
 
 You can view all available commands in the table below, or alternatively, use
-``vdev --help``. By using ``--help`` with the individual commands (e.g.
-``vdev start-demo-network --help``), you can view more details on how to execute
-them.
+``v6 dev --help``. By using ``--help`` with the individual commands (e.g.
+``v6 dev start-demo-network --help``), you can view more details on how to
+execute them.
 
 
-+------------------------------+--------------------------------------------+
-| **Command**                  | **Description**                            |
-+==============================+============================================+
-| ``vdev create-demo-network`` | Create a new network with server and nodes |
-+------------------------------+--------------------------------------------+
-| ``vdev start-demo-network``  | Start the network                          |
-+------------------------------+--------------------------------------------+
-| ``vdev stop-demo-network``   | Stop the network                           |
-+------------------------------+--------------------------------------------+
-| ``vdev remove-demo-network`` | Remove the network completely              |
-+------------------------------+--------------------------------------------+
++--------------------------------+--------------------------------------------+
+| **Command**                    | **Description**                            |
++================================+============================================+
+| ``v6 dev create-demo-network`` | Create a new network with server and nodes |
++--------------------------------+--------------------------------------------+
+| ``v6 dev start-demo-network``  | Start the network                          |
++--------------------------------+--------------------------------------------+
+| ``v6 dev stop-demo-network``   | Stop the network                           |
++--------------------------------+--------------------------------------------+
+| ``v6 dev remove-demo-network`` | Remove the network completely              |
++--------------------------------+--------------------------------------------+

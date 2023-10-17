@@ -24,7 +24,7 @@ Or if you want to install a specific version:
    pip install vantage6==x.y.z
 
 You can verify that the CLI has been installed by running the command
-``vnode --help``. If that prints a list of commands, the installation is
+``v6 node --help``. If that prints a list of commands, the installation is
 completed.
 
 The next pages will explain to configure, start and stop the node. The
