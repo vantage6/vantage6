@@ -17,9 +17,9 @@ vpn_subnet: 10.76.0.0/16
 algorithm_device_requests:
   gpu: false
 
-# add additional environment variables to the algorithm containers.
-# this could be usefull for passwords or other things that algorithms
-# need to know about the node it is running on
+# Add additional environment variables to the algorithm containers. In case
+# you want to supply database specific environment you should use `env` key in
+# the `database` settings.
 # OPTIONAL
 algorithm_env:
 
@@ -54,7 +54,11 @@ databases:
     uri: jdbc:postgresql://host.docker.internal:5454/postgres
     # additional environment variables that are passed to the algorithm
     # containers (or their wrapper). This can be used to for usernames
-    # and passwords for example.
+    # and passwords for example. Note that these environment variables are
+    # only passed to the algorithm container when the user requests that
+    # database. In case you want to pass some environment variable to all
+    # algorithms regard less of the data source the user specifies you can
+    # use the `algorithm_env` setting.
     env:
       username: admin@admin.com
       password: admin
