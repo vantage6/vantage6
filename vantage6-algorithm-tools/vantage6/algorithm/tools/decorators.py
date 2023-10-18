@@ -275,7 +275,7 @@ def database_connection(types: list[str], include_metadata: bool = True) \
     return connection_decorator
 
 
-def metadata(func: callable, *args, **kwargs) -> callable:
+def metadata(func: callable) -> callable:
     @wraps(func)
     def decorator(*args, **kwargs) -> callable:
         """
