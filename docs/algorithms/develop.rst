@@ -127,7 +127,50 @@ worksheet in an Excel file.
 Note that it is also possible to just specify ``@data()`` without an argument -
 in that case, a single dataframe is added to the arguments.
 
-A second useful decorator is the ``@algorithm_client`` decorator:
+For some data sources it's not trivial to construct a dataframe from the data.
+One of these data sources is the OHDSI OMOP CDM database. For this data source,
+the ``@database_connection`` is available:
+
+.. code:: python
+
+    from rpy2.robjects import RS4
+    from vantage6.algorithm.tools.decorators import (
+        database_connection, OHDSIMetaData
+    )
+
+    @database_connection(types=["OMOP"], include_metadata=True)
+    def my_function(connection: RS4, metadata: OHDSIMetaData,
+                    <other_arguments>):
+        pass
+
+This decorator provides the algorithm with a database connection that can be
+used to interact with the database. For instance, you can use this connection
+to execute functions from
+`python-ohdsi <https://python-ohdsi.readthedocs.io/>`_ package. The
+``include_metadata`` argument indicates whether the metadata of the database
+should also be provided. It is possible to connect to multiple databases at
+once, but you can also specify a single database by using the ``types``
+argument.
+
+.. code:: python
+
+    from rpy2.robjects import RS4
+    from vantage6.algorithm.tools.decorators import database_connection
+
+    @database_connection(types=["OMOP", "OMOP"], include_metadata=False)
+    def my_function(connection1: RS4, connection2: Connection,
+                    <other_arguments>):
+        pass
+
+.. note::
+
+    The ``@database_connection`` decorator is current only available for
+    OMOP CDM databases. The connection object ``RS4`` is an R object, mapped
+    to Python using the `rpy2 <https://rpy2.github.io/>`_, package. This
+    object can be passed directly on to the functions from
+    `python-ohdsi <https://python-ohdsi.readthedocs.io/>`.
+
+Another useful decorator is the ``@algorithm_client`` decorator:
 
 .. code:: python
 
@@ -148,10 +191,10 @@ can be found in the :ref:`algorithm client documentation <algo-client-api-ref>`.
 
 .. warning::
 
-    The decorators each have one reserved keyword: ``mock_data`` for the
-    ``@data`` decorator and ``mock_client`` for the ``@algorithm_client``
-    decorator. These keywords should not be used as argument names in your
-    algorithm functions.
+    The decorators ``@data`` and ``@algorithm_client`` each have one reserved
+    keyword: ``mock_data`` for the ``@data`` decorator and ``mock_client`` for
+    the ``@algorithm_client`` decorator. These keywords should not be used as
+    argument names in your algorithm functions.
 
     The reserved keywords are used by the
     :ref:`MockAlgorithmClient <mock-test-algo-dev>` to mock the data and the

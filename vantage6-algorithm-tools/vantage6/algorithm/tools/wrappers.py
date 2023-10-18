@@ -54,10 +54,8 @@ class DatabaseType(str, Enum):
     OMOP = "omop"
 
 
-def load_data(
-    database_uri: str, db_type: str = None, query: str = None,
-    sheet_name: str = None
-) -> pd.DataFrame:
+def load_data(database_uri: str, db_type: str = None, query: str = None,
+              sheet_name: str = None) -> pd.DataFrame:
     """
     Read data from database and give it back to the algorithm.
 
@@ -77,7 +75,7 @@ def load_data(
         Sparql and OMOP databases.
     sheet_name : str
         The sheet name to read from the Excel file. This is optional and
-        only forExcel databases.
+        only for Excel databases.
 
     Returns
     -------
@@ -96,7 +94,7 @@ def load_data(
 
     if db_type == DatabaseType.EXCEL:
         df = loader(database_uri, sheet_name=sheet_name)
-    elif db_type in (DatabaseType.SQL, DatabaseType.OMOP, DatabaseType.SPARQL):
+    elif db_type in (DatabaseType.SQL, DatabaseType.SPARQL):
         if not query:
             error(f"Query is required for database type '{db_type}'")
             exit(1)
