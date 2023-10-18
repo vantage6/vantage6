@@ -157,7 +157,6 @@ class ColumnNames(ServicesResources):
               'collaboration_id': collaboration_id,
               'name': 'get_column_names',
               'image': BASICS_IMAGE,
-              'init_org': g.user.organization,
               'organizations': data['organizations'],
               'databases': databases,
             },

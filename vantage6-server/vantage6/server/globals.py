@@ -52,4 +52,4 @@ DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES = 60
 DEFAULT_PAGE = 1
 DEFAULT_PAGE_SIZE = 10
 
-BASICS_IMAGE = 'harbor2.vantage6.ai/algorithm/basics'
+BASICS_IMAGE = 'harbor2.vantage6.ai/algorithms/basics'
