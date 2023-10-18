@@ -519,10 +519,13 @@ class DockerTaskManager(DockerBaseManager):
             environment_variables[type_var_name] = db['type']
 
             # Add optional database parameter settings, these can be used by
-            # the algorithm (wrapper).
+            # the algorithm (wrapper). Note that all env keys are prefixed
+            # with DB_PARAM_ to avoid collisions with other environment
+            # variables.
             if 'env' in db:
                 for key in db['env']:
-                    environment_variables[key.upper()] = db['env'][key]
+                    env_key = f'DB_PARAM_{key.upper()}'
+                    environment_variables[env_key] = db['env'][key]
 
             db_labels.append(label)
         environment_variables['DB_LABELS'] = ','.join(db_labels)

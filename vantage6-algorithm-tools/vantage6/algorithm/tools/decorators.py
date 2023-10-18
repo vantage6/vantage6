@@ -333,9 +333,9 @@ def omop_metadata(func: callable, *args, **kwargs) -> callable:
 
         tmp = Path(os.environ["TEMPORARY_FOLDER"])
         metadata = OMOPMetaData(
-            database=os.environ.get("CDM_DATABASE"),
-            cdm_schema=os.environ.get("CDM_SCHEMA"),
-            results_schema=os.environ.get("RESULTS_SCHEMA"),
+            database=os.environ.get("DB_PARAM_CDM_DATABASE"),
+            cdm_schema=os.environ.get("DB_PARAM_CDM_SCHEMA"),
+            results_schema=os.environ.get("DB_PARAM_RESULTS_SCHEMA"),
             incremental_folder=tmp / "incremental",
             cohort_statistics_folder=tmp / "cohort_statistics",
             export_folder=tmp / "export"
@@ -349,14 +349,15 @@ def _create_omop_database_connection(label: str) -> callable:
     Create a connection to an OMOP database.
 
     It expects that the following environment variables are set:
-    - DBMS: type of database to connect to
-    - USER: username to connect to the database
-    - PASSWORD: password to connect to the database
+    - DB_PARAM_DBMS: type of database to connect to
+    - DB_PARAM_USER: username to connect to the database
+    - DB_PARAM_PASSWORD: password to connect to the database
 
-    These should be provided by the vantage6 node in the `env` key of the
-    `database` section. For example:
+    These should be provided in the vantage6 node configuration file in the
+    `database` section without the `DB_PARAM_` prefix. For example:
 
     ```yaml
+    ...
     databases:
       - label: my_database
         type: OMOP
@@ -365,6 +366,7 @@ def _create_omop_database_connection(label: str) -> callable:
             DBMS: "postgresql"
             USER: "my_user"
             PASSWORD: "my_password"
+    ...
     ```
 
     Parameters
@@ -387,13 +389,13 @@ def _create_omop_database_connection(label: str) -> callable:
 
     # check that the required environment variables are set
     for var in ("DBMS", "USER", "PASSWORD"):
-        _check_environment_var_exists_or_exit(var)
+        _check_environment_var_exists_or_exit(f'DB_PARAM_{var}')
 
     info("Reading OHDSI environment variables")
-    dbms = os.environ["DBMS"]
+    dbms = os.environ["DB_PARAM_DBMS"]
     uri = os.environ[f"{label.upper()}_DATABASE_URI"]
-    user = os.environ["USER"]
-    password = os.environ["PASSWORD"]
+    user = os.environ["DB_PARAM_USER"]
+    password = os.environ["DB_PARAM_PASSWORD"]
     info(f' - dbms: {dbms}')
     info(f' - uri: {uri}')
     info(f' - user: {user}')
