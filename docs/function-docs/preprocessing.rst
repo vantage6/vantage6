@@ -44,9 +44,9 @@ vantage6.algorithm.tools.preprocessing.encoding
 Filter operations
 ----------------------
 
-vantage6.algorithm.tools.preprocessing.filter
-+++++++++++++++++++++++++++++++++++++++++++++
+vantage6.algorithm.tools.preprocessing.filtering
+++++++++++++++++++++++++++++++++++++++++++++++++
 
-.. automodule:: vantage6.algorithm.tools.preprocessing.filter
+.. automodule:: vantage6.algorithm.tools.preprocessing.filtering
    :members:
    :show-inheritance:

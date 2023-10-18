@@ -8,7 +8,7 @@ from vantage6.algorithm.tools.preprocessing import (
     column,
     datetime,
     encoding,
-    filter,
+    filtering,
 )
 from vantage6.common.utest import find_tests, run_tests
 
@@ -30,7 +30,7 @@ def run():
     )
 
     # add preprocessing doctests
-    for module in [aggregation, column, datetime, encoding, filter]:
+    for module in [aggregation, column, datetime, encoding, filtering]:
         algorithm_test_suites.addTests(doctest.DocTestSuite(module))
 
     success_algo = run_tests(algorithm_test_suites)

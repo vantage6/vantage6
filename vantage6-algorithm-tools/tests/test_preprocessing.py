@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 from vantage6.algorithm.tools.mock_client import MockAlgorithmClient
-from vantage6.algorithm.tools.preprocessing.filter import select_rows
+from vantage6.algorithm.tools.preprocessing.filtering import select_rows
 
 
 def get_test_dataframe(n=1000, seed=0):

@@ -27,7 +27,7 @@ from vantage6.algorithm.tools.preprocessing.encoding import (
     one_hot_encode,
     standard_scale,
 )
-from vantage6.algorithm.tools.preprocessing.filter import (
+from vantage6.algorithm.tools.preprocessing.filtering import (
     drop_columns,
     drop_columns_by_index,
     filter_by_date,
