@@ -9,6 +9,7 @@ from vantage6.algorithm.tools.preprocessing.aggregation import (
 )
 from vantage6.algorithm.tools.preprocessing.column import (
     assign_column,
+    change_column_type,
     rename_columns,
 )
 from vantage6.algorithm.tools.preprocessing.datetime import (
@@ -40,6 +41,7 @@ from vantage6.algorithm.tools.util import error
 funcs = [
     assign_column,
     calculate_age,
+    change_column_type,
     collapse,
     discretize_column,
     drop_columns,

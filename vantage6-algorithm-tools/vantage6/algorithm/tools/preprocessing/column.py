@@ -123,3 +123,53 @@ def assign_column(
 
     new_df[column_name] = new_df.eval(expression)
     return new_df
+
+
+def change_column_type(
+    df: pd.DataFrame, columns: List[str], target_type: Union[str, type]
+) -> pd.DataFrame:
+    """
+    Change DataFrame column data types.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The DataFrame whose columns' data types you want to change.
+    columns : list
+        List of column names whose data types you want to change.
+    target_type : str or type
+        The desired data type (either string representation or Python type)
+        for the specified columns.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with updated column data types.
+
+    Examples
+    --------
+    >>> df1 = pd.DataFrame({
+    ...     'a': ['1', '2'],
+    ...     'b': ['3.1', '4.2']
+    ... })
+    >>> change_column_type(df1, ['a', 'b'], float)
+         a    b
+    0  1.0  3.1
+    1  2.0  4.2
+
+    >>> df2 = pd.DataFrame({
+    ...     'category_column': pd.Categorical(['apple', 'banana', 'cherry'])
+    ... })
+    >>> print("Before conversion:", df2['category_column'].dtype)
+    Before conversion: category
+    >>> df3 = change_column_type(df2, ['category_column'], str)
+    >>> print("After conversion:", df3['category_column'].dtype)
+    After conversion: object
+    """
+    df = df.copy()
+    for col in columns:
+        if col not in df.columns:
+            raise KeyError(f"Column {col} not found in the DataFrame")
+        df[col] = df[col].astype(target_type)
+
+    return df

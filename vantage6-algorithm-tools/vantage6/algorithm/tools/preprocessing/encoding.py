@@ -390,7 +390,6 @@ def discretize_column(
     2   45      Senior
     3   55         Old
     """
-
     new_df = df.copy()
     new_column = pd.cut(
         df[column_name],

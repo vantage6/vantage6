@@ -1,8 +1,8 @@
-"""Test the preprocessing functionality of the vantage6-algorithm-tools package.
+"""
+Test the preprocessing functionality of the vantage6-algorithm-tools package.
 
 To run only this test, from the vantage6 root directory run:
-
-
+python -m unittest vantage6-algorithm-tools.tests.test_preprocessing
 """
 import unittest
 
@@ -28,7 +28,12 @@ def get_test_dataframe(n=1000, seed=0):
     )
 
     # Map education levels to ordinal numbers
-    education_mapping = {"High School": 1, "Bachelor": 2, "Master": 3, "PhD": 4}
+    education_mapping = {
+        "High School": 1,
+        "Bachelor": 2,
+        "Master": 3,
+        "PhD": 4,
+    }
     education = np.vectorize(education_mapping.get)(education_levels)
 
     # Generate synthetic color_preference (nominal feature)
@@ -197,6 +202,15 @@ def generate_treatment_example_df(
 
 class TestPreprocessing(unittest.TestCase):
     def test_preprocessing(self):
+        """
+        Tests the following preprocessing functions:
+        - select_rows
+        - select_columns
+        - select_columns_by_index
+        - drop_columns
+        - drop_columns_by_index
+        """
+
         df = get_test_dataframe()
 
         datasets = [df]
@@ -257,6 +271,19 @@ class TestPreprocessing(unittest.TestCase):
         self.assertTrue(result.shape[1] == 2)
 
     def test_preprocessing_larger(self):
+        """
+        Tests the following preprocessing functions:
+        - calculate_age
+        - filter_by_date
+        - group_statistics
+        - timedelta
+        - extract_from_string
+        - collapse
+        - impute
+        - encode
+        - drop_columns
+        """
+
         datasets = [generate_treatment_example_df(10, 3, 42, date_as_str=True)]
         datasets = [
             [
@@ -423,6 +450,87 @@ class TestPreprocessing(unittest.TestCase):
                     "treatment_code",
                 ],
             )
+        )
+
+    def test_more(self):
+        """
+        Tests the following preprocessing functions:
+        - discretize_column
+        - rename_columns
+        - change_column_type
+        - one_hot_encode
+        - min_max_scale
+        """
+        df = get_test_dataframe()
+        datasets = [df.iloc[:5]]
+        datasets = [
+            [
+                {
+                    "database": dataset,
+                    "type_": "csv",
+                    "preprocessing": [
+                        {
+                            "function": "discretize_column",
+                            "parameters": {
+                                "column_name": "age",
+                                "bins": [0, 35, 45, 55, 120],
+                            },
+                        },
+                        {
+                            "function": "change_column_type",
+                            "parameters": {
+                                "columns": ["age"],
+                                "target_type": "str",
+                            },
+                        },
+                        {
+                            "function": "one_hot_encode",
+                            "parameters": {
+                                "column": "color_preference",
+                                "categories": ["Blue", "Red", "Green"],
+                                "prefix": "col",
+                            },
+                        },
+                        {
+                            "function": "min_max_scale",
+                            "parameters": {
+                                "min_vals": [0],
+                                "max_vals": [100000],
+                                "columns": ["income"],
+                            },
+                        },
+                        {
+                            "function": "rename_columns",
+                            "parameters": {
+                                "new_names": {"income": "inc_norm"}
+                            },
+                        },
+                        {
+                            "function": "select_rows",
+                            "parameters": {"query": "inc_norm<0.9"},
+                        },
+                    ],
+                }
+                for dataset in datasets
+            ]
+        ]
+        mockclient = MockAlgorithmClient(
+            datasets=datasets, module="mock_package"
+        )
+        org_ids = [org["id"] for org in mockclient.organization.list()]
+        input_ = {"method": "execute", "kwargs": {}}
+        child_task = mockclient.task.create(
+            organizations=org_ids,
+            input_=input_,
+        )
+        result = pd.read_json(mockclient.result.get(id_=child_task.get("id")))
+        assert result.to_json() == (
+            '{"age":{"1":"(55, 120]","2":"(0, 35]","4":"(0, 35]"},"inc_nor'
+            'm":{"1":0.62677,"2":0.12963,"4":0.5687},"education":{"1":"Mas'
+            'ter","2":"Bachelor","4":"Bachelor"},"purchased_product":{"1":'
+            '1,"2":0,"4":1},"col_Blue":{"1":0,"2":0,"4":0},"col_Green":{"1'
+            '":0,"2":1,"4":0},"col_Red":{"1":1,"2":0,"4":1},"col_unknown":'
+            '{"1":0,"2":0,"4":0}}'
         )
 
 
