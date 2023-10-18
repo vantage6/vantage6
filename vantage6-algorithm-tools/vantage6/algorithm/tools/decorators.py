@@ -200,7 +200,7 @@ def data(number_of_databases: int = 1) -> callable:
 
 
 def database_connection(types: list[str], include_metadata: bool = True) \
-    -> callable:
+        -> callable:
     """
     Decorator that adds a database connection to a function
 
