@@ -129,6 +129,8 @@ class NodeTaskNamespace(ClientNamespace):
         Action to be taken when nodes are instructed by server to kill one or
         more tasks
 
+        Parameters
+        ----------
         kill_info: dict
             A dictionary that contains information on which tasks should be
             killed. This information may instruct a node to kill all its tasks
