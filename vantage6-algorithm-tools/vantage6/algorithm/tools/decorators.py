@@ -35,7 +35,7 @@ class RunMetaData:
 
 
 @dataclass
-class OMOPMetaData:
+class OHDSIMetaData:
     """Dataclass containing metadata of the OMOP database."""
     database: str | None
     cdm_schema: str | None
@@ -199,7 +199,8 @@ def data(number_of_databases: int = 1) -> callable:
     return protection_decorator
 
 
-def database_connection(type_: str) -> callable:
+def database_connection(types: list[str], include_metadata: bool = True) \
+    -> callable:
     """
     Decorator that adds a database connection to a function
 
@@ -209,12 +210,31 @@ def database_connection(type_: str) -> callable:
 
     Parameters
     ----------
-    type_ : str
-        Type of database to connect to. Currently only "OMOP" is supported.
+    types : list[str]
+        List of types of databases to connect to. Currently only "OMOP" is
+        supported.
+    include_metadata : bool
+        Whether to include metadata in the function arguments. This metadata
+        contains the database name, CDM schema, and results schema. Default is
+        True.
 
     Example
     -------
-    >>> @database_connection(type_="OMOP")
+    For a single OMOP data source:
+    >>> @database_connection(types=["OMOP"])
+    >>> def my_algorithm(connection: Connection, meta: OHDSIMetaData,
+    >>>                  <other arguments>):
+    >>>     pass
+
+    In case you have multiple OMOP data sources:
+    >>> @database_connection(types=["OMOP", "OMOP"])
+    >>> def my_algorithm(connection1: Connection, meta1: OHDSIMetaData,
+    >>>                  connection2: Connection, meta2: OHDSIMetaData,
+    >>>                  <other arguments>):
+    >>>     pass
+
+    In the case you do not want to include the metadata:
+    >>> @database_connection(types=["OMOP"], include_metadata=False)
     >>> def my_algorithm(connection: Connection, <other arguments>):
     >>>     pass
     """
@@ -225,48 +245,37 @@ def database_connection(type_: str) -> callable:
             Wrap the function with the database connection
             """
             labels = _get_user_database_labels()
-            if len(labels) != 1:
+            if len(labels) < len(types):
                 error(f"User provided {len(labels)} databases, but algorithm "
-                      f"requires 1 database connection. Exiting...")
+                      f"requires {len(types)} database connections. Exiting.")
                 exit(1)
+            if len(labels) > len(types):
+                warn(f"User provided {len(labels)} databases, but algorithm "
+                     f"requires {len(types)} database connections. Using the "
+                     f"first {len(types)} databases.")
 
-            match type_.upper():
-                case "OMOP":
-                    info("Creating OMOP database connection")
-                    connection = _create_omop_database_connection(labels[0])
-                # case "FHIR":
-                #     connection = _create_fhir_database_connection()
+            db_args = []
+            # Note: zip will stop at the shortest iterable, so this is exactly
+            # what we want in the len(labels) > len(types) case.
+            for type_, label in zip(types, labels):
+                match type_.upper():
+                    case "OMOP":
+                        info("Creating OMOP database connection")
+                        connection = _create_omop_database_connection(label)
+                        db_args.append(connection)
+                        if include_metadata:
+                            meta = get_ohdsi_metadata(label)
+                            db_args.append(meta)
+                    # case "FHIR":
+                    #     pass
 
-            return func(connection, *args, **kwargs)
+            return func(*db_args, *args, **kwargs)
 
         return decorator
     return connection_decorator
 
 
-def metadata(type_: str = "run") -> callable:
-    """
-    Decorator to add run metadata to the algorithm.
-
-    These items should always be present at either the node environment vars,
-    or in the token payload.
-
-    Example
-    -------
-    >>> @metadata()
-    >>> def my_algorithm(metadata: RunMetaData, <other arguments>):
-    >>>     pass
-    """
-    match type_.lower():
-        case "run":
-            return run_metadata
-        case "omop":
-            return omop_metadata
-        case _:
-            info(f"Unknown metadata type: {type_}. Exiting.")
-            exit(1)
-
-
-def run_metadata(func: callable, *args, **kwargs) -> callable:
+def metadata(func: callable, *args, **kwargs) -> callable:
     @wraps(func)
     def decorator(*args, **kwargs) -> callable:
         """
@@ -278,7 +287,7 @@ def run_metadata(func: callable, *args, **kwargs) -> callable:
 
         Example
         -------
-        >>> @run_metadata
+        >>> @metadata
         >>> def my_algorithm(metadata: RunMetaData, <other arguments>):
         >>>     pass
         """
@@ -304,44 +313,39 @@ def run_metadata(func: callable, *args, **kwargs) -> callable:
     return decorator
 
 
-def omop_metadata(func: callable, *args, **kwargs) -> callable:
-    @wraps(func)
-    def decorator(*args, **kwargs) -> callable:
-        """
-        Wrap the function with metadata from the OMOP database.
+def get_ohdsi_metadata(label: str) -> OHDSIMetaData:
+    """
+    Retrieve the OHDSI metadata from the environment variables.
 
-        The following environment variables are expected to be set in the
-        node configuration in the `env` key of the `database` section:
-        - CDM_DATABASE
-        - CDM_SCHEMA
-        - RESULTS_SCHEMA
+    The following environment variables are expected to be set in the
+    node configuration in the `env` key of the `database` section:
 
-        In case these are not set, the `None` value are returned.
+    - `CDM_DATABASE`
+    - `CDM_SCHEMA`
+    - `RESULTS_SCHEMA`
 
-        Example
-        -------
-        >>> @omop_metadata
-        >>> def my_algorithm(metadata: OMOPMetaData, <other arguments>):
-        >>>     pass
-        """
-        # check that all node environment variables are set
-        expected_env_vars = ["CDM_DATABASE", "CDM_SCHEMA", "RESULTS_SCHEMA"]
-        if not all((key.upper() in os.environ for key in expected_env_vars)):
-            warn("Missing settings in the node configuration.")
-            warn("This can result an algorithm crash if dependent on these.")
-            warn("Will continue with the missing settings...")
+    In case these are not set, the algorithm execution is terminated.
 
-        tmp = Path(os.environ["TEMPORARY_FOLDER"])
-        metadata = OMOPMetaData(
-            database=os.environ.get("DB_PARAM_CDM_DATABASE"),
-            cdm_schema=os.environ.get("DB_PARAM_CDM_SCHEMA"),
-            results_schema=os.environ.get("DB_PARAM_RESULTS_SCHEMA"),
-            incremental_folder=tmp / "incremental",
-            cohort_statistics_folder=tmp / "cohort_statistics",
-            export_folder=tmp / "export"
-        )
-        return func(metadata, *args, **kwargs)
-    return decorator
+    Example
+    -------
+    >>> get_ohdsi_metadata("my_database")
+    """
+    # check that all node environment variables are set
+    expected_env_vars = ["CDM_DATABASE", "CDM_SCHEMA", "RESULTS_SCHEMA"]
+    label_ = label.upper()
+    for var in expected_env_vars:
+        _check_environment_var_exists_or_exit(f'{label_}_DB_PARAM_{var}')
+
+    tmp = Path(os.environ["TEMPORARY_FOLDER"])
+    metadata = OHDSIMetaData(
+        database=os.environ.get(f"{label}_DB_PARAM_CDM_DATABASE"),
+        cdm_schema=os.environ.get(f"{label}_DB_PARAM_CDM_SCHEMA"),
+        results_schema=os.environ.get(f"{label}_DB_PARAM_RESULTS_SCHEMA"),
+        incremental_folder=tmp / "incremental",
+        cohort_statistics_folder=tmp / "cohort_statistics",
+        export_folder=tmp / "export"
+    )
+    return metadata
 
 
 def _create_omop_database_connection(label: str) -> callable:
@@ -387,15 +391,18 @@ def _create_omop_database_connection(label: str) -> callable:
               "algorithm?")
         exit(1)
 
+    # environment vars are always uppercase
+    label_ = label.upper()
+
     # check that the required environment variables are set
     for var in ("DBMS", "USER", "PASSWORD"):
-        _check_environment_var_exists_or_exit(f'DB_PARAM_{var}')
+        _check_environment_var_exists_or_exit(f'{label_}_DB_PARAM_{var}')
 
     info("Reading OHDSI environment variables")
     dbms = os.environ["DB_PARAM_DBMS"]
-    uri = os.environ[f"{label.upper()}_DATABASE_URI"]
-    user = os.environ["DB_PARAM_USER"]
-    password = os.environ["DB_PARAM_PASSWORD"]
+    uri = os.environ[f"{label_}_DATABASE_URI"]
+    user = os.environ[f"{label_}_DB_PARAM_USER"]
+    password = os.environ[f"{label_}_DB_PARAM_PASSWORD"]
     info(f' - dbms: {dbms}')
     info(f' - uri: {uri}')
     info(f' - user: {user}')
