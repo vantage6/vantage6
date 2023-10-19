@@ -3,11 +3,11 @@ from http import HTTPStatus
 
 import logging
 from flask_restful import Api
-from flask import request, g
+from flask import request
 
 from vantage6.common import logger_name
+from vantage6.common.globals import BASICS_IMAGE
 from vantage6.server import db
-from vantage6.server.globals import BASICS_IMAGE
 from vantage6.server.permission import (
     RuleCollection,
     Operation as P

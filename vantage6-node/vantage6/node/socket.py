@@ -88,10 +88,16 @@ class NodeTaskNamespace(ClientNamespace):
         if has_task_failed(status):
             # TODO handle run sequence at this node. Maybe terminate all
             #     containers with the same job_id?
-            self.log.critical(
-                f"A container on a node within your collaboration part of "
-                f"job_id={job_id} has exited with status '{status}'"
-            )
+            if status == TaskStatus.NOT_ALLOWED:
+                self.log.critical(
+                    'A node within your collaboration part did not allow a '
+                    'container of job_id=%s to start', job_id
+                )
+            else:
+                self.log.critical(
+                    'A container on a node within your collaboration part of '
+                    'job_id=%s has exited with status %s', job_id, status
+                )
         # else: no need to do anything when a task has started/finished/... on
         # another node
 

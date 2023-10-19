@@ -77,6 +77,11 @@ policies:
     - 6
     - root
 
+  # The basics algorithm (harbor2.vantage5.ai/algorithms/basics) is whitelisted
+  # by default. It is used to collect column names in the User Interface to
+  # facilitate task creation. Set to false to disable this.
+  allow_basics_algorithm: true
+
 # credentials used to login to private Docker registries
 docker_registries:
   - registry: docker-registry.org
