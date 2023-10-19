@@ -12,24 +12,23 @@ Also, note that this guide is mainly aimed at developers who want to develop
 their algorithm in Python, although we will try to clearly indicate where
 this differs from algorithms written in other languages.
 
-.. _algo-dev-create-template:
+.. _algo-dev-create-algorithm:
 
 Starting point
 --------------
 
 When starting to develop a new vantage6 algorithm in Python, the easiest way to
-start is by using the algorithm template creator:
+start is:
 
 .. code::
 
    v6 algorithm create
 
-Running this command will guide you through the process of creating a new
-algorithm template by answering some questions. After doing so, you should have
-a new folder with the name of your algorithm.
-
-The created template contains a checklist in the README.md file that you can
-follow to complete your algorithm.
+Running this command will prompt you to answering some questions, which will
+result in a personalized starting point or 'boilerplate' for your algorithm.
+After doing so, you will have a new folder with the name of your algorithm,
+boilerplate code and a checklist in the README.md file that you can follow to
+complete your algorithm.
 
 .. note::
    There is also a `boilerplate for R <https://github.com/IKNL/vtg.tpl>`_,
@@ -73,7 +72,7 @@ Note that having your code in a git repository is necessary if you want to
 Implementing your algorithm
 ---------------------------
 
-Your algorithm template should make clear to you which functions you need to
+Your personalized starting point should make clear to you which functions you need to
 implement - there are `TODO` comments in the code that indicate where you need
 to add your own code.
 
@@ -85,9 +84,16 @@ is explained in the :ref:`code structure section <algo-code_structure>`.
 Environment variables
 ---------------------
 
-The algorithms have access to several environment variables. These can be used
+The algorithms have access to several environment variables. You can also
+specify additional environment variables via the ``algorithm_env`` option
+in the node configuration files (see the
+:ref:`example node configuration file <node-configure-structure>`).
+
+Environment variables provided by the vantage6 infrastructure are used
 to locate certain files or to add local configuration settings into the
-container. For instance:
+container. These are usually used in the Python wrapper and you don't normally
+need them in your functions. However, you can access them in your functions
+as follows:
 
 .. code:: python
 
@@ -99,43 +105,9 @@ container. For instance:
 
        # do something with the input file and database URI
 
-There are several environment variables that are always available. These are
-listed in :numref:`envvartable`. Additional environment variables may
-be added to the container using the ``algorithm_env`` option
-in the node configuration files (see the
-:ref:`example node configuration file <node-configure-structure>`).
-
-.. _table-env-vars:
-
-.. list-table:: Environment variables
-   :name: envvartable
-   :widths: 30 70
-   :header-rows: 1
-
-   * - Variable
-     - Description
-   * - ``INPUT_FILE``
-     - path to the input file. The input file contains the user defined input
-       for the algorithms.
-   * - ``TOKEN_FILE``
-     - Path to the token file. The token file contains a JWT token which can
-       be used to access the vantage6 server. This way the algorithm container
-       is able to post new tasks and retrieve results.
-   * - ``TEMPORARY_FOLDER``
-     - Path to the temporary folder. This folder can be used to store
-       intermediate results. These intermediate results are shared between all
-       containers that have the same run_id. Algorithm containers which are
-       created from an algorithm container themselves share the same run_id.
-   * - ``HOST``
-     - Contains the URL to the vantage6 server.
-   * - ``PORT``
-     - Contains the port to which the vantage6 server listens. Is used in
-       combination with HOST and API_PATH.
-   * - ``API_PATH``
-     - Contains the api base path from the vantage6 server.
-   * - ``[*]_DATABASE_URI``
-     - Contains the URI of the local database. The  ``*``  is replaced by the
-       label specified in the node configuration file.
+The environment variables that you specify in the node configuration file
+can be used in the exact same manner. You can view all environment variables
+that are available to your algorithm by ``print(os.environ)``.
 
 Returning results
 -----------------
@@ -218,7 +190,7 @@ It can be helpful to test your algorithm outside of Docker using the
 ``MockAlgorithmClient``. This may save
 time as it does not require you to set up a test infrastructure with a vantage6
 server and nodes, and allows you to test your algorithm without building a
-Docker image every time. Your algorithm template comes with a test file that
+Docker image every time. The algorithm boilerplate code comes with a test file that
 you can use to test your algorithm using the ``MockAlgorithmClient`` - you can
 of course extend that to add more or different tests.
 
@@ -246,7 +218,7 @@ documentation is not too extensive, this may be sufficient.
 Package & distribute
 --------------------
 
-The algorithm template comes with a ``Dockerfile`` that is a blueprint for
+The algorithm boilerplate comes with a ``Dockerfile`` that is a blueprint for
 creating a Docker image of your algorithm. This Docker image is the package
 that you will distribute to the nodes.
 

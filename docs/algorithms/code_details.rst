@@ -8,10 +8,10 @@ Algorithm code structure
   These guidelines are Python specific.
 
 Here we provide some more information on algorithm code is organized.
-Most of these structures are generated automatically by the
-:ref:`algorithm template creator <algo-dev-create-template>`. We detail them here
-so that you understand why the algorithm code is structured as it is, and so
-that you know how to modify it if necessary.
+Most of these structures are generated automatically when you create a
+:ref:`personalized algorithm starting point <algo-dev-create-algorithm>`. We detail
+them here so that you understand why the algorithm code is structured as it is,
+and so that you know how to modify it if necessary.
 
 Defining functions
 ------------------
