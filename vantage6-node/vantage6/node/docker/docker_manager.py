@@ -196,7 +196,8 @@ class DockerManager(DockerBaseManager):
                 uri = self.__tasks_dir / os.path.basename(uri)
 
             self.databases[label] = {'uri': uri, 'is_file': db_is_file,
-                                     'type': db_config['type']}
+                                     'type': db_config['type'],
+                                     'env': db_config.get('env', {})}
         self.log.debug(f"Databases: {self.databases}")
 
     def _set_algorithm_device_requests(self, device_requests_config: dict) \

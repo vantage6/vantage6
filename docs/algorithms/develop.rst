@@ -80,6 +80,7 @@ to add your own code.
 You may wonder why the boilerplate code is structured the way it is. This
 is explained in the :ref:`code structure section <algo-code_structure>`.
 
+.. _algo-env-vars:
 
 Environment variables
 ---------------------
