@@ -6,7 +6,7 @@ from flask_restful import Api
 from flask import request
 
 from vantage6.common import logger_name
-from vantage6.common.globals import BASICS_IMAGE
+from vantage6.common.globals import BASIC_PROCESSING_IMAGE
 from vantage6.server import db
 from vantage6.server.permission import (
     RuleCollection,
@@ -115,7 +115,7 @@ class ColumnNames(ServicesResources):
             return {'msg': 'Request body is incorrect', 'errors': errors}, \
                 HTTPStatus.BAD_REQUEST
 
-        collaboration_id = data.pop('collaboration_id')
+        collaboration_id = data['collaboration_id']
         collaboration = db.Collaboration.get(collaboration_id)
         if not collaboration:
             return {
@@ -156,7 +156,7 @@ class ColumnNames(ServicesResources):
             data={
               'collaboration_id': collaboration_id,
               'name': 'get_column_names',
-              'image': BASICS_IMAGE,
+              'image': BASIC_PROCESSING_IMAGE,
               'organizations': data['organizations'],
               'databases': databases,
             },

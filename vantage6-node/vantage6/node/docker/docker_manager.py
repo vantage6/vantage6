@@ -19,7 +19,7 @@ from pathlib import Path
 from vantage6.common import logger_name
 from vantage6.common import get_database_config
 from vantage6.common.docker.addons import get_container, running_in_docker
-from vantage6.common.globals import APPNAME, BASICS_IMAGE
+from vantage6.common.globals import APPNAME, BASIC_PROCESSING_IMAGE
 from vantage6.common.task_status import TaskStatus, has_task_failed
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.algorithm.tools.wrappers import get_column_names
@@ -269,7 +269,7 @@ class DockerManager(DockerBaseManager):
         # check if algorithm matches any of the regex cases
         allow_basics = self._policies.get('allow_basics_algorithm', True)
         allowed_algorithms = self._policies.get('allowed_algorithms')
-        if docker_image_name.startswith(BASICS_IMAGE):
+        if docker_image_name.startswith(BASIC_PROCESSING_IMAGE):
             if not allow_basics:
                 self.log.warn("A task was sent with a basics algorithm that "
                               "this node does not allow to run.")
@@ -691,5 +691,9 @@ class DockerManager(DockerBaseManager):
         if db['type'] == 'excel':
             self.log.error("Cannot determine columns for excel database "
                            " without a worksheet")
+            return []
+        if type_ not in ('csv', 'sparql'):
+            self.log.error("Cannot determine columns for database of type %s."
+                           "Only csv and sparql are supported", type_)
             return []
         return get_column_names(db['uri'], type_)

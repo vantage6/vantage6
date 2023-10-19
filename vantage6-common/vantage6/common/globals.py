@@ -35,4 +35,4 @@ PING_INTERVAL_SECONDS = 60
 NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS = 600
 
 # The basics image can be used (mainly by the UI) to collect column names
-BASICS_IMAGE = 'harbor2.vantage6.ai/algorithms/basics'
+BASIC_PROCESSING_IMAGE = 'harbor2.vantage6.ai/algorithms/basics'
