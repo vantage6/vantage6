@@ -474,9 +474,6 @@ class AlgorithmClient(ClientBase):
 
             return results['addresses']
 
-        # FIXME consider renaming this and similar functions in v5+: users
-        # reported they expected a '{ip}:{port}' string, not a dict - we should
-        # evaluate what is most effective though complete
         def get_parent_address(self) -> dict:
             """
             Get the IP address and port number of the parent of the current
