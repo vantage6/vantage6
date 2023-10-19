@@ -399,7 +399,7 @@ def _create_omop_database_connection(label: str) -> callable:
         _check_environment_var_exists_or_exit(f'{label_}_DB_PARAM_{var}')
 
     info("Reading OHDSI environment variables")
-    dbms = os.environ["DB_PARAM_DBMS"]
+    dbms = os.environ[f"{label_}_DB_PARAM_DBMS"]
     uri = os.environ[f"{label_}_DATABASE_URI"]
     user = os.environ[f"{label_}_DB_PARAM_USER"]
     password = os.environ[f"{label_}_DB_PARAM_PASSWORD"]
