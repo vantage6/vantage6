@@ -338,9 +338,9 @@ def get_ohdsi_metadata(label: str) -> OHDSIMetaData:
 
     tmp = Path(os.environ["TEMPORARY_FOLDER"])
     metadata = OHDSIMetaData(
-        database=os.environ.get(f"{label}_DB_PARAM_CDM_DATABASE"),
-        cdm_schema=os.environ.get(f"{label}_DB_PARAM_CDM_SCHEMA"),
-        results_schema=os.environ.get(f"{label}_DB_PARAM_RESULTS_SCHEMA"),
+        database=os.environ[f"{label_}_DB_PARAM_CDM_DATABASE"],
+        cdm_schema=os.environ[f"{label_}_DB_PARAM_CDM_SCHEMA"],
+        results_schema=os.environ[f"{label_}_DB_PARAM_RESULTS_SCHEMA"],
         incremental_folder=tmp / "incremental",
         cohort_statistics_folder=tmp / "cohort_statistics",
         export_folder=tmp / "export"
