@@ -524,7 +524,7 @@ class DockerTaskManager(DockerBaseManager):
             # variables.
             if 'env' in db:
                 for key in db['env']:
-                    env_key = f'DB_PARAM_{key.upper()}'
+                    env_key = f'{label.upper()}_DB_PARAM_{key.upper()}'
                     environment_variables[env_key] = db['env'][key]
 
             db_labels.append(label)
