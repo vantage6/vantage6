@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { getChipTypeForStatus, getStatusInfoTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
 import { Algorithm, Function, Output } from 'src/app/models/api/algorithm.model';
-import { Task, TaskRun, TaskStatus } from 'src/app/models/api/task.models';
+import { Task, TaskLazyProperties, TaskRun, TaskStatus } from 'src/app/models/api/task.models';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { TaskService } from 'src/app/services/task.service';
@@ -52,7 +52,7 @@ export class TaskReadComponent implements OnInit {
   }
 
   async initData(): Promise<void> {
-    this.task = await this.taskService.getTask(this.id, [TaskLazyProperties.InitOrg, TaskLazyProperties.InitUser, TaskLazyProperties.Runs]);
+    this.task = await this.taskService.getTask(this.id, [TaskLazyProperties.InitOrg, TaskLazyProperties.InitUser]);
     this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image);
     this.function = this.algorithm?.functions.find((_) => _.name === this.task?.input?.method) || null;
     this.selectedOutput = this.function?.output?.[0] || null;
