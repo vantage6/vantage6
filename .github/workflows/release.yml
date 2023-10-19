@@ -196,7 +196,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: version
     env:
-      version: ${{ needs.version.outputs.version }}
       major: ${{ needs.version.outputs.major }}
       minor: ${{ needs.version.outputs.minor }}
       branch: ${{ needs.version.outputs.branch }}
