@@ -19,9 +19,10 @@ from pathlib import Path
 from vantage6.common import logger_name
 from vantage6.common import get_database_config
 from vantage6.common.docker.addons import get_container, running_in_docker
-from vantage6.common.globals import APPNAME
+from vantage6.common.globals import APPNAME, BASIC_PROCESSING_IMAGE
 from vantage6.common.task_status import TaskStatus, has_task_failed
 from vantage6.common.docker.network_manager import NetworkManager
+from vantage6.algorithm.tools.wrappers import get_column_names
 from vantage6.cli.context import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.docker.docker_base import DockerBaseManager
@@ -267,8 +268,15 @@ class DockerManager(DockerBaseManager):
             return True
 
         # check if algorithm matches any of the regex cases
+        allow_basics = self._policies.get('allow_basics_algorithm', True)
         allowed_algorithms = self._policies.get('allowed_algorithms')
-        if allowed_algorithms:
+        if docker_image_name.startswith(BASIC_PROCESSING_IMAGE):
+            if not allow_basics:
+                self.log.warn("A task was sent with a basics algorithm that "
+                              "this node does not allow to run.")
+                return False
+            # else: basics are allowed, so we don't need to check the regex
+        elif allowed_algorithms:
             if isinstance(allowed_algorithms, str):
                 allowed_algorithms = [allowed_algorithms]
             found = False
@@ -276,6 +284,7 @@ class DockerManager(DockerBaseManager):
                 expr_ = re.compile(regex_expr)
                 if expr_.match(docker_image_name):
                     found = True
+
             if not found:
                 self.log.warn("A task was sent with a docker image that this"
                               " node does not allow to run.")
@@ -655,3 +664,37 @@ class DockerManager(DockerBaseManager):
                     "Instructed to kill tasks but none were running"
                 )
         return killed_runs
+
+    def get_column_names(self, label: str, type_: str) -> list[str]:
+        """
+        Get column names from a node database
+
+        Parameters
+        ----------
+        label: str
+            Label of the database
+        type_: str
+            Type of the database
+
+        Returns
+        -------
+        list[str]
+            List of column names
+        """
+        db = self.databases.get(label)
+        if not db:
+            self.log.error("Database with label %s not found", label)
+            return []
+        if not db['is_file']:
+            self.log.error("Database with label %s is not a file. Cannot"
+                           " determine columns without query", label)
+            return []
+        if db['type'] == 'excel':
+            self.log.error("Cannot determine columns for excel database "
+                           " without a worksheet")
+            return []
+        if type_ not in ('csv', 'sparql'):
+            self.log.error("Cannot determine columns for database of type %s."
+                           "Only csv and sparql are supported", type_)
+            return []
+        return get_column_names(db['uri'], type_)
