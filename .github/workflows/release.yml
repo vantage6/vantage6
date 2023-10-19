@@ -196,7 +196,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: version
     env:
-      version: ${{ needs.version.outputs.version }}
+      major: ${{ needs.version.outputs.major }}
+      minor: ${{ needs.version.outputs.minor }}
       branch: ${{ needs.version.outputs.branch }}
 
     steps:
@@ -211,7 +212,6 @@ jobs:
         with:
           ref: ${{ env.branch }}
 
-
       - # Add support for more platforms with QEMU (optional)
         # https://github.com/docker/setup-qemu-action
         name: Set up QEMU
@@ -222,10 +222,10 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Build Algorithm base image
-        run: make algorithm-base-image TAG=$version
+        run: make algorithm-base-image TAG=${major}.${minor}
 
       - name: Build Algorithm OMOP base image
-        run: make algorithm-omop-base-image TAG=$version
+        run: make algorithm-omop-base-image BASE=${major}.${minor} TAG=${major}.${minor}
 
 
   # Update the server and node images on harbor2 for this major version,
