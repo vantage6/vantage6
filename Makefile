@@ -7,7 +7,7 @@ REGISTRY ?= harbor2.vantage6.ai
 PLATFORMS ?= linux/arm64,linux/amd64
 
 # infrastructure base image version
-BASE ?= 4
+BASE ?= 4.0
 
 help:
 	@echo "Available commands to 'make':"
@@ -26,9 +26,10 @@ help:
 	@echo "  devdocs              : run a documentation development server"
 	@echo ""
 	@echo "Using "
-	@echo "  tag:      ${TAG}"
-	@echo "  registry: ${REGISTRY}"
-	@echo "  base:     ${BASE}"
+	@echo "  tag:       ${TAG}"
+	@echo "  registry:  ${REGISTRY}"
+	@echo "  base:      ${BASE}"
+	@echo "  platforms: ${PLATFORMS}"
 
 set-version:
 	# --version --build --spec --post
