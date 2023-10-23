@@ -225,3 +225,17 @@ mat-card {
     margin-bottom: $spacing-px-3;
   }
 }
+
+.checkbox-form-field {
+  margin-bottom: $spacing-px-3;
+
+  mat-checkbox {
+    margin-bottom: 0;
+  }
+
+  mat-hint {
+    display: block;
+    margin-left: $spacing-px-4;
+    font-size: var(--mdc-typography-caption-font-size, $spacing-px-3);
+  }
+}

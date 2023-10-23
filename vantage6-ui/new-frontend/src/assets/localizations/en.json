@@ -31,6 +31,7 @@
     "sheet": "Sheet name",
     "status": "Status",
     "user": "user",
+    "preprocessing-function": "Preprocessing function",
     "alert-node-offline": "The node '{{name}}' is offline. This task will be handled when the node is back online."
   },
   "task-run": {
@@ -54,6 +55,9 @@
     },
     "step-database": {
       "title": "Select databases"
+    },
+    "step-preprocessing": {
+      "title": "Select preprocessing"
     },
     "step-parameters": {
       "title": "Function parameters"

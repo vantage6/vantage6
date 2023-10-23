@@ -15,11 +15,20 @@ export enum OutputVisualizeType {
   Histogram = 'histogram'
 }
 
+export enum SelectParameterType {
+  Column = 'column',
+  String = 'string',
+  Integer = 'integer',
+  Boolean = 'bool',
+  Date = 'date'
+}
+
 export interface Algorithm {
   id: number;
   name: string;
   url: string;
   functions: Function[];
+  select: Select[];
 }
 
 export interface Function {
@@ -28,6 +37,20 @@ export interface Function {
   arguments: Argument[];
   databases: Database[];
   output: Output[];
+}
+
+export interface Select {
+  function: string;
+  description?: string;
+  parameters: SelectParameter[];
+}
+
+export interface SelectParameter {
+  name: string;
+  type: SelectParameterType;
+  description: string;
+  required: boolean;
+  default?: string | boolean;
 }
 
 interface Argument {
