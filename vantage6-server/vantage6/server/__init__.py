@@ -6,10 +6,13 @@ through the API the server hosts. Finally, it also communicates with
 authenticated nodes and users via the socketIO server that is run here.
 """
 # -*- coding: utf-8 -*-
+import os
 from gevent import monkey
 
-# flake8: noqa: E402 (ignore import error)
-monkey.patch_all()
+# This is a workaround for readthedocs
+if not os.environ.get('READTHEDOCS'):
+    # flake8: noqa: E402 (ignore import error)
+    monkey.patch_all()
 
 import importlib
 import logging
