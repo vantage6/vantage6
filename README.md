@@ -3,7 +3,7 @@
   <a href="https://vantage6.ai"><img src="https://github.com/IKNL/guidelines/blob/master/resources/logos/vantage6.png?raw=true" alt="vantage6" width="350"></a>
 </h1>
 
-<h3 align=center> A privacy preserving federated learning solution</h3>
+<h3 align=center> A Privacy Enhancing Technology (PET) Operations platform</h3>
 <h3 align="center">
 
 <!-- Badges go here-->
@@ -16,17 +16,91 @@
 </h3>
 
 <p align="center">
-  <a href="#books-documentation">Documentation</a> •
-  <a href="#gift_heart-contributing">Contributing</a> •
+  <a href="#books-quickstart">Quickstart</a> •
+  <a href="#project-structure">Project structure</a> •
+  <a href="#gift_heart-join-the-community">Join the community</a> •
   <a href="#black_nib-references">References</a>
 </p>
 
 
-
 -----------------------------------------------------------------------------------------------------
-This repository is part of **vantage6**, our **privacy preserving federated learning infrastructure for secure insight exchange**, and contains all the **vantage6** infrastructure source/ code. Please visit our [website (vantage6.ai)](https://vantage6.ai) to learn more!
+This repository is contains all the **vantage6** infrastructure source code. The **vantage6** technology enables to manage and deploy privacy enhancing technologies like Federated Learning (FL) and Multi-Party Computation (MPC). Please visit our [website (vantage6.ai)](https://vantage6.ai) to learn more!
 
-## :books: Documentation
+You can find more (user) documentation at [readthedocs (docs.vantage6.ai)](https://docs.vantage6.ai). If you have any questions, suggestions or just want to chat about federated learning: join our [Discord (https://discord.gg/yAyFf6Y)](https://discord.gg/yAyFf6Y) channel.
+
+## Infrastructure overview
+
+![Vantage6 architecture overview](docs/images/overview-infrastructure.png)
+
+*A High level overview of the vantage6 infrastructure. Vantage6 has both a client-server and peer-to-peer architecture. The client is used by the researcher to create (PET) computation requests. It is also used to manage users, organizations and collaborations. The server contains users, organizations, collaborations, tasks and their results. It provides a central access point for both the clients and nodes. The nodes have access to privacy sensitive data and handle computation requests retrieved from the server. Computation request are executed as separate containers on the node. These containers are connected to containers at other nodes by a VPN network.*
+
+## :books: Quickstart
+
+### Requirements
+The **vantage6** infrastructure is delivered in Docker images. To run these images, you need to have [Docker](https://docs.docker.com/get-docker/) installed. To install the latest version of the vantage6 CLI, you need to have [Python](https://www.python.org/downloads/), we recommend using an environment manager like [mini-conda](https://docs.conda.io/en/latest/miniconda.html).
+
+Install the latest version of the vantage6 CLI by using:
+```bash
+pip install vantage6
+```
+
+This install the `v6` commands, which allows you to manage your nodes and servers. To view all available options, run:
+
+```bash
+v6 --help
+```
+
+For example you can create a local test setup by using:
+
+```bash
+v6 dev create-demo-network
+```
+
+This creates a local network with a server and two nodes. You can start the network by running:
+
+```bash
+v6 dev start-demo-network
+```
+
+This will start the server and nodes in the background. You can view the logs by running:
+
+```bash
+# View node logs
+v6 node attach
+
+# View server logs
+v6 server attach
+```
+
+From here you can use the [vantage6-client](https://pypi.org/project/vantage6-client) to interact with the server. The demo network has a pre-configured organization with the following credentials:
+
+* Username: `org_1-admin`
+* Password: `password`
+
+For example, you can create a new organization by running:
+
+```python
+from vantage6.client import Client
+
+client = Client('http://127.0.0.1', 5000, '/api', log_level='debug')
+client.authenticate('org_1-admin', 'password')
+client.setup_encryption(None)
+
+client.organization.create(
+    name='My organization',
+    address1='My address',
+    address2='My address',
+    zipcode='1234AB',
+    country='The Netherlands',
+    domain='my-organization.com'
+)
+```
+
+You can find more (user) documentation at [readthedocs (docs.vantage6.ai)](https://docs.vantage6.ai)
+
+## Project structure
+
+### PYPI packages
 This repository is home to 6 PyPi packages:
 
 * [vantage6](https://pypi.org/project/vantage6) -> _CLI for managing node and server instances_
@@ -38,22 +112,27 @@ This repository is home to 6 PyPi packages:
 
 **Note that when using vantage6 you do not install the _server_ and _node_ packages. These are delivered to you in Docker images.**
 
-Two docker images are published which contain the Node and Server applications:
+### Docker images
+The vantage6 infrastructure is delivered in Docker images. All Docker images are stored in our private [Harbor](https://goharbor.io/) registry. The most important images contain the server and node:
 
-* `harbor2.vantage6.ai/infrastructure/node:VERSION`
-* `harbor2.vantage6.ai/infrastructure/server:VERSION`
+* `harbor2.vantage6.ai/infrastructure/node:VERSION` -> _Node application Docker image_
+* `harbor2.vantage6.ai/infrastructure/server:VERSION` -> _Server application Docker image_
 
-These docker images are used by the _vantage6 CLI_ package, which can be installed by running:
+with `VERSION` being the full semantic version of the vantage6 infrastructure, e.g. `4.0.0` or `4.1.0rc0`.
 
-`pip install vantage6`
+Several other images are used to support the infrastructure:
 
-This will install the CLI which enables you to use (among others) the commands
-to manage your nodes and servers:
+* `harbor2.vantage6.ai/infrastructure/infrastructure-base:VERSION` -> _Base image for the infrastructure_
+* `harbor2.vantage6.ai/infrastructure/squid:VERSION` -> _Squid proxy image used for the whitelisting service_
+* `harbor2.vantage6.ai/infrastructure/alpine` -> _Alpine image used for vpn traffic forwarding_
+* `harbor2.vantage6.ai/infrastructure/vpn-client` -> _VPN image used to connect to the VPN_
+* `harbor2.vantage6.ai/infrastructure/vpn-configurator` -> _VPN image used for initialization_
+* `harbor2.vantage6.ai/infrastructure/ssh-tunnel` -> _SSH tunnel image used for connecting algorithms to external services_
 
-* `v6 node CMD [OPTIONS]`
-* `v6 server CMD [OPTIONS]`
+And finally there are some images released for algorithm development:
 
-You can find more (user) documentation at [Gitbook (docs.vantage6.ai)](https://docs.vantage6.ai). If you have any questions, suggestions or just want to chat about federated learning: join our [Dircord (https://discord.gg/yAyFf6Y)](https://discord.gg/yAyFf6Y) channel.
+* `harbor2.vantage6.ai/infrastructure/algorithm-base:MAJOR.MINOR` -> _Base image for algorithm development_
+* `harbor2.vantage6.ai/infrastructure/algorithm-ohdsi-base:MAJOR.MINOR` -> _Extended algorithm base image for OHDSI algorithm development_
 
 ## :gift_heart: Join the community!
 We hope to continue developing, improving, and supporting **vantage6** with the help of the federated learning community. If you are interested in contributing, first of all, thank you! Second, please take a look at our [contributing guidelines](https://docs.vantage6.ai/en/main/devops/contribute.html)
@@ -68,8 +147,6 @@ If you are using **vantage6**, please cite this repository as well as the accomp
 > * F. Martin, M. Sieswerda, H. Alradhi, et al. vantage6. Available at https://doi.org/10.5281/zenodo.7221216. Accessed on MONTH, 20XX.
 > * A. Moncada-Torres, F. Martin, M. Sieswerda, J. van Soest, G. Gelijnse. VANTAGE6: an open source priVAcy preserviNg federaTed leArninG infrastructurE for Secure Insight eXchange. AMIA Annual Symposium Proceedings, 2020, p. 870-877. [[BibTeX](https://arturomoncadatorres.com/bibtex/moncada-torres2020vantage6.txt), [PDF](https://vantage6.ai/vantage6/)]
 > * D. Smits\*, B. van Beusekom\*, F. Martin, L. Veen, G. Geleijnse, A. Moncada-Torres, An Improved Infrastructure for Privacy-Preserving Analysis of Patient Data, Proceedings of the International Conference of Informatics, Management, and Technology in Healthcare (ICIMTH), vol. 25, 2022, p. 144-147. [[BibTeX](https://arturomoncadatorres.com/bibtex/smits2022improved.txt), [PDF](https://ebooks.iospress.nl/volumearticle/60190)]
-
-
 
 -----------------------------------------------------------------------------------------------------
 <p align="center">
