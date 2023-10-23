@@ -100,55 +100,12 @@
         </form>
       </mat-step>
       <mat-step [stepControl]="preprocessingForm.controls.parameters" *ngIf="!function || (function && function.databases.length > 0)">
-        <form class="form" [formGroup]="preprocessingForm">
-          <ng-template matStepLabel>{{ "task-create.step-preprocessing.title" | translate }}</ng-template>
-          <mat-form-field subscriptSizing="dynamic">
-            <mat-label>{{ "task.preprocessing-function" | translate }}</mat-label>
-            <mat-select formControlName="preprocessingFunctionID">
-              <mat-option *ngFor="let select of algorithm?.select" [value]="select.function">
-                {{ select.function }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <ng-container *ngFor="let parameter of preprocessingFunction?.parameters" formGroupName="parameters">
-            <mat-form-field
-              *ngIf="parameter.type === selectParameterType.String || parameter.type === selectParameterType.Integer"
-              subscriptSizing="dynamic"
-            >
-              <mat-label>{{ parameter.name }}</mat-label>
-              <input
-                matInput
-                [type]="parameter.type === selectParameterType.Integer ? 'number' : 'text'"
-                [formControlName]="parameter.name"
-              />
-              <mat-hint *ngIf="parameter.description">{{ parameter.description }}</mat-hint>
-            </mat-form-field>
-            <mat-form-field *ngIf="parameter.type === selectParameterType.Column" subscriptSizing="dynamic">
-              <mat-label>{{ parameter.name }}</mat-label>
-              <mat-select [formControlName]="parameter.name">
-                <mat-option *ngFor="let column of columns" [value]="column">{{ column }}</mat-option>
-              </mat-select>
-              <mat-hint *ngIf="parameter.description">{{ parameter.description }}</mat-hint>
-            </mat-form-field>
-            <mat-form-field *ngIf="parameter.type === selectParameterType.Date">
-              <mat-label>{{ parameter.name }}</mat-label>
-              <input matInput [matDatepicker]="picker" />
-              <mat-hint *ngIf="parameter.description">{{ parameter.description }}</mat-hint>
-              <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-              <mat-datepicker #picker></mat-datepicker>
-            </mat-form-field>
-            <div class="checkbox-form-field" *ngIf="parameter.type === selectParameterType.Boolean">
-              <mat-checkbox [formControlName]="parameter.name">
-                {{ parameter.name }}
-              </mat-checkbox>
-              <mat-hint *ngIf="parameter.description">{{ parameter.description }}</mat-hint>
-            </div>
-          </ng-container>
-          <div>
-            <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
-            <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
-          </div>
-        </form>
+        <ng-template matStepLabel>{{ "task-create.step-preprocessing.title" | translate }}</ng-template>
+        <app-preprocessing-step [formGroup]="preprocessingForm" [functions]="algorithm?.select || []"></app-preprocessing-step>
+        <div>
+          <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+          <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+        </div>
       </mat-step>
       <mat-step [stepControl]="parameterForm">
         <form class="form" [formGroup]="parameterForm">

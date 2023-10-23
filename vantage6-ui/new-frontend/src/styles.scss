@@ -239,3 +239,11 @@ mat-card {
     font-size: var(--mdc-typography-caption-font-size, $spacing-px-3);
   }
 }
+
+mat-card {
+  mat-stepper {
+    .mat-vertical-content {
+      padding: $spacing-px-2 $spacing-px-6;
+    }
+  }
+}

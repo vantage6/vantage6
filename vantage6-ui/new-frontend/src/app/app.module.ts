@@ -62,6 +62,7 @@ import { CollaborationEditComponent } from './pages/collaboration/edit/collabora
 import { UserFormComponent } from './components/user-form/user-form/user-form.component';
 import { UserEditComponent } from './pages/user/edit/user-edit.component';
 import { VisualizeHistogramComponent } from './components/visualize-histogram/visualize-histogram.component';
+import { PreprocessingStepComponent } from './pages/task/create/steps/preprocessing-step/preprocessing-step.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -103,7 +104,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     CollaborationEditComponent,
     UserFormComponent,
     UserEditComponent,
-    VisualizeHistogramComponent
+    VisualizeHistogramComponent,
+    PreprocessingStepComponent
   ],
   imports: [
     BrowserModule,

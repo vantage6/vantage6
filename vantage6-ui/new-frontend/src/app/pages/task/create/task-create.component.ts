@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
-import { Algorithm, ArgumentType, Function, Select, SelectParameterType } from 'src/app/models/api/algorithm.model';
+import { Algorithm, ArgumentType, Function, Select } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, takeUntil } from 'rxjs';
 import { BaseNode, DatabaseType } from 'src/app/models/api/node.model';
@@ -21,13 +21,11 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   destroy$ = new Subject();
   routes = routePaths;
   argumentType = ArgumentType;
-  selectParameterType = SelectParameterType;
 
   algorithms: Algorithm[] = [];
   algorithm: Algorithm | null = null;
   function: Function | null = null;
   databases: any[] = [];
-  columns: string[] = ['Column 1', 'Column 2', 'Column 3']; //TODO: Get column data from backend, when backend is ready
   node: BaseNode | null = null;
   preprocessingFunction: Select | null = null;
 
@@ -42,12 +40,12 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     organizationIDs: ['', Validators.required]
   });
 
+  databaseForm = this.fb.nonNullable.group({});
+
   preprocessingForm = this.fb.nonNullable.group({
-    preprocessingFunctionID: [''],
+    functionID: [''],
     parameters: this.fb.nonNullable.group({})
   });
-
-  databaseForm = this.fb.nonNullable.group({});
 
   parameterForm = this.fb.nonNullable.group({});
 
@@ -73,12 +71,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     this.functionForm.controls.organizationIDs.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (organizationID) => {
       this.handleOrganizationChange(organizationID);
     });
-
-    this.preprocessingForm.controls.preprocessingFunctionID.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(async (preprocessingFunctionID) => {
-        this.handlePreprocessingFunctionChange(preprocessingFunctionID);
-      });
   }
 
   ngOnDestroy(): void {
@@ -199,21 +191,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     }
   }
 
-  private handlePreprocessingFunctionChange(preprocessingFunctionID: string): void {
-    this.preprocessingForm.controls.parameters = this.fb.nonNullable.group({}); //Reset parameters form group
-
-    this.preprocessingFunction = this.algorithm?.select.find((_) => _.function === preprocessingFunctionID) || null;
-    if (this.preprocessingFunction) {
-      this.preprocessingFunction.parameters.forEach((parameter) => {
-        const newControl = new FormControl(parameter.default || null);
-        if (parameter.required) {
-          newControl.setValidators(Validators.required);
-        }
-        this.preprocessingForm.controls.parameters.addControl(parameter.name, newControl);
-      });
-    }
-  }
-
   private clearFunctionStep(): void {
     this.functionForm.controls.organizationIDs.reset();
     Object.keys(this.databaseForm.controls).forEach((control) => {
@@ -234,7 +211,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   }
 
   private clearPreprocessingStep(): void {
-    this.preprocessingForm.controls.preprocessingFunctionID.reset();
+    this.preprocessingForm.controls.functionID.reset();
     this.preprocessingForm.controls.parameters = this.fb.nonNullable.group({});
   }
 
