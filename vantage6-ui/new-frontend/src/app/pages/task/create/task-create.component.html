@@ -99,9 +99,9 @@
           </div>
         </form>
       </mat-step>
-      <mat-step [stepControl]="preprocessingForm.controls.parameters" *ngIf="!function || (function && function.databases.length > 0)">
+      <mat-step *ngIf="shouldShowPreprocessorStep" [completed]="this.preprocessingStep ? this.preprocessingStep.valid() : true">
         <ng-template matStepLabel>{{ "task-create.step-preprocessing.title" | translate }}</ng-template>
-        <app-preprocessing-step [formGroup]="preprocessingForm" [functions]="algorithm?.select || []"></app-preprocessing-step>
+        <app-preprocessing-step [functions]="algorithm?.select || []"></app-preprocessing-step>
         <div>
           <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
           <button mat-button matStepperNext>{{ "general.next" | translate }}</button>

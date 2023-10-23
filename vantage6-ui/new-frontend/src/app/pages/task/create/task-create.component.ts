@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { Algorithm, ArgumentType, Function, Select } from 'src/app/models/api/algorithm.model';
@@ -10,6 +10,7 @@ import { CreateTask, CreateTaskInput } from 'src/app/models/api/task.models';
 import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
 import { Router } from '@angular/router';
+import { PreprocessingStepComponent } from './steps/preprocessing-step/preprocessing-step.component';
 
 @Component({
   selector: 'app-task-create',
@@ -18,6 +19,9 @@ import { Router } from '@angular/router';
   host: { '[class.card-container]': 'true' }
 })
 export class TaskCreateComponent implements OnInit, OnDestroy {
+  @ViewChild(PreprocessingStepComponent)
+  preprocessingStep?: PreprocessingStepComponent;
+
   destroy$ = new Subject();
   routes = routePaths;
   argumentType = ArgumentType;
@@ -41,11 +45,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   });
 
   databaseForm = this.fb.nonNullable.group({});
-
-  preprocessingForm = this.fb.nonNullable.group({
-    functionID: [''],
-    parameters: this.fb.nonNullable.group({})
-  });
 
   parameterForm = this.fb.nonNullable.group({});
 
@@ -75,6 +74,11 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.destroy$.next(true);
+  }
+
+  get shouldShowPreprocessorStep(): boolean {
+    if (!this.algorithm || !this.function) return true;
+    return this.algorithm.select.length > 0 && this.function.databases.length > 0;
   }
 
   async handleSubmit(): Promise<void> {
@@ -211,8 +215,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   }
 
   private clearPreprocessingStep(): void {
-    this.preprocessingForm.controls.functionID.reset();
-    this.preprocessingForm.controls.parameters = this.fb.nonNullable.group({});
+    this.preprocessingStep?.reset();
   }
 
   private setFormControlsForDatabase(selectedFunction: Function) {
