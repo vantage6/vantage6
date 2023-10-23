@@ -1,6 +1,41 @@
 Release notes
 =============
 
+4.1.0
+-----
+
+*19 October 2023*
+
+- **Feature**
+
+ - Renamed CLI commands. The new commands are:
+  - ``vnode`` → ``v6 node``
+  - ``vserver`` → ``v6 server``
+  - ``vdev`` → ``v6 dev``
+   The old commands are still available until version 5.0 is released.
+ - Added CLI command ``v6 algorithm create`` which is a starting point for
+   creating new algorithms
+   (`Issue#400 <https://github.com/vantage6/vantage6/issues/400>`_,
+   `PR#904 <https://github.com/vantage6/vantage6/pull/904>`_).
+ - Added ``@database_connection(type_)`` algorithm decorator. This enables
+   algorithm developers to inject a database connection into their algorithm
+   instead of a dataframe. The only type that currently is support is ``omop``,
+   which injects a ``OHDSI/DatabaseConnection`` object into your algorithm.
+   (`PR#902 <https://github.com/vantage6/vantage6/pull/902>`_).
+ - Added endpoint `/column` for the UI to get the column names of the database.
+   This is achieved either by sharing column names by the node for file-based
+   databases or by sending a task using the ``basics`` algorithm. The latter
+   is now an allowed algorithm by default, unless the node is configured to
+   not allow it. ((`Issue#778 <https://github.com/vantage6/vantage6/issues/778>`_,
+   `PR#908 <https://github.com/vantage6/vantage6/pull/908>`_).
+ - Added ``only_siblings`` and ``only_self`` options to the
+   ``client.vpn.get_addresses`` function. These options allow you to get the
+   VPN addresses of only the siblings or only the node itself, respectively.
+   This is useful for algorithms that need to communicate with other
+   algorithms on the same node or with the node itself.
+   (`Issue#729 <https://github.com/vantage6/vantage6/issues/729>`_,
+   `PR#901 <https://github.com/vantage6/vantage6/pull/901>`_).
+
 4.0.3
 -----
 
