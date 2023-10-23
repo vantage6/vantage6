@@ -395,22 +395,35 @@ class AlgorithmClient(ClientBase):
         """
         def get_addresses(
             self, only_children: bool = False, only_parent: bool = False,
+            only_siblings: bool = False, only_self: bool = False,
             include_children: bool = False, include_parent: bool = False,
             label: str = None
-        ) -> list[dict] | dict:
+        ) -> list[dict]:
             """
             Get information about the VPN IP addresses and ports of other
             algorithm containers involved in the current task. These addresses
             can be used to send VPN communication to.
 
+            Multiple ports may be exposed for a single algorithm run, so it
+            is possible that multiple ports are returned for a single IP.
+
             Parameters
             ----------
             only_children : bool, optional
                 Only return the IP addresses of the children of the current
-                task, by default False. Incompatible with only_parent.
+                task, by default False. Incompatible with other only_*
+                parameters.
             only_parent : bool, optional
                 Only return the IP address of the parent of the current task,
-                by default False. Incompatible with only_children.
+                by default False. Incompatible with other only_*
+                parameters.
+            only_siblings: bool, optional
+                Only return the IP addresses of the siblings of the current
+                task, by default False. Incompatible with other only_*
+                parameters.
+            only_self: bool, optional
+                Only return the IP address of the current task, by default
+                False. Incompatible with other only_* parameters.
             include_children : bool, optional
                 Include the IP addresses of the children of the current task,
                 by default False. Incompatible with only_parent, superseded
@@ -426,11 +439,12 @@ class AlgorithmClient(ClientBase):
 
             Returns
             -------
-            list[dict] | dict
-                List of dictionaries containing the IP address and port number,
-                and other information to identify the containers. If obtaining
-                the VPN addresses from the server fails, a dictionary with a
-                'message' key is returned instead.
+            list[dict]
+                List of dictionaries with algorithm addresses. Each dictionary
+                contains the keys 'ip', 'port', 'label', 'organization_id',
+                'task_id', and 'parent_id'. If obtaining the VPN addresses from
+                the server fails, a dictionary with a 'message' key is returned
+                instead.
             """
             # Only pass the parameters if they are not the default value - this
             # prevents that they are interpreted as string, which goes wrong
@@ -440,6 +454,10 @@ class AlgorithmClient(ClientBase):
                 params['only_children'] = 1
             if only_parent:
                 params['only_parent'] = 1
+            if only_siblings:
+                params['only_siblings'] = 1
+            if only_self:
+                params['only_self'] = 1
             if include_children:
                 params['include_children'] = 1
             if include_parent:
@@ -459,32 +477,77 @@ class AlgorithmClient(ClientBase):
         def get_parent_address(self) -> dict:
             """
             Get the IP address and port number of the parent of the current
-            task.
+            algorithm run.
+
+            Multiple ports may be exposed for a single algorithm run, so it
+            is possible that multiple ports are returned for a single IP.
 
             Returns
             -------
-            dict
-                Dictionary containing the IP address and port number, and other
-                information to identify the containers. If obtaining the VPN
-                addresses from the server fails, a dictionary with a 'message'
-                key is returned instead.
+            list[dict]
+                List of dictionaries with algorithm addresses. Each dictionary
+                contains the keys 'ip', 'port', 'label', 'organization_id',
+                'task_id', and 'parent_id'. If obtaining the VPN addresses from
+                the server fails, a dictionary with a 'message' key is returned
+                instead.
             """
             return self.get_addresses(only_parent=True)
 
         def get_child_addresses(self) -> list[dict]:
             """
             Get the IP addresses and port numbers of the children of the
-            current task.
+            current algorithm run.
+
+            Multiple ports may be exposed for a single algorithm run, so it
+            is possible that multiple ports are returned for a single IP.
 
             Returns
             -------
-            List[dict]
-                List of dictionaries containing the IP address and port number,
-                and other information to identify the containers. If obtaining
-                the VPN addresses from the server fails, a dictionary with a
-                'message' key is returned instead.
+            list[dict]
+                List of dictionaries with algorithm addresses. Each dictionary
+                contains the keys 'ip', 'port', 'label', 'organization_id',
+                'task_id', and 'parent_id'. If obtaining the VPN addresses from
+                the server fails, a dictionary with a 'message' key is returned
+                instead.
             """
             return self.get_addresses(only_children=True)
+
+        def get_sibling_addresses(self) -> list[dict]:
+            """
+            Get the IP addresses and port numbers of the siblings of the
+            current algorithm run.
+
+            Multiple ports may be exposed for a single algorithm run, so it
+            is possible that multiple ports are returned for a single IP.
+
+            Returns
+            -------
+            list[dict]
+                List of dictionaries with algorithm addresses. Each dictionary
+                contains the keys 'ip', 'port', 'label', 'organization_id',
+                'task_id', and 'parent_id'. If obtaining the VPN addresses from
+                the server fails, a dictionary with a 'message' key is returned
+                instead.
+            """
+            return self.get_addresses(only_siblings=True)
+
+        def get_own_address(self) -> dict:
+            """
+            Get the IP address and port number of the current algorithm run.
+
+            Multiple ports may be exposed for a single algorithm run, so it
+            is possible that multiple ports are returned for a single IP.
+
+            Returns
+            -------
+            list[dict]
+                List of dictionaries with algorithm addresses. Each dictionary
+                contains the keys 'ip', 'port', 'label', 'organization_id',
+                'task_id', and 'parent_id'. If obtaining the VPN addresses from
+                the server fails, a dictionary with a 'message' key is returned
+                instead.
+            """
+            return self.get_addresses(only_self=True)
 
     class Organization(ClientBase.SubClient):
         """

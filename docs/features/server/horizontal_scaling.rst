@@ -32,7 +32,7 @@ How to use
 
 If you use multiple server instances, you should always connect them to the same
 RabbitMQ instance. You can achieve this by adding your RabbitMQ server when you
-create a new server with :code:`vserver new`, or you can add it later to your
+create a new server with :code:`v6 server new`, or you can add it later to your
 server configuration file as follows:
 
 .. code:: yaml
@@ -49,7 +49,7 @@ instance group per vhost).
 Deploy
 ++++++
 
-If you are running a test server with ``vserver start``, a RabbitMQ docker
+If you are running a test server with ``v6 server start``, a RabbitMQ docker
 container will be started automatically for you. This docker container contains
 a management interface which will be available on port 15672.
 

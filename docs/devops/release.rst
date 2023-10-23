@@ -65,12 +65,12 @@ the following steps to test a release:
 
   .. code:: bash
 
-    vserver start --name <server name>
-                  --image harbor2.vantage6.ai/infrastructure/server:<version>
-                  --attach
-    vnode start --name <node name>
-                --image harbor2.vantage6.ai/infrastructure/node:<version>
-                --attach
+    v6 server start --name <server name>
+        --image harbor2.vantage6.ai/infrastructure/server:<version>
+        --attach
+    v6 node start --name <node name>
+        --image harbor2.vantage6.ai/infrastructure/node:<version>
+        --attach
 
 4. *Test code changes*. Go through all issues that are part of the new release
    and test their functionality.

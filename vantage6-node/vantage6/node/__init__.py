@@ -974,7 +974,7 @@ class Node:
                     self.log.exception(e)
 
         except (KeyboardInterrupt, InterruptedError):
-            self.log.info("Vnode is interrupted, shutting down...")
+            self.log.info("Node is interrupted, shutting down...")
             self.cleanup()
             sys.exit()
 
@@ -1049,16 +1049,23 @@ class Node:
             config_to_share['allowed_orgs'] = \
                 policies.get('allowed_organizations')
 
-        # share node database labels and types
+        # share node database labels, types, and column names (if they are
+        # fixed as e.g. for csv file)
         labels = []
         types = {}
+        col_names = {}
         for db in self.config.get('databases', []):
             label = db.get('label')
             type_ = db.get('type')
             labels.append(label)
             types[f"db_type_{label}"] = type_
+            if type_ in ('csv', 'parquet'):
+                col_names[f'columns_{label}'] = self.__docker.get_column_names(
+                    label, type_)
         config_to_share['database_labels'] = labels
         config_to_share['database_types'] = types
+        if col_names:
+            config_to_share['database_columns'] = col_names
 
         self.log.debug(f"Sharing node configuration: {config_to_share}")
         self.socketIO.emit(

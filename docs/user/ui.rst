@@ -22,7 +22,7 @@ anything is unclear, please contact us via
     :ref:`this section <install-ui>` on deploying a UI.
 
 .. note::
-    If you are :ref:`running your own server <use-server>` with ``vserver start``,
-    you can start the UI locally with ``vserver start --with-ui``, or you may
+    If you are :ref:`running your own server <use-server>` with ``v6 server start``,
+    you can start the UI locally with ``v6 server start --with-ui``, or you may
     specify that the UI should always be started in the ``ui`` section of the
     :ref:`server configuration file <server-configuration-file>`.

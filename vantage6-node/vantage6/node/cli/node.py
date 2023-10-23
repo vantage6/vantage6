@@ -1,10 +1,10 @@
 """
 This contains the ``vnode-local`` commands. These commands are similar
-to the ``vnode`` CLI commands, but they start up the node outside of a Docker
+to the ``v6 node`` CLI commands, but they start up the node outside of a Docker
 container, and are mostly intended for development purposes.
 
 Some commands, such as ``vnode-local start``, are used within the Docker
-container when ``vnode start`` is used.
+container when ``v6 node start`` is used.
 """
 import click
 import os

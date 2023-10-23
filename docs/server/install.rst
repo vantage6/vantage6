@@ -27,7 +27,7 @@ Or if you want to install a specific version:
 
 
 You can verify that the CLI has been installed by running the command
-``vserver --help``. If that prints a list of commands, the installation is
+``v6 server --help``. If that prints a list of commands, the installation is
 completed.
 
 The server software itself will be downloaded when you start the server for the

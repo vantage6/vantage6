@@ -1,37 +1,18 @@
-"""
-This module contains the CLI commands for generating dummy server and node
-instance(s). The following commands are available:
-
-    * vdev create-demo-network
-    * vdev remove-demo-network
-    * vdev start-demo-network
-    * vdev stop-demo-network
-"""
-import click
-import csv
-import subprocess
-import itertools
-
 from pathlib import Path
+import csv
+
+import click
 from jinja2 import Environment, FileSystemLoader
 from colorama import Fore, Style
-from shutil import rmtree
 
 from vantage6.common.globals import APPNAME
 from vantage6.common import info, error, generate_apikey
 
 from vantage6.cli.globals import PACKAGE_FOLDER
 from vantage6.cli.context import ServerContext, NodeContext
-from vantage6.cli.server import (
-    click_insert_context,
-    vserver_import,
-    vserver_start,
-    vserver_stop,
-    vserver_remove,
-    get_server_context
-)
-from vantage6.cli.node import vnode_stop
-from vantage6.cli.utils import prompt_config_name, remove_file
+from vantage6.cli.server.common import get_server_context
+from vantage6.cli.server.import_ import cli_server_import
+from vantage6.cli.utils import prompt_config_name
 
 
 def create_dummy_data(node_name: str, dev_folder: Path) -> Path:
@@ -172,9 +153,9 @@ def generate_node_configs(num_nodes: int, server_url: str, port: int,
 
 def create_vserver_import_config(node_configs: list[dict], server_name: str) \
         -> Path:
-    """Creates vserver configuration import file (YAML).
+    """Create server configuration import file (YAML).
 
-    Utilized by the ``vserver import`` command.
+    Utilized by the ``v6 server import`` command.
 
     Parameters
     ----------
@@ -231,7 +212,7 @@ def create_vserver_import_config(node_configs: list[dict], server_name: str) \
 
 
 def create_vserver_config(server_name: str, port: int) -> Path:
-    """Creates vserver configuration file (YAML).
+    """Creates server configuration file (YAML).
 
     Parameters
     ----------
@@ -304,15 +285,7 @@ def demo_network(num_nodes: int, server_url: str, server_port: int,
     return (node_configs, server_import_config, server_config)
 
 
-@click.group(name="dev")
-def cli_dev() -> None:
-    """
-    The `vdev` commands can be used to quickly manage a network with a server
-    and several nodes for local testing.
-    """
-
-
-@cli_dev.command(name="create-demo-network")
+@click.command()
 @click.option('-n', '--name', default=None, type=str,
               help="Name for your development setup")
 @click.option('--num-nodes', type=int, default=3,
@@ -325,8 +298,11 @@ def cli_dev() -> None:
 @click.option('-i', '--image', type=str, default=None,
               help='Server docker image to use when setting up resources for '
               'the development server')
-def create_demo_network(name: str, num_nodes: int, server_url: str,
-                        server_port: int, image: str = None) -> dict:
+@click.pass_context
+def create_demo_network(
+    click_ctx: click.Context, name: str, num_nodes: int, server_url: str,
+    server_port: int, image: str = None
+) -> dict:
     """Creates a demo network.
 
     Creates server instance as well as its import configuration file. Server
@@ -346,121 +322,12 @@ def create_demo_network(name: str, num_nodes: int, server_url: str,
         exit(1)
     (node_config, server_import_config, server_config) = demo
     ctx = get_server_context(server_name, True)
-    vserver_import(ctx, server_import_config, False, image, '', False, True)
+    click_ctx.invoke(
+        cli_server_import, ctx=ctx, file=server_import_config, drop_all=False,
+        image=image, mount_src='', keep=False, wait=True
+    )
     return {
         "node_configs": node_config,
         "server_import_config": server_import_config,
         "server_config": server_config
     }
-
-
-@cli_dev.command(name="start-demo-network")
-@click_insert_context
-@click.option('--server-image', type=str, default=None,
-              help='Server Docker image to use')
-@click.option('--node-image', type=str, default=None,
-              help='Node Docker image to use')
-def start_demo_network(
-    ctx: ServerContext, server_image: str, node_image: str
-) -> None:
-    """Starts running a demo-network.
-
-    Select a server configuration to run its demo network. You should choose a
-    server configuration that you created earlier for a demo network. If you
-    have not created a demo network, you can run `vdev create-demo-network` to
-    create one.
-    """
-    # run the server
-    vserver_start(
-        ctx=ctx,
-        ip=None,
-        port=None,
-        image=server_image,
-        start_ui=False,
-        ui_port=None,
-        start_rabbitmq=False,
-        rabbitmq_image=None,
-        keep=True,
-        mount_src='',
-        attach=False
-    )
-
-    # run all nodes that belong to this server
-    configs, _ = NodeContext.available_configurations(system_folders=False)
-    node_names = [
-        config.name for config in configs if f'{ctx.name}_node_' in config.name
-    ]
-    for name in node_names:
-        cmd = ["vnode", "start", "--name", name]
-        if node_image:
-            cmd.extend(["--image", node_image])
-        subprocess.run(cmd)
-
-
-@cli_dev.command(name="stop-demo-network")
-@click_insert_context
-def stop_demo_network(ctx: ServerContext) -> None:
-    """ Stops a demo network's server and nodes.
-
-    Select a server configuration to stop that server and the nodes attached
-    to it.
-    """
-    # stop the server
-    vserver_stop(name=ctx.name, system_folders=True, all_servers=False)
-
-    # stop the nodes
-    configs, _ = NodeContext.available_configurations(False)
-    node_names = [
-        config.name for config in configs if f'{ctx.name}_node_' in config.name
-    ]
-    for name in node_names:
-        vnode_stop(name, system_folders=False, all_nodes=False, force=False)
-
-
-@cli_dev.command(name="remove-demo-network")
-@click_insert_context
-@click.option('-f', "--force", type=bool, flag_value=True,
-              help='Don\'t ask for confirmation')
-def remove_demo_network(ctx: ServerContext, force: bool) -> None:
-    """ Remove all related demo network files and folders.
-
-    Select a server configuration to remove that server and the nodes attached
-    to it.
-    """
-
-    # remove the server
-    for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
-        handler.close()
-    vserver_remove(ctx, ctx.name, True, force)
-
-    # removing the server import config
-    info("Deleting demo import config file")
-    server_configs = ServerContext.instance_folders("server", ctx.name,
-                                                    system_folders=False)
-    import_config_to_del = Path(server_configs['dev']) / f"{ctx.name}.yaml"
-    remove_file(import_config_to_del, 'import_configuration')
-
-    # also remove the server folder
-    server_configs = ServerContext.instance_folders("server", ctx.name,
-                                                    system_folders=True)
-    server_folder = server_configs['data']
-    if server_folder.is_dir():
-        rmtree(server_folder)
-    # TODO BvB 2023-07-31 can it happen that the server folder is not a
-    # directory? What then?
-
-    # remove the nodes
-    configs, _ = NodeContext.available_configurations(system_folders=False)
-    node_names = [
-        config.name for config in configs if f'{ctx.name}_node_' in config.name
-    ]
-    for name in node_names:
-        node_ctx = NodeContext(name, False)
-        for handler in itertools.chain(node_ctx.log.handlers,
-                                       node_ctx.log.root.handlers):
-            handler.close()
-        subprocess.run(["vnode", "remove", "-n", name, "--user", "--force"])
-
-    # remove data files attached to the network
-    data_dirs_nodes = NodeContext.instance_folders('node', '', False)['dev']
-    rmtree(Path(data_dirs_nodes / ctx.name))

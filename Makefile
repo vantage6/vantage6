@@ -7,7 +7,7 @@ REGISTRY ?= harbor2.vantage6.ai
 PLATFORMS ?= linux/arm64,linux/amd64
 
 # infrastructure base image version
-BASE ?= 4
+BASE ?= 4.0
 
 help:
 	@echo "Available commands to 'make':"
@@ -26,9 +26,10 @@ help:
 	@echo "  devdocs              : run a documentation development server"
 	@echo ""
 	@echo "Using "
-	@echo "  tag:      ${TAG}"
-	@echo "  registry: ${REGISTRY}"
-	@echo "  base:     ${BASE}"
+	@echo "  tag:       ${TAG}"
+	@echo "  registry:  ${REGISTRY}"
+	@echo "  base:      ${BASE}"
+	@echo "  platforms: ${PLATFORMS}"
 
 set-version:
 	# --version --build --spec --post
@@ -79,16 +80,21 @@ algorithm-base-image:
 		--tag ${REGISTRY}/infrastructure/algorithm-base:${TAG} \
 		--tag ${REGISTRY}/infrastructure/algorithm-base:latest \
 		--platform ${PLATFORMS} \
+		--build-arg TAG=${TAG} \
 		-f ./docker/algorithm-base.Dockerfile \
 		--push .
 
+# FIXME FM 17-10-2023: This fails to build for arm64, this is because of
+# the r-base image.
 algorithm-omop-base-image:
-	@echo "Building ${REGISTRY}/algorithms/algorithm-base:${TAG}"
+	@echo "Building ${REGISTRY}/algorithms/algorithm-ohdsi-base:${TAG}"
 	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/algorithm-omop-base:${TAG} \
-		--tag ${REGISTRY}/infrastructure/algorithm-omop-base:latest \
-		--platform ${PLATFORMS} \
-		-f ./docker/algorithm-omop-base.Dockerfile \
+		--tag ${REGISTRY}/infrastructure/algorithm-ohdsi-base:${TAG} \
+		--tag ${REGISTRY}/infrastructure/algorithm-ohdsi-base:latest \
+		--build-arg BASE=${BASE} \
+		--build-arg TAG=${TAG} \
+		--platform linux/amd64 \
+		-f ./docker/algorithm-ohdsi-base.Dockerfile \
 		--push .
 
 support-image:

@@ -33,3 +33,6 @@ PING_INTERVAL_SECONDS = 60
 # start trying to refresh the JWT token of the node 10 minutes before it
 # expires.
 NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS = 600
+
+# The basics image can be used (mainly by the UI) to collect column names
+BASIC_PROCESSING_IMAGE = 'harbor2.vantage6.ai/algorithms/basics'
