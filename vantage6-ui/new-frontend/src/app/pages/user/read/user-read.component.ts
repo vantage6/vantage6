@@ -20,9 +20,9 @@ export class UserReadComponent implements OnInit {
 
   routes = routePaths;
 
-  isLoading = true;
-  canDelete = false;
-  canEdit = false;
+  isLoading: boolean = true;
+  canDelete: boolean = false;
+  canEdit: boolean = false;
   user: User | null = null;
 
   constructor(
@@ -40,11 +40,10 @@ export class UserReadComponent implements OnInit {
   private async initData(): Promise<void> {
     this.user = await this.userService.getUser(this.id, [UserLazyProperties.Organization, UserLazyProperties.Roles]);
     this.canDelete =
-      this.user.organization !== undefined &&
+      !!this.user.organization &&
       this.permissionService.isAllowedForOrg(ResourceType.USER, OperationType.DELETE, this.user.organization.id);
-    this.canDelete =
-      this.user.organization !== undefined &&
-      this.permissionService.isAllowedForOrg(ResourceType.USER, OperationType.EDIT, this.user.organization.id);
+    this.canEdit =
+      !!this.user.organization && this.permissionService.isAllowedForOrg(ResourceType.USER, OperationType.EDIT, this.user.organization.id);
     this.isLoading = false;
   }
 

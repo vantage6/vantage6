@@ -15,7 +15,7 @@ export class PermissionService {
 
   constructor(private apiService: ApiService) {}
 
-  async initData() {
+  async initData(): Promise<void> {
     if (this.activeRules === null) {
       // get user rules
       this.activeRules = await this.getUserRules();
@@ -37,7 +37,7 @@ export class PermissionService {
     );
   }
 
-  isAllowedForOrg(resource: ResourceType, operation: OperationType, orgId: number | null) {
+  isAllowedForOrg(resource: ResourceType, operation: OperationType, orgId: number | null): boolean {
     if (!orgId || !this.activeUser) return false;
     if (
       this.isAllowed(ScopeType.GLOBAL, resource, operation) ||
@@ -52,7 +52,7 @@ export class PermissionService {
     }
   }
 
-  isAllowedForCollab(resource: ResourceType, operation: OperationType, collab: Collaboration | null) {
+  isAllowedForCollab(resource: ResourceType, operation: OperationType, collab: Collaboration | null): boolean {
     if (!collab || !this.activeUser) return false;
     let collab_org_ids = collab.organizations.map((org) => org.id);
     return (
@@ -64,9 +64,9 @@ export class PermissionService {
   isAllowedWithMinScope(minScope: ScopeType, resource: ResourceType, operation: OperationType): boolean {
     // determine which scopes are at least minimum scope in hierarchy
     let scopes: ScopeType[] = [ScopeType.GLOBAL];
-    if (minScope != ScopeType.GLOBAL) scopes.push(ScopeType.COLLABORATION);
-    if (minScope != ScopeType.COLLABORATION) scopes.push(ScopeType.ORGANIZATION);
-    if (minScope != ScopeType.ORGANIZATION) scopes.push(ScopeType.OWN);
+    if (minScope !== ScopeType.GLOBAL) scopes.push(ScopeType.COLLABORATION);
+    if (minScope !== ScopeType.COLLABORATION) scopes.push(ScopeType.ORGANIZATION);
+    if (minScope !== ScopeType.ORGANIZATION) scopes.push(ScopeType.OWN);
 
     // check if user has at least one of the scopes
     return scopes.some((s) => this.isAllowed(s, resource, operation));

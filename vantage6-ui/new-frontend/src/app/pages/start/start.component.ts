@@ -23,10 +23,10 @@ export class StartComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
-    let params: GetCollaborationParameters = {
+    const params: GetCollaborationParameters = {
       sort: CollaborationSortProperties.Name
     };
-    let activeOrgId = this.permissionService.getActiveOrganizationID();
+    const activeOrgId = this.permissionService.getActiveOrganizationID();
     if (activeOrgId) {
       params.organization_id = activeOrgId.toString();
     }
