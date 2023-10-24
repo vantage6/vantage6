@@ -9,6 +9,7 @@ import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
 import { OrganizationService } from 'src/app/services/organization.service';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-organization-read',
@@ -31,7 +32,7 @@ export class OrganizationReadComponent implements OnInit {
     private router: Router,
     private translateService: TranslateService,
     private organizationService: OrganizationService,
-    public authService: AuthService
+    private permissionService: PermissionService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -58,6 +59,6 @@ export class OrganizationReadComponent implements OnInit {
     this.isLoading = false;
     this.canEdit =
       this.organization !== undefined &&
-      this.authService.isAllowedForOrg(ResourceType.ORGANIZATION, OperationType.EDIT, this.organization.id);
+      this.permissionService.isAllowedForOrg(ResourceType.ORGANIZATION, OperationType.EDIT, this.organization.id);
   }
 }

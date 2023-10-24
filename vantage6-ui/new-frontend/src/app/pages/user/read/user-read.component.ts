@@ -3,11 +3,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ConfirmDialog } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
-import { Organization } from 'src/app/models/api/organization.model';
-import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
-import { BaseUser, User, UserLazyProperties } from 'src/app/models/api/user.model';
+import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
+import { User, UserLazyProperties } from 'src/app/models/api/user.model';
 import { routePaths } from 'src/app/routes';
-import { AuthService } from 'src/app/services/auth.service';
+import { PermissionService } from 'src/app/services/permission.service';
 import { UserService } from 'src/app/services/user.service';
 
 @Component({
@@ -30,8 +29,8 @@ export class UserReadComponent implements OnInit {
     private dialog: MatDialog,
     private router: Router,
     private userService: UserService,
-    private authService: AuthService,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    private permissionService: PermissionService
   ) {}
 
   ngOnInit(): void {
@@ -42,10 +41,10 @@ export class UserReadComponent implements OnInit {
     this.user = await this.userService.getUser(this.id, [UserLazyProperties.Organization, UserLazyProperties.Roles]);
     this.canDelete =
       this.user.organization !== undefined &&
-      this.authService.isAllowedForOrg(ResourceType.USER, OperationType.DELETE, this.user.organization.id);
+      this.permissionService.isAllowedForOrg(ResourceType.USER, OperationType.DELETE, this.user.organization.id);
     this.canDelete =
       this.user.organization !== undefined &&
-      this.authService.isAllowedForOrg(ResourceType.USER, OperationType.EDIT, this.user.organization.id);
+      this.permissionService.isAllowedForOrg(ResourceType.USER, OperationType.EDIT, this.user.organization.id);
     this.isLoading = false;
   }
 

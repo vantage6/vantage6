@@ -3,14 +3,13 @@ import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { getChipTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
-import { Collaboration } from 'src/app/models/api/collaboration.model';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
-import { BaseTask, TaskSortProperties, TaskStatus } from 'src/app/models/api/task.models';
+import { BaseTask, TaskStatus } from 'src/app/models/api/task.models';
 import { CHOSEN_COLLABORATION, USER_ID } from 'src/app/models/constants/sessionStorage';
 import { routePaths } from 'src/app/routes';
-import { AuthService } from 'src/app/services/auth.service';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
+import { PermissionService } from 'src/app/services/permission.service';
 import { TaskService } from 'src/app/services/task.service';
 
 enum TableRows {
@@ -39,12 +38,12 @@ export class TaskListComponent implements OnInit {
     private router: Router,
     private translateService: TranslateService,
     private taskService: TaskService,
-    private authService: AuthService,
-    private chosenCollaborationService: ChosenCollaborationService
+    private chosenCollaborationService: ChosenCollaborationService,
+    private permissionService: PermissionService
   ) {}
 
   ngOnInit() {
-    this.canCreate = this.authService.isAllowedForCollab(
+    this.canCreate = this.permissionService.isAllowedForCollab(
       ResourceType.TASK,
       OperationType.CREATE,
       this.chosenCollaborationService.collaboration$.value

@@ -10,6 +10,7 @@ import { UserSortProperties } from 'src/app/models/api/user.model';
 import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
+import { PermissionService } from 'src/app/services/permission.service';
 import { UserService } from 'src/app/services/user.service';
 
 @Component({
@@ -32,7 +33,7 @@ export class UserListComponent implements OnInit, OnDestroy {
     private router: Router,
     private translateService: TranslateService,
     private userService: UserService,
-    private authService: AuthService,
+    private permissionService: PermissionService,
     private breakpointObserver: BreakpointObserver
   ) {}
 
@@ -61,7 +62,7 @@ export class UserListComponent implements OnInit, OnDestroy {
         };
       }
     });
-    this.canCreate = this.authService.isAllowed(ScopeType.ANY, ResourceType.USER, OperationType.CREATE);
+    this.canCreate = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.USER, OperationType.CREATE);
     this.initData();
   }
 

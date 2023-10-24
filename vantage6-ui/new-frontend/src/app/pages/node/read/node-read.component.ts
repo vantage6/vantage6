@@ -7,10 +7,10 @@ import { MatSelectChange } from '@angular/material/select';
 import { CollaborationService } from 'src/app/services/collaboration.service';
 import { BaseCollaboration, CollaborationSortProperties } from 'src/app/models/api/collaboration.model';
 import { FormControl, Validators } from '@angular/forms';
-import { AuthService } from 'src/app/services/auth.service';
-import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
+import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
 import { Pagination, PaginationLinks } from 'src/app/models/api/pagination.model';
 import { PageEvent } from '@angular/material/paginator';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-node-read',
@@ -37,7 +37,7 @@ export class NodeReadComponent implements OnInit {
     private nodeService: NodeService,
     private organizationService: OrganizationService,
     private collaborationService: CollaborationService,
-    public authService: AuthService
+    private permissionService: PermissionService
   ) {}
 
   ngOnInit(): void {
@@ -89,7 +89,7 @@ export class NodeReadComponent implements OnInit {
   }
 
   canEdit(orgId: number): boolean {
-    return this.authService.isAllowedForOrg(ResourceType.NODE, OperationType.EDIT, orgId);
+    return this.permissionService.isAllowedForOrg(ResourceType.NODE, OperationType.EDIT, orgId);
   }
 
   private async initData(): Promise<void> {
