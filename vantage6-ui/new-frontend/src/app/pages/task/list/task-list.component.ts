@@ -41,13 +41,13 @@ export class TaskListComponent implements OnInit {
     private taskService: TaskService,
     private authService: AuthService,
     private chosenCollaborationService: ChosenCollaborationService
-  ) { }
+  ) {}
 
   ngOnInit() {
     this.canCreate = this.authService.isAllowedForCollab(
       ResourceType.TASK,
       OperationType.CREATE,
-      this.chosenCollaborationService.collaboration$.value as Collaboration
+      this.chosenCollaborationService.collaboration$.value
     );
     this.initData();
   }

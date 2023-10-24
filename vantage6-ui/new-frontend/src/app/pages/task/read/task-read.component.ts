@@ -43,14 +43,14 @@ export class TaskReadComponent implements OnInit {
     private taskService: TaskService,
     private algorithmService: AlgorithmService,
     private authService: AuthService,
-    private chosenCollaborationService: ChosenCollaborationService,
-  ) { }
+    private chosenCollaborationService: ChosenCollaborationService
+  ) {}
 
   ngOnInit(): void {
     this.canDelete = this.authService.isAllowedForCollab(
       ResourceType.TASK,
       OperationType.DELETE,
-      this.chosenCollaborationService.collaboration$.value as Collaboration
+      this.chosenCollaborationService.collaboration$.value
     );
     this.visualization.valueChanges.subscribe((value) => {
       this.selectedOutput = this.function?.output?.[value || 0] || null;
@@ -101,7 +101,7 @@ export class TaskReadComponent implements OnInit {
   openLog(log: string): void {
     try {
       log = JSON.stringify(JSON.parse(log), null, 2);
-    } catch (e) { }
+    } catch (e) {}
 
     this.dialog.open(LogDialog, {
       width: '80vw',

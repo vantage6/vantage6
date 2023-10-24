@@ -17,9 +17,7 @@ export class AuthService {
   activeRules: Rule[] | null = null;
   activeUser: BaseUser | null = null;
 
-  constructor(
-    private apiService: ApiService,
-  ) { }
+  constructor(private apiService: ApiService) {}
 
   async login(loginForm: LoginForm): Promise<boolean> {
     const data = {
@@ -50,7 +48,6 @@ export class AuthService {
         // get user (knowing the user organization id is required to determine
         // what they are allowed to see for which organizations)
         this.activeUser = await this.getUser();
-        console.log(this.activeUser);
       }
     }
     return !isExpired;
@@ -64,9 +61,7 @@ export class AuthService {
     return !!this.activeRules?.some((rule) => rule.name.toLowerCase() === resource && rule.scope.toLowerCase() === scope);
   }
 
-  isAllowed(scope: ScopeType, resource: ResourceType | string, operation: OperationType | string): boolean {
-    if (typeof resource === 'string') resource = resource.toLowerCase() as ResourceType;
-    if (typeof operation === 'string') operation = operation.toLowerCase() as OperationType;
+  isAllowed(scope: ScopeType, resource: ResourceType, operation: OperationType): boolean {
     if (scope === ScopeType.ANY) {
       return !!this.activeRules?.some((rule) => rule.name.toLowerCase() === resource && rule.operation.toLowerCase() === operation);
     }
@@ -76,26 +71,27 @@ export class AuthService {
     );
   }
 
-  isAllowedForOrg(resource: ResourceType | string, operation: OperationType | string, orgId: number) {
-    let orgs_in_user_collabs = ((this.activeUser as BaseUser).permissions as UserPermissions).orgs_in_collabs;
-    return (
-      this.isAllowed(ScopeType.GLOBAL, resource, operation)
-      ||
-      (orgId === (this.activeUser as BaseUser).organization.id &&
-        this.isAllowed(ScopeType.ORGANIZATION, resource, operation))
-      ||
-      (orgId in orgs_in_user_collabs &&
-        this.isAllowed(ScopeType.COLLABORATION, resource, operation))
-    );
+  isAllowedForOrg(resource: ResourceType, operation: OperationType, orgId: number | null) {
+    if (!orgId || !this.activeUser) return false;
+    if (
+      this.isAllowed(ScopeType.GLOBAL, resource, operation) ||
+      (orgId === this.activeUser.organization.id && this.isAllowed(ScopeType.ORGANIZATION, resource, operation))
+    ) {
+      return true;
+    } else if (this.activeUser.permissions) {
+      let orgs_in_user_collabs = this.activeUser.permissions.orgs_in_collabs;
+      return orgId in orgs_in_user_collabs && this.isAllowed(ScopeType.COLLABORATION, resource, operation);
+    } else {
+      return false;
+    }
   }
 
-  isAllowedForCollab(resource: ResourceType | string, operation: OperationType | string, collab: Collaboration) {
+  isAllowedForCollab(resource: ResourceType, operation: OperationType, collab: Collaboration | null) {
+    if (!collab || !this.activeUser) return false;
     let collab_org_ids = collab.organizations.map((org) => org.id);
     return (
-      this.isAllowed(ScopeType.GLOBAL, resource, operation)
-      ||
-      ((this.activeUser as BaseUser).organization.id in collab_org_ids &&
-        this.isAllowed(ScopeType.COLLABORATION, resource, operation))
+      this.isAllowed(ScopeType.GLOBAL, resource, operation) ||
+      (this.activeUser.organization.id in collab_org_ids && this.isAllowed(ScopeType.COLLABORATION, resource, operation))
     );
   }
 
@@ -103,16 +99,15 @@ export class AuthService {
     // determine which scopes are at least minimum scope in hierarchy
     let scopes: ScopeType[] = [ScopeType.GLOBAL];
     if (minScope != ScopeType.GLOBAL) scopes.push(ScopeType.COLLABORATION);
-    if (minScope != ScopeType.COLLABORATION)
-      scopes.push(ScopeType.ORGANIZATION);
+    if (minScope != ScopeType.COLLABORATION) scopes.push(ScopeType.ORGANIZATION);
     if (minScope != ScopeType.ORGANIZATION) scopes.push(ScopeType.OWN);
 
     // check if user has at least one of the scopes
     return scopes.some((s) => this.isAllowed(s, resource, operation));
   }
 
-  getActiveOrganizationID(): number {
-    return (this.activeUser as BaseUser).organization.id;
+  getActiveOrganizationID(): number | undefined {
+    return this.activeUser?.organization.id;
   }
 
   logout(): void {

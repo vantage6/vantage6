@@ -32,7 +32,7 @@ export class OrganizationReadComponent implements OnInit {
     private translateService: TranslateService,
     private organizationService: OrganizationService,
     public authService: AuthService
-  ) { }
+  ) {}
 
   async ngOnInit(): Promise<void> {
     await this.initData();
@@ -56,5 +56,8 @@ export class OrganizationReadComponent implements OnInit {
       rows: this.organization.collaborations.map((_) => ({ id: _.id.toString(), columnData: { name: _.name } }))
     };
     this.isLoading = false;
+    this.canEdit =
+      this.organization !== undefined &&
+      this.authService.isAllowedForOrg(ResourceType.ORGANIZATION, OperationType.EDIT, this.organization.id);
   }
 }

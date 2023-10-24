@@ -23,7 +23,6 @@ export class NodeReadComponent implements OnInit {
 
   name = new FormControl<string>('', [Validators.required]);
   isLoading: boolean = true;
-  canEdit: boolean = false;
   isEdit: boolean = false;
   nodes: BaseNode[] = [];
   organizations: BaseOrganization[] = [];
@@ -87,6 +86,10 @@ export class NodeReadComponent implements OnInit {
 
   handleEditCancel(): void {
     this.isEdit = false;
+  }
+
+  canEdit(orgId: number): boolean {
+    return this.authService.isAllowedForOrg(ResourceType.NODE, OperationType.EDIT, orgId);
   }
 
   private async initData(): Promise<void> {

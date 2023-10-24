@@ -16,9 +16,7 @@ export class TaskService {
   }
 
   async getTask(id: string, lazyProperties: TaskLazyProperties[] = []): Promise<Task> {
-    const result = await this.apiService.getForApi<BaseTask>(
-      `/task/${id}`, { include: 'results,runs' }
-    );
+    const result = await this.apiService.getForApi<BaseTask>(`/task/${id}`, { include: 'results,runs' });
 
     const task: Task = { ...result, init_org: undefined, init_user: undefined };
     await getLazyProperties(result, task, lazyProperties, this.apiService);

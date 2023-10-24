@@ -62,7 +62,7 @@
                   <span>{{ selectedNode.last_seen ? (selectedNode.last_seen | date: "MMMM d, y, HH:mm:ss") : "Never" }}</span>
                 </div>
               </div>
-              <ng-container *ngIf="authService.isAllowedForOrg('node', 'edit', node.organization.id)">
+              <ng-container *ngIf="canEdit(node.organization.id)">
                 <div class="node-actions button-container" *ngIf="!isEdit">
                   <button mat-flat-button color="primary" (click)="handleEditStart()">{{ "node-edit.actions.edit" | translate }}</button>
                 </div>
