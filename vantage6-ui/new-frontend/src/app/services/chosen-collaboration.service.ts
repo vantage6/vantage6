@@ -11,6 +11,7 @@ import { Pagination } from '../models/api/pagination.model';
   providedIn: 'root'
 })
 export class ChosenCollaborationService {
+  isInitialized$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   collaboration$: BehaviorSubject<Collaboration | null> = new BehaviorSubject<Collaboration | null>(null);
 
   constructor(
@@ -49,6 +50,7 @@ export class ChosenCollaborationService {
       const collaboration = await this.getCollaboration(collaborationIDFromSession);
       this.collaboration$.next(collaboration);
     }
+    this.isInitialized$.next(true);
   }
 
   private async getCollaboration(id: string): Promise<Collaboration> {

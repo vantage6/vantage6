@@ -7,8 +7,8 @@ import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
-import { AuthService } from 'src/app/services/auth.service';
 import { OrganizationService } from 'src/app/services/organization.service';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-organization-list',
@@ -29,11 +29,11 @@ export class OrganizationListComponent implements OnInit {
     private router: Router,
     private translateService: TranslateService,
     private organizationService: OrganizationService,
-    private authService: AuthService
+    private permissionService: PermissionService
   ) {}
 
   ngOnInit(): void {
-    this.canCreate = this.authService.isOperationAllowed(ScopeType.GLOBAL, ResourceType.ORGANIZATION, OperationType.CREATE);
+    this.canCreate = this.permissionService.isAllowed(ScopeType.GLOBAL, ResourceType.ORGANIZATION, OperationType.CREATE);
     this.initData();
   }
 

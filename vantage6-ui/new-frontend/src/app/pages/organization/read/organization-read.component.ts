@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { downloadFile } from 'src/app/helpers/file.helper';
 import { NodeStatus } from 'src/app/models/api/node.model';
@@ -7,8 +7,8 @@ import { Organization, OrganizationLazyProperties } from 'src/app/models/api/org
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
-import { AuthService } from 'src/app/services/auth.service';
 import { OrganizationService } from 'src/app/services/organization.service';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-organization-read',
@@ -31,14 +31,10 @@ export class OrganizationReadComponent implements OnInit {
     private router: Router,
     private translateService: TranslateService,
     private organizationService: OrganizationService,
-    private authService: AuthService
+    private permissionService: PermissionService
   ) {}
 
   async ngOnInit(): Promise<void> {
-    this.canEdit =
-      this.authService.isOperationAllowed(ScopeType.GLOBAL, ResourceType.ORGANIZATION, OperationType.EDIT) ||
-      this.authService.isOperationAllowed(ScopeType.ORGANIZATION, ResourceType.ORGANIZATION, OperationType.EDIT) ||
-      this.authService.isOperationAllowed(ScopeType.COLLABORATION, ResourceType.ORGANIZATION, OperationType.EDIT);
     await this.initData();
   }
 
@@ -59,6 +55,8 @@ export class OrganizationReadComponent implements OnInit {
       columns: [{ id: 'name', label: this.translateService.instant('collaboration.name') }],
       rows: this.organization.collaborations.map((_) => ({ id: _.id.toString(), columnData: { name: _.name } }))
     };
+    this.canEdit =
+      !!this.organization && this.permissionService.isAllowedForOrg(ResourceType.ORGANIZATION, OperationType.EDIT, this.organization.id);
     this.isLoading = false;
   }
 }

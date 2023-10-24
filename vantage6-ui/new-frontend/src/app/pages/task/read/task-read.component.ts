@@ -8,11 +8,12 @@ import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { TaskService } from 'src/app/services/task.service';
 import { LogDialog } from '../../../components/dialogs/log/log-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
-import { AuthService } from 'src/app/services/auth.service';
-import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
+import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
 import { Router } from '@angular/router';
 import { ConfirmDialog } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { FormControl } from '@angular/forms';
+import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-task-read',
@@ -40,11 +41,16 @@ export class TaskReadComponent implements OnInit {
     private translateService: TranslateService,
     private taskService: TaskService,
     private algorithmService: AlgorithmService,
-    private authService: AuthService
+    private chosenCollaborationService: ChosenCollaborationService,
+    private permissionService: PermissionService
   ) {}
 
   ngOnInit(): void {
-    this.canDelete = this.authService.isOperationAllowed(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.DELETE);
+    this.canDelete = this.permissionService.isAllowedForCollab(
+      ResourceType.TASK,
+      OperationType.DELETE,
+      this.chosenCollaborationService.collaboration$.value
+    );
     this.visualization.valueChanges.subscribe((value) => {
       this.selectedOutput = this.function?.output?.[value || 0] || null;
     });

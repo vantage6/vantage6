@@ -7,8 +7,8 @@ import { Collaboration, CollaborationLazyProperties } from 'src/app/models/api/c
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { routePaths } from 'src/app/routes';
-import { AuthService } from 'src/app/services/auth.service';
 import { CollaborationService } from 'src/app/services/collaboration.service';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-collaboration-read',
@@ -30,14 +30,14 @@ export class CollaborationReadComponent implements OnInit {
   constructor(
     private dialog: MatDialog,
     private router: Router,
-    private authService: AuthService,
     private collaborationService: CollaborationService,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    private permissionService: PermissionService
   ) {}
 
   async ngOnInit(): Promise<void> {
-    this.canDelete = this.authService.isOperationAllowed(ScopeType.ANY, ResourceType.COLLABORATION, OperationType.DELETE);
-    this.canEdit = this.authService.isOperationAllowed(ScopeType.ANY, ResourceType.COLLABORATION, OperationType.EDIT);
+    this.canDelete = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.COLLABORATION, OperationType.DELETE);
+    this.canEdit = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.COLLABORATION, OperationType.EDIT);
     this.initData();
   }
 
