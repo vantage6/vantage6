@@ -43,8 +43,8 @@ export class TaskReadComponent implements OnInit {
     private taskService: TaskService,
     private algorithmService: AlgorithmService,
     private authService: AuthService,
-    private chosenCollaborationService: ChosenCollaborationService,
-  ) { }
+    private chosenCollaborationService: ChosenCollaborationService
+  ) {}
 
   ngOnInit(): void {
     this.canDelete = this.authService.isAllowedForCollab(
@@ -101,7 +101,7 @@ export class TaskReadComponent implements OnInit {
   openLog(log: string): void {
     try {
       log = JSON.stringify(JSON.parse(log), null, 2);
-    } catch (e) { }
+    } catch (e) {}
 
     this.dialog.open(LogDialog, {
       width: '80vw',

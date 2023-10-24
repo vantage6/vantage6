@@ -32,7 +32,7 @@ export class OrganizationReadComponent implements OnInit {
     private translateService: TranslateService,
     private organizationService: OrganizationService,
     public authService: AuthService
-  ) { }
+  ) {}
 
   async ngOnInit(): Promise<void> {
     await this.initData();

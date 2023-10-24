@@ -33,7 +33,7 @@ export class CollaborationReadComponent implements OnInit {
     private authService: AuthService,
     private collaborationService: CollaborationService,
     private translateService: TranslateService
-  ) { }
+  ) {}
 
   async ngOnInit(): Promise<void> {
     this.canDelete = this.authService.isAllowed(ScopeType.ANY, ResourceType.COLLABORATION, OperationType.DELETE);

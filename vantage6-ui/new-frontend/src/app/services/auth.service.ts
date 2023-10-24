@@ -17,9 +17,7 @@ export class AuthService {
   activeRules: Rule[] | null = null;
   activeUser: BaseUser | null = null;
 
-  constructor(
-    private apiService: ApiService,
-  ) { }
+  constructor(private apiService: ApiService) {}
 
   async login(loginForm: LoginForm): Promise<boolean> {
     const data = {
@@ -79,23 +77,17 @@ export class AuthService {
   isAllowedForOrg(resource: ResourceType | string, operation: OperationType | string, orgId: number) {
     let orgs_in_user_collabs = ((this.activeUser as BaseUser).permissions as UserPermissions).orgs_in_collabs;
     return (
-      this.isAllowed(ScopeType.GLOBAL, resource, operation)
-      ||
-      (orgId === (this.activeUser as BaseUser).organization.id &&
-        this.isAllowed(ScopeType.ORGANIZATION, resource, operation))
-      ||
-      (orgId in orgs_in_user_collabs &&
-        this.isAllowed(ScopeType.COLLABORATION, resource, operation))
+      this.isAllowed(ScopeType.GLOBAL, resource, operation) ||
+      (orgId === (this.activeUser as BaseUser).organization.id && this.isAllowed(ScopeType.ORGANIZATION, resource, operation)) ||
+      (orgId in orgs_in_user_collabs && this.isAllowed(ScopeType.COLLABORATION, resource, operation))
     );
   }
 
   isAllowedForCollab(resource: ResourceType | string, operation: OperationType | string, collab: Collaboration) {
     let collab_org_ids = collab.organizations.map((org) => org.id);
     return (
-      this.isAllowed(ScopeType.GLOBAL, resource, operation)
-      ||
-      ((this.activeUser as BaseUser).organization.id in collab_org_ids &&
-        this.isAllowed(ScopeType.COLLABORATION, resource, operation))
+      this.isAllowed(ScopeType.GLOBAL, resource, operation) ||
+      ((this.activeUser as BaseUser).organization.id in collab_org_ids && this.isAllowed(ScopeType.COLLABORATION, resource, operation))
     );
   }
 
@@ -103,8 +95,7 @@ export class AuthService {
     // determine which scopes are at least minimum scope in hierarchy
     let scopes: ScopeType[] = [ScopeType.GLOBAL];
     if (minScope != ScopeType.GLOBAL) scopes.push(ScopeType.COLLABORATION);
-    if (minScope != ScopeType.COLLABORATION)
-      scopes.push(ScopeType.ORGANIZATION);
+    if (minScope != ScopeType.COLLABORATION) scopes.push(ScopeType.ORGANIZATION);
     if (minScope != ScopeType.ORGANIZATION) scopes.push(ScopeType.OWN);
 
     // check if user has at least one of the scopes

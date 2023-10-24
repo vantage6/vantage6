@@ -32,7 +32,7 @@ export class UserReadComponent implements OnInit {
     private userService: UserService,
     private authService: AuthService,
     private translateService: TranslateService
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     this.initData();
@@ -40,12 +40,8 @@ export class UserReadComponent implements OnInit {
 
   private async initData(): Promise<void> {
     this.user = await this.userService.getUser(this.id, [UserLazyProperties.Organization, UserLazyProperties.Roles]);
-    this.canDelete = this.authService.isAllowedForOrg(
-      ResourceType.USER, OperationType.DELETE, (this.user.organization as Organization).id
-    );
-    this.canDelete = this.authService.isAllowedForOrg(
-      ResourceType.USER, OperationType.EDIT, (this.user.organization as Organization).id
-    );
+    this.canDelete = this.authService.isAllowedForOrg(ResourceType.USER, OperationType.DELETE, (this.user.organization as Organization).id);
+    this.canDelete = this.authService.isAllowedForOrg(ResourceType.USER, OperationType.EDIT, (this.user.organization as Organization).id);
     this.isLoading = false;
   }
 

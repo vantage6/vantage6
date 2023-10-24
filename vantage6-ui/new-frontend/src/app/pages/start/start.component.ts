@@ -19,15 +19,14 @@ export class StartComponent implements OnInit {
     private router: Router,
     private collaborationService: CollaborationService,
     private chosenCollaborationService: ChosenCollaborationService,
-    private authService: AuthService,
-  ) { }
+    private authService: AuthService
+  ) {}
 
   async ngOnInit() {
-    this.collaborations = await this.collaborationService.getCollaborations(
-      {
-        sort: CollaborationSortProperties.Name,
-        organization_id: this.authService.getActiveOrganizationID().toString()
-      });
+    this.collaborations = await this.collaborationService.getCollaborations({
+      sort: CollaborationSortProperties.Name,
+      organization_id: this.authService.getActiveOrganizationID().toString()
+    });
   }
 
   handleCollaborationClick(collaboration: BaseCollaboration) {

@@ -34,7 +34,7 @@ export class UserListComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private authService: AuthService,
     private breakpointObserver: BreakpointObserver
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     //TODO: Implement responsive columns in table component
