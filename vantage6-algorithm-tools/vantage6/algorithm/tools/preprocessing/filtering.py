@@ -134,8 +134,8 @@ def filter_range(
     column: str,
     min_: float = None,
     max_: float = None,
-    include_min: bool = False,
-    include_max: bool = False,
+    include_min: bool = True,
+    include_max: bool = True,
 ) -> pd.DataFrame:
     """
     Filter the data based on a minimum and/or maximum value.
@@ -151,14 +151,43 @@ def filter_range(
     max_ : float, optional
         The maximum value to filter on, by default None.
     include_min : bool, optional
-        Whether to include the minimum value, by default False.
+        Whether to include the minimum value, by default True.
     include_max : bool, optional
-        Whether to include the maximum value, by default False.
+        Whether to include the maximum value, by default True.
 
     Returns
     -------
     pandas.DataFrame
         The filtered data.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({'A': [1, 2, 3, 4, 5]})
+    >>> filter_range(df, 'A', min_=2, max_=4)
+       A
+    1  2
+    2  3
+    3  4
+    >>> filter_range(df, 'A', min_=2)
+       A
+    1  2
+    2  3
+    3  4
+    4  5
+    >>> filter_range(df, 'A', max_=4)
+       A
+    0  1
+    1  2
+    2  3
+    3  4
+    >>> df = pd.DataFrame({'A': [1.0, 2.1, 2.9, 3.5, 4.0]})
+    >>> filter_range(df, 'A', max_=4.0, include_max=False)
+         A
+    0  1.0
+    1  2.1
+    2  2.9
+    3  3.5
     """
     if column is None:
         column = df.index.name

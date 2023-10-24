@@ -213,9 +213,15 @@ def to_timedelta(
             raise ValueError(
                 "The `output_column` must be specified when using `column`."
             )
-        new_df[output_column] = pd.to_timedelta(
-            new_df[input_column], errors=errors
-        )
+        if pd.api.types.is_numeric_dtype(new_df[input_column]):
+            new_df[output_column] = pd.to_timedelta(
+                new_df[input_column].astype(str) + " " + unit, errors=errors
+            )
+
+        else:
+            new_df[output_column] = pd.to_timedelta(
+                new_df[input_column], errors=errors
+            )
 
     if duration is not None:
         if output_column is None:

@@ -4,13 +4,23 @@ Test the preprocessing functionality of the vantage6-algorithm-tools package.
 To run only this test, from the vantage6 root directory run:
 python -m unittest vantage6-algorithm-tools.tests.test_preprocessing
 """
+import random
 import unittest
+from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd
 
 from vantage6.algorithm.tools.mock_client import MockAlgorithmClient
 from vantage6.algorithm.tools.preprocessing.filtering import select_rows
+
+
+def random_date(start, end, fmt="%Y-%m-%d", seed=None):
+    if seed is not None:
+        random.seed(seed)
+    delta = end - start
+    random_days = random.randint(0, delta.days)
+    return (start + timedelta(days=random_days)).strftime(fmt)
 
 
 def get_test_dataframe(n=1000, seed=0):
@@ -201,7 +211,7 @@ def generate_treatment_example_df(
 
 
 class TestPreprocessing(unittest.TestCase):
-    def test_preprocessing(self):
+    def test_preprocessing_batch_1(self):
         """
         Tests the following preprocessing functions:
         - select_rows
@@ -270,7 +280,7 @@ class TestPreprocessing(unittest.TestCase):
         self.assertTrue(result["age"].min() > 50)
         self.assertTrue(result.shape[1] == 2)
 
-    def test_preprocessing_larger(self):
+    def test_preprocessing_batch_2(self):
         """
         Tests the following preprocessing functions:
         - calculate_age
@@ -452,7 +462,7 @@ class TestPreprocessing(unittest.TestCase):
             )
         )
 
-    def test_more(self):
+    def test_preprocessing_batch_3(self):
         """
         Tests the following preprocessing functions:
         - discretize_column
@@ -532,6 +542,131 @@ class TestPreprocessing(unittest.TestCase):
             '":0,"2":1,"4":0},"col_Red":{"1":1,"2":0,"4":1},"col_unknown":'
             '{"1":0,"2":0,"4":0}}'
         )
+
+    def test_preprocessing_batch_4(self):
+        """
+        Tests the following preprocessing functions:
+        - assign_column
+        - standard_scale
+        - filter_range
+        - to_timedelta
+        - to_datetime
+        """
+        df = get_test_dataframe()
+
+        # Set start and end dates for random date generation
+        start_date = datetime(2020, 1, 1)
+        end_date = datetime(2022, 12, 31)
+
+        # Generate a new column with random dates in string format
+        magic_fmt = "(%d)+(%m)=(%Y)"
+        # df["magic_date"] = [
+        #     random_date(start_date, end_date, fmt=magic_fmt)
+        #     for _ in range(len(df))
+        # ]
+        df["magic_date"] = [
+            random_date(start_date, end_date, fmt=magic_fmt, seed=i)
+            for i in range(len(df))
+        ]
+
+        datasets = [df]
+
+        datasets = [
+            [
+                {
+                    "database": dataset,
+                    "type_": "csv",
+                    "preprocessing": [
+                        {
+                            "function": "assign_column",
+                            "parameters": {
+                                "column_name": "income/age",
+                                "expression": "income/age",
+                            },
+                        },
+                        {
+                            "function": "assign_column",
+                            "parameters": {
+                                "column_name": "age_days",
+                                "expression": "age * 365",
+                            },
+                        },
+                        {
+                            "function": "standard_scale",
+                            "parameters": {
+                                "means": [1904.2572161956832],
+                                "stds": [813.9212391187492],
+                                "columns": ["income/age"],
+                            },
+                        },
+                        {
+                            "function": "filter_range",
+                            "parameters": {
+                                "column": "income/age",
+                                "min_": 0,
+                            },
+                        },
+                        {
+                            "function": "to_timedelta",
+                            "parameters": {
+                                "input_column": "age_days",
+                                "output_column": "age_days_td",
+                            },
+                        },
+                        {
+                            "function": "change_column_type",
+                            "parameters": {
+                                "columns": ["age_days_td"],
+                                "target_type": "str",
+                            },
+                        },
+                        {
+                            "function": "to_datetime",
+                            "parameters": {
+                                "column": "magic_date",
+                                "fmt": magic_fmt,
+                            },
+                        },
+                        {
+                            "function": "change_column_type",
+                            "parameters": {
+                                "columns": ["magic_date"],
+                                "target_type": "str",
+                            },
+                        },
+                        {
+                            "function": "select_rows",
+                            "parameters": {
+                                "query": "age==23 & education=='Master'"
+                            },
+                        },
+                    ],
+                }
+                for dataset in datasets
+            ]
+        ]
+        mockclient = MockAlgorithmClient(
+            datasets=datasets, module="mock_package"
+        )
+        org_ids = [org["id"] for org in mockclient.organization.list()]
+        input_ = {"method": "execute", "kwargs": {}}
+        child_task = mockclient.task.create(
+            organizations=org_ids,
+            input_=input_,
+        )
+        result = pd.read_json(mockclient.result.get(id_=child_task.get("id")))
+
+        expected = (
+            '{"age":{"171":23,"342":23},"income":{"171":62026,"342":44074},'
+            '"education":{"171":"Master","342":"Master"},"color_preference":'
+            '{"171":"Green","342":"Green"},"purchased_product":{"171":1,"342":'
+            '0},"magic_date":{"171":"2022-03-04","342":"2020-09-04"},"income\/'
+            'age":{"171":0.9737126326,"342":0.0147479299},"age_days":{"171":'
+            '8395,"342":8395},"age_days_td":{"171":"8395 days","342":"8395 '
+            'days"}}'
+        )
+        json_result = result.to_json()
+        assert json_result == expected, f"{json_result} != {expected}"
 
 
 class TestSelectRows(unittest.TestCase):
