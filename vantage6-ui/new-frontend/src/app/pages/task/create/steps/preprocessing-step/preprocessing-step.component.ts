@@ -3,11 +3,6 @@ import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@ang
 import { MatSelectChange } from '@angular/material/select';
 import { Select, SelectParameterType } from 'src/app/models/api/algorithm.model';
 
-interface Preprocessor {
-  function?: Select;
-  formGroup: FormGroup;
-}
-
 @Component({
   selector: 'app-preprocessing-step',
   templateUrl: './preprocessing-step.component.html',
@@ -24,6 +19,7 @@ export class PreprocessingStepComponent {
   constructor(private fb: FormBuilder) {}
 
   get formGroups(): FormGroup[] {
+    //Helps getting types form groups in template
     return this.form.controls as FormGroup[];
   }
 

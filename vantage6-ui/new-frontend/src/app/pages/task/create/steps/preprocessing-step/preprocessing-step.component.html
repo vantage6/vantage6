@@ -1,58 +1,52 @@
-<div class="form">
-  <mat-accordion>
-    <mat-expansion-panel hideToggle *ngFor="let formGroup of formGroups; let i = index">
-      <mat-expansion-panel-header>
-        <mat-panel-title>{{ "task.preprocessor" | translate }} {{ i + 1 }}</mat-panel-title>
-        <mat-panel-description *ngIf="getSelectedFunction(i)?.function">{{ getSelectedFunction(i)?.function }}</mat-panel-description>
-      </mat-expansion-panel-header>
-      <form [formGroup]="formGroup">
-        <mat-form-field subscriptSizing="dynamic">
-          <mat-label>{{ "task.preprocessing-function" | translate }}</mat-label>
-          <mat-select formControlName="functionID" (selectionChange)="handleFunctionChange($event, i)">
-            <mat-option *ngFor="let function of functions" [value]="function.function">
-              {{ function.function }}
-            </mat-option>
-          </mat-select>
-          <mat-hint *ngIf="getSelectedFunction(i)?.description">{{ getSelectedFunction(i)?.description }}</mat-hint>
+<mat-accordion>
+  <mat-expansion-panel hideToggle *ngFor="let formGroup of formGroups; let i = index">
+    <mat-expansion-panel-header>
+      <mat-panel-title>{{ "task.preprocessor" | translate }} {{ i + 1 }}</mat-panel-title>
+      <mat-panel-description *ngIf="getSelectedFunction(i)?.function">{{ getSelectedFunction(i)?.function }}</mat-panel-description>
+    </mat-expansion-panel-header>
+    <form class="form" [formGroup]="formGroup">
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ "task.preprocessing-function" | translate }}</mat-label>
+        <mat-select formControlName="functionID" (selectionChange)="handleFunctionChange($event, i)">
+          <mat-option *ngFor="let function of functions" [value]="function.function">
+            {{ function.function }}
+          </mat-option>
+        </mat-select>
+        <mat-hint *ngIf="getSelectedFunction(i)?.description">{{ getSelectedFunction(i)?.description }}</mat-hint>
+      </mat-form-field>
+      <ng-container *ngFor="let parameter of getSelectedFunction(i)?.parameters">
+        <mat-form-field
+          *ngIf="parameter.type === selectParameterType.String || parameter.type === selectParameterType.Integer"
+          subscriptSizing="dynamic"
+        >
+          <mat-label>{{ parameter.name }}</mat-label>
+          <input matInput [type]="parameter.type === selectParameterType.Integer ? 'number' : 'text'" [formControlName]="parameter.name" />
+          <mat-hint *ngIf="parameter.description">{{ parameter.description }}</mat-hint>
         </mat-form-field>
-        <ng-container *ngFor="let parameter of getSelectedFunction(i)?.parameters">
-          <mat-form-field
-            *ngIf="parameter.type === selectParameterType.String || parameter.type === selectParameterType.Integer"
-            subscriptSizing="dynamic"
-          >
-            <mat-label>{{ parameter.name }}</mat-label>
-            <input
-              matInput
-              [type]="parameter.type === selectParameterType.Integer ? 'number' : 'text'"
-              [formControlName]="parameter.name"
-            />
-            <mat-hint *ngIf="parameter.description">{{ parameter.description }}</mat-hint>
-          </mat-form-field>
-          <mat-form-field *ngIf="parameter.type === selectParameterType.Column" subscriptSizing="dynamic">
-            <mat-label>{{ parameter.name }}</mat-label>
-            <mat-select [formControlName]="parameter.name">
-              <mat-option *ngFor="let column of columns" [value]="column">{{ column }}</mat-option>
-            </mat-select>
-            <mat-hint *ngIf="parameter.description">{{ parameter.description }}</mat-hint>
-          </mat-form-field>
-          <mat-form-field *ngIf="parameter.type === selectParameterType.Date">
-            <mat-label>{{ parameter.name }}</mat-label>
-            <input matInput [matDatepicker]="picker" />
-            <mat-hint *ngIf="parameter.description">{{ parameter.description }}</mat-hint>
-            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-            <mat-datepicker #picker></mat-datepicker>
-          </mat-form-field>
-          <div class="checkbox-form-field" *ngIf="parameter.type === selectParameterType.Boolean">
-            <mat-checkbox [formControlName]="parameter.name">
-              {{ parameter.name }}
-            </mat-checkbox>
-            <mat-hint *ngIf="parameter.description">{{ parameter.description }}</mat-hint>
-          </div>
-        </ng-container>
-      </form>
-    </mat-expansion-panel>
-  </mat-accordion>
-  <button class="add-button" mat-flat-button color="primary" (click)="addPreprocessor()">
-    {{ "task-create.step-preprocessing.actions.add-preprocessor" | translate }}
-  </button>
-</div>
+        <mat-form-field *ngIf="parameter.type === selectParameterType.Column" subscriptSizing="dynamic">
+          <mat-label>{{ parameter.name }}</mat-label>
+          <mat-select [formControlName]="parameter.name">
+            <mat-option *ngFor="let column of columns" [value]="column">{{ column }}</mat-option>
+          </mat-select>
+          <mat-hint *ngIf="parameter.description">{{ parameter.description }}</mat-hint>
+        </mat-form-field>
+        <mat-form-field *ngIf="parameter.type === selectParameterType.Date">
+          <mat-label>{{ parameter.name }}</mat-label>
+          <input matInput [matDatepicker]="picker" />
+          <mat-hint *ngIf="parameter.description">{{ parameter.description }}</mat-hint>
+          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+        <div class="checkbox-form-field" *ngIf="parameter.type === selectParameterType.Boolean">
+          <mat-checkbox [formControlName]="parameter.name">
+            {{ parameter.name }}
+          </mat-checkbox>
+          <mat-hint *ngIf="parameter.description">{{ parameter.description }}</mat-hint>
+        </div>
+      </ng-container>
+    </form>
+  </mat-expansion-panel>
+</mat-accordion>
+<button class="add-button" mat-flat-button color="primary" (click)="addPreprocessor()">
+  {{ "task-create.step-preprocessing.actions.add-preprocessor" | translate }}
+</button>
