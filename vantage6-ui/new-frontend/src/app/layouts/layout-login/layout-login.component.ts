@@ -6,10 +6,49 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./layout-login.component.scss']
 })
 export class LayoutLoginComponent implements OnInit {
+  background_img_data: any = null;
   backgroundUrl: string = '';
 
+  BACKGROUND_IMAGES = [
+    {
+      image: 'cuppolone'
+    },
+    {
+      image: 'taipei'
+    },
+    {
+      image: 'trolltunga',
+      additional_styling: { 'background-position-y': 'top' },
+      attribution:
+        'Trolltunga, Norway by <a href="https://web.archive.org/web/20161102185545/http://www.panoramio.com/user/5226993?with_photo_id=119985909">rheins</a> (License CC BY 3.0)'
+    },
+    {
+      image: 'petronas'
+    },
+    {
+      image: 'cotopaxi',
+      additional_styling: { 'background-position-y': 'top' },
+      attribution: 'Cotopaxi, Ecuador by <a href="https://www.flickr.com/people/16448758@N03">Rinaldo Wurglitsch</a> (License CC BY 2.0)'
+    }
+  ];
+
   ngOnInit(): void {
-    const backgroundNumber = Math.floor(Math.random() * 4) + 1;
-    this.backgroundUrl = `url(assets/images/login_backgrounds/${backgroundNumber}.jpg)`;
+    this.background_img_data = this.BACKGROUND_IMAGES[Math.floor(Math.random() * this.BACKGROUND_IMAGES.length)];
+    this.backgroundUrl = `url(assets/images/login_backgrounds/${this.background_img_data['image']}.jpg)`;
+  }
+
+  get backgroundStyle(): object {
+    let style = {
+      'background-image': this.backgroundUrl
+    };
+    if (this.background_img_data.additional_styling) {
+      style = { ...style, ...this.background_img_data.additional_styling };
+    }
+
+    return style;
+  }
+
+  get attributionText(): string | null {
+    return this.background_img_data.attribution || null;
   }
 }
