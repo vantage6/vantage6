@@ -1,4 +1,4 @@
-<div class="login-background" [ngStyle]="getBackgroundStyle()">
+<div class="login-background" [ngStyle]="backgroundStyle">
   <router-outlet></router-outlet>
+  <div class="attribution-text" *ngIf="attributionText" [innerHTML]="attributionText"></div>
 </div>
-<div class="attribution-text" [innerHTML]="getAttributionText()"></div>

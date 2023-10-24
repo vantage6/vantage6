@@ -11,27 +11,25 @@ export class LayoutLoginComponent implements OnInit {
 
   BACKGROUND_IMAGES = [
     {
-      'image': 'cuppolone',
+      image: 'cuppolone'
     },
     {
-      'image': 'taipei101',
+      image: 'taipei'
     },
     {
-      'image': 'trolltunga',
-      'additional_styling': {'background-position-y': 'top'},
-      'attribution': 'Trolltunga, Norway by <a href="https://web.archive.org/web/20161102185545/http://www.panoramio.com/user/5226993?with_photo_id=119985909">rheins</a> (License CC BY 3.0)'
-    },
-    // {
-    //   'image': 'harukas2',
-    // },
-    {
-      'image': 'petronas',
+      image: 'trolltunga',
+      additional_styling: { 'background-position-y': 'top' },
+      attribution:
+        'Trolltunga, Norway by <a href="https://web.archive.org/web/20161102185545/http://www.panoramio.com/user/5226993?with_photo_id=119985909">rheins</a> (License CC BY 3.0)'
     },
     {
-      'image': 'cotopaxi',
-      'additional_styling': {'background-position-y': 'top'},
-      'attribution': 'Cotopaxi, Ecuador by <a href="https://www.flickr.com/people/16448758@N03">Rinaldo Wurglitsch</a> (License CC BY 2.0)'
+      image: 'petronas'
     },
+    {
+      image: 'cotopaxi',
+      additional_styling: { 'background-position-y': 'top' },
+      attribution: 'Cotopaxi, Ecuador by <a href="https://www.flickr.com/people/16448758@N03">Rinaldo Wurglitsch</a> (License CC BY 2.0)'
+    }
   ];
 
   ngOnInit(): void {
@@ -39,23 +37,18 @@ export class LayoutLoginComponent implements OnInit {
     this.backgroundUrl = `url(assets/images/login_backgrounds/${this.background_img_data['image']}.jpg)`;
   }
 
-  getBackgroundStyle() {
-    let style: any = this.getAdditionalStyling();
-    style['background-image'] = this.backgroundUrl;
+  get backgroundStyle(): object {
+    let style = {
+      'background-image': this.backgroundUrl
+    };
+    if (this.background_img_data.additional_styling) {
+      style = { ...style, ...this.background_img_data.additional_styling };
+    }
+
     return style;
   }
 
-  getAdditionalStyling() {
-    if ('additional_styling' in this.background_img_data){
-      return this.background_img_data['additional_styling'];
-    }
-    return {};
-  }
-
-  getAttributionText() {
-    if ('attribution' in this.background_img_data){
-      return this.background_img_data['attribution'];
-    }
-    return '';
+  get attributionText(): string | null {
+    return this.background_img_data.attribution || null;
   }
 }

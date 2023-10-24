@@ -1,4 +1,7 @@
+@import "../../../config.scss";
+
 .login-background {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -10,8 +13,8 @@
 
 .attribution-text {
   position: absolute;
-  bottom: 8px;
-  left: 16px;
-  font-size: 9pt;
-  color: white;
+  bottom: $spacing-px-2;
+  left: $spacing-px-2;
+  font-size: 0.75rem;
+  color: $light-primary-text;
 }
