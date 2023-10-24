@@ -40,8 +40,8 @@ export class NodeReadComponent implements OnInit {
     private permissionService: PermissionService
   ) {}
 
-  ngOnInit(): void {
-    this.initData();
+  async ngOnInit(): Promise<void> {
+    await this.initData();
   }
 
   async handleFilterChange(e: MatSelectChange): Promise<void> {

@@ -23,6 +23,15 @@ export class StartComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
+    await this.initData();
+  }
+
+  handleCollaborationClick(collaboration: BaseCollaboration) {
+    this.chosenCollaborationService.setCollaboration(collaboration.id.toString());
+    this.router.navigate([routePaths.home]);
+  }
+
+  private async initData(): Promise<void> {
     const params: GetCollaborationParameters = {
       sort: CollaborationSortProperties.Name
     };
@@ -31,10 +40,5 @@ export class StartComponent implements OnInit {
       params.organization_id = activeOrgId.toString();
     }
     this.collaborations = await this.collaborationService.getCollaborations(params);
-  }
-
-  handleCollaborationClick(collaboration: BaseCollaboration) {
-    this.chosenCollaborationService.setCollaboration(collaboration.id.toString());
-    this.router.navigate([routePaths.home]);
   }
 }

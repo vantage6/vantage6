@@ -32,9 +32,9 @@ export class CollaborationListComponent implements OnInit {
     private permissionService: PermissionService
   ) {}
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     this.canCreate = this.permissionService.isAllowed(ScopeType.GLOBAL, ResourceType.COLLABORATION, OperationType.CREATE);
-    this.initData();
+    await this.initData();
   }
 
   async handlePageEvent(e: PageEvent) {

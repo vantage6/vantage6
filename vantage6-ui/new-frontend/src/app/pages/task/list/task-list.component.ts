@@ -42,13 +42,13 @@ export class TaskListComponent implements OnInit {
     private permissionService: PermissionService
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
     this.canCreate = this.permissionService.isAllowedForCollab(
       ResourceType.TASK,
       OperationType.CREATE,
       this.chosenCollaborationService.collaboration$.value
     );
-    this.initData();
+    await this.initData();
   }
 
   async handlePageEvent(e: PageEvent) {
