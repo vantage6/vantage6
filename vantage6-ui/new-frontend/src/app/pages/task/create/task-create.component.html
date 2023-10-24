@@ -107,6 +107,14 @@
           <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
         </div>
       </mat-step>
+      <mat-step *ngIf="shouldShowPreprocessorStep" [stepControl]="filterForm">
+        <ng-template matStepLabel>{{ "task-create.step-filter.title" | translate }}</ng-template>
+        <app-filter-step [form]="filterForm" [filters]="algorithm?.filter || []"></app-filter-step>
+        <div>
+          <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+          <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+        </div>
+      </mat-step>
       <mat-step [stepControl]="parameterForm">
         <form class="form" [formGroup]="parameterForm">
           <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
@@ -130,7 +138,14 @@
     <button
       mat-flat-button
       color="primary"
-      [disabled]="packageForm.invalid || functionForm.invalid || databaseForm.invalid || parameterForm.invalid"
+      [disabled]="
+        packageForm.invalid ||
+        functionForm.invalid ||
+        databaseForm.invalid ||
+        preprocessingForm.invalid ||
+        this.filterForm.invalid ||
+        parameterForm.invalid
+      "
       (click)="handleSubmit()"
     >
       {{ "general.submit" | translate }}

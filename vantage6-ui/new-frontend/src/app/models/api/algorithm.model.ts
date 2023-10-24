@@ -23,12 +23,22 @@ export enum SelectParameterType {
   Date = 'date'
 }
 
+export enum FilterParameterType {
+  Column = 'column',
+  String = 'string',
+  Integer = 'integer',
+  Float = 'float',
+  Boolean = 'bool',
+  Date = 'date'
+}
+
 export interface Algorithm {
   id: number;
   name: string;
   url: string;
   functions: Function[];
   select: Select[];
+  filter: Filter[];
 }
 
 export interface Function {
@@ -45,9 +55,23 @@ export interface Select {
   parameters: SelectParameter[];
 }
 
+export interface Filter {
+  function: string;
+  description?: string;
+  parameters: FilterParameter[];
+}
+
 export interface SelectParameter {
   name: string;
   type: SelectParameterType;
+  description: string;
+  required: boolean;
+  default?: string | boolean;
+}
+
+export interface FilterParameter {
+  name: string;
+  type: FilterParameterType;
   description: string;
   required: boolean;
   default?: string | boolean;

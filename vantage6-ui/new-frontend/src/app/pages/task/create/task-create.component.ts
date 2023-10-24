@@ -31,23 +31,19 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   function: Function | null = null;
   databases: any[] = [];
   node: BaseNode | null = null;
-  preprocessingFunction: Select | null = null;
 
   packageForm = this.fb.nonNullable.group({
     algorithmID: ['', Validators.required],
     name: ['', Validators.required],
     description: ''
   });
-
   functionForm = this.fb.nonNullable.group({
     functionName: ['', Validators.required],
     organizationIDs: ['', Validators.required]
   });
-
   databaseForm = this.fb.nonNullable.group({});
-
   preprocessingForm = this.fb.array([]);
-
+  filterForm = this.fb.array([]);
   parameterForm = this.fb.nonNullable.group({});
 
   constructor(
@@ -89,6 +85,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
       this.functionForm.invalid ||
       this.databaseForm.invalid ||
       this.preprocessingForm.invalid ||
+      this.filterForm.invalid ||
       this.parameterForm.invalid
     ) {
       return;

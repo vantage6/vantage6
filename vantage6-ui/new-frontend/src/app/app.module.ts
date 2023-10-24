@@ -63,6 +63,7 @@ import { UserFormComponent } from './components/user-form/user-form/user-form.co
 import { UserEditComponent } from './pages/user/edit/user-edit.component';
 import { VisualizeHistogramComponent } from './components/visualize-histogram/visualize-histogram.component';
 import { PreprocessingStepComponent } from './pages/task/create/steps/preprocessing-step/preprocessing-step.component';
+import { FilterStepComponent } from './pages/task/create/steps/filter-step/filter-step.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -105,7 +106,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     UserFormComponent,
     UserEditComponent,
     VisualizeHistogramComponent,
-    PreprocessingStepComponent
+    PreprocessingStepComponent,
+    FilterStepComponent
   ],
   imports: [
     BrowserModule,
