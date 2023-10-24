@@ -45,10 +45,13 @@ def to_datetime(
         String to use as date format. See the following link for more
         information: https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior # noqa: E501
     errors : str, default 'raise'
+
         Errors handling if a string cannot be converted:
+
         * If 'raise', then invalid parsing will raise an exception.
         * If 'coerce', then invalid parsing will be set as NaT.
         * If 'ignore', then invalid parsing will return the input.
+
     input_value : str, optional
         String input to be converted to datetime if `column` is None.
     output_column : str, optional
@@ -61,7 +64,6 @@ def to_datetime(
 
     Examples
     --------
-    # Converting an existing column
     >>> df = pd.DataFrame({"date_str": ["2021-01-01", "2021-02-01",
     ... "2021-03-01"]})
     >>> to_datetime(df, "date_str")
@@ -70,7 +72,6 @@ def to_datetime(
     1 2021-02-01
     2 2021-03-01
 
-    # Adding a new column with a fixed date
     >>> to_datetime(df, input_value="2021-04-01", output_column="new_date")
          date_str   new_date
     0  2021-01-01 2021-04-01

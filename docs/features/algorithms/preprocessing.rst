@@ -128,12 +128,12 @@ An example of a task with dataset preprocessing:
    ====  =====  ========  =============
 
 
-Syntax
-+++++++++++++++++++++++
-
-
 Functionalities
 +++++++++++++++++++++++
+The supported functions are described in Function documentation > Preprocessing
+along with examples for each function.
 
 Examples
 +++++++++++++++++++++++
+More elaborate examples can be found as unit tests in the vantage6-algorithms
+repository.

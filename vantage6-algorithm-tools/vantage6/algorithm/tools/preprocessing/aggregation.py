@@ -37,21 +37,21 @@ def collapse(
     Collapses a DataFrame by grouping by one or more columns and aggregating
     the rest.
 
-    Parameters
-    ----------
+    Parameters:
+    -----------
     df : pd.DataFrame
         The input DataFrame.
-    group_columns : List[str]
+    group_columns : str or List[str]
         Columns by which the DataFrame will be grouped.
-    aggregation : Union[str, callable, Dict[str, Union[str, callable,
-                  List[Union[str, callable]]]]]
+    aggregation : str, callable, or Dict
         The aggregation strategy to apply. Can be a string to apply to all
         columns, or a dictionary specifying the aggregation for each column.
-        The strategy can also be a list of strategies, which will then provide
-        multiple columns.
+        For complex type definitions, refer to the function signature.
 
         Valid aggregation strategies:
+
         String:
+
         * "sum"
         * "mean"
         * "min"
@@ -65,7 +65,9 @@ def collapse(
         * "size": Size of the group (including null values)
 
         Callable:
+
         Any callable function that returns a single value, such as:
+
         * sum: Compute the sum of the group.
         * len: Count the number of elements in the group.
         * min: Get the minimum value in the group.
@@ -74,15 +76,16 @@ def collapse(
         * set: Convert group items into a set.
         * any: Check if any item in the group evaluates to True.
         * all: Check if all items in the group evaluate to True.
-        * lambda functions are also supported such as
-            - to compute the range: lambda x: x.max() - x.min()
-            - to concatenate strings: lambda x: ''.join(x)
+        * lambda functions are also supported such as:
+            * to compute the range: lambda x: x.max() - x.min()
+            * to concatenate strings: lambda x: ''.join(x)
 
+    default_aggregation : str or callable, optional
+        Default aggregation strategy to apply to columns not explicitly
+        mentioned. Only relevant when aggregation is a dictionary.
     strict_mode : bool, optional
         If True, all columns not in groupby must have an aggregation
-        definition.
-        It then raises an error if any column in the DataFrame is not in the
-        group_columns or aggregation definition. Defaults to True.
+        definition. An error is raised otherwise. Defaults to True.
 
     Returns
     -------
