@@ -12,10 +12,7 @@ export class AuthService {
   constructor(
     private apiService: ApiService,
     private permissionService: PermissionService
-  ) {
-    // check if authenticated. This also initializes the permission service.
-    this.isAuthenticated();
-  }
+  ) {}
 
   async login(loginForm: LoginForm): Promise<boolean> {
     const data = {
