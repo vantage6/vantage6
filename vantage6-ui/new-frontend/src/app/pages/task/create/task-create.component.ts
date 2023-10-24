@@ -46,6 +46,8 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
 
   databaseForm = this.fb.nonNullable.group({});
 
+  preprocessingForm = this.fb.array([]);
+
   parameterForm = this.fb.nonNullable.group({});
 
   constructor(
@@ -82,7 +84,13 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   }
 
   async handleSubmit(): Promise<void> {
-    if (this.packageForm.invalid || this.functionForm.invalid || this.databaseForm.invalid || this.parameterForm.invalid) {
+    if (
+      this.packageForm.invalid ||
+      this.functionForm.invalid ||
+      this.databaseForm.invalid ||
+      this.preprocessingForm.invalid ||
+      this.parameterForm.invalid
+    ) {
       return;
     }
 

@@ -1,11 +1,11 @@
 <div class="form">
   <mat-accordion>
-    <mat-expansion-panel hideToggle *ngFor="let preprocessor of preprocessors; let i = index">
+    <mat-expansion-panel hideToggle *ngFor="let formGroup of formGroups; let i = index">
       <mat-expansion-panel-header>
         <mat-panel-title>{{ "task.preprocessor" | translate }} {{ i + 1 }}</mat-panel-title>
-        <mat-panel-description *ngIf="preprocessor.function?.function">{{ preprocessor.function?.function }}</mat-panel-description>
+        <mat-panel-description *ngIf="getSelectedFunction(i)?.function">{{ getSelectedFunction(i)?.function }}</mat-panel-description>
       </mat-expansion-panel-header>
-      <form [formGroup]="preprocessor.formGroup">
+      <form [formGroup]="formGroup">
         <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ "task.preprocessing-function" | translate }}</mat-label>
           <mat-select formControlName="functionID" (selectionChange)="handleFunctionChange($event, i)">
@@ -13,9 +13,9 @@
               {{ function.function }}
             </mat-option>
           </mat-select>
-          <mat-hint *ngIf="preprocessor.function?.description">{{ preprocessor.function?.description }}</mat-hint>
+          <mat-hint *ngIf="getSelectedFunction(i)?.description">{{ getSelectedFunction(i)?.description }}</mat-hint>
         </mat-form-field>
-        <ng-container *ngFor="let parameter of preprocessor.function?.parameters" formGroupName="parameters">
+        <ng-container *ngFor="let parameter of getSelectedFunction(i)?.parameters">
           <mat-form-field
             *ngIf="parameter.type === selectParameterType.String || parameter.type === selectParameterType.Integer"
             subscriptSizing="dynamic"

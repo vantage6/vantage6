@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatSelectChange } from '@angular/material/select';
 import { Select, SelectParameterType } from 'src/app/models/api/algorithm.model';
 
@@ -16,23 +16,35 @@ interface Preprocessor {
 export class PreprocessingStepComponent {
   selectParameterType = SelectParameterType;
 
+  @Input() form!: FormArray;
   @Input() functions: Select[] = [];
-  preprocessors: Preprocessor[] = [];
+  selectedFunctions: Array<Select | null> = [];
   columns: string[] = ['Column 1', 'Column 2', 'Column 3']; //TODO: Get column data from backend, when backend is ready
 
   constructor(private fb: FormBuilder) {}
 
+  get formGroups(): FormGroup[] {
+    return this.form.controls as FormGroup[];
+  }
+
+  getSelectedFunction(index: number): Select | null {
+    return this.selectedFunctions.length >= index ? this.selectedFunctions[index] : null;
+  }
+
   addPreprocessor(): void {
     const preprocessorForm = this.fb.nonNullable.group({
-      functionID: ['', Validators.required],
-      parameters: this.fb.nonNullable.group({})
+      functionID: ['', Validators.required]
     });
-    this.preprocessors.push({ formGroup: preprocessorForm });
+    this.form.push(preprocessorForm);
   }
 
   handleFunctionChange(event: MatSelectChange, index: number): void {
-    this.preprocessors[index].formGroup.controls['parameters'] = this.fb.nonNullable.group({});
-    this.preprocessors[index].function = undefined;
+    const formGroup = this.form.controls[index] as FormGroup;
+
+    const controlsToRemove = Object.keys(formGroup.controls).filter((_) => _ !== 'functionID');
+    controlsToRemove.forEach((control) => {
+      formGroup.removeControl(control);
+    });
 
     const selectedFunction = this.functions.find((_) => _.function === event.value) || null;
     if (selectedFunction) {
@@ -41,25 +53,13 @@ export class PreprocessingStepComponent {
         if (parameter.required) {
           newControl.setValidators(Validators.required);
         }
-        (this.preprocessors[index].formGroup.controls['parameters'] as FormGroup).addControl(parameter.name, newControl);
+        formGroup.addControl(parameter.name, newControl);
       });
-      this.preprocessors[index].function = selectedFunction;
     }
+    this.selectedFunctions[index] = selectedFunction;
   }
 
   reset(): void {
-    this.preprocessors = [];
-  }
-
-  valid(): boolean {
-    for (const preprocessor of this.preprocessors) {
-      if (preprocessor.formGroup.invalid) {
-        return false;
-      }
-      if (preprocessor.formGroup.controls['parameters'].invalid) {
-        return false;
-      }
-    }
-    return true;
+    this.selectedFunctions = [];
   }
 }
