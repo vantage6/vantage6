@@ -13,6 +13,8 @@ import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.
 import { Router } from '@angular/router';
 import { ConfirmDialog } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { FormControl } from '@angular/forms';
+import { Collaboration } from 'src/app/models/api/collaboration.model';
+import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 
 @Component({
   selector: 'app-task-read',
@@ -40,11 +42,16 @@ export class TaskReadComponent implements OnInit {
     private translateService: TranslateService,
     private taskService: TaskService,
     private algorithmService: AlgorithmService,
-    private authService: AuthService
-  ) {}
+    private authService: AuthService,
+    private chosenCollaborationService: ChosenCollaborationService,
+  ) { }
 
   ngOnInit(): void {
-    this.canDelete = this.authService.isOperationAllowed(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.DELETE);
+    this.canDelete = this.authService.isAllowedForCollab(
+      ResourceType.TASK,
+      OperationType.DELETE,
+      this.chosenCollaborationService.collaboration$.value as Collaboration
+    );
     this.visualization.valueChanges.subscribe((value) => {
       this.selectedOutput = this.function?.output?.[value || 0] || null;
     });
@@ -94,7 +101,7 @@ export class TaskReadComponent implements OnInit {
   openLog(log: string): void {
     try {
       log = JSON.stringify(JSON.parse(log), null, 2);
-    } catch (e) {}
+    } catch (e) { }
 
     this.dialog.open(LogDialog, {
       width: '80vw',

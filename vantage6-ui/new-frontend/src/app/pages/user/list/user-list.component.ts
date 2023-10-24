@@ -34,7 +34,7 @@ export class UserListComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private authService: AuthService,
     private breakpointObserver: BreakpointObserver
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     //TODO: Implement responsive columns in table component
@@ -61,7 +61,7 @@ export class UserListComponent implements OnInit, OnDestroy {
         };
       }
     });
-    this.canCreate = this.authService.isOperationAllowed(ScopeType.ANY, ResourceType.USER, OperationType.CREATE);
+    this.canCreate = this.authService.isAllowed(ScopeType.ANY, ResourceType.USER, OperationType.CREATE);
     this.initData();
   }
 

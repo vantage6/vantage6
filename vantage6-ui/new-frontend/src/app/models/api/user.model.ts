@@ -26,6 +26,7 @@ export interface BaseUser {
   lastname: string;
   organization: BaseLink;
   roles: string;
+  permissions?: UserPermissions;
 }
 
 export interface User {
@@ -47,6 +48,12 @@ export interface UserForm {
   lastname: string;
   organization_id: number;
   roles: number[];
+}
+
+export interface UserPermissions {
+  orgs_in_collabs: number[];
+  roles: number[];
+  rules: number[];
 }
 
 export type UserCreate = Pick<UserForm, 'username' | 'email' | 'password' | 'firstname' | 'lastname' | 'organization_id' | 'roles'>;

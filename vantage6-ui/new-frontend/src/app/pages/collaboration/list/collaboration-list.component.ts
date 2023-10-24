@@ -30,10 +30,10 @@ export class CollaborationListComponent implements OnInit {
     private translateService: TranslateService,
     private collaborationService: CollaborationService,
     private authService: AuthService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
-    this.canCreate = this.authService.isOperationAllowed(ScopeType.GLOBAL, ResourceType.COLLABORATION, OperationType.CREATE);
+    this.canCreate = this.authService.isAllowed(ScopeType.GLOBAL, ResourceType.COLLABORATION, OperationType.CREATE);
     this.initData();
   }
 

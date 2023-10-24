@@ -30,10 +30,10 @@ export class OrganizationListComponent implements OnInit {
     private translateService: TranslateService,
     private organizationService: OrganizationService,
     private authService: AuthService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
-    this.canCreate = this.authService.isOperationAllowed(ScopeType.GLOBAL, ResourceType.ORGANIZATION, OperationType.CREATE);
+    this.canCreate = this.authService.isAllowed(ScopeType.GLOBAL, ResourceType.ORGANIZATION, OperationType.CREATE);
     this.initData();
   }
 

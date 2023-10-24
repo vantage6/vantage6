@@ -38,11 +38,10 @@ export class NodeReadComponent implements OnInit {
     private nodeService: NodeService,
     private organizationService: OrganizationService,
     private collaborationService: CollaborationService,
-    private authService: AuthService
+    public authService: AuthService
   ) {}
 
   ngOnInit(): void {
-    this.canEdit = this.authService.isOperationAllowed(ScopeType.ANY, ResourceType.NODE, OperationType.EDIT);
     this.initData();
   }
 

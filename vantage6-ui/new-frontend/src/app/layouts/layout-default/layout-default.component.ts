@@ -90,30 +90,22 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
         newLinks.push({ route: routePaths.organizations, label: 'Organizations', icon: 'location_city' });
       }
       //Collaborations
-      if (this.authService.isOperationAllowed(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.VIEW)) {
+      if (this.authService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.VIEW)) {
         newLinks.push({ route: routePaths.collaborations, label: 'Collaborations', icon: 'train' });
       }
       //Users
-      if (
-        this.authService.isOperationAllowed(ScopeType.ORGANIZATION, ResourceType.USER, OperationType.VIEW) ||
-        this.authService.isOperationAllowed(ScopeType.COLLABORATION, ResourceType.USER, OperationType.VIEW) ||
-        this.authService.isOperationAllowed(ScopeType.GLOBAL, ResourceType.USER, OperationType.VIEW)
-      ) {
+      if (this.authService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.USER, OperationType.VIEW)) {
         newLinks.push({ route: routePaths.users, label: 'Users', icon: 'people' });
       }
       //Nodes
-      if (
-        this.authService.isOperationAllowed(ScopeType.ORGANIZATION, ResourceType.NODE, OperationType.VIEW) ||
-        this.authService.isOperationAllowed(ScopeType.COLLABORATION, ResourceType.NODE, OperationType.VIEW) ||
-        this.authService.isOperationAllowed(ScopeType.GLOBAL, ResourceType.NODE, OperationType.VIEW)
-      ) {
+      if (this.authService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.NODE, OperationType.VIEW)) {
         newLinks.push({ route: routePaths.nodes, label: 'Nodes', icon: 'data_object' });
       }
     } else {
       //Home
       newLinks.push({ route: routePaths.home, label: 'Home', icon: 'home', shouldBeExact: true });
       //Tasks
-      if (this.authService.isOperationAllowed(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.VIEW)) {
+      if (this.authService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.VIEW)) {
         newLinks.push({ route: routePaths.tasks, label: 'Tasks', icon: 'science' });
       }
     }

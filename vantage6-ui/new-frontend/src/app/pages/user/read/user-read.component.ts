@@ -3,8 +3,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ConfirmDialog } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
+import { Organization } from 'src/app/models/api/organization.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
-import { User, UserLazyProperties } from 'src/app/models/api/user.model';
+import { BaseUser, User, UserLazyProperties } from 'src/app/models/api/user.model';
 import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
 import { UserService } from 'src/app/services/user.service';
@@ -31,22 +32,20 @@ export class UserReadComponent implements OnInit {
     private userService: UserService,
     private authService: AuthService,
     private translateService: TranslateService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
-    this.canDelete =
-      this.authService.isOperationAllowed(ScopeType.GLOBAL, ResourceType.COLLABORATION, OperationType.DELETE) ||
-      this.authService.isOperationAllowed(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.DELETE) ||
-      this.authService.isOperationAllowed(ScopeType.COLLABORATION, ResourceType.COLLABORATION, OperationType.DELETE);
-    this.canEdit =
-      this.authService.isOperationAllowed(ScopeType.GLOBAL, ResourceType.COLLABORATION, OperationType.EDIT) ||
-      this.authService.isOperationAllowed(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.EDIT) ||
-      this.authService.isOperationAllowed(ScopeType.COLLABORATION, ResourceType.COLLABORATION, OperationType.EDIT);
     this.initData();
   }
 
   private async initData(): Promise<void> {
     this.user = await this.userService.getUser(this.id, [UserLazyProperties.Organization, UserLazyProperties.Roles]);
+    this.canDelete = this.authService.isAllowedForOrg(
+      ResourceType.USER, OperationType.DELETE, (this.user.organization as Organization).id
+    );
+    this.canDelete = this.authService.isAllowedForOrg(
+      ResourceType.USER, OperationType.EDIT, (this.user.organization as Organization).id
+    );
     this.isLoading = false;
   }
 

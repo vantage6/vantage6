@@ -5,16 +5,21 @@ import { Login } from '../models/api/login.model';
 import { OperationType, ResourceType, Rule, ScopeType } from '../models/api/rule.model';
 import { Pagination } from '../models/api/pagination.model';
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_ID } from '../models/constants/sessionStorage';
-import { BaseUser } from '../models/api/user.model';
-import { routePaths } from '../routes';
+import { BaseUser, UserPermissions } from '../models/api/user.model';
+import { Collaboration } from '../models/api/collaboration.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
+  // TODO maybe refactor into activeUserService for permission checks and
+  // authService for logging on/off etc
   activeRules: Rule[] | null = null;
+  activeUser: BaseUser | null = null;
 
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+  ) { }
 
   async login(loginForm: LoginForm): Promise<boolean> {
     const data = {
@@ -36,15 +41,19 @@ export class AuthService {
     //TODO: Fully validate JTW token
     const isExpired = Date.now() >= JSON.parse(atob(token.split('.')[1])).exp * 1000;
 
-    if (!isExpired && this.activeRules === null) {
-      await this.getUserRules();
+    if (!isExpired) {
+      if (this.activeRules === null) {
+        // get user rules
+        this.activeRules = await this.getUserRules();
+      }
+      if (this.activeUser === null) {
+        // get user (knowing the user organization id is required to determine
+        // what they are allowed to see for which organizations)
+        this.activeUser = await this.getUser();
+        console.log(this.activeUser);
+      }
     }
     return !isExpired;
-  }
-
-  async getUser(): Promise<BaseUser> {
-    const userId = sessionStorage.getItem(USER_ID);
-    return await this.apiService.getForApi<BaseUser>(`/user/${userId}`);
   }
 
   hasResourceInScope(scope: ScopeType, resource: ResourceType): boolean {
@@ -55,7 +64,9 @@ export class AuthService {
     return !!this.activeRules?.some((rule) => rule.name.toLowerCase() === resource && rule.scope.toLowerCase() === scope);
   }
 
-  isOperationAllowed(scope: ScopeType, resource: ResourceType, operation: OperationType): boolean {
+  isAllowed(scope: ScopeType, resource: ResourceType | string, operation: OperationType | string): boolean {
+    if (typeof resource === 'string') resource = resource.toLowerCase() as ResourceType;
+    if (typeof operation === 'string') operation = operation.toLowerCase() as OperationType;
     if (scope === ScopeType.ANY) {
       return !!this.activeRules?.some((rule) => rule.name.toLowerCase() === resource && rule.operation.toLowerCase() === operation);
     }
@@ -63,6 +74,45 @@ export class AuthService {
     return !!this.activeRules?.some(
       (rule) => rule.scope.toLowerCase() === scope && rule.name.toLowerCase() === resource && rule.operation.toLowerCase() === operation
     );
+  }
+
+  isAllowedForOrg(resource: ResourceType | string, operation: OperationType | string, orgId: number) {
+    let orgs_in_user_collabs = ((this.activeUser as BaseUser).permissions as UserPermissions).orgs_in_collabs;
+    return (
+      this.isAllowed(ScopeType.GLOBAL, resource, operation)
+      ||
+      (orgId === (this.activeUser as BaseUser).organization.id &&
+        this.isAllowed(ScopeType.ORGANIZATION, resource, operation))
+      ||
+      (orgId in orgs_in_user_collabs &&
+        this.isAllowed(ScopeType.COLLABORATION, resource, operation))
+    );
+  }
+
+  isAllowedForCollab(resource: ResourceType | string, operation: OperationType | string, collab: Collaboration) {
+    let collab_org_ids = collab.organizations.map((org) => org.id);
+    return (
+      this.isAllowed(ScopeType.GLOBAL, resource, operation)
+      ||
+      ((this.activeUser as BaseUser).organization.id in collab_org_ids &&
+        this.isAllowed(ScopeType.COLLABORATION, resource, operation))
+    );
+  }
+
+  isAllowedWithMinScope(minScope: ScopeType, resource: ResourceType, operation: OperationType): boolean {
+    // determine which scopes are at least minimum scope in hierarchy
+    let scopes: ScopeType[] = [ScopeType.GLOBAL];
+    if (minScope != ScopeType.GLOBAL) scopes.push(ScopeType.COLLABORATION);
+    if (minScope != ScopeType.COLLABORATION)
+      scopes.push(ScopeType.ORGANIZATION);
+    if (minScope != ScopeType.ORGANIZATION) scopes.push(ScopeType.OWN);
+
+    // check if user has at least one of the scopes
+    return scopes.some((s) => this.isAllowed(s, resource, operation));
+  }
+
+  getActiveOrganizationID(): number {
+    return (this.activeUser as BaseUser).organization.id;
   }
 
   logout(): void {
@@ -75,7 +125,14 @@ export class AuthService {
       user_id: userId,
       no_pagination: 1
     });
-    this.activeRules = result.data;
+    return result.data;
+  }
+
+  private async getUser() {
+    const userId = sessionStorage.getItem(USER_ID);
+    return await this.apiService.getForApi<BaseUser>(`/user/${userId}`, {
+      include_permissions: true
+    });
   }
 
   private setSession(result: Login): void {

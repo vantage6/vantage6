@@ -31,14 +31,10 @@ export class OrganizationReadComponent implements OnInit {
     private router: Router,
     private translateService: TranslateService,
     private organizationService: OrganizationService,
-    private authService: AuthService
-  ) {}
+    public authService: AuthService
+  ) { }
 
   async ngOnInit(): Promise<void> {
-    this.canEdit =
-      this.authService.isOperationAllowed(ScopeType.GLOBAL, ResourceType.ORGANIZATION, OperationType.EDIT) ||
-      this.authService.isOperationAllowed(ScopeType.ORGANIZATION, ResourceType.ORGANIZATION, OperationType.EDIT) ||
-      this.authService.isOperationAllowed(ScopeType.COLLABORATION, ResourceType.ORGANIZATION, OperationType.EDIT);
     await this.initData();
   }
 
