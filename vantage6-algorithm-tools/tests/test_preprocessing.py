@@ -4,7 +4,6 @@ Test the preprocessing functionality of the vantage6-algorithm-tools package.
 To run only this test, from the vantage6 root directory run:
 python -m unittest vantage6-algorithm-tools.tests.test_preprocessing
 """
-import random
 import unittest
 from datetime import datetime, timedelta
 
@@ -15,11 +14,11 @@ from vantage6.algorithm.tools.mock_client import MockAlgorithmClient
 from vantage6.algorithm.tools.preprocessing.filtering import select_rows
 
 
-def random_date(start, end, fmt="%Y-%m-%d", seed=None):
-    if seed is not None:
-        random.seed(seed)
+def random_date(start, end, fmt="%Y-%m-%d", seed=0):
+    np.random.seed(seed)
+
     delta = end - start
-    random_days = random.randint(0, delta.days)
+    random_days = np.random.randint(0, delta.days)
     return (start + timedelta(days=random_days)).strftime(fmt)
 
 
@@ -660,7 +659,7 @@ class TestPreprocessing(unittest.TestCase):
             '{"age":{"171":23,"342":23},"income":{"171":62026,"342":44074},'
             '"education":{"171":"Master","342":"Master"},"color_preference":'
             '{"171":"Green","342":"Green"},"purchased_product":{"171":1,"342":'
-            '0},"magic_date":{"171":"2022-03-04","342":"2020-09-04"},"income\/'
+            '0},"magic_date":{"171":"2022-11-12","342":"2020-01-20"},"income\/'
             'age":{"171":0.9737126326,"342":0.0147479299},"age_days":{"171":'
             '8395,"342":8395},"age_days_td":{"171":"8395 days","342":"8395 '
             'days"}}'
