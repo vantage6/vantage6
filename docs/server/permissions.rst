@@ -2,7 +2,7 @@ Permission management
 ---------------------
 
 Almost everything in the vantage6 server is under role-based access control: not
-everyone is allowed to access it.
+everyone is allowed to access everything.
 
 Authentication types
 ~~~~~~~~~~~~~~~~~~~~
@@ -68,21 +68,18 @@ The scopes are:
 
 A user may be assigned anywhere between zero and all of the rules.
 
-Roles
-~~~~~
-
-To make it easier to assign permissions to users, there are roles. A role is
-simply a set of rules. When a user is assigned a role, they are assigned all
-the rules that are part of that role.
-
 .. note::
 
   When you create a new server, the first time it is started, a new user 'root'
   is created that has all permissions. This user is meant to be used to create
   the first users and organizations.
 
-Default roles
-~~~~~~~~~~~~~
+Roles
+~~~~~
+
+To make it easier to assign permissions to users, there are roles. A role is
+simply a set of rules. When a user is assigned a role, they are assigned all
+the rules that are part of that role.
 
 The permission structure of vantage6 allows for a lot of flexibility. However,
 especially for beginning users, it can be a bit daunting to set up all the
