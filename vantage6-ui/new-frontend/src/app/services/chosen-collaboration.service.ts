@@ -31,16 +31,6 @@ export class ChosenCollaborationService {
   async getNodes(): Promise<BaseNode[]> {
     const result = await this.apiService.getForApi<Pagination<BaseNode>>(`/node?collaboration_id=${this.collaboration$.value?.id}`);
 
-    //TODO: Remove mock data!
-    result.data.forEach((node) => {
-      node.config = [
-        { key: 'database_labels', value: 'default' },
-        { key: 'db_type_default', value: 'sql' },
-        { key: 'database_labels', value: 'example' },
-        { key: 'db_type_example', value: 'excel' }
-      ];
-    });
-
     return result.data;
   }
 
