@@ -124,6 +124,7 @@
               <mat-label>{{ argument.name }}</mat-label>
               <input
                 matInput
+                numberOnly
                 [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
                 [formControlName]="argument.name"
               />

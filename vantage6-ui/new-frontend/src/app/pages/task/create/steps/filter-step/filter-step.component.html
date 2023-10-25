@@ -26,6 +26,7 @@
           <mat-label>{{ parameter.name }}</mat-label>
           <input
             matInput
+            numberOnly
             [type]="parameter.type === filterParameterType.Integer || parameter.type === filterParameterType.Float ? 'number' : 'text'"
             [formControlName]="parameter.name"
           />

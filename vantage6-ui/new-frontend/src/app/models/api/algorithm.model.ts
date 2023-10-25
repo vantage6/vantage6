@@ -19,6 +19,7 @@ export enum SelectParameterType {
   Column = 'column',
   String = 'string',
   Integer = 'integer',
+  Float = 'float',
   Boolean = 'bool',
   Date = 'date'
 }

@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatSelectChange } from '@angular/material/select';
+import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 import { Filter, FilterParameterType } from 'src/app/models/api/algorithm.model';
 
 @Component({
@@ -40,7 +41,12 @@ export class FilterStepComponent {
       selectedFunction.parameters.forEach((parameter) => {
         const newControl = new FormControl(parameter.default || null);
         if (parameter.required) {
-          newControl.setValidators(Validators.required);
+          newControl.addValidators(Validators.required);
+        }
+        if (parameter.type === FilterParameterType.Integer) {
+          newControl.addValidators(Validators.pattern(integerRegex));
+        } else if (parameter.type === FilterParameterType.Float) {
+          newControl.addValidators(Validators.pattern(floatRegex));
         }
         formGroup.addControl(parameter.name, newControl);
       });

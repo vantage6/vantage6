@@ -1,7 +1,8 @@
 import { Component, Input } from '@angular/core';
 import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatSelectChange } from '@angular/material/select';
-import { Select, SelectParameterType } from 'src/app/models/api/algorithm.model';
+import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
+import { FilterParameterType, Select, SelectParameterType } from 'src/app/models/api/algorithm.model';
 
 @Component({
   selector: 'app-preprocessing-step',
@@ -47,7 +48,12 @@ export class PreprocessingStepComponent {
       selectedFunction.parameters.forEach((parameter) => {
         const newControl = new FormControl(parameter.default || null);
         if (parameter.required) {
-          newControl.setValidators(Validators.required);
+          newControl.addValidators(Validators.required);
+        }
+        if (parameter.type === SelectParameterType.Integer) {
+          newControl.addValidators(Validators.pattern(integerRegex));
+        } else if (parameter.type === SelectParameterType.Float) {
+          newControl.addValidators(Validators.pattern(floatRegex));
         }
         formGroup.addControl(parameter.name, newControl);
       });

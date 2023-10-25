@@ -11,6 +11,7 @@ import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
 import { Router } from '@angular/router';
 import { PreprocessingStepComponent } from './steps/preprocessing-step/preprocessing-step.component';
+import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 
 @Component({
   selector: 'app-task-create',
@@ -151,13 +152,10 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
         this.parameterForm.addControl(argument.name, new FormControl(null, Validators.required));
       }
       if (argument.type === ArgumentType.Integer) {
-        this.parameterForm.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern('^[0-9]*$')]));
+        this.parameterForm.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(integerRegex)]));
       }
       if (argument.type === ArgumentType.Float) {
-        this.parameterForm.addControl(
-          argument.name,
-          new FormControl(null, [Validators.required, Validators.pattern('^[0-9]*[,.]?[0-9]*$')])
-        );
+        this.parameterForm.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(floatRegex)]));
       }
     });
 

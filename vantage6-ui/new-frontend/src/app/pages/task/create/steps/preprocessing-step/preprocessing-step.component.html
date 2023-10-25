@@ -16,11 +16,20 @@
       </mat-form-field>
       <ng-container *ngFor="let parameter of getSelectedFunction(i)?.parameters">
         <mat-form-field
-          *ngIf="parameter.type === selectParameterType.String || parameter.type === selectParameterType.Integer"
+          *ngIf="
+            parameter.type === selectParameterType.String ||
+            parameter.type === selectParameterType.Integer ||
+            parameter.type === selectParameterType.Float
+          "
           subscriptSizing="dynamic"
         >
           <mat-label>{{ parameter.name }}</mat-label>
-          <input matInput [type]="parameter.type === selectParameterType.Integer ? 'number' : 'text'" [formControlName]="parameter.name" />
+          <input
+            matInput
+            numberOnly
+            [type]="parameter.type === selectParameterType.Integer || parameter.type === selectParameterType.Float ? 'number' : 'text'"
+            [formControlName]="parameter.name"
+          />
           <mat-hint *ngIf="parameter.description">{{ parameter.description }}</mat-hint>
         </mat-form-field>
         <mat-form-field *ngIf="parameter.type === selectParameterType.Column" subscriptSizing="dynamic">

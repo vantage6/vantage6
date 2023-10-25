@@ -64,6 +64,7 @@ import { UserEditComponent } from './pages/user/edit/user-edit.component';
 import { VisualizeHistogramComponent } from './components/visualize-histogram/visualize-histogram.component';
 import { PreprocessingStepComponent } from './pages/task/create/steps/preprocessing-step/preprocessing-step.component';
 import { FilterStepComponent } from './pages/task/create/steps/filter-step/filter-step.component';
+import { NumberOnlyDirective } from './directives/numberOnly.directive';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -107,7 +108,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     UserEditComponent,
     VisualizeHistogramComponent,
     PreprocessingStepComponent,
-    FilterStepComponent
+    FilterStepComponent,
+    NumberOnlyDirective
   ],
   imports: [
     BrowserModule,
