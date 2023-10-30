@@ -90,12 +90,18 @@ interface TaskResult {
   result?: string;
 }
 
+export interface TaskDatabase {
+  label: string;
+  query?: string;
+  sheet?: string;
+}
+
 export interface CreateTask {
   name: string;
   description: string;
   image: string;
   collaboration_id: number;
-  databases: string[];
+  databases: TaskDatabase[];
   organizations: Organization[];
 }
 

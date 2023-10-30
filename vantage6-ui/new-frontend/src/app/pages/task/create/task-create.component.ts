@@ -6,7 +6,7 @@ import { ChosenCollaborationService } from 'src/app/services/chosen-collaboratio
 import { Subject, takeUntil } from 'rxjs';
 import { BaseNode, DatabaseType } from 'src/app/models/api/node.model';
 import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
-import { CreateTask, CreateTaskInput } from 'src/app/models/api/task.models';
+import { CreateTask, CreateTaskInput, TaskDatabase } from 'src/app/models/api/task.models';
 import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
 import { Router } from '@angular/router';
@@ -95,9 +95,20 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     const selectedOrganizations = Array.isArray(this.functionForm.controls.organizationIDs.value)
       ? this.functionForm.controls.organizationIDs.value
       : [this.functionForm.controls.organizationIDs.value];
-    const selectedDatabases: string[] = Object.keys(this.databaseForm.controls)
-      .filter((control) => control.includes('_name'))
-      .map((controlName) => this.databaseForm.get(controlName)?.value || '');
+
+    const taskDatabases: TaskDatabase[] = [];
+    this.function?.databases.forEach((functionDatabase) => {
+      const taskDatabase: TaskDatabase = { label: functionDatabase.name };
+      const query = this.databaseForm.get(`${functionDatabase.name}_query`)?.value || '';
+      if (query) {
+        taskDatabase.query = query;
+      }
+      const sheet = this.databaseForm.get(`${functionDatabase.name}_sheet`)?.value || '';
+      if (sheet) {
+        taskDatabase.sheet = sheet;
+      }
+      taskDatabases.push(taskDatabase);
+    });
 
     const input: CreateTaskInput = {
       method: this.function?.name || '',
@@ -109,7 +120,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
       description: this.packageForm.controls.description.value,
       image: this.algorithm?.url || '',
       collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
-      databases: [...selectedDatabases],
+      databases: taskDatabases,
       organizations: selectedOrganizations.map((organizationID) => {
         return { id: Number.parseInt(organizationID), input: btoa(JSON.stringify(input)) || '' };
       })
