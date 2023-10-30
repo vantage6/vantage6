@@ -8,13 +8,14 @@ import { Directive, HostListener } from '@angular/core';
 export class NumberOnlyDirective {
   @HostListener('keydown', ['$event'])
   onKeyDown(event: KeyboardEvent) {
+    // Check if input is of type number
     if (event.target && (event.target as HTMLInputElement).type !== 'number') {
-      return true; // Check if input is of type number
+      return true;
     }
-    console.log(event.key);
+    // Allow space, backspace, tab, enter, arrows, etc
     if (event.key === '' || event.key.length > 1) {
-      return true; // Allow space, backspace, tab, enter, arrows, etc
+      return true;
     }
-    return !!event.key.match(/[0-9,.-]/); // Only allow numbers, comma and dot
+    return !!event.key.match(/[0-9,.-]/); // Only allow numbers, comma, dot and minus
   }
 }
