@@ -124,7 +124,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
       organizations: selectedOrganizations.map((organizationID) => {
         return { id: Number.parseInt(organizationID), input: btoa(JSON.stringify(input)) || '' };
       })
-      //TODO: Add preprocessing when backend is ready
+      //TODO: Add preprocessing and filtering when backend is ready
     };
 
     const newTask = await this.taskService.createTask(createTask);

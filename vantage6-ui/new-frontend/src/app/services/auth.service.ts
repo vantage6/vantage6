@@ -30,7 +30,6 @@ export class AuthService {
       return false;
     }
 
-    //TODO: Fully validate JTW token
     const isExpired = Date.now() >= JSON.parse(atob(token.split('.')[1])).exp * 1000;
     if (!isExpired) {
       await this.permissionService.initData();
