@@ -90,22 +90,19 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
       ? this.functionForm.controls.organizationIDs.value
       : [this.functionForm.controls.organizationIDs.value];
 
-    let selectedDatabases: TaskDatabase[] = [];
-    const selectedDBNames: string[] = Object.keys(this.databaseForm.controls)
-      .filter((control) => control.includes('_name'))
-      .map((controlName) => this.databaseForm.get(controlName)?.value || '');
-    for (let db of selectedDBNames) {
-      let selectedDB: TaskDatabase = { label: db };
-      const query = this.databaseForm.get(`${db}_query`)?.value || '';
+    const taskDatabases: TaskDatabase[] = [];
+    this.function?.databases.forEach((functionDatabase) => {
+      const taskDatabase: TaskDatabase = { label: functionDatabase.name };
+      const query = this.databaseForm.get(`${functionDatabase.name}_query`)?.value || '';
       if (query) {
-        selectedDB['query'] = query;
+        taskDatabase.query = query;
       }
-      const sheet = this.databaseForm.get(`${db}_sheet`)?.value || '';
+      const sheet = this.databaseForm.get(`${functionDatabase.name}_sheet`)?.value || '';
       if (sheet) {
-        selectedDB['sheet'] = sheet;
+        taskDatabase.sheet = sheet;
       }
-      selectedDatabases.push(selectedDB);
-    }
+      taskDatabases.push(taskDatabase);
+    });
 
     const input: CreateTaskInput = {
       method: this.function?.name || '',
@@ -117,7 +114,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
       description: this.packageForm.controls.description.value,
       image: this.algorithm?.url || '',
       collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
-      databases: selectedDatabases,
+      databases: taskDatabases,
       organizations: selectedOrganizations.map((organizationID) => {
         return { id: Number.parseInt(organizationID), input: btoa(JSON.stringify(input)) || '' };
       })
