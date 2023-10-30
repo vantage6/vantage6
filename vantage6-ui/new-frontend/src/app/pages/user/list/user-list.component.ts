@@ -37,7 +37,7 @@ export class UserListComponent implements OnInit, OnDestroy {
     private breakpointObserver: BreakpointObserver
   ) {}
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     //TODO: Implement responsive columns in table component
     this.breakpointObserver.observe([Breakpoints.Medium, Breakpoints.Large, Breakpoints.XLarge]).subscribe((result) => {
       if (!this.table) return;
@@ -63,7 +63,7 @@ export class UserListComponent implements OnInit, OnDestroy {
       }
     });
     this.canCreate = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.USER, OperationType.CREATE);
-    this.initData();
+    await this.initData();
   }
 
   ngOnDestroy() {

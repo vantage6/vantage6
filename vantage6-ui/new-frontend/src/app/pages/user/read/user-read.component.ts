@@ -33,8 +33,8 @@ export class UserReadComponent implements OnInit {
     private permissionService: PermissionService
   ) {}
 
-  ngOnInit(): void {
-    this.initData();
+  async ngOnInit(): Promise<void> {
+    await this.initData();
   }
 
   private async initData(): Promise<void> {

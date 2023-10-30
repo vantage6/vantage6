@@ -11,6 +11,7 @@ import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
 import { Router } from '@angular/router';
 import { PreprocessingStepComponent } from './steps/preprocessing-step/preprocessing-step.component';
+import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 
 @Component({
   selector: 'app-task-create',
@@ -31,21 +32,19 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   function: Function | null = null;
   databases: any[] = [];
   node: BaseNode | null = null;
-  preprocessingFunction: Select | null = null;
 
   packageForm = this.fb.nonNullable.group({
     algorithmID: ['', Validators.required],
     name: ['', Validators.required],
     description: ''
   });
-
   functionForm = this.fb.nonNullable.group({
     functionName: ['', Validators.required],
     organizationIDs: ['', Validators.required]
   });
-
   databaseForm = this.fb.nonNullable.group({});
-
+  preprocessingForm = this.fb.array([]);
+  filterForm = this.fb.array([]);
   parameterForm = this.fb.nonNullable.group({});
 
   constructor(
@@ -82,7 +81,14 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   }
 
   async handleSubmit(): Promise<void> {
-    if (this.packageForm.invalid || this.functionForm.invalid || this.databaseForm.invalid || this.parameterForm.invalid) {
+    if (
+      this.packageForm.invalid ||
+      this.functionForm.invalid ||
+      this.databaseForm.invalid ||
+      this.preprocessingForm.invalid ||
+      this.filterForm.invalid ||
+      this.parameterForm.invalid
+    ) {
       return;
     }
 
@@ -157,13 +163,10 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
         this.parameterForm.addControl(argument.name, new FormControl(null, Validators.required));
       }
       if (argument.type === ArgumentType.Integer) {
-        this.parameterForm.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern('^[0-9]*$')]));
+        this.parameterForm.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(integerRegex)]));
       }
       if (argument.type === ArgumentType.Float) {
-        this.parameterForm.addControl(
-          argument.name,
-          new FormControl(null, [Validators.required, Validators.pattern('^[0-9]*[,.]?[0-9]*$')])
-        );
+        this.parameterForm.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(floatRegex)]));
       }
     });
 

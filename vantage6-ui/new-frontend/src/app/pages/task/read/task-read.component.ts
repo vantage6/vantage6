@@ -45,7 +45,7 @@ export class TaskReadComponent implements OnInit {
     private permissionService: PermissionService
   ) {}
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     this.canDelete = this.permissionService.isAllowedForCollab(
       ResourceType.TASK,
       OperationType.DELETE,
@@ -54,7 +54,7 @@ export class TaskReadComponent implements OnInit {
     this.visualization.valueChanges.subscribe((value) => {
       this.selectedOutput = this.function?.output?.[value || 0] || null;
     });
-    this.initData();
+    await this.initData();
   }
 
   async initData(): Promise<void> {

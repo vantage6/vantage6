@@ -38,7 +38,7 @@ export class CollaborationReadComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     this.canDelete = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.COLLABORATION, OperationType.DELETE);
     this.canEdit = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.COLLABORATION, OperationType.EDIT);
-    this.initData();
+    await this.initData();
   }
 
   private async initData(): Promise<void> {
