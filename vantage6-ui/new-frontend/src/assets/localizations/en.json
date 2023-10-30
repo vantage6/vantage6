@@ -12,6 +12,7 @@
     "no": "No",
     "offline": "Offline",
     "none": "None",
+    "id": "ID",
     "visualization": "Visualization",
     "validation": {
       "password-length": "Password must be at least 8 characters long",
@@ -23,7 +24,6 @@
     "database": "Database",
     "description": "Description",
     "function": "Function",
-    "id": "ID",
     "parameters": "Parameters",
     "organization": "Organization",
     "name": "Name",

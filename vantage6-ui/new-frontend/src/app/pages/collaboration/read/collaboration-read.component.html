@@ -23,6 +23,10 @@
     </mat-card-header>
     <mat-card-content>
       <div class="data-list">
+        <div class="data-list__item">
+          <b>{{ "general.id" | translate }}</b>
+          <span>{{ collaboration.id || "-" }}</span>
+        </div>
         <div class="data-list__item data-list__item--big">
           <b>{{ "collaboration.name" | translate }}</b>
           <span>{{ collaboration.name || "-" }}</span>

@@ -20,6 +20,10 @@
     <mat-card-content>
       <div class="data-list">
         <div class="data-list__item">
+          <b>{{ "general.id" | translate }}</b>
+          <span>{{ organization.id || "-" }}</span>
+        </div>
+        <div class="data-list__item">
           <b>{{ "organization.name" | translate }}</b>
           <span>{{ organization.name || "-" }}</span>
         </div>
