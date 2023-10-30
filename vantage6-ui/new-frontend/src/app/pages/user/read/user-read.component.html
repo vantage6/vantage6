@@ -24,6 +24,10 @@
     <mat-card-content>
       <div class="data-list">
         <div class="data-list__item">
+          <b>{{ "general.id" | translate }}</b>
+          <span>{{ user.id || "-" }}</span>
+        </div>
+        <div class="data-list__item">
           <b>{{ "user.username" | translate }}</b>
           <span>{{ user.username || "-" }}</span>
         </div>
@@ -45,7 +49,7 @@
             <app-chip *ngIf="user.organization" [label]="user.organization.name"></app-chip>
           </span>
         </div>
-        <div class="data-list__item data-list__item--full">
+        <div class="data-list__item data-list__item--big">
           <b>{{ "user.roles" | translate }}</b>
           <span>
             <div class="chip-container">
