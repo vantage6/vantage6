@@ -21,7 +21,7 @@ export class FilterStepComponent {
   constructor(private fb: FormBuilder) {}
 
   get formGroups(): FormGroup[] {
-    //Helps getting types form groups in template
+    //Helps getting typed form groups in template
     return this.form.controls as FormGroup[];
   }
 
@@ -68,6 +68,11 @@ export class FilterStepComponent {
       });
     }
     this.selectedFilters[index] = selectedFunction;
+  }
+
+  deleteFilter(index: number): void {
+    this.form.removeAt(index);
+    this.selectedFilters.splice(index, 1);
   }
 
   addFilter(): void {

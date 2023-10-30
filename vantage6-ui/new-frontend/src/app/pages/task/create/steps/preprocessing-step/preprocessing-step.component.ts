@@ -21,7 +21,7 @@ export class PreprocessingStepComponent {
   constructor(private fb: FormBuilder) {}
 
   get formGroups(): FormGroup[] {
-    //Helps getting types form groups in template
+    //Helps getting typed form groups in template
     return this.form.controls as FormGroup[];
   }
 
@@ -30,6 +30,7 @@ export class PreprocessingStepComponent {
   }
 
   addPreprocessor(): void {
+    this.selectedFunctions.push(null);
     const preprocessorForm = this.fb.nonNullable.group({
       functionID: ['', Validators.required]
     });
@@ -75,6 +76,11 @@ export class PreprocessingStepComponent {
       });
     }
     this.selectedFunctions[index] = selectedFunction;
+  }
+
+  deletePreprocessor(index: number): void {
+    this.form.removeAt(index);
+    this.selectedFunctions.splice(index, 1);
   }
 
   reset(): void {

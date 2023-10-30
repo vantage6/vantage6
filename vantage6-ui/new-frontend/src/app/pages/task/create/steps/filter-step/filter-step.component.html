@@ -3,6 +3,9 @@
     <mat-expansion-panel-header>
       <mat-panel-title>{{ "task.filter" | translate }} {{ i + 1 }}</mat-panel-title>
       <mat-panel-description *ngIf="getSelectedFilter(i)?.function">{{ getSelectedFilter(i)?.function }}</mat-panel-description>
+      <button mat-icon-button color="warn" (click)="deleteFilter(i)">
+        <mat-icon>delete</mat-icon>
+      </button>
     </mat-expansion-panel-header>
     <form class="form" [formGroup]="formGroup">
       <mat-form-field subscriptSizing="dynamic">
