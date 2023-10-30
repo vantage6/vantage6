@@ -41,7 +41,7 @@
         </mat-form-field>
         <mat-form-field *ngIf="parameter.type === filterParameterType.Date">
           <mat-label>{{ parameter.name }}</mat-label>
-          <input matInput [matDatepicker]="picker" />
+          <input matInput [matDatepicker]="picker" [formControlName]="parameter.name" />
           <mat-hint *ngIf="parameter.description">{{ parameter.description }}</mat-hint>
           <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
           <mat-datepicker #picker></mat-datepicker>

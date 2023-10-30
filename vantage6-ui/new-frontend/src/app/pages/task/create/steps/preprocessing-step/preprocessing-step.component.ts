@@ -2,7 +2,8 @@ import { Component, Input } from '@angular/core';
 import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatSelectChange } from '@angular/material/select';
 import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
-import { FilterParameterType, Select, SelectParameterType } from 'src/app/models/api/algorithm.model';
+import { Select, SelectParameterType } from 'src/app/models/api/algorithm.model';
+import { format, parse } from 'date-fns';
 
 @Component({
   selector: 'app-preprocessing-step',
@@ -46,7 +47,22 @@ export class PreprocessingStepComponent {
     const selectedFunction = this.functions.find((_) => _.function === event.value) || null;
     if (selectedFunction) {
       selectedFunction.parameters.forEach((parameter) => {
-        const newControl = new FormControl(parameter.default || null);
+        const newControl = new FormControl<any>(null);
+
+        //Set default value
+        if (parameter.default) {
+          if (parameter.type === SelectParameterType.Date) {
+            if (parameter.default === 'today') {
+              newControl.setValue(format(new Date(), 'yyyy-MM-dd'));
+            } else {
+              newControl.setValue(format(parse(parameter.default as string, 'yyyy-MM-dd', new Date()), 'yyyy-MM-dd'));
+            }
+          } else {
+            newControl.setValue(parameter.default);
+          }
+        }
+
+        //Set validators
         if (parameter.required) {
           newControl.addValidators(Validators.required);
         }
