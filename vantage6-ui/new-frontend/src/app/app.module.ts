@@ -3,7 +3,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { ReactiveFormsModule } from '@angular/forms';
 
-import { MatNativeDateModule } from '@angular/material/core';
+import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -22,6 +22,8 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatDateFnsModule } from '@angular/material-date-fns-adapter';
+import { enCA } from 'date-fns/locale';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -63,6 +65,8 @@ import { UserFormComponent } from './components/user-form/user-form/user-form.co
 import { UserEditComponent } from './pages/user/edit/user-edit.component';
 import { VisualizeHistogramComponent } from './components/visualize-histogram/visualize-histogram.component';
 import { PreprocessingStepComponent } from './pages/task/create/steps/preprocessing-step/preprocessing-step.component';
+import { FilterStepComponent } from './pages/task/create/steps/filter-step/filter-step.component';
+import { NumberOnlyDirective } from './directives/numberOnly.directive';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -105,7 +109,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     UserFormComponent,
     UserEditComponent,
     VisualizeHistogramComponent,
-    PreprocessingStepComponent
+    PreprocessingStepComponent,
+    FilterStepComponent,
+    NumberOnlyDirective
   ],
   imports: [
     BrowserModule,
@@ -121,7 +127,7 @@ export function HttpLoaderFactory(http: HttpClient) {
       },
       defaultLanguage: 'en'
     }),
-    MatNativeDateModule,
+    MatDateFnsModule,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -141,7 +147,12 @@ export function HttpLoaderFactory(http: HttpClient) {
     MatTableModule,
     MatToolbarModule
   ],
-  providers: [],
+  providers: [
+    {
+      provide: MAT_DATE_LOCALE,
+      useValue: enCA
+    }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule {}

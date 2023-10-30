@@ -99,9 +99,17 @@
           </div>
         </form>
       </mat-step>
-      <mat-step *ngIf="shouldShowPreprocessorStep" [completed]="this.preprocessingStep ? this.preprocessingStep.valid() : true">
+      <mat-step *ngIf="shouldShowPreprocessorStep" [stepControl]="preprocessingForm">
         <ng-template matStepLabel>{{ "task-create.step-preprocessing.title" | translate }}</ng-template>
-        <app-preprocessing-step [functions]="algorithm?.select || []"></app-preprocessing-step>
+        <app-preprocessing-step [form]="preprocessingForm" [functions]="algorithm?.select || []"></app-preprocessing-step>
+        <div>
+          <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+          <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+        </div>
+      </mat-step>
+      <mat-step *ngIf="shouldShowPreprocessorStep" [stepControl]="filterForm">
+        <ng-template matStepLabel>{{ "task-create.step-filter.title" | translate }}</ng-template>
+        <app-filter-step [form]="filterForm" [filters]="algorithm?.filter || []"></app-filter-step>
         <div>
           <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
           <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
@@ -116,6 +124,7 @@
               <mat-label>{{ argument.name }}</mat-label>
               <input
                 matInput
+                numberOnly
                 [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
                 [formControlName]="argument.name"
               />
@@ -130,7 +139,14 @@
     <button
       mat-flat-button
       color="primary"
-      [disabled]="packageForm.invalid || functionForm.invalid || databaseForm.invalid || parameterForm.invalid"
+      [disabled]="
+        packageForm.invalid ||
+        functionForm.invalid ||
+        databaseForm.invalid ||
+        preprocessingForm.invalid ||
+        filterForm.invalid ||
+        parameterForm.invalid
+      "
       (click)="handleSubmit()"
     >
       {{ "general.submit" | translate }}
