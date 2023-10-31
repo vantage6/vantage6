@@ -1,7 +1,8 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Subject, takeUntil } from 'rxjs';
 import { ConfirmDialog } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
 import { User, UserLazyProperties } from 'src/app/models/api/user.model';
@@ -15,9 +16,10 @@ import { UserService } from 'src/app/services/user.service';
   styleUrls: ['./user-read.component.scss'],
   host: { '[class.card-container]': 'true' }
 })
-export class UserReadComponent implements OnInit {
+export class UserReadComponent implements OnInit, OnDestroy {
   @Input() id = '';
 
+  destroy$ = new Subject();
   routes = routePaths;
 
   isLoading: boolean = true;
@@ -35,6 +37,10 @@ export class UserReadComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.initData();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next(true);
   }
 
   private async initData(): Promise<void> {
@@ -59,13 +65,16 @@ export class UserReadComponent implements OnInit {
       }
     });
 
-    dialogRef.afterClosed().subscribe(async (result) => {
-      if (result === true) {
-        if (!this.user) return;
-        this.isLoading = true;
-        await this.userService.deleteUser(this.user.id);
-        this.router.navigate([routePaths.users]);
-      }
-    });
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(async (result) => {
+        if (result === true) {
+          if (!this.user) return;
+          this.isLoading = true;
+          await this.userService.deleteUser(this.user.id);
+          this.router.navigate([routePaths.users]);
+        }
+      });
   }
 }
