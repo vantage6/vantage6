@@ -10,6 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
+import { createUnEqualValidator } from 'src/app/validators/unequal.validator';
 
 @Component({
   selector: 'app-change-password',
@@ -25,7 +26,7 @@ export class ChangePasswordComponent implements OnDestroy {
       newPassword: ['', [Validators.required, ...PASSWORD_VALIDATORS]],
       newPasswordRepeat: ['', [Validators.required]]
     },
-    { validators: [createCompareValidator('newPassword', 'newPasswordRepeat')] }
+    { validators: [createCompareValidator('newPassword', 'newPasswordRepeat'), createUnEqualValidator('oldPassword', 'newPassword')] }
   );
 
   constructor(

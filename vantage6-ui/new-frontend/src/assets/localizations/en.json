@@ -228,6 +228,7 @@
   },
   "password": {
     "validation": {
+      "unequal": "New password cannot be the same as the old password",
       "compare": "Passwords do not match",
       "roles-unavailable": "Select an organization to determine available roles",
       "length": "Password must be at least 8 characters long",
