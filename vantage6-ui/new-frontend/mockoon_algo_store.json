@@ -17,7 +17,7 @@
       "responses": [
         {
           "uuid": "ff11c27b-b9bc-4e7d-be57-308a9c598e56",
-          "body": "{ \n  \"data\": [\n    {  \n      \"id\": 1,\n      \"name\": \"Average\"\n    },\n    {  \n      \"id\": 2,\n      \"name\": \"Linear\"\n    }\n  ], \n  \"links\": {\n    \"links\": {\n        \"first\": \"/api/algorithm?page=1\",\n        \"self\": \"/api/algorithm?page=1\",\n        \"previous\": \"/api/algorithm?page=1\",\n        \"next\": \"/api/algorithm?page=1\",\n        \"last\": \"/api/algorithm?page=1\"\n    }\n  }\n}",
+          "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Average\"\n    },\n    {\n      \"id\": 2,\n      \"name\": \"Quality check\"\n    },\n    {\n      \"id\": 3,\n      \"name\": \"Cross tabulation\"\n    },\n    {\n      \"id\": 4,\n      \"name\": \"Kaplan Meier\"\n    }\n  ],\n  \"links\": {\n    \"links\": {\n      \"first\": \"/api/algorithm?page=1\",\n      \"self\": \"/api/algorithm?page=1\",\n      \"previous\": \"/api/algorithm?page=1\",\n      \"next\": \"/api/algorithm?page=1\",\n      \"last\": \"/api/algorithm?page=1\"\n    }\n  }\n}",
           "latency": 0,
           "statusCode": 200,
           "label": "- add pagination",
@@ -44,8 +44,8 @@
       "endpoint": "algorithm/:id",
       "responses": [
         {
-          "uuid": "f17b95d1-b089-4a1b-b366-b4933093c4e2",
-          "body": "{\n  \"name\": \"average\",\n  \"url\": \"https://harbor2.vantage6.ai/demo/average\",\n  \"status\": \"approved\",\n  \"vantage6-version\": \"4.0\",\n  \"code-repositoy\": \"https://github.com/IKNL/v6-average-py.git\",\n  \"documentation\": \"https://docs.my-algorithm.ai\",\n  \"partitioning\": \"horizontal\",\n  \"developers\": [\n    \"Henk\",\n    \"Ingrid\"\n  ],\n  \"reviewers\": [\n    \"Charles Kip\"\n  ],\n  \"functions\": [\n    {\n      \"name\": \"central_average\",\n      \"description\": \"Compute average for a number of parties\",\n      \"is_central\": true,\n      \"databases\": [\n        {\n  \t\t\t\t\"name\": \"first_db\"\n  \t\t\t},\n  \t\t\t{\n  \t\t\t\t\"name\": \"second_db\"\n  \t\t\t}\n      ],\n      \"arguments\": [\n        {\n          \"name\": \"string_arg\",\n          \"type\": \"str\",\n          \"description\": \"Test string argument\"\n        },\n        {\n          \"name\": \"number_arg\",\n          \"type\": \"int\",\n          \"description\": \"Test number argument\"\n        },\n        {\n          \"name\": \"float_arg\",\n          \"type\": \"float\",\n          \"description\": \"Test float argument\"\n        }\n      ],\n      \"output\": {\n        \"type\": \"int\",\n        \"visualize\": \"null\"\n      }\n    },\n    {\n      \"name\": \"partial_average\",\n      \"description\": \"Return the data for one party so that central party can compute final average\",\n      \"is_central\": false,\n      \"databases\": [\n        {\n          \"name\": \"main_db\"\n        }\n      ],\n      \"arguments\": [\n        {\n          \"name\": \"column_name\",\n          \"type\": \"str\",\n          \"description\": \"Name of the column to calculate average for\"\n        }\n      ],\n      \"output\": {\n        \"type\": \"dict\",\n        \"keys\": [\n          \"sum\",\n          \"local_count\"\n        ],\n        \"visualize\": \"table\"\n      }\n    }\n  ],\n  \"select\": [\n    {\n      \"function\": \"calculate_age\",\n      \"description\": \"Calculate age from date of birth\",\n      \"parameters\": [\n        {\n          \"name\": \"input_column\",\n          \"type\": \"column\",\n          \"description\": \"Name of column with birthdates.\",\n          \"required\": true\n        },\n        {\n          \"name\": \"output_column\",\n          \"type\": \"string\",\n          \"description\": \"Name of new column with age\",\n          \"required\": false,\n          \"default\": \"age\"\n        },\n        {\n          \"name\": \"keep_original\",\n          \"type\": \"bool\",\n          \"description\": \"Whether to keep the original column or not\",\n          \"required\": false,\n          \"default\": true\n        },\n        {\n          \"name\": \"reference_date\",\n          \"type\": \"date\",\n          \"description\": \"Date on which the age is calculated\",\n          \"required\": false,\n          \"default\": \"today\"\n        }\n      ]\n    }\n  ],\n  \"filter\": [\n    {\n      \"function\": \"filter_range\",\n      \"description\": \"Filter values between minimum and maximum values\",\n      \"parameters\": [\n        {\n          \"name\": \"column\",\n          \"type\": \"column\",\n          \"description\": \"Column to filter on.\",\n          \"required\": true\n        },\n        {\n          \"name\": \"min\",\n          \"type\": \"float\",\n          \"description\": \"Minimum value\",\n          \"required\": false\n        },\n        {\n          \"name\": \"max\",\n          \"type\": \"float\",\n          \"description\": \"Maximum value\",\n          \"required\": false\n        },\n        {\n          \"name\": \"include_min\",\n          \"type\": \"bool\",\n          \"description\": \"Include minimum value\",\n          \"required\": false,\n          \"default\": false\n        },\n        {\n          \"name\": \"include_max\",\n          \"type\": \"bool\",\n          \"description\": \"Include maximum value\",\n          \"required\": false,\n          \"default\": false\n        }\n      ]\n    }\n  ]\n}",
+          "uuid": "069040ad-0e5d-4f11-858a-b9f92b26d76d",
+          "body": "{\n  \"name\": \"average\",\n  \"url\": \"harbor2.vantage6.ai/demo/average\",\n  \"status\": \"approved\",\n  \"vantage6-version\": \"4.0\",\n  \"code-repositoy\": \"https://github.com/IKNL/v6-average-py.git\",\n  \"documentation\": \"https://docs.my-algorithm.ai\",\n  \"partitioning\": \"horizontal\",\n  \"developers\": [\n    \"Henk\",\n    \"Ingrid\"\n  ],\n  \"reviewers\": [\n    \"Charles Kip\"\n  ],\n  \"functions\": [\n    {\n      \"name\": \"central_average\",\n      \"description\": \"Compute average for a number of parties\",\n      \"is_central\": true,\n      \"databases\": [\n        {\n          \"name\": \"Main database\"\n        }\n      ],\n      \"arguments\": [\n        {\n          \"name\": \"column_name\",\n          \"type\": \"str\",\n          \"description\": \"Name of column to compute average over\"\n        }\n      ],\n      \"output\": {\n        \"type\": \"dict\",\n        \"keys\": [\n          \"average\"\n        ],\n        \"visualize\": \"table\"\n      }\n    },\n    {\n      \"name\": \"partial_average\",\n      \"description\": \"Return the data for one party so that central party can compute final average\",\n      \"is_central\": false,\n      \"databases\": [\n        {\n          \"name\": \"Main database\"\n        }\n      ],\n      \"arguments\": [\n        {\n          \"name\": \"column_name\",\n          \"type\": \"str\",\n          \"description\": \"Name of the column to calculate average for\"\n        }\n      ],\n      \"output\": {\n        \"type\": \"dict\",\n        \"keys\": [\n          \"sum\",\n          \"local_count\"\n        ],\n        \"visualize\": \"table\"\n      }\n    }\n  ],\n  \"select\": [\n    {\n      \"function\": \"calculate_age\",\n      \"description\": \"Calculate age from date of birth\",\n      \"parameters\": [\n        {\n          \"name\": \"input_column\",\n          \"type\": \"string\",\n          \"description\": \"Name of column with birthdates.\",\n          \"required\": true\n        },\n        {\n          \"name\": \"output_column\",\n          \"type\": \"string\",\n          \"description\": \"Name of new column with age\",\n          \"required\": false,\n          \"default\": \"age\"\n        },\n        {\n          \"name\": \"keep_original\",\n          \"type\": \"bool\",\n          \"description\": \"Whether to keep the original column or not\",\n          \"required\": false,\n          \"default\": true\n        },\n        {\n          \"name\": \"reference_date\",\n          \"type\": \"date\",\n          \"description\": \"Date on which the age is calculated\",\n          \"required\": false,\n          \"default\": \"today\"\n        }\n      ]\n    }\n  ],\n  \"filter\": [\n    {\n      \"function\": \"filter_range\",\n      \"description\": \"Filter values between minimum and maximum values\",\n      \"parameters\": [\n        {\n          \"name\": \"column\",\n          \"type\": \"string\",\n          \"description\": \"Name of column to filter on.\",\n          \"required\": true\n        },\n        {\n          \"name\": \"min_\",\n          \"type\": \"float\",\n          \"description\": \"Minimum value\",\n          \"required\": false\n        },\n        {\n          \"name\": \"max_\",\n          \"type\": \"float\",\n          \"description\": \"Maximum value\",\n          \"required\": false\n        },\n        {\n          \"name\": \"include_min\",\n          \"type\": \"bool\",\n          \"description\": \"Include minimum value\",\n          \"required\": false,\n          \"default\": false\n        },\n        {\n          \"name\": \"include_max\",\n          \"type\": \"bool\",\n          \"description\": \"Include maximum value\",\n          \"required\": false,\n          \"default\": false\n        }\n      ]\n    }\n  ]\n}",
           "latency": 0,
           "statusCode": 200,
           "label": "",
@@ -455,12 +455,108 @@
       ],
       "enabled": true,
       "responseMode": null
+    },
+    {
+      "uuid": "99f8debd-1765-4dec-a361-8d7e0d01fa9a",
+      "type": "http",
+      "documentation": "Get an algorithm by its id",
+      "method": "get",
+      "endpoint": "algorithm/2",
+      "responses": [
+        {
+          "uuid": "4c289a09-55ae-49a0-a8b2-b801d1ae7ef7",
+          "body": "{\n  \"name\": \"quality check\",\n  \"url\": \"harbor2.vantage6.ai/starter/utils\",\n  \"status\": \"approved\",\n  \"vantage6-version\": \"4.0\",\n  \"code-repositoy\": \"https://github.com/IKNL/v6-average-py.git\",\n  \"documentation\": \"https://docs.my-algorithm.ai\",\n  \"partitioning\": \"horizontal\",\n  \"developers\": [\n    \"Henk\",\n    \"Ingrid\"\n  ],\n  \"reviewers\": [\n    \"Charles Kip\"\n  ],\n  \"functions\": [\n    {\n      \"name\": \"fetch_static_file\",\n      \"description\": \"Recover quality check files\",\n      \"is_central\": false,\n      \"databases\": [],\n      \"arguments\": [\n        {\n          \"name\": \"file_name\",\n          \"type\": \"str\",\n          \"description\": \"Name of the quality check file(s) to recover\"\n        }\n      ],\n      \"output\": {\n        \"type\": \"dict\",\n        \"keys\": [\n          \"average\"\n        ],\n        \"visualize\": \"table\"\n      }\n    }\n  ],\n  \"select\": [\n    {\n      \"function\": \"calculate_age\",\n      \"description\": \"Calculate age from date of birth\",\n      \"parameters\": [\n        {\n          \"name\": \"input_column\",\n          \"type\": \"string\",\n          \"description\": \"Name of column with birthdates.\",\n          \"required\": true\n        },\n        {\n          \"name\": \"output_column\",\n          \"type\": \"string\",\n          \"description\": \"Name of new column with age\",\n          \"required\": false,\n          \"default\": \"age\"\n        },\n        {\n          \"name\": \"keep_original\",\n          \"type\": \"bool\",\n          \"description\": \"Whether to keep the original column or not\",\n          \"required\": false,\n          \"default\": true\n        },\n        {\n          \"name\": \"reference_date\",\n          \"type\": \"date\",\n          \"description\": \"Date on which the age is calculated\",\n          \"required\": false,\n          \"default\": \"today\"\n        }\n      ]\n    }\n  ],\n  \"filter\": [\n    {\n      \"function\": \"filter_range\",\n      \"description\": \"Filter values between minimum and maximum values\",\n      \"parameters\": [\n        {\n          \"name\": \"column\",\n          \"type\": \"string\",\n          \"description\": \"Name of column to filter on.\",\n          \"required\": true\n        },\n        {\n          \"name\": \"min_\",\n          \"type\": \"float\",\n          \"description\": \"Minimum value\",\n          \"required\": false\n        },\n        {\n          \"name\": \"max_\",\n          \"type\": \"float\",\n          \"description\": \"Maximum value\",\n          \"required\": false\n        },\n        {\n          \"name\": \"include_min\",\n          \"type\": \"bool\",\n          \"description\": \"Include minimum value\",\n          \"required\": false,\n          \"default\": false\n        },\n        {\n          \"name\": \"include_max\",\n          \"type\": \"bool\",\n          \"description\": \"Include maximum value\",\n          \"required\": false,\n          \"default\": false\n        }\n      ]\n    }\n  ]\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true
+        }
+      ],
+      "enabled": true,
+      "responseMode": null
+    },
+    {
+      "uuid": "1b5f1fd3-c49f-49e8-a7bb-9e0a277a214e",
+      "type": "http",
+      "documentation": "Get an algorithm by its id",
+      "method": "get",
+      "endpoint": "algorithm/3",
+      "responses": [
+        {
+          "uuid": "ccac2852-aa93-4633-b5ce-eaf6a788a3f0",
+          "body": "{\n  \"name\": \"Cross tabulation\",\n  \"url\": \"harbor2.vantage6.ai/starter/crosstab\",\n  \"status\": \"approved\",\n  \"vantage6-version\": \"4.0\",\n  \"code-repositoy\": \"https://github.com/IKNL/v6-average-py.git\",\n  \"documentation\": \"https://docs.my-algorithm.ai\",\n  \"partitioning\": \"horizontal\",\n  \"developers\": [\n    \"Henk\",\n    \"Ingrid\"\n  ],\n  \"reviewers\": [\n    \"Charles Kip\"\n  ],\n  \"functions\": [\n    {\n      \"name\": \"dct\",\n      \"description\": \"Create a data cross tabulation\",\n      \"is_central\": true,\n      \"databases\": [\n        {\n          \"name\": \"Main database\"\n        }\n      ],\n      \"arguments\": [\n        {\n          \"name\": \"group_by_columns\",\n          \"type\": \"column\",\n          \"description\": \"Columns to group by before algorithm\"\n        },\n        {\n          \"name\": \"organizations_to_include\",\n          \"type\": \"list\",\n          \"description\": \"List of organizations to include in the computation\"\n        }\n      ],\n      \"output\": {\n        \"type\": \"dict\",\n        \"keys\": [\n          \"average\"\n        ],\n        \"visualize\": \"table\"\n      }\n    }\n  ],\n  \"select\": [\n    {\n      \"function\": \"calculate_age\",\n      \"description\": \"Calculate age from date of birth\",\n      \"parameters\": [\n        {\n          \"name\": \"input_column\",\n          \"type\": \"string\",\n          \"description\": \"Name of column with birthdates.\",\n          \"required\": true\n        },\n        {\n          \"name\": \"output_column\",\n          \"type\": \"string\",\n          \"description\": \"Name of new column with age\",\n          \"required\": false,\n          \"default\": \"age\"\n        },\n        {\n          \"name\": \"keep_original\",\n          \"type\": \"bool\",\n          \"description\": \"Whether to keep the original column or not\",\n          \"required\": false,\n          \"default\": true\n        },\n        {\n          \"name\": \"reference_date\",\n          \"type\": \"date\",\n          \"description\": \"Date on which the age is calculated\",\n          \"required\": false,\n          \"default\": \"today\"\n        }\n      ]\n    }\n  ],\n  \"filter\": [\n    {\n      \"function\": \"filter_range\",\n      \"description\": \"Filter values between minimum and maximum values\",\n      \"parameters\": [\n        {\n          \"name\": \"column\",\n          \"type\": \"string\",\n          \"description\": \"Name of column to filter on.\",\n          \"required\": true\n        },\n        {\n          \"name\": \"min_\",\n          \"type\": \"float\",\n          \"description\": \"Minimum value\",\n          \"required\": false\n        },\n        {\n          \"name\": \"max_\",\n          \"type\": \"float\",\n          \"description\": \"Maximum value\",\n          \"required\": false\n        },\n        {\n          \"name\": \"include_min\",\n          \"type\": \"bool\",\n          \"description\": \"Include minimum value\",\n          \"required\": false,\n          \"default\": false\n        },\n        {\n          \"name\": \"include_max\",\n          \"type\": \"bool\",\n          \"description\": \"Include maximum value\",\n          \"required\": false,\n          \"default\": false\n        }\n      ]\n    }\n  ]\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true
+        }
+      ],
+      "enabled": true,
+      "responseMode": null
+    },
+    {
+      "uuid": "51ba400e-da10-49ef-a16d-d170875605c7",
+      "type": "http",
+      "documentation": "Get an algorithm by its id",
+      "method": "get",
+      "endpoint": "algorithm/4",
+      "responses": [
+        {
+          "uuid": "6594c509-d17a-48bf-82cd-b702b9392c8b",
+          "body": "{\n  \"name\": \"average\",\n  \"url\": \"harbor2.vantage6.ai/starter/survfit\",\n  \"status\": \"approved\",\n  \"vantage6-version\": \"4.0\",\n  \"code-repositoy\": \"https://github.com/IKNL/v6-average-py.git\",\n  \"documentation\": \"https://docs.my-algorithm.ai\",\n  \"partitioning\": \"horizontal\",\n  \"developers\": [\n    \"Henk\",\n    \"Ingrid\"\n  ],\n  \"reviewers\": [\n    \"Charles Kip\"\n  ],\n  \"functions\": [\n    {\n      \"name\": \"dsurvfit\",\n      \"description\": \"Compute Kaplan-Meier curve\",\n      \"is_central\": true,\n      \"databases\": [\n        {\n          \"name\": \"Main database\"\n        }\n      ],\n      \"arguments\": [\n        {\n          \"name\": \"time_column\",\n          \"type\": \"column\",\n          \"description\": \"Name of time column\"\n        },\n        {\n          \"name\": \"event_column\",\n          \"type\": \"column\",\n          \"description\": \"Name of column with the event\"\n        },\n        {\n          \"name\": \"stratifier_column\",\n          \"type\": \"column\",\n          \"description\": \"Name of column to stratify\"\n        },\n        {\n          \"name\": \"conf.int\",\n          \"type\": \"number\",\n          \"description\": \"Confidence interval\",\n          \"required\": false,\n          \"default\": 0.95\n        }\n      ],\n      \"output\": {\n        \"type\": \"dict\",\n        \"keys\": [\n          \"average\"\n        ],\n        \"visualize\": \"table\"\n      }\n    },\n    {\n      \"name\": \"partial_average\",\n      \"description\": \"Return the data for one party so that central party can compute final average\",\n      \"is_central\": false,\n      \"databases\": [\n        {\n          \"name\": \"Main database\"\n        }\n      ],\n      \"arguments\": [\n        {\n          \"name\": \"column_name\",\n          \"type\": \"str\",\n          \"description\": \"Name of the column to calculate average for\"\n        }\n      ],\n      \"output\": {\n        \"type\": \"dict\",\n        \"keys\": [\n          \"sum\",\n          \"local_count\"\n        ],\n        \"visualize\": \"table\"\n      }\n    }\n  ],\n  \"select\": [\n    {\n      \"function\": \"calculate_age\",\n      \"description\": \"Calculate age from date of birth\",\n      \"parameters\": [\n        {\n          \"name\": \"input_column\",\n          \"type\": \"string\",\n          \"description\": \"Name of column with birthdates.\",\n          \"required\": true\n        },\n        {\n          \"name\": \"output_column\",\n          \"type\": \"string\",\n          \"description\": \"Name of new column with age\",\n          \"required\": false,\n          \"default\": \"age\"\n        },\n        {\n          \"name\": \"keep_original\",\n          \"type\": \"bool\",\n          \"description\": \"Whether to keep the original column or not\",\n          \"required\": false,\n          \"default\": true\n        },\n        {\n          \"name\": \"reference_date\",\n          \"type\": \"date\",\n          \"description\": \"Date on which the age is calculated\",\n          \"required\": false,\n          \"default\": \"today\"\n        }\n      ]\n    }\n  ],\n  \"filter\": [\n    {\n      \"function\": \"filter_range\",\n      \"description\": \"Filter values between minimum and maximum values\",\n      \"parameters\": [\n        {\n          \"name\": \"column\",\n          \"type\": \"string\",\n          \"description\": \"Name of column to filter on.\",\n          \"required\": true\n        },\n        {\n          \"name\": \"min_\",\n          \"type\": \"float\",\n          \"description\": \"Minimum value\",\n          \"required\": false\n        },\n        {\n          \"name\": \"max_\",\n          \"type\": \"float\",\n          \"description\": \"Maximum value\",\n          \"required\": false\n        },\n        {\n          \"name\": \"include_min\",\n          \"type\": \"bool\",\n          \"description\": \"Include minimum value\",\n          \"required\": false,\n          \"default\": false\n        },\n        {\n          \"name\": \"include_max\",\n          \"type\": \"bool\",\n          \"description\": \"Include maximum value\",\n          \"required\": false,\n          \"default\": false\n        }\n      ]\n    }\n  ]\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true
+        }
+      ],
+      "enabled": true,
+      "responseMode": null
     }
   ],
   "rootChildren": [
     {
       "type": "route",
       "uuid": "df784ad1-390f-4796-a731-ef9769ba4630"
+    },
+    {
+      "type": "route",
+      "uuid": "99f8debd-1765-4dec-a361-8d7e0d01fa9a"
+    },
+    {
+      "type": "route",
+      "uuid": "1b5f1fd3-c49f-49e8-a7bb-9e0a277a214e"
+    },
+    {
+      "type": "route",
+      "uuid": "51ba400e-da10-49ef-a16d-d170875605c7"
     },
     {
       "type": "route",
