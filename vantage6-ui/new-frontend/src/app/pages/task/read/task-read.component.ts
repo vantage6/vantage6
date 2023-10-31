@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { getChipTypeForStatus, getStatusInfoTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
 import { Algorithm, Function, Output } from 'src/app/models/api/algorithm.model';
@@ -14,6 +14,7 @@ import { ConfirmDialog } from 'src/app/components/dialogs/confirm/confirm-dialog
 import { FormControl } from '@angular/forms';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-task-read',
@@ -21,9 +22,10 @@ import { PermissionService } from 'src/app/services/permission.service';
   styleUrls: ['./task-read.component.scss'],
   host: { '[class.card-container]': 'true' }
 })
-export class TaskReadComponent implements OnInit {
+export class TaskReadComponent implements OnInit, OnDestroy {
   @Input() id = '';
 
+  destroy$ = new Subject();
   routes = routePaths;
 
   visualization = new FormControl(0);
@@ -55,6 +57,10 @@ export class TaskReadComponent implements OnInit {
       this.selectedOutput = this.function?.output?.[value || 0] || null;
     });
     await this.initData();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next(true);
   }
 
   async initData(): Promise<void> {
@@ -126,13 +132,16 @@ export class TaskReadComponent implements OnInit {
       }
     });
 
-    dialogRef.afterClosed().subscribe(async (result) => {
-      if (result === true) {
-        if (!this.task) return;
-        this.isLoading = true;
-        await this.taskService.deleteTask(this.task.id);
-        this.router.navigate([routePaths.tasks]);
-      }
-    });
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(async (result) => {
+        if (result === true) {
+          if (!this.task) return;
+          this.isLoading = true;
+          await this.taskService.deleteTask(this.task.id);
+          this.router.navigate([routePaths.tasks]);
+        }
+      });
   }
 }

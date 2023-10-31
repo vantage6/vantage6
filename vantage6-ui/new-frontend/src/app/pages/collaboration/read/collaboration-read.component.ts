@@ -1,7 +1,8 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Subject, takeUntil } from 'rxjs';
 import { ConfirmDialog } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { Collaboration, CollaborationLazyProperties } from 'src/app/models/api/collaboration.model';
 import { NodeStatus } from 'src/app/models/api/node.model';
@@ -16,7 +17,8 @@ import { PermissionService } from 'src/app/services/permission.service';
   styleUrls: ['./collaboration-read.component.scss'],
   host: { '[class.card-container]': 'true' }
 })
-export class CollaborationReadComponent implements OnInit {
+export class CollaborationReadComponent implements OnInit, OnDestroy {
+  destroy$ = new Subject();
   nodeStatus = NodeStatus;
   routes = routePaths;
 
@@ -41,6 +43,10 @@ export class CollaborationReadComponent implements OnInit {
     await this.initData();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next(true);
+  }
+
   private async initData(): Promise<void> {
     this.collaboration = await this.collaborationService.getCollaboration(this.id, [
       CollaborationLazyProperties.Organizations,
@@ -61,13 +67,16 @@ export class CollaborationReadComponent implements OnInit {
       }
     });
 
-    dialogRef.afterClosed().subscribe(async (result) => {
-      if (result === true) {
-        if (!this.collaboration) return;
-        this.isLoading = true;
-        await this.collaborationService.deleteCollaboration(this.collaboration.id.toString());
-        this.router.navigate([routePaths.collaborations]);
-      }
-    });
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(async (result) => {
+        if (result === true) {
+          if (!this.collaboration) return;
+          this.isLoading = true;
+          await this.collaborationService.deleteCollaboration(this.collaboration.id.toString());
+          this.router.navigate([routePaths.collaborations]);
+        }
+      });
   }
 }

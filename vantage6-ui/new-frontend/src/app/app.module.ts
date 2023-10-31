@@ -65,6 +65,8 @@ import { UserFormComponent } from './components/user-form/user-form/user-form.co
 import { UserEditComponent } from './pages/user/edit/user-edit.component';
 import { VisualizeHistogramComponent } from './components/visualize-histogram/visualize-histogram.component';
 import { PreprocessingStepComponent } from './pages/task/create/steps/preprocessing-step/preprocessing-step.component';
+import { ChangePasswordComponent } from './pages/change-password/change-password.component';
+import { MessageDialog } from './components/dialogs/message-dialog/message-dialog.component';
 import { FilterStepComponent } from './pages/task/create/steps/filter-step/filter-step.component';
 import { NumberOnlyDirective } from './directives/numberOnly.directive';
 
@@ -110,6 +112,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     UserEditComponent,
     VisualizeHistogramComponent,
     PreprocessingStepComponent,
+    ChangePasswordComponent,
+    MessageDialog,
     FilterStepComponent,
     NumberOnlyDirective
   ],
