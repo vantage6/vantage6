@@ -216,18 +216,22 @@
     "username": "Username",
     "password": "Password"
   },
+  "change-password": {
+    "title": "Change password",
+    "old-password": "Old password",
+    "new-password": "New password",
+    "new-password-repeat": "Repeat new password",
+    "success-dialog": {
+      "title": "Password changed",
+      "message": "Your password has been changed successfully."
+    }
+  },
   "password": {
     "validation": {
       "compare": "Passwords do not match",
       "roles-unavailable": "Select an organization to determine available roles",
       "length": "Password must be at least 8 characters long",
       "pattern": "Password must contain a lowercase letter, uppercase letter, number and special character"
-    },
-    "change": {
-      "title": "Change password",
-      "old-password": "Old password",
-      "new-password": "New password",
-      "new-password-repeat": "Repeat new password"
     }
   }
 }

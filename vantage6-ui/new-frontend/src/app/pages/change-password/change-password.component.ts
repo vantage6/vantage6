@@ -1,15 +1,15 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { Subject } from 'rxjs';
-import { Location } from '@angular/common';
+import { Subject, takeUntil } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 
-import { ChangePassword } from 'src/app/models/api/auth.model';
 import { PASSWORD_VALIDATORS } from 'src/app/models/constants/password_validators';
-import { ApiService } from 'src/app/services/api.service';
 import { createCompareValidator } from 'src/app/validators/compare.validator';
 import { MessageDialog } from 'src/app/components/dialogs/message-dialog/message-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
+import { Router } from '@angular/router';
+import { routePaths } from 'src/app/routes';
+import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
   selector: 'app-change-password',
@@ -17,12 +17,12 @@ import { TranslateService } from '@ngx-translate/core';
   styleUrls: ['./change-password.component.scss'],
   host: { '[class.card-container]': 'true' }
 })
-export class ChangePasswordComponent implements OnInit, OnDestroy {
+export class ChangePasswordComponent implements OnDestroy {
   destroy$ = new Subject();
   form = this.fb.nonNullable.group(
     {
       oldPassword: ['', [Validators.required]],
-      newPassword: ['', PASSWORD_VALIDATORS],
+      newPassword: ['', [Validators.required, ...PASSWORD_VALIDATORS]],
       newPasswordRepeat: ['', [Validators.required]]
     },
     { validators: [createCompareValidator('newPassword', 'newPasswordRepeat')] }
@@ -30,45 +30,45 @@ export class ChangePasswordComponent implements OnInit, OnDestroy {
 
   constructor(
     private fb: FormBuilder,
-    private location: Location,
+    private router: Router,
     private dialog: MatDialog,
     private translateService: TranslateService,
-    private apiService: ApiService
+    private authService: AuthService
   ) {}
-
-  async ngOnInit(): Promise<void> {}
 
   ngOnDestroy(): void {
     this.destroy$.next(true);
   }
 
-  async handleSubmit() {
+  async handleSubmit(): Promise<void> {
     if (this.form.valid) {
-      const result = await this.apiService.patchForApi<ChangePassword>('/password/change', {
-        current_password: this.form.controls.oldPassword.value,
-        new_password: this.form.controls.newPassword.value
-      });
+      this.authService.changePassword(this.form.controls.oldPassword.value, this.form.controls.newPassword.value);
+
       const dialogRef = this.dialog.open(MessageDialog, {
         data: {
-          title: 'Password changed',
-          content: 'Your password has been changed successfully.',
+          title: this.translateService.instant('change-password.success-dialog.title'),
+          content: this.translateService.instant('change-password.success-dialog.message'),
           confirmButtonText: this.translateService.instant('general.close'),
           confirmButtonType: 'primary'
         }
       });
 
-      dialogRef.afterClosed().subscribe(() => {
-        this.goToPreviousPage();
-      });
+      dialogRef
+        .afterClosed()
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(() => {
+          this.goToPreviousPage();
+        });
       // TODO handle errors
     }
   }
 
-  handleCancel() {
+  handleCancel(): void {
     this.goToPreviousPage();
   }
 
-  goToPreviousPage() {
-    this.location.back();
+  private goToPreviousPage(): void {
+    //TODO: Navigate to profile page
+    this.router.navigate([routePaths.start]);
   }
 }

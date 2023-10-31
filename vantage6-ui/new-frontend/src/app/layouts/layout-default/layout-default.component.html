@@ -9,7 +9,7 @@
       <mat-icon>person</mat-icon>
     </button>
     <mat-menu #headerMenu="matMenu">
-      <button mat-menu-item (click)="handleChangePasswordClick()">
+      <button mat-menu-item [routerLink]="routes.passwordChange">
         <mat-icon>key</mat-icon>
         <span>{{ "header.actions.change_password" | translate }}</span>
       </button>

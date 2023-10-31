@@ -23,7 +23,7 @@ export class UserFormComponent implements OnInit, OnDestroy {
     {
       username: ['', [Validators.required]],
       email: ['', [Validators.required]],
-      password: ['', PASSWORD_VALIDATORS],
+      password: ['', [Validators.required, ...PASSWORD_VALIDATORS]],
       passwordRepeat: ['', [Validators.required]],
       firstname: '',
       lastname: '',

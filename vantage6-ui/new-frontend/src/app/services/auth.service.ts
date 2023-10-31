@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { LoginForm } from '../models/forms/login-form.model';
 import { ApiService } from './api.service';
-import { Login } from '../models/api/auth.model';
+import { ChangePassword, Login } from '../models/api/auth.model';
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_ID } from '../models/constants/sessionStorage';
 import { PermissionService } from './permission.service';
 
@@ -13,16 +13,6 @@ export class AuthService {
     private apiService: ApiService,
     private permissionService: PermissionService
   ) {}
-
-  async login(loginForm: LoginForm): Promise<boolean> {
-    const data = {
-      username: loginForm.username,
-      password: loginForm.password
-    };
-    const result = await this.apiService.postForApi<Login>('/token/user', data);
-    this.setSession(result);
-    return await this.isAuthenticated();
-  }
 
   async isAuthenticated(): Promise<boolean> {
     const token = sessionStorage.getItem(ACCESS_TOKEN_KEY);
@@ -37,8 +27,25 @@ export class AuthService {
     return !isExpired;
   }
 
+  async login(loginForm: LoginForm): Promise<boolean> {
+    const data = {
+      username: loginForm.username,
+      password: loginForm.password
+    };
+    const result = await this.apiService.postForApi<Login>('/token/user', data);
+    this.setSession(result);
+    return await this.isAuthenticated();
+  }
+
   logout(): void {
     this.clearSession();
+  }
+
+  async changePassword(oldPassword: string, newPassword: string): Promise<void> {
+    await this.apiService.patchForApi<ChangePassword>('/password/change', {
+      current_password: oldPassword,
+      new_password: newPassword
+    });
   }
 
   private setSession(result: Login): void {
