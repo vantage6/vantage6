@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { LoginForm } from '../models/forms/login-form.model';
 import { ApiService } from './api.service';
-import { Login } from '../models/api/login.model';
+import { Login } from '../models/api/auth.model';
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_ID } from '../models/constants/sessionStorage';
 import { PermissionService } from './permission.service';
 

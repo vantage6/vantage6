@@ -3,3 +3,7 @@ export interface Login {
   refresh_token: string;
   user_url: string;
 }
+
+export interface ChangePassword {
+  msg: string;
+}

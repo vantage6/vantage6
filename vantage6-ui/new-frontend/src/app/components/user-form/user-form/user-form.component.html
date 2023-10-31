@@ -11,13 +11,13 @@
     <mat-form-field *ngIf="!isEdit" subscriptSizing="dynamic">
       <mat-label>{{ "user.password" | translate }}</mat-label>
       <input matInput type="password" formControlName="password" />
-      <mat-error *ngIf="form.controls.password.hasError('minlength')">{{ "general.validation.password-length" | translate }}</mat-error>
-      <mat-error *ngIf="form.controls.password.hasError('pattern')">{{ "general.validation.password-pattern" | translate }}</mat-error>
+      <mat-error *ngIf="form.controls.password.hasError('minlength')">{{ "password.validation.length" | translate }}</mat-error>
+      <mat-error *ngIf="form.controls.password.hasError('pattern')">{{ "password.validation.pattern" | translate }}</mat-error>
     </mat-form-field>
     <mat-form-field *ngIf="!isEdit" subscriptSizing="dynamic">
       <mat-label>{{ "user.password-repeat" | translate }}</mat-label>
       <input matInput type="password" formControlName="passwordRepeat" />
-      <mat-error *ngIf="form.hasError('compare')">{{ "user-create.validation.password-compare" | translate }}</mat-error>
+      <mat-error *ngIf="form.hasError('compare')">{{ "password.validation.compare" | translate }}</mat-error>
     </mat-form-field>
     <mat-form-field subscriptSizing="dynamic">
       <mat-label>{{ "user.first-name" | translate }}</mat-label>
@@ -42,7 +42,7 @@
           {{ role.name }}
         </mat-option>
       </mat-select>
-      <mat-hint *ngIf="form.controls.organization_id.invalid">{{ "user-create.validation.roles-unavailable" | translate }}</mat-hint>
+      <mat-hint *ngIf="form.controls.organization_id.invalid">{{ "password.validation.roles-unavailable" | translate }}</mat-hint>
     </mat-form-field>
     <div class="button-container">
       <button mat-flat-button type="submit" color="primary">{{ "general.submit" | translate }}</button>

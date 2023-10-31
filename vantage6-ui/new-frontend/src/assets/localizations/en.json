@@ -12,11 +12,8 @@
     "no": "No",
     "offline": "Offline",
     "none": "None",
-    "visualization": "Visualization",
-    "validation": {
-      "password-length": "Password must be at least 8 characters long",
-      "password-pattern": "Password must contain a lowercase letter, uppercase letter, number and special character"
-    }
+    "id": "ID",
+    "visualization": "Visualization"
   },
   "task": {
     "algorithm": "Algorithm",
@@ -156,11 +153,7 @@
     "title": "Users"
   },
   "user-create": {
-    "title": "Create user",
-    "validation": {
-      "password-compare": "Passwords do not match",
-      "roles-unavailable": "Select an organization to determine available roles"
-    }
+    "title": "Create user"
   },
   "user-read": {
     "card-details": {
@@ -207,12 +200,27 @@
     "actions": {
       "admin": "Administration",
       "admin-leave": "Leave administration",
-      "logout": "Logout"
+      "logout": "Logout",
+      "change_password": "Change password"
     }
   },
   "login": {
     "title": "Login",
     "username": "Username",
     "password": "Password"
+  },
+  "password": {
+    "validation": {
+      "compare": "Passwords do not match",
+      "roles-unavailable": "Select an organization to determine available roles",
+      "length": "Password must be at least 8 characters long",
+      "pattern": "Password must contain a lowercase letter, uppercase letter, number and special character"
+    },
+    "change": {
+      "title": "Change password",
+      "old-password": "Old password",
+      "new-password": "New password",
+      "new-password-repeat": "Repeat new password"
+    }
   }
 }

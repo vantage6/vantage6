@@ -4,6 +4,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { BaseOrganization, OrganizationSortProperties } from 'src/app/models/api/organization.model';
 import { Role } from 'src/app/models/api/role.model';
 import { User, UserForm } from 'src/app/models/api/user.model';
+import { PASSWORD_VALIDATORS } from 'src/app/models/constants/password_validators';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { createCompareValidator } from 'src/app/validators/compare.validator';
 
@@ -22,17 +23,7 @@ export class UserFormComponent implements OnInit, OnDestroy {
     {
       username: ['', [Validators.required]],
       email: ['', [Validators.required]],
-      password: [
-        '',
-        [
-          Validators.required,
-          Validators.minLength(8),
-          Validators.pattern(/(?=.*[A-Z])/),
-          Validators.pattern(/(?=.*[a-z])/),
-          Validators.pattern(/(?=.*\d)/),
-          Validators.pattern(/(?=.*\W)/)
-        ]
-      ],
+      password: ['', PASSWORD_VALIDATORS],
       passwordRepeat: ['', [Validators.required]],
       firstname: '',
       lastname: '',

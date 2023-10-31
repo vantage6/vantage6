@@ -23,6 +23,7 @@ import { NodeReadComponent } from './pages/node/read/node-read.component';
 import { OrganizationEditComponent } from './pages/organization/edit/organization-edit.component';
 import { CollaborationEditComponent } from './pages/collaboration/edit/collaboration-edit.component';
 import { UserEditComponent } from './pages/user/edit/user-edit.component';
+import { ChangePasswordComponent } from './pages/change-password/change-password.component';
 
 const routes: Routes = [
   {
@@ -62,6 +63,11 @@ const routes: Routes = [
       {
         path: routerConfig.task,
         component: TaskReadComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
+        path: routerConfig.passwordChange,
+        component: ChangePasswordComponent,
         canActivate: [authenticationGuard()]
       }
     ]

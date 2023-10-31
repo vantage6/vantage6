@@ -119,4 +119,8 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
     this.authService.logout();
     this.router.navigate([routePaths.login]);
   }
+
+  handleChangePasswordClick() {
+    this.router.navigate([routePaths.passwordChange]);
+  }
 }
