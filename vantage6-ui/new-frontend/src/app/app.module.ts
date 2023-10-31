@@ -70,6 +70,7 @@ import { MessageDialogComponent } from './components/dialogs/message-dialog/mess
 import { FilterStepComponent } from './pages/task/create/steps/filter-step/filter-step.component';
 import { NumberOnlyDirective } from './directives/numberOnly.directive';
 import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
+import { TemplateTaskCreateComponent } from './pages/template-task/create/template-task-create.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -117,7 +118,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     MessageDialogComponent,
     FilterStepComponent,
     NumberOnlyDirective,
-    BreadcrumbsComponent
+    BreadcrumbsComponent,
+    TemplateTaskCreateComponent
   ],
   imports: [
     BrowserModule,

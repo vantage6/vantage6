@@ -1,5 +1,5 @@
 {
-  "uuid": "798b2860-a605-42c9-97f1-c2e4b5a4d056",
+  "uuid": "945630a9-8014-401b-845d-3c1e5ed83907",
   "lastMigration": 27,
   "name": "Algo store",
   "endpointPrefix": "",
@@ -9,15 +9,15 @@
   "folders": [],
   "routes": [
     {
-      "uuid": "df784ad1-390f-4796-a731-ef9769ba4630",
+      "uuid": "0732da52-2a1b-4a9e-8f50-001853d7c6cd",
       "type": "http",
       "documentation": "Get list of algorithms - maybe need a separate endpoint for approved algorithm to prevent complicated permission checks",
       "method": "get",
       "endpoint": "algorithm",
       "responses": [
         {
-          "uuid": "ff11c27b-b9bc-4e7d-be57-308a9c598e56",
-          "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Average\"\n    },\n    {\n      \"id\": 2,\n      \"name\": \"Quality check\"\n    },\n    {\n      \"id\": 3,\n      \"name\": \"Cross tabulation\"\n    },\n    {\n      \"id\": 4,\n      \"name\": \"Kaplan Meier\"\n    }\n  ],\n  \"links\": {\n    \"links\": {\n      \"first\": \"/api/algorithm?page=1\",\n      \"self\": \"/api/algorithm?page=1\",\n      \"previous\": \"/api/algorithm?page=1\",\n      \"next\": \"/api/algorithm?page=1\",\n      \"last\": \"/api/algorithm?page=1\"\n    }\n  }\n}",
+          "uuid": "35176721-b7e0-45bc-a548-b7662ef076bf",
+          "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Average\",\n      \"url\": \"harbor2.vantage6.ai/demo/average\"\n    },\n    {\n      \"id\": 2,\n      \"name\": \"Quality check\",\n      \"url\": \"harbor2.vantage6.ai/starter/utils\"\n    },\n    {\n      \"id\": 3,\n      \"name\": \"Cross tabulation\",\n      \"url\": \"harbor2.vantage6.ai/starter/crosstab\"\n    },\n    {\n      \"id\": 4,\n      \"name\": \"Kaplan Meier\",\n      \"url\": \"harbor2.vantage6.ai/starter/survfit\"\n    }\n  ],\n  \"links\": {\n    \"links\": {\n      \"first\": \"/api/algorithm?page=1\",\n      \"self\": \"/api/algorithm?page=1\",\n      \"previous\": \"/api/algorithm?page=1\",\n      \"next\": \"/api/algorithm?page=1\",\n      \"last\": \"/api/algorithm?page=1\"\n    }\n  }\n}",
           "latency": 0,
           "statusCode": 200,
           "label": "- add pagination",
@@ -37,7 +37,7 @@
       "responseMode": null
     },
     {
-      "uuid": "d10d1b34-180a-46f3-8553-050f13b3442b",
+      "uuid": "0d6a094b-c41e-4b4e-929a-6651e984b3c5",
       "type": "http",
       "documentation": "Get an algorithm by its id",
       "method": "get",
@@ -65,14 +65,14 @@
       "responseMode": null
     },
     {
-      "uuid": "6697e450-fa87-470c-92af-6f02d14a0445",
+      "uuid": "e8e2c5ed-c476-4e91-92b5-9760a90e89f7",
       "type": "http",
       "documentation": "Submit an algorithm using git repo link",
       "method": "post",
       "endpoint": "algorithm/code/public",
       "responses": [
         {
-          "uuid": "bb425f83-b156-45c3-8998-7ac373f22806",
+          "uuid": "d08e8a8e-557d-4736-ac5e-6396fcc0d6db",
           "body": "{\n  \"name\": \"average\",\n  \"code-repositoy\": \"https://github.com/IKNL/v6-average-py.git\", // optional, alternatively update a file in \"code-zip\" field\n  \"documentation\": \"https://docs.my-algorithm.ai\", // \"none\"\n  \"partitioning\": \"horizontal\", // \"vertical\", \"none\" - not sure we need this in the image\n  \"functions\": [\n    {\n      // part of these fields we may already be able to check for automatically...\n      \"name\": \"central_average\",\n      \"is_central\": true, // this is just to help users of the algorithm to discern what type of function they're calling\n      \"databases\": [\n        {\n          \"name\": \"first_db\"\n        }, // this format allows for clarifying which databases should be entered by the user\n      ],\n      \"arguments\": [\n        {\n          \"name\": \"column_name\",\n          \"type\": \"str\",\n          \"description\": \"Name of the column to calculate average for\"\n        }\n      ],\n      \"output\": {\n        \"type\": \"int\",\n        \"visualize\": \"null\"\n      }\n    }, {\n      \"name\": \"partial_average\",\n      \"is_central\": false,\n      \"arguments\": [\n        {\n          \"name\": \"column_name\",\n          \"type\": \"str\",\n          \"description\": \"Name of the column to calculate average for\"\n        }\n      ],\n      \"output\": {\n        \"type\": \"dict\",\n        \"keys\": [\n          \"sum\",\n          \"local_count\"\n        ],\n        \"visualize\": \"table\"\n      }\n    }\n  ]\n}",
           "latency": 0,
           "statusCode": 200,
@@ -93,14 +93,14 @@
       "responseMode": null
     },
     {
-      "uuid": "f2a25cf3-7bf2-4889-ab00-7b04ec09e7b7",
+      "uuid": "39dfda6f-0c30-4c2e-8a6f-7a9ce2efc30c",
       "type": "http",
       "documentation": "Submit algorithm using existing Docker image or URL to it",
       "method": "post",
       "endpoint": "algorithm/image",
       "responses": [
         {
-          "uuid": "a465e315-61b2-4206-8bbb-379e8b61ea89",
+          "uuid": "2dae8c3e-8f07-4d91-84b9-a1e7bc91e011",
           "body": "{\n  // This endpoint may use all of the same fields as POST /algorithm/code, but all are optional\n  // They are optional only if a metadata file is already in the YAML, otherwise should\n  // return an error which metadata is missing\n}",
           "latency": 0,
           "statusCode": 200,
@@ -121,14 +121,14 @@
       "responseMode": null
     },
     {
-      "uuid": "135f2e08-887e-49f7-aec1-12c61f2feebd",
+      "uuid": "d83621f8-240d-4623-a77a-b2c0c2dd8f06",
       "type": "http",
       "documentation": "Update metadata on an algorithm - e.g. how often it has been run",
       "method": "patch",
       "endpoint": "algorithm/:id",
       "responses": [
         {
-          "uuid": "201eff20-3412-4636-96ab-f27484f47941",
+          "uuid": "8cee1cbd-fffb-4a92-a451-5a72dcdff236",
           "body": "{}",
           "latency": 0,
           "statusCode": 200,
@@ -149,14 +149,14 @@
       "responseMode": null
     },
     {
-      "uuid": "1378ea73-d772-4074-b7dd-c7c938152773",
+      "uuid": "4e39e2be-c7fe-4817-aecf-090405b10f06",
       "type": "http",
       "documentation": "Delete algorithm from the store",
       "method": "delete",
       "endpoint": "algorithm/:id",
       "responses": [
         {
-          "uuid": "204cf035-0d62-46f7-8d07-3685e1e0e71d",
+          "uuid": "5b6e5cb0-3c89-44d9-94c2-ae031caa77bd",
           "body": "{}",
           "latency": 0,
           "statusCode": 200,
@@ -177,14 +177,14 @@
       "responseMode": null
     },
     {
-      "uuid": "d60a4ed1-de9e-46a9-bd5b-ca20c78bd71c",
+      "uuid": "c1588997-56a5-4246-9320-1849253d0952",
       "type": "http",
       "documentation": "Approve or reject algorithm under review -> should also be called by store manager",
       "method": "patch",
       "endpoint": "review/:id",
       "responses": [
         {
-          "uuid": "24e8fed5-1da6-45aa-9c64-3902c52a42d6",
+          "uuid": "a878a2a1-1e29-4fc5-82f2-6bc4c75587ed",
           "body": "{}",
           "latency": 0,
           "statusCode": 200,
@@ -205,14 +205,14 @@
       "responseMode": null
     },
     {
-      "uuid": "513e63be-fefc-42d8-8620-75e0000b7a3b",
+      "uuid": "2cabb16c-9346-441b-bd8f-be9e6e64e17c",
       "type": "http",
       "documentation": "Assign one or more reviewers to a certain algorithm",
       "method": "post",
       "endpoint": "review",
       "responses": [
         {
-          "uuid": "4b8a1d42-4708-4d5d-ad34-3254a56f28eb",
+          "uuid": "2d60c714-d4ad-4c8d-a2f6-29c00e72b068",
           "body": "{\n  \"algorithm_id\": 1,\n  \"reviewer_ids\": [\n    1,\n    2\n  ]\n}",
           "latency": 0,
           "statusCode": 200,
@@ -233,14 +233,14 @@
       "responseMode": null
     },
     {
-      "uuid": "e4beb285-0c81-4682-871e-db35d1a2272b",
+      "uuid": "72b6151c-ffd3-4a96-8aaa-5a92b513e1d7",
       "type": "http",
       "documentation": "Test algorithm build pipeline",
       "method": "post",
       "endpoint": "build/test",
       "responses": [
         {
-          "uuid": "fbd8212e-efaf-46cd-b6cb-3cff2675bdef",
+          "uuid": "55b6cbb0-ec04-476d-9640-aebe725b21ff",
           "body": "{}",
           "latency": 0,
           "statusCode": 200,
@@ -261,14 +261,14 @@
       "responseMode": null
     },
     {
-      "uuid": "07d62402-9cbe-4c14-ab6e-cc2419f138d9",
+      "uuid": "cb0bfbb1-a9b4-4f4c-bed9-b82af1784645",
       "type": "http",
       "documentation": "Import an algorithm from another algorithm store using GET algorith/:id",
       "method": "post",
       "endpoint": "algorithm/import",
       "responses": [
         {
-          "uuid": "bc518bc7-a146-4c03-b699-2dcb771c2103",
+          "uuid": "51648870-24dd-4c90-826b-0d21a900e958",
           "body": "{\n  // TODO we need to think about authentication here\n  \"store_url\": \"https://some-algorithm-store.ai\",\n  \"algorithm_id\": 1\n}",
           "latency": 0,
           "statusCode": 200,
@@ -289,14 +289,14 @@
       "responseMode": null
     },
     {
-      "uuid": "9ee88cd7-88b7-4339-92ba-113c5c39f933",
+      "uuid": "ed57a894-79b1-421c-a0c2-e910553085ed",
       "type": "http",
       "documentation": "List of algorithm reviews - both open and past",
       "method": "get",
       "endpoint": "review",
       "responses": [
         {
-          "uuid": "1c288cb1-56a5-452c-897c-bf7368dfef2c",
+          "uuid": "d593bac7-04dd-4811-be15-b6805dd13d69",
           "body": "{}",
           "latency": 0,
           "statusCode": 200,
@@ -317,14 +317,14 @@
       "responseMode": null
     },
     {
-      "uuid": "03c79c0b-33c7-4749-baa6-de98f6727410",
+      "uuid": "4027bf12-cf05-4382-b697-28f67ae75d49",
       "type": "http",
       "documentation": "Delete review record (?)",
       "method": "delete",
       "endpoint": "review/:id",
       "responses": [
         {
-          "uuid": "55fb6cec-52b4-42aa-89f5-6e9958ed9694",
+          "uuid": "7ccf7923-4382-4832-a409-a60a12e0884c",
           "body": "{}",
           "latency": 0,
           "statusCode": 200,
@@ -345,14 +345,14 @@
       "responseMode": null
     },
     {
-      "uuid": "6a371964-59ab-4178-99fc-33765fb41556",
+      "uuid": "d20b68c4-0a5a-4867-ba9c-d31d2299b5e0",
       "type": "crud",
       "documentation": "Servers allowed to access the algorithms",
       "method": "",
       "endpoint": "server",
       "responses": [
         {
-          "uuid": "f7a4b241-052b-46a3-a9fe-79ea3329439a",
+          "uuid": "bf1a9b89-466f-4eaa-a396-7c79f77aac6d",
           "body": "{}",
           "latency": 0,
           "statusCode": 200,
@@ -373,14 +373,14 @@
       "responseMode": null
     },
     {
-      "uuid": "fe8c9592-9802-4f3a-8877-951810d67008",
+      "uuid": "aa684ebc-05aa-4c2f-9254-76050eff3661",
       "type": "crud",
       "documentation": "Settings of the algorithm store",
       "method": "",
       "endpoint": "settings",
       "responses": [
         {
-          "uuid": "87c82fdd-eec1-424a-9601-87709d0cf9bf",
+          "uuid": "a28ed850-efac-46a8-bfb6-755830ad0e59",
           "body": "{}",
           "latency": 0,
           "statusCode": 200,
@@ -401,14 +401,14 @@
       "responseMode": null
     },
     {
-      "uuid": "1ffa659b-944c-4a94-9b06-447781be1fd3",
+      "uuid": "949856b9-6a8c-45bc-a176-6c028882fe39",
       "type": "crud",
       "documentation": "Assign or remove permissions to specific users",
       "method": "",
       "endpoint": "permission",
       "responses": [
         {
-          "uuid": "da9f14b0-76e4-49cd-b291-58a80142c5c3",
+          "uuid": "32a0ca10-c0f3-49ff-9577-8d03ef96825b",
           "body": "{}",
           "latency": 0,
           "statusCode": 200,
@@ -429,14 +429,14 @@
       "responseMode": null
     },
     {
-      "uuid": "4e847530-c53c-4efd-8bd5-5bf6ff44a4f8",
+      "uuid": "1e4e3236-fe45-480b-8887-e7a8f36e1edc",
       "type": "http",
       "documentation": "Submit an algorithm using code zip",
       "method": "post",
       "endpoint": "algorithm/code/private",
       "responses": [
         {
-          "uuid": "ab0ee721-6564-40d9-8c6b-2d995ef0a8c7",
+          "uuid": "dd4647ae-d495-4bbf-8e21-62912881f0df",
           "body": "{\n  \"name\": \"average\",\n  \"code-zip\": \"algorithm.zip\" // <-- this should be a file\n  \"documentation\": \"https://docs.my-algorithm.ai\", // \"none\"\n  \"partitioning\": \"horizontal\", // \"vertical\", \"none\" - not sure we need this in the image\n  \"functions\": [\n    {\n      // part of these fields we may already be able to check for automatically...\n      \"name\": \"central_average\",\n      \"is_central\": true, // this is just to help users of the algorithm to discern what type of function they're calling\n      \"databases\": [\n        {\n          \"name\": \"first_db\"\n        }, // this format allows for clarifying which databases should be entered by the user\n      ],\n      \"arguments\": [\n        {\n          \"name\": \"column_name\",\n          \"type\": \"str\",\n          \"description\": \"Name of the column to calculate average for\"\n        }\n      ],\n      \"output\": {\n        \"type\": \"int\",\n        \"visualize\": \"null\"\n      }\n    }, {\n      \"name\": \"partial_average\",\n      \"is_central\": false,\n      \"arguments\": [\n        {\n          \"name\": \"column_name\",\n          \"type\": \"str\",\n          \"description\": \"Name of the column to calculate average for\"\n        }\n      ],\n      \"output\": {\n        \"type\": \"dict\",\n        \"keys\": [\n          \"sum\",\n          \"local_count\"\n        ],\n        \"visualize\": \"table\"\n      }\n    }\n  ]\n}",
           "latency": 0,
           "statusCode": 201,
@@ -465,7 +465,7 @@
       "responses": [
         {
           "uuid": "4c289a09-55ae-49a0-a8b2-b801d1ae7ef7",
-          "body": "{\n  \"name\": \"quality check\",\n  \"url\": \"harbor2.vantage6.ai/starter/utils\",\n  \"status\": \"approved\",\n  \"vantage6-version\": \"4.0\",\n  \"code-repositoy\": \"https://github.com/IKNL/v6-average-py.git\",\n  \"documentation\": \"https://docs.my-algorithm.ai\",\n  \"partitioning\": \"horizontal\",\n  \"developers\": [\n    \"Henk\",\n    \"Ingrid\"\n  ],\n  \"reviewers\": [\n    \"Charles Kip\"\n  ],\n  \"functions\": [\n    {\n      \"name\": \"fetch_static_file\",\n      \"description\": \"Recover quality check files\",\n      \"is_central\": false,\n      \"databases\": [],\n      \"arguments\": [\n        {\n          \"name\": \"file_name\",\n          \"type\": \"str\",\n          \"description\": \"Name of the quality check file(s) to recover\"\n        }\n      ],\n      \"output\": {\n        \"type\": \"dict\",\n        \"keys\": [\n          \"average\"\n        ],\n        \"visualize\": \"table\"\n      }\n    }\n  ],\n  \"select\": [\n    {\n      \"function\": \"calculate_age\",\n      \"description\": \"Calculate age from date of birth\",\n      \"parameters\": [\n        {\n          \"name\": \"input_column\",\n          \"type\": \"string\",\n          \"description\": \"Name of column with birthdates.\",\n          \"required\": true\n        },\n        {\n          \"name\": \"output_column\",\n          \"type\": \"string\",\n          \"description\": \"Name of new column with age\",\n          \"required\": false,\n          \"default\": \"age\"\n        },\n        {\n          \"name\": \"keep_original\",\n          \"type\": \"bool\",\n          \"description\": \"Whether to keep the original column or not\",\n          \"required\": false,\n          \"default\": true\n        },\n        {\n          \"name\": \"reference_date\",\n          \"type\": \"date\",\n          \"description\": \"Date on which the age is calculated\",\n          \"required\": false,\n          \"default\": \"today\"\n        }\n      ]\n    }\n  ],\n  \"filter\": [\n    {\n      \"function\": \"filter_range\",\n      \"description\": \"Filter values between minimum and maximum values\",\n      \"parameters\": [\n        {\n          \"name\": \"column\",\n          \"type\": \"string\",\n          \"description\": \"Name of column to filter on.\",\n          \"required\": true\n        },\n        {\n          \"name\": \"min_\",\n          \"type\": \"float\",\n          \"description\": \"Minimum value\",\n          \"required\": false\n        },\n        {\n          \"name\": \"max_\",\n          \"type\": \"float\",\n          \"description\": \"Maximum value\",\n          \"required\": false\n        },\n        {\n          \"name\": \"include_min\",\n          \"type\": \"bool\",\n          \"description\": \"Include minimum value\",\n          \"required\": false,\n          \"default\": false\n        },\n        {\n          \"name\": \"include_max\",\n          \"type\": \"bool\",\n          \"description\": \"Include maximum value\",\n          \"required\": false,\n          \"default\": false\n        }\n      ]\n    }\n  ]\n}",
+          "body": "{\n  \"name\": \"Quality check\",\n  \"url\": \"harbor2.vantage6.ai/starter/utils\",\n  \"status\": \"approved\",\n  \"vantage6-version\": \"4.0\",\n  \"code-repositoy\": \"https://github.com/IKNL/v6-average-py.git\",\n  \"documentation\": \"https://docs.my-algorithm.ai\",\n  \"partitioning\": \"horizontal\",\n  \"developers\": [\n    \"Henk\",\n    \"Ingrid\"\n  ],\n  \"reviewers\": [\n    \"Charles Kip\"\n  ],\n  \"functions\": [\n    {\n      \"name\": \"fetch_static_file\",\n      \"description\": \"Recover quality check files\",\n      \"is_central\": false,\n      \"databases\": [],\n      \"arguments\": [\n        {\n          \"name\": \"file_name\",\n          \"type\": \"str\",\n          \"description\": \"Name of the quality check file(s) to recover\"\n        }\n      ],\n      \"output\": {\n        \"type\": \"dict\",\n        \"keys\": [\n          \"average\"\n        ],\n        \"visualize\": \"table\"\n      }\n    }\n  ],\n  \"select\": [\n    {\n      \"function\": \"calculate_age\",\n      \"description\": \"Calculate age from date of birth\",\n      \"parameters\": [\n        {\n          \"name\": \"input_column\",\n          \"type\": \"string\",\n          \"description\": \"Name of column with birthdates.\",\n          \"required\": true\n        },\n        {\n          \"name\": \"output_column\",\n          \"type\": \"string\",\n          \"description\": \"Name of new column with age\",\n          \"required\": false,\n          \"default\": \"age\"\n        },\n        {\n          \"name\": \"keep_original\",\n          \"type\": \"bool\",\n          \"description\": \"Whether to keep the original column or not\",\n          \"required\": false,\n          \"default\": true\n        },\n        {\n          \"name\": \"reference_date\",\n          \"type\": \"date\",\n          \"description\": \"Date on which the age is calculated\",\n          \"required\": false,\n          \"default\": \"today\"\n        }\n      ]\n    }\n  ],\n  \"filter\": [\n    {\n      \"function\": \"filter_range\",\n      \"description\": \"Filter values between minimum and maximum values\",\n      \"parameters\": [\n        {\n          \"name\": \"column\",\n          \"type\": \"string\",\n          \"description\": \"Name of column to filter on.\",\n          \"required\": true\n        },\n        {\n          \"name\": \"min_\",\n          \"type\": \"float\",\n          \"description\": \"Minimum value\",\n          \"required\": false\n        },\n        {\n          \"name\": \"max_\",\n          \"type\": \"float\",\n          \"description\": \"Maximum value\",\n          \"required\": false\n        },\n        {\n          \"name\": \"include_min\",\n          \"type\": \"bool\",\n          \"description\": \"Include minimum value\",\n          \"required\": false,\n          \"default\": false\n        },\n        {\n          \"name\": \"include_max\",\n          \"type\": \"bool\",\n          \"description\": \"Include maximum value\",\n          \"required\": false,\n          \"default\": false\n        }\n      ]\n    }\n  ]\n}",
           "latency": 0,
           "statusCode": 200,
           "label": "",
@@ -544,7 +544,7 @@
   "rootChildren": [
     {
       "type": "route",
-      "uuid": "df784ad1-390f-4796-a731-ef9769ba4630"
+      "uuid": "0732da52-2a1b-4a9e-8f50-001853d7c6cd"
     },
     {
       "type": "route",
@@ -560,63 +560,63 @@
     },
     {
       "type": "route",
-      "uuid": "d10d1b34-180a-46f3-8553-050f13b3442b"
+      "uuid": "0d6a094b-c41e-4b4e-929a-6651e984b3c5"
     },
     {
       "type": "route",
-      "uuid": "135f2e08-887e-49f7-aec1-12c61f2feebd"
+      "uuid": "d83621f8-240d-4623-a77a-b2c0c2dd8f06"
     },
     {
       "type": "route",
-      "uuid": "1378ea73-d772-4074-b7dd-c7c938152773"
+      "uuid": "4e39e2be-c7fe-4817-aecf-090405b10f06"
     },
     {
       "type": "route",
-      "uuid": "6697e450-fa87-470c-92af-6f02d14a0445"
+      "uuid": "e8e2c5ed-c476-4e91-92b5-9760a90e89f7"
     },
     {
       "type": "route",
-      "uuid": "4e847530-c53c-4efd-8bd5-5bf6ff44a4f8"
+      "uuid": "1e4e3236-fe45-480b-8887-e7a8f36e1edc"
     },
     {
       "type": "route",
-      "uuid": "f2a25cf3-7bf2-4889-ab00-7b04ec09e7b7"
+      "uuid": "39dfda6f-0c30-4c2e-8a6f-7a9ce2efc30c"
     },
     {
       "type": "route",
-      "uuid": "07d62402-9cbe-4c14-ab6e-cc2419f138d9"
+      "uuid": "cb0bfbb1-a9b4-4f4c-bed9-b82af1784645"
     },
     {
       "type": "route",
-      "uuid": "9ee88cd7-88b7-4339-92ba-113c5c39f933"
+      "uuid": "ed57a894-79b1-421c-a0c2-e910553085ed"
     },
     {
       "type": "route",
-      "uuid": "d60a4ed1-de9e-46a9-bd5b-ca20c78bd71c"
+      "uuid": "c1588997-56a5-4246-9320-1849253d0952"
     },
     {
       "type": "route",
-      "uuid": "513e63be-fefc-42d8-8620-75e0000b7a3b"
+      "uuid": "2cabb16c-9346-441b-bd8f-be9e6e64e17c"
     },
     {
       "type": "route",
-      "uuid": "03c79c0b-33c7-4749-baa6-de98f6727410"
+      "uuid": "4027bf12-cf05-4382-b697-28f67ae75d49"
     },
     {
       "type": "route",
-      "uuid": "e4beb285-0c81-4682-871e-db35d1a2272b"
+      "uuid": "72b6151c-ffd3-4a96-8aaa-5a92b513e1d7"
     },
     {
       "type": "route",
-      "uuid": "6a371964-59ab-4178-99fc-33765fb41556"
+      "uuid": "d20b68c4-0a5a-4867-ba9c-d31d2299b5e0"
     },
     {
       "type": "route",
-      "uuid": "fe8c9592-9802-4f3a-8877-951810d67008"
+      "uuid": "aa684ebc-05aa-4c2f-9254-76050eff3661"
     },
     {
       "type": "route",
-      "uuid": "1ffa659b-944c-4a94-9b06-447781be1fd3"
+      "uuid": "949856b9-6a8c-45bc-a176-6c028882fe39"
     }
   ],
   "proxyMode": false,

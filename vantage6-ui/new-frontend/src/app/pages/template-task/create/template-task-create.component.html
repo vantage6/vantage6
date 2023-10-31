@@ -1,0 +1,54 @@
+<app-page-header title="{{ 'template-task-create.title' | translate }}"> </app-page-header>
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>{{ "template-task-create.card-predefined.title" | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div class="data-list">
+      <div class="data-list__item">
+        <b>{{ "task.algorithm" | translate }}</b>
+        <span>{{ algorithm?.name || "-" }}</span>
+      </div>
+      <div class="data-list__item">
+        <b>{{ "task.function" | translate }}</b>
+        <span>{{ function?.name || "-" }}</span>
+      </div>
+      <div class="data-list__item" *ngIf="templateTask?.fixed?.name">
+        <b>{{ "task.name" | translate }}</b>
+        <span>{{ templateTask?.fixed?.name || "-" }}</span>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
+<mat-card>
+  <mat-card-content>
+    <form class="form" [formGroup]="variableForm">
+      <!-- Description -->
+      <mat-form-field *ngIf="variableForm.get('description')" subscriptSizing="dynamic">
+        <mat-label>{{ "task.description" | translate }}</mat-label>
+        <input matInput type="text" formControlName="description" />
+      </mat-form-field>
+      <!-- Organizations -->
+      <mat-form-field *ngIf="function && variableForm.get('organizationIDs')" subscriptSizing="dynamic">
+        <mat-label>{{ "task.organization" | translate }}</mat-label>
+        <mat-select *ngIf="function.is_central" formControlName="organizationIDs">
+          <mat-option
+            *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
+            [value]="organization.id"
+          >
+            {{ organization.name }}
+          </mat-option>
+        </mat-select>
+        <mat-select *ngIf="!function.is_central" formControlName="organizationIDs" multiple>
+          <mat-option
+            *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
+            [value]="organization.id"
+          >
+            {{ organization.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <!-- TODO: Show alert if node is offline -->
+    </form>
+  </mat-card-content>
+</mat-card>
