@@ -3,7 +3,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 
-import { PASSWORD_VALIDATORS } from 'src/app/models/constants/password_validators';
+import { PASSWORD_VALIDATORS } from 'src/app/validators/passwordValidators';
 import { createCompareValidator } from 'src/app/validators/compare.validator';
 import { MessageDialog } from 'src/app/components/dialogs/message-dialog/message-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
