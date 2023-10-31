@@ -33,6 +33,12 @@ export enum FilterParameterType {
   Date = 'date'
 }
 
+export interface BaseAlgorithm {
+  id: number;
+  name: string;
+  url: string;
+}
+
 export interface Algorithm {
   id: number;
   name: string;

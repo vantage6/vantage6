@@ -1,7 +1,7 @@
 import { Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
-import { Algorithm, ArgumentType, AlgorithmFunction } from 'src/app/models/api/algorithm.model';
+import { Algorithm, ArgumentType, BaseAlgorithm, AlgorithmFunction, Select } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, takeUntil } from 'rxjs';
 import { BaseNode, Database, DatabaseType } from 'src/app/models/api/node.model';
@@ -30,7 +30,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   routes = routePaths;
   argumentType = ArgumentType;
 
-  algorithms: Algorithm[] = [];
+  algorithms: BaseAlgorithm[] = [];
   algorithm: Algorithm | null = null;
   function: AlgorithmFunction | null = null;
   databases: Database[] = [];
