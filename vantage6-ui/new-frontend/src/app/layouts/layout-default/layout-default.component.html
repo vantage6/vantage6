@@ -1,5 +1,5 @@
 <mat-toolbar color="primary">
-  <button mat-icon-button *ngIf="hideSideMenu && navigationLinks.length > 0" (click)="sideNav.toggle()"><mat-icon>menu</mat-icon></button>
+  <button mat-icon-button *ngIf="hideSideMenu" (click)="sideNav.toggle()"><mat-icon>menu</mat-icon></button>
   <img src="/assets/images/logo.png" class="logo" />
   <div class="actions">
     <button mat-flat-button [routerLink]="handleToggleAdmin()">
@@ -21,7 +21,7 @@
   </div>
 </mat-toolbar>
 <mat-sidenav-container autosize>
-  <mat-sidenav #sideNav [mode]="hideSideMenu ? 'over' : 'side'" [fixedInViewport]="hideSideMenu" fixedTopGap="56">
+  <mat-sidenav #sideNav *ngIf="!hideMenu" [mode]="hideSideMenu ? 'over' : 'side'" [fixedInViewport]="hideSideMenu" fixedTopGap="56">
     <mat-nav-list>
       <button mat-flat-button color="primary" *ngIf="!isStartPage && !isAdministration" [routerLink]="routes.start">
         <mat-icon>arrow_back</mat-icon>{{ (chosenCollaborationService.collaboration$ | async)?.name }}

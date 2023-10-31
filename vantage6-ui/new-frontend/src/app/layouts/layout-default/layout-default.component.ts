@@ -6,7 +6,7 @@ import { routePaths } from 'src/app/routes';
 import { NavigationLink } from 'src/app/models/application/navigation-link.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { AuthService } from 'src/app/services/auth.service';
-import { NavigationEnd, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
 
@@ -23,12 +23,14 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
   navigationLinks: NavigationLink[] = [];
   isAdministration: boolean = false;
   isStartPage: boolean = false;
+  hideMenu: boolean = false;
 
   @ViewChild(MatSidenav)
   sideNav!: MatSidenav;
 
   constructor(
     private router: Router,
+    route: ActivatedRoute,
     private breakpointObserver: BreakpointObserver,
     private authService: AuthService,
     public chosenCollaborationService: ChosenCollaborationService,
@@ -38,6 +40,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
       this.isStartPage = event.url.startsWith(routePaths.start);
       this.isAdministration = event.url.startsWith(routePaths.adminHome);
 
+      this.hideMenu = route.snapshot.data?.['hideMenu'] || false;
       this.setNavigationLinks();
     });
   }
@@ -71,7 +74,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
   }
 
   private setNavigationLinks() {
-    if (this.isStartPage) {
+    if (this.isStartPage || this.hideMenu) {
       this.navigationLinks = [];
       return;
     }

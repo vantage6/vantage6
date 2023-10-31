@@ -42,11 +42,6 @@ const routes: Routes = [
     component: LayoutDefaultComponent,
     children: [
       {
-        path: routerConfig.start,
-        component: StartComponent,
-        canActivate: [authenticationGuard()]
-      },
-      {
         path: routerConfig.home,
         component: HomeComponent,
         canActivate: [authenticationGuard(), chosenCollaborationGuard()]
@@ -65,6 +60,18 @@ const routes: Routes = [
         path: routerConfig.task,
         component: TaskReadComponent,
         canActivate: [authenticationGuard(), chosenCollaborationGuard()]
+      }
+    ]
+  },
+  {
+    path: '',
+    component: LayoutDefaultComponent,
+    data: { hideMenu: true },
+    children: [
+      {
+        path: routerConfig.start,
+        component: StartComponent,
+        canActivate: [authenticationGuard()]
       },
       {
         path: routerConfig.passwordChange,
