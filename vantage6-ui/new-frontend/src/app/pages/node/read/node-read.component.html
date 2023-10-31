@@ -28,6 +28,10 @@
             <mat-spinner *ngIf="!selectedNode" diameter="48"></mat-spinner>
             <ng-container *ngIf="selectedNode">
               <div class="data-list">
+                <div class="data-list__item">
+                  <b>{{ "general.id" | translate }}</b>
+                  <span>{{ selectedNode.id || "-" }}</span>
+                </div>
                 <div class="data-list__item data-list__item--big">
                   <ng-container *ngIf="!isEdit">
                     <b>{{ "node.name" | translate }}</b>

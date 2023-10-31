@@ -11,6 +11,8 @@ mat-toolbar {
 }
 
 mat-sidenav {
+  max-width: 275px;
+
   button {
     width: calc(100% - ($spacing-px-4 * 2));
     margin: 0 $spacing-px-4 $spacing-px-2 $spacing-px-4;

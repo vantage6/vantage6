@@ -20,7 +20,6 @@
     "database": "Database",
     "description": "Description",
     "function": "Function",
-    "id": "ID",
     "parameters": "Parameters",
     "organization": "Organization",
     "name": "Name",
@@ -30,6 +29,8 @@
     "user": "user",
     "preprocessor": "Preprocessor",
     "preprocessing-function": "Preprocessing function",
+    "filter": "Filter",
+    "filter-function": "Filter function",
     "alert-node-offline": "The node '{{name}}' is offline. This task will be handled when the node is back online."
   },
   "task-run": {
@@ -55,13 +56,19 @@
       "title": "Select databases"
     },
     "step-preprocessing": {
-      "title": "Select preprocessing",
+      "title": "Add preprocessors",
       "actions": {
         "add-preprocessor": "Add preprocessor"
       }
     },
+    "step-filter": {
+      "title": "Add filters",
+      "actions": {
+        "add-filter": "Add filter"
+      }
+    },
     "step-parameters": {
-      "title": "Function parameters"
+      "title": "Define parameters"
     }
   },
   "task-read": {

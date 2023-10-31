@@ -10,7 +10,6 @@ export class AlgorithmService {
   constructor(private apiService: ApiService) {}
 
   async getAlgorithms(): Promise<Algorithm[]> {
-    //TODO: Use base algorithm model
     const result = await this.apiService.getForAlgorithmApi<Pagination<Algorithm>>('/algorithm');
     return result.data;
   }
@@ -21,7 +20,6 @@ export class AlgorithmService {
   }
 
   async getAlgorithmByUrl(url: string): Promise<Algorithm> {
-    //TODO: Use correct backend url when backend has been developed
     const result = await this.apiService.getForAlgorithmApi<Algorithm>(`/algorithm/${encodeURIComponent(url)}`);
     return result;
   }
