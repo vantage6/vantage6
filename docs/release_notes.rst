@@ -1,6 +1,21 @@
 Release notes
 =============
 
+4.1.1
+-----
+
+*1 November 2023*
+
+- **Bugfix**
+
+ - Added OpenPyxl dependency to algorithm tools which is required to read Excel
+   databases (`PR#923 <https://github.com/vantage6/vantage6/pull/923>`_).
+ - Explicitly define the resource on which sorting is done in the API. This
+   prevents SQL errors when SQLAlchemy tries to sort on a column in a joined
+   table (`PR#925 <https://github.com/vantage6/vantage6/pull/925>`_).
+ - Fixed retrieving column names for Excel databases
+   (`PR#924 <https://github.com/vantage6/vantage6/pull/924>`_).
+
 4.1.0
 -----
 
@@ -9,10 +24,12 @@ Release notes
 - **Feature**
 
  - Renamed CLI commands. The new commands are:
-  - ``vnode`` → ``v6 node``
-  - ``vserver`` → ``v6 server``
-  - ``vdev`` → ``v6 dev``
-   The old commands are still available until version 5.0 is released.
+
+   - ``vnode`` → ``v6 node``
+   - ``vserver`` → ``v6 server``
+   - ``vdev`` → ``v6 dev``
+
+   The old commands will still be available until version 5.0 is released.
  - Added CLI command ``v6 algorithm create`` which is a starting point for
    creating new algorithms
    (`Issue#400 <https://github.com/vantage6/vantage6/issues/400>`_,
