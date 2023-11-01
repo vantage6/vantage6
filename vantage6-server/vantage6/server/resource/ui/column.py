@@ -59,6 +59,10 @@ class ColumnNames(ServicesResources):
         # Use task permissions for this resource
         self.r_task: RuleCollection = getattr(self.permissions, 'task')
 
+    # TODO this endpoint currently requires the user to provide the
+    # organization details (including input) for the task to retrieve the
+    # column names. When the method name is stored in the database, and is thus
+    # no longer encrypted, we can remove this requirement.
     @with_user
     def post(self):
         """Create request to get column names of a database. This is used in
@@ -83,7 +87,12 @@ class ColumnNames(ServicesResources):
                     type: integer
                     description: The collaboration id for which database
                       columns are requested
-                  worksheet_name:
+                  organizations:
+                    type: array
+                    description: The organizations that should execute the
+                      task. Each organization should be defined by a dictionary
+                      with the `id` key and `input` data for a task.
+                  sheet_name:
                     type: string
                     description: The name of the worksheet for which you want
                       to read the columns. Required for Excel files.
@@ -141,15 +150,14 @@ class ColumnNames(ServicesResources):
             # lead to an error for the other nodes.
             if colnames:
                 return {
-                    "msg": "Serving column names from database",
-                    "column_names": colnames
+                    "columns": colnames
                 }, HTTPStatus.OK
 
         # Column names not yet available, create new task to request column
         # names
         databases = [{'label': label}]
-        if data.get('worksheet_name'):
-            databases[0]['worksheet_name'] = data['worksheet_name']
+        if data.get('sheet_name'):
+            databases[0]['sheet_name'] = data['sheet_name']
         if data.get('query'):
             databases[0]['query'] = data['query']
         return Tasks.post_task(
