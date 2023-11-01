@@ -499,7 +499,7 @@ class ColumnNameInputSchema(Schema):
     db_label = fields.String(required=True)
     collaboration_id = fields.Integer(required=True, validate=Range(min=1))
     organizations = fields.List(fields.Dict(), required=True)
-    worksheet_name = fields.String(required=False)
+    sheet_name = fields.String(required=False)
     query = fields.String(required=False)
 
     @validates('organizations')
