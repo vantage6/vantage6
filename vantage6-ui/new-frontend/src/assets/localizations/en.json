@@ -56,13 +56,14 @@
       "title": "Select databases"
     },
     "step-preprocessing": {
-      "title": "Add preprocessors",
+      "title": "Extend data",
+      "get-columns": "Obtaining columns from data stations...",
       "actions": {
-        "add-preprocessor": "Add preprocessor"
+        "add-preprocessor": "Create new variable"
       }
     },
     "step-filter": {
-      "title": "Add filters",
+      "title": "Filter data",
       "actions": {
         "add-filter": "Add filter"
       }

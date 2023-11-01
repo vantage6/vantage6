@@ -108,6 +108,19 @@ mat-card {
   mat-spinner {
     margin: auto;
   }
+
+  // TODO this styling is ugly - the contents of the entire card should be
+  // centered, not just the spinner
+  .spinnerWithMessage {
+    display: flex;
+    margin-left: 40%;
+    margin-right: 10px;
+  }
+
+  .loadingMessage {
+    align-items: center;
+    display: flex;
+  }
 }
 
 .button-container {

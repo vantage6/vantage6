@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatSelectChange } from '@angular/material/select';
 import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
@@ -15,8 +15,9 @@ export class PreprocessingStepComponent {
 
   @Input() form!: FormArray;
   @Input() functions: Select[] = [];
+  @Input() columns: string[] = [];
+  @Output() onFirstPreprocessor: EventEmitter<boolean> = new EventEmitter();
   selectedFunctions: Array<Select | null> = [];
-  columns: string[] = ['Column 1', 'Column 2', 'Column 3']; //TODO: Get column data from backend, when backend is ready
 
   constructor(private fb: FormBuilder) {}
 
@@ -29,7 +30,15 @@ export class PreprocessingStepComponent {
     return this.selectedFunctions.length >= index ? this.selectedFunctions[index] : null;
   }
 
+  clear(): void {
+    this.form.clear();
+    this.selectedFunctions = [];
+  }
+
   addPreprocessor(): void {
+    if (this.columns.length === 0) {
+      this.onFirstPreprocessor.emit(true);
+    }
     this.selectedFunctions.push(null);
     const preprocessorForm = this.fb.nonNullable.group({
       functionID: ['', Validators.required]
