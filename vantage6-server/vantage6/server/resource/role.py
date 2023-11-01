@@ -325,8 +325,8 @@ class Roles(RoleBase):
 
         # paginate results
         try:
-            page = Pagination.from_query(query=q, request=request)
-        except ValueError as e:
+            page = Pagination.from_query(q, request, db.Role)
+        except (ValueError, AttributeError) as e:
             return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         return self.response(page, role_schema)

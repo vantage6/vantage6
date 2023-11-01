@@ -425,8 +425,8 @@ class Tasks(TaskBase):
 
         # paginate tasks
         try:
-            page = Pagination.from_query(query=q, request=request)
-        except ValueError as e:
+            page = Pagination.from_query(q, request, db.Task)
+        except (ValueError, AttributeError) as e:
             return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # serialization schema
