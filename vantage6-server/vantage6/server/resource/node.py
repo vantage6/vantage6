@@ -249,8 +249,8 @@ class Nodes(NodeBase):
 
         # paginate results
         try:
-            page = Pagination.from_query(q, request)
-        except ValueError as e:
+            page = Pagination.from_query(q, request, db.Node)
+        except (ValueError, AttributeError) as e:
             return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # model serialization

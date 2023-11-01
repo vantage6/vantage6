@@ -101,7 +101,7 @@ run_input_schema = RunInputSchema()
 def permissions(permissions: PermissionManager):
     """
     Define the permissions for this resource.
-    
+
     Parameters
     ----------
     permissions : PermissionManager
@@ -335,7 +335,7 @@ class Runs(MultiRunBase):
             description: Unauthorized
           400:
             description: Improper values for pagination or sorting parameters
-                
+
         security:
         - bearerAuth: []
 
@@ -348,8 +348,8 @@ class Runs(MultiRunBase):
             return query
 
         try:
-            page = Pagination.from_query(query=query, request=request)
-        except ValueError as e:
+            page = Pagination.from_query(query, request, db.Run)
+        except (ValueError, AttributeError) as e:
             return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # serialization of the models
@@ -477,7 +477,10 @@ class Results(MultiRunBase):
         if not isinstance(query, sa.orm.query.Query):
             return query
 
-        page = Pagination.from_query(query=query, request=request)
+        try:
+            page = Pagination.from_query(query, request, db.Run)
+        except (ValueError, AttributeError) as e:
+            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         return self.response(page, result_schema)
 

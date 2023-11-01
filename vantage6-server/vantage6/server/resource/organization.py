@@ -227,8 +227,8 @@ class Organizations(OrganizationBase):
 
         # paginate the results
         try:
-            page = Pagination.from_query(query=q, request=request)
-        except ValueError as e:
+            page = Pagination.from_query(q, request, db.Organization)
+        except (ValueError, AttributeError) as e:
             return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # serialization of DB model
