@@ -11,6 +11,7 @@ import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
 import { Router } from '@angular/router';
 import { PreprocessingStepComponent } from './steps/preprocessing-step/preprocessing-step.component';
+import { addParameterFormControlsForFunction } from '../task.helper';
 import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 import { FilterStepComponent } from './steps/filter-step/filter-step.component';
 
@@ -206,21 +207,11 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     //Get selected function
     const selectedFunction = this.algorithm?.functions.find((_) => _.name === functionName) || null;
 
-    //Add form controls for parameters for selected function
-    selectedFunction?.arguments.forEach((argument) => {
-      if (argument.type === ArgumentType.String) {
-        this.parameterForm.addControl(argument.name, new FormControl(null, Validators.required));
-      }
-      if (argument.type === ArgumentType.Integer) {
-        this.parameterForm.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(integerRegex)]));
-      }
-      if (argument.type === ArgumentType.Float) {
-        this.parameterForm.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(floatRegex)]));
-      }
-    });
-
-    //Add form controls for databases for selected function
     if (selectedFunction) {
+      //Add form controls for parameters for selected function
+      addParameterFormControlsForFunction(selectedFunction, this.parameterForm);
+
+      //Add form controls for databases for selected function
       this.setFormControlsForDatabase(selectedFunction);
     }
 

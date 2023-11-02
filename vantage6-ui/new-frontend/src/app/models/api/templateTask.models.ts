@@ -7,5 +7,6 @@ export interface TemplateTask {
 
 interface FixedTemplateTask {
   name?: string;
+  description?: string;
   databases?: string[];
 }

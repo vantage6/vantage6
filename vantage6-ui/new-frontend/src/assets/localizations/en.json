@@ -101,10 +101,7 @@
     }
   },
   "template-task-create": {
-    "title": "Create quick task",
-    "card-predefined": {
-      "title": "Predefined values"
-    }
+    "title": "Quick task"
   },
   "organization": {
     "name": "Name",

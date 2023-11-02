@@ -1,54 +1,101 @@
 <app-page-header title="{{ 'template-task-create.title' | translate }}"> </app-page-header>
-<mat-card>
-  <mat-card-header>
-    <mat-card-title>{{ "template-task-create.card-predefined.title" | translate }}</mat-card-title>
-  </mat-card-header>
-  <mat-card-content>
-    <div class="data-list">
-      <div class="data-list__item">
-        <b>{{ "task.algorithm" | translate }}</b>
-        <span>{{ algorithm?.name || "-" }}</span>
-      </div>
-      <div class="data-list__item">
-        <b>{{ "task.function" | translate }}</b>
-        <span>{{ function?.name || "-" }}</span>
-      </div>
-      <div class="data-list__item" *ngIf="templateTask?.fixed?.name">
-        <b>{{ "task.name" | translate }}</b>
-        <span>{{ templateTask?.fixed?.name || "-" }}</span>
-      </div>
-    </div>
-  </mat-card-content>
-</mat-card>
-<mat-card>
-  <mat-card-content>
-    <form class="form" [formGroup]="variableForm">
-      <!-- Description -->
-      <mat-form-field *ngIf="variableForm.get('description')" subscriptSizing="dynamic">
-        <mat-label>{{ "task.description" | translate }}</mat-label>
-        <input matInput type="text" formControlName="description" />
-      </mat-form-field>
-      <!-- Organizations -->
-      <mat-form-field *ngIf="function && variableForm.get('organizationIDs')" subscriptSizing="dynamic">
-        <mat-label>{{ "task.organization" | translate }}</mat-label>
-        <mat-select *ngIf="function.is_central" formControlName="organizationIDs">
-          <mat-option
-            *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
-            [value]="organization.id"
-          >
-            {{ organization.name }}
-          </mat-option>
-        </mat-select>
-        <mat-select *ngIf="!function.is_central" formControlName="organizationIDs" multiple>
-          <mat-option
-            *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
-            [value]="organization.id"
-          >
-            {{ organization.name }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-      <!-- TODO: Show alert if node is offline -->
-    </form>
-  </mat-card-content>
-</mat-card>
+<ng-container *ngIf="!isLoading; else loading">
+  <mat-card>
+    <mat-card-content>
+      <mat-stepper [linear]="true" orientation="vertical" #stepper>
+        <mat-step [stepControl]="packageForm">
+          <ng-template matStepLabel>{{ "task-create.step-package.title" | translate }}</ng-template>
+          <div class="data-list">
+            <div class="data-list__item">
+              <b>{{ "task.algorithm" | translate }}</b>
+              <span>{{ algorithm?.name || "-" }}</span>
+            </div>
+            <div class="data-list__item">
+              <b>{{ "task.function" | translate }}</b>
+              <span>{{ function?.name || "-" }}</span>
+            </div>
+            <div class="data-list__item" *ngIf="templateTask?.fixed?.name && !packageForm.get('name')">
+              <b>{{ "task.name" | translate }}</b>
+              <span>{{ templateTask?.fixed?.name || "-" }}</span>
+            </div>
+            <div class="data-list__item data-list__item--full" *ngIf="templateTask?.fixed?.description && !packageForm.get('description')">
+              <b>{{ "task.description" | translate }}</b>
+              <span>{{ templateTask?.fixed?.description || "-" }}</span>
+            </div>
+          </div>
+          <form class="form variable-form" [formGroup]="packageForm">
+            <!-- Name -->
+            <mat-form-field *ngIf="packageForm.get('name')" subscriptSizing="dynamic">
+              <mat-label>{{ "task.name" | translate }}</mat-label>
+              <input matInput type="text" formControlName="name" />
+            </mat-form-field>
+            <!-- Description -->
+            <mat-form-field *ngIf="packageForm.get('description')" subscriptSizing="dynamic">
+              <mat-label>{{ "task.description" | translate }}</mat-label>
+              <input matInput type="text" formControlName="description" />
+            </mat-form-field>
+            <!-- Organizations -->
+            <mat-form-field *ngIf="function && packageForm.get('organizationIDs')" subscriptSizing="dynamic">
+              <mat-label>{{ "task.organization" | translate }}</mat-label>
+              <mat-select *ngIf="function.is_central" formControlName="organizationIDs">
+                <mat-option
+                  *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
+                  [value]="organization.id"
+                >
+                  {{ organization.name }}
+                </mat-option>
+              </mat-select>
+              <mat-select *ngIf="!function.is_central" formControlName="organizationIDs" multiple>
+                <mat-option
+                  *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
+                  [value]="organization.id"
+                >
+                  {{ organization.name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <!-- TODO: Show alert if node is offline -->
+          </form>
+          <div>
+            <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+          </div>
+        </mat-step>
+        <mat-step [stepControl]="databaseForm" *ngIf="function && function.databases && function.databases.length >= 1">
+          <form class="form" [formGroup]="databaseForm">
+            <ng-template matStepLabel>{{ "task-create.step-database.title" | translate }}</ng-template>
+          </form>
+        </mat-step>
+        <mat-step [stepControl]="parameterForm">
+          <form class="form" [formGroup]="parameterForm">
+            <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
+            <ng-container *ngFor="let argument of function?.arguments">
+              <b>{{ argument.description }}</b>
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ argument.name }}</mat-label>
+                <input
+                  matInput
+                  numberOnly
+                  [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
+                  [formControlName]="argument.name"
+                />
+              </mat-form-field>
+            </ng-container>
+            <div>
+              <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+            </div>
+          </form>
+        </mat-step>
+      </mat-stepper>
+      <button mat-flat-button color="primary" [disabled]="packageForm.invalid">
+        {{ "general.submit" | translate }}
+      </button>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
+<ng-template #loading>
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-template>
