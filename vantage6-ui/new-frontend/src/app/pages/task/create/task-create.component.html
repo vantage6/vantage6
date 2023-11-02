@@ -71,7 +71,7 @@
           </div>
         </form>
       </mat-step>
-      <mat-step [stepControl]="databaseForm">
+      <mat-step [stepControl]="databaseForm" *ngIf="function && function.databases && function.databases.length >= 1">
         <form class="form" [formGroup]="databaseForm">
           <ng-template matStepLabel>{{ "task-create.step-database.title" | translate }}</ng-template>
           <ng-container *ngFor="let database of function?.databases">
