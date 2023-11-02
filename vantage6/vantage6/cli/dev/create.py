@@ -2,7 +2,6 @@ from pathlib import Path
 import csv
 
 import click
-import yaml
 from jinja2 import Environment, FileSystemLoader
 from colorama import Fore, Style
 
@@ -138,7 +137,6 @@ def _read_extra_config_file(extra_config_file: Path | None) -> str:
         with open(extra_config_file, 'r', encoding='utf-8') as f:
             return f.read()
     return ''
-
 
 
 def generate_node_configs(
