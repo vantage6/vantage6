@@ -1,3 +1,4 @@
+from pathlib import Path
 import click
 
 from vantage6.cli.utils import info
@@ -19,9 +20,19 @@ from vantage6.cli.test.feature_tester import cli_test_features
               help='Server Docker image to use')
 @click.option('--keep', type=bool, default=False,
               help='Keep the dev network after finishing the test')
+@click.option('--extra-server-config', type=click.Path(exists=True),
+              default=None, help='YAML File with additional server '
+              'configuration. This will be appended to the server '
+              'configuration file')
+@click.option('--extra-node-config', type=click.Path('rb'), default=None,
+              help='YAML File with additional node configuration. This will be'
+              ' appended to each of the node configuration files')
 @click.pass_context
-def cli_test_integration(click_ctx: click.Context, name: str, server_url: str,
-                         image: str, keep: bool = False) -> list[dict]:
+def cli_test_integration(
+    click_ctx: click.Context, name: str, server_url: str, image: str,
+    keep: bool = False, extra_server_config: Path = None,
+    extra_node_config: Path = None
+) -> list[dict]:
     """
     Create dev network and run diagnostic checks on it.
 
@@ -38,7 +49,8 @@ def cli_test_integration(click_ctx: click.Context, name: str, server_url: str,
     # collaborations, organizations, etc)
     click_ctx.invoke(
         create_demo_network, name=name, num_nodes=3, server_url=server_url,
-        server_port=5000, image=image
+        server_port=5000, image=image, extra_server_config=extra_server_config,
+        extra_node_config=extra_node_config
     )
 
     # start the server and nodes
