@@ -64,11 +64,11 @@
       <div class="data-list">
         <div class="data-list__item">
           <b>{{ "general.id" | translate }}</b>
-          <span>{{ this.task.id || "-" }}</span>
+          <span>{{ task.id || "-" }}</span>
         </div>
         <div class="data-list__item">
           <b>{{ "task.name" | translate }}</b>
-          <span>{{ this.task.name || "-" }}</span>
+          <span>{{ task.name || "-" }}</span>
         </div>
         <div class="data-list__item">
           <b>{{ "task.status" | translate }}</b>
@@ -76,15 +76,15 @@
         </div>
         <div class="data-list__item data-list__item--full">
           <b>{{ "task.description" | translate }}</b>
-          <span>{{ this.task.description || "-" }}</span>
+          <span>{{ task.description || "-" }}</span>
         </div>
         <div class="data-list__item">
           <b>{{ "task.organization" | translate }}</b>
-          <span>{{ this.task.init_org?.name || "-" }}</span>
+          <span>{{ task.init_org?.name || "-" }}</span>
         </div>
         <div class="data-list__item">
           <b>{{ "task.user" | translate }}</b>
-          <span>{{ this.task.init_user?.username || "-" }}</span>
+          <span>{{ task.init_user?.username || "-" }}</span>
         </div>
       </div>
     </mat-card-content>
@@ -97,14 +97,14 @@
       <div class="data-list">
         <div class="data-list__item">
           <b>{{ "task.algorithm" | translate }}</b>
-          <span>{{ this.algorithm?.name || "-" }}</span>
+          <span>{{ algorithm?.name || "-" }}</span>
         </div>
         <div class="data-list__item">
           <b>{{ "task.function" | translate }}</b>
-          <span>{{ this.task.input?.method || "-" }}</span>
+          <span>{{ task.input?.method || "-" }}</span>
         </div>
       </div>
-      <ng-container *ngIf="this.task.input?.parameters">
+      <ng-container *ngIf="task.input?.parameters">
         <h4 class="data-list__header">{{ "task.parameters" | translate }}</h4>
         <div class="data-list">
           <div class="data-list__item" *ngFor="let parameter of task?.input?.parameters">
