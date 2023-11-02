@@ -4,8 +4,8 @@
     <mat-card-content>
       <app-collaboration-form
         [collaboration]="collaboration"
-        (onSubmit)="handleSubmit($event)"
-        (onCancel)="handleCancel()"
+        (submitted)="handleSubmit($event)"
+        (cancelled)="handleCancel()"
       ></app-collaboration-form>
     </mat-card-content>
   </mat-card>

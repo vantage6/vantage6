@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostBinding, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,10 +13,10 @@ import { PermissionService } from 'src/app/services/permission.service';
 @Component({
   selector: 'app-collaboration-list',
   templateUrl: './collaboration-list.component.html',
-  styleUrls: ['./collaboration-list.component.scss'],
-  host: { '[class.card-container]': 'true' }
+  styleUrls: ['./collaboration-list.component.scss']
 })
 export class CollaborationListComponent implements OnInit {
+  @HostBinding('class') class = 'card-container';
   routes = routePaths;
 
   isLoading: boolean = true;

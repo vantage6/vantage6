@@ -6,10 +6,10 @@ export interface DialogData {
 }
 
 @Component({
-  selector: 'log-dialog',
+  selector: 'app-log-dialog',
   templateUrl: 'log-dialog.component.html',
   styleUrls: ['./log-dialog.component.scss']
 })
-export class LogDialog {
+export class LogDialogComponent {
   constructor(@Inject(MAT_DIALOG_DATA) public data: DialogData) {}
 }

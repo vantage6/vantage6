@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, Input, OnChanges } from '@angular/core';
 import { Output, OutputVisualizeType } from 'src/app/models/api/algorithm.model';
 

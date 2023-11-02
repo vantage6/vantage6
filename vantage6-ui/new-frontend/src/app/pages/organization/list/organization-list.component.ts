@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostBinding, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,10 +13,10 @@ import { PermissionService } from 'src/app/services/permission.service';
 @Component({
   selector: 'app-organization-list',
   templateUrl: './organization-list.component.html',
-  styleUrls: ['./organization-list.component.scss'],
-  host: { '[class.card-container]': 'true' }
+  styleUrls: ['./organization-list.component.scss']
 })
 export class OrganizationListComponent implements OnInit {
+  @HostBinding('class') class = 'card-container';
   routes = routePaths;
 
   isLoading: boolean = true;

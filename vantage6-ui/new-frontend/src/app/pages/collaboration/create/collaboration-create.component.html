@@ -2,7 +2,7 @@
 <ng-container *ngIf="!isSubmitting; else loading">
   <mat-card>
     <mat-card-content>
-      <app-collaboration-form (onSubmit)="handleSubmit($event)" (onCancel)="handleCancel()"></app-collaboration-form>
+      <app-collaboration-form (submitted)="handleSubmit($event)" (cancelled)="handleCancel()"></app-collaboration-form>
     </mat-card-content>
   </mat-card>
 </ng-container>

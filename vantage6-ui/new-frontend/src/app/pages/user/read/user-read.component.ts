@@ -1,9 +1,9 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
-import { ConfirmDialog } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
+import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
 import { User, UserLazyProperties } from 'src/app/models/api/user.model';
 import { routePaths } from 'src/app/routes';
@@ -13,10 +13,10 @@ import { UserService } from 'src/app/services/user.service';
 @Component({
   selector: 'app-user-read',
   templateUrl: './user-read.component.html',
-  styleUrls: ['./user-read.component.scss'],
-  host: { '[class.card-container]': 'true' }
+  styleUrls: ['./user-read.component.scss']
 })
 export class UserReadComponent implements OnInit, OnDestroy {
+  @HostBinding('class') class = 'card-container';
   @Input() id = '';
 
   destroy$ = new Subject();
@@ -56,7 +56,7 @@ export class UserReadComponent implements OnInit, OnDestroy {
   async handleDelete(): Promise<void> {
     if (!this.user) return;
 
-    const dialogRef = this.dialog.open(ConfirmDialog, {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
         title: this.translateService.instant('user-read.delete-dialog.title', { name: this.user.username }),
         content: this.translateService.instant('user-read.delete-dialog.content'),

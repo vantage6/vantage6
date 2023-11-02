@@ -8,6 +8,7 @@ import { Output } from 'src/app/models/api/algorithm.model';
 })
 export class VisualizeTableComponent implements OnChanges {
   @Input() output?: Output;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   @Input() results: any[] = [];
 
   columns: string[] = [];
@@ -18,6 +19,7 @@ export class VisualizeTableComponent implements OnChanges {
       const columns = this.output?.keys || Object.keys(result).filter((key) => !key.startsWith('_'));
       this.columns = ['_row', ...columns];
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rows: any = {};
       columns.map((column) => {
         rows[column] = result[column];

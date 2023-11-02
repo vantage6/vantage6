@@ -1,12 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 
+interface BackgroundImage {
+  image: string;
+  additional_styling?: object;
+  attribution?: string;
+}
+
 @Component({
   selector: 'app-layout-login',
   templateUrl: './layout-login.component.html',
   styleUrls: ['./layout-login.component.scss']
 })
 export class LayoutLoginComponent implements OnInit {
-  background_img_data: any = null;
+  backgroundImage: BackgroundImage | null = null;
   backgroundUrl: string = '';
 
   BACKGROUND_IMAGES = [
@@ -33,22 +39,22 @@ export class LayoutLoginComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.background_img_data = this.BACKGROUND_IMAGES[Math.floor(Math.random() * this.BACKGROUND_IMAGES.length)];
-    this.backgroundUrl = `url(assets/images/login_backgrounds/${this.background_img_data['image']}.jpg)`;
+    this.backgroundImage = this.BACKGROUND_IMAGES[Math.floor(Math.random() * this.BACKGROUND_IMAGES.length)];
+    this.backgroundUrl = `url(assets/images/login_backgrounds/${this.backgroundImage.image}.jpg)`;
   }
 
   get backgroundStyle(): object {
     let style = {
       'background-image': this.backgroundUrl
     };
-    if (this.background_img_data.additional_styling) {
-      style = { ...style, ...this.background_img_data.additional_styling };
+    if (this.backgroundImage?.additional_styling) {
+      style = { ...style, ...this.backgroundImage.additional_styling };
     }
 
     return style;
   }
 
   get attributionText(): string | null {
-    return this.background_img_data.attribution || null;
+    return this.backgroundImage?.attribution || null;
   }
 }

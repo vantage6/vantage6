@@ -65,6 +65,7 @@ export interface TaskRun {
   started_at?: string;
   finished_at?: string;
   log?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   result?: any;
 }
 
@@ -112,5 +113,5 @@ interface Organization {
 
 export interface CreateTaskInput {
   method: string;
-  kwargs: Object;
+  kwargs: object;
 }

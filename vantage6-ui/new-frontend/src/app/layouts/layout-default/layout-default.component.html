@@ -1,6 +1,6 @@
 <mat-toolbar color="primary">
   <button mat-icon-button *ngIf="hideSideMenu" (click)="sideNav.toggle()"><mat-icon>menu</mat-icon></button>
-  <img src="/assets/images/logo.png" class="logo" />
+  <img src="/assets/images/logo.png" class="logo" alt="vantage6" />
   <div class="actions">
     <button mat-flat-button [routerLink]="handleToggleAdmin()">
       {{ isAdministration ? ("header.actions.admin-leave" | translate) : ("header.actions.admin" | translate) }}

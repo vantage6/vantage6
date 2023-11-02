@@ -15,8 +15,8 @@ import { createCompareValidator } from 'src/app/validators/compare.validator';
 })
 export class UserFormComponent implements OnInit, OnDestroy {
   @Input() user?: User;
-  @Output() onCancel: EventEmitter<void> = new EventEmitter();
-  @Output() onSubmit: EventEmitter<UserForm> = new EventEmitter();
+  @Output() cancelled: EventEmitter<void> = new EventEmitter();
+  @Output() submitted: EventEmitter<UserForm> = new EventEmitter();
 
   destroy$ = new Subject();
   form = this.fb.nonNullable.group(
@@ -66,12 +66,12 @@ export class UserFormComponent implements OnInit, OnDestroy {
 
   handleSubmit() {
     if (this.form.valid) {
-      this.onSubmit.emit(this.form.getRawValue());
+      this.submitted.emit(this.form.getRawValue());
     }
   }
 
   handleCancel() {
-    this.onCancel.emit();
+    this.cancelled.emit();
   }
 
   private setupForm(): void {

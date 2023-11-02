@@ -1,16 +1,16 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { getChipTypeForStatus, getStatusInfoTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
-import { Algorithm, Function, Output } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmFunction, Output } from 'src/app/models/api/algorithm.model';
 import { Task, TaskLazyProperties, TaskRun, TaskStatus } from 'src/app/models/api/task.models';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { TaskService } from 'src/app/services/task.service';
-import { LogDialog } from '../../../components/dialogs/log/log-dialog.component';
+import { LogDialogComponent } from '../../../components/dialogs/log/log-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
 import { Router } from '@angular/router';
-import { ConfirmDialog } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
+import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { FormControl } from '@angular/forms';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
@@ -19,10 +19,10 @@ import { Subject, takeUntil } from 'rxjs';
 @Component({
   selector: 'app-task-read',
   templateUrl: './task-read.component.html',
-  styleUrls: ['./task-read.component.scss'],
-  host: { '[class.card-container]': 'true' }
+  styleUrls: ['./task-read.component.scss']
 })
 export class TaskReadComponent implements OnInit, OnDestroy {
+  @HostBinding('class') class = 'card-container';
   @Input() id = '';
 
   destroy$ = new Subject();
@@ -32,7 +32,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
 
   task: Task | null = null;
   algorithm: Algorithm | null = null;
-  function: Function | null = null;
+  function: AlgorithmFunction | null = null;
   selectedOutput: Output | null = null;
   isLoading = true;
   canDelete = false;
@@ -104,11 +104,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   }
 
   openLog(log: string): void {
-    try {
-      log = JSON.stringify(JSON.parse(log), null, 2);
-    } catch (e) {}
-
-    this.dialog.open(LogDialog, {
+    this.dialog.open(LogDialogComponent, {
       width: '80vw',
       data: {
         log: log
@@ -123,7 +119,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   async handleDelete(): Promise<void> {
     if (!this.task) return;
 
-    const dialogRef = this.dialog.open(ConfirmDialog, {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
         title: this.translateService.instant('task-read.delete-dialog.title', { name: this.task.name }),
         content: this.translateService.instant('task-read.delete-dialog.content'),

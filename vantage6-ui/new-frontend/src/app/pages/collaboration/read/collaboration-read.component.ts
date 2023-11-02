@@ -1,9 +1,9 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
-import { ConfirmDialog } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
+import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { Collaboration, CollaborationLazyProperties } from 'src/app/models/api/collaboration.model';
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
@@ -14,10 +14,10 @@ import { PermissionService } from 'src/app/services/permission.service';
 @Component({
   selector: 'app-collaboration-read',
   templateUrl: './collaboration-read.component.html',
-  styleUrls: ['./collaboration-read.component.scss'],
-  host: { '[class.card-container]': 'true' }
+  styleUrls: ['./collaboration-read.component.scss']
 })
 export class CollaborationReadComponent implements OnInit, OnDestroy {
+  @HostBinding('class') class = 'card-container';
   destroy$ = new Subject();
   nodeStatus = NodeStatus;
   routes = routePaths;
@@ -58,7 +58,7 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
   async handleDelete(): Promise<void> {
     if (!this.collaboration) return;
 
-    const dialogRef = this.dialog.open(ConfirmDialog, {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
         title: this.translateService.instant('collaboration-read.delete-dialog.title', { name: this.collaboration.name }),
         content: this.translateService.instant('collaboration-read.delete-dialog.content'),

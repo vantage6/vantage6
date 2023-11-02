@@ -37,12 +37,12 @@ export interface Algorithm {
   id: number;
   name: string;
   url: string;
-  functions: Function[];
+  functions: AlgorithmFunction[];
   select: Select[];
   filter: Filter[];
 }
 
-export interface Function {
+export interface AlgorithmFunction {
   name: string;
   is_central: boolean;
   arguments: Argument[];

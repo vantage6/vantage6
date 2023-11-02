@@ -1,10 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostBinding, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { getChipTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
-import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
+import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
 import { BaseTask, TaskStatus } from 'src/app/models/api/task.models';
 import { CHOSEN_COLLABORATION, USER_ID } from 'src/app/models/constants/sessionStorage';
 import { routePaths } from 'src/app/routes';
@@ -21,10 +21,10 @@ enum TableRows {
 @Component({
   selector: 'app-task-list',
   templateUrl: './task-list.component.html',
-  styleUrls: ['./task-list.component.scss'],
-  host: { '[class.card-container]': 'true' }
+  styleUrls: ['./task-list.component.scss']
 })
 export class TaskListComponent implements OnInit {
+  @HostBinding('class') class = 'card-container';
   tableRows = TableRows;
   routes = routePaths;
   tasks: BaseTask[] = [];

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { User, UserEdit, UserForm, UserLazyProperties } from 'src/app/models/api/user.model';
 import { routePaths } from 'src/app/routes';
@@ -7,10 +7,10 @@ import { UserService } from 'src/app/services/user.service';
 @Component({
   selector: 'app-user-edit',
   templateUrl: './user-edit.component.html',
-  styleUrls: ['./user-edit.component.scss'],
-  host: { '[class.card-container]': 'true' }
+  styleUrls: ['./user-edit.component.scss']
 })
 export class UserEditComponent implements OnInit {
+  @HostBinding('class') class = 'card-container';
   @Input() id: string = '';
 
   isLoading: boolean = true;
@@ -31,6 +31,7 @@ export class UserEditComponent implements OnInit {
     if (!this.user) return;
 
     this.isSubmitting = true;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const userEdit: UserEdit = (({ password, passwordRepeat, organization_id, ...data }) => data)(userForm);
     const user = await this.userService.editUser(this.user?.id.toString(), userEdit);
     if (user.id) {

@@ -45,8 +45,8 @@ export class PermissionService {
     ) {
       return true;
     } else if (this.activeUser.permissions) {
-      let orgs_in_user_collabs = this.activeUser.permissions.orgs_in_collabs;
-      return orgId in orgs_in_user_collabs && this.isAllowed(ScopeType.COLLABORATION, resource, operation);
+      const orgsInUserCollabs = this.activeUser.permissions.orgs_in_collabs;
+      return orgId in orgsInUserCollabs && this.isAllowed(ScopeType.COLLABORATION, resource, operation);
     } else {
       return false;
     }
@@ -54,16 +54,16 @@ export class PermissionService {
 
   isAllowedForCollab(resource: ResourceType, operation: OperationType, collab: Collaboration | null): boolean {
     if (!collab || !this.activeUser) return false;
-    let collab_org_ids = collab.organizations.map((org) => org.id);
+    const orgsInUserCollabs = collab.organizations.map((org) => org.id);
     return (
       this.isAllowed(ScopeType.GLOBAL, resource, operation) ||
-      (this.activeUser.organization.id in collab_org_ids && this.isAllowed(ScopeType.COLLABORATION, resource, operation))
+      (this.activeUser.organization.id in orgsInUserCollabs && this.isAllowed(ScopeType.COLLABORATION, resource, operation))
     );
   }
 
   isAllowedWithMinScope(minScope: ScopeType, resource: ResourceType, operation: OperationType): boolean {
     // determine which scopes are at least minimum scope in hierarchy
-    let scopes: ScopeType[] = [ScopeType.GLOBAL];
+    const scopes: ScopeType[] = [ScopeType.GLOBAL];
     if (minScope !== ScopeType.GLOBAL) scopes.push(ScopeType.COLLABORATION);
     if (minScope !== ScopeType.COLLABORATION) scopes.push(ScopeType.ORGANIZATION);
     if (minScope !== ScopeType.ORGANIZATION) scopes.push(ScopeType.OWN);
