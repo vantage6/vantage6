@@ -20,7 +20,7 @@ from vantage6.common.globals import (
     DEFAULT_UI_IMAGE
 )
 
-from vantage6.cli.globals import DEFAULT_UI_PORT
+from vantage6.cli.globals import DEFAULT_UI_PORT, ServerEnvVars
 from vantage6.cli.context import ServerContext
 from vantage6.cli.utils import check_config_name_allowed
 from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
@@ -131,8 +131,8 @@ def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
         ))
 
         environment_vars = {
-            "VANTAGE6_DB_URI": f"sqlite:////mnt/database/{basename}",
-            "VANTAGE6_CONFIG_NAME": ctx.config_file_name
+            ServerEnvVars.DB_URI: f"sqlite:////mnt/database/{basename}",
+            ServerEnvVars.CONFIG_NAME: ctx.config_file_name
         }
 
     else:

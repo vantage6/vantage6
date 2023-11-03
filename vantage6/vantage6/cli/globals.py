@@ -1,6 +1,7 @@
 """
 This module contains global variables that are used throughout the CLI.
 """
+from enum import Enum
 from pathlib import Path
 from vantage6.common.globals import APPNAME
 
@@ -39,3 +40,19 @@ ALGORITHM_TEMPLATE_REPO = "gh:vantage6/v6-algorithm-template.git"
 
 # image to use for diagnostics in `v6 test` commands
 DIAGNOSTICS_IMAGE = "harbor2.vantage6.ai/algorithms/diagnostic"
+
+
+class ServerType(str, Enum):
+    """ Enum containing server types """
+    V6SERVER = "server"
+    ALGORITHM_STORE = "algorithm-store"
+
+
+class ServerEnvVars(str, Enum):
+    """ Enum containing server environment variables """
+    DB_URI = "VANTAGE6_DB_URI"
+    CONFIG_NAME = "VANTAGE6_CONFIG_NAME"
+
+
+class AlgoStoreEnvVars(str, Enum):
+    DB_URI = "VANTAGE6_ALGO_STORE_DB_URI"

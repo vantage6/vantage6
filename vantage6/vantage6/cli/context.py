@@ -21,7 +21,10 @@ case of the node with a local database URIs.
 # TODO BvB 2023-01-10 we should have a look at all context classes and define
 # them in the same place. Now the DockerNodeContext is defined in the node, but
 # the server only has a TestServerContext there. This should be made consistent
+# TODO BvB 2023-11-03 we should also refactor this and put each context in a
+# separate file. This will make it easier to maintain and extend.
 from __future__ import annotations
+from enum import Enum
 
 import os.path
 
@@ -35,12 +38,108 @@ from vantage6.cli.configuration_manager import (NodeConfigurationManager,
                                                 ServerConfigurationManager)
 from vantage6.cli.globals import (
     DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL,
-    DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
+    DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL,
+    ServerType,
+    ServerEnvVars,
+    AlgoStoreEnvVars
 )
 from vantage6.cli._version import __version__
 
 
-class ServerContext(AppContext):
+class BaseServerContext(AppContext):
+    """
+    Base context for a vantage6 server or algorithm store server
+
+    Contains functions that the ServerContext and AlgorithmStoreContext have
+    in common.
+    """
+    def _get_database_uri(self, db_env_var: str) -> str:
+        """
+        Obtain the database uri from the environment or the configuration.
+
+        Parameters
+        ----------
+        db_env_var : str
+            Name of the environment variable that contains the database uri
+
+        Returns
+        -------
+        str
+            string representation of the database uri
+        """
+        uri = os.environ.get(db_env_var) or self.config['uri']
+        url = make_url(uri)
+
+        if url.host is None and not os.path.isabs(url.database):
+            # We're dealing with a relative path here of a local database, when
+            # we're running the server outside of docker. Therefore we need to
+            # prepend the data directory to the database name, but after the
+            # driver name (e.g. sqlite:////db.sqlite ->
+            # sqlite:////data_dir>/db.sqlite)
+
+            # find index of database name
+            idx_db_name = str(url).find(url.database)
+
+            # add the datadir to the right location in the database uri
+            return str(url)[:idx_db_name] + str(self.data_dir / url.database)
+
+        return uri
+
+    @property
+    def _docker_container_name(self, server_type: ServerType) -> str:
+        """
+        Name of the docker container that the server is running in.
+
+        Parameters
+        ----------
+        server_type : str
+            Type of server, either 'server' or 'algorithm-store'
+
+        Returns
+        -------
+        str
+            Server's docker container name
+        """
+        return f"{APPNAME}-{self.name}-{self.scope}-{server_type}"
+
+    @classmethod
+    def _from_external_config_file(
+        cls, path: str, server_type: ServerType, config_name_env_var: str,
+        system_folders: bool = S_FOL
+    ) -> ServerContext:
+        """
+        Create a server context from an external configuration file. External
+        means that the configuration file is not located in the default folders
+        but its location is specified by the user.
+
+        Parameters
+        ----------
+        path : str
+            Path of the configuration file
+        server_type : ServerType
+            Type of server, either 'server' or 'algorithm-store'
+        config_name_env_var : str
+            Name of the environment variable that contains the name of the
+            configuration
+        system_folders : bool, optional
+            System wide or user configuration, by default S_FOL
+
+        Returns
+        -------
+        ServerContext
+            Server context object
+        """
+        cls = super().from_external_config_file(
+            path, server_type, system_folders
+        )
+        # if we are running a server in a docker container, the name is taken
+        # from the name of the config file (which is usually a default). Get
+        # the config name from environment if it is given.
+        cls.name = os.environ.get(config_name_env_var) or cls.name
+        return cls
+
+
+class ServerContext(BaseServerContext):
     """
     Server context
 
@@ -73,23 +172,7 @@ class ServerContext(AppContext):
         str
             string representation of the database uri
         """
-        uri = os.environ.get("VANTAGE6_DB_URI") or self.config['uri']
-        url = make_url(uri)
-
-        if url.host is None and not os.path.isabs(url.database):
-            # We're dealing with a relative path here of a local database, when
-            # we're running the server outside of docker. Therefore we need to
-            # prepend the data directory to the database name, but after the
-            # driver name (e.g. sqlite:////db.sqlite ->
-            # sqlite:////data_dir>/db.sqlite)
-
-            # find index of database name
-            idx_db_name = str(url).find(url.database)
-
-            # add the datadir to the right location in the database uri
-            return str(url)[:idx_db_name] + str(self.data_dir / url.database)
-
-        return uri
+        return self._get_database_uri(ServerEnvVars.DB_URI)
 
     @property
     def docker_container_name(self) -> str:
@@ -101,7 +184,7 @@ class ServerContext(AppContext):
         str
             Server's docker container name
         """
-        return f"{APPNAME}-{self.name}-{self.scope}-server"
+        return self._docker_container_name(ServerType.V6SERVER)
 
     @classmethod
     def from_external_config_file(
@@ -123,12 +206,10 @@ class ServerContext(AppContext):
         ServerContext
             Server context object
         """
-        cls = super().from_external_config_file(path, "server", system_folders)
-        # if we are running a server in a docker container, the name is taken
-        # from the name of the config file (which is usually a default). Get
-        # the config name from environment if it is given.
-        cls.name = os.environ.get("VANTAGE6_CONFIG_NAME") or cls.name
-        return cls
+        return cls._from_external_config_file(
+            path, ServerType.V6SERVER, ServerEnvVars.CONFIG_NAME,
+            system_folders
+        )
 
     @classmethod
     def config_exists(cls, instance_name: str,
@@ -418,3 +499,120 @@ class NodeContext(AppContext):
             URI to the database
         """
         return self.config["databases"][label]
+
+
+class AlgorithmStoreContext(BaseServerContext):
+    """
+    Server context
+
+    Parameters
+    ----------
+    instance_name : str
+        Name of the configuration instance, corresponds to the filename
+        of the configuration file.
+    system_folders : bool, optional
+        System wide or user configuration, by default S_FOL
+    """
+
+    # The server configuration manager is aware of the structure of the server
+    # configuration file and makes sure only valid configuration can be loaded.
+    INST_CONFIG_MANAGER = ServerConfigurationManager #TODO: change to AlgorithmStoreConfigurationManager
+
+    def __init__(self, instance_name: str, system_folders: bool = S_FOL):
+        super().__init__("algorithm-store", instance_name,
+                         system_folders=system_folders)
+        self.log.info(f"vantage6 version '{__version__}'")
+
+    def get_database_uri(self) -> str:
+        """
+        Obtain the database uri from the environment or the configuration. The
+        `VANTAGE6_DB_URI` environment variable is used by the Docker container,
+        but can also be set by the user.
+
+        Returns
+        -------
+        str
+            string representation of the database uri
+        """
+        # TODO set the correct environment variable elsewhere
+        return super()._get_database_uri(AlgoStoreEnvVars.ALGO_STORE_DB_URI)
+
+    @property
+    def docker_container_name(self) -> str:
+        """
+        Name of the docker container that the server is running in.
+
+        Returns
+        -------
+        str
+            Server's docker container name
+        """
+        return super().docker_container_name(ServerType.ALGORITHM_STORE)
+
+    @classmethod
+    def from_external_config_file(
+            cls, path: str, system_folders: bool = S_FOL) -> ServerContext:
+        """
+        Create a server context from an external configuration file. External
+        means that the configuration file is not located in the default folders
+        but its location is specified by the user.
+
+        Parameters
+        ----------
+        path : str
+            Path of the configuration file
+        system_folders : bool, optional
+            System wide or user configuration, by default S_FOL
+
+        Returns
+        -------
+        ServerContext
+            Server context object
+        """
+        cls = super().from_external_config_file(path, "server", system_folders)
+        # if we are running a server in a docker container, the name is taken
+        # from the name of the config file (which is usually a default). Get
+        # the config name from environment if it is given.
+        cls.name = os.environ.get("VANTAGE6_CONFIG_NAME") or cls.name
+        return cls
+
+    @classmethod
+    def config_exists(cls, instance_name: str,
+                      system_folders: bool = S_FOL) -> bool:
+        """
+        Check if a configuration file exists.
+
+        Parameters
+        ----------
+        instance_name : str
+            Name of the configuration instance, corresponds to the filename
+            of the configuration file.
+        system_folders : bool, optional
+            System wide or user configuration, by default S_FOL
+
+        Returns
+        -------
+        bool
+            Whether the configuration file exists or not
+        """
+        return super().config_exists("server", instance_name,
+                                     system_folders=system_folders)
+
+    @classmethod
+    def available_configurations(cls, system_folders: bool = S_FOL) \
+            -> tuple[list, list]:
+        """
+        Find all available server configurations in the default folders.
+
+        Parameters
+        ----------
+        system_folders : bool, optional
+            System wide or user configuration, by default S_FOL
+
+        Returns
+        -------
+        tuple[list, list]
+            The first list contains validated configuration files, the second
+            list contains invalid configuration files.
+        """
+        return super().available_configurations("server", system_folders)
