@@ -34,10 +34,8 @@ def cli_server_remove(ctx: ServerContext, force: bool) -> None:
             exit(0)
 
     # now remove the folders...
-    info(f"Removing configuration file {ctx.config_file}")
     remove_file(ctx.config_file, 'configuration')
 
-    info(f"Removing log file {ctx.log_file}")
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
         handler.close()
     remove_file(ctx.log_file, 'log')
