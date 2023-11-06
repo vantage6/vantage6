@@ -1,8 +1,4 @@
-<app-page-header title="{{ 'task-create.title' | translate }}">
-  <button actions mat-flat-button color="primary" [routerLink]="routes.tasks">
-    <mat-icon>arrow_back</mat-icon>{{ "task-list.title" | translate }}
-  </button>
-</app-page-header>
+<app-page-header title="{{ 'task-create.title' | translate }}"></app-page-header>
 <mat-card>
   <mat-card-content>
     <mat-stepper [linear]="true" orientation="vertical" #stepper>
