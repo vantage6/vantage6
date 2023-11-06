@@ -24,7 +24,6 @@ case of the node with a local database URIs.
 # TODO BvB 2023-11-03 we should also refactor this and put each context in a
 # separate file. This will make it easier to maintain and extend.
 from __future__ import annotations
-from enum import Enum
 
 import os.path
 
@@ -33,15 +32,16 @@ from pathlib import Path
 from sqlalchemy.engine.url import make_url
 
 from vantage6.common.context import AppContext
-from vantage6.common.globals import APPNAME
-from vantage6.cli.configuration_manager import (NodeConfigurationManager,
-                                                ServerConfigurationManager)
+from vantage6.common.globals import APPNAME, InstanceType
+from vantage6.cli.configuration_manager import (
+    NodeConfigurationManager, ServerConfigurationManager
+)
 from vantage6.cli.globals import (
     DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL,
     DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL,
     ServerType,
-    ServerEnvVars,
-    AlgoStoreEnvVars
+    ServerGlobals,
+    AlgoStoreGlobals
 )
 from vantage6.cli._version import __version__
 
@@ -53,7 +53,7 @@ class BaseServerContext(AppContext):
     Contains functions that the ServerContext and AlgorithmStoreContext have
     in common.
     """
-    def _get_database_uri(self, db_env_var: str) -> str:
+    def get_database_uri(self, db_env_var: str) -> str:
         """
         Obtain the database uri from the environment or the configuration.
 
@@ -85,25 +85,8 @@ class BaseServerContext(AppContext):
 
         return uri
 
-    @property
-    def _docker_container_name(self, server_type: ServerType) -> str:
-        """
-        Name of the docker container that the server is running in.
-
-        Parameters
-        ----------
-        server_type : str
-            Type of server, either 'server' or 'algorithm-store'
-
-        Returns
-        -------
-        str
-            Server's docker container name
-        """
-        return f"{APPNAME}-{self.name}-{self.scope}-{server_type}"
-
     @classmethod
-    def _from_external_config_file(
+    def from_external_config_file(
         cls, path: str, server_type: ServerType, config_name_env_var: str,
         system_folders: bool = S_FOL
     ) -> ServerContext:
@@ -157,9 +140,9 @@ class ServerContext(BaseServerContext):
     INST_CONFIG_MANAGER = ServerConfigurationManager
 
     def __init__(self, instance_name: str, system_folders: bool = S_FOL):
-        super().__init__("server", instance_name,
+        super().__init__(InstanceType.SERVER, instance_name,
                          system_folders=system_folders)
-        self.log.info(f"vantage6 version '{__version__}'")
+        self.log.info("vantage6 version '%s'", __version__)
 
     def get_database_uri(self) -> str:
         """
@@ -172,7 +155,7 @@ class ServerContext(BaseServerContext):
         str
             string representation of the database uri
         """
-        return self._get_database_uri(ServerEnvVars.DB_URI)
+        return super().get_database_uri(ServerGlobals.DB_URI_ENV_VAR)
 
     @property
     def docker_container_name(self) -> str:
@@ -184,11 +167,12 @@ class ServerContext(BaseServerContext):
         str
             Server's docker container name
         """
-        return self._docker_container_name(ServerType.V6SERVER)
+        return f"{APPNAME}-{self.name}-{self.scope}-{ServerType.V6SERVER}"
 
     @classmethod
     def from_external_config_file(
-            cls, path: str, system_folders: bool = S_FOL) -> ServerContext:
+        cls, path: str, system_folders: bool = S_FOL
+    ) -> ServerContext:
         """
         Create a server context from an external configuration file. External
         means that the configuration file is not located in the default folders
@@ -206,8 +190,8 @@ class ServerContext(BaseServerContext):
         ServerContext
             Server context object
         """
-        return cls._from_external_config_file(
-            path, ServerType.V6SERVER, ServerEnvVars.CONFIG_NAME,
+        return super().from_external_config_file(
+            path, ServerType.V6SERVER, ServerGlobals.CONFIG_NAME_ENV_VAR,
             system_folders
         )
 
@@ -230,7 +214,7 @@ class ServerContext(BaseServerContext):
         bool
             Whether the configuration file exists or not
         """
-        return super().config_exists("server", instance_name,
+        return super().config_exists(InstanceType.SERVER, instance_name,
                                      system_folders=system_folders)
 
     @classmethod
@@ -250,7 +234,9 @@ class ServerContext(BaseServerContext):
             The first list contains validated configuration files, the second
             list contains invalid configuration files.
         """
-        return super().available_configurations("server", system_folders)
+        return super().available_configurations(
+            InstanceType.SERVER, system_folders
+        )
 
 
 class NodeContext(AppContext):
@@ -281,7 +267,8 @@ class NodeContext(AppContext):
 
     def __init__(self, instance_name: str, system_folders: bool = N_FOL,
                  config_file: str = None):
-        super().__init__("node", instance_name, system_folders, config_file)
+        super().__init__(InstanceType.NODE, instance_name, system_folders,
+                         config_file)
         self.log.info(f"vantage6 version '{__version__}'")
 
     @classmethod
@@ -304,7 +291,9 @@ class NodeContext(AppContext):
         NodeContext
             Node context object
         """
-        return super().from_external_config_file(path, "node", system_folders)
+        return super().from_external_config_file(
+            path, InstanceType.NODE, system_folders
+        )
 
     @classmethod
     def config_exists(cls, instance_name: str,
@@ -325,7 +314,7 @@ class NodeContext(AppContext):
         bool
             Whether the configuration file exists or not
         """
-        return super().config_exists("node", instance_name,
+        return super().config_exists(InstanceType.NODE, instance_name,
                                      system_folders=system_folders)
 
     @classmethod
@@ -345,7 +334,9 @@ class NodeContext(AppContext):
             The first list contains validated configuration files, the second
             list contains invalid configuration files.
         """
-        return super().available_configurations("node", system_folders)
+        return super().available_configurations(
+            InstanceType.NODE, system_folders
+        )
 
     @staticmethod
     def type_data_folder(system_folders: bool = N_FOL) -> Path:
@@ -362,7 +353,7 @@ class NodeContext(AppContext):
         Path
             Path to the data folder
         """
-        return AppContext.type_data_folder("node", system_folders)
+        return AppContext.type_data_folder(InstanceType.NODE, system_folders)
 
     @property
     def databases(self) -> dict:
@@ -513,15 +504,12 @@ class AlgorithmStoreContext(BaseServerContext):
     system_folders : bool, optional
         System wide or user configuration, by default S_FOL
     """
-
-    # The server configuration manager is aware of the structure of the server
-    # configuration file and makes sure only valid configuration can be loaded.
-    INST_CONFIG_MANAGER = ServerConfigurationManager #TODO: change to AlgorithmStoreConfigurationManager
+    INST_CONFIG_MANAGER = ServerConfigurationManager
 
     def __init__(self, instance_name: str, system_folders: bool = S_FOL):
-        super().__init__("algorithm-store", instance_name,
+        super().__init__(InstanceType.ALGORITHM_STORE, instance_name,
                          system_folders=system_folders)
-        self.log.info(f"vantage6 version '{__version__}'")
+        self.log.info("vantage6 version '%s'", __version__)
 
     def get_database_uri(self) -> str:
         """
@@ -534,8 +522,7 @@ class AlgorithmStoreContext(BaseServerContext):
         str
             string representation of the database uri
         """
-        # TODO set the correct environment variable elsewhere
-        return super()._get_database_uri(AlgoStoreEnvVars.ALGO_STORE_DB_URI)
+        return super().get_database_uri(AlgoStoreGlobals.DB_URI_ENV_VAR)
 
     @property
     def docker_container_name(self) -> str:
@@ -547,7 +534,9 @@ class AlgorithmStoreContext(BaseServerContext):
         str
             Server's docker container name
         """
-        return super().docker_container_name(ServerType.ALGORITHM_STORE)
+        return (
+            f"{APPNAME}-{self.name}-{self.scope}-{ServerType.ALGORITHM_STORE}"
+        )
 
     @classmethod
     def from_external_config_file(
@@ -569,12 +558,10 @@ class AlgorithmStoreContext(BaseServerContext):
         ServerContext
             Server context object
         """
-        cls = super().from_external_config_file(path, "server", system_folders)
-        # if we are running a server in a docker container, the name is taken
-        # from the name of the config file (which is usually a default). Get
-        # the config name from environment if it is given.
-        cls.name = os.environ.get("VANTAGE6_CONFIG_NAME") or cls.name
-        return cls
+        return super().from_external_config_file(
+            path, ServerType.ALGORITHM_STORE,
+            AlgoStoreGlobals.CONFIG_NAME_ENV_VAR, system_folders
+        )
 
     @classmethod
     def config_exists(cls, instance_name: str,
@@ -595,8 +582,9 @@ class AlgorithmStoreContext(BaseServerContext):
         bool
             Whether the configuration file exists or not
         """
-        return super().config_exists("server", instance_name,
-                                     system_folders=system_folders)
+        return super().config_exists(
+            InstanceType.ALGORITHM_STORE, instance_name, system_folders
+        )
 
     @classmethod
     def available_configurations(cls, system_folders: bool = S_FOL) \
@@ -615,4 +603,6 @@ class AlgorithmStoreContext(BaseServerContext):
             The first list contains validated configuration files, the second
             list contains invalid configuration files.
         """
-        return super().available_configurations("server", system_folders)
+        return super().available_configurations(
+            InstanceType.ALGORITHM_STORE, system_folders
+        )

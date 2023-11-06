@@ -3,14 +3,17 @@ import questionary as q
 from pathlib import Path
 
 from vantage6.common import generate_apikey
-from vantage6.common.globals import DATABASE_TYPES
+from vantage6.common.globals import DATABASE_TYPES, InstanceType
 from vantage6.common.client.node_client import NodeClient
+from vantage6.common.context import AppContext
 from vantage6.common import error, warning
+from vantage6.cli.common import select_context_class
 from vantage6.cli.context import NodeContext, ServerContext
 from vantage6.cli.configuration_manager import (
     NodeConfigurationManager,
     ServerConfigurationManager
 )
+from vantage6.cli.globals import AlgoStoreGlobals, ServerGlobals
 
 
 def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
@@ -150,21 +153,25 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
     return config
 
 
-def server_configuration_questionaire(instance_name: str) -> dict:
+def _get_common_server_config(
+    instance_type: InstanceType, instance_name: str
+) -> dict:
     """
-    Questionary to generate a config file for the node instance.
+    Part of the questionaire that is common to all server types (vantage6
+    server and algorithm store server).
 
     Parameters
     ----------
+    instance_type : InstanceType
+        Type of server instance.
     instance_name : str
-        Name of the node instance.
+        Name of the server instance.
 
     Returns
     -------
     dict
-        Dictionary with the new server configuration
+        Dictionary with new (partial) server configuration
     """
-
     config = q.prompt([
         {
             "type": "text",
@@ -181,8 +188,14 @@ def server_configuration_questionaire(instance_name: str) -> dict:
             "type": "text",
             "name": "port",
             "message": "Enter port to which the server listens:",
-            "default": "5000"
+            "default": (
+                # Note that .value is required in YAML to get proper str value
+                ServerGlobals.PORT.value
+                if instance_type == InstanceType.SERVER
+                else AlgoStoreGlobals.PORT.value
+            )
         },
+        # TODO v5+ remove api_path? It complicates configuration
         {
             "type": "text",
             "name": "api_path",
@@ -203,13 +216,51 @@ def server_configuration_questionaire(instance_name: str) -> dict:
         }
     ])
 
-    constant_jwt_secret = q.confirm("Do you want a constant JWT secret?").ask()
-    if constant_jwt_secret:
-        config["jwt_secret_key"] = generate_apikey()
-
     res = q.select("Which level of logging would you like?",
                    choices=["DEBUG", "INFO", "WARNING", "ERROR",
                             "CRITICAL", "NOTSET"]).ask()
+
+    config["logging"] = {
+        "level": res,
+        "file": f"{instance_name}.log",
+        "use_console": True,
+        "backup_count": 5,
+        "max_size": 1024,
+        "format": "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s",
+        "datefmt": "%Y-%m-%d %H:%M:%S",
+        "loggers": [
+            {"name": "urllib3", "level": "warning"},
+            {"name": "socketIO-client", "level": "warning"},
+            {"name": "socketio.server", "level": "warning"},
+            {"name": "engineio.server", "level": "warning"},
+            {"name": "sqlalchemy.engine", "level": "warning"},
+            {"name": "requests_oauthlib.oauth2_session", "level": "warning"},
+        ]
+    }
+
+    return config
+
+
+def server_configuration_questionaire(instance_name: str) -> dict:
+    """
+    Questionary to generate a config file for the server instance.
+
+    Parameters
+    ----------
+    instance_name : str
+        Name of the server instance.
+
+    Returns
+    -------
+    dict
+        Dictionary with the new server configuration
+    """
+
+    config = _get_common_server_config(InstanceType.SERVER, instance_name)
+
+    constant_jwt_secret = q.confirm("Do you want a constant JWT secret?").ask()
+    if constant_jwt_secret:
+        config["jwt_secret_key"] = generate_apikey()
 
     is_mfa = q.confirm(
         "Do you want to enforce two-factor authentication?"
@@ -269,36 +320,39 @@ def server_configuration_questionaire(instance_name: str) -> dict:
             'start_with_server': run_rabbit_locally
         }
 
-    config["logging"] = {
-        "level": res,
-        "file": f"{instance_name}.log",
-        "use_console": True,
-        "backup_count": 5,
-        "max_size": 1024,
-        "format": "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s",
-        "datefmt": "%Y-%m-%d %H:%M:%S",
-        "loggers": [
-            {"name": "urllib3", "level": "warning"},
-            {"name": "socketIO-client", "level": "warning"},
-            {"name": "socketio.server", "level": "warning"},
-            {"name": "engineio.server", "level": "warning"},
-            {"name": "sqlalchemy.engine", "level": "warning"},
-            {"name": "requests_oauthlib.oauth2_session", "level": "warning"},
-        ]
-    }
-
     return config
 
 
-def configuration_wizard(type_: str, instance_name: str,
+def algo_store_configuration_questionaire(instance_name: str) -> dict:
+    """
+    Questionary to generate a config file for the algorithm store server
+    instance.
+
+    Parameters
+    ----------
+    instance_name : str
+        Name of the server instance.
+
+    Returns
+    -------
+    dict
+        Dictionary with the new server configuration
+    """
+    config = _get_common_server_config(
+        InstanceType.ALGORITHM_STORE, instance_name
+    )
+    return config
+
+
+def configuration_wizard(type_: InstanceType, instance_name: str,
                          system_folders: bool) -> Path:
     """
     Create a configuration file for a node or server instance.
 
     Parameters
     ----------
-    type_ : str
-        Type of the instance. Either "node" or "server"
+    type_ : InstanceType
+        Type of the instance to create a configuration for
     instance_name : str
         Name of the instance
     system_folders : bool
@@ -310,15 +364,18 @@ def configuration_wizard(type_: str, instance_name: str,
         Path to the configuration file
     """
     # for defaults and where to save the config
-    dirs = NodeContext.instance_folders(type_, instance_name, system_folders)
+    dirs = AppContext.instance_folders(type_, instance_name, system_folders)
 
     # invoke questionaire to create configuration file
-    if type_ == "node":
+    if type_ == InstanceType.NODE:
         conf_manager = NodeConfigurationManager
         config = node_configuration_questionaire(dirs, instance_name)
-    else:
+    elif type_ == InstanceType.SERVER:
         conf_manager = ServerConfigurationManager
         config = server_configuration_questionaire(instance_name)
+    else:
+        conf_manager = ServerConfigurationManager
+        config = algo_store_configuration_questionaire(instance_name)
 
     # in the case of an environment we need to add it to the current
     # configuration. In the case of application we can simply overwrite this
@@ -336,15 +393,17 @@ def configuration_wizard(type_: str, instance_name: str,
     return config_file
 
 
-def select_configuration_questionaire(type_: str, system_folders: bool) -> str:
+def select_configuration_questionaire(
+    type_: InstanceType, system_folders: bool
+) -> str:
     """
     Ask which configuration the user wants to use. It shows only configurations
     that are in the default folder.
 
     Parameters
     ----------
-    type_ : str
-        Type of the instance. Either "node" or "server"
+    type_ : InstanceType
+        Type of the instance to create a configuration for
     system_folders : bool
         Whether to use the system folders or not
 
@@ -353,7 +412,7 @@ def select_configuration_questionaire(type_: str, system_folders: bool) -> str:
     str
         Name of the configuration
     """
-    context = NodeContext if type_ == "node" else ServerContext
+    context = select_context_class(type_)
     configs, _ = context.available_configurations(system_folders)
 
     # each collection (file) can contain multiple configs. (e.g. test,

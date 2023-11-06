@@ -8,6 +8,7 @@ from vantage6.cli.globals import (
 )
 from vantage6.cli.configuration_wizard import configuration_wizard
 from vantage6.cli.utils import check_config_name_allowed, prompt_config_name
+from vantage6.common.globals import InstanceType
 
 
 @click.command()
@@ -40,7 +41,7 @@ def cli_node_new_configuration(name: str, system_folders: bool) -> None:
 
     # create config in ctx location
     flag = "--system" if system_folders else ""
-    cfg_file = configuration_wizard("node", name, system_folders)
+    cfg_file = configuration_wizard(InstanceType.NODE, name, system_folders)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
     info(f"You can start the node by running "
          f"{Fore.GREEN}v6 node start {flag}{Style.RESET_ALL}")

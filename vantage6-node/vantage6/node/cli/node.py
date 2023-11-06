@@ -11,6 +11,7 @@ import os
 import sys
 import questionary as q
 import errno
+from vantage6.common.globals import InstanceType
 
 import vantage6.node.globals as constants
 
@@ -92,7 +93,7 @@ def cli_node_new_configuration(name: str, system_folders: bool) -> None:
         raise FileExistsError(f"Configuration {name} already exists!")
 
     # create config in ctx location
-    cfg_file = configuration_wizard("node", name, system_folders)
+    cfg_file = configuration_wizard(InstanceType.NODE, name, system_folders)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
 
 
@@ -114,7 +115,7 @@ def cli_node_files(name: str, system_folders: bool) -> None:
     """
     # select configuration name if none supplied
     name = name if name else \
-        select_configuration_questionaire("node", system_folders)
+        select_configuration_questionaire(InstanceType.NODE, system_folders)
 
     # raise error if config could not be found
     if not NodeContext.config_exists(name, system_folders):
@@ -166,7 +167,9 @@ def cli_node_start(name: str, config: str, system_folders: bool,
     else:
         # in case no name is supplied, ask user to select one
         if not name:
-            name = select_configuration_questionaire("node", system_folders)
+            name = select_configuration_questionaire(
+                InstanceType.NODE, system_folders
+            )
 
         # check that config exists in the APP, if not a questionaire will
         # be invoked
@@ -177,7 +180,7 @@ def cli_node_start(name: str, config: str, system_folders: bool,
             )
 
             if q.confirm(question).ask():
-                configuration_wizard("node", name, system_folders)
+                configuration_wizard(InstanceType.NODE, name, system_folders)
 
             else:
                 sys.exit(0)

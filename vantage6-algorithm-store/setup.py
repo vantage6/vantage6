@@ -16,7 +16,7 @@ with codecs.open(path.join(parent_dir, 'README.md'), encoding='utf-8') as f:
 # Read the API version from disk. This file should be located in the package
 # folder, since it's also used to set the pkg.__version__ variable.
 version_path = os.path.join(
-    here, 'vantage6', 'algorith', 'store', '_version.py'
+    here, 'vantage6', 'algorithm', 'store', '_version.py'
 )
 version_ns = {
     '__file__': version_path

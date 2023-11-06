@@ -6,7 +6,7 @@ import click
 from colorama import Fore, Style
 
 from vantage6.common import error, info
-from vantage6.common.globals import STRING_ENCODING, APPNAME
+from vantage6.common.globals import STRING_ENCODING, APPNAME, InstanceType
 from vantage6.common.docker.addons import remove_container, get_container
 
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
@@ -67,7 +67,7 @@ def click_insert_context(func: callable) -> callable:
                 try:
                     # select configuration if none supplied
                     name = select_configuration_questionaire(
-                        "server", system_folders
+                        InstanceType.SERVER, system_folders
                     )
                 except Exception:
                     error("No configurations could be found!")

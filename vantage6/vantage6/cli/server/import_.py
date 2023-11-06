@@ -4,7 +4,7 @@ from threading import Thread
 import click
 import docker
 from sqlalchemy.engine.url import make_url
-from vantage6.cli.globals import ServerEnvVars
+from vantage6.cli.globals import ServerGlobals
 
 from vantage6.common import info, warning
 from vantage6.common.docker.addons import check_docker_running
@@ -12,6 +12,7 @@ from vantage6.common.globals import (
     APPNAME,
     DEFAULT_DOCKER_REGISTRY,
     DEFAULT_SERVER_IMAGE,
+    InstanceType,
 )
 from vantage6.cli.context import ServerContext
 from vantage6.cli.utils import check_config_name_allowed
@@ -107,7 +108,7 @@ def cli_server_import(
         ))
 
         environment_vars = {
-            ServerEnvVars.DB_URI: f"sqlite:////mnt/database/{basename}"
+            ServerGlobals.DB_URI_ENV_VAR: f"sqlite:////mnt/database/{basename}"
         }
 
     else:
@@ -128,7 +129,7 @@ def cli_server_import(
         mounts=mounts,
         detach=True,
         labels={
-            f"{APPNAME}-type": "server",
+            f"{APPNAME}-type": InstanceType.SERVER,
             "name": ctx.config_file_name
         },
         environment=environment_vars,

@@ -9,6 +9,7 @@ from vantage6.cli.configuration_wizard import (
     configuration_wizard,
     select_configuration_questionaire
 )
+from vantage6.common.globals import InstanceType
 
 module_path = "vantage6.cli.configuration_wizard"
 
@@ -78,10 +79,10 @@ class WizardTest(unittest.TestCase):
             "config": "/some/path/"
         }
 
-        file_ = configuration_wizard("node", "vtg6", False)
+        file_ = configuration_wizard(InstanceType.NODE, "vtg6", False)
         self.assertEqual(Path("/some/path/vtg6.yaml"), file_)
 
-        file_ = configuration_wizard("server", "vtg6", True)
+        file_ = configuration_wizard(InstanceType.SERVER, "vtg6", True)
         self.assertEqual(Path("/some/path/vtg6.yaml"), file_)
 
     @patch(f"{module_path}.NodeContext")
@@ -96,6 +97,6 @@ class WizardTest(unittest.TestCase):
 
         with patch(f"{module_path}.q") as q:
             q.select.return_value.ask.return_value = "vtg6"
-            name = select_configuration_questionaire("node", True)
+            name = select_configuration_questionaire(InstanceType.NODE, True)
 
         self.assertEqual(name, "vtg6")

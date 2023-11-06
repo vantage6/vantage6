@@ -1,5 +1,6 @@
 import click
 import IPython
+from vantage6.common.globals import InstanceType
 import yaml
 
 from functools import wraps
@@ -66,7 +67,7 @@ def click_insert_context(func: callable) -> callable:
             if not name:
                 try:
                     name = select_configuration_questionaire(
-                        "server", system_folders
+                        InstanceType.SERVER, system_folders
                     )
                 except Exception:
                     error("No configurations could be found!")

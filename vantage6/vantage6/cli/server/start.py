@@ -17,10 +17,11 @@ from vantage6.common.globals import (
     APPNAME,
     DEFAULT_DOCKER_REGISTRY,
     DEFAULT_SERVER_IMAGE,
-    DEFAULT_UI_IMAGE
+    DEFAULT_UI_IMAGE,
+    InstanceType
 )
 
-from vantage6.cli.globals import DEFAULT_UI_PORT, ServerEnvVars
+from vantage6.cli.globals import DEFAULT_UI_PORT, ServerGlobals
 from vantage6.cli.context import ServerContext
 from vantage6.cli.utils import check_config_name_allowed
 from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
@@ -69,9 +70,10 @@ def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
 
     # check that this server is not already running
     running_servers = docker_client.containers.list(
-        filters={"label": f"{APPNAME}-type=server"})
+        filters={"label": f"{APPNAME}-type={InstanceType.SERVER}"})
     for server in running_servers:
-        if server.name == f"{APPNAME}-{ctx.name}-{ctx.scope}-server":
+        if server.name == \
+                f"{APPNAME}-{ctx.name}-{ctx.scope}-{InstanceType.SERVER}":
             error(f"Server {Fore.RED}{ctx.name}{Style.RESET_ALL} "
                   "is already running")
             exit(1)
@@ -131,8 +133,8 @@ def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
         ))
 
         environment_vars = {
-            ServerEnvVars.DB_URI: f"sqlite:////mnt/database/{basename}",
-            ServerEnvVars.CONFIG_NAME: ctx.config_file_name
+            ServerGlobals.DB_URI_ENV_VAR: f"sqlite:////mnt/database/{basename}",
+            ServerGlobals.CONFIG_NAME_ENV_VAR: ctx.config_file_name
         }
 
     else:
@@ -176,14 +178,14 @@ def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
     info(cmd)
 
     info("Run Docker container")
-    port_ = str(port or ctx.config["port"] or 5000)
+    port_ = str(port or ctx.config["port"] or ServerGlobals.PORT)
     container = docker_client.containers.run(
         image,
         command=cmd,
         mounts=mounts,
         detach=True,
         labels={
-            f"{APPNAME}-type": "server",
+            f"{APPNAME}-type": InstanceType.SERVER,
             "name": ctx.config_file_name
         },
         environment=environment_vars,

@@ -48,11 +48,15 @@ class ServerType(str, Enum):
     ALGORITHM_STORE = "algorithm-store"
 
 
-class ServerEnvVars(str, Enum):
+class ServerGlobals(str, Enum):
     """ Enum containing server environment variables """
-    DB_URI = "VANTAGE6_DB_URI"
-    CONFIG_NAME = "VANTAGE6_CONFIG_NAME"
+    DB_URI_ENV_VAR = "VANTAGE6_DB_URI"
+    CONFIG_NAME_ENV_VAR = "VANTAGE6_CONFIG_NAME"
+    PORT = "5000"
 
 
-class AlgoStoreEnvVars(str, Enum):
-    DB_URI = "VANTAGE6_ALGO_STORE_DB_URI"
+class AlgoStoreGlobals(str, Enum):
+    """ Enum containing algorithm store environment variables """
+    DB_URI_ENV_VAR = "VANTAGE6_ALGO_STORE_DB_URI"
+    CONFIG_NAME_ENV_VAR = "VANTAGE6_ALGO_STORE_CONFIG_NAME"
+    PORT = "5002"  # 5001 is the default UI port
