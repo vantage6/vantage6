@@ -1,0 +1,36 @@
+@import "../../../config.scss";
+
+.crumbs {
+  display: flex;
+  gap: $spacing-px-1;
+  margin-bottom: $spacing-px-2;
+
+  .crumb {
+    display: flex;
+    color: rgba(0, 0, 0, 0.54);
+    text-decoration: none;
+
+    &::before {
+      content: "/";
+      margin-right: $spacing-px-1;
+      color: rgba(0, 0, 0, 0.12);
+    }
+    &:first-child::before {
+      content: "";
+    }
+  }
+
+  .crumb:link {
+    &:hover {
+      color: $dark-primary-text;
+    }
+  }
+
+  .home {
+    mat-icon {
+      font-size: 1.25rem;
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+  }
+}

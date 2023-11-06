@@ -15,6 +15,9 @@
     "id": "ID",
     "visualization": "Visualization"
   },
+  "home": {
+    "title": "Home"
+  },
   "task": {
     "algorithm": "Algorithm",
     "database": "Database",
@@ -72,6 +75,7 @@
     }
   },
   "task-read": {
+    "title": "Task",
     "card-general": {
       "title": "General"
     },
@@ -108,6 +112,7 @@
     "title": "Organizations"
   },
   "organization-read": {
+    "title": "Organization",
     "card-details": {
       "title": "Details"
     },
@@ -135,6 +140,7 @@
     "title": "Collaborations"
   },
   "collaboration-read": {
+    "title": "Collaboration",
     "card-details": {
       "title": "Details"
     },
@@ -163,6 +169,7 @@
     "title": "Create user"
   },
   "user-read": {
+    "title": "User",
     "card-details": {
       "title": "Details"
     },

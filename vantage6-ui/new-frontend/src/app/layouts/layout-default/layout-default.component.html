@@ -39,6 +39,7 @@
   </mat-sidenav>
   <mat-sidenav-content>
     <div class="layout-container">
+      <app-breadcrumbs></app-breadcrumbs>
       <router-outlet *ngIf="chosenCollaborationService.isInitialized$ | async"></router-outlet>
     </div>
   </mat-sidenav-content>

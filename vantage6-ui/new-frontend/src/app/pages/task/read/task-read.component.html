@@ -1,7 +1,4 @@
 <app-page-header title="Task">
-  <button actions mat-flat-button color="primary" [routerLink]="routes.tasks">
-    <mat-icon>arrow_back</mat-icon>{{ "task-list.title" | translate }}
-  </button>
   <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="task && canDelete">
     <mat-icon>more_vert</mat-icon>
   </button>
