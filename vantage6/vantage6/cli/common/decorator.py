@@ -5,8 +5,7 @@ from vantage6.common import error
 from vantage6.common.globals import InstanceType
 from vantage6.cli.configuration_wizard import select_configuration_questionaire
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
-from vantage6.cli.server.common import get_server_context
-from vantage6.cli.common import select_context_class, get_context
+from vantage6.cli.context import select_context_class, get_context
 
 
 def insert_context(type_: InstanceType) -> callable:

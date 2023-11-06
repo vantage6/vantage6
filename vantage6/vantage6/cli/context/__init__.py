@@ -16,7 +16,6 @@ from vantage6.cli.context.node import NodeContext
 from vantage6.cli.context.server import ServerContext
 
 
-# TODO move to a context folder?!
 def select_context_class(
     type_: InstanceType
 ) -> ServerContext | NodeContext | AlgorithmStoreContext:
