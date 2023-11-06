@@ -2,8 +2,8 @@
 
 .crumbs {
   display: flex;
-  gap: 4px;
-  margin-bottom: 8px;
+  gap: $spacing-px-1;
+  margin-bottom: $spacing-px-2;
 
   .crumb {
     display: flex;
@@ -12,8 +12,8 @@
 
     &::before {
       content: "/";
-      margin-right: 4px;
-      opacity: 0.2;
+      margin-right: $spacing-px-1;
+      color: rgba(0, 0, 0, 0.12);
     }
     &:first-child::before {
       content: "";
