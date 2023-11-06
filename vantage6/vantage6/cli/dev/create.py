@@ -9,7 +9,8 @@ from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.common import info, error, generate_apikey
 
 from vantage6.cli.globals import PACKAGE_FOLDER
-from vantage6.cli.context import ServerContext, NodeContext
+from vantage6.cli.context.server import ServerContext
+from vantage6.cli.context.node import NodeContext
 from vantage6.cli.server.common import get_server_context
 from vantage6.cli.server.import_ import cli_server_import
 from vantage6.cli.utils import prompt_config_name

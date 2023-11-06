@@ -14,7 +14,7 @@ from vantage6.common.globals import (
     DEFAULT_SERVER_IMAGE,
     InstanceType,
 )
-from vantage6.cli.context import ServerContext
+from vantage6.cli.context.server import ServerContext
 from vantage6.cli.utils import check_config_name_allowed
 from vantage6.cli.server.common import click_insert_context, print_log_worker
 

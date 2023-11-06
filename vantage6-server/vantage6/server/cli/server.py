@@ -17,7 +17,7 @@ from vantage6.server.controller import fixture
 from vantage6.cli.configuration_wizard import (
     select_configuration_questionaire
 )
-from vantage6.cli.context import ServerContext
+from vantage6.cli.context.server import ServerContext
 from vantage6.server._version import __version__
 
 

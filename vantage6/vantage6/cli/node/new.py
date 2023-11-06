@@ -2,7 +2,7 @@ import click
 from colorama import Fore, Style
 
 from vantage6.common import error, info, check_config_writeable
-from vantage6.cli.context import NodeContext
+from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import (
     DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 )

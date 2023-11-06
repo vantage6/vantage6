@@ -3,7 +3,7 @@ from colorama import (Fore, Style)
 
 from vantage6.common import info, error, check_config_writeable
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
-from vantage6.cli.context import ServerContext
+from vantage6.cli.context.server import ServerContext
 from vantage6.cli.configuration_wizard import configuration_wizard
 from vantage6.cli.utils import check_config_name_allowed, prompt_config_name
 from vantage6.common.globals import InstanceType

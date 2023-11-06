@@ -22,7 +22,7 @@ from vantage6.common.globals import (
 )
 
 from vantage6.cli.globals import DEFAULT_UI_PORT, ServerGlobals
-from vantage6.cli.context import ServerContext
+from vantage6.cli.context.server import ServerContext
 from vantage6.cli.utils import check_config_name_allowed
 from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
 from vantage6.cli.server.common import (

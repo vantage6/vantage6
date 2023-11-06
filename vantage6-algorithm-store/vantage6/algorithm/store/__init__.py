@@ -33,7 +33,7 @@ from pathlib import Path
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
 # TODO replace by AlgorithmStoreContext
-from vantage6.cli.context import ServerContext
+from vantage6.cli.context.server import ServerContext
 from vantage6.algorithm.store._version import __version__
 # TODO move server imports to common / refactor
 from vantage6.server import db

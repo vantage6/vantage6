@@ -27,7 +27,7 @@ from vantage6.common.docker.addons import (
   check_docker_running
 )
 
-from vantage6.cli.context import NodeContext
+from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import (
     DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 )

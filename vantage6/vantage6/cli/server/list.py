@@ -6,7 +6,7 @@ from colorama import (Fore, Style)
 from vantage6.common import warning
 from vantage6.common.docker.addons import check_docker_running
 from vantage6.common.globals import APPNAME, InstanceType
-from vantage6.cli.context import ServerContext
+from vantage6.cli.context.server import ServerContext
 
 
 @click.command()

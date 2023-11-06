@@ -11,7 +11,7 @@ from vantage6.common import error, info, debug
 from vantage6.common.globals import STRING_ENCODING, APPNAME, InstanceType
 from vantage6.client import UserClient
 
-from vantage6.cli.context import NodeContext
+from vantage6.cli.context.node import NodeContext
 from vantage6.cli.configuration_wizard import select_configuration_questionaire
 
 

@@ -33,6 +33,7 @@ COPY . /vantage6
 # install individual packages
 RUN pip install -e /vantage6/vantage6-common
 RUN pip install -e /vantage6/vantage6
+# TODO remove dependency on server?
 RUN pip install -e /vantage6/vantage6-server
 RUN pip install -e /vantage6/vantage6-algorithm-store
 

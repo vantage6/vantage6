@@ -1,10 +1,19 @@
+"""
+The context module in the CLI package contains the Context classes of instances
+started from the CLI, such as nodes and servers. These contexts are related to
+the host system and therefore part of the CLI package.
+
+All classes are derived from the abstract AppContext class and provide the
+vantage6 applications with naming conventions, standard file locations, and
+more.
+"""
 from colorama import (Fore, Style)
 
 from vantage6.common.globals import InstanceType
 from vantage6.common import error
-from vantage6.cli.context import (
-    AlgorithmStoreContext, NodeContext, ServerContext
-)
+from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
+from vantage6.cli.context.node import NodeContext
+from vantage6.cli.context.server import ServerContext
 
 
 # TODO move to a context folder?!

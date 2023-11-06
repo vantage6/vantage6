@@ -6,7 +6,8 @@ from pathlib import Path
 import click
 
 from vantage6.common import info
-from vantage6.cli.context import ServerContext, NodeContext
+from vantage6.cli.context.server import ServerContext
+from vantage6.cli.context.node import NodeContext
 from vantage6.cli.server.common import click_insert_context
 from vantage6.cli.server.stop import vserver_remove
 from vantage6.cli.utils import remove_file
