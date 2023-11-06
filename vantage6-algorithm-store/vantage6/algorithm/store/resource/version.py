@@ -9,7 +9,7 @@ from http import HTTPStatus
 from vantage6.common import logger_name
 from vantage6.algorithm.store._version import __version__
 # TODO move to common / refactor
-from vantage6.server.resource import ServicesResources
+from vantage6.server.resource import AlgorithmStoreResources
 
 
 module_name = logger_name(__name__)
@@ -44,7 +44,8 @@ def setup(api: Api, api_base: str, services: dict) -> None:
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class Version(ServicesResources):
+class Version(AlgorithmStoreResources):
+    """ Version resource """
 
     def get(self):
         """Get version

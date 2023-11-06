@@ -27,32 +27,19 @@ from vantage6.server.resource.common.pagination import Page
 log = logging.getLogger(logger_name(__name__))
 
 
-class ServicesResources(Resource):
+class BaseServicesResources(Resource):
     """
-    Flask resource base class.
-
-    Adds functionality like mail, socket, permissions and the api itself.
-    Also adds common helper functions.
+    Flask resource base class
 
     Attributes
     ----------
-    socketio : SocketIO
-        SocketIO instance
-    mail : Mail
-        Mail instance
     api : Api
         Api instance
-    permissions : PermissionManager
-        Instance of class that manages permissions
-    config : dict
+    config: dict
         Configuration dictionary
     """
-    def __init__(self, socketio: SocketIO, mail: Mail, api: Api,
-                 permissions: PermissionManager, config: dict):
-        self.socketio = socketio
-        self.mail = mail
+    def __init__(self, api: Api, config: dict):
         self.api = api
-        self.permissions = permissions
         self.config = config
 
     @staticmethod
@@ -114,6 +101,33 @@ class ServicesResources(Resource):
         """
         return self.dump(page, schema), HTTPStatus.OK, page.headers
 
+class ServicesResources(BaseServicesResources):
+    """
+    Flask resource class for the vantage6 server.
+
+    Adds functionality like mail, socket, permissions and the api itself.
+    Also adds common helper functions.
+
+    Attributes
+    ----------
+    socketio : SocketIO
+        SocketIO instance
+    mail : Mail
+        Mail instance
+    api : Api
+        Api instance
+    permissions : PermissionManager
+        Instance of class that manages permissions
+    config : dict
+        Configuration dictionary
+    """
+    def __init__(self, socketio: SocketIO, mail: Mail, api: Api,
+                 permissions: PermissionManager, config: dict):
+        super().__init__(api, config)
+        self.socketio = socketio
+        self.mail = mail
+        self.permissions = permissions
+
     @staticmethod
     def obtain_auth() -> db.Authenticatable | dict:
         """
@@ -172,6 +186,21 @@ class ServicesResources(Resource):
             List of collaborations
         """
         return obtain_auth_collaborations()
+
+
+class AlgorithmStoreResources(BaseServicesResources):
+    """
+    Flask resource class for the algorithm store.
+
+    Attributes
+    ----------
+    api : Api
+        Api instance
+    config: dict
+        Configuration dictionary
+    """
+    # TODO implement this class when necessary
+    # TODO move this class elsewhere?
 
 
 # ------------------------------------------------------------------------------

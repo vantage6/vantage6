@@ -1,5 +1,4 @@
 import click
-import questionary as q
 import docker
 from colorama import (Fore, Style)
 

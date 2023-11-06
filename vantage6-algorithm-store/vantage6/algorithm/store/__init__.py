@@ -40,7 +40,7 @@ from vantage6.server import db
 from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.server.resource.common.output_schema import HATEOASModelSchema
 from vantage6.server.permission import PermissionManager
-from vantage6.server.globals import (
+from vantage6.algorithm.store.globals import (
     RESOURCES,
     SERVER_MODULE_NAME
 )
@@ -84,7 +84,7 @@ class AlgorithmStoreApp:
         self.cors = CORS(self.app)
 
         # setup the permission manager for the API endpoints
-        self.permissions = PermissionManager()
+        # self.permissions = PermissionManager()
 
         # Api - REST JSON-rpc
         self.api = Api(self.app)
@@ -233,7 +233,7 @@ class AlgorithmStoreApp:
         # make use of 'em.
         services = {
             "api": self.api,
-            "permissions": self.permissions,
+            # "permissions": self.permissions,
             "config": self.ctx.config
         }
 
