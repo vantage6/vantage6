@@ -13,6 +13,7 @@ from vantage6.common.globals import (
     InstanceType, APPNAME, DEFAULT_DOCKER_REGISTRY
 )
 from vantage6.common.docker.addons import check_docker_running, pull_if_newer
+from vantage6.cli.context import AlgorithmStoreContext, ServerContext
 from vantage6.cli.server.common import print_log_worker
 from vantage6.cli.utils import check_config_name_allowed
 from vantage6.cli.globals import ServerGlobals, AlgoStoreGlobals
@@ -152,7 +153,7 @@ def mount_source(mount_src: str) -> docker.types.Mount:
 
 
 def mount_database(
-    ctx: AppContext, type_: InstanceType
+    ctx: ServerContext | AlgorithmStoreContext, type_: InstanceType
 ) -> tuple[docker.types.Mount, dict]:
     """
     Mount database in the container if it is file-based (e.g. a SQLite DB).

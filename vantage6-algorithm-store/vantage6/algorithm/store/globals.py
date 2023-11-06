@@ -13,4 +13,4 @@ SERVER_MODULE_NAME = APPNAME + "-algorithm-store"
 
 # Which resources should be initialized. These names correspond to the
 # file-names in the resource directory
-RESOURCES = ['version', ]
+RESOURCES = ['version', 'algorithm']
