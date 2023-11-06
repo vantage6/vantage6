@@ -153,7 +153,7 @@ def mount_source(mount_src: str) -> docker.types.Mount:
 
 def mount_database(
     ctx: AppContext, type_: InstanceType
-) -> tuple(docker.types.Mount, dict):
+) -> tuple[docker.types.Mount, dict]:
     """
     Mount database in the container if it is file-based (e.g. a SQLite DB).
 
