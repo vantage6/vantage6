@@ -73,7 +73,7 @@ def cli_algo_store_start(
         mounts=mounts,
         detach=True,
         labels={
-            f"{APPNAME}-type": InstanceType.SERVER,
+            f"{APPNAME}-type": InstanceType.ALGORITHM_STORE,
             "name": ctx.config_file_name
         },
         environment=environment_vars,

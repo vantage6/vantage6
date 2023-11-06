@@ -8,6 +8,8 @@ from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 from vantage6.cli.context import select_context_class, get_context
 
 
+# TODO to make this decorator usable by nodes as well, we should make the
+# default for --user/--system configurable
 def insert_context(type_: InstanceType) -> callable:
     """
     Supply the Click function with an additional context parameter. The context
@@ -31,9 +33,9 @@ def insert_context(type_: InstanceType) -> callable:
     """
     def protection_decorator(func: callable) -> callable:
         @click.option('-n', '--name', default=None,
-                      help="Name of the configuration you want to use.")
+                      help="Name of the configuration.")
         @click.option('-c', '--config', default=None, help='Absolute path to '
-                      'configuration-file; overrides NAME')
+                      'configuration-file; overrides --name')
         @click.option('--system', 'system_folders', flag_value=True,
                       help='Use system folders instead of user folders. This '
                       'is the default')

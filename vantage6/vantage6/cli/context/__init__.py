@@ -64,8 +64,8 @@ def get_context(
 
     Returns
     -------
-    ServerContext
-        Server context object
+    AppContext
+        Specialized subclass context of AppContext for the given instance type
     """
     ctx_class = select_context_class(type_)
     if not ctx_class.config_exists(name, system_folders):
@@ -78,7 +78,7 @@ def get_context(
 
     # We do not want to log this here, we do this in the container and not on
     # the host. We only want CLI logging here.
-    ServerContext.LOGGING_ENABLED = False
+    ctx_class.LOGGING_ENABLED = False
 
     # create server context, and initialize db
     ctx = ctx_class(name, system_folders=system_folders)
