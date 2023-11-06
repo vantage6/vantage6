@@ -133,7 +133,8 @@ def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
         ))
 
         environment_vars = {
-            ServerGlobals.DB_URI_ENV_VAR: f"sqlite:////mnt/database/{basename}",
+            ServerGlobals.DB_URI_ENV_VAR:
+                f"sqlite:////mnt/database/{basename}",
             ServerGlobals.CONFIG_NAME_ENV_VAR: ctx.config_file_name
         }
 
