@@ -28,6 +28,7 @@ from vantage6.cli.algorithm.create import cli_algorithm_create
 from vantage6.cli.algorithm.update import cli_algorithm_update
 from vantage6.cli.test.feature_tester import cli_test_features
 from vantage6.cli.test.integration_test import cli_test_integration
+from vantage6.cli.algostore.attach import cli_algo_store_attach
 from vantage6.cli.algostore.new import cli_algo_store_new
 from vantage6.cli.algostore.start import cli_algo_store_start
 from vantage6.cli.algostore.stop import cli_algo_store_stop
@@ -127,6 +128,7 @@ def cli_algo_store() -> None:
 
 
 # Define the commands for the test group
+cli_algo_store.add_command(cli_algo_store_attach, name="attach")
 cli_algo_store.add_command(cli_algo_store_new, name="new")
 cli_algo_store.add_command(cli_algo_store_start, name="start")
 cli_algo_store.add_command(cli_algo_store_stop, name="stop")
