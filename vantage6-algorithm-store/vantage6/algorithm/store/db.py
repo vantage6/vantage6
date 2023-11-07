@@ -1,15 +1,22 @@
 # -*- coding: utf-8 -*-
 # TODO this is almost a copy of the same file in the server package. Refactor
+# TODO this file is awkward...
 import logging
 import datetime
 
 import enum
 import sqlalchemy as sql
 
-# TODO this file is akward...
+# Note: by importing these classes, the classes are registered in the Base's
+# SQLAlchemy metadata. This is required for SQLAlchemy to be able to map the
+# classes to the database tables, and e.g. initialize the database tables on
+# startup.
 from vantage6.algorithm.store.model import (
     Base,
-    Algorithm
+    Algorithm,
+    Argument,
+    Database,
+    Function
 )
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING

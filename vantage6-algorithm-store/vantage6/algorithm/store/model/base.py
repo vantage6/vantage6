@@ -122,12 +122,6 @@ class Database(metaclass=Singleton):
         self.object_session = Session.object_session
 
         Base.metadata.create_all(bind=self.engine)
-        print(Base)
-        print(Base.metadata.tables)
-        print("aewfawf")
-        print("aewfawf")
-        print("aewfawf")
-        print("aewfawf")
         log.info("Database initialized!")
 
         # add columns that are not yet in the database (they may have been

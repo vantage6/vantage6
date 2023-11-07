@@ -1,39 +1,51 @@
 from __future__ import annotations
-from sqlalchemy import Column, String
+import enum
+from sqlalchemy import Column, String, Enum
+from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base
 
 
+class Partitioning(str, enum.Enum):
+    """ Enum for types of partitioning """
+    HORIZONTAL = "horizontal"
+    VERTICAL = "vertical"
+
+
 class Algorithm(Base):
     """
-    Table that describes which collaborations are available.
-
-    Collaborations are combinations of one or more organizations
-    that do studies together. Each
-    :class:`~vantage6.server.model.organization.Organization` has a
-    :class:`~vantage6.server.model.node.Node` for
-    each collaboration that it is part of. Within a collaboration multiple
-    :class:`~vantage6.server.model.task.Task` can be executed.
+    Table that describes which algorithms are available.
 
     Attributes
     ----------
     name : str
-        Name of the collaboration
-    encrypted : bool
-        Whether the collaboration is encrypted or not
-    organizations :
-            list[:class:`~vantage6.server.model.organization.Organization`]
-        List of organizations that are part of this collaboration
-    nodes : list[:class:`~vantage6.server.model.node.Node`]
-        List of nodes that are part of this collaboration
-    tasks : list[:class:`~vantage6.server.model.task.Task`]
-        List of tasks that are part of this collaboration
+        Name of the algorithm
+    description: str
+        Description of the algorithm
+    image : str
+        Docker image URL
+    partitioning : str
+        Type of partitioning
+    vantage6_version : str
+        Version of vantage6 that the algorithm is built with
+
+    functions : list[:class:`~.model.function.function`]
+        List of functions that are available in the algorithm
     """
 
     # fields
-    name = Column(String, unique=True)
+    name = Column(String)
+    description = Column(String)
+    image = Column(String)
+    # status = Column(String)
+    # code_url = Column(String)
+    # documentation_url = Column(String)
+    partitioning = Column(Enum(Partitioning))
+    vantage6_version = Column(String)
 
     # relationships
-    # functions = relationship("Function", back_populates='algorithms')
-
-
+    functions = relationship("Function", back_populates='algorithm')
+    # developers = relationship("Developer", back_populates='algorithms')
+    # reviewers = relationship("Reviewer", back_populates='algorithms')
+    # preprocessing = relationship("Preprocessing",
+    #                              back_populates='algorithms')
