@@ -14,33 +14,37 @@
               <b>{{ "task.function" | translate }}</b>
               <span>{{ function?.name || "-" }}</span>
             </div>
-            <div class="data-list__item" *ngIf="templateTask?.fixed?.name && !packageForm.get('name')">
+            <div class="data-list__item" *ngIf="templateTask?.fixed?.name">
               <b>{{ "task.name" | translate }}</b>
               <span>{{ templateTask?.fixed?.name || "-" }}</span>
             </div>
-            <div class="data-list__item data-list__item--full" *ngIf="templateTask?.fixed?.description && !packageForm.get('description')">
+            <div class="data-list__item data-list__item--full" *ngIf="templateTask?.fixed?.description">
               <b>{{ "task.description" | translate }}</b>
               <span>{{ templateTask?.fixed?.description || "-" }}</span>
+            </div>
+            <div class="data-list__item data-list__item--full" *ngIf="templateTask?.fixed?.organizations">
+              <b>{{ "task.organization" | translate }}</b>
+              <span>{{ organizationsToDisplay() || "-" }}</span>
             </div>
           </div>
           <form class="form variable-form" [formGroup]="packageForm">
             <!-- Name -->
-            <mat-form-field *ngIf="packageForm.get('name')" subscriptSizing="dynamic">
+            <mat-form-field *ngIf="this.templateTask?.variable?.includes('name')" subscriptSizing="dynamic">
               <mat-label>{{ "task.name" | translate }}</mat-label>
               <input matInput type="text" formControlName="name" />
             </mat-form-field>
             <!-- Description -->
-            <mat-form-field *ngIf="packageForm.get('description')" subscriptSizing="dynamic">
+            <mat-form-field *ngIf="this.templateTask?.variable?.includes('description')" subscriptSizing="dynamic">
               <mat-label>{{ "task.description" | translate }}</mat-label>
               <input matInput type="text" formControlName="description" />
             </mat-form-field>
             <!-- Organizations -->
-            <mat-form-field *ngIf="function && packageForm.get('organizationIDs')" subscriptSizing="dynamic">
+            <mat-form-field *ngIf="this.templateTask?.variable?.includes('organizations') && function" subscriptSizing="dynamic">
               <mat-label>{{ "task.organization" | translate }}</mat-label>
               <mat-select *ngIf="function.is_central" formControlName="organizationIDs">
                 <mat-option
                   *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
-                  [value]="organization.id"
+                  [value]="organization.id.toString()"
                 >
                   {{ organization.name }}
                 </mat-option>

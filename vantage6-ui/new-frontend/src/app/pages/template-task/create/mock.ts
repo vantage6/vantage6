@@ -22,18 +22,14 @@ export const mockDataAllTemplateTask = {
   collaboration: 2,
   fixed: {
     name: 'Name',
-    description: 'Description'
+    description: 'Description',
+    organizations: ['2']
     //  databases: [{ name: 'default' }]
   },
   variable: [
-    //'name',
-    'organizations',
-    //'description',
-    {
-      functions: {
-        arguments: ['file_name']
-      }
-    }
+    'name'
+    // 'organizations',
+    // 'description'
   ],
   allow_data_extend: false,
   allow_data_filter: false

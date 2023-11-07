@@ -52,6 +52,19 @@ export class TemplateTaskCreateComponent implements OnInit {
     this.isLoading = false;
   }
 
+  organizationsToDisplay(): string {
+    const names: string[] = [];
+    this.templateTask?.fixed.organizations?.forEach((organizationID) => {
+      const organization = this.chosenCollaborationService.collaboration$
+        .getValue()
+        ?.organizations.find((_) => _.id === Number.parseInt(organizationID));
+      if (organization) {
+        names.push(organization.name);
+      }
+    });
+    return names.join(', ');
+  }
+
   private async initData(): Promise<void> {
     this.templateTask = mockDataAllTemplateTask;
 
@@ -75,13 +88,12 @@ export class TemplateTaskCreateComponent implements OnInit {
       throw new Error('Function not found');
     }
 
-    //Refactor to always have the fields in the formgroup
     this.templateTask.variable.forEach((variable) => {
       if (typeof variable === 'string') {
         if (variable === 'name') {
-          this.packageForm.addControl('name', this.fb.nonNullable.control(this.templateTask?.fixed.name || ''));
+          this.packageForm.addControl('name', this.fb.nonNullable.control(''));
         } else if (variable === 'description') {
-          this.packageForm.addControl('description', this.fb.nonNullable.control(this.templateTask?.fixed.description || ''));
+          this.packageForm.addControl('description', this.fb.nonNullable.control(''));
         } else if (variable === 'organizations') {
           this.packageForm.addControl('organizationIDs', this.fb.nonNullable.control('', [Validators.required]));
           this.packageForm
@@ -93,6 +105,10 @@ export class TemplateTaskCreateComponent implements OnInit {
         }
       }
     });
+
+    if (this.templateTask.fixed.organizations) {
+      this.handleOrganizationChange(this.templateTask.fixed.organizations);
+    }
   }
 
   private async handleOrganizationChange(organizationID: string | string[]): Promise<void> {
