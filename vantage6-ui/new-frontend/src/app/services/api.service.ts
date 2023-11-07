@@ -34,6 +34,7 @@ export class ApiService {
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async postForApi<T>(path: string, body: any): Promise<T> {
     return await this.handleResult(
       this.http.post<T>(this.getApiPath(path), body, {
@@ -42,6 +43,7 @@ export class ApiService {
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async patchForApi<T>(path: string, body: any): Promise<T> {
     return await this.handleResult(
       this.http.patch<T>(this.getApiPath(path), body, {
@@ -50,6 +52,7 @@ export class ApiService {
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async deleteForApi(path: string): Promise<any> {
     return await this.handleResult(
       this.http.delete(this.getApiPath(path), {
@@ -62,6 +65,7 @@ export class ApiService {
     return await this.handleResult(this.http.get<T>(environment.algorithm_server_url + path));
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private getApiAuthenticationHeaders(): any {
     const accessToken = sessionStorage.getItem(ACCESS_TOKEN_KEY);
 
@@ -86,6 +90,7 @@ export class ApiService {
   }
 
   private async handleResultForPagination<T>(request: Observable<HttpResponse<Pagination<T>>>): Promise<Pagination<T>> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return new Promise<any>((resolve, reject) => {
       request.pipe(first()).subscribe(
         (response) => {

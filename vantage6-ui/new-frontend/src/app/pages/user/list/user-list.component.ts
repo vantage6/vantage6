@@ -1,5 +1,5 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -9,17 +9,17 @@ import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.
 import { UserSortProperties } from 'src/app/models/api/user.model';
 import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
-import { AuthService } from 'src/app/services/auth.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { UserService } from 'src/app/services/user.service';
 
 @Component({
   selector: 'app-user-list',
   templateUrl: './user-list.component.html',
-  styleUrls: ['./user-list.component.scss'],
-  host: { '[class.card-container]': 'true' }
+  styleUrls: ['./user-list.component.scss']
 })
 export class UserListComponent implements OnInit, OnDestroy {
+  @HostBinding('class') class = 'card-container';
+
   destroy$ = new Subject();
   routes = routePaths;
 

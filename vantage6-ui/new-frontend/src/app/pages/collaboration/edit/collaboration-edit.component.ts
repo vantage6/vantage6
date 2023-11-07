@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Collaboration, CollaborationCreate, CollaborationForm, CollaborationLazyProperties } from 'src/app/models/api/collaboration.model';
 import { routePaths } from 'src/app/routes';
@@ -8,10 +8,10 @@ import { NodeService } from 'src/app/services/node.service';
 @Component({
   selector: 'app-collaboration-edit',
   templateUrl: './collaboration-edit.component.html',
-  styleUrls: ['./collaboration-edit.component.scss'],
-  host: { '[class.card-container]': 'true' }
+  styleUrls: ['./collaboration-edit.component.scss']
 })
-export class CollaborationEditComponent {
+export class CollaborationEditComponent implements OnInit {
+  @HostBinding('class') class = 'card-container';
   @Input() id: string = '';
 
   isLoading: boolean = true;
@@ -38,6 +38,7 @@ export class CollaborationEditComponent {
 
     this.isSubmitting = true;
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const collaborationCreate: CollaborationCreate = (({ registerNodes, ...data }) => data)(collaborationForm);
     const result = await this.collaborationService.editCollaboration(this.collaboration?.id.toString(), collaborationCreate);
 

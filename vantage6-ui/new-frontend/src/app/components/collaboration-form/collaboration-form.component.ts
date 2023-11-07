@@ -12,8 +12,8 @@ import { OrganizationService } from 'src/app/services/organization.service';
 })
 export class CollaborationFormComponent implements OnInit {
   @Input() collaboration?: Collaboration;
-  @Output() onCancel: EventEmitter<void> = new EventEmitter();
-  @Output() onSubmit: EventEmitter<CollaborationForm> = new EventEmitter();
+  @Output() cancelled: EventEmitter<void> = new EventEmitter();
+  @Output() submitted: EventEmitter<CollaborationForm> = new EventEmitter();
 
   form = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
@@ -58,12 +58,12 @@ export class CollaborationFormComponent implements OnInit {
 
   handleSubmit() {
     if (this.form.valid) {
-      this.onSubmit.emit(this.form.getRawValue());
+      this.submitted.emit(this.form.getRawValue());
     }
   }
 
   handleCancel() {
-    this.onCancel.emit();
+    this.cancelled.emit();
   }
 
   private async initData(): Promise<void> {

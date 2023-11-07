@@ -2,7 +2,7 @@
   <app-page-header [title]="user.username"></app-page-header>
   <mat-card>
     <mat-card-content>
-      <app-user-form [user]="user" (onSubmit)="handleSubmit($event)" (onCancel)="handleCancel()"></app-user-form>
+      <app-user-form [user]="user" (submitted)="handleSubmit($event)" (cancelled)="handleCancel()"></app-user-form>
     </mat-card-content>
   </mat-card>
 </ng-container>

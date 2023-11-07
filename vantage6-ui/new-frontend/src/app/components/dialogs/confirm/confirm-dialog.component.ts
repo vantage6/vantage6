@@ -10,10 +10,10 @@ export interface DialogData {
 }
 
 @Component({
-  selector: 'confirm-dialog',
+  selector: 'app-confirm-dialog',
   templateUrl: 'confirm-dialog.component.html',
   styleUrls: ['./confirm-dialog.component.scss']
 })
-export class ConfirmDialog {
+export class ConfirmDialogComponent {
   constructor(@Inject(MAT_DIALOG_DATA) public data: DialogData) {}
 }

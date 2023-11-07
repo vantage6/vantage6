@@ -1,10 +1,10 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
-import { Algorithm, ArgumentType, Function } from 'src/app/models/api/algorithm.model';
+import { Algorithm, ArgumentType, AlgorithmFunction } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, takeUntil } from 'rxjs';
-import { BaseNode, DatabaseType } from 'src/app/models/api/node.model';
+import { BaseNode, Database, DatabaseType } from 'src/app/models/api/node.model';
 import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
 import { ColumnRetrievalInput, CreateTask, CreateTaskInput, TaskDatabase } from 'src/app/models/api/task.models';
 import { TaskService } from 'src/app/services/task.service';
@@ -17,10 +17,10 @@ import { FilterStepComponent } from './steps/filter-step/filter-step.component';
 @Component({
   selector: 'app-task-create',
   templateUrl: './task-create.component.html',
-  styleUrls: ['./task-create.component.scss'],
-  host: { '[class.card-container]': 'true' }
+  styleUrls: ['./task-create.component.scss']
 })
 export class TaskCreateComponent implements OnInit, OnDestroy {
+  @HostBinding('class') class = 'card-container';
   @ViewChild(PreprocessingStepComponent)
   preprocessingStep?: PreprocessingStepComponent;
   @ViewChild(FilterStepComponent)
@@ -32,8 +32,8 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
 
   algorithms: Algorithm[] = [];
   algorithm: Algorithm | null = null;
-  function: Function | null = null;
-  databases: any[] = [];
+  function: AlgorithmFunction | null = null;
+  databases: Database[] = [];
   node: BaseNode | null = null;
   columns: string[] = [];
   isLoading: boolean = true;
@@ -299,7 +299,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     this.filterStep?.clear();
   }
 
-  private setFormControlsForDatabase(selectedFunction: Function) {
+  private setFormControlsForDatabase(selectedFunction: AlgorithmFunction) {
     selectedFunction?.databases.forEach((database) => {
       this.databaseForm.addControl(`${database.name}_name`, new FormControl(null, [Validators.required]));
       this.databaseForm

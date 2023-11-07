@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostBinding, OnInit } from '@angular/core';
 import { BaseNode, Node, NodeEdit, NodeLazyProperties, NodeSortProperties, NodeStatus } from '../../../models/api/node.model';
 import { NodeService } from 'src/app/services/node.service';
 import { BaseOrganization, OrganizationSortProperties } from 'src/app/models/api/organization.model';
@@ -15,10 +15,10 @@ import { PermissionService } from 'src/app/services/permission.service';
 @Component({
   selector: 'app-node-read',
   templateUrl: './node-read.component.html',
-  styleUrls: ['./node-read.component.scss'],
-  host: { '[class.card-container]': 'true' }
+  styleUrls: ['./node-read.component.scss']
 })
 export class NodeReadComponent implements OnInit {
+  @HostBinding('class') class = 'card-container';
   nodeStatus = NodeStatus;
 
   name = new FormControl<string>('', [Validators.required]);
@@ -80,7 +80,10 @@ export class NodeReadComponent implements OnInit {
     const result = await this.nodeService.editNode(this.selectedNode.id.toString(), nodeEdit);
     if (result.id) {
       this.selectedNode.name = result.name;
-      this.nodes.find((node) => node.id === result.id)!.name = result.name;
+      const nodeToUpdate = this.nodes.find((node) => node.id === result.id);
+      if (nodeToUpdate) {
+        nodeToUpdate.name = result.name;
+      }
     }
   }
 

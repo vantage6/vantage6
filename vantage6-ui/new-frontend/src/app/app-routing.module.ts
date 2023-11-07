@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { routerConfig } from './routes';
+import { routePaths, routerConfig } from './routes';
 import { LoginComponent } from './pages/login/login.component';
 import { LayoutLoginComponent } from './layouts/layout-login/layout-login.component';
 import { LayoutDefaultComponent } from './layouts/layout-default/layout-default.component';
@@ -40,12 +40,8 @@ const routes: Routes = [
   {
     path: '',
     component: LayoutDefaultComponent,
+    data: { crumb: ['home.title', routePaths.home] },
     children: [
-      {
-        path: routerConfig.start,
-        component: StartComponent,
-        canActivate: [authenticationGuard()]
-      },
       {
         path: routerConfig.home,
         component: HomeComponent,
@@ -54,17 +50,38 @@ const routes: Routes = [
       {
         path: routerConfig.tasks,
         component: TaskListComponent,
-        canActivate: [authenticationGuard(), chosenCollaborationGuard()]
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        data: {
+          crumbs: [['task-list.title']]
+        }
       },
       {
         path: routerConfig.taskCreate,
         component: TaskCreateComponent,
-        canActivate: [authenticationGuard(), chosenCollaborationGuard()]
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        data: {
+          crumbs: [['task-list.title', routePaths.tasks], ['task-create.title']]
+        }
       },
       {
         path: routerConfig.task,
         component: TaskReadComponent,
-        canActivate: [authenticationGuard(), chosenCollaborationGuard()]
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        data: {
+          crumbs: [['task-list.title', routePaths.tasks], ['task-read.title']]
+        }
+      }
+    ]
+  },
+  {
+    path: '',
+    component: LayoutDefaultComponent,
+    data: { hideMenu: true },
+    children: [
+      {
+        path: routerConfig.start,
+        component: StartComponent,
+        canActivate: [authenticationGuard()]
       },
       {
         path: routerConfig.passwordChange,
@@ -76,6 +93,7 @@ const routes: Routes = [
   {
     path: routerConfig.admin,
     component: LayoutDefaultComponent,
+    data: { crumb: ['home.title', routePaths.adminHome] },
     children: [
       {
         path: routerConfig.adminHome,
@@ -85,67 +103,106 @@ const routes: Routes = [
       {
         path: routerConfig.organizations,
         component: OrganizationListComponent,
-        canActivate: [authenticationGuard()]
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['organization-list.title']]
+        }
       },
       {
         path: routerConfig.organizationCreate,
         component: OrganizationCreateComponent,
-        canActivate: [authenticationGuard()]
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['organization-list.title', routePaths.organizations], ['organization-create.title']]
+        }
       },
       {
         path: routerConfig.organizationEdit,
         component: OrganizationEditComponent,
-        canActivate: [authenticationGuard()]
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['organization-list.title', routePaths.organizations], ['organization-read.title']]
+        }
       },
       {
         path: routerConfig.organization,
         component: OrganizationReadComponent,
-        canActivate: [authenticationGuard()]
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['organization-list.title', routePaths.organizations], ['organization-read.title']]
+        }
       },
       {
         path: routerConfig.collaborations,
         component: CollaborationListComponent,
-        canActivate: [authenticationGuard()]
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['collaboration-list.title']]
+        }
       },
       {
         path: routerConfig.collaborationCreate,
         component: CollaborationCreateComponent,
-        canActivate: [authenticationGuard()]
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-create.title']]
+        }
       },
       {
         path: routerConfig.collaborationEdit,
         component: CollaborationEditComponent,
-        canActivate: [authenticationGuard()]
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-read.title']]
+        }
       },
       {
         path: routerConfig.collaboration,
         component: CollaborationReadComponent,
-        canActivate: [authenticationGuard()]
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-read.title']]
+        }
       },
       {
         path: routerConfig.users,
         component: UserListComponent,
-        canActivate: [authenticationGuard()]
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['user-list.title']]
+        }
       },
       {
         path: routerConfig.userCreate,
         component: UserCreateComponent,
-        canActivate: [authenticationGuard()]
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['user-list.title', routePaths.users], ['user-create.title']]
+        }
       },
       {
         path: routerConfig.userEdit,
         component: UserEditComponent,
-        canActivate: [authenticationGuard()]
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['user-list.title', routePaths.users], ['user-read.title']]
+        }
       },
       {
         path: routerConfig.user,
         component: UserReadComponent,
-        canActivate: [authenticationGuard()]
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['user-list.title', routePaths.users], ['user-read.title']]
+        }
       },
       {
         path: routerConfig.nodes,
         component: NodeReadComponent,
-        canActivate: [authenticationGuard()]
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['node-read.title']]
+        }
       }
     ]
   }

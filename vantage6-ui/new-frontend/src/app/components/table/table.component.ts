@@ -16,6 +16,7 @@ export class TableComponent implements OnChanges {
     this.columnsToDisplay = this.data?.columns.map((column) => column.id) || [];
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   handleRowClick(row: any) {
     this.rowClick.emit(row.id);
   }

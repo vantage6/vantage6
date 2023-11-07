@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { ApiService } from '../../services/api.service';
 import { Version } from '../../models/api/version.model';
@@ -8,7 +8,7 @@ import { Version } from '../../models/api/version.model';
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
   serverUrl = environment.server_url;
   uiVersion: string = environment.version;
   serverVersion: string = '';

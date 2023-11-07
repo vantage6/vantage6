@@ -1,11 +1,11 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, HostBinding, OnDestroy } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 
 import { PASSWORD_VALIDATORS } from 'src/app/validators/passwordValidators';
 import { createCompareValidator } from 'src/app/validators/compare.validator';
-import { MessageDialog } from 'src/app/components/dialogs/message-dialog/message-dialog.component';
+import { MessageDialogComponent } from 'src/app/components/dialogs/message-dialog/message-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { routePaths } from 'src/app/routes';
@@ -15,10 +15,11 @@ import { createUnEqualValidator } from 'src/app/validators/unequal.validator';
 @Component({
   selector: 'app-change-password',
   templateUrl: './change-password.component.html',
-  styleUrls: ['./change-password.component.scss'],
-  host: { '[class.card-container]': 'true' }
+  styleUrls: ['./change-password.component.scss']
 })
 export class ChangePasswordComponent implements OnDestroy {
+  @HostBinding('class') class = 'card-container';
+
   destroy$ = new Subject();
   form = this.fb.nonNullable.group(
     {
@@ -45,7 +46,7 @@ export class ChangePasswordComponent implements OnDestroy {
     if (this.form.valid) {
       this.authService.changePassword(this.form.controls.oldPassword.value, this.form.controls.newPassword.value);
 
-      const dialogRef = this.dialog.open(MessageDialog, {
+      const dialogRef = this.dialog.open(MessageDialogComponent, {
         data: {
           title: this.translateService.instant('change-password.success-dialog.title'),
           content: this.translateService.instant('change-password.success-dialog.message'),

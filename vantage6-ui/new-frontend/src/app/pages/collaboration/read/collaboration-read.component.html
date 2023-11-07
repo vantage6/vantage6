@@ -1,8 +1,5 @@
 <ng-container *ngIf="!isLoading && collaboration; else loading">
   <app-page-header [title]="collaboration.name">
-    <button actions mat-flat-button color="primary" [routerLink]="routes.collaborations">
-      <mat-icon>arrow_back</mat-icon>{{ "collaboration-list.title" | translate }}
-    </button>
     <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="canDelete || canDelete">
       <mat-icon>more_vert</mat-icon>
     </button>

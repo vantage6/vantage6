@@ -1,6 +1,6 @@
 export const readFile = (file: File): Promise<string | undefined> => {
   return new Promise<string | undefined>((resolve, reject) => {
-    let fileReader = new FileReader();
+    const fileReader = new FileReader();
     fileReader.onload = () => {
       const result = fileReader.result?.toString();
       resolve(result);

@@ -1,10 +1,10 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { downloadFile } from 'src/app/helpers/file.helper';
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { Organization, OrganizationLazyProperties } from 'src/app/models/api/organization.model';
-import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
+import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
 import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
 import { OrganizationService } from 'src/app/services/organization.service';
@@ -13,10 +13,10 @@ import { PermissionService } from 'src/app/services/permission.service';
 @Component({
   selector: 'app-organization-read',
   templateUrl: './organization-read.component.html',
-  styleUrls: ['./organization-read.component.scss'],
-  host: { '[class.card-container]': 'true' }
+  styleUrls: ['./organization-read.component.scss']
 })
 export class OrganizationReadComponent implements OnInit {
+  @HostBinding('class') class = 'card-container';
   routes = routePaths;
   nodeStatus = NodeStatus;
 

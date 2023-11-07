@@ -13,6 +13,6 @@ export interface DialogData {
   templateUrl: './message-dialog.component.html',
   styleUrls: ['./message-dialog.component.scss']
 })
-export class MessageDialog {
+export class MessageDialogComponent {
   constructor(@Inject(MAT_DIALOG_DATA) public data: DialogData) {}
 }

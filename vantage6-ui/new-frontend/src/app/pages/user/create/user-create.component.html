@@ -1,7 +1,7 @@
 <app-page-header title="{{ 'user-create.title' | translate }}"></app-page-header>
 <mat-card *ngIf="!isSubmitting; else loading">
   <mat-card-content>
-    <app-user-form (onSubmit)="handleSubmit($event)" (onCancel)="handleCancel()"></app-user-form>
+    <app-user-form (submitted)="handleSubmit($event)" (cancelled)="handleCancel()"></app-user-form>
   </mat-card-content>
 </mat-card>
 <ng-template #loading>

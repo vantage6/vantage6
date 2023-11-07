@@ -1,4 +1,5 @@
-import { Component, ElementRef, Input, OnChanges, ViewChild } from '@angular/core';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { AfterViewInit, Component, ElementRef, Input, OnChanges, ViewChild } from '@angular/core';
 import { Output } from 'src/app/models/api/algorithm.model';
 import * as Plot from '@observablehq/plot';
 
@@ -7,7 +8,7 @@ import * as Plot from '@observablehq/plot';
   templateUrl: './visualize-histogram.component.html',
   styleUrls: ['./visualize-histogram.component.scss']
 })
-export class VisualizeHistogramComponent implements OnChanges {
+export class VisualizeHistogramComponent implements OnChanges, AfterViewInit {
   @ViewChild('histogram') container?: ElementRef;
   @Input() output!: Output;
   @Input() result!: any;

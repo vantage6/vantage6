@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostBinding, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { BaseCollaboration, CollaborationSortProperties, GetCollaborationParameters } from 'src/app/models/api/collaboration.model';
 import { routePaths } from 'src/app/routes';
@@ -9,10 +9,10 @@ import { PermissionService } from 'src/app/services/permission.service';
 @Component({
   selector: 'app-start',
   templateUrl: './start.component.html',
-  styleUrls: ['./start.component.scss'],
-  host: { '[class.card-container]': 'true' }
+  styleUrls: ['./start.component.scss']
 })
 export class StartComponent implements OnInit {
+  @HostBinding('class') class = 'card-container';
   collaborations: BaseCollaboration[] = [];
 
   constructor(

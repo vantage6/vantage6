@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { BaseUser, GetUserParameters, User, UserCreate, UserEdit, UserLazyProperties, UserSortProperties } from '../models/api/user.model';
+import { BaseUser, GetUserParameters, User, UserCreate, UserEdit, UserLazyProperties } from '../models/api/user.model';
 import { Pagination } from '../models/api/pagination.model';
 import { getLazyProperties } from '../helpers/api.helper';
 

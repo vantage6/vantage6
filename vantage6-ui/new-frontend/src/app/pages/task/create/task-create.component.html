@@ -1,8 +1,4 @@
-<app-page-header title="{{ 'task-create.title' | translate }}">
-  <button actions mat-flat-button color="primary" [routerLink]="routes.tasks">
-    <mat-icon>arrow_back</mat-icon>{{ "task-list.title" | translate }}
-  </button>
-</app-page-header>
+<app-page-header title="{{ 'task-create.title' | translate }}"></app-page-header>
 <ng-template #loadingColumns>
   <div class="loading-container">
     <mat-spinner diameter="48"></mat-spinner>
@@ -78,7 +74,7 @@
             </div>
           </form>
         </mat-step>
-        <mat-step [stepControl]="databaseForm">
+        <mat-step [stepControl]="databaseForm" *ngIf="function && function.databases && function.databases.length >= 1">
           <form class="form" [formGroup]="databaseForm">
             <ng-template matStepLabel>{{ "task-create.step-database.title" | translate }}</ng-template>
             <ng-container *ngFor="let database of function?.databases">
@@ -149,7 +145,7 @@
                 <mat-label>{{ argument.name }}</mat-label>
                 <input
                   matInput
-                  numberOnly
+                  appNumberOnly
                   [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
                   [formControlName]="argument.name"
                 />

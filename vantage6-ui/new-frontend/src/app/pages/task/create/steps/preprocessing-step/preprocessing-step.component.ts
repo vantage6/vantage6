@@ -57,6 +57,7 @@ export class PreprocessingStepComponent {
     const selectedFunction = this.functions.find((_) => _.function === event.value) || null;
     if (selectedFunction) {
       selectedFunction.parameters.forEach((parameter) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const newControl = new FormControl<any>(null);
 
         //Set default value

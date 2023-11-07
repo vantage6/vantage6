@@ -43,8 +43,8 @@ import { PageHeaderComponent } from './components/page-header/page-header.compon
 import { ChipComponent } from './components/chip/chip.component';
 import { AlertComponent } from './components/alert/alert.component';
 import { StatusInfoComponent } from './components/status-info/status-info.component';
-import { LogDialog } from './components/dialogs/log/log-dialog.component';
-import { ConfirmDialog } from './components/dialogs/confirm/confirm-dialog.component';
+import { LogDialogComponent } from './components/dialogs/log/log-dialog.component';
+import { ConfirmDialogComponent } from './components/dialogs/confirm/confirm-dialog.component';
 import { VisualizeResultComponent } from './components/visualize-result/visualize-result.component';
 import { VisualizeTableComponent } from './components/visualize-table/visualize-table.component';
 import { TableComponent } from './components/table/table.component';
@@ -66,9 +66,10 @@ import { UserEditComponent } from './pages/user/edit/user-edit.component';
 import { VisualizeHistogramComponent } from './components/visualize-histogram/visualize-histogram.component';
 import { PreprocessingStepComponent } from './pages/task/create/steps/preprocessing-step/preprocessing-step.component';
 import { ChangePasswordComponent } from './pages/change-password/change-password.component';
-import { MessageDialog } from './components/dialogs/message-dialog/message-dialog.component';
+import { MessageDialogComponent } from './components/dialogs/message-dialog/message-dialog.component';
 import { FilterStepComponent } from './pages/task/create/steps/filter-step/filter-step.component';
 import { NumberOnlyDirective } from './directives/numberOnly.directive';
+import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -92,8 +93,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     ChipComponent,
     AlertComponent,
     StatusInfoComponent,
-    LogDialog,
-    ConfirmDialog,
+    LogDialogComponent,
+    ConfirmDialogComponent,
     VisualizeResultComponent,
     VisualizeTableComponent,
     TableComponent,
@@ -113,9 +114,10 @@ export function HttpLoaderFactory(http: HttpClient) {
     VisualizeHistogramComponent,
     PreprocessingStepComponent,
     ChangePasswordComponent,
-    MessageDialog,
+    MessageDialogComponent,
     FilterStepComponent,
-    NumberOnlyDirective
+    NumberOnlyDirective,
+    BreadcrumbsComponent
   ],
   imports: [
     BrowserModule,

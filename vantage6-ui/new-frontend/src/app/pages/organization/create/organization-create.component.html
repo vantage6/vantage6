@@ -2,7 +2,7 @@
 <ng-container *ngIf="!isSubmitting; else loading">
   <mat-card>
     <mat-card-content>
-      <app-organization-form (onSubmit)="handleSubmit($event)" (onCancel)="handleCancel()"></app-organization-form>
+      <app-organization-form (submitted)="handleSubmit($event)" (cancelled)="handleCancel()"></app-organization-form>
     </mat-card-content>
   </mat-card>
 </ng-container>
