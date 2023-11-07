@@ -1,10 +1,4 @@
 <app-page-header title="{{ 'task-create.title' | translate }}"></app-page-header>
-<ng-template #loadingColumns>
-  <div class="loading-container">
-    <mat-spinner diameter="48"></mat-spinner>
-    <div>{{ "task-create.step-preprocessing.get-columns" | translate }}</div>
-  </div>
-</ng-template>
 <ng-container *ngIf="!isLoading; else loading">
   <mat-card>
     <mat-card-content>
@@ -184,4 +178,10 @@
 </ng-template>
 <ng-template #loadingColumnsPreprocessing>
   <ng-template [ngTemplateOutlet]="loadingColumns"></ng-template>
+</ng-template>
+<ng-template #loadingColumns>
+  <div class="loading-container">
+    <mat-spinner diameter="48"></mat-spinner>
+    <div>{{ "task-create.step-preprocessing.get-columns" | translate }}</div>
+  </div>
 </ng-template>
