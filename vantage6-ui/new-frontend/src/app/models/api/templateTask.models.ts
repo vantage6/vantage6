@@ -8,5 +8,11 @@ export interface TemplateTask {
 interface FixedTemplateTask {
   name?: string;
   description?: string;
-  databases?: string[];
+  databases?: FixedDatabase[];
+}
+
+interface FixedDatabase {
+  name: string;
+  sheet?: string;
+  query?: string;
 }

@@ -52,7 +52,7 @@ export interface AlgorithmFunction {
   name: string;
   is_central: boolean;
   arguments: Argument[];
-  databases: Database[];
+  databases: FunctionDatabase[];
   output: Output[];
 }
 
@@ -90,7 +90,7 @@ interface Argument {
   description?: string;
 }
 
-interface Database {
+export interface FunctionDatabase {
   name: string;
 }
 export interface Output {
