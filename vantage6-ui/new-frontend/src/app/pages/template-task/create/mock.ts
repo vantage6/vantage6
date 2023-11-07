@@ -17,10 +17,14 @@ export const mockDataQualityTemplateTask = {
 };
 
 export const mockDataAllTemplateTask = {
-  image: 'harbor2.vantage6.ai/starter/utils',
-  function: 'fetch_static_file',
+  image: 'harbor2.vantage6.ai/starter/crosstab',
+  function: 'dct',
   collaboration: 2,
-  fixed: { name: 'Name', description: 'Description' },
+  fixed: {
+    name: 'Name',
+    description: 'Description'
+    //  databases: [{ name: 'default' }]
+  },
   variable: [
     //'name',
     'organizations',
