@@ -84,7 +84,7 @@ export class FilterStepComponent {
 
   addFilter(): void {
     if (this.columns.length === 0) {
-      this.onFirstPreprocessor.emit(true);
+      this.onFirstPreprocessor.emit();
     }
     const filterForm = this.fb.nonNullable.group({
       filterID: ['', Validators.required]

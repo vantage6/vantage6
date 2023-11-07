@@ -4,8 +4,8 @@
   </button>
 </app-page-header>
 <ng-template #loadingColumns>
-  <div class="loadingMessage">
-    <mat-spinner class="spinnerWithMessage" diameter="48"></mat-spinner>
+  <div class="loading-message">
+    <mat-spinner class="spinner-with-message" diameter="48"></mat-spinner>
     <div>{{ "task-create.step-preprocessing.get-columns" | translate }}</div>
   </div>
 </ng-template>
@@ -113,16 +113,13 @@
               [form]="preprocessingForm"
               [functions]="algorithm?.select || []"
               [columns]="columns"
-              (onFirstPreprocessor)="handleFirstPrepocessor($event)"
+              (onFirstPreprocessor)="handleFirstPreprocessor()"
             ></app-preprocessing-step>
             <div>
               <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
               <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
             </div>
           </ng-container>
-          <ng-template #loadingColumnsPreprocessing>
-            <ng-template [ngTemplateOutlet]="loadingColumns"></ng-template>
-          </ng-template>
         </mat-step>
         <mat-step *ngIf="shouldShowPreprocessorStep" [stepControl]="filterForm">
           <ng-template matStepLabel>{{ "task-create.step-filter.title" | translate }}</ng-template>
@@ -131,7 +128,7 @@
               [form]="filterForm"
               [filters]="algorithm?.filter || []"
               [columns]="columns"
-              (onFirstPreprocessor)="handleFirstPrepocessor($event)"
+              (onFirstPreprocessor)="handleFirstPreprocessor()"
             ></app-filter-step>
             <div>
               <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
@@ -188,4 +185,7 @@
       <mat-spinner diameter="48"></mat-spinner>
     </mat-card-content>
   </mat-card>
+</ng-template>
+<ng-template #loadingColumnsPreprocessing>
+  <ng-template [ngTemplateOutlet]="loadingColumns"></ng-template>
 </ng-template>

@@ -35,7 +35,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   function: Function | null = null;
   databases: any[] = [];
   node: BaseNode | null = null;
-  collab_nodes: BaseNode[] = [];
   columns: string[] = [];
   isLoading: boolean = true;
   isLoadingColumns: boolean = false;
@@ -131,8 +130,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     }
   }
 
-  async handleFirstPrepocessor(isFirst: boolean): Promise<void> {
-    if (!isFirst) return;
+  async handleFirstPreprocessor(): Promise<void> {
     this.isLoadingColumns = true;
 
     // collect data to collect columns from database
@@ -146,7 +144,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
 
     const input = { method: 'column_headers' };
 
-    let columnRetrieveData: ColumnRetrievalInput = {
+    const columnRetrieveData: ColumnRetrievalInput = {
       collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
       db_label: taskDatabase.label,
       organizations: [
@@ -167,12 +165,13 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     // that will retrieve the columns
     // TODO handle errors (both for retrieving columns and for retrieving the task)
     // TODO enable user to exit requesting column names if it takes too long
-    const columns_or_task = await this.taskService.getColumnNames(columnRetrieveData);
-    if (columns_or_task.columns) {
-      this.columns = columns_or_task.columns;
+    const columnsOrTask = await this.taskService.getColumnNames(columnRetrieveData);
+    console.log(columnsOrTask);
+    if (columnsOrTask.columns) {
+      this.columns = columnsOrTask.columns;
     } else {
       // a task has been started to retrieve the columns
-      const task = await this.taskService.wait_for_results(columns_or_task.id);
+      const task = await this.taskService.wait_for_results(columnsOrTask.id);
       const decodedResult: any = JSON.parse(atob(task.results?.[0].result || ''));
       this.columns = decodedResult;
     }
@@ -245,9 +244,9 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     //Get node
     if (id) {
       //Get all nodes for chosen collaboration
-      await this.getNodes();
+      const nodes = await this.getNodes();
       //Filter node for chosen organization
-      this.node = this.collab_nodes.find((_) => _.organization.id === Number.parseInt(id)) || null;
+      this.node = nodes?.find((_) => _.organization.id === Number.parseInt(id)) || null;
 
       //Get databases for node
       if (this.node) {
@@ -262,14 +261,14 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
 
   private async getOnlineNode(): Promise<BaseNode | null> {
     //Get all nodes for chosen collaboration
-    await this.getNodes();
+    const nodes = await this.getNodes();
 
     //Find a random node that is online
-    return this.collab_nodes.find((_) => _.status === 'online') || null;
+    return nodes?.find((_) => _.status === 'online') || null;
   }
 
-  private async getNodes(): Promise<void> {
-    if (!this.collab_nodes.length) this.collab_nodes = await this.chosenCollaborationService.getNodes();
+  private async getNodes(): Promise<BaseNode[] | null> {
+    return await this.chosenCollaborationService.getNodes();
   }
 
   private clearFunctionStep(): void {

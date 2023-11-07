@@ -37,7 +37,7 @@ export class PreprocessingStepComponent {
 
   addPreprocessor(): void {
     if (this.columns.length === 0) {
-      this.onFirstPreprocessor.emit(true);
+      this.onFirstPreprocessor.emit();
     }
     this.selectedFunctions.push(null);
     const preprocessorForm = this.fb.nonNullable.group({
