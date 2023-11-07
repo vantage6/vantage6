@@ -33,7 +33,7 @@ from pathlib import Path
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
 # TODO replace by AlgorithmStoreContext
-from vantage6.cli.context.server import ServerContext
+from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.algorithm.store._version import __version__
 # TODO move server imports to common / refactor
 from vantage6.server import db
@@ -56,11 +56,11 @@ class AlgorithmStoreApp:
 
     Attributes
     ----------
-    ctx : ServerContext
-        Context object that contains the configuration of the server.
+    ctx : AlgorithmStoreContext
+        Context object that contains the configuration of the algorithm store.
     """
 
-    def __init__(self, ctx: ServerContext) -> None:
+    def __init__(self, ctx: AlgorithmStoreContext) -> None:
         """Create a vantage6-server application."""
 
         self.ctx = ctx
@@ -268,7 +268,7 @@ def run_server(config: str, system_folders: bool = True) -> AlgorithmStoreApp:
     AlgorithmStoreApp
         A running instance of the vantage6 server
     """
-    ctx = ServerContext.from_external_config_file(
+    ctx = AlgorithmStoreContext.from_external_config_file(
         config,
         system_folders
     )
