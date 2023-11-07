@@ -1,7 +1,7 @@
 from __future__ import annotations
 from sqlalchemy import Column, String
 
-from vantage6.server.model.base import Base
+from vantage6.algorithm.store.model.base import Base
 
 
 class Algorithm(Base):

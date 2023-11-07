@@ -32,12 +32,14 @@ from pathlib import Path
 
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
-# TODO replace by AlgorithmStoreContext
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.algorithm.store._version import __version__
+# TODO the following are simply copies of the same files in the server - refactor
+from vantage6.algorithm.store.model.base import (
+    Base, DatabaseSessionManager, Database
+)
+from vantage6.algorithm.store import db
 # TODO move server imports to common / refactor
-from vantage6.server import db
-from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.server.resource.common.output_schema import HATEOASModelSchema
 from vantage6.server.permission import PermissionManager
 from vantage6.algorithm.store.globals import (
@@ -200,7 +202,7 @@ class AlgorithmStoreApp:
         @self.api.representation('application/json')
         # pylint: disable=unused-argument
         def output_json(
-            data: db.Base | list[db.Base], code: HTTPStatus,
+            data: Base | list[Base], code: HTTPStatus,
             headers: dict = None
         ) -> Response:
             """
@@ -208,7 +210,7 @@ class AlgorithmStoreApp:
 
             Parameters
             ----------
-            data: db.Base | list[db.Base]
+            data: Base | list[Base]
                 The data to be jsonified
             code: HTTPStatus
                 The HTTP status code of the response
@@ -216,10 +218,10 @@ class AlgorithmStoreApp:
                 Additional headers to be added to the response
             """
 
-            if isinstance(data, db.Base):
+            if isinstance(data, Base):
                 data = db.jsonable(data)
             elif isinstance(data, list) and len(data) and \
-                    isinstance(data[0], db.Base):
+                    isinstance(data[0], Base):
                 data = db.jsonable(data)
 
             resp = make_response(json.dumps(data), code)
