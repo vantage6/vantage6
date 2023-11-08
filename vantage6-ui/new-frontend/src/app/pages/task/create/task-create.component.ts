@@ -6,12 +6,13 @@ import { ChosenCollaborationService } from 'src/app/services/chosen-collaboratio
 import { Subject, takeUntil } from 'rxjs';
 import { BaseNode, Database, DatabaseType } from 'src/app/models/api/node.model';
 import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
-import { CreateTask, CreateTaskInput, TaskDatabase } from 'src/app/models/api/task.models';
+import { ColumnRetrievalInput, CreateTask, CreateTaskInput, TaskDatabase } from 'src/app/models/api/task.models';
 import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
 import { Router } from '@angular/router';
 import { PreprocessingStepComponent } from './steps/preprocessing-step/preprocessing-step.component';
 import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
+import { FilterStepComponent } from './steps/filter-step/filter-step.component';
 
 @Component({
   selector: 'app-task-create',
@@ -22,6 +23,8 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   @ViewChild(PreprocessingStepComponent)
   preprocessingStep?: PreprocessingStepComponent;
+  @ViewChild(FilterStepComponent)
+  filterStep?: FilterStepComponent;
 
   destroy$ = new Subject();
   routes = routePaths;
@@ -32,6 +35,9 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   function: AlgorithmFunction | null = null;
   databases: Database[] = [];
   node: BaseNode | null = null;
+  columns: string[] = [];
+  isLoading: boolean = true;
+  isLoadingColumns: boolean = false;
 
   packageForm = this.fb.nonNullable.group({
     algorithmID: ['', Validators.required],
@@ -66,6 +72,9 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
       this.handleFunctionChange(functionName);
     });
 
+    // TODO this step may not be necessary because it re-requests the
+    // databases every time the organization is changed, but the databases should
+    // be the same for all nodes
     this.functionForm.controls.organizationIDs.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (organizationID) => {
       this.handleOrganizationChange(organizationID);
     });
@@ -96,19 +105,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
       ? this.functionForm.controls.organizationIDs.value
       : [this.functionForm.controls.organizationIDs.value];
 
-    const taskDatabases: TaskDatabase[] = [];
-    this.function?.databases.forEach((functionDatabase) => {
-      const taskDatabase: TaskDatabase = { label: functionDatabase.name };
-      const query = this.databaseForm.get(`${functionDatabase.name}_query`)?.value || '';
-      if (query) {
-        taskDatabase.query = query;
-      }
-      const sheet = this.databaseForm.get(`${functionDatabase.name}_sheet`)?.value || '';
-      if (sheet) {
-        taskDatabase.sheet = sheet;
-      }
-      taskDatabases.push(taskDatabase);
-    });
+    const taskDatabases: TaskDatabase[] = this.getSelectedDatabases();
 
     const input: CreateTaskInput = {
       method: this.function?.name || '',
@@ -133,8 +130,57 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     }
   }
 
+  async handleFirstPreprocessor(): Promise<void> {
+    this.isLoadingColumns = true;
+
+    // collect data to collect columns from database
+    const taskDatabases: TaskDatabase[] = this.getSelectedDatabases();
+    // TODO modify when choosing database for preprocessing is implemented
+    const taskDatabase = taskDatabases[0];
+
+    // collect a node that is online
+    const node = await this.getOnlineNode();
+    if (!node) return; // TODO alert user that no node is online so no columns can be retrieved
+
+    const input = { method: 'column_headers' };
+
+    const columnRetrieveData: ColumnRetrievalInput = {
+      collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
+      db_label: taskDatabase.label,
+      organizations: [
+        {
+          id: node?.organization.id,
+          input: btoa(JSON.stringify(input)) || ''
+        }
+      ]
+    };
+    if (taskDatabase.query) {
+      columnRetrieveData.query = taskDatabase.query;
+    }
+    if (taskDatabase.sheet) {
+      columnRetrieveData.sheet_name = taskDatabase.sheet;
+    }
+
+    // call /column endpoint. This returns either a list of columns or a task
+    // that will retrieve the columns
+    // TODO handle errors (both for retrieving columns and for retrieving the task)
+    // TODO enable user to exit requesting column names if it takes too long
+    const columnsOrTask = await this.taskService.getColumnNames(columnRetrieveData);
+    console.log(columnsOrTask);
+    if (columnsOrTask.columns) {
+      this.columns = columnsOrTask.columns;
+    } else {
+      // a task has been started to retrieve the columns
+      const task = await this.taskService.wait_for_results(columnsOrTask.id);
+      const decodedResult: any = JSON.parse(atob(task.results?.[0].result || ''));
+      this.columns = decodedResult;
+    }
+    this.isLoadingColumns = false;
+  }
+
   private async initData(): Promise<void> {
     this.algorithms = await this.algorithmService.getAlgorithms();
+    this.isLoading = false;
   }
 
   private async handleAlgorithmChange(algorithmID: string): Promise<void> {
@@ -142,6 +188,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     this.clearFunctionStep();
     this.clearDatabaseStep();
     this.clearPreprocessingStep();
+    this.clearFilterStep();
     this.clearParameterStep();
 
     //Get selected algorithm
@@ -152,6 +199,8 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     //Clear form
     this.clearFunctionStep(); //Also clear function step, so user needs to reselect organization
     this.clearDatabaseStep();
+    this.clearPreprocessingStep(); // this depends on the database, so it should be cleared
+    this.clearFilterStep();
     this.clearParameterStep();
 
     //Get selected function
@@ -191,12 +240,13 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     }
 
     //TODO: What should happen for multiple selected organizations
+    // TODO if selected node is offline, try to get databases from node that is online
     //Get node
     if (id) {
       //Get all nodes for chosen collaboration
-      const nodes = await this.chosenCollaborationService.getNodes();
+      const nodes = await this.getNodes();
       //Filter node for chosen organization
-      this.node = nodes.find((_) => _.organization.id === Number.parseInt(id)) || null;
+      this.node = nodes?.find((_) => _.organization.id === Number.parseInt(id)) || null;
 
       //Get databases for node
       if (this.node) {
@@ -207,6 +257,18 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     if (this.function) {
       this.setFormControlsForDatabase(this.function);
     }
+  }
+
+  private async getOnlineNode(): Promise<BaseNode | null> {
+    //Get all nodes for chosen collaboration
+    const nodes = await this.getNodes();
+
+    //Find a random node that is online
+    return nodes?.find((_) => _.status === 'online') || null;
+  }
+
+  private async getNodes(): Promise<BaseNode[] | null> {
+    return await this.chosenCollaborationService.getNodes();
   }
 
   private clearFunctionStep(): void {
@@ -229,7 +291,12 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   }
 
   private clearPreprocessingStep(): void {
-    this.preprocessingStep?.reset();
+    this.preprocessingStep?.clear();
+    this.columns = [];
+  }
+
+  private clearFilterStep(): void {
+    this.filterStep?.clear();
   }
 
   private setFormControlsForDatabase(selectedFunction: AlgorithmFunction) {
@@ -244,6 +311,10 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
             if (control.startsWith(database.name) && !control.includes('_name')) this.databaseForm.removeControl(control);
           });
 
+          // clear next steps in form
+          this.clearPreprocessingStep();
+          this.clearFilterStep();
+
           //Add form controls for selected database
           const type = this.databases.find((_) => _.name === dataBaseName)?.type;
           if (type === DatabaseType.SQL || type === DatabaseType.OMOP || type === DatabaseType.Sparql) {
@@ -254,5 +325,23 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
           }
         });
     });
+  }
+
+  private getSelectedDatabases(): TaskDatabase[] {
+    const taskDatabases: TaskDatabase[] = [];
+    this.function?.databases.forEach((functionDatabase) => {
+      const selected_database = this.databaseForm.get(`${functionDatabase.name}_name`)?.value || '';
+      const taskDatabase: TaskDatabase = { label: selected_database };
+      const query = this.databaseForm.get(`${functionDatabase.name}_query`)?.value || '';
+      if (query) {
+        taskDatabase.query = query;
+      }
+      const sheet = this.databaseForm.get(`${functionDatabase.name}_sheet`)?.value || '';
+      if (sheet) {
+        taskDatabase.sheet = sheet;
+      }
+      taskDatabases.push(taskDatabase);
+    });
+    return taskDatabases;
   }
 }

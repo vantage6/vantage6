@@ -1,10 +1,11 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatSelectChange } from '@angular/material/select';
 import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 import { Filter, FilterParameterType } from 'src/app/models/api/algorithm.model';
 import { format, parse } from 'date-fns';
 
+// TODO this component is highly similar to the PreprocessingStepComponent. Consider refactoring.
 @Component({
   selector: 'app-filter-step',
   templateUrl: './filter-step.component.html',
@@ -15,8 +16,9 @@ export class FilterStepComponent {
 
   @Input() form!: FormArray;
   @Input() filters: Filter[] = [];
+  @Input() columns: string[] = [];
+  @Output() onFirstPreprocessor: EventEmitter<boolean> = new EventEmitter();
   selectedFilters: Array<Filter | null> = [];
-  columns: string[] = ['Column 1', 'Column 2', 'Column 3']; //TODO: Get column data from backend, when backend is ready
 
   constructor(private fb: FormBuilder) {}
 
@@ -27,6 +29,11 @@ export class FilterStepComponent {
 
   getSelectedFilter(index: number): Filter | null {
     return this.selectedFilters.length >= index ? this.selectedFilters[index] : null;
+  }
+
+  clear(): void {
+    this.form.clear();
+    this.selectedFilters = [];
   }
 
   handleFilterChange(event: MatSelectChange, index: number): void {
@@ -77,6 +84,9 @@ export class FilterStepComponent {
   }
 
   addFilter(): void {
+    if (this.columns.length === 0) {
+      this.onFirstPreprocessor.emit();
+    }
     const filterForm = this.fb.nonNullable.group({
       filterID: ['', Validators.required]
     });

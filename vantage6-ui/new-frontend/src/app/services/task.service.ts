@@ -1,6 +1,15 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { BaseTask, CreateTask, GetTaskParameters, Task, TaskLazyProperties } from '../models/api/task.models';
+import {
+  BaseTask,
+  ColumnRetrievalInput,
+  ColumnRetrievalResult,
+  CreateTask,
+  GetTaskParameters,
+  Task,
+  TaskLazyProperties,
+  TaskStatus
+} from '../models/api/task.models';
 import { Pagination } from '../models/api/pagination.model';
 import { getLazyProperties } from '../helpers/api.helper';
 
@@ -15,6 +24,7 @@ export class TaskService {
     return result;
   }
 
+  // TODO id should be a number
   async getTask(id: string, lazyProperties: TaskLazyProperties[] = []): Promise<Task> {
     const result = await this.apiService.getForApi<BaseTask>(`/task/${id}`, { include: 'results,runs' });
 
@@ -48,5 +58,23 @@ export class TaskService {
 
   async deleteTask(id: number): Promise<void> {
     return await this.apiService.deleteForApi(`/task/${id}`);
+  }
+
+  async getColumnNames(columnRetrieve: ColumnRetrievalInput): Promise<ColumnRetrievalResult> {
+    return await this.apiService.postForApi<ColumnRetrievalResult>(`/column`, columnRetrieve);
+  }
+
+  async wait_for_results(id: number): Promise<Task> {
+    let task = await this.getTask(id.toString());
+    while (!this.hasFinished(task)) {
+      // poll every second until task is finished
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      task = await this.getTask(id.toString());
+    }
+    return task;
+  }
+
+  private hasFinished(task: Task): boolean {
+    return ![TaskStatus.Pending, TaskStatus.Initializing, TaskStatus.Active].includes(task.status);
   }
 }

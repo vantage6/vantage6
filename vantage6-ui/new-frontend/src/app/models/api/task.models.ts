@@ -115,3 +115,16 @@ export interface CreateTaskInput {
   method: string;
   kwargs: object;
 }
+
+export interface ColumnRetrievalInput {
+  collaboration_id: number;
+  db_label: string;
+  organizations: Organization[];
+  query?: string;
+  sheet_name?: string;
+}
+
+// The result of the /column endpoint is either a task or a list of column names
+export interface ColumnRetrievalResult extends BaseTask {
+  columns?: string[];
+}
