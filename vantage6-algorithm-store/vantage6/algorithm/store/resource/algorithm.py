@@ -4,24 +4,22 @@ Resources below '/<api_base>/version'
 """
 import logging
 
-from flask import request
+from flask import g, request
 from flask_restful import Api
 from http import HTTPStatus
 from vantage6.common import logger_name
-from vantage6.algorithm.store._version import __version__
 from vantage6.algorithm.store.resource.schema.input_schema import (
     AlgorithmInputSchema
 )
 from vantage6.algorithm.store.resource.schema.output_schema import (
     AlgorithmOutputSchema
 )
-from vantage6.algorithm.store.model.algorithm import Algorithm
+from vantage6.algorithm.store.model.algorithm import Algorithm as db_Algorithm
 from vantage6.algorithm.store.model.argument import Argument
 from vantage6.algorithm.store.model.database import Database
 from vantage6.algorithm.store.model.function import Function
 # TODO move to common / refactor
 from vantage6.server.resource import AlgorithmStoreResources
-
 
 
 module_name = logger_name(__name__)
@@ -52,6 +50,14 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         resource_class_kwargs=services
     )
 
+    api.add_resource(
+        Algorithm,
+        path + '/<int:id>',
+        endpoint='algorithm_with_id',
+        methods=('GET', 'DELETE'),
+        resource_class_kwargs=services
+    )
+
 
 algorithm_input_schema = AlgorithmInputSchema()
 algorithm_output_schema = AlgorithmOutputSchema()
@@ -61,10 +67,59 @@ algorithm_output_schema = AlgorithmOutputSchema()
 # Resources / API's
 # ------------------------------------------------------------------------------
 class Algorithms(AlgorithmStoreResources):
-    """ Algorithm resource """
+    """ Resource for /algorithm """
 
     def get(self):
-        return {"version": __version__}, HTTPStatus.OK
+        """List algorithms
+        ---
+        description: Return a list of algorithms
+
+        parameters:
+          - in: query
+            name: name
+            schema:
+              type: string
+            description: Filter on algorithm name using the SQL operator LIKE.
+          - in: query
+            name: description
+            schema:
+              type: string
+            description: Filter on algorithm description using the SQL operator
+              LIKE.
+          - in: query
+            name: image
+            schema:
+              type: string
+            description: Filter on algorithm image using the SQL operator LIKE.
+          - in: query
+            name: partitioning
+            schema:
+              type: string
+            description: Filter on algorithm partitioning. Can be 'horizontal'
+              or 'vertical'.
+          - in: query
+            name: vantage6_version
+            schema:
+              type: string
+            description: Filter on algorithm vantage6 version using the SQL
+              operator LIKE.
+
+        responses:
+          200:
+            description: OK
+          400:
+            description: Invalid input
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Algorithm"]
+        """
+        # TODO add pagination
+        # TODO add filtering
+        algorithms = g.session.query(db_Algorithm).all()
+        return algorithm_output_schema.dump(algorithms, many=True), \
+            HTTPStatus.OK
 
     def post(self):
         """Create new algorithm
@@ -164,7 +219,7 @@ class Algorithms(AlgorithmStoreResources):
                 HTTPStatus.BAD_REQUEST
 
         # create the algorithm
-        algorithm = Algorithm(
+        algorithm = db_Algorithm(
             name=data['name'],
             description=data.get('description', ''),
             image=data['image'],
@@ -207,3 +262,76 @@ class Algorithms(AlgorithmStoreResources):
 
         return algorithm_output_schema.dump(algorithm, many=False), \
             HTTPStatus.CREATED
+
+
+class Algorithm(AlgorithmStoreResources):
+    """ Resource for /algorithm/<id> """
+
+    def get(self, id):
+        """Get algorithm
+        ---
+        description: Return an algorithm specified by ID.
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: ID of the algorithm
+
+        responses:
+          200:
+            description: OK
+          404:
+            description: Algorithm not found
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Algorithm"]
+        """
+        algorithm = db_Algorithm.get(id)
+        if not algorithm:
+            return {'msg': 'Algorithm not found'}, HTTPStatus.NOT_FOUND
+
+        return algorithm_output_schema.dump(algorithm, many=False), \
+            HTTPStatus.OK
+
+    def delete(self, id):
+        """Delete algorithm
+        ---
+        description: Delete an algorithm specified by ID.
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: ID of the algorithm
+
+        responses:
+          200:
+            description: OK
+          404:
+            description: Algorithm not found
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Algorithm"]
+        """
+        algorithm = db_Algorithm.get(id)
+        if not algorithm:
+            return {'msg': 'Algorithm not found'}, HTTPStatus.NOT_FOUND
+
+        # delete all subresources and finally the algorithm itself
+        for function in algorithm.functions:
+            for database in function.databases:
+                database.delete()
+            for argument in function.arguments:
+                argument.delete()
+            function.delete()
+        algorithm.delete()
+
+        return {'msg': f'Algorithm id={id} was successfully deleted'}, \
+            HTTPStatus.OK
