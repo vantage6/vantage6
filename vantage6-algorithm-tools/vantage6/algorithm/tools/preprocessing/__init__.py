@@ -11,6 +11,7 @@ from vantage6.algorithm.tools.preprocessing import (
     encoding,
     filtering,
 )
+from vantage6.common import error
 
 modules = [aggregation, column, datetime, encoding, filtering]
 

@@ -5,7 +5,7 @@ collapse a DataFrame using various aggregation techniques, and to enrich a
 DataFrame with statistical information based on a given grouping.
 """
 
-from typing import Callable, Dict, List
+from typing import Callable
 
 import pandas as pd
 

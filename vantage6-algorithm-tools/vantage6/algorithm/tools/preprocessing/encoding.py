@@ -7,8 +7,6 @@ require external parameters like minimum and maximum values or means and
 standard deviations for scaling operations.
 """
 
-from typing import Dict, List, Optional, Union
-
 import numpy as np
 import pandas as pd
 
@@ -317,8 +315,8 @@ def encode(
 def discretize_column(
     df: pd.DataFrame,
     column_name: str,
-    bins: Union[int, List[Union[int, float]]],
-    labels: List[str] = None,
+    bins: int | list[int | float],
+    labels: list[str] = None,
     right: bool = True,
     include_lowest: bool = False,
     output_column: str = None,
@@ -329,21 +327,19 @@ def discretize_column(
 
     Parameters
     ----------
-    df : pandas.DataFrame
+    df : pd.DataFrame
         The DataFrame from which a new DataFrame will be created.
     column_name : str
         The name of the column to discretize.
     bins : int or list of int or float
         The number of bins to create or the specific bin edges.
-    labels : list of str, optional
+    labels : list of str, default=None
         Labels to assign to the bins.
-    right : bool, optional
-        Indicates whether bins include the rightmost edge or not (default is
-        True).
-    include_lowest : bool, optional
-        Whether the first interval should include the lowest value or not
-        (default is False).
-    output_column : str, optional
+    right : bool, default=True
+        Indicates whether bins include the rightmost edge or not.
+    include_lowest : bool, default=False
+        Whether the first interval should include the lowest value or not.
+    output_column : str, default=None
         The name of the output column that contains the discretized data.
         If not specified, the original column will be replaced.
 
@@ -483,17 +479,17 @@ def impute(
     >>> import pandas as pd
     >>> import numpy as np
     >>> df = pd.DataFrame({
-    ...     'A': [1, 2, np.nan, 4, 5],
+    ...     'A': [2, 1, np.nan, 5, 4],
     ...     'B': [5, 4, 3, 2, np.nan],
     ...     'C': [3, np.nan, np.nan, np.nan, np.nan]
     ... })
     >>> impute(df)
          A    B    C
-    0  1.0  5.0  3.0
-    1  2.0  4.0  3.0
+    0  2.0  5.0  3.0
+    1  1.0  4.0  3.0
     2  3.0  3.0  3.0
-    3  4.0  2.0  3.0
-    4  5.0  3.5  3.0
+    3  5.0  2.0  3.0
+    4  4.0  3.5  3.0
 
     >>> df = pd.DataFrame({
     ...     'Group': ['A', 'A', 'B', 'B', 'B'],
