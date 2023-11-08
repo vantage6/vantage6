@@ -159,7 +159,7 @@ class Pagination:
     @classmethod
     def from_query(
         cls, query: sqlalchemy.orm.query, request: flask.Request,
-        paginate: bool = True
+        resource_model: db.Base, paginate: bool = True
     ) -> Pagination:
         """
         Create a Pagination object from a query.
@@ -170,6 +170,8 @@ class Pagination:
             Query to paginate
         request : flask.Request
             Request object
+        resource_model : db.Base
+            SQLAlchemy model of the resource whose endpoint is being called
         paginate : bool
             Whether to paginate the query or not, default True
 
@@ -200,7 +202,9 @@ class Pagination:
         # FIXME BvB 2020-02-09 good error handling if sort is not a valid
         #  field
         if request.args.get('sort', False):
-            query = cls._add_sorting(query, request.args.get('sort'))
+            query = cls._add_sorting(
+                query, request.args.get('sort'), resource_model
+            )
 
         items = query.distinct().limit(per_page).offset((page_id-1)*per_page)\
             .all()
@@ -264,8 +268,9 @@ class Pagination:
         return per_page
 
     @staticmethod
-    def _add_sorting(query: sqlalchemy.orm.query, sort_string: str
-                     ) -> sqlalchemy.orm.query:
+    def _add_sorting(
+        query: sqlalchemy.orm.query, sort_string: str, resource_model: db.Base
+    ) -> sqlalchemy.orm.query:
         """
         Add sorting to a query.
 
@@ -277,14 +282,25 @@ class Pagination:
             The sorting to add. This can be a comma separated list of fields to
             sort on. The fields can be prefixed with a '-' to indicate a
             descending sort.
+        resource_model : db.Base
+            SQLAlchemy model of the resource whose endpoint is being called
         """
         sort_list = sort_string.split(',')
         for sorter in sort_list:
             sorter = sorter.strip()
+            sort_asc = True
             if sorter.startswith('-'):
-                query = query.order_by(sqlalchemy.desc(sorter[1:]))
-            else:
-                if sorter.startswith('+'):
-                    sorter = sorter[1:]
+                sort_asc = False
+            if sorter.startswith('+') or sorter.startswith('-'):
+                sorter = sorter[1:]
+            if not hasattr(resource_model, sorter):
+                raise AttributeError(
+                    f"Cannot sort a '{resource_model.__name__}' by "
+                    f"'{sorter}' because it does not exist"
+                )
+            sorter = getattr(resource_model, sorter)
+            if sort_asc:
                 query = query.order_by(sorter)
+            else:
+                query = query.order_by(sqlalchemy.desc(sorter))
         return query

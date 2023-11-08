@@ -218,8 +218,8 @@ code.
 Local test setup
 ^^^^^^^^^^^^^^^^
 To test your code changes, it may be useful to create a local test setup.
-This can be done by using the commands ``vserver`` and ``vnode`` in combination
-with the options ``--mount-src`` and optionally ``--image``.
+This can be done by using the commands ``v6 server`` and ``v6 node`` in
+combination with the options ``--mount-src`` and optionally ``--image``.
 
 * The ``--mount-src`` option will run your current code in the docker image.
   The provided path should point towards the root folder of the `vantage6

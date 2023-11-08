@@ -37,10 +37,12 @@ setup(
     install_requires=[
         'click==8.1.3',
         'colorama==0.4.6',
+        'copier==8.3.0',
         'docker==6.1.2',
         'ipython==8.10.0',
         'jinja2==3.1.2',
         'questionary==1.10.0',
+        'rich==13.5.2',
         'schema==0.7.5',
         'SQLAlchemy==1.4.46',
         f'vantage6-common == {version_ns["__version__"]}',
@@ -62,9 +64,11 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'vnode=vantage6.cli.node:cli_node',
-            'vserver=vantage6.cli.server:cli_server',
-            'vdev=vantage6.cli.dev:cli_dev'
+            'v6=vantage6.cli.cli:cli_complete',
+            # TODO v5+ remove vnode/vserver/vdev aliases (?)
+            'vnode=vantage6.cli.cli:cli_node',
+            'vserver=vantage6.cli.cli:cli_server',
+            'vdev=vantage6.cli.cli:cli_dev',
         ]
     }
 )

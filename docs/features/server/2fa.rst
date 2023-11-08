@@ -7,7 +7,7 @@ The vantage6 infrastructure includes the option to use two-factor
 authentication (2FA). This option is set at the server level: the server administrator
 decides if it is either enabled or disabled for everyone. Users cannot set this
 themselves. Server administrators can choose to require 2FA when
-prompted in ``vserver new``, or by adding the option
+prompted in ``v6 server new``, or by adding the option
 ``two_factor_auth: true`` to the configuration file (see :ref:`server-configure`).
 
 Currently, the only 2FA option is to use

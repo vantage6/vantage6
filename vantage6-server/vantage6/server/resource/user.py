@@ -309,8 +309,8 @@ class Users(UserBase):
 
         # paginate results
         try:
-            page = Pagination.from_query(query=q, request=request)
-        except ValueError as e:
+            page = Pagination.from_query(q, request, db.User)
+        except (ValueError, AttributeError) as e:
             return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # model serialization

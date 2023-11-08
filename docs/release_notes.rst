@@ -1,6 +1,70 @@
 Release notes
 =============
 
+4.1.1
+-----
+
+*1 November 2023*
+
+- **Bugfix**
+
+ - Added OpenPyxl dependency to algorithm tools which is required to read Excel
+   databases (`PR#923 <https://github.com/vantage6/vantage6/pull/923>`_).
+ - Explicitly define the resource on which sorting is done in the API. This
+   prevents SQL errors when SQLAlchemy tries to sort on a column in a joined
+   table (`PR#925 <https://github.com/vantage6/vantage6/pull/925>`_).
+ - Fixed retrieving column names for Excel databases
+   (`PR#924 <https://github.com/vantage6/vantage6/pull/924>`_).
+
+4.1.0
+-----
+
+*19 October 2023*
+
+- **Feature**
+
+ - Renamed CLI commands. The new commands are:
+
+   - ``vnode`` → ``v6 node``
+   - ``vserver`` → ``v6 server``
+   - ``vdev`` → ``v6 dev``
+
+   The old commands will still be available until version 5.0 is released.
+ - Added CLI command ``v6 algorithm create`` which is a starting point for
+   creating new algorithms
+   (`Issue#400 <https://github.com/vantage6/vantage6/issues/400>`_,
+   `PR#904 <https://github.com/vantage6/vantage6/pull/904>`_).
+ - Added ``@database_connection(type_)`` algorithm decorator. This enables
+   algorithm developers to inject a database connection into their algorithm
+   instead of a dataframe. The only type that currently is support is ``omop``,
+   which injects a ``OHDSI/DatabaseConnection`` object into your algorithm.
+   (`PR#902 <https://github.com/vantage6/vantage6/pull/902>`_).
+ - Added endpoint `/column` for the UI to get the column names of the database.
+   This is achieved either by sharing column names by the node for file-based
+   databases or by sending a task using the ``basics`` algorithm. The latter
+   is now an allowed algorithm by default, unless the node is configured to
+   not allow it. ((`Issue#778 <https://github.com/vantage6/vantage6/issues/778>`_,
+   `PR#908 <https://github.com/vantage6/vantage6/pull/908>`_).
+ - Added ``only_siblings`` and ``only_self`` options to the
+   ``client.vpn.get_addresses`` function. These options allow you to get the
+   VPN addresses of only the siblings or only the node itself, respectively.
+   This is useful for algorithms that need to communicate with other
+   algorithms on the same node or with the node itself.
+   (`Issue#729 <https://github.com/vantage6/vantage6/issues/729>`_,
+   `PR#901 <https://github.com/vantage6/vantage6/pull/901>`_).
+
+4.0.3
+-----
+
+*16 October 2023*
+
+- **Bugfix**
+
+ - Fix where custom Docker image for node was defined in config file but not
+   used in practice (`PR#896 <https://github.com/vantage6/vantage6/pull/896>`_).
+ - Fixed getting VPN algorithm addresses from ``AlgorithmClient``
+   (`PR#898 <https://github.com/vantage6/vantage6/pull/898>`_).
+
 4.0.2
 -----
 

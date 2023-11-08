@@ -17,7 +17,7 @@ How to create a configuration file
 """"""""""""""""""""""""""""""""""
 
 The easiest way to create an initial
-configuration file is via: ``vserver new``. This allows you to configure the
+configuration file is via: ``v6 server new``. This allows you to configure the
 basic settings. For more advanced configuration options, which are listed below,
 you can view the :ref:`example configuration file <server-config-file-structure>`.
 
@@ -30,7 +30,7 @@ command
 
 .. code:: bash
 
-    vserver files
+    v6 server files
 
 .. warning::
     This command will usually only work for local test deployments of the
@@ -43,7 +43,7 @@ command
 
 You can create and edit this file
 manually. To create an initial configuration file you can also use the
-configuration wizard: ``vserver new``.
+configuration wizard: ``v6 server new``.
 
 .. _server-config-file-structure:
 
@@ -93,14 +93,14 @@ The default directories per OS are as follows:
 .. |lin_usr| replace:: ``/home/<user>/.config/vantage6/server/``
 
 .. warning::
-    The command ``vserver`` looks in certain directories by default. It is
+    The command ``v6 server`` looks in certain directories by default. It is
     possible to use any directory and specify the location with the ``--config``
     flag. However, note that using a different directory requires you to specify
     the ``--config`` flag every time!
 
     Similarly, you can put your server configuration file in the user folder
     by using the ``--user`` flag. Note that in that case, you have to specify
-    the ``--user`` flag for all ``vserver`` commands.
+    the ``--user`` flag for all ``v6 server`` commands.
 
 .. _server-logging:
 
@@ -112,7 +112,7 @@ section in the example configuration in :ref:`server-config-file-structure`.
 
 Useful commands:
 
-1. ``vserver files``: shows you where the log file is stored
-2. ``vserver attach``: show live logs of a running server in your
+1. ``v6 server files``: shows you where the log file is stored
+2. ``v6 server attach``: show live logs of a running server in your
    current console. This can also be achieved when starting the server
-   with ``vserver start --attach``
+   with ``v6 server start --attach``

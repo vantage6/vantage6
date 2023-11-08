@@ -1,5 +1,3 @@
-import datetime
-
 from pathlib import Path
 
 from vantage6.common.globals import APPNAME
@@ -35,7 +33,7 @@ MIN_REFRESH_TOKEN_EXPIRY_DELTA = 1
 # file-names in the resource directory
 RESOURCES = ['node', 'collaboration', 'organization', 'task', 'run',
              'token', 'user', 'version', 'recover', 'role',
-             'rule', 'health', 'vpn', 'port', 'event']
+             'rule', 'health', 'vpn', 'port', 'event', 'ui.column']
 
 # Super user information. This user is only created if it is not in the
 # database yet at startup time.

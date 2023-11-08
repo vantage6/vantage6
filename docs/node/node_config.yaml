@@ -17,9 +17,10 @@ vpn_subnet: 10.76.0.0/16
 algorithm_device_requests:
   gpu: false
 
-# add additional environment variables to the algorithm containers.
-# this could be usefull for passwords or other things that algorithms
-# need to know about the node it is running on
+# Add additional environment variables to the algorithm containers. In case
+# you want to supply database specific environment (e.g. usernames and
+# passwords) you should use `env` key in the `database` section of this
+# configuration file.
 # OPTIONAL
 algorithm_env:
 
@@ -47,8 +48,26 @@ images:
 # data source you can specify 'other'.
 databases:
   - label: default
-    uri: D:\data\datafile.csv
+    uri: C:\data\datafile.csv
     type: csv
+
+  - label: omop
+    uri: jdbc:postgresql://host.docker.internal:5454/postgres
+    # additional environment variables that are passed to the algorithm
+    # containers (or their wrapper). This can be used to for usernames
+    # and passwords for example. Note that these environment variables are
+    # only passed to the algorithm container when the user requests that
+    # database. In case you want to pass some environment variable to all
+    # algorithms regard less of the data source the user specifies you can
+    # use the `algorithm_env` setting.
+    env:
+      username: admin@admin.com
+      password: admin
+      dbms: postgresql
+      cdm_database: postgres
+      cdm_schema: public
+      results_schema: results
+
 
 # end-to-end encryption settings
 encryption:
@@ -76,6 +95,11 @@ policies:
   allowed_organizations:
     - 6
     - root
+
+  # The basics algorithm (harbor2.vantage5.ai/algorithms/basics) is whitelisted
+  # by default. It is used to collect column names in the User Interface to
+  # facilitate task creation. Set to false to disable this.
+  allow_basics_algorithm: true
 
 # credentials used to login to private Docker registries
 docker_registries:

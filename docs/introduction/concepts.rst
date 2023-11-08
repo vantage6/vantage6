@@ -179,7 +179,7 @@ will replace the public key at the server.
     private key.
 
 In case you want to generate a new private key, you can use the command
-``vnode create-private-key``. If a key already exists at the local
+``v6 node create-private-key``. If a key already exists at the local
 system, the existing key is reused (unless you use the ``--force``
 flag). This way, it is easy to configure multiple nodes to use the same
 key.

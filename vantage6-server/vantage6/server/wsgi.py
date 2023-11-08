@@ -1,6 +1,6 @@
 """
 This is the WSGI entry-point for the vantage6 server. When the
-server is started using the `vserver start` command, it is started from here.
+server is started using the `v6 server start` command, it is started from here.
 """
 import sys
 

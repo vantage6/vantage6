@@ -9,7 +9,6 @@ The following pages each describe one feature of the Vantage6 server.
 
    2fa
    horizontal_scaling
-   permissions
    api_structure
 
 
@@ -20,6 +19,6 @@ The following pages each describe one feature of the Vantage6 server.
 .. * background tasks
 .. * Database
 .. * Models / structure
-.. * CLI (vserver local)
+.. * CLI (v6 server local)
 .. * Clients (Python, R) (maybe elsewhere?)
 .. * UI (maybe elsewhere?)

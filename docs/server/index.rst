@@ -19,4 +19,5 @@ server.
     optional
     use
     configure
+    permissions
     shell

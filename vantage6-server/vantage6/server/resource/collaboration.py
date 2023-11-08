@@ -246,8 +246,8 @@ class Collaborations(CollaborationBase):
 
         # paginate the results
         try:
-            page = Pagination.from_query(q, request)
-        except ValueError as e:
+            page = Pagination.from_query(q, request, db.Collaboration)
+        except (ValueError, AttributeError) as e:
             return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # serialize models

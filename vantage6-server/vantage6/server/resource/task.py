@@ -4,6 +4,7 @@ import json
 
 from flask import g, request, url_for
 from flask_restful import Api
+from flask_socketio import SocketIO
 from http import HTTPStatus
 from sqlalchemy import desc
 from sqlalchemy.sql import visitors
@@ -144,6 +145,7 @@ class TaskBase(ServicesResources):
             return task_result_schema
         else:
             return task_schema
+
 
 class Tasks(TaskBase):
 
@@ -423,8 +425,8 @@ class Tasks(TaskBase):
 
         # paginate tasks
         try:
-            page = Pagination.from_query(query=q, request=request)
-        except ValueError as e:
+            page = Pagination.from_query(q, request, db.Task)
+        except (ValueError, AttributeError) as e:
             return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
 
         # serialization schema
@@ -486,7 +488,18 @@ class Tasks(TaskBase):
 
         tags: ["Task"]
         """
-        data = request.get_json()
+        return self.post_task(request.get_json(), self.socketio, self.r)
+
+    @staticmethod
+    def post_task(data: dict, socketio: SocketIO, rules: RuleCollection):
+        """
+        Create new task and algorithm runs. Send the task to the nodes.
+
+        Parameters
+        ----------
+        data : dict
+            Task data
+        """
         # validate request body
         errors = task_input_schema.validate(data)
         if errors:
@@ -497,8 +510,9 @@ class Tasks(TaskBase):
         collaboration = db.Collaboration.get(collaboration_id)
 
         if not collaboration:
-            return {"msg": f"Collaboration id={collaboration_id} not found!"},\
-                   HTTPStatus.NOT_FOUND
+            return {
+                "msg": f"Collaboration id={collaboration_id} not found!"
+            }, HTTPStatus.NOT_FOUND
 
         organizations_json_list = data.get('organizations')
         org_ids = [org.get("id") for org in organizations_json_list]
@@ -528,7 +542,7 @@ class Tasks(TaskBase):
         # info and if this prevents this user from creating this task
         if g.user:
             for node in nodes:
-                if self._node_doesnt_allow_user_task(node.config):
+                if Tasks._node_doesnt_allow_user_task(node.config):
                     return {"msg": (
                         "Cannot create this task because one of the nodes that"
                         " you are trying to send this task to does not allow "
@@ -552,14 +566,14 @@ class Tasks(TaskBase):
         image = data.get('image', '')
 
         # verify permissions
-        if g.user and not self.r.can_for_col(P.CREATE, collaboration.id):
+        if g.user and not rules.can_for_col(P.CREATE, collaboration.id):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
         elif g.container:
             # verify that the container has permissions to create the task
-            if not self.__verify_container_permissions(g.container, image,
-                                                       collaboration_id):
+            if not Tasks.__verify_container_permissions(g.container, image,
+                                                        collaboration_id):
                 return {"msg": "Container-token is not valid"}, \
                     HTTPStatus.UNAUTHORIZED
 
@@ -606,10 +620,10 @@ class Tasks(TaskBase):
 
         # All checks completed, save task to database
         task.save()
-        [db_record.save() for db_record in db_records] # pylint: disable=W0106
+        [db_record.save() for db_record in db_records]  # pylint: disable=W0106
 
         # send socket event that task has been created
-        self.socketio.emit(
+        socketio.emit(
             "task_created", {
                 "task_id": task.id,
                 "job_id": task.job_id,
@@ -640,8 +654,8 @@ class Tasks(TaskBase):
 
         # notify nodes a new task available (only to online nodes), nodes that
         # are offline will receive this task on sign in.
-        self.socketio.emit('new_task', task.id, namespace='/tasks',
-                           room=f'collaboration_{task.collaboration_id}')
+        socketio.emit('new_task', task.id, namespace='/tasks',
+                      room=f'collaboration_{task.collaboration_id}')
 
         # add some logging
         log.info(f"New task for collaboration '{task.collaboration.name}'")

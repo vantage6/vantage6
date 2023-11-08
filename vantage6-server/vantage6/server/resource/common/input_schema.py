@@ -492,3 +492,35 @@ class UserInputSchema(_PasswordValidationSchema):
 class VPNConfigUpdateInputSchema(Schema):
     """ Schema for validating input for updating a VPN configuration. """
     vpn_config = fields.String(required=True)
+
+
+class ColumnNameInputSchema(Schema):
+    """ Schema for validating input for collecting database column names. """
+    db_label = fields.String(required=True)
+    collaboration_id = fields.Integer(required=True, validate=Range(min=1))
+    organizations = fields.List(fields.Dict(), required=True)
+    sheet_name = fields.String(required=False)
+    query = fields.String(required=False)
+
+    @validates('organizations')
+    def validate_organizations(self, organizations: list[dict]):
+        """
+        Validate the organizations in the input.
+
+        Parameters
+        ----------
+        organizations : list[dict]
+            List of organizations to validate. Each organization must have at
+            least an organization id.
+
+        Raises
+        ------
+        ValidationError
+            If the organizations are not valid.
+        """
+        if not len(organizations):
+            raise ValidationError('At least one organization is required')
+        for organization in organizations:
+            if 'id' not in organization:
+                raise ValidationError(
+                    'Organization id is required for each organization')
