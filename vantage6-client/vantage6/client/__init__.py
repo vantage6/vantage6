@@ -935,6 +935,8 @@ class UserClient(ClientBase):
                 Lastname of the new user
             password : str
                 Password of the new user
+            email : str
+                Email address of the new user
             organization : int
                 Organization `id` this user should belong to
             roles : list of ints
