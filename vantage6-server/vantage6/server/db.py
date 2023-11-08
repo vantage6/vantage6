@@ -5,7 +5,7 @@ import datetime
 import enum
 import sqlalchemy as sql
 
-# TODO this file is akward...
+# TODO this file is awkward...
 from vantage6.server.model import (
     Base,
     Task,

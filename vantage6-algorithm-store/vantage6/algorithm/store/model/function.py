@@ -1,15 +1,9 @@
 from __future__ import annotations
-import enum
 from sqlalchemy import Column, String, Enum, ForeignKey
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base
-
-
-class FunctionType(str, enum.Enum):
-    """ Enum for types of partitioning """
-    CENTRAL = "central"
-    FEDERATED = "federated"
+from vantage6.algorithm.store.model.common.enums import FunctionType
 
 
 class Function(Base):

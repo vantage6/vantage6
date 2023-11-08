@@ -1,22 +1,9 @@
 from __future__ import annotations
-import enum
 from sqlalchemy import Column, String, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base
-
-
-class ArgumentType(str, enum.Enum):
-    """ Enum for argument types """
-    COLUMN = "column"
-    STRING = "string"
-    INTEGER = "integer"
-    FLOAT = "float"
-    BOOLEAN = "boolean"
-    DATE = "date"
-    JSON = "json"
-    ORGANIZATIONS = "organizations"
-    ORGANIZATION = "organization"
+from vantage6.algorithm.store.model.common.enums import ArgumentType
 
 
 class Argument(Base):

@@ -1,15 +1,9 @@
 from __future__ import annotations
-import enum
 from sqlalchemy import Column, String, Enum
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base
-
-
-class Partitioning(str, enum.Enum):
-    """ Enum for types of partitioning """
-    HORIZONTAL = "horizontal"
-    VERTICAL = "vertical"
+from vantage6.algorithm.store.model.common.enums import Partitioning
 
 
 class Algorithm(Base):
