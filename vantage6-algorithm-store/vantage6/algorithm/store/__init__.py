@@ -110,7 +110,7 @@ class AlgorithmStoreApp:
 
         # Open Api Specification (f.k.a. swagger)
         self.app.config['SWAGGER'] = {
-            'title': APPNAME,
+            'title': f"{APPNAME} algorithm store",
             'uiversion': "3",
             'openapi': '3.0.0',
             'version': __version__
