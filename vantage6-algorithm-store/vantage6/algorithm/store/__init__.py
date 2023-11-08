@@ -28,6 +28,7 @@ from flask_cors import CORS
 from flask_marshmallow import Marshmallow
 from flask_restful import Api
 from flask_principal import Principal
+from flasgger import Swagger
 from pathlib import Path
 
 from vantage6.common import logger_name
@@ -84,6 +85,9 @@ class AlgorithmStoreApp:
 
         # Enable cross-origin resource sharing
         self.cors = CORS(self.app)
+
+        # SWAGGER documentation
+        self.swagger = Swagger(self.app, template={})
 
         # setup the permission manager for the API endpoints
         # self.permissions = PermissionManager()
