@@ -3,59 +3,40 @@ This module provides a set of utility functions for converting and manipulating
 datetime and timedelta columns in pandas DataFrames. It includes capabilities
 for converting strings to datetime, adding fixed or variable timedeltas, and
 calculating ages from birthdate columns.
-
-Functions
----------
-- **to_datetime**: Converts a string column or a fixed string to a
-  datetime column.
-- **to_timedelta**: Converts a string column or adds a fixed duration
-  to create a new timedelta column.
-- **timedelta**: Converts a datetime column to a timedelta column in
-  days.
-- **calculate_age**: Calculates age in years based on a birthdate
-  column.
 """
 
 from datetime import date
-from typing import Optional, Union
 
 import pandas as pd
 
 
 def to_datetime(
     df: pd.DataFrame,
-    column: Optional[str] = None,
-    fmt: Optional[str] = None,
+    column: str,
+    fmt: str | None = None,
     errors: str = "raise",
-    input_value: Optional[str] = None,
-    output_column: Optional[str] = None,
+    output_column: str | None = None,
 ) -> pd.DataFrame:
     """
-    Convert a string column or a string input to a datetime column in a new
-    DataFrame.
+    Convert a string column to a datetime column in a new DataFrame.
 
     Parameters
     ----------
     df : pd.DataFrame
         Input DataFrame.
-    column : str or None, default None
-        The name of the column to convert. If None, `input_value` must be
-        provided.
-    fmt : str, optional
+    column : str
+        The name of the column to convert.
+    fmt : str | None, optional
         String to use as date format. See the following link for more
-        information: https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior # noqa: E501
+        information: https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior
     errors : str, default 'raise'
-
         Errors handling if a string cannot be converted:
-
         * If 'raise', then invalid parsing will raise an exception.
         * If 'coerce', then invalid parsing will be set as NaT.
         * If 'ignore', then invalid parsing will return the input.
-
-    input_value : str, optional
-        String input to be converted to datetime if `column` is None.
-    output_column : str, optional
-        Output column name when `input_value` is used.
+    output_column : str | None, optional
+        Name for the output column of converted dates. If not specified, the input
+        column will be overwritten.
 
     Returns
     -------
@@ -64,45 +45,14 @@ def to_datetime(
 
     Examples
     --------
-    >>> df = pd.DataFrame({"date_str": ["2021-01-01", "2021-02-01",
-    ... "2021-03-01"]})
+    >>> df = pd.DataFrame({"date_str": ["2021-01-01", "2021-02-01", "2021-03-01"]})
     >>> to_datetime(df, "date_str")
         date_str
     0 2021-01-01
     1 2021-02-01
     2 2021-03-01
 
-    >>> to_datetime(df, input_value="2021-04-01", output_column="new_date")
-         date_str   new_date
-    0  2021-01-01 2021-04-01
-    1  2021-02-01 2021-04-01
-    2  2021-03-01 2021-04-01
-
-    >>> import pandas as pd
-    >>> df = pd.DataFrame({"date_str": ["2021-01-01", "2021-02-01",
-    ... "2021-03-01"]})
-    >>> to_datetime(df, "date_str")
-        date_str
-    0 2021-01-01
-    1 2021-02-01
-    2 2021-03-01
-
-    >>> to_datetime(df, "date_str", fmt='%Y-%m-%d')
-        date_str
-    0 2021-01-01
-    1 2021-02-01
-    2 2021-03-01
-
-    >>> df = pd.DataFrame({"date_str": ["01-2021-01", "01-2021-02",
-    ... "01-2021-03"]})
-    >>> to_datetime(df, "date_str", fmt='%d-%Y-%m')
-        date_str
-    0 2021-01-01
-    1 2021-02-01
-    2 2021-03-01
-
-    >>> df = pd.DataFrame({"date_str": ["Jan 01, 2021", "Feb 01, 2021",
-    ... "Mar 01, 2021"]})
+    >>> df = pd.DataFrame({"date_str": ["Jan 01, 2021", "Feb 01, 2021", "Mar 01, 2021"]})
     >>> to_datetime(df, "date_str", fmt='%b %d, %Y')
         date_str
     0 2021-01-01
@@ -118,30 +68,20 @@ def to_datetime(
     """
 
     new_df = df.copy()
-
-    if column is None:
-        if input_value is None or output_column is None:
-            raise ValueError(
-                "If `column` is None, both `input_value` and `output_column`"
-                "must be provided."
-            )
-        new_df[output_column] = pd.to_datetime(
-            input_value, format=fmt, errors=errors
-        )
-    else:
-        new_df[column] = pd.to_datetime(
-            new_df[column], format=fmt, errors=errors
-        )
+    conversion_column = output_column if output_column else column
+    new_df[conversion_column] = pd.to_datetime(
+        new_df[column], format=fmt, errors=errors
+    )
 
     return new_df
 
 
 def to_timedelta(
     df: pd.DataFrame,
-    input_column: Optional[str] = None,
-    duration: Optional[Union[str, int]] = None,
+    input_column: str | None = None,
+    duration: str | int | None = None,
     unit: str = "days",
-    output_column: Optional[str] = None,
+    output_column: str | None = None,
     errors: str = "raise",
 ) -> pd.DataFrame:
     """
@@ -155,9 +95,9 @@ def to_timedelta(
     ----------
     df : pd.DataFrame
         Input DataFrame.
-    input_column : str, optional
+    input_column : str | None, optional
         The name of the column to convert.
-    duration : str or int, optional
+    duration : str | int | None, optional
         A fixed duration to apply to all rows. Could be either a string like
         '1 days' or an integer.
     unit : str, default 'days'
@@ -165,15 +105,14 @@ def to_timedelta(
         integer.
 
         Possible values:
-        * W, D, T, S, L, U, or N
-        * days or day
-        * hours, hour, hr, or h
-
-    output_column : str, optional
+        * 'W', 'D', 'T', 'S', 'L', 'U', or 'N'
+        * 'days' or 'day'
+        * 'hours', 'hour', 'hr', or 'h'
+    output_column : str | None, optional
         The name of the output column. Required if using the `duration`
         parameter.
     errors : str, default 'raise'
-        Errors handling if a string cannot be converted:
+        Error handling if a string cannot be converted:
         * If 'raise', then invalid parsing will raise an exception.
         * If 'coerce', then invalid parsing will be set as NaT.
         * If 'ignore', then invalid parsing will return the input.
@@ -206,6 +145,10 @@ def to_timedelta(
     1   2 days   2 days
     2   3 days   2 days
     """
+    if input_column is not None and duration is not None:
+        raise ValueError(
+            "Either `input_column` or `duration` must be specified, not both."
+        )
 
     new_df = df.copy()
 
@@ -223,8 +166,7 @@ def to_timedelta(
             new_df[output_column] = pd.to_timedelta(
                 new_df[input_column], errors=errors
             )
-
-    if duration is not None:
+    elif duration is not None:
         if output_column is None:
             raise ValueError(
                 "The `output_column` must be specified when using `duration`."
@@ -243,9 +185,9 @@ def timedelta(
     df: pd.DataFrame,
     column: str,
     output_column: str = "timedelta",
-    to_date: Optional[pd.Timestamp] = None,
-    to_date_column: Optional[str] = None,
-    fmt: Optional[str] = None,
+    to_date: pd.Timestamp | None = None,
+    to_date_column: str | None = None,
+    fmt: str | None = None,
 ) -> pd.DataFrame:
     """
     Convert a datetime column to a timedelta column in days in a new DataFrame,
@@ -260,11 +202,16 @@ def timedelta(
         The name of the datetime column to convert to a timedelta.
     output_column : str
         Output column name.
-    to_date : pd.Timestamp, optional
-        The date to which the timedelta is calculated. Defaults to today.
-    to_date_column : str, optional
+    to_date : pd.Timestamp | None, optional
+        The date to which the timedelta is calculated. Defaults to today if not
+        provided.
+    to_date_column : str | None, optional
         A column containing dates to which the timedelta is calculated for each
-        row.
+        row. If not provided, `to_date` is used for all rows.
+    fmt : str | None, optional
+        The format to use for parsing date strings if the `column` or
+        `to_date_column` contains strings instead of actual datetime objects.
+        If None, pandas will infer the format.
 
     Returns
     -------
@@ -315,9 +262,9 @@ def calculate_age(
     df: pd.DataFrame,
     column: str,
     output_column: str = "age",
-    fmt: Optional[str] = None,
+    fmt: str | None = None,
     keep_original: bool = True,
-    reference_date: Optional[date] = None,
+    reference_date: date | None = None,
 ) -> pd.DataFrame:
     """
     Calculate the calendar age in years from the birthdate column to a
@@ -331,11 +278,16 @@ def calculate_age(
         The name of the column containing birthdate information.
     output_column : str
         The name of the column to store the age.
-    reference_date : date, optional
-        The date to use as the reference for calculating age. Defaults to
-        today's date.
+    fmt : str | None, optional
+        The format string to parse the birthdate column. If None, the format
+        will be inferred.
+    keep_original : bool, default True
+        Whether to keep the original birthdate column in the DataFrame.
+    reference_date : date | None, optional
+        The date to use as the reference for calculating age. If None, today's
+        date is used.
 
-    Returns
+            Returns
     -------
     pd.DataFrame
         DataFrame with the calculated age column.

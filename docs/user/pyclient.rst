@@ -174,7 +174,7 @@ Creating an organization
 """"""""""""""""""""""""
 
 After you have authenticated, you can start generating resources. The following
-also assumes that you have a login on the Vantage6 server that has the
+also assumes that you have a login on the vantage6 server that has the
 permissions to create a new organization. Regular end-users typically do
 not have these permissions (typically only administrators do); they may skip
 this part.
@@ -231,7 +231,7 @@ Creating a collaboration
 
 Here, we assume that you have a Python session with an authenticated
 Client object, as created in :ref:`authentication`. We
-also assume that you have a login on the Vantage6 server that has the
+also assume that you have a login on the vantage6 server that has the
 permissions to create a new collaboration (regular end-users typically
 do not have these permissions, this is typically only for
 administrators).

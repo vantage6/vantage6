@@ -1,7 +1,7 @@
 Algorithm features
 ------------------
 
-The following pages each describe one feature of Vantage6 algorithms.
+The following pages each describe one feature of vantage6 algorithms.
 
 .. toctree::
    :maxdepth: 1

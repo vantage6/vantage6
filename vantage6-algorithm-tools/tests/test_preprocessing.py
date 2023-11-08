@@ -14,11 +14,28 @@ from vantage6.algorithm.tools.mock_client import MockAlgorithmClient
 from vantage6.algorithm.tools.preprocessing.filtering import select_rows
 
 
-def random_date(start, end, fmt="%Y-%m-%d", seed=0):
-    np.random.seed(seed)
+def random_date(
+    start: datetime, end: datetime, fmt: str = "%Y-%m-%d", seed: int = None
+) -> str:
+    """
+    Generate a random date between start and end.
+
+    Arguments:
+    - start: datetime object indicating the start date.
+    - end: datetime object indicating the end date.
+    - fmt: str format in which to return the date.
+    - seed: Optional; an integer seed for the random number generator.
+
+    Returns:
+    - A string representation of the random date in the specified format.
+    """
+
+    # Set the seed only if provided.
+    if seed is not None:
+        np.random.seed(seed)
 
     delta = end - start
-    random_days = np.random.randint(0, delta.days)
+    random_days = np.random.randint(0, delta.days + 1)
     return (start + timedelta(days=random_days)).strftime(fmt)
 
 
@@ -79,12 +96,6 @@ def generate_treatment_example_df(
 ):
     np.random.seed(random_state)
 
-    # Data generation functions
-    def random_dates(start, end, n=10):
-        start_u = start.value // 10**9
-        end_u = end.value // 10**9
-        return pd.to_datetime(np.random.randint(start_u, end_u, n), unit="s")
-
     # Generate number of rows for each patient
     rows_per_patient = np.random.poisson(avg_rows_per_patient, n_patients)
 
@@ -94,6 +105,9 @@ def generate_treatment_example_df(
     birthdates = []
     education_levels = []
     weights = []
+
+    start_u = pd.Timestamp("2020-01-01").value // 10**9
+    end_u = pd.Timestamp("2023-01-01").value // 10**9
 
     for i, count in enumerate(rows_per_patient, 1):
         # Patient attributes
@@ -137,11 +151,11 @@ def generate_treatment_example_df(
         "Disease A" + str(i).zfill(2) for i in range(10)
     ]  # 10 diseases
     diagnosis_desc = np.random.choice(all_diseases, sum(rows_per_patient))
-    start_dates = random_dates(
-        pd.Timestamp("2020-01-01"),
-        pd.Timestamp("2023-01-01"),
-        sum(rows_per_patient),
+
+    start_dates = pd.to_datetime(
+        np.random.randint(start_u, end_u, sum(rows_per_patient)), unit="s"
     )
+
     end_dates = [
         date + pd.Timedelta(days=np.random.randint(1, 60))
         if np.random.random() < 0.8
@@ -215,9 +229,7 @@ class TestPreprocessing(unittest.TestCase):
         Tests the following preprocessing functions:
         - select_rows
         - select_columns
-        - select_columns_by_index
         - drop_columns
-        - drop_columns_by_index
         """
 
         df = get_test_dataframe()
@@ -246,16 +258,8 @@ class TestPreprocessing(unittest.TestCase):
                             },
                         },
                         {
-                            "function": "select_columns_by_index",
-                            "parameters": {"columns": [0, 1, 2, 3]},
-                        },
-                        {
                             "function": "drop_columns",
                             "parameters": {"columns": ["education"]},
-                        },
-                        {
-                            "function": "drop_columns_by_index",
-                            "parameters": {"columns": [-1]},
                         },
                     ],
                 }
@@ -277,7 +281,7 @@ class TestPreprocessing(unittest.TestCase):
         result = pd.read_json(mockclient.result.get(id_=child_task.get("id")))
 
         self.assertTrue(result["age"].min() > 50)
-        self.assertTrue(result.shape[1] == 2)
+        self.assertTrue(result.shape[1] == 4)
 
     def test_preprocessing_batch_2(self):
         """
@@ -602,7 +606,7 @@ class TestPreprocessing(unittest.TestCase):
                             "function": "filter_range",
                             "parameters": {
                                 "column": "income/age",
-                                "min_": 0,
+                                "min_value": 0,
                             },
                         },
                         {

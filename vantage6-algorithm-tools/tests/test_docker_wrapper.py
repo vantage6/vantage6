@@ -1,3 +1,5 @@
+# TODO: disabled for now as they were not used, to be re-enabled (#933)
+
 # import json
 # from pathlib import Path
 # from unittest.mock import patch, MagicMock

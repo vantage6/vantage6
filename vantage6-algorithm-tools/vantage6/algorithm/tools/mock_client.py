@@ -233,11 +233,6 @@ class MockAlgorithmClient:
                 client_copy.node_id = self._select_node(org_id)
                 client_copy.organization_id = org_id
 
-                data = self.parent.datasets_per_org[org_id]
-                client_copy = deepcopy(self.parent)
-                client_copy.node_id = self._select_node(org_id)
-                client_copy.organization_id = org_id
-
                 # detect which decorators are used and provide the mock client
                 # and/or mocked data that is required to the method
                 mocked_kwargs = {}

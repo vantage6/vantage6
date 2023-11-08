@@ -2,35 +2,23 @@
 This module provides functions for specific operations on Pandas DataFrames.
 It focuses on simplifying column renaming and column assignment through dynamic
 expressions.
-
-Functions
----------
-- `rename_columns`: Renames DataFrame's columns based on a provided dict or
-  list. Supports both direct mapping and indexed renaming of columns.
-
-- `assign_column`: Adds or modifies a DataFrame column using a given
-  expression. Permits conditional overwriting of existing columns.
 """
-
-from typing import Dict, List, Union
 
 import pandas as pd
 
 
 def rename_columns(
-    df: pd.DataFrame, new_names: Union[Dict[str, str], List[str]]
+    df: pd.DataFrame, new_names: dict[str, str]
 ) -> pd.DataFrame:
     """
     Rename DataFrame columns.
 
     Parameters
     ----------
-    df : pandas.DataFrame
+    df : pd.DataFrame
         The DataFrame whose columns you want to rename.
-    new_names : dict or list
-        If a dict, a mapping from current column names to new names.
-        If a list, new column names in order; the length should match the
-        number of columns.
+    new_names : dict[str, str]
+        A mapping from current column names to new names.
 
     Returns
     -------
@@ -47,97 +35,109 @@ def rename_columns(
        x  y
     0  1  3
     1  2  4
-
-    >>> rename_columns(df, ['x', 'y'])
-       x  y
-    0  1  3
-    1  2  4
     """
 
-    if isinstance(new_names, dict):
-        return df.rename(columns=new_names)
-    elif isinstance(new_names, list):
-        if len(new_names) != len(df.columns):
-            raise ValueError(
-                "Length of new names list must match the number of columns"
-            )
-        return df.set_axis(new_names, axis=1, copy=True)
-    else:
-        raise TypeError("Invalid type for new_names; expected a dict or list")
+    return df.rename(columns=new_names)
 
 
 def assign_column(
-    df: pd.DataFrame,
-    column_name: str,
-    expression: str,
-    overwrite: bool = False,
+    df: pd.DataFrame, column_name: str, expression: str
 ) -> pd.DataFrame:
     """
-    Create or modify a column in a new DataFrame based on the given expression.
+    Create a new column in a DataFrame based on the given expression.
 
     Parameters
     ----------
     df : pandas.DataFrame
-        The DataFrame from which a new DataFrame will be created.
+        The DataFrame to which a new column will be added.
     column_name : str
-        The name of the new or existing column.
+        The name of the new column.
     expression : str
-        The expression used to create or modify the column. The expression can
-        be any valid pandas DataFrame eval() expression, which includes
-        arithmetic, comparison, and logical  operations. For more details, see:
-        https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.eval.html
-    overwrite : bool, optional
-        Whether to overwrite the column if it already exists in the new
-        DataFrame (default is False).
+        The expression used to create the new column.
 
     Returns
     -------
     pandas.DataFrame
-        A new DataFrame with the new or modified column.
+        A DataFrame with the new column added.
+
+    Raises
+    ------
+    ValueError
+        If the column_name already exists in the DataFrame.
 
     Examples
     --------
     >>> import pandas as pd
-    >>> df = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
-    >>> new_df = assign_column(df, "C", "A + B")
-    >>> new_df
+    >>> df = pd.DataFrame({"A": [1, 2], "B": [3, 4]})
+    >>> assign_column(df, "C", "A + B")
        A  B  C
-    0  1  4  5
-    1  2  5  7
-    2  3  6  9
-
-    >>> another_df = assign_column(new_df, "B", "A * B", overwrite=True)
-    >>> another_df
-       A   B  C
-    0  1   4  5
-    1  2  10  7
-    2  3  18  9
+    0  1  3  4
+    1  2  4  6
     """
+    if column_name in df.columns:
+        raise ValueError(f"Column '{column_name}' already exists.")
 
     new_df = df.copy()
-    if column_name in new_df.columns and not overwrite:
-        raise ValueError(
-            f"Column '{column_name}' already exists and overwrite is set to"
-            "False."
-        )
+    new_df[column_name] = new_df.eval(expression)
+    return new_df
 
+
+def redefine_column(
+    df: pd.DataFrame, column_name: str, expression: str
+) -> pd.DataFrame:
+    """
+    Modify an existing column in a DataFrame based on the given expression.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The DataFrame whose column will be modified.
+    column_name : str
+        The name of the existing column to modify.
+    expression : str
+        The expression used to modify the existing column.
+
+    Returns
+    -------
+    pandas.DataFrame
+        A DataFrame with the modified column.
+
+    Raises
+    ------
+    ValueError
+        If the column_name does not exist in the DataFrame.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({"A": [1, 2], "B": [3, 4]})
+    >>> df = assign_column(df, "C", "A + B")
+    >>> redefine_column(df, "C", "A * B")
+       A  B  C
+    0  1  3  3
+    1  2  4  8
+    """
+    if column_name not in df.columns:
+        raise ValueError(f"Column '{column_name}' does not exist.")
+
+    new_df = df.copy()
     new_df[column_name] = new_df.eval(expression)
     return new_df
 
 
 def change_column_type(
-    df: pd.DataFrame, columns: List[str], target_type: Union[str, type]
+    df: pd.DataFrame, columns: list[str], target_type: str | type
 ) -> pd.DataFrame:
     """
     Change DataFrame column data types.
 
     Parameters
     ----------
-    df : pandas.DataFrame
+    df : pd.DataFrame
         The DataFrame whose columns' data types you want to change.
-    columns : list
+    columns : list[str]
         List of column names whose data types you want to change.
-    target_type : str or type
+    target_type : str | type
         The desired data type (either string representation or Python type)
         for the specified columns.
 

@@ -1,70 +1,33 @@
 import inspect
 import sys
+from inspect import getmembers, getmodule, isfunction
 
 import pandas as pd
 
-from vantage6.algorithm.tools.preprocessing.aggregation import (
-    collapse,
-    group_statistics,
+from vantage6.algorithm.tools.preprocessing import (
+    aggregation,
+    column,
+    datetime,
+    encoding,
+    filtering,
 )
-from vantage6.algorithm.tools.preprocessing.column import (
-    assign_column,
-    change_column_type,
-    rename_columns,
-)
-from vantage6.algorithm.tools.preprocessing.datetime import (
-    calculate_age,
-    timedelta,
-    to_datetime,
-    to_timedelta,
-)
-from vantage6.algorithm.tools.preprocessing.encoding import (
-    discretize_column,
-    encode,
-    extract_from_string,
-    impute,
-    min_max_scale,
-    one_hot_encode,
-    standard_scale,
-)
-from vantage6.algorithm.tools.preprocessing.filtering import (
-    drop_columns,
-    drop_columns_by_index,
-    filter_by_date,
-    filter_range,
-    select_columns,
-    select_columns_by_index,
-    select_rows,
-)
-from vantage6.algorithm.tools.util import error
 
-funcs = [
-    assign_column,
-    calculate_age,
-    change_column_type,
-    collapse,
-    discretize_column,
-    drop_columns,
-    drop_columns_by_index,
-    encode,
-    extract_from_string,
-    filter_by_date,
-    filter_range,
-    group_statistics,
-    impute,
-    min_max_scale,
-    one_hot_encode,
-    rename_columns,
-    select_columns,
-    select_columns_by_index,
-    select_rows,
-    standard_scale,
-    timedelta,
-    to_datetime,
-    to_timedelta,
-]
+modules = [aggregation, column, datetime, encoding, filtering]
+
+funcs = []
+
+# Iterate through the modules and get the functions, excluding private ones and imports
+for module in modules:
+    funcs += [
+        func
+        for name, func in getmembers(module, isfunction)
+        if not name.startswith("_") and getmodule(func) == module
+    ]
+
 func_dict = {f.__name__: f for f in funcs}
 
+# Allow users to import all functions from this module without
+# explicitly importing them from the submodules
 __all__ = list(func_dict.keys())
 
 
@@ -131,6 +94,13 @@ def preprocess_data(
                 sys.exit(1)
 
         # execute the preprocessing function
-        data = func(data, **parameters)
+        try:
+            data = func(data, **parameters)
+        except Exception as e:
+            error(
+                f"Error while executing preprocessing step '{func_name}': "
+                f"{e}. Exiting..."
+            )
+            sys.exit(1)
 
     return data

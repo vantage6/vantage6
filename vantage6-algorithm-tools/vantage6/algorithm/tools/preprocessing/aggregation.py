@@ -3,47 +3,33 @@ This module provides functions to perform advanced aggregation operations on
 Pandas DataFrames. It is designed to offer flexible yet simple tools to
 collapse a DataFrame using various aggregation techniques, and to enrich a
 DataFrame with statistical information based on a given grouping.
-
-Functions
----------
-- `collapse`: Collapses a DataFrame by grouping by one or more columns and
-  aggregating the rest according to specified methods. This function offers
-  a wide variety of aggregation strategies ranging from common statistical
-  methods to custom callable functions.
-
-- `group_statistics`: Adds statistical information to a DataFrame based on
-  specified grouping columns and target columns for aggregation. The function
-  allows for customization of the prefix used in the resulting column names.
-
 """
 
-from typing import Dict, List, Optional, Union
+from typing import Callable, Dict, List
 
 import pandas as pd
 
 
 def collapse(
     df: pd.DataFrame,
-    group_columns: Union[str, List[str]],
-    aggregation: Union[
-        str,
-        callable,
-        Dict[str, Union[str, callable, List[Union[str, callable]]]],
-    ],
-    default_aggregation: Optional[Union[str, callable]] = None,
+    group_columns: str | list[str],
+    aggregation: str
+    | Callable
+    | dict[str, str | Callable | list[str | Callable]],
+    default_aggregation: str | Callable = None,
     strict_mode: bool = True,
 ) -> pd.DataFrame:
     """
     Collapses a DataFrame by grouping by one or more columns and aggregating
     the rest.
 
-    Parameters:
+    Parameters
     -----------
     df : pd.DataFrame
         The input DataFrame.
-    group_columns : str or List[str]
+    group_columns : str or list[str]
         Columns by which the DataFrame will be grouped.
-    aggregation : str, callable, or Dict
+    aggregation : str, callable, or dict
         The aggregation strategy to apply. Can be a string to apply to all
         columns, or a dictionary specifying the aggregation for each column.
         For complex type definitions, refer to the function signature.
@@ -56,33 +42,20 @@ def collapse(
         * "mean"
         * "min"
         * "max"
-        * "count"
+        * "count", "len": Count the number of elements in the group.
         * "std": Standard Deviation
         * "var": Variance
         * "first": First non-null value in the group
         * "last": Last non-null value in the group
         * "nunique": Number of unique values
         * "size": Size of the group (including null values)
-
-        Callable:
-
-        Any callable function that returns a single value, such as:
-
-        * sum: Compute the sum of the group.
-        * len: Count the number of elements in the group.
-        * min: Get the minimum value in the group.
-        * max: Get the maximum value in the group.
-        * list: Convert group items into a list.
-        * set: Convert group items into a set.
-        * any: Check if any item in the group evaluates to True.
-        * all: Check if all items in the group evaluate to True.
-        * lambda functions are also supported such as:
-            * to compute the range: lambda x: x.max() - x.min()
-            * to concatenate strings: lambda x: ''.join(x)
-
+        * "list": Convert group items into a list.
+        * "set": Convert group items into a set.
+        * "any": Check if any item in the group evaluates to True.
+        * "all": Check if all items in the group evaluate to True.
     default_aggregation : str or callable, optional
-        Default aggregation strategy to apply to columns not explicitly
-        mentioned. Only relevant when aggregation is a dictionary.
+        Used for left-over columns when column-specific aggregation is
+        specified. Only relevant when aggregation is a dictionary.
     strict_mode : bool, optional
         If True, all columns not in groupby must have an aggregation
         definition. An error is raised otherwise. Defaults to True.
@@ -112,6 +85,33 @@ def collapse(
     1           2         [A, A]         40            2
 
     """
+    # Convert string aggregation keywords to actual functions
+    aggregation_mapping = {
+        "len": len,
+        "list": list,
+        "set": set,
+        "any": any,
+        "all": all,
+    }
+
+    # Helper function to apply mapping
+    def map_aggregation(agg):
+        if isinstance(agg, str) and agg in aggregation_mapping:
+            return aggregation_mapping[agg]
+        elif isinstance(agg, list):
+            return [map_aggregation(a) for a in agg]
+        return agg
+
+    # If a single string is provided, map to function, otherwise, apply
+    # mapping to dict
+    if isinstance(aggregation, str):
+        aggregation = map_aggregation(aggregation)
+    elif isinstance(aggregation, dict):
+        aggregation = {
+            col: map_aggregation(agg) for col, agg in aggregation.items()
+        }
+
+    # Assert conditions for default_aggregation
     assert default_aggregation is None or isinstance(
         aggregation, dict
     ), "If default_aggregation is not None, aggregation must be a dictionary."
@@ -122,19 +122,24 @@ def collapse(
         and default_aggregation is None
     ):
         all_columns = set(df.columns)
-        groupby_set = set(group_columns)
+        groupby_set = set(
+            group_columns
+            if isinstance(group_columns, list)
+            else [group_columns]
+        )
         aggregation_set = set(aggregation.keys())
 
-        # Check for columns that are neither in groupby nor in aggregation
         undefined_columns = all_columns - (groupby_set | aggregation_set)
         if undefined_columns:
             raise ValueError(
                 "Strict mode is enabled, and the following columns are missing"
-                f"from the aggregation definition: {undefined_columns}"
+                f" from the aggregation definition: {undefined_columns}"
             )
 
-    # Set default aggregation if not specified
+    # Set default aggregation if not specified and ensure it is a valid
+    # operation
     if isinstance(aggregation, dict) and default_aggregation is not None:
+        default_aggregation = map_aggregation(default_aggregation)
         aggregation = {
             col: aggregation.get(col, default_aggregation)
             for col in df.columns
@@ -155,10 +160,10 @@ def collapse(
 
 def group_statistics(
     df: pd.DataFrame,
-    group_columns: str,
-    target_columns: List[str],
-    aggregation: Union[str, callable],
-    prefix: str = None,
+    group_columns: str | list[str],
+    target_columns: list[str],
+    aggregation: str | Callable,
+    prefix: str | None = None,
 ) -> pd.DataFrame:
     """
     Adds statistical information to a DataFrame based on a grouping column.
@@ -167,12 +172,14 @@ def group_statistics(
     ----------
     df : pd.DataFrame
         The input DataFrame.
-    group_columns : str, List[str]
+    group_columns : str | list[str]
         The column(s) by which the DataFrame will be grouped.
-    target_columns : str, List[str]
+    target_columns : list[str]
         The column(s) on which the aggregation will be performed.
-    aggregation : Union[str, Callable]
+    aggregation : str | Callable
         The aggregation strategy to apply.
+    prefix : str | None, optional
+        An optional prefix for the names of new columns.
 
     Returns
     -------

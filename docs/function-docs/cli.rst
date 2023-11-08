@@ -3,7 +3,7 @@ Command line interface
 
 This page contains the API reference of the functions in the vantage
 package. This package contains the Command-Line Interface (CLI) of the
-Vantage6 framework.
+vantage6 framework.
 
 .. TODO It would be nice to just do the following here
 .. .. click:: vantage6.cli.cli:cli_complete

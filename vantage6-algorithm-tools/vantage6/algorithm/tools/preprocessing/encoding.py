@@ -5,25 +5,6 @@ functions are designed to be used in a federated setting, where nodes may not
 have access to the entire dataset's statistics. Therefore, these functions
 require external parameters like minimum and maximum values or means and
 standard deviations for scaling operations.
-
-Functions
----------
-- **min_max_scale**: Scales specified columns of a DataFrame using the min-max
-  formula. Requires pre-specified minimum and maximum values for each column.
-- **standard_scale**: Scales specified columns of a DataFrame using the
-  standard scaling formula. Requires pre-specified mean and standard deviation
-  values.
-- **one_hot_encode**: Performs one-hot encoding on a specific DataFrame column.
-  Allows for a predefined set of categories and encoding of unknown categories.
-- **encode**: Custom encoding of DataFrame columns using a provided mapping
-  dictionary. Supports an 'unknown_value' parameter for unmapped categories.
-- **discretize_column**: Discretizes a column in a DataFrame based on given bin
-  edges or number of bins.
-- **extract_from_string**: Extracts specific patterns from a string column in a
-  DataFrame.
-- **impute**: Imputes missing values in a DataFrame. Allows for group-based
-  imputation.
-
 """
 
 from typing import Dict, List, Optional, Union
@@ -34,29 +15,29 @@ import pandas as pd
 
 def min_max_scale(
     df: pd.DataFrame,
-    min_vals: List[float],
-    max_vals: List[float],
-    columns: Optional[List[str]] = None,
+    min_vals: list[float],
+    max_vals: list[float],
+    columns: list[str] | None = None,
 ) -> pd.DataFrame:
     """
     Perform min-max scaling on specified columns of a DataFrame using the
     formula (x - min) / (max - min). The function is applied in a federated
     setting, meaning one node does not know the global min and mix. This means
     the minimum and maximum values for each column must be specified.
-    If columns are not provied, all columns are scaled and the length of
+    If columns are not provided, all columns are scaled and the length of
     min_vals and max_vals must match the number of DataFrame columns.
 
     Parameters
     ----------
     df : pandas.DataFrame
         The DataFrame to scale.
-    min_vals : list
+    min_vals : list of float
         List of minimum values for scaling; should match the length of columns.
-    max_vals : list
+    max_vals : list of float
         List of maximum values for scaling; should match the length of columns.
-    columns : list, optional
-        List of columns to scale; if None, all columns are scaled and length of
-        min_vals and max_vals must match df.columns.
+    columns : list of str | None, optional
+        List of columns to scale; if None, all columns are scaled and the
+        length of min_vals and max_vals must match df.columns.
 
     Returns
     -------
@@ -105,9 +86,9 @@ def min_max_scale(
 
 def standard_scale(
     df: pd.DataFrame,
-    means: List[float],
-    stds: List[float],
-    columns: Optional[List[str]] = None,
+    means: list[float],
+    stds: list[float],
+    columns: list[str] | None = None,
 ) -> pd.DataFrame:
     """
     Perform standard scaling on specified columns of a DataFrame using the
@@ -121,12 +102,12 @@ def standard_scale(
     ----------
     df : pandas.DataFrame
         The DataFrame to scale.
-    means : list
+    means : list of float
         List of mean values for scaling; should match the length of columns.
-    stds : list
+    stds : list of float
         List of standard deviation values for scaling; should match the length
         of columns.
-    columns : list, optional
+    columns : list of str | None, optional
         List of columns to scale; if None, all columns are scaled and the
         length of means and stds must match df.columns.
 
@@ -178,14 +159,14 @@ def standard_scale(
 def one_hot_encode(
     df: pd.DataFrame,
     column: str,
-    categories: List[str],
-    unknown_category: Optional[str] = "unknown",
+    categories: list[str],
+    unknown_category: str | None = "unknown",
     drop_original: bool = True,
-    prefix: Optional[str] = None,
+    prefix: str | None = None,
 ) -> pd.DataFrame:
     """
     Perform one-hot encoding on a specific column of a DataFrame. As one node
-    may not have access to all possible categories in the entire dataset. This
+    may not have access to all possible categories in the entire dataset, this
     requires predefined categories to be specified upfront. The function allows
     encoding of unseen categories into a specified 'unknown' category label.
     The original column can be optionally dropped, and a prefix can be added
@@ -197,13 +178,13 @@ def one_hot_encode(
         The DataFrame to encode.
     column : str
         The column to one-hot encode.
-    categories : list
+    categories : list of str
         List of predefined categories.
-    unknown_category : str, optional
+    unknown_category : str | None, optional
         Label for unseen categories.
     drop_original : bool, optional
         Whether to drop the original column, default is True.
-    prefix : str, optional
+    prefix : str | None, optional
         Prefix for the new one-hot encoded columns.
 
     Returns
@@ -262,9 +243,9 @@ def one_hot_encode(
 
 def encode(
     df: pd.DataFrame,
-    columns: list,
-    mapping: Dict,
-    unknown_value: Union[str, int] = -1,
+    columns: list[str],
+    mapping: dict,
+    unknown_value: str | int = -1,
     raise_on_unknown: bool = False,
 ) -> pd.DataFrame:
     """
@@ -274,12 +255,12 @@ def encode(
     ----------
     df : pandas.DataFrame
         The DataFrame to encode.
-    columns : list
+    columns : list of str
         List of column names to be encoded.
-    mapping : Dict
+    mapping : dict
         Dictionary containing the mapping for encoding. Keys are original
         values and values are the new encoded values.
-    unknown_value : Union[str, int]
+    unknown_value : str | int
         Value to use for any unknown categories.
     raise_on_unknown : bool
         If True, raises an error when encountering an unknown category.
@@ -410,7 +391,7 @@ def extract_from_string(
     df: pd.DataFrame,
     column: str,
     pattern: str,
-    not_found: Optional[str] = np.nan,
+    not_found: str | None = np.nan,
     keep_original: bool = True,
     output_column: str = "extracted",
 ) -> pd.DataFrame:
@@ -425,7 +406,7 @@ def extract_from_string(
         The name of the column containing the string to be processed.
     pattern : str
         The regex pattern to extract.
-    not_found : Optional[str], default=None
+    not_found : str | None, default=np.nan
         The value to insert if the pattern is not found.
     keep_original : bool, default=True
         If True, retains the original column. If False, removes the original
@@ -464,11 +445,11 @@ def extract_from_string(
 
 def impute(
     df: pd.DataFrame,
-    columns: Optional[List[str]] = None,
-    missing_values: Union[str, int, float] = np.nan,
+    columns: list[str] | None = None,
+    missing_values: str | int | float = np.nan,
     strategy: str = "mean",
-    group_columns: Optional[List[str]] = None,
-    fill_value: Optional[Union[str, int, float]] = None,
+    group_columns: list[str] | None = None,
+    fill_value: str | int | float | None = None,
 ) -> pd.DataFrame:
     """
     Impute missing values in a DataFrame. If group_columns are provided, the
@@ -478,19 +459,19 @@ def impute(
     ----------
     df : pd.DataFrame
         The input DataFrame.
-    missing_values : Union[str, int, float], default=np.nan
+    columns : list[str] | None, default=None
+        List of columns to apply the imputation to. If None, imputation is
+        applied to all columns.
+    missing_values : str | int | float, default=np.nan
         The placeholder for the missing values.
     strategy : str, default='mean'
         The imputation strategy. Options include "mean", "median",
         "most_frequent", and "constant".
-    group_columns : List[str], default=None
+    group_columns : list[str] | None, default=None
         List of columns to group by for imputation.
-    fill_value : Union[str, int, float], default=None
+    fill_value : str | int | float | None, default=None
         When strategy == "constant", fill_value is used to replace all missing
         values.
-    columns : List[str], default=None
-        List of columns to apply the imputation to. If None, imputation is
-        applied to all columns.
 
     Returns
     -------
