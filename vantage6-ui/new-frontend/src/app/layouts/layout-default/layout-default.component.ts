@@ -92,6 +92,10 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
       if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.VIEW)) {
         newLinks.push({ route: routePaths.collaborations, label: 'Collaborations', icon: 'train' });
       }
+      //Roles
+      if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.VIEW)) {
+        newLinks.push({ route: routePaths.roles, label: 'Roles', icon: 'groups' });
+      }
       //Users
       if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.USER, OperationType.VIEW)) {
         newLinks.push({ route: routePaths.users, label: 'Users', icon: 'people' });

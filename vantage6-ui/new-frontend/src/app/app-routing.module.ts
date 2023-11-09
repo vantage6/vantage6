@@ -25,6 +25,7 @@ import { CollaborationEditComponent } from './pages/collaboration/edit/collabora
 import { UserEditComponent } from './pages/user/edit/user-edit.component';
 import { ChangePasswordComponent } from './pages/change-password/change-password.component';
 import { chosenCollaborationGuard } from './guards/chosenCollaboration.guard';
+import { RoleListComponent } from './pages/role/list/role-list/role-list.component';
 
 const routes: Routes = [
   {
@@ -162,6 +163,14 @@ const routes: Routes = [
         canActivate: [authenticationGuard()],
         data: {
           crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-read.title']]
+        }
+      },
+      {
+        path: routerConfig.roles,
+        component: RoleListComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['role-list.title']]
         }
       },
       {
