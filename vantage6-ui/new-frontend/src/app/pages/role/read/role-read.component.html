@@ -1,0 +1,13 @@
+<ng-container *ngIf="!isLoading && role; else loading">
+  <app-page-header [title]="role.name"> </app-page-header>
+  <mat-card>
+    <mat-card-content> </mat-card-content>
+  </mat-card>
+</ng-container>
+<ng-template #loading>
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-template>

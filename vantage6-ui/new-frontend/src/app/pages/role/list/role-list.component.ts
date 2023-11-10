@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostBinding, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
@@ -13,6 +13,8 @@ import { RoleService } from 'src/app/services/role.service';
   styleUrls: ['./role-list.component.scss']
 })
 export class RoleListComponent implements OnInit {
+  @HostBinding('class') class = 'card-container';
+
   isLoading: boolean = true;
   canCreate: boolean = false;
   table?: TableData;
@@ -50,6 +52,6 @@ export class RoleListComponent implements OnInit {
   }
 
   handleTableClick(id: string): void {
-    //   this.router.navigate([routePaths.collaboration, id]);
+    this.router.navigate([routePaths.role, id]);
   }
 }

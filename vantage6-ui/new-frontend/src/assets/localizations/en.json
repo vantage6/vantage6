@@ -153,6 +153,9 @@
       "content": "Note, this will also delete all nodes and tasks related to this collaboration.\nThis operation cannot be undone."
     }
   },
+  "role": {
+    "name": "Role"
+  },
   "role-create": {
     "title": "Create role"
   },
