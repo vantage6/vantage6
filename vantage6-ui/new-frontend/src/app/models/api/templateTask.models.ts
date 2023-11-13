@@ -10,10 +10,16 @@ interface FixedTemplateTask {
   description?: string;
   organizations?: string[];
   databases?: FixedDatabase[];
+  arguments?: FixedArgument[];
 }
 
 interface FixedDatabase {
   name: string;
   sheet?: string;
   query?: string;
+}
+
+interface FixedArgument {
+  name: string;
+  value: any;
 }

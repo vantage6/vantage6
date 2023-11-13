@@ -4,7 +4,7 @@ import { TemplateTask } from 'src/app/models/api/templateTask.models';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { Algorithm, ArgumentType, Function } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { addParameterFormControlsForFunction } from '../../task/task.helper';
 import { BaseNode } from 'src/app/models/api/node.model';
 import { Subject, takeUntil } from 'rxjs';
@@ -45,6 +45,14 @@ export class TemplateTaskCreateComponent implements OnInit {
     public chosenCollaborationService: ChosenCollaborationService
   ) {}
 
+  get isFormValid(): boolean {
+    return (
+      this.packageForm.invalid ||
+      (this.shouldShowDatabaseStep && this.databaseForm.invalid) ||
+      (this.shouldShowParameterStep && this.parameterForm.invalid)
+    );
+  }
+
   get shouldShowDatabaseStep(): boolean {
     if (this.templateTask?.fixed.databases) {
       //TODO: handle preselected database with customizable sheet/query
@@ -54,6 +62,11 @@ export class TemplateTaskCreateComponent implements OnInit {
   }
 
   get shouldShowParameterStep(): boolean {
+    if (this.templateTask?.fixed.arguments) {
+      //TODO: handle fixed and variable arguments
+      return false;
+    }
+
     return !!this.function && !!this.function.arguments && this.function.arguments.length > 0;
   }
 
@@ -76,7 +89,7 @@ export class TemplateTaskCreateComponent implements OnInit {
   }
 
   async handleSubmit(): Promise<void> {
-    if (this.packageForm.invalid || this.databaseForm.invalid || this.parameterForm.invalid) {
+    if (this.isFormValid) {
       return;
     }
 
@@ -151,7 +164,13 @@ export class TemplateTaskCreateComponent implements OnInit {
     }
 
     if (this.function) {
-      addParameterFormControlsForFunction(this.function, this.parameterForm);
+      if (this.templateTask?.fixed.arguments) {
+        this.templateTask.fixed.arguments.forEach((fixedArgument) => {
+          this.parameterForm.addControl(fixedArgument.name, new FormControl(fixedArgument.value));
+        });
+      } else {
+        addParameterFormControlsForFunction(this.function, this.parameterForm);
+      }
     } else {
       //TODO: Add error handling with toast
       throw new Error('Function not found');
@@ -160,11 +179,11 @@ export class TemplateTaskCreateComponent implements OnInit {
     this.templateTask.variable.forEach((variable) => {
       if (typeof variable === 'string') {
         if (variable === 'name') {
-          this.packageForm.addControl('name', this.fb.nonNullable.control('', [Validators.required]));
+          this.packageForm.addControl('name', new FormControl('', [Validators.required]));
         } else if (variable === 'description') {
-          this.packageForm.addControl('description', this.fb.nonNullable.control(''));
+          this.packageForm.addControl('description', new FormControl(''));
         } else if (variable === 'organizations') {
-          this.packageForm.addControl('organizationIDs', this.fb.nonNullable.control('', [Validators.required]));
+          this.packageForm.addControl('organizationIDs', new FormControl('', [Validators.required]));
           this.packageForm
             .get('organizationIDs')
             ?.valueChanges.pipe(takeUntil(this.destroy$))

@@ -79,7 +79,7 @@
             <button mat-button matStepperNext *ngIf="shouldShowParameterStep">{{ "general.next" | translate }}</button>
           </div>
         </mat-step>
-        <mat-step [stepControl]="parameterForm">
+        <mat-step [stepControl]="parameterForm" *ngIf="shouldShowParameterStep">
           <form class="form" [formGroup]="parameterForm">
             <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
             <ng-container *ngFor="let argument of function?.arguments">
@@ -100,12 +100,7 @@
           </form>
         </mat-step>
       </mat-stepper>
-      <button
-        mat-flat-button
-        color="primary"
-        [disabled]="packageForm.invalid || databaseForm.invalid || parameterForm.invalid"
-        (click)="handleSubmit()"
-      >
+      <button mat-flat-button color="primary" [disabled]="isFormValid" (click)="handleSubmit()">
         {{ "general.submit" | translate }}
       </button>
     </mat-card-content>

@@ -23,8 +23,9 @@ export const mockDataAllTemplateTask = {
   fixed: {
     name: 'Name',
     description: 'Description',
-    organizations: ['2']
+    organizations: ['2'],
     //  databases: [{ name: 'default' }]
+    arguments: [{ name: 'group_by_columns', value: 'group_by_columns' }]
   },
   variable: [
     'name'
