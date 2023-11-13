@@ -21,11 +21,11 @@ import { FilterStepComponent } from './steps/filter-step/filter-step.component';
 })
 export class TaskCreateComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
+
   @ViewChild(PreprocessingStepComponent)
   preprocessingStep?: PreprocessingStepComponent;
   @ViewChild(FilterStepComponent)
   filterStep?: FilterStepComponent;
-
   @ViewChild(DatabaseStepComponent)
   databaseStepComponent?: DatabaseStepComponent;
 
@@ -286,8 +286,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   }
 
   private clearParameterStep(): void {
-    Object.keys(this.parameterForm.controls).forEach((control) => {
-      this.parameterForm.removeControl(control);
-    });
+    this.parameterForm = this.fb.nonNullable.group({});
   }
 }

@@ -1,9 +1,10 @@
 export interface TemplateTask {
+  name: string;
   image: string;
   function: string;
-  fixed: FixedTemplateTask;
+  fixed?: FixedTemplateTask;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  variable: Array<string | any>;
+  variable?: Array<string | any>;
 }
 
 interface FixedTemplateTask {

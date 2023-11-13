@@ -1,5 +1,4 @@
 import { Component, HostBinding, OnInit, ViewChild } from '@angular/core';
-import { mockDataAllTemplateTask } from './mock';
 import { TemplateTask } from 'src/app/models/api/templateTask.models';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { Algorithm, AlgorithmFunction, ArgumentType } from 'src/app/models/api/algorithm.model';
@@ -13,6 +12,7 @@ import { CreateTask, CreateTaskInput, TaskDatabase } from 'src/app/models/api/ta
 import { routePaths } from 'src/app/routes';
 import { TaskService } from 'src/app/services/task.service';
 import { Router } from '@angular/router';
+import { MatSelectChange } from '@angular/material/select';
 
 @Component({
   selector: 'app-template-task-create',
@@ -21,18 +21,21 @@ import { Router } from '@angular/router';
 })
 export class TemplateTaskCreateComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
+
   @ViewChild(DatabaseStepComponent)
   databaseStepComponent?: DatabaseStepComponent;
 
   argumentType = ArgumentType;
   destroy$ = new Subject();
 
-  isLoading: boolean = true;
+  isLoadingTaskData: boolean = false;
+  templateTasks: TemplateTask[] = [];
   templateTask: TemplateTask | null = null;
   algorithm: Algorithm | null = null;
   function: AlgorithmFunction | null = null;
   node: BaseNode | null = null;
 
+  templateID = this.fb.nonNullable.control('', [Validators.required]);
   packageForm = this.fb.nonNullable.group({});
   databaseForm = this.fb.nonNullable.group({});
   parameterForm = this.fb.nonNullable.group({});
@@ -54,7 +57,7 @@ export class TemplateTaskCreateComponent implements OnInit {
   }
 
   get shouldShowDatabaseStep(): boolean {
-    if (this.templateTask?.fixed.databases) {
+    if (this.templateTask?.fixed?.databases) {
       //TODO: handle preselected database with customizable sheet/query
       return false;
     }
@@ -62,7 +65,7 @@ export class TemplateTaskCreateComponent implements OnInit {
   }
 
   get shouldShowParameterStep(): boolean {
-    if (this.templateTask?.fixed.arguments) {
+    if (this.templateTask?.fixed?.arguments) {
       //TODO: handle fixed and variable arguments
       return false;
     }
@@ -72,12 +75,11 @@ export class TemplateTaskCreateComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.initData();
-    this.isLoading = false;
   }
 
   organizationsToDisplay(): string {
     const names: string[] = [];
-    this.templateTask?.fixed.organizations?.forEach((organizationID) => {
+    this.templateTask?.fixed?.organizations?.forEach((organizationID) => {
       const organization = this.chosenCollaborationService.collaboration$
         .getValue()
         ?.organizations.find((_) => _.id === Number.parseInt(organizationID));
@@ -88,6 +90,62 @@ export class TemplateTaskCreateComponent implements OnInit {
     return names.join(', ');
   }
 
+  async handleTemplateChange(event: MatSelectChange): Promise<void> {
+    this.isLoadingTaskData = true;
+    this.clearForm();
+
+    this.templateTask = this.templateTasks[event.value] || null;
+
+    const algorithms = await this.algorithmService.getAlgorithms();
+    const baseAlgorithm = algorithms.find((_) => _.url === this.templateTask?.image);
+    if (baseAlgorithm) {
+      this.algorithm = await this.algorithmService.getAlgorithm(baseAlgorithm?.id.toString() || '');
+    } else {
+      //TODO: Add error handling with toast
+      throw new Error('Algorithm not found');
+    }
+
+    if (this.algorithm) {
+      this.function = this.algorithm.functions.find((_) => _.name === this.templateTask?.function) || null;
+    }
+
+    if (this.function) {
+      if (this.templateTask?.fixed?.arguments) {
+        this.templateTask.fixed.arguments.forEach((fixedArgument) => {
+          this.parameterForm.addControl(fixedArgument.name, new FormControl(fixedArgument.value));
+        });
+      } else {
+        addParameterFormControlsForFunction(this.function, this.parameterForm);
+      }
+    } else {
+      //TODO: Add error handling with toast
+      throw new Error('Function not found');
+    }
+
+    this.templateTask.variable?.forEach((variable) => {
+      if (typeof variable === 'string') {
+        if (variable === 'name') {
+          this.packageForm.addControl('name', new FormControl('', [Validators.required]));
+        } else if (variable === 'description') {
+          this.packageForm.addControl('description', new FormControl(''));
+        } else if (variable === 'organizations') {
+          this.packageForm.addControl('organizationIDs', new FormControl('', [Validators.required]));
+          this.packageForm
+            .get('organizationIDs')
+            ?.valueChanges.pipe(takeUntil(this.destroy$))
+            .subscribe(async (organizationID) => {
+              this.handleOrganizationChange(organizationID);
+            });
+        }
+      }
+    });
+
+    if (this.templateTask.fixed?.organizations) {
+      this.handleOrganizationChange(this.templateTask.fixed.organizations);
+    }
+    this.isLoadingTaskData = false;
+  }
+
   async handleSubmit(): Promise<void> {
     if (this.isFormValid) {
       return;
@@ -95,14 +153,14 @@ export class TemplateTaskCreateComponent implements OnInit {
 
     let selectedOrganizations: string[] = [];
     const organizationIDsControl = this.packageForm.get('organizationIDs');
-    if (this.templateTask?.fixed.organizations) {
+    if (this.templateTask?.fixed?.organizations) {
       selectedOrganizations = this.templateTask?.fixed.organizations;
     } else if (organizationIDsControl) {
       selectedOrganizations = Array.isArray(organizationIDsControl.value) ? organizationIDsControl.value : [organizationIDsControl.value];
     }
 
     let taskDatabases: TaskDatabase[] = [];
-    if (this.templateTask?.fixed.databases) {
+    if (this.templateTask?.fixed?.databases) {
       this.templateTask.fixed.databases.forEach((fixedDatabase) => {
         const taskDatabase: TaskDatabase = { label: fixedDatabase.name, query: fixedDatabase.query, sheet: fixedDatabase.sheet };
         taskDatabases.push(taskDatabase);
@@ -117,8 +175,8 @@ export class TemplateTaskCreateComponent implements OnInit {
     };
 
     const createTask: CreateTask = {
-      name: this.templateTask?.fixed.name ? this.templateTask.fixed.name : this.packageForm.get('name')?.value || '',
-      description: this.templateTask?.fixed.description
+      name: this.templateTask?.fixed?.name ? this.templateTask.fixed.name : this.packageForm.get('name')?.value || '',
+      description: this.templateTask?.fixed?.description
         ? this.templateTask.fixed.description
         : this.packageForm.get('description')?.value || '',
       image: this.algorithm?.url || '',
@@ -137,55 +195,7 @@ export class TemplateTaskCreateComponent implements OnInit {
   }
 
   private async initData(): Promise<void> {
-    this.templateTask = mockDataAllTemplateTask;
-
-    const algorithms = await this.algorithmService.getAlgorithms();
-    const baseAlgorithm = algorithms.find((_) => _.url === this.templateTask?.image);
-    if (baseAlgorithm) {
-      this.algorithm = await this.algorithmService.getAlgorithm(baseAlgorithm?.id.toString() || '');
-    } else {
-      //TODO: Add error handling with toast
-      throw new Error('Algorithm not found');
-    }
-
-    if (this.algorithm) {
-      this.function = this.algorithm.functions.find((_) => _.name === this.templateTask?.function) || null;
-    }
-
-    if (this.function) {
-      if (this.templateTask?.fixed.arguments) {
-        this.templateTask.fixed.arguments.forEach((fixedArgument) => {
-          this.parameterForm.addControl(fixedArgument.name, new FormControl(fixedArgument.value));
-        });
-      } else {
-        addParameterFormControlsForFunction(this.function, this.parameterForm);
-      }
-    } else {
-      //TODO: Add error handling with toast
-      throw new Error('Function not found');
-    }
-
-    this.templateTask.variable.forEach((variable) => {
-      if (typeof variable === 'string') {
-        if (variable === 'name') {
-          this.packageForm.addControl('name', new FormControl('', [Validators.required]));
-        } else if (variable === 'description') {
-          this.packageForm.addControl('description', new FormControl(''));
-        } else if (variable === 'organizations') {
-          this.packageForm.addControl('organizationIDs', new FormControl('', [Validators.required]));
-          this.packageForm
-            .get('organizationIDs')
-            ?.valueChanges.pipe(takeUntil(this.destroy$))
-            .subscribe(async (organizationID) => {
-              this.handleOrganizationChange(organizationID);
-            });
-        }
-      }
-    });
-
-    if (this.templateTask.fixed.organizations) {
-      this.handleOrganizationChange(this.templateTask.fixed.organizations);
-    }
+    this.templateTasks = await this.taskService.getTemplateTasks();
   }
 
   private async handleOrganizationChange(organizationID: string | string[]): Promise<void> {
@@ -207,6 +217,16 @@ export class TemplateTaskCreateComponent implements OnInit {
       //Filter node for chosen organization
       this.node = nodes.find((_) => _.organization.id === Number.parseInt(id)) || null;
     }
+  }
+
+  private clearForm(): void {
+    this.templateTask = null;
+    this.algorithm = null;
+    this.function = null;
+    this.node = null;
+    this.packageForm = this.fb.nonNullable.group({});
+    this.clearDatabaseStep();
+    this.parameterForm = this.fb.nonNullable.group({});
   }
 
   private clearDatabaseStep(): void {

@@ -101,7 +101,10 @@
     }
   },
   "template-task-create": {
-    "title": "Quick task"
+    "title": "Quick task",
+    "actions": {
+      "select": "Select quick task"
+    }
   },
   "organization": {
     "name": "Name",

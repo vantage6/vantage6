@@ -1,8 +1,17 @@
-<app-page-header title="{{ 'template-task-create.title' | translate }}"> </app-page-header>
-<ng-container *ngIf="!isLoading; else loading">
-  <mat-card>
+<app-page-header title="{{ 'template-task-create.title' | translate }}">
+  <mat-form-field content subscriptSizing="dynamic">
+    <mat-label>{{ "template-task-create.actions.select" | translate }}</mat-label>
+    <mat-select [formControl]="templateID" (selectionChange)="handleTemplateChange($event)">
+      <mat-option *ngFor="let templateTasks of templateTasks; index as index" [value]="index">
+        {{ templateTasks.name }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+</app-page-header>
+<ng-container *ngIf="templateTask">
+  <mat-card *ngIf="!isLoadingTaskData; else loading">
     <mat-card-content>
-      <mat-stepper [linear]="true" orientation="vertical" #stepper>
+      <mat-stepper [linear]="true" orientation="vertical" #stepper *ngIf="templateTask">
         <mat-step [stepControl]="packageForm">
           <ng-template matStepLabel>{{ "task-create.step-package.title" | translate }}</ng-template>
           <div class="data-list">
@@ -16,11 +25,11 @@
             </div>
             <div class="data-list__item" *ngIf="templateTask?.fixed?.name">
               <b>{{ "task.name" | translate }}</b>
-              <span>{{ templateTask?.fixed?.name || "-" }}</span>
+              <span>{{ templateTask.fixed?.name || "-" }}</span>
             </div>
             <div class="data-list__item data-list__item--full" *ngIf="templateTask?.fixed?.description">
               <b>{{ "task.description" | translate }}</b>
-              <span>{{ templateTask?.fixed?.description || "-" }}</span>
+              <span>{{ templateTask.fixed?.description || "-" }}</span>
             </div>
             <div class="data-list__item data-list__item--full" *ngIf="templateTask?.fixed?.organizations">
               <b>{{ "task.organization" | translate }}</b>

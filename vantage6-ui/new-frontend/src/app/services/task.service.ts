@@ -12,6 +12,8 @@ import {
 } from '../models/api/task.models';
 import { Pagination } from '../models/api/pagination.model';
 import { getLazyProperties } from '../helpers/api.helper';
+import { mockDataCrossTabTemplateTask, mockDataQualityTemplateTask } from '../pages/template-task/create/mock';
+import { TemplateTask } from '../models/api/templateTask.models';
 
 @Injectable({
   providedIn: 'root'
@@ -58,6 +60,11 @@ export class TaskService {
 
   async deleteTask(id: number): Promise<void> {
     return await this.apiService.deleteForApi(`/task/${id}`);
+  }
+
+  async getTemplateTasks(): Promise<TemplateTask[]> {
+    //TODO: Remove mock data when template tasks are implemented in backend
+    return [mockDataQualityTemplateTask, mockDataCrossTabTemplateTask];
   }
 
   async getColumnNames(columnRetrieve: ColumnRetrievalInput): Promise<ColumnRetrievalResult> {
