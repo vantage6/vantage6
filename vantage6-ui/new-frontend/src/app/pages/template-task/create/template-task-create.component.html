@@ -100,7 +100,12 @@
           </form>
         </mat-step>
       </mat-stepper>
-      <button mat-flat-button color="primary" [disabled]="packageForm.invalid">
+      <button
+        mat-flat-button
+        color="primary"
+        [disabled]="packageForm.invalid || databaseForm.invalid || parameterForm.invalid"
+        (click)="handleSubmit()"
+      >
         {{ "general.submit" | translate }}
       </button>
     </mat-card-content>

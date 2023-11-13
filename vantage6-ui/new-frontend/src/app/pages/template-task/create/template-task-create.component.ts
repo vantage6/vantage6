@@ -9,6 +9,10 @@ import { addParameterFormControlsForFunction } from '../../task/task.helper';
 import { BaseNode } from 'src/app/models/api/node.model';
 import { Subject, takeUntil } from 'rxjs';
 import { DatabaseStepComponent } from '../../task/create/steps/database-step/database-step.component';
+import { CreateTask, CreateTaskInput, TaskDatabase } from 'src/app/models/api/task.models';
+import { routePaths } from 'src/app/routes';
+import { TaskService } from 'src/app/services/task.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-template-task-create',
@@ -35,7 +39,9 @@ export class TemplateTaskCreateComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
+    private router: Router,
     private algorithmService: AlgorithmService,
+    private taskService: TaskService,
     public chosenCollaborationService: ChosenCollaborationService
   ) {}
 
@@ -69,6 +75,65 @@ export class TemplateTaskCreateComponent implements OnInit {
     return names.join(', ');
   }
 
+  async handleSubmit(): Promise<void> {
+    if (this.packageForm.invalid || this.databaseForm.invalid || this.parameterForm.invalid) {
+      return;
+    }
+
+    let selectedOrganizations: string[] = [];
+    const organizationIDsControl = this.packageForm.get('organizationIDs');
+    if (this.templateTask?.fixed.organizations) {
+      selectedOrganizations = this.templateTask?.fixed.organizations;
+    } else if (organizationIDsControl) {
+      selectedOrganizations = Array.isArray(organizationIDsControl.value) ? organizationIDsControl.value : [organizationIDsControl.value];
+    }
+
+    const taskDatabases: TaskDatabase[] = [];
+    if (this.templateTask?.fixed.databases) {
+      this.templateTask.fixed.databases.forEach((fixedDatabase) => {
+        const taskDatabase: TaskDatabase = { label: fixedDatabase.name, query: fixedDatabase.query, sheet: fixedDatabase.sheet };
+        taskDatabases.push(taskDatabase);
+      });
+    } else {
+      this.function?.databases.forEach((functionDatabase) => {
+        const taskDatabase: TaskDatabase = { label: functionDatabase.name };
+        const query = this.databaseForm.get(`${functionDatabase.name}_query`)?.value || '';
+        if (query) {
+          taskDatabase.query = query;
+        }
+        const sheet = this.databaseForm.get(`${functionDatabase.name}_sheet`)?.value || '';
+        if (sheet) {
+          taskDatabase.sheet = sheet;
+        }
+        taskDatabases.push(taskDatabase);
+      });
+    }
+
+    const input: CreateTaskInput = {
+      method: this.function?.name || '',
+      kwargs: this.parameterForm.value
+    };
+
+    const createTask: CreateTask = {
+      name: this.templateTask?.fixed.name ? this.templateTask.fixed.name : this.packageForm.get('name')?.value || '',
+      description: this.templateTask?.fixed.description
+        ? this.templateTask.fixed.description
+        : this.packageForm.get('description')?.value || '',
+      image: this.algorithm?.url || '',
+      collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
+      databases: taskDatabases,
+      organizations: selectedOrganizations.map((organizationID) => {
+        return { id: Number.parseInt(organizationID), input: btoa(JSON.stringify(input)) || '' };
+      })
+      //TODO: Add preprocessing and filtering when backend is ready
+    };
+
+    const newTask = await this.taskService.createTask(createTask);
+    if (newTask) {
+      this.router.navigate([routePaths.task, newTask.id]);
+    }
+  }
+
   private async initData(): Promise<void> {
     this.templateTask = mockDataAllTemplateTask;
 
@@ -95,7 +160,7 @@ export class TemplateTaskCreateComponent implements OnInit {
     this.templateTask.variable.forEach((variable) => {
       if (typeof variable === 'string') {
         if (variable === 'name') {
-          this.packageForm.addControl('name', this.fb.nonNullable.control(''));
+          this.packageForm.addControl('name', this.fb.nonNullable.control('', [Validators.required]));
         } else if (variable === 'description') {
           this.packageForm.addControl('description', this.fb.nonNullable.control(''));
         } else if (variable === 'organizations') {
