@@ -5,7 +5,7 @@ import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { Algorithm, AlgorithmFunction, ArgumentType } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { FormBuilder, FormControl, Validators } from '@angular/forms';
-import { addParameterFormControlsForFunction } from '../../task/task.helper';
+import { addParameterFormControlsForFunction, getTaskDatabaseFromForm } from '../../task/task.helper';
 import { BaseNode } from 'src/app/models/api/node.model';
 import { Subject, takeUntil } from 'rxjs';
 import { DatabaseStepComponent } from '../../task/create/steps/database-step/database-step.component';
@@ -101,25 +101,14 @@ export class TemplateTaskCreateComponent implements OnInit {
       selectedOrganizations = Array.isArray(organizationIDsControl.value) ? organizationIDsControl.value : [organizationIDsControl.value];
     }
 
-    const taskDatabases: TaskDatabase[] = [];
+    let taskDatabases: TaskDatabase[] = [];
     if (this.templateTask?.fixed.databases) {
       this.templateTask.fixed.databases.forEach((fixedDatabase) => {
         const taskDatabase: TaskDatabase = { label: fixedDatabase.name, query: fixedDatabase.query, sheet: fixedDatabase.sheet };
         taskDatabases.push(taskDatabase);
       });
     } else {
-      this.function?.databases.forEach((functionDatabase) => {
-        const taskDatabase: TaskDatabase = { label: functionDatabase.name };
-        const query = this.databaseForm.get(`${functionDatabase.name}_query`)?.value || '';
-        if (query) {
-          taskDatabase.query = query;
-        }
-        const sheet = this.databaseForm.get(`${functionDatabase.name}_sheet`)?.value || '';
-        if (sheet) {
-          taskDatabase.sheet = sheet;
-        }
-        taskDatabases.push(taskDatabase);
-      });
+      taskDatabases = getTaskDatabaseFromForm(this.function, this.databaseForm);
     }
 
     const input: CreateTaskInput = {

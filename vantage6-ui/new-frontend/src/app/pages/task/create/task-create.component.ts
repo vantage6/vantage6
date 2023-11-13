@@ -10,7 +10,7 @@ import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
 import { Router } from '@angular/router';
 import { PreprocessingStepComponent } from './steps/preprocessing-step/preprocessing-step.component';
-import { addParameterFormControlsForFunction } from '../task.helper';
+import { addParameterFormControlsForFunction, getTaskDatabaseFromForm } from '../task.helper';
 import { DatabaseStepComponent } from './steps/database-step/database-step.component';
 import { FilterStepComponent } from './steps/filter-step/filter-step.component';
 
@@ -120,7 +120,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
       ? this.functionForm.controls.organizationIDs.value
       : [this.functionForm.controls.organizationIDs.value];
 
-    const taskDatabases: TaskDatabase[] = this.getSelectedDatabases();
+    const taskDatabases: TaskDatabase[] = getTaskDatabaseFromForm(this.function, this.databaseForm);
 
     const input: CreateTaskInput = {
       method: this.function?.name || '',
@@ -149,7 +149,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     this.isLoadingColumns = true;
 
     // collect data to collect columns from database
-    const taskDatabases: TaskDatabase[] = this.getSelectedDatabases();
+    const taskDatabases: TaskDatabase[] = getTaskDatabaseFromForm(this.function, this.databaseForm);
     // TODO modify when choosing database for preprocessing is implemented
     const taskDatabase = taskDatabases[0];
 
@@ -263,24 +263,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
 
   private async getNodes(): Promise<BaseNode[] | null> {
     return await this.chosenCollaborationService.getNodes();
-  }
-
-  private getSelectedDatabases(): TaskDatabase[] {
-    const taskDatabases: TaskDatabase[] = [];
-    this.function?.databases.forEach((functionDatabase) => {
-      const selected_database = this.databaseForm.get(`${functionDatabase.name}_name`)?.value || '';
-      const taskDatabase: TaskDatabase = { label: selected_database };
-      const query = this.databaseForm.get(`${functionDatabase.name}_query`)?.value || '';
-      if (query) {
-        taskDatabase.query = query;
-      }
-      const sheet = this.databaseForm.get(`${functionDatabase.name}_sheet`)?.value || '';
-      if (sheet) {
-        taskDatabase.sheet = sheet;
-      }
-      taskDatabases.push(taskDatabase);
-    });
-    return taskDatabases;
   }
 
   private clearFunctionStep(): void {
