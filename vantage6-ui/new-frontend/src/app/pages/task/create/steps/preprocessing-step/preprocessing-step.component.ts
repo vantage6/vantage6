@@ -16,7 +16,7 @@ export class PreprocessingStepComponent {
   @Input() form!: FormArray;
   @Input() functions: Select[] = [];
   @Input() columns: string[] = [];
-  @Output() onFirstPreprocessor: EventEmitter<boolean> = new EventEmitter();
+  @Output() handleFirstPreprocessor: EventEmitter<boolean> = new EventEmitter();
   selectedFunctions: Array<Select | null> = [];
 
   constructor(private fb: FormBuilder) {}
@@ -37,7 +37,7 @@ export class PreprocessingStepComponent {
 
   addPreprocessor(): void {
     if (this.columns.length === 0) {
-      this.onFirstPreprocessor.emit();
+      this.handleFirstPreprocessor.emit();
     }
     this.selectedFunctions.push(null);
     const preprocessorForm = this.fb.nonNullable.group({

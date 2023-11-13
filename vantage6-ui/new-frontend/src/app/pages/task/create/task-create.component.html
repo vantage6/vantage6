@@ -68,19 +68,19 @@
             </div>
           </form>
         </mat-step>
-		<mat-step [stepControl]="databaseForm" *ngIf="shouldShowDatabaseStep">
-  			<ng-template matStepLabel>{{ "task-create.step-database.title" | translate }}</ng-template>
-  			<app-database-step
-    			*ngIf="node"
-    			[form]="databaseForm"
-    			[functionDatabases]="function?.databases || []"
-    			[node]="node"
-  			></app-database-step>
-  			<div>
-    			<button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
-    		<button mat-button matStepperNext>{{ "general.next" | translate }}</button>
-  			</div>
-		</mat-step>
+        <mat-step [stepControl]="databaseForm" *ngIf="shouldShowDatabaseStep">
+          <ng-template matStepLabel>{{ "task-create.step-database.title" | translate }}</ng-template>
+          <app-database-step
+            *ngIf="node"
+            [form]="databaseForm"
+            [functionDatabases]="function?.databases || []"
+            [node]="node"
+          ></app-database-step>
+          <div>
+            <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+            <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+          </div>
+        </mat-step>
         <mat-step *ngIf="shouldShowPreprocessorStep" [stepControl]="preprocessingForm">
           <ng-template matStepLabel>{{ "task-create.step-preprocessing.title" | translate }}</ng-template>
           <ng-container *ngIf="!isLoadingColumns; else loadingColumnsPreprocessing">
@@ -88,7 +88,7 @@
               [form]="preprocessingForm"
               [functions]="algorithm?.select || []"
               [columns]="columns"
-              (onFirstPreprocessor)="handleFirstPreprocessor()"
+              (handleFirstPreprocessor)="handleFirstPreprocessor()"
             ></app-preprocessing-step>
             <div>
               <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
@@ -103,7 +103,7 @@
               [form]="filterForm"
               [filters]="algorithm?.filter || []"
               [columns]="columns"
-              (onFirstPreprocessor)="handleFirstPreprocessor()"
+              (handleFirstPreprocessor)="handleFirstPreprocessor()"
             ></app-filter-step>
             <div>
               <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>

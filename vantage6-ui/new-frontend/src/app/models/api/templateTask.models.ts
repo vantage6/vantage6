@@ -2,6 +2,7 @@ export interface TemplateTask {
   image: string;
   function: string;
   fixed: FixedTemplateTask;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   variable: Array<string | any>;
 }
 
@@ -21,5 +22,6 @@ interface FixedDatabase {
 
 interface FixedArgument {
   name: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value: any;
 }

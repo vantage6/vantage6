@@ -1,7 +1,7 @@
 import { Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
-import { Algorithm, ArgumentType, BaseAlgorithm, AlgorithmFunction, Select } from 'src/app/models/api/algorithm.model';
+import { Algorithm, ArgumentType, BaseAlgorithm, AlgorithmFunction } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, takeUntil } from 'rxjs';
 import { BaseNode } from 'src/app/models/api/node.model';
@@ -187,6 +187,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     } else {
       // a task has been started to retrieve the columns
       const task = await this.taskService.wait_for_results(columnsOrTask.id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const decodedResult: any = JSON.parse(atob(task.results?.[0].result || ''));
       this.columns = decodedResult;
     }

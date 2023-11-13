@@ -17,7 +17,7 @@ export class FilterStepComponent {
   @Input() form!: FormArray;
   @Input() filters: Filter[] = [];
   @Input() columns: string[] = [];
-  @Output() onFirstPreprocessor: EventEmitter<boolean> = new EventEmitter();
+  @Output() handleFirstPreprocessor: EventEmitter<boolean> = new EventEmitter();
   selectedFilters: Array<Filter | null> = [];
 
   constructor(private fb: FormBuilder) {}
@@ -85,7 +85,7 @@ export class FilterStepComponent {
 
   addFilter(): void {
     if (this.columns.length === 0) {
-      this.onFirstPreprocessor.emit();
+      this.handleFirstPreprocessor.emit();
     }
     const filterForm = this.fb.nonNullable.group({
       filterID: ['', Validators.required]

@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
@@ -10,7 +10,7 @@ import { BaseNode, Database, DatabaseType } from 'src/app/models/api/node.model'
   templateUrl: './database-step.component.html',
   styleUrls: ['./database-step.component.scss']
 })
-export class DatabaseStepComponent implements OnDestroy {
+export class DatabaseStepComponent implements OnDestroy, OnChanges {
   destroy$ = new Subject();
 
   @Input() form!: FormGroup;
