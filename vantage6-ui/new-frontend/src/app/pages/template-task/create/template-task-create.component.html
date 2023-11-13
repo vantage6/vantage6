@@ -61,7 +61,9 @@
             <!-- TODO: Show alert if node is offline -->
           </form>
           <div>
-            <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+            <button mat-button matStepperNext *ngIf="shouldShowDatabaseStep || shouldShowParameterStep">
+              {{ "general.next" | translate }}
+            </button>
           </div>
         </mat-step>
         <mat-step [stepControl]="databaseForm" *ngIf="shouldShowDatabaseStep">
@@ -74,7 +76,7 @@
           ></app-database-step>
           <div>
             <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
-            <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+            <button mat-button matStepperNext *ngIf="shouldShowParameterStep">{{ "general.next" | translate }}</button>
           </div>
         </mat-step>
         <mat-step [stepControl]="parameterForm">
