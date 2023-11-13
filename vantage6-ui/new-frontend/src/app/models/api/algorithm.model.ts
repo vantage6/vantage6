@@ -33,6 +33,12 @@ export enum FilterParameterType {
   Date = 'date'
 }
 
+export interface BaseAlgorithm {
+  id: number;
+  name: string;
+  url: string;
+}
+
 export interface Algorithm {
   id: number;
   name: string;
@@ -46,7 +52,7 @@ export interface AlgorithmFunction {
   name: string;
   is_central: boolean;
   arguments: Argument[];
-  databases: Database[];
+  databases: FunctionDatabase[];
   output: Output[];
 }
 
@@ -84,7 +90,7 @@ interface Argument {
   description?: string;
 }
 
-interface Database {
+export interface FunctionDatabase {
   name: string;
 }
 export interface Output {

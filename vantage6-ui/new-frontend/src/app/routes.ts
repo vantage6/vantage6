@@ -19,7 +19,8 @@ export const routePaths = {
   nodes: '/admin/nodes',
   tasks: '/tasks',
   taskCreate: '/tasks/create',
-  task: '/tasks'
+  task: '/tasks',
+  templateTaskCreate: '/template-tasks/create'
 };
 
 export const routerConfig = {
@@ -44,5 +45,6 @@ export const routerConfig = {
   nodes: 'nodes',
   tasks: 'tasks',
   taskCreate: 'tasks/create',
-  task: 'tasks/:id'
+  task: 'tasks/:id',
+  templateTaskCreate: 'template-tasks/create'
 };

@@ -107,6 +107,10 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
       if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.VIEW)) {
         newLinks.push({ route: routePaths.tasks, label: 'Tasks', icon: 'science' });
       }
+      //Template tasks
+      if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.CREATE)) {
+        newLinks.push({ route: routePaths.templateTaskCreate, label: 'Quick tasks', icon: 'assignment' });
+      }
     }
 
     this.navigationLinks = newLinks;

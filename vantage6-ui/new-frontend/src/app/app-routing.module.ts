@@ -25,6 +25,7 @@ import { CollaborationEditComponent } from './pages/collaboration/edit/collabora
 import { UserEditComponent } from './pages/user/edit/user-edit.component';
 import { ChangePasswordComponent } from './pages/change-password/change-password.component';
 import { chosenCollaborationGuard } from './guards/chosenCollaboration.guard';
+import { TemplateTaskCreateComponent } from './pages/template-task/create/template-task-create.component';
 
 const routes: Routes = [
   {
@@ -70,6 +71,11 @@ const routes: Routes = [
         data: {
           crumbs: [['task-list.title', routePaths.tasks], ['task-read.title']]
         }
+      },
+      {
+        path: routerConfig.templateTaskCreate,
+        component: TemplateTaskCreateComponent,
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()]
       }
     ]
   },

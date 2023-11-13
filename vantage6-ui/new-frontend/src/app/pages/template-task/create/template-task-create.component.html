@@ -1,0 +1,124 @@
+<app-page-header title="{{ 'template-task-create.title' | translate }}">
+  <mat-form-field content subscriptSizing="dynamic">
+    <mat-label>{{ "template-task-create.actions.select" | translate }}</mat-label>
+    <mat-select [formControl]="templateID" (selectionChange)="handleTemplateChange($event)">
+      <mat-option *ngFor="let templateTasks of templateTasks; index as index" [value]="index">
+        {{ templateTasks.name }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+</app-page-header>
+<ng-container *ngIf="templateTask">
+  <mat-card *ngIf="!isLoadingTaskData; else loading">
+    <mat-card-content>
+      <mat-stepper [linear]="true" orientation="vertical" #stepper *ngIf="templateTask">
+        <mat-step [stepControl]="packageForm">
+          <ng-template matStepLabel>{{ "task-create.step-package.title" | translate }}</ng-template>
+          <div class="data-list">
+            <div class="data-list__item">
+              <b>{{ "task.algorithm" | translate }}</b>
+              <span>{{ algorithm?.name || "-" }}</span>
+            </div>
+            <div class="data-list__item">
+              <b>{{ "task.function" | translate }}</b>
+              <span>{{ function?.name || "-" }}</span>
+            </div>
+            <div class="data-list__item" *ngIf="templateTask?.fixed?.name">
+              <b>{{ "task.name" | translate }}</b>
+              <span>{{ templateTask.fixed?.name || "-" }}</span>
+            </div>
+            <div class="data-list__item data-list__item--full" *ngIf="templateTask?.fixed?.description">
+              <b>{{ "task.description" | translate }}</b>
+              <span>{{ templateTask.fixed?.description || "-" }}</span>
+            </div>
+            <div class="data-list__item data-list__item--full" *ngIf="templateTask?.fixed?.organizations">
+              <b>{{ "task.organization" | translate }}</b>
+              <span>{{ organizationsToDisplay() || "-" }}</span>
+            </div>
+          </div>
+          <form class="form variable-form" [formGroup]="packageForm">
+            <!-- Name -->
+            <mat-form-field *ngIf="this.templateTask?.variable?.includes('name')" subscriptSizing="dynamic">
+              <mat-label>{{ "task.name" | translate }}</mat-label>
+              <input matInput type="text" formControlName="name" />
+            </mat-form-field>
+            <!-- Description -->
+            <mat-form-field *ngIf="this.templateTask?.variable?.includes('description')" subscriptSizing="dynamic">
+              <mat-label>{{ "task.description" | translate }}</mat-label>
+              <input matInput type="text" formControlName="description" />
+            </mat-form-field>
+            <!-- Organizations -->
+            <mat-form-field *ngIf="this.templateTask?.variable?.includes('organizations') && function" subscriptSizing="dynamic">
+              <mat-label>{{ "task.organization" | translate }}</mat-label>
+              <mat-select *ngIf="function.is_central" formControlName="organizationIDs">
+                <mat-option
+                  *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
+                  [value]="organization.id.toString()"
+                >
+                  {{ organization.name }}
+                </mat-option>
+              </mat-select>
+              <mat-select *ngIf="!function.is_central" formControlName="organizationIDs" multiple>
+                <mat-option
+                  *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
+                  [value]="organization.id"
+                >
+                  {{ organization.name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <!-- TODO: Show alert if node is offline -->
+          </form>
+          <div>
+            <button mat-button matStepperNext *ngIf="shouldShowDatabaseStep || shouldShowParameterStep">
+              {{ "general.next" | translate }}
+            </button>
+          </div>
+        </mat-step>
+        <mat-step [stepControl]="databaseForm" *ngIf="shouldShowDatabaseStep">
+          <ng-template matStepLabel>{{ "task-create.step-database.title" | translate }}</ng-template>
+          <app-database-step
+            *ngIf="node"
+            [form]="databaseForm"
+            [functionDatabases]="function?.databases || []"
+            [node]="node"
+          ></app-database-step>
+          <div>
+            <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+            <button mat-button matStepperNext *ngIf="shouldShowParameterStep">{{ "general.next" | translate }}</button>
+          </div>
+        </mat-step>
+        <mat-step [stepControl]="parameterForm" *ngIf="shouldShowParameterStep">
+          <form class="form" [formGroup]="parameterForm">
+            <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
+            <ng-container *ngFor="let argument of function?.arguments">
+              <b>{{ argument.description }}</b>
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ argument.name }}</mat-label>
+                <input
+                  matInput
+                  numberOnly
+                  [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
+                  [formControlName]="argument.name"
+                />
+              </mat-form-field>
+            </ng-container>
+            <div>
+              <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+            </div>
+          </form>
+        </mat-step>
+      </mat-stepper>
+      <button mat-flat-button color="primary" [disabled]="isFormValid" (click)="handleSubmit()">
+        {{ "general.submit" | translate }}
+      </button>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
+<ng-template #loading>
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-template>
