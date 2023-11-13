@@ -47,6 +47,10 @@ export class TemplateTaskCreateComponent implements OnInit {
     return !!this.function?.databases && this.function.databases.length >= 1;
   }
 
+  get shouldShowParameterStep(): boolean {
+    return !!this.function && !!this.function.arguments && this.function.arguments.length > 0;
+  }
+
   async ngOnInit(): Promise<void> {
     await this.initData();
     this.isLoading = false;

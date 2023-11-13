@@ -96,7 +96,7 @@
             </div>
           </ng-container>
         </mat-step>
-        <mat-step *ngIf="shouldShowPreprocessorStep" [stepControl]="filterForm">
+        <mat-step *ngIf="shouldShowFilterStep" [stepControl]="filterForm">
           <ng-template matStepLabel>{{ "task-create.step-filter.title" | translate }}</ng-template>
           <ng-container *ngIf="!isLoadingColumns; else loadingColumnsFiltering">
             <app-filter-step
@@ -115,7 +115,7 @@
           </ng-template>
         </mat-step>
         <!-- TODO check if there are 'column'-type parameters - if so retrieve column names -->
-        <mat-step [stepControl]="parameterForm">
+        <mat-step *ngIf="shouldShowParameterStep" [stepControl]="parameterForm">
           <form class="form" [formGroup]="parameterForm">
             <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
             <ng-container *ngFor="let argument of function?.arguments">

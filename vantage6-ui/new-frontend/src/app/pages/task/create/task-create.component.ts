@@ -86,12 +86,21 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   }
 
   get shouldShowDatabaseStep(): boolean {
-    return !!this.function?.databases && this.function.databases.length >= 1;
+    return !this.function || (!!this.function?.databases && this.function.databases.length > 0);
   }
 
   get shouldShowPreprocessorStep(): boolean {
     if (!this.algorithm || !this.function) return true;
-    return this.algorithm.select.length > 0 && this.function.databases.length > 0;
+    return this.algorithm.select.length > 0 && this.shouldShowDatabaseStep;
+  }
+
+  get shouldShowFilterStep(): boolean {
+    if (!this.algorithm || !this.function) return true;
+    return this.algorithm.filter.length > 0 && this.shouldShowDatabaseStep;
+  }
+
+  get shouldShowParameterStep(): boolean {
+    return !this.function || (!!this.function && !!this.function.arguments && this.function.arguments.length > 0);
   }
 
   async handleSubmit(): Promise<void> {
