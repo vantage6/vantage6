@@ -1,17 +1,18 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { Algorithm, ArgumentType, BaseAlgorithm, AlgorithmFunction, Select } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, takeUntil } from 'rxjs';
 import { BaseNode } from 'src/app/models/api/node.model';
-import { CreateTask, CreateTaskInput, TaskDatabase } from 'src/app/models/api/task.models';
+import { ColumnRetrievalInput, CreateTask, CreateTaskInput, TaskDatabase } from 'src/app/models/api/task.models';
 import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
 import { Router } from '@angular/router';
 import { PreprocessingStepComponent } from './steps/preprocessing-step/preprocessing-step.component';
 import { addParameterFormControlsForFunction } from '../task.helper';
 import { DatabaseStepComponent } from './steps/database-step/database-step.component';
+import { FilterStepComponent } from './steps/filter-step/filter-step.component';
 
 @Component({
   selector: 'app-task-create',
@@ -247,7 +248,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
       //Get all nodes for chosen collaboration
       const nodes = await this.getNodes();
       //Filter node for chosen organization
-      this.node = nodes.find((_) => _.organization.id === Number.parseInt(id)) || null;
+      this.node = nodes?.find((_) => _.organization.id === Number.parseInt(id)) || null;
     }
   }
 
@@ -263,6 +264,24 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     return await this.chosenCollaborationService.getNodes();
   }
 
+  private getSelectedDatabases(): TaskDatabase[] {
+    const taskDatabases: TaskDatabase[] = [];
+    this.function?.databases.forEach((functionDatabase) => {
+      const selected_database = this.databaseForm.get(`${functionDatabase.name}_name`)?.value || '';
+      const taskDatabase: TaskDatabase = { label: selected_database };
+      const query = this.databaseForm.get(`${functionDatabase.name}_query`)?.value || '';
+      if (query) {
+        taskDatabase.query = query;
+      }
+      const sheet = this.databaseForm.get(`${functionDatabase.name}_sheet`)?.value || '';
+      if (sheet) {
+        taskDatabase.sheet = sheet;
+      }
+      taskDatabases.push(taskDatabase);
+    });
+    return taskDatabases;
+  }
+
   private clearFunctionStep(): void {
     this.functionForm.controls.organizationIDs.reset();
     Object.keys(this.databaseForm.controls).forEach((control) => {
@@ -274,14 +293,18 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     this.databaseStepComponent?.reset();
   }
 
+  private clearPreprocessingStep(): void {
+    this.preprocessingStep?.clear();
+    this.columns = [];
+  }
+
+  private clearFilterStep(): void {
+    this.filterStep?.clear();
+  }
+
   private clearParameterStep(): void {
     Object.keys(this.parameterForm.controls).forEach((control) => {
       this.parameterForm.removeControl(control);
     });
-  }
-
-  private clearPreprocessingStep(): void {
-    this.preprocessingStep?.clear();
-    this.columns = [];
   }
 }

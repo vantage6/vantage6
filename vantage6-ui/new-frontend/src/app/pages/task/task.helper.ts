@@ -1,8 +1,8 @@
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
-import { ArgumentType, Function } from 'src/app/models/api/algorithm.model';
+import { AlgorithmFunction, ArgumentType } from 'src/app/models/api/algorithm.model';
 
-export const addParameterFormControlsForFunction = (func: Function, form: FormGroup) => {
+export const addParameterFormControlsForFunction = (func: AlgorithmFunction, form: FormGroup) => {
   func?.arguments.forEach((argument) => {
     if (argument.type === ArgumentType.String) {
       form.addControl(argument.name, new FormControl(null, Validators.required));

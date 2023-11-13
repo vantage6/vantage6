@@ -1,8 +1,8 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, HostBinding, OnInit, ViewChild } from '@angular/core';
 import { mockDataAllTemplateTask } from './mock';
 import { TemplateTask } from 'src/app/models/api/templateTask.models';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
-import { Algorithm, ArgumentType, Function } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmFunction, ArgumentType } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { addParameterFormControlsForFunction } from '../../task/task.helper';
@@ -17,10 +17,10 @@ import { Router } from '@angular/router';
 @Component({
   selector: 'app-template-task-create',
   templateUrl: './template-task-create.component.html',
-  styleUrls: ['./template-task-create.component.scss'],
-  host: { '[class.card-container]': 'true' }
+  styleUrls: ['./template-task-create.component.scss']
 })
 export class TemplateTaskCreateComponent implements OnInit {
+  @HostBinding('class') class = 'card-container';
   @ViewChild(DatabaseStepComponent)
   databaseStepComponent?: DatabaseStepComponent;
 
@@ -30,7 +30,7 @@ export class TemplateTaskCreateComponent implements OnInit {
   isLoading: boolean = true;
   templateTask: TemplateTask | null = null;
   algorithm: Algorithm | null = null;
-  function: Function | null = null;
+  function: AlgorithmFunction | null = null;
   node: BaseNode | null = null;
 
   packageForm = this.fb.nonNullable.group({});

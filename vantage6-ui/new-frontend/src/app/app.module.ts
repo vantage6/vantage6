@@ -120,7 +120,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     FilterStepComponent,
     NumberOnlyDirective,
     BreadcrumbsComponent,
-    TemplateTaskCreateComponent
+    TemplateTaskCreateComponent,
     DatabaseStepComponent
   ],
   imports: [
