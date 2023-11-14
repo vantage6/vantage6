@@ -155,7 +155,8 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
 
 
 def _get_common_server_config(
-    instance_type: InstanceType, instance_name: str
+    instance_type: InstanceType, instance_name: str,
+    include_api_path: bool = True
 ) -> dict:
     """
     Part of the questionaire that is common to all server types (vantage6
@@ -167,6 +168,8 @@ def _get_common_server_config(
         Type of server instance.
     instance_name : str
         Name of the server instance.
+    include_api_path : bool
+        Whether to include the api path in the questionaire.
 
     Returns
     -------
@@ -195,14 +198,21 @@ def _get_common_server_config(
                 if instance_type == InstanceType.SERVER
                 else AlgoStoreGlobals.PORT.value
             )
-        },
-        # TODO v5+ remove api_path? It complicates configuration
-        {
-            "type": "text",
-            "name": "api_path",
-            "message": "Path of the api:",
-            "default": "/api"
-        },
+        }
+    ])
+
+    # TODO v5+ remove api_path. It complicates configuration
+    if include_api_path:
+        config.update(q.prompt([
+            {
+                "type": "text",
+                "name": "api_path",
+                "message": "Path of the api:",
+                "default": "/api"
+            }
+        ]))
+
+    config.update(q.prompt([
         {
             "type": "text",
             "name": "uri",
@@ -215,7 +225,7 @@ def _get_common_server_config(
             "message": "Allowed to drop all tables: ",
             "choices": ["True", "False"]
         }
-    ])
+    ]))
 
     res = q.select("Which level of logging would you like?",
                    choices=["DEBUG", "INFO", "WARNING", "ERROR",
@@ -257,7 +267,8 @@ def server_configuration_questionaire(instance_name: str) -> dict:
         Dictionary with the new server configuration
     """
 
-    config = _get_common_server_config(InstanceType.SERVER, instance_name)
+    config = _get_common_server_config(InstanceType.SERVER, instance_name,
+                                       include_api_path=True)
 
     constant_jwt_secret = q.confirm("Do you want a constant JWT secret?").ask()
     if constant_jwt_secret:
@@ -340,7 +351,7 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
         Dictionary with the new server configuration
     """
     config = _get_common_server_config(
-        InstanceType.ALGORITHM_STORE, instance_name
+        InstanceType.ALGORITHM_STORE, instance_name, include_api_path=False
     )
     return config
 

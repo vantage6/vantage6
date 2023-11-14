@@ -215,7 +215,7 @@ class AlgorithmStores(AlgorithmStoreBase):
           Container|Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Edit|❌|❌|Add algorithm store to a
-          collaboration|\n\n
+          collaboration|\n
           |Collaboration|Collaboration|Edit|❌|❌|Add algorithm store to a
           collaboration that your organization is a member of|\n\n
 
@@ -484,7 +484,7 @@ class AlgorithmStore(AlgorithmStoreBase):
           Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Edit|❌|❌|Remove any algorithm store from any
-          collaboration|\n\n
+          collaboration|\n
           |Collaboration|Collaboration|Edit|❌|❌|Remove any algorithm store
           from a collaboration that your organization is a member of|\n\n
 

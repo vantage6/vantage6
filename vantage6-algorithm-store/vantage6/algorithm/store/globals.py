@@ -10,6 +10,8 @@ from vantage6.common.globals import APPNAME
 
 SERVER_MODULE_NAME = APPNAME + "-algorithm-store"
 
+# URL extension for the API endpoints
+API_PATH = '/api'
 
 # Which resources should be initialized. These names correspond to the
 # file-names in the resource directory

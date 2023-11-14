@@ -35,6 +35,7 @@ from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.algorithm.store._version import __version__
+from vantage6.algorithm.store.globals import API_PATH
 # TODO the following are simply copies of the same files in the server - refactor
 from vantage6.algorithm.store.model.base import (
     Base, DatabaseSessionManager, Database
@@ -247,7 +248,7 @@ class AlgorithmStoreApp:
             module = importlib.import_module(
                 'vantage6.algorithm.store.resource.' + res
             )
-            module.setup(self.api, self.ctx.config['api_path'], services)
+            module.setup(self.api, API_PATH, services)
 
     def start(self) -> None:
         """

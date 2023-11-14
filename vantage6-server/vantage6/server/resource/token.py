@@ -5,6 +5,7 @@ Resources below '/<api_base>/token'
 import logging
 import pyotp
 import json
+import jwt
 
 from flask import request, g
 from flask_jwt_extended import (
@@ -32,6 +33,7 @@ from vantage6.server.resource.common.input_schema import (
     TokenNodeInputSchema,
     TokenUserInputSchema
 )
+from vantage6.server.resource import with_user
 
 module_name = __name__.split('.')[-1]
 log = logging.getLogger(module_name)
@@ -81,6 +83,14 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         RefreshToken,
         path+'/refresh',
         endpoint='refresh_token',
+        methods=('POST',),
+        resource_class_kwargs=services
+    )
+
+    api.add_resource(
+        ValidateToken,
+        path+'/user/validate',
+        endpoint='validate_user_token',
         methods=('POST',),
         resource_class_kwargs=services
     )
@@ -368,6 +378,34 @@ class RefreshToken(ServicesResources):
         return _get_token_dict(user_or_node, self.api), HTTPStatus.OK
 
 
+class ValidateToken(ServicesResources):
+    """ Resource for api/token/user/validate """
+
+    @with_user
+    def post(self):
+        """Validate a user token
+        ---
+        description: >-
+          Validate that a user token is valid. This is used by external
+          services such as an algorithm store to validate that a user token is
+          valid.
+
+        responses:
+          200:
+            description: Token is valid
+          401:
+            description: Token is invalid
+
+        tags: ["Authentication"]
+        """
+        # Note: if the token is invalid, the with_user decorator will return
+        # an error response. So if we get here, the token is valid.
+        return {
+            "msg": "Token is valid",
+            "user_id": g.user.id
+        }, HTTPStatus.OK
+
+
 def _get_token_dict(user_or_node: db.Authenticatable, api: Api) -> dict:
     """
     Create a dictionary with the tokens and urls for the user or node.
@@ -391,3 +429,5 @@ def _get_token_dict(user_or_node: db.Authenticatable, api: Api) -> dict:
         token_dict['node_url'] = api.url_for(server.resource.node.Node,
                                              id=user_or_node.id)
     return token_dict
+
+
