@@ -1,6 +1,18 @@
 Release notes
 =============
 
+4.1.2
+-----
+
+*14 November 2023*
+
+- **Security**
+
+ - Improved check which algorithms are allowed - no longer trusting an algorithm
+   with a `parent_id` by default (
+   `advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-vc3v-ppc7-v486>`_,
+   `commit <https://github.com/vantage6/vantage6/commit/92159580f11a17cd2e06f73f636088bbcbfe9cbc>`_).
+
 4.1.1
 -----
 
@@ -79,13 +91,7 @@ Release notes
 4.0.1
 -----
 
-*5 October 2023*
-
-- **Security**
-
- - Updating dependencies ``cryptography``, ``gevent``, and ``urllib3`` to fix
-   vulnerabilities (`PR#889 <https://github.com/vantage6/vantage6/pull/889>`_)
-
+6
 - **Bugfix**
 
  - Fix node connection issues if server without constant JWT secret key is
