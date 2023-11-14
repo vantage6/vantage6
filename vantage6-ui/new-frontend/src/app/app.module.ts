@@ -72,6 +72,7 @@ import { NumberOnlyDirective } from './directives/numberOnly.directive';
 import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
 import { RoleListComponent } from './pages/role/list/role-list.component';
 import { RoleReadComponent } from './pages/role/read/role-read.component';
+import { RolesTableComponent } from './components/roles-table/roles-table.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -121,7 +122,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     NumberOnlyDirective,
     BreadcrumbsComponent,
     RoleListComponent,
-    RoleReadComponent
+    RoleReadComponent,
+    RolesTableComponent
   ],
   imports: [
     BrowserModule,

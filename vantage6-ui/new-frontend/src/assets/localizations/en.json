@@ -162,6 +162,35 @@
   "role-list": {
     "title": "roles"
   },
+  "role-read": {
+    "title": "view"
+  },
+  "rule": {
+    "resource": {
+      "label": "Resource",
+      "organization": "Organization",
+      "collaboration": "Collaboration",
+      "task": "Task",
+      "user": "User"
+    },
+
+    "scope": {
+      "label": "Scope",
+      "own": "Own",
+      "organization": "Organization",
+      "collaboration": "Collaboration",
+      "global": "Global"
+    },
+
+    "operation": {
+      "create": "Create",
+      "edit": "Edit",
+      "delete": "Delete",
+      "view": "View",
+      "send": "Send",
+      "receive": "Receive"
+    }
+  },
   "user": {
     "username": "Username",
     "email": "Email",

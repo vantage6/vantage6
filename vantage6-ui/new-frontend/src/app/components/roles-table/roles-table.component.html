@@ -1,0 +1,18 @@
+<table>
+  <thead>
+    <tr>
+      <th>{{ "rule.resource.label" | translate }}</th>
+      <th>{{ "rule.scope.label" | translate }}</th>
+      <th *ngFor="let operation of allOperations">{{ "rule.operation." + operation | translate }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <ng-container *ngFor="let resourcePermission of resourcePermissions">
+      <tr *ngFor="let scope of resourcePermission.scopes; index as i">
+        <td *ngIf="i === 0" [rowSpan]="allScopes.length">{{ "rule.resource." + resourcePermission.resource | translate }}</td>
+        <td>{{ "rule.scope." + scope.scope | translate }}</td>
+        <td *ngFor="let operationPermission of scope.operations">{{ operationPermission.operation }}</td>
+      </tr>
+    </ng-container>
+  </tbody>
+</table>
