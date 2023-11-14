@@ -60,7 +60,6 @@ export class ChangePasswordComponent implements OnDestroy {
         .subscribe(() => {
           this.goToPreviousPage();
         });
-      // TODO handle errors
     }
   }
 

@@ -64,7 +64,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   }
 
   async initData(): Promise<void> {
-    this.task = await this.taskService.getTask(this.id, [TaskLazyProperties.InitOrg, TaskLazyProperties.InitUser]);
+    this.task = await this.taskService.getTask(Number.parseInt(this.id), [TaskLazyProperties.InitOrg, TaskLazyProperties.InitUser]);
     this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image);
     this.function = this.algorithm?.functions.find((_) => _.name === this.task?.input?.method) || null;
     this.selectedOutput = this.function?.output?.[0] || null;

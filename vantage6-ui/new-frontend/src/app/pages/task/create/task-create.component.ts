@@ -13,6 +13,7 @@ import { PreprocessingStepComponent } from './steps/preprocessing-step/preproces
 import { addParameterFormControlsForFunction, getTaskDatabaseFromForm } from '../task.helper';
 import { DatabaseStepComponent } from './steps/database-step/database-step.component';
 import { FilterStepComponent } from './steps/filter-step/filter-step.component';
+import { NodeService } from 'src/app/services/node.service';
 
 @Component({
   selector: 'app-task-create',
@@ -60,6 +61,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     private router: Router,
     private algorithmService: AlgorithmService,
     private taskService: TaskService,
+    private nodeService: NodeService,
     public chosenCollaborationService: ChosenCollaborationService
   ) {}
 
@@ -261,7 +263,9 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   }
 
   private async getNodes(): Promise<BaseNode[] | null> {
-    return await this.chosenCollaborationService.getNodes();
+    return await this.nodeService.getNodes({
+      collaboration_id: this.chosenCollaborationService.collaboration$.value?.id.toString() || ''
+    });
   }
 
   private clearFunctionStep(): void {

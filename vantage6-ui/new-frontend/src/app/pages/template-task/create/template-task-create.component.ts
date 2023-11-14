@@ -13,6 +13,8 @@ import { routePaths } from 'src/app/routes';
 import { TaskService } from 'src/app/services/task.service';
 import { Router } from '@angular/router';
 import { MatSelectChange } from '@angular/material/select';
+import { SnackbarService } from 'src/app/services/snackbar.service';
+import { NodeService } from 'src/app/services/node.service';
 
 @Component({
   selector: 'app-template-task-create',
@@ -45,6 +47,8 @@ export class TemplateTaskCreateComponent implements OnInit {
     private router: Router,
     private algorithmService: AlgorithmService,
     private taskService: TaskService,
+    private nodeService: NodeService,
+    private snackBarService: SnackbarService,
     public chosenCollaborationService: ChosenCollaborationService
   ) {}
 
@@ -101,8 +105,7 @@ export class TemplateTaskCreateComponent implements OnInit {
     if (baseAlgorithm) {
       this.algorithm = await this.algorithmService.getAlgorithm(baseAlgorithm?.id.toString() || '');
     } else {
-      //TODO: Add error handling with toast
-      throw new Error('Algorithm not found');
+      this.snackBarService.showMessage('Algorithm not found');
     }
 
     if (this.algorithm) {
@@ -118,8 +121,7 @@ export class TemplateTaskCreateComponent implements OnInit {
         addParameterFormControlsForFunction(this.function, this.parameterForm);
       }
     } else {
-      //TODO: Add error handling with toast
-      throw new Error('Function not found');
+      this.snackBarService.showMessage('Function not found');
     }
 
     this.templateTask.variable?.forEach((variable) => {
@@ -213,7 +215,9 @@ export class TemplateTaskCreateComponent implements OnInit {
     //Get node
     if (id) {
       //Get all nodes for chosen collaboration
-      const nodes = await this.chosenCollaborationService.getNodes();
+      const nodes = await this.nodeService.getNodes({
+        collaboration_id: this.chosenCollaborationService.collaboration$.value?.id.toString() || ''
+      });
       //Filter node for chosen organization
       this.node = nodes.find((_) => _.organization.id === Number.parseInt(id)) || null;
     }

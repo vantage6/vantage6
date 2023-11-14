@@ -27,8 +27,7 @@ export class TaskService {
     return result;
   }
 
-  // TODO id should be a number
-  async getTask(id: string, lazyProperties: TaskLazyProperties[] = []): Promise<Task> {
+  async getTask(id: number, lazyProperties: TaskLazyProperties[] = []): Promise<Task> {
     const result = await this.apiService.getForApi<BaseTask>(`/task/${id}`, { include: 'results,runs' });
 
     const task: Task = { ...result, init_org: undefined, init_user: undefined };
@@ -73,11 +72,11 @@ export class TaskService {
   }
 
   async waitForResults(id: number): Promise<Task> {
-    let task = await this.getTask(id.toString());
+    let task = await this.getTask(id);
     while (!isTaskFinished(task)) {
       // poll at an interval until task is finished
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      task = await this.getTask(id.toString());
+      task = await this.getTask(id);
     }
     return task;
   }
