@@ -1,11 +1,12 @@
 import os
 import sys
-import appdirs
 import logging
 import logging.handlers
-
+import enum
 from pathlib import Path
 from typing import Tuple
+
+import appdirs
 
 from vantage6.common import (
     Singleton, error, Fore, Style, get_config_path, logger_name
@@ -221,7 +222,9 @@ class AppContext(metaclass=Singleton):
         """
         d = appdirs.AppDirs(APPNAME, "")
 
-        instance_type = str(instance_type)
+        if isinstance(instance_type, enum.Enum):
+            instance_type = instance_type.value
+
         if system_folders:
             return {
                 "log": Path(d.site_data_dir) / instance_type,

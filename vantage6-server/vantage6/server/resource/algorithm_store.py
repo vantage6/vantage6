@@ -385,7 +385,7 @@ class AlgorithmStore(AlgorithmStoreBase):
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Collaboration|Global|Edit|❌|❌|Update any algorithm store|\n\n
+          |Collaboration|Global|Edit|❌|❌|Update any algorithm store|\n
           |Collaboration|Collaboration|Edit|❌|❌|Update algorithm stores
           within a collaboration that your organization is a member of|\n\n
 

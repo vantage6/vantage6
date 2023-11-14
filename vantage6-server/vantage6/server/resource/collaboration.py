@@ -404,7 +404,7 @@ class Collaboration(CollaborationBase):
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Collaboration|Global|Edit|❌|❌|Update a collaboration|\n\n
+          |Collaboration|Global|Edit|❌|❌|Update a collaboration|\n
           |Collaboration|Collaboration|Edit|❌|❌|Update a collaboration that
           you are already a member of|\n\n
 
@@ -503,7 +503,7 @@ class Collaboration(CollaborationBase):
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Collaboration|Global|Delete|❌|❌|Remove collaboration|\n\n
+          |Collaboration|Global|Delete|❌|❌|Remove collaboration|\n
           |Collaboration|Collaboration|Delete|❌|❌|Remove collaborations
           that you are part of yourself|\n\n
 
@@ -589,7 +589,7 @@ class CollaborationOrganization(ServicesResources):
           Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Edit|❌|❌|Add organization to a
-          collaboration|\n\n
+          collaboration|\n
           |Collaboration|Collaboration|Edit|❌|❌|Add organization to a
           collaboration that your organization is already a member of|\n\n
 
@@ -667,7 +667,7 @@ class CollaborationOrganization(ServicesResources):
           Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Edit|❌|❌|Remove an organization from an
-          existing collaboration|\n\n
+          existing collaboration|\n
           |Collaboration|Collaboration|Edit|❌|❌|Remove an organization from
           an existing collaboration that your organization is a member of|\n\n
 
