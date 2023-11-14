@@ -14,6 +14,7 @@ import { Pagination } from '../models/api/pagination.model';
 import { getLazyProperties } from '../helpers/api.helper';
 import { mockDataCrossTabTemplateTask, mockDataQualityTemplateTask } from '../pages/template-task/create/mock';
 import { TemplateTask } from '../models/api/templateTask.models';
+import { isTaskFinished } from '../helpers/task.helper';
 
 @Injectable({
   providedIn: 'root'
@@ -71,17 +72,13 @@ export class TaskService {
     return await this.apiService.postForApi<ColumnRetrievalResult>(`/column`, columnRetrieve);
   }
 
-  async wait_for_results(id: number): Promise<Task> {
+  async waitForResults(id: number): Promise<Task> {
     let task = await this.getTask(id.toString());
-    while (!this.hasFinished(task)) {
-      // poll every second until task is finished
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+    while (!isTaskFinished(task)) {
+      // poll at an interval until task is finished
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       task = await this.getTask(id.toString());
     }
     return task;
-  }
-
-  private hasFinished(task: Task): boolean {
-    return ![TaskStatus.Pending, TaskStatus.Initializing, TaskStatus.Active].includes(task.status);
   }
 }

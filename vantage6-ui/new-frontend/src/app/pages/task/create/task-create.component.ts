@@ -181,12 +181,11 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     // TODO handle errors (both for retrieving columns and for retrieving the task)
     // TODO enable user to exit requesting column names if it takes too long
     const columnsOrTask = await this.taskService.getColumnNames(columnRetrieveData);
-    console.log(columnsOrTask);
     if (columnsOrTask.columns) {
       this.columns = columnsOrTask.columns;
     } else {
       // a task has been started to retrieve the columns
-      const task = await this.taskService.wait_for_results(columnsOrTask.id);
+      const task = await this.taskService.waitForResults(columnsOrTask.id);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const decodedResult: any = JSON.parse(atob(task.results?.[0].result || ''));
       this.columns = decodedResult;

@@ -1,5 +1,5 @@
 import { TranslateService } from '@ngx-translate/core';
-import { TaskStatus } from '../models/api/task.models';
+import { Task, TaskStatus } from '../models/api/task.models';
 
 export const getChipTypeForStatus = (status: TaskStatus): 'default' | 'active' | 'success' | 'error' => {
   switch (status) {
@@ -43,4 +43,8 @@ export const getStatusInfoTypeForStatus = (status: TaskStatus): 'pending' | 'act
     default:
       return 'pending';
   }
+};
+
+export const isTaskFinished = (task: Task): boolean => {
+  return ![TaskStatus.Pending, TaskStatus.Initializing, TaskStatus.Active].includes(task.status);
 };
