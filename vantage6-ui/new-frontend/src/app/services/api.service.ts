@@ -1,15 +1,19 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, first } from 'rxjs';
 import { ACCESS_TOKEN_KEY } from '../models/constants/sessionStorage';
 import { environment } from 'src/environments/environment.development';
 import { Pagination } from '../models/api/pagination.model';
+import { SnackbarService } from './snackbar.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private snackBarService: SnackbarService
+  ) {}
 
   async getForApi<T = null>(path: string, params: object | null = null): Promise<T> {
     return await this.handleResult(
@@ -81,8 +85,7 @@ export class ApiService {
           resolve(response as T);
         },
         (error) => {
-          //TODO: handle error
-          console.log(error.error?.msg ? error.error?.msg : 'An error occurred');
+          this.snackBarService.showMessage(error.error?.msg ? error.error?.msg : 'An error occurred');
           reject(error);
         }
       );
@@ -102,8 +105,12 @@ export class ApiService {
           resolve(body);
         },
         (error) => {
-          //TODO: handle error
-          console.log(error.msg ? error.msg : 'An error occurred');
+          if (error instanceof HttpErrorResponse) {
+            this.snackBarService.showMessage(error.message || 'An error occurred');
+          } else {
+            this.snackBarService.showMessage(error.error?.msg ? error.error?.msg : 'An error occurred');
+          }
+
           reject(error);
         }
       );
