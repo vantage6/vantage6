@@ -3,9 +3,7 @@ import { CHOSEN_COLLABORATION } from '../models/constants/sessionStorage';
 import { BehaviorSubject } from 'rxjs';
 import { CollaborationService } from './collaboration.service';
 import { Collaboration, CollaborationLazyProperties } from '../models/api/collaboration.model';
-import { BaseNode } from '../models/api/node.model';
 import { ApiService } from './api.service';
-import { Pagination } from '../models/api/pagination.model';
 
 @Injectable({
   providedIn: 'root'

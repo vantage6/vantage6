@@ -7,8 +7,7 @@ import {
   CreateTask,
   GetTaskParameters,
   Task,
-  TaskLazyProperties,
-  TaskStatus
+  TaskLazyProperties
 } from '../models/api/task.models';
 import { Pagination } from '../models/api/pagination.model';
 import { getLazyProperties } from '../helpers/api.helper';
