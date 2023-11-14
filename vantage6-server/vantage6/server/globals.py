@@ -31,9 +31,11 @@ MIN_REFRESH_TOKEN_EXPIRY_DELTA = 1
 
 # Which resources should be initialized. These names correspond to the
 # file-names in the resource directory
-RESOURCES = ['node', 'collaboration', 'organization', 'task', 'run',
-             'token', 'user', 'version', 'recover', 'role',
-             'rule', 'health', 'vpn', 'port', 'event', 'ui.column']
+RESOURCES = [
+    'node', 'collaboration', 'organization', 'task', 'run', 'token', 'user',
+    'version', 'recover', 'role', 'rule', 'health', 'vpn', 'port', 'event',
+    'ui.column', 'algorithm_store'
+]
 
 # Super user information. This user is only created if it is not in the
 # database yet at startup time.

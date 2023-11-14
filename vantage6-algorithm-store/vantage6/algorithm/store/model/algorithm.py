@@ -1,9 +1,8 @@
 from __future__ import annotations
-from sqlalchemy import Column, String, Enum
+from sqlalchemy import Column, String
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base
-from vantage6.algorithm.store.model.common.enums import Partitioning
 
 
 class Algorithm(Base):
@@ -34,7 +33,7 @@ class Algorithm(Base):
     # status = Column(String)
     # code_url = Column(String)
     # documentation_url = Column(String)
-    partitioning = Column(Enum(Partitioning))
+    partitioning = Column(String)
     vantage6_version = Column(String)
 
     # relationships

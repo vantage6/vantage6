@@ -322,6 +322,9 @@ class CollaborationSchema(HATEOASModelSchema):
     tasks = fields.Function(lambda obj: create_one_to_many_link(
         obj, link_to='task', link_from='collaboration_id'
     ))
+    algorithm_stores = fields.Function(lambda obj: create_one_to_many_link(
+        obj, link_to='algorithm_store', link_from='collaboration_id'
+    ))
 
 
 class NodeSchema(HATEOASModelSchema):
@@ -346,6 +349,15 @@ class NodeSchemaSimple(HATEOASModelSchema):
     class Meta:
         model = db.Node
         exclude = ('collaboration', 'api_key', 'type',)
+
+
+class AlgorithmStoreSchema(HATEOASModelSchema):
+    class Meta:
+        model = db.AlgorithmStore
+
+    collaborations = fields.Function(lambda obj: create_one_to_many_link(
+        obj, link_to='collaboration', link_from='algorithm_store_id'
+    ))
 
 
 class UserSchema(HATEOASModelSchema):

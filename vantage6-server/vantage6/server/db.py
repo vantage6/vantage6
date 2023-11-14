@@ -24,6 +24,7 @@ from vantage6.server.model import (
     AlgorithmPort,
     NodeConfig,
     TaskDatabase,
+    AlgorithmStore,
 )
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING

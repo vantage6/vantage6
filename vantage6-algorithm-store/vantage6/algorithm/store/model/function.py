@@ -1,9 +1,8 @@
 from __future__ import annotations
-from sqlalchemy import Column, String, Enum, ForeignKey
+from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base
-from vantage6.algorithm.store.model.common.enums import FunctionType
 
 
 class Function(Base):
@@ -34,7 +33,7 @@ class Function(Base):
     # fields
     name = Column(String)
     description = Column(String)
-    type = Column(Enum(FunctionType))
+    type = Column(String)
     algorithm_id = Column(String, ForeignKey('algorithm.id'))
 
     # relationships
