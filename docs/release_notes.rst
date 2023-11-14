@@ -91,7 +91,13 @@ Release notes
 4.0.1
 -----
 
-6
+*5 October 2023*
+
+- **Security**
+
+ - Updating dependencies ``cryptography``, ``gevent``, and ``urllib3`` to fix
+   vulnerabilities (`PR#889 <https://github.com/vantage6/vantage6/pull/889>`_)
+
 - **Bugfix**
 
  - Fix node connection issues if server without constant JWT secret key is
