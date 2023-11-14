@@ -43,7 +43,7 @@ export class ChangePasswordComponent implements OnDestroy {
 
   async handleSubmit(): Promise<void> {
     if (this.form.valid) {
-      this.authService.changePassword(this.form.controls.oldPassword.value, this.form.controls.newPassword.value);
+      await this.authService.changePassword(this.form.controls.oldPassword.value, this.form.controls.newPassword.value);
 
       const dialogRef = this.dialog.open(MessageDialogComponent, {
         data: {
