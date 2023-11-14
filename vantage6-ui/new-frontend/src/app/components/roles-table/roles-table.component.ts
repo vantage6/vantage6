@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { SelectionModel } from '@angular/cdk/collections';
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { isEqualString } from 'src/app/helpers/task.helper';
 import { OperationType, ResourceType, Rule, ScopeType } from 'src/app/models/api/rule.model';
 
 class ResourcePermission {
@@ -18,16 +20,16 @@ class ScopePermission {
 }
 
 class OperationPermission {
-  public state: CellState = CellState.Preselect;
   constructor(
     public resource: ResourceType,
     public scope: ScopeType,
-    public operation: OperationType
+    public operation: OperationType,
+    public state: CellState
   ) {}
 }
 
 enum CellState {
-  Preselect,
+  Preselected,
   NotSelected,
   Selected
 }
@@ -38,8 +40,8 @@ enum CellState {
   styleUrls: ['./roles-table.component.scss']
 })
 export class RolesTableComponent implements OnInit, OnChanges {
+  @Input() preselected: Rule[] = [];
   @Input() rules: Rule[] = [];
-  @Input() editable: boolean = false;
 
   @Output() edited: EventEmitter<Rule[]> = new EventEmitter();
 
@@ -55,27 +57,50 @@ export class RolesTableComponent implements OnInit, OnChanges {
     OperationType.RECEIVE
   ];
 
+  CellState = CellState;
+
   public resourcePermissions: ResourcePermission[] = [];
 
+  public selection: SelectionModel<OperationPermission> = new SelectionModel<OperationPermission>(true, []);
+
   ngOnInit(): void {
-    this.resourcePermissions = this.updateTable(this.rules);
+    this.resourcePermissions = this.updateTable(this.preselected, this.rules);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['rules']) {
-      this.resourcePermissions = this.updateTable(changes['rules'].currentValue);
+    if (changes['preselected'] || changes['rules']) {
+      this.resourcePermissions = this.updateTable(this.preselected, this.rules);
     }
   }
 
-  private updateTable(rules: Rule[]) {
+  private updateTable(preselected: Rule[], rules: Rule[]) {
     return this.allResources.map((resource) => {
       const scopePermissions = this.allScopes.map((scope) => {
-        const operationPermissions = this.allOperations.map((operation) => new OperationPermission(resource, scope, operation));
+        const operationPermissions = this.allOperations.map((operation) => {
+          const cellState = this.getCellState(preselected, rules, resource, scope, operation);
+          const operationPermission = new OperationPermission(resource, scope, operation, cellState);
+          if (cellState === CellState.Selected) this.selection.select(operationPermission);
+          return operationPermission;
+        });
         return new ScopePermission(scope, operationPermissions);
       });
 
       const resourcePermission = new ResourcePermission(resource, scopePermissions);
       return resourcePermission;
     });
+  }
+
+  private getCellState(preselected: Rule[], rules: Rule[], resource: ResourceType, scope: ScopeType, operation: OperationType): CellState {
+    if (this.containsRule(preselected, resource, scope, operation)) return CellState.Preselected;
+
+    if (this.containsRule(rules, resource, scope, operation)) return CellState.Selected;
+
+    return CellState.NotSelected;
+  }
+
+  private containsRule(rules: Rule[], resource: ResourceType, scope: ScopeType, operation: OperationType): boolean {
+    return !!rules.find(
+      (rule) => isEqualString(rule.name, resource) && isEqualString(rule.scope, scope) && isEqualString(rule.operation, operation)
+    );
   }
 }

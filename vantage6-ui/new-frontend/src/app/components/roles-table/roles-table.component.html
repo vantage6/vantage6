@@ -11,7 +11,14 @@
       <tr *ngFor="let scope of resourcePermission.scopes; index as i">
         <td *ngIf="i === 0" [rowSpan]="allScopes.length">{{ "rule.resource." + resourcePermission.resource | translate }}</td>
         <td>{{ "rule.scope." + scope.scope | translate }}</td>
-        <td *ngFor="let operationPermission of scope.operations">{{ operationPermission.operation }}</td>
+        <td *ngFor="let operationPermission of scope.operations">
+          <mat-checkbox
+            *ngIf="operationPermission.state !== CellState.Preselected"
+            (change)="$event ? selection.toggle(operationPermission) : null"
+            [checked]="selection.isSelected(operationPermission)"
+          ></mat-checkbox>
+          <mat-icon *ngIf="operationPermission.state === CellState.Preselected">check</mat-icon>
+        </td>
       </tr>
     </ng-container>
   </tbody>

@@ -2,7 +2,7 @@
   <app-page-header [title]="role.name"> </app-page-header>
   <mat-card>
     <mat-card-content>
-      <app-roles-table></app-roles-table>
+      <app-roles-table [rules]="role.rules"></app-roles-table>
     </mat-card-content>
   </mat-card>
 </ng-container>
