@@ -6,8 +6,7 @@ import { UserService } from 'src/app/services/user.service';
 
 @Component({
   selector: 'app-user-create',
-  templateUrl: './user-create.component.html',
-  styleUrls: ['./user-create.component.scss']
+  templateUrl: './user-create.component.html'
 })
 export class UserCreateComponent {
   @HostBinding('class') class = 'card-container';

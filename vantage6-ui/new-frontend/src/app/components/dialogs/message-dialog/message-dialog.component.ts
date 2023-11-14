@@ -10,8 +10,7 @@ export interface DialogData {
 
 @Component({
   selector: 'app-message-dialog',
-  templateUrl: './message-dialog.component.html',
-  styleUrls: ['./message-dialog.component.scss']
+  templateUrl: './message-dialog.component.html'
 })
 export class MessageDialogComponent {
   constructor(@Inject(MAT_DIALOG_DATA) public data: DialogData) {}

@@ -6,8 +6,7 @@ import { OrganizationService } from 'src/app/services/organization.service';
 
 @Component({
   selector: 'app-organization-edit',
-  templateUrl: './organization-edit.component.html',
-  styleUrls: ['./organization-edit.component.scss']
+  templateUrl: './organization-edit.component.html'
 })
 export class OrganizationEditComponent implements OnInit {
   @HostBinding('class') class = 'card-container';

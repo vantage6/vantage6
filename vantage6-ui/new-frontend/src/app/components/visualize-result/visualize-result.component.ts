@@ -9,8 +9,7 @@ interface VisualizeResult {
 
 @Component({
   selector: 'app-visualize-result',
-  templateUrl: './visualize-result.component.html',
-  styleUrls: ['./visualize-result.component.scss']
+  templateUrl: './visualize-result.component.html'
 })
 export class VisualizeResultComponent implements OnChanges {
   outputVisualizeType = OutputVisualizeType;

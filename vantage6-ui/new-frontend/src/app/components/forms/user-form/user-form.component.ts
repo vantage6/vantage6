@@ -10,8 +10,7 @@ import { createCompareValidator } from 'src/app/validators/compare.validator';
 
 @Component({
   selector: 'app-user-form',
-  templateUrl: './user-form.component.html',
-  styleUrls: ['./user-form.component.scss']
+  templateUrl: './user-form.component.html'
 })
 export class UserFormComponent implements OnInit, OnDestroy {
   @Input() user?: User;

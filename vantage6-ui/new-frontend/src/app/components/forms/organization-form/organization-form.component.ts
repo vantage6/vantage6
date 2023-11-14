@@ -5,8 +5,7 @@ import { Organization, OrganizationCreate } from 'src/app/models/api/organizatio
 
 @Component({
   selector: 'app-organization-form',
-  templateUrl: './organization-form.component.html',
-  styleUrls: ['./organization-form.component.scss']
+  templateUrl: './organization-form.component.html'
 })
 export class OrganizationFormComponent implements OnInit {
   @Input() organization?: Organization;

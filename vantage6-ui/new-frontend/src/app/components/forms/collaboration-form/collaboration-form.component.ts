@@ -7,8 +7,7 @@ import { OrganizationService } from 'src/app/services/organization.service';
 
 @Component({
   selector: 'app-collaboration-form',
-  templateUrl: './collaboration-form.component.html',
-  styleUrls: ['./collaboration-form.component.scss']
+  templateUrl: './collaboration-form.component.html'
 })
 export class CollaborationFormComponent implements OnInit {
   @Input() collaboration?: Collaboration;

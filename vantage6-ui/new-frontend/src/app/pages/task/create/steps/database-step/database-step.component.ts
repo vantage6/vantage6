@@ -7,8 +7,7 @@ import { BaseNode, Database, DatabaseType } from 'src/app/models/api/node.model'
 
 @Component({
   selector: 'app-database-step',
-  templateUrl: './database-step.component.html',
-  styleUrls: ['./database-step.component.scss']
+  templateUrl: './database-step.component.html'
 })
 export class DatabaseStepComponent implements OnDestroy, OnChanges {
   destroy$ = new Subject();

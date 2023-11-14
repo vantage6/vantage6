@@ -20,8 +20,7 @@ enum TableRows {
 
 @Component({
   selector: 'app-task-list',
-  templateUrl: './task-list.component.html',
-  styleUrls: ['./task-list.component.scss']
+  templateUrl: './task-list.component.html'
 })
 export class TaskListComponent implements OnInit {
   @HostBinding('class') class = 'card-container';

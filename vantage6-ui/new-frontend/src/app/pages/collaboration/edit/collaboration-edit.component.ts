@@ -7,8 +7,7 @@ import { NodeService } from 'src/app/services/node.service';
 
 @Component({
   selector: 'app-collaboration-edit',
-  templateUrl: './collaboration-edit.component.html',
-  styleUrls: ['./collaboration-edit.component.scss']
+  templateUrl: './collaboration-edit.component.html'
 })
 export class CollaborationEditComponent implements OnInit {
   @HostBinding('class') class = 'card-container';

@@ -6,8 +6,7 @@ import { UserService } from 'src/app/services/user.service';
 
 @Component({
   selector: 'app-user-edit',
-  templateUrl: './user-edit.component.html',
-  styleUrls: ['./user-edit.component.scss']
+  templateUrl: './user-edit.component.html'
 })
 export class UserEditComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
