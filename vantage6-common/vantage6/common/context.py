@@ -221,7 +221,7 @@ class AppContext(metaclass=Singleton):
         """
         d = appdirs.AppDirs(APPNAME, "")
 
-        instance_type = instance_type.value
+        instance_type = str(instance_type)
         if system_folders:
             return {
                 "log": Path(d.site_data_dir) / instance_type,

@@ -19,7 +19,7 @@ from vantage6.common.task_status import TaskStatus
 from vantage6.server.globals import PACKAGE_FOLDER
 from vantage6.server import ServerApp, session
 from vantage6.server.model import (Rule, Role, Organization, User, Node,
-                                   Collaboration, Task, Run)
+                                   Collaboration, Task, Run, AlgorithmStore)
 from vantage6.server.model.rule import Scope, Operation
 from vantage6.server import context
 from vantage6.server._version import __version__
@@ -3378,3 +3378,199 @@ class TestResources(unittest.TestCase):
                                        task=task)
         results = self.app.get(f'/api/run?task_id={task.id}', headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
+
+    def test_create_algorithm_store_record(self):
+        """ Test creating an algorithm store record """
+        # initialize resources
+        org = Organization()
+        col = Collaboration(organizations=[org])
+        col.save()
+        headers = self.create_user_and_login(organization=org)
+
+        record = {
+            "name": "test",
+            "url": "http://test.com",
+            "collaboration_id": col.id
+        }
+
+        # test creating a record without any permissions
+        results = self.app.post(
+            '/api/algorithmstore', headers=headers, json=record
+        )
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test creating a record with collaboration permissions if not member
+        # of the collaboration
+        rule = Rule.get_by_("collaboration", Scope.COLLABORATION,
+                            Operation.EDIT)
+        headers = self.create_user_and_login(rules=[rule])
+        results = self.app.post(
+            '/api/algorithmstore', headers=headers, json=record
+        )
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test creating a record with collaboration permissions if member
+        # of the collaboration
+        headers = self.create_user_and_login(organization=org, rules=[rule])
+        results = self.app.post(
+            '/api/algorithmstore', headers=headers, json=record
+        )
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        # test creating a record with global permissions
+        rule = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.EDIT)
+        headers = self.create_user_and_login(rules=[rule])
+        results = self.app.post(
+            '/api/algorithmstore', headers=headers, json=record
+        )
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        # cleanup
+        org.delete()
+        col.delete()
+
+    def test_view_algorithm_store(self):
+        """ Test viewing algorithm store records """
+        # without permissions
+        headers = self.create_user_and_login()
+        results = self.app.get('/api/algorithmstore', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # view with organization permissions
+        org = Organization()
+        org2 = Organization()
+        col = Collaboration(organizations=[org, org2])
+        col.save()
+        algo_store = AlgorithmStore(name="test", url="http://test.com",
+                                    collaboration=col)
+        algo_store.save()
+        rule = Rule.get_by_("collaboration", Scope.ORGANIZATION,
+                            Operation.VIEW)
+        headers = self.create_user_and_login(organization=org, rules=[rule])
+        # list
+        results = self.app.get('/api/algorithmstore', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual(len(results.json['data']), 1)
+        # single record
+        results = self.app.get(f'/api/algorithmstore/{algo_store.id}',
+                               headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+
+        # view with another organization within the same collaboration
+        headers = self.create_user_and_login(organization=org2, rules=[rule])
+        results = self.app.get('/api/algorithmstore', headers=headers,
+                               query_string={'collaboration_id': col.id})
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual(len(results.json['data']), 1)
+        results = self.app.get(f'/api/algorithmstore/{algo_store.id}',
+                               headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+
+        # try to view with organization permissions but not member of
+        # collaboration
+        org3 = Organization()
+        org3.save()
+        headers = self.create_user_and_login(organization=org3, rules=[rule])
+        results = self.app.get(f'/api/algorithmstore/{algo_store.id}',
+                               headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # view with global permissions
+        rule = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.VIEW)
+        headers = self.create_user_and_login(rules=[rule])
+        results = self.app.get('/api/algorithmstore', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual(len(results.json['data']), 1)
+        results = self.app.get(f'/api/algorithmstore/{algo_store.id}',
+                               headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+
+        # cleanup
+        org.delete()
+        org2.delete()
+        org3.delete()
+        col.delete()
+        algo_store.delete()
+
+    def test_patch_algorithm_store(self):
+        """ Test patching algorithm store records """
+        # initialize resources
+        org = Organization()
+        col = Collaboration(organizations=[org])
+        col.save()
+        algo_store = AlgorithmStore(name="test", url="http://test.com",
+                                    collaboration=col)
+        algo_store.save()
+
+        # test patching without any permissions
+        headers = self.create_user_and_login()
+        results = self.app.patch(f'/api/algorithmstore/{algo_store.id}',
+                                 headers=headers, json={'name': 'test1'})
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test patching non-existing record
+        rule = Rule.get_by_("collaboration", Scope.COLLABORATION,
+                            Operation.EDIT)
+        headers = self.create_user_and_login(organization=org, rules=[rule])
+        results = self.app.patch('/api/algorithmstore/9999', headers=headers,
+                                 json={})
+        self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
+
+        # test patching with collaboration permissions
+        results = self.app.patch(f'/api/algorithmstore/{algo_store.id}',
+                                 headers=headers, json={'name': 'test2'})
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual(results.json['name'], 'test2')
+
+        # test patching with global permissions
+        rule = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.EDIT)
+        headers = self.create_user_and_login(rules=[rule])
+        results = self.app.patch(f'/api/algorithmstore/{algo_store.id}',
+                                 headers=headers, json={'name': 'test3'})
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual(results.json['name'], 'test3')
+
+        # cleanup
+        org.delete()
+        col.delete()
+        algo_store.delete()
+
+    def test_delete_algorithm_store(self):
+        """ Test deleting algorithm store records """
+        # initialize resources
+        org = Organization()
+        col = Collaboration(organizations=[org])
+        col.save()
+        algo_store = AlgorithmStore(name="test", url="http://test.com",
+                                    collaboration=col)
+        algo_store.save()
+
+        # test deleting without any permissions
+        headers = self.create_user_and_login()
+        results = self.app.delete(f'/api/algorithmstore/{algo_store.id}',
+                                  headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test deleting non-existing record
+        rule = Rule.get_by_("collaboration", Scope.COLLABORATION,
+                            Operation.EDIT)
+        headers = self.create_user_and_login(organization=org, rules=[rule])
+        results = self.app.delete('/api/algorithmstore/9999', headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
+
+        # test deleting with collaboration permissions
+        results = self.app.delete(f'/api/algorithmstore/{algo_store.id}',
+                                  headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+
+        # test deleting with global permissions
+        algo_store.save()
+        rule = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.EDIT)
+        headers = self.create_user_and_login(rules=[rule])
+        results = self.app.delete(f'/api/algorithmstore/{algo_store.id}',
+                                  headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+
+        # cleanup
+        org.delete()
+        col.delete()

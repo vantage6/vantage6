@@ -4,18 +4,14 @@ import logging
 from flask import request, g
 from flask_restful import Api
 from http import HTTPStatus
+from sqlalchemy import or_
 
 from vantage6.server import db
 from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.resource.common.input_schema import (
     AlgorithmStoreInputSchema
 )
-from vantage6.server.permission import (
-    RuleCollection,
-    Scope as S,
-    Operation as P,
-    PermissionManager
-)
+from vantage6.server.permission import RuleCollection, Operation as P
 from vantage6.server.resource.common.output_schema import AlgorithmStoreSchema
 from vantage6.server.resource import (
     with_user,
@@ -67,6 +63,7 @@ algorithm_store_input_schema = AlgorithmStoreInputSchema()
 # Resources / API's
 # ------------------------------------------------------------------------------
 class AlgorithmStoreBase(ServicesResources):
+    """ Base class for algorithm store resources. """
 
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
@@ -74,6 +71,7 @@ class AlgorithmStoreBase(ServicesResources):
 
 
 class AlgorithmStores(AlgorithmStoreBase):
+    """ Resource for /algorithm """
 
     @with_user
     def get(self):
@@ -179,9 +177,10 @@ class AlgorithmStores(AlgorithmStoreBase):
                         auth_org.id in orgs_in_collab):
                     return {'msg': 'You lack the permission to do that!'}, \
                         HTTPStatus.UNAUTHORIZED
-            q = q.filter(
-                db.AlgorithmStore.collaboration_id == args['collaboration_id']
-            )
+            q = q.filter(or_(
+                db.AlgorithmStore.collaboration_id == args['collaboration_id'],
+                db.AlgorithmStore.collaboration_id.is_(None)
+            ))
 
         # filter based on permissions
         if not self.r_col.v_glo.can():
@@ -306,10 +305,11 @@ class AlgorithmStores(AlgorithmStoreBase):
         )
         algorithm_store.save()
 
-        return algorithm_store_schema.dump(algorithm_store), HTTPStatus.OK
+        return algorithm_store_schema.dump(algorithm_store), HTTPStatus.CREATED
 
 
 class AlgorithmStore(AlgorithmStoreBase):
+    """ Resource for /algorithm/<id> """
 
     @with_user
     def get(self, id):
@@ -354,7 +354,7 @@ class AlgorithmStore(AlgorithmStoreBase):
 
         # check that collaboration exists, unlikely to happen without ID
         if not algorithm_store:
-            return {"msg": f"Algorithm store id={id} not found"},\
+            return {"msg": f"Algorithm store id={id} not found"}, \
                 HTTPStatus.NOT_FOUND
 
         # verify that the user organization is within the collaboration
@@ -365,7 +365,8 @@ class AlgorithmStore(AlgorithmStoreBase):
             ids = [
                 org.id for org in algorithm_store.collaboration.organizations
             ]
-            if not (self.r_col.v_org.can() and
+            if not (
+                self.r_col.v_org.can() and
                 (auth_org_id in ids or not algorithm_store.collaboration_id)
             ):
                 return {'msg': 'You lack the permission to do that!'}, \
@@ -374,20 +375,19 @@ class AlgorithmStore(AlgorithmStoreBase):
         return algorithm_store_schema.dump(algorithm_store, many=False), \
             HTTPStatus.OK  # 200
 
-    # TODO implement the endpoints below
     @with_user
     def patch(self, id):
-        """ Update collaboration
+        """ Update algorithm store record
         ---
         description: >-
-          Updates the collaboration with the specified id.\n\n
+          Updates the linked algorithm store with the specified id.\n\n
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Collaboration|Global|Edit|❌|❌|Update a collaboration|\n\n
-          |Collaboration|Collaboration|Edit|❌|❌|Update a collaboration that
-          you are already a member of|\n\n
+          |Collaboration|Global|Edit|❌|❌|Update any algorithm store|\n\n
+          |Collaboration|Collaboration|Edit|❌|❌|Update algorithm stores
+          within a collaboration that your organization is a member of|\n\n
 
           Accessible to users.
 
@@ -396,7 +396,7 @@ class AlgorithmStore(AlgorithmStoreBase):
             name: id
             schema:
               type: integer
-            description: Collaboration id
+            description: Algorithm store id
             required: tr
 
         requestBody:
@@ -407,86 +407,86 @@ class AlgorithmStore(AlgorithmStoreBase):
                   name:
                     type: string
                     description: Human readable label
-                  organization_ids:
-                    type: array
-                    items:
-                      type: integer
-                    description: List of organization ids
-                  encrypted:
-                    type: boolean
-                    description: Whether collaboration is encrypted or not
+                  url:
+                    type: string
+                    description: URL to the algorithm store
+                  collaboration_id:
+                    type: integer
+                    description: Collaboration id to which the algorithm store
+                      will be added. If set to None, the algorithm store will
+                      be available to all collaborations.
 
         responses:
           200:
             description: Ok
           404:
-            description: Collaboration with specified id is not found
+            description: Algorithm store with specified id is not found
           401:
             description: Unauthorized
-          400:
-            description: Collaboration name already exists
 
         security:
           - bearerAuth: []
 
         tags: ["Collaboration"]
         """
-        collaboration = db.Collaboration.get(id)
-
+        algorithm_store = db.AlgorithmStore.get(id)
         # check if collaboration exists
-        if not collaboration:
-            return {"msg": f"collaboration having collaboration_id={id} "
-                    "can not be found"}, HTTPStatus.NOT_FOUND  # 404
+        if not algorithm_store:
+            return {"msg": f"Algorithm store with id={id} can not be found"}, \
+                HTTPStatus.NOT_FOUND  # 404
 
-        # verify permissions
-        if not self.r.can_for_col(P.EDIT, collaboration.id):
-            return {'msg': 'You lack the permission to do that!'}, \
-                HTTPStatus.UNAUTHORIZED
-
-        data = request.get_json()
         # validate request body
-        errors = collaboration_input_schema.validate(data, partial=True)
+        data = request.get_json()
+        errors = algorithm_store_input_schema.validate(data, partial=True)
         if errors:
             return {'msg': 'Request body is incorrect', 'errors': errors}, \
                 HTTPStatus.BAD_REQUEST
 
+        # verify permissions - check permission for old collaboration
+        collaboration_id_old = algorithm_store.collaboration_id
+        if not self.r_col.can_for_col(P.EDIT, collaboration_id_old):
+            return {'msg': 'You lack the permission to do that!'}, \
+                HTTPStatus.UNAUTHORIZED
+
+        # verify permissions - check permission for new collaboration (if
+        # specified)
+        data = request.get_json()
+        if "collaboration_id" in data:
+            collaboration_id_new = data["collaboration_id"]
+            if not self.r_col.can_for_col(P.EDIT, collaboration_id_new):
+                return {'msg': 'You lack the permission to do that!'}, \
+                        HTTPStatus.UNAUTHORIZED
+
         # only update fields that are provided
-        if "name" in data:
-            name = data["name"]
-            if collaboration.name != name and \
-                    db.Collaboration.exists("name", name):
-                return {
-                    "msg": f"Collaboration name '{name}' already exists!"
-                }, HTTPStatus.BAD_REQUEST
-            collaboration.name = name
-        if "organization_ids" in data:
-            collaboration.organizations = [
-                db.Organization.get(org_id)
-                for org_id in data['organization_ids']
-                if db.Organization.get(org_id)
-            ]
-        if 'encrypted' in data:
-            collaboration.encrypted = data['encrypted']
+        fields = ["name", "url"]
+        for field in fields:
+            if field in data and data[field] is not None:
+                setattr(algorithm_store, field, data[field])
+        # update collaboration_id if specified - also if it is set to None (
+        # that makes it available to all collaborations)
+        if "collaboration_id" in data:
+            algorithm_store.collaboration_id = data["collaboration_id"]
 
-        collaboration.save()
+        algorithm_store.save()
 
-        return collaboration_schema.dump(collaboration, many=False), \
+        return algorithm_store_schema.dump(algorithm_store, many=False), \
             HTTPStatus.OK  # 200
 
     @with_user
     def delete(self, id):
-        """ Delete collaboration
+        """ Delete linked algorithm store record
         ---
         description: >-
-          Removes the collaboration from the database entirely.
+          Removes the algorithm store from the database entirely.
 
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Collaboration|Global|Delete|❌|❌|Remove collaboration|\n\n
-          |Collaboration|Collaboration|Delete|❌|❌|Remove collaborations
-          that you are part of yourself|\n\n
+          |Collaboration|Global|Edit|❌|❌|Remove any algorithm store from any
+          collaboration|\n\n
+          |Collaboration|Collaboration|Edit|❌|❌|Remove any algorithm store
+          from a collaboration that your organization is a member of|\n\n
 
           Accessible to users.
 
@@ -495,20 +495,14 @@ class AlgorithmStore(AlgorithmStoreBase):
             name: id
             schema:
               type: integer
-            description: Collaboration id
+            description: Algorithm store id
             required: true
-          - in: query
-            name: delete_dependents
-            schema:
-              type: boolean
-            description: If set to true, the collaboratio will be deleted along
-              with all its tasks and nodes (default=False)
 
         responses:
           200:
             description: Ok
           404:
-            description: Collaboration with specified id is not found
+            description: Algorithm store with specified id is not found
           401:
             description: Unauthorized
 
@@ -518,35 +512,18 @@ class AlgorithmStore(AlgorithmStoreBase):
         tags: ["Collaboration"]
         """
 
-        collaboration = db.Collaboration.get(id)
-        if not collaboration:
-            return {"msg": f"collaboration id={id} is not found"}, \
+        algorithm_store = db.AlgorithmStore.get(id)
+        if not algorithm_store:
+            return {"msg": f"Algorithm store id={id} is not found"}, \
                 HTTPStatus.NOT_FOUND
 
         # verify permissions
-        if not self.r.can_for_col(P.DELETE, collaboration.id):
+        if not self.r_col.can_for_col(
+            P.EDIT, algorithm_store.collaboration_id
+        ):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
-        if collaboration.tasks or collaboration.nodes:
-            delete_dependents = request.args.get('delete_dependents', False)
-            if not delete_dependents:
-                return {
-                    "msg": f"Collaboration id={id} has "
-                    f"{len(collaboration.tasks)} tasks and "
-                    f"{len(collaboration.nodes)} nodes. Please delete them "
-                    "separately or set delete_dependents=True"
-                }, HTTPStatus.BAD_REQUEST
-            else:
-                log.warn(f"Deleting collaboration id={id} along with "
-                         f"{len(collaboration.tasks)} tasks and "
-                         f"{len(collaboration.nodes)} nodes")
-                for task in collaboration.tasks:
-                    task.delete()
-                for node in collaboration.nodes:
-                    node.delete()
-
-        collaboration.delete()
-        return {"msg": f"Collaboration id={id} successfully deleted"}, \
+        algorithm_store.delete()
+        return {"msg": f"Algorithm store id={id} successfully deleted"}, \
             HTTPStatus.OK
-
