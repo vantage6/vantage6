@@ -85,4 +85,5 @@ def cli_algo_store_start(
 
     info(f"Success! container id = {container.id}")
 
-    attach_logs(container, attach)
+    if attach:
+        attach_logs(container, InstanceType.ALGORITHM_STORE)

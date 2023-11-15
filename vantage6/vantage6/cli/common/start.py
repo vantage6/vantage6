@@ -2,6 +2,7 @@ import os
 from threading import Thread
 import time
 import docker
+import enum
 from docker.client import DockerClient
 from docker.models.containers import Container
 from colorama import (Fore, Style)
@@ -217,7 +218,7 @@ def mount_database(
     return mount, environment_vars
 
 
-def attach_logs(container: Container, attach: bool) -> None:
+def attach_logs(container: Container, type_: InstanceType) -> None:
     """
     Attach container logs to the console if specified.
 
@@ -225,17 +226,18 @@ def attach_logs(container: Container, attach: bool) -> None:
     ----------
     container : Container
         The container to attach the logs from
-    attach : bool
-        Whether to attach the logs or not
+    type_ : InstanceType
+        The type of instance to attach the logs for
     """
-    if attach:
-        logs = container.attach(stream=True, logs=True, stdout=True)
-        Thread(target=print_log_worker, args=(logs,), daemon=True).start()
-        while True:
-            try:
-                time.sleep(1)
-            except KeyboardInterrupt:
-                info("Closing log file. Keyboard Interrupt.")
-                info("Note that your server is still running! Shut it down "
-                     f"with {Fore.RED}v6 server stop{Style.RESET_ALL}")
-                exit(0)
+    if isinstance(type_, enum.Enum):
+        type_ = type_.value
+    logs = container.attach(stream=True, logs=True, stdout=True)
+    Thread(target=print_log_worker, args=(logs,), daemon=True).start()
+    while True:
+        try:
+            time.sleep(1)
+        except KeyboardInterrupt:
+            info("Closing log file. Keyboard Interrupt.")
+            info("Note that your server is still running! Shut it down "
+                 f"with {Fore.RED}v6 {type_} stop{Style.RESET_ALL}")
+            exit(0)

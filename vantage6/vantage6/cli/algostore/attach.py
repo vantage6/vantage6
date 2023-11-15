@@ -26,6 +26,6 @@ def cli_algo_store_attach(ctx: AlgorithmStoreContext) -> None:
 
     if ctx.docker_container_name in running_server_names:
         container = client.containers.get(ctx.docker_container_name)
-        attach_logs(container, attach=True)
+        attach_logs(container, InstanceType.ALGORITHM_STORE)
     else:
         error(f"{Fore.RED}{ctx.name}{Style.RESET_ALL} is not running!")

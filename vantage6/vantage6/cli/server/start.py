@@ -126,7 +126,8 @@ def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
 
     info(f"Success! container id = {container.id}")
 
-    attach_logs(container, attach)
+    if attach:
+        attach_logs(container, InstanceType.SERVER)
 
 
 def _start_rabbitmq(ctx: ServerContext, rabbitmq_image: str,
