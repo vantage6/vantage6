@@ -109,6 +109,8 @@ class Algorithms(AlgorithmStoreResources):
             description: OK
           400:
             description: Invalid input
+          401:
+            description: Unauthorized
 
         security:
           - bearerAuth: []
@@ -204,6 +206,8 @@ class Algorithms(AlgorithmStoreResources):
             description: Algorithm created successfully
           400:
             description: Invalid input
+          401:
+            description: Unauthorized
 
         security:
           - bearerAuth: []
@@ -282,6 +286,8 @@ class Algorithm(AlgorithmStoreResources):
         responses:
           200:
             description: OK
+          401:
+            description: Unauthorized
           404:
             description: Algorithm not found
 
@@ -312,6 +318,8 @@ class Algorithm(AlgorithmStoreResources):
         responses:
           200:
             description: OK
+          401:
+            description: Unauthorized
           404:
             description: Algorithm not found
 

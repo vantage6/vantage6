@@ -101,6 +101,7 @@ class BaseServicesResources(Resource):
         """
         return self.dump(page, schema), HTTPStatus.OK, page.headers
 
+
 class ServicesResources(BaseServicesResources):
     """
     Flask resource class for the vantage6 server.

@@ -15,4 +15,4 @@ API_PATH = '/api'
 
 # Which resources should be initialized. These names correspond to the
 # file-names in the resource directory
-RESOURCES = ['version', 'algorithm']
+RESOURCES = ['version', 'algorithm', 'vantage6_server']

@@ -398,6 +398,10 @@ class ValidateToken(ServicesResources):
 
         tags: ["Authentication"]
         """
+        # TODO we should check the origin of the request. Only allow requests
+        #  from whitelisted algorithm stores and only for users that are in
+        # the right collaboration(s).
+
         # Note: if the token is invalid, the with_user decorator will return
         # an error response. So if we get here, the token is valid.
         return {

@@ -83,3 +83,11 @@ class ArgumentInputSchema(_NameDescriptionSchema):
                 f"Argument type '{value}' is not one of the allowed values "
                 f"{types}"
             )
+
+
+class Vantage6ServerInputSchema(Schema):
+    """
+    Schema for the input of a vantage6 server.
+    """
+    url = fields.String(required=True)
+    force = fields.Boolean()

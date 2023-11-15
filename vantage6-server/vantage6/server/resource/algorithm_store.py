@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 
+import requests
 from flask import request, g
 from flask_restful import Api
 from http import HTTPStatus
@@ -229,21 +230,30 @@ class AlgorithmStores(AlgorithmStoreBase):
                   name:
                     type: string
                     description: Human readable name for the algorithm store
-                  url:
+                  algorithm_store_url:
                     type: string
                     description: URL to the algorithm store
+                  server_url:
+                    type: string
+                    description: URL to this vantage6 server. This is used to
+                      whitelist this server at the algorithm store.
                   collaboration_id:
                     type: integer
                     description: Collaboration id to which the algorithm store
                       will be added. If not given, the algorithm store will be
                       available to all collaborations.
+                  force:
+                    type: boolean
+                    description: Force adding the algorithm store to the
+                      collaboration. This will overwrite warnings if insecure
+                      addresses (e.g. localhost) are added.
 
         responses:
           200:
             description: Ok
           400:
-            description: Wrong input data or algorithm store is already
-              available for the collaboration
+            description: Wrong input data, algorithm store is already
+              available for the collaboration or algorithm store is unreachable
           401:
             description: Unauthorized
           404:
@@ -279,7 +289,13 @@ class AlgorithmStores(AlgorithmStoreBase):
                 HTTPStatus.UNAUTHORIZED
 
         # check if algorithm store is already available for the collaboration
-        existing_algorithm_stores = db.AlgorithmStore.get_by_url(data['url'])
+        algorithm_store_url = data['algorithm_store_url']
+        if algorithm_store_url.endswith("/"):
+            algorithm_store_url = algorithm_store_url[:-1]
+        existing_algorithm_stores = db.AlgorithmStore.get_by_url(
+            algorithm_store_url
+        )
+        records_to_delete = []
         if existing_algorithm_stores:
             collabs_with_algo_store = [a.id for a in existing_algorithm_stores]
             if None in collabs_with_algo_store:
@@ -295,17 +311,137 @@ class AlgorithmStores(AlgorithmStoreBase):
                 # collaborations, but now it will be available for all of them.
                 # Remove the records that only make it available to some
                 # collaborations (this prevents duplicates)
-                for algo_store in existing_algorithm_stores:
-                    algo_store.delete()
+                records_to_delete = existing_algorithm_stores
 
+        # raise a warning if the algorithm store url is insecure (i.e.
+        # localhost)
+        force = data.get('force', False)
+        if not force and (
+            "localhost" in algorithm_store_url or
+            "127.0.0.1" in algorithm_store_url
+        ):
+            return {
+                'msg': "Algorithm store url is insecure: localhost services "
+                "may be run on any computer. Add it anyway by setting the "
+                "'force' flag to true, but only do so for development servers!"
+            }, HTTPStatus.BAD_REQUEST
+
+        # whitelist this vantage6 server url for the algorithm store
+        request_error = self._communicate_to_algo_store(
+            algorithm_store_url, data['server_url'], force
+        )
+        if request_error:
+            return request_error
+
+        # delete and create records
+        for record in records_to_delete:
+            record.delete()
         algorithm_store = db.AlgorithmStore(
             name=data['name'],
-            url=data['url'],
+            url=algorithm_store_url,
             collaboration_id=collaboration_id
         )
         algorithm_store.save()
 
         return algorithm_store_schema.dump(algorithm_store), HTTPStatus.CREATED
+
+    def _communicate_to_algo_store(
+        self, algo_store_url: str, server_url: str, force: bool
+    ) -> dict | None:
+        """
+        Whitelist this vantage6 server url for the algorithm store.
+
+        Parameters
+        ----------
+        algo_store_url : str
+            URL to the algorithm store
+        server_url : str
+            URL to this vantage6 server. This is used to whitelist this server
+            at the algorithm store.
+        force : bool
+            If True, the algorithm store will be added even if the algorithm
+            store url is insecure (i.e. localhost)
+
+        Returns
+        -------
+        tuple[dict, HTTPStatus] | None
+            If the algorithm store is not reachable, a dict with an error
+            message is returned. Otherwise, None is returned.
+        """
+        # TODO this is not pretty, but it works for now. This should change
+        # when we have a separate auth service
+        response = self._send_whitelist_request_to_algo_server(
+            algo_store_url, server_url, force
+        )
+
+        if not response and (
+            algo_store_url.startswith("http://localhost") or
+            algo_store_url.startswith("http://127.0.0.1")
+        ):
+            # try again with the docker host ip
+            algo_store_url = algo_store_url.replace(
+                "localhost", "host.docker.internal"
+            ).replace(
+                "127.0.0.1", "host.docker.internal"
+            )
+            response = self._send_whitelist_request_to_algo_server(
+                algo_store_url, server_url, force
+            )
+
+        if response is None:
+            return {'msg': 'Algorithm store cannot be reached. Make sure that '
+                    'it is online and that you have not included /api at the '
+                    'end of the algorithm store URL'}, \
+                HTTPStatus.BAD_REQUEST
+        elif response.status_code != 201:
+            try:
+                msg = f"Algorithm store error: {response.json()['msg']}"
+            except KeyError:
+                msg = "Communication to algorithm store failed"
+            return {'msg': msg}, HTTPStatus.BAD_REQUEST
+        # else: server has been registered at algorithm store, proceed
+        return None
+
+    @staticmethod
+    def _send_whitelist_request_to_algo_server(
+        algo_store_url: str, server_url: str, force: bool
+    ) -> requests.Response:
+        """
+        Send a request to the algorithm store to whitelist this vantage6 server
+        url for the algorithm store.
+
+        Parameters
+        ----------
+        algo_store_url : str
+            URL to the algorithm store
+        server_url : str
+            URL to this vantage6 server. This is used to whitelist this server
+            at the algorithm store.
+        force : bool
+            If True, the algorithm store will be added even if the algorithm
+            store url is insecure (i.e. localhost)
+
+        Returns
+        -------
+        requests.Response | None
+            Response from the algorithm store. If the algorithm store is not
+            reachable, None is returned
+        """
+        if server_url.endswith("/"):
+            server_url = server_url[:-1]
+        if algo_store_url.endswith("/"):
+            algo_store_url = algo_store_url[:-1]
+        json = {"url": server_url}
+        if force:
+            json['force'] = True
+        try:
+            return requests.post(
+                f"{algo_store_url}/api/vantage6-server",
+                json=json,
+                # headers={"Authorization": f"Bearer {g.token}"}
+            )
+        except requests.exceptions.ConnectionError:
+            pass
 
 
 class AlgorithmStore(AlgorithmStoreBase):
@@ -419,6 +555,8 @@ class AlgorithmStore(AlgorithmStoreBase):
         responses:
           200:
             description: Ok
+          400:
+            description: Wrong input data
           404:
             description: Algorithm store with specified id is not found
           401:
