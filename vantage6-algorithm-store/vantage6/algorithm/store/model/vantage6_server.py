@@ -22,7 +22,7 @@ class Vantage6Server(Base):
     url = Column(String)
 
     @classmethod
-    def get_by_url(cls, url: str) -> list[Vantage6Server]:
+    def get_by_url(cls, url: str) -> Vantage6Server | None:
         """
         Get all algorithm store records with a certain url
 
@@ -33,8 +33,8 @@ class Vantage6Server(Base):
 
         Returns
         -------
-        list[AlgorithmStore]
-            List of algorithm store records with that URL
+        Vanatge6Server | None
+            Vanatge6Server object if found, None otherwise
         """
         session = DatabaseSessionManager.get_session()
-        return session.query(Vantage6Server).filter_by(url=url).all()
+        return session.query(Vantage6Server).filter_by(url=url).first()

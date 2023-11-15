@@ -18,9 +18,9 @@ from vantage6.algorithm.store.model.algorithm import Algorithm as db_Algorithm
 from vantage6.algorithm.store.model.argument import Argument
 from vantage6.algorithm.store.model.database import Database
 from vantage6.algorithm.store.model.function import Function
+from vantage6.algorithm.store.resource import with_authentication
 # TODO move to common / refactor
 from vantage6.server.resource import AlgorithmStoreResources
-
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -69,6 +69,7 @@ algorithm_output_schema = AlgorithmOutputSchema()
 class Algorithms(AlgorithmStoreResources):
     """ Resource for /algorithm """
 
+    @with_authentication()
     def get(self):
         """List algorithms
         ---
@@ -123,6 +124,7 @@ class Algorithms(AlgorithmStoreResources):
         return algorithm_output_schema.dump(algorithms, many=True), \
             HTTPStatus.OK
 
+    @with_authentication()
     def post(self):
         """Create new algorithm
         ---
@@ -271,6 +273,7 @@ class Algorithms(AlgorithmStoreResources):
 class Algorithm(AlgorithmStoreResources):
     """ Resource for /algorithm/<id> """
 
+    @with_authentication()
     def get(self, id):
         """Get algorithm
         ---
@@ -303,6 +306,7 @@ class Algorithm(AlgorithmStoreResources):
         return algorithm_output_schema.dump(algorithm, many=False), \
             HTTPStatus.OK
 
+    @with_authentication()
     def delete(self, id):
         """Delete algorithm
         ---

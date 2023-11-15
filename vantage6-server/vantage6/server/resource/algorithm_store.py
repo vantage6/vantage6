@@ -434,11 +434,14 @@ class AlgorithmStores(AlgorithmStoreBase):
         json = {"url": server_url}
         if force:
             json['force'] = True
+        # add server_url header
+        headers = {k: v for k, v in request.headers.items()}
+        headers['server_url'] = server_url
         try:
             return requests.post(
                 f"{algo_store_url}/api/vantage6-server",
                 json=json,
-                # headers={"Authorization": f"Bearer {g.token}"}
+                headers=headers
             )
         except requests.exceptions.ConnectionError:
             pass
@@ -511,6 +514,8 @@ class AlgorithmStore(AlgorithmStoreBase):
         return algorithm_store_schema.dump(algorithm_store, many=False), \
             HTTPStatus.OK  # 200
 
+    # TODO this endpoint should also update the URL at the algorithm store
+    # (whitelist it) if it is changed. Maybe delete this endpoint altogether?
     @with_user
     def patch(self, id):
         """ Update algorithm store record
@@ -610,6 +615,9 @@ class AlgorithmStore(AlgorithmStoreBase):
         return algorithm_store_schema.dump(algorithm_store, many=False), \
             HTTPStatus.OK  # 200
 
+    # TODO this endpoint should also remove the URL at the algorithm store
+    # (whitelist it) if it is changed and that is the last collaboration that
+    # uses it.
     @with_user
     def delete(self, id):
         """ Delete linked algorithm store record

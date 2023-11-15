@@ -17,9 +17,7 @@ from vantage6.algorithm.store.resource.schema.output_schema import (
 from vantage6.algorithm.store.model.vantage6_server import (
     Vantage6Server as db_Vantage6Server
 )
-from vantage6.algorithm.store.model.argument import Argument
-from vantage6.algorithm.store.model.database import Database
-from vantage6.algorithm.store.model.function import Function
+from vantage6.algorithm.store.resource import with_authentication
 # TODO move to common / refactor
 from vantage6.server.resource import AlgorithmStoreResources
 
@@ -71,6 +69,7 @@ v6_server_output_schema = Vantage6ServerOutputSchema()
 class Vantage6Servers(AlgorithmStoreResources):
     """ Resource for /algorithm """
 
+    @with_authentication()
     def get(self):
         """List whitelisted vantage6 servers
         ---
@@ -103,6 +102,7 @@ class Vantage6Servers(AlgorithmStoreResources):
         return v6_server_output_schema.dump(servers, many=True), \
             HTTPStatus.OK
 
+    @with_authentication()
     def post(self):
         """Create new whitelisted vantage6 server
         ---
@@ -156,10 +156,10 @@ class Vantage6Servers(AlgorithmStoreResources):
                 " the request body."
             }, HTTPStatus.BAD_REQUEST
 
-        # delete any existing records with the same url to prevent duplicates
-        existing_servers = db_Vantage6Server.get_by_url(data['url'])
-        for server in existing_servers:
-            server.delete()
+        # delete any existing record with the same url to prevent duplicates
+        existing_server = db_Vantage6Server.get_by_url(data['url'])
+        if existing_server:
+            existing_server.delete()
 
         # create the whitelisted server record
         server = db_Vantage6Server(url=data['url'])
@@ -172,6 +172,7 @@ class Vantage6Servers(AlgorithmStoreResources):
 class Vantage6Server(AlgorithmStoreResources):
     """ Resource for /algorithm/<id> """
 
+    @with_authentication()
     def get(self, id):
         """Get specific whitelisted vantage6 server
         ---
@@ -204,6 +205,7 @@ class Vantage6Server(AlgorithmStoreResources):
         return v6_server_output_schema.dump(server, many=False), \
             HTTPStatus.OK
 
+    @with_authentication()
     def delete(self, id):
         """Delete whitelist vantage6 server
         ---
