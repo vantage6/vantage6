@@ -1,5 +1,32 @@
-table,
-th,
-td {
-  border: 1px solid black;
+.roles-table {
+  border-collapse: collapse;
+
+  &__body {
+    font-size: 0.9em;
+  }
+
+  &__resource-header,
+  &__resource {
+    text-align: left;
+    padding-left: 1em;
+    padding-right: 1em;
+  }
+  &__scope-header,
+  &__scope {
+    text-align: right;
+    padding-left: 1em;
+    padding-right: 1em;
+  }
+
+  &__even-row {
+    background-color: #f0f0f0;
+  }
+
+  &__operation-permission-select {
+    text-align: center;
+  }
+
+  .mdc-checkbox--disabled {
+    opacity: 0.2;
+  }
 }

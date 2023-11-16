@@ -1,23 +1,31 @@
-<table>
+<table class="roles-table">
+  <colgroup>
+    <col class="roles-table__resource-column" />
+    <col class="roles-table__scope-column" />
+    <col *ngFor="let operation of allOperations" class="roles-table__operation-column" />
+  </colgroup>
   <thead>
     <tr>
-      <th>{{ "rule.resource.label" | translate }}</th>
-      <th>{{ "rule.scope.label" | translate }}</th>
+      <th class="roles-table__resource-header">{{ "rule.resource.label" | translate }}</th>
+      <th class="roles-table__scope-header">{{ "rule.scope.label" | translate }}</th>
       <th *ngFor="let operation of allOperations">{{ "rule.operation." + operation | translate }}</th>
     </tr>
   </thead>
-  <tbody>
-    <ng-container *ngFor="let resourcePermission of resourcePermissions">
-      <tr *ngFor="let scope of resourcePermission.scopes; index as i">
-        <td *ngIf="i === 0" [rowSpan]="allScopes.length">{{ "rule.resource." + resourcePermission.resource | translate }}</td>
-        <td>{{ "rule.scope." + scope.scope | translate }}</td>
-        <td *ngFor="let operationPermission of scope.operations">
+  <tbody class="roles-table__body">
+    <ng-container *ngFor="let resourcePermission of resourcePermissions; index as p">
+      <tr *ngFor="let scope of resourcePermission.scopes; index as i" [ngClass]="rowClass(p)">
+        <td *ngIf="i === 0" [rowSpan]="resourcePermission.scopes.length" class="roles-table__resource">
+          {{ "rule.resource." + resourcePermission.resource | translate }}
+        </td>
+        <td class="roles-table__scope">{{ "rule.scope." + scope.scope | translate }}</td>
+        <td *ngFor="let operationPermission of scope.operations" class="roles-table__operation-permission-select">
           <mat-checkbox
-            *ngIf="operationPermission.state !== CellState.Preselected"
+            *ngIf="showCheckBox(operationPermission)"
+            [disabled]="isDisabled(operationPermission)"
             (change)="$event ? selection.toggle(operationPermission) : null"
             [checked]="selection.isSelected(operationPermission)"
           ></mat-checkbox>
-          <mat-icon *ngIf="operationPermission.state === CellState.Preselected">check</mat-icon>
+          <mat-icon *ngIf="showCheckIcon(operationPermission)">check</mat-icon>
         </td>
       </tr>
     </ng-container>

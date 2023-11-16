@@ -6,6 +6,14 @@ import { BaseUser } from '../models/api/user.model';
 import { ApiService } from './api.service';
 import { USER_ID } from '../models/constants/sessionStorage';
 
+const requiredScopeLevel: Record<ScopeType, ScopeType[]> = {
+  [ScopeType.OWN]: [ScopeType.OWN, ScopeType.ORGANIZATION, ScopeType.COLLABORATION, ScopeType.GLOBAL],
+  [ScopeType.ORGANIZATION]: [ScopeType.ORGANIZATION, ScopeType.COLLABORATION, ScopeType.GLOBAL],
+  [ScopeType.COLLABORATION]: [ScopeType.COLLABORATION, ScopeType.GLOBAL],
+  [ScopeType.GLOBAL]: [ScopeType.GLOBAL],
+  [ScopeType.ANY]: []
+};
+
 @Injectable({
   providedIn: 'root'
 })
@@ -67,6 +75,13 @@ export class PermissionService {
     if (minScope !== ScopeType.GLOBAL) scopes.push(ScopeType.COLLABORATION);
     if (minScope !== ScopeType.COLLABORATION) scopes.push(ScopeType.ORGANIZATION);
     if (minScope !== ScopeType.ORGANIZATION) scopes.push(ScopeType.OWN);
+
+    // check if user has at least one of the scopes
+    return scopes.some((s) => this.isAllowed(s, resource, operation));
+  }
+
+  isAllowedToAssignRuleToRole(scope: ScopeType, resource: ResourceType, operation: OperationType): boolean {
+    const scopes: ScopeType[] = requiredScopeLevel[scope];
 
     // check if user has at least one of the scopes
     return scopes.some((s) => this.isAllowed(s, resource, operation));

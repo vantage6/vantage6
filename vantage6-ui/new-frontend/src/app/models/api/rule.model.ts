@@ -38,3 +38,7 @@ export interface Rule {
   name: ResourceType; //TODO: should be named resource in backend
   scope: ScopeType;
 }
+
+export interface GetRuleParameters {
+  no_pagination?: 0 | 1;
+}
