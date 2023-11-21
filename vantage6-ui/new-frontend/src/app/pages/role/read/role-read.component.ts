@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Role, RoleLazyProperties } from 'src/app/models/api/role.model';
-import { OperationType, ResourceType, Rule, ScopeType } from 'src/app/models/api/rule.model';
+import { Rule } from 'src/app/models/api/rule.model';
 import { TableData } from 'src/app/models/application/table.model';
 import { RoleService } from 'src/app/services/role.service';
 import { RuleService } from 'src/app/services/rule.service';
@@ -33,6 +33,8 @@ export class RoleReadComponent implements OnInit {
   preselectedRules: Rule[] = [];
   selectableRules: Rule[] = [];
   fixedSelectedRules: Rule[] = [];
+
+  changedRules?: Rule[];
 
   async ngOnInit(): Promise<void> {
     await this.initData();
@@ -81,5 +83,18 @@ export class RoleReadComponent implements OnInit {
 
   public get showUserTable(): boolean {
     return this.userTable != undefined && this.userTable.rows.length > 0;
+  }
+
+  public handleChangedSelection(rules: Rule[]): void {
+    this.changedRules = rules;
+  }
+
+  public async handleSubmitEdit(): Promise<void> {
+    if (!this.role || !this.changedRules) return;
+    this.isLoading = true;
+    const role: Role = { ...this.role, rules: this.changedRules };
+    await this.roleService.patchRole(role);
+    this.changedRules = [];
+    this.initData();
   }
 }

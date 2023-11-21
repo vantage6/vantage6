@@ -12,7 +12,15 @@
             <button *ngIf="isEditing" mat-flat-button type="submit" color="primary" (click)="handleCancelEdit()">
               {{ "general.cancel" | translate }}
             </button>
-            <app-permissions-matrix [fixedSelected]="fixedSelectedRules" [preselected]="preselectedRules" [selectable]="selectableRules">
+            <button *ngIf="isEditing" mat-flat-button type="submit" color="primary" (click)="handleSubmitEdit()">
+              {{ "general.submit" | translate }}
+            </button>
+            <app-permissions-matrix
+              [fixedSelected]="fixedSelectedRules"
+              [preselected]="preselectedRules"
+              [selectable]="selectableRules"
+              (changed)="handleChangedSelection($event)"
+            >
             </app-permissions-matrix>
           </div>
         </mat-tab>

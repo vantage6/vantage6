@@ -3,6 +3,7 @@ import { BaseUser } from './user.model';
 
 export interface BaseRole {
   id: number;
+  description: string;
   name: string;
   rules: string;
   users: string;
@@ -10,6 +11,7 @@ export interface BaseRole {
 
 export interface Role {
   id: number;
+  description: string;
   name: string;
   rules: Rule[];
   users: BaseUser[];
@@ -28,4 +30,10 @@ export enum RoleSortProperties {
 export interface GetRoleParameters {
   organization_id?: string;
   sort?: RoleSortProperties;
+}
+
+export interface RolePatch {
+  description: string;
+  name: string;
+  rules: number[];
 }

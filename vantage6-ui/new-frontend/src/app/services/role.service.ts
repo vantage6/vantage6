@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 
-import { BaseRole, GetRoleParameters, Role, RoleLazyProperties } from '../models/api/role.model';
+import { BaseRole, GetRoleParameters, Role, RoleLazyProperties, RolePatch } from '../models/api/role.model';
 import { Pagination } from '../models/api/pagination.model';
 import { getLazyProperties } from '../helpers/api.helper';
+import { Rule } from '../models/api/rule.model';
 
 @Injectable({
   providedIn: 'root'
@@ -23,5 +24,18 @@ export class RoleService {
     await getLazyProperties(result, role, lazyProperties, this.apiService);
 
     return role;
+  }
+
+  async patchRole(role: Role): Promise<Role | null> {
+    try {
+      const requestBody: RolePatch = {
+        name: role.name,
+        description: role.description,
+        rules: role.rules.map((rule) => rule.id)
+      };
+      return await this.apiService.patchForApi<Role>(`/role/${role.id}`, requestBody);
+    } catch {
+      return null;
+    }
   }
 }
