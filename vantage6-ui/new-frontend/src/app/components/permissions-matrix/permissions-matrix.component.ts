@@ -31,7 +31,6 @@ class OperationPermission {
 
 enum CellState {
   NotApplicable,
-  Disabled,
   FixedSelected,
   FixedNotSelected,
   NotSelected,
@@ -39,11 +38,11 @@ enum CellState {
 }
 
 @Component({
-  selector: 'app-roles-table',
-  templateUrl: './roles-table.component.html',
-  styleUrls: ['./roles-table.component.scss']
+  selector: 'app-permissions-matrix',
+  templateUrl: './permissions-matrix.component.html',
+  styleUrls: ['./permissions-matrix.component.scss']
 })
-export class RolesTableComponent implements OnInit, OnChanges {
+export class PermissionsMatrixComponent implements OnInit, OnChanges {
   /* Rules that are visualised as selected and cannot be unselected by the user */
   @Input() fixedSelected: Rule[] = [];
   /* Rules that can be selected or unselected.  */
@@ -147,15 +146,11 @@ export class RolesTableComponent implements OnInit, OnChanges {
   }
 
   public showCheckBox(operationPermission: OperationPermission): boolean {
-    return (
-      operationPermission.state !== CellState.Disabled &&
-      operationPermission.state !== CellState.FixedSelected &&
-      operationPermission.state !== CellState.NotApplicable
-    );
+    return [CellState.Selected, CellState.NotSelected, CellState.FixedNotSelected].includes(operationPermission.state);
   }
 
   public isDisabled(operationPermission: OperationPermission): boolean {
-    return operationPermission.state === CellState.Disabled || operationPermission.state === CellState.FixedNotSelected;
+    return operationPermission.state === CellState.FixedNotSelected;
   }
 
   public showCheckIcon(operationPermission: OperationPermission): boolean {

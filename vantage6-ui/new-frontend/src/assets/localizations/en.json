@@ -163,15 +163,24 @@
     "title": "roles"
   },
   "role-read": {
-    "title": "view"
+    "title": "view",
+    "tab": {
+      "permissions": "Permissions",
+      "users": "Users"
+    }
   },
   "rule": {
     "resource": {
       "label": "Resource",
       "organization": "Organization",
       "collaboration": "Collaboration",
+      "role": "Role",
+      "node": "Node",
       "task": "Task",
-      "user": "User"
+      "user": "User",
+      "run": "Run",
+      "event": "Event",
+      "port": "Port"
     },
 
     "scope": {

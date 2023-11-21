@@ -1,5 +1,8 @@
+@import "../../../config.scss";
+
 .roles-table {
   border-collapse: collapse;
+  position: relative;
 
   &__body {
     font-size: 0.9em;
@@ -8,14 +11,21 @@
   &__resource-header,
   &__resource {
     text-align: left;
-    padding-left: 1em;
-    padding-right: 1em;
+    padding-left: $spacing-px-4;
+    padding-right: $spacing-px-4;
   }
+
   &__scope-header,
   &__scope {
     text-align: right;
-    padding-left: 1em;
-    padding-right: 1em;
+    padding-left: $spacing-px-4;
+    padding-right: $spacing-px-4;
+  }
+
+  &__resource-header,
+  &__scope-header,
+  &__operation-header {
+    padding-bottom: $spacing-px-4;
   }
 
   &__even-row {
@@ -26,7 +36,11 @@
     text-align: center;
   }
 
+  &__check {
+    color: $success-700;
+  }
+
   .mdc-checkbox--disabled {
-    opacity: 0.2;
+    opacity: 0.3;
   }
 }

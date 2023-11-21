@@ -8,7 +8,7 @@
     <tr>
       <th class="roles-table__resource-header">{{ "rule.resource.label" | translate }}</th>
       <th class="roles-table__scope-header">{{ "rule.scope.label" | translate }}</th>
-      <th *ngFor="let operation of allOperations">{{ "rule.operation." + operation | translate }}</th>
+      <th class="roles-table__operation-header" *ngFor="let operation of allOperations">{{ "rule.operation." + operation | translate }}</th>
     </tr>
   </thead>
   <tbody class="roles-table__body">
@@ -25,7 +25,7 @@
             (change)="$event ? selection.toggle(operationPermission) : null"
             [checked]="selection.isSelected(operationPermission)"
           ></mat-checkbox>
-          <mat-icon *ngIf="showCheckIcon(operationPermission)">check</mat-icon>
+          <mat-icon class="roles-table__check" *ngIf="showCheckIcon(operationPermission)">check</mat-icon>
         </td>
       </tr>
     </ng-container>

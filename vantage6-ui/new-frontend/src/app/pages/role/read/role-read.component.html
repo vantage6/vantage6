@@ -2,7 +2,18 @@
   <app-page-header [title]="role.name"> </app-page-header>
   <mat-card>
     <mat-card-content>
-      <app-roles-table [preselected]="role.rules" [selectable]="allRules" [fixedSelected]="testFixedRules"> </app-roles-table>
+      <mat-tab-group dynamicHeight mat-stretch-tabs="false" mat-align-tabs="start">
+        <mat-tab label="{{ 'role-read.tab.permissions' | translate }}">
+          <div class="role-read__tab-content">
+            <app-permissions-matrix [fixedSelected]="roleRules" [selectable]="roleRules"> </app-permissions-matrix>
+          </div>
+        </mat-tab>
+        <mat-tab label="{{ 'role-read.tab.users' | translate }}">
+          <div class="role-read__tab-content">
+            <app-table [data]="userTable"></app-table>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
     </mat-card-content>
   </mat-card>
 </ng-container>

@@ -21,6 +21,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatTableModule } from '@angular/material/table';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatDateFnsModule } from '@angular/material-date-fns-adapter';
 import { enCA } from 'date-fns/locale';
@@ -72,7 +73,7 @@ import { NumberOnlyDirective } from './directives/numberOnly.directive';
 import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
 import { RoleListComponent } from './pages/role/list/role-list.component';
 import { RoleReadComponent } from './pages/role/read/role-read.component';
-import { RolesTableComponent } from './components/roles-table/roles-table.component';
+import { PermissionsMatrixComponent } from './components/permissions-matrix/permissions-matrix.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -123,7 +124,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     BreadcrumbsComponent,
     RoleListComponent,
     RoleReadComponent,
-    RolesTableComponent
+    PermissionsMatrixComponent
   ],
   imports: [
     BrowserModule,
@@ -156,6 +157,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     MatSelectModule,
     MatSidenavModule,
     MatStepperModule,
+    MatTabsModule,
     MatTableModule,
     MatToolbarModule
   ],

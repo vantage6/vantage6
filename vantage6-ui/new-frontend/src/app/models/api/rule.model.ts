@@ -41,4 +41,5 @@ export interface Rule {
 
 export interface GetRuleParameters {
   no_pagination?: 0 | 1;
+  role_id?: string;
 }

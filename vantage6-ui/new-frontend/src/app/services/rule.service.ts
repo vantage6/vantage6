@@ -9,8 +9,10 @@ import { Pagination } from '../models/api/pagination.model';
 export class RuleService {
   constructor(private apiService: ApiService) {}
 
-  async getAllRules(): Promise<Rule[]> {
-    return this.getRules({ no_pagination: 1 });
+  async getAllRules(roleId?: string): Promise<Rule[]> {
+    const params: GetRuleParameters = { no_pagination: 1 };
+    if (roleId) params.role_id = roleId;
+    return this.getRules(params);
   }
 
   async getRules(parameters?: GetRuleParameters): Promise<Rule[]> {
