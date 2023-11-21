@@ -95,22 +95,24 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges {
   }
 
   private updateTable(fixedSelected: Rule[], preSelected: Rule[], selectable: Rule[]) {
-    return this.allResources.map((resource) => {
-      const scopePermissions = this.allScopes
-        .filter((scope) => this.hasSelectableOperations(resource, scope, selectable))
-        .map((scope) => {
-          const operationPermissions = this.allOperations.map((operation) => {
-            const cellState = this.getCellState(fixedSelected, preSelected, selectable, resource, scope, operation);
-            const operationPermission = new OperationPermission(resource, scope, operation, cellState);
-            if (cellState === CellState.Selected) this.selection.select(operationPermission);
-            return operationPermission;
+    return this.allResources
+      .map((resource) => {
+        const scopePermissions = this.allScopes
+          .filter((scope) => this.hasSelectableOperations(resource, scope, selectable))
+          .map((scope) => {
+            const operationPermissions = this.allOperations.map((operation) => {
+              const cellState = this.getCellState(fixedSelected, preSelected, selectable, resource, scope, operation);
+              const operationPermission = new OperationPermission(resource, scope, operation, cellState);
+              if (cellState === CellState.Selected) this.selection.select(operationPermission);
+              return operationPermission;
+            });
+            return new ScopePermission(scope, operationPermissions);
           });
-          return new ScopePermission(scope, operationPermissions);
-        });
 
-      const resourcePermission = new ResourcePermission(resource, scopePermissions);
-      return resourcePermission;
-    });
+        const resourcePermission = new ResourcePermission(resource, scopePermissions);
+        return resourcePermission;
+      })
+      .filter((resourcePermission) => resourcePermission.scopes.length > 0);
   }
 
   private hasSelectableOperations(resource: ResourceType, scope: ScopeType, selectable: Rule[]): boolean {

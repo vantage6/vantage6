@@ -10,7 +10,8 @@
         </mat-tab>
         <mat-tab label="{{ 'role-read.tab.users' | translate }}">
           <div class="role-read__tab-content">
-            <app-table [data]="userTable"></app-table>
+            <app-table *ngIf="showUserTable" [data]="userTable"></app-table>
+            <p *ngIf="!showUserTable">{{ "role-read.no-users" | translate }}</p>
           </div>
         </mat-tab>
       </mat-tab-group>

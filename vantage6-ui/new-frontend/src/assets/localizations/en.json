@@ -164,6 +164,7 @@
   },
   "role-read": {
     "title": "view",
+    "no-users": "No users have been assigned to the selected role.",
     "tab": {
       "permissions": "Permissions",
       "users": "Users"

@@ -50,4 +50,8 @@ export class RoleReadComponent implements OnInit {
     this.roleRules = await this.ruleService.getAllRules(this.id);
     this.isLoading = false;
   }
+
+  public get showUserTable(): boolean {
+    return this.userTable != undefined && this.userTable.rows.length > 0;
+  }
 }
