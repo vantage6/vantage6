@@ -4,6 +4,9 @@
   border-collapse: collapse;
   position: relative;
 
+  width: 100%;
+  margin-left: 0; // Needed to undo the anti-pattern that is defined on 'mat-card table'
+
   &__body {
     font-size: 0.9em;
   }

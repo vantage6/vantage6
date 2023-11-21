@@ -5,7 +5,15 @@
       <mat-tab-group dynamicHeight mat-stretch-tabs="false" mat-align-tabs="start">
         <mat-tab label="{{ 'role-read.tab.permissions' | translate }}">
           <div class="role-read__tab-content">
-            <app-permissions-matrix [fixedSelected]="roleRules" [selectable]="roleRules"> </app-permissions-matrix>
+            <button *ngIf="!isEditing" mat-flat-button type="submit" color="primary" (click)="handleEnterEditMode()">
+              {{ "role-read.edit-permissions" | translate }}
+            </button>
+
+            <button *ngIf="isEditing" mat-flat-button type="submit" color="primary" (click)="handleCancelEdit()">
+              {{ "general.cancel" | translate }}
+            </button>
+            <app-permissions-matrix [fixedSelected]="fixedSelectedRules" [preselected]="preselectedRules" [selectable]="selectableRules">
+            </app-permissions-matrix>
           </div>
         </mat-tab>
         <mat-tab label="{{ 'role-read.tab.users' | translate }}">

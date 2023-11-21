@@ -2,6 +2,7 @@
 
 import { SelectionModel } from '@angular/cdk/collections';
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { isEqualString } from 'src/app/helpers/task.helper';
 import { OperationType, ResourceType, Rule, ScopeType } from 'src/app/models/api/rule.model';
 import { PermissionService } from 'src/app/services/permission.service';
@@ -51,7 +52,7 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges {
   @Input() preselected: Rule[] = [];
   @Input() userRules: Rule[] = [];
 
-  @Output() edited: EventEmitter<Rule[]> = new EventEmitter();
+  @Output() changed: EventEmitter<Rule[]> = new EventEmitter();
 
   constructor(private permissionService: PermissionService) {}
 
@@ -84,6 +85,8 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges {
 
   public selection: SelectionModel<OperationPermission> = new SelectionModel<OperationPermission>(true, []);
 
+  private selectionSubscription?: Subscription;
+
   ngOnInit(): void {
     this.resourcePermissions = this.updateTable(this.fixedSelected, this.preselected, this.selectable);
   }
@@ -94,8 +97,21 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges {
     }
   }
 
+  private handleSelectionChange(): void {
+    const rules: Rule[] = [];
+    this.selection.selected.forEach((permission) => {
+      const rule = this.findRule(this.selectable, permission.resource, permission.scope, permission.operation);
+      if (rule) rules.push(rule);
+      else console.error('Selected rule not found.');
+    });
+    this.changed.emit(rules);
+  }
+
   private updateTable(fixedSelected: Rule[], preSelected: Rule[], selectable: Rule[]) {
-    return this.allResources
+    if (this.selectionSubscription) this.selectionSubscription.unsubscribe();
+    this.selection.clear();
+
+    const result = this.allResources
       .map((resource) => {
         const scopePermissions = this.allScopes
           .filter((scope) => this.hasSelectableOperations(resource, scope, selectable))
@@ -113,6 +129,10 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges {
         return resourcePermission;
       })
       .filter((resourcePermission) => resourcePermission.scopes.length > 0);
+
+    this.selectionSubscription = this.selection.changed.subscribe(() => this.handleSelectionChange());
+
+    return result;
   }
 
   private hasSelectableOperations(resource: ResourceType, scope: ScopeType, selectable: Rule[]): boolean {
@@ -142,7 +162,11 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges {
   }
 
   private containsRule(rules: Rule[], resource: ResourceType, scope: ScopeType, operation: OperationType): boolean {
-    return !!rules.find(
+    return !!this.findRule(rules, resource, scope, operation);
+  }
+
+  private findRule(rules: Rule[], resource: ResourceType, scope: ScopeType, operation: OperationType): Rule | undefined {
+    return rules.find(
       (rule) => isEqualString(rule.name, resource) && isEqualString(rule.scope, scope) && isEqualString(rule.operation, operation)
     );
   }
@@ -161,5 +185,9 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges {
 
   public rowClass(permissionIndex: number): string {
     return permissionIndex % 2 === 0 ? 'roles-table__even-row' : 'roles-table__uneven-row';
+  }
+
+  public selectPermission(permission: OperationPermission): void {
+    this.selection.select(permission);
   }
 }

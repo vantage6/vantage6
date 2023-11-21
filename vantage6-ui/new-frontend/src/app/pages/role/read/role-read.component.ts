@@ -27,6 +27,12 @@ export class RoleReadComponent implements OnInit {
   roleRules: Rule[] = [];
   allRules: Rule[] = [];
   userTable?: TableData;
+  isEditing: boolean = false;
+
+  /* Bound variables to permission matrix. */
+  preselectedRules: Rule[] = [];
+  selectableRules: Rule[] = [];
+  fixedSelectedRules: Rule[] = [];
 
   async ngOnInit(): Promise<void> {
     await this.initData();
@@ -48,7 +54,29 @@ export class RoleReadComponent implements OnInit {
       }))
     };
     this.roleRules = await this.ruleService.getAllRules(this.id);
+    this.enterEditMode(false);
     this.isLoading = false;
+  }
+
+  private enterEditMode(edit: boolean): void {
+    this.isEditing = edit;
+    if (edit) {
+      this.preselectedRules = this.roleRules;
+      this.fixedSelectedRules = [];
+      this.selectableRules = this.allRules;
+    } else {
+      this.preselectedRules = [];
+      this.fixedSelectedRules = this.roleRules;
+      this.selectableRules = this.roleRules;
+    }
+  }
+
+  public handleEnterEditMode(): void {
+    this.enterEditMode(true);
+  }
+
+  public handleCancelEdit(): void {
+    this.enterEditMode(false);
   }
 
   public get showUserTable(): boolean {
