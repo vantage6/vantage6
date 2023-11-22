@@ -1,8 +1,10 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Role, RoleLazyProperties } from 'src/app/models/api/role.model';
-import { Rule } from 'src/app/models/api/rule.model';
+import { OperationType, ResourceType, Rule, ScopeType } from 'src/app/models/api/rule.model';
 import { TableData } from 'src/app/models/application/table.model';
+import { PermissionService } from 'src/app/services/permission.service';
 import { RoleService } from 'src/app/services/role.service';
 import { RuleService } from 'src/app/services/rule.service';
 
@@ -19,15 +21,18 @@ export class RoleReadComponent implements OnInit {
   constructor(
     private roleService: RoleService,
     private ruleService: RuleService,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    private permissionService: PermissionService
   ) {}
 
   isLoading = true;
+  isEditing: boolean = false;
+
+  canEdit = false;
   role?: Role;
   roleRules: Rule[] = [];
   allRules: Rule[] = [];
   userTable?: TableData;
-  isEditing: boolean = false;
 
   /* Bound variables to permission matrix. */
   preselectedRules: Rule[] = [];
@@ -35,13 +40,24 @@ export class RoleReadComponent implements OnInit {
   fixedSelectedRules: Rule[] = [];
 
   changedRules?: Rule[];
+  errorMessage?: string;
 
   async ngOnInit(): Promise<void> {
-    await this.initData();
+    this.canEdit = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.ROLE, OperationType.EDIT);
+    this.allRules = await this.ruleService.getAllRules();
+    try {
+      await this.initData();
+    } catch (error) {
+      this.handleHttpError(error as HttpErrorResponse);
+      this.isLoading = false;
+    }
+  }
+
+  private handleHttpError(error: HttpErrorResponse): void {
+    this.errorMessage = error.error['msg'] ?? error.message;
   }
 
   private async initData(): Promise<void> {
-    this.allRules = await this.ruleService.getAllRules();
     this.role = await this.roleService.getRole(this.id, [RoleLazyProperties.Users]);
     this.userTable = {
       columns: [
@@ -81,6 +97,10 @@ export class RoleReadComponent implements OnInit {
     this.enterEditMode(false);
   }
 
+  public get showData(): boolean {
+    return !this.isLoading && this.role != undefined;
+  }
+
   public get showUserTable(): boolean {
     return this.userTable != undefined && this.userTable.rows.length > 0;
   }
@@ -91,10 +111,15 @@ export class RoleReadComponent implements OnInit {
 
   public async handleSubmitEdit(): Promise<void> {
     if (!this.role || !this.changedRules) return;
+
     this.isLoading = true;
     const role: Role = { ...this.role, rules: this.changedRules };
     await this.roleService.patchRole(role);
     this.changedRules = [];
     this.initData();
+  }
+
+  public get editEnabled(): boolean {
+    return this.canEdit && !!this.role?.organization;
   }
 }

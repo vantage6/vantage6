@@ -5,6 +5,7 @@
   position: relative;
 
   width: 100%;
+  max-width: 800px;
   margin-left: 0; // Needed to undo the anti-pattern that is defined on 'mat-card table'
 
   &__body {
@@ -16,6 +17,7 @@
     text-align: left;
     padding-left: $spacing-px-4;
     padding-right: $spacing-px-4;
+    width: 120px;
   }
 
   &__scope-header,
@@ -23,6 +25,7 @@
     text-align: right;
     padding-left: $spacing-px-4;
     padding-right: $spacing-px-4;
+    width: 120px;
   }
 
   &__resource-header,

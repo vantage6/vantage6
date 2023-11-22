@@ -9,12 +9,18 @@ export interface BaseRole {
   users: string;
 }
 
+export interface RoleOrganization {
+  id: number;
+  link: string;
+}
+
 export interface Role {
   id: number;
   description: string;
   name: string;
   rules: Rule[];
   users: BaseUser[];
+  organization?: RoleOrganization;
 }
 
 export enum RoleLazyProperties {

@@ -1,20 +1,17 @@
-<ng-container *ngIf="!isLoading && role; else loading">
-  <app-page-header [title]="role.name"> </app-page-header>
+<ng-container *ngIf="showData">
+  <app-page-header [title]="role ? role.name : ''"> </app-page-header>
   <mat-card>
     <mat-card-content>
       <mat-tab-group dynamicHeight mat-stretch-tabs="false" mat-align-tabs="start">
         <mat-tab label="{{ 'role-read.tab.permissions' | translate }}">
           <div class="role-read__tab-content">
-            <button *ngIf="!isEditing" mat-flat-button type="submit" color="primary" (click)="handleEnterEditMode()">
-              {{ "role-read.edit-permissions" | translate }}
-            </button>
+            <div *ngIf="editEnabled" class="role-read__buttons">
+              <button *ngIf="!isEditing" mat-flat-button (click)="handleEnterEditMode()">
+                <mat-icon>edit</mat-icon>
+                <span>{{ "role-read.edit-permissions" | translate }}</span>
+              </button>
+            </div>
 
-            <button *ngIf="isEditing" mat-flat-button type="submit" color="primary" (click)="handleCancelEdit()">
-              {{ "general.cancel" | translate }}
-            </button>
-            <button *ngIf="isEditing" mat-flat-button type="submit" color="primary" (click)="handleSubmitEdit()">
-              {{ "general.submit" | translate }}
-            </button>
             <app-permissions-matrix
               [fixedSelected]="fixedSelectedRules"
               [preselected]="preselectedRules"
@@ -22,6 +19,11 @@
               (changed)="handleChangedSelection($event)"
             >
             </app-permissions-matrix>
+
+            <div *ngIf="isEditing" class="button-container role-read__submit-buttons">
+              <button mat-flat-button type="submit" color="primary" (click)="handleSubmitEdit()">{{ "general.submit" | translate }}</button>
+              <button mat-flat-button (click)="handleCancelEdit()">{{ "general.cancel" | translate }}</button>
+            </div>
           </div>
         </mat-tab>
         <mat-tab label="{{ 'role-read.tab.users' | translate }}">
@@ -34,10 +36,17 @@
     </mat-card-content>
   </mat-card>
 </ng-container>
-<ng-template #loading>
+<ng-container *ngIf="isLoading">
   <mat-card>
     <mat-card-content>
       <mat-spinner diameter="48"></mat-spinner>
     </mat-card-content>
   </mat-card>
-</ng-template>
+</ng-container>
+<ng-container *ngIf="errorMessage">
+  <mat-card>
+    <mat-card-content>
+      <p class="role-read__error-message">{{ errorMessage }}</p>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
