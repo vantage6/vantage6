@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { SelectionModel } from '@angular/cdk/collections';
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { isEqualString } from 'src/app/helpers/task.helper';
+import { isEqualString } from 'src/app/helpers/general.helper';
 import { OperationType, ResourceType, Rule, ScopeType } from 'src/app/models/api/rule.model';
 import { PermissionService } from 'src/app/services/permission.service';
 
@@ -43,7 +43,7 @@ enum CellState {
   templateUrl: './permissions-matrix.component.html',
   styleUrls: ['./permissions-matrix.component.scss']
 })
-export class PermissionsMatrixComponent implements OnInit, OnChanges {
+export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy {
   /* Rules that are visualised as selected and cannot be unselected by the user */
   @Input() fixedSelected: Rule[] = [];
   /* Rules that can be selected or unselected.  */
@@ -97,6 +97,10 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges {
     }
   }
 
+  ngOnDestroy(): void {
+    this.selectionSubscription?.unsubscribe();
+  }
+
   private handleSelectionChange(): void {
     const rules: Rule[] = [];
     this.selection.selected.forEach((permission) => {
@@ -107,7 +111,7 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges {
     this.changed.emit(rules);
   }
 
-  private updateTable(fixedSelected: Rule[], preSelected: Rule[], selectable: Rule[]) {
+  private updateTable(fixedSelected: Rule[], preSelected: Rule[], selectable: Rule[]): ResourcePermission[] {
     if (this.selectionSubscription) this.selectionSubscription.unsubscribe();
     this.selection.clear();
 

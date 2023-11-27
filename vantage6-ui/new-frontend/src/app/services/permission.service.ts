@@ -7,11 +7,11 @@ import { ApiService } from './api.service';
 import { USER_ID } from '../models/constants/sessionStorage';
 
 const requiredScopeLevel: Record<ScopeType, ScopeType[]> = {
+  [ScopeType.ANY]: [ScopeType.OWN, ScopeType.ORGANIZATION, ScopeType.COLLABORATION, ScopeType.GLOBAL],
   [ScopeType.OWN]: [ScopeType.OWN, ScopeType.ORGANIZATION, ScopeType.COLLABORATION, ScopeType.GLOBAL],
   [ScopeType.ORGANIZATION]: [ScopeType.ORGANIZATION, ScopeType.COLLABORATION, ScopeType.GLOBAL],
   [ScopeType.COLLABORATION]: [ScopeType.COLLABORATION, ScopeType.GLOBAL],
-  [ScopeType.GLOBAL]: [ScopeType.GLOBAL],
-  [ScopeType.ANY]: []
+  [ScopeType.GLOBAL]: [ScopeType.GLOBAL]
 };
 
 @Injectable({

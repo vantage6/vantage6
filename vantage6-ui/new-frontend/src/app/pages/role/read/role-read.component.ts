@@ -109,6 +109,7 @@ export class RoleReadComponent implements OnInit {
     this.changedRules = rules;
   }
 
+  // TODO: handle error
   public async handleSubmitEdit(): Promise<void> {
     if (!this.role || !this.changedRules) return;
 
