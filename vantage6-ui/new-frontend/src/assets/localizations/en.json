@@ -86,7 +86,8 @@
     "card-results": {
       "title": "Results",
       "actions": {
-        "visualization": "Visualization"
+        "visualization": "Visualization",
+        "download": "Download JSON result"
       }
     },
     "card-algorithm": {

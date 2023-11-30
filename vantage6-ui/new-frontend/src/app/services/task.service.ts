@@ -35,6 +35,7 @@ export class TaskService {
     //Handle base64 input
     if (Array.isArray(task.runs) && task.runs.length > 0) {
       const input = JSON.parse(atob(task.runs[0].input));
+      // TODO this may not always true: what if different runs have different inputs?
       if (input) {
         task.input = {
           method: input.method || '',
@@ -47,6 +48,13 @@ export class TaskService {
               })
             : []
         };
+      }
+    }
+    if (Array.isArray(task.results) && task.results.length > 0) {
+      for (const result of task.results) {
+        if (result.result) {
+          result.decoded_result = JSON.parse(atob(result.result));
+        }
       }
     }
 

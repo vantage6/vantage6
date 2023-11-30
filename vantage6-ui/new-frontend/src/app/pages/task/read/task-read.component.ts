@@ -2,7 +2,7 @@ import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core'
 import { TranslateService } from '@ngx-translate/core';
 import { getChipTypeForStatus, getStatusInfoTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
 import { Algorithm, AlgorithmFunction, Output } from 'src/app/models/api/algorithm.model';
-import { Task, TaskLazyProperties, TaskRun, TaskStatus } from 'src/app/models/api/task.models';
+import { Task, TaskLazyProperties, TaskRun, TaskStatus, TaskResult } from 'src/app/models/api/task.models';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { TaskService } from 'src/app/services/task.service';
@@ -15,6 +15,7 @@ import { FormControl } from '@angular/forms';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { Subject, takeUntil } from 'rxjs';
+import { FileService } from 'src/app/services/file.service';
 
 @Component({
   selector: 'app-task-read',
@@ -44,7 +45,8 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     private taskService: TaskService,
     private algorithmService: AlgorithmService,
     private chosenCollaborationService: ChosenCollaborationService,
-    private permissionService: PermissionService
+    private permissionService: PermissionService,
+    private fileService: FileService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -139,5 +141,20 @@ export class TaskReadComponent implements OnInit, OnDestroy {
           this.router.navigate([routePaths.tasks]);
         }
       });
+  }
+
+  displayTextResult(result: object | undefined): string {
+    if (result === undefined) return '';
+    const textResult = JSON.stringify(result);
+    if (textResult.length > 100) {
+      return textResult.substring(0, 100) + '...';
+    }
+    return textResult;
+  }
+
+  downloadResult(result: TaskResult): void {
+    const filename = `vantage6_result_${result.id}.txt`;
+    const textResult = JSON.stringify(result.decoded_result);
+    this.fileService.downloadTxtFile(textResult, filename);
   }
 }
