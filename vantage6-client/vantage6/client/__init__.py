@@ -1238,10 +1238,7 @@ class UserClient(ClientBase):
                     'assigning it to at least one organization.'
                 )
 
-            if isinstance(databases, str):
-                # it is not unlikely that users specify a single database as a
-                # str, in that case we convert it to a list
-                databases = [{'label': databases}]
+            databases = self._parse_arg_databases(databases)
 
             # Data will be serialized in JSON.
             serialized_input = serialize(input_)
@@ -1266,6 +1263,61 @@ class UserClient(ClientBase):
                 "organizations": organization_json_list,
                 'databases': databases
             })
+
+        @staticmethod
+        def _parse_arg_databases(databases: list[dict] | str) -> list[dict]:
+            """Parse the databases argument
+
+            Parameters
+            ----------
+            databases: list[dict] | str
+                Each dict should contain at least a 'label' key. A single str
+                can be passed and will be interpreted as a single database with
+                that label.
+
+            Returns
+            -------
+            list[dict]
+                The parsed databases argument
+
+            Raises
+            ------
+            ValueError: if 'label' is missing from the database dict or an
+                        invalid label is provided.
+
+            Note
+            ----
+            We are looking before we leap (LBYL) rather than attempting to
+            catch an exception later on (EAFP) because the task will be created
+            on the server before nodes might even get a chance to complain.
+            """
+            if isinstance(databases, str):
+                # it is not unlikely that users specify a single database as a
+                # str, in that case we convert it to a list
+                databases = [{"label": databases}]
+
+            for db in databases:
+                try:
+                    label_input = db.get("label")
+                except AttributeError:
+                    raise ValueError(
+                        "Databases specified should be a list of dicts with"
+                        "label keys or a single str"
+                    )
+                if not label_input or not isinstance(label_input, str):
+                    raise ValueError(
+                        "Each database should have a 'label' key with a string"
+                        "value."
+                    )
+                # Labels will become part of env var names in algo container,
+                # some chars are not allowed in some shells.
+                if not label_input.isidentifier():
+                    raise ValueError(
+                        "Database labels should be made up of letters, digits"
+                        " (except first character) and underscores only. "
+                        f"Invalid label: {db.get('label')}"
+                    )
+            return databases
 
         def delete(self, id_: int) -> dict:
             """Delete a task
