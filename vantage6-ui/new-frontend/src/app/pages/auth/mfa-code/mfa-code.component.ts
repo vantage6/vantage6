@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthResult } from 'src/app/models/api/auth.model';
@@ -7,14 +7,15 @@ import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
-  selector: 'app-login',
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss']
+  selector: 'app-mfa-code',
+  templateUrl: './mfa-code.component.html',
+  styleUrls: ['./mfa-code.component.scss']
 })
-export class LoginComponent {
+export class MfaCodeComponent implements OnInit {
   loginForm = this.fb.nonNullable.group({
     username: ['', Validators.required],
-    password: ['', Validators.required]
+    password: ['', Validators.required],
+    mfaCode: ['', Validators.required]
   });
 
   constructor(
@@ -23,14 +24,20 @@ export class LoginComponent {
     private authService: AuthService
   ) {}
 
+  ngOnInit(): void {
+    if (!this.authService.username || !this.authService.password) {
+      this.router.navigate([routePaths.login]);
+    }
+    this.loginForm.controls['username'].setValue(this.authService.username);
+    this.loginForm.controls['password'].setValue(this.authService.password);
+  }
+
   async onSubmit(): Promise<void> {
     if (!this.loginForm.valid) return;
 
     const authStatus = await this.authService.login(this.loginForm.value as LoginForm);
     if (authStatus == AuthResult.Success) {
       this.router.navigate([routePaths.home]);
-    } else if (authStatus == AuthResult.RedirectMFA) {
-      this.router.navigate([routePaths.setupMFA]);
     }
   }
 }

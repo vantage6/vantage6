@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { routePaths, routerConfig } from './routes';
-import { LoginComponent } from './pages/login/login.component';
+import { LoginComponent } from './pages/auth/login/login.component';
 import { LayoutLoginComponent } from './layouts/layout-login/layout-login.component';
 import { LayoutDefaultComponent } from './layouts/layout-default/layout-default.component';
 import { HomeComponent } from './pages/home/home.component';
@@ -23,19 +23,24 @@ import { NodeReadComponent } from './pages/node/read/node-read.component';
 import { OrganizationEditComponent } from './pages/organization/edit/organization-edit.component';
 import { CollaborationEditComponent } from './pages/collaboration/edit/collaboration-edit.component';
 import { UserEditComponent } from './pages/user/edit/user-edit.component';
-import { ChangePasswordComponent } from './pages/change-password/change-password.component';
+import { ChangePasswordComponent } from './pages/auth/change-password/change-password.component';
 import { chosenCollaborationGuard } from './guards/chosenCollaboration.guard';
 import { TemplateTaskCreateComponent } from './pages/template-task/create/template-task-create.component';
-import { SetupMfaComponent } from './pages/setup-mfa/setup-mfa.component';
+import { SetupMfaComponent } from './pages/auth/setup-mfa/setup-mfa.component';
+import { MfaCodeComponent } from './pages/auth/mfa-code/mfa-code.component';
 
 const routes: Routes = [
   {
-    path: '',
+    path: 'auth',
     component: LayoutLoginComponent,
     children: [
       {
         path: routerConfig.login,
         component: LoginComponent
+      },
+      {
+        path: routerConfig.mfaCode,
+        component: MfaCodeComponent
       },
       {
         path: routerConfig.setupMFA,

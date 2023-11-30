@@ -1,6 +1,7 @@
 export const routePaths = {
-  login: '/login',
-  setupMFA: '/setup/mfa',
+  login: '/auth/login',
+  setupMFA: '/auth/mfa/setup',
+  mfaCode: '/auth/mfa/code',
   start: '/start',
   home: '/',
   passwordChange: '/password/change',
@@ -26,7 +27,8 @@ export const routePaths = {
 
 export const routerConfig = {
   login: 'login',
-  setupMFA: 'setup/mfa',
+  setupMFA: 'mfa/setup',
+  mfaCode: 'mfa/code',
   start: 'start',
   home: '',
   passwordChange: 'password/change',

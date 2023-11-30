@@ -29,7 +29,7 @@ import { enCA } from 'date-fns/locale';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { LoginComponent } from './pages/login/login.component';
+import { LoginComponent } from './pages/auth/login/login.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -67,14 +67,15 @@ import { UserFormComponent } from './components/forms/user-form/user-form.compon
 import { UserEditComponent } from './pages/user/edit/user-edit.component';
 import { VisualizeHistogramComponent } from './components/visualize-histogram/visualize-histogram.component';
 import { PreprocessingStepComponent } from './pages/task/create/steps/preprocessing-step/preprocessing-step.component';
-import { ChangePasswordComponent } from './pages/change-password/change-password.component';
+import { ChangePasswordComponent } from './pages/auth/change-password/change-password.component';
 import { MessageDialogComponent } from './components/dialogs/message-dialog/message-dialog.component';
 import { FilterStepComponent } from './pages/task/create/steps/filter-step/filter-step.component';
 import { NumberOnlyDirective } from './directives/numberOnly.directive';
 import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
 import { TemplateTaskCreateComponent } from './pages/template-task/create/template-task-create.component';
 import { DatabaseStepComponent } from './pages/task/create/steps/database-step/database-step.component';
-import { SetupMfaComponent } from './pages/setup-mfa/setup-mfa.component';
+import { SetupMfaComponent } from './pages/auth/setup-mfa/setup-mfa.component';
+import { MfaCodeComponent } from './pages/auth/mfa-code/mfa-code.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -125,7 +126,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     BreadcrumbsComponent,
     TemplateTaskCreateComponent,
     DatabaseStepComponent,
-    SetupMfaComponent
+    SetupMfaComponent,
+    MfaCodeComponent
   ],
   imports: [
     BrowserModule,

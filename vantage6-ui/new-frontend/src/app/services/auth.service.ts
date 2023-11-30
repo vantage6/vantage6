@@ -1,23 +1,22 @@
 import { Injectable } from '@angular/core';
 import { LoginForm } from '../models/forms/login-form.model';
 import { ApiService } from './api.service';
-import { AuthResult, ChangePassword, Login, SetupMFA } from '../models/api/auth.model';
+import { AuthResult, ChangePassword, Login, LoginSubmit, SetupMFA } from '../models/api/auth.model';
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_ID } from '../models/constants/sessionStorage';
 import { PermissionService } from './permission.service';
-import { Router } from '@angular/router';
-import { routePaths } from '../routes';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
+  username = '';
+  password = '';
   qr_uri = '';
   otp_code = '';
 
   constructor(
     private apiService: ApiService,
-    private permissionService: PermissionService,
-    private router: Router
+    private permissionService: PermissionService
   ) {}
 
   async isAuthenticated(): Promise<AuthResult> {
@@ -36,20 +35,26 @@ export class AuthService {
     return AuthResult.Failure;
   }
 
-  // TODO instead of boolean return an interface that sets to go to setup MFA
   async login(loginForm: LoginForm): Promise<AuthResult> {
-    const data = {
-      username: loginForm.username,
-      password: loginForm.password
+    this.username = loginForm.username;
+    this.password = loginForm.password;
+    const data: LoginSubmit = {
+      username: this.username,
+      password: this.password
     };
+    if (loginForm.mfaCode) {
+      data.mfa_code = loginForm.mfaCode;
+    }
     const result = await this.apiService.postForApi<Login | SetupMFA>('/token/user', data);
-
+    console.log(result);
     if ('qr_uri' in result) {
       // redirect to setup MFA
       this.qr_uri = result.qr_uri;
       this.otp_code = result.otp_secret;
-      // this.router.navigate([routePaths.setupMFA]);
-      return AuthResult.RedirectMFA;
+      return AuthResult.SetupMFA;
+    } else if (!('access_token' in result)) {
+      // ask for MFA code
+      return AuthResult.MFACode;
     } else {
       // login success
       this.setSession(result);

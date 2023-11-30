@@ -12,6 +12,8 @@ import { AuthService } from 'src/app/services/auth.service';
   styleUrls: ['./setup-mfa.component.scss']
 })
 export class SetupMfaComponent implements OnInit {
+  routes = routePaths;
+
   constructor(
     private router: Router,
     private dialog: MatDialog,
@@ -30,7 +32,6 @@ export class SetupMfaComponent implements OnInit {
   }
 
   showOtpCode() {
-    console.log(this.authService.otp_code);
     this.dialog.open(MessageDialogComponent, {
       data: {
         title: this.translateService.instant('mfa.otp-manual-title'),
