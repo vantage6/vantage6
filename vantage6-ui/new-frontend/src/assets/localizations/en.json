@@ -230,6 +230,13 @@
     "username": "Username",
     "password": "Password"
   },
+  "mfa": {
+    "title-setup": "Setup two-factor authentication",
+    "scan-message": "Your system administrator requires you to set up two-factor authentication. Scan the QR code below with your favorite authenticator app to set this up.",
+    "scan-recommend": "You may use your favorite authentication app. We recommend using Lastpass or Google authenticator.",
+    "otp-manual-title": "Setup two-factor authentication manually",
+    "otp-manual-message": "If you are having difficulties scanning the QR code, please enter the following code manually in your authentication app:"
+  },
   "change-password": {
     "title": "Change password",
     "old-password": "Old password",

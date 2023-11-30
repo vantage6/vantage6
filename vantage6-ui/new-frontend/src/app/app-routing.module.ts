@@ -26,15 +26,20 @@ import { UserEditComponent } from './pages/user/edit/user-edit.component';
 import { ChangePasswordComponent } from './pages/change-password/change-password.component';
 import { chosenCollaborationGuard } from './guards/chosenCollaboration.guard';
 import { TemplateTaskCreateComponent } from './pages/template-task/create/template-task-create.component';
+import { SetupMfaComponent } from './pages/setup-mfa/setup-mfa.component';
 
 const routes: Routes = [
   {
-    path: routerConfig.login,
+    path: '',
     component: LayoutLoginComponent,
     children: [
       {
-        path: '',
+        path: routerConfig.login,
         component: LoginComponent
+      },
+      {
+        path: routerConfig.setupMFA,
+        component: SetupMfaComponent
       }
     ]
   },

@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { ReactiveFormsModule } from '@angular/forms';
+import { QRCodeModule } from 'angularx-qrcode';
 
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
@@ -73,6 +74,7 @@ import { NumberOnlyDirective } from './directives/numberOnly.directive';
 import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
 import { TemplateTaskCreateComponent } from './pages/template-task/create/template-task-create.component';
 import { DatabaseStepComponent } from './pages/task/create/steps/database-step/database-step.component';
+import { SetupMfaComponent } from './pages/setup-mfa/setup-mfa.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -122,7 +124,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     NumberOnlyDirective,
     BreadcrumbsComponent,
     TemplateTaskCreateComponent,
-    DatabaseStepComponent
+    DatabaseStepComponent,
+    SetupMfaComponent
   ],
   imports: [
     BrowserModule,
@@ -157,7 +160,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     MatSnackBarModule,
     MatStepperModule,
     MatTableModule,
-    MatToolbarModule
+    MatToolbarModule,
+    QRCodeModule
   ],
   providers: [
     {

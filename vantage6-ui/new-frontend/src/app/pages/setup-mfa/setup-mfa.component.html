@@ -1,0 +1,16 @@
+<mat-card class="auth-card">
+  <mat-card-header>
+    <mat-card-title>{{ "mfa.title-setup" | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <p>
+      <strong>{{ "mfa.scan-message" | translate }}</strong>
+    </p>
+    <p>{{ "mfa.scan-recommend" | translate }}</p>
+
+    <qrcode [qrdata]="getQRUrl()" [width]="256" [errorCorrectionLevel]="'M'"></qrcode>
+
+    <button mat-flat-button type="submit" color="primary" [routerLink]="['/mfa_code']">I'm done!</button>
+    <button mat-flat-button type="submit" (click)="showOtpCode()">I need help!</button>
+  </mat-card-content>
+</mat-card>

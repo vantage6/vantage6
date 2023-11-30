@@ -3,7 +3,7 @@ import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 export interface DialogData {
   title: string;
-  content: string;
+  content: string[];
   confirmButtonText: string;
   confirmButtonType: 'primary' | 'warn' | 'accent';
 }
