@@ -39,7 +39,21 @@ export interface GetRoleParameters {
 }
 
 export interface RolePatch {
-  description: string;
   name: string;
+  description: string;
+  rules: number[];
+}
+
+export interface RoleForm {
+  name: string;
+  description: string;
+  organization_ids: number[];
+  rules: number[];
+}
+
+export interface RoleCreate {
+  name: string;
+  description: string;
+  organization_id?: number;
   rules: number[];
 }

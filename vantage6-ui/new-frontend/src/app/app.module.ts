@@ -73,7 +73,10 @@ import { NumberOnlyDirective } from './directives/numberOnly.directive';
 import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
 import { RoleListComponent } from './pages/role/list/role-list.component';
 import { RoleReadComponent } from './pages/role/read/role-read.component';
+import { RoleCreateComponent } from './pages/role/create/role-create.component';
 import { PermissionsMatrixComponent } from './components/permissions-matrix/permissions-matrix.component';
+import { RoleFormComponent } from './components/role-form/role-form.component';
+import { OrderByPipe } from './pipes/order-by.pipe';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -124,7 +127,10 @@ export function HttpLoaderFactory(http: HttpClient) {
     BreadcrumbsComponent,
     RoleListComponent,
     RoleReadComponent,
-    PermissionsMatrixComponent
+    PermissionsMatrixComponent,
+    RoleCreateComponent,
+    RoleFormComponent,
+    OrderByPipe
   ],
   imports: [
     BrowserModule,

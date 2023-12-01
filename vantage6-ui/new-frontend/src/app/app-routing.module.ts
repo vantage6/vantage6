@@ -27,6 +27,7 @@ import { ChangePasswordComponent } from './pages/change-password/change-password
 import { chosenCollaborationGuard } from './guards/chosenCollaboration.guard';
 import { RoleListComponent } from './pages/role/list/role-list.component';
 import { RoleReadComponent } from './pages/role/read/role-read.component';
+import { RoleCreateComponent } from './pages/role/create/role-create.component';
 
 const routes: Routes = [
   {
@@ -172,6 +173,14 @@ const routes: Routes = [
         canActivate: [authenticationGuard()],
         data: {
           crumbs: [['role-list.title']]
+        }
+      },
+      {
+        path: routerConfig.roleCreate,
+        component: RoleCreateComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['role-list.title', routePaths.roles], ['role-create.title']]
         }
       },
       {

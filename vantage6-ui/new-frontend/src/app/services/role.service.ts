@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 
-import { BaseRole, GetRoleParameters, Role, RoleLazyProperties, RolePatch } from '../models/api/role.model';
+import { BaseRole, GetRoleParameters, Role, RoleCreate, RoleForm, RoleLazyProperties, RolePatch } from '../models/api/role.model';
 import { Pagination } from '../models/api/pagination.model';
 import { getLazyProperties } from '../helpers/api.helper';
-import { Rule } from '../models/api/rule.model';
 
 @Injectable({
   providedIn: 'root'
@@ -22,6 +21,19 @@ export class RoleService {
     const result = await this.apiService.getForApi<BaseRole>(`/role/${roleID}`);
     const role: Role = { ...result, rules: [], users: [] };
     await getLazyProperties(result, role, lazyProperties, this.apiService);
+
+    return role;
+  }
+
+  async createRole(roleForm: RoleForm): Promise<Role> {
+    const roleCreate: RoleCreate = {
+      name: roleForm.name,
+      description: roleForm.description,
+      rules: roleForm.rules
+    };
+    const role = await this.apiService.postForApi<Role>(`/role`, roleCreate);
+
+    /* Assign role to organisations. */
 
     return role;
   }

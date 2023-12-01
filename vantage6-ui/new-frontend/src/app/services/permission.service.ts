@@ -5,6 +5,7 @@ import { Collaboration } from '../models/api/collaboration.model';
 import { BaseUser } from '../models/api/user.model';
 import { ApiService } from './api.service';
 import { USER_ID } from '../models/constants/sessionStorage';
+import { BaseOrganization, Organization } from '../models/api/organization.model';
 
 const requiredScopeLevel: Record<ScopeType, ScopeType[]> = {
   [ScopeType.ANY]: [ScopeType.OWN, ScopeType.ORGANIZATION, ScopeType.COLLABORATION, ScopeType.GLOBAL],
@@ -89,6 +90,18 @@ export class PermissionService {
 
   getActiveOrganizationID(): number | undefined {
     return this.activeUser?.organization.id;
+  }
+
+  /**
+   * Get all organizations that the user is allowed to perform 'operation' on 'resource'. E.g. all organizations for
+   * which it is possible to create a role.
+   * @param resource
+   * @param operation
+   * @returns
+   */
+  public getAllowedOrganizationsIds(resource: ResourceType, operation: OperationType): number[] {
+    const ids = this.activeUser?.permissions?.orgs_in_collabs.filter((orgId) => this.isAllowedForOrg(resource, operation, orgId));
+    return ids ?? [];
   }
 
   private async getUserRules() {

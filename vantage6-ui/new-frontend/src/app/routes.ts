@@ -42,6 +42,7 @@ export const routerConfig = {
   collaboration: 'collaborations/:id',
   roles: 'roles',
   role: 'roles/:id',
+  roleCreate: 'roles/create',
   users: 'users',
   userCreate: 'users/create',
   userEdit: 'users/edit/:id',
