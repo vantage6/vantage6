@@ -17,6 +17,7 @@ export class MfaCodeComponent implements OnInit {
     password: ['', Validators.required],
     mfaCode: ['', Validators.required]
   });
+  routes = routePaths;
 
   constructor(
     private router: Router,

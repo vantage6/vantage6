@@ -76,6 +76,9 @@ import { TemplateTaskCreateComponent } from './pages/template-task/create/templa
 import { DatabaseStepComponent } from './pages/task/create/steps/database-step/database-step.component';
 import { SetupMfaComponent } from './pages/auth/setup-mfa/setup-mfa.component';
 import { MfaCodeComponent } from './pages/auth/mfa-code/mfa-code.component';
+import { MfaRecoverComponent } from './pages/auth/mfa-recover/mfa-recover.component';
+import { MfaLostComponent } from './pages/auth/mfa-lost/mfa-lost.component';
+import { AlertWithButtonComponent } from './components/alert-with-button/alert-with-button.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -127,7 +130,10 @@ export function HttpLoaderFactory(http: HttpClient) {
     TemplateTaskCreateComponent,
     DatabaseStepComponent,
     SetupMfaComponent,
-    MfaCodeComponent
+    MfaCodeComponent,
+    MfaRecoverComponent,
+    MfaLostComponent,
+    AlertWithButtonComponent
   ],
   imports: [
     BrowserModule,

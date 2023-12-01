@@ -34,8 +34,8 @@ export class SetupMfaComponent implements OnInit {
   showOtpCode() {
     this.dialog.open(MessageDialogComponent, {
       data: {
-        title: this.translateService.instant('mfa.otp-manual-title'),
-        content: [this.translateService.instant('mfa.otp-manual-message'), this.authService.otp_code],
+        title: this.translateService.instant('mfa.setup.manual.title'),
+        content: [this.translateService.instant('mfa.setup.manual.message'), this.authService.otp_code],
         confirmButtonText: this.translateService.instant('general.close'),
         confirmButtonType: 'primary'
       }

@@ -28,6 +28,8 @@ import { chosenCollaborationGuard } from './guards/chosenCollaboration.guard';
 import { TemplateTaskCreateComponent } from './pages/template-task/create/template-task-create.component';
 import { SetupMfaComponent } from './pages/auth/setup-mfa/setup-mfa.component';
 import { MfaCodeComponent } from './pages/auth/mfa-code/mfa-code.component';
+import { MfaLostComponent } from './pages/auth/mfa-lost/mfa-lost.component';
+import { MfaRecoverComponent } from './pages/auth/mfa-recover/mfa-recover.component';
 
 const routes: Routes = [
   {
@@ -45,6 +47,14 @@ const routes: Routes = [
       {
         path: routerConfig.setupMFA,
         component: SetupMfaComponent
+      },
+      {
+        path: routerConfig.mfaLost,
+        component: MfaLostComponent
+      },
+      {
+        path: routerConfig.mfaRecover,
+        component: MfaRecoverComponent
       }
     ]
   },

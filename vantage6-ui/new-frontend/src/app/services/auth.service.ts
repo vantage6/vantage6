@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { LoginForm } from '../models/forms/login-form.model';
 import { ApiService } from './api.service';
-import { AuthResult, ChangePassword, Login, LoginSubmit, SetupMFA } from '../models/api/auth.model';
+import { AuthResult, ChangePassword, Login, LoginSubmit, MFARecover, SetupMFA } from '../models/api/auth.model';
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_ID } from '../models/constants/sessionStorage';
 import { PermissionService } from './permission.service';
 
@@ -46,7 +46,6 @@ export class AuthService {
       data.mfa_code = loginForm.mfaCode;
     }
     const result = await this.apiService.postForApi<Login | SetupMFA>('/token/user', data);
-    console.log(result);
     if ('qr_uri' in result) {
       // redirect to setup MFA
       this.qr_uri = result.qr_uri;
@@ -71,6 +70,21 @@ export class AuthService {
       current_password: oldPassword,
       new_password: newPassword
     });
+  }
+
+  async mfaLost(): Promise<string> {
+    const data = {
+      // TODO remove this!
+      username: 'just somethiq',
+      // username: this.username,
+      password: this.password
+    };
+    const result = await this.apiService.postForApi<MFARecover>('/recover/2fa/lost', data);
+    console.log(result);
+    if (result.msg) {
+      return result.msg;
+    }
+    return '';
   }
 
   private setSession(result: Login): void {

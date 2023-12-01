@@ -15,6 +15,10 @@ export interface SetupMFA {
   otp_secret: string;
 }
 
+export interface MFARecover {
+  msg: string;
+}
+
 export interface ChangePassword {
   msg: string;
 }
