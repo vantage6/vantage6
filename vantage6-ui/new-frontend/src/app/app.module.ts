@@ -79,6 +79,8 @@ import { MfaCodeComponent } from './pages/auth/mfa-code/mfa-code.component';
 import { MfaRecoverComponent } from './pages/auth/mfa-recover/mfa-recover.component';
 import { MfaLostComponent } from './pages/auth/mfa-lost/mfa-lost.component';
 import { AlertWithButtonComponent } from './components/alert-with-button/alert-with-button.component';
+import { PasswordLostComponent } from './pages/auth/password-lost/password-lost.component';
+import { PasswordRecoverComponent } from './pages/auth/password-recover/password-recover.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -133,7 +135,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     MfaCodeComponent,
     MfaRecoverComponent,
     MfaLostComponent,
-    AlertWithButtonComponent
+    AlertWithButtonComponent,
+    PasswordLostComponent,
+    PasswordRecoverComponent
   ],
   imports: [
     BrowserModule,

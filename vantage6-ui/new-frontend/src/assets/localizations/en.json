@@ -228,7 +228,8 @@
   "login": {
     "title": "Login",
     "username": "Username",
-    "password": "Password"
+    "password": "Password",
+    "forgot-password": "Forgot your password?"
   },
   "mfa": {
     "enter": {

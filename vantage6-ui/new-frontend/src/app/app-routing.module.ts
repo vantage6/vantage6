@@ -30,6 +30,8 @@ import { SetupMfaComponent } from './pages/auth/setup-mfa/setup-mfa.component';
 import { MfaCodeComponent } from './pages/auth/mfa-code/mfa-code.component';
 import { MfaLostComponent } from './pages/auth/mfa-lost/mfa-lost.component';
 import { MfaRecoverComponent } from './pages/auth/mfa-recover/mfa-recover.component';
+import { PasswordLostComponent } from './pages/auth/password-lost/password-lost.component';
+import { PasswordRecoverComponent } from './pages/auth/password-recover/password-recover.component';
 
 const routes: Routes = [
   {
@@ -39,6 +41,14 @@ const routes: Routes = [
       {
         path: routerConfig.login,
         component: LoginComponent
+      },
+      {
+        path: routerConfig.passwordLost,
+        component: PasswordLostComponent
+      },
+      {
+        path: routerConfig.passwordRecover,
+        component: PasswordRecoverComponent
       },
       {
         path: routerConfig.mfaCode,

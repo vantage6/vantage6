@@ -16,6 +16,7 @@ export class LoginComponent {
     username: ['', Validators.required],
     password: ['', Validators.required]
   });
+  routes = routePaths;
 
   constructor(
     private router: Router,
