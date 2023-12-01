@@ -25,7 +25,7 @@ export class MfaLostComponent implements OnInit {
   }
 
   async onSubmit(): Promise<void> {
-    const response_msg = await this.authService.mfaLost();
+    const response_msg = await this.authService.MFALost();
     if (response_msg) {
       this.executed_request = true;
       this.request_msg = response_msg;

@@ -13,12 +13,12 @@ export interface LoginSubmit {
 export interface SetupMFA {
   qr_uri: string;
   otp_secret: string;
-}
-
-export interface MFARecover {
   msg: string;
 }
 
+export interface MFARecoverLost {
+  msg: string;
+}
 export interface ChangePassword {
   msg: string;
 }

@@ -252,6 +252,13 @@
       "request-token": "Request reset token",
       "enter-token": "Enter your reset token",
       "already-reset": "Already have a reset token?"
+    },
+    "recover": {
+      "title": "Enter your reset token",
+      "message": "Enter the reset token you received at your registered email address.",
+      "token-field": "Reset token",
+      "submit": "Submit",
+      "error": "Resetting two-factor authentication failed: {{error}}"
     }
   },
   "change-password": {

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { LoginForm } from '../models/forms/login-form.model';
+import { LoginForm, ResetTokenForm } from '../models/forms/login-form.model';
 import { ApiService } from './api.service';
-import { AuthResult, ChangePassword, Login, LoginSubmit, MFARecover, SetupMFA } from '../models/api/auth.model';
+import { AuthResult, ChangePassword, Login, LoginSubmit, MFARecoverLost, SetupMFA } from '../models/api/auth.model';
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_ID } from '../models/constants/sessionStorage';
 import { PermissionService } from './permission.service';
 
@@ -72,19 +72,29 @@ export class AuthService {
     });
   }
 
-  async mfaLost(): Promise<string> {
+  async MFALost(): Promise<string> {
     const data = {
-      // TODO remove this!
-      username: 'just somethiq',
-      // username: this.username,
+      username: this.username,
       password: this.password
     };
-    const result = await this.apiService.postForApi<MFARecover>('/recover/2fa/lost', data);
-    console.log(result);
+    const result = await this.apiService.postForApi<MFARecoverLost>('/recover/2fa/lost', data);
     if (result.msg) {
       return result.msg;
     }
     return '';
+  }
+
+  async MFARecover(resetForm: ResetTokenForm): Promise<boolean> {
+    const data = {
+      reset_token: resetForm.resetToken
+    };
+    const result = await this.apiService.postForApi<SetupMFA>('/recover/2fa/reset', data);
+    if ('qr_uri' in result) {
+      this.qr_uri = result.qr_uri;
+      this.otp_code = result.otp_secret;
+      return true;
+    }
+    return false;
   }
 
   private setSession(result: Login): void {

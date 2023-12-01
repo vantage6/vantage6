@@ -3,3 +3,7 @@ export interface LoginForm {
   password: string;
   mfaCode?: string;
 }
+
+export interface ResetTokenForm {
+  resetToken: string;
+}
