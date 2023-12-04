@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Organization } from 'src/app/models/api/organization.model';
 import { RoleForm } from 'src/app/models/api/role.model';
@@ -20,7 +20,7 @@ export class RoleFormComponent {
   form = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
     description: '',
-    organization_ids: [[], [Validators.required]]
+    organization_id: [0, [Validators.required]]
   });
 
   selectedRules: number[] = [];
@@ -35,7 +35,7 @@ export class RoleFormComponent {
     this.cancelled.emit();
   }
 
-  public handleChangedSelection(rules: Rule[]): void {
+  handleChangedSelection(rules: Rule[]): void {
     this.selectedRules = rules ? rules.map((rule) => rule.id) : [];
   }
 }

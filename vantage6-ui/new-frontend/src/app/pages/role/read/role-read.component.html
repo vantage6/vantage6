@@ -2,6 +2,16 @@
   <app-page-header [title]="role ? role.name : ''"> </app-page-header>
   <mat-card>
     <mat-card-content>
+      <div class="data-list">
+        <div class="data-list__item">
+          <b>{{ "role-read.organization" | translate }}</b>
+          <span>{{ roleOrganization?.name || "role-read.all-organizations" | translate }}</span>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  <mat-card>
+    <mat-card-content>
       <mat-tab-group dynamicHeight mat-stretch-tabs="false" mat-align-tabs="start">
         <mat-tab label="{{ 'role-read.tab.permissions' | translate }}">
           <div class="role-read__tab-content">

@@ -159,14 +159,18 @@
     "formlabels": {
       "name": "Name",
       "description": "Description",
-      "organizations": "Organizations"
-    }
+      "organization": "Organization"
+    },
+    "all-organizations": "All organizations"
   },
   "role-list": {
-    "title": "roles"
+    "title": "roles",
+    "name": "Role"
   },
   "role-read": {
     "title": "view",
+    "organization": "Organization",
+    "all-organizations": "All organizations",
     "no-users": "No users have been assigned to the selected role.",
     "edit-permissions": "Edit permissions",
     "tab": {

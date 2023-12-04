@@ -8,8 +8,8 @@
     <input matInput type="text" formControlName="description" />
   </mat-form-field>
   <mat-form-field subscriptSizing="dynamic">
-    <mat-label>{{ "role-create.formLabels.organizations" | translate }}</mat-label>
-    <mat-select formControlName="organization_ids" multiple>
+    <mat-label>{{ "role-create.formlabels.organization" | translate }}</mat-label>
+    <mat-select formControlName="organization_id">
       <mat-option *ngFor="let organization of organizations | orderBy: 'name'" [value]="organization.id">
         {{ organization.name }}
       </mat-option>

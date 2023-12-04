@@ -47,13 +47,13 @@ export interface RolePatch {
 export interface RoleForm {
   name: string;
   description: string;
-  organization_ids: number[];
+  organization_id: number;
   rules: number[];
 }
 
 export interface RoleCreate {
   name: string;
   description: string;
-  organization_id?: number;
+  organization_id: number;
   rules: number[];
 }

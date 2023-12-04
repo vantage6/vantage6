@@ -1,6 +1,8 @@
 import { Component, HostBinding, OnInit } from '@angular/core';
+import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
@@ -18,6 +20,7 @@ export class RoleListComponent implements OnInit {
   isLoading: boolean = true;
   canCreate: boolean = false;
   table?: TableData;
+  pagination: PaginationLinks | null = null;
   routes = routePaths;
 
   constructor(
@@ -33,25 +36,31 @@ export class RoleListComponent implements OnInit {
   }
 
   private async initData() {
-    await this.getRoles();
+    await this.getRoles(1);
     this.isLoading = false;
   }
 
-  private async getRoles() {
-    const result = await this.roleService.getRoles();
+  private async getRoles(pageIndex: number) {
+    const result = await this.roleService.getPaginatedRoles(pageIndex);
 
     this.table = {
-      columns: [{ id: 'name', label: this.translateService.instant('role.name') }],
-      rows: result.map((_) => ({
+      columns: [{ id: 'name', label: this.translateService.instant('role-list.name') }],
+      rows: result.data.map((_) => ({
         id: _.id.toString(),
         columnData: {
           name: _.name
         }
       }))
     };
+
+    this.pagination = result.links;
   }
 
   handleTableClick(id: string): void {
     this.router.navigate([routePaths.role, id]);
+  }
+
+  async handlePageEvent(e: PageEvent) {
+    await this.getRoles(e.pageIndex + 1);
   }
 }

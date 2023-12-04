@@ -17,6 +17,11 @@ export class RoleService {
     return result.data;
   }
 
+  async getPaginatedRoles(currentPage: number, parameters?: GetRoleParameters): Promise<Pagination<Role>> {
+    const result = await this.apiService.getForApiWithPagination<Role>(`/role`, currentPage, parameters);
+    return result;
+  }
+
   async getRole(roleID: string, lazyProperties: RoleLazyProperties[] = []): Promise<Role> {
     const result = await this.apiService.getForApi<BaseRole>(`/role/${roleID}`);
     const role: Role = { ...result, rules: [], users: [] };
@@ -27,15 +32,9 @@ export class RoleService {
 
   async createRole(roleForm: RoleForm): Promise<Role> {
     const roleCreate: RoleCreate = {
-      name: roleForm.name,
-      description: roleForm.description,
-      rules: roleForm.rules
+      ...roleForm
     };
-    const role = await this.apiService.postForApi<Role>(`/role`, roleCreate);
-
-    /* Assign role to organisations. */
-
-    return role;
+    return await this.apiService.postForApi<Role>(`/role`, roleCreate);
   }
 
   async patchRole(role: Role): Promise<Role | null> {

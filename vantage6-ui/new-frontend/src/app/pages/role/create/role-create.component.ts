@@ -37,7 +37,8 @@ export class RoleCreateComponent implements OnInit {
     try {
       await this.roleService.createRole(roleForm);
     } catch (error) {
-      console.error('bla');
+      /* Error handling */
+    } finally {
       this.router.navigate([routePaths.roles]);
     }
 

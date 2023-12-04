@@ -1,9 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { Organization } from 'src/app/models/api/organization.model';
 import { Role, RoleLazyProperties } from 'src/app/models/api/role.model';
 import { OperationType, ResourceType, Rule, ScopeType } from 'src/app/models/api/rule.model';
 import { TableData } from 'src/app/models/application/table.model';
+import { OrganizationService } from 'src/app/services/organization.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { RoleService } from 'src/app/services/role.service';
 import { RuleService } from 'src/app/services/rule.service';
@@ -21,6 +23,7 @@ export class RoleReadComponent implements OnInit {
   constructor(
     private roleService: RoleService,
     private ruleService: RuleService,
+    private organizationService: OrganizationService,
     private translateService: TranslateService,
     private permissionService: PermissionService
   ) {}
@@ -31,6 +34,7 @@ export class RoleReadComponent implements OnInit {
   canEdit = false;
   role?: Role;
   roleRules: Rule[] = [];
+  roleOrganization?: Organization;
   allRules: Rule[] = [];
   userTable?: TableData;
 
@@ -59,6 +63,10 @@ export class RoleReadComponent implements OnInit {
 
   private async initData(): Promise<void> {
     this.role = await this.roleService.getRole(this.id, [RoleLazyProperties.Users]);
+    const organizationId = this.role.organization?.id.toString();
+    if (organizationId) {
+      this.roleOrganization = await this.organizationService.getOrganization(organizationId as string);
+    }
     this.userTable = {
       columns: [
         { id: 'username', label: this.translateService.instant('user.username') },
