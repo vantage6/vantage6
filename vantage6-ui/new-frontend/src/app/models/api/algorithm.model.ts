@@ -1,7 +1,8 @@
 export enum ArgumentType {
   String = 'str',
   Integer = 'int',
-  Float = 'float'
+  Float = 'float',
+  Json = 'json'
 }
 
 export enum OutputType {

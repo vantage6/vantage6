@@ -1,7 +1,23 @@
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 import { AlgorithmFunction, ArgumentType } from 'src/app/models/api/algorithm.model';
 import { TaskDatabase } from 'src/app/models/api/task.models';
+
+function jsonValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const error: ValidationErrors = { jsonInvalid: true };
+
+    try {
+      JSON.parse(control.value);
+    } catch (e) {
+      control.setErrors(error);
+      return error;
+    }
+
+    control.setErrors(null);
+    return null;
+  };
+}
 
 export const addParameterFormControlsForFunction = (func: AlgorithmFunction, form: FormGroup) => {
   func?.arguments.forEach((argument) => {
@@ -13,6 +29,9 @@ export const addParameterFormControlsForFunction = (func: AlgorithmFunction, for
     }
     if (argument.type === ArgumentType.Float) {
       form.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(floatRegex)]));
+    }
+    if (argument.type === ArgumentType.Json) {
+      form.addControl(argument.name, new FormControl(null, [Validators.required, jsonValidator()]));
     }
   });
 };

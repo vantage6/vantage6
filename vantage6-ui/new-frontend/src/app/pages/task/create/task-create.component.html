@@ -120,6 +120,7 @@
             <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
             <ng-container *ngFor="let argument of function?.arguments">
               <b>{{ argument.description }}</b>
+              <p *ngIf="argument.type === argumentType.Json">Please provide valid JSON input.</p>
               <mat-form-field subscriptSizing="dynamic">
                 <mat-label>{{ argument.name }}</mat-label>
                 <input
