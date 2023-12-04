@@ -257,14 +257,14 @@ class RecoverPasswordInputSchema(Schema):
     username = fields.String(validate=Length(max=_MAX_LEN_NAME))
 
     @validates_schema
-    def validate_email_or_username(self, data: dict, **kwargs):
+    def validate_email_or_username(self, data: dict, **kwargs) -> None:
         """
         Validate the input, which should contain either an email or username.
 
         Parameters
         ----------
         data : dict
-            The input data.
+            The input data. Should contain an email or username.
 
         Raises
         ------
@@ -289,14 +289,14 @@ class Recover2FAInputSchema(Schema):
         min=1, max=_MAX_LEN_PW))
 
     @validates_schema
-    def validate_email_or_username(self, data: dict, **kwargs):
+    def validate_email_or_username(self, data: dict, **kwargs) -> None:
         """
         Validate the input, which should contain either an email or username.
 
         Parameters
         ----------
         data : dict
-            The input data.
+            The input data. Should contain an email or username.
 
         Raises
         ------
