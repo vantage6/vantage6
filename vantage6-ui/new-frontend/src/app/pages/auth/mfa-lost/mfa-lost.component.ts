@@ -10,7 +10,7 @@ import { AuthService } from 'src/app/services/auth.service';
 })
 export class MfaLostComponent implements OnInit {
   executed_request = false;
-  request_msg = '';
+  responseMsg = '';
   routes = routePaths;
 
   constructor(
@@ -25,10 +25,10 @@ export class MfaLostComponent implements OnInit {
   }
 
   async onSubmit(): Promise<void> {
-    const response_msg = await this.authService.MFALost();
-    if (response_msg) {
+    const responseMsg = await this.authService.MFALost();
+    if (responseMsg) {
       this.executed_request = true;
-      this.request_msg = response_msg;
+      this.responseMsg = responseMsg;
     }
   }
 }

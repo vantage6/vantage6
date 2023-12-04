@@ -4,6 +4,17 @@ export interface LoginForm {
   mfaCode?: string;
 }
 
-export interface ResetTokenForm {
+export interface PasswordResetTokenForm {
   resetToken: string;
+  password: string;
+  passwordRepeat: string;
+}
+
+export interface MFAResetTokenForm {
+  resetToken: string;
+}
+
+export interface LostPasswordForm {
+  email?: string;
+  username?: string;
 }

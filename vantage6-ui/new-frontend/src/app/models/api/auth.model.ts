@@ -16,9 +16,15 @@ export interface SetupMFA {
   msg: string;
 }
 
-export interface MFARecoverLost {
+export interface LoginRecoverLost {
   msg: string;
 }
+
+export interface LoginRecoverSubmit {
+  username?: string;
+  email?: string;
+}
+
 export interface ChangePassword {
   msg: string;
 }

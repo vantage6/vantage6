@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { LoginForm, ResetTokenForm } from '../models/forms/login-form.model';
+import { LoginForm, LostPasswordForm, MFAResetTokenForm, PasswordResetTokenForm } from '../models/forms/login-form.model';
 import { ApiService } from './api.service';
-import { AuthResult, ChangePassword, Login, LoginSubmit, MFARecoverLost, SetupMFA } from '../models/api/auth.model';
+import { AuthResult, ChangePassword, Login, LoginSubmit, LoginRecoverLost, SetupMFA, LoginRecoverSubmit } from '../models/api/auth.model';
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_ID } from '../models/constants/sessionStorage';
 import { PermissionService } from './permission.service';
 
@@ -72,19 +72,46 @@ export class AuthService {
     });
   }
 
-  async MFALost(): Promise<string> {
-    const data = {
-      username: this.username,
-      password: this.password
-    };
-    const result = await this.apiService.postForApi<MFARecoverLost>('/recover/2fa/lost', data);
+  async passwordLost(forgotPasswordForm: LostPasswordForm): Promise<string> {
+    const data: LoginRecoverSubmit = {};
+    if (forgotPasswordForm.email) {
+      data.email = forgotPasswordForm.email;
+    }
+    if (forgotPasswordForm.username) {
+      data.username = forgotPasswordForm.username;
+    }
+    const result = await this.apiService.postForApi<LoginRecoverLost>('/recover/lost', data);
     if (result.msg) {
       return result.msg;
     }
     return '';
   }
 
-  async MFARecover(resetForm: ResetTokenForm): Promise<boolean> {
+  async passwordRecover(resetForm: PasswordResetTokenForm): Promise<boolean> {
+    const data = {
+      reset_token: resetForm.resetToken,
+      password: resetForm.password
+    };
+    const result = await this.apiService.postForApi<ChangePassword>('/recover/reset', data);
+    if (result.msg) {
+      return true;
+    }
+    return false;
+  }
+
+  async MFALost(): Promise<string> {
+    const data = {
+      username: this.username,
+      password: this.password
+    };
+    const result = await this.apiService.postForApi<LoginRecoverLost>('/recover/2fa/lost', data);
+    if (result.msg) {
+      return result.msg;
+    }
+    return '';
+  }
+
+  async MFARecover(resetForm: MFAResetTokenForm): Promise<boolean> {
     const data = {
       reset_token: resetForm.resetToken
     };

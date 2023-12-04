@@ -9,7 +9,7 @@
     <button mat-flat-button color="primary" (click)="onSubmit()">{{ "mfa.lost.request-token" | translate }}</button>
     <app-alert-with-button
       *ngIf="executed_request"
-      label="{{ request_msg }}"
+      label="{{ responseMsg }}"
       buttonText="{{ 'mfa.lost.enter-token' | translate }}"
       buttonLink="{{ routes.mfaRecover }}"
     ></app-alert-with-button>
