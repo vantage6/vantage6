@@ -5,7 +5,8 @@ import { Version } from '../../models/api/version.model';
 
 @Component({
   selector: 'app-home',
-  templateUrl: './home.component.html'
+  templateUrl: './home.component.html',
+  styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
   serverUrl = environment.server_url;
