@@ -257,7 +257,20 @@ class RecoverPasswordInputSchema(Schema):
     username = fields.String(validate=Length(max=_MAX_LEN_NAME))
 
     @validates_schema
-    def validate_email_or_username(self, data, **kwargs):
+    def validate_email_or_username(self, data: dict, **kwargs):
+        """
+        Validate the input, which should contain either an email or username.
+
+        Parameters
+        ----------
+        data : dict
+            The input data.
+
+        Raises
+        ------
+        ValidationError
+            If the input does not contain an email or username.
+        """
         if not ('email' in data or 'username' in data):
             raise ValidationError('Email or username is required')
 
@@ -268,10 +281,12 @@ class ResetPasswordInputSchema(_PasswordValidationSchema):
                                 validate=Length(max=_MAX_LEN_STR_LONG))
 
 
-class Recover2FAInputSchema(_PasswordValidationSchema):
+class Recover2FAInputSchema(Schema):
     """ Schema for validating input for recovering 2FA. """
     email = fields.Email()
     username = fields.String(validate=Length(max=_MAX_LEN_NAME))
+    password = fields.String(required=True, validate=Length(
+        min=1, max=_MAX_LEN_PW))
 
     @validates_schema
     def validate_email_or_username(self, data: dict, **kwargs):
