@@ -1,6 +1,18 @@
 Release notes
 =============
 
+4.1.2
+-----
+
+*14 November 2023*
+
+- **Security**
+
+ - Improved check which algorithms are allowed - no longer trusting an algorithm
+   with a `parent_id` by default (
+   `advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-vc3v-ppc7-v486>`_,
+   `commit <https://github.com/vantage6/vantage6/commit/92159580f11a17cd2e06f73f636088bbcbfe9cbc>`_).
+
 4.1.1
 -----
 

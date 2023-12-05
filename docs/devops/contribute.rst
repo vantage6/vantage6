@@ -215,30 +215,6 @@ Finally, push your commits to your fork on Github and create a pull request.
 Please apply the `PEP8 <https://peps.python.org/pep-0008/>`_ standards to your
 code.
 
-Local test setup
-^^^^^^^^^^^^^^^^
-To test your code changes, it may be useful to create a local test setup.
-This can be done by using the commands ``v6 server`` and ``v6 node`` in
-combination with the options ``--mount-src`` and optionally ``--image``.
-
-* The ``--mount-src`` option will run your current code in the docker image.
-  The provided path should point towards the root folder of the `vantage6
-  repository <https://github.com/vantage6/vantage6>`_.
-* The ``--image`` can be used to point towards a custom build infrastructure
-  image. Note that when your code update includes dependency upgrades you
-  need to build a custom infrastructure image as the 'old' image does not
-  contain these and the ``--mount-src`` option will only overwrite the
-  source and not re-install dependencies.
-
-.. note::
-
-  If you are using Docker Desktop (which is usually the case if you are on
-  Windows or MacOS) and want to setup a test environment, you should use
-  ``http://host.docker.interal`` for the server address in the node
-  configuration file. You should not use ``http://localhost`` in that case as
-  that points to the localhost within the docker container instead of the
-  system-wide localhost.
-
 Unit tests & coverage
 ^^^^^^^^^^^^^^^^^^^^^
 You can execute unit tests using the ``test`` command in the Makefile:
@@ -256,6 +232,35 @@ one that is failing), you can use a command like:
 
 This command assumes you are in the directory above ``tests_folder``. If you are
 inside the ``tests_folder``, then you should remove that part.
+
+Verifying local code changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+While working on a new feature, it can be useful to run a server and/or nodes
+locally with your code changes to verify that it does what you expect it to do.
+This can be done by using the commands ``v6 server`` and ``v6 node`` in
+combination with the options ``--mount-src`` and optionally ``--image``.
+
+* The ``--mount-src /path/to/vantage6`` option will overwrite the code that
+  the server/node runs with your local code when running the docker image.
+  The provided path should point towards the root folder of the `vantage6
+  repository <https://github.com/vantage6/vantage6>`_ - where you have your
+  local changes.
+* The ``--image <url_to_docker_image>`` can be used to point towards a custom
+  Docker image for the node or server. This is mostly useful when your code
+  update includes dependency upgrades. Then, you need to build a custom
+  infrastructure image as the 'old' image does not contain the new depencey and
+  the ``--mount-src`` option will only overwrite the source code and not
+  re-install dependencies.
+
+.. note::
+
+  If you are using Docker Desktop (which is usually the case if you are on
+  Windows or MacOS) and want to setup a test environment, you should use
+  ``http://host.docker.interal`` for the server address in the node
+  configuration file. You should not use ``http://localhost`` in that case as
+  that points to the localhost within the docker container instead of the
+  system-wide localhost.
 
 Pull Request
 ^^^^^^^^^^^^
