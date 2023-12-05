@@ -396,7 +396,7 @@ us create a task that runs the central part of the
       name="an-awesome-task",
       image="harbor2.vantage6.ai/demo/average",
       description='',
-      input=input_,
+      input_=input_,
       databases=[
          {'label': 'default'}
       ]
@@ -447,7 +447,7 @@ central part of the algorithm will normally do:
                                      name="an-awesome-task",
                                      image="harbor2.vantage6.ai/demo/average",
                                      description='',
-                                     input=input_)
+                                     input_=input_)
 
 **Inspecting the results**
 
