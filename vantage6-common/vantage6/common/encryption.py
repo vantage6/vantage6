@@ -346,7 +346,7 @@ class RSACryptor(CryptorBase):
             padding.PKCS1v15()
         )
 
-        self.log.info(f'Decrypted shared key: {shared_key}')
+        self.log.debug('Decrypted shared key: %s', shared_key)
 
         # Use the shared key for symmetric encryption/decryption of the payload
         cipher = Cipher(

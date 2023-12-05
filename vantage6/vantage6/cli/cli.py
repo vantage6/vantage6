@@ -26,6 +26,8 @@ from vantage6.cli.dev.start import start_demo_network
 from vantage6.cli.dev.stop import stop_demo_network
 from vantage6.cli.algorithm.create import cli_algorithm_create
 from vantage6.cli.algorithm.update import cli_algorithm_update
+from vantage6.cli.test.feature_tester import cli_test_features
+from vantage6.cli.test.integration_test import cli_test_integration
 
 
 # Define the server group
@@ -100,6 +102,19 @@ cli_algorithm.add_command(cli_algorithm_create, name="create")
 cli_algorithm.add_command(cli_algorithm_update, name="update")
 
 
+# Define the test group
+@click.group(name="test")
+def cli_test() -> None:
+    """
+    Execute tests on your vantage6 infrastructure.
+    """
+
+
+# Define the commands for the test group
+cli_test.add_command(cli_test_features, name="feature-test")
+cli_test.add_command(cli_test_integration, name="integration-test")
+
+
 # Define the overall group
 @click.group(name='cli')
 def cli_complete() -> None:
@@ -116,3 +131,4 @@ cli_complete.add_command(cli_node)
 cli_complete.add_command(cli_server)
 cli_complete.add_command(cli_dev)
 cli_complete.add_command(cli_algorithm)
+cli_complete.add_command(cli_test)
