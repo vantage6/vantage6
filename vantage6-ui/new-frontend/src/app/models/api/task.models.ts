@@ -88,7 +88,6 @@ interface TaskParameter {
 
 export interface TaskResult {
   id: number;
-  // object if result is a (decoded) json object, string if result is an (encoded) string
   result?: string;
   decoded_result?: object;
 }
