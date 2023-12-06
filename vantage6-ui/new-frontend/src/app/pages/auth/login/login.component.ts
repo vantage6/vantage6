@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { AuthResult } from 'src/app/models/api/auth.model';
 import { LoginForm } from 'src/app/models/forms/login-form.model';
 import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
@@ -15,6 +16,7 @@ export class LoginComponent {
     username: ['', Validators.required],
     password: ['', Validators.required]
   });
+  routes = routePaths;
 
   constructor(
     private router: Router,
@@ -25,9 +27,13 @@ export class LoginComponent {
   async onSubmit(): Promise<void> {
     if (!this.loginForm.valid) return;
 
-    const isAuthenticated = await this.authService.login(this.loginForm.value as LoginForm);
-    if (isAuthenticated) {
+    const authStatus = await this.authService.login(this.loginForm.value as LoginForm);
+    if (authStatus == AuthResult.Success) {
       this.router.navigate([routePaths.home]);
+    } else if (authStatus == AuthResult.MFACode) {
+      this.router.navigate([routePaths.mfaCode]);
+    } else if (authStatus == AuthResult.SetupMFA) {
+      this.router.navigate([routePaths.setupMFA]);
     }
   }
 }

@@ -1,0 +1,17 @@
+<mat-card class="auth-card">
+  <mat-card-header>
+    <mat-card-title>{{ "mfa.recover.title" | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <p>
+      {{ "mfa.recover.message" | translate }}
+    </p>
+    <form class="form" [formGroup]="recoverForm" (ngSubmit)="onSubmit()">
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ "mfa.recover.token-field" | translate }}</mat-label>
+        <input matInput type="text" formControlName="resetToken" />
+      </mat-form-field>
+      <button mat-flat-button type="submit" color="primary" [disabled]="!recoverForm.valid">{{ "mfa.recover.submit" | translate }}</button>
+    </form>
+  </mat-card-content>
+</mat-card>

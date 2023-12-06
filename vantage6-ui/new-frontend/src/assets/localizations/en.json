@@ -229,7 +229,55 @@
   "login": {
     "title": "Login",
     "username": "Username",
-    "password": "Password"
+    "password": "Password",
+    "forgot-password": "Forgot your password?",
+    "lost": {
+      "title": "Lost your password?",
+      "instruction": "Fill in your username *or* email address in order to reset your password.",
+      "request-token": "Request reset token",
+      "enter-token": "Enter your reset token",
+      "already-reset": "Already have a reset token?"
+    },
+    "recover": {
+      "title": "Enter your reset token and new password",
+      "message": "Enter the reset token you received at your registered email address and choose a new password.",
+      "token-field": "Reset token",
+      "new-password": "New password",
+      "new-password-repeat": "Repeat new password",
+      "submit": "Submit",
+      "error": "Resetting password failed: {{error}}"
+    }
+  },
+  "mfa": {
+    "enter": {
+      "title": "Enter two-factor authentication code",
+      "code": "Code"
+    },
+    "setup": {
+      "title": "Setup two-factor authentication",
+      "message": "Your system administrator requires you to set up two-factor authentication. Scan the QR code below with your favorite authenticator app to set this up.",
+      "recommend": "You may use your favorite authentication app. We recommend using Lastpass or Google authenticator.",
+      "done": "I'm done!",
+      "help": "I need help!",
+      "manual": {
+        "title": "Setup two-factor authentication manually",
+        "message": "If you are having difficulties scanning the QR code, please enter the following code manually in your authentication app:"
+      }
+    },
+    "lost": {
+      "title": "Lost your code?",
+      "instruction": "In order to reset your two-factor authentication code, you need to get a reset token. You will receive this at your registered email address.",
+      "request-token": "Request reset token",
+      "enter-token": "Enter your reset token",
+      "already-reset": "Already have a reset token?"
+    },
+    "recover": {
+      "title": "Enter your reset token",
+      "message": "Enter the reset token you received at your registered email address.",
+      "token-field": "Reset token",
+      "submit": "Submit",
+      "error": "Resetting two-factor authentication failed: {{error}}"
+    }
   },
   "change-password": {
     "title": "Change password",

@@ -1,0 +1,16 @@
+<mat-card class="auth-card">
+  <mat-card-header>
+    <mat-card-title>{{ "mfa.setup.title" | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <p>
+      <strong>{{ "mfa.setup.message" | translate }}</strong>
+    </p>
+    <p>{{ "mfa.setup.recommend" | translate }}</p>
+
+    <qrcode [qrdata]="getQRUrl()" [width]="256" [errorCorrectionLevel]="'M'"></qrcode>
+
+    <button mat-flat-button type="submit" color="primary" [routerLink]="[routes.mfaCode]">{{ "mfa.setup.done" | translate }}</button>
+    <button mat-flat-button type="submit" (click)="showOtpCode()">{{ "mfa.setup.help" | translate }}</button>
+  </mat-card-content>
+</mat-card>

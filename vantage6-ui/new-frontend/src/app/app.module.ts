@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { ReactiveFormsModule } from '@angular/forms';
+import { QRCodeModule } from 'angularx-qrcode';
 
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
@@ -28,7 +29,7 @@ import { enCA } from 'date-fns/locale';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { LoginComponent } from './pages/login/login.component';
+import { LoginComponent } from './pages/auth/login/login.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -66,13 +67,20 @@ import { UserFormComponent } from './components/forms/user-form/user-form.compon
 import { UserEditComponent } from './pages/user/edit/user-edit.component';
 import { VisualizeHistogramComponent } from './components/visualize-histogram/visualize-histogram.component';
 import { PreprocessingStepComponent } from './pages/task/create/steps/preprocessing-step/preprocessing-step.component';
-import { ChangePasswordComponent } from './pages/change-password/change-password.component';
+import { ChangePasswordComponent } from './pages/auth/change-password/change-password.component';
 import { MessageDialogComponent } from './components/dialogs/message-dialog/message-dialog.component';
 import { FilterStepComponent } from './pages/task/create/steps/filter-step/filter-step.component';
 import { NumberOnlyDirective } from './directives/numberOnly.directive';
 import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
 import { TemplateTaskCreateComponent } from './pages/template-task/create/template-task-create.component';
 import { DatabaseStepComponent } from './pages/task/create/steps/database-step/database-step.component';
+import { SetupMfaComponent } from './pages/auth/setup-mfa/setup-mfa.component';
+import { MfaCodeComponent } from './pages/auth/mfa-code/mfa-code.component';
+import { MfaRecoverComponent } from './pages/auth/mfa-recover/mfa-recover.component';
+import { MfaLostComponent } from './pages/auth/mfa-lost/mfa-lost.component';
+import { AlertWithButtonComponent } from './components/alert-with-button/alert-with-button.component';
+import { PasswordLostComponent } from './pages/auth/password-lost/password-lost.component';
+import { PasswordRecoverComponent } from './pages/auth/password-recover/password-recover.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -122,7 +130,14 @@ export function HttpLoaderFactory(http: HttpClient) {
     NumberOnlyDirective,
     BreadcrumbsComponent,
     TemplateTaskCreateComponent,
-    DatabaseStepComponent
+    DatabaseStepComponent,
+    SetupMfaComponent,
+    MfaCodeComponent,
+    MfaRecoverComponent,
+    MfaLostComponent,
+    AlertWithButtonComponent,
+    PasswordLostComponent,
+    PasswordRecoverComponent
   ],
   imports: [
     BrowserModule,
@@ -157,7 +172,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     MatSnackBarModule,
     MatStepperModule,
     MatTableModule,
-    MatToolbarModule
+    MatToolbarModule,
+    QRCodeModule
   ],
   providers: [
     {
