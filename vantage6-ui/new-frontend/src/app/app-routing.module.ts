@@ -26,6 +26,9 @@ import { UserEditComponent } from './pages/user/edit/user-edit.component';
 import { ChangePasswordComponent } from './pages/auth/change-password/change-password.component';
 import { chosenCollaborationGuard } from './guards/chosenCollaboration.guard';
 import { TemplateTaskCreateComponent } from './pages/template-task/create/template-task-create.component';
+import { RoleListComponent } from './pages/role/list/role-list.component';
+import { RoleReadComponent } from './pages/role/read/role-read.component';
+import { RoleCreateComponent } from './pages/role/create/role-create.component';
 import { SetupMfaComponent } from './pages/auth/setup-mfa/setup-mfa.component';
 import { MfaCodeComponent } from './pages/auth/mfa-code/mfa-code.component';
 import { MfaLostComponent } from './pages/auth/mfa-lost/mfa-lost.component';
@@ -198,6 +201,30 @@ const routes: Routes = [
         canActivate: [authenticationGuard()],
         data: {
           crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-read.title']]
+        }
+      },
+      {
+        path: routerConfig.roles,
+        component: RoleListComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['role-list.title']]
+        }
+      },
+      {
+        path: routerConfig.roleCreate,
+        component: RoleCreateComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['role-list.title', routePaths.roles], ['role-create.title']]
+        }
+      },
+      {
+        path: routerConfig.role,
+        component: RoleReadComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['role-list.title', routePaths.roles], ['role-read.title']]
         }
       },
       {

@@ -1,0 +1,62 @@
+<ng-container *ngIf="showData">
+  <app-page-header [title]="role ? role.name : ''"> </app-page-header>
+  <mat-card>
+    <mat-card-content>
+      <div class="data-list">
+        <div class="data-list__item">
+          <b>{{ "role-read.organization" | translate }}</b>
+          <span>{{ roleOrganization?.name || "role-read.all-organizations" | translate }}</span>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  <mat-card>
+    <mat-card-content>
+      <mat-tab-group dynamicHeight mat-stretch-tabs="false" mat-align-tabs="start">
+        <mat-tab label="{{ 'role-read.tab.permissions' | translate }}">
+          <div class="role-read__tab-content">
+            <div *ngIf="editEnabled" class="role-read__buttons">
+              <button *ngIf="!isEditing" mat-flat-button (click)="handleEnterEditMode()">
+                <mat-icon>edit</mat-icon>
+                <span>{{ "role-read.edit-permissions" | translate }}</span>
+              </button>
+            </div>
+
+            <app-permissions-matrix
+              [fixedSelected]="fixedSelectedRules"
+              [preselected]="preselectedRules"
+              [selectable]="selectableRules"
+              (changed)="handleChangedSelection($event)"
+            >
+            </app-permissions-matrix>
+
+            <div *ngIf="isEditing" class="button-container role-read__submit-buttons">
+              <button mat-flat-button type="submit" color="primary" (click)="handleSubmitEdit()">{{ "general.submit" | translate }}</button>
+              <button mat-flat-button (click)="handleCancelEdit()">{{ "general.cancel" | translate }}</button>
+            </div>
+          </div>
+        </mat-tab>
+        <mat-tab label="{{ 'role-read.tab.users' | translate }}">
+          <div class="role-read__tab-content">
+            <app-table *ngIf="showUserTable" [data]="userTable"></app-table>
+            <p *ngIf="!showUserTable">{{ "role-read.no-users" | translate }}</p>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
+<ng-container *ngIf="isLoading">
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
+<ng-container *ngIf="errorMessage">
+  <mat-card>
+    <mat-card-content>
+      <p class="role-read__error-message">{{ errorMessage }}</p>
+    </mat-card-content>
+  </mat-card>
+</ng-container>

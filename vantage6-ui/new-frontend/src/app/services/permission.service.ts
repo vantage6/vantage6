@@ -6,6 +6,14 @@ import { BaseUser } from '../models/api/user.model';
 import { ApiService } from './api.service';
 import { USER_ID } from '../models/constants/sessionStorage';
 
+const requiredScopeLevel: Record<ScopeType, ScopeType[]> = {
+  [ScopeType.ANY]: [ScopeType.OWN, ScopeType.ORGANIZATION, ScopeType.COLLABORATION, ScopeType.GLOBAL],
+  [ScopeType.OWN]: [ScopeType.OWN, ScopeType.ORGANIZATION, ScopeType.COLLABORATION, ScopeType.GLOBAL],
+  [ScopeType.ORGANIZATION]: [ScopeType.ORGANIZATION, ScopeType.COLLABORATION, ScopeType.GLOBAL],
+  [ScopeType.COLLABORATION]: [ScopeType.COLLABORATION, ScopeType.GLOBAL],
+  [ScopeType.GLOBAL]: [ScopeType.GLOBAL]
+};
+
 @Injectable({
   providedIn: 'root'
 })
@@ -72,8 +80,27 @@ export class PermissionService {
     return scopes.some((s) => this.isAllowed(s, resource, operation));
   }
 
+  isAllowedToAssignRuleToRole(scope: ScopeType, resource: ResourceType, operation: OperationType): boolean {
+    const scopes: ScopeType[] = requiredScopeLevel[scope];
+
+    // check if user has at least one of the scopes
+    return scopes.some((s) => this.isAllowed(s, resource, operation));
+  }
+
   getActiveOrganizationID(): number | undefined {
     return this.activeUser?.organization.id;
+  }
+
+  /**
+   * Get all organizations that the user is allowed to perform 'operation' on 'resource'. E.g. all organizations for
+   * which it is possible to create a role.
+   * @param resource
+   * @param operation
+   * @returns
+   */
+  public getAllowedOrganizationsIds(resource: ResourceType, operation: OperationType): number[] {
+    const ids = this.activeUser?.permissions?.orgs_in_collabs.filter((orgId) => this.isAllowedForOrg(resource, operation, orgId));
+    return ids ?? [];
   }
 
   private async getUserRules() {

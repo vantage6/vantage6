@@ -23,6 +23,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatTableModule } from '@angular/material/table';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatDateFnsModule } from '@angular/material-date-fns-adapter';
 import { enCA } from 'date-fns/locale';
@@ -74,6 +75,12 @@ import { NumberOnlyDirective } from './directives/numberOnly.directive';
 import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
 import { TemplateTaskCreateComponent } from './pages/template-task/create/template-task-create.component';
 import { DatabaseStepComponent } from './pages/task/create/steps/database-step/database-step.component';
+import { RoleListComponent } from './pages/role/list/role-list.component';
+import { RoleReadComponent } from './pages/role/read/role-read.component';
+import { RoleCreateComponent } from './pages/role/create/role-create.component';
+import { PermissionsMatrixComponent } from './components/permissions-matrix/permissions-matrix.component';
+import { RoleFormComponent } from './components/role-form/role-form.component';
+import { OrderByPipe } from './pipes/order-by.pipe';
 import { SetupMfaComponent } from './pages/auth/setup-mfa/setup-mfa.component';
 import { MfaCodeComponent } from './pages/auth/mfa-code/mfa-code.component';
 import { MfaRecoverComponent } from './pages/auth/mfa-recover/mfa-recover.component';
@@ -131,6 +138,12 @@ export function HttpLoaderFactory(http: HttpClient) {
     BreadcrumbsComponent,
     TemplateTaskCreateComponent,
     DatabaseStepComponent,
+    RoleListComponent,
+    RoleReadComponent,
+    PermissionsMatrixComponent,
+    RoleCreateComponent,
+    RoleFormComponent,
+    OrderByPipe,
     SetupMfaComponent,
     MfaCodeComponent,
     MfaRecoverComponent,
@@ -171,6 +184,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     MatSidenavModule,
     MatSnackBarModule,
     MatStepperModule,
+    MatTabsModule,
     MatTableModule,
     MatToolbarModule,
     QRCodeModule

@@ -38,3 +38,8 @@ export interface Rule {
   name: ResourceType;
   scope: ScopeType;
 }
+
+export interface GetRuleParameters {
+  no_pagination?: 0 | 1;
+  role_id?: string;
+}

@@ -30,7 +30,8 @@
           "rulesOperator": "OR",
           "disableTemplating": false,
           "fallbackTo404": false,
-          "default": true
+          "default": true,
+          "crudKey": "id"
         }
       ],
       "enabled": true,
@@ -58,7 +59,8 @@
           "rulesOperator": "OR",
           "disableTemplating": false,
           "fallbackTo404": false,
-          "default": true
+          "default": true,
+          "crudKey": "id"
         }
       ],
       "enabled": true,
@@ -86,7 +88,8 @@
           "rulesOperator": "OR",
           "disableTemplating": false,
           "fallbackTo404": false,
-          "default": true
+          "default": true,
+          "crudKey": "id"
         }
       ],
       "enabled": true,
@@ -114,7 +117,8 @@
           "rulesOperator": "OR",
           "disableTemplating": false,
           "fallbackTo404": false,
-          "default": true
+          "default": true,
+          "crudKey": "id"
         }
       ],
       "enabled": true,
@@ -142,7 +146,8 @@
           "rulesOperator": "OR",
           "disableTemplating": false,
           "fallbackTo404": false,
-          "default": true
+          "default": true,
+          "crudKey": "id"
         }
       ],
       "enabled": true,
@@ -170,7 +175,8 @@
           "rulesOperator": "OR",
           "disableTemplating": false,
           "fallbackTo404": false,
-          "default": true
+          "default": true,
+          "crudKey": "id"
         }
       ],
       "enabled": true,
@@ -198,7 +204,8 @@
           "rulesOperator": "OR",
           "disableTemplating": false,
           "fallbackTo404": false,
-          "default": true
+          "default": true,
+          "crudKey": "id"
         }
       ],
       "enabled": true,
@@ -226,7 +233,8 @@
           "rulesOperator": "OR",
           "disableTemplating": false,
           "fallbackTo404": false,
-          "default": true
+          "default": true,
+          "crudKey": "id"
         }
       ],
       "enabled": true,
@@ -254,7 +262,8 @@
           "rulesOperator": "OR",
           "disableTemplating": false,
           "fallbackTo404": false,
-          "default": true
+          "default": true,
+          "crudKey": "id"
         }
       ],
       "enabled": true,
@@ -282,7 +291,8 @@
           "rulesOperator": "OR",
           "disableTemplating": false,
           "fallbackTo404": false,
-          "default": true
+          "default": true,
+          "crudKey": "id"
         }
       ],
       "enabled": true,
@@ -310,7 +320,8 @@
           "rulesOperator": "OR",
           "disableTemplating": false,
           "fallbackTo404": false,
-          "default": true
+          "default": true,
+          "crudKey": "id"
         }
       ],
       "enabled": true,
@@ -338,7 +349,8 @@
           "rulesOperator": "OR",
           "disableTemplating": false,
           "fallbackTo404": false,
-          "default": true
+          "default": true,
+          "crudKey": "id"
         }
       ],
       "enabled": true,
@@ -366,7 +378,8 @@
           "rulesOperator": "OR",
           "disableTemplating": false,
           "fallbackTo404": false,
-          "default": true
+          "default": true,
+          "crudKey": "id"
         }
       ],
       "enabled": true,
@@ -394,7 +407,8 @@
           "rulesOperator": "OR",
           "disableTemplating": false,
           "fallbackTo404": false,
-          "default": true
+          "default": true,
+          "crudKey": "id"
         }
       ],
       "enabled": true,
@@ -422,7 +436,8 @@
           "rulesOperator": "OR",
           "disableTemplating": false,
           "fallbackTo404": false,
-          "default": true
+          "default": true,
+          "crudKey": "id"
         }
       ],
       "enabled": true,
@@ -450,7 +465,8 @@
           "rulesOperator": "OR",
           "disableTemplating": false,
           "fallbackTo404": false,
-          "default": true
+          "default": true,
+          "crudKey": "id"
         }
       ],
       "enabled": true,

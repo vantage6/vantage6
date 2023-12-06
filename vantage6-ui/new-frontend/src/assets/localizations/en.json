@@ -160,6 +160,62 @@
       "content": "Note, this will also delete all nodes and tasks related to this collaboration.\nThis operation cannot be undone."
     }
   },
+
+  "role-create": {
+    "title": "Create role",
+    "formlabels": {
+      "name": "Name",
+      "description": "Description",
+      "organization": "Organization"
+    },
+    "all-organizations": "All organizations"
+  },
+  "role-list": {
+    "title": "roles",
+    "name": "Role"
+  },
+  "role-read": {
+    "title": "view",
+    "organization": "Organization",
+    "all-organizations": "All organizations",
+    "no-users": "No users have been assigned to the selected role.",
+    "edit-permissions": "Edit permissions",
+    "tab": {
+      "permissions": "Permissions",
+      "users": "Users"
+    }
+  },
+  "rule": {
+    "resource": {
+      "label": "Resource",
+      "organization": "Organization",
+      "collaboration": "Collaboration",
+      "role": "Role",
+      "node": "Node",
+      "task": "Task",
+      "user": "User",
+      "run": "Run",
+      "event": "Event",
+      "port": "Port"
+    },
+
+    "scope": {
+      "label": "Scope",
+      "own": "Own",
+      "organization": "Organization",
+      "collaboration": "Collaboration",
+      "global": "Global"
+    },
+
+    "operation": {
+      "create": "Create",
+      "edit": "Edit",
+      "delete": "Delete",
+      "view": "View",
+      "send": "Send",
+      "receive": "Receive"
+    }
+  },
   "user": {
     "username": "Username",
     "email": "Email",

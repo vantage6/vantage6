@@ -10,12 +10,23 @@ import {
 } from '../models/api/organization.model';
 import { Role } from '../models/api/role.model';
 import { getLazyProperties } from '../helpers/api.helper';
+import { PermissionService } from './permission.service';
+import { OperationType, ResourceType } from '../models/api/rule.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class OrganizationService {
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private permissionService: PermissionService
+  ) {}
+
+  async getAllowedOrganizations(resource: ResourceType, operation: OperationType): Promise<Organization[]> {
+    const ids = this.permissionService.getAllowedOrganizationsIds(resource, operation);
+    const promises = ids.map((id) => this.getOrganization(id.toString()));
+    return Promise.all(promises);
+  }
 
   async getOrganizations(parameters?: GetOrganizationParameters): Promise<BaseOrganization[]> {
     //TODO: Add backend no pagination instead of page size 9999
