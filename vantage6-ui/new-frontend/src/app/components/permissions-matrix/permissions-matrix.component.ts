@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { SelectionModel } from '@angular/cdk/collections';
+import { SelectionChange, SelectionModel } from '@angular/cdk/collections';
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { isEqualString } from 'src/app/helpers/general.helper';
@@ -38,6 +38,31 @@ enum CellState {
   Selected
 }
 
+class OperationPermissionDictionary {
+  private _dictionary: { [key: string]: OperationPermission } = {};
+  public add(permission: OperationPermission): void {
+    if (!permission) return;
+    const hash = this.getHash(permission.resource, permission.scope, permission.operation);
+    this._dictionary[hash] = permission;
+  }
+
+  public get(resource: ResourceType, scope: ScopeType, operation: OperationType): OperationPermission {
+    const hash = this.getHash(resource, scope, operation);
+    return this._dictionary[hash];
+  }
+
+  public getAllOperationTypes(resource: ResourceType, scope: ScopeType): OperationPermission[] {
+    const all: OperationPermission[] = [];
+    for (const key in this._dictionary) if (key.startsWith(this.getHash(resource, scope))) all.push(this._dictionary[key]);
+    return all;
+  }
+
+  private getHash(resource: ResourceType, scope: ScopeType, operation?: OperationType): string {
+    const operationKey = operation ?? '';
+    return `${resource}#${scope}#${operationKey}`;
+  }
+}
+
 @Component({
   selector: 'app-permissions-matrix',
   templateUrl: './permissions-matrix.component.html',
@@ -71,10 +96,10 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
   allScopes = [ScopeType.OWN, ScopeType.ORGANIZATION, ScopeType.COLLABORATION, ScopeType.GLOBAL];
 
   allOperations = [
+    OperationType.VIEW,
     OperationType.CREATE,
     OperationType.DELETE,
     OperationType.EDIT,
-    OperationType.VIEW,
     OperationType.SEND,
     OperationType.RECEIVE
   ];
@@ -86,6 +111,7 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
   public selection: SelectionModel<OperationPermission> = new SelectionModel<OperationPermission>(true, []);
 
   private selectionSubscription?: Subscription;
+  private operationPermissionDictionary = new OperationPermissionDictionary();
 
   ngOnInit(): void {
     this.resourcePermissions = this.updateTable(this.fixedSelected, this.preselected, this.selectable);
@@ -98,11 +124,61 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   ngOnDestroy(): void {
+    this.selectionUnsubscribe();
+  }
+
+  private selectionUnsubscribe(): void {
     this.selectionSubscription?.unsubscribe();
   }
 
-  private handleSelectionChange(): void {
+  private selectionSubscribe(): void {
+    this.selectionSubscription = this.selection.changed.subscribe((change: SelectionChange<OperationPermission>) =>
+      this.handleSelectionChange(change)
+    );
+  }
+
+  private addRelatedRules(operationPermissions: OperationPermission[]): void {
+    this.selectionUnsubscribe();
+
+    operationPermissions.forEach((operationPermission) => {
+      if ([OperationType.CREATE, OperationType.EDIT, OperationType.DELETE].includes(operationPermission.operation)) {
+        const viewPermission = this.operationPermissionDictionary.get(
+          operationPermission.resource,
+          operationPermission.scope,
+          OperationType.VIEW
+        );
+        if (viewPermission && this.isEditable(viewPermission)) this.selection.select(viewPermission);
+      }
+    });
+
+    this.selectionSubscribe();
+  }
+
+  private removeRelatedRules(operationPermissions: OperationPermission[]): void {
+    this.selectionUnsubscribe();
+
+    operationPermissions.forEach((operationPermission) => {
+      if (operationPermission.operation === OperationType.VIEW) {
+        const permissions = this.operationPermissionDictionary.getAllOperationTypes(
+          operationPermission.resource,
+          operationPermission.scope
+        );
+        permissions.forEach((permission) => {
+          if (this.isEditable(permission)) this.selection.deselect(permission);
+        });
+      }
+    });
+
+    this.selectionSubscribe();
+  }
+
+  private isEditable(permission: OperationPermission): boolean {
+    return permission.state === CellState.NotSelected || permission.state === CellState.Selected;
+  }
+  private handleSelectionChange(change: SelectionChange<OperationPermission>): void {
     const rules: Rule[] = [];
+    this.addRelatedRules(change.added);
+    this.removeRelatedRules(change.removed);
     this.selection.selected.forEach((permission) => {
       const rule = this.findRule(this.selectable, permission.resource, permission.scope, permission.operation);
       if (rule) rules.push(rule);
@@ -112,7 +188,7 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   private updateTable(fixedSelected: Rule[], preSelected: Rule[], selectable: Rule[]): ResourcePermission[] {
-    if (this.selectionSubscription) this.selectionSubscription.unsubscribe();
+    this.selectionUnsubscribe();
     this.selection.clear();
 
     const result = this.allResources
@@ -123,6 +199,7 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
             const operationPermissions = this.allOperations.map((operation) => {
               const cellState = this.getCellState(fixedSelected, preSelected, selectable, resource, scope, operation);
               const operationPermission = new OperationPermission(resource, scope, operation, cellState);
+              this.operationPermissionDictionary.add(operationPermission);
               if (cellState === CellState.Selected) this.selection.select(operationPermission);
               return operationPermission;
             });
@@ -134,7 +211,7 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
       })
       .filter((resourcePermission) => resourcePermission.scopes.length > 0);
 
-    this.selectionSubscription = this.selection.changed.subscribe(() => this.handleSelectionChange());
+    this.selectionSubscribe();
 
     return result;
   }

@@ -46,7 +46,7 @@ export class RoleCreateComponent implements OnInit {
   }
 
   handleCancel(): void {
-    console.log('test');
+    this.router.navigate([routePaths.roles]);
   }
 
   /* TODO: bundle promises */
