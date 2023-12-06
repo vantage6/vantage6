@@ -86,9 +86,10 @@ interface TaskParameter {
   value: string;
 }
 
-interface TaskResult {
+export interface TaskResult {
   id: number;
   result?: string;
+  decoded_result?: object;
 }
 
 export interface TaskDatabase {
