@@ -26,6 +26,7 @@
     "@ngx-translate/core": "^15.0.0",
     "@ngx-translate/http-loader": "^8.0.0",
     "@observablehq/plot": "^0.6.11",
+    "angularx-qrcode": "^16.0.2",
     "rxjs": "~7.8.0",
     "tslib": "^2.6.2",
     "zone.js": "^0.13.3"

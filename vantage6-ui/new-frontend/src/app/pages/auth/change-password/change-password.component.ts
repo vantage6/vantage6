@@ -48,7 +48,7 @@ export class ChangePasswordComponent implements OnDestroy {
       const dialogRef = this.dialog.open(MessageDialogComponent, {
         data: {
           title: this.translateService.instant('change-password.success-dialog.title'),
-          content: this.translateService.instant('change-password.success-dialog.message'),
+          content: [this.translateService.instant('change-password.success-dialog.message')],
           confirmButtonText: this.translateService.instant('general.close'),
           confirmButtonType: 'primary'
         }

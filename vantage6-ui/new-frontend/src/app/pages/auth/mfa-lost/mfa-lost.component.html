@@ -1,0 +1,18 @@
+<mat-card class="auth-card">
+  <mat-card-header>
+    <mat-card-title>{{ "mfa.lost.title" | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <p>
+      {{ "mfa.lost.instruction" | translate }}
+    </p>
+    <button mat-flat-button color="primary" (click)="onSubmit()">{{ "mfa.lost.request-token" | translate }}</button>
+    <app-alert-with-button
+      *ngIf="executed_request"
+      label="{{ responseMsg }}"
+      buttonText="{{ 'mfa.lost.enter-token' | translate }}"
+      buttonLink="{{ routes.mfaRecover }}"
+    ></app-alert-with-button>
+    <button mat-flat-button type="submit" [routerLink]="routes.mfaRecover">{{ "mfa.lost.already-reset" | translate }}</button>
+  </mat-card-content>
+</mat-card>
