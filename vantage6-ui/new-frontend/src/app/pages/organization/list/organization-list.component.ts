@@ -12,8 +12,7 @@ import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-organization-list',
-  templateUrl: './organization-list.component.html',
-  styleUrls: ['./organization-list.component.scss']
+  templateUrl: './organization-list.component.html'
 })
 export class OrganizationListComponent implements OnInit {
   @HostBinding('class') class = 'card-container';

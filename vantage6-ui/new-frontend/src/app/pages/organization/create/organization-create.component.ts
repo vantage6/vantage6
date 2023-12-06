@@ -6,8 +6,7 @@ import { OrganizationService } from 'src/app/services/organization.service';
 
 @Component({
   selector: 'app-organization-create',
-  templateUrl: './organization-create.component.html',
-  styleUrls: ['./organization-create.component.scss']
+  templateUrl: './organization-create.component.html'
 })
 export class OrganizationCreateComponent {
   @HostBinding('class') class = 'card-container';

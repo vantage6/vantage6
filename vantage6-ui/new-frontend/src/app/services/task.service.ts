@@ -7,11 +7,13 @@ import {
   CreateTask,
   GetTaskParameters,
   Task,
-  TaskLazyProperties,
-  TaskStatus
+  TaskLazyProperties
 } from '../models/api/task.models';
 import { Pagination } from '../models/api/pagination.model';
 import { getLazyProperties } from '../helpers/api.helper';
+import { mockDataCrossTabTemplateTask, mockDataQualityTemplateTask } from '../pages/template-task/create/mock';
+import { TemplateTask } from '../models/api/templateTask.models';
+import { isTaskFinished } from '../helpers/task.helper';
 
 @Injectable({
   providedIn: 'root'
@@ -24,8 +26,7 @@ export class TaskService {
     return result;
   }
 
-  // TODO id should be a number
-  async getTask(id: string, lazyProperties: TaskLazyProperties[] = []): Promise<Task> {
+  async getTask(id: number, lazyProperties: TaskLazyProperties[] = []): Promise<Task> {
     const result = await this.apiService.getForApi<BaseTask>(`/task/${id}`, { include: 'results,runs' });
 
     const task: Task = { ...result, init_org: undefined, init_user: undefined };
@@ -34,6 +35,7 @@ export class TaskService {
     //Handle base64 input
     if (Array.isArray(task.runs) && task.runs.length > 0) {
       const input = JSON.parse(atob(task.runs[0].input));
+      // TODO this may not always true: what if different runs have different inputs?
       if (input) {
         task.input = {
           method: input.method || '',
@@ -48,6 +50,13 @@ export class TaskService {
         };
       }
     }
+    if (Array.isArray(task.results) && task.results.length > 0) {
+      for (const result of task.results) {
+        if (result.result) {
+          result.decoded_result = JSON.parse(atob(result.result));
+        }
+      }
+    }
 
     return task;
   }
@@ -60,21 +69,22 @@ export class TaskService {
     return await this.apiService.deleteForApi(`/task/${id}`);
   }
 
+  async getTemplateTasks(): Promise<TemplateTask[]> {
+    //TODO: Remove mock data when template tasks are implemented in backend
+    return [mockDataQualityTemplateTask, mockDataCrossTabTemplateTask];
+  }
+
   async getColumnNames(columnRetrieve: ColumnRetrievalInput): Promise<ColumnRetrievalResult> {
     return await this.apiService.postForApi<ColumnRetrievalResult>(`/column`, columnRetrieve);
   }
 
-  async wait_for_results(id: number): Promise<Task> {
-    let task = await this.getTask(id.toString());
-    while (!this.hasFinished(task)) {
-      // poll every second until task is finished
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      task = await this.getTask(id.toString());
+  async waitForResults(id: number): Promise<Task> {
+    let task = await this.getTask(id);
+    while (!isTaskFinished(task)) {
+      // poll at an interval until task is finished
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      task = await this.getTask(id);
     }
     return task;
-  }
-
-  private hasFinished(task: Task): boolean {
-    return ![TaskStatus.Pending, TaskStatus.Initializing, TaskStatus.Active].includes(task.status);
   }
 }

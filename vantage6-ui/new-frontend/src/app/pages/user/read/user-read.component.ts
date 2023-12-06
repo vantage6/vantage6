@@ -12,8 +12,7 @@ import { UserService } from 'src/app/services/user.service';
 
 @Component({
   selector: 'app-user-read',
-  templateUrl: './user-read.component.html',
-  styleUrls: ['./user-read.component.scss']
+  templateUrl: './user-read.component.html'
 })
 export class UserReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

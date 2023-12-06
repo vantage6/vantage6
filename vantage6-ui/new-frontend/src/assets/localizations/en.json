@@ -86,7 +86,8 @@
     "card-results": {
       "title": "Results",
       "actions": {
-        "visualization": "Visualization"
+        "visualization": "Visualization",
+        "download": "Download JSON result"
       }
     },
     "card-algorithm": {
@@ -98,6 +99,12 @@
     "delete-dialog": {
       "title": "Are you sure you want to delete the task '{{name}}'?",
       "content": "Note, this will also delete all subtasks and results.\nThis operation cannot be undone."
+    }
+  },
+  "template-task-create": {
+    "title": "Quick task",
+    "actions": {
+      "select": "Select quick task"
     }
   },
   "organization": {

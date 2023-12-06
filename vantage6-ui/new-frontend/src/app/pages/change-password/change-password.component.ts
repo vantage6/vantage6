@@ -14,8 +14,7 @@ import { createUnEqualValidator } from 'src/app/validators/unequal.validator';
 
 @Component({
   selector: 'app-change-password',
-  templateUrl: './change-password.component.html',
-  styleUrls: ['./change-password.component.scss']
+  templateUrl: './change-password.component.html'
 })
 export class ChangePasswordComponent implements OnDestroy {
   @HostBinding('class') class = 'card-container';
@@ -44,7 +43,7 @@ export class ChangePasswordComponent implements OnDestroy {
 
   async handleSubmit(): Promise<void> {
     if (this.form.valid) {
-      this.authService.changePassword(this.form.controls.oldPassword.value, this.form.controls.newPassword.value);
+      await this.authService.changePassword(this.form.controls.oldPassword.value, this.form.controls.newPassword.value);
 
       const dialogRef = this.dialog.open(MessageDialogComponent, {
         data: {
@@ -61,7 +60,6 @@ export class ChangePasswordComponent implements OnDestroy {
         .subscribe(() => {
           this.goToPreviousPage();
         });
-      // TODO handle errors
     }
   }
 

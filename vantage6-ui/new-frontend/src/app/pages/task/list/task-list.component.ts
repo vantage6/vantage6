@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { getChipTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
-import { BaseTask, TaskStatus } from 'src/app/models/api/task.models';
+import { BaseTask, TaskSortProperties, TaskStatus } from 'src/app/models/api/task.models';
 import { CHOSEN_COLLABORATION, USER_ID } from 'src/app/models/constants/sessionStorage';
 import { routePaths } from 'src/app/routes';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
@@ -20,8 +20,7 @@ enum TableRows {
 
 @Component({
   selector: 'app-task-list',
-  templateUrl: './task-list.component.html',
-  styleUrls: ['./task-list.component.scss']
+  templateUrl: './task-list.component.html'
 })
 export class TaskListComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
@@ -85,9 +84,8 @@ export class TaskListComponent implements OnInit {
     if (!collaborationID || !userID) return;
 
     const taskData = await this.taskService.getTasks(this.currentPage, {
-      collaboration_id: collaborationID
-      //TODO: Sorting causes backend error
-      //sort: TaskSortProperties.ID
+      collaboration_id: collaborationID,
+      sort: TaskSortProperties.ID
     });
     this.tasks = taskData.data;
     this.pagination = taskData.links;

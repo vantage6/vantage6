@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import { Pagination } from '../models/api/pagination.model';
-import { Algorithm } from '../models/api/algorithm.model';
+import { Algorithm, BaseAlgorithm } from '../models/api/algorithm.model';
 
 @Injectable({
   providedIn: 'root'
@@ -9,7 +9,7 @@ import { Algorithm } from '../models/api/algorithm.model';
 export class AlgorithmService {
   constructor(private apiService: ApiService) {}
 
-  async getAlgorithms(): Promise<Algorithm[]> {
+  async getAlgorithms(): Promise<BaseAlgorithm[]> {
     const result = await this.apiService.getForAlgorithmApi<Pagination<Algorithm>>('/algorithm');
     return result.data;
   }

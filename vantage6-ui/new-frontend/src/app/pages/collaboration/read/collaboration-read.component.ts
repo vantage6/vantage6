@@ -13,8 +13,7 @@ import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-collaboration-read',
-  templateUrl: './collaboration-read.component.html',
-  styleUrls: ['./collaboration-read.component.scss']
+  templateUrl: './collaboration-read.component.html'
 })
 export class CollaborationReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

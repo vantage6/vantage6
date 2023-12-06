@@ -12,8 +12,7 @@ import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-collaboration-list',
-  templateUrl: './collaboration-list.component.html',
-  styleUrls: ['./collaboration-list.component.scss']
+  templateUrl: './collaboration-list.component.html'
 })
 export class CollaborationListComponent implements OnInit {
   @HostBinding('class') class = 'card-container';

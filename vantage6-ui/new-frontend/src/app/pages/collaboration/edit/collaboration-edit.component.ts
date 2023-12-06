@@ -7,8 +7,7 @@ import { NodeService } from 'src/app/services/node.service';
 
 @Component({
   selector: 'app-collaboration-edit',
-  templateUrl: './collaboration-edit.component.html',
-  styleUrls: ['./collaboration-edit.component.scss']
+  templateUrl: './collaboration-edit.component.html'
 })
 export class CollaborationEditComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
@@ -44,13 +43,24 @@ export class CollaborationEditComponent implements OnInit {
 
     if (result?.id) {
       if (collaborationForm.registerNodes && collaborationForm.organization_ids) {
-        const newCollaborationIDs = collaborationForm.organization_ids.filter(
+        // register nodes of new organizations in collaboration
+        const newOrganizationIDs = collaborationForm.organization_ids.filter(
           (id: number) => !this.collaboration?.organizations.find((organization) => organization.id === id)
         );
         await Promise.all(
-          newCollaborationIDs.map(async (organizationID: number) => {
+          newOrganizationIDs.map(async (organizationID: number) => {
             if (!this.collaboration) return;
             await this.nodeService.createNode(this.collaboration, organizationID);
+          })
+        );
+        // delete nodes of organizations that are not in collaboration anymore
+        const removedOrganizationIDs = this.collaboration.organizations
+          .filter((organization) => !collaborationForm.organization_ids?.includes(organization.id))
+          .map((organization) => organization.id);
+        await Promise.all(
+          removedOrganizationIDs.map(async (organizationID: number) => {
+            if (!this.collaboration) return;
+            await this.nodeService.deleteNode(this.collaboration, organizationID);
           })
         );
       }

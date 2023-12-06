@@ -3,8 +3,7 @@ import { TableData } from 'src/app/models/application/table.model';
 
 @Component({
   selector: 'app-table',
-  templateUrl: './table.component.html',
-  styleUrls: ['./table.component.scss']
+  templateUrl: './table.component.html'
 })
 export class TableComponent implements OnChanges {
   @Input() data?: TableData;

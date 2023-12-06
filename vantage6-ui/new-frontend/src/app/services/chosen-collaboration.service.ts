@@ -3,9 +3,7 @@ import { CHOSEN_COLLABORATION } from '../models/constants/sessionStorage';
 import { BehaviorSubject } from 'rxjs';
 import { CollaborationService } from './collaboration.service';
 import { Collaboration, CollaborationLazyProperties } from '../models/api/collaboration.model';
-import { BaseNode } from '../models/api/node.model';
 import { ApiService } from './api.service';
-import { Pagination } from '../models/api/pagination.model';
 
 @Injectable({
   providedIn: 'root'
@@ -25,13 +23,6 @@ export class ChosenCollaborationService {
     sessionStorage.setItem(CHOSEN_COLLABORATION, id);
     const collaboration = await this.getCollaboration(id);
     this.collaboration$.next(collaboration);
-  }
-
-  //TODO: Should be in node service
-  async getNodes(): Promise<BaseNode[]> {
-    const result = await this.apiService.getForApi<Pagination<BaseNode>>(`/node?collaboration_id=${this.collaboration$.value?.id}`);
-
-    return result.data;
   }
 
   private async initData() {

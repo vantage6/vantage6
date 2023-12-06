@@ -7,8 +7,7 @@ import { NodeService } from 'src/app/services/node.service';
 
 @Component({
   selector: 'app-collaboration-create',
-  templateUrl: './collaboration-create.component.html',
-  styleUrls: ['./collaboration-create.component.scss']
+  templateUrl: './collaboration-create.component.html'
 })
 export class CollaborationCreateComponent {
   @HostBinding('class') class = 'card-container';

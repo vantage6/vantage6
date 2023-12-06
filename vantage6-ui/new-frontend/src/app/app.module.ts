@@ -19,6 +19,7 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
@@ -59,10 +60,10 @@ import { UserCreateComponent } from './pages/user/create/user-create.component';
 import { OrganizationListComponent } from './pages/organization/list/organization-list.component';
 import { NodeReadComponent } from './pages/node/read/node-read.component';
 import { OrganizationEditComponent } from './pages/organization/edit/organization-edit.component';
-import { OrganizationFormComponent } from './components/organization-form/organization-form/organization-form.component';
-import { CollaborationFormComponent } from './components/collaboration-form/collaboration-form.component';
+import { OrganizationFormComponent } from './components/forms/organization-form/organization-form.component';
+import { CollaborationFormComponent } from './components/forms/collaboration-form/collaboration-form.component';
 import { CollaborationEditComponent } from './pages/collaboration/edit/collaboration-edit.component';
-import { UserFormComponent } from './components/user-form/user-form/user-form.component';
+import { UserFormComponent } from './components/forms/user-form/user-form.component';
 import { UserEditComponent } from './pages/user/edit/user-edit.component';
 import { VisualizeHistogramComponent } from './components/visualize-histogram/visualize-histogram.component';
 import { PreprocessingStepComponent } from './pages/task/create/steps/preprocessing-step/preprocessing-step.component';
@@ -71,6 +72,8 @@ import { MessageDialogComponent } from './components/dialogs/message-dialog/mess
 import { FilterStepComponent } from './pages/task/create/steps/filter-step/filter-step.component';
 import { NumberOnlyDirective } from './directives/numberOnly.directive';
 import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
+import { TemplateTaskCreateComponent } from './pages/template-task/create/template-task-create.component';
+import { DatabaseStepComponent } from './pages/task/create/steps/database-step/database-step.component';
 import { RoleListComponent } from './pages/role/list/role-list.component';
 import { RoleReadComponent } from './pages/role/read/role-read.component';
 import { RoleCreateComponent } from './pages/role/create/role-create.component';
@@ -125,6 +128,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     FilterStepComponent,
     NumberOnlyDirective,
     BreadcrumbsComponent,
+    TemplateTaskCreateComponent,
+    DatabaseStepComponent,
     RoleListComponent,
     RoleReadComponent,
     PermissionsMatrixComponent,
@@ -162,6 +167,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     MatProgressSpinnerModule,
     MatSelectModule,
     MatSidenavModule,
+    MatSnackBarModule,
     MatStepperModule,
     MatTabsModule,
     MatTableModule,

@@ -9,14 +9,13 @@ interface VisualizeResult {
 
 @Component({
   selector: 'app-visualize-result',
-  templateUrl: './visualize-result.component.html',
-  styleUrls: ['./visualize-result.component.scss']
+  templateUrl: './visualize-result.component.html'
 })
 export class VisualizeResultComponent implements OnChanges {
   outputVisualizeType = OutputVisualizeType;
 
   @Input() functionOutput: Output | null = null;
-  @Input() result: string = '';
+  @Input() result: any = '';
 
   visualizeResults: VisualizeResult[] = [];
 
@@ -33,16 +32,15 @@ export class VisualizeResultComponent implements OnChanges {
 
   private getFilteredResults(output: Output): any[] {
     const filteredResults: any[] = [];
-    const decodedResult: any = JSON.parse(atob(this.result || ''));
 
-    Object.keys(decodedResult).forEach((key) => {
-      if (decodedResult[key]) {
+    Object.keys(this.result).forEach((key) => {
+      if (this.result[key]) {
         if (output.filter_property) {
-          if (decodedResult[key][output.filter_property] === output.filter_value) {
-            filteredResults.push({ _row: key, ...decodedResult[key] });
+          if (this.result[key][output.filter_property] === output.filter_value) {
+            filteredResults.push({ _row: key, ...this.result[key] });
           }
         } else {
-          filteredResults.push({ _row: key, ...decodedResult[key] });
+          filteredResults.push({ _row: key, ...this.result[key] });
         }
       }
     });
