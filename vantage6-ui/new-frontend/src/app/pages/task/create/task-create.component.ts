@@ -124,9 +124,20 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
 
     const taskDatabases: TaskDatabase[] = getTaskDatabaseFromForm(this.function, this.databaseForm);
 
+    // setup input for task. Parse string to JSON if needed
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const kwargs: any = {};
+    this.function?.arguments.forEach((arg) => {
+      Object.keys(this.parameterForm.controls).forEach((control) => {
+        if (control === arg.name) {
+          const value = this.parameterForm.get(control)?.value;
+          kwargs[arg.name] = arg.type === ArgumentType.Json ? JSON.parse(value) : value;
+        }
+      });
+    });
     const input: CreateTaskInput = {
       method: this.function?.name || '',
-      kwargs: this.parameterForm.value
+      kwargs: kwargs
     };
 
     const createTask: CreateTask = {
