@@ -5,7 +5,6 @@ import { RoleForm } from 'src/app/models/api/role.model';
 import { OperationType, ResourceType, Rule } from 'src/app/models/api/rule.model';
 import { routePaths } from 'src/app/routes';
 import { OrganizationService } from 'src/app/services/organization.service';
-import { PermissionService } from 'src/app/services/permission.service';
 import { RoleService } from 'src/app/services/role.service';
 import { RuleService } from 'src/app/services/rule.service';
 
@@ -25,8 +24,7 @@ export class RoleCreateComponent implements OnInit {
     private router: Router,
     private ruleService: RuleService,
     private roleService: RoleService,
-    private organizationService: OrganizationService,
-    private permissionService: PermissionService
+    private organizationService: OrganizationService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -39,7 +37,7 @@ export class RoleCreateComponent implements OnInit {
     try {
       await this.roleService.createRole(roleForm);
     } catch (error) {
-      /* Error handling */
+      /* TODO Error handling */
     } finally {
       this.router.navigate([routePaths.roles]);
     }

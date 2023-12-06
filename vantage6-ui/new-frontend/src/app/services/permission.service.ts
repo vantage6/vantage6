@@ -5,7 +5,6 @@ import { Collaboration } from '../models/api/collaboration.model';
 import { BaseUser } from '../models/api/user.model';
 import { ApiService } from './api.service';
 import { USER_ID } from '../models/constants/sessionStorage';
-import { BaseOrganization, Organization } from '../models/api/organization.model';
 
 const requiredScopeLevel: Record<ScopeType, ScopeType[]> = {
   [ScopeType.ANY]: [ScopeType.OWN, ScopeType.ORGANIZATION, ScopeType.COLLABORATION, ScopeType.GLOBAL],

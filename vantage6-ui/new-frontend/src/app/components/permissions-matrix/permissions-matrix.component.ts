@@ -182,7 +182,6 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
     this.selection.selected.forEach((permission) => {
       const rule = this.findRule(this.selectable, permission.resource, permission.scope, permission.operation);
       if (rule) rules.push(rule);
-      else console.error('Selected rule not found.');
     });
     this.changed.emit(rules);
   }
