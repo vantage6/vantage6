@@ -143,7 +143,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     PermissionsMatrixComponent,
     RoleCreateComponent,
     RoleFormComponent,
-    OrderByPipe
+    OrderByPipe,
     SetupMfaComponent,
     MfaCodeComponent,
     MfaRecoverComponent,
