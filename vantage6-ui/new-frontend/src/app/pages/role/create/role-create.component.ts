@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostBinding, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Organization } from 'src/app/models/api/organization.model';
 import { RoleForm } from 'src/app/models/api/role.model';
@@ -15,6 +15,8 @@ import { RuleService } from 'src/app/services/rule.service';
   styleUrls: ['./role-create.component.scss']
 })
 export class RoleCreateComponent implements OnInit {
+  @HostBinding('class') class = 'card-container';
+
   isSubmitting = false;
   selectableRules: Rule[] = [];
   selectableOrganizations: Organization[] = [];
