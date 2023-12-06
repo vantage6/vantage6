@@ -81,28 +81,12 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
 
   constructor(private permissionService: PermissionService) {}
 
-  allResources = [
-    ResourceType.USER,
-    ResourceType.ORGANIZATION,
-    ResourceType.COLLABORATION,
-    ResourceType.ROLE,
-    ResourceType.NODE,
-    ResourceType.TASK,
-    ResourceType.RUN,
-    ResourceType.EVENT,
-    ResourceType.PORT
-  ];
-
-  allScopes = [ScopeType.OWN, ScopeType.ORGANIZATION, ScopeType.COLLABORATION, ScopeType.GLOBAL];
-
-  allOperations = [
-    OperationType.VIEW,
-    OperationType.CREATE,
-    OperationType.DELETE,
-    OperationType.EDIT,
-    OperationType.SEND,
-    OperationType.RECEIVE
-  ];
+  // get resources, scopes and operations from enums, but filter out the ones with no rules attached to them
+  allResources = Object.values(ResourceType).filter(
+    (resource) => ![ResourceType.ANY, ResourceType.RESULT, ResourceType.RULE].includes(resource)
+  );
+  allScopes = Object.values(ScopeType).filter((scope) => scope !== ScopeType.ANY);
+  allOperations = Object.values(OperationType).filter((operation) => operation !== OperationType.ANY);
 
   CellState = CellState;
 
