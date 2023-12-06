@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { FormBuilder, FormGroup, ValidationErrors } from '@angular/forms';
 import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
 
@@ -10,7 +9,6 @@ import { AuthService } from 'src/app/services/auth.service';
   styleUrls: ['./password-lost.component.scss']
 })
 export class PasswordLostComponent {
-  // TODO clean up
   private emailOrUsername(group: FormGroup): ValidationErrors | null {
     const email = group.controls['email'].value;
     const username = group.controls['username'].value;
@@ -21,21 +19,6 @@ export class PasswordLostComponent {
           emailOrUsername: true
         };
   }
-  // private atLeastOne =
-  // (validator: ValidatorFn, controls: string[] | null = null) =>
-  // (group: FormGroup): ValidationErrors | null => {
-  //   if (!controls) {
-  //     controls = Object.keys(group.controls);
-  //   }
-
-  //   const hasAtLeastOne = group && group.controls && controls.some((k) => !validator(group.controls[k]));
-
-  //   return hasAtLeastOne
-  //     ? null
-  //     : {
-  //         atLeastOne: true
-  //       };
-  // };
 
   forgotPasswordForm = this.fb.group(
     {
@@ -49,7 +32,6 @@ export class PasswordLostComponent {
   routes = routePaths;
 
   constructor(
-    private router: Router,
     private fb: FormBuilder,
     private authService: AuthService
   ) {}
