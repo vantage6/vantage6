@@ -126,22 +126,13 @@ class ServerCLITest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.server.stop.ServerContext")
     @patch("vantage6.cli.server.stop.docker.from_env")
-    @patch("vantage6.cli.server.stop.check_docker_running", return_value=True)
-    def test_stop(self, docker_check, containers, context):
+    def test_stop(self, containers):
         """Stop server without errors."""
 
         container1 = MagicMock()
         container1.name = f"{APPNAME}-iknl-system-server"
         containers.containers.list.return_value = [container1]
-
-        ctx = MagicMock(
-            config={
-                'rabbitmq_uri': None
-            }
-        )
-        context.return_value = ctx
 
         runner = CliRunner()
         result = runner.invoke(cli_server_stop, ["--name", "iknl"])
@@ -151,9 +142,7 @@ class ServerCLITest(unittest.TestCase):
 
     @patch("vantage6.cli.server.attach.time.sleep")
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.server.attach.check_docker_running",
-           return_value=True)
-    def test_attach(self, docker_check, containers, sleep):
+    def test_attach(self, containers, sleep):
         """Attach log to the console without errors."""
         container1 = MagicMock()
         container1.name = f"{APPNAME}-iknl-system-server"
