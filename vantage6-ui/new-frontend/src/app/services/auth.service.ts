@@ -68,6 +68,7 @@ export class AuthService {
 
   logout(): void {
     this.tokenStorageService.clearSession();
+    this.permissionService.clear();
     this.socketConnectService.disconnect();
   }
 

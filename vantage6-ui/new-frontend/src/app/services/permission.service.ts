@@ -35,6 +35,11 @@ export class PermissionService {
     }
   }
 
+  clear(): void {
+    this.activeRules = null;
+    this.activeUser = null;
+  }
+
   isAllowed(scope: ScopeType, resource: ResourceType, operation: OperationType): boolean {
     if (scope === ScopeType.ANY) {
       return !!this.activeRules?.some((rule) => rule.name.toLowerCase() === resource && rule.operation.toLowerCase() === operation);
