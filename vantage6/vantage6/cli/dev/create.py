@@ -69,7 +69,8 @@ def create_node_config_file(server_url: str, port: int, config: dict,
     port : int
         Port of the dummy server.
     config : dict
-        Configuration dictionary containing org_id, api_key and node name.
+        Configuration dictionary containing org_id, api_key, node name and
+        additional user_defined_config.
     server_name : str
         Configuration name of the dummy server.
     """
@@ -128,7 +129,7 @@ def _read_extra_config_file(extra_config_file: Path | None) -> str:
 
     Returns
     -------
-    str | None
+    str
         Extra configuration file content
     """
     if extra_config_file:

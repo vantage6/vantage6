@@ -65,7 +65,6 @@ def cli_test_integration(
     # default but both should be defined in the same place
     # TODO VPN testing is always excluded - allow to include it with a flag
     # when vdev commands can handle extra config parameters
-    print()
     diagnose_results = click_ctx.invoke(
         cli_test_features, host="http://localhost", port=5000, api_path='/api',
         username='org_1-admin', password='password', collaboration=1,
