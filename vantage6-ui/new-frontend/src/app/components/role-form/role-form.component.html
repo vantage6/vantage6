@@ -20,8 +20,5 @@
     [selectable]="selectableRules"
     (changed)="handleChangedSelection($event)"
   ></app-permissions-matrix>
-  <div class="button-container">
-    <button mat-flat-button type="submit" color="primary">{{ "general.submit" | translate }}</button>
-    <button mat-flat-button (click)="handleCancel()">{{ "general.cancel" | translate }}</button>
-  </div>
+  <app-role-submit-buttons [submitDisabled]="submitDisabled" (cancelled)="handleCancel()"></app-role-submit-buttons>
 </form>

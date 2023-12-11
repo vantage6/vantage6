@@ -38,4 +38,8 @@ export class RoleFormComponent {
   handleChangedSelection(rules: Rule[]): void {
     this.selectedRules = rules ? rules.map((rule) => rule.id) : [];
   }
+
+  get submitDisabled(): boolean {
+    return this.selectedRules?.length === 0;
+  }
 }

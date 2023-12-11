@@ -131,4 +131,8 @@ export class RoleReadComponent implements OnInit {
   public get editEnabled(): boolean {
     return this.canEdit && !!this.role?.organization;
   }
+
+  public get submitDisabled(): boolean {
+    return this.changedRules?.length === 0;
+  }
 }

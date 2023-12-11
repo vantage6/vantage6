@@ -170,6 +170,9 @@
     },
     "all-organizations": "All organizations"
   },
+  "role-submit-buttons": {
+    "error-minimal-selection": "Select at least one permission."
+  },
   "role-list": {
     "title": "roles",
     "name": "Role"
