@@ -10,7 +10,7 @@
   </mat-menu>
 </app-page-header>
 <ng-container *ngIf="!isLoading && task; else loading">
-  <mat-card *ngIf="shouldShowStatusInfo()">
+  <mat-card *ngIf="isTaskInProgress()">
     <mat-card-header>
       <mat-card-title>{{ "task-read.card-status.title" | translate }}</mat-card-title>
     </mat-card-header>

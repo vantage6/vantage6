@@ -4,6 +4,8 @@ import { ApiService } from './api.service';
 import { AuthResult, ChangePassword, Login, LoginSubmit, LoginRecoverLost, SetupMFA, LoginRecoverSubmit } from '../models/api/auth.model';
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_ID } from '../models/constants/sessionStorage';
 import { PermissionService } from './permission.service';
+import { TokenStorageService } from './token-storage.service';
+import { SocketioConnectService } from './socketio-connect.service';
 
 @Injectable({
   providedIn: 'root'
@@ -16,11 +18,13 @@ export class AuthService {
 
   constructor(
     private apiService: ApiService,
-    private permissionService: PermissionService
+    private permissionService: PermissionService,
+    private tokenStorageService: TokenStorageService,
+    private socketConnectService: SocketioConnectService
   ) {}
 
   async isAuthenticated(): Promise<AuthResult> {
-    const token = sessionStorage.getItem(ACCESS_TOKEN_KEY);
+    const token = this.tokenStorageService.getToken();
     if (!token) {
       return AuthResult.Failure;
     }
@@ -28,6 +32,7 @@ export class AuthService {
     const isExpired = Date.now() >= JSON.parse(atob(token.split('.')[1])).exp * 1000;
     if (!isExpired) {
       await this.permissionService.initData();
+      await this.socketConnectService.connect();
     }
     if (!isExpired) {
       return AuthResult.Success;
@@ -56,13 +61,15 @@ export class AuthService {
       return AuthResult.MFACode;
     } else {
       // login success
-      this.setSession(result);
+      this.tokenStorageService.setSession(result);
       return await this.isAuthenticated();
     }
   }
 
   logout(): void {
-    this.clearSession();
+    this.tokenStorageService.clearSession();
+    this.permissionService.clear();
+    this.socketConnectService.disconnect();
   }
 
   async changePassword(oldPassword: string, newPassword: string): Promise<void> {
@@ -122,19 +129,5 @@ export class AuthService {
       return true;
     }
     return false;
-  }
-
-  private setSession(result: Login): void {
-    this.clearSession();
-
-    if (!result.access_token) return;
-
-    sessionStorage.setItem(ACCESS_TOKEN_KEY, result.access_token);
-    sessionStorage.setItem(REFRESH_TOKEN_KEY, result.refresh_token);
-    sessionStorage.setItem(USER_ID, result.user_url.split('/').pop() || '');
-  }
-
-  private clearSession(): void {
-    sessionStorage.clear();
   }
 }

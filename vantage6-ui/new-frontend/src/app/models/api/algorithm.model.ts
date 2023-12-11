@@ -40,6 +40,7 @@ export interface BaseAlgorithm {
   url: string;
 }
 
+// TODO this interface must be updated to match the API
 export interface Algorithm {
   id: number;
   name: string;
