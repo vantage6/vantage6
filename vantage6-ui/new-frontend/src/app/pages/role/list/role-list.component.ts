@@ -31,7 +31,7 @@ export class RoleListComponent implements OnInit {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    this.canCreate = this.permissionService.isAllowed(ScopeType.GLOBAL, ResourceType.ROLE, OperationType.CREATE);
+    this.canCreate = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.ROLE, OperationType.CREATE);
     await this.initData();
   }
 
