@@ -17,7 +17,8 @@ import { PermissionService } from 'src/app/services/permission.service';
 import { Subject, Subscription, takeUntil, timer } from 'rxjs';
 import { FileService } from 'src/app/services/file.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
-import { AlgorithmStatusChangeMsg, NewTaskMsg } from 'src/app/models/socket-messages.model';
+import { AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
+import { NodeStatus } from 'src/app/models/api/node.model';
 
 @Component({
   selector: 'app-task-read',
@@ -42,6 +43,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   isLoading = true;
   canDelete = false;
 
+  private nodeStatusUpdateSubscription?: Subscription;
   private taskStatusUpdateSubscription?: Subscription;
   private taskNewUpdateSubscription?: Subscription;
 
@@ -79,6 +81,12 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     this.taskNewUpdateSubscription = this.socketioConnectService.getNewTaskUpdates().subscribe((newTaskMsg: NewTaskMsg | null) => {
       if (newTaskMsg) this.onNewTask(newTaskMsg);
     });
+    // subscribe to node status updates
+    this.nodeStatusUpdateSubscription = this.socketioConnectService
+      .getNodeStatusUpdates()
+      .subscribe((nodeStatus: NodeOnlineStatusMsg | null) => {
+        if (nodeStatus) this.onNodeStatusUpdate(nodeStatus);
+      });
   }
 
   ngOnDestroy(): void {
@@ -86,6 +94,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     this.waitTaskComplete$.next(true);
     this.taskStatusUpdateSubscription?.unsubscribe();
     this.taskNewUpdateSubscription?.unsubscribe();
+    this.nodeStatusUpdateSubscription?.unsubscribe();
   }
 
   async initData(sync_tasks: boolean = true): Promise<void> {
@@ -239,5 +248,24 @@ export class TaskReadComponent implements OnInit, OnDestroy {
 
     // set the child task data
     this.childTasks = await this.getChildTasks();
+  }
+
+  private async onNodeStatusUpdate(nodeStatus: NodeOnlineStatusMsg): Promise<void> {
+    // first update the child tasks
+    this.childTasks.forEach((task: BaseTask) => {
+      task.runs.forEach((run: TaskRun) => {
+        if (run.node.id === nodeStatus.id) {
+          run.node.status = nodeStatus.online ? NodeStatus.Online : NodeStatus.Offline;
+        }
+      });
+    });
+
+    if (!this.task) return;
+
+    // update the status of the runs
+    const run = this.task.runs.find((r) => r.node.id === nodeStatus.id);
+    if (run) {
+      run.node.status = nodeStatus.online ? NodeStatus.Online : NodeStatus.Offline;
+    }
   }
 }
