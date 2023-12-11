@@ -123,7 +123,8 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     if (!this.task) return false;
     if (this.task.runs.length <= 0) return false;
     if (this.task.results?.some((result) => result.result === null)) return true;
-    return false;
+    if (this.task.runs.every((run) => run.status === TaskStatus.Completed)) return false;
+    return true;
   }
 
   isFailedRun(status: TaskStatus): boolean {

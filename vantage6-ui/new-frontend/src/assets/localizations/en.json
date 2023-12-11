@@ -268,7 +268,7 @@
   "task-status": {
     "Active": "Active",
     "Completed": "Completed",
-    "Crashed": "Crashed",
+    "Crashed": "Error during execution",
     "Failed": "Failed",
     "Initializing": "Initializing",
     "Killed": "Killed by user",
