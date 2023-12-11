@@ -16,5 +16,6 @@ export interface AlgorithmStatusChangeMsg {
 }
 
 export interface NewTaskMsg {
-  task_id: number;
+  id: number;
+  parent_id: number;
 }

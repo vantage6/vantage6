@@ -77,7 +77,7 @@ export class SocketioConnectService {
     return this.algoStatusUpdate$.asObservable();
   }
 
-  public getTaskCreatedUpdates() {
+  public getNewTaskUpdates() {
     return this.taskCreated$.asObservable();
   }
 }

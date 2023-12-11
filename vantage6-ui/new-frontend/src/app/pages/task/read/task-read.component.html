@@ -31,6 +31,28 @@
         </app-status-info>
       </div>
     </mat-card-content>
+    <div *ngIf="childTasks.length > 0">
+      <mat-card-header>
+        <mat-card-title>{{ "task-read.card-status.child-title" | translate }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="status-info-container" *ngFor="let childTask of childTasks">
+          <app-status-info
+            *ngFor="let run of childTask?.runs"
+            [type]="getStatusInfoTypeForStatus(run.status)"
+            title="{{ run.node.name }}"
+            [subTitle]="getTaskStatusTranslation(run.status)"
+          >
+            <button actions mat-raised-button *ngIf="run.log && isFailedRun(run.status)" (click)="openLog(run.log)">
+              {{ "task-run.show-log" | translate }}
+            </button>
+            <span actionText *ngIf="run.node.status !== 'online' && isActiveRun(run.status)">{{
+              "task-run.alert-node-offline" | translate
+            }}</span>
+          </app-status-info>
+        </div>
+      </mat-card-content>
+    </div>
   </mat-card>
   <mat-card *ngIf="!isLoading && task.results && task.results.length > 0">
     <mat-card-header>

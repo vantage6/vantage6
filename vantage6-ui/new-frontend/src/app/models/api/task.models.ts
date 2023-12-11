@@ -30,6 +30,8 @@ export interface GetTaskParameters {
   collaboration_id?: string;
   init_user_id?: string;
   sort?: TaskSortProperties;
+  parent_id?: number;
+  include?: string;
 }
 
 export interface BaseTask {
