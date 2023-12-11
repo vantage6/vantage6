@@ -14,3 +14,7 @@ export interface AlgorithmStatusChangeMsg {
   organization_id: number;
   parent_id: number;
 }
+
+export interface NewTaskMsg {
+  task_id: number;
+}

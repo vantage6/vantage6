@@ -4,15 +4,15 @@ import { io, Socket } from 'socket.io-client';
 
 import { environment } from 'src/environments/environment';
 import { TokenStorageService } from './token-storage.service';
-import { AlgorithmStatusChangeMsg, NodeOnlineStatusMsg } from '../models/socket-messages.model';
+import { AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from '../models/socket-messages.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SocketioConnectService {
-  message$: BehaviorSubject<string> = new BehaviorSubject('');
   nodeStatusUpdate$: BehaviorSubject<NodeOnlineStatusMsg | null> = new BehaviorSubject<NodeOnlineStatusMsg | null>(null);
   algoStatusUpdate$: BehaviorSubject<AlgorithmStatusChangeMsg | null> = new BehaviorSubject<AlgorithmStatusChangeMsg | null>(null);
+  taskCreated$: BehaviorSubject<NewTaskMsg | null> = new BehaviorSubject<NewTaskMsg | null>(null);
   socket: Socket | null = null;
 
   constructor(private tokenStorageService: TokenStorageService) {}
@@ -62,11 +62,12 @@ export class SocketioConnectService {
     this.socket?.on('algorithm_status_change', (data) => {
       this.algoStatusUpdate$.next(data);
     });
-  }
 
-  public getMessages = () => {
-    return this.message$.asObservable();
-  };
+    // get messages when a new task is created
+    this.socket?.on('new_task', (data) => {
+      this.taskCreated$.next(data);
+    });
+  }
 
   public getNodeStatusUpdates() {
     return this.nodeStatusUpdate$.asObservable();
@@ -74,5 +75,9 @@ export class SocketioConnectService {
 
   public getAlgorithmStatusUpdates() {
     return this.algoStatusUpdate$.asObservable();
+  }
+
+  public getTaskCreatedUpdates() {
+    return this.taskCreated$.asObservable();
   }
 }

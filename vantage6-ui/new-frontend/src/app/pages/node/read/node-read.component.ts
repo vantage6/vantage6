@@ -1,4 +1,4 @@
-import { Component, HostBinding, OnInit } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
 import { BaseNode, Node, NodeEdit, NodeLazyProperties, NodeSortProperties, NodeStatus } from '../../../models/api/node.model';
 import { NodeService } from 'src/app/services/node.service';
 import { BaseOrganization, OrganizationSortProperties } from 'src/app/models/api/organization.model';
@@ -11,13 +11,16 @@ import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
 import { Pagination, PaginationLinks } from 'src/app/models/api/pagination.model';
 import { PageEvent } from '@angular/material/paginator';
 import { PermissionService } from 'src/app/services/permission.service';
+import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
+import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-node-read',
   templateUrl: './node-read.component.html',
   styleUrls: ['./node-read.component.scss']
 })
-export class NodeReadComponent implements OnInit {
+export class NodeReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   nodeStatus = NodeStatus;
 
@@ -33,15 +36,27 @@ export class NodeReadComponent implements OnInit {
   filterType: string = '';
   filterValue: string = '';
 
+  private nodeStatusUpdateSubscription?: Subscription;
+
   constructor(
     private nodeService: NodeService,
     private organizationService: OrganizationService,
     private collaborationService: CollaborationService,
-    private permissionService: PermissionService
+    private permissionService: PermissionService,
+    private socketioConnectService: SocketioConnectService
   ) {}
 
   async ngOnInit(): Promise<void> {
     await this.initData();
+    this.nodeStatusUpdateSubscription = this.socketioConnectService
+      .getNodeStatusUpdates()
+      .subscribe((nodeStatusUpdate: NodeOnlineStatusMsg | null) => {
+        if (nodeStatusUpdate) this.onNodeStatusUpdate(nodeStatusUpdate);
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.nodeStatusUpdateSubscription?.unsubscribe();
   }
 
   async handleFilterChange(e: MatSelectChange): Promise<void> {
@@ -93,6 +108,18 @@ export class NodeReadComponent implements OnInit {
 
   canEdit(orgId: number): boolean {
     return this.permissionService.isAllowedForOrg(ResourceType.NODE, OperationType.EDIT, orgId);
+  }
+
+  onNodeStatusUpdate(nodeStatusUpdate: NodeOnlineStatusMsg): void {
+    for (const node of this.nodes) {
+      if (node.id === nodeStatusUpdate.id) {
+        node.status = nodeStatusUpdate.online ? NodeStatus.Online : NodeStatus.Offline;
+        if (this.selectedNode && this.selectedNode.id === node.id) {
+          this.selectedNode.status = node.status;
+        }
+        break;
+      }
+    }
   }
 
   private async initData(): Promise<void> {

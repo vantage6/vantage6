@@ -3,8 +3,8 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { Algorithm, ArgumentType, BaseAlgorithm, AlgorithmFunction } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
-import { Subject, takeUntil } from 'rxjs';
-import { BaseNode } from 'src/app/models/api/node.model';
+import { Subject, Subscription, takeUntil } from 'rxjs';
+import { BaseNode, NodeStatus } from 'src/app/models/api/node.model';
 import { ColumnRetrievalInput, CreateTask, CreateTaskInput, TaskDatabase } from 'src/app/models/api/task.models';
 import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
@@ -14,6 +14,8 @@ import { addParameterFormControlsForFunction, getTaskDatabaseFromForm } from '..
 import { DatabaseStepComponent } from './steps/database-step/database-step.component';
 import { FilterStepComponent } from './steps/filter-step/filter-step.component';
 import { NodeService } from 'src/app/services/node.service';
+import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
+import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
 
 @Component({
   selector: 'app-task-create',
@@ -56,13 +58,16 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   filterForm = this.fb.array([]);
   parameterForm = this.fb.nonNullable.group({});
 
+  private nodeStatusUpdateSubscription?: Subscription;
+
   constructor(
     private fb: FormBuilder,
     private router: Router,
     private algorithmService: AlgorithmService,
     private taskService: TaskService,
     private nodeService: NodeService,
-    public chosenCollaborationService: ChosenCollaborationService
+    public chosenCollaborationService: ChosenCollaborationService,
+    private socketioConnectService: SocketioConnectService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -82,10 +87,17 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     this.functionForm.controls.organizationIDs.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (organizationID) => {
       this.handleOrganizationChange(organizationID);
     });
+
+    this.nodeStatusUpdateSubscription = this.socketioConnectService
+      .getNodeStatusUpdates()
+      .subscribe((nodeStatusUpdate: NodeOnlineStatusMsg | null) => {
+        if (nodeStatusUpdate) this.onNodeStatusUpdate(nodeStatusUpdate);
+      });
   }
 
   ngOnDestroy(): void {
     this.destroy$.next(true);
+    this.nodeStatusUpdateSubscription?.unsubscribe();
   }
 
   get shouldShowDatabaseStep(): boolean {
@@ -301,5 +313,12 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
 
   private clearParameterStep(): void {
     this.parameterForm = this.fb.nonNullable.group({});
+  }
+
+  private onNodeStatusUpdate(nodeStatusUpdate: NodeOnlineStatusMsg): void {
+    if (!this.node) return;
+    if (this.node.id === nodeStatusUpdate.id) {
+      this.node.status = nodeStatusUpdate.online ? NodeStatus.Online : NodeStatus.Offline;
+    }
   }
 }

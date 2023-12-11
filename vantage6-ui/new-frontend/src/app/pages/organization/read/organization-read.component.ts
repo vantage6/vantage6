@@ -1,21 +1,24 @@
-import { Component, HostBinding, Input, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
 import { downloadFile } from 'src/app/helpers/file.helper';
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { Organization, OrganizationLazyProperties } from 'src/app/models/api/organization.model';
 import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
 import { TableData } from 'src/app/models/application/table.model';
+import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
 import { routePaths } from 'src/app/routes';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { PermissionService } from 'src/app/services/permission.service';
+import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 
 @Component({
   selector: 'app-organization-read',
   templateUrl: './organization-read.component.html',
   styleUrls: ['./organization-read.component.scss']
 })
-export class OrganizationReadComponent implements OnInit {
+export class OrganizationReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   routes = routePaths;
   nodeStatus = NodeStatus;
@@ -27,15 +30,27 @@ export class OrganizationReadComponent implements OnInit {
   organization?: Organization;
   collaborationTable?: TableData;
 
+  private nodeStatusUpdateSubscription?: Subscription;
+
   constructor(
     private router: Router,
     private translateService: TranslateService,
     private organizationService: OrganizationService,
-    private permissionService: PermissionService
+    private permissionService: PermissionService,
+    private socketioConnectService: SocketioConnectService
   ) {}
 
   async ngOnInit(): Promise<void> {
     await this.initData();
+    this.nodeStatusUpdateSubscription = this.socketioConnectService
+      .getNodeStatusUpdates()
+      .subscribe((nodeStatusUpdate: NodeOnlineStatusMsg | null) => {
+        if (nodeStatusUpdate) this.onNodeStatusUpdate(nodeStatusUpdate);
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.nodeStatusUpdateSubscription?.unsubscribe();
   }
 
   handleDownload(): void {
@@ -58,5 +73,13 @@ export class OrganizationReadComponent implements OnInit {
     this.canEdit =
       !!this.organization && this.permissionService.isAllowedForOrg(ResourceType.ORGANIZATION, OperationType.EDIT, this.organization.id);
     this.isLoading = false;
+  }
+
+  private onNodeStatusUpdate(nodeStatusUpdate: NodeOnlineStatusMsg): void {
+    if (!this.organization) return;
+    const node = this.organization.nodes.find((n) => n.id === nodeStatusUpdate.id);
+    if (node) {
+      node.status = nodeStatusUpdate.online ? NodeStatus.Online : NodeStatus.Offline;
+    }
   }
 }
