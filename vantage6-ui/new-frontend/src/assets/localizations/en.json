@@ -82,7 +82,8 @@
       "title": "General"
     },
     "card-status": {
-      "title": "Status"
+      "title": "Status",
+      "child-title": "Subtasks"
     },
     "card-results": {
       "title": "Results",

@@ -2,7 +2,7 @@ import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core'
 import { TranslateService } from '@ngx-translate/core';
 import { getChipTypeForStatus, getStatusInfoTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
 import { Algorithm, AlgorithmFunction, Output } from 'src/app/models/api/algorithm.model';
-import { Task, TaskLazyProperties, TaskRun, TaskStatus, TaskResult } from 'src/app/models/api/task.models';
+import { Task, TaskLazyProperties, TaskRun, TaskStatus, TaskResult, BaseTask } from 'src/app/models/api/task.models';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { TaskService } from 'src/app/services/task.service';
@@ -17,7 +17,7 @@ import { PermissionService } from 'src/app/services/permission.service';
 import { Subject, Subscription, takeUntil, timer } from 'rxjs';
 import { FileService } from 'src/app/services/file.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
-import { AlgorithmStatusChangeMsg } from 'src/app/models/socket-messages.model';
+import { AlgorithmStatusChangeMsg, NewTaskMsg } from 'src/app/models/socket-messages.model';
 
 @Component({
   selector: 'app-task-read',
@@ -35,6 +35,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   visualization = new FormControl(0);
 
   task: Task | null = null;
+  childTasks: BaseTask[] = [];
   algorithm: Algorithm | null = null;
   function: AlgorithmFunction | null = null;
   selectedOutput: Output | null = null;
@@ -42,6 +43,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   canDelete = false;
 
   private taskStatusUpdateSubscription?: Subscription;
+  private taskNewUpdateSubscription?: Subscription;
 
   constructor(
     public dialog: MatDialog,
@@ -65,25 +67,40 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       this.selectedOutput = this.function?.output?.[value || 0] || null;
     });
     await this.initData();
+
+    // subscribe to task updates
     this.taskStatusUpdateSubscription = this.socketioConnectService
       .getAlgorithmStatusUpdates()
       .subscribe((statusUpdate: AlgorithmStatusChangeMsg | null) => {
         if (statusUpdate) this.onAlgorithmStatusUpdate(statusUpdate);
       });
+
+    // subscribe to new tasks
+    this.taskNewUpdateSubscription = this.socketioConnectService.getNewTaskUpdates().subscribe((newTaskMsg: NewTaskMsg | null) => {
+      if (newTaskMsg) this.onNewTask(newTaskMsg);
+    });
   }
 
   ngOnDestroy(): void {
     this.destroy$.next(true);
     this.waitTaskComplete$.next(true);
     this.taskStatusUpdateSubscription?.unsubscribe();
+    this.taskNewUpdateSubscription?.unsubscribe();
   }
 
-  async initData(): Promise<void> {
-    this.task = await this.taskService.getTask(Number.parseInt(this.id), [TaskLazyProperties.InitOrg, TaskLazyProperties.InitUser]);
+  async initData(sync_tasks: boolean = true): Promise<void> {
+    if (!this.task || sync_tasks) {
+      this.task = await this.getMainTask();
+      this.childTasks = await this.getChildTasks();
+    }
     this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image);
     this.function = this.algorithm?.functions.find((_) => _.name === this.task?.input?.method) || null;
     this.selectedOutput = this.function?.output?.[0] || null;
     this.isLoading = false;
+  }
+
+  async getMainTask(): Promise<Task> {
+    return await this.taskService.getTask(Number.parseInt(this.id), [TaskLazyProperties.InitOrg, TaskLazyProperties.InitUser]);
   }
 
   getChipTypeForStatus(status: TaskStatus) {
@@ -98,12 +115,15 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     return getStatusInfoTypeForStatus(status);
   }
 
+  async getChildTasks(): Promise<BaseTask[]> {
+    return await this.taskService.getTasks(1, { parent_id: this.task?.id, include: 'results,runs' }).then((data) => data.data);
+  }
+
   isTaskInProgress(): boolean {
     if (!this.task) return false;
     if (this.task.runs.length <= 0) return false;
     if (this.task.results?.some((result) => result.result === null)) return true;
-    if (this.task.runs.every((run) => run.status === TaskStatus.Completed)) return false;
-    return true;
+    return false;
   }
 
   isFailedRun(status: TaskStatus): boolean {
@@ -173,6 +193,17 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   }
 
   private async onAlgorithmStatusUpdate(statusUpdate: AlgorithmStatusChangeMsg): Promise<void> {
+    // Update status of child tasks
+    this.childTasks.forEach((task: BaseTask) => {
+      if (task.id === statusUpdate.task_id) {
+        task.runs.forEach((run: TaskRun) => {
+          if (run.id === statusUpdate.run_id) {
+            run.status = statusUpdate.status as TaskStatus;
+          }
+        });
+      }
+    });
+
     if (!this.task) return;
     if (statusUpdate.task_id !== this.task.id) return;
 
@@ -189,14 +220,23 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       timer(0, 1000)
         .pipe(takeUntil(this.waitTaskComplete$))
         .subscribe({
-          next: () => {
-            this.initData();
+          next: async () => {
+            this.task = await this.getMainTask();
             if (!this.isTaskInProgress()) {
+              this.initData(false);
               // stop polling
               this.waitTaskComplete$.next(true);
             }
           }
         });
     }
+  }
+
+  private async onNewTask(newTaskMsg: NewTaskMsg): Promise<void> {
+    if (!this.task) return;
+    if (newTaskMsg.parent_id !== this.task.id) return;
+
+    // set the child task data
+    this.childTasks = await this.getChildTasks();
   }
 }
