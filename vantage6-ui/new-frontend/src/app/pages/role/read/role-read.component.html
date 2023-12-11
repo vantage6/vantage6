@@ -30,10 +30,13 @@
             >
             </app-permissions-matrix>
 
-            <div *ngIf="isEditing" class="button-container role-read__submit-buttons">
-              <button mat-flat-button type="submit" color="primary" (click)="handleSubmitEdit()">{{ "general.submit" | translate }}</button>
-              <button mat-flat-button (click)="handleCancelEdit()">{{ "general.cancel" | translate }}</button>
-            </div>
+            <app-role-submit-buttons
+              *ngIf="isEditing"
+              [submitDisabled]="submitDisabled"
+              (submitted)="handleSubmitEdit()"
+              (cancelled)="handleCancelEdit()"
+              class="role-read__submit-buttons"
+            ></app-role-submit-buttons>
           </div>
         </mat-tab>
         <mat-tab label="{{ 'role-read.tab.users' | translate }}">
