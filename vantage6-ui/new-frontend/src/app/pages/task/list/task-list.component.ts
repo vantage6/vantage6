@@ -1,15 +1,18 @@
-import { Component, HostBinding, OnInit } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
 import { getChipTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
 import { BaseTask, TaskSortProperties, TaskStatus } from 'src/app/models/api/task.models';
 import { CHOSEN_COLLABORATION, USER_ID } from 'src/app/models/constants/sessionStorage';
+import { AlgorithmStatusChangeMsg } from 'src/app/models/socket-messages.model';
 import { routePaths } from 'src/app/routes';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
+import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { TaskService } from 'src/app/services/task.service';
 
 enum TableRows {
@@ -22,7 +25,7 @@ enum TableRows {
   selector: 'app-task-list',
   templateUrl: './task-list.component.html'
 })
-export class TaskListComponent implements OnInit {
+export class TaskListComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   tableRows = TableRows;
   routes = routePaths;
@@ -33,12 +36,15 @@ export class TaskListComponent implements OnInit {
   currentPage: number = 1;
   canCreate: boolean = false;
 
+  private taskStatusUpdateSubscription?: Subscription;
+
   constructor(
     private router: Router,
     private translateService: TranslateService,
     private taskService: TaskService,
     private chosenCollaborationService: ChosenCollaborationService,
-    private permissionService: PermissionService
+    private permissionService: PermissionService,
+    private socketioConnectService: SocketioConnectService
   ) {}
 
   async ngOnInit() {
@@ -48,6 +54,15 @@ export class TaskListComponent implements OnInit {
       this.chosenCollaborationService.collaboration$.value
     );
     await this.initData();
+    this.taskStatusUpdateSubscription = this.socketioConnectService
+      .getAlgorithmStatusUpdates()
+      .subscribe((statusUpdate: AlgorithmStatusChangeMsg | null) => {
+        if (statusUpdate) this.onAlgorithmStatusUpdate(statusUpdate);
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.taskStatusUpdateSubscription?.unsubscribe();
   }
 
   async handlePageEvent(e: PageEvent) {
@@ -89,5 +104,12 @@ export class TaskListComponent implements OnInit {
     });
     this.tasks = taskData.data;
     this.pagination = taskData.links;
+  }
+
+  private async onAlgorithmStatusUpdate(statusUpdate: AlgorithmStatusChangeMsg) {
+    const task = this.tasks.find((t) => t.id === statusUpdate.task_id);
+    if (task) {
+      task.status = statusUpdate.status as TaskStatus;
+    }
   }
 }

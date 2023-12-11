@@ -14,8 +14,10 @@ import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confi
 import { FormControl } from '@angular/forms';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, Subscription, takeUntil, timer } from 'rxjs';
 import { FileService } from 'src/app/services/file.service';
+import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
+import { AlgorithmStatusChangeMsg } from 'src/app/models/socket-messages.model';
 
 @Component({
   selector: 'app-task-read',
@@ -27,6 +29,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   @Input() id = '';
 
   destroy$ = new Subject();
+  waitTaskComplete$ = new Subject();
   routes = routePaths;
 
   visualization = new FormControl(0);
@@ -38,6 +41,8 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   isLoading = true;
   canDelete = false;
 
+  private taskStatusUpdateSubscription?: Subscription;
+
   constructor(
     public dialog: MatDialog,
     private router: Router,
@@ -46,7 +51,8 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     private algorithmService: AlgorithmService,
     private chosenCollaborationService: ChosenCollaborationService,
     private permissionService: PermissionService,
-    private fileService: FileService
+    private fileService: FileService,
+    private socketioConnectService: SocketioConnectService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -59,10 +65,17 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       this.selectedOutput = this.function?.output?.[value || 0] || null;
     });
     await this.initData();
+    this.taskStatusUpdateSubscription = this.socketioConnectService
+      .getAlgorithmStatusUpdates()
+      .subscribe((statusUpdate: AlgorithmStatusChangeMsg | null) => {
+        if (statusUpdate) this.onAlgorithmStatusUpdate(statusUpdate);
+      });
   }
 
   ngOnDestroy(): void {
     this.destroy$.next(true);
+    this.waitTaskComplete$.next(true);
+    this.taskStatusUpdateSubscription?.unsubscribe();
   }
 
   async initData(): Promise<void> {
@@ -85,9 +98,10 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     return getStatusInfoTypeForStatus(status);
   }
 
-  shouldShowStatusInfo(): boolean {
+  isTaskInProgress(): boolean {
     if (!this.task) return false;
     if (this.task.runs.length <= 0) return false;
+    if (this.task.results?.some((result) => result.result === null)) return true;
     if (this.task.runs.every((run) => run.status === TaskStatus.Completed)) return false;
     return true;
   }
@@ -156,5 +170,33 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     const filename = `vantage6_result_${result.id}.txt`;
     const textResult = JSON.stringify(result.decoded_result);
     this.fileService.downloadTxtFile(textResult, filename);
+  }
+
+  private async onAlgorithmStatusUpdate(statusUpdate: AlgorithmStatusChangeMsg): Promise<void> {
+    if (!this.task) return;
+    if (statusUpdate.task_id !== this.task.id) return;
+
+    // update the status of the runs
+    const run = this.task.runs.find((r) => r.id === statusUpdate.run_id);
+    if (run) {
+      run.status = statusUpdate.status as TaskStatus;
+    }
+
+    // if the task is completed, we need to reload the task to get the results
+    if (statusUpdate.status === TaskStatus.Completed) {
+      // Task is completed but we need to wait for the results to be available
+      // on the server. Poll every second until the results are available.
+      timer(0, 1000)
+        .pipe(takeUntil(this.waitTaskComplete$))
+        .subscribe({
+          next: () => {
+            this.initData();
+            if (!this.isTaskInProgress()) {
+              // stop polling
+              this.waitTaskComplete$.next(true);
+            }
+          }
+        });
+    }
   }
 }
