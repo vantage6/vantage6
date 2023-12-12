@@ -100,7 +100,8 @@ export class TaskListComponent implements OnInit, OnDestroy {
 
     const taskData = await this.taskService.getTasks(this.currentPage, {
       collaboration_id: collaborationID,
-      sort: TaskSortProperties.ID
+      sort: TaskSortProperties.ID,
+      is_user_created: 1
     });
     this.tasks = taskData.data;
     this.pagination = taskData.links;
