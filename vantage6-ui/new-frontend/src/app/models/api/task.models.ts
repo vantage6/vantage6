@@ -32,6 +32,7 @@ export interface GetTaskParameters {
   sort?: TaskSortProperties;
   parent_id?: number;
   include?: string;
+  is_user_created?: number;
 }
 
 export interface BaseTask {
