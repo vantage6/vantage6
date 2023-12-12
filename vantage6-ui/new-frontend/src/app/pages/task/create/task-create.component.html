@@ -8,8 +8,8 @@
             <ng-template matStepLabel>{{ "task-create.step-package.title" | translate }}</ng-template>
             <mat-form-field subscriptSizing="dynamic">
               <mat-label>{{ "task.algorithm" | translate }}</mat-label>
-              <mat-select formControlName="algorithmID">
-                <mat-option *ngFor="let algorithm of algorithms" [value]="algorithm.id">
+              <mat-select formControlName="algorithmName">
+                <mat-option *ngFor="let algorithm of algorithms" [value]="algorithm.name">
                   {{ algorithm.name }}
                 </mat-option>
               </mat-select>

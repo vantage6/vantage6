@@ -98,6 +98,14 @@ const routes: Routes = [
         }
       },
       {
+        path: routerConfig.taskCreateRepeat,
+        component: TaskCreateComponent,
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        data: {
+          crumbs: [['task-list.title', routePaths.tasks], ['task-create.title']]
+        }
+      },
+      {
         path: routerConfig.task,
         component: TaskReadComponent,
         canActivate: [authenticationGuard(), chosenCollaborationGuard()],

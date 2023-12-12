@@ -45,7 +45,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   isLoadingColumns: boolean = false;
 
   packageForm = this.fb.nonNullable.group({
-    algorithmID: ['', Validators.required],
+    algorithmName: ['', Validators.required],
     name: ['', Validators.required],
     description: ''
   });
@@ -73,7 +73,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   async ngOnInit(): Promise<void> {
     this.initData();
 
-    this.packageForm.controls.algorithmID.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (algorithmID) => {
+    this.packageForm.controls.algorithmName.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (algorithmID) => {
       this.handleAlgorithmChange(algorithmID);
     });
 
@@ -93,6 +93,12 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
       .subscribe((nodeStatusUpdate: NodeOnlineStatusMsg | null) => {
         if (nodeStatusUpdate) this.onNodeStatusUpdate(nodeStatusUpdate);
       });
+
+    // if we are repeating a previous task, set that up
+    if (this.router.url.startsWith(routePaths.taskCreateRepeat)) {
+      const taskID = this.router.url.split('/')[4];
+      this.setupRepeatTask(taskID);
+    }
   }
 
   ngOnDestroy(): void {
@@ -116,6 +122,43 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
 
   get shouldShowParameterStep(): boolean {
     return !this.function || (!!this.function && !!this.function.arguments && this.function.arguments.length > 0);
+  }
+
+  async setupRepeatTask(taskID: string): Promise<void> {
+    const task = await this.taskService.getTask(Number(taskID));
+    console.log('task', task);
+    if (task) {
+      this.packageForm.controls.name.setValue(task.name);
+      this.packageForm.controls.description.setValue(task.description);
+
+      const algorithm = this.algorithms.find((_) => _.url === task.image);
+
+      if (!algorithm) return;
+      this.packageForm.controls.algorithmName.setValue(algorithm.name.toString());
+      await this.handleAlgorithmChange(algorithm.id.toString());
+
+      if (!task.input) return;
+      this.functionForm.controls.functionName.setValue(task.input?.method);
+      await this.handleFunctionChange(task.input?.method);
+
+      if (!this.function) return;
+      const organizationIDs = task.runs.map((_) => _.organization?.id).toString();
+      if (this.function.is_central) {
+        this.functionForm.get('organizationIDs')?.setValue(organizationIDs.toString());
+        // this.functionForm.controls.organizationIDs.setValue(organizationIDs.toString());
+      } else {
+        this.functionForm.controls.organizationIDs.setValue(organizationIDs.toString());
+      }
+      console.log('org_ids', organizationIDs);
+      // this.handleOrganizationChange(task.organizations.map((_) => _.id));
+      // this.databaseStepComponent?.setDatabases(task.databases);
+      // this.preprocessingStep?.setPreprocessing(task.preprocessing);
+      // this.filterStep?.setFilters(task.filter);
+      // this.parameterForm = this.fb.nonNullable.group({});
+      // task.arguments.forEach((arg) => {
+      //   this.parameterForm.addControl(arg.name, this.fb.control(arg.value));
+      // });
+    }
   }
 
   async handleSubmit(): Promise<void> {
@@ -253,6 +296,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
 
     //Delay setting function, so that form controls are added
     this.function = selectedFunction;
+    console.log(this.function);
   }
 
   private async handleOrganizationChange(organizationID: string | string[]): Promise<void> {
