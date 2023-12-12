@@ -75,7 +75,6 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
   @Input() selectable: Rule[] = [];
   /* Selections that can be edited */
   @Input() preselected: Rule[] = [];
-  @Input() userRules: Rule[] = [];
 
   @Output() changed: EventEmitter<Rule[]> = new EventEmitter();
 

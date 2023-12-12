@@ -18,7 +18,7 @@ export class UserService {
   async getUser(id: string, lazyProperties: UserLazyProperties[] = []): Promise<User> {
     const result = await this.apiService.getForApi<BaseUser>(`/user/${id}`);
 
-    const user: User = { ...result, organization: undefined, roles: [] };
+    const user: User = { ...result, organization: undefined, roles: [], rules: [] };
     await getLazyProperties(result, user, lazyProperties, this.apiService);
 
     return user;

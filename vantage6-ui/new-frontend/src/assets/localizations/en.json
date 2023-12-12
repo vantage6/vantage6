@@ -228,7 +228,8 @@
     "first-name": "First name",
     "last-name": "Last name",
     "organization": "Organization",
-    "roles": "Roles"
+    "roles": "Roles",
+    "permissions": "Permissions"
   },
   "user-list": {
     "title": "Users"

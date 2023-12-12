@@ -45,6 +45,10 @@ export class UserEditComponent implements OnInit {
   }
 
   private async initData(): Promise<void> {
-    this.user = await this.userService.getUser(this.id, [UserLazyProperties.Organization, UserLazyProperties.Roles]);
+    this.user = await this.userService.getUser(this.id, [
+      UserLazyProperties.Organization,
+      UserLazyProperties.Roles,
+      UserLazyProperties.Rules
+    ]);
   }
 }

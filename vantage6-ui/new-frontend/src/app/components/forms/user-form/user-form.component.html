@@ -38,13 +38,24 @@
     <mat-form-field subscriptSizing="dynamic">
       <mat-label>{{ "user.roles" | translate }}</mat-label>
       <mat-select formControlName="roles" multiple>
-        <mat-option *ngFor="let role of roles" [value]="role.id">
+        <mat-option *ngFor="let role of organizationRoles" [value]="role.id">
           {{ role.name }}
         </mat-option>
       </mat-select>
       <mat-hint *ngIf="form.controls.organization_id.invalid">{{ "password.validation.roles-unavailable" | translate }}</mat-hint>
     </mat-form-field>
-    <div class="button-container">
+    <div class="user-form__header">
+      <div class="user-form__label">
+        {{ "user.permissions" | translate }}
+      </div>
+    </div>
+    <app-permissions-matrix
+      [fixedSelected]="roleRules"
+      [selectable]="selectableRules"
+      [preselected]="editSessionUserRules"
+      (changed)="handleChangedRules($event)"
+    ></app-permissions-matrix>
+    <div class="button-container user-form__button-container">
       <button mat-flat-button type="submit" color="primary">{{ "general.submit" | translate }}</button>
       <button mat-flat-button (click)="handleCancel()">{{ "general.cancel" | translate }}</button>
     </div>
