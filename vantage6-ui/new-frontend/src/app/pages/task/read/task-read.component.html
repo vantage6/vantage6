@@ -110,6 +110,31 @@
           <b>{{ "task.user" | translate }}</b>
           <span>{{ task.init_user?.username || "-" }}</span>
         </div>
+        <div class="data-list__item">
+          <b>{{ "task.created-at" | translate }}</b>
+          <span>{{ (task.created_at | date: "MMMM d, y, HH:mm:ss") || "-" }}</span>
+        </div>
+        <div class="data-list__item" *ngIf="task.parent">
+          <b>{{ "task.parent" | translate }}</b>
+          <app-chip
+            [label]="task.parent.id.toString()"
+            [small]="true"
+            [clickable]="true"
+            [routerLink]="[routes.task, task.parent.id]"
+          ></app-chip>
+        </div>
+        <div class="data-list__item" *ngIf="childTasks.length > 0">
+          <b>{{ "task.children" | translate }}</b>
+          <div class="chip-container">
+            <app-chip
+              *ngFor="let childTask of childTasks"
+              [label]="childTask.id.toString()"
+              [small]="true"
+              [clickable]="true"
+              [routerLink]="[routes.task, childTask.id]"
+            ></app-chip>
+          </div>
+        </div>
       </div>
     </mat-card-content>
   </mat-card>

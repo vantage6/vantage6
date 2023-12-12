@@ -9,7 +9,7 @@ import { TaskService } from 'src/app/services/task.service';
 import { LogDialogComponent } from '../../../components/dialogs/log/log-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { FormControl } from '@angular/forms';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
@@ -50,6 +50,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   constructor(
     public dialog: MatDialog,
     private router: Router,
+    private activatedRoute: ActivatedRoute,
     private translateService: TranslateService,
     private taskService: TaskService,
     private algorithmService: AlgorithmService,
@@ -69,6 +70,13 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       this.selectedOutput = this.function?.output?.[value || 0] || null;
     });
     await this.initData();
+
+    // subscribe to reload task data when url changes (i.e. other task is viewed)
+    this.activatedRoute.params.pipe(takeUntil(this.destroy$)).subscribe(async (params) => {
+      this.id = params['id'];
+      this.isLoading = true;
+      await this.initData();
+    });
 
     // subscribe to task updates
     this.taskStatusUpdateSubscription = this.socketioConnectService
