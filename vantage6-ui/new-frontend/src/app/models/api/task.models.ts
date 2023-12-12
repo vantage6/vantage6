@@ -45,6 +45,7 @@ export interface BaseTask {
   init_user: BaseLink;
   runs: TaskRun[];
   created_at: string;
+  databases: TaskDBOutput[];
   parent?: BaseLink;
 }
 
@@ -60,7 +61,13 @@ export interface Task {
   runs: TaskRun[];
   results?: TaskResult[];
   created_at: string;
+  databases: TaskDBOutput[];
   parent?: BaseLink;
+}
+
+export interface TaskDBOutput {
+  label: string;
+  parameters?: string;
 }
 
 export interface TaskRun {

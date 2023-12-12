@@ -16,6 +16,7 @@ import { FilterStepComponent } from './steps/filter-step/filter-step.component';
 import { NodeService } from 'src/app/services/node.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
+import { MatStepper } from '@angular/material/stepper';
 
 @Component({
   selector: 'app-task-create',
@@ -31,6 +32,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   filterStep?: FilterStepComponent;
   @ViewChild(DatabaseStepComponent)
   databaseStepComponent?: DatabaseStepComponent;
+  @ViewChild('stepper') private myStepper: MatStepper | null = null;
 
   destroy$ = new Subject();
   routes = routePaths;
@@ -71,7 +73,8 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    this.initData();
+    const is_task_repeat = this.router.url.startsWith(routePaths.taskCreateRepeat);
+    this.initData(is_task_repeat);
 
     this.packageForm.controls.algorithmName.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (algorithmID) => {
       this.handleAlgorithmChange(algorithmID);
@@ -88,17 +91,20 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
       this.handleOrganizationChange(organizationID);
     });
 
+    // if we are repeating a previous task, set that up
+    if (is_task_repeat) {
+      this.isLoading = true;
+      const taskID = this.router.url.split('/')[4];
+      await this.setupRepeatTask(taskID);
+      this.isLoading = false;
+      console.log('finished loading');
+    }
+
     this.nodeStatusUpdateSubscription = this.socketioConnectService
       .getNodeStatusUpdates()
       .subscribe((nodeStatusUpdate: NodeOnlineStatusMsg | null) => {
         if (nodeStatusUpdate) this.onNodeStatusUpdate(nodeStatusUpdate);
       });
-
-    // if we are repeating a previous task, set that up
-    if (this.router.url.startsWith(routePaths.taskCreateRepeat)) {
-      const taskID = this.router.url.split('/')[4];
-      this.setupRepeatTask(taskID);
-    }
   }
 
   ngOnDestroy(): void {
@@ -126,38 +132,43 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
 
   async setupRepeatTask(taskID: string): Promise<void> {
     const task = await this.taskService.getTask(Number(taskID));
-    console.log('task', task);
-    if (task) {
-      this.packageForm.controls.name.setValue(task.name);
-      this.packageForm.controls.description.setValue(task.description);
+    if (!task) {
+      return;
+    }
+    // set algorithm step
+    this.packageForm.controls.name.setValue(task.name);
+    this.packageForm.controls.description.setValue(task.description);
+    const algorithm = this.algorithms.find((_) => _.url === task.image);
+    if (!algorithm) return;
+    this.packageForm.controls.algorithmName.setValue(algorithm.name.toString());
+    await this.handleAlgorithmChange(algorithm.id.toString());
+    this.myStepper?.next();
 
-      const algorithm = this.algorithms.find((_) => _.url === task.image);
+    // set function step
+    if (!task.input) return;
+    this.functionForm.controls.functionName.setValue(task.input?.method);
+    await this.handleFunctionChange(task.input?.method);
+    this.myStepper?.next();
 
-      if (!algorithm) return;
-      this.packageForm.controls.algorithmName.setValue(algorithm.name.toString());
-      await this.handleAlgorithmChange(algorithm.id.toString());
+    if (!this.function) return;
+    const organizationIDs = task.runs.map((_) => _.organization?.id).toString();
+    this.functionForm.controls.organizationIDs.setValue(organizationIDs);
+    await this.handleOrganizationChange(organizationIDs);
+    this.myStepper?.next();
 
-      if (!task.input) return;
-      this.functionForm.controls.functionName.setValue(task.input?.method);
-      await this.handleFunctionChange(task.input?.method);
+    // set database step
+    // TODO this doesnt always go well yet - sometimes component is null when we get here
+    this.databaseStepComponent?.setDatabasesFromPreviousTask(task.databases, this.function?.databases);
 
-      if (!this.function) return;
-      const organizationIDs = task.runs.map((_) => _.organization?.id).toString();
-      if (this.function.is_central) {
-        this.functionForm.get('organizationIDs')?.setValue(organizationIDs.toString());
-        // this.functionForm.controls.organizationIDs.setValue(organizationIDs.toString());
-      } else {
-        this.functionForm.controls.organizationIDs.setValue(organizationIDs.toString());
-      }
-      console.log('org_ids', organizationIDs);
-      // this.handleOrganizationChange(task.organizations.map((_) => _.id));
-      // this.databaseStepComponent?.setDatabases(task.databases);
-      // this.preprocessingStep?.setPreprocessing(task.preprocessing);
-      // this.filterStep?.setFilters(task.filter);
-      // this.parameterForm = this.fb.nonNullable.group({});
-      // task.arguments.forEach((arg) => {
-      //   this.parameterForm.addControl(arg.name, this.fb.control(arg.value));
-      // });
+    // TODO copy preprocessing and filtering when backend is ready
+    // this.preprocessingStep?.setPreprocessing(task.preprocessing);
+    this.myStepper?.next();
+    // this.filterStep?.setFilters(task.filter);
+    this.myStepper?.next();
+
+    // set parameter step
+    for (const parameter of task.input?.parameters || []) {
+      this.parameterForm.get(parameter.label)?.setValue(parameter.value);
     }
   }
 
@@ -261,9 +272,16 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     this.isLoadingColumns = false;
   }
 
-  private async initData(): Promise<void> {
+  // compare function for mat-select
+  compareOrganizationsForSelection(obj1: any, obj2: any): boolean {
+    // The mat-select object set from typescript only has an ID set. Compare that with the ID of the
+    // organization object from the collaboration
+    return obj1.id === obj2.id;
+  }
+
+  private async initData(keepLoading: boolean): Promise<void> {
     this.algorithms = await this.algorithmService.getAlgorithms();
-    this.isLoading = false;
+    if (!keepLoading) this.isLoading = false;
   }
 
   private async handleAlgorithmChange(algorithmID: string): Promise<void> {
@@ -296,7 +314,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
 
     //Delay setting function, so that form controls are added
     this.function = selectedFunction;
-    console.log(this.function);
   }
 
   private async handleOrganizationChange(organizationID: string | string[]): Promise<void> {

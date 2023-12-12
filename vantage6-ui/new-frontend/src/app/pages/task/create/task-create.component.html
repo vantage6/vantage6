@@ -40,7 +40,7 @@
             </mat-form-field>
             <mat-form-field *ngIf="function" subscriptSizing="dynamic">
               <mat-label>{{ "task.organization" | translate }}</mat-label>
-              <mat-select *ngIf="function.is_central" formControlName="organizationIDs">
+              <mat-select *ngIf="function.is_central" formControlName="organizationIDs" [compareWith]="compareOrganizationsForSelection">
                 <mat-option
                   *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
                   [value]="organization.id"
@@ -48,7 +48,12 @@
                   {{ organization.name }}
                 </mat-option>
               </mat-select>
-              <mat-select *ngIf="!function.is_central" formControlName="organizationIDs" multiple>
+              <mat-select
+                *ngIf="!function.is_central"
+                formControlName="organizationIDs"
+                [compareWith]="compareOrganizationsForSelection"
+                multiple
+              >
                 <mat-option
                   *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
                   [value]="organization.id"

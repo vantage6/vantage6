@@ -4,6 +4,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
 import { FunctionDatabase } from 'src/app/models/api/algorithm.model';
 import { BaseNode, Database, DatabaseType } from 'src/app/models/api/node.model';
+import { TaskDBOutput } from 'src/app/models/api/task.models';
 
 @Component({
   selector: 'app-database-step',
@@ -23,6 +24,7 @@ export class DatabaseStepComponent implements OnDestroy, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    console.log(changes);
     if (changes['node']?.currentValue) {
       this.getAvailableDatabases();
     }
@@ -35,6 +37,30 @@ export class DatabaseStepComponent implements OnDestroy, OnChanges {
     Object.keys(this.form.controls).forEach((control) => {
       this.form.removeControl(control);
     });
+  }
+
+  setDatabasesFromPreviousTask(databases: TaskDBOutput[], functionDatabases: FunctionDatabase[]): void {
+    console.log(databases);
+    console.log(functionDatabases);
+    if (databases.length != functionDatabases.length) {
+      return; // the algorithm has changed, we cannot use the previous task's databases
+    }
+    for (let idx = 0; idx < databases.length; idx++) {
+      const database = databases[idx];
+      const functionDatabase = functionDatabases[idx];
+      this.form.get(`${functionDatabase.name}_name`)?.setValue(database.label);
+      if (database.parameters) {
+        const parameters = JSON.parse(database.parameters);
+        Object.keys(parameters).forEach((parameter) => {
+          // TODO 'query' and 'sheet_name' should come from some enum
+          if (parameter === 'query') {
+            this.form.get(`${functionDatabase.name}_query`)?.setValue(parameters[parameter]);
+          } else if (parameter === 'sheet_name') {
+            this.form.get(`${functionDatabase.name}_sheet`)?.setValue(parameters[parameter]);
+          }
+        });
+      }
+    }
   }
 
   private getAvailableDatabases(): void {
