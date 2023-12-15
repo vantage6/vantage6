@@ -2,7 +2,8 @@ export enum ArgumentType {
   String = 'str',
   Integer = 'int',
   Float = 'float',
-  Json = 'json'
+  Json = 'json',
+  Column = 'column'
 }
 
 export enum OutputType {
@@ -86,7 +87,7 @@ export interface FilterParameter {
   default?: string | boolean;
 }
 
-interface Argument {
+export interface Argument {
   name: string;
   type: ArgumentType;
   description?: string;

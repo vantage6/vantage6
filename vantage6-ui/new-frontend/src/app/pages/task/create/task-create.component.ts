@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
-import { Algorithm, ArgumentType, BaseAlgorithm, AlgorithmFunction } from 'src/app/models/api/algorithm.model';
+import { Algorithm, ArgumentType, BaseAlgorithm, AlgorithmFunction, Argument } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { BaseNode, NodeStatus } from 'src/app/models/api/node.model';
@@ -84,6 +84,10 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.functionForm.controls.functionName.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (functionName) => {
       this.handleFunctionChange(functionName);
+    });
+
+    this.databaseForm.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (_) => {
+      this.handleDatabaseChange();
     });
 
     this.nodeStatusUpdateSubscription = this.socketioConnectService
@@ -227,7 +231,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  async handleFirstPreprocessor(): Promise<void> {
+  async retrieveColumns(): Promise<void> {
     this.isLoadingColumns = true;
     if (!this.node) return;
 
@@ -270,6 +274,14 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       this.columns = decodedResult;
     }
     this.isLoadingColumns = false;
+  }
+
+  shouldShowColumnDropdown(argument: Argument): boolean {
+    return argument.type === this.argumentType.Column && this.columns.length > 0;
+  }
+
+  shouldShowColumnDropdownForAnyArg(): boolean {
+    return this.function?.arguments.some((arg) => this.shouldShowColumnDropdown(arg)) || false;
   }
 
   // compare function for mat-select
@@ -316,6 +328,13 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     //Delay setting function, so that form controls are added
     this.function = selectedFunction;
+  }
+
+  private async handleDatabaseChange(): Promise<void> {
+    if (this.databaseForm.invalid || Object.keys(this.databaseForm.controls).length === 0) return;
+
+    // gather data to retrieve columns - these may be required in the steps that follow
+    await this.retrieveColumns();
   }
 
   private async getOnlineNode(): Promise<BaseNode | null> {
