@@ -1,6 +1,9 @@
 import { BaseNode, Database, DatabaseType } from '../models/api/node.model';
 
-export const getDatabasesFromNode = (node: BaseNode): Database[] => {
+export const getDatabasesFromNode = (node: BaseNode | null): Database[] => {
+  if (!node) {
+    return [];
+  }
   const databaseNames: string[] = [];
 
   node.config.forEach((config) => {

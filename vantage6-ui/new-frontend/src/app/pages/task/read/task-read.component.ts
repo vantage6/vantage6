@@ -42,6 +42,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   selectedOutput: Output | null = null;
   isLoading = true;
   canDelete = false;
+  canCreate = false;
 
   private nodeStatusUpdateSubscription?: Subscription;
   private taskStatusUpdateSubscription?: Subscription;
@@ -64,6 +65,11 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     this.canDelete = this.permissionService.isAllowedForCollab(
       ResourceType.TASK,
       OperationType.DELETE,
+      this.chosenCollaborationService.collaboration$.value
+    );
+    this.canCreate = this.permissionService.isAllowedForCollab(
+      ResourceType.TASK,
+      OperationType.CREATE,
       this.chosenCollaborationService.collaboration$.value
     );
     this.visualization.valueChanges.subscribe((value) => {
@@ -193,6 +199,11 @@ export class TaskReadComponent implements OnInit, OnDestroy {
           this.router.navigate([routePaths.tasks]);
         }
       });
+  }
+
+  handleRepeat(): void {
+    if (!this.task) return;
+    this.router.navigate([routePaths.taskCreateRepeat, this.task.id]);
   }
 
   displayTextResult(result: object | undefined): string {

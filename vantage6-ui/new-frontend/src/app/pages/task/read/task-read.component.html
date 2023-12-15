@@ -1,11 +1,15 @@
 <app-page-header title="Task">
-  <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="task && canDelete">
+  <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="task && (canDelete || canCreate)">
     <mat-icon>more_vert</mat-icon>
   </button>
   <mat-menu #menu="matMenu">
     <button mat-menu-item *ngIf="canDelete" (click)="handleDelete()">
       <mat-icon>delete</mat-icon>
       <span>{{ "general.delete" | translate }}</span>
+    </button>
+    <button mat-menu-item *ngIf="canCreate" (click)="handleRepeat()">
+      <mat-icon>repeat</mat-icon>
+      <span>{{ "task-read.repeat" | translate }}</span>
     </button>
   </mat-menu>
 </app-page-header>

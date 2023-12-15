@@ -45,6 +45,7 @@ export interface BaseTask {
   init_user: BaseLink;
   runs: TaskRun[];
   created_at: string;
+  databases: TaskDBOutput[];
   parent?: BaseLink;
 }
 
@@ -60,7 +61,13 @@ export interface Task {
   runs: TaskRun[];
   results?: TaskResult[];
   created_at: string;
+  databases: TaskDBOutput[];
   parent?: BaseLink;
+}
+
+export interface TaskDBOutput {
+  label: string;
+  parameters?: string;
 }
 
 export interface TaskRun {
@@ -72,6 +79,7 @@ export interface TaskRun {
   started_at?: string;
   finished_at?: string;
   log?: string;
+  organization?: BaseLink;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   result?: any;
 }

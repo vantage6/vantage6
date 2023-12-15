@@ -8,8 +8,8 @@
             <ng-template matStepLabel>{{ "task-create.step-package.title" | translate }}</ng-template>
             <mat-form-field subscriptSizing="dynamic">
               <mat-label>{{ "task.algorithm" | translate }}</mat-label>
-              <mat-select formControlName="algorithmID">
-                <mat-option *ngFor="let algorithm of algorithms" [value]="algorithm.id">
+              <mat-select formControlName="algorithmName">
+                <mat-option *ngFor="let algorithm of algorithms" [value]="algorithm.name">
                   {{ algorithm.name }}
                 </mat-option>
               </mat-select>
@@ -40,7 +40,7 @@
             </mat-form-field>
             <mat-form-field *ngIf="function" subscriptSizing="dynamic">
               <mat-label>{{ "task.organization" | translate }}</mat-label>
-              <mat-select *ngIf="function.is_central" formControlName="organizationIDs">
+              <mat-select *ngIf="function.is_central" formControlName="organizationIDs" [compareWith]="compareOrganizationsForSelection">
                 <mat-option
                   *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
                   [value]="organization.id"
@@ -48,7 +48,12 @@
                   {{ organization.name }}
                 </mat-option>
               </mat-select>
-              <mat-select *ngIf="!function.is_central" formControlName="organizationIDs" multiple>
+              <mat-select
+                *ngIf="!function.is_central"
+                formControlName="organizationIDs"
+                [compareWith]="compareOrganizationsForSelection"
+                multiple
+              >
                 <mat-option
                   *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
                   [value]="organization.id"
@@ -71,10 +76,10 @@
         <mat-step [stepControl]="databaseForm" *ngIf="shouldShowDatabaseStep">
           <ng-template matStepLabel>{{ "task-create.step-database.title" | translate }}</ng-template>
           <app-database-step
-            *ngIf="node"
             [form]="databaseForm"
             [functionDatabases]="function?.databases || []"
             [node]="node"
+            (isReady)="handleDatabaseStepInitialized()"
           ></app-database-step>
           <div>
             <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>

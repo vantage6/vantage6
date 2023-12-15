@@ -1,11 +1,11 @@
-import { Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { Algorithm, ArgumentType, BaseAlgorithm, AlgorithmFunction } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { BaseNode, NodeStatus } from 'src/app/models/api/node.model';
-import { ColumnRetrievalInput, CreateTask, CreateTaskInput, TaskDatabase } from 'src/app/models/api/task.models';
+import { ColumnRetrievalInput, CreateTask, CreateTaskInput, Task, TaskDatabase } from 'src/app/models/api/task.models';
 import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
 import { Router } from '@angular/router';
@@ -16,13 +16,14 @@ import { FilterStepComponent } from './steps/filter-step/filter-step.component';
 import { NodeService } from 'src/app/services/node.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
+import { MatStepper } from '@angular/material/stepper';
 
 @Component({
   selector: 'app-task-create',
   templateUrl: './task-create.component.html',
   styleUrls: ['./task-create.component.scss']
 })
-export class TaskCreateComponent implements OnInit, OnDestroy {
+export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   @HostBinding('class') class = 'card-container';
 
   @ViewChild(PreprocessingStepComponent)
@@ -31,6 +32,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   filterStep?: FilterStepComponent;
   @ViewChild(DatabaseStepComponent)
   databaseStepComponent?: DatabaseStepComponent;
+  @ViewChild('stepper') private myStepper: MatStepper | null = null;
 
   destroy$ = new Subject();
   routes = routePaths;
@@ -43,9 +45,11 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   columns: string[] = [];
   isLoading: boolean = true;
   isLoadingColumns: boolean = false;
+  isTaskRepeat: boolean = false;
+  repeatedTask: Task | null = null;
 
   packageForm = this.fb.nonNullable.group({
-    algorithmID: ['', Validators.required],
+    algorithmName: ['', Validators.required],
     name: ['', Validators.required],
     description: ''
   });
@@ -71,9 +75,10 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    this.initData();
+    this.isTaskRepeat = this.router.url.startsWith(routePaths.taskCreateRepeat);
+    await this.initData();
 
-    this.packageForm.controls.algorithmID.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (algorithmID) => {
+    this.packageForm.controls.algorithmName.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (algorithmID) => {
       this.handleAlgorithmChange(algorithmID);
     });
 
@@ -81,18 +86,20 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
       this.handleFunctionChange(functionName);
     });
 
-    // TODO this step may not be necessary because it re-requests the
-    // databases every time the organization is changed, but the databases should
-    // be the same for all nodes
-    this.functionForm.controls.organizationIDs.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (organizationID) => {
-      this.handleOrganizationChange(organizationID);
-    });
-
     this.nodeStatusUpdateSubscription = this.socketioConnectService
       .getNodeStatusUpdates()
       .subscribe((nodeStatusUpdate: NodeOnlineStatusMsg | null) => {
         if (nodeStatusUpdate) this.onNodeStatusUpdate(nodeStatusUpdate);
       });
+  }
+
+  async ngAfterViewInit(): Promise<void> {
+    if (this.isTaskRepeat) {
+      this.isLoading = true;
+      const taskID = this.router.url.split('/')[4];
+      await this.setupRepeatTask(taskID);
+      this.isLoading = false;
+    }
   }
 
   ngOnDestroy(): void {
@@ -116,6 +123,56 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
 
   get shouldShowParameterStep(): boolean {
     return !this.function || (!!this.function && !!this.function.arguments && this.function.arguments.length > 0);
+  }
+
+  async setupRepeatTask(taskID: string): Promise<void> {
+    // TODO there are console errors when we use this routine - figure out why and resolve them
+    this.repeatedTask = await this.taskService.getTask(Number(taskID));
+    if (!this.repeatedTask) {
+      return;
+    }
+    // set algorithm step
+    this.packageForm.controls.name.setValue(this.repeatedTask.name);
+    this.packageForm.controls.description.setValue(this.repeatedTask.description);
+    const algorithm = this.algorithms.find((_) => _.url === this.repeatedTask?.image);
+    if (!algorithm) return;
+    this.packageForm.controls.algorithmName.setValue(algorithm.name.toString());
+    await this.handleAlgorithmChange(algorithm.id.toString());
+
+    // set function step
+    if (!this.repeatedTask.input) return;
+    this.functionForm.controls.functionName.setValue(this.repeatedTask?.input?.method);
+    await this.handleFunctionChange(this.repeatedTask.input?.method);
+
+    if (!this.function) return;
+    const organizationIDs = this.repeatedTask.runs.map((_) => _.organization?.id).toString();
+    this.functionForm.controls.organizationIDs.setValue(organizationIDs);
+
+    // Note: the database step is not setup here because the database child
+    // component may not yet be initialized when we get here. Instead, we
+    // setup the database step in the database child component when it is
+    // initialized.
+
+    // set parameter step
+    for (const parameter of this.repeatedTask.input?.parameters || []) {
+      this.parameterForm.get(parameter.label)?.setValue(parameter.value);
+    }
+
+    // go to last step
+    // TODO this can still be NULL when we get here, then it doesn't work
+    if (this.myStepper?._steps) {
+      for (let idx = 0; idx < this.myStepper?._steps.length || 0; idx++) {
+        this.myStepper?.next();
+      }
+    }
+  }
+
+  async handleDatabaseStepInitialized(): Promise<void> {
+    if (!this.repeatedTask || !this.function) return;
+    // set database step for task repeat
+    this.databaseStepComponent?.setDatabasesFromPreviousTask(this.repeatedTask?.databases, this.function?.databases);
+
+    // TODO repeat preprocessing and filtering when backend is ready
   }
 
   async handleSubmit(): Promise<void> {
@@ -172,15 +229,12 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
 
   async handleFirstPreprocessor(): Promise<void> {
     this.isLoadingColumns = true;
+    if (!this.node) return;
 
     // collect data to collect columns from database
     const taskDatabases: TaskDatabase[] = getTaskDatabaseFromForm(this.function, this.databaseForm);
     // TODO modify when choosing database for preprocessing is implemented
     const taskDatabase = taskDatabases[0];
-
-    // collect a node that is online
-    const node = await this.getOnlineNode();
-    if (!node) return; // TODO alert user that no node is online so no columns can be retrieved
 
     const input = { method: 'column_headers' };
 
@@ -189,7 +243,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
       db_label: taskDatabase.label,
       organizations: [
         {
-          id: node?.organization.id,
+          id: this.node.organization.id,
           input: btoa(JSON.stringify(input)) || ''
         }
       ]
@@ -218,9 +272,18 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     this.isLoadingColumns = false;
   }
 
+  // compare function for mat-select
+  compareOrganizationsForSelection(obj1: any, obj2: any): boolean {
+    // The mat-select object set from typescript only has an ID set. Compare that with the ID of the
+    // organization object from the collaboration
+    return obj1.id === obj2.id;
+  }
+
   private async initData(): Promise<void> {
     this.algorithms = await this.algorithmService.getAlgorithms();
-    this.isLoading = false;
+    // TODO if node is null, alert user that no node is online so no columns and databases can be retrieved - so better not create a task
+    this.node = await this.getOnlineNode();
+    if (!this.isTaskRepeat) this.isLoading = false;
   }
 
   private async handleAlgorithmChange(algorithmID: string): Promise<void> {
@@ -253,28 +316,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
 
     //Delay setting function, so that form controls are added
     this.function = selectedFunction;
-  }
-
-  private async handleOrganizationChange(organizationID: string | string[]): Promise<void> {
-    //Clear form
-    this.clearDatabaseStep();
-    this.node = null;
-
-    //Get organization id, from array or string
-    let id: string = organizationID.toString();
-    if (Array.isArray(organizationID) && organizationID.length > 0) {
-      id = organizationID[0];
-    }
-
-    //TODO: What should happen for multiple selected organizations
-    // TODO if selected node is offline, try to get databases from node that is online
-    //Get node
-    if (id) {
-      //Get all nodes for chosen collaboration
-      const nodes = await this.getNodes();
-      //Filter node for chosen organization
-      this.node = nodes?.find((_) => _.organization.id === Number.parseInt(id)) || null;
-    }
   }
 
   private async getOnlineNode(): Promise<BaseNode | null> {

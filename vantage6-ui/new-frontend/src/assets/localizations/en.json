@@ -104,7 +104,8 @@
     "delete-dialog": {
       "title": "Are you sure you want to delete the task '{{name}}'?",
       "content": "Note, this will also delete all subtasks and results.\nThis operation cannot be undone."
-    }
+    },
+    "repeat": "Repeat task"
   },
   "template-task-create": {
     "title": "Quick task",
