@@ -120,22 +120,24 @@
         <mat-step *ngIf="shouldShowParameterStep" [stepControl]="parameterForm">
           <form class="form" [formGroup]="parameterForm">
             <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
-            <ng-container *ngFor="let argument of function?.arguments">
-              <b>{{ argument.description }}</b>
-              <p *ngIf="argument.type === argumentType.Json">Please provide valid JSON input.</p>
-              <mat-form-field subscriptSizing="dynamic">
-                <mat-label>{{ argument.name }}</mat-label>
-                <mat-select *ngIf="showColumnDropdown(argument)" [formControlName]="argument.name">
-                  <mat-option *ngFor="let column of columns" [value]="column">{{ column }}</mat-option>
-                </mat-select>
-                <input
-                  *ngIf="!showColumnDropdown(argument)"
-                  matInput
-                  appNumberOnly
-                  [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
-                  [formControlName]="argument.name"
-                />
-              </mat-form-field>
+            <ng-container *ngIf="!shouldShowColumnDropdownForAnyArg() || !isLoadingColumns; else loadingColumns">
+              <ng-container *ngFor="let argument of function?.arguments">
+                <b>{{ argument.description }}</b>
+                <p *ngIf="argument.type === argumentType.Json">Please provide valid JSON input.</p>
+                <mat-form-field subscriptSizing="dynamic">
+                  <mat-label>{{ argument.name }}</mat-label>
+                  <mat-select *ngIf="shouldShowColumnDropdown(argument)" [formControlName]="argument.name">
+                    <mat-option *ngFor="let column of columns" [value]="column">{{ column }}</mat-option>
+                  </mat-select>
+                  <input
+                    *ngIf="!shouldShowColumnDropdown(argument)"
+                    matInput
+                    appNumberOnly
+                    [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
+                    [formControlName]="argument.name"
+                  />
+                </mat-form-field>
+              </ng-container>
             </ng-container>
             <div>
               <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>

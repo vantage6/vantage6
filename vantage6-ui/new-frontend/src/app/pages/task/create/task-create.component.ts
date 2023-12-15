@@ -276,9 +276,12 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isLoadingColumns = false;
   }
 
-  showColumnDropdown(argument: Argument): boolean {
-    console.log(argument);
+  shouldShowColumnDropdown(argument: Argument): boolean {
     return argument.type === this.argumentType.Column && this.columns.length > 0;
+  }
+
+  shouldShowColumnDropdownForAnyArg(): boolean {
+    return this.function?.arguments.some((arg) => this.shouldShowColumnDropdown(arg)) || false;
   }
 
   // compare function for mat-select
@@ -317,7 +320,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     //Get selected function
     const selectedFunction = this.algorithm?.functions.find((_) => _.name === functionName) || null;
-    console.log(selectedFunction);
 
     if (selectedFunction) {
       //Add form controls for parameters for selected function
@@ -330,11 +332,9 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private async handleDatabaseChange(): Promise<void> {
     if (this.databaseForm.invalid || Object.keys(this.databaseForm.controls).length === 0) return;
-    console.log('handleDatabaseChange');
 
     // gather data to retrieve columns - these may be required in the steps that follow
     await this.retrieveColumns();
-    console.log(this.columns);
   }
 
   private async getOnlineNode(): Promise<BaseNode | null> {
