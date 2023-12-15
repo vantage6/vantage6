@@ -87,7 +87,7 @@ export interface FilterParameter {
   default?: string | boolean;
 }
 
-interface Argument {
+export interface Argument {
   name: string;
   type: ArgumentType;
   description?: string;

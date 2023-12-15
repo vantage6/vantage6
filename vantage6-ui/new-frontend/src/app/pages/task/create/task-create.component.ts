@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
-import { Algorithm, ArgumentType, BaseAlgorithm, AlgorithmFunction } from 'src/app/models/api/algorithm.model';
+import { Algorithm, ArgumentType, BaseAlgorithm, AlgorithmFunction, Argument } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { BaseNode, NodeStatus } from 'src/app/models/api/node.model';
@@ -239,43 +239,46 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     const taskDatabases: TaskDatabase[] = getTaskDatabaseFromForm(this.function, this.databaseForm);
     // TODO modify when choosing database for preprocessing is implemented
     const taskDatabase = taskDatabases[0];
-    console.log(taskDatabase);
-    return;
 
-    // const input = { method: 'column_headers' };
+    const input = { method: 'column_headers' };
 
-    // const columnRetrieveData: ColumnRetrievalInput = {
-    //   collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
-    //   db_label: taskDatabase.label,
-    //   organizations: [
-    //     {
-    //       id: this.node.organization.id,
-    //       input: btoa(JSON.stringify(input)) || ''
-    //     }
-    //   ]
-    // };
-    // if (taskDatabase.query) {
-    //   columnRetrieveData.query = taskDatabase.query;
-    // }
-    // if (taskDatabase.sheet) {
-    //   columnRetrieveData.sheet_name = taskDatabase.sheet;
-    // }
+    const columnRetrieveData: ColumnRetrievalInput = {
+      collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
+      db_label: taskDatabase.label,
+      organizations: [
+        {
+          id: this.node.organization.id,
+          input: btoa(JSON.stringify(input)) || ''
+        }
+      ]
+    };
+    if (taskDatabase.query) {
+      columnRetrieveData.query = taskDatabase.query;
+    }
+    if (taskDatabase.sheet) {
+      columnRetrieveData.sheet_name = taskDatabase.sheet;
+    }
 
-    // // call /column endpoint. This returns either a list of columns or a task
-    // // that will retrieve the columns
-    // // TODO handle errors (both for retrieving columns and for retrieving the task)
-    // // TODO enable user to exit requesting column names if it takes too long
-    // const columnsOrTask = await this.taskService.getColumnNames(columnRetrieveData);
-    // if (columnsOrTask.columns) {
-    //   this.columns = columnsOrTask.columns;
-    // } else {
-    //   // a task has been started to retrieve the columns
-    //   const task = await this.taskService.waitForResults(columnsOrTask.id);
-    //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    //   const decodedResult: any = JSON.parse(atob(task.results?.[0].result || ''));
-    //   this.columns = decodedResult;
-    // }
-    // this.isLoadingColumns = false;
+    // call /column endpoint. This returns either a list of columns or a task
+    // that will retrieve the columns
+    // TODO handle errors (both for retrieving columns and for retrieving the task)
+    // TODO enable user to exit requesting column names if it takes too long
+    const columnsOrTask = await this.taskService.getColumnNames(columnRetrieveData);
+    if (columnsOrTask.columns) {
+      this.columns = columnsOrTask.columns;
+    } else {
+      // a task has been started to retrieve the columns
+      const task = await this.taskService.waitForResults(columnsOrTask.id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const decodedResult: any = JSON.parse(atob(task.results?.[0].result || ''));
+      this.columns = decodedResult;
+    }
+    this.isLoadingColumns = false;
+  }
+
+  showColumnDropdown(argument: Argument): boolean {
+    console.log(argument);
+    return argument.type === this.argumentType.Column && this.columns.length > 0;
   }
 
   // compare function for mat-select
@@ -314,6 +317,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     //Get selected function
     const selectedFunction = this.algorithm?.functions.find((_) => _.name === functionName) || null;
+    console.log(selectedFunction);
 
     if (selectedFunction) {
       //Add form controls for parameters for selected function
@@ -329,7 +333,8 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     console.log('handleDatabaseChange');
 
     // gather data to retrieve columns - these may be required in the steps that follow
-    // await this.retrieveColumns();
+    await this.retrieveColumns();
+    console.log(this.columns);
   }
 
   private async getOnlineNode(): Promise<BaseNode | null> {

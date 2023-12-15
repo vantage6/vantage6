@@ -125,9 +125,11 @@
               <p *ngIf="argument.type === argumentType.Json">Please provide valid JSON input.</p>
               <mat-form-field subscriptSizing="dynamic">
                 <mat-label>{{ argument.name }}</mat-label>
-
+                <mat-select *ngIf="showColumnDropdown(argument)" [formControlName]="argument.name">
+                  <mat-option *ngFor="let column of columns" [value]="column">{{ column }}</mat-option>
+                </mat-select>
                 <input
-                  *ngIf="argument.type !== argumentType.Column"
+                  *ngIf="!showColumnDropdown(argument)"
                   matInput
                   appNumberOnly
                   [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
