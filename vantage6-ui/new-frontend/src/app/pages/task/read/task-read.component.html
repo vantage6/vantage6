@@ -74,9 +74,9 @@
       <div *ngFor="let result of task.results">
         <ng-container *ngIf="result.result">
           <b>{{ getRunForResult(result.id)?.node?.name }}</b>
-          <app-visualize-result [result]="result.result" [functionOutput]="selectedOutput"></app-visualize-result>
+          <app-visualize-result [result]="result.decoded_result" [functionOutput]="selectedOutput"></app-visualize-result>
           <!-- TODO only display text result if there are no visualizations -->
-          <p>{{ displayTextResult(result.decoded_result) }}</p>
+          <!-- <p>{{ displayTextResult(result.decoded_result) }}</p> -->
           <button mat-flat-button color="primary" (click)="downloadResult(result)">
             {{ "task-read.card-results.actions.download" | translate }}
           </button>
