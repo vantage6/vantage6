@@ -17,7 +17,7 @@ export class VisualizeTableComponent implements OnChanges {
   ngOnChanges(): void {
     this.results.forEach((result) => {
       const columns = this.output?.keys || Object.keys(result).filter((key) => !key.startsWith('_'));
-      this.columns = ['_row', ...columns];
+      this.columns = [...columns];
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rows: any = {};

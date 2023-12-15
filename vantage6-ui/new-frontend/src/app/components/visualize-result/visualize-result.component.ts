@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, Input, OnChanges } from '@angular/core';
+import { filter } from 'd3';
 import { Output, OutputVisualizeType } from 'src/app/models/api/algorithm.model';
 
 interface VisualizeResult {
@@ -32,18 +33,22 @@ export class VisualizeResultComponent implements OnChanges {
 
   private getFilteredResults(output: Output): any[] {
     const filteredResults: any[] = [];
+    // TODO This may not work for the case where the output is an array - fix that. Old code kept (but commented out) below
 
-    Object.keys(this.result).forEach((key) => {
-      if (this.result[key]) {
-        if (output.filter_property) {
-          if (this.result[key][output.filter_property] === output.filter_value) {
-            filteredResults.push({ _row: key, ...this.result[key] });
-          }
-        } else {
-          filteredResults.push({ _row: key, ...this.result[key] });
-        }
-      }
-    });
+    // Object.keys(this.result).forEach((key) => {
+    // console.log(this.result[key], this.result, key);
+    // if (this.result[key]) {
+    const filteredResult: any = { _row: 1, ...this.result };
+    // if (output.filter_property) {
+    //   if (this.result[key][output.filter_property] === output.filter_value) {
+    //     filteredResult[key] = this.result[key];
+    //   }
+    // } else {
+    // filteredResult[key] = this.result[key];
+    // }
+    filteredResults.push(filteredResult);
+    // }
+    // });
     return filteredResults;
   }
 }
