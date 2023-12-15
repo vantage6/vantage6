@@ -72,7 +72,6 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       OperationType.CREATE,
       this.chosenCollaborationService.collaboration$.value
     );
-
     this.visualization.valueChanges.subscribe((value) => {
       this.selectedOutput = this.function?.output?.[value || 0] || null;
     });

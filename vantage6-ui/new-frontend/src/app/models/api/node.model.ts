@@ -39,7 +39,7 @@ export interface BaseNode {
   organization: BaseLink;
   collaboration: BaseLink;
   config: Config[];
-  status?: string;
+  status?: NodeStatus;
   last_seen?: string;
 }
 

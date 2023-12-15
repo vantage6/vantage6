@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
@@ -15,7 +15,8 @@ export class DatabaseStepComponent implements OnDestroy, OnChanges {
 
   @Input() form!: FormGroup;
   @Input() functionDatabases: FunctionDatabase[] = [];
-  @Input() node!: BaseNode;
+  @Input() node!: BaseNode | null;
+  @Output() isReady = new EventEmitter<boolean>();
 
   availableDatabases: Database[] = [];
 
@@ -24,12 +25,14 @@ export class DatabaseStepComponent implements OnDestroy, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log(changes);
     if (changes['node']?.currentValue) {
       this.getAvailableDatabases();
     }
     if (changes['functionDatabases']?.currentValue || changes['node']?.currentValue) {
       this.setFormControlsForDatabase();
+    }
+    if (this.node && this.functionDatabases.length > 0) {
+      this.isReady.emit(true);
     }
   }
 
@@ -40,8 +43,6 @@ export class DatabaseStepComponent implements OnDestroy, OnChanges {
   }
 
   setDatabasesFromPreviousTask(databases: TaskDBOutput[], functionDatabases: FunctionDatabase[]): void {
-    console.log(databases);
-    console.log(functionDatabases);
     if (databases.length != functionDatabases.length) {
       return; // the algorithm has changed, we cannot use the previous task's databases
     }
