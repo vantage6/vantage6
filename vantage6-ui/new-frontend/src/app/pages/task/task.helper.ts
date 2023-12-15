@@ -21,7 +21,6 @@ function jsonValidator(): ValidatorFn {
 
 export const addParameterFormControlsForFunction = (func: AlgorithmFunction, form: FormGroup) => {
   func?.arguments.forEach((argument) => {
-    console.log(argument);
     if (argument.type === ArgumentType.String || argument.type === ArgumentType.Column) {
       form.addControl(argument.name, new FormControl(null, Validators.required));
     }
