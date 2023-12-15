@@ -86,6 +86,10 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       this.handleFunctionChange(functionName);
     });
 
+    this.databaseForm.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (_) => {
+      this.handleDatabaseChange();
+    });
+
     this.nodeStatusUpdateSubscription = this.socketioConnectService
       .getNodeStatusUpdates()
       .subscribe((nodeStatusUpdate: NodeOnlineStatusMsg | null) => {
@@ -227,7 +231,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  async handleFirstPreprocessor(): Promise<void> {
+  async retrieveColumns(): Promise<void> {
     this.isLoadingColumns = true;
     if (!this.node) return;
 
@@ -235,41 +239,43 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     const taskDatabases: TaskDatabase[] = getTaskDatabaseFromForm(this.function, this.databaseForm);
     // TODO modify when choosing database for preprocessing is implemented
     const taskDatabase = taskDatabases[0];
+    console.log(taskDatabase);
+    return;
 
-    const input = { method: 'column_headers' };
+    // const input = { method: 'column_headers' };
 
-    const columnRetrieveData: ColumnRetrievalInput = {
-      collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
-      db_label: taskDatabase.label,
-      organizations: [
-        {
-          id: this.node.organization.id,
-          input: btoa(JSON.stringify(input)) || ''
-        }
-      ]
-    };
-    if (taskDatabase.query) {
-      columnRetrieveData.query = taskDatabase.query;
-    }
-    if (taskDatabase.sheet) {
-      columnRetrieveData.sheet_name = taskDatabase.sheet;
-    }
+    // const columnRetrieveData: ColumnRetrievalInput = {
+    //   collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
+    //   db_label: taskDatabase.label,
+    //   organizations: [
+    //     {
+    //       id: this.node.organization.id,
+    //       input: btoa(JSON.stringify(input)) || ''
+    //     }
+    //   ]
+    // };
+    // if (taskDatabase.query) {
+    //   columnRetrieveData.query = taskDatabase.query;
+    // }
+    // if (taskDatabase.sheet) {
+    //   columnRetrieveData.sheet_name = taskDatabase.sheet;
+    // }
 
-    // call /column endpoint. This returns either a list of columns or a task
-    // that will retrieve the columns
-    // TODO handle errors (both for retrieving columns and for retrieving the task)
-    // TODO enable user to exit requesting column names if it takes too long
-    const columnsOrTask = await this.taskService.getColumnNames(columnRetrieveData);
-    if (columnsOrTask.columns) {
-      this.columns = columnsOrTask.columns;
-    } else {
-      // a task has been started to retrieve the columns
-      const task = await this.taskService.waitForResults(columnsOrTask.id);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const decodedResult: any = JSON.parse(atob(task.results?.[0].result || ''));
-      this.columns = decodedResult;
-    }
-    this.isLoadingColumns = false;
+    // // call /column endpoint. This returns either a list of columns or a task
+    // // that will retrieve the columns
+    // // TODO handle errors (both for retrieving columns and for retrieving the task)
+    // // TODO enable user to exit requesting column names if it takes too long
+    // const columnsOrTask = await this.taskService.getColumnNames(columnRetrieveData);
+    // if (columnsOrTask.columns) {
+    //   this.columns = columnsOrTask.columns;
+    // } else {
+    //   // a task has been started to retrieve the columns
+    //   const task = await this.taskService.waitForResults(columnsOrTask.id);
+    //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //   const decodedResult: any = JSON.parse(atob(task.results?.[0].result || ''));
+    //   this.columns = decodedResult;
+    // }
+    // this.isLoadingColumns = false;
   }
 
   // compare function for mat-select
@@ -316,6 +322,14 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     //Delay setting function, so that form controls are added
     this.function = selectedFunction;
+  }
+
+  private async handleDatabaseChange(): Promise<void> {
+    if (this.databaseForm.invalid || Object.keys(this.databaseForm.controls).length === 0) return;
+    console.log('handleDatabaseChange');
+
+    // gather data to retrieve columns - these may be required in the steps that follow
+    // await this.retrieveColumns();
   }
 
   private async getOnlineNode(): Promise<BaseNode | null> {

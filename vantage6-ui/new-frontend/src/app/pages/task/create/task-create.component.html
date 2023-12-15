@@ -88,12 +88,12 @@
         </mat-step>
         <mat-step *ngIf="shouldShowPreprocessorStep" [stepControl]="preprocessingForm">
           <ng-template matStepLabel>{{ "task-create.step-preprocessing.title" | translate }}</ng-template>
-          <ng-container *ngIf="!isLoadingColumns; else loadingColumnsPreprocessing">
+          <ng-container *ngIf="!isLoadingColumns; else loadingColumns">
             <app-preprocessing-step
               [form]="preprocessingForm"
               [functions]="algorithm?.select || []"
               [columns]="columns"
-              (handleFirstPreprocessor)="handleFirstPreprocessor()"
+              (handleFirstPreprocessor)="retrieveColumns()"
             ></app-preprocessing-step>
             <div>
               <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
@@ -103,21 +103,18 @@
         </mat-step>
         <mat-step *ngIf="shouldShowFilterStep" [stepControl]="filterForm">
           <ng-template matStepLabel>{{ "task-create.step-filter.title" | translate }}</ng-template>
-          <ng-container *ngIf="!isLoadingColumns; else loadingColumnsFiltering">
+          <ng-container *ngIf="!isLoadingColumns; else loadingColumns">
             <app-filter-step
               [form]="filterForm"
               [filters]="algorithm?.filter || []"
               [columns]="columns"
-              (handleFirstPreprocessor)="handleFirstPreprocessor()"
+              (handleFirstPreprocessor)="retrieveColumns()"
             ></app-filter-step>
             <div>
               <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
               <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
             </div>
           </ng-container>
-          <ng-template #loadingColumnsFiltering>
-            <ng-template [ngTemplateOutlet]="loadingColumns"></ng-template>
-          </ng-template>
         </mat-step>
         <!-- TODO check if there are 'column'-type parameters - if so retrieve column names -->
         <mat-step *ngIf="shouldShowParameterStep" [stepControl]="parameterForm">
@@ -128,7 +125,9 @@
               <p *ngIf="argument.type === argumentType.Json">Please provide valid JSON input.</p>
               <mat-form-field subscriptSizing="dynamic">
                 <mat-label>{{ argument.name }}</mat-label>
+
                 <input
+                  *ngIf="argument.type !== argumentType.Column"
                   matInput
                   appNumberOnly
                   [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
