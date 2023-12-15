@@ -44,6 +44,10 @@
 
   &__check {
     color: $success-700;
+
+    &--secondary {
+      color: $warning-700;
+    }
   }
 
   .mdc-checkbox--disabled {

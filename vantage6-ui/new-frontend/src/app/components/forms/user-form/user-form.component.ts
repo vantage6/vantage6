@@ -111,7 +111,7 @@ export class UserFormComponent implements OnInit, OnDestroy {
    * 2. Get the selected rules that are specific to the selected user.
    *  */
   private async processRules(roleIds: number[], allUserRules: Rule[]): Promise<void> {
-    this.roleRules = await this.getRoleRules(roleIds);
+    this.roleRules = await this.ruleService.getRulesOfRoles(roleIds);
     this.editSessionUserRules = this.determineUserRules(this.roleRules, allUserRules);
   }
 
@@ -129,16 +129,6 @@ export class UserFormComponent implements OnInit, OnDestroy {
   private async getRoles(organizationID: number): Promise<void> {
     this.organizationRoles = await this.organizationService.getRolesForOrganization(organizationID.toString());
     this.form.controls.roles.enable();
-  }
-
-  private async getRoleRules(roleIds: number[]): Promise<Rule[]> {
-    let roleRules: Rule[] = [];
-    const promises = roleIds.map(async (id) => {
-      const rules = await this.ruleService.getRules({ role_id: id.toString(), no_pagination: 1 });
-      roleRules = roleRules.concat(rules);
-    });
-    await Promise.all(promises);
-    return roleRules;
   }
 
   public handleChangedRules(rules: Rule[]): void {

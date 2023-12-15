@@ -26,8 +26,15 @@ class OperationPermission {
     public resource: ResourceType,
     public scope: ScopeType,
     public operation: OperationType,
-    public state: CellState
+    public state: CellState,
+    public displayClass: DisplayClass
   ) {}
+}
+
+enum DisplayClass {
+  FixedSelected1,
+  FixedSelected2,
+  Other
 }
 
 enum CellState {
@@ -69,8 +76,10 @@ class OperationPermissionDictionary {
   styleUrls: ['./permissions-matrix.component.scss']
 })
 export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy {
-  /* Rules that are visualised as selected and cannot be unselected by the user */
-  @Input() fixedSelected: Rule[] = [];
+  /* Rules that are visualised as selected and cannot be unselected by the user. */
+  @Input() fixedSelected1: Rule[] = [];
+  /* Same as fixedSelected1, but with a different visual display. */
+  @Input() fixedSelected2: Rule[] = [];
   /* Rules that can be selected or unselected.  */
   @Input() selectable: Rule[] = [];
   /* Selections that can be edited */
@@ -87,6 +96,11 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
   allScopes = Object.values(ScopeType).filter((scope) => scope !== ScopeType.ANY);
   allOperations = Object.values(OperationType).filter((operation) => operation !== OperationType.ANY);
 
+  /* A handy variable that is the merge of fixedSelected1 and fixedSelected2. */
+  get fixedSelected(): Rule[] {
+    return this.fixedSelected1.concat(this.fixedSelected2);
+  }
+
   CellState = CellState;
 
   public resourcePermissions: ResourcePermission[] = [];
@@ -101,7 +115,7 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['fixedSelected'] || changes['preselected'] || changes['selectable']) {
+    if (changes['fixedSelected1'] || changes['fixedSelected1'] || changes['preselected'] || changes['selectable']) {
       this.resourcePermissions = this.updateTable(this.fixedSelected, this.preselected, this.selectable);
     }
   }
@@ -176,11 +190,12 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
     const result = this.allResources
       .map((resource) => {
         const scopePermissions = this.allScopes
-          .filter((scope) => this.hasSelectableOperations(resource, scope, selectable))
+          .filter((scope) => this.hasOperationsForDisplay(resource, scope, [...fixedSelected, ...preSelected, ...selectable]))
           .map((scope) => {
             const operationPermissions = this.allOperations.map((operation) => {
               const cellState = this.getCellState(fixedSelected, preSelected, selectable, resource, scope, operation);
-              const operationPermission = new OperationPermission(resource, scope, operation, cellState);
+              const displayClass = this.getDisplayClass(this.fixedSelected1, this.fixedSelected2, resource, scope, operation);
+              const operationPermission = new OperationPermission(resource, scope, operation, cellState, displayClass);
               this.operationPermissionDictionary.add(operationPermission);
               if (cellState === CellState.Selected) this.selection.select(operationPermission);
               return operationPermission;
@@ -198,8 +213,20 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
     return result;
   }
 
-  private hasSelectableOperations(resource: ResourceType, scope: ScopeType, selectable: Rule[]): boolean {
-    return !!selectable.find((rule) => isEqualString(rule.name, resource) && isEqualString(rule.scope, scope));
+  private hasOperationsForDisplay(resource: ResourceType, scope: ScopeType, rules: Rule[]): boolean {
+    return !!rules.find((rule) => isEqualString(rule.name, resource) && isEqualString(rule.scope, scope));
+  }
+
+  private getDisplayClass(
+    fixedSelected1: Rule[],
+    fixedSelected2: Rule[],
+    resource: ResourceType,
+    scope: ScopeType,
+    operation: OperationType
+  ): DisplayClass {
+    if (this.containsRule(fixedSelected1, resource, scope, operation)) return DisplayClass.FixedSelected1;
+    if (this.containsRule(fixedSelected2, resource, scope, operation)) return DisplayClass.FixedSelected2;
+    return DisplayClass.Other;
   }
 
   private getCellState(
@@ -210,7 +237,7 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
     scope: ScopeType,
     operation: OperationType
   ): CellState {
-    if (!this.containsRule(selectable, resource, scope, operation)) return CellState.NotApplicable;
+    if (!this.containsRule([...selectable, ...fixedSelected], resource, scope, operation)) return CellState.NotApplicable;
 
     if (this.containsRule(fixedSelected, resource, scope, operation)) return CellState.FixedSelected;
 
@@ -252,5 +279,10 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
 
   public selectPermission(permission: OperationPermission): void {
     this.selection.select(permission);
+  }
+
+  public getIconClass(permission: OperationPermission): string {
+    // Cellstate is always selected
+    return permission.displayClass === DisplayClass.FixedSelected2 ? 'roles-table__check--secondary' : '';
   }
 }

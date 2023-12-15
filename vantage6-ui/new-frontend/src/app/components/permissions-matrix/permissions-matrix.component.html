@@ -20,7 +20,9 @@
             (change)="$event ? selection.toggle(operationPermission) : null"
             [checked]="selection.isSelected(operationPermission)"
           ></mat-checkbox>
-          <mat-icon class="roles-table__check" *ngIf="showCheckIcon(operationPermission)">check</mat-icon>
+          <mat-icon class="roles-table__check" [ngClass]="getIconClass(operationPermission)" *ngIf="showCheckIcon(operationPermission)"
+            >check</mat-icon
+          >
         </td>
       </tr>
     </ng-container>
