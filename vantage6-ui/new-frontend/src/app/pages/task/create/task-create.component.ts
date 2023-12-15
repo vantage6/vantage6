@@ -142,26 +142,21 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!algorithm) return;
     this.packageForm.controls.algorithmName.setValue(algorithm.name.toString());
     await this.handleAlgorithmChange(algorithm.id.toString());
-
     // set function step
     if (!this.repeatedTask.input) return;
     this.functionForm.controls.functionName.setValue(this.repeatedTask?.input?.method);
     await this.handleFunctionChange(this.repeatedTask.input?.method);
-
     if (!this.function) return;
     const organizationIDs = this.repeatedTask.runs.map((_) => _.organization?.id).toString();
     this.functionForm.controls.organizationIDs.setValue(organizationIDs);
-
     // Note: the database step is not setup here because the database child
     // component may not yet be initialized when we get here. Instead, we
     // setup the database step in the database child component when it is
     // initialized.
-
     // set parameter step
     for (const parameter of this.repeatedTask.input?.parameters || []) {
       this.parameterForm.get(parameter.label)?.setValue(parameter.value);
     }
-
     // go to last step
     // TODO this can still be NULL when we get here, then it doesn't work
     if (this.myStepper?._steps) {
@@ -288,7 +283,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   compareOrganizationsForSelection(obj1: any, obj2: any): boolean {
     // The mat-select object set from typescript only has an ID set. Compare that with the ID of the
     // organization object from the collaboration
-    return obj1.id === obj2.id;
+    return obj1 && obj2 && obj1.id && obj2.id && obj1.id === obj2.id;
   }
 
   private async initData(): Promise<void> {
@@ -333,7 +328,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   private async handleDatabaseChange(): Promise<void> {
     if (this.databaseForm.invalid || Object.keys(this.databaseForm.controls).length === 0) return;
 
-    // gather data to retrieve columns - these may be required in the steps that follow
+    // gather data to retrieve columns - these are often required in the steps that follow
     await this.retrieveColumns();
   }
 
