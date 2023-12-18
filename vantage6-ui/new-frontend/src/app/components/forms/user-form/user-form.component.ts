@@ -121,7 +121,12 @@ export class UserFormComponent implements OnInit, OnDestroy {
   private async initData(): Promise<void> {
     if (!this.user) return;
 
-    this.organizations = await this.organizationService.getOrganizations({ sort: OrganizationSortProperties.Name });
+    if (!this.isEdit) {
+      // we only need to collect organizations when creating a new user
+      // TODO ensure that this goes well with pagination
+      this.organizations = await this.organizationService.getOrganizations({ sort: OrganizationSortProperties.Name });
+    }
+
     this.selectableRules = await this.ruleService.getAllRules();
     this.userRoles = await this.roleService.getRoles({ user_id: this.user.id, per_page: 1000 });
     const roleIds = this.userRoles.map((role) => role.id) ?? [];

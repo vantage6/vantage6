@@ -32,8 +32,8 @@ class OperationPermission {
 }
 
 enum DisplayClass {
-  FixedSelected1,
-  FixedSelected2,
+  FixedSelectedPrimary,
+  FixedSelectedSecondary,
   Other
 }
 
@@ -77,9 +77,9 @@ class OperationPermissionDictionary {
 })
 export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy {
   /* Rules that are visualised as selected and cannot be unselected by the user. */
-  @Input() fixedSelected1: Rule[] = [];
-  /* Same as fixedSelected1, but with a different visual display. */
-  @Input() fixedSelected2: Rule[] = [];
+  @Input() fixedSelectedPrimary: Rule[] = [];
+  /* Same as fixedSelectedPrimary, but with a different visual display. */
+  @Input() fixedSelectedSecondary: Rule[] = [];
   /* Rules that can be selected or unselected.  */
   @Input() selectable: Rule[] = [];
   /* Selections that can be edited */
@@ -96,9 +96,9 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
   allScopes = Object.values(ScopeType).filter((scope) => scope !== ScopeType.ANY);
   allOperations = Object.values(OperationType).filter((operation) => operation !== OperationType.ANY);
 
-  /* A handy variable that is the merge of fixedSelected1 and fixedSelected2. */
+  /* A handy variable that is the merge of fixedSelectedPrimary and fixedSelectedSecondary. */
   get fixedSelected(): Rule[] {
-    return this.fixedSelected1.concat(this.fixedSelected2);
+    return this.fixedSelectedPrimary.concat(this.fixedSelectedSecondary);
   }
 
   CellState = CellState;
@@ -115,7 +115,7 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['fixedSelected1'] || changes['fixedSelected2'] || changes['preselected'] || changes['selectable']) {
+    if (changes['fixedSelectedPrimary'] || changes['fixedSelectedSecondary'] || changes['preselected'] || changes['selectable']) {
       this.resourcePermissions = this.updateTable(this.fixedSelected, this.preselected, this.selectable);
     }
   }
@@ -194,7 +194,7 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
           .map((scope) => {
             const operationPermissions = this.allOperations.map((operation) => {
               const cellState = this.getCellState(fixedSelected, preSelected, selectable, resource, scope, operation);
-              const displayClass = this.getDisplayClass(this.fixedSelected1, this.fixedSelected2, resource, scope, operation);
+              const displayClass = this.getDisplayClass(this.fixedSelectedPrimary, this.fixedSelectedSecondary, resource, scope, operation);
               const operationPermission = new OperationPermission(resource, scope, operation, cellState, displayClass);
               this.operationPermissionDictionary.add(operationPermission);
               if (cellState === CellState.Selected) this.selection.select(operationPermission);
@@ -218,14 +218,14 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   private getDisplayClass(
-    fixedSelected1: Rule[],
-    fixedSelected2: Rule[],
+    fixedSelectedPrimary: Rule[],
+    fixedSelectedSecondary: Rule[],
     resource: ResourceType,
     scope: ScopeType,
     operation: OperationType
   ): DisplayClass {
-    if (this.containsRule(fixedSelected1, resource, scope, operation)) return DisplayClass.FixedSelected1;
-    if (this.containsRule(fixedSelected2, resource, scope, operation)) return DisplayClass.FixedSelected2;
+    if (this.containsRule(fixedSelectedPrimary, resource, scope, operation)) return DisplayClass.FixedSelectedPrimary;
+    if (this.containsRule(fixedSelectedSecondary, resource, scope, operation)) return DisplayClass.FixedSelectedSecondary;
     return DisplayClass.Other;
   }
 
@@ -283,6 +283,6 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
 
   public getIconClass(permission: OperationPermission): string {
     // Cellstate is always selected
-    return permission.displayClass === DisplayClass.FixedSelected2 ? 'roles-table__check--secondary' : '';
+    return permission.displayClass === DisplayClass.FixedSelectedSecondary ? 'roles-table__check--secondary' : '';
   }
 }
