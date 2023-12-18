@@ -35,6 +35,16 @@ export enum FilterParameterType {
   Date = 'date'
 }
 
+enum PartitioningType {
+  Horizontal = 'horizontal',
+  Vertical = 'vertical'
+}
+
+enum FunctionType {
+  Central = 'central',
+  Federated = 'federated'
+}
+
 export interface BaseAlgorithm {
   id: number;
   name: string;
@@ -45,15 +55,19 @@ export interface BaseAlgorithm {
 export interface Algorithm {
   id: number;
   name: string;
-  url: string;
+  image: string;
+  vantage6_version: string;
+  description: string;
+  partitioning: PartitioningType;
   functions: AlgorithmFunction[];
-  select: Select[];
-  filter: Filter[];
+  select?: Select[];
+  filter?: Filter[];
 }
 
 export interface AlgorithmFunction {
   name: string;
-  is_central: boolean;
+  description: string;
+  type: FunctionType;
   arguments: Argument[];
   databases: FunctionDatabase[];
   output: Output[];
@@ -95,6 +109,7 @@ export interface Argument {
 
 export interface FunctionDatabase {
   name: string;
+  description?: string;
 }
 export interface Output {
   visualize?: OutputVisualizeType | null;
