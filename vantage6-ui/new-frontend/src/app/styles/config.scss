@@ -66,3 +66,10 @@ $spacing-px-minus-8: -32px;
 $spacing-px-minus-10: -40px;
 $spacing-px-minus-12: -48px;
 $spacing-px-minus-16: -64px;
+
+$breakpoints: (
+  lt-sm: 599.9px,
+  lt-md: 959.9px,
+  lt-lg: 1279.9px,
+  lt-xl: 1919.9px
+) !default;

@@ -115,7 +115,7 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['fixedSelected1'] || changes['fixedSelected1'] || changes['preselected'] || changes['selectable']) {
+    if (changes['fixedSelected1'] || changes['fixedSelected2'] || changes['preselected'] || changes['selectable']) {
       this.resourcePermissions = this.updateTable(this.fixedSelected, this.preselected, this.selectable);
     }
   }

@@ -60,11 +60,11 @@ export class UserReadComponent implements OnInit, OnDestroy {
       this.permissionService.isAllowedForOrg(ResourceType.USER, OperationType.DELETE, this.user.organization.id);
     this.canEdit =
       !!this.user.organization && this.permissionService.isAllowedForOrg(ResourceType.USER, OperationType.EDIT, this.user.organization.id);
-    this.isLoading = false;
 
     this.allUserRules = await this.ruleService.getRules({ user_id: this.user.id, no_pagination: 1 });
     this.rolesRules = await this.ruleService.getRulesOfRoles(this.user.roles.map((role) => role.id));
     this.userSpecificRules = this.determineUserRules(this.rolesRules, this.allUserRules);
+    this.isLoading = false;
   }
 
   processRulesForDisplay(): void {
