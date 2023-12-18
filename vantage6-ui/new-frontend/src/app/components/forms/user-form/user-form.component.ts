@@ -59,6 +59,8 @@ export class UserFormComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit(): Promise<void> {
+    this.isLoading = true;
+
     this.isEdit = !!this.user;
     await this.initData();
     if (this.isEdit && this.user) {
@@ -73,6 +75,7 @@ export class UserFormComponent implements OnInit, OnDestroy {
     if (this.isEdit) {
       await this.getRoles(this.form.controls.organization_id.value);
     }
+
     this.isLoading = false;
   }
 

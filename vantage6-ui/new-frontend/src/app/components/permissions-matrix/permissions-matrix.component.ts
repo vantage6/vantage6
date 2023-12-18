@@ -33,7 +33,7 @@ class OperationPermission {
 
 enum DisplayClass {
   FixedSelectedPrimary,
-  FixedSelected2,
+  FixedSelectedSecondary,
   Other
 }
 
@@ -225,7 +225,7 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
     operation: OperationType
   ): DisplayClass {
     if (this.containsRule(fixedSelectedPrimary, resource, scope, operation)) return DisplayClass.FixedSelectedPrimary;
-    if (this.containsRule(fixedSelectedSecondary, resource, scope, operation)) return DisplayClass.FixedSelected2;
+    if (this.containsRule(fixedSelectedSecondary, resource, scope, operation)) return DisplayClass.FixedSelectedSecondary;
     return DisplayClass.Other;
   }
 
@@ -283,6 +283,6 @@ export class PermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy 
 
   public getIconClass(permission: OperationPermission): string {
     // Cellstate is always selected
-    return permission.displayClass === DisplayClass.FixedSelected2 ? 'roles-table__check--secondary' : '';
+    return permission.displayClass === DisplayClass.FixedSelectedSecondary ? 'roles-table__check--secondary' : '';
   }
 }
