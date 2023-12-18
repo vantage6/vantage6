@@ -70,7 +70,8 @@ def create_node_config_file(server_url: str, port: int, config: dict,
     port : int
         Port of the dummy server.
     config : dict
-        Configuration dictionary containing org_id, api_key and node name.
+        Configuration dictionary containing org_id, api_key, node name and
+        additional user_defined_config.
     server_name : str
         Configuration name of the dummy server.
     """
@@ -104,7 +105,8 @@ def create_node_config_file(server_url: str, port: int, config: dict,
         },
         "port": port,
         "server_url": server_url,
-        "task_dir": str(path_to_data_dir)
+        "task_dir": str(path_to_data_dir),
+        "user_provided_config": config['user_defined_config']
     })
 
     try:
@@ -118,9 +120,31 @@ def create_node_config_file(server_url: str, port: int, config: dict,
          f"{Style.RESET_ALL}")
 
 
-def generate_node_configs(num_nodes: int, server_url: str, port: int,
-                          server_name: str) \
-        -> list[dict]:
+def _read_extra_config_file(extra_config_file: Path | None) -> str:
+    """Reads extra configuration file.
+
+    Parameters
+    ----------
+    extra_config_file : Path | None
+        Path to file with additional configuration.
+
+    Returns
+    -------
+    str
+        Extra configuration file content
+    """
+    if extra_config_file:
+        # read the YAML file as string, so it can be appended to the
+        # configuration easily
+        with open(extra_config_file, 'r', encoding='utf-8') as f:
+            return f.read()
+    return ''
+
+
+def generate_node_configs(
+    num_nodes: int, server_url: str, port: int, server_name: str,
+    extra_node_config: Path | None
+) -> list[dict]:
     """Generates ``num_nodes`` node configuration files.
 
     Parameters
@@ -133,6 +157,8 @@ def generate_node_configs(num_nodes: int, server_url: str, port: int,
         Port of the dummy server.
     server_name : str
         Configuration name of the dummy server.
+    extra_node_config : Path | None
+        Path to file with additional node configuration.
 
     Returns
     -------
@@ -140,11 +166,13 @@ def generate_node_configs(num_nodes: int, server_url: str, port: int,
         List of dictionaries containing node configurations.
     """
     configs = []
+    extra_config = _read_extra_config_file(extra_node_config)
     for i in range(num_nodes):
         config = {
             'org_id': i + 1,
             'api_key': generate_apikey(),
-            'node_name': f"{server_name}_node_{i + 1}"
+            'node_name': f"{server_name}_node_{i + 1}",
+            "user_defined_config": extra_config
         }
         create_node_config_file(server_url, port, config, server_name)
         configs.append(config)
@@ -214,7 +242,9 @@ def create_vserver_import_config(node_configs: list[dict], server_name: str) \
     return full_path
 
 
-def create_vserver_config(server_name: str, port: int) -> Path:
+def create_vserver_config(
+    server_name: str, port: int, extra_config_file: Path
+) -> Path:
     """Creates server configuration file (YAML).
 
     Parameters
@@ -223,6 +253,8 @@ def create_vserver_config(server_name: str, port: int) -> Path:
         Server name.
     port : int
         Server port.
+    extra_config_file : Path
+        Path to file with additional server configuration.
 
     Returns
     -------
@@ -232,10 +264,14 @@ def create_vserver_config(server_name: str, port: int) -> Path:
     environment = Environment(
         loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
         trim_blocks=True, lstrip_blocks=True, autoescape=True)
+
+    extra_config = _read_extra_config_file(extra_config_file)
+
     template = environment.get_template("server_config.j2")
     server_config = template.render(
         port=port,
-        jwt_secret_key=generate_apikey()
+        jwt_secret_key=generate_apikey(),
+        user_provided_config=extra_config
     )
     folders = ServerContext.instance_folders(
         instance_type='server', instance_name=server_name,
@@ -260,8 +296,10 @@ def create_vserver_config(server_name: str, port: int) -> Path:
     return full_path
 
 
-def demo_network(num_nodes: int, server_url: str, server_port: int,
-                 server_name: str) -> tuple[list[dict], Path, Path]:
+def demo_network(
+    num_nodes: int, server_url: str, server_port: int, server_name: str,
+    extra_server_config: Path, extra_node_config: Path
+) -> tuple[list[dict], Path, Path]:
     """Generates the demo network.
 
     Parameters
@@ -274,6 +312,10 @@ def demo_network(num_nodes: int, server_url: str, server_port: int,
         Port of the dummy server.
     server_name : str
         Server name.
+    extra_server_config : Path
+        Path to file with additional server configuration.
+    extra_node_config : Path
+        Path to file with additional node configuration.
 
     Returns
     -------
@@ -281,10 +323,11 @@ def demo_network(num_nodes: int, server_url: str, server_port: int,
         Tuple containing node, server import and server configurations.
     """
     node_configs = generate_node_configs(num_nodes, server_url, server_port,
-                                         server_name)
+                                         server_name, extra_node_config)
     server_import_config = create_vserver_import_config(node_configs,
                                                         server_name)
-    server_config = create_vserver_config(server_name, server_port)
+    server_config = create_vserver_config(server_name, server_port,
+                                          extra_server_config)
     return (node_configs, server_import_config, server_config)
 
 
@@ -301,10 +344,18 @@ def demo_network(num_nodes: int, server_url: str, server_port: int,
 @click.option('-i', '--image', type=str, default=None,
               help='Server docker image to use when setting up resources for '
               'the development server')
+@click.option('--extra-server-config', type=click.Path(exists=True),
+              default=None, help='YAML File with additional server '
+              'configuration. This will be appended to the server '
+              'configuration file')
+@click.option('--extra-node-config', type=click.Path('rb'), default=None,
+              help='YAML File with additional node configuration. This will be'
+              ' appended to each of the node configuration files')
 @click.pass_context
 def create_demo_network(
     click_ctx: click.Context, name: str, num_nodes: int, server_url: str,
-    server_port: int, image: str = None
+    server_port: int, image: str = None, extra_server_config: Path = None,
+    extra_node_config: Path = None
 ) -> dict:
     """Creates a demo network.
 
@@ -315,7 +366,10 @@ def create_demo_network(
     """
     server_name = prompt_config_name(name)
     if not ServerContext.config_exists(server_name):
-        demo = demo_network(num_nodes, server_url, server_port, server_name)
+        demo = demo_network(
+            num_nodes, server_url, server_port, server_name,
+            extra_server_config, extra_node_config
+        )
         info(f"Created {Fore.GREEN}{len(demo[0])}{Style.RESET_ALL} node "
              f"configuration(s), attaching them to {Fore.GREEN}{server_name}"
              f"{Style.RESET_ALL}.")

@@ -9,16 +9,17 @@ from vantage6.common import info
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.server.common import click_insert_context
-from vantage6.cli.server.stop import vserver_remove
+from vantage6.cli.server.remove import cli_server_remove
 from vantage6.cli.utils import remove_file
 from vantage6.common.globals import InstanceType
 
 
 @click.command()
 @click_insert_context
-@click.option('-f', "--force", type=bool, flag_value=True,
-              help='Don\'t ask for confirmation')
-def remove_demo_network(ctx: ServerContext, force: bool) -> None:
+@click.pass_context
+def remove_demo_network(
+    click_ctx: click.Context, ctx: ServerContext
+) -> None:
     """ Remove all related demo network files and folders.
 
     Select a server configuration to remove that server and the nodes attached
@@ -28,7 +29,7 @@ def remove_demo_network(ctx: ServerContext, force: bool) -> None:
     # remove the server
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
         handler.close()
-    vserver_remove(ctx, ctx.name, True, force)
+    click_ctx.invoke(cli_server_remove, ctx=ctx, force=True)
 
     # removing the server import config
     info("Deleting demo import config file")
@@ -45,8 +46,6 @@ def remove_demo_network(ctx: ServerContext, force: bool) -> None:
     server_folder = server_configs['data']
     if server_folder.is_dir():
         rmtree(server_folder)
-    # TODO BvB 2023-07-31 can it happen that the server folder is not a
-    # directory? What then?
 
     # remove the nodes
     configs, _ = NodeContext.available_configurations(system_folders=False)

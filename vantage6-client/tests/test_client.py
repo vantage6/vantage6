@@ -38,6 +38,43 @@ class TestClient(TestCase):
 
         assert results == [{'result': {'some_key': 'some_value'}}]
 
+    def test_parse_arg_databases(self):
+        dbs_in = [{"label": "dblabel"}]
+        dbs_out = UserClient.Task._parse_arg_databases(dbs_in)
+        self.assertEqual(dbs_in, dbs_out)
+
+        dbs_in = [
+            {"label": "dblabel"},
+            {"label": "dblabel2"},
+            {"label": "dblabel3"}
+        ]
+        dbs_out = UserClient.Task._parse_arg_databases(dbs_in)
+        self.assertEqual(dbs_in, dbs_out)
+
+        dbs_in = "labelstr"
+        dbs_out = UserClient.Task._parse_arg_databases(dbs_in)
+        self.assertEqual(dbs_out, [{"label": "labelstr"}])
+
+        dbs_in = [
+            {"label": "dblabel"},
+            {"label": "dblabel2"},
+            "single_label"
+        ]
+        with self.assertRaisesRegex(ValueError, "list of dict"):
+            dbs_out = UserClient.Task._parse_arg_databases(dbs_in)
+
+        dbs_in = [{"nolabel": "dblabel"}]
+        with self.assertRaisesRegex(ValueError, "label"):
+            dbs_out = UserClient.Task._parse_arg_databases(dbs_in)
+
+        dbs_in = [{"label": "bad-label"}]
+        with self.assertRaisesRegex(ValueError, "(?i)Invalid label"):
+            dbs_out = UserClient.Task._parse_arg_databases(dbs_in)
+
+        dbs_in = "1badlabel"
+        with self.assertRaisesRegex(ValueError, "(?i)Invalid label"):
+            dbs_out = UserClient.Task._parse_arg_databases(dbs_in)
+
     @staticmethod
     def post_task_on_mock_client(input_) -> dict[str, any]:
         mock_requests = MagicMock()

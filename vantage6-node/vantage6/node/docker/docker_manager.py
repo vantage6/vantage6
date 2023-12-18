@@ -262,11 +262,6 @@ class DockerManager(DockerBaseManager):
         bool
             Whether docker image is allowed or not
         """
-        # in case of subtasks, don't check anymore, as parent has already
-        # been checked
-        if task_info['parent'] is not None:
-            return True
-
         # check if algorithm matches any of the regex cases
         allow_basics = self._policies.get('allow_basics_algorithm', True)
         allowed_algorithms = self._policies.get('allowed_algorithms')
