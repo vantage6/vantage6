@@ -34,6 +34,14 @@
     padding-bottom: $spacing-px-4;
   }
 
+  @media only screen and (max-width: map-get($breakpoints, lt-md)) {
+    &__operation-header {
+      width: 5em;
+      transform: rotate(270deg) translate(0px, 32px);
+      transform-origin: left center;
+      text-align: left;
+    }
+  }
   &__even-row {
     background-color: #f0f0f0;
   }
@@ -43,7 +51,13 @@
   }
 
   &__check {
-    color: $success-700;
+    margin: 2px;
+    color: rgba(0, 0, 0, 0.87);
+    &--secondary {
+      color: $success-700;
+      border: 1px solid $success-700;
+      border-radius: 5px;
+    }
   }
 
   .mdc-checkbox--disabled {

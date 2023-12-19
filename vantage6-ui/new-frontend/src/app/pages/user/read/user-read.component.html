@@ -54,7 +54,10 @@
             </div>
           </span>
         </div>
-        <!-- TODO: Show extra rules -->
+      </div>
+      <div class="user-read__permissions">
+        <b>{{ "user.permissions" | translate }}</b>
+        <app-permissions-matrix [fixedSelectedPrimary]="rolesRules" [fixedSelectedSecondary]="userSpecificRules"> </app-permissions-matrix>
       </div>
     </mat-card-content>
   </mat-card>

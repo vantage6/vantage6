@@ -20,4 +20,14 @@ export class RuleService {
     const result = await this.apiService.getForApi<Pagination<Rule>>('/rule', { ...parameters });
     return result.data;
   }
+
+  async getRulesOfRoles(roleIds: number[]): Promise<Rule[]> {
+    let roleRules: Rule[] = [];
+    const promises = roleIds.map(async (id) => {
+      const rules = await this.getRules({ role_id: id.toString(), no_pagination: 1 });
+      roleRules = roleRules.concat(rules);
+    });
+    await Promise.all(promises);
+    return roleRules;
+  }
 }

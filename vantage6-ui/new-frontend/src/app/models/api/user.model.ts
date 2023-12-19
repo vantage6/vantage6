@@ -1,10 +1,12 @@
 import { BaseLink } from './base.model';
 import { Organization } from './organization.model';
 import { Role } from './role.model';
+import { Rule } from './rule.model';
 
 export enum UserLazyProperties {
   Organization = 'organization',
-  Roles = 'roles'
+  Roles = 'roles',
+  Rules = 'rules'
 }
 
 export enum UserSortProperties {
@@ -37,6 +39,7 @@ export interface User {
   lastname: string;
   organization?: Organization;
   roles: Role[];
+  rules: Rule[];
 }
 
 export interface UserForm {
@@ -48,6 +51,7 @@ export interface UserForm {
   lastname: string;
   organization_id: number;
   roles: number[];
+  rules: number[];
 }
 
 export interface UserPermissions {
