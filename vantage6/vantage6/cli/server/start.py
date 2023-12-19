@@ -76,6 +76,9 @@ def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
                   "is already running")
             exit(1)
 
+    # check that log directory exists - or create it
+    ctx.log_dir.mkdir(parents=True, exist_ok=True)
+
     # Determine image-name. First we check if the option --image has been used.
     # Then we check if the image has been specified in the config file, and
     # finally we use the default settings from the package.
@@ -101,6 +104,8 @@ def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
     mounts = [
         docker.types.Mount(
             config_file, str(ctx.config_file), type="bind"
+        ), docker.types.Mount(
+            "/mnt/log/", str(ctx.log_dir), type="bind"
         )
     ]
 
