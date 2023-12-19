@@ -107,6 +107,7 @@ export class TemplateTaskCreateComponent implements OnInit {
       this.algorithm = await this.algorithmService.getAlgorithm(baseAlgorithm?.id.toString() || '');
     } else {
       this.snackBarService.showMessage('Algorithm not found');
+      return;
     }
 
     if (this.algorithm) {
@@ -123,6 +124,7 @@ export class TemplateTaskCreateComponent implements OnInit {
       }
     } else {
       this.snackBarService.showMessage('Function not found');
+      return;
     }
 
     this.templateTask.variable?.forEach((variable) => {
