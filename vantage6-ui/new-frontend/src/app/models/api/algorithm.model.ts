@@ -40,15 +40,9 @@ enum PartitioningType {
   Vertical = 'vertical'
 }
 
-enum FunctionType {
+export enum FunctionType {
   Central = 'central',
   Federated = 'federated'
-}
-
-export interface BaseAlgorithm {
-  id: number;
-  name: string;
-  url: string;
 }
 
 // TODO this interface must be updated to match the API

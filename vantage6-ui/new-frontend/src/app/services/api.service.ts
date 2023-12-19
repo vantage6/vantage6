@@ -65,8 +65,13 @@ export class ApiService {
     );
   }
 
-  async getForAlgorithmApi<T = null>(path: string): Promise<T> {
-    return await this.handleResult(this.http.get<T>(environment.algorithm_server_url + path));
+  async getForAlgorithmApi<T = null>(path: string, parameters: object | null = null): Promise<T> {
+    return await this.handleResult(
+      this.http.get<T>(environment.algorithm_server_url + path, {
+        headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() },
+        params: { ...parameters }
+      })
+    );
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
