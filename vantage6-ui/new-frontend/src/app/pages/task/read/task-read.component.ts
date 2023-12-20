@@ -43,6 +43,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   isLoading = true;
   canDelete = false;
   canCreate = false;
+  canKill = false;
 
   private nodeStatusUpdateSubscription?: Subscription;
   private taskStatusUpdateSubscription?: Subscription;
@@ -70,6 +71,11 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     this.canCreate = this.permissionService.isAllowedForCollab(
       ResourceType.TASK,
       OperationType.CREATE,
+      this.chosenCollaborationService.collaboration$.value
+    );
+    this.canKill = this.permissionService.isAllowedForCollab(
+      ResourceType.EVENT,
+      OperationType.SEND,
       this.chosenCollaborationService.collaboration$.value
     );
     this.visualization.valueChanges.subscribe((value) => {
@@ -155,11 +161,12 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       status === TaskStatus.Failed ||
       status === TaskStatus.Crashed ||
       status === TaskStatus.NoDockerImage ||
-      status === TaskStatus.StartFailed
+      status === TaskStatus.StartFailed ||
+      status === TaskStatus.Killed
     );
   }
 
-  isActiveRun(status: TaskStatus): boolean {
+  isActive(status: TaskStatus): boolean {
     return status === TaskStatus.Pending || status === TaskStatus.Initializing || status === TaskStatus.Active;
   }
 
@@ -206,6 +213,34 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     this.router.navigate([routePaths.taskCreateRepeat, this.task.id]);
   }
 
+  handleTaskKill(): void {
+    if (!this.task) return;
+
+    // ask for confirmation
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: this.translateService.instant('task-read.kill-dialog.title', { name: this.task.name }),
+        content: this.translateService.instant('task-read.kill-dialog.content'),
+        confirmButtonText: this.translateService.instant('task-read.card-status.actions.kill'),
+        confirmButtonType: 'warn'
+      }
+    });
+
+    // execute kill (if confirmed)
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(async (result) => {
+        if (result === true) {
+          if (!this.task) return;
+          await this.taskService.killTask(this.task.id);
+          this.task.status == TaskStatus.Killed;
+          // renew task data to get the updated status
+          this.initData(true);
+        }
+      });
+  }
+
   displayTextResult(result: object | undefined): string {
     if (result === undefined) return '';
     const textResult = JSON.stringify(result);
@@ -235,6 +270,9 @@ export class TaskReadComponent implements OnInit, OnDestroy {
 
     if (!this.task) return;
     if (statusUpdate.task_id !== this.task.id) return;
+    // Don't update status if task has been killed - subtasks may still complete
+    // in the meantime (racing condition) but we don't want to overwrite the killed status
+    if (this.task.status === TaskStatus.Killed) return;
 
     // update the status of the runs
     const run = this.task.runs.find((r) => r.id === statusUpdate.run_id);

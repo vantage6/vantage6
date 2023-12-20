@@ -29,7 +29,7 @@
           <button actions mat-raised-button *ngIf="run.log && isFailedRun(run.status)" (click)="openLog(run.log)">
             {{ "task-run.show-log" | translate }}
           </button>
-          <span actionText *ngIf="run.node.status !== 'online' && isActiveRun(run.status)">{{
+          <span actionText *ngIf="run.node.status !== 'online' && isActive(run.status)">{{
             "task-run.alert-node-offline" | translate
           }}</span>
         </app-status-info>
@@ -50,13 +50,18 @@
             <button actions mat-raised-button *ngIf="run.log && isFailedRun(run.status)" (click)="openLog(run.log)">
               {{ "task-run.show-log" | translate }}
             </button>
-            <span actionText *ngIf="run.node.status !== 'online' && isActiveRun(run.status)">{{
+            <span actionText *ngIf="run.node.status !== 'online' && isActive(run.status)">{{
               "task-run.alert-node-offline" | translate
             }}</span>
           </app-status-info>
         </div>
       </mat-card-content>
     </div>
+    <mat-card-actions *ngIf="canKill && isActive(task.status)">
+      <button mat-flat-button color="warn" (click)="handleTaskKill()">
+        {{ "task-read.card-status.actions.kill" | translate }}
+      </button>
+    </mat-card-actions>
   </mat-card>
   <mat-card *ngIf="!isLoading && task.results && task.results.length > 0">
     <mat-card-header>

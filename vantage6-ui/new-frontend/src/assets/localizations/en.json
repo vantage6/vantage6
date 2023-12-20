@@ -86,7 +86,10 @@
     },
     "card-status": {
       "title": "Status",
-      "child-title": "Subtasks"
+      "child-title": "Subtasks",
+      "actions": {
+        "kill": "Kill task"
+      }
     },
     "card-results": {
       "title": "Results",
@@ -104,6 +107,10 @@
     "delete-dialog": {
       "title": "Are you sure you want to delete the task '{{name}}'?",
       "content": "Note, this will also delete all subtasks and results.\nThis operation cannot be undone."
+    },
+    "kill-dialog": {
+      "title": "Are you sure you want to kill the task '{{name}}'?",
+      "content": "Note, this will also kill all subtasks.\nThis operation cannot be undone."
     },
     "repeat": "Repeat task"
   },
