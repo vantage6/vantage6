@@ -3,7 +3,7 @@ import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { SearchRequest } from 'src/app/components/table/table.component';
-import { getApiParameters } from 'src/app/helpers/api.helper';
+import { getApiSearchParameters } from 'src/app/helpers/api.helper';
 import { unlikeApiParameter } from 'src/app/helpers/general.helper';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { GetRoleParameters } from 'src/app/models/api/role.model';
@@ -73,7 +73,7 @@ export class RoleListComponent implements OnInit {
   }
 
   handleSearchChanged(searchRequests: SearchRequest[]): void {
-    this.getRoleParameters = getApiParameters<GetRoleParameters>(searchRequests);
+    this.getRoleParameters = getApiSearchParameters<GetRoleParameters>(searchRequests);
     this.initData(this.getRoleParameters);
   }
 

@@ -20,7 +20,7 @@ export const getLazyProperties = async (result: any, data: any, lazyProperties: 
   );
 };
 
-export const getApiParameters = function <T>(searchRequests?: SearchRequest[]): T {
+export const getApiSearchParameters = function <T>(searchRequests?: SearchRequest[]): T {
   if (!searchRequests) return {} as T;
 
   const parameters: T = {} as T;

@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { SearchRequest } from 'src/app/components/table/table.component';
-import { getApiParameters } from 'src/app/helpers/api.helper';
+import { getApiSearchParameters } from 'src/app/helpers/api.helper';
 import { unlikeApiParameter } from 'src/app/helpers/general.helper';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
@@ -161,7 +161,7 @@ export class UserListComponent implements OnInit, OnDestroy {
   }
 
   handleSearchChanged(searchRequests: SearchRequest[]): void {
-    this.getUserParameters = getApiParameters<GetUserParameters>(searchRequests);
+    this.getUserParameters = getApiSearchParameters<GetUserParameters>(searchRequests);
     this.initData(this.getUserParameters);
   }
 }

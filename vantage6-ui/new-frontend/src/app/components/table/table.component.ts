@@ -3,6 +3,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription, debounceTime } from 'rxjs';
 import { Column, TableData } from 'src/app/models/application/table.model';
+import { WAIT_TABLE_SEARCH_TIME_MS } from 'src/app/models/constants/table';
 
 export interface SearchRequest {
   columnId: string;
@@ -43,7 +44,7 @@ export class TableComponent implements OnChanges {
         });
         this.searchForm = new FormGroup(formControls);
 
-        this.searchFormDescription = this.searchForm.statusChanges.pipe(debounceTime(500)).subscribe(() => {
+        this.searchFormDescription = this.searchForm.statusChanges.pipe(debounceTime(WAIT_TABLE_SEARCH_TIME_MS)).subscribe(() => {
           const test = this.searchForm.getRawValue();
           const searchRequests: SearchRequest[] = Object.entries(test).map(([id, searchString]) => {
             return { columnId: id, searchString: searchString as string };
