@@ -246,9 +246,8 @@ class RecoverPassword(ServicesResources):
             {"id": str(user.id)}, expires_delta=expires
         )
 
-        email_info = self.config.get("smtp", {})
-        email_sender = email_info.get("username",
-                                      DEFAULT_SUPPORT_EMAIL_ADDRESS)
+        email_sender = smtp_settings.get("username",
+                                         DEFAULT_SUPPORT_EMAIL_ADDRESS)
         support_email = self.config.get("support_email", email_sender)
 
         self.mail.send_email(
