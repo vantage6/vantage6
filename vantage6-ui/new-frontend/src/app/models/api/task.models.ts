@@ -26,6 +26,13 @@ export enum TaskStatus {
   Killed = 'killed by user'
 }
 
+export enum TaskStatusGroup {
+  Pending = 'pending',
+  Active = 'active',
+  Success = 'success',
+  Error = 'error'
+}
+
 export interface GetTaskParameters {
   collaboration_id?: string;
   init_user_id?: string;

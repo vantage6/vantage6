@@ -1,8 +1,8 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { getChipTypeForStatus, getStatusInfoTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
+import { getChipTypeForStatus, getStatusType, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
 import { Algorithm, AlgorithmFunction, Output } from 'src/app/models/api/algorithm.model';
-import { Task, TaskLazyProperties, TaskRun, TaskStatus, TaskResult, BaseTask } from 'src/app/models/api/task.models';
+import { Task, TaskLazyProperties, TaskRun, TaskStatus, TaskResult, BaseTask, TaskStatusGroup } from 'src/app/models/api/task.models';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { TaskService } from 'src/app/services/task.service';
@@ -140,15 +140,15 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     return getTaskStatusTranslation(this.translateService, status);
   }
 
-  getStatusInfoTypeForStatus(status: TaskStatus) {
-    return getStatusInfoTypeForStatus(status);
+  getStatusType(status: TaskStatus) {
+    return getStatusType(status);
   }
 
   async getChildTasks(): Promise<BaseTask[]> {
     return await this.taskService.getTasks(1, { parent_id: this.task?.id, include: 'results,runs' }).then((data) => data.data);
   }
 
-  isTaskInProgress(): boolean {
+  isTaskNotComplete(): boolean {
     if (!this.task) return false;
     if (this.task.runs.length <= 0) return false;
     if (this.task.results?.some((result) => result.result === null)) return true;
@@ -280,16 +280,36 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       run.status = statusUpdate.status as TaskStatus;
     }
 
-    // if the task is completed, we need to reload the task to get the results
-    if (statusUpdate.status === TaskStatus.Completed) {
-      // Task is completed but we need to wait for the results to be available
+    // if all task runs are completed, update the status of the task itself
+    if (this.task.runs.every((r) => r.status === TaskStatus.Completed)) {
+      this.task.status = TaskStatus.Completed;
+    } else if (this.task.runs.some((r) => getStatusType(r.status) === TaskStatusGroup.Error)) {
+      this.task.status = TaskStatus.Failed;
+    }
+
+    // if the task is completed, we need to reload the task to get the results.
+    // Also, if the task crashes, we should reload the task to get the logs.
+    if ([TaskStatusGroup.Error, TaskStatusGroup.Success].includes(getStatusType(statusUpdate.status as TaskStatus))) {
+      // Task is no longer running but we need to wait for the results to be available
       // on the server. Poll every second until the results are available.
       timer(0, 1000)
         .pipe(takeUntil(this.waitTaskComplete$))
         .subscribe({
           next: async () => {
-            this.task = await this.getMainTask();
-            if (!this.isTaskInProgress()) {
+            if (!this.task) return;
+            const renewed_task = await this.getMainTask();
+            // keep statuses of the task and the runs - these are updated by the socket
+            // and are likely more up-to-date than the statuses at the central server
+            renewed_task.status = this.task.status;
+            renewed_task.runs.map((run) => {
+              const old_run = this.task?.runs.find((r) => r.id === run.id);
+              if (old_run) {
+                run.status = old_run.status;
+              }
+            });
+            this.task = renewed_task;
+            if (!this.isTaskNotComplete() || getStatusType(this.task.status) === TaskStatusGroup.Error) {
+              this.childTasks = await this.getChildTasks();
               this.initData(false);
               // stop polling
               this.waitTaskComplete$.next(true);
