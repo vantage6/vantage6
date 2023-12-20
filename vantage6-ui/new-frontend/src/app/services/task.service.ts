@@ -6,6 +6,7 @@ import {
   ColumnRetrievalResult,
   CreateTask,
   GetTaskParameters,
+  KillTask,
   Task,
   TaskLazyProperties
 } from '../models/api/task.models';
@@ -67,6 +68,11 @@ export class TaskService {
 
   async deleteTask(id: number): Promise<void> {
     return await this.apiService.deleteForApi(`/task/${id}`);
+  }
+
+  async killTask(id: number): Promise<void> {
+    const killTaskParams: KillTask = { id: id };
+    await this.apiService.postForApi('/kill/task', killTaskParams);
   }
 
   async getTemplateTasks(): Promise<TemplateTask[]> {

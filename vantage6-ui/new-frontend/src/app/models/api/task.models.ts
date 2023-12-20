@@ -122,6 +122,10 @@ export interface CreateTask {
   organizations: Organization[];
 }
 
+export interface KillTask {
+  id: number;
+}
+
 interface Organization {
   id: number;
   input: string;

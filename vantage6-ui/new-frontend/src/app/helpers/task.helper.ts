@@ -12,6 +12,7 @@ export const getChipTypeForStatus = (status: TaskStatus): 'default' | 'active' |
     case TaskStatus.StartFailed:
     case TaskStatus.NoDockerImage:
     case TaskStatus.Crashed:
+    case TaskStatus.Killed:
       return 'error';
     default:
       return 'default';
@@ -39,6 +40,7 @@ export const getStatusInfoTypeForStatus = (status: TaskStatus): 'pending' | 'act
     case TaskStatus.StartFailed:
     case TaskStatus.NoDockerImage:
     case TaskStatus.Crashed:
+    case TaskStatus.Killed:
       return 'error';
     default:
       return 'pending';
