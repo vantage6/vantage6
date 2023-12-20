@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { routePaths } from '../routes';
 import { AuthService } from '../services/auth.service';
+import { AuthResult } from '../models/api/auth.model';
 
 export function authenticationGuard(): CanActivateFn {
   return async () => {
@@ -9,7 +10,7 @@ export function authenticationGuard(): CanActivateFn {
     const authService: AuthService = inject(AuthService);
 
     const isAuthenticated = await authService.isAuthenticated();
-    if (!isAuthenticated) {
+    if (isAuthenticated !== AuthResult.Success) {
       router.navigate([routePaths.login]);
       return false;
     }
