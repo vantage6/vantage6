@@ -527,7 +527,7 @@ class User(UserBase):
         schema = user_schema
 
         if request.args.get('include_permissions', False):
-              schema = user_schema_with_permissions
+            schema = user_schema_with_permissions
 
         # allow user to be returned if authenticated user can view users from
         # that organization or if the user is the same as the authenticated
