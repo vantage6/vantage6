@@ -253,7 +253,7 @@ class RecoverPassword(ServicesResources):
 
         self.mail.send_email(
             f"Password reset {APPNAME}",
-            sender="support@vantage6.ai",
+            sender=email_sender,
             recipients=[user.email],
             text_body=render_template(
                 "mail/reset_token.txt", token=reset_token,
