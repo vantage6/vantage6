@@ -2,7 +2,11 @@ import { Component, HostBinding, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { SearchRequest } from 'src/app/components/table/table.component';
+import { getApiParameters } from 'src/app/helpers/api.helper';
+import { unlikeApiParameter } from 'src/app/helpers/general.helper';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
+import { GetRoleParameters } from 'src/app/models/api/role.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
@@ -22,6 +26,7 @@ export class RoleListComponent implements OnInit {
   table?: TableData;
   pagination: PaginationLinks | null = null;
   routes = routePaths;
+  getRoleParameters: GetRoleParameters = {};
 
   constructor(
     private router: Router,
@@ -32,23 +37,30 @@ export class RoleListComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.canCreate = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.ROLE, OperationType.CREATE);
-    await this.initData();
+    await this.initData(this.getRoleParameters);
   }
 
-  private async initData() {
-    await this.getRoles(1);
+  private async initData(getRoleParameters: GetRoleParameters) {
+    await this.getRoles(1, getRoleParameters);
     this.isLoading = false;
   }
 
-  private async getRoles(pageIndex: number) {
-    const result = await this.roleService.getPaginatedRoles(pageIndex);
+  private async getRoles(pageIndex: number, parameters: GetRoleParameters) {
+    const result = await this.roleService.getPaginatedRoles(pageIndex, parameters);
 
     this.table = {
-      columns: [{ id: 'name', label: this.translateService.instant('role-list.name') }],
-      rows: result.data.map((_) => ({
-        id: _.id.toString(),
+      columns: [
+        {
+          id: 'name',
+          label: this.translateService.instant('role-list.name'),
+          searchEnabled: true,
+          initSearchString: unlikeApiParameter(this.getRoleParameters.name)
+        }
+      ],
+      rows: result.data.map((role) => ({
+        id: role.id.toString(),
         columnData: {
-          name: _.name
+          name: role.name
         }
       }))
     };
@@ -60,7 +72,12 @@ export class RoleListComponent implements OnInit {
     this.router.navigate([routePaths.role, id]);
   }
 
+  handleSearchChanged(searchRequests: SearchRequest[]): void {
+    this.getRoleParameters = getApiParameters<GetRoleParameters>(searchRequests);
+    this.initData(this.getRoleParameters);
+  }
+
   async handlePageEvent(e: PageEvent) {
-    await this.getRoles(e.pageIndex + 1);
+    await this.getRoles(e.pageIndex + 1, this.getRoleParameters);
   }
 }

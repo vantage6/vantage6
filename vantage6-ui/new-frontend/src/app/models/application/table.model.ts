@@ -3,9 +3,11 @@ export interface TableData {
   rows: Row[];
 }
 
-interface Column {
+export interface Column {
   id: string;
   label: string;
+  searchEnabled?: boolean;
+  initSearchString?: string;
 }
 
 interface Row {

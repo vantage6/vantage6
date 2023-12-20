@@ -6,7 +6,7 @@
 </app-page-header>
 <mat-card *ngIf="!isLoading; else loading">
   <mat-card-content>
-    <app-table [data]="table" (rowClick)="handleTableClick($event)"></app-table>
+    <app-table [data]="table" (rowClick)="handleTableClick($event)" (searchChanged)="handleSearchChanged($event)"></app-table>
     <mat-paginator (page)="handlePageEvent($event)" [length]="pagination?.total" pageSize="10" [hidePageSize]="true"></mat-paginator>
   </mat-card-content>
 </mat-card>
