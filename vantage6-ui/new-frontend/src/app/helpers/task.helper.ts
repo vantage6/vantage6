@@ -1,5 +1,5 @@
 import { TranslateService } from '@ngx-translate/core';
-import { Task, TaskStatus } from '../models/api/task.models';
+import { Task, TaskStatus, TaskStatusGroup } from '../models/api/task.models';
 
 export const getChipTypeForStatus = (status: TaskStatus): 'default' | 'active' | 'success' | 'error' => {
   switch (status) {
@@ -29,21 +29,21 @@ export const getTaskStatusTranslation = (translateService: TranslateService, sta
   return translation;
 };
 
-export const getStatusInfoTypeForStatus = (status: TaskStatus): 'pending' | 'active' | 'success' | 'error' => {
+export const getStatusType = (status: TaskStatus): TaskStatusGroup => {
   switch (status) {
     case TaskStatus.Initializing:
     case TaskStatus.Active:
-      return 'active';
+      return TaskStatusGroup.Active;
     case TaskStatus.Completed:
-      return 'success';
+      return TaskStatusGroup.Success;
     case TaskStatus.Failed:
     case TaskStatus.StartFailed:
     case TaskStatus.NoDockerImage:
     case TaskStatus.Crashed:
     case TaskStatus.Killed:
-      return 'error';
+      return TaskStatusGroup.Error;
     default:
-      return 'pending';
+      return TaskStatusGroup.Pending;
   }
 };
 

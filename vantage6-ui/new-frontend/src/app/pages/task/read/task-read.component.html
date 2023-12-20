@@ -14,7 +14,7 @@
   </mat-menu>
 </app-page-header>
 <ng-container *ngIf="!isLoading && task; else loading">
-  <mat-card *ngIf="isTaskInProgress()">
+  <mat-card *ngIf="isTaskNotComplete()">
     <mat-card-header>
       <mat-card-title>{{ "task-read.card-status.title" | translate }}</mat-card-title>
     </mat-card-header>
@@ -22,7 +22,7 @@
       <div class="status-info-container">
         <app-status-info
           *ngFor="let run of task?.runs"
-          [type]="getStatusInfoTypeForStatus(run.status)"
+          [type]="getStatusType(run.status)"
           title="{{ run.node.name }}"
           [subTitle]="getTaskStatusTranslation(run.status)"
         >
@@ -43,7 +43,7 @@
         <div class="status-info-container" *ngFor="let childTask of childTasks">
           <app-status-info
             *ngFor="let run of childTask?.runs"
-            [type]="getStatusInfoTypeForStatus(run.status)"
+            [type]="getStatusType(run.status)"
             title="{{ run.node.name }}"
             [subTitle]="getTaskStatusTranslation(run.status)"
           >
