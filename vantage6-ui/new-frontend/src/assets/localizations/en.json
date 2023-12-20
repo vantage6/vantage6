@@ -77,7 +77,8 @@
     },
     "step-parameters": {
       "title": "Define parameters"
-    }
+    },
+    "alert-no-online-nodes": "You cannot create a task right now because no nodes are online in your collaboration. Online nodes are required to collect information on available databases and columns. Please try again later or contact your collaboration manager."
   },
   "task-read": {
     "title": "Task",
