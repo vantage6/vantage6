@@ -57,7 +57,8 @@
       "title": "Select package"
     },
     "step-function": {
-      "title": "Select function"
+      "title": "Select function",
+      "organization": "Organization(s) to run this function"
     },
     "step-database": {
       "title": "Select databases"

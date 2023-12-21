@@ -29,7 +29,7 @@
         </mat-step>
         <mat-step [stepControl]="functionForm">
           <form class="form" [formGroup]="functionForm">
-            <ng-template matStepLabel>{{ "task-create.step-package.title" | translate }}</ng-template>
+            <ng-template matStepLabel>{{ "task-create.step-function.title" | translate }}</ng-template>
             <mat-form-field subscriptSizing="dynamic">
               <mat-label>{{ "task.function" | translate }}</mat-label>
               <mat-select formControlName="functionName">
@@ -39,7 +39,7 @@
               </mat-select>
             </mat-form-field>
             <mat-form-field *ngIf="function" subscriptSizing="dynamic">
-              <mat-label>{{ "task.organization" | translate }}</mat-label>
+              <mat-label>{{ "task-create.step-function.organization" | translate }}</mat-label>
               <mat-select *ngIf="function.is_central" formControlName="organizationIDs" [compareWith]="compareOrganizationsForSelection">
                 <mat-option
                   *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
@@ -116,7 +116,6 @@
             </div>
           </ng-container>
         </mat-step>
-        <!-- TODO check if there are 'column'-type parameters - if so retrieve column names -->
         <mat-step *ngIf="shouldShowParameterStep" [stepControl]="parameterForm">
           <form class="form" [formGroup]="parameterForm">
             <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
