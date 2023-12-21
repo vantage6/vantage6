@@ -3,6 +3,11 @@
   <mat-card>
     <mat-card-content *ngIf="!(isDataInitialized && (!node || node?.status !== 'online')); else noOnlineNodes">
       <mat-stepper [linear]="true" orientation="vertical" #stepper>
+        <!-- by default, completed steps get an 'edit' icon to indicate they are completed but still editable.
+          We change this to a check mark to show clearly which steps have been filled in -->
+        <ng-template matStepperIcon="edit">
+          <mat-icon>check</mat-icon>
+        </ng-template>
         <mat-step [stepControl]="packageForm">
           <form class="form" [formGroup]="packageForm">
             <ng-template matStepLabel>{{ "task-create.step-package.title" | translate }}</ng-template>

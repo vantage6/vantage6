@@ -12,6 +12,11 @@
   <mat-card *ngIf="!isLoadingTaskData; else loading">
     <mat-card-content>
       <mat-stepper [linear]="true" orientation="vertical" #stepper *ngIf="templateTask">
+        <!-- by default, completed steps get an 'edit' icon to indicate they are completed but still editable.
+          We change this to a check mark to show clearly which steps have been filled in -->
+        <ng-template matStepperIcon="edit">
+          <mat-icon>check</mat-icon>
+        </ng-template>
         <mat-step [stepControl]="packageForm">
           <ng-template matStepLabel>{{ "task-create.step-package.title" | translate }}</ng-template>
           <div class="data-list">
