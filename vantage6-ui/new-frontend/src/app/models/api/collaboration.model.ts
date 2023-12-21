@@ -1,3 +1,4 @@
+import { AlgorithmStore } from '../algorithmStore.model';
 import { BaseNode } from './node.model';
 import { BaseOrganization } from './organization.model';
 import { BaseTask } from './task.models';
@@ -5,7 +6,8 @@ import { BaseTask } from './task.models';
 export enum CollaborationLazyProperties {
   Organizations = 'organizations',
   Nodes = 'nodes',
-  Tasks = 'tasks'
+  Tasks = 'tasks',
+  AlgorithmStores = 'algorithm_stores'
 }
 
 export enum CollaborationSortProperties {
@@ -25,6 +27,7 @@ export interface BaseCollaboration {
   organizations: string;
   nodes: string;
   tasks: string;
+  algorithm_stores: string;
 }
 
 export interface Collaboration {
@@ -34,6 +37,7 @@ export interface Collaboration {
   organizations: BaseOrganization[];
   nodes: BaseNode[];
   tasks: BaseTask[];
+  algorithm_stores: AlgorithmStore[];
 }
 
 export interface CollaborationForm {

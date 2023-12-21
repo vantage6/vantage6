@@ -10,6 +10,7 @@
     "confirm": "Confirm",
     "yes": "Yes",
     "no": "No",
+    "name": "Name",
     "offline": "Offline",
     "online": "Online",
     "none": "None",
@@ -152,7 +153,10 @@
   "collaboration": {
     "name": "Name",
     "encrypted": "Encrypted",
-    "organizations": "Organizations"
+    "organizations": "Organizations",
+    "algorithm-store": {
+      "url": "Web address"
+    }
   },
   "collaboration-create": {
     "title": "Create collaboration",
@@ -169,6 +173,9 @@
     },
     "card-nodes": {
       "title": "Nodes"
+    },
+    "card-algorithm-stores": {
+      "title": "Algorithm stores available to this collaboration"
     },
     "delete-dialog": {
       "title": "Are you sure you want to delete the collaboration '{{name}}'?",

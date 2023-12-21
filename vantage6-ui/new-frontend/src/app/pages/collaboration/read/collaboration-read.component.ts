@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
+import { AlgorithmStore } from 'src/app/models/algorithmStore.model';
 import { Collaboration, CollaborationLazyProperties } from 'src/app/models/api/collaboration.model';
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
@@ -29,6 +30,7 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
   collaboration?: Collaboration;
   canDelete = false;
   canEdit = false;
+  selectedAlgoStore?: AlgorithmStore;
 
   private nodeStatusUpdateSubscription?: Subscription;
 
@@ -60,8 +62,10 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
   private async initData(): Promise<void> {
     this.collaboration = await this.collaborationService.getCollaboration(this.id, [
       CollaborationLazyProperties.Organizations,
-      CollaborationLazyProperties.Nodes
+      CollaborationLazyProperties.Nodes,
+      CollaborationLazyProperties.AlgorithmStores
     ]);
+    console.log(this.collaboration);
     this.isLoading = false;
   }
 
@@ -71,6 +75,10 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
     if (node) {
       node.status = nodeStatusUpdate.online ? NodeStatus.Online : NodeStatus.Offline;
     }
+  }
+
+  selectAlgoStore(id: number): void {
+    this.selectedAlgoStore = this.collaboration?.algorithm_stores.find((algoStore) => algoStore.id === id);
   }
 
   async handleDelete(): Promise<void> {

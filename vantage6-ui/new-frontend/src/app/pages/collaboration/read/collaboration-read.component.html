@@ -57,6 +57,39 @@
       </div>
     </mat-card-content>
   </mat-card>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ "collaboration-read.card-algorithm-stores.title" | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <mat-accordion class="card-accordion">
+        <mat-expansion-panel *ngFor="let algo_store of collaboration.algorithm_stores" (opened)="selectAlgoStore(algo_store.id)">
+          <mat-expansion-panel-header>
+            <mat-panel-title>{{ algo_store.name }}</mat-panel-title>
+          </mat-expansion-panel-header>
+          <ng-template matExpansionPanelContent>
+            <mat-spinner *ngIf="!selectedAlgoStore" diameter="48"></mat-spinner>
+            <ng-container *ngIf="selectedAlgoStore">
+              <div class="data-list">
+                <div class="data-list__item">
+                  <b>{{ "general.id" | translate }}</b>
+                  <span>{{ selectedAlgoStore.id || "-" }}</span>
+                </div>
+                <div class="data-list__item">
+                  <b>{{ "general.name" | translate }}</b>
+                  <span>{{ selectedAlgoStore.name || "-" }}</span>
+                </div>
+                <div class="data-list__item">
+                  <b>{{ "collaboration.algorithm-store.url" | translate }}</b>
+                  <span>{{ selectedAlgoStore.url || "-" }}</span>
+                </div>
+              </div>
+            </ng-container>
+          </ng-template>
+        </mat-expansion-panel>
+      </mat-accordion>
+    </mat-card-content>
+  </mat-card>
 </ng-container>
 <ng-template #loading>
   <mat-card>
