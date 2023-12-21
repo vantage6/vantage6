@@ -57,7 +57,8 @@
       "title": "Select package"
     },
     "step-function": {
-      "title": "Select function"
+      "title": "Select function",
+      "organization": "Organization(s) to run this function"
     },
     "step-database": {
       "title": "Select databases"
@@ -77,7 +78,8 @@
     },
     "step-parameters": {
       "title": "Define parameters"
-    }
+    },
+    "alert-no-online-nodes": "You cannot create a task right now because no nodes are online in your collaboration. Online nodes are required to collect information on available databases and columns. Please try again later or contact your collaboration manager."
   },
   "task-read": {
     "title": "Task",
@@ -86,7 +88,10 @@
     },
     "card-status": {
       "title": "Status",
-      "child-title": "Subtasks"
+      "child-title": "Subtasks",
+      "actions": {
+        "kill": "Kill task"
+      }
     },
     "card-results": {
       "title": "Results",
@@ -104,6 +109,10 @@
     "delete-dialog": {
       "title": "Are you sure you want to delete the task '{{name}}'?",
       "content": "Note, this will also delete all subtasks and results.\nThis operation cannot be undone."
+    },
+    "kill-dialog": {
+      "title": "Are you sure you want to kill the task '{{name}}'?",
+      "content": "Note, this will also kill all subtasks.\nThis operation cannot be undone."
     },
     "repeat": "Repeat task"
   },
@@ -233,7 +242,8 @@
     "first-name": "First name",
     "last-name": "Last name",
     "organization": "Organization",
-    "roles": "Roles"
+    "roles": "Roles",
+    "permissions": "Permissions"
   },
   "user-list": {
     "title": "Users"

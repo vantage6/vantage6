@@ -1,8 +1,13 @@
 <app-page-header title="{{ 'task-create.title' | translate }}"></app-page-header>
 <ng-container *ngIf="!isLoading; else loading">
   <mat-card>
-    <mat-card-content>
+    <mat-card-content *ngIf="!(isDataInitialized && (!node || node?.status !== 'online')); else noOnlineNodes">
       <mat-stepper [linear]="true" orientation="vertical" #stepper>
+        <!-- by default, completed steps get an 'edit' icon to indicate they are completed but still editable.
+          We change this to a check mark to show clearly which steps have been filled in -->
+        <ng-template matStepperIcon="edit">
+          <mat-icon>check</mat-icon>
+        </ng-template>
         <mat-step [stepControl]="packageForm">
           <form class="form" [formGroup]="packageForm">
             <ng-template matStepLabel>{{ "task-create.step-package.title" | translate }}</ng-template>
@@ -29,7 +34,7 @@
         </mat-step>
         <mat-step [stepControl]="functionForm">
           <form class="form" [formGroup]="functionForm">
-            <ng-template matStepLabel>{{ "task-create.step-package.title" | translate }}</ng-template>
+            <ng-template matStepLabel>{{ "task-create.step-function.title" | translate }}</ng-template>
             <mat-form-field subscriptSizing="dynamic">
               <mat-label>{{ "task.function" | translate }}</mat-label>
               <mat-select formControlName="functionName">
@@ -39,12 +44,8 @@
               </mat-select>
             </mat-form-field>
             <mat-form-field *ngIf="function" subscriptSizing="dynamic">
-              <mat-label>{{ "task.organization" | translate }}</mat-label>
-              <mat-select
-                *ngIf="function.type === functionType.Central"
-                formControlName="organizationIDs"
-                [compareWith]="compareOrganizationsForSelection"
-              >
+              <mat-label>{{ "task-create.step-function.organization" | translate }}</mat-label>
+              <mat-select *ngIf="function.type === functionType.Central" formControlName="organizationIDs" [compareWith]="compareOrganizationsForSelection">
                 <mat-option
                   *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
                   [value]="organization.id"
@@ -120,7 +121,6 @@
             </div>
           </ng-container>
         </mat-step>
-        <!-- TODO check if there are 'column'-type parameters - if so retrieve column names -->
         <mat-step *ngIf="shouldShowParameterStep" [stepControl]="parameterForm">
           <form class="form" [formGroup]="parameterForm">
             <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
@@ -182,4 +182,7 @@
     <mat-spinner diameter="48"></mat-spinner>
     <div>{{ "task-create.step-preprocessing.get-columns" | translate }}</div>
   </div>
+</ng-template>
+<ng-template #noOnlineNodes>
+  <app-alert class="node-alert" label="{{ 'task-create.alert-no-online-nodes' | translate }}"></app-alert>
 </ng-template>

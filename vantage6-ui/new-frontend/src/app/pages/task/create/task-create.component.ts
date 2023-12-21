@@ -47,6 +47,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   isLoading: boolean = true;
   isLoadingColumns: boolean = false;
   isTaskRepeat: boolean = false;
+  isDataInitialized: boolean = false;
   repeatedTask: Task | null = null;
 
   packageForm = this.fb.nonNullable.group({
@@ -292,6 +293,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     // TODO if node is null, alert user that no node is online so no columns and databases can be retrieved - so better not create a task
     this.node = await this.getOnlineNode();
     if (!this.isTaskRepeat) this.isLoading = false;
+    this.isDataInitialized = true;
   }
 
   private async handleAlgorithmChange(algorithmID: number): Promise<void> {
@@ -371,10 +373,14 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     this.parameterForm = this.fb.nonNullable.group({});
   }
 
-  private onNodeStatusUpdate(nodeStatusUpdate: NodeOnlineStatusMsg): void {
-    if (!this.node) return;
-    if (this.node.id === nodeStatusUpdate.id) {
+  private async onNodeStatusUpdate(nodeStatusUpdate: NodeOnlineStatusMsg): Promise<void> {
+    // check if currently selected node is the one that came online/offline
+    if (this.node && this.node.id === nodeStatusUpdate.id) {
       this.node.status = nodeStatusUpdate.online ? NodeStatus.Online : NodeStatus.Offline;
+    }
+    // if no node is selected or the selected node is offline, try to get an online node
+    if (!this.node || this.node.status === NodeStatus.Offline) {
+      this.node = await this.getOnlineNode();
     }
   }
 }
