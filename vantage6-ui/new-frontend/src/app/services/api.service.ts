@@ -90,7 +90,8 @@ export class ApiService {
           resolve(response as T);
         },
         (error) => {
-          this.snackBarService.showMessage(error.error?.msg ? error.error?.msg : 'An error occurred');
+          const errorMsg = this.getErrorMsg(error);
+          this.snackBarService.showMessage(errorMsg);
           reject(error);
         }
       );
@@ -113,13 +114,31 @@ export class ApiService {
           if (error instanceof HttpErrorResponse) {
             this.snackBarService.showMessage(error.message || 'An error occurred');
           } else {
-            this.snackBarService.showMessage(error.error?.msg ? error.error?.msg : 'An error occurred');
+            const errorMsg = this.getErrorMsg(error);
+            this.snackBarService.showMessage(errorMsg);
           }
 
           reject(error);
         }
       );
     });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private getErrorMsg(error: any): string {
+    let errorMsg = error.error?.msg ? error.error?.msg : 'An error occurred';
+    // Vantage6 server does request validation - if there are errors, they are returned in the response.
+    // Here we append these errors to the error message.
+    if (error.error?.errors) {
+      errorMsg +=
+        ': ' +
+        Object.keys(error.error?.errors)
+          .map((key) => {
+            return key + ': ' + error.error?.errors[key];
+          })
+          .join(', ');
+    }
+    return errorMsg;
   }
 
   private getApiPath(path: string): string {

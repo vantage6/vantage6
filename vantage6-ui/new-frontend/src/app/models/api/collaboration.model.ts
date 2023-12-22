@@ -1,4 +1,4 @@
-import { AlgorithmStore } from '../algorithmStore.model';
+import { AlgorithmStore } from './algorithmStore.model';
 import { BaseNode } from './node.model';
 import { BaseOrganization } from './organization.model';
 import { BaseTask } from './task.models';

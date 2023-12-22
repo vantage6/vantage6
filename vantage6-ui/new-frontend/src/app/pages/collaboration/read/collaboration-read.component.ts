@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
-import { AlgorithmStore } from 'src/app/models/algorithmStore.model';
+import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { Collaboration, CollaborationLazyProperties } from 'src/app/models/api/collaboration.model';
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
@@ -16,7 +16,8 @@ import { SocketioConnectService } from 'src/app/services/socketio-connect.servic
 
 @Component({
   selector: 'app-collaboration-read',
-  templateUrl: './collaboration-read.component.html'
+  templateUrl: './collaboration-read.component.html',
+  styleUrls: ['./collaboration-read.component.scss']
 })
 export class CollaborationReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
@@ -65,7 +66,6 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
       CollaborationLazyProperties.Nodes,
       CollaborationLazyProperties.AlgorithmStores
     ]);
-    console.log(this.collaboration);
     this.isLoading = false;
   }
 

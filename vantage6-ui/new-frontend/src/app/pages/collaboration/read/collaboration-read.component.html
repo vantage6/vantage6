@@ -60,6 +60,16 @@
   <mat-card>
     <mat-card-header>
       <mat-card-title>{{ "collaboration-read.card-algorithm-stores.title" | translate }}</mat-card-title>
+      <button
+        actions
+        mat-flat-button
+        class="right-aligned-button"
+        color="primary"
+        *ngIf="canEdit"
+        [routerLink]="[routes.algorithmStoreAdd, collaboration.id]"
+      >
+        <mat-icon>add</mat-icon>{{ "collaboration-read.card-algorithm-stores.add" | translate }}
+      </button>
     </mat-card-header>
     <mat-card-content>
       <mat-accordion class="card-accordion">

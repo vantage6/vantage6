@@ -175,14 +175,31 @@
       "title": "Nodes"
     },
     "card-algorithm-stores": {
-      "title": "Algorithm stores available to this collaboration"
+      "title": "Algorithm stores available to this collaboration",
+      "add": "Add algorithm store"
     },
     "delete-dialog": {
       "title": "Are you sure you want to delete the collaboration '{{name}}'?",
       "content": "Note, this will also delete all nodes and tasks related to this collaboration.\nThis operation cannot be undone."
     }
   },
-
+  "algorithm-store-add": {
+    "title": "Add algorithm store to your collaboration",
+    "name": "Name",
+    "url": "Algorithm store URL",
+    "server_url": "Vantage6 server URL",
+    "form": {
+      "name-hint": "This name will be used to identify the algorithm store in your collaboration(s).",
+      "url-hint": "The web address of the algorithm store. This should be the address of the algorithm store's API.",
+      "server-url-hint": "The web address of this vantage6 server. This should be the address of the vantage6 server's including the API path.",
+      "all-collaborations": "Make this algorithm store available to all current and future collaborations of this vantage6 server"
+    },
+    "localhost-dialog": {
+      "title": "Adding localhost algorithm store",
+      "content": "You are adding an algorithm store running on localhost. This is insecure and should only be done for development servers. Are you sure you want to continue?",
+      "confirm": "I understand, proceed."
+    }
+  },
   "role-create": {
     "title": "Create role",
     "formlabels": {
