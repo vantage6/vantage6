@@ -97,7 +97,7 @@ export class UserListComponent implements OnInit, OnDestroy {
       }
     });
     this.canCreate = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.USER, OperationType.CREATE);
-    await this.initData(this.getUserParameters);
+    await this.initData(this.currentPage, this.getUserParameters);
   }
 
   ngOnDestroy() {
@@ -105,22 +105,23 @@ export class UserListComponent implements OnInit, OnDestroy {
   }
 
   async handlePageEvent(e: PageEvent) {
-    this.currentPage = e.pageIndex + 1;
-    await this.getUsers(this.getUserParameters);
+    await this.getUsers(e.pageIndex + 1, this.getUserParameters);
   }
 
   handleTableClick(id: string) {
     this.router.navigate([routePaths.user, id]);
   }
 
-  private async initData(getUserParameters: GetUserParameters) {
+  private async initData(page: number, parameters: GetUserParameters) {
     this.isLoading = true;
-    await this.getUsers(getUserParameters);
+    this.currentPage = page;
+    this.getUserParameters = parameters;
+    await this.getUsers(page, parameters);
     this.isLoading = false;
   }
 
-  private async getUsers(getUserParameters: GetUserParameters) {
-    const result = await this.userService.getPaginatedUsers(this.currentPage, { ...getUserParameters, sort: UserSortProperties.Username });
+  private async getUsers(page: number, getUserParameters: GetUserParameters) {
+    const result = await this.userService.getPaginatedUsers(page, { ...getUserParameters, sort: UserSortProperties.Username });
     this.table = {
       columns: [
         {
@@ -161,7 +162,7 @@ export class UserListComponent implements OnInit, OnDestroy {
   }
 
   handleSearchChanged(searchRequests: SearchRequest[]): void {
-    this.getUserParameters = getApiSearchParameters<GetUserParameters>(searchRequests);
-    this.initData(this.getUserParameters);
+    const parameters = getApiSearchParameters<GetUserParameters>(searchRequests);
+    this.initData(1, parameters);
   }
 }

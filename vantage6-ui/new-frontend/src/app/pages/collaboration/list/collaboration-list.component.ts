@@ -2,7 +2,10 @@ import { Component, HostBinding, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { CollaborationSortProperties } from 'src/app/models/api/collaboration.model';
+import { SearchRequest } from 'src/app/components/table/table.component';
+import { getApiSearchParameters } from 'src/app/helpers/api.helper';
+import { unlikeApiParameter } from 'src/app/helpers/general.helper';
+import { CollaborationSortProperties, GetCollaborationParameters } from 'src/app/models/api/collaboration.model';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { TableData } from 'src/app/models/application/table.model';
@@ -18,11 +21,12 @@ export class CollaborationListComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
   routes = routePaths;
 
-  isLoading: boolean = true;
+  isLoading: boolean = false;
   canCreate: boolean = false;
   table?: TableData;
   pagination: PaginationLinks | null = null;
-  currentPage: number = 1;
+  currentPage: number = 0;
+  getCollaborationParameters: GetCollaborationParameters = {};
 
   constructor(
     private router: Router,
@@ -33,29 +37,36 @@ export class CollaborationListComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.canCreate = this.permissionService.isAllowed(ScopeType.GLOBAL, ResourceType.COLLABORATION, OperationType.CREATE);
-    await this.initData();
+    await this.initData(1, {});
   }
 
   async handlePageEvent(e: PageEvent) {
-    this.currentPage = e.pageIndex + 1;
-    await this.getCollaborations();
+    await this.initData(e.pageIndex + 1, this.getCollaborationParameters);
   }
 
   handleTableClick(id: string): void {
     this.router.navigate([routePaths.collaboration, id]);
   }
 
-  private async initData() {
-    await this.getCollaborations();
+  private async initData(page: number, parameters: GetCollaborationParameters) {
+    this.isLoading = true;
+    this.currentPage = page;
+    this.getCollaborationParameters = { ...parameters, sort: CollaborationSortProperties.Name };
+    await this.getCollaborations(page, this.getCollaborationParameters);
     this.isLoading = false;
   }
 
-  private async getCollaborations() {
-    const result = await this.collaborationService.getPaginatedCollaborations(this.currentPage, { sort: CollaborationSortProperties.Name });
+  private async getCollaborations(page: number, parameters: GetCollaborationParameters) {
+    const result = await this.collaborationService.getPaginatedCollaborations(page, parameters);
 
     this.table = {
       columns: [
-        { id: 'name', label: this.translateService.instant('collaboration.name') },
+        {
+          id: 'name',
+          label: this.translateService.instant('collaboration.name'),
+          searchEnabled: true,
+          initSearchString: unlikeApiParameter(parameters.name)
+        },
         { id: 'encrypted', label: this.translateService.instant('collaboration.encrypted') }
       ],
       rows: result.data.map((_) => ({
@@ -67,5 +78,10 @@ export class CollaborationListComponent implements OnInit {
       }))
     };
     this.pagination = result.links;
+  }
+
+  public handleSearchChanged(searchRequests: SearchRequest[]): void {
+    const parameters: GetCollaborationParameters = getApiSearchParameters<GetCollaborationParameters>(searchRequests);
+    this.initData(1, parameters);
   }
 }

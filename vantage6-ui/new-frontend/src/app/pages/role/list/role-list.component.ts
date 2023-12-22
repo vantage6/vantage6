@@ -38,13 +38,14 @@ export class RoleListComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.canCreate = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.ROLE, OperationType.CREATE);
-    await this.initData(1, this.getRoleParameters);
+    await this.initData(1, {});
   }
 
-  private async initData(page: number, getRoleParameters: GetRoleParameters) {
+  private async initData(page: number, parameters: GetRoleParameters) {
     this.isLoading = true;
     this.currentPage = page;
-    await this.getRoles(page, getRoleParameters);
+    this.getRoleParameters = parameters;
+    await this.getRoles(page, parameters);
     this.isLoading = false;
   }
 
@@ -76,8 +77,8 @@ export class RoleListComponent implements OnInit {
   }
 
   handleSearchChanged(searchRequests: SearchRequest[]): void {
-    this.getRoleParameters = getApiSearchParameters<GetRoleParameters>(searchRequests);
-    this.initData(1, this.getRoleParameters);
+    const parameters = getApiSearchParameters<GetRoleParameters>(searchRequests);
+    this.initData(1, parameters);
   }
 
   async handlePageEvent(e: PageEvent) {

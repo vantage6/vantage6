@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription, debounceTime } from 'rxjs';
@@ -29,11 +29,13 @@ export class TableComponent implements OnChanges {
 
   constructor(private translate: TranslateService) {}
 
-  ngOnChanges(): void {
-    this.columnsToDisplay = this.data?.columns.map((column) => column.id) || [];
-    this.searchColumnsToDisplay = this.data?.columns.map((column) => `search-${column.id}`) || [];
-    this.hasSearchColumns = !!this.data?.columns.find((column) => column.searchEnabled);
-    this.initFormGroup();
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['data']) {
+      this.columnsToDisplay = this.data?.columns.map((column) => column.id) || [];
+      this.searchColumnsToDisplay = this.data?.columns.map((column) => `search-${column.id}`) || [];
+      this.hasSearchColumns = !!this.data?.columns.find((column) => column.searchEnabled);
+      this.initFormGroup();
+    }
   }
 
   getComponentClass(): string {
