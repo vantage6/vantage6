@@ -12,14 +12,18 @@ export interface SearchRequest {
 
 @Component({
   selector: 'app-table',
+  styleUrls: ['./table.component.scss'],
   templateUrl: './table.component.html'
 })
 export class TableComponent implements OnChanges {
   @Input() data?: TableData;
+  @Input() isLoading: boolean = false;
   @Output() rowClick = new EventEmitter<string>();
   @Output() searchChanged = new EventEmitter<SearchRequest[]>();
 
   columnsToDisplay: string[] = [];
+  searchColumnsToDisplay: string[] = [];
+  hasSearchColumns: boolean = false;
   searchForm: FormGroup = new FormGroup('');
   searchFormDescription?: Subscription;
 
@@ -27,7 +31,17 @@ export class TableComponent implements OnChanges {
 
   ngOnChanges(): void {
     this.columnsToDisplay = this.data?.columns.map((column) => column.id) || [];
+    this.searchColumnsToDisplay = this.data?.columns.map((column) => `search-${column.id}`) || [];
+    this.hasSearchColumns = !!this.data?.columns.find((column) => column.searchEnabled);
     this.initFormGroup();
+  }
+
+  getComponentClass(): string {
+    const classes: string[] = [];
+    if (this.isLoading) classes.push('searchable-table--is-loading');
+    if (!this.hasSearchColumns) classes.push('searchable-table--has-no-search-columns');
+
+    return classes.join(' ');
   }
 
   initFormGroup(): void {

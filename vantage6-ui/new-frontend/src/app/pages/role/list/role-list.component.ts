@@ -21,12 +21,13 @@ import { RoleService } from 'src/app/services/role.service';
 export class RoleListComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
 
-  isLoading: boolean = true;
+  isLoading: boolean = false;
   canCreate: boolean = false;
   table?: TableData;
   pagination: PaginationLinks | null = null;
   routes = routePaths;
   getRoleParameters: GetRoleParameters = {};
+  currentPage: number = 0;
 
   constructor(
     private router: Router,
@@ -37,11 +38,13 @@ export class RoleListComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.canCreate = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.ROLE, OperationType.CREATE);
-    await this.initData(this.getRoleParameters);
+    await this.initData(1, this.getRoleParameters);
   }
 
-  private async initData(getRoleParameters: GetRoleParameters) {
-    await this.getRoles(1, getRoleParameters);
+  private async initData(page: number, getRoleParameters: GetRoleParameters) {
+    this.isLoading = true;
+    this.currentPage = page;
+    await this.getRoles(page, getRoleParameters);
     this.isLoading = false;
   }
 
@@ -74,10 +77,10 @@ export class RoleListComponent implements OnInit {
 
   handleSearchChanged(searchRequests: SearchRequest[]): void {
     this.getRoleParameters = getApiSearchParameters<GetRoleParameters>(searchRequests);
-    this.initData(this.getRoleParameters);
+    this.initData(1, this.getRoleParameters);
   }
 
   async handlePageEvent(e: PageEvent) {
-    await this.getRoles(e.pageIndex + 1, this.getRoleParameters);
+    await this.initData(e.pageIndex + 1, this.getRoleParameters);
   }
 }
