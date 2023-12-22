@@ -24,7 +24,6 @@ def with_authentication() -> callable:
     def protection_decorator(fn):
         @wraps(fn)
         def decorator(*args, **kwargs):
-            print(request.headers)
             # check if server to validate token is in header
             msg = 'Missing Server-Url header'
             if not request.headers.get('Server-Url'):

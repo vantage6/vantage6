@@ -327,6 +327,13 @@ class CollaborationSchema(HATEOASModelSchema):
     ))
 
 
+class CollaborationWithOrgsSchema(CollaborationSchema):
+    """
+    Returns the CollaborationSchema plus the organizations participating in it.
+    """
+    organizations = fields.Nested('OrganizationSchema', many=True)
+
+
 class NodeSchema(HATEOASModelSchema):
     organization = fields.Method("organization")
     collaboration = fields.Method("collaboration")
