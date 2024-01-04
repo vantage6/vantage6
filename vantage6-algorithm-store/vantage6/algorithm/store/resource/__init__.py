@@ -39,16 +39,14 @@ def with_authentication() -> callable:
                 return {'msg': msg}, HTTPStatus.UNAUTHORIZED
 
             # check if token is valid
-            # TODO this is very ugly: if we are running a development server,
-            # there is a good chance that the server is running on
-            # localhost:5000. In that case, this request will resolve to this
-            # algorithm store server itself (within Docker).
             url = f"{request.headers['Server-Url']}/token/user/validate"
             try:
                 response = requests.post(url, headers=request.headers)
             except requests.exceptions.ConnectionError:
                 pass
 
+            # if we are looking for a localhost server, it might be that we
+            # have to check host.docker.internal instead.
             if 'localhost' in url or '127.0.0.1' in url:
                 url = url.replace('localhost', 'host.docker.internal')\
                     .replace('127.0.0.1', 'host.docker.internal')
@@ -57,11 +55,15 @@ def with_authentication() -> callable:
                 except requests.exceptions.ConnectionError:
                     pass
 
-            if response is None:
-                msg = 'Could not connect to server to validate token'
+            if response is None or \
+                    response.status_code == HTTPStatus.NOT_FOUND:
+                msg = ('Could not connect to the vantage6 server. Please check'
+                       ' the server URL.')
                 log.warning(msg)
-                return {'msg': msg}, HTTPStatus.INTERNAL_SERVER_ERROR
-            if response.status_code != HTTPStatus.OK:
+                status_to_return = HTTPStatus.INTERNAL_SERVER_ERROR \
+                    if response is None else HTTPStatus.BAD_REQUEST
+                return {'msg': msg}, status_to_return
+            elif response.status_code != HTTPStatus.OK:
                 msg = 'Token is not valid'
                 log.warning(msg)
                 return {'msg': msg}, HTTPStatus.UNAUTHORIZED
