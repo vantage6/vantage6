@@ -161,7 +161,9 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
           await this.algorithmStoreService.delete(this.selectedAlgoStore.id.toString());
 
           // update list of stores
-          this.collaboration.algorithm_stores.filter((store) => store.id === result.id);
+          this.collaboration.algorithm_stores = this.collaboration.algorithm_stores.filter(
+            (store) => store.id !== this.selectedAlgoStore?.id
+          );
           this.selectedAlgoStore = undefined;
         }
       });
