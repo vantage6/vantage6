@@ -70,6 +70,107 @@ class AlgorithmStoreBase(ServicesResources):
         super().__init__(socketio, mail, api, permissions, config)
         self.r_col: RuleCollection = getattr(self.permissions, "collaboration")
 
+    def _communicate_to_algo_store(
+        self, algo_store_url: str, server_url: str, force: bool
+    ) -> dict | None:
+        """
+        Whitelist this vantage6 server url for the algorithm store.
+
+        Parameters
+        ----------
+        algo_store_url : str
+            URL to the algorithm store
+        server_url : str
+            URL to this vantage6 server. This is used to whitelist this server
+            at the algorithm store.
+        force : bool
+            If True, the algorithm store will be added even if the algorithm
+            store url is insecure (i.e. localhost)
+
+        Returns
+        -------
+        tuple[dict, HTTPStatus] | None
+            If the algorithm store is not reachable, a dict with an error
+            message is returned. Otherwise, None is returned.
+        """
+        # TODO this is not pretty, but it works for now. This should change
+        # when we have a separate auth service
+        response = self._send_whitelist_request_to_algo_server(
+            algo_store_url, server_url, force
+        )
+
+        if not response and (
+            algo_store_url.startswith("http://localhost") or
+            algo_store_url.startswith("http://127.0.0.1")
+        ):
+            # try again with the docker host ip
+            algo_store_url = algo_store_url.replace(
+                "localhost", "host.docker.internal"
+            ).replace(
+                "127.0.0.1", "host.docker.internal"
+            )
+            response = self._send_whitelist_request_to_algo_server(
+                algo_store_url, server_url, force
+            )
+
+        if response is None:
+            return {'msg': 'Algorithm store cannot be reached. Make sure that '
+                    'it is online and that you have not included /api at the '
+                    'end of the algorithm store URL'}, \
+                HTTPStatus.BAD_REQUEST
+        elif response.status_code != 201:
+            try:
+                msg = f"Algorithm store error: {response.json()['msg']}"
+            except KeyError:
+                msg = "Communication to algorithm store failed"
+            return {'msg': msg}, HTTPStatus.BAD_REQUEST
+        # else: server has been registered at algorithm store, proceed
+        return None
+
+    @staticmethod
+    def _send_whitelist_request_to_algo_server(
+        algo_store_url: str, server_url: str, force: bool
+    ) -> requests.Response:
+        """
+        Send a request to the algorithm store to whitelist this vantage6 server
+        url for the algorithm store.
+
+        Parameters
+        ----------
+        algo_store_url : str
+            URL to the algorithm store
+        server_url : str
+            URL to this vantage6 server. This is used to whitelist this server
+            at the algorithm store.
+        force : bool
+            If True, the algorithm store will be added even if the algorithm
+            store url is insecure (i.e. localhost)
+
+        Returns
+        -------
+        requests.Response | None
+            Response from the algorithm store. If the algorithm store is not
+            reachable, None is returned
+        """
+        if server_url.endswith("/"):
+            server_url = server_url[:-1]
+        if algo_store_url.endswith("/"):
+            algo_store_url = algo_store_url[:-1]
+        json = {"url": server_url}
+        if force:
+            json['force'] = True
+        # add server_url header
+        headers = {k: v for k, v in request.headers.items()}
+        headers['server_url'] = server_url
+        try:
+            return requests.post(
+                f"{algo_store_url}/api/vantage6-server",
+                json=json,
+                headers=headers
+            )
+        except requests.exceptions.ConnectionError:
+            pass
+
 
 class AlgorithmStores(AlgorithmStoreBase):
     """ Resource for /algorithm """
@@ -347,107 +448,6 @@ class AlgorithmStores(AlgorithmStoreBase):
         algorithm_store.save()
 
         return algorithm_store_schema.dump(algorithm_store), HTTPStatus.CREATED
-
-    def _communicate_to_algo_store(
-        self, algo_store_url: str, server_url: str, force: bool
-    ) -> dict | None:
-        """
-        Whitelist this vantage6 server url for the algorithm store.
-
-        Parameters
-        ----------
-        algo_store_url : str
-            URL to the algorithm store
-        server_url : str
-            URL to this vantage6 server. This is used to whitelist this server
-            at the algorithm store.
-        force : bool
-            If True, the algorithm store will be added even if the algorithm
-            store url is insecure (i.e. localhost)
-
-        Returns
-        -------
-        tuple[dict, HTTPStatus] | None
-            If the algorithm store is not reachable, a dict with an error
-            message is returned. Otherwise, None is returned.
-        """
-        # TODO this is not pretty, but it works for now. This should change
-        # when we have a separate auth service
-        response = self._send_whitelist_request_to_algo_server(
-            algo_store_url, server_url, force
-        )
-
-        if not response and (
-            algo_store_url.startswith("http://localhost") or
-            algo_store_url.startswith("http://127.0.0.1")
-        ):
-            # try again with the docker host ip
-            algo_store_url = algo_store_url.replace(
-                "localhost", "host.docker.internal"
-            ).replace(
-                "127.0.0.1", "host.docker.internal"
-            )
-            response = self._send_whitelist_request_to_algo_server(
-                algo_store_url, server_url, force
-            )
-
-        if response is None:
-            return {'msg': 'Algorithm store cannot be reached. Make sure that '
-                    'it is online and that you have not included /api at the '
-                    'end of the algorithm store URL'}, \
-                HTTPStatus.BAD_REQUEST
-        elif response.status_code != 201:
-            try:
-                msg = f"Algorithm store error: {response.json()['msg']}"
-            except KeyError:
-                msg = "Communication to algorithm store failed"
-            return {'msg': msg}, HTTPStatus.BAD_REQUEST
-        # else: server has been registered at algorithm store, proceed
-        return None
-
-    @staticmethod
-    def _send_whitelist_request_to_algo_server(
-        algo_store_url: str, server_url: str, force: bool
-    ) -> requests.Response:
-        """
-        Send a request to the algorithm store to whitelist this vantage6 server
-        url for the algorithm store.
-
-        Parameters
-        ----------
-        algo_store_url : str
-            URL to the algorithm store
-        server_url : str
-            URL to this vantage6 server. This is used to whitelist this server
-            at the algorithm store.
-        force : bool
-            If True, the algorithm store will be added even if the algorithm
-            store url is insecure (i.e. localhost)
-
-        Returns
-        -------
-        requests.Response | None
-            Response from the algorithm store. If the algorithm store is not
-            reachable, None is returned
-        """
-        if server_url.endswith("/"):
-            server_url = server_url[:-1]
-        if algo_store_url.endswith("/"):
-            algo_store_url = algo_store_url[:-1]
-        json = {"url": server_url}
-        if force:
-            json['force'] = True
-        # add server_url header
-        headers = {k: v for k, v in request.headers.items()}
-        headers['server_url'] = server_url
-        try:
-            return requests.post(
-                f"{algo_store_url}/api/vantage6-server",
-                json=json,
-                headers=headers
-            )
-        except requests.exceptions.ConnectionError:
-            pass
 
 
 class AlgorithmStore(AlgorithmStoreBase):
