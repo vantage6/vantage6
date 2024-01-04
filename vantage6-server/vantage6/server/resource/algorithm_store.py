@@ -274,6 +274,7 @@ class AlgorithmStores(AlgorithmStoreBase):
         # check if collaboration exists
         collaboration_id = data.get('collaboration_id', None)
         if collaboration_id:
+            collaboration_id = int(collaboration_id)
             collaboration = db.Collaboration.get(collaboration_id)
             if not collaboration:
                 return {'msg': 'Collaboration not found'}, \
