@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/htt
 import { Injectable } from '@angular/core';
 import { Observable, first } from 'rxjs';
 import { ACCESS_TOKEN_KEY } from '../models/constants/sessionStorage';
-import { environment } from 'src/environments/environment.development';
+import { environment } from 'src/environments/environment';
 import { Pagination } from '../models/api/pagination.model';
 import { SnackbarService } from './snackbar.service';
 
@@ -57,10 +57,11 @@ export class ApiService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async deleteForApi(path: string): Promise<any> {
+  async deleteForApi(path: string, params: object = {}): Promise<any> {
     return await this.handleResult(
       this.http.delete(this.getApiPath(path), {
-        headers: this.getApiAuthenticationHeaders()
+        headers: this.getApiAuthenticationHeaders(),
+        params: { ...params }
       })
     );
   }
