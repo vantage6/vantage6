@@ -66,9 +66,12 @@ export class ApiService {
     );
   }
 
-  async getForAlgorithmApi<T = null>(path: string, parameters: object | null = null): Promise<T> {
+  async getForAlgorithmApi<T = null>(algo_store_url: string, path: string, parameters: object | null = null): Promise<T> {
+    if (algo_store_url.endsWith('/')) {
+      algo_store_url = algo_store_url.slice(0, -1);
+    }
     return await this.handleResult(
-      this.http.get<T>(environment.algorithm_server_url + path, {
+      this.http.get<T>(algo_store_url + path, {
         headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() },
         params: { ...parameters }
       })

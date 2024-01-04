@@ -102,9 +102,13 @@ export class TemplateTaskCreateComponent implements OnInit {
     this.templateTask = this.templateTasks[event.value] || null;
 
     const algorithms = await this.algorithmService.getAlgorithms();
+    // TODO handle multiple matches from different algorithm stores
     const baseAlgorithm = algorithms.find((_) => _.image === this.templateTask?.image);
     if (baseAlgorithm) {
-      this.algorithm = await this.algorithmService.getAlgorithm(baseAlgorithm?.id.toString() || '');
+      this.algorithm = await this.algorithmService.getAlgorithm(
+        baseAlgorithm.algorithm_store_url || '',
+        baseAlgorithm?.id.toString() || ''
+      );
     } else {
       this.snackBarService.showMessage('Algorithm not found');
       return;

@@ -56,6 +56,7 @@ export interface Algorithm {
   functions: AlgorithmFunction[];
   select?: Select[];
   filter?: Filter[];
+  algorithm_store_url?: string;
 }
 
 export interface AlgorithmFunction {
