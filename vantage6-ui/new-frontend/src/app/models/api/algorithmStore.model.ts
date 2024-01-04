@@ -20,3 +20,7 @@ export interface AddAlgorithmStore {
   collaboration_id?: string;
   force?: boolean;
 }
+
+export interface EditAlgorithmStore {
+  name: string;
+}

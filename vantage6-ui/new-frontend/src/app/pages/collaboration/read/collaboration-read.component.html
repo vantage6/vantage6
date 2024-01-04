@@ -86,13 +86,33 @@
                   <span>{{ selectedAlgoStore.id || "-" }}</span>
                 </div>
                 <div class="data-list__item">
-                  <b>{{ "general.name" | translate }}</b>
-                  <span>{{ selectedAlgoStore.name || "-" }}</span>
+                  <ng-container *ngIf="!isEditAlgorithmStore">
+                    <b>{{ "general.name" | translate }}</b>
+                    <span>{{ selectedAlgoStore.name || "-" }}</span>
+                  </ng-container>
+                  <mat-form-field *ngIf="isEditAlgorithmStore" subscriptSizing="dynamic">
+                    <mat-label>{{ "general.name" | translate }}</mat-label>
+                    <input matInput type="text" [formControl]="algoStoreNewName" />
+                  </mat-form-field>
                 </div>
                 <div class="data-list__item">
                   <b>{{ "collaboration.algorithm-store.url" | translate }}</b>
                   <span>{{ selectedAlgoStore.url || "-" }}</span>
                 </div>
+              </div>
+            </ng-container>
+            <ng-container *ngIf="canEdit">
+              <div class="algo-store-actions button-container" *ngIf="!isEditAlgorithmStore">
+                <button mat-flat-button color="primary" (click)="handleAlgoStoreEditStart()">
+                  {{ "collaboration.algorithm-store.actions.edit" | translate }}
+                </button>
+                <button mat-flat-button color="warn" (click)="handleAlgoStoreDelete()">
+                  {{ "collaboration.algorithm-store.actions.delete" | translate }}
+                </button>
+              </div>
+              <div class="algo-store-actions button-container" *ngIf="isEditAlgorithmStore">
+                <button mat-flat-button color="primary" (click)="handleAlgoStoreEditSubmit()">{{ "general.submit" | translate }}</button>
+                <button mat-flat-button (click)="handleAlgoStoreEditCancel()">{{ "general.cancel" | translate }}</button>
               </div>
             </ng-container>
           </ng-template>

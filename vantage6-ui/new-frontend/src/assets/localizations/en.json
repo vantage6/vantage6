@@ -155,7 +155,15 @@
     "encrypted": "Encrypted",
     "organizations": "Organizations",
     "algorithm-store": {
-      "url": "Web address"
+      "url": "Web address",
+      "actions": {
+        "edit": "Edit",
+        "delete": "Remove from collaboration"
+      },
+      "delete-dialog": {
+        "title": "Are you sure you want to remove the algorithm store '{{name}}' from the collaboration '{{collaboration}}'?",
+        "content": "Users will no longer be able to create tasks in this collaboration with the algorithms in this store.\nThe algorithm store can be added back to the collaboration at any time."
+      }
     }
   },
   "collaboration-create": {
@@ -190,9 +198,9 @@
     "server_url": "Vantage6 server URL",
     "form": {
       "name-hint": "This name will be used to identify the algorithm store in your collaboration(s).",
-      "url-hint": "The web address of the algorithm store. This should be the address of the algorithm store's API.",
+      "url-hint": "The web address of the algorithm store. This should be the address of the algorithm store without '/api' at the end.",
       "server-url-hint": "The web address of this vantage6 server. This should be the address of the vantage6 server's including the API path.",
-      "all-collaborations": "Make this algorithm store available to all current and future collaborations of this vantage6 server"
+      "all-collaborations": "Make this algorithm store available to all collaborations"
     },
     "localhost-dialog": {
       "title": "Adding localhost algorithm store",
