@@ -97,12 +97,19 @@ class Vantage6Servers(AlgorithmStoreResources):
         tags: ["Vantage6 Server"]
         """
         # TODO add pagination
-        # TODO add filtering
-        servers = g.session.query(db_Vantage6Server).all()
+        # TODO extend filtering
+        args = request.args
+        q = g.session.query(db_Vantage6Server)
+
+        if 'url' in args:
+            q = q.filter(db_Vantage6Server.url.like(args['url']))
+
+        servers = q.all()
         return v6_server_output_schema.dump(servers, many=True), \
             HTTPStatus.OK
 
-    @with_authentication()
+    # Note: this endpoint is not authenticated, because it is used by the
+    # vantage6 server to whitelist itself.
     def post(self):
         """Create new whitelisted vantage6 server
         ---

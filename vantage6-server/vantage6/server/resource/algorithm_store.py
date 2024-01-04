@@ -70,8 +70,9 @@ class AlgorithmStoreBase(ServicesResources):
         super().__init__(socketio, mail, api, permissions, config)
         self.r_col: RuleCollection = getattr(self.permissions, "collaboration")
 
-    def _communicate_to_algo_store(
-        self, algo_store_url: str, server_url: str, force: bool
+    def _request_algo_store(
+        self, algo_store_url: str, server_url: str, endpoint: str,
+        method: str, force: bool = False
     ) -> dict | None:
         """
         Whitelist this vantage6 server url for the algorithm store.
@@ -83,6 +84,10 @@ class AlgorithmStoreBase(ServicesResources):
         server_url : str
             URL to this vantage6 server. This is used to whitelist this server
             at the algorithm store.
+        endpoint : str
+            Endpoint to use at the algorithm store.
+        method : str
+            HTTP method to use.
         force : bool
             If True, the algorithm store will be added even if the algorithm
             store url is insecure (i.e. localhost)
@@ -95,8 +100,8 @@ class AlgorithmStoreBase(ServicesResources):
         """
         # TODO this is not pretty, but it works for now. This should change
         # when we have a separate auth service
-        response = self._send_whitelist_request_to_algo_server(
-            algo_store_url, server_url, force
+        response = self._execute_algo_store_request(
+            algo_store_url, server_url, endpoint, method, force
         )
 
         if not response and (
@@ -109,8 +114,8 @@ class AlgorithmStoreBase(ServicesResources):
             ).replace(
                 "127.0.0.1", "host.docker.internal"
             )
-            response = self._send_whitelist_request_to_algo_server(
-                algo_store_url, server_url, force
+            response = self._execute_algo_store_request(
+                algo_store_url, server_url, endpoint, method, force
             )
 
         if response is None:
@@ -118,18 +123,20 @@ class AlgorithmStoreBase(ServicesResources):
                     'it is online and that you have not included /api at the '
                     'end of the algorithm store URL'}, \
                 HTTPStatus.BAD_REQUEST
-        elif response.status_code != 201:
+        elif response.status_code not in [HTTPStatus.CREATED, HTTPStatus.OK]:
             try:
                 msg = f"Algorithm store error: {response.json()['msg']}"
             except KeyError:
                 msg = "Communication to algorithm store failed"
             return {'msg': msg}, HTTPStatus.BAD_REQUEST
         # else: server has been registered at algorithm store, proceed
-        return None
+        return response, response.status_code
 
+    # TODO this function and above should be moved to some kind of client lib
     @staticmethod
-    def _send_whitelist_request_to_algo_server(
-        algo_store_url: str, server_url: str, force: bool
+    def _execute_algo_store_request(
+        algo_store_url: str, server_url: str, endpoint: str, method: str,
+        force: bool
     ) -> requests.Response:
         """
         Send a request to the algorithm store to whitelist this vantage6 server
@@ -142,6 +149,11 @@ class AlgorithmStoreBase(ServicesResources):
         server_url : str
             URL to this vantage6 server. This is used to whitelist this server
             at the algorithm store.
+        endpoint : str
+            Endpoint to use at the algorithm store.
+        method : str
+            HTTP method to use. Choose "post" for adding the server url and
+            "delete" for removing it.
         force : bool
             If True, the algorithm store will be added even if the algorithm
             store url is insecure (i.e. localhost)
@@ -156,15 +168,33 @@ class AlgorithmStoreBase(ServicesResources):
             server_url = server_url[:-1]
         if algo_store_url.endswith("/"):
             algo_store_url = algo_store_url[:-1]
-        json = {"url": server_url}
+
+        param_dict = {"url": server_url}
         if force:
-            json['force'] = True
+            param_dict['force'] = True
+
         # add server_url header
         headers = {k: v for k, v in request.headers.items()}
         headers['server_url'] = server_url
+
+        params = None
+        json = None
+        if method == "get":
+            request_function = requests.get
+            params = param_dict
+        elif method == "post":
+            request_function = requests.post
+            json = param_dict
+        elif method == "delete":
+            request_function = requests.delete
+            params = param_dict
+        else:
+            raise ValueError(f"Method {method} not supported")
+
         try:
-            return requests.post(
-                f"{algo_store_url}/api/vantage6-server",
+            return request_function(
+                f"{algo_store_url}/api/{endpoint}",
+                params=params,
                 json=json,
                 headers=headers
             )
@@ -431,11 +461,12 @@ class AlgorithmStores(AlgorithmStoreBase):
             }, HTTPStatus.BAD_REQUEST
 
         # whitelist this vantage6 server url for the algorithm store
-        request_error = self._communicate_to_algo_store(
-            algorithm_store_url, data['server_url'], force
+        response, status = self._request_algo_store(
+            algorithm_store_url, data['server_url'],
+            endpoint="vantage6-server", method="post", force=force
         )
-        if request_error:
-            return request_error
+        if status != HTTPStatus.CREATED:
+            return response, status
 
         # delete and create records
         for record in records_to_delete:
@@ -517,14 +548,19 @@ class AlgorithmStore(AlgorithmStoreBase):
         return algorithm_store_schema.dump(algorithm_store, many=False), \
             HTTPStatus.OK  # 200
 
-    # TODO this endpoint should also update the URL at the algorithm store
-    # (whitelist it) if it is changed. Maybe delete this endpoint altogether?
+    # Note that this endpoint cannot be used to change the collaboration_id
+    # or the url of the algorithm store, because those actions make little
+    # sense and/or require additional checks. Users should then delete the
+    # algorithm store link and create a new one.
     @with_user
     def patch(self, id):
         """ Update algorithm store record
         ---
         description: >-
-          Updates the linked algorithm store with the specified id.\n\n
+          Updates the linked algorithm store with the specified id. Note that
+          you cannot change the collaboration or the algorithm store URL: these
+          can only be modified by deleting and re-creating the algorithm store
+          link.\n\n
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
@@ -618,9 +654,8 @@ class AlgorithmStore(AlgorithmStoreBase):
         return algorithm_store_schema.dump(algorithm_store, many=False), \
             HTTPStatus.OK  # 200
 
-    # TODO this endpoint should also remove the URL at the algorithm store
-    # (whitelist it) if it is changed and that is the last collaboration that
-    # uses it.
+    # TODO this endpoint should also remove the server URL at the algorithm
+    # store (whitelisting it) if it is the last collaboration that uses it.
     @with_user
     def delete(self, id):
         """ Delete linked algorithm store record
@@ -646,6 +681,12 @@ class AlgorithmStore(AlgorithmStoreBase):
               type: integer
             description: Algorithm store id
             required: true
+          - in: query
+            name: server_url
+            schema:
+              type: string
+            description: URL to this vantage6 server. This is used to delete
+              the whitelisting of this server at the algorithm store.
 
         responses:
           200:
@@ -673,6 +714,51 @@ class AlgorithmStore(AlgorithmStoreBase):
             return {'msg': 'You lack the permission to do that!'}, \
                 HTTPStatus.UNAUTHORIZED
 
+        # Delete the whitelisting of this server at the algorithm store.
+        # First check if algostore is not used by other collaborations
+        other_algorithm_stores = db.AlgorithmStore.get_by_url(
+            algorithm_store.url
+        )
+        if len(other_algorithm_stores) == 1:
+            # only this algorithm store uses this url, so delete the
+            # whitelisting
+            server_url = request.args.get("server_url", None)
+            if not server_url:
+                return {
+                    "msg": "The 'server_url' query parameter is required"
+                }, HTTPStatus.BAD_REQUEST
+            # get the ID of the whitelisted server, then delete it
+            response, status = self._request_algo_store(
+                algorithm_store.url, server_url, endpoint="vantage6-server",
+                method="get",
+            )
+            if status != HTTPStatus.OK:
+                return response, status
+            result = response.json()
+            if len(result) > 1:
+                msg = (
+                    "More than one whitelisted server found with url "
+                    f"{server_url}. This should not happen! All will be "
+                    "removed."
+                )
+                log.warning(msg)
+            elif len(result) == 0:
+                msg = (
+                    "No whitelisted server found with url "
+                    f"{server_url}. This should not happen!"
+                )
+                log.warning(msg)
+            # remove all linked servers with the given url
+            for server in result:
+                server_id = server["id"]
+                response, status = self._request_algo_store(
+                    algorithm_store.url, server_url,
+                    endpoint=f"vantage6-server/{server_id}", method="delete"
+                )
+            if status != HTTPStatus.OK:
+                return response, status
+
+        # finally delete the algorithm store record itself
         algorithm_store.delete()
         return {"msg": f"Algorithm store id={id} successfully deleted"}, \
             HTTPStatus.OK
