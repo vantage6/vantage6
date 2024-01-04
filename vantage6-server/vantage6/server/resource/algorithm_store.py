@@ -297,7 +297,9 @@ class AlgorithmStores(AlgorithmStoreBase):
         )
         records_to_delete = []
         if existing_algorithm_stores:
-            collabs_with_algo_store = [a.id for a in existing_algorithm_stores]
+            collabs_with_algo_store = [
+                a.collaboration_id for a in existing_algorithm_stores
+            ]
             if None in collabs_with_algo_store:
                 return {'msg': 'Algorithm store is already available for all '
                         'collaborations'}, \
