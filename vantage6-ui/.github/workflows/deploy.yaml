@@ -125,6 +125,7 @@ jobs:
           docker push harbor2.vantage6.ai/infrastructure/ui:latest
 
   # Deploy to Azure
+  # TODO this should be moved to a separate workflow so build and deployment are separated
   deploy:
     runs-on: ubuntu-latest
     needs: build
@@ -148,4 +149,13 @@ jobs:
           app-name: "ui-cotopaxi"
           slot-name: "Production"
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_04E01406E55D4F78B667E49B87D27787 }}
+          package: ./dist/vantage6-UI
+
+      - name: 'Deploy to Azure Web App'
+        id: deploy-to-webapp-blueberry
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'ui-blueberry'
+          slot-name: 'Production'
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_34D7566DA42C414A95D1BEA2A214384C }}
           package: ./dist/vantage6-UI
