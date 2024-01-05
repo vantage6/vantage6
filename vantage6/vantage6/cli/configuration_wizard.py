@@ -143,7 +143,7 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
         q.text("Path to private key file:").ask()
 
     config["encryption"] = {
-        "enabled": encryption == "true",
+        "enabled": encryption is True or encryption == "true",
         "private_key": private_key
     }
 
