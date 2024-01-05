@@ -125,11 +125,11 @@ jobs:
 #         run: |
 #           docker push harbor2.vantage6.ai/infrastructure/ui:${major_name}
 #           docker push harbor2.vantage6.ai/infrastructure/ui:latest
-
+#
   # Deploy to Azure
   deploy:
     runs-on: ubuntu-latest
-    needs: build
+    # needs: build
     environment:
       name: "Production"
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
