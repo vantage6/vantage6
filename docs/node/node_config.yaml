@@ -28,6 +28,18 @@ algorithm_env:
   # the value 'Alice' inside the algorithm container
   player: Alice
 
+# Add additional environment variables to the node container. This can be useful
+# if you need to modify the configuration of certain python libraries that the
+# node uses. For example, if you want to use a custom CA bundle for the requests
+# library you can specify it here.
+node_extra_env:
+  - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+
+# Add additional volumes to the node container. This can be useful if you need
+# to mount a custom CA bundle for the requests library for example.
+node_extra_mounts:
+  - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro
+
 # specify custom Docker images to use for starting the different
 # components.
 # OPTIONAL
