@@ -95,12 +95,14 @@ debug:
 smtp:
   port: 587
   server: smtp.yourmailserver.com
+  # credentials for authenticating with the SMTP server
   username: your-username
   password: super-secret-password
+  # email address to send emails from (header)
+  email_from: noreply@example.com
 
 # Set an email address you want to direct your users to for support
-# (defaults to the address you set above in the SMTP server or otherwise
-# to support@vantage6.ai)
+# (defaults to support@vantage6.ai)
 support_email: your-support@email.com
 
 # set how long reset token provided via email are valid (default 1 hour)
