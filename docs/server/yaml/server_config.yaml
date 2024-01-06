@@ -99,6 +99,7 @@ smtp:
   username: your-username
   password: super-secret-password
   # email address to send emails from (header)
+  # (defaults to noreply@vantage6.ai)
   email_from: noreply@example.com
 
 # Set an email address you want to direct your users to for support
