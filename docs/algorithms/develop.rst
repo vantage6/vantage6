@@ -97,13 +97,22 @@ as follows:
 
 .. code:: python
 
-   import os
+   from vantage6.algorithm.tools.util import get_env_var
 
    def my_function():
-       input_file = os.environ["INPUT_FILE"]
-       token_file = os.environ["DEFAULT_DATABASE_URI"]
+       input_file = get_env_var("INPUT_FILE")
+       token_file = get_env_var("DEFAULT_DATABASE_URI")
 
        # do something with the input file and database URI
+
+.. note::
+
+   The ``get_env_var`` function is used here rather than the standard
+   ``os.environ`` dictionary because the environment variables are encoded
+   for security purposes. The ``get_env_var`` function will decode the
+   environment variable for you. While this is only necessary if your
+   environment variable contains special characters, it is good practice to
+   always use the ``get_env_var`` function.
 
 The environment variables that you specify in the node configuration file
 can be used in the exact same manner. You can view all environment variables

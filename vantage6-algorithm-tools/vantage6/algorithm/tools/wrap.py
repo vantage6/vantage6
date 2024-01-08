@@ -6,7 +6,7 @@ from typing import Any
 
 from vantage6.common.client import deserialization
 from vantage6.common import serialization
-from vantage6.algorithm.tools.util import info, error
+from vantage6.algorithm.tools.util import info, error, get_env_var
 from vantage6.algorithm.tools.exceptions import DeserializationException
 
 
@@ -44,7 +44,7 @@ def wrap_algorithm(module: str, log_traceback: bool = True) -> None:
     info(f"wrapper for {module}")
 
     # read input from the mounted input file.
-    input_file = os.environ["INPUT_FILE"]
+    input_file = get_env_var("INPUT_FILE")
     info(f"Reading input file {input_file}")
     input_data = load_input(input_file)
 
@@ -54,7 +54,7 @@ def wrap_algorithm(module: str, log_traceback: bool = True) -> None:
 
     # write output from the method to mounted output file. Which will be
     # transferred back to the server by the node-instance.
-    output_file = os.environ["OUTPUT_FILE"]
+    output_file = get_env_var("OUTPUT_FILE")
     info(f"Writing output to {output_file}")
 
     _write_output(output, output_file)

@@ -7,7 +7,7 @@ import json
 
 from pathlib import Path
 
-from vantage6.common.globals import APPNAME
+from vantage6.common.globals import APPNAME, STRING_ENCODING
 from vantage6.common.docker.addons import (
     remove_container_if_exists, remove_container, pull_if_newer,
     running_in_docker
@@ -122,6 +122,8 @@ class DockerTaskManager(DockerBaseManager):
         bool:
             True if algorithm container is finished
         """
+        if self.container is None:
+            raise AlgorithmContainerNotFound
         try:
             self.container.reload()
         except docker.errors.NotFound:
@@ -530,7 +532,6 @@ class DockerTaskManager(DockerBaseManager):
             db_labels.append(label)
         environment_variables['DB_LABELS'] = ','.join(db_labels)
 
-        self.log.debug(f"environment: {environment_variables}")
 
         # Load additional environment variables
         if algorithm_env:
@@ -538,4 +539,76 @@ class DockerTaskManager(DockerBaseManager):
                 {**environment_variables, **algorithm_env}
             self.log.info('Custom environment variables are loaded!')
             self.log.debug(f"custom environment: {algorithm_env}")
+
+        # validate whether environment variables don't contain any illegal
+        # characters
+        self._validate_environment_variables(environment_variables)
+
+        # encode environment variables to prevent special characters from being
+        # possibly code injection
+        environment_variables = self._encode_environment_variables(
+            environment_variables)
+
+        self.log.debug(f"environment: {environment_variables}")
+
         return environment_variables
+
+    def _validate_environment_variables(self,
+                                        environment_variables: dict) -> None:
+        """
+        Check whether environment variables don't contain any illegal
+        characters
+
+        Parameters
+        ----------
+        environment_variables: dict
+            Environment variables required to run algorithm
+
+        Raises
+        ------
+        ValueError
+            If environment variables contain illegal characters
+        """
+        for key, val in environment_variables.items():
+            if '=' in key:
+                self.status = TaskStatus.FAILED
+                msg = (
+                    "Environment variable '{key}' contains illegal character"
+                    " '='"
+                )
+                self.log.error(msg)
+                raise PermanentAlgorithmStartFail(msg)
+            elif '=' in val:
+                self.status = TaskStatus.FAILED
+                msg = (f"Value for environment variable '{key}' contains "
+                       "illegal character '='")
+                raise PermanentAlgorithmStartFail(msg)
+
+    def _encode_environment_variables(self, environment_variables: dict) \
+            -> dict:
+        """
+        Encode environment variables to prevent special characters from being
+        possibly code injection
+
+        Parameters
+        ----------
+        environment_variables: dict
+            Environment variables required to run algorithm
+
+        Returns
+        -------
+        dict:
+            Encoded environment variables
+        """
+        def _encode(string: str) -> str:
+            """ Encode string
+
+            Note that the first two characters "b'" and the last character "'"
+            are removed.
+            """
+            return str(string.encode(STRING_ENCODING))[2:-1]
+
+        encoded_environment_variables = {}
+        for key, val in environment_variables.items():
+            encoded_environment_variables[_encode(key)] = _encode(val)
+        return encoded_environment_variables

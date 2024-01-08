@@ -241,6 +241,13 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
     db_labels = [db['label'] for db in ctx.databases]
     for label in db_labels:
 
+        # equal signs in database labels lead to problems with defining
+        # environment variables
+        if '=' in label:
+            error(f"Database label {Fore.RED}{label}{Style.RESET_ALL} "
+                  "contains an '=' character. This is not allowed.")
+            exit(1)
+
         db_config = get_database_config(ctx.databases, label)
         uri = db_config['uri']
         db_type = db_config['type']
