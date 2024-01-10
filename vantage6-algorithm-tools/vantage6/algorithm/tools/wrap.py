@@ -10,7 +10,7 @@ from vantage6.algorithm.tools.util import info, error, get_env_var
 from vantage6.algorithm.tools.exceptions import DeserializationException
 
 
-def wrap_algorithm(module: str, log_traceback: bool = True) -> None:
+def wrap_algorithm(log_traceback: bool = True) -> None:
     """
     Wrap an algorithm module to provide input and output handling for the
     vantage6 infrastructure.
@@ -41,6 +41,9 @@ def wrap_algorithm(module: str, log_traceback: bool = True) -> None:
         default False. Algorithm developers should set this to False if
         the error messages may contain sensitive information. By default True.
     """
+    # get the module name from the environment variable. Note that this env var
+    # is set in the Dockerfile and is therefore not encrypted.
+    module = os.environ.get("PKG_NAME")
     info(f"wrapper for {module}")
 
     # read input from the mounted input file.
