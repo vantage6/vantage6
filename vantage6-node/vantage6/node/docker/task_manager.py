@@ -4,8 +4,10 @@ import logging
 import os
 import docker.errors
 import json
+import base64
 
 from pathlib import Path
+from vantage6.common import is_valid_env_var_name
 
 from vantage6.common.globals import APPNAME, STRING_ENCODING
 from vantage6.common.docker.addons import (
@@ -544,12 +546,14 @@ class DockerTaskManager(DockerBaseManager):
         # characters
         self._validate_environment_variables(environment_variables)
 
+        # print the environment before encoding it so that the user can see
+        # what is passed to the container
+        self.log.debug(f"environment: {environment_variables}")
+
         # encode environment variables to prevent special characters from being
         # possibly code injection
         environment_variables = self._encode_environment_variables(
             environment_variables)
-
-        self.log.debug(f"environment: {environment_variables}")
 
         return environment_variables
 
@@ -569,26 +573,23 @@ class DockerTaskManager(DockerBaseManager):
         ValueError
             If environment variables contain illegal characters
         """
-        for key, val in environment_variables.items():
-            if '=' in key:
+        for key in environment_variables:
+            if not is_valid_env_var_name(key):
                 self.status = TaskStatus.FAILED
                 msg = (
-                    "Environment variable '{key}' contains illegal character"
-                    " '='"
+                    f"Environment variable '{key}' is invalid: environment "
+                    " variable names should only contain number, letters and "
+                    " underscores"
                 )
                 self.log.error(msg)
-                raise PermanentAlgorithmStartFail(msg)
-            elif '=' in val:
-                self.status = TaskStatus.FAILED
-                msg = (f"Value for environment variable '{key}' contains "
-                       "illegal character '='")
                 raise PermanentAlgorithmStartFail(msg)
 
     def _encode_environment_variables(self, environment_variables: dict) \
             -> dict:
         """
-        Encode environment variables to prevent special characters from being
-        possibly code injection
+        Encode environment variable values to ensure that special characters
+        are not interpretable as code while transferring them to the algorithm
+        container.
 
         Parameters
         ----------
@@ -598,17 +599,27 @@ class DockerTaskManager(DockerBaseManager):
         Returns
         -------
         dict:
-            Encoded environment variables
+            Environment variables with encoded values
         """
         def _encode(string: str) -> str:
-            """ Encode string
+            """ Encode env var value
 
-            Note that the first two characters "b'" and the last character "'"
-            are removed.
+            We first encode to bytes, then to b32 and then decode to a string.
+            Finally, '=' is replaced by '!' to prevent issues with interpreting
+            the encoded string in the env var value.
+
+            Examples
+            --------
+            >>> _encode("abc")
+            'MFRGG!!!'
             """
-            return str(string.encode(STRING_ENCODING))[2:-1]
+            return base64.b32encode(
+                string.encode(STRING_ENCODING)
+            ).decode(STRING_ENCODING).replace('=', '!')
+
+        self.log.debug("Encoding environment variables")
 
         encoded_environment_variables = {}
         for key, val in environment_variables.items():
-            encoded_environment_variables[_encode(key)] = _encode(val)
+            encoded_environment_variables[key] = _encode(val)
         return encoded_environment_variables

@@ -11,7 +11,7 @@ import docker
 from colorama import Fore, Style
 
 from vantage6.common import (
-    warning, error, info, debug,
+    is_valid_env_var_name, warning, error, info, debug,
     get_database_config
 )
 from vantage6.common.globals import (
@@ -241,11 +241,11 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
     db_labels = [db['label'] for db in ctx.databases]
     for label in db_labels:
 
-        # equal signs in database labels lead to problems with defining
-        # environment variables
-        if '=' in label:
-            error(f"Database label {Fore.RED}{label}{Style.RESET_ALL} "
-                  "contains an '=' character. This is not allowed.")
+        # check that label contains only valid characters
+        if not is_valid_env_var_name(label):
+            error(f"Database label {Fore.RED}{label}{Style.RESET_ALL} contains"
+                  " invalid characters. Only letters, numbers, and underscores"
+                  " are allowed.")
             exit(1)
 
         db_config = get_database_config(ctx.databases, label)
