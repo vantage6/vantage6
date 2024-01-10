@@ -110,9 +110,7 @@ as follows:
    The ``get_env_var`` function is used here rather than the standard
    ``os.environ`` dictionary because the environment variables are encoded
    for security purposes. The ``get_env_var`` function will decode the
-   environment variable for you. While this is only necessary if your
-   environment variable contains special characters, it is good practice to
-   always use the ``get_env_var`` function.
+   environment variable for you.
 
 The environment variables that you specify in the node configuration file
 can be used in the exact same manner. You can view all environment variables
