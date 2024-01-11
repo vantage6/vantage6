@@ -7,7 +7,6 @@ import json
 import base64
 
 from pathlib import Path
-from vantage6.common import is_valid_env_var_name
 
 from vantage6.common.globals import APPNAME, STRING_ENCODING
 from vantage6.common.docker.addons import (
@@ -574,12 +573,12 @@ class DockerTaskManager(DockerBaseManager):
             If environment variables contain illegal characters
         """
         for key in environment_variables:
-            if not is_valid_env_var_name(key):
+            if not key.isidentifier():
                 self.status = TaskStatus.FAILED
                 msg = (
                     f"Environment variable '{key}' is invalid: environment "
                     " variable names should only contain number, letters and "
-                    " underscores"
+                    " underscores, and start with a letter."
                 )
                 self.log.error(msg)
                 raise PermanentAlgorithmStartFail(msg)

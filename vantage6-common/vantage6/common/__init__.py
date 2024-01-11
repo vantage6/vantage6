@@ -352,23 +352,3 @@ def generate_apikey() -> str:
         api_key
     """
     return str(uuid.uuid4())
-
-
-def is_valid_env_var_name(label: str) -> bool:
-    """
-    Check that the database label contains only valid characters. If not, exit
-    Allowed characters are letters, numbers, and underscores.
-
-    Parameters
-    ----------
-    label : str
-        The database label to check
-
-    Returns
-    -------
-    bool
-        Whether the label is valid or not
-    """
-    # Note that we use a + at the end of the regex to check that the string
-    # contains at least one character.
-    return re.match(r'^[a-zA-Z0-9_]+$', label)

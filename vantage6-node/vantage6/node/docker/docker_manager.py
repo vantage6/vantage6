@@ -486,7 +486,7 @@ class DockerManager(DockerBaseManager):
                         break
                 except AlgorithmContainerNotFound:
                     self.log.exception('Failed to find container for '
-                                       'result %s', task.run_id)
+                                       'algorithm with run_id %s', task.run_id)
                     self.failed_tasks.append(task)
                     self.active_tasks.remove(task)
                     break

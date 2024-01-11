@@ -446,7 +446,8 @@ def _get_data_from_label(label: str) -> pd.DataFrame:
 
     # Get the database type from the environment variable, this variable is
     # set by the vantage6 node based on its configuration file.
-    database_type = get_env_var(f"{label.upper()}_DATABASE_TYPE", "csv")
+    database_type = get_env_var(
+        f"{label.upper()}_DATABASE_TYPE", "csv").lower()
 
     # Load the data based on the database type. Try to provide environment
     # variables that should be available for some data types.
