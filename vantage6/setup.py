@@ -40,7 +40,7 @@ setup(
         'copier==8.3.0',
         'docker==6.1.2',
         'ipython==8.10.0',
-        'jinja2==3.1.2',
+        'jinja2==3.1.3',
         'questionary==1.10.0',
         'schema==0.7.5',
         'SQLAlchemy==1.4.46',
