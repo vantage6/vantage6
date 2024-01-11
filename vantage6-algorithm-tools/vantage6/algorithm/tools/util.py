@@ -1,7 +1,7 @@
 import sys
 import os
 import base64
-from vantage6.common.globals import STRING_ENCODING
+from vantage6.common.globals import STRING_ENCODING, ENV_VAR_EQUALS_REPLACEMENT
 
 
 def info(msg: str) -> None:
@@ -46,7 +46,7 @@ def get_env_var(var_name: str, default: str | None = None) -> str:
     by the node so they need to be decoded here.
 
     Note that this decoding follows the reverse of the encoding in the node:
-    first replace '!' by '=' and then decode the base32 string.
+    first replace '=' back and then decode the base32 string.
 
     Parameters
     ----------
@@ -60,7 +60,9 @@ def get_env_var(var_name: str, default: str | None = None) -> str:
     """
     try:
         encoded_env_var_value = \
-            os.environ[var_name].replace("!", "=").encode(STRING_ENCODING)
+            os.environ[var_name].replace(
+                ENV_VAR_EQUALS_REPLACEMENT, "="
+            ).encode(STRING_ENCODING)
         return base64.b32decode(encoded_env_var_value).decode(STRING_ENCODING)
     except KeyError:
         return default

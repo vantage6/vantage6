@@ -8,7 +8,7 @@ import base64
 
 from pathlib import Path
 
-from vantage6.common.globals import APPNAME, STRING_ENCODING
+from vantage6.common.globals import APPNAME, ENV_VAR_EQUALS_REPLACEMENT, STRING_ENCODING
 from vantage6.common.docker.addons import (
     remove_container_if_exists, remove_container, pull_if_newer,
     running_in_docker
@@ -123,11 +123,9 @@ class DockerTaskManager(DockerBaseManager):
         bool:
             True if algorithm container is finished
         """
-        if self.container is None:
-            raise AlgorithmContainerNotFound
         try:
             self.container.reload()
-        except docker.errors.NotFound:
+        except (docker.errors.NotFound, AttributeError):
             self.log.error("Container not found")
             self.log.debug(f"- task id: {self.task_id}")
             self.log.debug(f"- result id: {self.task_id}")
@@ -569,7 +567,7 @@ class DockerTaskManager(DockerBaseManager):
 
         Raises
         ------
-        ValueError
+        PermanentAlgorithmStartFail
             If environment variables contain illegal characters
         """
         for key in environment_variables:
@@ -604,8 +602,18 @@ class DockerTaskManager(DockerBaseManager):
             """ Encode env var value
 
             We first encode to bytes, then to b32 and then decode to a string.
-            Finally, '=' is replaced by '!' to prevent issues with interpreting
-            the encoded string in the env var value.
+            Finally, '=' is replaced by less sensitve characters to prevent
+            issues with interpreting the encoded string in the env var value.
+
+            Parameters
+            ----------
+            string: str
+                String to be encoded
+
+            Returns
+            -------
+            str:
+                Encoded string
 
             Examples
             --------
@@ -614,7 +622,7 @@ class DockerTaskManager(DockerBaseManager):
             """
             return base64.b32encode(
                 string.encode(STRING_ENCODING)
-            ).decode(STRING_ENCODING).replace('=', '!')
+            ).decode(STRING_ENCODING).replace('=', ENV_VAR_EQUALS_REPLACEMENT)
 
         self.log.debug("Encoding environment variables")
 

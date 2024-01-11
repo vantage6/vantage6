@@ -42,7 +42,7 @@ def wrap_algorithm(log_traceback: bool = True) -> None:
         the error messages may contain sensitive information. By default True.
     """
     # get the module name from the environment variable. Note that this env var
-    # is set in the Dockerfile and is therefore not encrypted.
+    # is set in the Dockerfile and is therefore not encoded.
     module = os.environ.get("PKG_NAME")
     info(f"wrapper for {module}")
 
