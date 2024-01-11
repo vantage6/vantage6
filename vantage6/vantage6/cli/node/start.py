@@ -10,10 +10,7 @@ import docker
 
 from colorama import Fore, Style
 
-from vantage6.common import (
-    warning, error, info, debug,
-    get_database_config
-)
+from vantage6.common import warning, error, info, debug, get_database_config
 from vantage6.common.globals import (
     APPNAME,
     DEFAULT_DOCKER_REGISTRY,
@@ -21,15 +18,13 @@ from vantage6.common.globals import (
     DEFAULT_NODE_IMAGE_WO_TAG,
 )
 from vantage6.common.docker.addons import (
-  pull_if_newer,
-  remove_container_if_exists,
-  check_docker_running
+    pull_if_newer,
+    remove_container_if_exists,
+    check_docker_running,
 )
 
 from vantage6.cli.context import NodeContext
-from vantage6.cli.globals import (
-    DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
-)
+from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.configuration_wizard import (
     configuration_wizard,
     select_configuration_questionaire,
@@ -41,28 +36,54 @@ from vantage6.cli.node.common import print_log_worker, create_client
 
 @click.command()
 @click.option("-n", "--name", default=None, help="Configuration name")
-@click.option("-c", "--config", default=None,
-              help='Absolute path to configuration-file; overrides NAME')
-@click.option('--system', 'system_folders', flag_value=True,
-              help="Search for the configuration in the system folders")
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL,
-              help="Search for the configuration in the user folders. This is "
-                   "the default")
-@click.option('-i', '--image', default=None, help="Node Docker image to use")
-@click.option('--keep/--auto-remove', default=False,
-              help="Keep node container after finishing. Useful for debugging")
-@click.option('--force-db-mount', is_flag=True,
-              help="Always mount node databases; skip the check if they are "
-                   "existing files.")
-@click.option('--attach/--detach', default=False,
-              help="Show node logs on the current console after starting the "
-                   "node")
-@click.option('--mount-src', default='',
-              help="Override vantage6 source code in container with the source"
-                   " code in this path")
-def cli_node_start(name: str, config: str, system_folders: bool, image: str,
-                   keep: bool, mount_src: str, attach: bool,
-                   force_db_mount: bool) -> None:
+@click.option(
+    "-c", "--config", default=None, help="Path to configuration-file; overrides NAME"
+)
+@click.option(
+    "--system",
+    "system_folders",
+    flag_value=True,
+    help="Search for the configuration in the system folders",
+)
+@click.option(
+    "--user",
+    "system_folders",
+    flag_value=False,
+    default=N_FOL,
+    help="Search for the configuration in the user folders. This is " "the default",
+)
+@click.option("-i", "--image", default=None, help="Node Docker image to use")
+@click.option(
+    "--keep/--auto-remove",
+    default=False,
+    help="Keep node container after finishing. Useful for debugging",
+)
+@click.option(
+    "--force-db-mount",
+    is_flag=True,
+    help="Always mount node databases; skip the check if they are " "existing files.",
+)
+@click.option(
+    "--attach/--detach",
+    default=False,
+    help="Show node logs on the current console after starting the " "node",
+)
+@click.option(
+    "--mount-src",
+    default="",
+    help="Override vantage6 source code in container with the source"
+    " code in this path",
+)
+def cli_node_start(
+    name: str,
+    config: str,
+    system_folders: bool,
+    image: str,
+    keep: bool,
+    mount_src: str,
+    attach: bool,
+    force_db_mount: bool,
+) -> None:
     """
     Start the node.
     """
@@ -82,8 +103,9 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
 
         # check that config exists, if not a questionaire will be invoked
         if not NodeContext.config_exists(name, system_folders):
-            warning(f"Configuration {Fore.RED}{name}{Style.RESET_ALL} does not"
-                    " exist.")
+            warning(
+                f"Configuration {Fore.RED}{name}{Style.RESET_ALL} does not" " exist."
+            )
 
             if q.confirm("Create this configuration now?").ask():
                 configuration_wizard("node", name, system_folders)
@@ -117,7 +139,7 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
     # Then we check if the image has been specified in the config file, and
     # finally we use the default settings from the package.
     if not image:
-        custom_images: dict = ctx.config.get('images')
+        custom_images: dict = ctx.config.get("images")
         if custom_images:
             image = custom_images.get("node")
         else:
@@ -127,16 +149,19 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
             major_minor = None
             try:
                 # try to get server version, skip if can't get a connection
-                version = client.util.get_server_version(
-                    attempts_on_timeout=3
-                )['version']
-                major_minor = '.'.join(version.split('.')[:2])
-                image = (f"{DEFAULT_DOCKER_REGISTRY}/"
-                         f"{DEFAULT_NODE_IMAGE_WO_TAG}"
-                         f":{major_minor}")
+                version = client.util.get_server_version(attempts_on_timeout=3)[
+                    "version"
+                ]
+                major_minor = ".".join(version.split(".")[:2])
+                image = (
+                    f"{DEFAULT_DOCKER_REGISTRY}/"
+                    f"{DEFAULT_NODE_IMAGE_WO_TAG}"
+                    f":{major_minor}"
+                )
             except Exception:
-                warning("Could not determine server version. Using default "
-                        "node image")
+                warning(
+                    "Could not determine server version. Using default " "node image"
+                )
 
             if major_minor and not __version__.startswith(major_minor):
                 warning(
@@ -158,7 +183,7 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
         pull_if_newer(docker.from_env(), image)
 
     except Exception as e:
-        warning(' ... Getting latest node image failed:')
+        warning(" ... Getting latest node image failed:")
         warning(f"     {e}")
     else:
         info(" ... success!")
@@ -186,7 +211,7 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
     if mount_src:
         # If mount_src is a relative path, docker will consider it a volume.
         mount_src = os.path.abspath(mount_src)
-        mounts.append(('/vantage6', mount_src))
+        mounts.append(("/vantage6", mount_src))
 
     # FIXME: Code duplication: Node.__init__() (vantage6/node/__init__.py)
     #   uses a lot of the same logic. Suggest moving this to
@@ -194,10 +219,10 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
     filename = ctx.config.get("encryption", {}).get("private_key")
     # filename may be set to an empty string
     if not filename:
-        filename = 'private_key.pem'
+        filename = "private_key.pem"
 
     # Location may be overridden by the environment
-    filename = os.environ.get('PRIVATE_KEY', filename)
+    filename = os.environ.get("PRIVATE_KEY", filename)
 
     # If ctx.get_data_file() receives an absolute path, it is returned as-is
     fullpath = Path(ctx.get_data_file(filename))
@@ -205,8 +230,7 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
         if Path(fullpath).exists():
             mounts.append(("/mnt/private_key.pem", str(fullpath)))
         else:
-            warning(f"private key file provided {fullpath}, "
-                    "but does not exists")
+            warning(f"private key file provided {fullpath}, " "but does not exists")
 
     # Mount private keys for ssh tunnels
     ssh_tunnels = ctx.config.get("ssh-tunnels", [])
@@ -214,13 +238,17 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
         hostname = ssh_tunnel.get("hostname")
         key_path = ssh_tunnel.get("ssh", {}).get("identity", {}).get("key")
         if not key_path:
-            error(f"SSH tunnel identity {Fore.RED}{hostname}{Style.RESET_ALL} "
-                  "key not provided. Continuing to start without this tunnel.")
+            error(
+                f"SSH tunnel identity {Fore.RED}{hostname}{Style.RESET_ALL} "
+                "key not provided. Continuing to start without this tunnel."
+            )
         key_path = Path(key_path)
         if not key_path.exists():
-            error(f"SSH tunnel identity {Fore.RED}{hostname}{Style.RESET_ALL} "
-                  "key does not exist. Continuing to start without this "
-                  "tunnel.")
+            error(
+                f"SSH tunnel identity {Fore.RED}{hostname}{Style.RESET_ALL} "
+                "key does not exist. Continuing to start without this "
+                "tunnel."
+            )
 
         info(f"  Mounting private key for {hostname} at {key_path}")
 
@@ -233,20 +261,21 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
     env = {
         "DATA_VOLUME_NAME": data_volume.name,
         "VPN_VOLUME_NAME": vpn_volume.name,
-        "PRIVATE_KEY": "/mnt/private_key.pem"
+        "PRIVATE_KEY": "/mnt/private_key.pem",
     }
 
     # only mount the DB if it is a file
     info("Setting up databases")
-    db_labels = [db['label'] for db in ctx.databases]
+    db_labels = [db["label"] for db in ctx.databases]
     for label in db_labels:
-
         db_config = get_database_config(ctx.databases, label)
-        uri = db_config['uri']
-        db_type = db_config['type']
+        uri = db_config["uri"]
+        db_type = db_config["type"]
 
-        info(f"  Processing {Fore.GREEN}{db_type}{Style.RESET_ALL} database "
-             f"{Fore.GREEN}{label}:{uri}{Style.RESET_ALL}")
+        info(
+            f"  Processing {Fore.GREEN}{db_type}{Style.RESET_ALL} database "
+            f"{Fore.GREEN}{label}:{uri}{Style.RESET_ALL}"
+        )
         label_capitals = label.upper()
 
         try:
@@ -259,22 +288,24 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
             file_based = False
 
         if not file_based and not force_db_mount:
-            debug('  - non file-based database added')
-            env[f'{label_capitals}_DATABASE_URI'] = uri
+            debug("  - non file-based database added")
+            env[f"{label_capitals}_DATABASE_URI"] = uri
         else:
-            debug('  - file-based database added')
+            debug("  - file-based database added")
             suffix = Path(uri).suffix
-            env[f'{label_capitals}_DATABASE_URI'] = f'{label}{suffix}'
-            mounts.append((f'/mnt/{label}{suffix}', str(uri)))
+            env[f"{label_capitals}_DATABASE_URI"] = f"{label}{suffix}"
+            mounts.append((f"/mnt/{label}{suffix}", str(uri)))
 
     system_folders_option = "--system" if system_folders else "--user"
-    cmd = f'vnode-local start -c /mnt/config/{name}.yaml -n {name} '\
-          f' --dockerized {system_folders_option}'
+    cmd = (
+        f"vnode-local start -c /mnt/config/{name}.yaml -n {name} "
+        f" --dockerized {system_folders_option}"
+    )
 
     info("Running Docker container")
     volumes = []
     for mount in mounts:
-        volumes.append(f'{mount[1]}:{mount[0]}')
+        volumes.append(f"{mount[1]}:{mount[0]}")
 
     remove_container_if_exists(
         docker_client=docker_client, name=ctx.docker_container_name
@@ -288,12 +319,12 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
         labels={
             f"{APPNAME}-type": "node",
             "system": str(system_folders),
-            "name": ctx.config_file_name
+            "name": ctx.config_file_name,
         },
         environment=env,
         name=ctx.docker_container_name,
         auto_remove=not keep,
-        tty=True
+        tty=True,
     )
 
     info(f"Success! container id = {container}")
@@ -306,6 +337,8 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
                 time.sleep(1)
             except KeyboardInterrupt:
                 info("Closing log file. Keyboard Interrupt.")
-                info("Note that your node is still running! Shut it down with "
-                     f"'{Fore.RED}v6 node stop{Style.RESET_ALL}'")
+                info(
+                    "Note that your node is still running! Shut it down with "
+                    f"'{Fore.RED}v6 node stop{Style.RESET_ALL}'"
+                )
                 exit(0)
