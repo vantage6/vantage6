@@ -7,7 +7,10 @@ from flask import request, render_template
 from flask_mail import Mail
 
 from vantage6.common.globals import APPNAME, MAIN_VERSION_NAME
-from vantage6.server.globals import DEFAULT_SUPPORT_EMAIL_ADDRESS
+from vantage6.server.globals import (
+    DEFAULT_SUPPORT_EMAIL_ADDRESS, DEFAULT_MAX_FAILED_ATTEMPTS,
+    DEFAULT_INACTIVATION_MINUTES
+)
 from vantage6.server.model.user import User
 
 module_name = __name__.split('.')[-1]
@@ -43,8 +46,12 @@ def user_login(
     if User.username_exists(username):
         user = User.get_by_username(username)
         password_policy = config.get("password_policy", {})
-        max_failed_attempts = password_policy.get('max_failed_attempts', 5)
-        inactivation_time = password_policy.get('inactivation_minutes', 15)
+        max_failed_attempts = password_policy.get(
+            'max_failed_attempts', DEFAULT_MAX_FAILED_ATTEMPTS
+        )
+        inactivation_time = password_policy.get(
+            'inactivation_minutes', DEFAULT_INACTIVATION_MINUTES
+        )
 
         is_blocked, min_rem = user.is_blocked(max_failed_attempts,
                                               inactivation_time)
