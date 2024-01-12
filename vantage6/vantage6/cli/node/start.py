@@ -242,7 +242,7 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
         if not label.isidentifier():
             error(f"Database label {Fore.RED}{label}{Style.RESET_ALL} contains"
                   " invalid characters. Only letters, numbers, and underscores"
-                  " are allowed, and it should start with a letter.")
+                  " are allowed, and it cannot start with a number.")
             exit(1)
 
         db_config = get_database_config(ctx.databases, label)

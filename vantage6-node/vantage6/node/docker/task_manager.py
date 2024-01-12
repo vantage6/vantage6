@@ -8,7 +8,9 @@ import base64
 
 from pathlib import Path
 
-from vantage6.common.globals import APPNAME, ENV_VAR_EQUALS_REPLACEMENT, STRING_ENCODING
+from vantage6.common.globals import (
+    APPNAME, ENV_VAR_EQUALS_REPLACEMENT, STRING_ENCODING
+)
 from vantage6.common.docker.addons import (
     remove_container_if_exists, remove_container, pull_if_newer,
     running_in_docker
@@ -16,7 +18,7 @@ from vantage6.common.docker.addons import (
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.task_status import TaskStatus
 from vantage6.node.util import get_parent_id
-from vantage6.node.globals import ALPINE_IMAGE
+from vantage6.node.globals import ALPINE_IMAGE, ENV_VARS_NOT_SETTABLE_BY_NODE
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.docker.squid import Squid
 from vantage6.node.docker.docker_base import DockerBaseManager
@@ -570,14 +572,22 @@ class DockerTaskManager(DockerBaseManager):
         PermanentAlgorithmStartFail
             If environment variables contain illegal characters
         """
+        msg = None
         for key in environment_variables:
             if not key.isidentifier():
-                self.status = TaskStatus.FAILED
                 msg = (
                     f"Environment variable '{key}' is invalid: environment "
                     " variable names should only contain number, letters and "
                     " underscores, and start with a letter."
                 )
+            elif key in ENV_VARS_NOT_SETTABLE_BY_NODE:
+                msg = (
+                    f"Environment variable '{key}' cannot be set: this "
+                    "variable is set in the algorithm Dockerfile and cannot "
+                    "be overwritten."
+                )
+            if msg:
+                self.status = TaskStatus.FAILED
                 self.log.error(msg)
                 raise PermanentAlgorithmStartFail(msg)
 

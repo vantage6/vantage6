@@ -46,3 +46,7 @@ SSH_TUNNEL_IMAGE = "harbor2.vantage6.ai/infrastructure/ssh-tunnel"
 #   SQUID RELATED CONSTANTS
 #
 SQUID_IMAGE = "harbor2.vantage6.ai/infrastructure/squid"
+
+# Environment variables that should be set in the Dockerfile and that may not
+# be overwritten by the user.
+ENV_VARS_NOT_SETTABLE_BY_NODE = ["PKG_NAME"]

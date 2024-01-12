@@ -167,8 +167,8 @@ interaction between the algorithm and the node. The wrappers are responsible
 for reading the input data from the data source and supplying it to the algorithm.
 They also take care of writing the results back to the data source.
 
-As algorithm developer, you do not have to worry about the wrappers. The only
-thing you have to make sure is that the following line is present at the end of
+As algorithm developer, you do not have to worry about the wrappers. The main
+point you have to make sure is that the following line is present at the end of
 your ``Dockerfile``:
 
 .. code:: docker
@@ -176,7 +176,9 @@ your ``Dockerfile``:
     CMD python -c "from vantage6.algorithm.tools.wrap import wrap_algorithm; wrap_algorithm()"
 
 The ``wrap_algorithm`` function will wrap your algorithm to ensure that the
-vantage6 algorithm tools are available to it.
+vantage6 algorithm tools are available to it. Note that the ``wrap_algorithm``
+function will also read the ``PKG_NAME`` environment variable from the
+``Dockerfile`` so make sure that this variable is set correctly.
 
 For R, the command is slightly different:
 
