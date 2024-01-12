@@ -11,7 +11,8 @@ vantage6 server itself.
 :ref:`docker-registry`
   A (private) Docker registry can be used to store algorithms but it is also
   possible to use the (public) `Docker hub <https://hub.docker.com/>`__ to
-  upload your Docker images.
+  upload your Docker images. For production scenarios, we recommend using a
+  private registry.
 
 :ref:`eduvpn-install`
   If you want to enable algorithm containers that are running on different
@@ -59,8 +60,11 @@ Docker registry
 """""""""""""""
 
 A Docker registry or repository provides storage and versioning for Docker
-images. Installing a private Docker registry is useful if you want
-don't want to share your algorithms.
+images. Installing a private Docker registry is useful if you don't want to
+share your algorithms. Also, a private registry may have security benefits,
+for example, you can scan your images for vulnerabilities and you can limit
+the range of IP addresses that the node may access to its server and the
+private registry.
 
 Docker Hub
 ~~~~~~~~~~
