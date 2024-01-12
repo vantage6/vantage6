@@ -1,10 +1,12 @@
+import sys
 import logging
 import datetime as dt
 import pyotp
 
 from http import HTTPStatus
-from flask import request, render_template
+from flask import request, render_template, current_app, Flask
 from flask_mail import Mail
+from threading import Thread
 
 from vantage6.common.globals import APPNAME, MAIN_VERSION_NAME
 from vantage6.server.globals import (
@@ -41,50 +43,84 @@ def user_login(
     HTTPStatus:
         Status code that the current request should return
     """
-    log.info(f"Trying to login '{username}'")
+    log.info("Trying to login '%s'", username)
     failed_login_msg = "Failed to login"
-    if User.username_exists(username):
-        user = User.get_by_username(username)
-        password_policy = config.get("password_policy", {})
-        max_failed_attempts = password_policy.get(
-            'max_failed_attempts', DEFAULT_MAX_FAILED_ATTEMPTS
-        )
-        inactivation_time = password_policy.get(
-            'inactivation_minutes', DEFAULT_INACTIVATION_MINUTES
-        )
 
-        is_blocked, min_rem = user.is_blocked(max_failed_attempts,
-                                              inactivation_time)
-        if is_blocked:
-            notify_user_blocked(user, max_failed_attempts, min_rem, mail,
-                                config)
-            return {"msg": failed_login_msg}, HTTPStatus.UNAUTHORIZED
-        elif user.check_password(password):
-            user.failed_login_attempts = 0
-            user.save()
-            return user, HTTPStatus.OK
-        else:
-            # update the number of failed login attempts
-            user.failed_login_attempts = 1 \
-                if (
-                    not user.failed_login_attempts or
-                    user.failed_login_attempts >= max_failed_attempts
-                ) else user.failed_login_attempts + 1
+    # check if username exists. If it does not, we continue anyway, to prevent
+    # that an attacker can find out which usernames exist.
+    username_exists = User.username_exists(username)
+    random_username = User.get_random_user().username
+    user = User.get_by_username(username) if username_exists \
+        else User.get_by_username(random_username)
+
+    password_policy = config.get("password_policy", {})
+    max_failed_attempts = password_policy.get(
+        'max_failed_attempts', DEFAULT_MAX_FAILED_ATTEMPTS
+    )
+    inactivation_time = password_policy.get(
+        'inactivation_minutes', DEFAULT_INACTIVATION_MINUTES
+    )
+
+    is_blocked, min_rem = user.is_blocked(max_failed_attempts,
+                                          inactivation_time)
+
+    if user.check_password(password) and not is_blocked and username_exists:
+        # Note: above the username_exists is checked to prevent that an
+        # attacker happens to get the correct password for the random user
+        # that is returned when the username does not exist. Note also that
+        # the password is checked first to keep the timing equal for both.
+        user.failed_login_attempts = 0
+        user.save()
+        return user, HTTPStatus.OK
+    else:
+        # update the number of failed login attempts
+        if not username_exists or is_blocked:
+            # if the username does not exist or user is blocked, we do not
+            # update the number of failed login attempts, but we do go through
+            # this code block to keep timing similar in all cases.
+            pass
+        elif (
+            not user.failed_login_attempts or
+            user.failed_login_attempts >= max_failed_attempts
+        ):
+            user.failed_login_attempts = 1
             user.last_login_attempt = dt.datetime.now()
-            user.save()
+        else:
+            user.failed_login_attempts += 1
+            user.last_login_attempt = dt.datetime.now()
+        user.save()
+
+    # Start a separate thread to send an email to the user if the user is
+    # blocked. This is done in a separate thread to keep response times similar
+    # in all cases.
+    # pylint: disable=W0212
+    t = Thread(target=__notify_user_blocked, args=(
+        current_app._get_current_object(), is_blocked and username_exists,
+        user, max_failed_attempts, min_rem, mail, config,
+        request.access_route[-1]
+    ))
+    t.start()
 
     return {"msg": failed_login_msg}, HTTPStatus.UNAUTHORIZED
 
 
-def notify_user_blocked(
-    user: User, max_n_attempts: int, min_rem: int, mail: Mail,
-    config: dict
+def __notify_user_blocked(
+    app: Flask, is_blocked: bool, user: User, max_n_attempts: int,
+    min_rem: int, mail: Mail, config: dict, ip: str
 ) -> None:
     """
     Sends an email to the user when his or her account is locked
 
+    Note that this function is called in a separate thread to keep response
+    times for login attempts similar in all cases. Therefore, this function
+    calls `sys.exit()` to terminate the thread.
+
     Parameters
     ----------
+    current_app: flask.Flask
+        The current Flask app
+    is_blocked: bool
+        Whether or not the user is blocked
     user: :class:`~vantage6.server.model.user.User`
         User who is temporarily blocked
     max_n_attempts: int
@@ -96,12 +132,13 @@ def notify_user_blocked(
         of too many failed login attempts.
     config: dict
         Dictionary with configuration settings
+    ip: str
+        IP address from where the login attempt was made
     """
-    if not user.email:
-        log.warning(f'User {user.username} is locked, but does not have'
-                    'an email registered. So no message has been sent.')
+    if not is_blocked:
+        sys.exit()
 
-    log.info(f'User {user.username} is locked. Sending them an email.')
+    log.info('User %s is locked. Sending them an email.', user.username)
 
     email_info = config.get("smtp", {})
     email_sender = email_info.get("username", DEFAULT_SUPPORT_EMAIL_ADDRESS)
@@ -110,19 +147,25 @@ def notify_user_blocked(
     template_vars = {
         'firstname': user.firstname,
         'number_of_allowed_attempts': max_n_attempts,
-        'ip': request.access_route[-1],
+        'ip': ip,
         'time': dt.datetime.now(dt.timezone.utc),
         'time_remaining': min_rem,
         'support_email': support_email,
     }
 
-    mail.send_email(
-        "Failed login attempts on your vantage6 account",
-        sender=email_sender,
-        recipients=[user.email],
-        text_body=render_template("mail/blocked_account.txt", **template_vars),
-        html_body=render_template("mail/blocked_account.html", **template_vars)
-    )
+    with app.app_context():
+        mail.send_email(
+            "Failed login attempts on your vantage6 account",
+            sender=email_sender,
+            recipients=[user.email],
+            text_body=render_template(
+                "mail/blocked_account.txt", **template_vars
+            ),
+            html_body=render_template(
+                "mail/blocked_account.html", **template_vars
+            )
+        )
+    sys.exit()
 
 
 def create_qr_uri(user: User) -> dict:

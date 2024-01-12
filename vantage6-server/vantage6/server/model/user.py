@@ -214,6 +214,24 @@ class User(Authenticatable):
         return result
 
     @classmethod
+    def get_random_user(cls) -> User:
+        """
+        Get a random user by their username.
+
+        This function is used to prevent an attacker from finding out which
+        usernames exist.
+
+        Returns
+        -------
+        User
+            A random user that is in the database
+        """
+        session = DatabaseSessionManager.get_session()
+        result = session.query(cls).order_by(cls.id).first()
+        session.commit()
+        return result
+
+    @classmethod
     def get_by_email(cls, email: str) -> User:
         """
         Get a user by their email
