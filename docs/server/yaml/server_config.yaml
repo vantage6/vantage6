@@ -154,3 +154,13 @@ ui:
 
   # port at which the UI will be available on your local machine
   port: 3456
+
+# set password policies for the server
+password_policy:
+  # maximum number of failed login attempts before the user is locked out for
+  # a certain amount of time. Default is 5.
+  max_failed_attempts: 5
+
+  # number of minutes the user is locked out after the maximum number of failed
+  # login attempts is reached. Default is 15.
+  inactivation_minutes: 15
