@@ -8,6 +8,11 @@ vantage6 server itself.
   An application that will allow your server's users to interact more easily
   with your vantage6 server.
 
+:ref:`docker-registry`
+  A (private) Docker registry can be used to store algorithms but it is also
+  possible to use the (public) `Docker hub <https://hub.docker.com/>`__ to
+  upload your Docker images.
+
 :ref:`eduvpn-install`
   If you want to enable algorithm containers that are running on different
   nodes, to directly communicate with one another, you require a VPN
@@ -18,10 +23,6 @@ vantage6 server itself.
   improve, you may want to set up a RabbitMQ service which enables horizontal
   scaling of the Vantage6 server.
 
-:ref:`docker-registry`
-  A (private) Docker registry can be used to store algorithms but it is also
-  possible to use the (public) `Docker hub <https://hub.docker.com/>`__ to
-  upload your Docker images.
 
 :ref:`smtp-server`
   If you want to send emails to your users, e.g. to help them reset their
@@ -51,6 +52,29 @@ The UI is not compatible with older versions (<3.3) of vantage6.
     :align: center
 
     Screenshot of the vantage6 UI
+
+.. _docker-registry:
+
+Docker registry
+"""""""""""""""
+
+A Docker registry or repository provides storage and versioning for Docker
+images. Installing a private Docker registry is useful if you want
+don't want to share your algorithms.
+
+Docker Hub
+~~~~~~~~~~
+
+Docker itself provides a registry as a turn-key solution on Docker Hub.
+Instructions for setting it up can be found here:
+https://hub.docker.com/_/registry.
+
+Harbor
+~~~~~~
+
+`Harbor <https://goharbor.io>`_ is another option for running a
+registry. Harbor provides access control, a user interface and automated
+scanning on vulnerabilities.
 
 .. _eduvpn-install:
 
@@ -307,29 +331,6 @@ by adding the following to the server configuration:
 Be sure to create the user and vhost that you specify exist! Otherwise,
 you can add them via the `RabbitMQ management
 console <https://www.cloudamqp.com/blog/part3-rabbitmq-for-beginners_the-management-interface.html>`__.
-
-.. _docker-registry:
-
-Docker registry
-"""""""""""""""
-
-A Docker registry or repository provides storage and versioning for Docker
-images. Installing a private Docker registry is useful if you want
-don't want to share your algorithms.
-
-Docker Hub
-~~~~~~~~~~
-
-Docker itself provides a registry as a turn-key solution on Docker Hub.
-Instructions for setting it up can be found here:
-https://hub.docker.com/_/registry.
-
-Harbor
-~~~~~~
-
-`Harbor <https://goharbor.io>`_ is another option for running a
-registry. Harbor provides access control, a user interface and automated
-scanning on vulnerabilities.
 
 .. _smtp-server:
 
