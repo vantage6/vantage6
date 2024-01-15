@@ -36,7 +36,7 @@ setup(
         'click==8.1.3',
         'docker==6.1.2',
         'gevent==23.9.1',
-        'jinja2==3.1.2',
+        'jinja2==3.1.3',
         'python-socketio==5.7.2',
         'requests==2.31.0',
         f'vantage6 == {version_ns["__version__"]}',
@@ -47,10 +47,10 @@ setup(
         'dev': [
             'coverage==6.4.4',
             'python-coveralls==2.9.3',
-            'SQLAlchemy==1.4.46',
+            'sqlalchemy==1.4.46',
             'schema==0.7.5',
             'appdirs==1.4.4',
-            'flask==2.2.5'
+            'flask==3.0.0'
         ]
     },
     package_data={
