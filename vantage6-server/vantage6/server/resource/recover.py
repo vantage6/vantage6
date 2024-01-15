@@ -382,7 +382,7 @@ class RecoverTwoFactorSecret(ServicesResources):
             log.info("Someone request 2FA reset for non-existing account"
                      f" {account_name}")
             # we do not tell them.... But we won't continue either
-            return ret
+            return ret, HTTPStatus.OK
 
         # check password
         user, code = user_login(self.config, user.username, password,
@@ -431,7 +431,7 @@ class RecoverTwoFactorSecret(ServicesResources):
             )
         )
 
-        return ret
+        return ret, HTTPStatus.OK
 
 
 class ChangePassword(ServicesResources):

@@ -177,7 +177,7 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
     # FIXME: should obtain mount points from DockerNodeContext
     mounts = [
         # (target, source)
-        ("/mnt/log", str(ctx.log_dir)),
+        (f"/mnt/log/{name}", str(ctx.log_dir)),
         ("/mnt/data", data_volume.name),
         ("/mnt/vpn", vpn_volume.name),
         ("/mnt/ssh", ssh_volume.name),

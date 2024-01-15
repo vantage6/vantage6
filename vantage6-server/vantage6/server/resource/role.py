@@ -482,12 +482,16 @@ class Role(RoleBase):
             return {"msg": f"Role with id={id} not found."}, \
                 HTTPStatus.NOT_FOUND
 
-        # check permissions. A user can always view their own roles
+        # check permissions. A user can always view their own roles. Roles
+        # that are not assigned to a specific organization can be viewed by
+        # anyone with at least organization permission
         if not (
             self.r.can_for_org(P.VIEW, role.organization_id) or
-            role in g.user.roles
+            role in g.user.roles or
+            (role.name in [role for role in DefaultRole] and
+             self.r.has_at_least_scope(Scope.ORGANIZATION, P.VIEW))
         ):
-            return {"msg": "You do not have permission to view this."},\
+            return {"msg": "You do not have permission to view this."}, \
                     HTTPStatus.UNAUTHORIZED
 
         return role_schema.dump(role, many=False), HTTPStatus.OK

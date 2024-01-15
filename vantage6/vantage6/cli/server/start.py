@@ -59,8 +59,38 @@ def cli_server_start(ctx: ServerContext, ip: str, port: int, image: str,
 
     pull_image(docker_client, image)
 
+    # check that log directory exists - or create it
+    ctx.log_dir.mkdir(parents=True, exist_ok=True)
+
+    # Determine image-name. First we check if the option --image has been used.
+    # Then we check if the image has been specified in the config file, and
+    # finally we use the default settings from the package.
+    if image is None:
+        custom_images: dict = ctx.config.get('images')
+        if custom_images:
+            image = custom_images.get('server')
+        if not image:
+            image = f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_SERVER_IMAGE}"
+
+    info(f"Pulling latest server image '{image}'.")
+    try:
+        pull_if_newer(docker.from_env(), image)
+        # docker_client.images.pull(image)
+    except Exception as e:
+        warning(' ... Getting latest server image failed:')
+        warning(f"     {e}")
+    else:
+        info(" ... success!")
+
+    info("Creating mounts")
     config_file = "/mnt/config.yaml"
-    mounts = mount_config_file(ctx, config_file)
+    mounts = [
+        docker.types.Mount(
+            config_file, str(ctx.config_file), type="bind"
+        ), docker.types.Mount(
+            "/mnt/log/", str(ctx.log_dir), type="bind"
+        )
+    ]
 
     src_mount = mount_source(mount_src)
     if src_mount:
