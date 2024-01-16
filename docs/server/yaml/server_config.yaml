@@ -164,3 +164,7 @@ password_policy:
   # number of minutes the user is locked out after the maximum number of failed
   # login attempts is reached. Default is 15.
   inactivation_minutes: 15
+
+  # number of minutes to wait between emails that alert a user that someone is
+  # trying to log in to their account. Default is 60.
+  between_email_blocked_login_minutes: 60
