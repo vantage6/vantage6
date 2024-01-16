@@ -7,7 +7,9 @@ from flask import request, render_template
 from flask_mail import Mail
 
 from vantage6.common.globals import APPNAME, MAIN_VERSION_NAME
-from vantage6.server.globals import DEFAULT_SUPPORT_EMAIL_ADDRESS
+from vantage6.server.globals import (
+    DEFAULT_SUPPORT_EMAIL_ADDRESS, DEFAULT_EMAIL_FROM_ADDRESS
+)
 from vantage6.server.model.user import User
 
 module_name = __name__.split('.')[-1]
@@ -96,9 +98,9 @@ def notify_user_blocked(
 
     log.info(f'User {user.username} is locked. Sending them an email.')
 
-    email_info = config.get("smtp", {})
-    email_sender = email_info.get("username", DEFAULT_SUPPORT_EMAIL_ADDRESS)
-    support_email = config.get("support_email", email_sender)
+    smtp_settings = config.get("smtp", {})
+    email_from = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
+    support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
 
     template_vars = {
         'firstname': user.firstname,
@@ -111,7 +113,7 @@ def notify_user_blocked(
 
     mail.send_email(
         "Failed login attempts on your vantage6 account",
-        sender=email_sender,
+        sender=email_from,
         recipients=[user.email],
         text_body=render_template("mail/blocked_account.txt", **template_vars),
         html_body=render_template("mail/blocked_account.html", **template_vars)
