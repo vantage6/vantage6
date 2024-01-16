@@ -362,8 +362,9 @@ class VPNManager(DockerBaseManager):
 
         occupied_ports = occupied_ports.output.decode('utf-8')
         occupied_ports = occupied_ports.split('\n')
-        occupied_ports = \
-            [int(port) for port in occupied_ports if port != '']
+        occupied_ports = list(set([
+            int(port) for port in occupied_ports if port.lstrip('-').isdigit()
+        ]))
         self.log.debug(f"Occupied ports: {occupied_ports}")
 
         # take first available port
