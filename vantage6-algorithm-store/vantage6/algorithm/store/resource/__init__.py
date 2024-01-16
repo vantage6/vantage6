@@ -1,5 +1,6 @@
 import logging
 import requests
+from sys import platform
 from functools import wraps
 from http import HTTPStatus
 from flask import request
@@ -45,11 +46,16 @@ def with_authentication() -> callable:
             except requests.exceptions.ConnectionError:
                 pass
 
-            # if we are looking for a localhost server, it might be that we
-            # have to check host.docker.internal instead.
+            # if we are looking for a localhost server, we probably have to
+            # check host.docker.internal (Windows) or 172.17.0.1 (Linux)
+            # instead.
             if 'localhost' in url or '127.0.0.1' in url:
-                url = url.replace('localhost', 'host.docker.internal')\
-                    .replace('127.0.0.1', 'host.docker.internal')
+                if platform == 'linux' or platform == 'linux2':
+                    url = url.replace('localhost', '172.17.0.1')\
+                        .replace('127.0.0.1', '172.17.0.1')
+                elif platform == 'win32' or platform == "darwin":
+                    url = url.replace('localhost', 'host.docker.internal')\
+                        .replace('127.0.0.1', 'host.docker.internal')
                 try:
                     response = requests.post(url, headers=request.headers)
                 except requests.exceptions.ConnectionError:
