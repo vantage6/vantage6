@@ -15,18 +15,6 @@ LABEL maintainer="Frank Martin <f.martin@iknl.nl>; Bart van Beusekom <b.vanbeuse
 RUN apt update -y
 RUN apt upgrade -y
 
-# Enable SSH access in Azure App service
-RUN apt install openssh-server sudo -y
-RUN useradd -rm -d /home/ubuntu -s /bin/bash -g root -G sudo -u 1000 test
-RUN echo 'root:Docker!' | chpasswd
-
-COPY sshd_config /etc/ssh/
-RUN mkdir /run/sshd
-
-# Fix DB issue
-RUN apt install python-psycopg2 -y
-RUN pip install psycopg2-binary
-
 # copy source
 COPY . /vantage6
 
