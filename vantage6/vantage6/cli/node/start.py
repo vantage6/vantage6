@@ -103,9 +103,7 @@ def cli_node_start(
 
         # check that config exists, if not a questionaire will be invoked
         if not NodeContext.config_exists(name, system_folders):
-            warning(
-                f"Configuration {Fore.RED}{name}{Style.RESET_ALL} does not" " exist."
-            )
+            warning(f"Configuration {Fore.RED}{name}{Style.RESET_ALL} does not exist.")
 
             if q.confirm("Create this configuration now?").ask():
                 configuration_wizard("node", name, system_folders)
