@@ -35,9 +35,9 @@ setup(
     install_requires=[
         'bcrypt==4.0.1',
         'flasgger==0.9.5',
-        'flask==3.0.0',
-        'Flask-Cors==4.0.0',
-        'Flask-JWT-Extended==4.6.0',
+        'flask==2.2.5',
+        'Flask-Cors==3.0.10',
+        'Flask-JWT-Extended==4.4.4',
         'Flask-Mail==0.9.1',
         'Flask-Principal==0.4.0',
         'Flask-RESTful==0.3.10',
@@ -54,7 +54,7 @@ setup(
         'requests==2.31.0',
         'requests-oauthlib==1.3.1',
         'schema==0.7.5',
-        'sqlalchemy==1.4.46',
+        'SQLAlchemy==1.4.46',
         'werkzeug==3.0.1',
         f'vantage6 == {version_ns["__version__"]}',
         f'vantage6-common == {version_ns["__version__"]}'

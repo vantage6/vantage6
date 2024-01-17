@@ -44,7 +44,7 @@ setup(
         'questionary==1.10.0',
         'rich==13.5.2',
         'schema==0.7.5',
-        'sqlalchemy==1.4.46',
+        'SQLAlchemy==1.4.46',
         f'vantage6-common == {version_ns["__version__"]}',
         f'vantage6-client == {version_ns["__version__"]}',
     ],
