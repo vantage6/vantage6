@@ -9,6 +9,8 @@ authenticated nodes and users via the socketIO server that is run here.
 import os
 from gevent import monkey
 
+from vantage6.algorithm.store.default_roles import get_default_roles
+
 # This is a workaround for readthedocs
 if not os.environ.get('READTHEDOCS'):
     # flake8: noqa: E402 (ignore import error)
@@ -250,6 +252,18 @@ class AlgorithmStoreApp:
             )
             module.setup(self.api, API_PATH, services)
 
+    @staticmethod
+    def _add_default_roles() -> None:
+        for role in get_default_roles(db):
+            if not db.Role.get_by_name(role['name']):
+                log.warn(f"Creating new default role {role['name']}...")
+                new_role = db.Role(
+                    name=role['name'],
+                    description=role['description'],
+                    # rules=role['rules']
+                )
+                new_role.save()
+
     def start(self) -> None:
         """
         Start the server.
@@ -257,6 +271,7 @@ class AlgorithmStoreApp:
         Before server is really started, some database settings are checked and
         (re)set where appropriate.
         """
+        self._add_default_roles()
         return self
 
 def run_server(config: str, system_folders: bool = True) -> AlgorithmStoreApp:

@@ -4,6 +4,7 @@ from vantage6.algorithm.store.model.algorithm import Algorithm
 from vantage6.algorithm.store.model.argument import Argument
 from vantage6.algorithm.store.model.database import Database
 from vantage6.algorithm.store.model.function import Function
+from vantage6.algorithm.store.model.role import Role
 from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 from vantage6.server.resource.common.output_schema import (
     BaseHATEOASModelSchema
@@ -26,6 +27,8 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
                 lambda obj: self.create_hateoas("database", obj))
         setattr(self, "argument",
                 lambda obj: self.create_hateoas("argument", obj))
+        setattr(self, "role",
+                lambda obj: self.create_hateoas("role", obj))
 
         # call super class. Do this after setting the attributes above, because
         # the super class initializer will call the attributes.
@@ -66,3 +69,8 @@ class ArgumentOutputSchema(HATEOASModelSchema):
 class Vantage6ServerOutputSchema(HATEOASModelSchema):
     class Meta:
         model = Vantage6Server
+
+
+class RoleOutputSchema(HATEOASModelSchema):
+    class Meta:
+        model = Role

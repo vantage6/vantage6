@@ -16,7 +16,8 @@ from vantage6.algorithm.store.model import (
     Algorithm,
     Argument,
     Database,
-    Function
+    Function,
+    Role
 )
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING
