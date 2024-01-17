@@ -42,8 +42,11 @@ SUPER_USER_INFO = {
     "password": "root"
 }
 
-# default support email address
+# default support email address to make users aware of
 DEFAULT_SUPPORT_EMAIL_ADDRESS = 'support@vantage6.ai'
+
+# default email address used in 'from' header
+DEFAULT_EMAIL_FROM_ADDRESS = 'noreply@vantage6.ai'
 
 # default time that token is valid in minutes
 DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES = 60

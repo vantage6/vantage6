@@ -11,7 +11,8 @@ from threading import Thread
 from vantage6.common.globals import APPNAME, MAIN_VERSION_NAME
 from vantage6.server.globals import (
     DEFAULT_SUPPORT_EMAIL_ADDRESS, DEFAULT_MAX_FAILED_ATTEMPTS,
-    DEFAULT_INACTIVATION_MINUTES, DEFAULT_BETWEEN_BLOCKED_LOGIN_EMAIL_MINUTES
+    DEFAULT_INACTIVATION_MINUTES, DEFAULT_BETWEEN_BLOCKED_LOGIN_EMAIL_MINUTES,
+    DEFAULT_EMAIL_FROM_ADDRESS
 )
 from vantage6.server.model.user import User
 
@@ -161,9 +162,9 @@ def __notify_user_blocked(
 
     log.info('User %s is locked. Sending them an email.', user.username)
 
-    email_info = config.get("smtp", {})
-    email_sender = email_info.get("username", DEFAULT_SUPPORT_EMAIL_ADDRESS)
-    support_email = config.get("support_email", email_sender)
+    smtp_settings = config.get("smtp", {})
+    email_from = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
+    support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
 
     template_vars = {
         'firstname': user.firstname if user.firstname else user.username,
@@ -177,7 +178,7 @@ def __notify_user_blocked(
     with app.app_context():
         mail.send_email(
             "Failed login attempts on your vantage6 account",
-            sender=email_sender,
+            sender=email_from,
             recipients=[user.email],
             text_body=render_template(
                 "mail/blocked_account.txt", **template_vars

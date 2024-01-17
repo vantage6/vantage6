@@ -16,7 +16,8 @@ from vantage6.common import logger_name, generate_apikey
 from vantage6.common.globals import APPNAME
 from vantage6.server import db
 from vantage6.server.globals import (
-    DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES, DEFAULT_SUPPORT_EMAIL_ADDRESS
+    DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES, DEFAULT_SUPPORT_EMAIL_ADDRESS,
+    DEFAULT_EMAIL_FROM_ADDRESS
 )
 from vantage6.server.resource import ServicesResources, with_user
 from vantage6.server.resource.common.auth_helper import (
@@ -246,14 +247,12 @@ class RecoverPassword(ServicesResources):
             {"id": str(user.id)}, expires_delta=expires
         )
 
-        email_info = self.config.get("smtp", {})
-        email_sender = email_info.get("username",
-                                      DEFAULT_SUPPORT_EMAIL_ADDRESS)
-        support_email = self.config.get("support_email", email_sender)
+        email_from = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
+        support_email = self.config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
 
         self.mail.send_email(
             f"Password reset {APPNAME}",
-            sender="support@vantage6.ai",
+            sender=email_from,
             recipients=[user.email],
             text_body=render_template(
                 "mail/reset_token.txt", token=reset_token,
@@ -405,14 +404,12 @@ class RecoverTwoFactorSecret(ServicesResources):
             {"id": str(user.id)}, expires_delta=expires
         )
 
-        email_info = self.config.get("smtp", {})
-        email_sender = email_info.get("username",
-                                      DEFAULT_SUPPORT_EMAIL_ADDRESS)
-        support_email = self.config.get("support_email", email_sender)
+        email_from = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
+        support_email = self.config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
 
         self.mail.send_email(
             f"Two-factor authentication reset {APPNAME}",
-            sender=email_sender,
+            sender=email_from,
             recipients=[user.email],
             text_body=render_template(
                 "mail/reset_token.txt", token=reset_token,
