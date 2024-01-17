@@ -271,7 +271,6 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
     cmd = f'vnode-local start -c /mnt/config/{name}.yaml -n {name} '\
           f' --dockerized {system_folders_option}'
 
-    info("Running Docker container")
     volumes = []
     for mount in mounts:
         volumes.append(f'{mount[1]}:{mount[0]}')
@@ -280,22 +279,16 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
     for mount in extra_mounts:
         volumes.append(mount)
 
-    extra_env = ctx.config.get("node_extra_env", [])
-    for env_var in extra_env:
-        try:
-            k, v = env_var.split("=", 1)
-            if k in env:
-                warning(f"Overriding environment variable {k} via node_extra_env option")
-            env[k] = v
-        except ValueError:
-            error(f"Invalid environment variable: {env_var}")
-            error("Did you forget to use the format KEY=VALUE?")
-            exit(1)
+    extra_env = ctx.config.get("node_extra_env", {})
+    for k in extra_env.keys() & env.keys():
+        warning(f"Overwriting environment variable {k} via node_extra_env option!")
+    env.update(extra_env)
 
     remove_container_if_exists(
         docker_client=docker_client, name=ctx.docker_container_name
     )
 
+    info("Running Docker container")
     container = docker_client.containers.run(
         image,
         command=cmd,

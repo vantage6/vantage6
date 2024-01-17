@@ -33,7 +33,7 @@ algorithm_env:
 # node uses. For example, if you want to use a custom CA bundle for the requests
 # library you can specify it here.
 node_extra_env:
-  - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+  REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
 
 # Add additional volumes to the node container. This can be useful if you need
 # to mount a custom CA bundle for the requests library for example.

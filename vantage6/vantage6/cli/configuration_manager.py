@@ -60,7 +60,7 @@ class NodeConfiguration(Configuration):
             "enabled": bool,
             Optional("private_key"): Use(str)
         },
-        Optional("node_extra_env"): [str],
+        Optional("node_extra_env"): dict,
         Optional("node_extra_mounts"): [str]
     }
 
