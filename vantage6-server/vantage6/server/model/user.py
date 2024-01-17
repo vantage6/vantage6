@@ -215,7 +215,7 @@ class User(Authenticatable):
         return result
 
     @classmethod
-    def get_random_user(cls) -> User:
+    def get_first_user(cls) -> User:
         """
         Get a random user by their username.
 

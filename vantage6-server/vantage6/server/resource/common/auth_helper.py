@@ -49,7 +49,7 @@ def user_login(
     # check if username exists. If it does not, we continue anyway, to prevent
     # that an attacker can find out which usernames exist via a timing attack.
     username_exists = User.username_exists(username)
-    random_username = User.get_random_user().username
+    random_username = User.get_first_user().username
     user = User.get_by_username(username) if username_exists \
         else User.get_by_username(random_username)
 
