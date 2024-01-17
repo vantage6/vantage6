@@ -53,6 +53,7 @@ databases:
 
   - label: omop
     uri: jdbc:postgresql://host.docker.internal:5454/postgres
+    type: omop
     # additional environment variables that are passed to the algorithm
     # containers (or their wrapper). This can be used to for usernames
     # and passwords for example. Note that these environment variables are
@@ -139,22 +140,22 @@ ssh-tunnels:
         username: username
         key: /path/to/private_key.pem
 
-      # Once the SSH connection is established, a tunnel is created to
-      # forward traffic from the local machine to the remote machine.
-      tunnel:
+    # Once the SSH connection is established, a tunnel is created to
+    # forward traffic from the local machine to the remote machine.
+    tunnel:
 
-        # The port and ip on the tunnel container. The ip is always
-        # 0.0.0.0 as we want the algorithm container to be able to
-        # connect.
-        bind:
-          ip: 0.0.0.0
-          port: 8000
+      # The port and ip on the tunnel container. The ip is always
+      # 0.0.0.0 as we want the algorithm container to be able to
+      # connect.
+      bind:
+        ip: 0.0.0.0
+        port: 8000
 
-        # The port and ip on the remote machine. If the data source runs
-        # on this machine, the ip most likely is 127.0.0.1.
-        dest:
-          ip: 127.0.0.1
-          port: 8000
+      # The port and ip on the remote machine. If the data source runs
+      # on this machine, the ip most likely is 127.0.0.1.
+      dest:
+        ip: 127.0.0.1
+        port: 8000
 
 # Whitelist URLs and/or IP addresses that the algorithm containers are
 # allowed to reach using the http protocol.
