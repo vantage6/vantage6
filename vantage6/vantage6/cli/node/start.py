@@ -296,7 +296,7 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
         tty=True
     )
 
-    info(f"Success! container id = {container}")
+    info("Node container was successfully started!")
 
     if attach:
         logs = container.attach(stream=True, logs=True)
@@ -309,3 +309,6 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
                 info("Note that your node is still running! Shut it down with "
                      f"'{Fore.RED}v6 node stop{Style.RESET_ALL}'")
                 exit(0)
+    else:
+        info(f"To see the logs, run: {Fore.GREEN}v6 node attach --name "
+             f"{ctx.name}{Style.RESET_ALL}")

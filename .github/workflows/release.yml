@@ -110,6 +110,8 @@ jobs:
         ref: ${{env.branch}}
     - name: Release
       uses: softprops/action-gh-release@v1
+      with:
+        prerelease: ${{ env.stage != '' }}
 
   support-images:
     name: Build support images

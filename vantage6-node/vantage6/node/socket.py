@@ -50,33 +50,37 @@ class NodeTaskNamespace(ClientNamespace):
         # self.node_worker_ref.socketIO.disconnect()
         self.log.info('Disconnected from the server')
 
-    def on_new_task(self, task_id: int):
+    def on_new_task(self, data: dict):
         """
         Actions to be taken when node is notified of new task by server
 
         Parameters
         ----------
-        task_id: int
-            ID of the new task
+        data: dict
+            Dictionary with relevant data to the new task. Should include:
+            id: int
+                ID of the new task
+            parent_id: int | None
+                ID of the parent task (if any)
         """
         if self.node_worker_ref:
+            task_id = data.get('id')
             self.node_worker_ref.get_task_and_add_to_queue(task_id)
             self.log.info(f'New task has been added task_id={task_id}')
-
         else:
             self.log.critical(
                 'Node reference is not set in socket namespace; cannot create '
                 'new task!'
             )
 
-    def on_algorithm_status_change(self, data):
+    def on_algorithm_status_change(self, data: dict):
         """
         Actions to be taken when an algorithm container in the collaboration
         has changed its status.
 
         Parameters
         ----------
-        data: Dict
+        data: dict
             Dictionary with relevant data to the status change. Should include:
             job_id: int
                 job_id of the algorithm container that changed status
