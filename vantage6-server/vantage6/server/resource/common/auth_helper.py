@@ -49,6 +49,7 @@ def user_login(
 
     # check if username exists. If it does not, we continue anyway, to prevent
     # that an attacker can find out which usernames exist via a timing attack.
+    # In that case, we fetch the first user as random user.
     username_exists = User.username_exists(username)
     random_username = User.get_first_user().username
     user = User.get_by_username(username) if username_exists \
@@ -61,20 +62,9 @@ def user_login(
     inactivation_time = password_policy.get(
         'inactivation_minutes', DEFAULT_INACTIVATION_MINUTES
     )
-    minutes_between_blocked_emails = password_policy.get(
-        'between_email_blocked_login_minutes',
-        DEFAULT_BETWEEN_BLOCKED_LOGIN_EMAIL_MINUTES
-    )
 
     is_blocked, min_rem = user.is_blocked(max_failed_attempts,
                                           inactivation_time)
-
-    # check if the user has already been sent an email in the last hour - in
-    # case may want to we send them one, we don't want to spam them
-    email_sent_recently = user.last_email_failed_login_sent and (
-        dt.datetime.now() < user.last_email_failed_login_sent +
-        dt.timedelta(minutes=minutes_between_blocked_emails)
-    )
 
     if user.check_password(password) and not is_blocked and username_exists:
         # Note: above the username_exists is checked to prevent that an
@@ -84,51 +74,27 @@ def user_login(
         user.failed_login_attempts = 0
         user.save()
         return user, HTTPStatus.OK
-    else:
-        # update the number of failed login attempts
-        if not username_exists:
-            # As the username does not exist or user is blocked, do not
-            # update the number of failed login attempts here.
-            pass
-        elif is_blocked:
-            # If the user is blocked, do not update the number of failed login
-            # attempts here, but if we are going to send them an email, update
-            # the database to reflect that (this is done here rather than in
-            # the subthread since that DB updates don't work there)
-            if not email_sent_recently:
-                user.last_email_failed_login_sent = dt.datetime.now()
-        elif (
-            not user.failed_login_attempts or
-            user.failed_login_attempts >= max_failed_attempts
-        ):
-            user.failed_login_attempts = 1
-            user.last_login_attempt = dt.datetime.now()
-        else:
-            user.failed_login_attempts += 1
-            user.last_login_attempt = dt.datetime.now()
-        # Always save the user object to keep timing similar in all cases.
-        user.save()
 
-    # Start a separate thread to send an email to the user if the user is
-    # blocked. This is done in a separate thread to keep response times similar
-    # in all cases.
+    # Handle database updates required upon failed login in a separate thread
+    # to ensure similar response times
     # pylint: disable=W0212
-    t = Thread(target=__notify_user_blocked, args=(
-        current_app._get_current_object(), is_blocked and username_exists,
-        user, max_failed_attempts, min_rem, mail, config,
-        request.access_route[-1], email_sent_recently
+    t1 = Thread(target=__handle_failed_login, args=(
+        current_app._get_current_object(), username_exists, username,
+        password_policy, is_blocked, min_rem, mail, config,
+        request.access_route[-1]
     ))
-    t.start()
+    t1.start()
 
     return {"msg": failed_login_msg}, HTTPStatus.UNAUTHORIZED
 
 
-def __notify_user_blocked(
-    app: Flask, is_blocked: bool, user: User, max_n_attempts: int,
-    min_rem: int, mail: Mail, config: dict, ip: str, email_sent_recently
+def __handle_failed_login(
+    app: Flask, user_exists: bool, username: str, password_policy: dict,
+    is_blocked: bool, min_rem: int, mail: Mail, config: dict, ip: str
 ) -> None:
     """
-    Sends an email to the user when his or her account is locked
+    When a user login fails, this function is called to update the database
+    with the failed login attempt and send an email to the user if necessary.
 
     Note that this function is called in a separate thread to keep response
     times for login attempts similar in all cases. Therefore, this function
@@ -136,14 +102,66 @@ def __notify_user_blocked(
 
     Parameters
     ----------
-    current_app: flask.Flask
+    app: flask.Flask
         The current Flask app
-    is_blocked: bool
-        Whether or not the user is blocked
+    user_exists: bool
+        Whether user exists or not
+    username: str
+        Username of the user that failed to login
+    password_policy: dict
+        Dictionary with password policy settings.
+    min_rem: int
+        Number of minutes remaining before the account is unlocked
+    mail: flask_mail.Mail
+        An instance of the Flask mail class. Used to send email to user in case
+        of too many failed login attempts.
+    config: dict
+        Dictionary with configuration settings
+    ip: str
+        IP address from where the login attempt was made
+    """
+    if not user_exists:
+        sys.exit()
+    # get user object again (required because we are in a new thread)
+    user = User.get_by_username(username)
+
+    max_failed_attempts = password_policy.get(
+        'max_failed_attempts', DEFAULT_MAX_FAILED_ATTEMPTS
+    )
+
+    if is_blocked:
+        # alert the user via email that they are blocked
+        __notify_user_blocked(app, user, min_rem, mail, config, ip)
+        sys.exit()
+    elif (
+        not user.failed_login_attempts or
+        user.failed_login_attempts >= max_failed_attempts
+    ):
+        # set failed login attempts to 1 if first failed login attempt or if
+        # user got unblocked after being blocked previously
+        user.failed_login_attempts = 1
+    else:
+        user.failed_login_attempts += 1
+    user.last_login_attempt = dt.datetime.now()
+    user.save()
+    sys.exit()
+
+
+def __notify_user_blocked(
+    app: Flask, user: User, min_rem: int, mail: Mail, config: dict, ip: str
+) -> None:
+    """
+    Sends an email to the user when their account is locked.
+
+    This function also checks that emails are not sent too often to the same
+    user.
+
+    Parameters
+    ----------
+    app: flask.Flask
+        The current Flask app
     user: :class:`~vantage6.server.model.user.User`
         User who is temporarily blocked
-    max_n_attempts: int
-        Maximum number of failed login attempts before the account is locked
     min_rem: int
         Number of minutes remaining before the account is unlocked
     mail: flask_mail.Mail
@@ -157,18 +175,32 @@ def __notify_user_blocked(
         Whether or not the user has been sent an email so recently that we do
         not want to send them another one
     """
-    if not is_blocked or email_sent_recently:
-        sys.exit()
-
     log.info('User %s is locked. Sending them an email.', user.username)
 
+    # check that email has not already been sent recently
+    password_policy = config.get("password_policy", {})
+    minutes_between_blocked_emails = password_policy.get(
+        'between_email_blocked_login_minutes',
+        DEFAULT_BETWEEN_BLOCKED_LOGIN_EMAIL_MINUTES
+    )
+    email_sent_recently = user.last_email_failed_login_sent and (
+        dt.datetime.now() < user.last_email_failed_login_sent +
+        dt.timedelta(minutes=minutes_between_blocked_emails)
+    )
+    if email_sent_recently:
+        return
+
+    # send email
     smtp_settings = config.get("smtp", {})
     email_from = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
     support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
 
+    max_failed_attempts = password_policy.get(
+        'max_failed_attempts', DEFAULT_MAX_FAILED_ATTEMPTS
+    )
     template_vars = {
         'firstname': user.firstname if user.firstname else user.username,
-        'number_of_allowed_attempts': max_n_attempts,
+        'number_of_allowed_attempts': max_failed_attempts,
         'ip': ip,
         'time': dt.datetime.now(dt.timezone.utc),
         'time_remaining': min_rem,
@@ -187,7 +219,10 @@ def __notify_user_blocked(
                 "mail/blocked_account.html", **template_vars
             )
         )
-    sys.exit()
+
+    # Update latest email sent timestamp
+    user.last_email_failed_login_sent = dt.datetime.now()
+    user.save()
 
 
 def create_qr_uri(user: User) -> dict:
