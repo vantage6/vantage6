@@ -66,6 +66,13 @@ for example, you can scan your images for vulnerabilities and you can limit
 the range of IP addresses that the node may access to its server and the
 private registry.
 
+Harbor
+~~~~~~
+
+Our preferred solution for hosting a Docker registry is
+`Harbor <https://goharbor.io>`_. Harbor provides access control, a user
+interface and automated scanning on vulnerabilities.
+
 Docker Hub
 ~~~~~~~~~~
 
@@ -73,12 +80,9 @@ Docker itself provides a registry as a turn-key solution on Docker Hub.
 Instructions for setting it up can be found here:
 https://hub.docker.com/_/registry.
 
-Harbor
-~~~~~~
-
-`Harbor <https://goharbor.io>`_ is another option for running a
-registry. Harbor provides access control, a user interface and automated
-scanning on vulnerabilities.
+Note that some features of vantage6, such as timestamp based retrieval of the
+newest image, or multi-arch images, are not supported by the Docker Hub
+registry.
 
 .. _eduvpn-install:
 
