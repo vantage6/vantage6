@@ -171,9 +171,6 @@ def __notify_user_blocked(
         Dictionary with configuration settings
     ip: str
         IP address from where the login attempt was made
-    email_sent_recently: bool
-        Whether or not the user has been sent an email so recently that we do
-        not want to send them another one
     """
     log.info('User %s is locked. Sending them an email.', user.username)
 
