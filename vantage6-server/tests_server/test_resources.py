@@ -16,6 +16,8 @@ from werkzeug.utils import cached_property
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
 from vantage6.common.task_status import TaskStatus
+from vantage6.common.serialization import serialize
+from vantage6.common import bytes_to_base64s
 from vantage6.server.globals import PACKAGE_FOLDER
 from vantage6.server import ServerApp, session
 from vantage6.server.model import (Rule, Role, Organization, User, Node,
@@ -3063,7 +3065,8 @@ class TestResources(unittest.TestCase):
     def test_create_task_permission_as_user(self):
         # non existant collaboration
         headers = self.create_user_and_login()
-        input_ = {'method': 'dummy'}
+        input_ = bytes_to_base64s(serialize({'method': 'dummy'}))
+
         task_json = {
             "collaboration_id": 9999,
             "organizations": [{'id': 9999, 'input': input_}],
@@ -3075,7 +3078,7 @@ class TestResources(unittest.TestCase):
         # organizations outside of collaboration
         org = Organization()
         org.save()
-        col = Collaboration(organizations=[org])
+        col = Collaboration(organizations=[org], encrypted=False)
         col.save()
 
         # task without any node created
@@ -3126,7 +3129,7 @@ class TestResources(unittest.TestCase):
 
     def test_create_task_permissions_as_container(self):
         org = Organization()
-        col = Collaboration(organizations=[org])
+        col = Collaboration(organizations=[org], encrypted=False)
         parent_task = Task(collaboration=col, image="some-image")
         parent_task.save()
         parent_res = Run(organization=org, task=parent_task,
@@ -3134,7 +3137,7 @@ class TestResources(unittest.TestCase):
         parent_res.save()
 
         # test wrong image name
-        input_ = {'method': 'dummy'}
+        input_ = bytes_to_base64s(serialize({'method': 'dummy'}))
         headers = self.login_container(collaboration=col, organization=org,
                                        task=parent_task)
         results = self.app.post('/api/task', headers=headers, json={
