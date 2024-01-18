@@ -36,3 +36,6 @@ NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS = 600
 
 # The basics image can be used (mainly by the UI) to collect column names
 BASIC_PROCESSING_IMAGE = 'harbor2.vantage6.ai/algorithms/basics'
+
+# Character to replace '=' with in encoded environment variables
+ENV_VAR_EQUALS_REPLACEMENT = "!"

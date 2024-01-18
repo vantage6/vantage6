@@ -10,7 +10,7 @@ import pandas as pd
 
 from vantage6.algorithm.client import AlgorithmClient
 from vantage6.algorithm.tools.mock_client import MockAlgorithmClient
-from vantage6.algorithm.tools.util import info, error, warn
+from vantage6.algorithm.tools.util import info, error, warn, get_env_var
 from vantage6.algorithm.tools.wrappers import load_data
 from vantage6.algorithm.tools.preprocessing import preprocess_data
 
@@ -89,12 +89,12 @@ def _algorithm_client() -> callable:
             if mock_client is not None:
                 return func(mock_client, *args, **kwargs)
             # read server address from the environment
-            host = os.environ["HOST"]
-            port = os.environ["PORT"]
-            api_path = os.environ["API_PATH"]
+            host = get_env_var("HOST")
+            port = get_env_var("PORT")
+            api_path = get_env_var("API_PATH")
 
             # read token from the environment
-            token_file = os.environ["TOKEN_FILE"]
+            token_file = get_env_var("TOKEN_FILE")
             info("Reading token")
             with open(token_file) as fp:
                 token = fp.read().strip()
@@ -184,7 +184,7 @@ def data(number_of_databases: int = 1) -> callable:
 
                 # do any data preprocessing here
                 info(f"Applying preprocessing for database '{label}'")
-                env_prepro = os.environ.get(f"{label.upper()}_PREPROCESSING")
+                env_prepro = get_env_var(f"{label.upper()}_PREPROCESSING")
                 if env_prepro is not None:
                     preprocess = json.loads(env_prepro)
                     data_ = preprocess_data(data_, preprocess)
@@ -291,7 +291,7 @@ def metadata(func: callable) -> callable:
         >>> def my_algorithm(metadata: RunMetaData, <other arguments>):
         >>>     pass
         """
-        token_file = os.environ["TOKEN_FILE"]
+        token_file = get_env_var("TOKEN_FILE")
         info("Reading token")
         with open(token_file) as fp:
             token = fp.read().strip()
@@ -304,10 +304,10 @@ def metadata(func: callable) -> callable:
             node_id=payload["node_id"],
             collaboration_id=payload["collaboration_id"],
             organization_id=payload["organization_id"],
-            temporary_directory=Path(os.environ["TEMPORARY_FOLDER"]),
-            output_file=Path(os.environ["OUTPUT_FILE"]),
-            input_file=Path(os.environ["INPUT_FILE"]),
-            token_file=Path(os.environ["TOKEN_FILE"])
+            temporary_directory=Path(get_env_var("TEMPORARY_FOLDER")),
+            output_file=Path(get_env_var("OUTPUT_FILE")),
+            input_file=Path(get_env_var("INPUT_FILE")),
+            token_file=Path(get_env_var("TOKEN_FILE"))
         )
         return func(metadata, *args, **kwargs)
     return decorator
@@ -336,11 +336,11 @@ def get_ohdsi_metadata(label: str) -> OHDSIMetaData:
     for var in expected_env_vars:
         _check_environment_var_exists_or_exit(f'{label_}_DB_PARAM_{var}')
 
-    tmp = Path(os.environ["TEMPORARY_FOLDER"])
+    tmp = Path(get_env_var("TEMPORARY_FOLDER"))
     metadata = OHDSIMetaData(
-        database=os.environ[f"{label_}_DB_PARAM_CDM_DATABASE"],
-        cdm_schema=os.environ[f"{label_}_DB_PARAM_CDM_SCHEMA"],
-        results_schema=os.environ[f"{label_}_DB_PARAM_RESULTS_SCHEMA"],
+        database=get_env_var(f"{label_}_DB_PARAM_CDM_DATABASE"),
+        cdm_schema=get_env_var(f"{label_}_DB_PARAM_CDM_SCHEMA"),
+        results_schema=get_env_var(f"{label_}_DB_PARAM_RESULTS_SCHEMA"),
         incremental_folder=tmp / "incremental",
         cohort_statistics_folder=tmp / "cohort_statistics",
         export_folder=tmp / "export"
@@ -399,10 +399,10 @@ def _create_omop_database_connection(label: str) -> callable:
         _check_environment_var_exists_or_exit(f'{label_}_DB_PARAM_{var}')
 
     info("Reading OHDSI environment variables")
-    dbms = os.environ[f"{label_}_DB_PARAM_DBMS"]
-    uri = os.environ[f"{label_}_DATABASE_URI"]
-    user = os.environ[f"{label_}_DB_PARAM_USER"]
-    password = os.environ[f"{label_}_DB_PARAM_PASSWORD"]
+    dbms = get_env_var(f"{label_}_DB_PARAM_DBMS")
+    uri = get_env_var(f"{label_}_DATABASE_URI")
+    user = get_env_var(f"{label_}_DB_PARAM_USER")
+    password = get_env_var(f"{label_}_DB_PARAM_PASSWORD")
     info(f' - dbms: {dbms}')
     info(f' - uri: {uri}')
     info(f' - user: {user}')
@@ -441,12 +441,12 @@ def _get_data_from_label(label: str) -> pd.DataFrame:
         Data from the database
     """
     # Load the input data from the input file - this may e.g. include the
-    database_uri = os.environ[f"{label.upper()}_DATABASE_URI"]
+    database_uri = get_env_var(f"{label.upper()}_DATABASE_URI")
     info(f"Using '{database_uri}' with label '{label}' as database")
 
     # Get the database type from the environment variable, this variable is
     # set by the vantage6 node based on its configuration file.
-    database_type = os.environ.get(
+    database_type = get_env_var(
         f"{label.upper()}_DATABASE_TYPE", "csv").lower()
 
     # Load the data based on the database type. Try to provide environment
@@ -454,8 +454,8 @@ def _get_data_from_label(label: str) -> pd.DataFrame:
     return load_data(
         database_uri,
         database_type,
-        query=os.environ.get(f"{label.upper()}_QUERY"),
-        sheet_name=os.environ.get(f"{label.upper()}_SHEET_NAME")
+        query=get_env_var(f"{label.upper()}_QUERY"),
+        sheet_name=get_env_var(f"{label.upper()}_SHEET_NAME")
     )
 
 
@@ -470,7 +470,7 @@ def _get_user_database_labels() -> list[str]:
     """
     # read the labels that the user requested, which is a comma
     # separated list of labels.
-    labels = os.environ["USER_REQUESTED_DATABASE_LABELS"]
+    labels = get_env_var("USER_REQUESTED_DATABASE_LABELS")
     return labels.split(',')
 
 

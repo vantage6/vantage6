@@ -10,10 +10,7 @@ import docker
 
 from colorama import Fore, Style
 
-from vantage6.common import (
-    warning, error, info, debug,
-    get_database_config
-)
+from vantage6.common import warning, error, info, debug, get_database_config
 from vantage6.common.globals import (
     APPNAME,
     DEFAULT_DOCKER_REGISTRY,
@@ -240,6 +237,13 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
     info("Setting up databases")
     db_labels = [db['label'] for db in ctx.databases]
     for label in db_labels:
+
+        # check that label contains only valid characters
+        if not label.isidentifier():
+            error(f"Database label {Fore.RED}{label}{Style.RESET_ALL} contains"
+                  " invalid characters. Only letters, numbers, and underscores"
+                  " are allowed, and it cannot start with a number.")
+            exit(1)
 
         db_config = get_database_config(ctx.databases, label)
         uri = db_config['uri']

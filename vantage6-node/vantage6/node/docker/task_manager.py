@@ -4,10 +4,13 @@ import logging
 import os
 import docker.errors
 import json
+import base64
 
 from pathlib import Path
 
-from vantage6.common.globals import APPNAME
+from vantage6.common.globals import (
+    APPNAME, ENV_VAR_EQUALS_REPLACEMENT, STRING_ENCODING
+)
 from vantage6.common.docker.addons import (
     remove_container_if_exists, remove_container, pull_if_newer,
     running_in_docker
@@ -15,7 +18,7 @@ from vantage6.common.docker.addons import (
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.task_status import TaskStatus
 from vantage6.node.util import get_parent_id
-from vantage6.node.globals import ALPINE_IMAGE
+from vantage6.node.globals import ALPINE_IMAGE, ENV_VARS_NOT_SETTABLE_BY_NODE
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.docker.squid import Squid
 from vantage6.node.docker.docker_base import DockerBaseManager
@@ -124,7 +127,7 @@ class DockerTaskManager(DockerBaseManager):
         """
         try:
             self.container.reload()
-        except docker.errors.NotFound:
+        except (docker.errors.NotFound, AttributeError):
             self.log.error("Container not found")
             self.log.debug(f"- task id: {self.task_id}")
             self.log.debug(f"- result id: {self.task_id}")
@@ -530,7 +533,6 @@ class DockerTaskManager(DockerBaseManager):
             db_labels.append(label)
         environment_variables['DB_LABELS'] = ','.join(db_labels)
 
-        self.log.debug(f"environment: {environment_variables}")
 
         # Load additional environment variables
         if algorithm_env:
@@ -538,4 +540,103 @@ class DockerTaskManager(DockerBaseManager):
                 {**environment_variables, **algorithm_env}
             self.log.info('Custom environment variables are loaded!')
             self.log.debug(f"custom environment: {algorithm_env}")
+
+        # validate whether environment variables don't contain any illegal
+        # characters
+        self._validate_environment_variables(environment_variables)
+
+        # print the environment before encoding it so that the user can see
+        # what is passed to the container
+        self.log.debug(f"environment: {environment_variables}")
+
+        # encode environment variables to prevent special characters from being
+        # possibly code injection
+        environment_variables = self._encode_environment_variables(
+            environment_variables)
+
         return environment_variables
+
+    def _validate_environment_variables(self,
+                                        environment_variables: dict) -> None:
+        """
+        Check whether environment variables don't contain any illegal
+        characters
+
+        Parameters
+        ----------
+        environment_variables: dict
+            Environment variables required to run algorithm
+
+        Raises
+        ------
+        PermanentAlgorithmStartFail
+            If environment variables contain illegal characters
+        """
+        msg = None
+        for key in environment_variables:
+            if not key.isidentifier():
+                msg = (
+                    f"Environment variable '{key}' is invalid: environment "
+                    " variable names should only contain number, letters and "
+                    " underscores, and start with a letter."
+                )
+            elif key in ENV_VARS_NOT_SETTABLE_BY_NODE:
+                msg = (
+                    f"Environment variable '{key}' cannot be set: this "
+                    "variable is set in the algorithm Dockerfile and cannot "
+                    "be overwritten."
+                )
+            if msg:
+                self.status = TaskStatus.FAILED
+                self.log.error(msg)
+                raise PermanentAlgorithmStartFail(msg)
+
+    def _encode_environment_variables(self, environment_variables: dict) \
+            -> dict:
+        """
+        Encode environment variable values to ensure that special characters
+        are not interpretable as code while transferring them to the algorithm
+        container.
+
+        Parameters
+        ----------
+        environment_variables: dict
+            Environment variables required to run algorithm
+
+        Returns
+        -------
+        dict:
+            Environment variables with encoded values
+        """
+        def _encode(string: str) -> str:
+            """ Encode env var value
+
+            We first encode to bytes, then to b32 and then decode to a string.
+            Finally, '=' is replaced by less sensitve characters to prevent
+            issues with interpreting the encoded string in the env var value.
+
+            Parameters
+            ----------
+            string: str
+                String to be encoded
+
+            Returns
+            -------
+            str:
+                Encoded string
+
+            Examples
+            --------
+            >>> _encode("abc")
+            'MFRGG!!!'
+            """
+            return base64.b32encode(
+                string.encode(STRING_ENCODING)
+            ).decode(STRING_ENCODING).replace('=', ENV_VAR_EQUALS_REPLACEMENT)
+
+        self.log.debug("Encoding environment variables")
+
+        encoded_environment_variables = {}
+        for key, val in environment_variables.items():
+            encoded_environment_variables[key] = _encode(val)
+        return encoded_environment_variables

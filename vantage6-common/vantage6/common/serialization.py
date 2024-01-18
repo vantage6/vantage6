@@ -1,4 +1,5 @@
 import json
+from vantage6.common.globals import STRING_ENCODING
 
 
 # TODO BvB 2023-02-03: I feel this function could be given a better name. And
@@ -17,4 +18,4 @@ def serialize(data: any) -> bytes:
     bytes
         A JSON-serialized and then encoded bytes object representing the data
     """
-    return json.dumps(data).encode()
+    return json.dumps(data).encode(STRING_ENCODING)
