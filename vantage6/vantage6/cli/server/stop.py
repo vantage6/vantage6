@@ -1,5 +1,3 @@
-import itertools
-
 import click
 import questionary as q
 import docker
@@ -16,8 +14,6 @@ from vantage6.common.globals import APPNAME
 from vantage6.cli.rabbitmq import split_rabbitmq_uri
 
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
-from vantage6.cli.context import ServerContext
-from vantage6.cli.utils import remove_file
 from vantage6.cli.server.common import get_server_context, stop_ui
 
 
@@ -109,50 +105,3 @@ def _stop_server_containers(client: DockerClient, container_name: str,
             remove_container(rabbit_container, kill=True)
             info(f"Stopped the {Fore.GREEN}{rabbit_container_name}"
                  f"{Style.RESET_ALL} container.")
-
-
-# TODO this should be refactored into its own module and get a click command
-# attached
-@click.pass_context
-def vserver_remove(
-    click_ctx: click.Context, ctx: ServerContext, name: str,
-    system_folders: bool, force: bool
-) -> None:
-    """
-    Function to remove a server.
-
-    Parameters
-    ----------
-    ctx : ServerContext
-        Server context object
-    name : str
-        Name of the server to remove
-    system_folders : bool
-        Whether to use system folders or not
-    force : bool
-        Whether to ask for confirmation before removing or not
-    """
-    check_docker_running()
-
-    # first stop server
-    click_ctx.invoke(
-        cli_server_stop, name=name, system_folders=system_folders,
-        all_servers=False
-    )
-
-    if not force:
-        if not q.confirm(
-            "This server will be deleted permanently including its "
-            "configuration. Are you sure?", default=False
-        ).ask():
-            info("Server will not be deleted")
-            exit(0)
-
-    # now remove the folders...
-    info(f"Removing configuration file {ctx.config_file}")
-    remove_file(ctx.config_file, 'configuration')
-
-    info(f"Removing log file {ctx.log_file}")
-    for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
-        handler.close()
-    remove_file(ctx.log_file, 'log')
