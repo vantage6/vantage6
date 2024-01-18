@@ -665,8 +665,12 @@ class Tasks(TaskBase):
 
         # notify nodes a new task available (only to online nodes), nodes that
         # are offline will receive this task on sign in.
-        socketio.emit('new_task', task.id, namespace='/tasks',
-                      room=f'collaboration_{task.collaboration_id}')
+        socketio.emit(
+            'new_task',
+            {'id': task.id, 'parent_id': task.parent_id},
+            namespace='/tasks',
+            room=f'collaboration_{task.collaboration_id}'
+        )
 
         # add some logging
         log.info(f"New task for collaboration '{task.collaboration.name}'")

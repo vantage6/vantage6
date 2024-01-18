@@ -280,15 +280,15 @@ class Node:
         task_id : int
             Task identifier
         """
-        # fetch (open) result for the node with the task_id
-        task_results = self.client.run.list(
+        # fetch open algorithm runs for this node
+        task_runs = self.client.run.list(
             include_task=True,
             state='open',
             task_id=task_id
         )
 
         # add the tasks to the queue
-        self.__add_tasks_to_queue(task_results)
+        self.__add_tasks_to_queue(task_runs)
 
     def __add_tasks_to_queue(self, task_results: list[dict]) -> None:
         """
