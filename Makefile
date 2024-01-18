@@ -203,5 +203,9 @@ publish:
 test:
 	coverage run --source=vantage6 --omit="utest.py","*.html","*.htm","*.txt","*.yml","*.yaml" utest.py
 
+# the READTHEDOCS envvar is set for this target to circumvent a monkey patch
+# that would get stuck indefinitely when running the sphinx-autobuild package.
+# Note that the value of the envvar does not matter, just that it is set.
+devdocs: export READTHEDOCS = Yes
 devdocs:
 	sphinx-autobuild docs docs/_build/html --watch .
