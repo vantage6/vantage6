@@ -57,7 +57,13 @@ setup(
         f'vantage6 == {version_ns["__version__"]}',
         f'vantage6-common == {version_ns["__version__"]}',
     ],
-    extras_require={"dev": ["coverage==6.4.4"]},
+    extras_require={
+        "dev": [
+            "coverage==6.4.4",
+            "black==23.12.1",
+            "pre-commit==3.6.0",
+        ]
+    },
     package_data={
         "vantage6.server": [
             "__build__",

@@ -36,6 +36,12 @@ setup(
         "pyfiglet==0.8.post1",
         f'vantage6-common=={version_ns["__version__"]}',
     ],
+    extras_require={
+        "dev": [
+            "black==23.12.1",
+            "pre-commit==3.6.0",
+        ]
+    },
     tests_require=["pytest"],
     package_data={
         "vantage6.client": [
