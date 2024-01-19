@@ -16,11 +16,9 @@ LABEL maintainer="Frank Martin <f.martin@iknl.nl>"
 RUN apt update -y
 RUN apt upgrade -y
 
-# TODO 2024-01-09 check if this custom install is still needed. It was used to
-# fix problems with the sqlalchemy dependency psycopg2 at some point.
 # # Fix DB issue
-# RUN apt install python-psycopg2 -y
-# RUN pip install psycopg2-binary
+RUN apt install python-psycopg2 -y
+RUN pip install psycopg2-binary
 
 # copy source
 COPY . /vantage6
