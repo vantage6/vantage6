@@ -1,6 +1,15 @@
 Release notes
 =============
 
+4.2.1
+-----
+
+*19 January 2024*
+
+- **Bugfix**
+ - Add back binary installation of ``psycopg2`` to support Postgres databases
+   (`PR#932 <https://github.com/vantage6/vantage6/pull/932>`_).
+
 4.2.0
 -----
 
