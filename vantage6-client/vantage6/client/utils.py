@@ -1,4 +1,3 @@
-
 from enum import Enum
 
 
@@ -19,8 +18,9 @@ class LogLevel(Enum):
     CRITICAL: str
         The critical log level
     """
-    DEBUG = 'DEBUG'
-    INFO = 'INFO'
-    WARN = 'WARN'
-    ERROR = 'ERROR'
-    CRITICAL = 'CRITICAL'
+
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARN = "WARN"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"

@@ -17,9 +17,9 @@ from vantage6.cli.rabbitmq.definitions import RABBITMQ_DEFINITIONS
 from vantage6.cli.globals import RABBIT_TIMEOUT
 from vantage6.cli.rabbitmq import split_rabbitmq_uri
 
-DEFAULT_RABBIT_IMAGE = 'harbor2.vantage6.ai/infrastructure/rabbitmq'
-RABBIT_CONFIG = 'rabbitmq.config'
-RABBIT_DIR = 'rabbitmq'
+DEFAULT_RABBIT_IMAGE = "harbor2.vantage6.ai/infrastructure/rabbitmq"
+RABBIT_CONFIG = "rabbitmq.config"
+RABBIT_DIR = "rabbitmq"
 
 
 class RabbitMQManager:
@@ -36,17 +36,19 @@ class RabbitMQManager:
         Docker image to use for RabbitMQ container. By default, the image
         harbor2.vantage6.ai/infrastructure/rabbitmq is used.
     """
-    def __init__(self, ctx: ServerContext, network_mgr: NetworkManager,
-                 image: str = None) -> None:
+
+    def __init__(
+        self, ctx: ServerContext, network_mgr: NetworkManager, image: str = None
+    ) -> None:
         self.ctx = ctx
-        self.queue_uri = self.ctx.config['rabbitmq'].get('uri')
+        self.queue_uri = self.ctx.config["rabbitmq"].get("uri")
         rabbit_splitted = split_rabbitmq_uri(self.queue_uri)
-        self.rabbit_user = rabbit_splitted['user']
-        self.rabbit_pass = rabbit_splitted['password']
-        self.vhost = rabbit_splitted['vhost']
-        self.port = rabbit_splitted['port']
-        self.host = rabbit_splitted['host']
-        self.definitions_file = Path(self.ctx.data_dir / 'definitions.json')
+        self.rabbit_user = rabbit_splitted["user"]
+        self.rabbit_pass = rabbit_splitted["password"]
+        self.vhost = rabbit_splitted["vhost"]
+        self.port = rabbit_splitted["port"]
+        self.host = rabbit_splitted["host"]
+        self.definitions_file = Path(self.ctx.data_dir / "definitions.json")
         self.network_mgr = network_mgr
 
         self.docker = docker.from_env()
@@ -64,19 +66,16 @@ class RabbitMQManager:
         # same for 15672 in container to 8080 on host
         # TODO check if these ports are not already used on the host
         ports = {
-            f'{self.port}/tcp': self.port,
+            f"{self.port}/tcp": self.port,
             # TODO this is for the management tool, do we keep this? Not used
             # at the moment..
-            '15672/tcp': 8080
+            "15672/tcp": 8080,
         }
 
         # check if a RabbitMQ container is already running
-        self.rabbit_container = get_container(
-            docker_client=self.docker, name=self.host
-        )
+        self.rabbit_container = get_container(docker_client=self.docker, name=self.host)
         if self.rabbit_container:
-            info("RabbitMQ is already running! Linking the server to that "
-                 "queue")
+            info("RabbitMQ is already running! Linking the server to that " "queue")
             if not self.network_mgr.contains(self.rabbit_container):
                 self.network_mgr.connect(self.rabbit_container)
             return
@@ -93,14 +92,14 @@ class RabbitMQManager:
             labels={
                 f"{APPNAME}-type": "rabbitmq",
             },
-            network=self.network_mgr.network_name
+            network=self.network_mgr.network_name,
         )
 
         # Wait until RabbitMQ is up before continuing with other stuff
         self._wait_for_startup()
 
     def _wait_for_startup(self) -> None:
-        """ Wait until RabbitMQ has been initialized """
+        """Wait until RabbitMQ has been initialized"""
         interval = 10
         attempts = int((RABBIT_TIMEOUT + interval) / interval)
         is_running = False
@@ -144,12 +143,11 @@ class RabbitMQManager:
         rabbit_definitions = self._get_rabbitmq_definitions()
 
         # write the RabbitMQ definition to file(s)
-        with open(self.definitions_file, 'w') as f:
+        with open(self.definitions_file, "w") as f:
             json.dump(rabbit_definitions, f, indent=2)
 
         # write RabbitMQ config to file
-        rabbit_conf = \
-            Path(__file__).parent.resolve() / RABBIT_CONFIG
+        rabbit_conf = Path(__file__).parent.resolve() / RABBIT_CONFIG
         shutil.copyfile(rabbit_conf, self.ctx.data_dir / RABBIT_CONFIG)
 
         # check if a directory for persistent RabbitMQ storage exists,
@@ -160,14 +158,12 @@ class RabbitMQManager:
 
         return {
             self.definitions_file: {
-                'bind': '/etc/rabbitmq/definitions.json', 'mode': 'ro'
+                "bind": "/etc/rabbitmq/definitions.json",
+                "mode": "ro",
             },
-            self.ctx.data_dir / RABBIT_CONFIG: {
-                'bind': '/etc/rabbitmq/rabbitmq.config', 'mode': 'ro'
-            },
-            rabbit_data_dir: {
-                'bind': '/var/lib/rabbitmq', 'mode': 'rw'
-            }
+            self.ctx.data_dir
+            / RABBIT_CONFIG: {"bind": "/etc/rabbitmq/rabbitmq.config", "mode": "ro"},
+            rabbit_data_dir: {"bind": "/var/lib/rabbitmq", "mode": "rw"},
         }
 
     def _get_rabbitmq_definitions(self) -> dict:
@@ -181,12 +177,13 @@ class RabbitMQManager:
             startup of RabbitMQ
         """
         rabbit_definitions = RABBITMQ_DEFINITIONS
-        rabbit_definitions['users'][0]['name'] = self.rabbit_user
-        rabbit_definitions['permissions'][0]['user'] = self.rabbit_user
-        rabbit_definitions['users'][0]['password_hash'] = \
-            self._get_hashed_pw(self.rabbit_pass)
-        rabbit_definitions['vhosts'][0]['name'] = self.vhost
-        rabbit_definitions['permissions'][0]['vhost'] = self.vhost
+        rabbit_definitions["users"][0]["name"] = self.rabbit_user
+        rabbit_definitions["permissions"][0]["user"] = self.rabbit_user
+        rabbit_definitions["users"][0]["password_hash"] = self._get_hashed_pw(
+            self.rabbit_pass
+        )
+        rabbit_definitions["vhosts"][0]["name"] = self.vhost
+        rabbit_definitions["permissions"][0]["vhost"] = self.vhost
         return rabbit_definitions
 
     def _get_hashed_pw(self, pw: str) -> str:
@@ -208,7 +205,7 @@ class RabbitMQManager:
         salt = os.urandom(4)
 
         # Concatenate that with the UTF-8 representation of the password
-        tmp0 = salt + pw.encode('utf-8')
+        tmp0 = salt + pw.encode("utf-8")
 
         # Take the SHA256 hash and get the bytes back
         tmp1 = hashlib.sha256(tmp0).digest()
@@ -218,4 +215,4 @@ class RabbitMQManager:
 
         # convert to base64 encoding:
         pass_hash = base64.b64encode(salted_hash)
-        return pass_hash.decode('utf-8')
+        return pass_hash.decode("utf-8")

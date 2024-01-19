@@ -29,7 +29,7 @@ def logger_name(special__name__: str):
     str
         The name of the logger.
     """
-    log_name = special__name__.split('.')[-1]
+    log_name = special__name__.split(".")[-1]
     if len(log_name) > 14:
         log_name = log_name[:11] + ".."
     return log_name
@@ -52,6 +52,7 @@ class WhoAmI(typing.NamedTuple):
     organization_id: int
         The id of the organization of the authenticatable.
     """
+
     type_: str
     id_: int
     name: str
@@ -59,12 +60,14 @@ class WhoAmI(typing.NamedTuple):
     organization_id: int
 
     def __repr__(self) -> str:
-        return (f"<WhoAmI "
-                f"name={self.name}, "
-                f"type={self.type_}, "
-                f"organization={self.organization_name}, "
-                f"(id={self.organization_id})"
-                ">")
+        return (
+            f"<WhoAmI "
+            f"name={self.name}, "
+            f"type={self.type_}, "
+            f"organization={self.organization_name}, "
+            f"(id={self.organization_id})"
+            ">"
+        )
 
 
 class Singleton(type):
@@ -72,6 +75,7 @@ class Singleton(type):
     Singleton metaclass. It allows us to create just a single instance of a
     class to which it is the metaclass.
     """
+
     _instances = {}
 
     def __call__(cls, *args, **kwargs) -> object:
@@ -192,7 +196,7 @@ def debug(msg: str) -> None:
 
 
 class ClickLogger:
-    """"Logs output to the click interface."""
+    """ "Logs output to the click interface."""
 
     @staticmethod
     def info(msg: str) -> None:
@@ -262,8 +266,9 @@ def check_config_writeable(system_folders: bool = False) -> bool:
     config_dir = get_config_path(dirs, system_folders=system_folders)
     w_ok = True
     if not os.path.isdir(config_dir):
-        warning(f"Target directory '{config_dir}' for configuration file does "
-                "not exist.")
+        warning(
+            f"Target directory '{config_dir}' for configuration file does " "not exist."
+        )
         w_ok = False
     elif not os.access(config_dir, os.W_OK):
         warning(f"No write permissions at '{config_dir}'.")
@@ -272,8 +277,7 @@ def check_config_writeable(system_folders: bool = False) -> bool:
     return w_ok
 
 
-def get_config_path(dirs: appdirs.AppDirs,
-                    system_folders: bool = False) -> str:
+def get_config_path(dirs: appdirs.AppDirs, system_folders: bool = False) -> str:
     """
     Get the path to the configuration directory.
 
@@ -294,8 +298,8 @@ def get_config_path(dirs: appdirs.AppDirs,
         # the Appdirs package prefers to store the config in /etc/xdg, but
         # we chose instead to put it in /etc/vantage6. We think this is more
         # in accordance with the Unix File Hierarchy Standard for config files.
-        if 'xdg' in config_dir:
-            config_dir = f'/etc/{APPNAME}'
+        if "xdg" in config_dir:
+            config_dir = f"/etc/{APPNAME}"
         return config_dir
     else:
         return dirs.user_config_dir

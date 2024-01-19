@@ -12,12 +12,20 @@ from vantage6.cli.node.common import find_running_node_names
 
 @click.command()
 @click.option("-n", "--name", default=None, help="Configuration name")
-@click.option('--system', 'system_folders', flag_value=True,
-              help="Search for configuration in system folders rather than "
-                   "user folders")
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL,
-              help="Search for configuration in user folders rather than "
-                   "system folders. This is the default")
+@click.option(
+    "--system",
+    "system_folders",
+    flag_value=True,
+    help="Search for configuration in system folders rather than " "user folders",
+)
+@click.option(
+    "--user",
+    "system_folders",
+    flag_value=False,
+    default=N_FOL,
+    help="Search for configuration in user folders rather than "
+    "system folders. This is the default",
+)
 def cli_node_version(name: str, system_folders: bool) -> None:
     """
     Returns current version of a vantage6 node.
@@ -29,19 +37,21 @@ def cli_node_version(name: str, system_folders: bool) -> None:
 
     if not name:
         if not running_node_names:
-            error("No nodes are running! You can only check the version for "
-                  "nodes that are running")
+            error(
+                "No nodes are running! You can only check the version for "
+                "nodes that are running"
+            )
             exit(1)
-        name = q.select("Select the node you wish to inspect:",
-                        choices=running_node_names).ask()
+        name = q.select(
+            "Select the node you wish to inspect:", choices=running_node_names
+        ).ask()
     else:
         post_fix = "system" if system_folders else "user"
         name = f"{APPNAME}-{name}-{post_fix}"
 
     if name in running_node_names:
         container = client.containers.get(name)
-        version = container.exec_run(cmd='vnode-local version', stdout=True)
-        click.echo(
-            {"node": version.output.decode('utf-8'), "cli": __version__})
+        version = container.exec_run(cmd="vnode-local version", stdout=True)
+        click.echo({"node": version.output.decode("utf-8"), "cli": __version__})
     else:
         error(f"Node {name} is not running! Cannot provide version...")

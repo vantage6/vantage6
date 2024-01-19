@@ -41,7 +41,9 @@ from enum import Enum
 
 from vantage6.common import logger_name
 from vantage6.common.docker.addons import (
-    ContainerKillListener, check_docker_running, running_in_docker
+    ContainerKillListener,
+    check_docker_running,
+    running_in_docker,
 )
 from vantage6.common.globals import VPN_CONFIG_FILE, PING_INTERVAL_SECONDS
 from vantage6.common.exceptions import AuthenticationException
@@ -51,8 +53,10 @@ from vantage6.common.log import get_file_logger
 from vantage6.cli.context import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.globals import (
-    NODE_PROXY_SERVER_HOSTNAME, SLEEP_BTWN_NODE_LOGIN_TRIES,
-    TIME_LIMIT_RETRY_CONNECT_NODE, TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET
+    NODE_PROXY_SERVER_HOSTNAME,
+    SLEEP_BTWN_NODE_LOGIN_TRIES,
+    TIME_LIMIT_RETRY_CONNECT_NODE,
+    TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET,
 )
 from vantage6.common.client.node_client import NodeClient
 from vantage6.node import proxy_server
@@ -84,8 +88,8 @@ class Node:
         Application context object.
 
     """
-    def __init__(self, ctx: NodeContext | DockerNodeContext):
 
+    def __init__(self, ctx: NodeContext | DockerNodeContext):
         self.log = logging.getLogger(logger_name(__name__))
         self.ctx = ctx
 
@@ -103,15 +107,15 @@ class Node:
         check_docker_running()
 
         self.config = self.ctx.config
-        self.debug: dict = self.config.get('debug', {})
+        self.debug: dict = self.config.get("debug", {})
         self.queue = queue.Queue()
         self._using_encryption = None
 
         # initialize Node connection to the server
         self.client = NodeClient(
-            host=self.config.get('server_url'),
-            port=self.config.get('port'),
-            path=self.config.get('api_path')
+            host=self.config.get("server_url"),
+            port=self.config.get("port"),
+            path=self.config.get("api_path"),
         )
 
         self.log.info(f"Connecting server: {self.client.base_path}")
@@ -144,8 +148,7 @@ class Node:
         self._set_task_dir(self.ctx)
 
         # Setup VPN connection
-        self.vpn_manager = self.setup_vpn_connection(
-            isolated_network_mgr, self.ctx)
+        self.vpn_manager = self.setup_vpn_connection(isolated_network_mgr, self.ctx)
 
         # Create SSH tunnel according to the node configuration
         self.ssh_tunnels = self.setup_ssh_tunnels(isolated_network_mgr)
@@ -161,7 +164,7 @@ class Node:
             vpn_manager=self.vpn_manager,
             tasks_dir=self.__tasks_dir,
             client=self.client,
-            proxy=self.squid
+            proxy=self.squid,
         )
 
         # Create a long-lasting websocket connection.
@@ -173,7 +176,7 @@ class Node:
         if self.ctx.running_in_docker:
             isolated_network_mgr.connect(
                 container_name=self.ctx.docker_container_name,
-                aliases=[NODE_PROXY_SERVER_HOSTNAME]
+                aliases=[NODE_PROXY_SERVER_HOSTNAME],
             )
 
         # Connect any docker services specified in the configuration file to
@@ -191,7 +194,7 @@ class Node:
         t = Thread(target=self.__listening_worker, daemon=True)
         t.start()
 
-        self.log.info('Init complete')
+        self.log.info("Init complete")
 
     def __proxy_server_worker(self) -> None:
         """
@@ -208,7 +211,7 @@ class Node:
             # If we're running non-dockerized, assume that the proxy is
             # accessible from within the docker algorithm container on
             # host.docker.internal.
-            default_proxy_host = 'host.docker.internal'
+            default_proxy_host = "host.docker.internal"
 
         # If PROXY_SERVER_HOST was set in the environment, it overrides our
         # value.
@@ -228,38 +231,37 @@ class Node:
         # set up proxy server logging
         log_level = getattr(logging, self.config["logging"]["level"].upper())
         self.proxy_log = get_file_logger(
-            'proxy_server', self.ctx.proxy_log_file, log_level_file=log_level
+            "proxy_server", self.ctx.proxy_log_file, log_level_file=log_level
         )
 
         # this is where we try to find a port for the proxyserver
         for try_number in range(5):
-            self.log.info(
-                f"Starting proxyserver at '{proxy_host}:{proxy_port}'")
-            http_server = WSGIServer(('0.0.0.0', proxy_port), proxy_server.app,
-                                     log=self.proxy_log)
+            self.log.info(f"Starting proxyserver at '{proxy_host}:{proxy_port}'")
+            http_server = WSGIServer(
+                ("0.0.0.0", proxy_port), proxy_server.app, log=self.proxy_log
+            )
 
             try:
                 http_server.serve_forever()
 
             except OSError as e:
-                self.log.debug(f'Error during attempt {try_number}')
-                self.log.debug(f'{type(e)}: {e}')
+                self.log.debug(f"Error during attempt {try_number}")
+                self.log.debug(f"{type(e)}: {e}")
 
                 if e.errno == 48:
                     proxy_port = random.randint(2048, 16384)
-                    self.log.critical(
-                        f"Retrying with a different port: {proxy_port}")
-                    os.environ['PROXY_SERVER_PORT'] = str(proxy_port)
+                    self.log.critical(f"Retrying with a different port: {proxy_port}")
+                    os.environ["PROXY_SERVER_PORT"] = str(proxy_port)
 
                 else:
                     raise
 
             except Exception as e:
-                self.log.error('Proxyserver could not be started or crashed!')
+                self.log.error("Proxyserver could not be started or crashed!")
                 self.log.error(e)
 
     def sync_task_queue_with_server(self) -> None:
-        """ Get all unprocessed tasks from the server for this node."""
+        """Get all unprocessed tasks from the server for this node."""
         assert self.client.cryptor, "Encrpytion has not been setup"
 
         # request open tasks from the server
@@ -282,9 +284,7 @@ class Node:
         """
         # fetch open algorithm runs for this node
         task_runs = self.client.run.list(
-            include_task=True,
-            state='open',
-            task_id=task_id
+            include_task=True, state="open", task_id=task_id
         )
 
         # add the tasks to the queue
@@ -302,7 +302,7 @@ class Node:
         """
         for task_result in task_results:
             try:
-                if not self.__docker.is_running(task_result['id']):
+                if not self.__docker.is_running(task_result["id"]):
                     self.queue.put(task_result)
                 else:
                     self.log.info(
@@ -323,16 +323,13 @@ class Node:
         task_incl_run : dict
             A dictionary with information required to run the algorithm
         """
-        task = task_incl_run['task']
+        task = task_incl_run["task"]
         self.log.info("Starting task {id} - {name}".format(**task))
 
         # notify that we are processing this task
         self.client.set_task_start_time(task_incl_run["id"])
 
-        token = self.client.request_token_for_container(
-            task["id"],
-            task["image"]
-        )
+        token = self.client.request_token_for_container(task["id"], task["image"])
         token = token["container_token"]
 
         # create a temporary volume for each job_id
@@ -343,8 +340,8 @@ class Node:
         # automatically marshalled? This causes trouble, so we'll serialize it
         # again.
         # FIXME: should probably find & fix the root cause?
-        if type(task_incl_run['input']) == dict:
-            task_incl_run['input'] = json.dumps(task_incl_run['input'])
+        if type(task_incl_run["input"]) == dict:
+            task_incl_run["input"] = json.dumps(task_incl_run["input"])
 
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
@@ -352,49 +349,46 @@ class Node:
             run_id=task_incl_run["id"],
             task_info=task,
             image=task["image"],
-            docker_input=task_incl_run['input'],
+            docker_input=task_incl_run["input"],
             tmp_vol_name=vol_name,
             token=token,
-            databases_to_use=task.get('databases', [])
+            databases_to_use=task.get("databases", []),
         )
 
         # save task status to the server
-        update = {'status': task_status}
+        update = {"status": task_status}
         if task_status == TaskStatus.NOT_ALLOWED:
             # set finished_at to now, so that the task is not picked up again
             # (as the task is not started at all, unlike other crashes, it will
             # never finish and hence not be set to finished)
-            update['finished_at'] = datetime.datetime.now().isoformat()
-        self.client.run.patch(
-            id_=task_incl_run['id'], data=update
-        )
+            update["finished_at"] = datetime.datetime.now().isoformat()
+        self.client.run.patch(id_=task_incl_run["id"], data=update)
 
         # ensure that the /tasks namespace is connected. This may take a while
         # (usually < 5s) when the socket just (re)connected
         MAX_ATTEMPTS = 30
         retries = 0
-        while '/tasks' not in self.socketIO.namespaces and \
-                retries < MAX_ATTEMPTS:
+        while "/tasks" not in self.socketIO.namespaces and retries < MAX_ATTEMPTS:
             retries += 1
-            self.log.debug('Waiting for /tasks namespace to connect...')
+            self.log.debug("Waiting for /tasks namespace to connect...")
             time.sleep(1)
-        self.log.debug('Connected to /tasks namespace')
+        self.log.debug("Connected to /tasks namespace")
         # in case the namespace is still not connected, the socket notification
         # will not be sent to other nodes, but the task will still be processed
 
         # send socket event to alert everyone of task status change
         self.socketIO.emit(
-            'algorithm_status_change',
+            "algorithm_status_change",
             data={
-                'node_id': self.client.whoami.id_,
-                'status': task_status,
-                'run_id': task_incl_run['id'],
-                'task_id': task['id'],
-                'collaboration_id': self.client.collaboration_id,
-                'organization_id': self.client.whoami.organization_id,
-                'parent_id': get_parent_id(task),
+                "node_id": self.client.whoami.id_,
+                "status": task_status,
+                "run_id": task_incl_run["id"],
+                "task_id": task["id"],
+                "collaboration_id": self.client.collaboration_id,
+                "organization_id": self.client.whoami.organization_id,
+                "parent_id": get_parent_id(task),
             },
-            namespace='/tasks',
+            namespace="/tasks",
         )
 
         if vpn_ports:
@@ -402,12 +396,11 @@ class Node:
             # to the algorithm container. First delete any existing port
             # assignments in case algorithm has crashed
             self.client.request(
-                'port', params={'run_id': task_incl_run['id']},
-                method="DELETE"
+                "port", params={"run_id": task_incl_run["id"]}, method="DELETE"
             )
             for port in vpn_ports:
-                port['run_id'] = task_incl_run['id']
-                self.client.request('port', method='POST', json=port)
+                port["run_id"] = task_incl_run["id"]
+                self.client.request("port", method="POST", json=port)
 
     def __listening_worker(self) -> None:
         """
@@ -427,7 +420,7 @@ class Node:
             try:
                 self.socketIO.wait()
             except Exception as e:
-                self.log.error('Listening thread had an exception')
+                self.log.error("Listening thread had an exception")
                 self.log.debug(e)
 
     def __speaking_worker(self) -> None:
@@ -447,29 +440,25 @@ class Node:
 
                 # notify socket channel of algorithm status change
                 self.socketIO.emit(
-                    'algorithm_status_change',
+                    "algorithm_status_change",
                     data={
-                        'node_id': self.client.whoami.id_,
-                        'status': results.status,
-                        'run_id': results.run_id,
-                        'task_id': results.task_id,
-                        'collaboration_id': self.client.collaboration_id,
-                        'organization_id':
-                            self.client.whoami.organization_id,
-                        'parent_id': results.parent_id,
+                        "node_id": self.client.whoami.id_,
+                        "status": results.status,
+                        "run_id": results.run_id,
+                        "task_id": results.task_id,
+                        "collaboration_id": self.client.collaboration_id,
+                        "organization_id": self.client.whoami.organization_id,
+                        "parent_id": results.parent_id,
                     },
-                    namespace='/tasks',
+                    namespace="/tasks",
                 )
 
-                self.log.info(
-                    f"Sending result (run={results.run_id}) to the server!")
+                self.log.info(f"Sending result (run={results.run_id}) to the server!")
 
                 # FIXME: why are we retrieving the result *again*? Shouldn't we
                 # just store the task_id when retrieving the task the first
                 # time?
-                response = self.client.request(
-                    f"run/{results.run_id}"
-                )
+                response = self.client.request(f"run/{results.run_id}")
                 task_id = response.get("task").get("id")
 
                 if not task_id:
@@ -491,21 +480,20 @@ class Node:
                 self.client.run.patch(
                     id_=results.run_id,
                     data={
-                        'result': results.data,
-                        'log': results.logs,
-                        'status': results.status,
-                        'finished_at': datetime.datetime.now().isoformat(),
+                        "result": results.data,
+                        "log": results.logs,
+                        "status": results.status,
+                        "finished_at": datetime.datetime.now().isoformat(),
                     },
                     init_org_id=init_org.get("id"),
                 )
             except Exception:
-                self.log.exception('Speaking thread had an exception')
+                self.log.exception("Speaking thread had an exception")
 
     def __print_connection_error_logs(self):
-        """ Print error message when node cannot find the server """
-        self.log.warning(
-            "Could not connect to the server. Retrying in 10 seconds")
-        if self.client.host == 'http://localhost' and running_in_docker():
+        """Print error message when node cannot find the server"""
+        self.log.warning("Could not connect to the server. Retrying in 10 seconds")
+        if self.client.host == "http://localhost" and running_in_docker():
             self.log.warn(
                 f"You are trying to reach the server at {self.client.host}."
                 " As your node is running inside a Docker container, it cannot"
@@ -514,8 +502,9 @@ class Node:
                 "(Windows/MacOS) or http://172.17.0.1 (Linux)."
             )
         else:
-            self.log.debug("Are you sure the server can be reached at "
-                           f"{self.client.base_path}?")
+            self.log.debug(
+                "Are you sure the server can be reached at " f"{self.client.base_path}?"
+            )
 
     def authenticate(self) -> None:
         """
@@ -542,8 +531,10 @@ class Node:
                 self.__print_connection_error_logs()
                 time.sleep(SLEEP_BTWN_NODE_LOGIN_TRIES)
             except Exception as e:
-                msg = ('Authentication failed. Retrying in '
-                       f'{SLEEP_BTWN_NODE_LOGIN_TRIES} seconds!')
+                msg = (
+                    "Authentication failed. Retrying in "
+                    f"{SLEEP_BTWN_NODE_LOGIN_TRIES} seconds!"
+                )
                 self.log.warning(msg)
                 self.log.debug(e)
                 time.sleep(SLEEP_BTWN_NODE_LOGIN_TRIES)
@@ -556,7 +547,7 @@ class Node:
         if success:
             self.log.info(f"Node name: {self.client.name}")
         else:
-            self.log.critical('Unable to authenticate. Exiting')
+            self.log.critical("Unable to authenticate. Exiting")
             exit(1)
 
         # start thread to keep the connection alive by refreshing the token
@@ -567,14 +558,14 @@ class Node:
 
         # FIXME: Code duplication: vantage6/cli/node.py uses a lot of the same
         #   logic. Suggest moving this to ctx.get_private_key()
-        filename = self.config['encryption']["private_key"]
+        filename = self.config["encryption"]["private_key"]
 
         # filename may be set to an empty string
         if not filename:
-            filename = 'private_key.pem'
+            filename = "private_key.pem"
 
         # If we're running dockerized, the location may have been overridden
-        filename = os.environ.get('PRIVATE_KEY', filename)
+        filename = os.environ.get("PRIVATE_KEY", filename)
 
         # If ctx.get_data_file() receives an absolute path, its returned as-is
         fullpath = Path(self.ctx.get_data_file(filename))
@@ -582,21 +573,21 @@ class Node:
         return fullpath
 
     def setup_encryption(self) -> None:
-        """ Setup encryption if the node is part of encrypted collaboration """
+        """Setup encryption if the node is part of encrypted collaboration"""
         encrypted_collaboration = self.client.is_encrypted_collaboration()
-        encrypted_node = self.config['encryption']["enabled"]
+        encrypted_node = self.config["encryption"]["enabled"]
 
         if encrypted_collaboration != encrypted_node:
             # You can't force it if it just ain't right, you know?
             raise Exception("Expectations on encryption don't match?!")
 
         if encrypted_collaboration:
-            self.log.warn('Enabling encryption!')
+            self.log.warn("Enabling encryption!")
             private_key_file = self.private_key_filename()
             self.client.setup_encryption(private_key_file)
 
         else:
-            self.log.warn('Disabling encryption!')
+            self.log.warn("Disabling encryption!")
             self.client.setup_encryption(None)
 
     def _set_task_dir(self, ctx) -> None:
@@ -632,16 +623,15 @@ class Node:
         # We'll only do this if we're running outside docker, otherwise we
         # would create '/data' on the data volume.
         if not ctx.running_in_docker:
-            self.__tasks_dir = ctx.data_dir / 'data'
+            self.__tasks_dir = ctx.data_dir / "data"
             os.makedirs(self.__tasks_dir, exist_ok=True)
-            self.__vpn_dir = ctx.data_dir / 'vpn'
+            self.__vpn_dir = ctx.data_dir / "vpn"
             os.makedirs(self.__vpn_dir, exist_ok=True)
         else:
             self.__tasks_dir = ctx.data_dir
             self.__vpn_dir = ctx.vpn_dir
 
-    def setup_squid_proxy(self, isolated_network_mgr: NetworkManager) \
-            -> Squid:
+    def setup_squid_proxy(self, isolated_network_mgr: NetworkManager) -> Squid:
         """
         Initiates a Squid proxy if configured in the config.yml
 
@@ -670,32 +660,41 @@ class Node:
         Squid
             Squid proxy instance
         """
-        if 'whitelist' not in self.config:
+        if "whitelist" not in self.config:
             self.log.info("No squid proxy configured")
             return
 
-        custom_squid_image = self.config.get('images', {}).get('squid') \
-            if 'images' in self.config else None
+        custom_squid_image = (
+            self.config.get("images", {}).get("squid")
+            if "images" in self.config
+            else None
+        )
 
         self.log.info("Setting up squid proxy")
-        config = self.config['whitelist']
+        config = self.config["whitelist"]
 
-        volume = self.ctx.docker_squid_volume_name if \
-            self.ctx.running_in_docker else self.ctx.data_dir
+        volume = (
+            self.ctx.docker_squid_volume_name
+            if self.ctx.running_in_docker
+            else self.ctx.data_dir
+        )
 
         try:
-            squid = Squid(isolated_network_mgr, config, self.ctx.name, volume,
-                          custom_squid_image)
+            squid = Squid(
+                isolated_network_mgr, config, self.ctx.name, volume, custom_squid_image
+            )
         except Exception as e:
-            self.log.critical("Squid proxy failed to initialize. "
-                              "Continuing without.")
+            self.log.critical(
+                "Squid proxy failed to initialize. " "Continuing without."
+            )
             self.log.debug(e, exc_info=True)
             squid = None
 
         return squid
 
-    def setup_ssh_tunnels(self, isolated_network_mgr: NetworkManager) \
-            -> list[SSHTunnel]:
+    def setup_ssh_tunnels(
+        self, isolated_network_mgr: NetworkManager
+    ) -> list[SSHTunnel]:
         """
         Create a SSH tunnels when they are defined in the configuration file.
         For each tunnel a new container is created. The image used can be
@@ -707,14 +706,17 @@ class Node:
         isolated_network_mgr: NetworkManager
             Manager for the isolated network
         """
-        if 'ssh-tunnels' not in self.config:
+        if "ssh-tunnels" not in self.config:
             self.log.info("No SSH tunnels configured")
             return
 
-        custom_tunnel_image = self.config.get('images', {}).get('ssh-tunnel') \
-            if 'images' in self.config else None
+        custom_tunnel_image = (
+            self.config.get("images", {}).get("ssh-tunnel")
+            if "images" in self.config
+            else None
+        )
 
-        configs = self.config['ssh-tunnels']
+        configs = self.config["ssh-tunnels"]
         self.log.info(f"Setting up {len(configs)} SSH tunnels")
 
         tunnels: list[SSHTunnel] = []
@@ -726,23 +728,25 @@ class Node:
             # within a volume)
             if self.ctx.running_in_docker:
                 ssh_key = f"/mnt/ssh/{config['hostname']}.pem.tmp"
-                key_path = shutil.copy(ssh_key,
-                                       f"/mnt/ssh/{config['hostname']}.pem")
+                key_path = shutil.copy(ssh_key, f"/mnt/ssh/{config['hostname']}.pem")
                 volume = self.ctx.docker_ssh_volume_name
 
             else:
-                ssh_key = config['ssh']['identity']['key']
+                ssh_key = config["ssh"]["identity"]["key"]
 
                 volume = str(Path(ssh_key).parent)
-                key_path = shutil.copy(ssh_key,
-                                       f"{volume}/{config['hostname']}.pem")
+                key_path = shutil.copy(ssh_key, f"{volume}/{config['hostname']}.pem")
 
             os.chmod(key_path, 0o600)
 
             try:
-                new_tunnel = SSHTunnel(isolated_network_mgr, config,
-                                       self.ctx.name, volume,
-                                       custom_tunnel_image)
+                new_tunnel = SSHTunnel(
+                    isolated_network_mgr,
+                    config,
+                    self.ctx.name,
+                    volume,
+                    custom_tunnel_image,
+                )
             except Exception as e:
                 self.log.error("Error setting up SSH tunnel")
                 self.log.debug(e, exc_info=True)
@@ -752,9 +756,9 @@ class Node:
 
         return tunnels
 
-    def setup_vpn_connection(self, isolated_network_mgr: NetworkManager,
-                             ctx: DockerNodeContext | NodeContext
-                             ) -> VPNManager:
+    def setup_vpn_connection(
+        self, isolated_network_mgr: NetworkManager, ctx: DockerNodeContext | NodeContext
+    ) -> VPNManager:
         """
         Setup container which has a VPN connection
 
@@ -773,41 +777,47 @@ class Node:
         ovpn_file = os.path.join(self.__vpn_dir, VPN_CONFIG_FILE)
 
         self.log.info("Setting up VPN client container")
-        vpn_volume_name = self.ctx.docker_vpn_volume_name \
-            if ctx.running_in_docker else self.__vpn_dir
+        vpn_volume_name = (
+            self.ctx.docker_vpn_volume_name if ctx.running_in_docker else self.__vpn_dir
+        )
 
         # user can specify custom images in the configuration file
-        custom_alpine = self.config['images'].get('alpine') \
-            if 'images' in self.config else None
-        custom_vpn_client = self.config['images'].get('vpn_client') \
-            if 'images' in self.config else None
-        custom_network = self.config['images'].get('network_config') \
-            if 'images' in self.config else None
+        custom_alpine = (
+            self.config["images"].get("alpine") if "images" in self.config else None
+        )
+        custom_vpn_client = (
+            self.config["images"].get("vpn_client") if "images" in self.config else None
+        )
+        custom_network = (
+            self.config["images"].get("network_config")
+            if "images" in self.config
+            else None
+        )
 
         vpn_manager = VPNManager(
             isolated_network_mgr=isolated_network_mgr,
             node_name=self.ctx.name,
             node_client=self.client,
             vpn_volume_name=vpn_volume_name,
-            vpn_subnet=self.config.get('vpn_subnet'),
+            vpn_subnet=self.config.get("vpn_subnet"),
             alpine_image=custom_alpine,
             vpn_client_image=custom_vpn_client,
-            network_config_image=custom_network
+            network_config_image=custom_network,
         )
 
-        if not self.config.get('vpn_subnet'):
+        if not self.config.get("vpn_subnet"):
             self.log.warn("VPN subnet is not defined! VPN disabled.")
         elif not os.path.isfile(ovpn_file):
             # if vpn config doesn't exist, get it and write to disk
-            self._connect_vpn(vpn_manager, VPNConnectMode.REFRESH_COMPLETE,
-                              ovpn_file)
+            self._connect_vpn(vpn_manager, VPNConnectMode.REFRESH_COMPLETE, ovpn_file)
         else:
             self._connect_vpn(vpn_manager, VPNConnectMode.FIRST_TRY, ovpn_file)
 
         return vpn_manager
 
-    def _connect_vpn(self, vpn_manager: VPNManager,
-                     connect_mode: VPNConnectMode, ovpn_file: str) -> None:
+    def _connect_vpn(
+        self, vpn_manager: VPNManager, connect_mode: VPNConnectMode, ovpn_file: str
+    ) -> None:
         """
         Connect to the VPN by starting up a VPN client container. If no VPN
         config file exists, we only try once after first obtaining a config
@@ -871,7 +881,7 @@ class Node:
             return False
 
         # write ovpn config to node docker volume
-        with open(ovpn_file, 'w') as f:
+        with open(ovpn_file, "w") as f:
             f.write(ovpn_config)
         return True
 
@@ -890,37 +900,42 @@ class Node:
         Create long-lasting websocket connection with the server. The
         connection is used to receive status updates, such as new tasks.
         """
-        debug_mode = self.debug.get('socketio', False)
+        debug_mode = self.debug.get("socketio", False)
         if debug_mode:
             self.log.debug("Debug mode enabled for socketio")
-        self.socketIO = SocketIO(request_timeout=60, logger=debug_mode,
-                                 engineio_logger=debug_mode)
+        self.socketIO = SocketIO(
+            request_timeout=60, logger=debug_mode, engineio_logger=debug_mode
+        )
 
-        self.socketIO.register_namespace(NodeTaskNamespace('/tasks'))
+        self.socketIO.register_namespace(NodeTaskNamespace("/tasks"))
         NodeTaskNamespace.node_worker_ref = self
 
         self.socketIO.connect(
-            url=f'{self.client.host}:{self.client.port}',
+            url=f"{self.client.host}:{self.client.port}",
             headers=self.client.headers,
-            wait=False
+            wait=False,
         )
 
         # Log the outcome
         i = 0
         while not self.socketIO.connected:
             if i > TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET:
-                self.log.critical('Could not connect to the websocket '
-                                  'channels, do you have a slow connection?')
+                self.log.critical(
+                    "Could not connect to the websocket "
+                    "channels, do you have a slow connection?"
+                )
                 exit(1)
-            self.log.debug('Waiting for socket connection...')
+            self.log.debug("Waiting for socket connection...")
             time.sleep(1)
             i += 1
 
-        self.log.info(f'Connected to host={self.client.host} on port='
-                      f'{self.client.port}')
+        self.log.info(
+            f"Connected to host={self.client.host} on port=" f"{self.client.port}"
+        )
 
-        self.log.debug("Starting thread to ping the server to notify this node"
-                       " is online.")
+        self.log.debug(
+            "Starting thread to ping the server to notify this node" " is online."
+        )
         self.socketIO.start_background_task(self.__socket_ping_worker)
 
     def __socket_ping_worker(self) -> None:
@@ -934,11 +949,11 @@ class Node:
         while True:
             try:
                 if self.socketIO.connected:
-                    self.socketIO.emit('ping', namespace='/tasks')
+                    self.socketIO.emit("ping", namespace="/tasks")
                 else:
-                    self.log.debug('SocketIO is not connected, skipping ping')
+                    self.log.debug("SocketIO is not connected, skipping ping")
             except Exception:
-                self.log.exception('Ping thread had an exception')
+                self.log.exception("Ping thread had an exception")
             # Wait before sending next ping
             time.sleep(PING_INTERVAL_SECONDS)
 
@@ -994,27 +1009,27 @@ class Node:
             List of dictionaries with information on killed task (keys:
             run_id, task_id and parent_id)
         """
-        if kill_info['collaboration_id'] != self.client.collaboration_id:
+        if kill_info["collaboration_id"] != self.client.collaboration_id:
             self.log.debug(
                 "Not killing tasks as this node is in another collaboration."
             )
             return []
-        elif 'node_id' in kill_info and \
-                kill_info['node_id'] != self.client.whoami.id_:
+        elif "node_id" in kill_info and kill_info["node_id"] != self.client.whoami.id_:
             self.log.debug(
                 "Not killing tasks as instructions to kill tasks were directed"
-                " at another node in this collaboration.")
+                " at another node in this collaboration."
+            )
             return []
 
         # kill specific task if specified, else kill all algorithms
-        kill_list = kill_info.get('kill_list')
+        kill_list = kill_info.get("kill_list")
         killed_algos = self.__docker.kill_tasks(
             org_id=self.client.whoami.organization_id, kill_list=kill_list
         )
         # update status of killed tasks
         for killed_algo in killed_algos:
             self.client.run.patch(
-                id_=killed_algo.run_id, data={'status': TaskStatus.KILLED}
+                id_=killed_algo.run_id, data={"status": TaskStatus.KILLED}
             )
         return killed_algos
 
@@ -1026,62 +1041,61 @@ class Node:
         algorithms they are allowed to run on this node.
         """
         # check if node allows to share node details, otherwise return
-        if not self.config.get('share_config', True):
-            self.log.debug("Not sharing node configuration in accordance with "
-                           "the configuration setting.")
+        if not self.config.get("share_config", True):
+            self.log.debug(
+                "Not sharing node configuration in accordance with "
+                "the configuration setting."
+            )
             return
 
         config_to_share = {}
 
-        encryption_config = self.config.get('encryption')
+        encryption_config = self.config.get("encryption")
         if encryption_config:
-            if encryption_config.get('enabled') is not None:
-                config_to_share['encryption'] = \
-                    encryption_config.get('enabled')
+            if encryption_config.get("enabled") is not None:
+                config_to_share["encryption"] = encryption_config.get("enabled")
 
         # share node policies (e.g. who can run which algorithms)
-        policies = self.config.get('policies', {})
-        config_to_share['allowed_algorithms'] = \
-            policies.get('allowed_algorithms', 'all')
-        if policies.get('allowed_users') is not None:
-            config_to_share['allowed_users'] = policies.get('allowed_users')
-        if policies.get('allowed_organizations') is not None:
-            config_to_share['allowed_orgs'] = \
-                policies.get('allowed_organizations')
+        policies = self.config.get("policies", {})
+        config_to_share["allowed_algorithms"] = policies.get(
+            "allowed_algorithms", "all"
+        )
+        if policies.get("allowed_users") is not None:
+            config_to_share["allowed_users"] = policies.get("allowed_users")
+        if policies.get("allowed_organizations") is not None:
+            config_to_share["allowed_orgs"] = policies.get("allowed_organizations")
 
         # share node database labels, types, and column names (if they are
         # fixed as e.g. for csv file)
         labels = []
         types = {}
         col_names = {}
-        for db in self.config.get('databases', []):
-            label = db.get('label')
-            type_ = db.get('type')
+        for db in self.config.get("databases", []):
+            label = db.get("label")
+            type_ = db.get("type")
             labels.append(label)
             types[f"db_type_{label}"] = type_
-            if type_ in ('csv', 'parquet'):
-                col_names[f'columns_{label}'] = self.__docker.get_column_names(
-                    label, type_)
-        config_to_share['database_labels'] = labels
-        config_to_share['database_types'] = types
+            if type_ in ("csv", "parquet"):
+                col_names[f"columns_{label}"] = self.__docker.get_column_names(
+                    label, type_
+                )
+        config_to_share["database_labels"] = labels
+        config_to_share["database_types"] = types
         if col_names:
-            config_to_share['database_columns'] = col_names
+            config_to_share["database_columns"] = col_names
 
         self.log.debug(f"Sharing node configuration: {config_to_share}")
-        self.socketIO.emit(
-            'node_info_update', config_to_share, namespace='/tasks'
-        )
+        self.socketIO.emit("node_info_update", config_to_share, namespace="/tasks")
 
     def cleanup(self) -> None:
-
-        if hasattr(self, 'socketIO') and self.socketIO:
+        if hasattr(self, "socketIO") and self.socketIO:
             self.socketIO.disconnect()
-        if hasattr(self, 'vpn_manager') and self.vpn_manager:
+        if hasattr(self, "vpn_manager") and self.vpn_manager:
             self.vpn_manager.exit_vpn()
-        if hasattr(self, 'ssh_tunnels') and self.ssh_tunnels:
+        if hasattr(self, "ssh_tunnels") and self.ssh_tunnels:
             for tunnel in self.ssh_tunnels:
                 tunnel.stop()
-        if hasattr(self, '_Node__docker') and self.__docker:
+        if hasattr(self, "_Node__docker") and self.__docker:
             self.__docker.cleanup()
 
         self.log.info("Bye!")
@@ -1089,7 +1103,7 @@ class Node:
 
 # ------------------------------------------------------------------------------
 def run(ctx):
-    """ Start the node."""
+    """Start the node."""
 
     # initialize node, connect to the server using websockets
     node = Node(ctx)

@@ -9,8 +9,14 @@ from vantage6.cli.utils import info
 
 
 @click.command()
-@click.option('-d', '--dir', 'directory', default=None, type=str,
-              help="Directory to put the algorithm into")
+@click.option(
+    "-d",
+    "--dir",
+    "directory",
+    default=None,
+    type=str,
+    help="Directory to put the algorithm into",
+)
 def cli_algorithm_update(directory: str) -> dict:
     """Update an algorithm template
 
@@ -20,10 +26,7 @@ def cli_algorithm_update(directory: str) -> dict:
     """
     if not directory:
         default_dir = str(Path(os.getcwd()))
-        directory = q.text(
-            "Algorithm directory:",
-            default=default_dir
-        ).ask()
+        directory = q.text("Algorithm directory:", default=default_dir).ask()
 
     run_update(directory, overwrite=True)
 

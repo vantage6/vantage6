@@ -8,11 +8,19 @@ from vantage6.cli.node.common import select_node
 
 @click.command()
 @click.option("-n", "--name", default=None, help="Configuration name")
-@click.option('--system', 'system_folders', flag_value=True,
-              help="Search for the configuration in the system folders")
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL,
-              help="Search for the configuration in the user folders. This is "
-                   "the default")
+@click.option(
+    "--system",
+    "system_folders",
+    flag_value=True,
+    help="Search for the configuration in the system folders",
+)
+@click.option(
+    "--user",
+    "system_folders",
+    flag_value=False,
+    default=N_FOL,
+    help="Search for the configuration in the user folders. This is " "the default",
+)
 def cli_node_files(name: str, system_folders: bool) -> None:
     """
     Prints the location of important node files.

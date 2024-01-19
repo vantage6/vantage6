@@ -71,7 +71,7 @@ class Database(metaclass=Singleton):
         self.allow_drop_all = False
         self.URI = None
 
-    def connect(self, uri='sqlite:////tmp/test.db', allow_drop_all=False):
+    def connect(self, uri="sqlite:////tmp/test.db", allow_drop_all=False):
         """
         Connect to the database.
 
@@ -103,8 +103,7 @@ class Database(metaclass=Singleton):
         # exists it will return the same session (!). implicit access to the
         # Session (without calling it first). The scoped session is scoped to
         # the local thread the process is running in.
-        self.session_a = scoped_session(sessionmaker(autocommit=False,
-                                                     autoflush=False))
+        self.session_a = scoped_session(sessionmaker(autocommit=False, autoflush=False))
         self.session_a.configure(bind=self.engine)
 
         # because the Session factory returns the same session (if one exists
@@ -113,8 +112,7 @@ class Database(metaclass=Singleton):
         # Because the flask session is managed by the hooks `pre_request` and
         # `post request`. If we would use the same session for other tasks, the
         # session can be terminated unexpectedly.
-        self.session_b = scoped_session(sessionmaker(autocommit=False,
-                                                     autoflush=False))
+        self.session_b = scoped_session(sessionmaker(autocommit=False, autoflush=False))
         self.session_b.configure(bind=self.engine)
 
         # short hand to obtain a object-session.
@@ -142,8 +140,7 @@ class Database(metaclass=Singleton):
 
             table_name = table_cls.__tablename__
             if table_name in table_names:
-                non_existing_cols = \
-                    self.get_non_existing_columns(table_cls, table_name)
+                non_existing_cols = self.get_non_existing_columns(table_cls, table_name)
 
                 for col in non_existing_cols:
                     self.add_col_to_table(col, table_cls)
@@ -153,8 +150,9 @@ class Database(metaclass=Singleton):
                     " not exist in the database."
                 )
 
-    def get_non_existing_columns(self, table_cls: Table,
-                                 table_name: str) -> list[Column]:
+    def get_non_existing_columns(
+        self, table_cls: Table, table_name: str
+    ) -> list[Column]:
         """
         Return a list of columns that are defined in the SQLAlchemy model, but
         are not present in the database
@@ -172,17 +170,14 @@ class Database(metaclass=Singleton):
             List of SQLAlchemy Column objects that are present in the model,
             but not in the database
         """
-        column_names = [
-            c["name"] for c in self.__iengine.get_columns(table_name)
-        ]
+        column_names = [c["name"] for c in self.__iengine.get_columns(table_name)]
         mapper = inspect(table_cls)
 
         non_existing_columns = []
         for prop in mapper.attrs:
             if not isinstance(prop, RelationshipProperty):
                 for column in prop.columns:
-                    if self.is_column_missing(column, column_names,
-                                              table_name):
+                    if self.is_column_missing(column, column_names, table_name):
                         non_existing_columns.append(column)
 
         return non_existing_columns
@@ -201,17 +196,18 @@ class Database(metaclass=Singleton):
         col_name = column.key
         col_type = column.type.compile(self.engine.dialect)
         tab_name = table_cls.__tablename__
-        log.warn(f"Adding column {col_name} to table {tab_name} as it did not "
-                 "exist yet")
+        log.warn(
+            f"Adding column {col_name} to table {tab_name} as it did not " "exist yet"
+        )
         self.engine.execute(
-            'ALTER TABLE "%s" ADD COLUMN %s %s' % (tab_name, col_name,
-                                                   col_type)
+            'ALTER TABLE "%s" ADD COLUMN %s %s' % (tab_name, col_name, col_type)
         )
 
     @staticmethod
-    def is_column_missing(column: Column, column_names: list[str],
-                          table_name: str) -> bool:
-        """ Check if column is missing in the table
+    def is_column_missing(
+        column: Column, column_names: list[str], table_name: str
+    ) -> bool:
+        """Check if column is missing in the table
 
         Parameters
         ----------
@@ -230,9 +226,7 @@ class Database(metaclass=Singleton):
         # the check for table_name is for columns that are actually not in
         # the current table but in the parent table, e.g. the column
         # 'status' in the user table is actually in the authenticatable table.
-        return (
-            column.key not in column_names and str(column.table) == table_name
-        )
+        return column.key not in column_names and str(column.table) == table_name
 
 
 class DatabaseSessionManager:
@@ -272,9 +266,8 @@ class DatabaseSessionManager:
             A database session
         """
         if DatabaseSessionManager.in_flask_request():
-
             # needed for SocketIO requests
-            if 'session' not in g:
+            if "session" not in g:
                 DatabaseSessionManager.new_session()
 
             return g.session
@@ -316,7 +309,7 @@ class DatabaseSessionManager:
                 session.session.remove()
                 session.session = None
             else:
-                print('No DB session found to clear!')
+                print("No DB session found to clear!")
 
 
 class ModelBase:
@@ -324,6 +317,7 @@ class ModelBase:
     Declarative base that defines default attributes. All data models inherit
     from this class.
     """
+
     _hidden_attributes = []
 
     @declared_attr
@@ -400,8 +394,7 @@ class ModelBase:
             True if the value exists, False otherwise
         """
         session = DatabaseSessionManager.get_session()
-        result = session.query(exists().where(getattr(cls, field) == value))\
-            .scalar()
+        result = session.query(exists().where(getattr(cls, field) == value)).scalar()
         session.commit()
         return result
 
@@ -411,19 +404,19 @@ class ModelBase:
         Print a help message for the class.
         """
         i = inspect(cls)
-        properties = ''.join([f' ->{a.key}\n' for a in i.mapper.column_attrs])
-        relations = ''.join([f' ->{a[0]}\n' for a in i.relationships.items()])
-        methods = class_inspect.getmembers(cls,
-                                           predicate=class_inspect.isroutine)
+        properties = "".join([f" ->{a.key}\n" for a in i.mapper.column_attrs])
+        relations = "".join([f" ->{a[0]}\n" for a in i.relationships.items()])
+        methods = class_inspect.getmembers(cls, predicate=class_inspect.isroutine)
 
-        methods = ''.join([f' ->{key[0]}\n' for key in methods
-                          if not key[0].startswith('_')])
+        methods = "".join(
+            [f" ->{key[0]}\n" for key in methods if not key[0].startswith("_")]
+        )
 
         print(
-            f'Table: {cls.__tablename__}\n\n'
-            f'Properties: \n{properties}\n'
-            f'Relations: \n{relations}\n'
-            f'Methods: \n{methods}\n'
+            f"Table: {cls.__tablename__}\n\n"
+            f"Properties: \n{properties}\n"
+            f"Relations: \n{relations}\n"
+            f"Methods: \n{methods}\n"
         )
 
 

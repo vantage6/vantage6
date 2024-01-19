@@ -24,6 +24,7 @@ except ImportError:
 @dataclass
 class RunMetaData:
     """Dataclass containing metadata of the run."""
+
     task_id: int | None
     node_id: int | None
     collaboration_id: int | None
@@ -37,6 +38,7 @@ class RunMetaData:
 @dataclass
 class OHDSIMetaData:
     """Dataclass containing metadata of the OMOP database."""
+
     database: str | None
     cdm_schema: str | None
     results_schema: str | None
@@ -74,10 +76,12 @@ def _algorithm_client() -> callable:
     >>> def my_algorithm(algorithm_client: AlgorithmClient, <other arguments>):
     >>>     pass
     """
+
     def protection_decorator(func: callable, *args, **kwargs) -> callable:
         @wraps(func)
-        def decorator(*args, mock_client: MockAlgorithmClient = None,
-                      **kwargs) -> callable:
+        def decorator(
+            *args, mock_client: MockAlgorithmClient = None, **kwargs
+        ) -> callable:
             """
             Wrap the function with the client object
 
@@ -99,12 +103,13 @@ def _algorithm_client() -> callable:
             with open(token_file) as fp:
                 token = fp.read().strip()
 
-            client = AlgorithmClient(token=token, host=host, port=port,
-                                     path=api_path)
+            client = AlgorithmClient(token=token, host=host, port=port, path=api_path)
             return func(client, *args, **kwargs)
+
         # set attribute that this function is wrapped in an algorithm client
         decorator.wrapped_in_algorithm_client_decorator = True
         return decorator
+
     return protection_decorator
 
 
@@ -147,10 +152,12 @@ def data(number_of_databases: int = 1) -> callable:
     >>>                  <other arguments>):
     >>>     pass
     """
+
     def protection_decorator(func: callable, *args, **kwargs) -> callable:
         @wraps(func)
-        def decorator(*args, mock_data: list[pd.DataFrame] = None,
-                      **kwargs) -> callable:
+        def decorator(
+            *args, mock_data: list[pd.DataFrame] = None, **kwargs
+        ) -> callable:
             """
             Wrap the function with the data
 
@@ -167,14 +174,18 @@ def data(number_of_databases: int = 1) -> callable:
 
             # check if user provided enough databases
             if len(labels) < number_of_databases:
-                error(f"Algorithm requires {number_of_databases} databases "
-                      f"but only {len(labels)} were provided. "
-                      "Exiting...")
+                error(
+                    f"Algorithm requires {number_of_databases} databases "
+                    f"but only {len(labels)} were provided. "
+                    "Exiting..."
+                )
                 exit(1)
             elif len(labels) > number_of_databases:
-                warn(f"Algorithm requires only {number_of_databases} databases"
-                     f", but {len(labels)} were provided. Using the "
-                     f"first {number_of_databases} databases.")
+                warn(
+                    f"Algorithm requires only {number_of_databases} databases"
+                    f", but {len(labels)} were provided. Using the "
+                    f"first {number_of_databases} databases."
+                )
 
             for i in range(number_of_databases):
                 label = labels[i]
@@ -193,14 +204,15 @@ def data(number_of_databases: int = 1) -> callable:
                 args = (data_, *args)
 
             return func(*args, **kwargs)
+
         # set attribute that this function is wrapped in a data decorator
         decorator.wrapped_in_data_decorator = True
         return decorator
+
     return protection_decorator
 
 
-def database_connection(types: list[str], include_metadata: bool = True) \
-        -> callable:
+def database_connection(types: list[str], include_metadata: bool = True) -> callable:
     """
     Decorator that adds a database connection to a function
 
@@ -238,6 +250,7 @@ def database_connection(types: list[str], include_metadata: bool = True) \
     >>> def my_algorithm(connection: Connection, <other arguments>):
     >>>     pass
     """
+
     def connection_decorator(func: callable, *args, **kwargs) -> callable:
         @wraps(func)
         def decorator(*args, **kwargs) -> callable:
@@ -246,13 +259,17 @@ def database_connection(types: list[str], include_metadata: bool = True) \
             """
             labels = _get_user_database_labels()
             if len(labels) < len(types):
-                error(f"User provided {len(labels)} databases, but algorithm "
-                      f"requires {len(types)} database connections. Exiting.")
+                error(
+                    f"User provided {len(labels)} databases, but algorithm "
+                    f"requires {len(types)} database connections. Exiting."
+                )
                 exit(1)
             if len(labels) > len(types):
-                warn(f"User provided {len(labels)} databases, but algorithm "
-                     f"requires {len(types)} database connections. Using the "
-                     f"first {len(types)} databases.")
+                warn(
+                    f"User provided {len(labels)} databases, but algorithm "
+                    f"requires {len(types)} database connections. Using the "
+                    f"first {len(types)} databases."
+                )
 
             db_args = []
             # Note: zip will stop at the shortest iterable, so this is exactly
@@ -272,6 +289,7 @@ def database_connection(types: list[str], include_metadata: bool = True) \
             return func(*db_args, *args, **kwargs)
 
         return decorator
+
     return connection_decorator
 
 
@@ -307,9 +325,10 @@ def metadata(func: callable) -> callable:
             temporary_directory=Path(get_env_var("TEMPORARY_FOLDER")),
             output_file=Path(get_env_var("OUTPUT_FILE")),
             input_file=Path(get_env_var("INPUT_FILE")),
-            token_file=Path(get_env_var("TOKEN_FILE"))
+            token_file=Path(get_env_var("TOKEN_FILE")),
         )
         return func(metadata, *args, **kwargs)
+
     return decorator
 
 
@@ -334,7 +353,7 @@ def get_ohdsi_metadata(label: str) -> OHDSIMetaData:
     expected_env_vars = ["CDM_DATABASE", "CDM_SCHEMA", "RESULTS_SCHEMA"]
     label_ = label.upper()
     for var in expected_env_vars:
-        _check_environment_var_exists_or_exit(f'{label_}_DB_PARAM_{var}')
+        _check_environment_var_exists_or_exit(f"{label_}_DB_PARAM_{var}")
 
     tmp = Path(get_env_var("TEMPORARY_FOLDER"))
     metadata = OHDSIMetaData(
@@ -343,7 +362,7 @@ def get_ohdsi_metadata(label: str) -> OHDSIMetaData:
         results_schema=get_env_var(f"{label_}_DB_PARAM_RESULTS_SCHEMA"),
         incremental_folder=tmp / "incremental",
         cohort_statistics_folder=tmp / "cohort_statistics",
-        export_folder=tmp / "export"
+        export_folder=tmp / "export",
     )
     return metadata
 
@@ -387,8 +406,7 @@ def _create_omop_database_connection(label: str) -> callable:
     # check that the OHDSI package is available in this container
     if not OHDSI_AVAILABLE:
         error("OHDSI/DatabaseConnector is not available.")
-        error("Did you use 'algorithm-ohdsi-base' image to build this "
-              "algorithm?")
+        error("Did you use 'algorithm-ohdsi-base' image to build this " "algorithm?")
         exit(1)
 
     # environment vars are always uppercase
@@ -396,20 +414,21 @@ def _create_omop_database_connection(label: str) -> callable:
 
     # check that the required environment variables are set
     for var in ("DBMS", "USER", "PASSWORD"):
-        _check_environment_var_exists_or_exit(f'{label_}_DB_PARAM_{var}')
+        _check_environment_var_exists_or_exit(f"{label_}_DB_PARAM_{var}")
 
     info("Reading OHDSI environment variables")
     dbms = get_env_var(f"{label_}_DB_PARAM_DBMS")
     uri = get_env_var(f"{label_}_DATABASE_URI")
     user = get_env_var(f"{label_}_DB_PARAM_USER")
     password = get_env_var(f"{label_}_DB_PARAM_PASSWORD")
-    info(f' - dbms: {dbms}')
-    info(f' - uri: {uri}')
-    info(f' - user: {user}')
+    info(f" - dbms: {dbms}")
+    info(f" - uri: {uri}")
+    info(f" - user: {user}")
 
     info("Creating OHDSI database connection")
-    return connect_to_omop(dbms=dbms, connection_string=uri, password=password,
-                           user=user)
+    return connect_to_omop(
+        dbms=dbms, connection_string=uri, password=password, user=user
+    )
 
 
 def _check_environment_var_exists_or_exit(var: str):
@@ -446,8 +465,7 @@ def _get_data_from_label(label: str) -> pd.DataFrame:
 
     # Get the database type from the environment variable, this variable is
     # set by the vantage6 node based on its configuration file.
-    database_type = get_env_var(
-        f"{label.upper()}_DATABASE_TYPE", "csv").lower()
+    database_type = get_env_var(f"{label.upper()}_DATABASE_TYPE", "csv").lower()
 
     # Load the data based on the database type. Try to provide environment
     # variables that should be available for some data types.
@@ -455,7 +473,7 @@ def _get_data_from_label(label: str) -> pd.DataFrame:
         database_uri,
         database_type,
         query=get_env_var(f"{label.upper()}_QUERY"),
-        sheet_name=get_env_var(f"{label.upper()}_SHEET_NAME")
+        sheet_name=get_env_var(f"{label.upper()}_SHEET_NAME"),
     )
 
 
@@ -471,7 +489,7 @@ def _get_user_database_labels() -> list[str]:
     # read the labels that the user requested, which is a comma
     # separated list of labels.
     labels = get_env_var("USER_REQUESTED_DATABASE_LABELS")
-    return labels.split(',')
+    return labels.split(",")
 
 
 def _extract_token_payload(token: str) -> dict:
@@ -491,4 +509,4 @@ def _extract_token_payload(token: str) -> dict:
         and `databases`.
     """
     jwt_payload = jwt.decode(token, options={"verify_signature": False})
-    return jwt_payload['sub']
+    return jwt_payload["sub"]

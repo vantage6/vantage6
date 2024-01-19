@@ -3,10 +3,7 @@ import logging
 import datetime
 
 from flask import request, render_template, g
-from flask_jwt_extended import (
-    create_access_token,
-    decode_token
-)
+from flask_jwt_extended import create_access_token, decode_token
 from flask_restful import Api
 from jwt.exceptions import DecodeError
 from http import HTTPStatus
@@ -16,20 +13,19 @@ from vantage6.common import logger_name, generate_apikey
 from vantage6.common.globals import APPNAME
 from vantage6.server import db
 from vantage6.server.globals import (
-    DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES, DEFAULT_SUPPORT_EMAIL_ADDRESS,
-    DEFAULT_EMAIL_FROM_ADDRESS
+    DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES,
+    DEFAULT_SUPPORT_EMAIL_ADDRESS,
+    DEFAULT_EMAIL_FROM_ADDRESS,
 )
 from vantage6.server.resource import ServicesResources, with_user
-from vantage6.server.resource.common.auth_helper import (
-    create_qr_uri, user_login
-)
+from vantage6.server.resource.common.auth_helper import create_qr_uri, user_login
 from vantage6.server.resource.common.input_schema import (
     ChangePasswordInputSchema,
     RecoverPasswordInputSchema,
     ResetPasswordInputSchema,
     Recover2FAInputSchema,
     Reset2FAInputSchema,
-    ResetAPIKeyInputSchema
+    ResetAPIKeyInputSchema,
 )
 
 module_name = logger_name(__name__)
@@ -54,50 +50,50 @@ def setup(api: Api, api_base: str, services: dict) -> None:
 
     api.add_resource(
         ResetPassword,
-        path+'/reset',
+        path + "/reset",
         endpoint="reset_password",
-        methods=('POST',),
-        resource_class_kwargs=services
+        methods=("POST",),
+        resource_class_kwargs=services,
     )
 
     api.add_resource(
         RecoverPassword,
-        path+'/lost',
-        endpoint='recover_password',
-        methods=('POST',),
-        resource_class_kwargs=services
+        path + "/lost",
+        endpoint="recover_password",
+        methods=("POST",),
+        resource_class_kwargs=services,
     )
 
     api.add_resource(
         ResetTwoFactorSecret,
-        path+'/2fa/reset',
+        path + "/2fa/reset",
         endpoint="reset_2fa_secret",
-        methods=('POST',),
-        resource_class_kwargs=services
+        methods=("POST",),
+        resource_class_kwargs=services,
     )
 
     api.add_resource(
         RecoverTwoFactorSecret,
-        path+'/2fa/lost',
-        endpoint='recover_2fa_secret',
-        methods=('POST',),
-        resource_class_kwargs=services
+        path + "/2fa/lost",
+        endpoint="recover_2fa_secret",
+        methods=("POST",),
+        resource_class_kwargs=services,
     )
 
     api.add_resource(
         ChangePassword,
-        api_base+'/password/change',
-        endpoint='change_password',
-        methods=('PATCH',),
-        resource_class_kwargs=services
+        api_base + "/password/change",
+        endpoint="change_password",
+        methods=("PATCH",),
+        resource_class_kwargs=services,
     )
 
     api.add_resource(
         ResetAPIKey,
-        path+'/node',
+        path + "/node",
         endpoint="reset_api_key",
-        methods=('POST',),
-        resource_class_kwargs=services
+        methods=("POST",),
+        resource_class_kwargs=services,
     )
 
 
@@ -145,15 +141,17 @@ class ResetPassword(ServicesResources):
         # validate request body
         errors = reset_pw_schema.validate(body)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
         reset_token = body.get("reset_token")
         password = body.get("password")
 
         # obtain user
         try:
-            user_id = decode_token(reset_token)['sub'].get('id')
+            user_id = decode_token(reset_token)["sub"].get("id")
         except DecodeError:
             return {"msg": "Invalid recovery token!"}, HTTPStatus.BAD_REQUEST
 
@@ -170,8 +168,7 @@ class ResetPassword(ServicesResources):
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
         log.info(f"Successfull password reset for '{user.username}'")
-        return {"msg": "The password has successfully been reset!"}, \
-            HTTPStatus.OK
+        return {"msg": "The password has successfully been reset!"}, HTTPStatus.OK
 
 
 class RecoverPassword(ServicesResources):
@@ -207,15 +204,19 @@ class RecoverPassword(ServicesResources):
         tags: ["Account recovery"]
         """
         # default return string
-        ret = {"msg": "If the username or email is in our database you "
-                      "will soon receive an email."}
+        ret = {
+            "msg": "If the username or email is in our database you "
+            "will soon receive an email."
+        }
         body = request.get_json()
 
         # validate request body
         errors = recover_pw_schema.validate(body)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
         # obtain username/email from request
         username = body.get("username")
@@ -229,8 +230,9 @@ class RecoverPassword(ServicesResources):
                 user = db.User.get_by_email(email)
         except NoResultFound:
             account_name = email if email else username
-            log.info("Someone request 2FA reset for non-existing account"
-                     f" {account_name}")
+            log.info(
+                "Someone request 2FA reset for non-existing account" f" {account_name}"
+            )
             # we do not tell them.... But we won't continue either
             return ret
 
@@ -239,13 +241,10 @@ class RecoverPassword(ServicesResources):
         # generate a token that can reset their password
         smtp_settings = self.config.get("smtp", {})
         minutes_token_valid = smtp_settings.get(
-            "email_token_validity_minutes",
-            DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES
+            "email_token_validity_minutes", DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES
         )
         expires = datetime.timedelta(minutes=minutes_token_valid)
-        reset_token = create_access_token(
-            {"id": str(user.id)}, expires_delta=expires
-        )
+        reset_token = create_access_token({"id": str(user.id)}, expires_delta=expires)
 
         email_from = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
         support_email = self.config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
@@ -255,16 +254,20 @@ class RecoverPassword(ServicesResources):
             sender=email_from,
             recipients=[user.email],
             text_body=render_template(
-                "mail/reset_token.txt", token=reset_token,
-                firstname=user.firstname, reset_type="password",
-                what_to_do="simply ignore this message"
+                "mail/reset_token.txt",
+                token=reset_token,
+                firstname=user.firstname,
+                reset_type="password",
+                what_to_do="simply ignore this message",
             ),
             html_body=render_template(
-                "mail/reset_token.html", token=reset_token,
-                firstname=user.firstname, reset_type="password",
+                "mail/reset_token.html",
+                token=reset_token,
+                firstname=user.firstname,
+                reset_type="password",
                 support_email=support_email,
-                what_to_do="simply ignore this message"
-            )
+                what_to_do="simply ignore this message",
+            ),
         )
 
         return ret
@@ -303,13 +306,15 @@ class ResetTwoFactorSecret(ServicesResources):
         # validate request body
         errors = reset_2fa_schema.validate(body)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
         # obtain user
         reset_token = body.get("reset_token")
         try:
-            user_id = decode_token(reset_token)['sub'].get('id')
+            user_id = decode_token(reset_token)["sub"].get("id")
         except DecodeError:
             return {"msg": "Invalid recovery token!"}, HTTPStatus.BAD_REQUEST
 
@@ -354,8 +359,10 @@ class RecoverTwoFactorSecret(ServicesResources):
         tags: ["Account recovery"]
         """
         # default return string
-        ret = {"msg": "If you sent a correct combination of username/email and"
-                      "password, you will soon receive an email."}
+        ret = {
+            "msg": "If you sent a correct combination of username/email and"
+            "password, you will soon receive an email."
+        }
 
         # obtain parameters from request
         body = request.get_json()
@@ -363,8 +370,10 @@ class RecoverTwoFactorSecret(ServicesResources):
         # validate request body
         errors = recover_2fa_schema.validate(body)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
         username = body.get("username")
         email = body.get("email")
@@ -378,17 +387,16 @@ class RecoverTwoFactorSecret(ServicesResources):
                 user = db.User.get_by_email(email)
         except NoResultFound:
             account_name = email if email else username
-            log.info("Someone request 2FA reset for non-existing account"
-                     f" {account_name}")
+            log.info(
+                "Someone request 2FA reset for non-existing account" f" {account_name}"
+            )
             # we do not tell them.... But we won't continue either
             return ret, HTTPStatus.OK
 
         # check password
-        user, code = user_login(self.config, user.username, password,
-                                self.mail)
+        user, code = user_login(self.config, user.username, password, self.mail)
         if code != HTTPStatus.OK:
-            log.error(f"Failed to reset 2FA for user {username}, wrong "
-                      "password")
+            log.error(f"Failed to reset 2FA for user {username}, wrong " "password")
             return user, code
 
         log.info(f"2FA reset requested for '{user.username}'")
@@ -396,13 +404,10 @@ class RecoverTwoFactorSecret(ServicesResources):
         # generate a token that can reset their password
         smtp_settings = self.config.get("smtp", {})
         minutes_token_valid = smtp_settings.get(
-            "email_token_validity_minutes",
-            DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES
+            "email_token_validity_minutes", DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES
         )
         expires = datetime.timedelta(minutes=minutes_token_valid)
-        reset_token = create_access_token(
-            {"id": str(user.id)}, expires_delta=expires
-        )
+        reset_token = create_access_token({"id": str(user.id)}, expires_delta=expires)
 
         email_from = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
         support_email = self.config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
@@ -412,20 +417,20 @@ class RecoverTwoFactorSecret(ServicesResources):
             sender=email_from,
             recipients=[user.email],
             text_body=render_template(
-                "mail/reset_token.txt", token=reset_token,
+                "mail/reset_token.txt",
+                token=reset_token,
                 firstname=user.firstname,
                 reset_type="two-factor authentication code",
-                what_to_do=("please reset your password! It has been "
-                            "compromised")
+                what_to_do=("please reset your password! It has been " "compromised"),
             ),
             html_body=render_template(
-                "mail/reset_token.html", token=reset_token,
+                "mail/reset_token.html",
+                token=reset_token,
                 firstname=user.firstname,
                 reset_type="two-factor authentication code",
                 support_email=support_email,
-                what_to_do=("please reset your password! It has been "
-                            "compromised")
-            )
+                what_to_do=("please reset your password! It has been " "compromised"),
+            ),
         )
 
         return ret, HTTPStatus.OK
@@ -472,8 +477,10 @@ class ChangePassword(ServicesResources):
         # validate request body
         errors = change_pw_schema.validate(body)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
         old_password = body.get("current_password")
         new_password = body.get("new_password")
@@ -484,12 +491,14 @@ class ChangePassword(ServicesResources):
         # check if the old password is correct
         pw_correct = user.check_password(old_password)
         if not pw_correct:
-            return {"msg": "Your current password is not correct!"}, \
-                HTTPStatus.UNAUTHORIZED
+            return {
+                "msg": "Your current password is not correct!"
+            }, HTTPStatus.UNAUTHORIZED
 
         if old_password == new_password:
-            return {"msg": "New password is the same as current password!"}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "New password is the same as current password!"
+            }, HTTPStatus.BAD_REQUEST
 
         # set password
         msg = user.set_password(new_password)
@@ -497,8 +506,7 @@ class ChangePassword(ServicesResources):
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
         log.info(f"Successful password change for '{user.username}'")
-        return {"msg": "The password has been changed successfully!"}, \
-            HTTPStatus.OK
+        return {"msg": "The password has been changed successfully!"}, HTTPStatus.OK
 
 
 class ResetAPIKey(ServicesResources):
@@ -508,7 +516,7 @@ class ResetAPIKey(ServicesResources):
         super().__init__(socketio, mail, api, permissions, config)
 
         # obtain permissions to check if user is allowed to modify nodes
-        self.r = getattr(self.permissions, 'node')
+        self.r = getattr(self.permissions, "node")
 
     @with_user
     def post(self):
@@ -557,22 +565,23 @@ class ResetAPIKey(ServicesResources):
         # validate request body
         errors = reset_api_key_schema.validate(body)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
-        id_ = body['id']
+        id_ = body["id"]
         node = db.Node.get(id_)
         if not node:
-            return {
-                'msg': f'Node id={id_} is not found!'
-            }, HTTPStatus.NOT_FOUND
+            return {"msg": f"Node id={id_} is not found!"}, HTTPStatus.NOT_FOUND
 
         # check if user is allowed to edit the node
         if not self.r.e_glo.can():
             own = g.user.organization.id == node.organization.id
             if not (self.r.e_org.can() and own):
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
+                return {
+                    "msg": "You lack the permission to do that!"
+                }, HTTPStatus.UNAUTHORIZED
 
         # all good, change API key
         log.info(f"Successful API key reset for node {id}")

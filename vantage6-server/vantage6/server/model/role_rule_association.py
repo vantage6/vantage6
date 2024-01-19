@@ -9,8 +9,8 @@ from .base import Base
 
 
 role_rule_association = Table(
-    'role_rule_association',
+    "role_rule_association",
     Base.metadata,
-    Column('role_id', Integer, ForeignKey('role.id')),
-    Column('rule_id', Integer, ForeignKey('rule.id'))
+    Column("role_id", Integer, ForeignKey("role.id")),
+    Column("rule_id", Integer, ForeignKey("rule.id")),
 )

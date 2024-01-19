@@ -1,9 +1,6 @@
 from pathlib import Path
 
-from vantage6.common.globals import (
-    PACKAGE_FOLDER,
-    APPNAME
-)
+from vantage6.common.globals import PACKAGE_FOLDER, APPNAME
 
 from vantage6.common.context import AppContext
 from vantage6.common.configuration_manager import ConfigurationManager
@@ -22,14 +19,10 @@ class DockerNodeContext(NodeContext):
         self.log.info(f"Node package version '{__version__}'")
 
     def set_folders(self, instance_type, instance_name, system_folders):
-        """ In case of the dockerized version we do not want to use user
-            specified directories within the container.
+        """In case of the dockerized version we do not want to use user
+        specified directories within the container.
         """
-        dirs = self.instance_folders(
-            instance_type,
-            instance_name,
-            system_folders
-        )
+        dirs = self.instance_folders(instance_type, instance_name, system_folders)
 
         self.log_dir = dirs.get("log")
         self.data_dir = dirs.get("data")
@@ -38,8 +31,8 @@ class DockerNodeContext(NodeContext):
 
     @staticmethod
     def instance_folders(instance_type, instance_name, system_folders):
-        """ Log, data and config folders are always mounted. The node manager
-            should take care of this.
+        """Log, data and config folders are always mounted. The node manager
+        should take care of this.
         """
         mnt = Path("/mnt")
 
@@ -47,7 +40,7 @@ class DockerNodeContext(NodeContext):
             "log": mnt / "log",
             "data": mnt / "data",
             "config": mnt / "config",
-            "vpn": mnt / "vpn"
+            "vpn": mnt / "vpn",
         }
 
 
@@ -56,7 +49,6 @@ class TestingConfigurationManager(ConfigurationManager):
 
 
 class TestContext(AppContext):
-
     INST_CONFIG_MANAGER = TestingConfigurationManager
     LOGGING_ENABLED = False
 
@@ -68,10 +60,8 @@ class TestContext(AppContext):
 
     @staticmethod
     def test_config_location():
-        return (PACKAGE_FOLDER / APPNAME /
-                "_data" / "unittest_config.yaml")
+        return PACKAGE_FOLDER / APPNAME / "_data" / "unittest_config.yaml"
 
     @staticmethod
     def test_data_location():
-        return (PACKAGE_FOLDER / APPNAME /
-                "_data")
+        return PACKAGE_FOLDER / APPNAME / "_data"

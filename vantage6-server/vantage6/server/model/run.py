@@ -7,11 +7,7 @@ from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from vantage6.common import logger_name
 from vantage6.server.model.base import Base
-from vantage6.server.model import (
-    Node,
-    Collaboration,
-    Organization
-)
+from vantage6.server.model import Node, Collaboration, Organization
 from vantage6.server.model.task import Task
 from vantage6.server.model.base import DatabaseSessionManager
 
@@ -82,26 +78,32 @@ class Run(Base):
         """
         session = DatabaseSessionManager.get_session()
         try:
-            node = session.query(Node)\
-                .join(Collaboration)\
-                .join(Organization)\
-                .join(Run)\
-                .join(Task)\
-                .filter(Run.id == self.id)\
-                .filter(self.organization_id == Node.organization_id)\
-                .filter(Task.collaboration_id == Node.collaboration_id)\
+            node = (
+                session.query(Node)
+                .join(Collaboration)
+                .join(Organization)
+                .join(Run)
+                .join(Task)
+                .filter(Run.id == self.id)
+                .filter(self.organization_id == Node.organization_id)
+                .filter(Task.collaboration_id == Node.collaboration_id)
                 .one()
+            )
             session.commit()
         # FIXME 2022-03-03 BvB: the following errors are not currently
         # forwarded to the user as request response. Make that happen.
         except NoResultFound:
-            log_.warn("No node exists for organization_id "
-                      f"{self.organization_id} in the current collaboration!")
+            log_.warn(
+                "No node exists for organization_id "
+                f"{self.organization_id} in the current collaboration!"
+            )
             return None
         except MultipleResultsFound:
-            log_.error("Multiple nodes are registered for organization_id "
-                       f"{self.organization_id} in the current collaboration. "
-                       "Please delete all nodes but one.")
+            log_.error(
+                "Multiple nodes are registered for organization_id "
+                f"{self.organization_id} in the current collaboration. "
+                "Please delete all nodes but one."
+            )
             raise
         return node
 
