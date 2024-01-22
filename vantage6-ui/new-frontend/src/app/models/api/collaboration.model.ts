@@ -39,8 +39,12 @@ export interface Collaboration {
 export interface CollaborationForm {
   name: string;
   encrypted: boolean;
-  organization_ids: number[];
+  organizations: BaseOrganization[];
   registerNodes: boolean;
 }
 
-export type CollaborationCreate = Pick<CollaborationForm, 'name' | 'encrypted' | 'organization_ids'>;
+export type CollaborationCreate = {
+  name: string;
+  encrypted: boolean;
+  organization_ids: number[];
+};
