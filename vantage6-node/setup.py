@@ -49,6 +49,8 @@ setup(
             "schema==0.7.5",
             "appdirs==1.4.4",
             "flask==2.2.5",
+            "black==23.12.1",
+            "pre-commit==3.6.0",
         ]
     },
     package_data={
