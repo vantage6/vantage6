@@ -1,4 +1,4 @@
-import { Component, HostBinding, OnDestroy } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
@@ -11,12 +11,13 @@ import { Router } from '@angular/router';
 import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
 import { createUnEqualValidator } from 'src/app/validators/unequal.validator';
+import { LoginErrorService } from 'src/app/services/login-error.service';
 
 @Component({
   selector: 'app-change-password',
   templateUrl: './change-password.component.html'
 })
-export class ChangePasswordComponent implements OnDestroy {
+export class ChangePasswordComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
 
   destroy$ = new Subject();
@@ -30,12 +31,17 @@ export class ChangePasswordComponent implements OnDestroy {
   );
 
   constructor(
+    public loginErrorService: LoginErrorService,
     private fb: FormBuilder,
     private router: Router,
     private dialog: MatDialog,
     private translateService: TranslateService,
     private authService: AuthService
   ) {}
+
+  ngOnInit(): void {
+    this.loginErrorService.clearError();
+  }
 
   ngOnDestroy(): void {
     this.destroy$.next(true);

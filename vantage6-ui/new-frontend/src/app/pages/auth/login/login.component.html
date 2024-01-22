@@ -15,5 +15,6 @@
       <button mat-flat-button type="submit" color="primary" [disabled]="!loginForm.valid">Login</button>
       <button mat-flat-button type="button" [routerLink]="routes.passwordLost">{{ "login.forgot-password" | translate }}</button>
     </form>
+    <app-alert class="top-spacer" *ngIf="this.loginErrorService.hasError()" label="{{ this.loginErrorService.getError() }}"></app-alert>
   </mat-card-content>
 </mat-card>

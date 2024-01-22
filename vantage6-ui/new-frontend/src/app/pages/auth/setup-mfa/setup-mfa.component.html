@@ -12,5 +12,6 @@
 
     <button mat-flat-button type="submit" color="primary" [routerLink]="[routes.mfaCode]">{{ "mfa.setup.done" | translate }}</button>
     <button mat-flat-button type="submit" (click)="showOtpCode()">{{ "mfa.setup.help" | translate }}</button>
+    <app-alert class="top-spacer" *ngIf="this.loginErrorService.hasError()" label="{{ this.loginErrorService.getError() }}"></app-alert>
   </mat-card-content>
 </mat-card>

@@ -5,6 +5,7 @@ import { AuthResult } from 'src/app/models/api/auth.model';
 import { LoginForm } from 'src/app/models/forms/login-form.model';
 import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
+import { LoginErrorService } from 'src/app/services/login-error.service';
 
 @Component({
   selector: 'app-login',
@@ -19,6 +20,7 @@ export class LoginComponent {
   routes = routePaths;
 
   constructor(
+    public loginErrorService: LoginErrorService,
     private router: Router,
     private fb: FormBuilder,
     private authService: AuthService
