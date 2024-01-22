@@ -78,3 +78,7 @@ export interface ApiKeyExport {
   organization: string;
   api_key: string;
 }
+
+export interface APIKey {
+  api_key: string;
+}

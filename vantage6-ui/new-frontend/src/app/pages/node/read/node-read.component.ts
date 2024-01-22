@@ -14,6 +14,10 @@ import { PermissionService } from 'src/app/services/permission.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
 import { Subscription } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
+import { TranslateService } from '@ngx-translate/core';
+import { MessageDialogComponent } from 'src/app/components/dialogs/message-dialog/message-dialog.component';
+import { FileService } from 'src/app/services/file.service';
 
 @Component({
   selector: 'app-node-read',
@@ -39,11 +43,14 @@ export class NodeReadComponent implements OnInit, OnDestroy {
   private nodeStatusUpdateSubscription?: Subscription;
 
   constructor(
+    private dialog: MatDialog,
     private nodeService: NodeService,
     private organizationService: OrganizationService,
     private collaborationService: CollaborationService,
     private permissionService: PermissionService,
-    private socketioConnectService: SocketioConnectService
+    private socketioConnectService: SocketioConnectService,
+    private translateService: TranslateService,
+    private fileService: FileService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -120,6 +127,26 @@ export class NodeReadComponent implements OnInit, OnDestroy {
         break;
       }
     }
+  }
+
+  async generateNewAPIKey(): Promise<void> {
+    if (!this.selectedNode) return;
+    const new_api_key = await this.nodeService.resetApiKey(this.selectedNode?.id.toString());
+    this.downloadResettedApiKey(new_api_key.api_key, this.selectedNode.name);
+
+    this.dialog.open(MessageDialogComponent, {
+      data: {
+        title: this.translateService.instant('api-key-download-dialog.title'),
+        content: [this.translateService.instant('api-key-download-dialog.reset-message')],
+        confirmButtonText: this.translateService.instant('general.close'),
+        confirmButtonType: 'default'
+      }
+    });
+  }
+
+  private downloadResettedApiKey(api_key: string, node_name: string): void {
+    const filename = `API_key_${node_name}.txt`;
+    this.fileService.downloadTxtFile(api_key, filename);
   }
 
   private async initData(): Promise<void> {

@@ -67,12 +67,17 @@
                 </div>
               </div>
               <ng-container *ngIf="canEdit(node.organization.id)">
-                <div class="node-actions button-container" *ngIf="!isEdit">
-                  <button mat-flat-button color="primary" (click)="handleEditStart()">{{ "node-edit.actions.edit" | translate }}</button>
-                </div>
-                <div class="node-actions button-container" *ngIf="isEdit">
-                  <button mat-flat-button color="primary" (click)="handleEditSubmit()">{{ "general.submit" | translate }}</button>
-                  <button mat-flat-button (click)="handleEditCancel()">{{ "general.cancel" | translate }}</button>
+                <div class="node-actions button-container">
+                  <div *ngIf="!isEdit">
+                    <button mat-flat-button color="primary" (click)="handleEditStart()">{{ "node-edit.actions.edit" | translate }}</button>
+                  </div>
+                  <div *ngIf="isEdit">
+                    <button mat-flat-button color="primary" (click)="handleEditSubmit()">{{ "general.submit" | translate }}</button>
+                    <button mat-flat-button (click)="handleEditCancel()">{{ "general.cancel" | translate }}</button>
+                  </div>
+                  <button mat-flat-button color="accent" (click)="generateNewAPIKey()">
+                    {{ "node-edit.actions.new-api-key" | translate }}
+                  </button>
                 </div>
               </ng-container>
             </ng-container>
