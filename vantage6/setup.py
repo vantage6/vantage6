@@ -49,8 +49,8 @@ setup(
     extras_require={
         "dev": [
             "coverage==6.4.4",
-            "black==23.12.1",
-            "pre-commit==3.6.0",
+            "black",
+            "pre-commit",
         ]
     },
     package_data={

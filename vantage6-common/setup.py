@@ -46,8 +46,8 @@ setup(
     ],
     extras_require={
         "dev": [
-            "black==23.12.1",
-            "pre-commit==3.6.0",
+            "black",
+            "pre-commit",
         ]
     },
     package_data={
