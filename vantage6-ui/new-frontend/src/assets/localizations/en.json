@@ -157,7 +157,12 @@
   "collaboration-create": {
     "title": "Create collaboration",
     "register-nodes": "Register nodes",
-    "register-nodes-edit": "Register nodes for new organizations: {{organizations}}"
+    "register-nodes-edit": "Register nodes for new organizations: {{organizations}}",
+    "api-key-download-dialog": {
+      "title": "API key download",
+      "message": "The API keys have been downloaded.",
+      "security-message": "Please distribute each of these keys privately to each of the organizations. Note that they may reset their API key so that no-one but them knows it."
+    }
   },
   "collaboration-list": {
     "title": "Collaborations"

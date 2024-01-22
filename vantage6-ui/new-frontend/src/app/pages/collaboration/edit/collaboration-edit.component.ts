@@ -1,6 +1,7 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Collaboration, CollaborationCreate, CollaborationForm, CollaborationLazyProperties } from 'src/app/models/api/collaboration.model';
+import { BaseOrganization } from 'src/app/models/api/organization.model';
 import { routePaths } from 'src/app/routes';
 import { CollaborationService } from 'src/app/services/collaboration.service';
 import { NodeService } from 'src/app/services/node.service';
@@ -38,24 +39,29 @@ export class CollaborationEditComponent implements OnInit {
     this.isSubmitting = true;
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const collaborationCreate: CollaborationCreate = (({ registerNodes, ...data }) => data)(collaborationForm);
+    const collaborationCreate: CollaborationCreate = {
+      name: collaborationForm.name,
+      encrypted: collaborationForm.encrypted,
+      organization_ids: collaborationForm.organizations.map((organization: BaseOrganization) => organization.id)
+    };
     const result = await this.collaborationService.editCollaboration(this.collaboration?.id.toString(), collaborationCreate);
 
     if (result?.id) {
-      if (collaborationForm.registerNodes && collaborationForm.organization_ids) {
+      if (collaborationForm.registerNodes && collaborationForm.organizations) {
         // register nodes of new organizations in collaboration
-        const newOrganizationIDs = collaborationForm.organization_ids.filter(
-          (id: number) => !this.collaboration?.organizations.find((organization) => organization.id === id)
+        const newOrganizations = collaborationForm.organizations.filter(
+          (org_in_updated_collab: BaseOrganization) =>
+            !this.collaboration?.organizations.find((organization) => organization.id === org_in_updated_collab.id)
         );
         await Promise.all(
-          newOrganizationIDs.map(async (organizationID: number) => {
+          newOrganizations.map(async (organization: BaseOrganization) => {
             if (!this.collaboration) return;
-            await this.nodeService.createNode(this.collaboration, organizationID);
+            await this.nodeService.createNode(this.collaboration, organization.id);
           })
         );
         // delete nodes of organizations that are not in collaboration anymore
         const removedOrganizationIDs = this.collaboration.organizations
-          .filter((organization) => !collaborationForm.organization_ids?.includes(organization.id))
+          .filter((organization) => !collaborationForm.organizations?.includes(organization))
           .map((organization) => organization.id);
         await Promise.all(
           removedOrganizationIDs.map(async (organizationID: number) => {

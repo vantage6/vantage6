@@ -41,6 +41,7 @@ export interface BaseNode {
   config: Config[];
   status?: NodeStatus;
   last_seen?: string;
+  api_key?: string;
 }
 
 interface Config {
@@ -71,4 +72,9 @@ export interface NodeCreate {
 
 export interface NodeEdit {
   name: string;
+}
+
+export interface ApiKeyExport {
+  organization: string;
+  api_key: string;
 }

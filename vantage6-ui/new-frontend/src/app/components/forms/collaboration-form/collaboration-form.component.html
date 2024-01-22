@@ -9,8 +9,8 @@
     </mat-checkbox>
     <mat-form-field subscriptSizing="dynamic">
       <mat-label>{{ "collaboration.organizations" | translate }}</mat-label>
-      <mat-select multiple formControlName="organization_ids" (selectionChange)="handleOrganizationChange($event)">
-        <mat-option *ngFor="let organization of organizations" [value]="organization.id">
+      <mat-select multiple formControlName="organizations" (selectionChange)="handleOrganizationChange($event)">
+        <mat-option *ngFor="let organization of organizations" [value]="organization">
           {{ organization.name }}
         </mat-option>
       </mat-select>
