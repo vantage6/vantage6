@@ -75,10 +75,10 @@ export class CollaborationCreateComponent {
   alertApiKeyDownload(): void {
     this.dialog.open(MessageDialogComponent, {
       data: {
-        title: this.translateService.instant('collaboration-create.api-key-download-dialog.title'),
+        title: this.translateService.instant('api-key-download-dialog.title'),
         content: [
-          this.translateService.instant('collaboration-create.api-key-download-dialog.message'),
-          this.translateService.instant('collaboration-create.api-key-download-dialog.security-message')
+          this.translateService.instant('api-key-download-dialog.create-message'),
+          this.translateService.instant('api-key-download-dialog.security-message')
         ],
         confirmButtonText: this.translateService.instant('general.close'),
         confirmButtonType: 'default'

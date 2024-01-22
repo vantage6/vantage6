@@ -65,6 +65,14 @@ export class CollaborationFormComponent implements OnInit {
     this.cancelled.emit();
   }
 
+  // compare function for mat-select
+  // TODO this is duplicate function - move to helper
+  compareOrganizationsForSelection(obj1: any, obj2: any): boolean {
+    // The mat-select object set from typescript only has an ID set. Compare that with the ID of the
+    // organization object from the collaboration
+    return obj1 && obj2 && obj1.id && obj2.id && obj1.id === obj2.id;
+  }
+
   private async initData(): Promise<void> {
     this.organizations = await this.organizationService.getOrganizations({ sort: OrganizationSortProperties.Name });
   }
