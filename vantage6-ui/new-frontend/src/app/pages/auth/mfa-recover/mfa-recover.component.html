@@ -13,5 +13,6 @@
       </mat-form-field>
       <button mat-flat-button type="submit" color="primary" [disabled]="!recoverForm.valid">{{ "mfa.recover.submit" | translate }}</button>
     </form>
+    <app-alert class="top-spacer" *ngIf="this.loginErrorService.hasError()" label="{{ this.loginErrorService.getError() }}"></app-alert>
   </mat-card-content>
 </mat-card>

@@ -5,6 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MessageDialogComponent } from 'src/app/components/dialogs/message-dialog/message-dialog.component';
 import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
+import { LoginErrorService } from 'src/app/services/login-error.service';
 
 @Component({
   selector: 'app-setup-mfa',
@@ -15,6 +16,7 @@ export class SetupMfaComponent implements OnInit {
   routes = routePaths;
 
   constructor(
+    public loginErrorService: LoginErrorService,
     private router: Router,
     private dialog: MatDialog,
     private authService: AuthService,
@@ -22,6 +24,7 @@ export class SetupMfaComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.loginErrorService.clearError();
     if (!this.authService.qr_uri) {
       this.router.navigate([routePaths.login]);
     }
