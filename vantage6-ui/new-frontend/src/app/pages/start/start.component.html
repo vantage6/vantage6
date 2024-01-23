@@ -4,3 +4,8 @@
     {{ collaboration.name }}
   </button>
 </div>
+<mat-card *ngIf="collaborations.length === 0">
+  <mat-card-content>
+    <p>{{ "start.no-collaborations" | translate }}</p>
+  </mat-card-content>
+</mat-card>

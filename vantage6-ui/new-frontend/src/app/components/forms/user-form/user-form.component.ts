@@ -122,6 +122,7 @@ export class UserFormComponent implements OnInit, OnDestroy {
     if (!this.isEdit) {
       // we only need to collect organizations when creating a new user
       // TODO ensure that this goes well with pagination
+      // TODO ensure that user doesn't get organizations that they can't create users for
       this.organizations = await this.organizationService.getOrganizations({ sort: OrganizationSortProperties.Name });
     }
     this.selectableRules = await this.ruleService.getAllRules();

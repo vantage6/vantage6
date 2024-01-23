@@ -19,6 +19,9 @@
   "home": {
     "title": "Home"
   },
+  "start": {
+    "no-collaborations": "Your organization is not part of any collaborations yet. Please contact your vantage6 project manager to set up a collaboration or go to the administration section to create a new collaboration."
+  },
   "table": {
     "search-placeholder": "Search"
   },
