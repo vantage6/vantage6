@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/htt
 import { Injectable } from '@angular/core';
 import { Observable, first } from 'rxjs';
 import { ACCESS_TOKEN_KEY } from '../models/constants/sessionStorage';
-import { environment } from 'src/environments/environment.development';
+import { environment } from 'src/environments/environment';
 import { Pagination } from '../models/api/pagination.model';
 import { SnackbarService } from './snackbar.service';
 import { Router } from '@angular/router';
@@ -61,16 +61,25 @@ export class ApiService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async deleteForApi(path: string): Promise<any> {
+  async deleteForApi(path: string, params: object = {}): Promise<any> {
     return await this.handleResult(
       this.http.delete(this.getApiPath(path), {
-        headers: this.getApiAuthenticationHeaders()
+        headers: this.getApiAuthenticationHeaders(),
+        params: { ...params }
       })
     );
   }
 
-  async getForAlgorithmApi<T = null>(path: string): Promise<T> {
-    return await this.handleResult(this.http.get<T>(environment.algorithm_server_url + path));
+  async getForAlgorithmApi<T = null>(algo_store_url: string, path: string, parameters: object | null = null): Promise<T> {
+    if (algo_store_url.endsWith('/')) {
+      algo_store_url = algo_store_url.slice(0, -1);
+    }
+    return await this.handleResult(
+      this.http.get<T>(algo_store_url + path, {
+        headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() },
+        params: { ...parameters }
+      })
+    );
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -89,7 +98,7 @@ export class ApiService {
           resolve(response as T);
         },
         (error) => {
-          const errorMsg = error.error?.msg ? error.error?.msg : 'An error occurred';
+          const errorMsg = this.getErrorMsg(error);
           // TODO it would be nicer to find another way to check if we are on the login page. Difficulty is to
           // prevent circular dependencies, that's why we can't import authService here
           if (this.router.url.startsWith('/auth')) {
@@ -121,13 +130,31 @@ export class ApiService {
           if (error instanceof HttpErrorResponse) {
             this.snackBarService.showMessage(error.message || 'An error occurred');
           } else {
-            this.snackBarService.showMessage(error.error?.msg ? error.error?.msg : 'An error occurred');
+            const errorMsg = this.getErrorMsg(error);
+            this.snackBarService.showMessage(errorMsg);
           }
 
           reject(error);
         }
       );
     });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private getErrorMsg(error: any): string {
+    let errorMsg = error.error?.msg ? error.error?.msg : 'An error occurred';
+    // Vantage6 server does request validation - if there are errors, they are returned in the response.
+    // Here we append these errors to the error message.
+    if (error.error?.errors) {
+      errorMsg +=
+        ': ' +
+        Object.keys(error.error?.errors)
+          .map((key) => {
+            return key + ': ' + error.error?.errors[key];
+          })
+          .join(', ');
+    }
+    return errorMsg;
   }
 
   private getApiPath(path: string): string {

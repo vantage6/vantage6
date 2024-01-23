@@ -82,6 +82,7 @@
           <app-visualize-result [result]="result.decoded_result" [functionOutput]="selectedOutput"></app-visualize-result>
           <!-- TODO only display text result if there are no visualizations -->
           <!-- <p>{{ displayTextResult(result.decoded_result) }}</p> -->
+          <br />
           <button mat-flat-button color="primary" (click)="downloadResult(result)">
             {{ "task-read.card-results.actions.download" | translate }}
           </button>

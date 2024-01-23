@@ -13,8 +13,8 @@
             <ng-template matStepLabel>{{ "task-create.step-package.title" | translate }}</ng-template>
             <mat-form-field subscriptSizing="dynamic">
               <mat-label>{{ "task.algorithm" | translate }}</mat-label>
-              <mat-select formControlName="algorithmName">
-                <mat-option *ngFor="let algorithm of algorithms" [value]="algorithm.name">
+              <mat-select formControlName="algorithmID" [compareWith]="compareIDsForSelection">
+                <mat-option *ngFor="let algorithm of algorithms" [value]="algorithm.id">
                   {{ algorithm.name }}
                 </mat-option>
               </mat-select>
@@ -45,7 +45,11 @@
             </mat-form-field>
             <mat-form-field *ngIf="function" subscriptSizing="dynamic">
               <mat-label>{{ "task-create.step-function.organization" | translate }}</mat-label>
-              <mat-select *ngIf="function.is_central" formControlName="organizationIDs" [compareWith]="compareOrganizationsForSelection">
+              <mat-select
+                *ngIf="function.type === functionType.Central"
+                formControlName="organizationIDs"
+                [compareWith]="compareIDsForSelection"
+              >
                 <mat-option
                   *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
                   [value]="organization.id"
@@ -54,9 +58,9 @@
                 </mat-option>
               </mat-select>
               <mat-select
-                *ngIf="!function.is_central"
+                *ngIf="function.type !== functionType.Central"
                 formControlName="organizationIDs"
-                [compareWith]="compareOrganizationsForSelection"
+                [compareWith]="compareIDsForSelection"
                 multiple
               >
                 <mat-option
