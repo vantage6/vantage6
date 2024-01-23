@@ -34,6 +34,7 @@ export enum RoleSortProperties {
 }
 
 export interface GetRoleParameters {
+  name?: string;
   organization_id?: string;
   sort?: RoleSortProperties;
   user_id?: number;

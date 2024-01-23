@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { SearchRequest } from '../components/table/table.component';
 import { Pagination } from '../models/api/pagination.model';
 import { ApiService } from '../services/api.service';
 
@@ -17,4 +18,18 @@ export const getLazyProperties = async (result: any, data: any, lazyProperties: 
       }
     })
   );
+};
+
+export const getApiSearchParameters = function <T>(searchRequests?: SearchRequest[]): T {
+  if (!searchRequests) return {} as T;
+
+  const parameters: T = {} as T;
+  searchRequests.forEach((request) => {
+    if (request.searchString?.trim().length > 0) {
+      const key = request.columnId as keyof typeof parameters;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      parameters[key] = `%${request.searchString}%` as any;
+    }
+  });
+  return parameters;
 };

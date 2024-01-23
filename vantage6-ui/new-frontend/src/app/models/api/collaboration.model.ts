@@ -14,6 +14,7 @@ export enum CollaborationSortProperties {
 }
 
 export interface GetCollaborationParameters {
+  name?: string;
   organization_id?: string;
   sort?: CollaborationSortProperties;
 }

@@ -4,9 +4,12 @@ import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
+import { SearchRequest } from 'src/app/components/table/table.component';
+import { getApiSearchParameters } from 'src/app/helpers/api.helper';
+import { unlikeApiParameter } from 'src/app/helpers/general.helper';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
-import { UserSortProperties } from 'src/app/models/api/user.model';
+import { GetUserParameters, UserSortProperties } from 'src/app/models/api/user.model';
 import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
 import { PermissionService } from 'src/app/services/permission.service';
@@ -28,6 +31,8 @@ export class UserListComponent implements OnInit, OnDestroy {
   pagination: PaginationLinks | null = null;
   currentPage: number = 1;
 
+  getUserParameters: GetUserParameters = {};
+
   constructor(
     private router: Router,
     private translateService: TranslateService,
@@ -45,24 +50,54 @@ export class UserListComponent implements OnInit, OnDestroy {
         this.table = {
           ...this.table,
           columns: [
-            { id: 'username', label: this.translateService.instant('user.username') },
-            { id: 'firsname', label: this.translateService.instant('user.first-name') },
-            { id: 'lastname', label: this.translateService.instant('user.last-name') },
-            { id: 'email', label: this.translateService.instant('user.email') }
+            {
+              id: 'username',
+              label: this.translateService.instant('user.username'),
+              searchEnabled: true,
+              initSearchString: unlikeApiParameter(this.getUserParameters.username)
+            },
+            {
+              id: 'firsname',
+              label: this.translateService.instant('user.first-name'),
+              searchEnabled: true,
+              initSearchString: unlikeApiParameter(this.getUserParameters.firstname)
+            },
+            {
+              id: 'lastname',
+              label: this.translateService.instant('user.last-name'),
+              searchEnabled: true,
+              initSearchString: unlikeApiParameter(this.getUserParameters.lastname)
+            },
+            {
+              id: 'email',
+              label: this.translateService.instant('user.email'),
+              searchEnabled: true,
+              initSearchString: unlikeApiParameter(this.getUserParameters.email)
+            }
           ]
         };
       } else {
         this.table = {
           ...this.table,
           columns: [
-            { id: 'username', label: this.translateService.instant('user.username') },
-            { id: 'email', label: this.translateService.instant('user.email') }
+            {
+              id: 'username',
+              label: this.translateService.instant('user.username'),
+              searchEnabled: true,
+              initSearchString: unlikeApiParameter(this.getUserParameters.username)
+            },
+            {
+              id: 'email',
+              label: this.translateService.instant('user.email'),
+              searchEnabled: true,
+              initSearchString: unlikeApiParameter(this.getUserParameters.email)
+            }
           ]
         };
       }
     });
     this.canCreate = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.USER, OperationType.CREATE);
-    await this.initData();
+    await this.initData(this.currentPage, this.getUserParameters);
   }
 
   ngOnDestroy() {
@@ -70,27 +105,49 @@ export class UserListComponent implements OnInit, OnDestroy {
   }
 
   async handlePageEvent(e: PageEvent) {
-    this.currentPage = e.pageIndex + 1;
-    await this.getUsers();
+    await this.getUsers(e.pageIndex + 1, this.getUserParameters);
   }
 
   handleTableClick(id: string) {
     this.router.navigate([routePaths.user, id]);
   }
 
-  private async initData() {
-    await this.getUsers();
+  private async initData(page: number, parameters: GetUserParameters) {
+    this.isLoading = true;
+    this.currentPage = page;
+    this.getUserParameters = parameters;
+    await this.getUsers(page, parameters);
     this.isLoading = false;
   }
 
-  private async getUsers() {
-    const result = await this.userService.getPaginatedUsers(this.currentPage, { sort: UserSortProperties.Username });
+  private async getUsers(page: number, getUserParameters: GetUserParameters) {
+    const result = await this.userService.getPaginatedUsers(page, { ...getUserParameters, sort: UserSortProperties.Username });
     this.table = {
       columns: [
-        { id: 'username', label: this.translateService.instant('user.username') },
-        { id: 'firsname', label: this.translateService.instant('user.first-name') },
-        { id: 'lastname', label: this.translateService.instant('user.last-name') },
-        { id: 'email', label: this.translateService.instant('user.email') }
+        {
+          id: 'username',
+          label: this.translateService.instant('user.username'),
+          searchEnabled: true,
+          initSearchString: unlikeApiParameter(getUserParameters.username)
+        },
+        {
+          id: 'firstname',
+          label: this.translateService.instant('user.first-name'),
+          searchEnabled: true,
+          initSearchString: unlikeApiParameter(getUserParameters.firstname)
+        },
+        {
+          id: 'lastname',
+          label: this.translateService.instant('user.last-name'),
+          searchEnabled: true,
+          initSearchString: unlikeApiParameter(getUserParameters.lastname)
+        },
+        {
+          id: 'email',
+          label: this.translateService.instant('user.email'),
+          searchEnabled: true,
+          initSearchString: unlikeApiParameter(getUserParameters.email)
+        }
       ],
       rows: result.data.map((_) => ({
         id: _.id.toString(),
@@ -102,5 +159,10 @@ export class UserListComponent implements OnInit, OnDestroy {
       }))
     };
     this.pagination = result.links;
+  }
+
+  handleSearchChanged(searchRequests: SearchRequest[]): void {
+    const parameters = getApiSearchParameters<GetUserParameters>(searchRequests);
+    this.initData(1, parameters);
   }
 }

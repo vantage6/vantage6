@@ -3,10 +3,14 @@ import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
+import { SearchRequest } from 'src/app/components/table/table.component';
+import { getApiSearchParameters } from 'src/app/helpers/api.helper';
+import { unlikeApiParameter } from 'src/app/helpers/general.helper';
 import { getChipTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
-import { BaseTask, TaskSortProperties, TaskStatus } from 'src/app/models/api/task.models';
+import { BaseTask, GetTaskParameters, TaskSortProperties, TaskStatus } from 'src/app/models/api/task.models';
+import { TableData } from 'src/app/models/application/table.model';
 import { CHOSEN_COLLABORATION, USER_ID } from 'src/app/models/constants/sessionStorage';
 import { AlgorithmStatusChangeMsg } from 'src/app/models/socket-messages.model';
 import { routePaths } from 'src/app/routes';
@@ -30,6 +34,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
   tableRows = TableRows;
   routes = routePaths;
   tasks: BaseTask[] = [];
+  table?: TableData;
   displayedColumns: string[] = [TableRows.ID, TableRows.Name, TableRows.Status];
   isLoading: boolean = true;
   pagination: PaginationLinks | null = null;
@@ -53,7 +58,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
       OperationType.CREATE,
       this.chosenCollaborationService.collaboration$.value
     );
-    await this.initData();
+    await this.initData(this.currentPage, { sort: TaskSortProperties.ID, is_user_created: 1 });
     this.taskStatusUpdateSubscription = this.socketioConnectService
       .getAlgorithmStatusUpdates()
       .subscribe((statusUpdate: AlgorithmStatusChangeMsg | null) => {
@@ -67,16 +72,16 @@ export class TaskListComponent implements OnInit, OnDestroy {
 
   async handlePageEvent(e: PageEvent) {
     this.currentPage = e.pageIndex + 1;
-    await this.getTasks();
+    await this.getTasks(this.currentPage, { sort: TaskSortProperties.ID, is_user_created: 1 });
   }
 
-  handleRowClick(task: BaseTask) {
-    this.router.navigate([routePaths.task, task.id]);
+  handleTableClick(task_id: string) {
+    this.router.navigate([routePaths.task, task_id]);
   }
 
   handleRowKeyPress(event: KeyboardEvent, task: BaseTask) {
     if (event.key === 'Enter' || event.key === ' ') {
-      this.handleRowClick(task);
+      this.handleTableClick(task.id.toString());
     }
   }
 
@@ -88,23 +93,56 @@ export class TaskListComponent implements OnInit, OnDestroy {
     return getTaskStatusTranslation(this.translateService, status);
   }
 
-  private async initData() {
-    await this.getTasks();
+  public handleSearchChanged(searchRequests: SearchRequest[]): void {
+    const parameters: GetTaskParameters = getApiSearchParameters<GetTaskParameters>(searchRequests);
+    this.initData(1, parameters);
+  }
+
+  private async initData(page: number, parameters: GetTaskParameters) {
+    await this.getTasks(page, parameters);
     this.isLoading = false;
   }
 
-  private async getTasks() {
+  private async getTasks(page: number, parameters: GetTaskParameters) {
     const collaborationID = sessionStorage.getItem(CHOSEN_COLLABORATION);
     const userID = sessionStorage.getItem(USER_ID);
     if (!collaborationID || !userID) return;
 
-    const taskData = await this.taskService.getTasks(this.currentPage, {
-      collaboration_id: collaborationID,
-      sort: TaskSortProperties.ID,
-      is_user_created: 1
-    });
+    parameters = { ...parameters, collaboration_id: collaborationID };
+    const taskData = await this.taskService.getTasks(page, parameters);
     this.tasks = taskData.data;
     this.pagination = taskData.links;
+
+    this.table = {
+      columns: [
+        {
+          id: TableRows.ID,
+          label: this.translateService.instant('general.id')
+        },
+        {
+          id: TableRows.Name,
+          label: this.translateService.instant('task.name'),
+          searchEnabled: true,
+          initSearchString: unlikeApiParameter(parameters.name)
+        },
+        {
+          id: TableRows.Status,
+          label: this.translateService.instant('task.status'),
+          filterEnabled: true,
+          isChip: true,
+          chipTypeProperty: 'statusType'
+        }
+      ],
+      rows: this.tasks.map((_) => ({
+        id: _.id.toString(),
+        columnData: {
+          id: _.id.toString(),
+          name: _.name,
+          status: this.getTaskStatusTranslation(_.status),
+          statusType: this.getChipTypeForStatus(_.status)
+        }
+      }))
+    };
   }
 
   private async onAlgorithmStatusUpdate(statusUpdate: AlgorithmStatusChangeMsg) {

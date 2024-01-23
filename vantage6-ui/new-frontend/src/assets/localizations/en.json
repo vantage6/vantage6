@@ -19,6 +19,9 @@
   "home": {
     "title": "Home"
   },
+  "table": {
+    "search-placeholder": "Search"
+  },
   "task": {
     "algorithm": "Algorithm",
     "database": "Database",
