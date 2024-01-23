@@ -15,7 +15,14 @@
         <th mat-header-cell *matHeaderCellDef>
           {{ column.label }}
         </th>
-        <td mat-cell *matCellDef="let element">{{ element.columnData[column.id] }}</td>
+        <div *ngIf="!column.isChip">
+          <td mat-cell *matCellDef="let element">{{ element.columnData[column.id] }}</td>
+        </div>
+        <div *ngIf="column.isChip && column.chipTypeProperty">
+          <td mat-cell *matCellDef="let element">
+            <app-chip [label]="element.columnData[column.id]" [type]="element.columnData[column.chipTypeProperty]"></app-chip>
+          </td>
+        </div>
       </ng-container>
       <tr mat-header-row *matHeaderRowDef="searchColumnsToDisplay" class="searchable-table__search-header-row"></tr>
       <tr mat-header-row *matHeaderRowDef="columnsToDisplay" class="searchable-table__header-row"></tr>
