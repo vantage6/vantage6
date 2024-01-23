@@ -16,4 +16,8 @@ export class SnackbarService {
       duration: 20000 //Auto close after 20 seconds
     });
   }
+
+  dismiss() {
+    this.snackBar.dismiss();
+  }
 }

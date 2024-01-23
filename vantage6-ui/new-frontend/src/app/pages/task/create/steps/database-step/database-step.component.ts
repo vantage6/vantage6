@@ -24,7 +24,7 @@ export class DatabaseStepComponent implements OnDestroy, OnChanges {
     this.destroy$.next(true);
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
+  async ngOnChanges(changes: SimpleChanges): Promise<void> {
     if (changes['node']?.currentValue) {
       this.getAvailableDatabases();
     }

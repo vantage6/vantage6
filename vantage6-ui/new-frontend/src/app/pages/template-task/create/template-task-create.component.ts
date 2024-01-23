@@ -1,7 +1,7 @@
 import { Component, HostBinding, OnInit, ViewChild } from '@angular/core';
 import { TemplateTask } from 'src/app/models/api/templateTask.models';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
-import { Algorithm, AlgorithmFunction, ArgumentType } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmFunction, ArgumentType, FunctionType } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { addParameterFormControlsForFunction, getTaskDatabaseFromForm } from '../../task/task.helper';
@@ -28,6 +28,7 @@ export class TemplateTaskCreateComponent implements OnInit {
   databaseStepComponent?: DatabaseStepComponent;
 
   argumentType = ArgumentType;
+  functionType = FunctionType;
   destroy$ = new Subject();
 
   isLoadingTaskData: boolean = false;
@@ -101,11 +102,16 @@ export class TemplateTaskCreateComponent implements OnInit {
     this.templateTask = this.templateTasks[event.value] || null;
 
     const algorithms = await this.algorithmService.getAlgorithms();
-    const baseAlgorithm = algorithms.find((_) => _.url === this.templateTask?.image);
+    // TODO handle multiple matches from different algorithm stores
+    const baseAlgorithm = algorithms.find((_) => _.image === this.templateTask?.image);
     if (baseAlgorithm) {
-      this.algorithm = await this.algorithmService.getAlgorithm(baseAlgorithm?.id.toString() || '');
+      this.algorithm = await this.algorithmService.getAlgorithm(
+        baseAlgorithm.algorithm_store_url || '',
+        baseAlgorithm?.id.toString() || ''
+      );
     } else {
       this.snackBarService.showMessage('Algorithm not found');
+      return;
     }
 
     if (this.algorithm) {
@@ -122,6 +128,7 @@ export class TemplateTaskCreateComponent implements OnInit {
       }
     } else {
       this.snackBarService.showMessage('Function not found');
+      return;
     }
 
     this.templateTask.variable?.forEach((variable) => {
@@ -181,7 +188,7 @@ export class TemplateTaskCreateComponent implements OnInit {
       description: this.templateTask?.fixed?.description
         ? this.templateTask.fixed.description
         : this.packageForm.get('description')?.value || '',
-      image: this.algorithm?.url || '',
+      image: this.algorithm?.image || '',
       collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
       databases: taskDatabases,
       organizations: selectedOrganizations.map((organizationID) => {

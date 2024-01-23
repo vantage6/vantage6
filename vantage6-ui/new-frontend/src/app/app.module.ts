@@ -45,7 +45,7 @@ import { TaskListComponent } from './pages/task/list/task-list.component';
 import { TaskReadComponent } from './pages/task/read/task-read.component';
 import { PageHeaderComponent } from './components/page-header/page-header.component';
 import { ChipComponent } from './components/chip/chip.component';
-import { AlertComponent } from './components/alert/alert.component';
+import { AlertComponent } from './components/alerts/alert/alert.component';
 import { StatusInfoComponent } from './components/status-info/status-info.component';
 import { LogDialogComponent } from './components/dialogs/log/log-dialog.component';
 import { ConfirmDialogComponent } from './components/dialogs/confirm/confirm-dialog.component';
@@ -86,10 +86,12 @@ import { SetupMfaComponent } from './pages/auth/setup-mfa/setup-mfa.component';
 import { MfaCodeComponent } from './pages/auth/mfa-code/mfa-code.component';
 import { MfaRecoverComponent } from './pages/auth/mfa-recover/mfa-recover.component';
 import { MfaLostComponent } from './pages/auth/mfa-lost/mfa-lost.component';
-import { AlertWithButtonComponent } from './components/alert-with-button/alert-with-button.component';
+import { AlertWithButtonComponent } from './components/alerts/alert-with-button/alert-with-button.component';
 import { PasswordLostComponent } from './pages/auth/password-lost/password-lost.component';
 import { PasswordRecoverComponent } from './pages/auth/password-recover/password-recover.component';
 import { RoleSubmitButtonsComponent } from './components/role-submit-buttons/role-submit-buttons.component';
+import { AddAlgoStoreComponent } from './pages/collaboration/add-algo-store/add-algo-store.component';
+import { AlgorithmStoreFormComponent } from './components/forms/algorithm-store-form/algorithm-store-form.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -153,7 +155,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     AlertWithButtonComponent,
     PasswordLostComponent,
     PasswordRecoverComponent,
-    RoleSubmitButtonsComponent
+    RoleSubmitButtonsComponent,
+    AddAlgoStoreComponent,
+    AlgorithmStoreFormComponent
   ],
   imports: [
     BrowserModule,

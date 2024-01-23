@@ -1,0 +1,24 @@
+<form class="form" [formGroup]="form" (ngSubmit)="handleSubmit()">
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ "algorithm-store-add.name" | translate }}</mat-label>
+    <input matInput type="text" formControlName="name" />
+    <mat-hint>{{ "algorithm-store-add.form.name-hint" | translate }}</mat-hint>
+  </mat-form-field>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ "algorithm-store-add.url" | translate }}</mat-label>
+    <input matInput type="text" formControlName="algorithm_store_url" />
+    <mat-hint>{{ "algorithm-store-add.form.url-hint" | translate }}</mat-hint>
+  </mat-form-field>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ "algorithm-store-add.server_url" | translate }}</mat-label>
+    <input matInput type="text" formControlName="server_url" />
+    <mat-hint>{{ "algorithm-store-add.form.server-url-hint" | translate }}</mat-hint>
+  </mat-form-field>
+  <mat-checkbox formControlName="all_collaborations" *ngIf="canSetAllCollaborations">{{
+    "algorithm-store-add.form.all-collaborations" | translate
+  }}</mat-checkbox>
+  <div class="button-container">
+    <button mat-flat-button type="submit" color="primary">{{ "general.submit" | translate }}</button>
+    <button mat-flat-button (click)="handleCancel()">{{ "general.cancel" | translate }}</button>
+  </div>
+</form>

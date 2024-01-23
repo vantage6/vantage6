@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { RouterModule, Routes, Router } from '@angular/router';
 import { routePaths, routerConfig } from './routes';
 import { LoginComponent } from './pages/auth/login/login.component';
 import { LayoutLoginComponent } from './layouts/layout-login/layout-login.component';
@@ -35,6 +35,7 @@ import { MfaLostComponent } from './pages/auth/mfa-lost/mfa-lost.component';
 import { MfaRecoverComponent } from './pages/auth/mfa-recover/mfa-recover.component';
 import { PasswordLostComponent } from './pages/auth/password-lost/password-lost.component';
 import { PasswordRecoverComponent } from './pages/auth/password-recover/password-recover.component';
+import { AddAlgoStoreComponent } from './pages/collaboration/add-algo-store/add-algo-store.component';
 
 const routes: Routes = [
   {
@@ -209,6 +210,20 @@ const routes: Routes = [
         canActivate: [authenticationGuard()],
         data: {
           crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-read.title']]
+        }
+      },
+      {
+        path: routerConfig.algorithmStoreAdd,
+        component: AddAlgoStoreComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [
+            ['collaboration-list.title', routePaths.collaborations],
+            // TODO this crumb is not complete: it should include the collaboration for which
+            // the algorithm store is being added, but not sure how to get its ID here
+            // ['collaboration-read.title', Router().url.split('/').pop() || ''],
+            ['algorithm-store-add.title']
+          ]
         }
       },
       {

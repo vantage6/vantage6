@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
-import { Algorithm, ArgumentType, BaseAlgorithm, AlgorithmFunction, Argument } from 'src/app/models/api/algorithm.model';
+import { Algorithm, ArgumentType, AlgorithmFunction, Argument, FunctionType } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { BaseNode, NodeStatus } from 'src/app/models/api/node.model';
@@ -37,8 +37,9 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   destroy$ = new Subject();
   routes = routePaths;
   argumentType = ArgumentType;
+  functionType = FunctionType;
 
-  algorithms: BaseAlgorithm[] = [];
+  algorithms: Algorithm[] = [];
   algorithm: Algorithm | null = null;
   function: AlgorithmFunction | null = null;
   node: BaseNode | null = null;
@@ -47,10 +48,11 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   isLoadingColumns: boolean = false;
   isTaskRepeat: boolean = false;
   isDataInitialized: boolean = false;
+  isNgInitDone: boolean = false;
   repeatedTask: Task | null = null;
 
   packageForm = this.fb.nonNullable.group({
-    algorithmName: ['', Validators.required],
+    algorithmID: ['', Validators.required],
     name: ['', Validators.required],
     description: ''
   });
@@ -79,8 +81,8 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isTaskRepeat = this.router.url.startsWith(routePaths.taskCreateRepeat);
     await this.initData();
 
-    this.packageForm.controls.algorithmName.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (algorithmID) => {
-      this.handleAlgorithmChange(algorithmID);
+    this.packageForm.controls.algorithmID.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (algorithmID) => {
+      this.handleAlgorithmChange(Number(algorithmID));
     });
 
     this.functionForm.controls.functionName.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (functionName) => {
@@ -96,9 +98,19 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       .subscribe((nodeStatusUpdate: NodeOnlineStatusMsg | null) => {
         if (nodeStatusUpdate) this.onNodeStatusUpdate(nodeStatusUpdate);
       });
+
+    this.isNgInitDone = true;
   }
 
   async ngAfterViewInit(): Promise<void> {
+    // recursively wait until ngInit is done
+    if (!this.isNgInitDone) {
+      await new Promise((f) => setTimeout(f, 200));
+      this.ngAfterViewInit();
+      return;
+    }
+
+    // setup repeating task if needed
     if (this.isTaskRepeat) {
       this.isLoading = true;
       const taskID = this.router.url.split('/')[4];
@@ -118,12 +130,12 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
   get shouldShowPreprocessorStep(): boolean {
     if (!this.algorithm || !this.function) return true;
-    return this.algorithm.select.length > 0 && this.shouldShowDatabaseStep;
+    return this.algorithm.select !== undefined && this.algorithm.select.length > 0 && this.shouldShowDatabaseStep;
   }
 
   get shouldShowFilterStep(): boolean {
     if (!this.algorithm || !this.function) return true;
-    return this.algorithm.filter.length > 0 && this.shouldShowDatabaseStep;
+    return this.algorithm.filter !== undefined && this.algorithm.filter.length > 0 && this.shouldShowDatabaseStep;
   }
 
   get shouldShowParameterStep(): boolean {
@@ -140,11 +152,10 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     // set algorithm step
     this.packageForm.controls.name.setValue(this.repeatedTask.name);
     this.packageForm.controls.description.setValue(this.repeatedTask.description);
-    const algorithm = this.algorithms.find((_) => _.url === this.repeatedTask?.image);
+    const algorithm = this.algorithms.find((_) => _.image === this.repeatedTask?.image);
     if (!algorithm) return;
-    this.packageForm.controls.algorithmName.setValue(algorithm.name.toString());
-    await this.handleAlgorithmChange(algorithm.id.toString());
-
+    this.packageForm.controls.algorithmID.setValue(algorithm.id.toString());
+    await this.handleAlgorithmChange(algorithm.id);
     // set function step
     if (!this.repeatedTask.input) return;
     this.functionForm.controls.functionName.setValue(this.repeatedTask?.input?.method);
@@ -157,6 +168,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     // component may not yet be initialized when we get here. Instead, we
     // setup the database step in the database child component when it is
     // initialized.
+
     // set parameter step
     for (const parameter of this.repeatedTask.input?.parameters || []) {
       this.parameterForm.get(parameter.label)?.setValue(parameter.value);
@@ -173,6 +185,16 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
   async handleDatabaseStepInitialized(): Promise<void> {
     if (!this.repeatedTask || !this.function) return;
+    // This function is run when the database child component is initialized,
+    // but it may still be null when we get here. If it is null, we wait a bit
+    // and then (recursively) try again.
+    if (!this.databaseStepComponent) {
+      await new Promise((f) => setTimeout(f, 200));
+      this.handleDatabaseStepInitialized();
+      return;
+    }
+
+    // Now, setup the database step
     // set database step for task repeat
     this.databaseStepComponent?.setDatabasesFromPreviousTask(this.repeatedTask?.databases, this.function?.databases);
 
@@ -216,7 +238,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     const createTask: CreateTask = {
       name: this.packageForm.controls.name.value,
       description: this.packageForm.controls.description.value,
-      image: this.algorithm?.url || '',
+      image: this.algorithm?.image || '',
       collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
       databases: taskDatabases,
       organizations: selectedOrganizations.map((organizationID) => {
@@ -285,7 +307,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   // compare function for mat-select
-  compareOrganizationsForSelection(id1: number | string, id2: number | string): boolean {
+  compareIDsForSelection(id1: number | string, id2: number | string): boolean {
     // The mat-select object set from typescript only has an ID set. Compare that with the ID of the
     // organization object from the collaboration
     if (typeof id1 === 'number') {
@@ -305,7 +327,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isDataInitialized = true;
   }
 
-  private async handleAlgorithmChange(algorithmID: string): Promise<void> {
+  private async handleAlgorithmChange(algorithmID: number): Promise<void> {
     //Clear form
     this.clearFunctionStep();
     this.clearDatabaseStep();
@@ -314,7 +336,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     this.clearParameterStep();
 
     //Get selected algorithm
-    this.algorithm = await this.algorithmService.getAlgorithm(algorithmID);
+    this.algorithm = this.algorithms.find((_) => _.id === algorithmID) || null;
   }
 
   private handleFunctionChange(functionName: string): void {
