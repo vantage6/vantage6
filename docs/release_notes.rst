@@ -1,6 +1,23 @@
 Release notes
 =============
 
+4.1.3
+-----
+
+*19 December 2023*
+
+- **Bugfix**
+
+ - Server logs were not persisted properly
+   (`Issue#951 <https://github.com/vantage6/vantage6/issues/951>`_,
+   `PR#953 <https://github.com/vantage6/vantage6/pull/953>`_).
+ - Fixed validation of request to recover two-factor authentication secret
+   (`PR#941 <https://github.com/vantage6/vantage6/pull/941>`_).
+ - Default roles were visible via GET ``/role`` but not via GET ``/role/<id> ``
+   for users without global role view permission. Now they are visible via both
+   (`PR#948 <https://github.com/vantage6/vantage6/pull/948>`_).
+
+
 4.1.2
 -----
 

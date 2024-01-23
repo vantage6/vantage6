@@ -33,10 +33,6 @@ class NodeContext(AppContext):
     # configuration file and makes sure only valid configuration can be loaded.
     INST_CONFIG_MANAGER = NodeConfigurationManager
 
-    # Flag to indicate if the node is running in a docker container or directly
-    # on the host machine.
-    running_in_docker = False
-
     def __init__(self, instance_name: str, system_folders: bool = N_FOL,
                  config_file: str = None):
         super().__init__(InstanceType.NODE, instance_name, system_folders,

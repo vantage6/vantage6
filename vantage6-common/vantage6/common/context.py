@@ -3,6 +3,8 @@ import sys
 import logging
 import logging.handlers
 import enum
+import pyfiglet
+
 from pathlib import Path
 from typing import Tuple
 
@@ -13,6 +15,7 @@ from vantage6.common import (
 )
 from vantage6.common.colors import ColorStreamHandler
 from vantage6.common.globals import APPNAME, InstanceType
+from vantage6.common.docker.addons import running_in_docker
 from vantage6.common.configuration_manager import (
     ConfigurationManager
 )
@@ -50,10 +53,31 @@ class AppContext(metaclass=Singleton):
             will be used to find the configuration file specified by
             `instance_name`.
         """
+        self.initialize(instance_type, instance_name, system_folders,
+                        config_file)
+
+    def initialize(self, instance_type: str, instance_name: str,
+                   system_folders: bool = False,
+                   config_file: str | None = None) -> None:
+        """
+        Initialize the AppContext instance.
+
+        Parameters
+        ----------
+        instance_type: str
+            'server' or 'node'
+        instance_name: str
+            Name of the configuration
+        system_folders: bool
+            Use system folders rather than user folders
+        config_file: str
+            Path to a specific config file. If left as None, OS specific folder
+            will be used to find the configuration file specified by
+            `instance_name`.
+        """
         self.scope: str = "system" if system_folders else "user"
         self.name: str = instance_name
         self.instance_type = instance_type
-
         # if config_file is None:
         #     config_file = f"{instance_name}.yaml"
         self.config_file = self.find_config_file(
@@ -77,7 +101,6 @@ class AppContext(metaclass=Singleton):
         self.log = logging.getLogger(module_name)
         self.log.info("-" * 45)
         # self.log.info(f'#{APPNAME:^78}#')
-        import pyfiglet
         self.log.info(" Welcome to")
         for line in pyfiglet.figlet_format(APPNAME, font='big').split('\n'):
             self.log.info(line)
@@ -122,16 +145,7 @@ class AppContext(metaclass=Singleton):
         instance_name = Path(path).stem
 
         self_ = cls.__new__(cls)
-        self_.name = instance_name
-        self_.scope = "system" if system_folders else "user"
-        self_.config_dir = Path(path).parent
-        self_.config_file = path
-        self_.instance_type = instance_type
-        self_.set_folders(instance_type, instance_name, system_folders)
-        module_name = logger_name(__name__)
-        self_.log = logging.getLogger(module_name)
-        if self_.LOGGING_ENABLED:
-            self_.setup_logging()
+        self_.initialize(instance_type, instance_name, system_folders, path)
 
         return self_
 
@@ -225,17 +239,22 @@ class AppContext(metaclass=Singleton):
         if isinstance(instance_type, enum.Enum):
             instance_type = instance_type.value
 
-        if system_folders:
+        if running_in_docker():
             return {
-                "log": Path(d.site_data_dir) / instance_type,
+                "log": Path("/mnt/log"),
+                "data": Path("/mnt/data"),
+                "config": Path("/mnt/config")
+            }
+        elif system_folders:
+            return {
+                "log": Path(d.site_data_dir) / instance_type / instance_name,
                 "data": Path(d.site_data_dir) / instance_type / instance_name,
-                "config": (
-                    Path(get_config_path(d, system_folders)) / instance_type
-                )
+                "config": (Path(get_config_path(d, system_folders)) /
+                           instance_type)
             }
         else:
             return {
-                "log": Path(d.user_log_dir) / instance_type,
+                "log": Path(d.user_log_dir) / instance_type / instance_name,
                 "data": Path(d.user_data_dir) / instance_type / instance_name,
                 "config": Path(d.user_config_dir) / instance_type,
                 "dev": Path(d.user_config_dir) / "dev"
@@ -313,8 +332,7 @@ class AppContext(metaclass=Singleton):
         """
         assert self.config_manager, \
             "Log file unkown as configuration manager not initialized"
-        file_ = (Path(self.config_manager.name) /
-                 f"{type_}_{self.scope}.log")
+        file_ = f"{type_}_{self.scope}.log"
         return self.log_dir / file_
 
     @property

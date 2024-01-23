@@ -29,6 +29,10 @@ uri: sqlite:///test.sqlite
 # testing/developing.
 allow_drop_all: True
 
+# Enable or disable two-factor authentication. If enabled, users will be
+# presented with a QR-code to scan with their phone the first time they log in.
+two_factor_auth: true
+
 # The secret key used to generate JWT authorization tokens. This should
 # be kept secret as others are able to generate access tokens if they
 # know this secret. This parameter is optional. In case it is not
