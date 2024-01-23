@@ -21,6 +21,10 @@ from vantage6.algorithm.store.model.function import Function
 from vantage6.algorithm.store.resource import with_authentication
 # TODO move to common / refactor
 from vantage6.server.resource import AlgorithmStoreResources
+from vantage6.algorithm.store.permission import (
+    PermissionManager,
+    Operation as P,
+)
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -64,8 +68,28 @@ algorithm_output_schema = AlgorithmOutputSchema()
 
 
 # ------------------------------------------------------------------------------
+# Permissions
+# ------------------------------------------------------------------------------
+def permissions(permissions: PermissionManager) -> None:
+    """
+    Define the permissions for this resource.
+
+    Parameters
+    ----------
+    permissions : PermissionManager
+        Permission manager instance to which permissions are added
+    """
+    add = permissions.appender(module_name)
+    add(P.VIEW, description='View any algorithm')
+    add(P.CREATE, description='Create a new algorithm')
+    add(P.EDIT, description='Edit any algorithm')
+    add(P.DELETE, description='Delete any algorithm')
+
+# ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
+
+
 class Algorithms(AlgorithmStoreResources):
     """ Resource for /algorithm """
 

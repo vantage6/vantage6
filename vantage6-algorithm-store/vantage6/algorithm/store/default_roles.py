@@ -1,6 +1,6 @@
 from enum import Enum
 
-from vantage6.server.model.rule import Operation, Scope
+from vantage6.algorithm.store.model.rule import Operation
 
 
 class DefaultRole(str, Enum):
@@ -44,23 +44,11 @@ def get_default_roles(db) -> list[dict]:
     SUPER_ROLE = {
         'name': DefaultRole.ROOT,
         'description': "Super role",
-        # 'rules': db.Rule.get()
+        'rules': db.Rule.get()
     }
     # 2. Role for viewing algorithms
     VIEWER_RULES = [
-        # db.Rule.get_by_('user', Scope.OWN, Operation.EDIT),
-        # db.Rule.get_by_('user', Scope.OWN, Operation.DELETE),
-        # db.Rule.get_by_('user', Scope.ORGANIZATION, Operation.VIEW),
-        # db.Rule.get_by_('organization', Scope.ORGANIZATION, Operation.VIEW),
-        # db.Rule.get_by_('organization', Scope.COLLABORATION, Operation.VIEW),
-        # db.Rule.get_by_('collaboration', Scope.ORGANIZATION, Operation.VIEW),
-        # db.Rule.get_by_('role', Scope.ORGANIZATION, Operation.VIEW),
-        # db.Rule.get_by_('node', Scope.ORGANIZATION, Operation.VIEW),
-        # db.Rule.get_by_('node', Scope.COLLABORATION, Operation.VIEW),
-        # db.Rule.get_by_('task', Scope.COLLABORATION, Operation.VIEW),
-        # db.Rule.get_by_('run', Scope.COLLABORATION, Operation.VIEW),
-        # db.Rule.get_by_('port', Scope.ORGANIZATION, Operation.VIEW),
-        # db.Rule.get_by_('event', Scope.ORGANIZATION, Operation.RECEIVE),
+        db.Rule.get_by_('algorithm', Operation.VIEW),
     ]
     VIEWER_ROLE = {
         'name': DefaultRole.VIEWER,
@@ -68,14 +56,20 @@ def get_default_roles(db) -> list[dict]:
         'rules': VIEWER_RULES
     }
     # 3. Reviewer role
-    REVIEWER_RULES = []
+    REVIEWER_RULES = [
+        db.Rule.get_by_('algorithm', Operation.VIEW),
+        db.Rule.get_by_('algorithm', Operation.EDIT)
+    ]
     REVIEWER_ROLE = {
         'name': DefaultRole.REVIEWER,
         'description': "Can view and edit algorithms",
         'rules': REVIEWER_RULES
     }
     # 4. Store manager role
-    STORE_MANAGER = []
+    STORE_MANAGER = [
+        db.Rule.get_by_('algorithm', Operation.VIEW),
+        db.Rule.get_by_('algorithm', Operation.DELETE)
+    ]
     STORE_MANAGER = {
         'name': DefaultRole.STORE_MANAGER,
         'description':
@@ -83,12 +77,15 @@ def get_default_roles(db) -> list[dict]:
         'rules': STORE_MANAGER
     }
     # 4. Developer role
-    DEVELOPER_RULES = []
+    DEVELOPER_RULES = [
+        db.Rule.get_by_('algorithm', Operation.VIEW),
+        db.Rule.get_by_('algorithm', Operation.CREATE)
+    ]
     DEVELOPER_ROLE = {
         'name': DefaultRole.DEVELOPER,
         'description':
             "Can view and create algorithms.",
-        'rules': STORE_MANAGER
+        'rules': DEVELOPER_RULES
     }
     # Combine all in array
     return [

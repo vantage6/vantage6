@@ -44,8 +44,8 @@ from vantage6.algorithm.store.model.base import (
 )
 from vantage6.algorithm.store import db
 # TODO move server imports to common / refactor
-from vantage6.server.resource.common.output_schema import HATEOASModelSchema
-from vantage6.server.permission import PermissionManager
+from vantage6.algorithm.store.resource.schema.output_schema import HATEOASModelSchema
+from vantage6.algorithm.store.permission import PermissionManager
 from vantage6.algorithm.store.globals import (
     RESOURCES,
     SERVER_MODULE_NAME
@@ -93,7 +93,7 @@ class AlgorithmStoreApp:
         self.swagger = Swagger(self.app, template={})
 
         # setup the permission manager for the API endpoints
-        # self.permissions = PermissionManager()
+        self.permissions = PermissionManager()
 
         # Api - REST JSON-rpc
         self.api = Api(self.app)
@@ -260,7 +260,7 @@ class AlgorithmStoreApp:
                 new_role = db.Role(
                     name=role['name'],
                     description=role['description'],
-                    # rules=role['rules']
+                    rules=role['rules']
                 )
                 new_role.save()
 

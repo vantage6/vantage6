@@ -1,14 +1,45 @@
 from marshmallow import fields
+from flask import url_for
 
 from vantage6.algorithm.store.model.algorithm import Algorithm
 from vantage6.algorithm.store.model.argument import Argument
 from vantage6.algorithm.store.model.database import Database
 from vantage6.algorithm.store.model.function import Function
+from vantage6.algorithm.store.model import Base
 from vantage6.algorithm.store.model.role import Role
+from vantage6.algorithm.store.model.rule import Rule
 from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 from vantage6.server.resource.common.output_schema import (
     BaseHATEOASModelSchema
 )
+
+
+def create_one_to_many_link(obj: Base, link_to: str, link_from: str) -> str:
+    """
+    Create an API link to get objects related to a given object.
+
+    Parameters
+    ----------
+    obj : Base
+        Object to which the link is created
+    link_to : str
+        Name of the resource to which the link is created
+    link_from : str
+        Name of the resource from which the link is created
+
+    Returns
+    -------
+    str
+        API link
+
+    Examples
+    --------
+    >>> create_one_to_many_link(obj, "node", "organization_id")
+    "/api/node?organization_id=<obj.id>"
+    """
+    endpoint = link_to + "_without_id"
+    values = {link_from: obj.id}
+    return url_for(endpoint, **values)
 
 
 class HATEOASModelSchema(BaseHATEOASModelSchema):
@@ -27,6 +58,8 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
                 lambda obj: self.create_hateoas("database", obj))
         setattr(self, "argument",
                 lambda obj: self.create_hateoas("argument", obj))
+        setattr(self, "rule",
+                lambda obj: self.create_hateoas("rule", obj))
         setattr(self, "role",
                 lambda obj: self.create_hateoas("role", obj))
 
@@ -72,5 +105,16 @@ class Vantage6ServerOutputSchema(HATEOASModelSchema):
 
 
 class RoleOutputSchema(HATEOASModelSchema):
+
+    rules = fields.Function(lambda obj: create_one_to_many_link(
+        obj, link_to='rule', link_from='role_id'
+    ))
+
     class Meta:
         model = Role
+
+
+class RuleOutputSchema(HATEOASModelSchema):
+    class Meta:
+        model = Rule
+        exclude = ('roles',)
