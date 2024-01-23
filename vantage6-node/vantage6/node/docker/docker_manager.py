@@ -485,8 +485,8 @@ class DockerManager(DockerBaseManager):
                         self.active_tasks.remove(task)
                         break
                 except AlgorithmContainerNotFound:
-                    self.log.exception(f'Failed to find container for '
-                                       f'result {task.result_id}')
+                    self.log.exception('Failed to find container for '
+                                       'algorithm with run_id %s', task.run_id)
                     self.failed_tasks.append(task)
                     self.active_tasks.remove(task)
                     break
@@ -517,7 +517,7 @@ class DockerManager(DockerBaseManager):
         else:
             # at least one task failed to start
             finished_task = self.failed_tasks.pop()
-            logs = 'Container failed'
+            logs = 'Container failed. Check node logs for details'
             results = b''
 
         return Result(

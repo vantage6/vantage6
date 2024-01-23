@@ -44,8 +44,11 @@ SUPER_USER_INFO = {
     "password": "root"
 }
 
-# default support email address
+# default support email address to make users aware of
 DEFAULT_SUPPORT_EMAIL_ADDRESS = 'support@vantage6.ai'
+
+# default email address used in 'from' header
+DEFAULT_EMAIL_FROM_ADDRESS = 'noreply@vantage6.ai'
 
 # default time that token is valid in minutes
 DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES = 60
@@ -53,3 +56,8 @@ DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES = 60
 # pagination settings
 DEFAULT_PAGE = 1
 DEFAULT_PAGE_SIZE = 10
+
+# default password policies
+DEFAULT_MAX_FAILED_ATTEMPTS = 5
+DEFAULT_INACTIVATION_MINUTES = 15
+DEFAULT_BETWEEN_BLOCKED_LOGIN_EMAIL_MINUTES = 60

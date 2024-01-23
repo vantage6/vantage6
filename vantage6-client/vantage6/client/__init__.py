@@ -1238,6 +1238,8 @@ class UserClient(ClientBase):
                     'assigning it to at least one organization.'
                 )
 
+            if databases is None:
+                databases = []
             databases = self._parse_arg_databases(databases)
 
             # Data will be serialized in JSON.

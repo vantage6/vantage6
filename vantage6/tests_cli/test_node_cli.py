@@ -214,7 +214,7 @@ class NodeCLITest(unittest.TestCase):
             log_dir=Path("logs"),
             config_dir=Path("configs"),
             databases=[{
-                "label": "some-label",
+                "label": "some_label",
                 "uri": "data.csv",
                 "type": "csv"
             }]

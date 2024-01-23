@@ -6,24 +6,17 @@
 # * harbor2.vantage6.ai/infrastructure/server:x.x.x
 #
 ARG TAG=latest
-ARG BASE=4.1
+ARG BASE=4.2
 FROM harbor2.vantage6.ai/infrastructure/infrastructure-base:${BASE}
 
 LABEL version=${TAG}
 LABEL maintainer="Frank Martin <f.martin@iknl.nl>"
 
+# Update and upgrade
 RUN apt update -y
 RUN apt upgrade -y
 
-# Enable SSH access in Azure App service
-RUN apt install openssh-server sudo -y
-RUN useradd -rm -d /home/ubuntu -s /bin/bash -g root -G sudo -u 1000 test
-RUN  echo 'root:Docker!' | chpasswd
-
-COPY sshd_config /etc/ssh/
-RUN mkdir /run/sshd
-
-# Fix DB issue
+# # Fix DB issue
 RUN apt install python-psycopg2 -y
 RUN pip install psycopg2-binary
 
@@ -36,7 +29,7 @@ COPY . /vantage6
 # This is also done in the base-image to safe build time. We redo it here
 # to allow for dependency upgrades in minor and patch versions.
 RUN pip install -r /vantage6/requirements.txt \
-    --extra-index-url https://www.piwheels.org/simple
+  --extra-index-url https://www.piwheels.org/simple
 
 # install individual packages
 RUN pip install -e /vantage6/vantage6-common
@@ -59,5 +52,5 @@ RUN chmod +x /vantage6/vantage6-server/server.sh
 
 # expose the proxy server port
 ARG port=80
-EXPOSE ${port} 2222
+EXPOSE ${port}
 ENV PROXY_SERVER_PORT ${port}

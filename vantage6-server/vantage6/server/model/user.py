@@ -65,6 +65,7 @@ class User(Authenticatable):
     failed_login_attempts = Column(Integer, default=0)
     last_login_attempt = Column(DateTime)
     otp_secret = Column(String(32))
+    last_email_failed_login_sent = Column(DateTime)
 
     # relationships
     organization = relationship("Organization", back_populates="users")
@@ -155,7 +156,7 @@ class User(Authenticatable):
         return False
 
     def is_blocked(self, max_failed_attempts: int,
-                   inactivation_in_minutes: int) -> tuple[bool, str | None]:
+                   inactivation_in_minutes: int) -> tuple[bool, int | None]:
         """
         Check if user can login or if they are temporarily blocked because they
         entered a wrong password too often
@@ -164,15 +165,15 @@ class User(Authenticatable):
         ----------
         max_failed_attempts: int
             Maximum number of attempts to login before temporary deactivation
-        inactivation_minutes: int
+        inactivation_in_minutes: int
             How many minutes an account is deactivated
 
         Returns
         -------
         bool
             Whether or not user is blocked temporarily
-        str | None
-            Message if user is blocked, else None
+        int | None
+            How many minutes user is still blocked for
         """
         td_max_blocked = dt.timedelta(minutes=inactivation_in_minutes)
         td_last_login = dt.datetime.now() - self.last_login_attempt \
@@ -210,6 +211,24 @@ class User(Authenticatable):
         """
         session = DatabaseSessionManager.get_session()
         result = session.query(cls).filter_by(username=username).one()
+        session.commit()
+        return result
+
+    @classmethod
+    def get_first_user(cls) -> User:
+        """
+        Get a random user by their username.
+
+        This function is used to prevent an attacker from finding out which
+        usernames exist.
+
+        Returns
+        -------
+        User
+            A random user that is in the database
+        """
+        session = DatabaseSessionManager.get_session()
+        result = session.query(cls).order_by(cls.id).first()
         session.commit()
         return result
 
