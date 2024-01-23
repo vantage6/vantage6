@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "vantage6-ui-new": {
+    "vantage6-UI": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -17,7 +17,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/vantage6-ui-new",
+            "outputPath": "dist/vantage6-UI",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": ["zone.js"],
@@ -64,10 +64,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "vantage6-ui-new:build:production"
+              "browserTarget": "vantage6-UI:build:production"
             },
             "development": {
-              "browserTarget": "vantage6-ui-new:build:development"
+              "browserTarget": "vantage6-UI:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -75,7 +75,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "vantage6-ui-new:build"
+            "browserTarget": "vantage6-UI:build"
           }
         },
         "test": {
