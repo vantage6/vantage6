@@ -16,7 +16,7 @@ export interface Task {
   job_id: number;
   parent_id: number | null;
   parent?: Task;
-  databases: string[];
+  databases: any[];
   initiator_id: number;
   init_org?: Organization;
   init_user_id: number;
