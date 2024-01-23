@@ -42,7 +42,8 @@ export class SocketioConnectService {
 
     // update observable (generate status messages downstream) when node comes
     //online
-    this.socket?.on('node-online', (data) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.socket?.on('node-online', (data: any) => {
       this.nodeStatusUpdate$.next({
         id: data.id,
         name: data.name,
@@ -50,7 +51,8 @@ export class SocketioConnectService {
       });
     });
     // ... and when a node goes offline
-    this.socket?.on('node-offline', (data) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.socket?.on('node-offline', (data: any) => {
       this.nodeStatusUpdate$.next({
         id: data.id,
         name: data.name,
