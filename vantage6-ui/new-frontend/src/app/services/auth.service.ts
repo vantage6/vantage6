@@ -6,6 +6,7 @@ import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_ID } from '../models/constant
 import { PermissionService } from './permission.service';
 import { TokenStorageService } from './token-storage.service';
 import { SocketioConnectService } from './socketio-connect.service';
+import { LoginErrorService } from './login-error.service';
 
 @Injectable({
   providedIn: 'root'
@@ -20,7 +21,8 @@ export class AuthService {
     private apiService: ApiService,
     private permissionService: PermissionService,
     private tokenStorageService: TokenStorageService,
-    private socketConnectService: SocketioConnectService
+    private socketConnectService: SocketioConnectService,
+    private loginErrorService: LoginErrorService
   ) {}
 
   async isAuthenticated(): Promise<AuthResult> {
@@ -51,6 +53,7 @@ export class AuthService {
       data.mfa_code = loginForm.mfaCode;
     }
     const result = await this.apiService.postForApi<Login | SetupMFA>('/token/user', data);
+    this.loginErrorService.clearError();
     if ('qr_uri' in result) {
       // redirect to setup MFA
       this.qr_uri = result.qr_uri;
