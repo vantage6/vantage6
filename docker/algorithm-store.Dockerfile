@@ -38,5 +38,4 @@ RUN chmod +x /vantage6/vantage6-algorithm-store/server.sh
 
 # expose the proxy server port
 ARG port=80
-EXPOSE ${port} 2222
 ENV PROXY_SERVER_PORT ${port}
