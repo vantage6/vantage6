@@ -280,8 +280,18 @@ def cli_node_start(name: str, config: str, system_folders: bool, image: str,
         volumes.append(mount)
 
     extra_env = ctx.config.get("node_extra_env", {})
-    for k in extra_env.keys() & env.keys():
-        warning(f"Overwriting environment variable {k} via node_extra_env option!")
+    # all extra env var names should be valid identifiers
+    extra_env_invalid = [key for key in extra_env.keys() if not key.isidentifier()]
+    if extra_env_invalid:
+        error("Environment variable names should be valid identifiers. "
+              f"The following break this rule: {extra_env_invalid}")
+        exit(1)
+    # we won't accept overwrites of existing env vars
+    env_overwrites = extra_env.keys() & env.keys()
+    if env_overwrites:
+        error("Cannot overwrite existing node environment variables: "
+              f"{env_overwrites}")
+        exit(1)
     env.update(extra_env)
 
     remove_container_if_exists(
