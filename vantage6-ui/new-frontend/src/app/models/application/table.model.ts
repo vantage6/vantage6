@@ -3,9 +3,14 @@ export interface TableData {
   rows: Row[];
 }
 
-interface Column {
+export interface Column {
   id: string;
   label: string;
+  searchEnabled?: boolean;
+  initSearchString?: string;
+  filterEnabled?: boolean;
+  isChip?: boolean;
+  chipTypeProperty?: string;
 }
 
 interface Row {

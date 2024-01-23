@@ -13,5 +13,6 @@
         {{ "mfa.lost.title" | translate }}
       </button>
     </form>
+    <app-alert class="top-spacer" *ngIf="this.loginErrorService.hasError()" label="{{ this.loginErrorService.getError() }}"></app-alert>
   </mat-card-content>
 </mat-card>

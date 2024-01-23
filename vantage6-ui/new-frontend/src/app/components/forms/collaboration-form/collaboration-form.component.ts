@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MatSelectChange } from '@angular/material/select';
 import { Collaboration, CollaborationForm } from 'src/app/models/api/collaboration.model';
-import { BaseOrganization, OrganizationSortProperties } from 'src/app/models/api/organization.model';
+import { BaseOrganization, Organization, OrganizationSortProperties } from 'src/app/models/api/organization.model';
 import { OrganizationService } from 'src/app/services/organization.service';
 
 @Component({
@@ -17,7 +17,7 @@ export class CollaborationFormComponent implements OnInit {
   form = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
     encrypted: false,
-    organization_ids: [[] as number[], [Validators.required]],
+    organizations: [[] as BaseOrganization[], [Validators.required]],
     registerNodes: true
   });
 
@@ -36,7 +36,7 @@ export class CollaborationFormComponent implements OnInit {
     if (this.collaboration) {
       this.form.controls.name.setValue(this.collaboration.name);
       this.form.controls.encrypted.setValue(this.collaboration.encrypted);
-      this.form.controls.organization_ids.setValue(this.collaboration.organizations.map((organization) => organization.id));
+      this.form.controls.organizations.setValue(this.collaboration.organizations);
     }
     await this.initData();
     this.isLoading = false;
@@ -63,6 +63,14 @@ export class CollaborationFormComponent implements OnInit {
 
   handleCancel() {
     this.cancelled.emit();
+  }
+
+  // compare function for mat-select
+  // TODO this is duplicate function - move to helper
+  compareOrganizationsForSelection(obj1: any, obj2: any): boolean {
+    // The mat-select object set from typescript only has an ID set. Compare that with the ID of the
+    // organization object from the collaboration
+    return obj1 && obj2 && obj1.id && obj2.id && obj1.id === obj2.id;
   }
 
   private async initData(): Promise<void> {

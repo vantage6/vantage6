@@ -35,11 +35,13 @@ export enum TaskStatusGroup {
 
 export interface GetTaskParameters {
   collaboration_id?: string;
+  name?: string;
   init_user_id?: string;
   sort?: TaskSortProperties;
   parent_id?: number;
   include?: string;
   is_user_created?: number;
+  status?: TaskStatus;
 }
 
 export interface BaseTask {

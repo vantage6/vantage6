@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { BaseNode, GetNodeParameters, Node, NodeCreate, NodeEdit, NodeLazyProperties } from '../models/api/node.model';
+import { APIKey, BaseNode, GetNodeParameters, Node, NodeCreate, NodeEdit, NodeLazyProperties } from '../models/api/node.model';
 import { BaseCollaboration, Collaboration } from '../models/api/collaboration.model';
 import { OrganizationService } from './organization.service';
 import { Pagination } from '../models/api/pagination.model';
@@ -55,5 +55,9 @@ export class NodeService {
 
   async editNode(nodeID: string, nodeEdit: NodeEdit): Promise<BaseNode> {
     return await this.apiService.patchForApi<BaseNode>(`/node/${nodeID}`, nodeEdit);
+  }
+
+  async resetApiKey(nodeID: string): Promise<APIKey> {
+    return await this.apiService.postForApi<APIKey>(`/recover/node`, { id: nodeID });
   }
 }

@@ -20,6 +20,12 @@
   "home": {
     "title": "Home"
   },
+  "start": {
+    "no-collaborations": "Your organization is not part of any collaborations yet. Please contact your vantage6 project manager to set up a collaboration or go to the administration section to create a new collaboration."
+  },
+  "table": {
+    "search-placeholder": "Search"
+  },
   "task": {
     "algorithm": "Algorithm",
     "database": "Database",
@@ -171,6 +177,13 @@
     "register-nodes": "Register nodes",
     "register-nodes-edit": "Register nodes for new organizations: {{organizations}}"
   },
+  "api-key-download-dialog": {
+    "title": "API key download",
+    "create-message": "The API keys have been downloaded.",
+    "edit-message": "The API keys for the new organizations in the collaboration have been downloaded.",
+    "reset-message": "Your API key has been reset. Please read your new key in the file that has been downloaded.",
+    "security-message": "Please distribute each of these keys privately to each of the organizations. Note that they may reset their API key so that no-one but them knows it."
+  },
   "collaboration-list": {
     "title": "Collaborations"
   },
@@ -308,7 +321,8 @@
   },
   "node-edit": {
     "actions": {
-      "edit": "Change name"
+      "edit": "Change name",
+      "new-api-key": "Reset API key"
     }
   },
   "task-status": {

@@ -48,6 +48,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   isLoadingColumns: boolean = false;
   isTaskRepeat: boolean = false;
   isDataInitialized: boolean = false;
+  isNgInitDone: boolean = false;
   repeatedTask: Task | null = null;
 
   packageForm = this.fb.nonNullable.group({
@@ -97,9 +98,19 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       .subscribe((nodeStatusUpdate: NodeOnlineStatusMsg | null) => {
         if (nodeStatusUpdate) this.onNodeStatusUpdate(nodeStatusUpdate);
       });
+
+    this.isNgInitDone = true;
   }
 
   async ngAfterViewInit(): Promise<void> {
+    // recursively wait until ngInit is done
+    if (!this.isNgInitDone) {
+      await new Promise((f) => setTimeout(f, 200));
+      this.ngAfterViewInit();
+      return;
+    }
+
+    // setup repeating task if needed
     if (this.isTaskRepeat) {
       this.isLoading = true;
       const taskID = this.router.url.split('/')[4];
@@ -137,6 +148,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!this.repeatedTask) {
       return;
     }
+
     // set algorithm step
     this.packageForm.controls.name.setValue(this.repeatedTask.name);
     this.packageForm.controls.description.setValue(this.repeatedTask.description);
@@ -151,14 +163,17 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!this.function) return;
     const organizationIDs = this.repeatedTask.runs.map((_) => _.organization?.id).toString();
     this.functionForm.controls.organizationIDs.setValue(organizationIDs);
+
     // Note: the database step is not setup here because the database child
     // component may not yet be initialized when we get here. Instead, we
     // setup the database step in the database child component when it is
     // initialized.
+
     // set parameter step
     for (const parameter of this.repeatedTask.input?.parameters || []) {
       this.parameterForm.get(parameter.label)?.setValue(parameter.value);
     }
+
     // go to last step
     // TODO this can still be NULL when we get here, then it doesn't work
     if (this.myStepper?._steps) {
@@ -170,6 +185,16 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
   async handleDatabaseStepInitialized(): Promise<void> {
     if (!this.repeatedTask || !this.function) return;
+    // This function is run when the database child component is initialized,
+    // but it may still be null when we get here. If it is null, we wait a bit
+    // and then (recursively) try again.
+    if (!this.databaseStepComponent) {
+      await new Promise((f) => setTimeout(f, 200));
+      this.handleDatabaseStepInitialized();
+      return;
+    }
+
+    // Now, setup the database step
     // set database step for task repeat
     this.databaseStepComponent?.setDatabasesFromPreviousTask(this.repeatedTask?.databases, this.function?.databases);
 
@@ -282,10 +307,16 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   // compare function for mat-select
-  compareOrganizationsForSelection(obj1: any, obj2: any): boolean {
+  compareIDsForSelection(id1: number | string, id2: number | string): boolean {
     // The mat-select object set from typescript only has an ID set. Compare that with the ID of the
     // organization object from the collaboration
-    return obj1 && obj2 && obj1.id && obj2.id && obj1.id === obj2.id;
+    if (typeof id1 === 'number') {
+      id1 = id1.toString();
+    }
+    if (typeof id2 === 'number') {
+      id2 = id2.toString();
+    }
+    return id1 === id2;
   }
 
   private async initData(): Promise<void> {
