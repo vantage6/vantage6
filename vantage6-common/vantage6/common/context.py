@@ -1,17 +1,19 @@
 import os
 import sys
-import appdirs
 import logging
 import logging.handlers
+import enum
 import pyfiglet
 
 from pathlib import Path
 from typing import Tuple
 
+import appdirs
+
 from vantage6.common import Singleton, error, Fore, Style, get_config_path, logger_name
 from vantage6.common.colors import ColorStreamHandler
+from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.common.docker.addons import running_in_docker
-from vantage6.common.globals import APPNAME
 from vantage6.common.configuration_manager import ConfigurationManager
 from vantage6.common._version import __version__
 
@@ -30,7 +32,7 @@ class AppContext(metaclass=Singleton):
 
     def __init__(
         self,
-        instance_type: str,
+        instance_type: InstanceType,
         instance_name: str,
         system_folders: bool = False,
         config_file: Path | str = None,
@@ -40,8 +42,8 @@ class AppContext(metaclass=Singleton):
 
         Parameters
         ----------
-        instance_type: str
-            'server' or 'node'
+        instance_type: InstanceType
+            Type of instance that is initialized
         instance_name: str
             Name of the configuration
         system_folders: bool
@@ -121,7 +123,7 @@ class AppContext(metaclass=Singleton):
 
     @classmethod
     def from_external_config_file(
-        cls, path: Path | str, instance_type: str, system_folders: bool = False
+        cls, path: Path | str, instance_type: InstanceType, system_folders: bool = False
     ) -> "AppContext":
         """
         Create a new AppContext instance from an external config file.
@@ -130,8 +132,8 @@ class AppContext(metaclass=Singleton):
         ----------
         path: str
             Path to the config file
-        instance_type: str
-            'server' or 'node'
+        instance_type: InstanceType
+            Type of instance for which the config file is used
         system_folders: bool
             Use system folders rather than user folders
 
@@ -149,14 +151,17 @@ class AppContext(metaclass=Singleton):
 
     @classmethod
     def config_exists(
-        cls, instance_type: str, instance_name: str, system_folders: bool = False
+        cls,
+        instance_type: InstanceType,
+        instance_name: str,
+        system_folders: bool = False,
     ) -> bool:
         """Check if a config file exists for the given instance type and name.
 
         Parameters
         ----------
-        instance_type: str
-            'server' or 'node'
+        instance_type: InstanceType
+            Type of instance that is checked
         instance_name: str
             Name of the configuration
         system_folders: bool
@@ -180,14 +185,14 @@ class AppContext(metaclass=Singleton):
         return bool(config)
 
     @staticmethod
-    def type_data_folder(instance_type: str, system_folders: bool) -> Path:
+    def type_data_folder(instance_type: InstanceType, system_folders: bool) -> Path:
         """
         Return OS specific data folder.
 
         Parameters
         ----------
-        instance_type: str
-            'server' or 'node'
+        instance_type: InstanceType
+            Type of instance that is checked
         system_folders: bool
             Use system folders rather than user folders
 
@@ -206,7 +211,7 @@ class AppContext(metaclass=Singleton):
 
     @staticmethod
     def instance_folders(
-        instance_type: str, instance_name: str, system_folders: bool
+        instance_type: InstanceType, instance_name: str, system_folders: bool
     ) -> dict:
         """
         Return OS and instance specific folders for storing logs, data and
@@ -214,8 +219,8 @@ class AppContext(metaclass=Singleton):
 
         Parameters
         ----------
-        instance_type: str
-            'server' or 'node'
+        instance_type: InstanceType
+            Type of instance that is checked
         instance_name: str
             Name of the configuration
         system_folders: bool
@@ -228,6 +233,9 @@ class AppContext(metaclass=Singleton):
             files.
         """
         d = appdirs.AppDirs(APPNAME, "")
+
+        if isinstance(instance_type, enum.Enum):
+            instance_type = instance_type.value
 
         if running_in_docker():
             return {
@@ -251,7 +259,7 @@ class AppContext(metaclass=Singleton):
 
     @classmethod
     def available_configurations(
-        cls, instance_type: str, system_folders: bool
+        cls, instance_type: InstanceType, system_folders: bool
     ) -> tuple[list[ConfigurationManager], list[Path]]:
         """
         Returns a list of configuration managers and a list of paths to
@@ -259,8 +267,8 @@ class AppContext(metaclass=Singleton):
 
         Parameters
         ----------
-        instance_type: str
-            'server' or 'node'
+        instance_type: InstanceType
+            Type of instance that is checked
         system_folders: bool
             Use system folders rather than user folders
 
@@ -370,7 +378,7 @@ class AppContext(metaclass=Singleton):
     @classmethod
     def find_config_file(
         cls,
-        instance_type: str,
+        instance_type: InstanceType,
         instance_name: str,
         system_folders: bool,
         config_file: str | None = None,
@@ -381,8 +389,8 @@ class AppContext(metaclass=Singleton):
 
         Parameters
         ----------
-        instance_type: str
-            'server' or 'node'
+        instance_type: InstanceType
+            Type of instance that is checked
         instance_name: str
             Name of the configuration
         system_folders: bool
@@ -454,15 +462,15 @@ class AppContext(metaclass=Singleton):
         return os.path.join(self.data_dir, filename)
 
     def set_folders(
-        self, instance_type: str, instance_name: str, system_folders: bool
+        self, instance_type: InstanceType, instance_name: str, system_folders: bool
     ) -> None:
         """
         Set the folders where the configuration, data and log files are stored.
 
         Parameters
         ----------
-        instance_type: str
-            'server' or 'node'
+        instance_type: InstanceType
+            Type of instance that is checked
         instance_name: str
             Name of the configuration
         system_folders: bool

@@ -48,6 +48,7 @@ RESOURCES = [
     "port",
     "event",
     "ui.column",
+    "algorithm_store",
 ]
 
 # Super user information. This user is only created if it is not in the

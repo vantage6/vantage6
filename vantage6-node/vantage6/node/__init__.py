@@ -50,7 +50,7 @@ from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.task_status import TaskStatus
 from vantage6.common.log import get_file_logger
-from vantage6.cli.context import NodeContext
+from vantage6.cli.context.node import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.globals import (
     NODE_PROXY_SERVER_HOSTNAME,

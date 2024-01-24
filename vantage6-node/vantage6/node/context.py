@@ -4,7 +4,7 @@ from vantage6.common.globals import PACKAGE_FOLDER, APPNAME
 
 from vantage6.common.context import AppContext
 from vantage6.common.configuration_manager import ConfigurationManager
-from vantage6.cli.context import NodeContext
+from vantage6.cli.context.node import NodeContext
 from vantage6.node._version import __version__
 
 

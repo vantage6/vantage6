@@ -29,7 +29,7 @@ COPY . /vantage6
 # This is also done in the base-image to safe build time. We redo it here
 # to allow for dependency upgrades in minor and patch versions.
 RUN pip install -r /vantage6/requirements.txt \
-    --extra-index-url https://www.piwheels.org/simple
+  --extra-index-url https://www.piwheels.org/simple
 
 # install individual packages
 RUN pip install -e /vantage6/vantage6-common

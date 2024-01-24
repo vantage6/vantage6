@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 import base64
 
@@ -43,45 +42,10 @@ def create_one_to_many_link(obj: Base, link_to: str, link_from: str) -> str:
     return url_for(endpoint, **values)
 
 
-class HATEOASModelSchema(SQLAlchemyAutoSchema):
-    """
-    This class is used to convert foreign-key fields to HATEOAS specification.
-    """
+class BaseHATEOASModelSchema(SQLAlchemyAutoSchema):
+    """Base class for generating HATEOAS links for SQLAlchemy resources."""
 
     api = None
-
-    def __init__(self, *args, **kwargs) -> None:
-        # set lambda functions to create links for one to one relationship
-        setattr(self, "node", lambda obj: self.create_hateoas("node", obj))
-        setattr(
-            self, "organization", lambda obj: self.create_hateoas("organization", obj)
-        )
-        setattr(
-            self, "collaboration", lambda obj: self.create_hateoas("collaboration", obj)
-        )
-        setattr(self, "user", lambda obj: self.create_hateoas("user", obj))
-        setattr(self, "run", lambda obj: self.create_hateoas("run", obj))
-        setattr(self, "task", lambda obj: self.create_hateoas("task", obj))
-        setattr(self, "port", lambda obj: self.create_hateoas("port", obj))
-        setattr(
-            self,
-            "parent_",
-            lambda obj: self.create_hateoas("parent", obj, endpoint="task"),
-        )
-        setattr(
-            self,
-            "init_org_",
-            lambda obj: self.create_hateoas("init_org", obj, endpoint="organization"),
-        )
-        setattr(
-            self,
-            "init_user_",
-            lambda obj: self.create_hateoas("init_user", obj, endpoint="user"),
-        )
-
-        # call super class. Do this after setting the attributes above, because
-        # the super class initializer will call the attributes.
-        super().__init__(*args, **kwargs)
 
     def create_hateoas(self, name: str, obj: Base, endpoint: str = None) -> dict | None:
         """
@@ -162,6 +126,45 @@ class HATEOASModelSchema(SQLAlchemyAutoSchema):
         """
         data = self.dump(pagination.page.items, many=True)
         return {"data": data, "links": pagination.metadata_links}
+
+
+class HATEOASModelSchema(BaseHATEOASModelSchema):
+    """
+    This class is used to convert foreign-key fields to HATEOAS specification.
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
+        # set lambda functions to create links for one to one relationship
+        setattr(self, "node", lambda obj: self.create_hateoas("node", obj))
+        setattr(
+            self, "organization", lambda obj: self.create_hateoas("organization", obj)
+        )
+        setattr(
+            self, "collaboration", lambda obj: self.create_hateoas("collaboration", obj)
+        )
+        setattr(self, "user", lambda obj: self.create_hateoas("user", obj))
+        setattr(self, "run", lambda obj: self.create_hateoas("run", obj))
+        setattr(self, "task", lambda obj: self.create_hateoas("task", obj))
+        setattr(self, "port", lambda obj: self.create_hateoas("port", obj))
+        setattr(
+            self,
+            "parent_",
+            lambda obj: self.create_hateoas("parent", obj, endpoint="task"),
+        )
+        setattr(
+            self,
+            "init_org_",
+            lambda obj: self.create_hateoas("init_org", obj, endpoint="organization"),
+        )
+        setattr(
+            self,
+            "init_user_",
+            lambda obj: self.create_hateoas("init_user", obj, endpoint="user"),
+        )
+
+        # call super class. Do this after setting the attributes above, because
+        # the super class initializer will call the attributes.
+        super().__init__(*args, **kwargs)
 
 
 # /task/{id}
@@ -347,6 +350,19 @@ class CollaborationSchema(HATEOASModelSchema):
             obj, link_to="task", link_from="collaboration_id"
         )
     )
+    algorithm_stores = fields.Function(
+        lambda obj: create_one_to_many_link(
+            obj, link_to="algorithm_store", link_from="collaboration_id"
+        )
+    )
+
+
+class CollaborationWithOrgsSchema(CollaborationSchema):
+    """
+    Returns the CollaborationSchema plus the organizations participating in it.
+    """
+
+    organizations = fields.Nested("OrganizationSchema", many=True)
 
 
 class NodeSchema(HATEOASModelSchema):
@@ -374,6 +390,17 @@ class NodeSchemaSimple(HATEOASModelSchema):
             "api_key",
             "type",
         )
+
+
+class AlgorithmStoreSchema(HATEOASModelSchema):
+    class Meta:
+        model = db.AlgorithmStore
+
+    collaborations = fields.Function(
+        lambda obj: create_one_to_many_link(
+            obj, link_to="collaboration", link_from="algorithm_store_id"
+        )
+    )
 
 
 class UserSchema(HATEOASModelSchema):

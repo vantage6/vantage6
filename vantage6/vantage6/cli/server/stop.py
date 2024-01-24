@@ -15,7 +15,7 @@ from vantage6.common.docker.addons import (
     delete_network,
     remove_container_if_exists,
 )
-from vantage6.common.globals import APPNAME
+from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.cli.rabbitmq import split_rabbitmq_uri
 
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
@@ -37,7 +37,7 @@ def cli_server_stop(name: str, system_folders: bool, all_servers: bool):
     client = docker.from_env()
 
     running_servers = client.containers.list(
-        filters={"label": f"{APPNAME}-type=server"}
+        filters={"label": f"{APPNAME}-type={InstanceType.SERVER}"}
     )
 
     if not running_servers:
@@ -58,7 +58,7 @@ def cli_server_stop(name: str, system_folders: bool, all_servers: bool):
         ).ask()
     else:
         post_fix = "system" if system_folders else "user"
-        container_name = f"{APPNAME}-{name}-{post_fix}-server"
+        container_name = f"{APPNAME}-{name}-{post_fix}-{InstanceType.SERVER}"
 
     if container_name not in running_server_names:
         error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running!")
@@ -88,7 +88,6 @@ def _stop_server_containers(
     info(f"Stopped the {Fore.GREEN}{container_name}{Style.RESET_ALL} server.")
 
     # find the configuration name from the docker container name
-    # server name is formatted as f"{APPNAME}-{self.name}-{self.scope}-server"
     scope = "system" if system_folders else "user"
     config_name = get_server_config_name(container_name, scope)
 

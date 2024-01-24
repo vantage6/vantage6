@@ -16,6 +16,7 @@ from vantage6.common.globals import (
     DEFAULT_DOCKER_REGISTRY,
     DEFAULT_NODE_IMAGE,
     DEFAULT_NODE_IMAGE_WO_TAG,
+    InstanceType,
 )
 from vantage6.common.docker.addons import (
     pull_if_newer,
@@ -23,7 +24,7 @@ from vantage6.common.docker.addons import (
     check_docker_running,
 )
 
-from vantage6.cli.context import NodeContext
+from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.configuration_wizard import (
     configuration_wizard,
@@ -99,14 +100,14 @@ def cli_node_start(
     else:
         # in case no name is supplied, ask the user to select one
         if not name:
-            name = select_configuration_questionaire("node", system_folders)
+            name = select_configuration_questionaire(InstanceType.NODE, system_folders)
 
         # check that config exists, if not a questionaire will be invoked
         if not NodeContext.config_exists(name, system_folders):
             warning(f"Configuration {Fore.RED}{name}{Style.RESET_ALL} does not exist.")
 
             if q.confirm("Create this configuration now?").ask():
-                configuration_wizard("node", name, system_folders)
+                configuration_wizard(InstanceType.NODE, name, system_folders)
 
             else:
                 error("Config file couldn't be loaded")
@@ -119,7 +120,7 @@ def cli_node_start(
 
     # check that this node is not already running
     running_nodes = docker_client.containers.list(
-        filters={"label": f"{APPNAME}-type=node"}
+        filters={"label": f"{APPNAME}-type={InstanceType.NODE}"}
     )
 
     suffix = "system" if system_folders else "user"
@@ -324,7 +325,7 @@ def cli_node_start(
         volumes=volumes,
         detach=True,
         labels={
-            f"{APPNAME}-type": "node",
+            f"{APPNAME}-type": InstanceType.NODE,
             "system": str(system_folders),
             "name": ctx.config_file_name,
         },

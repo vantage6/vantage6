@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 
 from flask import request, g
@@ -20,6 +19,7 @@ from vantage6.server.permission import (
 )
 from vantage6.server.resource.common.output_schema import (
     CollaborationSchema,
+    CollaborationWithOrgsSchema,
     OrganizationSchema,
     NodeSchemaSimple,
 )
@@ -83,6 +83,7 @@ node_schema = NodeSchemaSimple()
 collaboration_input_schema = CollaborationInputSchema()
 collaboration_add_organization_schema = CollaborationAddOrganizationSchema()
 collaboration_add_node_schema = CollaborationAddNodeSchema()
+collab_with_orgs_schema = CollaborationWithOrgsSchema()
 
 
 # -----------------------------------------------------------------------------
@@ -136,6 +137,20 @@ class CollaborationBase(ServicesResources):
         super().__init__(socketio, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
 
+    def _select_schema(self) -> CollaborationSchema:
+        """
+        Select the output schema based on which resources should be included
+
+        Returns
+        -------
+        CollaborationSchema or derivative of it
+            Schema to use for serialization
+        """
+        if self.is_included("organizations"):
+            return collab_with_orgs_schema
+        else:
+            return collaboration_schema
+
 
 class Collaborations(CollaborationBase):
     @only_for(["user", "node"])
@@ -177,6 +192,14 @@ class Collaborations(CollaborationBase):
             schema:
               type: integer
             description: Organization id
+          - in: query
+            name: include
+            schema:
+              type: array
+              items:
+                type: string
+            description: Include 'organizations' to include the organizations
+              within the collaboration.
           - in: query
             name: page
             schema:
@@ -253,8 +276,10 @@ class Collaborations(CollaborationBase):
         except (ValueError, AttributeError) as e:
             return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
 
+        schema = self._select_schema()
+
         # serialize models
-        return self.response(page, collaboration_schema)
+        return self.response(page, schema)
 
     @with_user
     def post(self):
@@ -365,6 +390,14 @@ class Collaboration(CollaborationBase):
               minimum: 1
             description: Collaboration id
             required: true
+          - in: query
+            name: include
+            schema:
+              type: array
+              items:
+                type: string
+            description: Include 'organizations' to include the organizations
+              within the collaboration.
 
         responses:
           200:
@@ -399,10 +432,9 @@ class Collaboration(CollaborationBase):
                     "msg": "You lack the permission to do that!"
                 }, HTTPStatus.UNAUTHORIZED
 
-        return (
-            collaboration_schema.dump(collaboration, many=False),
-            HTTPStatus.OK,
-        )  # 200
+        schema = self._select_schema()
+
+        return schema.dump(collaboration, many=False), HTTPStatus.OK  # 200
 
     @with_user
     def patch(self, id):
@@ -414,7 +446,7 @@ class Collaboration(CollaborationBase):
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Collaboration|Global|Edit|❌|❌|Update a collaboration|\n\n
+          |Collaboration|Global|Edit|❌|❌|Update a collaboration|\n
           |Collaboration|Collaboration|Edit|❌|❌|Update a collaboration that
           you are already a member of|\n\n
 
@@ -518,7 +550,7 @@ class Collaboration(CollaborationBase):
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Collaboration|Global|Delete|❌|❌|Remove collaboration|\n\n
+          |Collaboration|Global|Delete|❌|❌|Remove collaboration|\n
           |Collaboration|Collaboration|Delete|❌|❌|Remove collaborations
           that you are part of yourself|\n\n
 
@@ -605,7 +637,7 @@ class CollaborationOrganization(ServicesResources):
           Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Edit|❌|❌|Add organization to a
-          collaboration|\n\n
+          collaboration|\n
           |Collaboration|Collaboration|Edit|❌|❌|Add organization to a
           collaboration that your organization is already a member of|\n\n
 
@@ -687,7 +719,7 @@ class CollaborationOrganization(ServicesResources):
           Description|\n
           |--|--|--|--|--|--|\n
           |Collaboration|Global|Edit|❌|❌|Remove an organization from an
-          existing collaboration|\n\n
+          existing collaboration|\n
           |Collaboration|Collaboration|Edit|❌|❌|Remove an organization from
           an existing collaboration that your organization is a member of|\n\n
 

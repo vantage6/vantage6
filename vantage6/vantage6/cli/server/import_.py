@@ -4,6 +4,7 @@ from threading import Thread
 import click
 import docker
 from sqlalchemy.engine.url import make_url
+from vantage6.cli.globals import ServerGlobals
 
 from vantage6.common import info, warning
 from vantage6.common.docker.addons import check_docker_running
@@ -11,8 +12,9 @@ from vantage6.common.globals import (
     APPNAME,
     DEFAULT_DOCKER_REGISTRY,
     DEFAULT_SERVER_IMAGE,
+    InstanceType,
 )
-from vantage6.cli.context import ServerContext
+from vantage6.cli.context.server import ServerContext
 from vantage6.cli.utils import check_config_name_allowed
 from vantage6.cli.server.common import click_insert_context, print_log_worker
 
@@ -113,7 +115,9 @@ def cli_server_import(
         # we're mounting the entire folder that contains the database
         mounts.append(docker.types.Mount("/mnt/database/", dirname, type="bind"))
 
-        environment_vars = {"VANTAGE6_DB_URI": f"sqlite:////mnt/database/{basename}"}
+        environment_vars = {
+            ServerGlobals.DB_URI_ENV_VAR: f"sqlite:////mnt/database/{basename}"
+        }
 
     else:
         warning(
@@ -133,7 +137,7 @@ def cli_server_import(
         command=cmd,
         mounts=mounts,
         detach=True,
-        labels={f"{APPNAME}-type": "server", "name": ctx.config_file_name},
+        labels={f"{APPNAME}-type": InstanceType.SERVER, "name": ctx.config_file_name},
         environment=environment_vars,
         auto_remove=not keep,
         tty=True,

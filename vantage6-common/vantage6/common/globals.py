@@ -1,3 +1,4 @@
+from enum import Enum
 from pathlib import Path
 
 #
@@ -19,6 +20,8 @@ DEFAULT_SERVER_IMAGE = f"infrastructure/server:{MAIN_VERSION_NAME}"
 
 DEFAULT_UI_IMAGE = f"infrastructure/ui:{MAIN_VERSION_NAME}"
 
+DEFAULT_ALGO_STORE_IMAGE = f"infrastructure/algorithm-store:{MAIN_VERSION_NAME}"
+
 #
 #   COMMON GLOBALS
 #
@@ -39,3 +42,11 @@ BASIC_PROCESSING_IMAGE = "harbor2.vantage6.ai/algorithms/basics"
 
 # Character to replace '=' with in encoded environment variables
 ENV_VAR_EQUALS_REPLACEMENT = "!"
+
+
+class InstanceType(str, Enum):
+    """The types of instances that can be created."""
+
+    NODE = "node"
+    SERVER = "server"
+    ALGORITHM_STORE = "algorithm-store"

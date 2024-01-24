@@ -11,7 +11,7 @@ from vantage6.common import (
 )
 
 from vantage6.common.encryption import RSACryptor
-from vantage6.cli.context import NodeContext
+from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.node.common import select_node, create_client_and_authenticate
 

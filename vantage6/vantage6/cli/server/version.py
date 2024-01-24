@@ -4,7 +4,7 @@ import docker
 
 from vantage6.common import error
 from vantage6.common.docker.addons import check_docker_running
-from vantage6.common.globals import APPNAME
+from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 from vantage6.cli import __version__
 
@@ -23,7 +23,7 @@ def cli_server_version(name: str, system_folders: bool) -> None:
     client = docker.from_env()
 
     running_servers = client.containers.list(
-        filters={"label": f"{APPNAME}-type=server"}
+        filters={"label": f"{APPNAME}-type={InstanceType.SERVER}"}
     )
     running_server_names = [server.name for server in running_servers]
 

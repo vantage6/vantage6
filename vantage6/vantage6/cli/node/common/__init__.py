@@ -8,10 +8,10 @@ import docker
 from colorama import Fore, Style
 
 from vantage6.common import error, info, debug
-from vantage6.common.globals import STRING_ENCODING, APPNAME
+from vantage6.common.globals import STRING_ENCODING, APPNAME, InstanceType
 from vantage6.client import UserClient
 
-from vantage6.cli.context import NodeContext
+from vantage6.cli.context.node import NodeContext
 from vantage6.cli.configuration_wizard import select_configuration_questionaire
 
 
@@ -92,7 +92,11 @@ def select_node(name: str, system_folders: bool) -> tuple[str, str]:
     str
         Name of the configuration file
     """
-    name = name if name else select_configuration_questionaire("node", system_folders)
+    name = (
+        name
+        if name
+        else select_configuration_questionaire(InstanceType.NODE, system_folders)
+    )
 
     # raise error if config could not be found
     if not NodeContext.config_exists(name, system_folders):
@@ -118,5 +122,7 @@ def find_running_node_names(client: docker.DockerClient) -> list[str]:
     list[str]
         List of names of running nodes
     """
-    running_nodes = client.containers.list(filters={"label": f"{APPNAME}-type=node"})
+    running_nodes = client.containers.list(
+        filters={"label": f"{APPNAME}-type={InstanceType.NODE}"}
+    )
     return [node.name for node in running_nodes]

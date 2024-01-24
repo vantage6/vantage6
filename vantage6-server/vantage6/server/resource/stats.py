@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # import logging
 
 # from vantage6.server.resource import only_for

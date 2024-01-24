@@ -5,11 +5,12 @@ import click
 from jinja2 import Environment, FileSystemLoader
 from colorama import Fore, Style
 
-from vantage6.common.globals import APPNAME
+from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.common import info, error, generate_apikey
 
 from vantage6.cli.globals import PACKAGE_FOLDER
-from vantage6.cli.context import ServerContext, NodeContext
+from vantage6.cli.context.server import ServerContext
+from vantage6.cli.context.node import NodeContext
 from vantage6.cli.server.common import get_server_context
 from vantage6.cli.server.import_ import cli_server_import
 from vantage6.cli.utils import prompt_config_name
@@ -233,7 +234,7 @@ def create_vserver_import_config(node_configs: list[dict], server_name: str) -> 
     server_import_config = template.render(
         organizations=organizations, collaboration=collaboration
     )
-    folders = ServerContext.instance_folders("server", server_name, False)
+    folders = ServerContext.instance_folders(InstanceType.SERVER, server_name, False)
 
     demo_dir = Path(folders["dev"])
     demo_dir.mkdir(parents=True, exist_ok=True)

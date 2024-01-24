@@ -39,7 +39,7 @@ class NodeCLITest(unittest.TestCase):
         # check exit code
         self.assertEqual(result.exit_code, 1)
 
-    @patch("vantage6.cli.context.NodeContext.available_configurations")
+    @patch("vantage6.cli.context.node.NodeContext.available_configurations")
     @patch("docker.DockerClient.ping")
     @patch("docker.DockerClient.containers")
     def test_list(self, containers, docker_ping, available_configurations):
