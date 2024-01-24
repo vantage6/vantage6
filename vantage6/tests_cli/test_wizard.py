@@ -99,7 +99,7 @@ class WizardTest(unittest.TestCase):
         file_ = configuration_wizard(InstanceType.SERVER, "vtg6", True)
         self.assertEqual(Path("/some/path/vtg6.yaml"), file_)
 
-    @patch("vantage6.cli.configuration_wizard.NodeContext.available_configurations")
+    @patch("vantage6.cli.configuration_wizard.AppContext.available_configurations")
     def test_select_configuration(self, available_configurations):
         config = MagicMock()
         config.name = "vtg6"
