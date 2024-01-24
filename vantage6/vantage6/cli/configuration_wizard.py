@@ -8,8 +8,6 @@ from vantage6.common.client.node_client import NodeClient
 from vantage6.common.context import AppContext
 from vantage6.common import error, warning
 from vantage6.cli.context import select_context_class
-from vantage6.cli.context.node import NodeContext
-from vantage6.cli.context.server import ServerContext
 from vantage6.cli.configuration_manager import (
     NodeConfigurationManager,
     ServerConfigurationManager,

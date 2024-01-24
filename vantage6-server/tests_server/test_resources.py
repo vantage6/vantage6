@@ -3619,11 +3619,11 @@ class TestResources(unittest.TestCase):
         "vantage6.server.resource.algorithm_store.AlgorithmStore._request_algo_store",
     )
     def test_delete_algorithm_store(self, request_algo_store):
+        """Test deleting algorithm store records"""
         mock_response = MagicMock()
         mock_response.json.return_value = [{"id": "1"}]
         request_algo_store.return_value = (mock_response, HTTPStatus.OK)
 
-        """Test deleting algorithm store records"""
         # initialize resources
         org = Organization()
         col = Collaboration(organizations=[org])

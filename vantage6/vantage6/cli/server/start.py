@@ -23,7 +23,6 @@ from vantage6.cli.common.start import (
     mount_source,
     pull_image,
 )
-from vantage6.cli.server.common import click_insert_context, stop_ui
 
 
 @click.command()

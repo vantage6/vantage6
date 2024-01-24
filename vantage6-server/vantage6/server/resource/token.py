@@ -4,7 +4,6 @@ Resources below '/<api_base>/token'
 import logging
 import pyotp
 import json
-import jwt
 
 from flask import request, g
 from flask_jwt_extended import (
