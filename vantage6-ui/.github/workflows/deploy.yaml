@@ -56,7 +56,16 @@ jobs:
       version: ${{ needs.version.outputs.version }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+
+      - name: Get branch on which the tag is based
+        id: branchname
+        run: |
+          # get the branch on which the tag is based
+          raw=$(git branch -r --contains ${{ github.ref }})
+          # delete the name of the branch up to and including 'origin/'
+          branch=$(echo $raw | sed 's/.*origin\///')
+          echo "branch=${branch}" >> $GITHUB_OUTPUT
 
       - name: Update UI version in package.json
         run: |
@@ -65,7 +74,17 @@ jobs:
       - name: Set up Node.js version
         uses: actions/setup-node@v1
         with:
-          node-version: "16.x"
+          node-version: "20.x"
+
+      - name: Commit updated version
+        env:
+          branch: ${{ steps.branchname.outputs.branch }}
+        run: |
+          git config --local user.name github-actions
+          git config --local user.email github-actions@github.com
+          git add *
+          git commit -m "Updated the version to ${version}"
+          git push origin HEAD:$branch
 
       - name: npm install, build, and test
         run: |
