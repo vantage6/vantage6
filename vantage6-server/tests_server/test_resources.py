@@ -3553,7 +3553,8 @@ class TestResources(unittest.TestCase):
         headers = self.create_user_and_login(rules=[rule])
         results = self.app.get("/api/algorithmstore", headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
-        self.assertEqual(len(results.json["data"]), 1)
+        self.assertEqual(len(results.json["data"]), len(AlgorithmStore.get()))
+
         results = self.app.get(f"/api/algorithmstore/{algo_store.id}", headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
