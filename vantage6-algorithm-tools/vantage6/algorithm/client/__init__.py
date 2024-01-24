@@ -38,13 +38,12 @@ class AlgorithmClient(ClientBase):
         super().__init__(*args, **kwargs)
 
         # obtain the identity from the token
-        jwt_payload = jwt.decode(
-            token, options={"verify_signature": False})
+        jwt_payload = jwt.decode(token, options={"verify_signature": False})
 
-        container_identity = jwt_payload['sub']
+        container_identity = jwt_payload["sub"]
 
         self.image = container_identity.get("image")
-        self.databases = container_identity.get('databases', [])
+        self.databases = container_identity.get("databases", [])
         self.node_id = container_identity.get("node_id")
         self.collaboration_id = container_identity.get("collaboration_id")
         self.organization_id = container_identity.get("organization_id")
@@ -116,8 +115,7 @@ class AlgorithmClient(ClientBase):
         NotImplementedError
             Always.
         """
-        return NotImplementedError(
-            "Algorithm containers cannot refresh their token!")
+        return NotImplementedError("Algorithm containers cannot refresh their token!")
 
     def wait_for_results(self, task_id: int, interval: float = 1) -> list:
         """
@@ -136,11 +134,11 @@ class AlgorithmClient(ClientBase):
         list
             List of task results.
         """
-        status = self.task.get(task_id).get('status')
+        status = self.task.get(task_id).get("status")
         while not has_task_finished(status):
             info(f"Waiting for results of task {task_id}...")
             time.sleep(interval)
-            status = self.task.get(task_id).get('status')
+            status = self.task.get(task_id).get("status")
         info("Done!")
 
         return self.result.from_task(task_id)
@@ -177,7 +175,7 @@ class AlgorithmClient(ClientBase):
             response["data"] += self.request(endpoint, params=params)["data"]
             links = response.get("links")
 
-        return response['data']
+        return response["data"]
 
     class Run(ClientBase.SubClient):
         """
@@ -228,9 +226,7 @@ class AlgorithmClient(ClientBase):
             # TODO do we need this function? It may be used to collect data
             # on subtasks but usually only the results are accessed, which is
             # done with the function below.
-            return self.parent._multi_page_request(
-                "run", params={"task_id": task_id}
-            )
+            return self.parent._multi_page_request("run", params={"task_id": task_id})
 
     class Result(ClientBase.SubClient):
         """
@@ -238,6 +234,7 @@ class AlgorithmClient(ClientBase):
 
         This client is used to get results from the central server.
         """
+
         def get(self, id_: int) -> Any:
             """
             Obtain a specific result from the central server.
@@ -256,11 +253,11 @@ class AlgorithmClient(ClientBase):
 
             # Encryption is not done at the client level for the container. The
             # algorithm developer is responsible for decrypting the results.
-            self.parent.log.info('--> Attempting to decode results!')
+            self.parent.log.info("--> Attempting to decode results!")
             result = None
-            if response.get('result'):
+            if response.get("result"):
                 result = json_lib.loads(
-                    base64s_to_bytes(response.get('result')).decode()
+                    base64s_to_bytes(response.get("result")).decode()
                 )
             return result
 
@@ -295,13 +292,12 @@ class AlgorithmClient(ClientBase):
             decoded_results = []
             try:
                 decoded_results = [
-                    json_lib.loads(
-                        base64s_to_bytes(result.get("result")).decode()
-                    )
-                    for result in results if result.get("result")
+                    json_lib.loads(base64s_to_bytes(result.get("result")).decode())
+                    for result in results
+                    if result.get("result")
                 ]
             except Exception as e:
-                self.parent.log.error('Unable to load results')
+                self.parent.log.error("Unable to load results")
                 self.parent.log.debug(e)
 
             return decoded_results
@@ -312,6 +308,7 @@ class AlgorithmClient(ClientBase):
 
         It provides functions to get task information and create new tasks.
         """
+
         def get(self, task_id: int) -> dict:
             """
             Retrieve a task at the central server.
@@ -326,13 +323,14 @@ class AlgorithmClient(ClientBase):
             dict
                 Dictionary containing the task information
             """
-            return self.parent.request(
-                f"task/{task_id}"
-            )
+            return self.parent.request(f"task/{task_id}")
 
         def create(
-            self, input_: bytes, organizations: list[int] = None,
-            name: str = "subtask", description: str = None
+            self,
+            input_: bytes,
+            organizations: list[int] = None,
+            name: str = "subtask",
+            description: str = None,
         ) -> dict:
             """
             Create a new (child) task at the central server.
@@ -362,8 +360,7 @@ class AlgorithmClient(ClientBase):
             self.parent.log.debug(f"Creating new subtask for {organizations}")
 
             description = (
-                description or
-                f"task from container on node_id={self.parent.node_id}"
+                description or f"task from container on node_id={self.parent.node_id}"
             )
 
             # serializing input. Note that the input is not encrypted here, but
@@ -371,21 +368,20 @@ class AlgorithmClient(ClientBase):
             serialized_input = bytes_to_base64s(serialize(input_))
             organization_json_list = []
             for org_id in organizations:
-                organization_json_list.append(
-                    {
-                        "id": org_id,
-                        "input": serialized_input
-                    }
-                )
+                organization_json_list.append({"id": org_id, "input": serialized_input})
 
-            return self.parent.request('task', method='post', json={
-                "name": name,
-                "image": self.parent.image,
-                "collaboration_id": self.parent.collaboration_id,
-                "description": description,
-                "organizations": organization_json_list,
-                "databases": self.parent.databases
-            })
+            return self.parent.request(
+                "task",
+                method="post",
+                json={
+                    "name": name,
+                    "image": self.parent.image,
+                    "collaboration_id": self.parent.collaboration_id,
+                    "description": description,
+                    "organizations": organization_json_list,
+                    "databases": self.parent.databases,
+                },
+            )
 
     class VPN(ClientBase.SubClient):
         """
@@ -393,11 +389,16 @@ class AlgorithmClient(ClientBase):
 
         It provides functions to obtain the IP addresses of other containers.
         """
+
         def get_addresses(
-            self, only_children: bool = False, only_parent: bool = False,
-            only_siblings: bool = False, only_self: bool = False,
-            include_children: bool = False, include_parent: bool = False,
-            label: str = None
+            self,
+            only_children: bool = False,
+            only_parent: bool = False,
+            only_siblings: bool = False,
+            only_self: bool = False,
+            include_children: bool = False,
+            include_parent: bool = False,
+            label: str = None,
         ) -> list[dict]:
             """
             Get information about the VPN IP addresses and ports of other
@@ -451,28 +452,26 @@ class AlgorithmClient(ClientBase):
             # for 'False' or 'None' values in the proxy server
             params = {}
             if only_children:
-                params['only_children'] = 1
+                params["only_children"] = 1
             if only_parent:
-                params['only_parent'] = 1
+                params["only_parent"] = 1
             if only_siblings:
-                params['only_siblings'] = 1
+                params["only_siblings"] = 1
             if only_self:
-                params['only_self'] = 1
+                params["only_self"] = 1
             if include_children:
-                params['include_children'] = 1
+                params["include_children"] = 1
             if include_parent:
-                params['include_parent'] = 1
+                params["include_parent"] = 1
             if label:
-                params['label'] = label
+                params["label"] = label
 
-            results = self.parent.request(
-                "vpn/algorithm/addresses", params=params
-            )
+            results = self.parent.request("vpn/algorithm/addresses", params=params)
 
-            if 'addresses' not in results:
-                return {'message': 'Obtaining VPN addresses failed!'}
+            if "addresses" not in results:
+                return {"message": "Obtaining VPN addresses failed!"}
 
-            return results['addresses']
+            return results["addresses"]
 
         def get_parent_address(self) -> dict:
             """
@@ -553,6 +552,7 @@ class AlgorithmClient(ClientBase):
         """
         Get information about organizations in the collaboration.
         """
+
         def get(self, id_: int) -> dict:
             """
             Get an organization by ID.
@@ -584,15 +584,15 @@ class AlgorithmClient(ClientBase):
                 List of organizations in the collaboration.
             """
             return self.parent._multi_page_request(
-                endpoint="organization", params={
-                    "collaboration_id": self.parent.collaboration_id
-                }
+                endpoint="organization",
+                params={"collaboration_id": self.parent.collaboration_id},
             )
 
     class Collaboration(ClientBase.SubClient):
         """
         Get information about the collaboration.
         """
+
         def get(self) -> dict:
             """
             Get the collaboration data.
@@ -602,13 +602,13 @@ class AlgorithmClient(ClientBase):
             dict
                 Dictionary containing the collaboration data.
             """
-            return self.parent.request(
-                f"collaboration/{self.parent.collaboration_id}")
+            return self.parent.request(f"collaboration/{self.parent.collaboration_id}")
 
     class Node(ClientBase.SubClient):
         """
         Get information about the node.
         """
+
         def get(self) -> dict:
             """
             Get the node data.

@@ -16,12 +16,20 @@ from vantage6.cli.node.common import find_running_node_names, print_log_worker
 
 @click.command()
 @click.option("-n", "--name", default=None, help="Configuration name")
-@click.option('--system', 'system_folders', flag_value=True,
-              help="Search for configuration in system folders rather than "
-                   "user folders")
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL,
-              help="Search for configuration in user folders rather than "
-                   "system folders. This is the default")
+@click.option(
+    "--system",
+    "system_folders",
+    flag_value=True,
+    help="Search for configuration in system folders rather than " "user folders",
+)
+@click.option(
+    "--user",
+    "system_folders",
+    flag_value=False,
+    default=N_FOL,
+    help="Search for configuration in user folders rather than "
+    "system folders. This is the default",
+)
 def cli_node_attach(name: str, system_folders: bool) -> None:
     """
     Show the node logs in the current console.
@@ -36,8 +44,9 @@ def cli_node_attach(name: str, system_folders: bool) -> None:
         return
 
     if not name:
-        name = q.select("Select the node you wish to inspect:",
-                        choices=running_node_names).ask()
+        name = q.select(
+            "Select the node you wish to inspect:", choices=running_node_names
+        ).ask()
     else:
         post_fix = "system" if system_folders else "user"
         name = f"{APPNAME}-{name}-{post_fix}"
@@ -51,8 +60,10 @@ def cli_node_attach(name: str, system_folders: bool) -> None:
                 time.sleep(1)
             except KeyboardInterrupt:
                 info("Closing log file. Keyboard Interrupt.")
-                info("Note that your node is still running! Shut it down with "
-                     f"'{Fore.RED}v6 node stop{Style.RESET_ALL}'")
+                info(
+                    "Note that your node is still running! Shut it down with "
+                    f"'{Fore.RED}v6 node stop{Style.RESET_ALL}'"
+                )
                 exit(0)
     else:
         error(f"{Fore.RED}{name}{Style.RESET_ALL} was not running!?")

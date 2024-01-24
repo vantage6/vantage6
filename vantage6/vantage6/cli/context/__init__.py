@@ -7,7 +7,7 @@ All classes are derived from the abstract AppContext class and provide the
 vantage6 applications with naming conventions, standard file locations, and
 more.
 """
-from colorama import (Fore, Style)
+from colorama import Fore, Style
 
 from vantage6.common.globals import InstanceType
 from vantage6.common import error
@@ -17,7 +17,7 @@ from vantage6.cli.context.server import ServerContext
 
 
 def select_context_class(
-    type_: InstanceType
+    type_: InstanceType,
 ) -> ServerContext | NodeContext | AlgorithmStoreContext:
     """
     Select the context class based on the type of instance.

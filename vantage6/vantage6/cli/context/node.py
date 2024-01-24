@@ -33,15 +33,16 @@ class NodeContext(AppContext):
     # configuration file and makes sure only valid configuration can be loaded.
     INST_CONFIG_MANAGER = NodeConfigurationManager
 
-    def __init__(self, instance_name: str, system_folders: bool = N_FOL,
-                 config_file: str = None):
-        super().__init__(InstanceType.NODE, instance_name, system_folders,
-                         config_file)
-        self.log.info('vantage6 version \'%s\'', __version__)
+    def __init__(
+        self, instance_name: str, system_folders: bool = N_FOL, config_file: str = None
+    ):
+        super().__init__(InstanceType.NODE, instance_name, system_folders, config_file)
+        self.log.info("vantage6 version '%s'", __version__)
 
     @classmethod
-    def from_external_config_file(cls, path: str,
-                                  system_folders: bool = N_FOL) -> NodeContext:
+    def from_external_config_file(
+        cls, path: str, system_folders: bool = N_FOL
+    ) -> NodeContext:
         """
         Create a node context from an external configuration file. External
         means that the configuration file is not located in the default folders
@@ -64,8 +65,7 @@ class NodeContext(AppContext):
         )
 
     @classmethod
-    def config_exists(cls, instance_name: str,
-                      system_folders: bool = N_FOL) -> bool:
+    def config_exists(cls, instance_name: str, system_folders: bool = N_FOL) -> bool:
         """
         Check if a configuration file exists.
 
@@ -82,12 +82,14 @@ class NodeContext(AppContext):
         bool
             Whether the configuration file exists or not
         """
-        return super().config_exists(InstanceType.NODE, instance_name,
-                                     system_folders=system_folders)
+        return super().config_exists(
+            InstanceType.NODE, instance_name, system_folders=system_folders
+        )
 
     @classmethod
-    def available_configurations(cls, system_folders: bool = N_FOL) \
-            -> tuple[list, list]:
+    def available_configurations(
+        cls, system_folders: bool = N_FOL
+    ) -> tuple[list, list]:
         """
         Find all available server configurations in the default folders.
 
@@ -102,9 +104,7 @@ class NodeContext(AppContext):
             The first list contains validated configuration files, the second
             list contains invalid configuration files.
         """
-        return super().available_configurations(
-            InstanceType.NODE, system_folders
-        )
+        return super().available_configurations(InstanceType.NODE, system_folders)
 
     @staticmethod
     def type_data_folder(system_folders: bool = N_FOL) -> Path:
@@ -171,10 +171,7 @@ class NodeContext(AppContext):
         str
             Docker volume name
         """
-        return os.environ.get(
-            'DATA_VOLUME_NAME',
-            f"{self.docker_container_name}-vol"
-        )
+        return os.environ.get("DATA_VOLUME_NAME", f"{self.docker_container_name}-vol")
 
     @property
     def docker_vpn_volume_name(self) -> str:
@@ -187,8 +184,7 @@ class NodeContext(AppContext):
             Docker volume name
         """
         return os.environ.get(
-            'VPN_VOLUME_NAME',
-            f"{self.docker_container_name}-vpn-vol"
+            "VPN_VOLUME_NAME", f"{self.docker_container_name}-vpn-vol"
         )
 
     @property
@@ -202,8 +198,7 @@ class NodeContext(AppContext):
             Docker volume name
         """
         return os.environ.get(
-            'SSH_TUNNEL_VOLUME_NAME',
-            f"{self.docker_container_name}-ssh-vol"
+            "SSH_TUNNEL_VOLUME_NAME", f"{self.docker_container_name}-ssh-vol"
         )
 
     @property
@@ -217,8 +212,7 @@ class NodeContext(AppContext):
             Docker volume name
         """
         return os.environ.get(
-            'SSH_SQUID_VOLUME_NAME',
-            f"{self.docker_container_name}-squid-vol"
+            "SSH_SQUID_VOLUME_NAME", f"{self.docker_container_name}-squid-vol"
         )
 
     @property
@@ -258,4 +252,3 @@ class NodeContext(AppContext):
             URI to the database
         """
         return self.config["databases"][label]
-

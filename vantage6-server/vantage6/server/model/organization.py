@@ -48,6 +48,7 @@ class Organization(Base):
     roles : list[:class:`~vantage6.server.model.role.Role`]
 
     """
+
     # fields
     name = Column(String, unique=True)
     domain = Column(String)
@@ -58,8 +59,9 @@ class Organization(Base):
     _public_key = Column(LargeBinary)
 
     # relations
-    collaborations = relationship("Collaboration", secondary="Member",
-                                  back_populates="organizations")
+    collaborations = relationship(
+        "Collaboration", secondary="Member", back_populates="organizations"
+    )
     runs = relationship("Run", back_populates="organization")
     nodes = relationship("Node", back_populates="organization")
     users = relationship("User", back_populates="organization")
@@ -103,8 +105,7 @@ class Organization(Base):
         if self._public_key:
             # TODO this should be fixed properly
             try:
-                return base64.b64decode(self._public_key)\
-                    .decode(STRING_ENCODING)
+                return base64.b64decode(self._public_key).decode(STRING_ENCODING)
             except Exception:
                 return ""
         else:
@@ -121,9 +122,7 @@ class Organization(Base):
         public_key_b64 : str
             Public key of the organization, b64-encoded
         """
-        self._public_key = base64.b64decode(
-            public_key_b64.encode(STRING_ENCODING)
-        )
+        self._public_key = base64.b64decode(public_key_b64.encode(STRING_ENCODING))
 
     def __repr__(self) -> str:
         """

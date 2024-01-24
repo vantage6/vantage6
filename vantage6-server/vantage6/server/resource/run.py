@@ -14,26 +14,22 @@ from vantage6.server.permission import (
     RuleCollection,
     PermissionManager,
     Scope as S,
-    Operation as P
+    Operation as P,
 )
 from vantage6.server.resource import (
     with_node,
     only_for,
     parse_datetime,
-    ServicesResources
+    ServicesResources,
 )
 from vantage6.server.resource.common.input_schema import RunInputSchema
 from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.resource.common.output_schema import (
-    RunSchema, RunTaskIncludedSchema, ResultSchema
+    RunSchema,
+    RunTaskIncludedSchema,
+    ResultSchema,
 )
-from vantage6.server.model import (
-    Run as db_Run,
-    Node,
-    Task,
-    Collaboration,
-    Organization
-)
+from vantage6.server.model import Run as db_Run, Node, Task, Collaboration, Organization
 
 
 module_name = logger_name(__name__)
@@ -59,32 +55,32 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     api.add_resource(
         Runs,
         path,
-        endpoint='run_without_id',
-        methods=('GET',),
-        resource_class_kwargs=services
+        endpoint="run_without_id",
+        methods=("GET",),
+        resource_class_kwargs=services,
     )
     api.add_resource(
         Run,
-        path + '/<int:id>',
-        endpoint='run_with_id',
-        methods=('GET', 'PATCH'),
-        resource_class_kwargs=services
+        path + "/<int:id>",
+        endpoint="run_with_id",
+        methods=("GET", "PATCH"),
+        resource_class_kwargs=services,
     )
     api.add_resource(
         Results,
-        api_base + '/result',
-        endpoint='result_without_id',
-        methods=('GET',),
-        resource_class_kwargs=services
+        api_base + "/result",
+        endpoint="result_without_id",
+        methods=("GET",),
+        resource_class_kwargs=services,
     )
     # TODO v4+ implement a PATCH method and use it to update the result. Then,
     # remove that from patching it in the Run resource.
     api.add_resource(
         Result,
-        api_base + '/result/<int:id>',
-        endpoint='result_with_id',
-        methods=('GET',),
-        resource_class_kwargs=services
+        api_base + "/result/<int:id>",
+        endpoint="result_with_id",
+        methods=("GET",),
+        resource_class_kwargs=services,
     )
 
 
@@ -110,13 +106,23 @@ def permissions(permissions: PermissionManager):
     add = permissions.appender(module_name)
 
     add(scope=S.GLOBAL, operation=P.VIEW, description="view any run")
-    add(scope=S.COLLABORATION, operation=P.VIEW, assign_to_container=True,
-        assign_to_node=True, description="view runs of your organizations "
-        "collaborations")
-    add(scope=S.ORGANIZATION, operation=P.VIEW,
-        description="view any run of a task created by your organization")
-    add(scope=S.OWN, operation=P.VIEW,
-        description="view any run of a task created by you")
+    add(
+        scope=S.COLLABORATION,
+        operation=P.VIEW,
+        assign_to_container=True,
+        assign_to_node=True,
+        description="view runs of your organizations " "collaborations",
+    )
+    add(
+        scope=S.ORGANIZATION,
+        operation=P.VIEW,
+        description="view any run of a task created by your organization",
+    )
+    add(
+        scope=S.OWN,
+        operation=P.VIEW,
+        description="view any run of a task created by you",
+    )
 
 
 # ------------------------------------------------------------------------------
@@ -124,6 +130,7 @@ def permissions(permissions: PermissionManager):
 # ------------------------------------------------------------------------------
 class RunBase(ServicesResources):
     """Base class for run resources"""
+
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
@@ -147,61 +154,68 @@ class MultiRunBase(RunBase):
 
         q = g.session.query(db_Run)
 
-        if 'organization_id' in args:
-            if not self.r.can_for_org(P.VIEW, args['organization_id']):
-                return {'msg': 'You lack the permission to view runs for '
-                        f'organization id={args["organization_id"]}!'}, \
-                    HTTPStatus.UNAUTHORIZED
-            q = q.filter(db_Run.organization_id == args['organization_id'])
+        if "organization_id" in args:
+            if not self.r.can_for_org(P.VIEW, args["organization_id"]):
+                return {
+                    "msg": "You lack the permission to view runs for "
+                    f'organization id={args["organization_id"]}!'
+                }, HTTPStatus.UNAUTHORIZED
+            q = q.filter(db_Run.organization_id == args["organization_id"])
 
-        if 'task_id' in args:
-            task = db.Task.get(args['task_id'])
+        if "task_id" in args:
+            task = db.Task.get(args["task_id"])
             if not task:
-                return {'msg': f'Task id={args["task_id"]} does not exist!'}, \
-                    HTTPStatus.BAD_REQUEST
-            elif not self.r.can_for_org(P.VIEW, task.init_org_id) \
-                    and not (self.r.v_own.can() and
-                             g.user.id == task.init_user_id):
-                return {'msg': 'You lack the permission to view runs for '
-                        f'task id={args["task_id"]}!'}, HTTPStatus.UNAUTHORIZED
-            q = q.filter(db_Run.task_id == args['task_id'])
+                return {
+                    "msg": f'Task id={args["task_id"]} does not exist!'
+                }, HTTPStatus.BAD_REQUEST
+            elif not self.r.can_for_org(P.VIEW, task.init_org_id) and not (
+                self.r.v_own.can() and g.user.id == task.init_user_id
+            ):
+                return {
+                    "msg": "You lack the permission to view runs for "
+                    f'task id={args["task_id"]}!'
+                }, HTTPStatus.UNAUTHORIZED
+            q = q.filter(db_Run.task_id == args["task_id"])
 
-        if args.get('node_id'):
-            node = db.Node.get(args['node_id'])
+        if args.get("node_id"):
+            node = db.Node.get(args["node_id"])
             if not node:
-                return {'msg': f'Node id={args["node_id"]} does not exist!'}, \
-                    HTTPStatus.BAD_REQUEST
+                return {
+                    "msg": f'Node id={args["node_id"]} does not exist!'
+                }, HTTPStatus.BAD_REQUEST
             elif not self.r.can_for_col(P.VIEW, node.collaboration_id):
-                return {'msg': 'You lack the permission to view runs for '
-                        f'node id={args["node_id"]}!'}, HTTPStatus.UNAUTHORIZED
-            q = q.filter(db.Node.id == args.get('node_id'))\
-                .filter(db.Collaboration.id == db.Node.collaboration_id)
+                return {
+                    "msg": "You lack the permission to view runs for "
+                    f'node id={args["node_id"]}!'
+                }, HTTPStatus.UNAUTHORIZED
+            q = q.filter(db.Node.id == args.get("node_id")).filter(
+                db.Collaboration.id == db.Node.collaboration_id
+            )
 
         # relation filters
-        if 'port' in args:
-            q = q.filter(db_Run.port == args['port'])
+        if "port" in args:
+            q = q.filter(db_Run.port == args["port"])
 
         # date selections
-        for param in ['assigned', 'started', 'finished']:
-            if f'{param}_till' in args:
-                q = q.filter(getattr(db_Run, f'{param}_at')
-                             <= args[f'{param}_till'])
-            if f'{param}_from' in args:
-                q = q.filter(db_Run.assigned_at >= args[f'{param}_from'])
+        for param in ["assigned", "started", "finished"]:
+            if f"{param}_till" in args:
+                q = q.filter(getattr(db_Run, f"{param}_at") <= args[f"{param}_till"])
+            if f"{param}_from" in args:
+                q = q.filter(db_Run.assigned_at >= args[f"{param}_from"])
 
         # custom filters
-        if args.get('state') == 'open':
+        if args.get("state") == "open":
             q = q.filter(db_Run.finished_at.is_(None))
 
-        q = q.join(Organization).join(Node).join(Task, db_Run.task)\
-            .join(Collaboration)
+        q = q.join(Organization).join(Node).join(Task, db_Run.task).join(Collaboration)
 
-        if 'collaboration_id' in args:
-            if not self.r.can_for_col(P.VIEW, args['collaboration_id']):
-                return {'msg': 'You lack the permission to view runs for '
-                        f'collaboration id={args["collaboration_id"]}!'}, \
-                    HTTPStatus.UNAUTHORIZED
-            q = q.filter(Collaboration.id == args['collaboration_id'])
+        if "collaboration_id" in args:
+            if not self.r.can_for_col(P.VIEW, args["collaboration_id"]):
+                return {
+                    "msg": "You lack the permission to view runs for "
+                    f'collaboration id={args["collaboration_id"]}!'
+                }, HTTPStatus.UNAUTHORIZED
+            q = q.filter(Collaboration.id == args["collaboration_id"])
 
         # filter based on permissions
         if not self.r.v_glo.can():
@@ -213,8 +227,9 @@ class MultiRunBase(RunBase):
             elif self.r.v_own.can():
                 q = q.filter(Task.init_user_id == g.user.id)
             else:
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
+                return {
+                    "msg": "You lack the permission to do that!"
+                }, HTTPStatus.UNAUTHORIZED
 
         # query the DB and paginate
         q = q.order_by(desc(db_Run.id))
@@ -222,10 +237,9 @@ class MultiRunBase(RunBase):
 
 
 class Runs(MultiRunBase):
-
-    @only_for(('node', 'user', 'container'))
+    @only_for(("node", "user", "container"))
     def get(self):
-        """ Returns a list of runs
+        """Returns a list of runs
         ---
 
         description: >-
@@ -350,19 +364,18 @@ class Runs(MultiRunBase):
         try:
             page = Pagination.from_query(query, request, db.Run)
         except (ValueError, AttributeError) as e:
-            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
 
         # serialization of the models
-        s = run_inc_schema if self.is_included('task') else run_schema
+        s = run_inc_schema if self.is_included("task") else run_schema
 
         return self.response(page, s)
 
 
 class Results(MultiRunBase):
-
-    @only_for(('node', 'user', 'container'))
+    @only_for(("node", "user", "container"))
     def get(self):
-        """ Returns a list of results
+        """Returns a list of results
         ---
 
         description: >-
@@ -480,7 +493,7 @@ class Results(MultiRunBase):
         try:
             page = Pagination.from_query(query, request, db.Run)
         except (ValueError, AttributeError) as e:
-            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
 
         return self.response(page, result_schema)
 
@@ -505,23 +518,23 @@ class SingleRunBase(RunBase):
         """
         run = db_Run.get(id)
         if not run:
-            return {'msg': f'Run id={id} not found!'}, \
-                HTTPStatus.NOT_FOUND
+            return {"msg": f"Run id={id} not found!"}, HTTPStatus.NOT_FOUND
 
-        if not self.r.can_for_org(P.VIEW, run.task.init_org_id) \
-                and not (self.r.v_own.can() and
-                         run.task.init_user_id == g.user.id):
-            return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
+        if not self.r.can_for_org(P.VIEW, run.task.init_org_id) and not (
+            self.r.v_own.can() and run.task.init_user_id == g.user.id
+        ):
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
         return run
 
 
 class Run(SingleRunBase):
     """Resource for /api/run"""
 
-    @only_for(('node', 'user', 'container'))
+    @only_for(("node", "user", "container"))
     def get(self, id):
-        """ Get a single run's data
+        """Get a single run's data
         ---
 
         description: >-
@@ -573,8 +586,7 @@ class Run(SingleRunBase):
         if not isinstance(run, db_Run):
             return run
 
-        s = run_inc_schema if request.args.get('include') == 'task' \
-            else run_schema
+        s = run_inc_schema if request.args.get("include") == "task" else run_schema
 
         return s.dump(run, many=False), HTTPStatus.OK
 
@@ -636,22 +648,25 @@ class Run(SingleRunBase):
         """
         run = db_Run.get(id)
         if not run:
-            return {'msg': f'Run id={id} not found!'}, HTTPStatus.NOT_FOUND
+            return {"msg": f"Run id={id} not found!"}, HTTPStatus.NOT_FOUND
 
         data = request.get_json()
         # validate request body
         errors = run_input_schema.validate(data, partial=True)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
         if run.organization_id != g.node.organization_id:
             log.warn(
                 f"{g.node.name} tries to update a run that does not belong "
                 f"to them ({run.organization_id}/{g.node.organization_id})."
             )
-            return {"msg": "This is not your algorithm run to PATCH!"}, \
-                HTTPStatus.UNAUTHORIZED
+            return {
+                "msg": "This is not your algorithm run to PATCH!"
+            }, HTTPStatus.UNAUTHORIZED
 
         if run.finished_at is not None:
             return {
@@ -660,12 +675,13 @@ class Run(SingleRunBase):
 
         # notify collaboration nodes/users that the task has an update
         self.socketio.emit(
-            "status_update", {'run_id': id}, namespace='/tasks',
-            room=f'collaboration_{run.task.collaboration.id}'
+            "status_update",
+            {"run_id": id},
+            namespace="/tasks",
+            room=f"collaboration_{run.task.collaboration.id}",
         )
 
-        run.started_at = parse_datetime(data.get("started_at"),
-                                        run.started_at)
+        run.started_at = parse_datetime(data.get("started_at"), run.started_at)
         run.finished_at = parse_datetime(data.get("finished_at"))
         run.result = data.get("result")
         run.log = data.get("log")
@@ -678,9 +694,9 @@ class Run(SingleRunBase):
 class Result(SingleRunBase):
     """Resource for /api/result/<id>"""
 
-    @only_for(['node', 'user', 'container'])
+    @only_for(["node", "user", "container"])
     def get(self, id):
-        """ Get a single result
+        """Get a single result
         ---
 
         description: >-

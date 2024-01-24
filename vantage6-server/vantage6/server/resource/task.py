@@ -17,7 +17,7 @@ from vantage6.server.permission import (
     RuleCollection,
     Scope as S,
     PermissionManager,
-    Operation as P
+    Operation as P,
 )
 from vantage6.server.resource import only_for, ServicesResources, with_user
 from vantage6.server.resource.common.output_schema import (
@@ -31,7 +31,7 @@ from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.resource.event import kill_task
 
 
-module_name = __name__.split('.')[-1]
+module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
 
 
@@ -54,16 +54,16 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     api.add_resource(
         Tasks,
         path,
-        endpoint='task_without_id',
-        methods=('GET', 'POST'),
-        resource_class_kwargs=services
+        endpoint="task_without_id",
+        methods=("GET", "POST"),
+        resource_class_kwargs=services,
     )
     api.add_resource(
         Task,
-        path + '/<int:id>',
-        endpoint='task_with_id',
-        methods=('GET', 'DELETE'),
-        resource_class_kwargs=services
+        path + "/<int:id>",
+        endpoint="task_with_id",
+        methods=("GET", "DELETE"),
+        resource_class_kwargs=services,
     )
 
 
@@ -82,31 +82,45 @@ def permissions(permissions: PermissionManager) -> None:
     add = permissions.appender(module_name)
 
     add(scope=S.GLOBAL, operation=P.VIEW, description="view any task")
-    add(scope=S.COLLABORATION, operation=P.VIEW, assign_to_container=True,
-        assign_to_node=True, description="view tasks of your collaborations")
-    add(scope=S.ORGANIZATION, operation=P.VIEW,
-        description="view tasks that your organization initiated")
-    add(scope=S.OWN, operation=P.VIEW,
-        description="view tasks that you initiated")
+    add(
+        scope=S.COLLABORATION,
+        operation=P.VIEW,
+        assign_to_container=True,
+        assign_to_node=True,
+        description="view tasks of your collaborations",
+    )
+    add(
+        scope=S.ORGANIZATION,
+        operation=P.VIEW,
+        description="view tasks that your organization initiated",
+    )
+    add(scope=S.OWN, operation=P.VIEW, description="view tasks that you initiated")
 
     add(scope=S.GLOBAL, operation=P.CREATE, description="create a new task")
-    add(scope=S.COLLABORATION, operation=P.CREATE,
+    add(
+        scope=S.COLLABORATION,
+        operation=P.CREATE,
         description=(
             "create a new task for collaborations in which your organization "
             "participates with"
-        ))
+        ),
+    )
 
-    add(scope=S.GLOBAL, operation=P.DELETE,
-        description="delete a task")
-    add(scope=S.COLLABORATION, operation=P.DELETE,
-        description="delete a task from your collaborations")
-    add(scope=S.ORGANIZATION, operation=P.DELETE,
+    add(scope=S.GLOBAL, operation=P.DELETE, description="delete a task")
+    add(
+        scope=S.COLLABORATION,
+        operation=P.DELETE,
+        description="delete a task from your collaborations",
+    )
+    add(
+        scope=S.ORGANIZATION,
+        operation=P.DELETE,
         description=(
             "delete a task from a collaboration in which your organization "
             "participates with"
-        ))
-    add(scope=S.OWN, operation=P.DELETE,
-        description="delete tasks that you created")
+        ),
+    )
+    add(scope=S.OWN, operation=P.DELETE, description="delete tasks that you created")
 
 
 # ------------------------------------------------------------------------------
@@ -121,13 +135,12 @@ task_input_schema = TaskInputSchema()
 
 
 class TaskBase(ServicesResources):
-
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
         # permissions for the run resource are also relevant for the task
         # resource as they are sometimes included
-        self.r_run: RuleCollection = getattr(self.permissions, 'run')
+        self.r_run: RuleCollection = getattr(self.permissions, "run")
 
     def _select_schema(self) -> TaskSchema:
         """
@@ -138,18 +151,17 @@ class TaskBase(ServicesResources):
         TaskSchema
             Schema to use for serialization
         """
-        if self.is_included('runs') and self.is_included('results'):
+        if self.is_included("runs") and self.is_included("results"):
             return task_result_run_schema
-        elif self.is_included('runs'):
+        elif self.is_included("runs"):
             return task_run_schema
-        elif self.is_included('results'):
+        elif self.is_included("results"):
             return task_result_schema
         else:
             return task_schema
 
 
 class Tasks(TaskBase):
-
     @only_for(("user", "node", "container"))
     def get(self):
         """List tasks
@@ -300,126 +312,145 @@ class Tasks(TaskBase):
         # check permissions and apply filter if neccassary
         if not self.r.v_glo.can():
             if self.r.v_col.can():
-                q = q.join(db.Collaboration).join(db.Organization)\
+                q = (
+                    q.join(db.Collaboration)
+                    .join(db.Organization)
                     .filter(db.Collaboration.organizations.any(id=auth_org_id))
+                )
             elif self.r.v_org.can():
-                q = q.join(db.Organization)\
-                    .filter(db.Task.init_org_id == auth_org_id)
+                q = q.join(db.Organization).filter(db.Task.init_org_id == auth_org_id)
             elif self.r.v_own.can():
                 q = q.filter(db.Task.init_user_id == g.user.id)
             else:
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
+                return {
+                    "msg": "You lack the permission to do that!"
+                }, HTTPStatus.UNAUTHORIZED
         # if results are included, check permissions on results
-        if self.is_included('results'):
+        if self.is_included("results"):
             max_scope_task = self.r.get_max_scope(P.VIEW)
             if not self.r_run.has_at_least_scope(max_scope_task, P.VIEW):
                 max_scope_run = self.r_run.get_max_scope(P.VIEW)
                 return {
-                    'msg': 'You cannot view the results of all tasks, as you '
-                    f'are allowed to view tasks with scope {max_scope_task} '
-                    f'but you can only view results with scope {max_scope_run}'
+                    "msg": "You cannot view the results of all tasks, as you "
+                    f"are allowed to view tasks with scope {max_scope_task} "
+                    f"but you can only view results with scope {max_scope_run}"
                 }, HTTPStatus.UNAUTHORIZED
 
-        if 'collaboration_id' in args:
-            collaboration_id = int(args['collaboration_id'])
+        if "collaboration_id" in args:
+            collaboration_id = int(args["collaboration_id"])
             if not self.r.can_for_col(P.VIEW, collaboration_id):
-                return {'msg': 'You lack the permission to view tasks '
-                        f'from collaboration {collaboration_id}!'}, \
-                    HTTPStatus.UNAUTHORIZED
+                return {
+                    "msg": "You lack the permission to view tasks "
+                    f"from collaboration {collaboration_id}!"
+                }, HTTPStatus.UNAUTHORIZED
             # dont join collaboration table if it is already joined
             # FIXME refactor this after moving to SQLAlchemy 2.0
             has_already_joined_collab = False
             for visitor in visitors.iterate(q.statement):
-                if visitor.__visit_name__ == 'table' and \
-                        visitor.name == 'collaboration':
+                if (
+                    visitor.__visit_name__ == "table"
+                    and visitor.name == "collaboration"
+                ):
                     has_already_joined_collab = True
             if not has_already_joined_collab:
                 q = q.join(db.Collaboration)
             q = q.filter(db.Collaboration.id == collaboration_id)
 
-        if 'init_org_id' in args:
-            init_org_id = int(args['init_org_id'])
+        if "init_org_id" in args:
+            init_org_id = int(args["init_org_id"])
             if not self.r.can_for_org(P.VIEW, init_org_id):
-                return {'msg': 'You lack the permission to view tasks '
-                        f'from organization id={init_org_id}!'}, \
-                    HTTPStatus.UNAUTHORIZED
+                return {
+                    "msg": "You lack the permission to view tasks "
+                    f"from organization id={init_org_id}!"
+                }, HTTPStatus.UNAUTHORIZED
             q = q.filter(db.Task.init_org_id == init_org_id)
 
-        if 'init_user_id' in args:
-            init_user_id = int(args['init_user_id'])
+        if "init_user_id" in args:
+            init_user_id = int(args["init_user_id"])
             init_user = db.User.get(init_user_id)
             if not init_user:
-                return {'msg': f'User id={init_user_id} does not '
-                        'exist!'}, HTTPStatus.BAD_REQUEST
-            elif not self.r.can_for_org(P.VIEW, init_user.organization_id) \
-                    and not (self.r.v_own.can() and g.user and
-                             init_user.id == g.user.id):
-                return {'msg': 'You lack the permission to view tasks '
-                        f'from user id={init_user_id}!'}, \
-                    HTTPStatus.UNAUTHORIZED
+                return {
+                    "msg": f"User id={init_user_id} does not " "exist!"
+                }, HTTPStatus.BAD_REQUEST
+            elif not self.r.can_for_org(P.VIEW, init_user.organization_id) and not (
+                self.r.v_own.can() and g.user and init_user.id == g.user.id
+            ):
+                return {
+                    "msg": "You lack the permission to view tasks "
+                    f"from user id={init_user_id}!"
+                }, HTTPStatus.UNAUTHORIZED
             q = q.filter(db.Task.init_user_id == init_user_id)
 
-        if 'parent_id' in args:
-            parent_id = int(args['parent_id'])
+        if "parent_id" in args:
+            parent_id = int(args["parent_id"])
             parent = db.Task.get(parent_id)
             if not parent:
-                return {'msg': f'Parent task id={args["parent_id"]} does not '
-                        'exist!'}, HTTPStatus.BAD_REQUEST
+                return {
+                    "msg": f'Parent task id={args["parent_id"]} does not ' "exist!"
+                }, HTTPStatus.BAD_REQUEST
             elif not self.r.can_for_col(P.VIEW, parent.collaboration_id):
-                return {'msg': 'You lack the permission to view tasks '
-                        'from the collaboration that the task with parent_id='
-                        f'{parent.collaboration_id} belongs to!'}, \
-                    HTTPStatus.UNAUTHORIZED
+                return {
+                    "msg": "You lack the permission to view tasks "
+                    "from the collaboration that the task with parent_id="
+                    f"{parent.collaboration_id} belongs to!"
+                }, HTTPStatus.UNAUTHORIZED
             q = q.filter(db.Task.parent_id == int(parent_id))
 
-        if 'job_id' in args:
-            job_id = int(args['job_id'])
-            task_in_job = q.session.query(db.Task).filter(
-                db.Task.job_id == job_id).first()
+        if "job_id" in args:
+            job_id = int(args["job_id"])
+            task_in_job = (
+                q.session.query(db.Task).filter(db.Task.job_id == job_id).first()
+            )
             if not task_in_job:
-                return {'msg': f'Job id={args["job_id"]} does not exist!'}, \
-                    HTTPStatus.BAD_REQUEST
+                return {
+                    "msg": f'Job id={args["job_id"]} does not exist!'
+                }, HTTPStatus.BAD_REQUEST
             elif not self.r.can_for_col(P.VIEW, task_in_job.collaboration_id):
-                return {'msg': 'You lack the permission to view tasks '
-                        'from the collaboration that the task with job_id='
-                        f'{task_in_job.collaboration_id} belongs to!'}, \
-                    HTTPStatus.UNAUTHORIZED
+                return {
+                    "msg": "You lack the permission to view tasks "
+                    "from the collaboration that the task with job_id="
+                    f"{task_in_job.collaboration_id} belongs to!"
+                }, HTTPStatus.UNAUTHORIZED
             q = q.filter(db.Task.job_id == job_id)
 
-        for param in ['name', 'image', 'description', 'status']:
+        for param in ["name", "image", "description", "status"]:
             if param in args:
                 q = q.filter(getattr(db.Task, param).like(args[param]))
 
-        if 'run_id' in args:
-            run_id = int(args['run_id'])
+        if "run_id" in args:
+            run_id = int(args["run_id"])
             run = db.Run.get(run_id)
             if not run:
-                return {'msg': f'Run id={args["run_id"]} does not exist!'}, \
-                    HTTPStatus.BAD_REQUEST
+                return {
+                    "msg": f'Run id={args["run_id"]} does not exist!'
+                }, HTTPStatus.BAD_REQUEST
             elif not self.r.can_for_col(P.VIEW, run.collaboration_id):
-                return {'msg': 'You lack the permission to view tasks '
-                        'from the collaboration that the run with id='
-                        f'{run.collaboration_id} belongs to!'}, \
-                    HTTPStatus.UNAUTHORIZED
+                return {
+                    "msg": "You lack the permission to view tasks "
+                    "from the collaboration that the run with id="
+                    f"{run.collaboration_id} belongs to!"
+                }, HTTPStatus.UNAUTHORIZED
             q = q.join(db.Run).filter(db.Run.id == run_id)
 
-        if 'database' in args:
-            q = q.join(db.TaskDatabase)\
-                 .filter(db.TaskDatabase.database == args['database'])
+        if "database" in args:
+            q = q.join(db.TaskDatabase).filter(
+                db.TaskDatabase.database == args["database"]
+            )
 
-        if 'is_user_created' in args:
+        if "is_user_created" in args:
             try:
-                user_created = int(args['is_user_created'])
+                user_created = int(args["is_user_created"])
                 if user_created == 0:
                     q = q.filter(db.Task.parent_id.isnot(None))
                 else:
                     q = q.filter(db.Task.parent_id.is_(None))
             except ValueError:
-                return {"msg": (
-                    "Invalid value for 'is_user_created' provided: "
-                    f"'{args['is_user_created']}'. Should be an integer."
-                )}, HTTPStatus.BAD_REQUEST
+                return {
+                    "msg": (
+                        "Invalid value for 'is_user_created' provided: "
+                        f"'{args['is_user_created']}'. Should be an integer."
+                    )
+                }, HTTPStatus.BAD_REQUEST
 
         # order to get latest task first
         q = q.order_by(desc(db.Task.id))
@@ -428,7 +459,7 @@ class Tasks(TaskBase):
         try:
             page = Pagination.from_query(q, request, db.Task)
         except (ValueError, AttributeError) as e:
-            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
 
         # serialization schema
         schema = self._select_schema()
@@ -505,10 +536,12 @@ class Tasks(TaskBase):
         # validate request body
         errors = task_input_schema.validate(data)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
-        collaboration_id = data.get('collaboration_id')
+        collaboration_id = data.get("collaboration_id")
         collaboration = db.Collaboration.get(collaboration_id)
 
         if not collaboration:
@@ -516,40 +549,48 @@ class Tasks(TaskBase):
                 "msg": f"Collaboration id={collaboration_id} not found!"
             }, HTTPStatus.NOT_FOUND
 
-        organizations_json_list = data.get('organizations')
+        organizations_json_list = data.get("organizations")
         org_ids = [org.get("id") for org in organizations_json_list]
         db_ids = collaboration.get_organization_ids()
 
         # Check that all organization ids are within the collaboration, this
         # also ensures us that the organizations exist
         if not set(org_ids).issubset(db_ids):
-            return {"msg": (
-                "At least one of the supplied organizations in not within "
-                "the collaboration."
-            )}, HTTPStatus.BAD_REQUEST
+            return {
+                "msg": (
+                    "At least one of the supplied organizations in not within "
+                    "the collaboration."
+                )
+            }, HTTPStatus.BAD_REQUEST
 
         # check if all the organizations have a registered node
-        nodes = g.session.query(db.Node)\
-            .filter(db.Node.organization_id.in_(org_ids))\
-            .filter(db.Node.collaboration_id == collaboration_id)\
+        nodes = (
+            g.session.query(db.Node)
+            .filter(db.Node.organization_id.in_(org_ids))
+            .filter(db.Node.collaboration_id == collaboration_id)
             .all()
+        )
         if len(nodes) < len(org_ids):
             present_nodes = [node.organization_id for node in nodes]
             missing = [str(id) for id in org_ids if id not in present_nodes]
-            return {"msg": (
-                "Cannot create this task because there are no nodes registered"
-                f" for the following organization(s): {', '.join(missing)}."
-            )}, HTTPStatus.BAD_REQUEST
+            return {
+                "msg": (
+                    "Cannot create this task because there are no nodes registered"
+                    f" for the following organization(s): {', '.join(missing)}."
+                )
+            }, HTTPStatus.BAD_REQUEST
         # check if any of the nodes that are offline shared their configuration
         # info and if this prevents this user from creating this task
         if g.user:
             for node in nodes:
                 if Tasks._node_doesnt_allow_user_task(node.config):
-                    return {"msg": (
-                        "Cannot create this task because one of the nodes that"
-                        " you are trying to send this task to does not allow "
-                        "you to create tasks."
-                    )}, HTTPStatus.BAD_REQUEST
+                    return {
+                        "msg": (
+                            "Cannot create this task because one of the nodes that"
+                            " you are trying to send this task to does not allow "
+                            "you to create tasks."
+                        )
+                    }, HTTPStatus.BAD_REQUEST
 
         # figure out the initiating organization of the task
         if g.user:
@@ -561,21 +602,22 @@ class Tasks(TaskBase):
         if init_org not in collaboration.organizations:
             return {
                 "msg": "You can only create tasks for collaborations "
-                       "you are participating in!"
+                "you are participating in!"
             }, HTTPStatus.UNAUTHORIZED
 
         # verify permissions
-        image = data.get('image', '')
+        image = data.get("image", "")
         if g.user and not rules.can_for_col(P.CREATE, collaboration.id):
-            return {'msg': 'You lack the permission to do that!'}, \
-                HTTPStatus.UNAUTHORIZED
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         elif g.container:
             # verify that the container has permissions to create the task
-            if not Tasks.__verify_container_permissions(g.container, image,
-                                                        collaboration_id):
-                return {"msg": "Container-token is not valid"}, \
-                    HTTPStatus.UNAUTHORIZED
+            if not Tasks.__verify_container_permissions(
+                g.container, image, collaboration_id
+            ):
+                return {"msg": "Container-token is not valid"}, HTTPStatus.UNAUTHORIZED
 
         # check that the input is valid. If the collaboration is encrypted, it
         # should not be possible to read the input, and we should not save it
@@ -589,9 +631,13 @@ class Tasks(TaskBase):
             return {"msg": error_msg}, HTTPStatus.BAD_REQUEST
 
         # permissions ok, create task record and TaskDatabase records
-        task = db.Task(collaboration=collaboration, name=data.get('name', ''),
-                       description=data.get('description', ''), image=image,
-                       init_org=init_org)
+        task = db.Task(
+            collaboration=collaboration,
+            name=data.get("name", ""),
+            description=data.get("description", ""),
+            image=image,
+            init_org=init_org,
+        )
 
         # create job_id. Users can only create top-level -tasks (they will not
         # have sub-tasks). Therefore, always create a new job_id. Tasks created
@@ -608,30 +654,33 @@ class Tasks(TaskBase):
             log.debug(f"Sub task from parent_id={task.parent_id}")
 
         # save the databases that the task uses
-        databases = data.get('databases')
+        databases = data.get("databases")
         if isinstance(databases, str):
-            databases = [{'label': databases}]
+            databases = [{"label": databases}]
         elif databases is None:
             databases = []
         db_records = []
         for database in databases:
-            if 'label' not in database:
-                return {'msg': "Database label missing! The dictionary "
-                        f"{database} should contain a 'label' key"}, \
-                    HTTPStatus.BAD_REQUEST
+            if "label" not in database:
+                return {
+                    "msg": "Database label missing! The dictionary "
+                    f"{database} should contain a 'label' key"
+                }, HTTPStatus.BAD_REQUEST
             # remove label from the database dictionary, which apart from it
             # may only contain some optional parameters . Save optional
             # parameters as JSON without spaces to database
-            label = database.pop('label')
+            label = database.pop("label")
             # TODO task.id is only set here because in between creating the
             # task and using the ID here, there are other database operations
             # that silently update the task.id (i.e. next_job_id() and
             # db.Task.get()). Task.id should be updated explicitly instead.
-            db_records.append(db.TaskDatabase(
-                task_id=task.id,
-                database=label,
-                parameters=json.dumps(database, separators=(',', ':'))
-            ))
+            db_records.append(
+                db.TaskDatabase(
+                    task_id=task.id,
+                    database=label,
+                    parameters=json.dumps(database, separators=(",", ":")),
+                )
+            )
 
         # All checks completed, save task to database
         task.save()
@@ -639,21 +688,24 @@ class Tasks(TaskBase):
 
         # send socket event that task has been created
         socketio.emit(
-            "task_created", {
+            "task_created",
+            {
                 "task_id": task.id,
                 "job_id": task.job_id,
                 "collaboration_id": collaboration_id,
                 "init_org_id": init_org.id,
-            }, room=f"collaboration_{collaboration_id}", namespace='/tasks'
+            },
+            room=f"collaboration_{collaboration_id}",
+            namespace="/tasks",
         )
 
         # now we need to create results for the nodes to fill. Each node
         # receives their instructions from a result, not from the task itself
         log.debug(f"Assigning task to {len(organizations_json_list)} nodes.")
         for org in organizations_json_list:
-            organization = db.Organization.get(org['id'])
+            organization = db.Organization.get(org["id"])
             log.debug(f"Assigning task to '{organization.name}'.")
-            input_ = org.get('input')
+            input_ = org.get("input")
             # FIXME: legacy input from the client, could be removed at some
             # point
             if isinstance(input_, dict):
@@ -663,17 +715,17 @@ class Tasks(TaskBase):
                 task=task,
                 organization=organization,
                 input=input_,
-                status=TaskStatus.PENDING
+                status=TaskStatus.PENDING,
             )
             run.save()
 
         # notify nodes a new task available (only to online nodes), nodes that
         # are offline will receive this task on sign in.
         socketio.emit(
-            'new_task',
-            {'id': task.id, 'parent_id': task.parent_id},
-            namespace='/tasks',
-            room=f'collaboration_{task.collaboration_id}'
+            "new_task",
+            {"id": task.id, "parent_id": task.parent_id},
+            namespace="/tasks",
+            room=f"collaboration_{task.collaboration_id}",
         )
 
         # add some logging
@@ -681,9 +733,11 @@ class Tasks(TaskBase):
         if g.user:
             log.debug(f" created by: '{g.user.username}'")
         else:
-            log.debug(f" created by container on node_id="
-                      f"{g.container['node_id']}"
-                      f" for (parent) task_id={g.container['task_id']}")
+            log.debug(
+                f" created by container on node_id="
+                f"{g.container['node_id']}"
+                f" for (parent) task_id={g.container['task_id']}"
+            )
 
         log.debug(f" url: '{url_for('task_with_id', id=task.id)}'")
         log.debug(f" name: '{task.name}'")
@@ -698,8 +752,12 @@ class Tasks(TaskBase):
         # check that the image is allowed: algorithm containers can only
         # create tasks with the same image
         if not image.endswith(container["image"]):
-            log.warning((f"Container from node={container['node_id']} "
-                        f"attempts to post a task using illegal image!?"))
+            log.warning(
+                (
+                    f"Container from node={container['node_id']} "
+                    f"attempts to post a task using illegal image!?"
+                )
+            )
             log.warning(f"  task image: {image}")
             log.warning(f"  container image: {container['image']}")
             return False
@@ -725,9 +783,7 @@ class Tasks(TaskBase):
         return True
 
     @staticmethod
-    def _node_doesnt_allow_user_task(
-        node_configs: list[db.NodeConfig]
-    ) -> bool:
+    def _node_doesnt_allow_user_task(node_configs: list[db.NodeConfig]) -> bool:
         """
         Checks if the node allows user to create task.
 
@@ -784,7 +840,7 @@ class Tasks(TaskBase):
         """
         dummy_cryptor = DummyCryptor()
         for org in organizations_json_list:
-            input_ = org.get('input')
+            input_ = org.get("input")
             decrypted_input = dummy_cryptor.decrypt_str_to_bytes(input_)
             is_input_readable = False
             try:
@@ -794,10 +850,13 @@ class Tasks(TaskBase):
                 pass
 
             if collaboration.encrypted and is_input_readable:
-                return False,  (
-                    "Your collaboration requires encryption, but input is not "
-                    "encrypted! Please encrypt your input before sending it."
-                ),
+                return (
+                    False,
+                    (
+                        "Your collaboration requires encryption, but input is not "
+                        "encrypted! Please encrypt your input before sending it."
+                    ),
+                )
             elif not collaboration.encrypted and not is_input_readable:
                 return False, (
                     "Your task's input cannot be parsed. Your input should be "
@@ -806,7 +865,7 @@ class Tasks(TaskBase):
                     "for you. Also, make sure not to encrypt your input, "
                     "as your collaboration is set to not use encryption."
                 )
-        return True, ''
+        return True, ""
 
 
 class Task(TaskBase):
@@ -867,18 +926,21 @@ class Task(TaskBase):
         schema = self._select_schema()
 
         # check permissions
-        if not self.r.can_for_org(P.VIEW, task.init_org_id) \
-                and not (self.r.v_own.can() and g.user and
-                         task.init_user_id == g.user.id):
-            return {'msg': 'You lack the permission to do that!'}, \
-                HTTPStatus.UNAUTHORIZED
+        if not self.r.can_for_org(P.VIEW, task.init_org_id) and not (
+            self.r.v_own.can() and g.user and task.init_user_id == g.user.id
+        ):
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
         # if results are included, check permissions for results
-        if self.is_included('results') and not \
-                self.r_run.can_for_org(P.VIEW, task.init_org_id) \
-                and not (self.r.v_own.can() and g.user and
-                         task.init_user_id == g.user.id):
-            return {'msg': 'You lack the permission to view results for this '
-                    'task!'}, HTTPStatus.UNAUTHORIZED
+        if (
+            self.is_included("results")
+            and not self.r_run.can_for_org(P.VIEW, task.init_org_id)
+            and not (self.r.v_own.can() and g.user and task.init_user_id == g.user.id)
+        ):
+            return {
+                "msg": "You lack the permission to view results for this " "task!"
+            }, HTTPStatus.UNAUTHORIZED
 
         return schema.dump(task, many=False), HTTPStatus.OK
 
@@ -929,17 +991,19 @@ class Task(TaskBase):
             return {"msg": f"Task id={id} not found"}, HTTPStatus.NOT_FOUND
 
         # validate permissions
-        if not self.r.can_for_org(P.DELETE, task.init_org_id) and \
-                not (self.r.d_own.can() and task.init_user_id == g.user.id):
-            return {'msg': 'You lack the permission to do that!'}, \
-                HTTPStatus.UNAUTHORIZED
+        if not self.r.can_for_org(P.DELETE, task.init_org_id) and not (
+            self.r.d_own.can() and task.init_user_id == g.user.id
+        ):
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         # kill the task if it is still running
         if not has_task_finished(task.status):
             kill_task(task, self.socketio)
 
         # retrieve runs that belong to this task
-        log.info(f'Removing task id={task.id}')
+        log.info(f"Removing task id={task.id}")
         for run in task.runs:
             log.info(f" Removing run id={run.id}")
             run.delete()
@@ -950,8 +1014,10 @@ class Task(TaskBase):
         # permissions ok, delete...
         task.delete()
 
-        return {"msg": f"task id={id} and its algorithm run data have been "
-                       "successfully deleted"}, HTTPStatus.OK
+        return {
+            "msg": f"task id={id} and its algorithm run data have been "
+            "successfully deleted"
+        }, HTTPStatus.OK
 
     @staticmethod
     def _delete_subtasks(task: db.Task) -> None:

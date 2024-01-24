@@ -7,7 +7,7 @@ from vantage6.cli.configuration_wizard import (
     node_configuration_questionaire,
     server_configuration_questionaire,
     configuration_wizard,
-    select_configuration_questionaire
+    select_configuration_questionaire,
 )
 from vantage6.common.globals import InstanceType
 
@@ -15,7 +15,6 @@ module_path = "vantage6.cli.configuration_wizard"
 
 
 class WizardTest(unittest.TestCase):
-
     @staticmethod
     def prompts(*args, **kwargs):
         result = {}
@@ -40,30 +39,46 @@ class WizardTest(unittest.TestCase):
                 False,  # don't enable two-factor authentication
                 True,  # add VPN server
                 False,  # don't abort if no server connection is made to pull
-                        # collaboration settings
-                True  # Enable encryption
+                # collaboration settings
+                True,  # Enable encryption
             ]
             dirs = MagicMock(data="/")
             config = node_configuration_questionaire(dirs, "iknl")
 
-        keys = ["api_key", "server_url", "port", "api_path", "task_dir",
-                "databases", "logging", "encryption", "vpn_subnet"]
+        keys = [
+            "api_key",
+            "server_url",
+            "port",
+            "api_path",
+            "task_dir",
+            "databases",
+            "logging",
+            "encryption",
+            "vpn_subnet",
+        ]
         for key in keys:
             self.assertIn(key, config)
 
     def test_server_wizard(self):
-
         with patch(f"{module_path}.q") as q:
             q.prompt.side_effect = self.prompts
-            q.confirm.return_value.ask.side_effect = [
-                True, True, True, True, True
-            ]
+            q.confirm.return_value.ask.side_effect = [True, True, True, True, True]
 
             config = server_configuration_questionaire("vantage6")
 
-            keys = ["description", "ip", "port", "api_path", "uri",
-                    "allow_drop_all", "jwt_secret_key", "logging",
-                    "vpn_server", "rabbitmq", "two_factor_auth"]
+            keys = [
+                "description",
+                "ip",
+                "port",
+                "api_path",
+                "uri",
+                "allow_drop_all",
+                "jwt_secret_key",
+                "logging",
+                "vpn_server",
+                "rabbitmq",
+                "two_factor_auth",
+            ]
 
             for key in keys:
                 self.assertIn(key, config)
@@ -73,11 +88,10 @@ class WizardTest(unittest.TestCase):
     @patch(f"{module_path}.ServerConfigurationManager")
     @patch(f"{module_path}.NodeConfigurationManager")
     @patch(f"{module_path}.NodeContext")
-    def test_configuration_wizard_interface(self, context, node_m, server_m,
-                                            server_q, node_q):
-        context.instance_folders.return_value = {
-            "config": "/some/path/"
-        }
+    def test_configuration_wizard_interface(
+        self, context, node_m, server_m, server_q, node_q
+    ):
+        context.instance_folders.return_value = {"config": "/some/path/"}
 
         file_ = configuration_wizard(InstanceType.NODE, "vtg6", False)
         self.assertEqual(Path("/some/path/vtg6.yaml"), file_)
@@ -88,7 +102,6 @@ class WizardTest(unittest.TestCase):
     @patch(f"{module_path}.NodeContext")
     @patch(f"{module_path}.ServerContext")
     def test_select_configuration(self, server_c, node_c):
-
         config = MagicMock()
         config.name = "vtg6"
 

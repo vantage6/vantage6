@@ -21,7 +21,8 @@ log = logging.getLogger(logger_name(__name__))
 
 
 class ContainerKillListener:
-    """Listen for signals that the docker container should be shut down """
+    """Listen for signals that the docker container should be shut down"""
+
     kill_now = False
 
     def __init__(self) -> None:
@@ -41,8 +42,9 @@ def check_docker_running() -> None:
         docker_client = docker.from_env()
         docker_client.ping()
     except Exception as e:
-        log.error("Cannot reach the Docker engine! Please make sure Docker "
-                  "is running.")
+        log.error(
+            "Cannot reach the Docker engine! Please make sure Docker " "is running."
+        )
         log.warn("Exiting...")
         log.debug(e)
         exit(1)
@@ -57,11 +59,12 @@ def running_in_docker() -> bool:
     bool
         True if the code is executed within a Docker container, False otherwise
     """
-    return pathlib.Path('/.dockerenv').exists()
+    return pathlib.Path("/.dockerenv").exists()
 
 
 def registry_basic_auth_header(
-        docker_client: DockerClient, registry: str) -> dict[str, str]:
+    docker_client: DockerClient, registry: str
+) -> dict[str, str]:
     """
     Obtain credentials for registry
 
@@ -91,7 +94,7 @@ def registry_basic_auth_header(
     # change this headers.
     header = docker.auth.get_config_header(docker_client.api, registry)
     if not header:
-        log.debug(f'No credentials found for {registry}')
+        log.debug(f"No credentials found for {registry}")
         return
 
     # decode header
@@ -99,22 +102,29 @@ def registry_basic_auth_header(
 
     # Extract username and password. Depending on the docker version, the keys
     # may be capitalized in the JSON header
-    username = header_json['username'] if 'username' in header_json \
-        else header_json['Username']
-    password = header_json['password'] if 'password' in header_json \
-        else header_json['Password']
+    username = (
+        header_json["username"]
+        if "username" in header_json
+        else header_json["Username"]
+    )
+    password = (
+        header_json["password"]
+        if "password" in header_json
+        else header_json["Password"]
+    )
     basic_auth = f"{username}:{password}"
 
     # Encode them back to base64 and as a dict
     bytes_basic_auth = basic_auth.encode("utf-8")
     b64_basic_auth = base64.b64encode(bytes_basic_auth).decode("utf-8")
 
-    return {'authorization': f'Basic {b64_basic_auth}'}
+    return {"authorization": f"Basic {b64_basic_auth}"}
 
 
 def inspect_remote_image_timestamp(
-    docker_client: DockerClient, image: str,
-    log: logging.Logger | ClickLogger = ClickLogger
+    docker_client: DockerClient,
+    image: str,
+    log: logging.Logger | ClickLogger = ClickLogger,
 ) -> tuple[datetime, str] | None:
     """
     Obtain creation timestamp object from remote image.
@@ -143,11 +153,12 @@ def inspect_remote_image_timestamp(
     try:
         reg, rep, img_ = re.split("/", img)
     except ValueError:
-        log.warn("Could not construct remote URL, "
-                 "are you using a local image?")
+        log.warn("Could not construct remote URL, " "are you using a local image?")
         log.warn("Or an image from docker hub?")
-        log.warn("We'll make a final attempt when running the image to pull"
-                 " it without any checks...")
+        log.warn(
+            "We'll make a final attempt when running the image to pull"
+            " it without any checks..."
+        )
         return None, None
 
     # figure out API of the docker repo
@@ -167,13 +178,13 @@ def inspect_remote_image_timestamp(
     if v1:
         image = f"https://{reg}/api/repositories/{rep}/{img_}/tags/{tag}"
     else:
-        image = f"https://{reg}/api/v2.0/projects/{rep}/repositories/" \
-                f"{img_}/artifacts/{tag}"
+        image = (
+            f"https://{reg}/api/v2.0/projects/{rep}/repositories/"
+            f"{img_}/artifacts/{tag}"
+        )
 
     # retrieve info from the Harbor server
-    result = requests.get(
-        image, headers=registry_basic_auth_header(docker_client, reg)
-    )
+    result = requests.get(image, headers=registry_basic_auth_header(docker_client, reg))
 
     # verify that we got an result
     if result.status_code == 404:
@@ -181,8 +192,9 @@ def inspect_remote_image_timestamp(
         return None, None
 
     if result.status_code != 200:
-        log.warn(f"Remote info could not be fetched! ({result.status_code}) "
-                 f"{image}")
+        log.warn(
+            f"Remote info could not be fetched! ({result.status_code}) " f"{image}"
+        )
         return None, None
 
     if v1:
@@ -195,8 +207,9 @@ def inspect_remote_image_timestamp(
 
 
 def inspect_local_image_timestamp(
-    docker_client: DockerClient, image: str,
-    log: logging.Logger | ClickLogger = ClickLogger
+    docker_client: DockerClient,
+    image: str,
+    log: logging.Logger | ClickLogger = ClickLogger,
 ) -> tuple[datetime, str] | None:
     """
     Obtain creation timestamp object from local image.
@@ -235,8 +248,9 @@ def inspect_local_image_timestamp(
 
 
 def pull_if_newer(
-    docker_client: DockerClient, image: str,
-    log: logging.Logger | ClickLogger = ClickLogger
+    docker_client: DockerClient,
+    image: str,
+    log: logging.Logger | ClickLogger = ClickLogger,
 ) -> None:
     """
     Docker pull only if the remote image is newer.
@@ -278,8 +292,10 @@ def pull_if_newer(
         log.debug("No local image found, pulling from remote!")
         pull = True
     elif not local_time and not remote_time:
-        log.warn(f"Cannot locate image {image} locally or remotely. Will try "
-                 "to pull it from Docker Hub...")
+        log.warn(
+            f"Cannot locate image {image} locally or remotely. Will try "
+            "to pull it from Docker Hub..."
+        )
         # we will try to pull it from the docker hub
         pull = True
 
@@ -311,9 +327,7 @@ def get_container(docker_client: DockerClient, **filters) -> Container:
     Container or None
         Container if it exists, else None
     """
-    running_containers = docker_client.containers.list(
-        all=True, filters=filters
-    )
+    running_containers = docker_client.containers.list(all=True, filters=filters)
     return running_containers[0] if running_containers else None
 
 
@@ -332,8 +346,7 @@ def remove_container_if_exists(docker_client: DockerClient, **filters) -> None:
     """
     container = get_container(docker_client, **filters)
     if container:
-        log.warn("Removing container that was already running: "
-                 f"{container.name}")
+        log.warn("Removing container that was already running: " f"{container.name}")
         remove_container(container, kill=True)
 
 
@@ -356,7 +369,7 @@ def remove_container(container: Container, kill: bool = False) -> None:
 
 
 def get_network(docker_client: DockerClient, **filters) -> Network:
-    """ Return network if it exists after searching using kwargs
+    """Return network if it exists after searching using kwargs
 
     Parameters
     ----------
@@ -372,14 +385,12 @@ def get_network(docker_client: DockerClient, **filters) -> Network:
     Container or None
         Container if it exists, else None
     """
-    networks = docker_client.networks.list(
-        filters=filters
-    )
+    networks = docker_client.networks.list(filters=filters)
     return networks[0] if networks else None
 
 
 def delete_network(network: Network, kill_containers: bool = True) -> None:
-    """ Delete network and optionally its containers
+    """Delete network and optionally its containers
 
     Parameters
     ----------
@@ -422,7 +433,7 @@ def get_networks_of_container(container: Container) -> dict:
         Describes container's networks and their properties
     """
     container.reload()
-    return container.attrs['NetworkSettings']['Networks']
+    return container.attrs["NetworkSettings"]["Networks"]
 
 
 def get_num_nonempty_networks(container: Container) -> int:
@@ -445,12 +456,10 @@ def get_num_nonempty_networks(container: Container) -> int:
 
     networks = get_networks_of_container(container)
     for network_properties in networks.values():
-        network_obj = docker_client.networks.get(
-            network_properties['NetworkID']
-        )
+        network_obj = docker_client.networks.get(network_properties["NetworkID"])
         if not network_obj:
             continue
-        containers = network_obj.attrs['Containers']
+        containers = network_obj.attrs["Containers"]
         if len(containers) > 1:
             count_non_empty_networks += 1
     return count_non_empty_networks
@@ -477,4 +486,4 @@ def get_server_config_name(container_name: str, scope: str) -> str:
     """
     idx_scope = container_name.rfind(scope)
     length_app_name = len(APPNAME)
-    return container_name[length_app_name+1:idx_scope-1]
+    return container_name[length_app_name + 1 : idx_scope - 1]

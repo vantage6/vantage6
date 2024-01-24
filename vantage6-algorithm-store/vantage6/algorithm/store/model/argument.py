@@ -27,8 +27,8 @@ class Argument(Base):
     # fields
     name = Column(String)
     description = Column(String)
-    function_id = Column(String, ForeignKey('function.id'))
+    function_id = Column(String, ForeignKey("function.id"))
     type = Column(String)
 
     # relationships
-    function = relationship("Function", back_populates='arguments')
+    function = relationship("Function", back_populates="arguments")

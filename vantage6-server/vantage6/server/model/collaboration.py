@@ -39,13 +39,12 @@ class Collaboration(Base):
     encrypted = Column(Boolean, default=1)
 
     # relationships
-    organizations = relationship("Organization", secondary="Member",
-                                 back_populates='collaborations')
+    organizations = relationship(
+        "Organization", secondary="Member", back_populates="collaborations"
+    )
     nodes = relationship("Node", back_populates="collaboration")
     tasks = relationship("Task", back_populates="collaboration")
-    algorithm_stores = relationship(
-        "AlgorithmStore", back_populates="collaboration"
-    )
+    algorithm_stores = relationship("AlgorithmStore", back_populates="collaboration")
 
     def get_organization_ids(self) -> list[int]:
         """
@@ -85,8 +84,7 @@ class Collaboration(Base):
         """
         return [n for n in self.nodes if n.organization.id in ids]
 
-    def get_node_from_organization(
-            self, organization: Organization) -> Node | None:
+    def get_node_from_organization(self, organization: Organization) -> Node | None:
         """
         Returns the node that is part of the given
         :class:`~vantage6.server.model.organization.Organization`.

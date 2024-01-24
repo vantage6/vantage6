@@ -1,12 +1,14 @@
-
 import logging
 
 from pathlib import Path
 
 
-def get_file_logger(logger_name: str, file_path: Path | str,
-                    log_level_file: int = logging.DEBUG,
-                    log_level_console: int = logging.WARN) -> logging.Logger:
+def get_file_logger(
+    logger_name: str,
+    file_path: Path | str,
+    log_level_file: int = logging.DEBUG,
+    log_level_console: int = logging.WARN,
+) -> logging.Logger:
     """
     Create a logger that primarily writes to a file.
 

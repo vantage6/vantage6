@@ -2,30 +2,26 @@
 swagger_template = {
     "components": {
         "securitySchemes": {
-            "bearerAuth": {
-                "type": "http",
-                "scheme": "bearer",
-                "bearerFormat": " JWT"
-            }
+            "bearerAuth": {"type": "http", "scheme": "bearer", "bearerFormat": " JWT"}
         },
         "schemas": {
             "Task": {
                 "properties": {
                     "image": {
                         "type": "string",
-                        "description": "Name of the algorithm's Docker image"
+                        "description": "Name of the algorithm's Docker image",
                     },
                     "description": {
                         "type": "string",
-                        "description": "Human-readable task description"
+                        "description": "Human-readable task description",
                     },
                     "name": {
                         "type": "string",
-                        "description": "Human-readable task name"
+                        "description": "Human-readable task name",
                     },
                     "collaboration_id": {
                         "type": "integer",
-                        "description": "Collaboration id"
+                        "description": "Collaboration id",
                     },
                     "organizations": {
                         "type": "dict",
@@ -36,13 +32,13 @@ swagger_template = {
                             "organization. Each input should be a encrypted "
                             "and/or serialized dictionary that may contain the"
                             " keys 'method', kwargs', 'args'."
-                        )
+                        ),
                     },
                     "databases": {
                         "type": "array",
                         "items": {"type": "dict"},
-                        "description": "Databases to use for this task"
-                    }
+                        "description": "Databases to use for this task",
+                    },
                 },
                 "example": {
                     "name": "human-readable-name",
@@ -55,8 +51,8 @@ swagger_template = {
                             "input": {
                                 "method": "method-name",
                                 "kwargs": {"key": "value"},
-                                "args": ["arg1", "arg2"]
-                            }
+                                "args": ["arg1", "arg2"],
+                            },
                         }
                     ],
                     "databases": [
@@ -70,47 +66,30 @@ swagger_template = {
                                         "column": "column-name",
                                         "min": 0,
                                         "max": 10,
-                                    }
+                                    },
                                 }
-                            ]
+                            ],
                         }
                     ],
-
                 },
-                "required": ["image", "collaboration_id"]
+                "required": ["image", "collaboration_id"],
             },
             "Organization": {
                 "properties": {
-                    "name": {
-                        "type": "string",
-                        "description": "Name"
-                    },
-                    "address1": {
-                        "type": "string",
-                        "description": "Address line 1"
-                    },
-                    "address2": {
-                        "type": "string",
-                        "description": "Address line 2"
-                    },
-                    "zipcode": {
-                        "type": "string",
-                        "description": "Zip code"
-                    },
-                    "country": {
-                        "type": "string",
-                        "description": "Country"
-                    },
+                    "name": {"type": "string", "description": "Name"},
+                    "address1": {"type": "string", "description": "Address line 1"},
+                    "address2": {"type": "string", "description": "Address line 2"},
+                    "zipcode": {"type": "string", "description": "Zip code"},
+                    "country": {"type": "string", "description": "Country"},
                     "public_key": {
                         "type": "string",
-                        "description":
-                            "Public key. Note that this should be public key "
-                            "*only*, i.e. without any metadata."
+                        "description": "Public key. Note that this should be public key "
+                        "*only*, i.e. without any metadata.",
                     },
                     "domain": {
                         "type": "string",
-                        "description": "Link to website of the organization."
-                    }
+                        "description": "Link to website of the organization.",
+                    },
                 },
                 "example": {
                     "name": "organization-name",
@@ -119,50 +98,32 @@ swagger_template = {
                     "zipcode": "1234 LA",
                     "country": "USA",
                     "public_key": "a_public_key",
-                    "domain": "organization.edu"
+                    "domain": "organization.edu",
                 },
             },
             "Collaboration": {
-                "properties": {
-                    "collaboration_id": {"type": "integer"}
-                },
-                "example": {
-                    "collaboration_id": 1
-                }
+                "properties": {"collaboration_id": {"type": "integer"}},
+                "example": {"collaboration_id": 1},
             },
             "Node": {
-                "example": {
-                    "api_key": "unique-uuid-string"
-                },
-                "properties": {
-                    "api_key": {
-                        "type": "string"
-                    }
-                }
+                "example": {"api_key": "unique-uuid-string"},
+                "properties": {"api_key": {"type": "string"}},
             },
             "User": {
-                "example": {
-                    "password": "secret!",
-                    "username": "yourname"
-                },
+                "example": {"password": "secret!", "username": "yourname"},
                 "properties": {
                     "password": {"type": "string"},
-                    "username": {"type": "string"}
-                }
+                    "username": {"type": "string"},
+                },
             },
             "ContainerToken": {
                 "properties": {
                     "task_id": {"type": "string"},
-                    "image": {"type": "string"}
+                    "image": {"type": "string"},
                 },
-                "example": {
-                    "task_id": 1,
-                    "image": "hello-world"
-                }
-            }
-        }
+                "example": {"task_id": 1, "image": "hello-world"},
+            },
+        },
     },
-    "security": [
-        {"bearerAuth": []}
-    ]
+    "security": [{"bearerAuth": []}],
 }

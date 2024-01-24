@@ -27,7 +27,7 @@ class Database(Base):
     # fields
     name = Column(String)
     description = Column(String)
-    function_id = Column(String, ForeignKey('function.id'))
+    function_id = Column(String, ForeignKey("function.id"))
 
     # relationships
-    function = relationship("Function", back_populates='databases')
+    function = relationship("Function", back_populates="databases")

@@ -18,6 +18,7 @@ class BaseServerContext(AppContext):
     Contains functions that the ServerContext and AlgorithmStoreContext have
     in common.
     """
+
     def get_database_uri(self, db_env_var: str) -> str:
         """
         Obtain the database uri from the environment or the configuration.
@@ -32,7 +33,7 @@ class BaseServerContext(AppContext):
         str
             string representation of the database uri
         """
-        uri = os.environ.get(db_env_var) or self.config['uri']
+        uri = os.environ.get(db_env_var) or self.config["uri"]
         url = make_url(uri)
 
         if url.host is None and not os.path.isabs(url.database):
@@ -52,8 +53,11 @@ class BaseServerContext(AppContext):
 
     @classmethod
     def from_external_config_file(
-        cls, path: str, server_type: ServerType, config_name_env_var: str,
-        system_folders: bool = S_FOL
+        cls,
+        path: str,
+        server_type: ServerType,
+        config_name_env_var: str,
+        system_folders: bool = S_FOL,
     ) -> BaseServerContext:
         """
         Create a server context from an external configuration file. External
@@ -77,9 +81,7 @@ class BaseServerContext(AppContext):
         ServerContext
             Server context object
         """
-        cls = super().from_external_config_file(
-            path, server_type, system_folders
-        )
+        cls = super().from_external_config_file(path, server_type, system_folders)
         # if we are running a server in a docker container, the name is taken
         # from the name of the config file (which is usually a default). Get
         # the config name from environment if it is given.

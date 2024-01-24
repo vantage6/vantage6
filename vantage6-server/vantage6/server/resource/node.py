@@ -10,14 +10,17 @@ from vantage6.server.resource import with_user_or_node, with_user
 from vantage6.server.resource import ServicesResources
 from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.permission import (
-    RuleCollection, Scope as S, Operation as P, PermissionManager
+    RuleCollection,
+    Scope as S,
+    Operation as P,
+    PermissionManager,
 )
 from vantage6.server import db
 from vantage6.server.resource.common.output_schema import NodeSchema
 from vantage6.server.resource.common.input_schema import NodeInputSchema
 
 
-module_name = __name__.split('.')[-1]
+module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
 
 
@@ -40,16 +43,16 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     api.add_resource(
         Nodes,
         path,
-        endpoint='node_without_id',
-        methods=('GET', 'POST'),
-        resource_class_kwargs=services
+        endpoint="node_without_id",
+        methods=("GET", "POST"),
+        resource_class_kwargs=services,
     )
     api.add_resource(
         Node,
-        path + '/<int:id>',
-        endpoint='node_with_id',
-        methods=('GET', 'DELETE', 'PATCH'),
-        resource_class_kwargs=services
+        path + "/<int:id>",
+        endpoint="node_with_id",
+        methods=("GET", "DELETE", "PATCH"),
+        resource_class_kwargs=services,
     )
 
 
@@ -68,30 +71,59 @@ def permissions(permissions: PermissionManager) -> None:
     add = permissions.appender(module_name)
 
     add(scope=S.GLOBAL, operation=P.VIEW, description="view any node")
-    add(scope=S.COLLABORATION, operation=P.VIEW,
-        description="view any node in your collaborations")
-    add(scope=S.ORGANIZATION, operation=P.VIEW, assign_to_container=True,
-        description="view your own node info", assign_to_node=True)
+    add(
+        scope=S.COLLABORATION,
+        operation=P.VIEW,
+        description="view any node in your collaborations",
+    )
+    add(
+        scope=S.ORGANIZATION,
+        operation=P.VIEW,
+        assign_to_container=True,
+        description="view your own node info",
+        assign_to_node=True,
+    )
 
     add(scope=S.GLOBAL, operation=P.EDIT, description="edit any node")
-    add(scope=S.COLLABORATION, operation=P.EDIT,
-        description="edit any node in your collaborations")
-    add(scope=S.ORGANIZATION, operation=P.EDIT,
+    add(
+        scope=S.COLLABORATION,
+        operation=P.EDIT,
+        description="edit any node in your collaborations",
+    )
+    add(
+        scope=S.ORGANIZATION,
+        operation=P.EDIT,
         description="edit node that is part of your organization",
-        assign_to_node=True)
+        assign_to_node=True,
+    )
 
-    add(scope=S.GLOBAL, operation=P.CREATE,
-        description="create node for any organization")
-    add(scope=S.COLLABORATION, operation=P.CREATE,
-        description="create node for any organization in your collaborations")
-    add(scope=S.ORGANIZATION, operation=P.CREATE,
-        description="create new node for your organization")
+    add(
+        scope=S.GLOBAL,
+        operation=P.CREATE,
+        description="create node for any organization",
+    )
+    add(
+        scope=S.COLLABORATION,
+        operation=P.CREATE,
+        description="create node for any organization in your collaborations",
+    )
+    add(
+        scope=S.ORGANIZATION,
+        operation=P.CREATE,
+        description="create new node for your organization",
+    )
 
     add(scope=S.GLOBAL, operation=P.DELETE, description="delete any node")
-    add(scope=S.COLLABORATION, operation=P.DELETE,
-        description="delete any node in your collaborations")
-    add(scope=S.ORGANIZATION, operation=P.DELETE,
-        description="delete node that is part of your organization")
+    add(
+        scope=S.COLLABORATION,
+        operation=P.DELETE,
+        description="delete any node in your collaborations",
+    )
+    add(
+        scope=S.ORGANIZATION,
+        operation=P.DELETE,
+        description="delete node that is part of your organization",
+    )
 
 
 # ------------------------------------------------------------------------------
@@ -102,14 +134,12 @@ node_input_schema = NodeInputSchema()
 
 
 class NodeBase(ServicesResources):
-
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
 
 
 class Nodes(NodeBase):
-
     @with_user_or_node
     def get(self):
         """Returns a list of nodes
@@ -207,51 +237,54 @@ class Nodes(NodeBase):
         auth_org_id = self.obtain_organization_id()
         args = request.args
 
-        if 'organization_id' in args:
-            if not self.r.can_for_org(P.VIEW, int(args['organization_id'])):
+        if "organization_id" in args:
+            if not self.r.can_for_org(P.VIEW, int(args["organization_id"])):
                 return {
-                    'msg': 'You lack the permission view nodes from the '
+                    "msg": "You lack the permission view nodes from the "
                     f'organization with id {args["organization_id"]}!'
                 }, HTTPStatus.UNAUTHORIZED
-            q = q.filter(db.Node.organization_id == args['organization_id'])
+            q = q.filter(db.Node.organization_id == args["organization_id"])
 
-        if 'collaboration_id' in args:
-            collaboration_id = int(args['collaboration_id'])
+        if "collaboration_id" in args:
+            collaboration_id = int(args["collaboration_id"])
             if not self.r.can_for_col(P.VIEW, collaboration_id):
                 return {
-                    'msg': 'You lack the permission view nodes from the '
-                    f'collaboration with id {collaboration_id}!'
+                    "msg": "You lack the permission view nodes from the "
+                    f"collaboration with id {collaboration_id}!"
                 }, HTTPStatus.UNAUTHORIZED
             q = q.filter(db.Node.collaboration_id == collaboration_id)
 
-        for param in ['status', 'ip']:
+        for param in ["status", "ip"]:
             if param in args:
                 q = q.filter(getattr(db.Node, param) == args[param])
-        if 'name' in args:
-            q = q.filter(db.Node.name.like(args['name']))
+        if "name" in args:
+            q = q.filter(db.Node.name.like(args["name"]))
 
-        if 'last_seen_till' in args:
-            q = q.filter(db.Node.last_seen <= args['last_seen_till'])
-        if 'last_seen_from' in args:
-            q = q.filter(db.Node.last_seen >= args['last_seen_from'])
+        if "last_seen_till" in args:
+            q = q.filter(db.Node.last_seen <= args["last_seen_till"])
+        if "last_seen_from" in args:
+            q = q.filter(db.Node.last_seen >= args["last_seen_from"])
 
         if not self.r.v_glo.can():
             if self.r.v_col.can():
-                q = q.filter(db.Node.collaboration_id.in_(
-                    [col.id for col in self.obtain_auth_collaborations()]
-                ))
+                q = q.filter(
+                    db.Node.collaboration_id.in_(
+                        [col.id for col in self.obtain_auth_collaborations()]
+                    )
+                )
             elif self.r.v_org.can():
                 # only the results of the user's organization are returned
                 q = q.filter(db.Node.organization_id == auth_org_id)
             else:
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
+                return {
+                    "msg": "You lack the permission to do that!"
+                }, HTTPStatus.UNAUTHORIZED
 
         # paginate results
         try:
             page = Pagination.from_query(q, request, db.Node)
         except (ValueError, AttributeError) as e:
-            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
 
         # model serialization
         return self.response(page, node_schema)
@@ -320,46 +353,58 @@ class Nodes(NodeBase):
         # validate request body
         errors = node_input_schema.validate(data)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
         # check that the collaboration exists
         collaboration = db.Collaboration.get(data["collaboration_id"])
         if not collaboration:
-            return {"msg": f"collaboration id={data['collaboration_id']} "
-                    "does not exist"}, HTTPStatus.NOT_FOUND  # 404
+            return {
+                "msg": f"collaboration id={data['collaboration_id']} " "does not exist"
+            }, HTTPStatus.NOT_FOUND  # 404
 
-        org_id = data["organization_id"] \
-            if data.get("organization_id") is not None \
+        org_id = (
+            data["organization_id"]
+            if data.get("organization_id") is not None
             else g.user.organization_id
+        )
         organization = db.Organization.get(org_id)
 
         # check that the organization exists
         if not organization:
-            return {"msg": f"organization id={org_id} does not exist"}, \
-                HTTPStatus.NOT_FOUND
+            return {
+                "msg": f"organization id={org_id} does not exist"
+            }, HTTPStatus.NOT_FOUND
 
         # check permissions
         if not self.r.can_for_org(P.CREATE, org_id):
-            return {'msg': 'You lack the permission to do that!'}, \
-                HTTPStatus.UNAUTHORIZED
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         # we need to check that the organization belongs to the
         # collaboration
         if not (organization in collaboration.organizations):
-            return {'msg': f'The organization id={org_id} is not part of '
-                    f'collabotation id={collaboration.id}. Add it first!'}, \
-                        HTTPStatus.BAD_REQUEST
+            return {
+                "msg": f"The organization id={org_id} is not part of "
+                f"collabotation id={collaboration.id}. Add it first!"
+            }, HTTPStatus.BAD_REQUEST
 
         # verify that this node does not already exist
         if db.Node.exists_by_id(organization.id, collaboration.id):
-            return {'msg': f'Organization id={organization.id} already has a '
-                    f'node for collaboration id={collaboration.id}'}, \
-                        HTTPStatus.BAD_REQUEST
+            return {
+                "msg": f"Organization id={organization.id} already has a "
+                f"node for collaboration id={collaboration.id}"
+            }, HTTPStatus.BAD_REQUEST
 
         # if no name is provided, generate one
-        name = data['name'] if 'name' in data else \
-            f"{organization.name} - {collaboration.name} Node"
+        name = (
+            data["name"]
+            if "name" in data
+            else f"{organization.name} - {collaboration.name} Node"
+        )
         if db.Node.exists("name", name):
             return {
                 "msg": f"Node with name '{name}' already exists!"
@@ -371,19 +416,18 @@ class Nodes(NodeBase):
             name=name,
             collaboration=collaboration,
             organization=organization,
-            api_key=api_key
+            api_key=api_key,
         )
         node.save()
 
         # Return the node information to the user. Manually return the api_key
         # to the user as the hashed key is not returned
         node_json = node_schema.dump(node)
-        node_json['api_key'] = api_key
+        node_json["api_key"] = api_key
         return node_json, HTTPStatus.CREATED  # 201
 
 
 class Node(NodeBase):
-
     @with_user_or_node
     def get(self, id):
         """Get node
@@ -429,13 +473,13 @@ class Node(NodeBase):
         """
         node = db.Node.get(id)
         if not node:
-            return {'msg': f'Node id={id} is not found!'}, \
-                HTTPStatus.NOT_FOUND
+            return {"msg": f"Node id={id} is not found!"}, HTTPStatus.NOT_FOUND
 
         # check permissions
         if not self.r.can_for_org(P.VIEW, node.organization_id):
-            return {'msg': 'You lack the permission to do that!'}, \
-                HTTPStatus.UNAUTHORIZED
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         return node_schema.dump(node, many=False), HTTPStatus.OK
 
@@ -487,8 +531,9 @@ class Node(NodeBase):
             return {"msg": f"Node id={id} not found"}, HTTPStatus.NOT_FOUND
 
         if not self.r.can_for_org(P.DELETE, node.organization_id):
-            return {'msg': 'You lack the permission to do that!'}, \
-                HTTPStatus.UNAUTHORIZED
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         node.delete()
         return {"msg": f"Successfully deleted node id={id}"}, HTTPStatus.OK
@@ -563,20 +608,23 @@ class Node(NodeBase):
         # validate request body
         errors = node_input_schema.validate(data, partial=True)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
         node = db.Node.get(id)
         if not node:
-            return {'msg': f'Node id={id} not found!'}, HTTPStatus.NOT_FOUND
+            return {"msg": f"Node id={id} not found!"}, HTTPStatus.NOT_FOUND
 
         if not self.r.can_for_org(P.EDIT, node.organization_id):
-            return {'msg': 'You lack the permission to do that!'}, \
-                HTTPStatus.UNAUTHORIZED
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         # update fields
-        if 'name' in data:
-            name = data['name']
+        if "name" in data:
+            name = data["name"]
             if node.name != name and db.Node.exists("name", name):
                 return {
                     "msg": f"Node name '{name}' already exists!"
@@ -584,50 +632,55 @@ class Node(NodeBase):
             node.name = name
 
         # organization goes before collaboration (!)
-        org_id = data.get('organization_id')
+        org_id = data.get("organization_id")
         updated_org = org_id and org_id != node.organization.id
         if updated_org:
             if not self.r.e_glo.can():
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
-            organization = db.Organization.get(data['organization_id'])
+                return {
+                    "msg": "You lack the permission to do that!"
+                }, HTTPStatus.UNAUTHORIZED
+            organization = db.Organization.get(data["organization_id"])
             if not organization:
-                return {'msg': f'Organization id={data["organization_id"]} '
-                        'not found!'}, HTTPStatus.NOT_FOUND
+                return {
+                    "msg": f'Organization id={data["organization_id"]} ' "not found!"
+                }, HTTPStatus.NOT_FOUND
             node.organization = organization
 
         auth = self.obtain_auth()
-        col_id = data.get('collaboration_id')
+        col_id = data.get("collaboration_id")
         updated_col = col_id and col_id != node.collaboration.id
         if updated_col:
             collaboration = db.Collaboration.get(col_id)
             if not collaboration:
-                return {'msg': f'collaboration id={col_id} not found!'}, \
-                    HTTPStatus.NOT_FOUND
+                return {
+                    "msg": f"collaboration id={col_id} not found!"
+                }, HTTPStatus.NOT_FOUND
 
             if not self.r.e_glo.can():
                 if auth.organization not in collaboration.organizations:
-                    return {'msg': f'Organization id={auth.organization.id} '
-                            'of this node is not part of this collaboration id'
-                            f'={collaboration.id}'}
+                    return {
+                        "msg": f"Organization id={auth.organization.id} "
+                        "of this node is not part of this collaboration id"
+                        f"={collaboration.id}"
+                    }
 
             node.collaboration = collaboration
 
         # validate that node does not already exist when we change either
         # the organization and/or collaboration
         if updated_org or updated_col:
-            if db.Node.exists_by_id(node.organization.id,
-                                    node.collaboration.id):
-                return {'msg': 'A node with organization id='
-                        f'{node.organization.id} and collaboration id='
-                        f'{node.collaboration.id} already exists!'}, \
-                            HTTPStatus.BAD_REQUEST
+            if db.Node.exists_by_id(node.organization.id, node.collaboration.id):
+                return {
+                    "msg": "A node with organization id="
+                    f"{node.organization.id} and collaboration id="
+                    f"{node.collaboration.id} already exists!"
+                }, HTTPStatus.BAD_REQUEST
 
         # update node IP address if it is given
-        ip = data.get('ip')
+        ip = data.get("ip")
         if ip:
             node.ip = ip
-        elif data.get('clear_ip'):
+        elif data.get("clear_ip"):
             node.ip = None
 
         node.save()

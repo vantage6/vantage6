@@ -11,13 +11,7 @@ import sqlalchemy as sql
 # SQLAlchemy metadata. This is required for SQLAlchemy to be able to map the
 # classes to the database tables, and e.g. initialize the database tables on
 # startup.
-from vantage6.algorithm.store.model import (
-    Base,
-    Algorithm,
-    Argument,
-    Database,
-    Function
-)
+from vantage6.algorithm.store.model import Base, Algorithm, Argument, Database, Function
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING
 
@@ -53,8 +47,9 @@ def jsonable(value: list[Base] | Base) -> list | dict:
         retval = dict()
         mapper = sql.inspect(value.__class__)
 
-        columns = [c.key for c in mapper.columns
-                   if c.key not in value._hidden_attributes]
+        columns = [
+            c.key for c in mapper.columns if c.key not in value._hidden_attributes
+        ]
 
         for column in columns:
             # log.debug(f"processing column={column}")
@@ -74,4 +69,4 @@ def jsonable(value: list[Base] | Base) -> list | dict:
 
     # FIXME: does it make sense to raise an exception or should base types
     #        (or other JSON-serializable types) just be returned as-is?
-    raise Exception('value should be instance of db.Base or list!')
+    raise Exception("value should be instance of db.Base or list!")

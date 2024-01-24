@@ -8,7 +8,8 @@ from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
 class Operation(str, Enumerate):
-    """ Enumerator of all available operations """
+    """Enumerator of all available operations"""
+
     VIEW = "v"
     EDIT = "e"
     CREATE = "c"
@@ -18,7 +19,8 @@ class Operation(str, Enumerate):
 
 
 class Scope(str, Enumerate):
-    """ Enumerator of all available scopes """
+    """Enumerator of all available scopes"""
+
     OWN = "own"
     ORGANIZATION = "org"
     COLLABORATION = "col"
@@ -56,10 +58,10 @@ class Rule(Base):
     description = Column(String)
 
     # relationships
-    roles = relationship("Role", back_populates="rules",
-                         secondary="role_rule_association")
-    users = relationship("User", back_populates="rules",
-                         secondary="UserPermission")
+    roles = relationship(
+        "Role", back_populates="rules", secondary="role_rule_association"
+    )
+    users = relationship("User", back_populates="rules", secondary="UserPermission")
 
     @classmethod
     def get_by_(cls, name: str, scope: str, operation: str) -> Rule | None:
@@ -83,11 +85,11 @@ class Rule(Base):
         """
         session = DatabaseSessionManager.get_session()
         try:
-            result = session.query(cls).filter_by(
-                name=name,
-                operation=operation,
-                scope=scope
-            ).first()
+            result = (
+                session.query(cls)
+                .filter_by(name=name, operation=operation, scope=scope)
+                .first()
+            )
             session.commit()
             return result
         except NoResultFound:

@@ -42,15 +42,15 @@ def create_client(ctx: NodeContext) -> UserClient:
     UserClient
         vantage6 client
     """
-    host = ctx.config['server_url']
+    host = ctx.config["server_url"]
     # if the server is run locally, we need to use localhost here instead of
     # the host address of docker
-    if host in ['http://host.docker.internal', 'http://172.17.0.1']:
-        host = 'http://localhost'
-    port = ctx.config['port']
-    api_path = ctx.config['api_path']
+    if host in ["http://host.docker.internal", "http://172.17.0.1"]:
+        host = "http://localhost"
+    port = ctx.config["port"]
+    api_path = ctx.config["api_path"]
     info(f"Connecting to server at '{host}:{port}{api_path}'")
-    return UserClient(host, port, api_path, log_level='warn')
+    return UserClient(host, port, api_path, log_level="warn")
 
 
 def create_client_and_authenticate(ctx: NodeContext) -> UserClient:
@@ -92,8 +92,11 @@ def select_node(name: str, system_folders: bool) -> tuple[str, str]:
     str
         Name of the configuration file
     """
-    name = name if name else \
-        select_configuration_questionaire(InstanceType.NODE, system_folders)
+    name = (
+        name
+        if name
+        else select_configuration_questionaire(InstanceType.NODE, system_folders)
+    )
 
     # raise error if config could not be found
     if not NodeContext.config_exists(name, system_folders):
@@ -120,5 +123,6 @@ def find_running_node_names(client: docker.DockerClient) -> list[str]:
         List of names of running nodes
     """
     running_nodes = client.containers.list(
-        filters={"label": f"{APPNAME}-type={InstanceType.NODE}"})
+        filters={"label": f"{APPNAME}-type={InstanceType.NODE}"}
+    )
     return [node.name for node in running_nodes]

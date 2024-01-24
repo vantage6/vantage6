@@ -9,14 +9,13 @@ from vantage6.cli.server.start import cli_server_start
 
 @click.command()
 @click_insert_context
-@click.option('--server-image', type=str, default=None,
-              help='Server Docker image to use')
-@click.option('--node-image', type=str, default=None,
-              help='Node Docker image to use')
+@click.option(
+    "--server-image", type=str, default=None, help="Server Docker image to use"
+)
+@click.option("--node-image", type=str, default=None, help="Node Docker image to use")
 @click.pass_context
 def start_demo_network(
-    click_ctx: click.Context, ctx: ServerContext, server_image: str,
-    node_image: str
+    click_ctx: click.Context, ctx: ServerContext, server_image: str, node_image: str
 ) -> None:
     """Starts running a demo-network.
 
@@ -37,14 +36,14 @@ def start_demo_network(
         start_rabbitmq=False,
         rabbitmq_image=None,
         keep=True,
-        mount_src='',
-        attach=False
+        mount_src="",
+        attach=False,
     )
 
     # run all nodes that belong to this server
     configs, _ = NodeContext.available_configurations(system_folders=False)
     node_names = [
-        config.name for config in configs if f'{ctx.name}_node_' in config.name
+        config.name for config in configs if f"{ctx.name}_node_" in config.name
     ]
     for name in node_names:
         cmd = ["v6", "node", "start", "--name", name]

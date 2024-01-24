@@ -8,17 +8,13 @@ from functools import wraps
 from flask import g, request
 from flask_restful import Resource, Api
 from flask_mail import Mail
-from flask_jwt_extended import (
-    get_jwt, get_jwt_identity, jwt_required
-)
+from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 from flask_socketio import SocketIO
 
 
 from vantage6.common import logger_name
 from vantage6.server import db
-from vantage6.server.utils import (
-    obtain_auth_collaborations, obtain_auth_organization
-)
+from vantage6.server.utils import obtain_auth_collaborations, obtain_auth_organization
 from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.resource.common.output_schema import HATEOASModelSchema
 from vantage6.server.permission import PermissionManager
@@ -38,6 +34,7 @@ class BaseServicesResources(Resource):
     config: dict
         Configuration dictionary
     """
+
     def __init__(self, api: Api, config: dict):
         self.api = api
         self.config = config
@@ -60,9 +57,7 @@ class BaseServicesResources(Resource):
         # The logic below intends to find 'x' both in 'include=y&include=x' and
         # 'include=x,y'.
         return field in [
-            val
-            for item in request.args.getlist('include')
-            for val in item.split(',')
+            val for item in request.args.getlist("include") for val in item.split(",")
         ]
 
     def dump(self, page: Page, schema: HATEOASModelSchema) -> dict:
@@ -122,8 +117,15 @@ class ServicesResources(BaseServicesResources):
     config : dict
         Configuration dictionary
     """
-    def __init__(self, socketio: SocketIO, mail: Mail, api: Api,
-                 permissions: PermissionManager, config: dict):
+
+    def __init__(
+        self,
+        socketio: SocketIO,
+        mail: Mail,
+        api: Api,
+        permissions: PermissionManager,
+        config: dict,
+    ):
         super().__init__(api, config)
         self.socketio = socketio
         self.mail = mail
@@ -200,6 +202,7 @@ class AlgorithmStoreResources(BaseServicesResources):
     config: dict
         Configuration dictionary
     """
+
     # TODO implement this class when necessary
     # TODO move this class elsewhere?
 
@@ -207,7 +210,7 @@ class AlgorithmStoreResources(BaseServicesResources):
 # ------------------------------------------------------------------------------
 # Helper functions/decoraters ...
 # ------------------------------------------------------------------------------
-def only_for(types: tuple[str] = ('user', 'node', 'container')) -> callable:
+def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
     """
     JWT endpoint protection decorator
 
@@ -222,10 +225,10 @@ def only_for(types: tuple[str] = ('user', 'node', 'container')) -> callable:
     function
         Decorator function that can be used to protect endpoints
     """
+
     def protection_decorator(fn):
         @wraps(fn)
         def decorator(*args, **kwargs):
-
             # decode JWT-token
             identity = get_jwt_identity()
             claims = get_jwt()
@@ -237,39 +240,42 @@ def only_for(types: tuple[str] = ('user', 'node', 'container')) -> callable:
             if g.type not in types:
                 # FIXME BvB 23-10-19: user gets a 500 error, would be better to
                 # get an error message with 400 code
-                msg = f"{g.type}s are not allowed to access {request.url} " \
-                      f"({request.method})"
+                msg = (
+                    f"{g.type}s are not allowed to access {request.url} "
+                    f"({request.method})"
+                )
                 log.warning(msg)
                 raise Exception(msg)
 
             # do some specific stuff per identity
             g.user = g.container = g.node = None
 
-            if g.type == 'user':
+            if g.type == "user":
                 user = get_and_update_authenticatable_info(identity)
                 g.user = user
                 assert g.user.type == g.type
-                log.debug(
-                    f"Received request from user {user.username} ({user.id})")
+                log.debug(f"Received request from user {user.username} ({user.id})")
 
-            elif g.type == 'node':
+            elif g.type == "node":
                 node = get_and_update_authenticatable_info(identity)
                 g.node = node
                 assert g.node.type == g.type
-                log.debug(
-                    f"Received request from node {node.name} ({node.id})")
+                log.debug(f"Received request from node {node.name} ({node.id})")
 
-            elif g.type == 'container':
+            elif g.type == "container":
                 g.container = identity
                 log.debug(
                     "Received request from container with node id "
-                    f"{identity['node_id']} and task id {identity['task_id']}")
+                    f"{identity['node_id']} and task id {identity['task_id']}"
+                )
 
             else:
                 raise Exception(f"Unknown entity: {g.type}")
 
             return fn(*args, **kwargs)
+
         return jwt_required()(decorator)
+
     return protection_decorator
 
 
@@ -294,7 +300,12 @@ def get_and_update_authenticatable_info(auth_id: int) -> db.Authenticatable:
 
 
 # create alias decorators
-with_user_or_node = only_for(("user", "node",))
+with_user_or_node = only_for(
+    (
+        "user",
+        "node",
+    )
+)
 with_user = only_for(("user",))
 with_node = only_for(("node",))
 with_container = only_for(("container",))
@@ -317,12 +328,11 @@ def parse_datetime(dt: str = None, default: datetime = None) -> datetime:
         Datetime object
     """
     if dt:
-        return datetime.datetime.strptime(dt, '%Y-%m-%dT%H:%M:%S.%f')
+        return datetime.datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S.%f")
     return default
 
 
-def get_org_ids_from_collabs(auth: Authenticatable,
-                             collab_id: int = None) -> list[int]:
+def get_org_ids_from_collabs(auth: Authenticatable, collab_id: int = None) -> list[int]:
     """
     Get all organization ids from the collaborations the user or node is in.
 

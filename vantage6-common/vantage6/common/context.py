@@ -10,15 +10,11 @@ from typing import Tuple
 
 import appdirs
 
-from vantage6.common import (
-    Singleton, error, Fore, Style, get_config_path, logger_name
-)
+from vantage6.common import Singleton, error, Fore, Style, get_config_path, logger_name
 from vantage6.common.colors import ColorStreamHandler
 from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.common.docker.addons import running_in_docker
-from vantage6.common.configuration_manager import (
-    ConfigurationManager
-)
+from vantage6.common.configuration_manager import ConfigurationManager
 from vantage6.common._version import __version__
 
 
@@ -26,6 +22,7 @@ class AppContext(metaclass=Singleton):
     """
     Base class from which to create Node and Server context classes.
     """
+
     # FIXME: drop the prefix "INST_": a *class* is assigned.
     # FIXME: this does not need to be a class attribute, but ~~can~~_should_
     #        be set in __init__
@@ -34,8 +31,11 @@ class AppContext(metaclass=Singleton):
     LOGGING_ENABLED = True
 
     def __init__(
-        self, instance_type: InstanceType, instance_name: str,
-        system_folders: bool = False, config_file: Path | str = None
+        self,
+        instance_type: InstanceType,
+        instance_name: str,
+        system_folders: bool = False,
+        config_file: Path | str = None,
     ) -> None:
         """
         Create a new AppContext instance.
@@ -53,12 +53,15 @@ class AppContext(metaclass=Singleton):
             will be used to find the configuration file specified by
             `instance_name`.
         """
-        self.initialize(instance_type, instance_name, system_folders,
-                        config_file)
+        self.initialize(instance_type, instance_name, system_folders, config_file)
 
-    def initialize(self, instance_type: str, instance_name: str,
-                   system_folders: bool = False,
-                   config_file: str | None = None) -> None:
+    def initialize(
+        self,
+        instance_type: str,
+        instance_name: str,
+        system_folders: bool = False,
+        config_file: str | None = None,
+    ) -> None:
         """
         Initialize the AppContext instance.
 
@@ -81,10 +84,7 @@ class AppContext(metaclass=Singleton):
         # if config_file is None:
         #     config_file = f"{instance_name}.yaml"
         self.config_file = self.find_config_file(
-            instance_type,
-            self.name,
-            system_folders,
-            config_file
+            instance_type, self.name, system_folders, config_file
         )
 
         # look up system / user directories. This way we can check if the
@@ -97,12 +97,12 @@ class AppContext(metaclass=Singleton):
 
         # Log some history
         # FIXME: this should probably be moved to the actual app
-        module_name = __name__.split('.')[-1]
+        module_name = __name__.split(".")[-1]
         self.log = logging.getLogger(module_name)
         self.log.info("-" * 45)
         # self.log.info(f'#{APPNAME:^78}#')
         self.log.info(" Welcome to")
-        for line in pyfiglet.figlet_format(APPNAME, font='big').split('\n'):
+        for line in pyfiglet.figlet_format(APPNAME, font="big").split("\n"):
             self.log.info(line)
         self.log.info(" --> Join us on Discord! https://discord.gg/rwRvwyK")
         self.log.info(" --> Docs: https://docs.vantage6.ai")
@@ -115,15 +115,15 @@ class AppContext(metaclass=Singleton):
         self.log.info("-" * 60)
         self.log.info(f"Started application {APPNAME}")
         self.log.info("Current working directory is '%s'" % os.getcwd())
-        self.log.info(f"Successfully loaded configuration from "
-                      f"'{self.config_file}'")
+        self.log.info(
+            f"Successfully loaded configuration from " f"'{self.config_file}'"
+        )
         self.log.info("Logging to '%s'" % self.log_file)
         self.log.info(f"Common package version '{__version__}'")
 
     @classmethod
     def from_external_config_file(
-        cls, path: Path | str, instance_type: InstanceType,
-        system_folders: bool = False
+        cls, path: Path | str, instance_type: InstanceType, system_folders: bool = False
     ) -> "AppContext":
         """
         Create a new AppContext instance from an external config file.
@@ -151,8 +151,10 @@ class AppContext(metaclass=Singleton):
 
     @classmethod
     def config_exists(
-        cls, instance_type: InstanceType, instance_name: str,
-        system_folders: bool = False
+        cls,
+        instance_type: InstanceType,
+        instance_name: str,
+        system_folders: bool = False,
     ) -> bool:
         """Check if a config file exists for the given instance type and name.
 
@@ -172,10 +174,7 @@ class AppContext(metaclass=Singleton):
         """
         try:
             config_file = cls.find_config_file(
-                instance_type,
-                instance_name,
-                system_folders,
-                verbose=False
+                instance_type, instance_name, system_folders, verbose=False
             )
 
         except Exception:
@@ -186,9 +185,7 @@ class AppContext(metaclass=Singleton):
         return bool(config)
 
     @staticmethod
-    def type_data_folder(
-        instance_type: InstanceType, system_folders: bool
-    ) -> Path:
+    def type_data_folder(instance_type: InstanceType, system_folders: bool) -> Path:
         """
         Return OS specific data folder.
 
@@ -213,8 +210,9 @@ class AppContext(metaclass=Singleton):
             return Path(d.user_data_dir) / instance_type
 
     @staticmethod
-    def instance_folders(instance_type: InstanceType, instance_name: str,
-                         system_folders: bool) -> dict:
+    def instance_folders(
+        instance_type: InstanceType, instance_name: str, system_folders: bool
+    ) -> dict:
         """
         Return OS and instance specific folders for storing logs, data and
         config files.
@@ -243,21 +241,20 @@ class AppContext(metaclass=Singleton):
             return {
                 "log": Path("/mnt/log"),
                 "data": Path("/mnt/data"),
-                "config": Path("/mnt/config")
+                "config": Path("/mnt/config"),
             }
         elif system_folders:
             return {
                 "log": Path(d.site_data_dir) / instance_type / instance_name,
                 "data": Path(d.site_data_dir) / instance_type / instance_name,
-                "config": (Path(get_config_path(d, system_folders)) /
-                           instance_type)
+                "config": (Path(get_config_path(d, system_folders)) / instance_type),
             }
         else:
             return {
                 "log": Path(d.user_log_dir) / instance_type / instance_name,
                 "data": Path(d.user_data_dir) / instance_type / instance_name,
                 "config": Path(d.user_config_dir) / instance_type,
-                "dev": Path(d.user_config_dir) / "dev"
+                "dev": Path(d.user_config_dir) / "dev",
             }
 
     @classmethod
@@ -330,8 +327,9 @@ class AppContext(metaclass=Singleton):
         AssertionError
             If the configuration manager is not initialized.
         """
-        assert self.config_manager, \
-            "Log file unkown as configuration manager not initialized"
+        assert (
+            self.config_manager
+        ), "Log file unkown as configuration manager not initialized"
         file_ = f"{type_}_{self.scope}.log"
         return self.log_dir / file_
 
@@ -379,9 +377,12 @@ class AppContext(metaclass=Singleton):
 
     @classmethod
     def find_config_file(
-        cls, instance_type: InstanceType, instance_name: str,
-        system_folders: bool, config_file: str | None = None,
-        verbose: bool = True
+        cls,
+        instance_type: InstanceType,
+        instance_name: str,
+        system_folders: bool,
+        config_file: str | None = None,
+        verbose: bool = True,
     ) -> str:
         """
         Find a configuration file.
@@ -415,14 +416,12 @@ class AppContext(metaclass=Singleton):
             config_file = f"{instance_name}.yaml"
 
         config_dir = cls.instance_folders(
-            instance_type,
-            instance_name,
-            system_folders
-        ).get('config')
+            instance_type, instance_name, system_folders
+        ).get("config")
 
         dirs = [
             config_dir,
-            './',
+            "./",
         ]
 
         for location in dirs:
@@ -436,9 +435,9 @@ class AppContext(metaclass=Singleton):
         if verbose:
             msg = f'Could not find configuration file "{config_file}"!?'
             print(msg)
-            print('Tried the following directories:')
+            print("Tried the following directories:")
             for d in dirs:
-                print(f' * {d}')
+                print(f" * {d}")
 
         raise Exception(msg)
 
@@ -462,8 +461,9 @@ class AppContext(metaclass=Singleton):
             raise Exception('Argument "filename" should be provided!')
         return os.path.join(self.data_dir, filename)
 
-    def set_folders(self, instance_type: InstanceType, instance_name: str,
-                    system_folders: bool) -> None:
+    def set_folders(
+        self, instance_type: InstanceType, instance_name: str, system_folders: bool
+    ) -> None:
         """
         Set the folders where the configuration, data and log files are stored.
 
@@ -476,11 +476,7 @@ class AppContext(metaclass=Singleton):
         system_folders: bool
             Whether to use system folders rather than user folders
         """
-        dirs = self.instance_folders(
-            instance_type,
-            instance_name,
-            system_folders
-        )
+        dirs = self.instance_folders(instance_type, instance_name, system_folders)
 
         # Check if the user has set custom directories
         custom_dirs = self.config.get("directories", None)
@@ -520,12 +516,14 @@ class AppContext(metaclass=Singleton):
         try:
             rfh = logging.handlers.RotatingFileHandler(
                 self.log_file,
-                maxBytes=1024*log_config["max_size"],
-                backupCount=log_config["backup_count"]
+                maxBytes=1024 * log_config["max_size"],
+                backupCount=log_config["backup_count"],
             )
         except PermissionError:
-            error(f"Can't write to log dir: "
-                  f"{Fore.RED}{self.log_file}{Style.RESET_ALL}!")
+            error(
+                f"Can't write to log dir: "
+                f"{Fore.RED}{self.log_file}{Style.RESET_ALL}!"
+            )
             exit(1)
 
         rfh.setLevel(level)
@@ -548,8 +546,7 @@ class AppContext(metaclass=Singleton):
         logging.captureWarnings(True)
 
     @staticmethod
-    def configure_logger(name: str | None, level: str) \
-            -> Tuple[logging.Logger, int]:
+    def configure_logger(name: str | None, level: str) -> Tuple[logging.Logger, int]:
         """
         Set the logging level of a logger.
 

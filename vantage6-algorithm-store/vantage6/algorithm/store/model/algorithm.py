@@ -37,7 +37,7 @@ class Algorithm(Base):
     vantage6_version = Column(String)
 
     # relationships
-    functions = relationship("Function", back_populates='algorithm')
+    functions = relationship("Function", back_populates="algorithm")
     # developers = relationship("Developer", back_populates='algorithms')
     # reviewers = relationship("Reviewer", back_populates='algorithms')
     # preprocessing = relationship("Preprocessing",

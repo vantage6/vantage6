@@ -47,12 +47,13 @@ class User(Authenticatable):
     created_tasks : list[:class:`~.model.task.Task`]
         Tasks that the user has created
     """
-    _hidden_attributes = ['password']
+
+    _hidden_attributes = ["password"]
 
     # overwrite id with linked id to the authenticatable
-    id = Column(Integer, ForeignKey('authenticatable.id'), primary_key=True)
+    id = Column(Integer, ForeignKey("authenticatable.id"), primary_key=True)
     __mapper_args__ = {
-        'polymorphic_identity': 'user',
+        "polymorphic_identity": "user",
     }
 
     # fields
@@ -69,10 +70,8 @@ class User(Authenticatable):
 
     # relationships
     organization = relationship("Organization", back_populates="users")
-    roles = relationship("Role", back_populates="users",
-                         secondary="Permission")
-    rules = relationship("Rule", back_populates="users",
-                         secondary="UserPermission")
+    roles = relationship("Role", back_populates="users", secondary="Permission")
+    rules = relationship("Rule", back_populates="users", secondary="UserPermission")
     created_tasks = relationship("Task", back_populates="init_user")
 
     def __repr__(self) -> str:
@@ -151,12 +150,13 @@ class User(Authenticatable):
             Whether or not the password is correct
         """
         if self.password is not None:
-            expected_hash = self.password.encode('utf8')
-            return bcrypt.checkpw(pw.encode('utf8'), expected_hash)
+            expected_hash = self.password.encode("utf8")
+            return bcrypt.checkpw(pw.encode("utf8"), expected_hash)
         return False
 
-    def is_blocked(self, max_failed_attempts: int,
-                   inactivation_in_minutes: int) -> tuple[bool, int | None]:
+    def is_blocked(
+        self, max_failed_attempts: int, inactivation_in_minutes: int
+    ) -> tuple[bool, int | None]:
         """
         Check if user can login or if they are temporarily blocked because they
         entered a wrong password too often
@@ -176,15 +176,18 @@ class User(Authenticatable):
             How many minutes user is still blocked for
         """
         td_max_blocked = dt.timedelta(minutes=inactivation_in_minutes)
-        td_last_login = dt.datetime.now() - self.last_login_attempt \
-            if self.last_login_attempt else None
+        td_last_login = (
+            dt.datetime.now() - self.last_login_attempt
+            if self.last_login_attempt
+            else None
+        )
         has_max_attempts = (
             self.failed_login_attempts >= max_failed_attempts
-            if self.failed_login_attempts else False
+            if self.failed_login_attempts
+            else False
         )
         if has_max_attempts and td_last_login < td_max_blocked:
-            minutes_remaining = \
-                (td_max_blocked - td_last_login).seconds // 60 + 1
+            minutes_remaining = (td_max_blocked - td_last_login).seconds // 60 + 1
             return True, minutes_remaining
         else:
             return False, None
@@ -272,7 +275,7 @@ class User(Authenticatable):
         bool
             Whether or not a user with the given username exists
         """
-        return cls.exists(field='username', value=username)
+        return cls.exists(field="username", value=username)
 
     def can(self, resource: str, scope: Scope, operation: Operation) -> bool:
         """
@@ -294,5 +297,4 @@ class User(Authenticatable):
             on the resource
         """
         rule = Rule.get_by_(resource, scope, operation)
-        return rule in self.rules or \
-            any(rule in role.rules for role in self.roles)
+        return rule in self.rules or any(rule in role.rules for role in self.roles)

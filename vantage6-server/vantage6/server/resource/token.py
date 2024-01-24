@@ -12,7 +12,7 @@ from flask_jwt_extended import (
     jwt_required,
     create_access_token,
     create_refresh_token,
-    get_jwt_identity
+    get_jwt_identity,
 )
 from flask_restful import Api
 from http import HTTPStatus
@@ -21,21 +21,16 @@ from vantage6 import server
 from vantage6.common.task_status import has_task_finished
 from vantage6.server import db
 from vantage6.server.model.user import User
-from vantage6.server.resource import (
-    with_node,
-    ServicesResources
-)
-from vantage6.server.resource.common.auth_helper import (
-  user_login, create_qr_uri
-)
+from vantage6.server.resource import with_node, ServicesResources
+from vantage6.server.resource.common.auth_helper import user_login, create_qr_uri
 from vantage6.server.resource.common.input_schema import (
     TokenAlgorithmInputSchema,
     TokenNodeInputSchema,
-    TokenUserInputSchema
+    TokenUserInputSchema,
 )
 from vantage6.server.resource import with_user
 
-module_name = __name__.split('.')[-1]
+module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
 
 
@@ -57,42 +52,42 @@ def setup(api: Api, api_base: str, services: dict) -> None:
 
     api.add_resource(
         UserToken,
-        path+'/user',
-        endpoint='user_token',
-        methods=('POST',),
-        resource_class_kwargs=services
+        path + "/user",
+        endpoint="user_token",
+        methods=("POST",),
+        resource_class_kwargs=services,
     )
 
     api.add_resource(
         NodeToken,
-        path+'/node',
-        endpoint='node_token',
-        methods=('POST',),
-        resource_class_kwargs=services
+        path + "/node",
+        endpoint="node_token",
+        methods=("POST",),
+        resource_class_kwargs=services,
     )
 
     api.add_resource(
         ContainerToken,
-        path+'/container',
-        endpoint='container_token',
-        methods=('POST',),
-        resource_class_kwargs=services
+        path + "/container",
+        endpoint="container_token",
+        methods=("POST",),
+        resource_class_kwargs=services,
     )
 
     api.add_resource(
         RefreshToken,
-        path+'/refresh',
-        endpoint='refresh_token',
-        methods=('POST',),
-        resource_class_kwargs=services
+        path + "/refresh",
+        endpoint="refresh_token",
+        methods=("POST",),
+        resource_class_kwargs=services,
     )
 
     api.add_resource(
         ValidateToken,
-        path+'/user/validate',
-        endpoint='validate_user_token',
-        methods=('POST',),
-        resource_class_kwargs=services
+        path + "/user/validate",
+        endpoint="validate_user_token",
+        methods=("POST",),
+        resource_class_kwargs=services,
     )
 
 
@@ -148,43 +143,45 @@ class UserToken(ServicesResources):
         # validate request body
         errors = user_token_input_schema.validate(body)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
         # Check JSON body
-        username = body.get('username')
-        password = body.get('password')
+        username = body.get("username")
+        password = body.get("password")
 
         user, code = user_login(self.config, username, password, self.mail)
         if code != HTTPStatus.OK:  # login failed
             log.error(f"Failed to login for user='{username}'")
             return user, code
 
-        is_mfa_enabled = self.config.get('two_factor_auth', False)
+        is_mfa_enabled = self.config.get("two_factor_auth", False)
         if is_mfa_enabled:
             if user.otp_secret is None:
                 # server requires mfa but user hasn't set it up yet. Return
                 # an URI to generate a QR code
-                log.info(f'Redirecting user {username} to setup MFA')
+                log.info(f"Redirecting user {username} to setup MFA")
                 return create_qr_uri(user), HTTPStatus.OK
             else:
                 # 2nd authentication factor: check the OTP secret of the user
-                mfa_code = body.get('mfa_code')
+                mfa_code = body.get("mfa_code")
                 if not mfa_code:
                     # note: this is not treated as error, but simply guide
                     # user to also fill in second factor
-                    return {"msg": "Please include your two-factor "
-                            "authentication code"}, HTTPStatus.OK
+                    return {
+                        "msg": "Please include your two-factor " "authentication code"
+                    }, HTTPStatus.OK
                 elif not self.validate_2fa_token(user, mfa_code):
                     return {
-                        "msg": "Your two-factor authentication code is "
-                               "incorrect!"
+                        "msg": "Your two-factor authentication code is " "incorrect!"
                     }, HTTPStatus.UNAUTHORIZED
 
         token = _get_token_dict(user, self.api)
 
         log.info(f"Succesfull login from {username}")
-        return token, HTTPStatus.OK, {'jwt-token': token['access_token']}
+        return token, HTTPStatus.OK, {"jwt-token": token["access_token"]}
 
     @staticmethod
     def validate_2fa_token(user: User, mfa_code: int | str) -> bool:
@@ -206,12 +203,10 @@ class UserToken(ServicesResources):
         # the option `valid_window=1` means the code from 1 time window (30s)
         # ago, is also valid. This prevents that users around the edge of
         # the time window can still login successfully if server is a bit slow
-        return pyotp.TOTP(user.otp_secret).verify(str(mfa_code),
-                                                  valid_window=1)
+        return pyotp.TOTP(user.otp_secret).verify(str(mfa_code), valid_window=1)
 
 
 class NodeToken(ServicesResources):
-
     def post(self):
         """Login node
         ---
@@ -242,25 +237,25 @@ class NodeToken(ServicesResources):
         # validate request body
         errors = node_token_input_schema.validate(body)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
         # Check JSON body
-        api_key = request.json.get('api_key')
+        api_key = request.json.get("api_key")
         node = db.Node.get_by_api_key(api_key)
         if not node:  # login failed
             log.error("Api key is not recognized")
-            return {"msg": "Api key is not recognized!"}, \
-                HTTPStatus.UNAUTHORIZED
+            return {"msg": "Api key is not recognized!"}, HTTPStatus.UNAUTHORIZED
 
         token = _get_token_dict(node, self.api)
 
         log.info(f"Succesfull login as node '{node.id}' ({node.name})")
-        return token, HTTPStatus.OK, {'jwt-token': token['access_token']}
+        return token, HTTPStatus.OK, {"jwt-token": token["access_token"]}
 
 
 class ContainerToken(ServicesResources):
-
     @with_node
     def post(self):
         """Algorithm container login
@@ -292,18 +287,21 @@ class ContainerToken(ServicesResources):
         # validate request body
         errors = algorithm_token_input_schema.validate(body)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
         task_id = body.get("task_id")
         claim_image = body.get("image")
 
         db_task = db.Task.get(task_id)
         if not db_task:
-            log.warning(f"Node {g.node.id} attempts to generate key for task "
-                        f"{task_id} that does not exist")
-            return {"msg": "Parent task does not exist!"}, \
-                HTTPStatus.BAD_REQUEST
+            log.warning(
+                f"Node {g.node.id} attempts to generate key for task "
+                f"{task_id} that does not exist"
+            )
+            return {"msg": "Parent task does not exist!"}, HTTPStatus.BAD_REQUEST
 
         # verify that task the token is requested for exists
         if claim_image != db_task.image:
@@ -311,8 +309,7 @@ class ContainerToken(ServicesResources):
                 f"Node {g.node.id} attempts to generate key for image "
                 f"{claim_image} that does not belong to task {task_id}."
             )
-            return {"msg": "Image and task do no match"}, \
-                HTTPStatus.UNAUTHORIZED
+            return {"msg": "Image and task do no match"}, HTTPStatus.UNAUTHORIZED
 
         # check if the node is in the collaboration to which the task is
         # enlisted
@@ -322,13 +319,16 @@ class ContainerToken(ServicesResources):
                 f" which is outside its collaboration "
                 f"({g.node.collaboration_id}/{db_task.collaboration_id})."
             )
-            return {"msg": "You are not within the collaboration"}, \
-                HTTPStatus.UNAUTHORIZED
+            return {
+                "msg": "You are not within the collaboration"
+            }, HTTPStatus.UNAUTHORIZED
 
         # validate that the task not has been finished yet
         if has_task_finished(db_task.status):
-            log.warning(f"Node {g.node.id} attempts to generate a key for "
-                        f"completed task {task_id}")
+            log.warning(
+                f"Node {g.node.id} attempts to generate a key for "
+                f"completed task {task_id}"
+            )
             return {"msg": "Task is already finished!"}, HTTPStatus.BAD_REQUEST
 
         # container identity consists of its node_id,
@@ -343,15 +343,14 @@ class ContainerToken(ServicesResources):
             "databases": [
                 json.loads(db_entry.parameters) | {"label": db_entry.database}
                 for db_entry in db_task.databases
-            ]
+            ],
         }
         token = create_access_token(container, expires_delta=False)
 
-        return {'container_token': token}, HTTPStatus.OK
+        return {"container_token": token}, HTTPStatus.OK
 
 
 class RefreshToken(ServicesResources):
-
     @jwt_required(refresh=True)
     def post(self):
         """Refresh token
@@ -379,7 +378,7 @@ class RefreshToken(ServicesResources):
 
 
 class ValidateToken(ServicesResources):
-    """ Resource for api/token/user/validate """
+    """Resource for api/token/user/validate"""
 
     @with_user
     def post(self):
@@ -404,10 +403,7 @@ class ValidateToken(ServicesResources):
 
         # Note: if the token is invalid, the with_user decorator will return
         # an error response. So if we get here, the token is valid.
-        return {
-            "msg": "Token is valid",
-            "user_id": g.user.id
-        }, HTTPStatus.OK
+        return {"msg": "Token is valid", "user_id": g.user.id}, HTTPStatus.OK
 
 
 def _get_token_dict(user_or_node: db.Authenticatable, api: Api) -> dict:
@@ -422,16 +418,16 @@ def _get_token_dict(user_or_node: db.Authenticatable, api: Api) -> dict:
         The api to create the urls for.
     """
     token_dict = {
-        'access_token': create_access_token(user_or_node),
-        'refresh_token': create_refresh_token(user_or_node),
-        'refresh_url': api.url_for(RefreshToken),
+        "access_token": create_access_token(user_or_node),
+        "refresh_token": create_refresh_token(user_or_node),
+        "refresh_url": api.url_for(RefreshToken),
     }
     if isinstance(user_or_node, db.User):
-        token_dict['user_url'] = api.url_for(server.resource.user.User,
-                                             id=user_or_node.id)
+        token_dict["user_url"] = api.url_for(
+            server.resource.user.User, id=user_or_node.id
+        )
     else:
-        token_dict['node_url'] = api.url_for(server.resource.node.Node,
-                                             id=user_or_node.id)
+        token_dict["node_url"] = api.url_for(
+            server.resource.node.Node, id=user_or_node.id
+        )
     return token_dict
-
-

@@ -34,10 +34,10 @@ class Function(Base):
     name = Column(String)
     description = Column(String)
     type = Column(String)
-    algorithm_id = Column(String, ForeignKey('algorithm.id'))
+    algorithm_id = Column(String, ForeignKey("algorithm.id"))
 
     # relationships
-    algorithm = relationship("Algorithm", back_populates='functions')
-    databases = relationship("Database", back_populates='function')
-    arguments = relationship("Argument", back_populates='function')
+    algorithm = relationship("Algorithm", back_populates="functions")
+    databases = relationship("Database", back_populates="function")
+    arguments = relationship("Argument", back_populates="function")
     # output = relationship("Output", back_populates='function')
