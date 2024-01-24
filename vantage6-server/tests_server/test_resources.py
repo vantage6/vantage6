@@ -3646,7 +3646,9 @@ class TestResources(unittest.TestCase):
         # test deleting non-existing record
         rule = Rule.get_by_("collaboration", Scope.COLLABORATION, Operation.EDIT)
         headers = self.create_user_and_login(organization=org, rules=[rule])
-        results = self.app.delete("/api/algorithmstore/9999", headers=headers, query_string=params)
+        results = self.app.delete(
+            "/api/algorithmstore/9999", headers=headers, query_string=params
+        )
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
         # test deleting with collaboration permissions
