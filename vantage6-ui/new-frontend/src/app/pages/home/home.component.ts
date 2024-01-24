@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { ApiService } from '../../services/api.service';
 import { Version } from '../../models/api/version.model';
+import packageJson from '../../../../package.json';
 
 @Component({
   selector: 'app-home',
@@ -10,7 +11,7 @@ import { Version } from '../../models/api/version.model';
 })
 export class HomeComponent implements OnInit {
   serverUrl = environment.server_url;
-  uiVersion: string = environment.version;
+  uiVersion: string = packageJson.version;
   serverVersion: string = '';
 
   constructor(private apiService: ApiService) {}
