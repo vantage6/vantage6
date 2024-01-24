@@ -47,6 +47,7 @@ uninstall:
 	pip uninstall -y vantage6-common
 	pip uninstall -y vantage6-node
 	pip uninstall -y vantage6-server
+	pip uninstall -y vantage6-algorithm-store
 
 install:
 	cd vantage6-common && pip install .
@@ -55,6 +56,7 @@ install:
 	cd vantage6 && pip install .
 	cd vantage6-node && pip install .
 	cd vantage6-server && pip install .
+	cd vantage6-algorithm-store && pip install .
 
 install-dev:
 	cd vantage6-common && pip install -e .
@@ -63,6 +65,7 @@ install-dev:
 	cd vantage6 && pip install -e .[dev]
 	cd vantage6-node && pip install -e .[dev]
 	cd vantage6-server && pip install -e .[dev]
+	cd vantage6-algorithm-store && pip install -e .[dev]
 
 base-image:
 	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:${TAG}"
@@ -191,6 +194,10 @@ rebuild:
 	@echo "         VANTAGE6 SERVER            "
 	@echo "------------------------------------"
 	cd vantage6-server && make rebuild
+	@echo "------------------------------------"
+	@echo "         VANTAGE6 ALGORITHM STORE   "
+	@echo "------------------------------------"
+	cd vantage6-algorithm-store && make rebuild
 
 publish:
 	cd vantage6-common && make publish
@@ -199,6 +206,7 @@ publish:
 	cd vantage6 && make publish
 	cd vantage6-node && make publish
 	cd vantage6-server && make publish
+	cd vantage6-algorithm-store && make publish
 
 test:
 	coverage run --source=vantage6 --omit="utest.py","*.html","*.htm","*.txt","*.yml","*.yaml" utest.py
