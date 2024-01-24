@@ -18,7 +18,7 @@ class ServerCLITest(unittest.TestCase):
     @patch("vantage6.cli.server.start.NetworkManager")
     @patch("vantage6.cli.server.start.docker.types.Mount")
     @patch("os.makedirs")
-    @patch("vantage6.cli.server.start.pull_if_newer")
+    @patch("vantage6.cli.common.start.pull_if_newer")
     @patch("vantage6.cli.server.common.ServerContext")
     @patch("vantage6.cli.server.start.docker.from_env")
     @patch("vantage6.cli.common.start.check_docker_running", return_value=True)

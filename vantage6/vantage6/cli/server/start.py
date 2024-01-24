@@ -3,17 +3,9 @@ import docker
 from docker.client import DockerClient
 
 from vantage6.common import info, warning, error
-from vantage6.common.docker.addons import pull_if_newer
-from colorama import Fore, Style
-from sqlalchemy.engine.url import make_url
-from docker.client import DockerClient
-
-from vantage6.common import info, warning, error
-from vantage6.common.docker.addons import pull_if_newer
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.globals import (
     APPNAME,
-    DEFAULT_DOCKER_REGISTRY,
     DEFAULT_SERVER_IMAGE,
     DEFAULT_UI_IMAGE,
     InstanceType,
@@ -31,7 +23,7 @@ from vantage6.cli.common.start import (
     mount_source,
     pull_image,
 )
-from vantage6.cli.server.common import click_insert_context, print_log_worker, stop_ui
+from vantage6.cli.server.common import click_insert_context, stop_ui
 
 
 @click.command()
@@ -95,30 +87,10 @@ def cli_server_start(
 
     image = get_image(image, ctx, "server", DEFAULT_SERVER_IMAGE)
 
-    pull_image(docker_client, image)
-
     # check that log directory exists - or create it
     ctx.log_dir.mkdir(parents=True, exist_ok=True)
 
-    # Determine image-name. First we check if the option --image has been used.
-    # Then we check if the image has been specified in the config file, and
-    # finally we use the default settings from the package.
-    if image is None:
-        custom_images: dict = ctx.config.get("images")
-        if custom_images:
-            image = custom_images.get("server")
-        if not image:
-            image = f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_SERVER_IMAGE}"
-
-    info(f"Pulling latest server image '{image}'.")
-    try:
-        pull_if_newer(docker.from_env(), image)
-        # docker_client.images.pull(image)
-    except Exception as e:
-        warning(" ... Getting latest server image failed:")
-        warning(f"     {e}")
-    else:
-        info(" ... success!")
+    pull_image(docker_client, image)
 
     info("Creating mounts")
     config_file = "/mnt/config.yaml"
@@ -254,22 +226,9 @@ def _start_ui(client: DockerClient, ctx: ServerContext, ui_port: int) -> None:
         ui_port = DEFAULT_UI_PORT
 
     # find image to use
-    custom_images: dict = ctx.config.get("images")
-    image = None
-    if custom_images:
-        image = custom_images.get("ui")
-    if not image:
-        image = f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_UI_IMAGE}"
+    image = get_image(None, ctx, "ui", DEFAULT_UI_IMAGE)
 
-    info(f"Pulling latest UI image '{image}'.")
-    try:
-        pull_if_newer(docker.from_env(), image)
-        # docker_client.images.pull(image)
-    except Exception as e:
-        warning(" ... Getting latest node image failed:")
-        warning(f"     {e}")
-    else:
-        info(" ... success!")
+    pull_image(client, image)
 
     # set environment variables
     env_vars = {
