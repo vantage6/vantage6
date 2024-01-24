@@ -46,7 +46,13 @@ setup(
         f'vantage6-common == {version_ns["__version__"]}',
         f'vantage6-client == {version_ns["__version__"]}',
     ],
-    extras_require={"dev": ["coverage==6.4.4"]},
+    extras_require={
+        "dev": [
+            "coverage==6.4.4",
+            "black",
+            "pre-commit",
+        ]
+    },
     package_data={
         "vantage6.cli": [
             "__build__",

@@ -4,6 +4,12 @@ from docker.client import DockerClient
 
 from vantage6.common import info, warning, error
 from vantage6.common.docker.addons import pull_if_newer
+from colorama import Fore, Style
+from sqlalchemy.engine.url import make_url
+from docker.client import DockerClient
+
+from vantage6.common import info, warning, error
+from vantage6.common.docker.addons import pull_if_newer
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.globals import (
     APPNAME,
@@ -21,11 +27,11 @@ from vantage6.cli.common.start import (
     attach_logs,
     check_for_start,
     get_image,
-    mount_config_file,
     mount_database,
     mount_source,
     pull_image,
 )
+from vantage6.cli.server.common import click_insert_context, print_log_worker, stop_ui
 
 
 @click.command()

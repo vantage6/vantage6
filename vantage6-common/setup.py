@@ -44,6 +44,12 @@ setup(
         "requests==2.31.0",
         "schema==0.7.5",
     ],
+    extras_require={
+        "dev": [
+            "black",
+            "pre-commit",
+        ]
+    },
     package_data={
         "vantage6.common": [
             "__build__",

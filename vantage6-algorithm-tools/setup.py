@@ -39,6 +39,12 @@ setup(
         "SPARQLWrapper>=2.0.0",
         f'vantage6-common=={version_ns["__version__"]}',
     ],
+    extras_require={
+        "dev": [
+            "black",
+            "pre-commit",
+        ]
+    },
     tests_require=["pytest"],
     package_data={
         "vantage6.algorithm.tools": [
