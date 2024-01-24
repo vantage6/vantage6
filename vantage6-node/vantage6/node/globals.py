@@ -30,12 +30,12 @@ TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET = 60
 #    VPN CONFIGURATION RELATED CONSTANTS
 #
 # TODO move part of these constants elsewhere?! Or make context?
-VPN_CLIENT_IMAGE = 'harbor2.vantage6.ai/infrastructure/vpn-client'
-NETWORK_CONFIG_IMAGE = 'harbor2.vantage6.ai/infrastructure/vpn-configurator'
-ALPINE_IMAGE = 'harbor2.vantage6.ai/infrastructure/alpine'
-MAX_CHECK_VPN_ATTEMPTS = 60   # max attempts to obtain VPN IP (1 second apart)
+VPN_CLIENT_IMAGE = "harbor2.vantage6.ai/infrastructure/vpn-client"
+NETWORK_CONFIG_IMAGE = "harbor2.vantage6.ai/infrastructure/vpn-configurator"
+ALPINE_IMAGE = "harbor2.vantage6.ai/infrastructure/alpine"
+MAX_CHECK_VPN_ATTEMPTS = 60  # max attempts to obtain VPN IP (1 second apart)
 FREE_PORT_RANGE = range(49152, 65535)
-DEFAULT_ALGO_VPN_PORT = '8888'  # default VPN port for algorithm container
+DEFAULT_ALGO_VPN_PORT = "8888"  # default VPN port for algorithm container
 
 #
 #   SSH TUNNEL RELATED CONSTANTS
@@ -46,3 +46,7 @@ SSH_TUNNEL_IMAGE = "harbor2.vantage6.ai/infrastructure/ssh-tunnel"
 #   SQUID RELATED CONSTANTS
 #
 SQUID_IMAGE = "harbor2.vantage6.ai/infrastructure/squid"
+
+# Environment variables that should be set in the Dockerfile and that may not
+# be overwritten by the user.
+ENV_VARS_NOT_SETTABLE_BY_NODE = ["PKG_NAME"]

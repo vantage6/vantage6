@@ -31,22 +31,34 @@ MIN_REFRESH_TOKEN_EXPIRY_DELTA = 1
 
 # Which resources should be initialized. These names correspond to the
 # file-names in the resource directory
-RESOURCES = ['node', 'collaboration', 'organization', 'task', 'run',
-             'token', 'user', 'version', 'recover', 'role',
-             'rule', 'health', 'vpn', 'port', 'event', 'ui.column']
+RESOURCES = [
+    "node",
+    "collaboration",
+    "organization",
+    "task",
+    "run",
+    "token",
+    "user",
+    "version",
+    "recover",
+    "role",
+    "rule",
+    "health",
+    "vpn",
+    "port",
+    "event",
+    "ui.column",
+]
 
 # Super user information. This user is only created if it is not in the
 # database yet at startup time.
-SUPER_USER_INFO = {
-    "username": "root",
-    "password": "root"
-}
+SUPER_USER_INFO = {"username": "root", "password": "root"}
 
 # default support email address to make users aware of
-DEFAULT_SUPPORT_EMAIL_ADDRESS = 'support@vantage6.ai'
+DEFAULT_SUPPORT_EMAIL_ADDRESS = "support@vantage6.ai"
 
 # default email address used in 'from' header
-DEFAULT_EMAIL_FROM_ADDRESS = 'noreply@vantage6.ai'
+DEFAULT_EMAIL_FROM_ADDRESS = "noreply@vantage6.ai"
 
 # default time that token is valid in minutes
 DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES = 60
@@ -54,3 +66,8 @@ DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES = 60
 # pagination settings
 DEFAULT_PAGE = 1
 DEFAULT_PAGE_SIZE = 10
+
+# default password policies
+DEFAULT_MAX_FAILED_ATTEMPTS = 5
+DEFAULT_INACTIVATION_MINUTES = 15
+DEFAULT_BETWEEN_BLOCKED_LOGIN_EMAIL_MINUTES = 60

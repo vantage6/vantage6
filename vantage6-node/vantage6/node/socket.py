@@ -14,7 +14,7 @@ class NodeTaskNamespace(ClientNamespace):
     node_worker_ref = None
 
     def __init__(self, *args, **kwargs):
-        """ Handler for a websocket namespace. """
+        """Handler for a websocket namespace."""
         super().__init__(*args, **kwargs)
         self.log = logging.getLogger(logger_name(__name__))
 
@@ -40,15 +40,15 @@ class NodeTaskNamespace(ClientNamespace):
         Actions to be taken on socket sync event. This event is triggered by
         the server when the node connects to the socket namespace.
         """
-        self.log.info('(Re)Connected to the /tasks namespace')
+        self.log.info("(Re)Connected to the /tasks namespace")
         self.node_worker_ref.sync_task_queue_with_server()
         self.log.debug("Tasks synced again with the server...")
         self.node_worker_ref.share_node_details()
 
     def on_disconnect(self):
-        """ Actions to be taken on socket disconnect event. """
+        """Actions to be taken on socket disconnect event."""
         # self.node_worker_ref.socketIO.disconnect()
-        self.log.info('Disconnected from the server')
+        self.log.info("Disconnected from the server")
 
     def on_new_task(self, data: dict):
         """
@@ -64,13 +64,13 @@ class NodeTaskNamespace(ClientNamespace):
                 ID of the parent task (if any)
         """
         if self.node_worker_ref:
-            task_id = data.get('id')
+            task_id = data.get("id")
             self.node_worker_ref.get_task_and_add_to_queue(task_id)
-            self.log.info(f'New task has been added task_id={task_id}')
+            self.log.info(f"New task has been added task_id={task_id}")
         else:
             self.log.critical(
-                'Node reference is not set in socket namespace; cannot create '
-                'new task!'
+                "Node reference is not set in socket namespace; cannot create "
+                "new task!"
             )
 
     def on_algorithm_status_change(self, data: dict):
@@ -87,20 +87,23 @@ class NodeTaskNamespace(ClientNamespace):
             status: str
                 New status of the algorithm container
         """
-        status = data.get('status')
-        job_id = data.get('job_id')
+        status = data.get("status")
+        job_id = data.get("job_id")
         if has_task_failed(status):
             # TODO handle run sequence at this node. Maybe terminate all
             #     containers with the same job_id?
             if status == TaskStatus.NOT_ALLOWED:
                 self.log.critical(
-                    'A node within your collaboration part did not allow a '
-                    'container of job_id=%s to start', job_id
+                    "A node within your collaboration part did not allow a "
+                    "container of job_id=%s to start",
+                    job_id,
                 )
             else:
                 self.log.critical(
-                    'A container on a node within your collaboration part of '
-                    'job_id=%s has exited with status %s', job_id, status
+                    "A container on a node within your collaboration part of "
+                    "job_id=%s has exited with status %s",
+                    job_id,
+                    status,
                 )
         # else: no need to do anything when a task has started/finished/... on
         # another node
@@ -125,7 +128,7 @@ class NodeTaskNamespace(ClientNamespace):
         The server indicates that this node has an invalid token. We should
         reauthenticate.
         """
-        self.log.warning('Node has invalid token. Reauthenticating...')
+        self.log.warning("Node has invalid token. Reauthenticating...")
         self.node_worker_ref.socketIO.disconnect()
         self.log.debug("Old socket connection terminated")
         self.log.debug("Reauthenticating the node...")
@@ -152,15 +155,13 @@ class NodeTaskNamespace(ClientNamespace):
             self.emit(
                 "algorithm_status_change",
                 {
-                    'run_id': killed.run_id,
-                    'task_id': killed.task_id,
-                    'collaboration_id':
-                        self.node_worker_ref.client.collaboration_id,
-                    'node_id': self.node_worker_ref.client.whoami.id_,
-                    'status': TaskStatus.KILLED,
-                    'organization_id':
-                        self.node_worker_ref.client.whoami.organization_id,
-                    'parent_id': killed.parent_id,
+                    "run_id": killed.run_id,
+                    "task_id": killed.task_id,
+                    "collaboration_id": self.node_worker_ref.client.collaboration_id,
+                    "node_id": self.node_worker_ref.client.whoami.id_,
+                    "status": TaskStatus.KILLED,
+                    "organization_id": self.node_worker_ref.client.whoami.organization_id,
+                    "parent_id": killed.parent_id,
                 },
-                namespace='/tasks'
+                namespace="/tasks",
             )

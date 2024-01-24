@@ -12,8 +12,9 @@ class NodeConfig(Base):
     node. The information is stored in the database while the node is
     connected.
     """
+
     # fields
-    node_id = Column('node_id', Integer, ForeignKey('node.id'))
+    node_id = Column("node_id", Integer, ForeignKey("node.id"))
     key = Column(String)
     value = Column(String)
 

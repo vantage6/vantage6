@@ -31,11 +31,13 @@ from sqlalchemy.engine.url import make_url
 
 from vantage6.common.context import AppContext
 from vantage6.common.globals import APPNAME
-from vantage6.cli.configuration_manager import (NodeConfigurationManager,
-                                                ServerConfigurationManager)
+from vantage6.cli.configuration_manager import (
+    NodeConfigurationManager,
+    ServerConfigurationManager,
+)
 from vantage6.cli.globals import (
     DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL,
-    DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
+    DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL,
 )
 from vantage6.cli._version import __version__
 
@@ -58,8 +60,7 @@ class ServerContext(AppContext):
     INST_CONFIG_MANAGER = ServerConfigurationManager
 
     def __init__(self, instance_name: str, system_folders: bool = S_FOL):
-        super().__init__("server", instance_name,
-                         system_folders=system_folders)
+        super().__init__("server", instance_name, system_folders=system_folders)
         self.log.info(f"vantage6 version '{__version__}'")
 
     def get_database_uri(self) -> str:
@@ -73,7 +74,7 @@ class ServerContext(AppContext):
         str
             string representation of the database uri
         """
-        uri = os.environ.get("VANTAGE6_DB_URI") or self.config['uri']
+        uri = os.environ.get("VANTAGE6_DB_URI") or self.config["uri"]
         url = make_url(uri)
 
         if url.host is None and not os.path.isabs(url.database):
@@ -105,7 +106,8 @@ class ServerContext(AppContext):
 
     @classmethod
     def from_external_config_file(
-            cls, path: str, system_folders: bool = S_FOL) -> ServerContext:
+        cls, path: str, system_folders: bool = S_FOL
+    ) -> ServerContext:
         """
         Create a server context from an external configuration file. External
         means that the configuration file is not located in the default folders
@@ -131,8 +133,7 @@ class ServerContext(AppContext):
         return cls
 
     @classmethod
-    def config_exists(cls, instance_name: str,
-                      system_folders: bool = S_FOL) -> bool:
+    def config_exists(cls, instance_name: str, system_folders: bool = S_FOL) -> bool:
         """
         Check if a configuration file exists.
 
@@ -149,12 +150,14 @@ class ServerContext(AppContext):
         bool
             Whether the configuration file exists or not
         """
-        return super().config_exists("server", instance_name,
-                                     system_folders=system_folders)
+        return super().config_exists(
+            "server", instance_name, system_folders=system_folders
+        )
 
     @classmethod
-    def available_configurations(cls, system_folders: bool = S_FOL) \
-            -> tuple[list, list]:
+    def available_configurations(
+        cls, system_folders: bool = S_FOL
+    ) -> tuple[list, list]:
         """
         Find all available server configurations in the default folders.
 
@@ -194,14 +197,16 @@ class NodeContext(AppContext):
     # configuration file and makes sure only valid configuration can be loaded.
     INST_CONFIG_MANAGER = NodeConfigurationManager
 
-    def __init__(self, instance_name: str, system_folders: bool = N_FOL,
-                 config_file: str = None):
+    def __init__(
+        self, instance_name: str, system_folders: bool = N_FOL, config_file: str = None
+    ):
         super().__init__("node", instance_name, system_folders, config_file)
         self.log.info(f"vantage6 version '{__version__}'")
 
     @classmethod
-    def from_external_config_file(cls, path: str,
-                                  system_folders: bool = N_FOL) -> NodeContext:
+    def from_external_config_file(
+        cls, path: str, system_folders: bool = N_FOL
+    ) -> NodeContext:
         """
         Create a node context from an external configuration file. External
         means that the configuration file is not located in the default folders
@@ -222,8 +227,7 @@ class NodeContext(AppContext):
         return super().from_external_config_file(path, "node", system_folders)
 
     @classmethod
-    def config_exists(cls, instance_name: str,
-                      system_folders: bool = N_FOL) -> bool:
+    def config_exists(cls, instance_name: str, system_folders: bool = N_FOL) -> bool:
         """
         Check if a configuration file exists.
 
@@ -240,12 +244,14 @@ class NodeContext(AppContext):
         bool
             Whether the configuration file exists or not
         """
-        return super().config_exists("node", instance_name,
-                                     system_folders=system_folders)
+        return super().config_exists(
+            "node", instance_name, system_folders=system_folders
+        )
 
     @classmethod
-    def available_configurations(cls, system_folders: bool = N_FOL) \
-            -> tuple[list, list]:
+    def available_configurations(
+        cls, system_folders: bool = N_FOL
+    ) -> tuple[list, list]:
         """
         Find all available server configurations in the default folders.
 
@@ -327,10 +333,7 @@ class NodeContext(AppContext):
         str
             Docker volume name
         """
-        return os.environ.get(
-            'DATA_VOLUME_NAME',
-            f"{self.docker_container_name}-vol"
-        )
+        return os.environ.get("DATA_VOLUME_NAME", f"{self.docker_container_name}-vol")
 
     @property
     def docker_vpn_volume_name(self) -> str:
@@ -343,8 +346,7 @@ class NodeContext(AppContext):
             Docker volume name
         """
         return os.environ.get(
-            'VPN_VOLUME_NAME',
-            f"{self.docker_container_name}-vpn-vol"
+            "VPN_VOLUME_NAME", f"{self.docker_container_name}-vpn-vol"
         )
 
     @property
@@ -358,8 +360,7 @@ class NodeContext(AppContext):
             Docker volume name
         """
         return os.environ.get(
-            'SSH_TUNNEL_VOLUME_NAME',
-            f"{self.docker_container_name}-ssh-vol"
+            "SSH_TUNNEL_VOLUME_NAME", f"{self.docker_container_name}-ssh-vol"
         )
 
     @property
@@ -373,8 +374,7 @@ class NodeContext(AppContext):
             Docker volume name
         """
         return os.environ.get(
-            'SSH_SQUID_VOLUME_NAME',
-            f"{self.docker_container_name}-squid-vol"
+            "SSH_SQUID_VOLUME_NAME", f"{self.docker_container_name}-squid-vol"
         )
 
     @property

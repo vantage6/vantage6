@@ -1,6 +1,72 @@
 Release notes
 =============
 
+4.2.1
+-----
+
+*19 January 2024*
+
+- **Bugfix**
+ - Add back binary installation of ``psycopg2`` to support Postgres databases
+   (`PR#932 <https://github.com/vantage6/vantage6/pull/932>`_).
+
+4.2.0
+-----
+
+*18 January 2024*
+
+- **Security**
+
+ - Remove option to SSH into node and server containers. The configuration was
+   not completely secure. (
+   `advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-2wgc-48g2-cj5w>`_,
+   `commit <https://github.com/vantage6/vantage6/commit/3fcc6e6a8bd1142fd7a558d8fdd2b246e55c8841>`_).
+ - Prevent code injection into environment variables (
+   `advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-w9h2-px87-74vx>`_,
+   `commit <https://github.com/vantage6/vantage6/commit/eac19db737145d3ca987adf037a454fae0790ddd>`_).
+ - Prevent that user can accidentally upload non-encrypted input to the server
+   for an encrypted collaboration. (
+   `advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-rjmv-52mp-gjrr>`_,
+   `commit <https://github.com/vantage6/vantage6/commit/6383283733b81abfcacfec7538dc4dc882e98074>`_).
+ - Prevent that usernames are findable in brute force attack due to a difference
+   in response time when they exist versus when they don't exist (
+   `advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-45gq-q4xh-cp53>`_,
+   `commit <https://github.com/vantage6/vantage6/commit/389f416c445da4f2438c72f34c3b1084485c4e30>`_).
+ - Updated dependencies of jinja2, cryptography and Werkzeug. (
+   `PR#984 <https://github.com/vantage6/vantage6/pull/984>`_).
+
+- **Feature**
+
+ - Introduced the ``v6 test`` commands that will run the test algorithm
+   ``v6-diagnostics`` (`Issue#918 <https://github.com/vantage6/vantage6/issues/918>`_,
+   `PR#930 <https://github.com/vantage6/vantage6/pull/930>`_).
+ - Extended ``v6 dev`` commands with options to add extra configuration to the
+   server and node configuration files. Also, added the ``v6 server remove``
+   command. (`Issue#860 <https://github.com/vantage6/vantage6/issues/860>`_,
+   `PR#930 <https://github.com/vantage6/vantage6/pull/930>`_).
+
+- **Change**
+
+ - Changed some log messages to a more appropriate log level
+   (`Issue#667 <https://github.com/vantage6/vantage6/issues/667>`_)
+ - Improved message when node starts so as to make it clearer to users that
+   the node has not yet authenticated
+   (`PR#957 <https://github.com/vantage6/vantage6/pull/957>`_).
+ - Changed socket event ``on_new_task`` to also include the parent ID of the
+   task that was created (`PR#950 <https://github.com/vantage6/vantage6/pull/950>`_).
+
+- **Bugfix**
+
+ - Added check whether database labels are properly specified when creating a
+   task (`Issue#910 <https://github.com/vantage6/vantage6/issues/910>`_,
+   `PR#932 <https://github.com/vantage6/vantage6/pull/932>`_).
+ - Fix bug in creating task with VPN client image when it has ``iptables-legacy``
+   installed (`Issue#966 <https://github.com/vantage6/vantage6/issues/966>`_,
+   `PR#982 <https://github.com/vantage6/vantage6/pull/982>`_).
+ - Add missing ``email`` argument from ``client.user.create`` function
+   (`Issue#837 <https://github.com/vantage6/vantage6/issues/837>`_,
+   `PR#934 <https://github.com/vantage6/vantage6/pull/934>`_).
+
 4.1.3
 -----
 

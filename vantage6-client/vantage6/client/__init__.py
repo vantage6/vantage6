@@ -1372,6 +1372,8 @@ class UserClient(ClientBase):
                     "assigning it to at least one organization."
                 )
 
+            if databases is None:
+                databases = []
             databases = self._parse_arg_databases(databases)
 
             # Data will be serialized in JSON.
@@ -1448,8 +1450,7 @@ class UserClient(ClientBase):
                     )
                 if not label_input or not isinstance(label_input, str):
                     raise ValueError(
-                        "Each database should have a 'label' key with a string"
-                        "value."
+                        "Each database should have a 'label' key with a string" "value."
                     )
                 # Labels will become part of env var names in algo container,
                 # some chars are not allowed in some shells.

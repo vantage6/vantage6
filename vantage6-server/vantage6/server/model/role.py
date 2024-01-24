@@ -31,11 +31,11 @@ class Role(Base):
     organization_id = Column(Integer, ForeignKey("organization.id"))
 
     # relationships
-    rules = relationship("Rule", back_populates="roles",
-                         secondary="role_rule_association")
+    rules = relationship(
+        "Rule", back_populates="roles", secondary="role_rule_association"
+    )
     organization = relationship("Organization", back_populates="roles")
-    users = relationship("User", back_populates="roles",
-                         secondary="Permission")
+    users = relationship("User", back_populates="roles", secondary="Permission")
 
     @classmethod
     def get_by_name(cls, name: str) -> Role | None:

@@ -17,8 +17,8 @@ class Authenticatable(Base):
     # fields
     type = Column(String(50))
     __mapper_args__ = {
-        'polymorphic_identity': 'authenticatable',
-        'polymorphic_on': type,
+        "polymorphic_identity": "authenticatable",
+        "polymorphic_on": type,
     }
     ip = Column(String)
     last_seen = Column(DateTime)
@@ -39,5 +39,4 @@ class Authenticatable(Base):
         str
             Hashed secret
         """
-        return bcrypt.hashpw(secret.encode('utf8'), bcrypt.gensalt())\
-            .decode('utf8')
+        return bcrypt.hashpw(secret.encode("utf8"), bcrypt.gensalt()).decode("utf8")

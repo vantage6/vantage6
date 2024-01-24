@@ -1,4 +1,5 @@
 from discord import Embed
+
 # import discord
 import os
 import click
@@ -21,15 +22,15 @@ def info(msg: str):
 
 
 # load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
+TOKEN = os.getenv("DISCORD_TOKEN")
 
-bot = commands.bot.Bot('$')
+bot = commands.bot.Bot("$")
 
 
 class PostUpdates(commands.Cog):
-
-    def __init__(self, bot: commands.bot.Bot, version: str, notes: str,
-                 post_notes: str) -> None:
+    def __init__(
+        self, bot: commands.bot.Bot, version: str, notes: str, post_notes: str
+    ) -> None:
         """
         Post updates to the discord channel.
 
@@ -55,14 +56,14 @@ class PostUpdates(commands.Cog):
         """
         info("Ready to send message")
         for channel in self.bot.get_all_channels():
-            if channel.name == 'announcements':
+            if channel.name == "announcements":
                 await channel.send(embed=self.create_embed(*self.info))
                 exit()
 
     @update_community.before_loop
     async def before_printer(self):
-        """ Wait until the bot logs in. """
-        info('Signing in to Discord...')
+        """Wait until the bot logs in."""
+        info("Signing in to Discord...")
         await self.bot.wait_until_ready()
 
     @staticmethod
@@ -85,53 +86,61 @@ class PostUpdates(commands.Cog):
             The embed to send to the discord channel.
         """
         description = (
-            ':triangular_flag_on_post: A new **vantage6** release! '
-            ':triangular_flag_on_post:\n\n'
-            f'{summary}'
-            '\nSee the complete release notes [here]('
-            'https://docs.vantage6.ai/en/main/release_notes.html)\n\n'
-            'To upgrade:'
-            '```'
-            f'pip install vantage6=={version}'
-            '```'
-            '\n\n'
-            f'_{notes}_'
+            ":triangular_flag_on_post: A new **vantage6** release! "
+            ":triangular_flag_on_post:\n\n"
+            f"{summary}"
+            "\nSee the complete release notes [here]("
+            "https://docs.vantage6.ai/en/main/release_notes.html)\n\n"
+            "To upgrade:"
+            "```"
+            f"pip install vantage6=={version}"
+            "```"
+            "\n\n"
+            f"_{notes}_"
         )
 
-        repositories = (
-            "[vantage6](http://github.com/vantage6)"
-        )
+        repositories = "[vantage6](http://github.com/vantage6)"
 
         documentation = (
-            '[Latest release notes](https://docs.vantage6.ai/en/main/'
-            'release_notes.html)\n'
-            '[Documentation](https://docs.vantage6.ai/en/main/index.html)\n'
-            '[How to contribute](https://docs.vantage6.ai/en/main/devops/'
-            'contribute.html)\n'
+            "[Latest release notes](https://docs.vantage6.ai/en/main/"
+            "release_notes.html)\n"
+            "[Documentation](https://docs.vantage6.ai/en/main/index.html)\n"
+            "[How to contribute](https://docs.vantage6.ai/en/main/devops/"
+            "contribute.html)\n"
         )
 
         links = (
-            '[harbor2](https://harbor2.vantage6.ai)\n'
-            '[Project website](https://vantage6.ai)\n'
-            '[Build status](https://github.com/vantage6/vantage6/actions)'
+            "[harbor2](https://harbor2.vantage6.ai)\n"
+            "[Project website](https://vantage6.ai)\n"
+            "[Build status](https://github.com/vantage6/vantage6/actions)"
         )
 
-        embed = Embed(title=f"Release {version}", url="https://pypi.org",
-                      description=description, color=0x0593ff)
+        embed = Embed(
+            title=f"Release {version}",
+            url="https://pypi.org",
+            description=description,
+            color=0x0593FF,
+        )
         embed.set_author(
             name="vantage6 Team",
-            icon_url=("https://nl.gravatar.com/userimage/193840621/"
-                      "ae1b7b037ec1f7f16e15a75d0ae10b0f.png?size=35")
+            icon_url=(
+                "https://nl.gravatar.com/userimage/193840621/"
+                "ae1b7b037ec1f7f16e15a75d0ae10b0f.png?size=35"
+            ),
         )
         embed.set_thumbnail(
-            url=("https://github.com/IKNL/guidelines/blob/master/resources"
-                 "/logos/vantage6.png?raw=true")
+            url=(
+                "https://github.com/IKNL/guidelines/blob/master/resources"
+                "/logos/vantage6.png?raw=true"
+            )
         )
         embed.add_field(
             name="Docker Images",
-            value=(f"harbor2.vantage6.ai/infrastructure/node:{version} \n"
-                   f" harbor2.vantage6.ai/infrastructure/server:{version}"),
-            inline=False
+            value=(
+                f"harbor2.vantage6.ai/infrastructure/node:{version} \n"
+                f" harbor2.vantage6.ai/infrastructure/server:{version}"
+            ),
+            inline=False,
         )
         embed.add_field(name="Documentation", value=documentation, inline=True)
         embed.add_field(name="Github", value=repositories, inline=True)
@@ -142,9 +151,9 @@ class PostUpdates(commands.Cog):
 
 
 @click.command()
-@click.option('--version', default=None, help="major.minor.patch.specBuild")
-@click.option('--notes', default=None)
-@click.option('--post-notes', default=None)
+@click.option("--version", default=None, help="major.minor.patch.specBuild")
+@click.option("--notes", default=None)
+@click.option("--post-notes", default=None)
 def update_the_community(version: str, notes: str, post_notes: str) -> None:
     """
     Send a message to the discord channel.
@@ -162,5 +171,5 @@ def update_the_community(version: str, notes: str, post_notes: str) -> None:
     bot.run(TOKEN)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     update_the_community()
