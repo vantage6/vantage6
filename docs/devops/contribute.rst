@@ -212,8 +212,28 @@ Finally, push your commits to your fork on Github and create a pull request.
 
     git push --set-upstream fork your-branch-name
 
-Please apply the `PEP8 <https://peps.python.org/pep-0008/>`_ standards to your
-code.
+Code style
+^^^^^^^^^^
+
+We use `black <https://black.readthedocs.io/en/stable/index.html>`_ to format
+our code. It is important that you use this style so make sure that your
+contribution will be easily incorporated into the code base.
+
+Black is automatically installed into your python environment
+when you run ``make install-dev``. To automatically enable black, we recommend
+that you install the `Black Formatter` extension from Microsoft in the VSCode
+marketplace. By enabling the option 'format on save' you can then automatically
+format your code in the proper style when you save a file.
+
+Alternatively, or additionally, you may install a pre-commit hook that will
+automatically format your code when you commit it. To do so, run the following
+command:
+
+  ::
+
+    pre-commit install
+
+You may need to run ``pre-commit autoupdate`` to update the pre-commit hook.
 
 Unit tests & coverage
 ^^^^^^^^^^^^^^^^^^^^^

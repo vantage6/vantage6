@@ -29,19 +29,33 @@ def click_insert_context(func: callable) -> callable:
     Callable
         Click function with context
     """
-    @click.option('-n', '--name', default=None,
-                  help="Name of the configuration you want to use.")
-    @click.option('-c', '--config', default=None,
-                  help='Absolute path to configuration-file; overrides NAME')
-    @click.option('--system', 'system_folders', flag_value=True,
-                  help='Use system folders instead of user folders. This is '
-                  'the default')
-    @click.option('--user', 'system_folders', flag_value=False,
-                  default=DEFAULT_SERVER_SYSTEM_FOLDERS,
-                  help='Use user folders instead of system folders')
+
+    @click.option(
+        "-n", "--name", default=None, help="Name of the configuration you want to use."
+    )
+    @click.option(
+        "-c",
+        "--config",
+        default=None,
+        help="Absolute path to configuration-file; overrides NAME",
+    )
+    @click.option(
+        "--system",
+        "system_folders",
+        flag_value=True,
+        help="Use system folders instead of user folders. This is " "the default",
+    )
+    @click.option(
+        "--user",
+        "system_folders",
+        flag_value=False,
+        default=DEFAULT_SERVER_SYSTEM_FOLDERS,
+        help="Use user folders instead of system folders",
+    )
     @wraps(func)
-    def func_with_context(name: str, config: str, system_folders: bool, *args,
-                          **kwargs) -> callable:
+    def func_with_context(
+        name: str, config: str, system_folders: bool, *args, **kwargs
+    ) -> callable:
         """
         Decorator function that adds the context to the function.
 
@@ -52,23 +66,18 @@ def click_insert_context(func: callable) -> callable:
         """
         # path to configuration file always overrides name
         if config:
-            ctx = ServerContext.from_external_config_file(
-                config,
-                system_folders
-            )
-        elif 'ctx' in kwargs:
+            ctx = ServerContext.from_external_config_file(config, system_folders)
+        elif "ctx" in kwargs:
             # if ctx is already in kwargs (typically when one click command
             # calls another internally), use that existing ctx
-            ctx = kwargs.pop('ctx')
+            ctx = kwargs.pop("ctx")
         else:
             # in case no name, ctx or config file is supplied, ask the user to
             # select an existing config by name
             if not name:
                 try:
                     # select configuration if none supplied
-                    name = select_configuration_questionaire(
-                        "server", system_folders
-                    )
+                    name = select_configuration_questionaire("server", system_folders)
                 except Exception:
                     error("No configurations could be found!")
                     exit(1)
@@ -79,8 +88,7 @@ def click_insert_context(func: callable) -> callable:
     return func_with_context
 
 
-def get_server_context(name: str, system_folders: bool) \
-        -> ServerContext:
+def get_server_context(name: str, system_folders: bool) -> ServerContext:
     """
     Load the server context from the configuration file.
 
@@ -142,5 +150,7 @@ def stop_ui(client: DockerClient, ctx: ServerContext) -> None:
     ui_container = get_container(client, name=ui_container_name)
     if ui_container:
         remove_container(ui_container, kill=True)
-        info(f"Stopped the {Fore.GREEN}{ui_container_name}"
-             f"{Style.RESET_ALL} User Interface container.")
+        info(
+            f"Stopped the {Fore.GREEN}{ui_container_name}"
+            f"{Style.RESET_ALL} User Interface container."
+        )

@@ -63,8 +63,9 @@ def wrap_algorithm(log_traceback: bool = True) -> None:
     _write_output(output, output_file)
 
 
-def _run_algorithm_method(input_data: dict, module: str,
-                          log_traceback: bool = True) -> Any:
+def _run_algorithm_method(
+    input_data: dict, module: str, log_traceback: bool = True
+) -> Any:
     """
     Load the algorithm module and call the correct method to run an algorithm.
 
@@ -141,7 +142,7 @@ def load_input(input_file: str) -> Any:
         try:
             input_data = deserialization.deserialize(fp)
         except DeserializationException:
-            raise DeserializationException('Could not deserialize input')
+            raise DeserializationException("Could not deserialize input")
     return input_data
 
 
@@ -156,6 +157,6 @@ def _write_output(output: Any, output_file: str) -> None:
     output_file : str
         Path to the output file
     """
-    with open(output_file, 'wb') as fp:
+    with open(output_file, "wb") as fp:
         serialized = serialization.serialize(output)
         fp.write(serialized)

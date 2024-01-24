@@ -3,39 +3,70 @@ import click
 from colorama import Fore, Style
 
 from vantage6.common import (
-    warning, error, info, debug, bytes_to_base64s,
+    warning,
+    error,
+    info,
+    debug,
+    bytes_to_base64s,
 )
 
 from vantage6.common.encryption import RSACryptor
 from vantage6.cli.context import NodeContext
-from vantage6.cli.globals import (
-    DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
-)
-from vantage6.cli.node.common import (
-    select_node, create_client_and_authenticate
-)
+from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
+from vantage6.cli.node.common import select_node, create_client_and_authenticate
 
 
 @click.command()
 @click.option("-n", "--name", default=None, help="Configuration name")
-@click.option("-c", "--config", default=None,
-              help='Absolute path to configuration-file; overrides NAME')
-@click.option('--system', 'system_folders', flag_value=True,
-              help="Search for configuration in system folders rather than "
-                   "user folders")
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL,
-              help="Search for configuration in user folders rather than "
-                   "system folders. This is the default")
-@click.option('--no-upload', 'upload', flag_value=False, default=True,
-              help="Don't upload the public key to the server")
-@click.option("-o", "--organization-name", default=None,
-              help="Organization name. Used in the filename of the private key"
-                   " so that it can easily be recognized again later")
-@click.option('--overwrite', 'overwrite', flag_value=True, default=False,
-              help="Overwrite existing private key if present")
+@click.option(
+    "-c",
+    "--config",
+    default=None,
+    help="Absolute path to configuration-file; overrides NAME",
+)
+@click.option(
+    "--system",
+    "system_folders",
+    flag_value=True,
+    help="Search for configuration in system folders rather than " "user folders",
+)
+@click.option(
+    "--user",
+    "system_folders",
+    flag_value=False,
+    default=N_FOL,
+    help="Search for configuration in user folders rather than "
+    "system folders. This is the default",
+)
+@click.option(
+    "--no-upload",
+    "upload",
+    flag_value=False,
+    default=True,
+    help="Don't upload the public key to the server",
+)
+@click.option(
+    "-o",
+    "--organization-name",
+    default=None,
+    help="Organization name. Used in the filename of the private key"
+    " so that it can easily be recognized again later",
+)
+@click.option(
+    "--overwrite",
+    "overwrite",
+    flag_value=True,
+    default=False,
+    help="Overwrite existing private key if present",
+)
 def cli_node_create_private_key(
-        name: str, config: str, system_folders: bool, upload: bool,
-        organization_name: str, overwrite: bool) -> None:
+    name: str,
+    config: str,
+    system_folders: bool,
+    upload: bool,
+    organization_name: str,
+    overwrite: bool,
+) -> None:
     """
     Create and upload a new private key
 
@@ -117,7 +148,7 @@ def cli_node_create_private_key(
             "This will overwrite any previously existing key!"
         )
 
-        if 'client' not in locals():
+        if "client" not in locals():
             client = create_client_and_authenticate(ctx)
 
         # TODO what happens if the user doesn't have permission to upload key?
@@ -126,7 +157,7 @@ def cli_node_create_private_key(
             client.request(
                 f"/organization/{client.whoami.organization_id}",
                 method="patch",
-                json={"public_key": bytes_to_base64s(public_key)}
+                json={"public_key": bytes_to_base64s(public_key)},
             )
 
         except Exception as e:

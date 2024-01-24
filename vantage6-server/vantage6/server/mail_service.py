@@ -44,8 +44,14 @@ class MailService:
                 log.error("Mailserver error!")
                 log.debug(e)
 
-    def send_email(self, subject: str, sender: str, recipients: list[str],
-                   text_body: str, html_body: str) -> None:
+    def send_email(
+        self,
+        subject: str,
+        sender: str,
+        recipients: list[str],
+        text_body: str,
+        html_body: str,
+    ) -> None:
         """
         Send an email.
 

@@ -49,8 +49,10 @@ class Page:
     pages : int
         Total number of pages
     """
-    def __init__(self, items: list[db.Base], page: int, page_size: int,
-                 total: int) -> None:
+
+    def __init__(
+        self, items: list[db.Base], page: int, page_size: int, total: int
+    ) -> None:
         self.current_page = page
         self.items = items
         self.previous_page = None
@@ -90,8 +92,15 @@ class Pagination:
     request : flask.Request
         Request object
     """
-    def __init__(self, items: list[db.Base], page: int, page_size: int,
-                 total: int, request: flask.Request) -> None:
+
+    def __init__(
+        self,
+        items: list[db.Base],
+        page: int,
+        page_size: int,
+        total: int,
+        request: flask.Request,
+    ) -> None:
         self.page = Page(items, page, page_size, total)
         self.request = request
 
@@ -105,9 +114,8 @@ class Pagination:
         str
             Link header
         """
-        link_strs = [f'<{url}>; rel={rel}' for rel, url in
-                     self.metadata_links.items()]
-        return ','.join(link_strs)
+        link_strs = [f"<{url}>; rel={rel}" for rel, url in self.metadata_links.items()]
+        return ",".join(link_strs)
 
     @property
     def headers(self) -> dict:
@@ -120,11 +128,11 @@ class Pagination:
             Response headers
         """
         return {
-            'total-count': self.page.total,
-            'Link': self.link_header,
+            "total-count": self.page.total,
+            "Link": self.link_header,
             # indicate that these headers are allowed to be exposed to scripts
             # running in a browser
-            'access-control-expose-headers': 'total-count, Link',
+            "access-control-expose-headers": "total-count, Link",
         }
 
     @property
@@ -141,25 +149,28 @@ class Pagination:
         args = self.request.args.copy()
 
         navs = [
-            {'rel': 'first', 'page': 1},
-            {'rel': 'previous', 'page': self.page.previous_page},
-            {'rel': 'self', 'page': self.page.current_page},
-            {'rel': 'next', 'page': self.page.next_page},
-            {'rel': 'last', 'page': self.page.pages},
+            {"rel": "first", "page": 1},
+            {"rel": "previous", "page": self.page.previous_page},
+            {"rel": "self", "page": self.page.current_page},
+            {"rel": "next", "page": self.page.next_page},
+            {"rel": "last", "page": self.page.pages},
         ]
 
         links = {}
         for nav in navs:
-            if nav['page']:
-                args['page'] = nav['page']
-                links[nav['rel']] = f'{url}?{urlencode(args)}'
+            if nav["page"]:
+                args["page"] = nav["page"]
+                links[nav["rel"]] = f"{url}?{urlencode(args)}"
 
         return links
 
     @classmethod
     def from_query(
-        cls, query: sqlalchemy.orm.query, request: flask.Request,
-        resource_model: db.Base, paginate: bool = True
+        cls,
+        query: sqlalchemy.orm.query,
+        request: flask.Request,
+        resource_model: db.Base,
+        paginate: bool = True,
     ) -> Pagination:
         """
         Create a Pagination object from a query.
@@ -188,26 +199,23 @@ class Pagination:
 
         # check if pagination is desired, else return all records
         if paginate:
-            page_id = int(request.args.get('page', 1))
-            per_page = int(request.args.get('per_page', 10))
+            page_id = int(request.args.get("page", 1))
+            per_page = int(request.args.get("per_page", 10))
 
             if page_id <= 0:
-                raise AttributeError('page needs to be >= 1')
+                raise AttributeError("page needs to be >= 1")
             if per_page <= 0:
-                raise AttributeError('per_page needs to be >= 1')
+                raise AttributeError("per_page needs to be >= 1")
         else:
             page_id = 1
             per_page = total or 1
 
         # FIXME BvB 2020-02-09 good error handling if sort is not a valid
         #  field
-        if request.args.get('sort', False):
-            query = cls._add_sorting(
-                query, request.args.get('sort'), resource_model
-            )
+        if request.args.get("sort", False):
+            query = cls._add_sorting(query, request.args.get("sort"), resource_model)
 
-        items = query.distinct().limit(per_page).offset((page_id-1)*per_page)\
-            .all()
+        items = query.distinct().limit(per_page).offset((page_id - 1) * per_page).all()
 
         return cls(items, page_id, per_page, total, request)
 
@@ -232,7 +240,7 @@ class Pagination:
             If the page id is not an integer or is less than 1
         """
         try:
-            page_id = int(request.args.get('page', DEFAULT_PAGE))
+            page_id = int(request.args.get("page", DEFAULT_PAGE))
         except ValueError:
             raise ValueError("The 'page' parameter should be an integer")
         if page_id <= 0:
@@ -260,7 +268,7 @@ class Pagination:
             If the number of items per page is not an integer or is less than 1
         """
         try:
-            per_page = int(request.args.get('per_page', DEFAULT_PAGE_SIZE))
+            per_page = int(request.args.get("per_page", DEFAULT_PAGE_SIZE))
         except ValueError:
             raise ValueError("The 'per_page' parameter should be an integer")
         if per_page <= 0:
@@ -285,13 +293,13 @@ class Pagination:
         resource_model : db.Base
             SQLAlchemy model of the resource whose endpoint is being called
         """
-        sort_list = sort_string.split(',')
+        sort_list = sort_string.split(",")
         for sorter in sort_list:
             sorter = sorter.strip()
             sort_asc = True
-            if sorter.startswith('-'):
+            if sorter.startswith("-"):
                 sort_asc = False
-            if sorter.startswith('+') or sorter.startswith('-'):
+            if sorter.startswith("+") or sorter.startswith("-"):
                 sorter = sorter[1:]
             if not hasattr(resource_model, sorter):
                 raise AttributeError(

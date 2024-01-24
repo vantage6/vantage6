@@ -59,10 +59,11 @@ def get_env_var(var_name: str, default: str | None = None) -> str:
         Value of the environment variable, or default value if not found
     """
     try:
-        encoded_env_var_value = \
-            os.environ[var_name].replace(
-                ENV_VAR_EQUALS_REPLACEMENT, "="
-            ).encode(STRING_ENCODING)
+        encoded_env_var_value = (
+            os.environ[var_name]
+            .replace(ENV_VAR_EQUALS_REPLACEMENT, "=")
+            .encode(STRING_ENCODING)
+        )
         return base64.b32decode(encoded_env_var_value).decode(STRING_ENCODING)
     except KeyError:
         return default

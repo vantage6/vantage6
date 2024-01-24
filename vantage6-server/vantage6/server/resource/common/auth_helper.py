@@ -10,13 +10,15 @@ from threading import Thread
 
 from vantage6.common.globals import APPNAME, MAIN_VERSION_NAME
 from vantage6.server.globals import (
-    DEFAULT_SUPPORT_EMAIL_ADDRESS, DEFAULT_MAX_FAILED_ATTEMPTS,
-    DEFAULT_INACTIVATION_MINUTES, DEFAULT_BETWEEN_BLOCKED_LOGIN_EMAIL_MINUTES,
-    DEFAULT_EMAIL_FROM_ADDRESS
+    DEFAULT_SUPPORT_EMAIL_ADDRESS,
+    DEFAULT_MAX_FAILED_ATTEMPTS,
+    DEFAULT_INACTIVATION_MINUTES,
+    DEFAULT_BETWEEN_BLOCKED_LOGIN_EMAIL_MINUTES,
+    DEFAULT_EMAIL_FROM_ADDRESS,
 )
 from vantage6.server.model.user import User
 
-module_name = __name__.split('.')[-1]
+module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
 
 
@@ -52,19 +54,21 @@ def user_login(
     # In that case, we fetch the first user as random user.
     username_exists = User.username_exists(username)
     random_username = User.get_first_user().username
-    user = User.get_by_username(username) if username_exists \
+    user = (
+        User.get_by_username(username)
+        if username_exists
         else User.get_by_username(random_username)
+    )
 
     password_policy = config.get("password_policy", {})
     max_failed_attempts = password_policy.get(
-        'max_failed_attempts', DEFAULT_MAX_FAILED_ATTEMPTS
+        "max_failed_attempts", DEFAULT_MAX_FAILED_ATTEMPTS
     )
     inactivation_time = password_policy.get(
-        'inactivation_minutes', DEFAULT_INACTIVATION_MINUTES
+        "inactivation_minutes", DEFAULT_INACTIVATION_MINUTES
     )
 
-    is_blocked, min_rem = user.is_blocked(max_failed_attempts,
-                                          inactivation_time)
+    is_blocked, min_rem = user.is_blocked(max_failed_attempts, inactivation_time)
 
     if user.check_password(password) and not is_blocked and username_exists:
         # Note: above the username_exists is checked to prevent that an
@@ -78,19 +82,35 @@ def user_login(
     # Handle database updates required upon failed login in a separate thread
     # to ensure similar response times
     # pylint: disable=W0212
-    t1 = Thread(target=__handle_failed_login, args=(
-        current_app._get_current_object(), username_exists, username,
-        password_policy, is_blocked, min_rem, mail, config,
-        request.access_route[-1]
-    ))
+    t1 = Thread(
+        target=__handle_failed_login,
+        args=(
+            current_app._get_current_object(),
+            username_exists,
+            username,
+            password_policy,
+            is_blocked,
+            min_rem,
+            mail,
+            config,
+            request.access_route[-1],
+        ),
+    )
     t1.start()
 
     return {"msg": failed_login_msg}, HTTPStatus.UNAUTHORIZED
 
 
 def __handle_failed_login(
-    app: Flask, user_exists: bool, username: str, password_policy: dict,
-    is_blocked: bool, min_rem: int, mail: Mail, config: dict, ip: str
+    app: Flask,
+    user_exists: bool,
+    username: str,
+    password_policy: dict,
+    is_blocked: bool,
+    min_rem: int,
+    mail: Mail,
+    config: dict,
+    ip: str,
 ) -> None:
     """
     When a user login fails, this function is called to update the database
@@ -126,7 +146,7 @@ def __handle_failed_login(
     user = User.get_by_username(username)
 
     max_failed_attempts = password_policy.get(
-        'max_failed_attempts', DEFAULT_MAX_FAILED_ATTEMPTS
+        "max_failed_attempts", DEFAULT_MAX_FAILED_ATTEMPTS
     )
 
     if is_blocked:
@@ -134,8 +154,8 @@ def __handle_failed_login(
         __notify_user_blocked(app, user, min_rem, mail, config, ip)
         sys.exit()
     elif (
-        not user.failed_login_attempts or
-        user.failed_login_attempts >= max_failed_attempts
+        not user.failed_login_attempts
+        or user.failed_login_attempts >= max_failed_attempts
     ):
         # set failed login attempts to 1 if first failed login attempt or if
         # user got unblocked after being blocked previously
@@ -172,17 +192,18 @@ def __notify_user_blocked(
     ip: str
         IP address from where the login attempt was made
     """
-    log.info('User %s is locked. Sending them an email.', user.username)
+    log.info("User %s is locked. Sending them an email.", user.username)
 
     # check that email has not already been sent recently
     password_policy = config.get("password_policy", {})
     minutes_between_blocked_emails = password_policy.get(
-        'between_email_blocked_login_minutes',
-        DEFAULT_BETWEEN_BLOCKED_LOGIN_EMAIL_MINUTES
+        "between_email_blocked_login_minutes",
+        DEFAULT_BETWEEN_BLOCKED_LOGIN_EMAIL_MINUTES,
     )
     email_sent_recently = user.last_email_failed_login_sent and (
-        dt.datetime.now() < user.last_email_failed_login_sent +
-        dt.timedelta(minutes=minutes_between_blocked_emails)
+        dt.datetime.now()
+        < user.last_email_failed_login_sent
+        + dt.timedelta(minutes=minutes_between_blocked_emails)
     )
     if email_sent_recently:
         return
@@ -193,15 +214,15 @@ def __notify_user_blocked(
     support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
 
     max_failed_attempts = password_policy.get(
-        'max_failed_attempts', DEFAULT_MAX_FAILED_ATTEMPTS
+        "max_failed_attempts", DEFAULT_MAX_FAILED_ATTEMPTS
     )
     template_vars = {
-        'firstname': user.firstname if user.firstname else user.username,
-        'number_of_allowed_attempts': max_failed_attempts,
-        'ip': ip,
-        'time': dt.datetime.now(dt.timezone.utc),
-        'time_remaining': min_rem,
-        'support_email': support_email,
+        "firstname": user.firstname if user.firstname else user.username,
+        "number_of_allowed_attempts": max_failed_attempts,
+        "ip": ip,
+        "time": dt.datetime.now(dt.timezone.utc),
+        "time_remaining": min_rem,
+        "support_email": support_email,
     }
 
     with app.app_context():
@@ -209,12 +230,8 @@ def __notify_user_blocked(
             "Failed login attempts on your vantage6 account",
             sender=email_from,
             recipients=[user.email],
-            text_body=render_template(
-                "mail/blocked_account.txt", **template_vars
-            ),
-            html_body=render_template(
-                "mail/blocked_account.html", **template_vars
-            )
+            text_body=render_template("mail/blocked_account.txt", **template_vars),
+            html_body=render_template("mail/blocked_account.html", **template_vars),
         )
 
     # Update latest email sent timestamp
@@ -244,8 +261,10 @@ def create_qr_uri(user: User) -> dict:
     user.otp_secret = otp_secret
     user.save()
     return {
-        'qr_uri': qr_uri,
-        'otp_secret': otp_secret,
-        'msg': ('Two-factor authentication is obligatory on this server. '
-                'Please visualize the QR code to set up authentication.')
+        "qr_uri": qr_uri,
+        "otp_secret": otp_secret,
+        "msg": (
+            "Two-factor authentication is obligatory on this server. "
+            "Please visualize the QR code to set up authentication."
+        ),
     }

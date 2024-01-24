@@ -6,7 +6,7 @@ from typing import Any
 # Decorators
 #
 def filter_dicts_from_results(func: callable) -> callable:
-    """ Filter a list of dicts.
+    """Filter a list of dicts.
 
     Based on a key-value pair within the dict. A single key-value pair can be
     given through the argument `filter_` OR a list of key-value pairs can be
@@ -24,10 +24,13 @@ def filter_dicts_from_results(func: callable) -> callable:
         The function that returns a list of dicts, filtered by the specified
         filters.
     """
+
     @functools.wraps(func)
     def wrapper_filter(
-        *args, filter_: tuple[Any, Any] = None,
-        filters: list[tuple[Any, Any]] = None, **kwargs
+        *args,
+        filter_: tuple[Any, Any] = None,
+        filters: list[tuple[Any, Any]] = None,
+        **kwargs
     ) -> list[dict]:
         """
         Apply filters to the results of the function.
@@ -50,11 +53,12 @@ def filter_dicts_from_results(func: callable) -> callable:
         if filter_:
             return filter_dicts_by_values(dicts, [filter_])
         return filter_dicts_by_values(dicts, filters)
+
     return wrapper_filter
 
 
 def filter_keys_from_result(func: callable) -> callable:
-    """ Wrapper to filter key-value pairs from a dict.
+    """Wrapper to filter key-value pairs from a dict.
 
     Removes key-value pair based on the key from a dict. If the key is not
     present in the dict it is ignored.
@@ -69,9 +73,11 @@ def filter_keys_from_result(func: callable) -> callable:
     callable
         The function that returns a dict, with only the specified keys kept.
     """
+
     @functools.wraps(func)
-    def wrapper_filter(*args, field: Any = None, fields: list[Any] = None,
-                       **kwargs) -> dict:
+    def wrapper_filter(
+        *args, field: Any = None, fields: list[Any] = None, **kwargs
+    ) -> dict:
         """
         Apply filters to the results of the function. If no filters are given,
         the function returns the original dict.
@@ -94,11 +100,12 @@ def filter_keys_from_result(func: callable) -> callable:
         if field:
             return filter_dict_keys(dict_, [field])
         return filter_dict_keys(dict_, fields)
+
     return wrapper_filter
 
 
 def filter_keys_from_results(func: callable) -> callable:
-    """ Remove key-value pairs from a list of dicts.
+    """Remove key-value pairs from a list of dicts.
 
     Removes key-value pair of all dictornairies in the list. If the key is not
     present in the dicts it is ignored.
@@ -113,9 +120,11 @@ def filter_keys_from_results(func: callable) -> callable:
     callable
         The function that returns a list of dicts, with only the specified keys
     """
+
     @functools.wraps(func)
-    def wrapper_filter(*args, field: Any = None, fields: list[Any] = None,
-                       **kwargs) -> list[dict]:
+    def wrapper_filter(
+        *args, field: Any = None, fields: list[Any] = None, **kwargs
+    ) -> list[dict]:
         """
         Apply filters to the results of the function. If no filters are given,
         the function returns the list of dicts.
@@ -138,6 +147,7 @@ def filter_keys_from_results(func: callable) -> callable:
         if field:
             return filter_dicts_keys(dict_, [field])
         return filter_dicts_keys(dict_, fields)
+
     return wrapper_filter
 
 
@@ -164,19 +174,25 @@ def post_filtering(iterable: bool = True) -> callable:
         The original function with the added decorators that filter the output
         of the function by specified fields and keys.
     """
+
     def decorator(func):
         if iterable:
+
             @functools.wraps(func)
             @filter_keys_from_results
             @filter_dicts_from_results
             def wrapper_filter(*args, **kwargs):
                 return func(*args, **kwargs)
+
         else:
+
             @functools.wraps(func)
             @filter_keys_from_result
             def wrapper_filter(*args, **kwargs):
                 return func(*args, **kwargs)
+
         return wrapper_filter
+
     return decorator
 
 
@@ -252,7 +268,7 @@ def filter_dicts_keys(dict_: dict, keys: list[str]) -> list[dict]:
     # note: we look only in the 'data' key of the dict, which contains the list
     # of data. The only other key is 'links' which contains pagination links
     if keys:
-        return [filter_dict_keys(adict, keys) for adict in dict_['data']]
+        return [filter_dict_keys(adict, keys) for adict in dict_["data"]]
     return dict_
 
 

@@ -6,9 +6,14 @@ prepare the data for the algorithm.
 import pandas as pd
 
 
-def filter_range(df: pd.DataFrame, column: str, min_: float = None,
-                 max_: float = None, include_min: bool = False,
-                 include_max: bool = False) -> pd.DataFrame:
+def filter_range(
+    df: pd.DataFrame,
+    column: str,
+    min_: float = None,
+    max_: float = None,
+    include_min: bool = False,
+    include_max: bool = False,
+) -> pd.DataFrame:
     """
     Filter the data based on a minimum and/or maximum value.
 

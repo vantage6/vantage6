@@ -22,7 +22,7 @@ def remove_subnet_mask(ip: str) -> str:
     str
         IP subnet address without the subnet mask
     """
-    return ip[0:ip.find('/')]
+    return ip[0 : ip.find("/")]
 
 
 class NetworkManager(object):
@@ -47,9 +47,7 @@ class NetworkManager(object):
         # Connect to docker daemon
         self.docker = docker.from_env()
 
-    def create_network(
-        self, is_internal: bool = True
-    ) -> None:
+    def create_network(self, is_internal: bool = True) -> None:
         """
         Creates an internal (docker) network
 
@@ -64,18 +62,18 @@ class NetworkManager(object):
             self.log.warn(f"Network {self.network_name} was already created!")
             return
 
-        existing_networks = self.docker.networks.list(
-            names=[self.network_name]
-        )
+        existing_networks = self.docker.networks.list(names=[self.network_name])
         if existing_networks:
             if len(existing_networks) > 1:
                 self.log.error(
                     f"Found multiple ({len(existing_networks)}) existing "
                     f"networks {self.network_name}. Please delete all or all "
-                    "but one before starting the server!")
+                    "but one before starting the server!"
+                )
                 exit(1)
-            self.log.info(f"Network {self.network_name} already exists! Using "
-                          "existing network")
+            self.log.info(
+                f"Network {self.network_name} already exists! Using " "existing network"
+            )
             self.network = existing_networks[0]
             self.network.reload()  # required to initialize containers in netw
         else:
@@ -95,13 +93,10 @@ class NetworkManager(object):
         kill_containers: bool
             If true, kill and remove any containers in the network
         """
-        networks = self.docker.networks.list(
-            names=[self.network_name]
-        )
+        networks = self.docker.networks.list(names=[self.network_name])
 
         # network = self.docker.networks.get(self.network_name)
-        self.log.debug(
-            f"Network {self.network_name} already exists. Deleting it.")
+        self.log.debug(f"Network {self.network_name} already exists. Deleting it.")
         for network in networks:
             delete_network(network, kill_containers)
 
@@ -122,8 +117,9 @@ class NetworkManager(object):
         self.network.reload()
         return container in self.network.containers
 
-    def connect(self, container_name: str, aliases: list[str] = None,
-                ipv4: str | None = None) -> None:
+    def connect(
+        self, container_name: str, aliases: list[str] = None, ipv4: str | None = None
+    ) -> None:
         """
         Connect a container to the network.
 
@@ -136,11 +132,8 @@ class NetworkManager(object):
         ipv4: str | None
             An IP address to assign to the container in the network
         """
-        self.log.debug(
-            f"Connecting {container_name} to network '{self.network_name}'")
-        self.network.connect(
-            container_name, aliases=aliases, ipv4_address=ipv4
-        )
+        self.log.debug(f"Connecting {container_name} to network '{self.network_name}'")
+        self.network.connect(container_name, aliases=aliases, ipv4_address=ipv4)
 
     def disconnect(self, container_name: str) -> None:
         """
@@ -152,8 +145,7 @@ class NetworkManager(object):
             Name of the container to disconnect
         """
         self.log.debug(
-            f"Disconnecting {container_name} from network"
-            f"'{self.network_name}'"
+            f"Disconnecting {container_name} from network" f"'{self.network_name}'"
         )
         self.network.disconnect(container=container_name, force=True)
 
@@ -173,13 +165,14 @@ class NetworkManager(object):
         """
         self.network.reload()
         ip = None
-        containers = self.network.attrs['Containers']
+        containers = self.network.attrs["Containers"]
         for container_id, container_dict in containers.items():
-            if container_dict['Name'] == container_name:
-                ip = container_dict['IPv4Address']
+            if container_dict["Name"] == container_name:
+                ip = container_dict["IPv4Address"]
         if not ip:
-            self.log.warn(f"IP Address for container {container_name} not "
-                          "found in the network")
+            self.log.warn(
+                f"IP Address for container {container_name} not " "found in the network"
+            )
             return None
         ip = remove_subnet_mask(ip)
         return ip

@@ -8,6 +8,7 @@ class DockerBaseManager(object):
     Base class for docker-using classes. Contains simple methods that are used
     by multiple derived classes
     """
+
     def __init__(self, isolated_network_mgr: NetworkManager) -> None:
         self.isolated_network_mgr = isolated_network_mgr
 
@@ -29,6 +30,6 @@ class DockerBaseManager(object):
             IP address of a container in isolated network
         """
         container.reload()
-        return container.attrs[
-            'NetworkSettings'
-        ]['Networks'][self.isolated_network_mgr.network_name]['IPAddress']
+        return container.attrs["NetworkSettings"]["Networks"][
+            self.isolated_network_mgr.network_name
+        ]["IPAddress"]

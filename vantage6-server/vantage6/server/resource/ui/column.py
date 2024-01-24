@@ -8,10 +8,7 @@ from flask import request
 from vantage6.common import logger_name
 from vantage6.common.globals import BASIC_PROCESSING_IMAGE
 from vantage6.server import db
-from vantage6.server.permission import (
-    RuleCollection,
-    Operation as P
-)
+from vantage6.server.permission import RuleCollection, Operation as P
 from vantage6.server.resource import ServicesResources, with_user
 from vantage6.server.resource.common.input_schema import ColumnNameInputSchema
 from vantage6.server.resource.task import Tasks
@@ -40,9 +37,9 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     api.add_resource(
         ColumnNames,
         path,
-        endpoint='column_names_without_id',
-        methods=('POST',),
-        resource_class_kwargs=services
+        endpoint="column_names_without_id",
+        methods=("POST",),
+        resource_class_kwargs=services,
     )
 
 
@@ -54,10 +51,11 @@ column_name_input_schema = ColumnNameInputSchema()
 
 class ColumnNames(ServicesResources):
     """Resource for requesting column names from a node database."""
+
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
         # Use task permissions for this resource
-        self.r_task: RuleCollection = getattr(self.permissions, 'task')
+        self.r_task: RuleCollection = getattr(self.permissions, "task")
 
     # TODO this endpoint currently requires the user to provide the
     # organization details (including input) for the task to retrieve the
@@ -121,10 +119,12 @@ class ColumnNames(ServicesResources):
         # validate request body
         errors = column_name_input_schema.validate(data)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
-        collaboration_id = data['collaboration_id']
+        collaboration_id = data["collaboration_id"]
         collaboration = db.Collaboration.get(collaboration_id)
         if not collaboration:
             return {
@@ -134,40 +134,39 @@ class ColumnNames(ServicesResources):
         # check if user has permission to create a task for this collaboration:
         # that determines if the user is allowed to request column names
         if not self.r_task.can_for_col(P.CREATE, collaboration_id):
-            return {'msg': 'You lack the permission to do that!'}, \
-                HTTPStatus.UNAUTHORIZED
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         # check if the column names are already available in the database
         # through shared node details.
-        label = data['db_label']
+        label = data["db_label"]
         colnames = []
         for node in collaboration.nodes:
             for record in node.config:
-                if record.key == f'columns_{label}':
+                if record.key == f"columns_{label}":
                     colnames.append(record.value)
             # note this indent: if one node has the column names, we assume
             # that all nodes have the column names. Otherwise it will just
             # lead to an error for the other nodes.
             if colnames:
-                return {
-                    "columns": colnames
-                }, HTTPStatus.OK
+                return {"columns": colnames}, HTTPStatus.OK
 
         # Column names not yet available, create new task to request column
         # names
-        databases = [{'label': label}]
-        if data.get('sheet_name'):
-            databases[0]['sheet_name'] = data['sheet_name']
-        if data.get('query'):
-            databases[0]['query'] = data['query']
+        databases = [{"label": label}]
+        if data.get("sheet_name"):
+            databases[0]["sheet_name"] = data["sheet_name"]
+        if data.get("query"):
+            databases[0]["query"] = data["query"]
         return Tasks.post_task(
             data={
-              'collaboration_id': collaboration_id,
-              'name': 'get_column_names',
-              'image': BASIC_PROCESSING_IMAGE,
-              'organizations': data['organizations'],
-              'databases': databases,
+                "collaboration_id": collaboration_id,
+                "name": "get_column_names",
+                "image": BASIC_PROCESSING_IMAGE,
+                "organizations": data["organizations"],
+                "databases": databases,
             },
             socketio=self.socketio,
-            rules=self.r_task
+            rules=self.r_task,
         )
