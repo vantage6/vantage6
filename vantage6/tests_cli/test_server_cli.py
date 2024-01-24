@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 from pathlib import Path
 from click.testing import CliRunner
 
-from vantage6.cli.globals import APPNAME, InstanceType
+from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.cli.server.start import cli_server_start
 from vantage6.cli.server.list import cli_server_configuration_list
 from vantage6.cli.server.files import cli_server_files
@@ -21,7 +21,7 @@ class ServerCLITest(unittest.TestCase):
     @patch("vantage6.cli.server.start.pull_if_newer")
     @patch("vantage6.cli.server.common.ServerContext")
     @patch("vantage6.cli.server.start.docker.from_env")
-    @patch("vantage6.cli.server.start.check_docker_running", return_value=True)
+    @patch("vantage6.cli.common.start.check_docker_running", return_value=True)
     def test_start(
         self,
         docker_check,

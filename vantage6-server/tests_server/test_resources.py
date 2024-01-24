@@ -7,7 +7,7 @@ import json
 import uuid
 
 from http import HTTPStatus
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from flask import Response as BaseResponse
 from flask.testing import FlaskClient
 from flask_socketio import SocketIO
@@ -3431,7 +3431,11 @@ class TestResources(unittest.TestCase):
         results = self.app.get(f"/api/run?task_id={task.id}", headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
-    def test_create_algorithm_store_record(self):
+    @patch(
+        "vantage6.server.resource.algorithm_store.AlgorithmStores._request_algo_store",
+        return_value=("success", HTTPStatus.CREATED),
+    )
+    def test_create_algorithm_store_record(self, _request_algo_store):
         """Test creating an algorithm store record"""
         # initialize resources
         org = Organization()
@@ -3439,7 +3443,12 @@ class TestResources(unittest.TestCase):
         col.save()
         headers = self.create_user_and_login(organization=org)
 
-        record = {"name": "test", "url": "http://test.com", "collaboration_id": col.id}
+        record = {
+            "name": "test",
+            "algorithm_store_url": "http://test.com",
+            "server_url": "http://test2.com",
+            "collaboration_id": col.id,
+        }
 
         # test creating a record without any permissions
         results = self.app.post("/api/algorithmstore", headers=headers, json=record)
@@ -3458,9 +3467,35 @@ class TestResources(unittest.TestCase):
         results = self.app.post("/api/algorithmstore", headers=headers, json=record)
         self.assertEqual(results.status_code, HTTPStatus.CREATED)
 
-        # test creating a record with global permissions
+        # test that doing it again fails because the record already exists
+        results = self.app.post("/api/algorithmstore", headers=headers, json=record)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+
+        # test that we cannot create a record for all collaborations with
+        # collaboration permissions
+        del record["collaboration_id"]
+        results = self.app.post("/api/algorithmstore", headers=headers, json=record)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test creating a record with global permissions. Note that while we
+        # are creating the same algorithm store record, we are doing it for
+        # all collaborations, so it should succeed
         rule = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.EDIT)
         headers = self.create_user_and_login(rules=[rule])
+        results = self.app.post("/api/algorithmstore", headers=headers, json=record)
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        # test that creating a record for a localhost algorithm store fails
+        record["algorithm_store_url"] = "http://localhost:5000"
+        results = self.app.post("/api/algorithmstore", headers=headers, json=record)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+        record["algorithm_store_url"] = "http://127.0.0.1:5000"
+        results = self.app.post("/api/algorithmstore", headers=headers, json=record)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+
+        # by using force we should be able to create a record for a localhost
+        # algorithm store
+        record["force"] = True
         results = self.app.post("/api/algorithmstore", headers=headers, json=record)
         self.assertEqual(results.status_code, HTTPStatus.CREATED)
 
@@ -3581,42 +3616,57 @@ class TestResources(unittest.TestCase):
         col.delete()
         algo_store.delete()
 
-    def test_delete_algorithm_store(self):
+    @patch(
+        "vantage6.server.resource.algorithm_store.AlgorithmStore._request_algo_store",
+    )
+    def test_delete_algorithm_store(self, request_algo_store):
+        mock_response = MagicMock()
+        mock_response.json.return_value = [{"id": "1"}]
+        request_algo_store.return_value = (mock_response, HTTPStatus.OK)
+
         """Test deleting algorithm store records"""
         # initialize resources
         org = Organization()
         col = Collaboration(organizations=[org])
         col.save()
         algo_store = AlgorithmStore(
-            name="test", url="http://test.com", collaboration=col
+            name="test",
+            url="http://test.com",
+            collaboration_id=col.id,
         )
         algo_store.save()
+        params = {"server_url": "http://test.com"}
 
         # test deleting without any permissions
         headers = self.create_user_and_login()
         results = self.app.delete(
-            f"/api/algorithmstore/{algo_store.id}", headers=headers
+            f"/api/algorithmstore/{algo_store.id}", headers=headers, query_string=params
         )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test deleting non-existing record
         rule = Rule.get_by_("collaboration", Scope.COLLABORATION, Operation.EDIT)
         headers = self.create_user_and_login(organization=org, rules=[rule])
-        results = self.app.delete("/api/algorithmstore/9999", headers=headers)
+        results = self.app.delete("/api/algorithmstore/9999", headers=headers, query_string=params)
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
         # test deleting with collaboration permissions
         results = self.app.delete(
-            f"/api/algorithmstore/{algo_store.id}", headers=headers
+            f"/api/algorithmstore/{algo_store.id}", headers=headers, query_string=params
         )
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # test deleting with global permissions
+        algo_store = AlgorithmStore(
+            name="test2",
+            url="http://test.com",
+            collaboration_id=col.id,
+        )
         algo_store.save()
         rule = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.EDIT)
         headers = self.create_user_and_login(rules=[rule])
         results = self.app.delete(
-            f"/api/algorithmstore/{algo_store.id}", headers=headers
+            f"/api/algorithmstore/{algo_store.id}", headers=headers, query_string=params
         )
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
