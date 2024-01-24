@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Resources below '/<api_base>/version'
 """

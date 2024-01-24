@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Resources below '/<api_base>/version'
-"""
 import logging
 
 from flask import g, request
@@ -238,7 +234,7 @@ class Algorithms(AlgorithmStoreResources):
             func = Function(
                 name=function["name"],
                 description=function.get("description", ""),
-                type=function["type"],
+                type_=function["type"],
                 algorithm_id=algorithm.id,
             )
             func.save()
@@ -249,7 +245,7 @@ class Algorithms(AlgorithmStoreResources):
                     arg = Argument(
                         name=argument["name"],
                         description=argument.get("description", ""),
-                        type=argument["type"],
+                        type_=argument["type"],
                         function_id=func.id,
                     )
                     arg.save()

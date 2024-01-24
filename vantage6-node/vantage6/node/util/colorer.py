@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# encoding: utf-8
 import logging
 
 # now we patch Python code to add color support to logging.StreamHandler

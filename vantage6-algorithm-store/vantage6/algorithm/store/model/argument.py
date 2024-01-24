@@ -22,13 +22,15 @@ class Argument(Base):
         ID of the algorithm that this function belongs to
     function : :class:`~.model.algorithm.algorithm`
         Algorithm function that this argument belongs to
+    type_ : str
+        Type of the argument
     """
 
     # fields
     name = Column(String)
     description = Column(String)
     function_id = Column(String, ForeignKey("function.id"))
-    type = Column(String)
+    type_ = Column(String)
 
     # relationships
     function = relationship("Function", back_populates="arguments")

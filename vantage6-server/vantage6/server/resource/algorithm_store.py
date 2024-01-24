@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 import logging
 
 import requests
-from flask import request, g
+from flask import Response, request, g
 from flask_restful import Api
 from http import HTTPStatus
 from sqlalchemy import or_
@@ -72,7 +71,7 @@ class AlgorithmStoreBase(ServicesResources):
         endpoint: str,
         method: str,
         force: bool = False,
-    ) -> dict | None:
+    ) -> tuple[dict | Response, HTTPStatus]:
         """
         Whitelist this vantage6 server url for the algorithm store.
 
@@ -93,15 +92,19 @@ class AlgorithmStoreBase(ServicesResources):
 
         Returns
         -------
-        tuple[dict, HTTPStatus] | None
-            If the algorithm store is not reachable, a dict with an error
-            message is returned. Otherwise, None is returned.
+        tuple[dict | Response, HTTPStatus]
+            The response of the algorithm store and the HTTP status. If the
+            algorithm store is not reachable, a dict with an error message is
+            returned instead of the response.
         """
         # TODO this is not pretty, but it works for now. This should change
         # when we have a separate auth service
-        response = self._execute_algo_store_request(
-            algo_store_url, server_url, endpoint, method, force
-        )
+        try:
+            response = self._execute_algo_store_request(
+                algo_store_url, server_url, endpoint, method, force
+            )
+        except requests.exceptions.ConnectionError:
+            response = None
 
         if not response and (
             algo_store_url.startswith("http://localhost")
@@ -111,9 +114,12 @@ class AlgorithmStoreBase(ServicesResources):
             algo_store_url = algo_store_url.replace(
                 "localhost", "host.docker.internal"
             ).replace("127.0.0.1", "host.docker.internal")
-            response = self._execute_algo_store_request(
-                algo_store_url, server_url, endpoint, method, force
-            )
+            try:
+                response = self._execute_algo_store_request(
+                    algo_store_url, server_url, endpoint, method, force
+                )
+            except requests.exceptions.ConnectionError:
+                response = None
 
         if response is None:
             return {
@@ -188,15 +194,12 @@ class AlgorithmStoreBase(ServicesResources):
         else:
             raise ValueError(f"Method {method} not supported")
 
-        try:
-            return request_function(
-                f"{algo_store_url}/api/{endpoint}",
-                params=params,
-                json=json,
-                headers=headers,
-            )
-        except requests.exceptions.ConnectionError:
-            pass
+        return request_function(
+            f"{algo_store_url}/api/{endpoint}",
+            params=params,
+            json=json,
+            headers=headers,
+        )
 
 
 class AlgorithmStores(AlgorithmStoreBase):

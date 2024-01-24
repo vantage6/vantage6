@@ -76,7 +76,7 @@ def with_authentication() -> callable:
                 )
                 return {"msg": msg}, status_to_return
             elif response.status_code != HTTPStatus.OK:
-                msg = "Token is not valid"
+                msg = f"Token could not be validated (code {response.status_code})"
                 log.warning(msg)
                 return {"msg": msg}, HTTPStatus.UNAUTHORIZED
 

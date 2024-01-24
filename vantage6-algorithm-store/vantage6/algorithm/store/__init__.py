@@ -1,11 +1,11 @@
 """
-The server has a central function in the vantage6 architecture. It stores
-in the database which organizations, collaborations, users, etc.
-exist. It allows the users and nodes to authenticate and subsequently interact
-through the API the server hosts. Finally, it also communicates with
-authenticated nodes and users via the socketIO server that is run here.
+The algorithm store holds the algorithms that are available to the vantage6
+nodes. It is a repository of algorithms that can be coupled to a vantage6
+server. The algorithms are stored in a database and can be managed through
+the API. Note that is possible to couple multiple algorithm stores to a
+vantage6 server. This allows both coupling a community store and a private
+store to a vantage6 server.
 """
-# -*- coding: utf-8 -*-
 import os
 from gevent import monkey
 

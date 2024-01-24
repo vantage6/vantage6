@@ -5,7 +5,6 @@ exist. It allows the users and nodes to authenticate and subsequently interact
 through the API the server hosts. Finally, it also communicates with
 authenticated nodes and users via the socketIO server that is run here.
 """
-# -*- coding: utf-8 -*-
 import os
 from gevent import monkey
 

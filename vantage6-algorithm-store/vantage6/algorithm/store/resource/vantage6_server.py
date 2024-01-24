@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Resources below '/<api_base>/version'
-"""
 import logging
 
 from flask import g, request

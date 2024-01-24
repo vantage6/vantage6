@@ -1,9 +1,8 @@
-# Dockerfile for the node an server images
+# Dockerfile for the algorithm store
 #
-# IMAGES
-# ------
-# * harbor2.vantage6.ai/infrastructure/node:x.x.x
-# * harbor2.vantage6.ai/infrastructure/server:x.x.x
+# IMAGE
+# -----
+# * harbor2.vantage6.ai/infrastructure/algorithm-store:x.x.x
 #
 ARG TAG=latest
 ARG BASE=4.1
@@ -35,7 +34,3 @@ RUN CFLAGS="-I/usr/local/opt/openssl/include" \
   pip install uwsgi -Iv
 
 RUN chmod +x /vantage6/vantage6-algorithm-store/server.sh
-
-# expose the proxy server port
-ARG port=80
-ENV PROXY_SERVER_PORT ${port}

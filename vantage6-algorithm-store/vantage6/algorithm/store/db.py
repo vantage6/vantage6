@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # TODO this is almost a copy of the same file in the server package. Refactor
 # TODO this file is awkward...
 import logging

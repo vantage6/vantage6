@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from http import HTTPStatus
 
 import logging
