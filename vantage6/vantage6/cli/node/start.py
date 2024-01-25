@@ -309,15 +309,37 @@ def cli_node_start(
         f" --dockerized {system_folders_option}"
     )
 
-    info("Running Docker container")
     volumes = []
     for mount in mounts:
         volumes.append(f"{mount[1]}:{mount[0]}")
+
+    extra_mounts = ctx.config.get("node_extra_mounts", [])
+    for mount in extra_mounts:
+        volumes.append(mount)
+
+    extra_env = ctx.config.get("node_extra_env", {})
+    # all extra env var names should be valid identifiers
+    extra_env_invalid = [key for key in extra_env.keys() if not key.isidentifier()]
+    if extra_env_invalid:
+        error(
+            "Environment variable names should be valid identifiers. "
+            f"The following break this rule: {extra_env_invalid}"
+        )
+        exit(1)
+    # we won't accept overwrites of existing env vars
+    env_overwrites = extra_env.keys() & env.keys()
+    if env_overwrites:
+        error(
+            "Cannot overwrite existing node environment variables: " f"{env_overwrites}"
+        )
+        exit(1)
+    env.update(extra_env)
 
     remove_container_if_exists(
         docker_client=docker_client, name=ctx.docker_container_name
     )
 
+    info("Running Docker container")
     container = docker_client.containers.run(
         image,
         command=cmd,
