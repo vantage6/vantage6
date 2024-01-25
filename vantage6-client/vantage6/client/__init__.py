@@ -117,7 +117,7 @@ class UserClient(ClientBase):
             Username used to authenticate
         password : str
             Password used to authenticate
-        mfa_token: str | int
+        mfa_code: str | int
             Six-digit two-factor authentication code
         """
         auth_json = {
