@@ -282,8 +282,8 @@ def proxy_task():
     return response.json(), HTTPStatus.OK
 
 
-@app.route("/result?task_id=<int:id_>", methods=["GET"])
-def proxy_result(id_: int) -> Response:
+@app.route("/result", methods=["GET"])
+def proxy_result() -> Response:
     """
     Obtain and decrypt all results to belong to a certain task
 
@@ -305,24 +305,30 @@ def proxy_result(id_: int) -> Response:
             HTTPStatus.INTERNAL_SERVER_ERROR,
         )
 
+    try:
+        task_id = request.args["task_id"]
+    except KeyError:
+        log.exception("No task id found in request for results...")
+        return {
+            "msg": "No task id found in request from algorithm..."
+        }, HTTPStatus.BAD_REQUEST
+
     # Forward the request
     try:
-        response: Response = make_proxied_request(f"result?task_id={id_}")
+        response: Response = make_proxied_request(f"result?task_id={task_id}")
     except Exception:
-        log.exception(f'Error on "result?task_id={id_}"')
+        log.exception(f'Error on "result?task_id={task_id}"')
         return {
             "msg": "Request failed, see node logs"
         }, HTTPStatus.INTERNAL_SERVER_ERROR
 
     # Attempt to decrypt the results. The enpoint should have returned
     # a list of results
-    unencrypted = []
-    runs = get_response_json_and_handle_exceptions(response)
-    for run in runs:
-        run = decrypt_result(run)
-        unencrypted.append(run)
+    results = get_response_json_and_handle_exceptions(response)
+    for result in results["data"]:
+        result = decrypt_result(result)
 
-    return jsonify(unencrypted), HTTPStatus.OK
+    return jsonify(results), HTTPStatus.OK
 
 
 @app.route("/run/<int:id>", methods=["GET"])
