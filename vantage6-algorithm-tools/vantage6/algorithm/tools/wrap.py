@@ -44,6 +44,12 @@ def wrap_algorithm(log_traceback: bool = True) -> None:
     # get the module name from the environment variable. Note that this env var
     # is set in the Dockerfile and is therefore not encoded.
     module = os.environ.get("PKG_NAME")
+    if not module:
+        error(
+            "No PKG_NAME specified! Make sure that the PKG_NAME environment "
+            "variable is specified in the Dockerfile. Exiting..."
+        )
+        exit(1)
     info(f"wrapper for {module}")
 
     # read input from the mounted input file.
