@@ -8,7 +8,9 @@ from pathlib import Path
 from shutil import rmtree
 
 from vantage6.common import (
-    error, info, debug,
+    error,
+    info,
+    debug,
 )
 from vantage6.common.globals import APPNAME
 
@@ -16,25 +18,30 @@ from vantage6.common.globals import VPN_CONFIG_FILE
 
 
 from vantage6.cli.context import NodeContext
-from vantage6.cli.globals import (
-    DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
-)
-from vantage6.cli.utils import (
-    check_if_docker_daemon_is_running, remove_file
-)
+from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
+from vantage6.cli.utils import check_if_docker_daemon_is_running, remove_file
 from vantage6.cli.node.common import select_node, find_running_node_names
 
 
 @click.command()
 @click.option("-n", "--name", default=None, help="Configuration name")
-@click.option('--system', 'system_folders', flag_value=True,
-              help="Search for configuration in system folders rather than "
-                   "user folders")
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL,
-              help="Search for configuration in user folders rather than "
-                   "system folders. This is the default")
-@click.option('-f', "--force", type=bool, flag_value=True,
-              help='Don\'t ask for confirmation')
+@click.option(
+    "--system",
+    "system_folders",
+    flag_value=True,
+    help="Search for configuration in system folders rather than " "user folders",
+)
+@click.option(
+    "--user",
+    "system_folders",
+    flag_value=False,
+    default=N_FOL,
+    help="Search for configuration in user folders rather than "
+    "system folders. This is the default",
+)
+@click.option(
+    "-f", "--force", type=bool, flag_value=True, help="Don't ask for confirmation"
+)
 def cli_node_remove(name: str, system_folders: bool, force: bool) -> None:
     """
     Delete a node permanently.
@@ -54,14 +61,16 @@ def cli_node_remove(name: str, system_folders: bool, force: bool) -> None:
     post_fix = "system" if system_folders else "user"
     node_container_name = f"{APPNAME}-{name}-{post_fix}"
     if node_container_name in running_node_names:
-        error(f"Node {name} is still running! Please stop the node before "
-              "deleting it.")
+        error(
+            f"Node {name} is still running! Please stop the node before " "deleting it."
+        )
         exit(1)
 
     if not force:
         if not q.confirm(
             "This node will be deleted permanently including its "
-            "configuration. Are you sure?", default=False
+            "configuration. Are you sure?",
+            default=False,
         ).ask():
             info("Node will not be deleted")
             exit(0)
@@ -82,11 +91,11 @@ def cli_node_remove(name: str, system_folders: bool, force: bool) -> None:
             vol.remove()
 
     # remove the VPN configuration file
-    vpn_config_file = os.path.join(ctx.data_dir, 'vpn', VPN_CONFIG_FILE)
-    remove_file(vpn_config_file, 'VPN configuration')
+    vpn_config_file = os.path.join(ctx.data_dir, "vpn", VPN_CONFIG_FILE)
+    remove_file(vpn_config_file, "VPN configuration")
 
     # remove the config file
-    remove_file(ctx.config_file, 'configuration')
+    remove_file(ctx.config_file, "configuration")
 
     # remove the log file. As this process opens the log file above, the log
     # handlers need to be closed before deleting

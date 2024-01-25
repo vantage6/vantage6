@@ -13,9 +13,7 @@ from vantage6.common import (
 from vantage6.server.model.base import Database
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
 from vantage6.server.controller import fixture
-from vantage6.cli.configuration_wizard import (
-    select_configuration_questionaire
-)
+from vantage6.cli.configuration_wizard import select_configuration_questionaire
 from vantage6.cli.context import ServerContext
 from vantage6.server._version import __version__
 
@@ -49,25 +47,21 @@ def click_insert_context(func: callable) -> callable:
     """
 
     # add option decorators
-    @click.option('-n', '--name', default=None, help=help_["name"])
-    @click.option('-c', '--config', default=None, help=help_["config"])
-    @click.option('--system', 'system_folders', flag_value=True)
-    @click.option('--user', 'system_folders', flag_value=False, default=S_FOL)
+    @click.option("-n", "--name", default=None, help=help_["name"])
+    @click.option("-c", "--config", default=None, help=help_["config"])
+    @click.option("--system", "system_folders", flag_value=True)
+    @click.option("--user", "system_folders", flag_value=False, default=S_FOL)
     @wraps(func)
-    def func_with_context(name: str, config: str, system_folders: bool,
-                          *args, **kwargs) -> callable:
-
+    def func_with_context(
+        name: str, config: str, system_folders: bool, *args, **kwargs
+    ) -> callable:
         # select configuration if none supplied
         if config:
-            ctx = ServerContext.from_external_config_file(
-                config, system_folders
-            )
+            ctx = ServerContext.from_external_config_file(config, system_folders)
         else:
             if not name:
                 try:
-                    name = select_configuration_questionaire(
-                        "server", system_folders
-                    )
+                    name = select_configuration_questionaire("server", system_folders)
                 except Exception:
                     error("No configurations could be found!")
                     exit()
@@ -86,15 +80,14 @@ def click_insert_context(func: callable) -> callable:
 
         # initialize database (singleton)
         allow_drop_all = ctx.config["allow_drop_all"]
-        Database().connect(uri=ctx.get_database_uri(),
-                           allow_drop_all=allow_drop_all)
+        Database().connect(uri=ctx.get_database_uri(), allow_drop_all=allow_drop_all)
 
         return func(ctx, *args, **kwargs)
 
     return func_with_context
 
 
-@click.group(name='server')
+@click.group(name="server")
 def cli_server() -> None:
     """Subcommand `vserver-local`."""
     pass
@@ -103,9 +96,9 @@ def cli_server() -> None:
 #
 #   import
 #
-@cli_server.command(name='import')
-@click.argument('file_', type=click.Path(exists=True))
-@click.option('--drop-all', is_flag=True, default=False)
+@cli_server.command(name="import")
+@click.argument("file_", type=click.Path(exists=True))
+@click.option("--drop-all", is_flag=True, default=False)
 @click_insert_context
 def cli_server_import(ctx: ServerContext, file_: str, drop_all: bool) -> None:
     """
@@ -134,7 +127,7 @@ def cli_server_import(ctx: ServerContext, file_: str, drop_all: bool) -> None:
 #
 #   shell
 #
-@cli_server.command(name='shell')
+@cli_server.command(name="shell")
 @click_insert_context
 def cli_server_shell(ctx: ServerContext) -> None:
     """
@@ -156,25 +149,28 @@ def cli_server_shell(ctx: ServerContext) -> None:
 
     # Suppress logging (e.g. on tab-completion)
     import logging
-    logging.getLogger('parso.cache').setLevel(logging.WARNING)
-    logging.getLogger('parso.python.diff').setLevel(logging.WARNING)
-    logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
-    logging.getLogger('asyncio').setLevel(logging.WARNING)
+
+    logging.getLogger("parso.cache").setLevel(logging.WARNING)
+    logging.getLogger("parso.python.diff").setLevel(logging.WARNING)
+    logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
+    logging.getLogger("asyncio").setLevel(logging.WARNING)
 
     logging.warning(
         "Using the shell is not recommended! There are no checks on "
-        "the validity of the data you are entering.")
+        "the validity of the data you are entering."
+    )
     logging.warning("Please use the User interface, Python client, or API.")
     del logging
 
     import vantage6.server.db as db
+
     IPython.embed(config=c)
 
 
 #
 #   version
 #
-@cli_server.command(name='version')
+@cli_server.command(name="version")
 def cli_server_version() -> None:
-    """ Prints current version of vantage6 services installed. """
+    """Prints current version of vantage6 services installed."""
     click.echo(__version__)

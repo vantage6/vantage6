@@ -14,15 +14,15 @@ from .base import Base
 
 
 Permission = Table(
-    'Permission',
+    "Permission",
     Base.metadata,
-    Column('role_id', Integer, ForeignKey('role.id')),
-    Column('user_id', Integer, ForeignKey('user.id'))
+    Column("role_id", Integer, ForeignKey("role.id")),
+    Column("user_id", Integer, ForeignKey("user.id")),
 )
 
 UserPermission = Table(
-    'UserPermission',
+    "UserPermission",
     Base.metadata,
-    Column('rule_id', Integer, ForeignKey('rule.id')),
-    Column('user_id', Integer, ForeignKey('user.id'))
+    Column("rule_id", Integer, ForeignKey("rule.id")),
+    Column("user_id", Integer, ForeignKey("user.id")),
 )

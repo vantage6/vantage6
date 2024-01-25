@@ -14,7 +14,7 @@ from vantage6.common.globals import NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS
 
 
 class NodeClient(ClientBase):
-    """ Node interface to the central server."""
+    """Node interface to the central server."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -41,8 +41,7 @@ class NodeClient(ClientBase):
         super().authenticate({"api_key": api_key}, path="token/node")
 
         # obtain the server authenticatable id
-        id_ = jwt.decode(
-            self.token, options={"verify_signature": False})['sub']
+        id_ = jwt.decode(self.token, options={"verify_signature": False})["sub"]
 
         # get info on how the server sees me
         node = self.request(f"node/{id_}")
@@ -59,32 +58,36 @@ class NodeClient(ClientBase):
             id_=id_,
             name=name,
             organization_id=organization_id,
-            organization_name=organization_name
+            organization_name=organization_name,
         )
 
     def auto_refresh_token(self) -> None:
-        """ Start a thread that refreshes token before it expires. """
+        """Start a thread that refreshes token before it expires."""
         # set up thread to refresh token
         t = Thread(target=self.__refresh_token_worker, daemon=True)
         t.start()
 
     def __refresh_token_worker(self) -> None:
-        """ Keep refreshing token to prevent it from expiring. """
+        """Keep refreshing token to prevent it from expiring."""
         while True:
             # get the time until the token expires
-            expiry_time = jwt.decode(
-                self.token, options={"verify_signature": False})["exp"]
+            expiry_time = jwt.decode(self.token, options={"verify_signature": False})[
+                "exp"
+            ]
             time_until_expiry = expiry_time - time.time()
             if time_until_expiry < NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS:
                 self.refresh_token()
             else:
                 time.sleep(
-                    int(time_until_expiry -
-                        NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS + 1)
+                    int(
+                        time_until_expiry
+                        - NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS
+                        + 1
+                    )
                 )
 
     def request_token_for_container(self, task_id: int, image: str) -> dict:
-        """ Request a container-token at the central server.
+        """Request a container-token at the central server.
 
         This token is used by algorithm containers that run on this
         node. These algorithms can then create subtasks and retrieve
@@ -107,16 +110,15 @@ class NodeClient(ClientBase):
             The container token.
         """
         self.log.debug(
-            f"requesting container token for task_id={task_id} "
-            f"and image={image}"
+            f"requesting container token for task_id={task_id} " f"and image={image}"
         )
-        return self.request('/token/container', method="post", json={
-            "task_id": task_id,
-            "image": image
-        })
+        return self.request(
+            "/token/container", method="post", json={"task_id": task_id, "image": image}
+        )
 
     class Run(ClientBase.SubClient):
-        """ Subclient for the run endpoint. """
+        """Subclient for the run endpoint."""
+
         def list(
             self, state: str, include_task: bool, task_id: int = None
         ) -> dict | list:
@@ -138,15 +140,12 @@ class NodeClient(ClientBase):
             dict | list
                 The algorithm runs as json.
             """
-            params = {
-                'state': state,
-                'node_id': self.parent.whoami.id_
-            }
+            params = {"state": state, "node_id": self.parent.whoami.id_}
             if include_task:
-                params['include'] = 'task'
+                params["include"] = "task"
             if task_id:
-                params['task_id'] = task_id
-            run_data = self.parent.request(endpoint='run', params=params)
+                params["task_id"] = task_id
+            run_data = self.parent.request(endpoint="run", params=params)
 
             if isinstance(run_data, str):
                 self.parent.log.warn("Requesting algorithm runs failed")
@@ -154,22 +153,21 @@ class NodeClient(ClientBase):
                 return {}
 
             # if there are multiple pages of algorithm runs, get them all
-            links = run_data.get('links')
+            links = run_data.get("links")
             page = 1
-            while links and links.get('next'):
+            while links and links.get("next"):
                 page += 1
-                run_data['data'] += self.parent.request(
-                    endpoint='run',
-                    params={**params, 'page': page}
-                )['data']
-                links = run_data.get('links')
+                run_data["data"] += self.parent.request(
+                    endpoint="run", params={**params, "page": page}
+                )["data"]
+                links = run_data.get("links")
 
             # strip pagination links
-            run_data = run_data['data']
+            run_data = run_data["data"]
 
             # Multiple runs
             for run in run_data:
-                run['input'] = self.parent._decrypt_input(run['input'])
+                run["input"] = self.parent._decrypt_input(run["input"])
 
             return run_data
 
@@ -205,17 +203,16 @@ class NodeClient(ClientBase):
                     public_key = org["public_key"]
                 except KeyError:
                     self.parent.log.critical(
-                        'Public key could not be retrieved... Does the '
-                        'initiating organization belong to your organization?'
+                        "Public key could not be retrieved... Does the "
+                        "initiating organization belong to your organization?"
                     )
 
                 data["result"] = self.parent.cryptor.encrypt_bytes_to_str(
-                    data["result"],
-                    public_key
+                    data["result"], public_key
                 )
 
             self.parent.log.debug("Sending algorithm run update to server")
-            return self.parent.request(f"run/{id_}", json=data, method='patch')
+            return self.parent.request(f"run/{id_}", json=data, method="patch")
 
     def is_encrypted_collaboration(self) -> bool:
         """
@@ -246,9 +243,7 @@ class NodeClient(ClientBase):
         id_ : int
             ID of the task.
         """
-        self.run.patch(id_, data={
-            "started_at": datetime.datetime.now().isoformat()
-        })
+        self.run.patch(id_, data={"started_at": datetime.datetime.now().isoformat()})
 
     def get_vpn_config(self) -> tuple[bool, str]:
         """
@@ -265,7 +260,7 @@ class NodeClient(ClientBase):
 
         ovpn_config = response.get("ovpn_config")
         if ovpn_config is None:
-            return False, ''
+            return False, ""
 
         # replace windows line endings to linux style to prevent extra
         # whitespace in writing the file
@@ -288,13 +283,13 @@ class NodeClient(ClientBase):
             Whether or not the refresh was successful
         """
         # Extract the contents of the VPN file
-        with open(ovpn_file, 'r') as file:
+        with open(ovpn_file, "r") as file:
             ovpn_config = file.read()
 
         response = self.request(
             "vpn/update",
             method="POST",
-            json={'vpn_config': ovpn_config},
+            json={"vpn_config": ovpn_config},
         )
         ovpn_config = response.get("ovpn_config")
         if not ovpn_config:
@@ -303,13 +298,16 @@ class NodeClient(ClientBase):
             return False
 
         # write new configuration back to file
-        with open(ovpn_file, 'w') as f:
+        with open(ovpn_file, "w") as f:
             f.write(ovpn_config)
         return True
 
     def check_user_allowed_to_send_task(
-        self, allowed_users: list[str], allowed_orgs: list[str],
-        init_org_id: int, init_user_id: int
+        self,
+        allowed_users: list[str],
+        allowed_orgs: list[str],
+        init_org_id: int,
+        init_user_id: int,
     ) -> bool:
         """
         Check if the user is allowed to send a task to this node
@@ -356,8 +354,7 @@ class NodeClient(ClientBase):
         for allowed_org in allowed_orgs:
             resp = self.request("organization", params={"name": allowed_org})
             for org in resp:
-                if org.get("name") == allowed_org and \
-                        org.get("id") == init_org_id:
+                if org.get("name") == allowed_org and org.get("id") == init_org_id:
                     return True
 
         # not in any of the allowed users or orgs

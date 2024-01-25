@@ -24,14 +24,11 @@ def validate_password(pw: str) -> None:
         # because long passwords can be used for DoS attacks (long pw
         # hashing consumes a lot of resources)
         raise ValueError("Password too long: use at most 128 characters")
-    elif re.search('[0-9]', pw) is None:
+    elif re.search("[0-9]", pw) is None:
         raise ValueError("Password should contain at least one number")
-    elif re.search('[A-Z]', pw) is None:
-        raise ValueError(
-            "Password should contain at least one uppercase letter")
-    elif re.search('[a-z]', pw) is None:
-        raise ValueError(
-            "Password should contain at least one lowercase letter")
+    elif re.search("[A-Z]", pw) is None:
+        raise ValueError("Password should contain at least one uppercase letter")
+    elif re.search("[a-z]", pw) is None:
+        raise ValueError("Password should contain at least one lowercase letter")
     elif pw.isalnum():
-        raise ValueError(
-            "Password should contain at least one special character")
+        raise ValueError("Password should contain at least one special character")

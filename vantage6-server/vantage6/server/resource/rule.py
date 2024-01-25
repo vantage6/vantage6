@@ -7,10 +7,7 @@ from flask import g
 from flask_restful import Api
 from sqlalchemy import or_
 
-from vantage6.server.resource import (
-    with_user,
-    ServicesResources
-)
+from vantage6.server.resource import with_user, ServicesResources
 from vantage6.common import logger_name
 from vantage6.server import db
 from vantage6.server.resource.common.output_schema import RuleSchema
@@ -41,16 +38,16 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     api.add_resource(
         Rules,
         path,
-        endpoint='rule_without_id',
-        methods=('GET',),
-        resource_class_kwargs=services
+        endpoint="rule_without_id",
+        methods=("GET",),
+        resource_class_kwargs=services,
     )
     api.add_resource(
         Rule,
-        path + '/<int:id>',
-        endpoint='rule_with_id',
-        methods=('GET',),
-        resource_class_kwargs=services
+        path + "/<int:id>",
+        endpoint="rule_with_id",
+        methods=("GET",),
+        resource_class_kwargs=services,
     )
 
 
@@ -58,7 +55,6 @@ def setup(api: Api, api_base: str, services: dict) -> None:
 # Resources / API's
 # ------------------------------------------------------------------------------
 class Rules(ServicesResources):
-
     @with_user
     def get(self):
         """List Rules
@@ -137,58 +133,63 @@ class Rules(ServicesResources):
         args = request.args
 
         # filter by any field of this endpoint
-        for param in ['name', 'operation', 'scope']:
+        for param in ["name", "operation", "scope"]:
             if param in args:
                 q = q.filter(getattr(db.Rule, param) == args[param])
 
         # find roles containing a specific rule
-        if 'role_id' in args:
-            role = db.Role.get(args['role_id'])
+        if "role_id" in args:
+            role = db.Role.get(args["role_id"])
             if not role:
                 return {
-                    'msg': f'Role with id={args["role_id"]} does not exist!'
+                    "msg": f'Role with id={args["role_id"]} does not exist!'
                 }, HTTPStatus.BAD_REQUEST
-            q = q.join(db.role_rule_association).join(db.Role)\
-                 .filter(db.Role.id == args['role_id'])
+            q = (
+                q.join(db.role_rule_association)
+                .join(db.Role)
+                .filter(db.Role.id == args["role_id"])
+            )
 
         # find all rules of a specific user. This is done by first joining all
         # tables to find all rules originating from a user's roles. Then, we
         # do an outer join to find all rules that are directly assigned to the
         # user.
-        if 'user_id' in args:
-            user = db.User.get(args['user_id'])
+        if "user_id" in args:
+            user = db.User.get(args["user_id"])
             if not user:
                 return {
-                    'msg': f'User with id={args["user_id"]} does not exist!'
+                    "msg": f'User with id={args["user_id"]} does not exist!'
                 }, HTTPStatus.BAD_REQUEST
-            q = q.join(db.role_rule_association).join(db.Role)\
-                 .join(db.Permission).join(db.User)\
-                 .outerjoin(db.UserPermission,
-                            db.Rule.id == db.UserPermission.c.rule_id)\
-                 .filter(or_(
-                    db.User.id == args['user_id'],
-                    db.UserPermission.c.user_id == args['user_id']
-                 ))
+            q = (
+                q.join(db.role_rule_association)
+                .join(db.Role)
+                .join(db.Permission)
+                .join(db.User)
+                .outerjoin(db.UserPermission, db.Rule.id == db.UserPermission.c.rule_id)
+                .filter(
+                    or_(
+                        db.User.id == args["user_id"],
+                        db.UserPermission.c.user_id == args["user_id"],
+                    )
+                )
+            )
 
         # check if pagination is disabled
         paginate = True
-        if 'no_pagination' in args and args['no_pagination'] == '1':
+        if "no_pagination" in args and args["no_pagination"] == "1":
             paginate = False
 
         # paginate results
         try:
-            page = Pagination.from_query(
-                q, request, db.Rule, paginate=paginate
-            )
+            page = Pagination.from_query(q, request, db.Rule, paginate=paginate)
         except (ValueError, AttributeError) as e:
-            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
 
         # model serialization
         return self.response(page, rule_schema)
 
 
 class Rule(ServicesResources):
-
     @with_user
     def get(self, id):
         """Returns a specific rule
@@ -221,6 +222,6 @@ class Rule(ServicesResources):
         """
         rule = db.Rule.get(id)
         if not rule:
-            return {'msg': f'Rule id={id} not found!'}, HTTPStatus.NOT_FOUND
+            return {"msg": f"Rule id={id} not found!"}, HTTPStatus.NOT_FOUND
 
         return rule_schema.dump(rule, many=False), HTTPStatus.OK

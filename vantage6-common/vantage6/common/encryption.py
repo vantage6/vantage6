@@ -25,17 +25,12 @@ from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 from cryptography.hazmat.primitives.serialization import (
     load_pem_private_key,
-    load_pem_public_key
+    load_pem_public_key,
 )
 
-from vantage6.common import (
-    Singleton,
-    logger_name,
-    bytes_to_base64s,
-    base64s_to_bytes
-)
+from vantage6.common import Singleton, logger_name, bytes_to_base64s, base64s_to_bytes
 
-SEPARATOR = '$'
+SEPARATOR = "$"
 
 
 # ------------------------------------------------------------------------------
@@ -43,6 +38,7 @@ SEPARATOR = '$'
 # ------------------------------------------------------------------------------
 class CryptorBase(metaclass=Singleton):
     """Base class/interface for encryption implementations."""
+
     def __init__(self):
         """Create a new CryptorBase instance."""
         self.log = logging.getLogger(logger_name(__name__))
@@ -186,15 +182,12 @@ class RSACryptor(CryptorBase):
         """
 
         if not private_key_file.exists():
-            raise FileNotFoundError(
-                f"Private key file {private_key_file} not found.")
+            raise FileNotFoundError(f"Private key file {private_key_file} not found.")
 
         self.log.debug("Loading private key")
 
         return load_pem_private_key(
-            private_key_file.read_bytes(),
-            password=None,
-            backend=default_backend()
+            private_key_file.read_bytes(), password=None, backend=default_backend()
         )
 
     @staticmethod
@@ -213,16 +206,14 @@ class RSACryptor(CryptorBase):
             The newly created private key.
         """
         private_key = rsa.generate_private_key(
-            backend=default_backend(),
-            key_size=4096,
-            public_exponent=65537
+            backend=default_backend(), key_size=4096, public_exponent=65537
         )
 
         path.write_bytes(
             private_key.private_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.TraditionalOpenSSL,
-                encryption_algorithm=serialization.NoEncryption()
+                encryption_algorithm=serialization.NoEncryption(),
             )
         )
         return private_key
@@ -256,7 +247,7 @@ class RSACryptor(CryptorBase):
         """
         return private_key.public_key().public_bytes(
             encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
         )
 
     @property
@@ -293,9 +284,7 @@ class RSACryptor(CryptorBase):
         iv_bytes = os.urandom(16)
 
         cipher = Cipher(
-            algorithms.AES(shared_key),
-            modes.CTR(iv_bytes),
-            backend=default_backend()
+            algorithms.AES(shared_key), modes.CTR(iv_bytes), backend=default_backend()
         )
 
         encryptor = cipher.encryptor()
@@ -303,14 +292,10 @@ class RSACryptor(CryptorBase):
 
         # Create a public key instance.
         pubkey = load_pem_public_key(
-            base64s_to_bytes(pubkey_base64s),
-            backend=default_backend()
+            base64s_to_bytes(pubkey_base64s), backend=default_backend()
         )
 
-        encrypted_key_bytes = pubkey.encrypt(
-            shared_key,
-            padding.PKCS1v15()
-        )
+        encrypted_key_bytes = pubkey.encrypt(shared_key, padding.PKCS1v15())
 
         encrypted_key = self.bytes_to_str(encrypted_key_bytes)
         iv = self.bytes_to_str(iv_bytes)
@@ -341,18 +326,13 @@ class RSACryptor(CryptorBase):
         encrypted_msg_bytes = self.str_to_bytes(encrypted_msg)
 
         # Decrypt the shared key using asymmetric encryption
-        shared_key = self.private_key.decrypt(
-            encrypted_key_bytes,
-            padding.PKCS1v15()
-        )
+        shared_key = self.private_key.decrypt(encrypted_key_bytes, padding.PKCS1v15())
 
-        self.log.info(f'Decrypted shared key: {shared_key}')
+        self.log.debug("Decrypted shared key: %s", shared_key)
 
         # Use the shared key for symmetric encryption/decryption of the payload
         cipher = Cipher(
-            algorithms.AES(shared_key),
-            modes.CTR(iv_bytes),
-            backend=default_backend()
+            algorithms.AES(shared_key), modes.CTR(iv_bytes), backend=default_backend()
         )
 
         decryptor = cipher.decryptor()

@@ -8,7 +8,7 @@ from vantage6.common.task_status import TaskStatus
 from vantage6.common.serialization import serialize
 from vantage6.common import bytes_to_base64s
 
-module_name = __name__.split('.')[-1]
+module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
 
 
@@ -61,14 +61,28 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
         # print(org)
 
         # create organization
-        organization = db.Organization(**{k: org[k] for k in [
-            "name", "domain", "address1", "address2", "zipcode",
-            "country", "public_key"
-        ]})
+        organization = db.Organization(
+            **{
+                k: org[k]
+                for k in [
+                    "name",
+                    "domain",
+                    "address1",
+                    "address2",
+                    "zipcode",
+                    "country",
+                    "public_key",
+                ]
+            }
+        )
         organization.save()
         log.debug(f"processed organization={organization.name}")
-        superuserrole = db.Role(name="super", description="Super user",
-                                rules=db.Rule.get(), organization=organization)
+        superuserrole = db.Role(
+            name="super",
+            description="Super user",
+            rules=db.Rule.get(),
+            organization=organization,
+        )
         superuserrole.save()
         # create users
         for usr in org.get("users", {}):
@@ -80,22 +94,26 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
 
     log.info("Create collaborations")
     for col in fixtures.get("collaborations", {}):
-
         # create collaboration
         collaboration = db.Collaboration(
-            name=col.get("name"), encrypted=col.get("encrypted", True))
+            name=col.get("name"), encrypted=col.get("encrypted", True)
+        )
         log.debug(f"processed collaboration={collaboration.name}")
 
         # append organizations to the collaboration
 
         for participant in col.get("participants", {}):
-            if not isinstance(participant, dict) \
-                    or not participant.get('name') \
-                    or not participant.get('api_key'):
-                log.error("Collaboration participants should contain the "
-                          "fields 'name' and 'api_key'. This is not the case "
-                          f"for participant {participant} in collaboration "
-                          f"{collaboration.name}")
+            if (
+                not isinstance(participant, dict)
+                or not participant.get("name")
+                or not participant.get("api_key")
+            ):
+                log.error(
+                    "Collaboration participants should contain the "
+                    "fields 'name' and 'api_key'. This is not the case "
+                    f"for participant {participant} in collaboration "
+                    f"{collaboration.name}"
+                )
                 exit(1)
 
             org_name = participant.get("name")
@@ -114,7 +132,7 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
                 organization=organization,
                 collaboration=collaboration,
                 name=f"{organization.name} - {collaboration.name} Node",
-                api_key=node_api_key
+                api_key=node_api_key,
             )
             node.save()
             log.debug(f"added node {node.name} to {collaboration.name}")
@@ -131,7 +149,7 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
                 collaboration=collaboration,
                 job_id=db.Task.next_job_id(),
                 init_org=init_org,
-                init_user=db.User.get()[0]
+                init_user=db.User.get()[0],
             )
 
             for organization in collaboration.organizations:
@@ -139,7 +157,7 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
                     task=task,
                     input=bytes_to_base64s(serialize({"a": "b"})),
                     organization=organization,
-                    status=TaskStatus.PENDING
+                    status=TaskStatus.PENDING,
                 )
                 run.save()
 

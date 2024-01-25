@@ -12,17 +12,18 @@ from vantage6.server.permission import (
     Scope as S,
     Operation as P,
     PermissionManager,
-    RuleCollection
+    RuleCollection,
 )
 from vantage6.server.resource import (
     get_org_ids_from_collabs,
     with_user,
-    ServicesResources
+    ServicesResources,
 )
 from vantage6.server.resource.common.input_schema import UserInputSchema
 from vantage6.server.resource.common.pagination import Pagination
 from vantage6.server.resource.common.output_schema import (
-    UserSchema, UserWithPermissionDetailsSchema
+    UserSchema,
+    UserWithPermissionDetailsSchema,
 )
 
 
@@ -49,16 +50,16 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     api.add_resource(
         Users,
         path,
-        endpoint='user_without_id',
-        methods=('GET', 'POST'),
-        resource_class_kwargs=services
+        endpoint="user_without_id",
+        methods=("GET", "POST"),
+        resource_class_kwargs=services,
     )
     api.add_resource(
         User,
-        path + '/<int:id>',
-        endpoint='user_with_id',
-        methods=('GET', 'PATCH', 'DELETE'),
-        resource_class_kwargs=services
+        path + "/<int:id>",
+        endpoint="user_with_id",
+        methods=("GET", "PATCH", "DELETE"),
+        resource_class_kwargs=services,
     )
 
 
@@ -75,33 +76,24 @@ def permissions(permissions: PermissionManager) -> None:
         Permission manager instance to which permissions are added
     """
     add = permissions.appender(module_name)
-    add(S.GLOBAL, P.VIEW,
-        description='View any user')
-    add(S.COLLABORATION, P.VIEW,
-        description='View users from your collaboration')
-    add(S.ORGANIZATION, P.VIEW,
-        description='View users from your organization')
-    add(S.GLOBAL, P.CREATE,
-        description='Create a new user for any organization')
-    add(S.COLLABORATION, P.CREATE,
-        description='Create a new user for organizations in your '
-                    'collaborations')
-    add(S.ORGANIZATION, P.CREATE,
-        description='Create a new user for your organization')
-    add(S.GLOBAL, P.EDIT, description='Edit any user')
-    add(S.COLLABORATION, P.EDIT,
-        description='Edit any user in your collaborations')
-    add(S.ORGANIZATION, P.EDIT,
-        description='Edit users from your organization')
-    add(S.OWN, P.EDIT,
-        description='Edit your own info')
-    add(S.GLOBAL, P.DELETE, description='Delete any user')
-    add(S.COLLABORATION, P.DELETE,
-        description='Delete any user in your collaborations')
-    add(S.ORGANIZATION, P.DELETE,
-        description='Delete users from your organization')
-    add(S.OWN, P.DELETE,
-        description='Delete your own account')
+    add(S.GLOBAL, P.VIEW, description="View any user")
+    add(S.COLLABORATION, P.VIEW, description="View users from your collaboration")
+    add(S.ORGANIZATION, P.VIEW, description="View users from your organization")
+    add(S.GLOBAL, P.CREATE, description="Create a new user for any organization")
+    add(
+        S.COLLABORATION,
+        P.CREATE,
+        description="Create a new user for organizations in your " "collaborations",
+    )
+    add(S.ORGANIZATION, P.CREATE, description="Create a new user for your organization")
+    add(S.GLOBAL, P.EDIT, description="Edit any user")
+    add(S.COLLABORATION, P.EDIT, description="Edit any user in your collaborations")
+    add(S.ORGANIZATION, P.EDIT, description="Edit users from your organization")
+    add(S.OWN, P.EDIT, description="Edit your own info")
+    add(S.GLOBAL, P.DELETE, description="Delete any user")
+    add(S.COLLABORATION, P.DELETE, description="Delete any user in your collaborations")
+    add(S.ORGANIZATION, P.DELETE, description="Delete users from your organization")
+    add(S.OWN, P.DELETE, description="Delete your own account")
 
 
 # ------------------------------------------------------------------------------
@@ -111,15 +103,14 @@ user_schema = UserSchema()
 user_input_schema = UserInputSchema()
 user_schema_with_permissions = UserWithPermissionDetailsSchema()
 
-class UserBase(ServicesResources):
 
+class UserBase(ServicesResources):
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
 
 
 class Users(UserBase):
-
     @with_user
     def get(self):
         """List users
@@ -240,78 +231,93 @@ class Users(UserBase):
         q = g.session.query(db.User)
 
         # filter by any field of this endpoint
-        for param in ['username', 'firstname', 'lastname', 'email']:
+        for param in ["username", "firstname", "lastname", "email"]:
             if param in args:
                 q = q.filter(getattr(db.User, param).like(args[param]))
-        if 'organization_id' in args:
-            if not self.r.can_for_org(P.VIEW, args['organization_id']):
+        if "organization_id" in args:
+            if not self.r.can_for_org(P.VIEW, args["organization_id"]):
                 return {
-                    'msg': 'You lack the permission view users from the '
+                    "msg": "You lack the permission view users from the "
                     f'organization with id {args["organization_id"]}!'
                 }, HTTPStatus.UNAUTHORIZED
-            q = q.filter(db.User.organization_id == args['organization_id'])
-        if 'last_seen_till' in args:
-            q = q.filter(db.User.last_seen <= args['last_seen_till'])
-        if 'last_seen_from' in args:
-            q = q.filter(db.User.last_seen >= args['last_seen_from'])
+            q = q.filter(db.User.organization_id == args["organization_id"])
+        if "last_seen_till" in args:
+            q = q.filter(db.User.last_seen <= args["last_seen_till"])
+        if "last_seen_from" in args:
+            q = q.filter(db.User.last_seen >= args["last_seen_from"])
 
         # find users with a particulare role or rule assigned
-        if 'role_id' in args:
-            role = db.Role.get(args['role_id'])
+        if "role_id" in args:
+            role = db.Role.get(args["role_id"])
             if not role:
                 return {
-                    'msg': f'Role with id={args["role_id"]} does not exist!'
+                    "msg": f'Role with id={args["role_id"]} does not exist!'
                 }, HTTPStatus.BAD_REQUEST
             # note: We check if role has organization to ensure that users
             # with limited permissions can still see who have default roles
-            elif not self.r.can_for_org(P.VIEW, role.organization_id) and \
-                    role.organization:
+            elif (
+                not self.r.can_for_org(P.VIEW, role.organization_id)
+                and role.organization
+            ):
                 return {
-                    'msg': 'You lack the permission view users from the '
-                    f'organization that role with id={role.organization_id} '
-                    'belongs to!'
+                    "msg": "You lack the permission view users from the "
+                    f"organization that role with id={role.organization_id} "
+                    "belongs to!"
                 }, HTTPStatus.UNAUTHORIZED
-            q = q.join(db.Permission).join(db.Role)\
-                 .filter(db.Role.id == args['role_id'])
+            q = (
+                q.join(db.Permission)
+                .join(db.Role)
+                .filter(db.Role.id == args["role_id"])
+            )
 
-        if 'rule_id' in args:
-            rule = db.Rule.query.get(args['rule_id'])
+        if "rule_id" in args:
+            rule = db.Rule.query.get(args["rule_id"])
             if not rule:
                 return {
-                    'msg': f'Rule with id={args["rule_id"]} does not exist!'
+                    "msg": f'Rule with id={args["rule_id"]} does not exist!'
                 }, HTTPStatus.BAD_REQUEST
-            q = q.join(db.UserPermission).join(db.Rule)\
-                 .filter(db.Rule.id == args['rule_id'])
+            q = (
+                q.join(db.UserPermission)
+                .join(db.Rule)
+                .filter(db.Rule.id == args["rule_id"])
+            )
 
-        if 'collaboration_id' in args:
-            if not self.r.can_for_col(P.VIEW, args['collaboration_id']):
+        if "collaboration_id" in args:
+            if not self.r.can_for_col(P.VIEW, args["collaboration_id"]):
                 return {
-                    'msg': 'You lack the permission view all users from '
+                    "msg": "You lack the permission view all users from "
                     f'collaboration {args["collaboration_id"]}!'
                 }, HTTPStatus.UNAUTHORIZED
-            q = q.filter(db.User.organization_id.in_(
-                get_org_ids_from_collabs(g.user, args['collaboration_id'])
-            ))
+            q = q.filter(
+                db.User.organization_id.in_(
+                    get_org_ids_from_collabs(g.user, args["collaboration_id"])
+                )
+            )
 
         # check permissions and apply filter if neccessary
         if not self.r.v_glo.can():
             if self.r.v_col.can():
-                q = q.filter(db.User.organization_id.in_(
-                    [org.id
-                     for col in g.user.organization.collaborations
-                     for org in col.organizations]
-                ))
+                q = q.filter(
+                    db.User.organization_id.in_(
+                        [
+                            org.id
+                            for col in g.user.organization.collaborations
+                            for org in col.organizations
+                        ]
+                    )
+                )
             elif self.r.v_org.can():
                 q = q.filter(db.User.organization_id == g.user.organization_id)
             else:
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
+                return {
+                    "msg": "You lack the permission to do that!"
+                }, HTTPStatus.UNAUTHORIZED
 
         # paginate results
         try:
             page = Pagination.from_query(q, request, db.User)
         except (ValueError, AttributeError) as e:
-            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
 
         # model serialization
         return self.response(page, user_schema)
@@ -388,8 +394,10 @@ class Users(UserBase):
         # validate request body
         errors = user_input_schema.validate(data)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
         # check unique constraints
         if db.User.username_exists(data["username"]):
@@ -401,20 +409,22 @@ class Users(UserBase):
         # check if the organization has been provided, if this is the case the
         # user needs global permissions in case it is not their own
         organization_id = g.user.organization_id
-        if data.get('organization_id'):
-            if data['organization_id'] != organization_id:
+        if data.get("organization_id"):
+            if data["organization_id"] != organization_id:
                 if self.r.c_glo.can():
                     # check if organization exists
-                    org = db.Organization.get(data['organization_id'])
+                    org = db.Organization.get(data["organization_id"])
                     if not org:
-                        return {'msg': "Organization does not exist."}, \
-                            HTTPStatus.NOT_FOUND
-            organization_id = data['organization_id']
+                        return {
+                            "msg": "Organization does not exist."
+                        }, HTTPStatus.NOT_FOUND
+            organization_id = data["organization_id"]
 
         # check that user is allowed to create users
         if not self.r.can_for_org(P.CREATE, organization_id):
-            return {'msg': 'You lack the permission to do that!'}, \
-                HTTPStatus.UNAUTHORIZED
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         # process the required roles. It is only possible to assign roles with
         # rules that you already have permission to. This way we ensure you can
@@ -432,19 +442,19 @@ class Users(UserBase):
 
                     # validate that the assigned role is either a general role
                     # or a role pertaining to that organization
-                    if (role_.organization and
-                            role_.organization.id != organization_id):
-                        return {'msg': (
-                            "You can't assign that role as the role belongs to"
-                            " a different organization than the user."
-                        )}, HTTPStatus.UNAUTHORIZED
+                    if role_.organization and role_.organization.id != organization_id:
+                        return {
+                            "msg": (
+                                "You can't assign that role as the role belongs to"
+                                " a different organization than the user."
+                            )
+                        }, HTTPStatus.UNAUTHORIZED
 
         # You can only assign rules that you already have to others.
         potential_rules = data.get("rules")
         rules = []
         if potential_rules:
-            rules = [db.Rule.get(rule) for rule in potential_rules
-                     if db.Rule.get(rule)]
+            rules = [db.Rule.get(rule) for rule in potential_rules if db.Rule.get(rule)]
             denied = self.permissions.check_user_rules(rules)
             if denied:
                 return denied, HTTPStatus.UNAUTHORIZED
@@ -458,7 +468,7 @@ class Users(UserBase):
             rules=rules,
             organization_id=organization_id,
             email=data["email"],
-            password=data["password"]
+            password=data["password"],
         )
 
         # check if the password meets password criteria
@@ -472,7 +482,6 @@ class Users(UserBase):
 
 
 class User(UserBase):
-
     @with_user
     def get(self, id):
         """Get user
@@ -526,18 +535,19 @@ class User(UserBase):
 
         schema = user_schema
 
-        if request.args.get('include_permissions', False):
-              schema = user_schema_with_permissions
+        if request.args.get("include_permissions", False):
+            schema = user_schema_with_permissions
 
         # allow user to be returned if authenticated user can view users from
         # that organization or if the user is the same as the authenticated
         # user.
         same_user = g.user.id == user.id
-        if (same_user or self.r.can_for_org(P.VIEW, user.organization_id)):
+        if same_user or self.r.can_for_org(P.VIEW, user.organization_id):
             return schema.dump(user, many=False), HTTPStatus.OK
         else:
-            return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
     @with_user
     def patch(self, id):
@@ -611,24 +621,28 @@ class User(UserBase):
         """
         user = db.User.get(id)
         if not user:
-            return {"msg": f"user id={id} not found"}, \
-                HTTPStatus.NOT_FOUND
+            return {"msg": f"user id={id} not found"}, HTTPStatus.NOT_FOUND
 
         data = request.get_json()
         # validate request body
         errors = user_input_schema.validate(data, partial=True)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
         if data.get("password"):
-            return {"msg": "You cannot change your password here!"}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "You cannot change your password here!"
+            }, HTTPStatus.BAD_REQUEST
 
         # check permissions
-        if not (self.r.e_own.can() and user == g.user) and \
-                not self.r.can_for_org(P.EDIT, user.organization_id):
-            return {'msg': 'You lack the permission to do that!'}, \
-                HTTPStatus.UNAUTHORIZED
+        if not (self.r.e_own.can() and user == g.user) and not self.r.can_for_org(
+            P.EDIT, user.organization_id
+        ):
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         # update user and check for unique constraints
         if data.get("username") is not None:
@@ -647,28 +661,29 @@ class User(UserBase):
         if data.get("lastname") is not None:
             user.lastname = data["lastname"]
         if data.get("email") is not None:
-            if (user.email != data["email"] and
-                    db.User.exists("email", data["email"])):
+            if user.email != data["email"] and db.User.exists("email", data["email"]):
                 return {
                     "msg": "User with that email already exists."
                 }, HTTPStatus.BAD_REQUEST
             user.email = data["email"]
 
         # request parser is awefull with lists
-        if 'roles' in data:
+        if "roles" in data:
             # validate that these roles exist
             roles = []
-            for role_id in data['roles']:
+            for role_id in data["roles"]:
                 role = db.Role.get(role_id)
                 if not role:
-                    return {'msg': f'Role={role_id} can not be found!'}, \
-                        HTTPStatus.NOT_FOUND
+                    return {
+                        "msg": f"Role={role_id} can not be found!"
+                    }, HTTPStatus.NOT_FOUND
                 roles.append(role)
 
             # validate that user is not changing their own roles
             if user == g.user:
-                return {'msg': "You can't changes your own roles!"}, \
-                    HTTPStatus.UNAUTHORIZED
+                return {
+                    "msg": "You can't changes your own roles!"
+                }, HTTPStatus.UNAUTHORIZED
 
             # validate that user can assign these
             for role in roles:
@@ -678,12 +693,13 @@ class User(UserBase):
 
                 # validate that the assigned role is either a general role or a
                 # role pertaining to that organization
-                if (role.organization and
-                        role.organization.id != user.organization_id):
-                    return {'msg': (
-                        "You can't assign that role to that user as the role "
-                        "belongs to a different organization than the user "
-                    )}, HTTPStatus.UNAUTHORIZED
+                if role.organization and role.organization.id != user.organization_id:
+                    return {
+                        "msg": (
+                            "You can't assign that role to that user as the role "
+                            "belongs to a different organization than the user "
+                        )
+                    }, HTTPStatus.UNAUTHORIZED
 
             # validate that user is not deleting roles they cannot assign
             # e.g. an organization admin is not allowed to delete a root role
@@ -691,29 +707,33 @@ class User(UserBase):
             for role in deleted_roles:
                 denied = self.permissions.check_user_rules(role.rules)
                 if denied:
-                    return {"msg": (
-                        f"You are trying to delete the role {role.name} from "
-                        "this user but that is not allowed because they have "
-                        f"permissions you don't have: {denied['msg']} (and "
-                        "they do!)"
-                    )}, HTTPStatus.UNAUTHORIZED
+                    return {
+                        "msg": (
+                            f"You are trying to delete the role {role.name} from "
+                            "this user but that is not allowed because they have "
+                            f"permissions you don't have: {denied['msg']} (and "
+                            "they do!)"
+                        )
+                    }, HTTPStatus.UNAUTHORIZED
 
             user.roles = roles
 
-        if 'rules' in data:
+        if "rules" in data:
             # validate that these rules exist
             rules = []
-            for rule_id in data['rules']:
+            for rule_id in data["rules"]:
                 rule = db.Rule.get(rule_id)
                 if not rule:
-                    return {'msg': f'Rule={rule_id} can not be found!'}, \
-                        HTTPStatus.NOT_FOUND
+                    return {
+                        "msg": f"Rule={rule_id} can not be found!"
+                    }, HTTPStatus.NOT_FOUND
                 rules.append(rule)
 
             # validate that user is not changing their own rules
             if user == g.user:
-                return {'msg': "You can't changes your own rules!"}, \
-                    HTTPStatus.UNAUTHORIZED
+                return {
+                    "msg": "You can't changes your own rules!"
+                }, HTTPStatus.UNAUTHORIZED
 
             # validate that user can assign these
             denied = self.permissions.check_user_rules(rules)
@@ -725,10 +745,12 @@ class User(UserBase):
             deleted_rules = [r for r in user.rules if r not in rules]
             denied = self.permissions.check_user_rules(deleted_rules)
             if denied:
-                return {"msg": (
-                    f"{denied['msg']}. You can't delete permissions for "
-                    "another user that you don't have yourself!"
-                )}, HTTPStatus.UNAUTHORIZED
+                return {
+                    "msg": (
+                        f"{denied['msg']}. You can't delete permissions for "
+                        "another user that you don't have yourself!"
+                    )
+                }, HTTPStatus.UNAUTHORIZED
 
             user.rules = rules
 
@@ -792,18 +814,19 @@ class User(UserBase):
         """
         user = db.User.get(id)
         if not user:
-            return {"msg": f"user id={id} not found"}, \
-                HTTPStatus.NOT_FOUND
+            return {"msg": f"user id={id} not found"}, HTTPStatus.NOT_FOUND
 
-        if not (self.r.d_own.can() and user == g.user) and \
-                not self.r.can_for_org(P.DELETE, user.organization_id):
-            return {'msg': 'You lack the permission to do that!'}, \
-                HTTPStatus.UNAUTHORIZED
+        if not (self.r.d_own.can() and user == g.user) and not self.r.can_for_org(
+            P.DELETE, user.organization_id
+        ):
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         # check if user created any tasks
         if user.created_tasks:
             params = request.args
-            if not params.get('delete_dependents', False):
+            if not params.get("delete_dependents", False):
                 return {
                     "msg": f"User has created {len(user.created_tasks)} tasks."
                     " Please delete those first, or set the "
@@ -811,12 +834,13 @@ class User(UserBase):
                     "automatically together with this user."
                 }, HTTPStatus.BAD_REQUEST
             else:
-                log.warn(f"Deleting {len(user.created_tasks)} tasks created by"
-                         f" user id={id}")
+                log.warn(
+                    f"Deleting {len(user.created_tasks)} tasks created by"
+                    f" user id={id}"
+                )
                 for task in user.created_tasks:
                     task.delete()
 
         user.delete()
         log.info(f"user id={id} is removed from the database")
-        return {"msg": f"user id={id} is removed from the database"}, \
-            HTTPStatus.OK
+        return {"msg": f"user id={id} is removed from the database"}, HTTPStatus.OK

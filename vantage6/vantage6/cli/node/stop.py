@@ -14,18 +14,30 @@ from vantage6.cli.node.common import find_running_node_names
 
 @click.command()
 @click.option("-n", "--name", default=None, help="Configuration name")
-@click.option('--system', 'system_folders', flag_value=True,
-              help="Search for configuration in system folders instead of "
-                   "user folders")
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL,
-              help="Search for configuration in the user folders instead of "
-                   "system folders. This is the default.")
-@click.option('--all', 'all_nodes', flag_value=True,
-              help="Stop all running nodes")
-@click.option('--force', 'force', flag_value=True,
-              help="Kill nodes instantly; don't wait for them to shut down")
-def cli_node_stop(name: str, system_folders: bool, all_nodes: bool,
-                  force: bool) -> None:
+@click.option(
+    "--system",
+    "system_folders",
+    flag_value=True,
+    help="Search for configuration in system folders instead of " "user folders",
+)
+@click.option(
+    "--user",
+    "system_folders",
+    flag_value=False,
+    default=N_FOL,
+    help="Search for configuration in the user folders instead of "
+    "system folders. This is the default.",
+)
+@click.option("--all", "all_nodes", flag_value=True, help="Stop all running nodes")
+@click.option(
+    "--force",
+    "force",
+    flag_value=True,
+    help="Kill nodes instantly; don't wait for them to shut down",
+)
+def cli_node_stop(
+    name: str, system_folders: bool, all_nodes: bool, force: bool
+) -> None:
     """
     Stop one or all running nodes.
     """
@@ -39,9 +51,11 @@ def cli_node_stop(name: str, system_folders: bool, all_nodes: bool,
         return
 
     if force:
-        warning('Forcing the node to stop will not terminate helper '
-                'containers, neither will it remove routing rules made on the '
-                'host!')
+        warning(
+            "Forcing the node to stop will not terminate helper "
+            "containers, neither will it remove routing rules made on the "
+            "host!"
+        )
 
     if all_nodes:
         for name in running_node_names:
@@ -53,10 +67,10 @@ def cli_node_stop(name: str, system_folders: bool, all_nodes: bool,
             info(f"Stopped the {Fore.GREEN}{name}{Style.RESET_ALL} Node.")
     else:
         if not name:
-            name = q.select("Select the node you wish to stop:",
-                            choices=running_node_names).ask()
+            name = q.select(
+                "Select the node you wish to stop:", choices=running_node_names
+            ).ask()
         else:
-
             post_fix = "system" if system_folders else "user"
             name = f"{APPNAME}-{name}-{post_fix}"
 

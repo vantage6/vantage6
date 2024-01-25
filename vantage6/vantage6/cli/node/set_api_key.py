@@ -11,14 +11,21 @@ from vantage6.cli.node.common import select_node
 @click.command()
 @click.option("-n", "--name", default=None, help="Configuration name")
 @click.option("--api-key", default=None, help="New API key")
-@click.option('--system', 'system_folders', flag_value=True,
-              help="Search for configuration in system folders rather than "
-                   "user folders")
-@click.option('--user', 'system_folders', flag_value=False, default=N_FOL,
-              help="Search for configuration in user folders rather than "
-                   "system folders. This is the default")
-def cli_node_set_api_key(name: str, api_key: str,
-                         system_folders: bool) -> None:
+@click.option(
+    "--system",
+    "system_folders",
+    flag_value=True,
+    help="Search for configuration in system folders rather than " "user folders",
+)
+@click.option(
+    "--user",
+    "system_folders",
+    flag_value=False,
+    default=N_FOL,
+    help="Search for configuration in user folders rather than "
+    "system folders. This is the default",
+)
+def cli_node_set_api_key(name: str, api_key: str, system_folders: bool) -> None:
     """
     Put a new API key into the node configuration file
     """
@@ -38,8 +45,7 @@ def cli_node_set_api_key(name: str, api_key: str,
     conf_mgr = NodeConfigurationManager.from_file(ctx.config_file)
 
     # set new api key, and save the file
-    ctx.config['api_key'] = api_key
+    ctx.config["api_key"] = api_key
     conf_mgr.put(ctx.config)
     conf_mgr.save(ctx.config_file)
-    info("Your new API key has been uploaded to the config file "
-         f"{ctx.config_file}.")
+    info("Your new API key has been uploaded to the config file " f"{ctx.config_file}.")
