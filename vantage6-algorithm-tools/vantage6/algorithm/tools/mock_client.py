@@ -10,7 +10,7 @@ from vantage6.algorithm.tools.wrappers import load_data
 from vantage6.algorithm.tools.util import info
 from vantage6.algorithm.tools.preprocessing import preprocess_data
 
-module_name = __name__.split('.')[1]
+module_name = __name__.split(".")[1]
 
 
 class MockAlgorithmClient:
@@ -51,9 +51,13 @@ class MockAlgorithmClient:
         Set the node ids to this value. The first value is used for this node,
         the rest for child tasks. Defaults to [0, 1, 2, ...].
     """
+
     def __init__(
-        self, datasets: list[list[dict]], module: str,
-        collaboration_id: int = None, organization_ids: int = None,
+        self,
+        datasets: list[list[dict]],
+        module: str,
+        collaboration_id: int = None,
+        organization_ids: int = None,
         node_ids: int = None,
     ) -> None:
         self.log = logging.getLogger(module_name)
@@ -106,7 +110,7 @@ class MockAlgorithmClient:
                         database_uri=dataset.get("database"),
                         db_type=dataset.get("db_type"),
                         query=dataset.get("query"),
-                        sheet_name=dataset.get("sheet_name")
+                        sheet_name=dataset.get("sheet_name"),
                     )
                 df = preprocess_data(df, dataset.get("preprocessing", []))
                 org_data.append(df)
@@ -118,8 +122,8 @@ class MockAlgorithmClient:
         self.runs = []
         self.results = []
 
-        self.image = 'mock_image'
-        self.database = 'mock_database'
+        self.image = "mock_image"
+        self.database = "mock_database"
 
         self.task = self.Task(self)
         self.result = self.Result(self)
@@ -148,7 +152,7 @@ class MockAlgorithmClient:
         list
             List of task results.
         """
-        info('Mocking waiting for results')
+        info("Mocking waiting for results")
         return self.result.from_task(task_id)
 
     class SubClient:
@@ -160,6 +164,7 @@ class MockAlgorithmClient:
         parent : MockAlgorithmClient
             The parent client
         """
+
         def __init__(self, parent) -> None:
             self.parent: MockAlgorithmClient = parent
 
@@ -167,13 +172,17 @@ class MockAlgorithmClient:
         """
         Task subclient for the MockAlgorithmClient
         """
+
         def __init__(self, parent) -> None:
             super().__init__(parent)
             self.last_result_id = 0
 
         def create(
-            self, input_: dict, organizations: list[int], name: str = "mock",
-            description: str = "mock"
+            self,
+            input_: dict,
+            organizations: list[int],
+            name: str = "mock",
+            description: str = "mock",
         ) -> int:
             """
             Create a new task with the MockProtocol and return the task id.
@@ -227,60 +236,63 @@ class MockAlgorithmClient:
                 # detect which decorators are used and provide the mock client
                 # and/or mocked data that is required to the method
                 mocked_kwargs = {}
-                if getattr(method, 'wrapped_in_algorithm_client_decorator',
-                           False):
-                    mocked_kwargs['mock_client'] = client_copy
-                if getattr(method, 'wrapped_in_data_decorator', False):
-                    mocked_kwargs['mock_data'] = data
+                if getattr(method, "wrapped_in_algorithm_client_decorator", False):
+                    mocked_kwargs["mock_client"] = client_copy
+                if getattr(method, "wrapped_in_data_decorator", False):
+                    mocked_kwargs["mock_data"] = data
 
                 result = method(*args, **kwargs, **mocked_kwargs)
 
                 self.last_result_id += 1
-                self.parent.results.append({
-                    "id": self.last_result_id,
-                    "result": json.dumps(result),
-                    "run": {
+                self.parent.results.append(
+                    {
                         "id": self.last_result_id,
-                        "link": f"/api/run/{self.last_result_id}",
-                        "methods": ["GET", "PATCH"]
-                    },
-                    "task": {
-                        "id": new_task_id,
-                        "link": f"/api/task/{new_task_id}",
-                        "methods": ["GET", "PATCH"]
-                    },
-                })
-                self.parent.runs.append({
-                    "id": self.last_result_id,
-                    "started_at": "2021-01-01T00:00:00.000000",
-                    "assigned_at": "2021-01-01T00:00:00.000000",
-                    "finished_at": "2021-01-01T00:00:00.000000",
-                    "log": "mock_log",
-                    "ports": [],
-                    "status": "completed",
-                    "input": json.dumps(input_),
-                    "results": {
+                        "result": json.dumps(result),
+                        "run": {
+                            "id": self.last_result_id,
+                            "link": f"/api/run/{self.last_result_id}",
+                            "methods": ["GET", "PATCH"],
+                        },
+                        "task": {
+                            "id": new_task_id,
+                            "link": f"/api/task/{new_task_id}",
+                            "methods": ["GET", "PATCH"],
+                        },
+                    }
+                )
+                self.parent.runs.append(
+                    {
                         "id": self.last_result_id,
-                        "link": f"/api/result/{self.last_result_id}",
-                        "methods": ["GET", "PATCH"]
-                    },
-                    "node": {
-                        "id": org_id,
-                        "ip": None,
-                        "name": "mock_node",
-                        "status": "online",
-                    },
-                    "organization": {
-                        "id": org_id,
-                        "link": f"/api/organization/{org_id}",
-                        "methods": ["GET", "PATCH"]
-                    },
-                    "task": {
-                        "id": new_task_id,
-                        "link": f"/api/task/{new_task_id}",
-                        "methods": ["GET", "PATCH"]
-                    },
-                })
+                        "started_at": "2021-01-01T00:00:00.000000",
+                        "assigned_at": "2021-01-01T00:00:00.000000",
+                        "finished_at": "2021-01-01T00:00:00.000000",
+                        "log": "mock_log",
+                        "ports": [],
+                        "status": "completed",
+                        "input": json.dumps(input_),
+                        "results": {
+                            "id": self.last_result_id,
+                            "link": f"/api/result/{self.last_result_id}",
+                            "methods": ["GET", "PATCH"],
+                        },
+                        "node": {
+                            "id": org_id,
+                            "ip": None,
+                            "name": "mock_node",
+                            "status": "online",
+                        },
+                        "organization": {
+                            "id": org_id,
+                            "link": f"/api/organization/{org_id}",
+                            "methods": ["GET", "PATCH"],
+                        },
+                        "task": {
+                            "id": new_task_id,
+                            "link": f"/api/task/{new_task_id}",
+                            "methods": ["GET", "PATCH"],
+                        },
+                    }
+                )
 
             collab_id = self.parent.collaboration_id
             task = {
@@ -295,18 +307,18 @@ class MockAlgorithmClient:
                 "init_user": {
                     "id": 1,
                     "link": "/api/user/1",
-                    "methods": ["GET", "DELETE", "PATCH"]
+                    "methods": ["GET", "DELETE", "PATCH"],
                 },
                 "init_org": {
                     "id": self.parent.organization_id,
                     "link": f"/api/organization/{self.parent.organization_id}",
-                    "methods": ["GET", "PATCH"]
+                    "methods": ["GET", "PATCH"],
                 },
                 "parent": None,
                 "collaboration": {
                     "id": collab_id,
                     "link": f"/api/collaboration/{collab_id}",
-                    "methods": ["DELETE", "PATCH", "GET"]
+                    "methods": ["DELETE", "PATCH", "GET"],
                 },
                 "job_id": 1,
                 "children": None,
@@ -329,9 +341,7 @@ class MockAlgorithmClient:
                 The task details.
             """
             if task_id >= len(self.parent.tasks):
-                return {
-                    "msg": f"Could not find task with id {task_id}"
-                }
+                return {"msg": f"Could not find task with id {task_id}"}
             return self.parent.tasks[task_id]
 
         def _select_node(self, org_id: int) -> int:
@@ -348,9 +358,11 @@ class MockAlgorithmClient:
             int
                 The node id.
             """
-            if not self.parent.all_node_ids or \
-                    not self.parent.all_organization_ids or \
-                    org_id not in self.parent.all_organization_ids:
+            if (
+                not self.parent.all_node_ids
+                or not self.parent.all_organization_ids
+                or org_id not in self.parent.all_organization_ids
+            ):
                 return org_id
             org_idx = self.parent.all_organization_ids.index(org_id)
             return self.parent.all_node_ids[org_idx]
@@ -359,6 +371,7 @@ class MockAlgorithmClient:
         """
         Run subclient for the MockAlgorithmClient
         """
+
         def get(self, id_: int) -> dict:
             """
             Get mocked run by ID
@@ -376,9 +389,7 @@ class MockAlgorithmClient:
             for run in self.parent.runs:
                 if run.get("id") == id_:
                     return run
-            return {
-                "msg": f"Could not find run with id {id_}"
-            }
+            return {"msg": f"Could not find run with id {id_}"}
 
         def from_task(self, task_id: int) -> list[dict]:
             """
@@ -404,6 +415,7 @@ class MockAlgorithmClient:
         """
         Result subclient for the MockAlgorithmClient
         """
+
         def get(self, id_: int) -> Any:
             """
             Get mocked result by ID
@@ -421,9 +433,7 @@ class MockAlgorithmClient:
             for result in self.parent.results:
                 if result.get("id") == id_:
                     return json.loads(result.get("result"))
-            return {
-                "msg": f"Could not find result with id {id_}"
-            }
+            return {"msg": f"Could not find result with id {id_}"}
 
         def from_task(self, task_id: int) -> list[Any]:
             """
@@ -449,6 +459,7 @@ class MockAlgorithmClient:
         """
         Organization subclient for the MockAlgorithmClient
         """
+
         def get(self, id_) -> dict:
             """
             Get mocked organization by ID
@@ -463,11 +474,11 @@ class MockAlgorithmClient:
             dict
                 A mocked organization.
             """
-            if not id_ == self.parent.organization_id and \
-                    id_ not in self.parent.organizations_with_data:
-                return {
-                    "msg": f"Organization {id_} not found."
-                }
+            if (
+                not id_ == self.parent.organization_id
+                and id_ not in self.parent.organizations_with_data
+            ):
+                return {"msg": f"Organization {id_} not found."}
             return {
                 "id": id_,
                 "name": f"mock-{id_}",
@@ -481,7 +492,7 @@ class MockAlgorithmClient:
                 "users": f"/api/user?organization_id={id_}",
                 "tasks": f"/api/task?init_org_id={id_}",
                 "nodes": f"/api/node?organization_id={id_}",
-                "runs": f"/api/run?organization_id={id_}"
+                "runs": f"/api/run?organization_id={id_}",
             }
 
         def list(self) -> list[dict]:
@@ -502,6 +513,7 @@ class MockAlgorithmClient:
         """
         Collaboration subclient for the MockAlgorithmClient
         """
+
         def get(self, is_encrypted: bool = True) -> dict:
             """
             Get mocked collaboration
@@ -523,14 +535,14 @@ class MockAlgorithmClient:
                 "encrypted": is_encrypted,
                 "tasks": f"/api/task?collaboration_id={collab_id}",
                 "nodes": f"/api/node?collaboration_id={collab_id}",
-                "organizations":
-                    f"/api/organization?collaboration_id={collab_id}"
+                "organizations": f"/api/organization?collaboration_id={collab_id}",
             }
 
     class Node(SubClient):
         """
         Node subclient for the MockAlgorithmClient
         """
+
         def get(self, is_online: bool = True) -> dict:
             """
             Get mocked node
@@ -558,21 +570,14 @@ class MockAlgorithmClient:
                 "collaboration": {
                     "id": collab_id,
                     "link": f"/api/collaboration/{collab_id}",
-                    "methods": [
-                        "DELETE",
-                        "PATCH",
-                        "GET"
-                    ]
+                    "methods": ["DELETE", "PATCH", "GET"],
                 },
                 "last_seen": "2021-01-01T00:00:00.000000",
                 "type": "node",
                 "organization": {
                     "id": node_id,
                     "link": f"/api/organization/{node_id}",
-                    "methods": [
-                        "GET",
-                        "PATCH"
-                    ]
+                    "methods": ["GET", "PATCH"],
                 },
             }
 

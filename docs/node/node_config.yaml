@@ -65,6 +65,7 @@ databases:
 
   - label: omop
     uri: jdbc:postgresql://host.docker.internal:5454/postgres
+    type: omop
     # additional environment variables that are passed to the algorithm
     # containers (or their wrapper). This can be used to for usernames
     # and passwords for example. Note that these environment variables are
@@ -73,7 +74,7 @@ databases:
     # algorithms regard less of the data source the user specifies you can
     # use the `algorithm_env` setting.
     env:
-      username: admin@admin.com
+      user: admin@admin.com
       password: admin
       dbms: postgresql
       cdm_database: postgres
@@ -97,8 +98,8 @@ policies:
   # Control which algorithm images are allowed to run on this node. This is
   # expected to be a valid regular expression.
   allowed_algorithms:
-    - ^harbor2.vantage6.ai/[a-zA-Z]+/[a-zA-Z]+
-    - myalgorithm.ai/some-algorithm
+    - ^harbor2\.vantage6\.ai/[a-zA-Z]+/[a-zA-Z]+
+    - ^myalgorithm\.ai/some-algorithm
   # Define which users are allowed to run algorithms on your node by their ID
   allowed_users:
     - 2
@@ -151,22 +152,22 @@ ssh-tunnels:
         username: username
         key: /path/to/private_key.pem
 
-      # Once the SSH connection is established, a tunnel is created to
-      # forward traffic from the local machine to the remote machine.
-      tunnel:
+    # Once the SSH connection is established, a tunnel is created to
+    # forward traffic from the local machine to the remote machine.
+    tunnel:
 
-        # The port and ip on the tunnel container. The ip is always
-        # 0.0.0.0 as we want the algorithm container to be able to
-        # connect.
-        bind:
-          ip: 0.0.0.0
-          port: 8000
+      # The port and ip on the tunnel container. The ip is always
+      # 0.0.0.0 as we want the algorithm container to be able to
+      # connect.
+      bind:
+        ip: 0.0.0.0
+        port: 8000
 
-        # The port and ip on the remote machine. If the data source runs
-        # on this machine, the ip most likely is 127.0.0.1.
-        dest:
-          ip: 127.0.0.1
-          port: 8000
+      # The port and ip on the remote machine. If the data source runs
+      # on this machine, the ip most likely is 127.0.0.1.
+      dest:
+        ip: 127.0.0.1
+        port: 8000
 
 # Whitelist URLs and/or IP addresses that the algorithm containers are
 # allowed to reach using the http protocol.

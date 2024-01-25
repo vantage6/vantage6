@@ -23,7 +23,7 @@ from vantage6.common import warning, info, error, check_config_writeable
 
 from vantage6.cli.configuration_wizard import (
     configuration_wizard,
-    select_configuration_questionaire
+    select_configuration_questionaire,
 )
 from vantage6.node._version import __version__
 
@@ -42,7 +42,7 @@ def cli_node_list() -> None:
     """Lists all nodes in the default configuration directories."""
 
     # FIXME: use package 'table' for this.
-    click.echo("\nName"+(21*" ")+"System/User")
+    click.echo("\nName" + (21 * " ") + "System/User")
     click.echo("-" * 70)
 
     configs, f1 = NodeContext.available_configurations(system_folders=True)
@@ -53,9 +53,10 @@ def cli_node_list() -> None:
     for config in configs:
         click.echo(f"{config.name:25} User   ")
 
-    click.echo("-"*70)
-    warning(f"Number of failed imports: "
-            f"{Fore.YELLOW}{len(f1)+len(f2)}{Style.RESET_ALL}")
+    click.echo("-" * 70)
+    warning(
+        f"Number of failed imports: " f"{Fore.YELLOW}{len(f1)+len(f2)}{Style.RESET_ALL}"
+    )
 
 
 #
@@ -63,11 +64,19 @@ def cli_node_list() -> None:
 #
 @cli_node.command(name="new")
 @click.option("-n", "--name", default=None, help="Configuration name")
-@click.option('--system', 'system_folders', flag_value=True,
-              help="Use configuration from system folders (default)")
-@click.option('--user', 'system_folders', flag_value=False,
-              default=constants.DEFAULT_NODE_SYSTEM_FOLDERS,
-              help="Use configuration from user folders")
+@click.option(
+    "--system",
+    "system_folders",
+    flag_value=True,
+    help="Use configuration from system folders (default)",
+)
+@click.option(
+    "--user",
+    "system_folders",
+    flag_value=False,
+    default=constants.DEFAULT_NODE_SYSTEM_FOLDERS,
+    help="Use configuration from user folders",
+)
 def cli_node_new_configuration(name: str, system_folders: bool) -> None:
     """Create a new configation file.
 
@@ -101,11 +110,19 @@ def cli_node_new_configuration(name: str, system_folders: bool) -> None:
 #
 @cli_node.command(name="files")
 @click.option("-n", "--name", default=None, help="Configuration name")
-@click.option('--system', 'system_folders', flag_value=True,
-              help="Use configuration from system folders (default)")
-@click.option('--user', 'system_folders', flag_value=False,
-              default=constants.DEFAULT_NODE_SYSTEM_FOLDERS,
-              help="Use configuration from user folders")
+@click.option(
+    "--system",
+    "system_folders",
+    flag_value=True,
+    help="Use configuration from system folders (default)",
+)
+@click.option(
+    "--user",
+    "system_folders",
+    flag_value=False,
+    default=constants.DEFAULT_NODE_SYSTEM_FOLDERS,
+    help="Use configuration from user folders",
+)
 def cli_node_files(name: str, system_folders: bool) -> None:
     """Print out the paths of important files.
 
@@ -113,8 +130,7 @@ def cli_node_files(name: str, system_folders: bool) -> None:
     it returns the absolute path to the output.
     """
     # select configuration name if none supplied
-    name = name if name else \
-        select_configuration_questionaire("node", system_folders)
+    name = name if name else select_configuration_questionaire("node", system_folders)
 
     # raise error if config could not be found
     if not NodeContext.config_exists(name, system_folders):
@@ -135,20 +151,35 @@ def cli_node_files(name: str, system_folders: bool) -> None:
 #
 #   start
 #
-@cli_node.command(name='start')
+@cli_node.command(name="start")
 @click.option("-n", "--name", default=None, help="Configuration name")
-@click.option("-c", "--config", default=None,
-              help='Absolute path to configuration-file; overrides "name"')
-@click.option('--system', 'system_folders', flag_value=True,
-              help="Use configuration from system folders (default)")
-@click.option('--user', 'system_folders', flag_value=False,
-              default=constants.DEFAULT_NODE_SYSTEM_FOLDERS,
-              help="Use configuration from user folders")
-@click.option('--dockerized/-non-dockerized', default=False,
-              help=("Whether to use DockerNodeContext or regular NodeContext "
-                    "(default)"))
-def cli_node_start(name: str, config: str, system_folders: bool,
-                   dockerized: bool) -> None:
+@click.option(
+    "-c",
+    "--config",
+    default=None,
+    help='Absolute path to configuration-file; overrides "name"',
+)
+@click.option(
+    "--system",
+    "system_folders",
+    flag_value=True,
+    help="Use configuration from system folders (default)",
+)
+@click.option(
+    "--user",
+    "system_folders",
+    flag_value=False,
+    default=constants.DEFAULT_NODE_SYSTEM_FOLDERS,
+    help="Use configuration from user folders",
+)
+@click.option(
+    "--dockerized/-non-dockerized",
+    default=False,
+    help=("Whether to use DockerNodeContext or regular NodeContext " "(default)"),
+)
+def cli_node_start(
+    name: str, config: str, system_folders: bool, dockerized: bool
+) -> None:
     """Start the node instance.
 
     If no name or config is specified the default.yaml configuation is used.
@@ -192,7 +223,7 @@ def cli_node_start(name: str, config: str, system_folders: bool,
 #
 #   version
 #
-@cli_node.command(name='version')
+@cli_node.command(name="version")
 def cli_node_version() -> None:
     """Returns current version of vantage6 services installed."""
     click.echo(__version__)

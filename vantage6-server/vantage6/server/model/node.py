@@ -25,9 +25,10 @@ class Node(Authenticatable):
     organization : :class:`~.model.organization.Organization`
         Organization that the node belongs to
     """
-    _hidden_attributes = ['api_key']
 
-    id = Column(Integer, ForeignKey('authenticatable.id'), primary_key=True)
+    _hidden_attributes = ["api_key"]
+
+    id = Column(Integer, ForeignKey("authenticatable.id"), primary_key=True)
 
     # fields
     name = Column(String, unique=True)
@@ -36,13 +37,13 @@ class Node(Authenticatable):
     organization_id = Column(Integer, ForeignKey("organization.id"))
 
     # relationships
-    collaboration = relationship("Collaboration", back_populates='nodes')
-    organization = relationship("Organization", back_populates='nodes')
+    collaboration = relationship("Collaboration", back_populates="nodes")
+    organization = relationship("Organization", back_populates="nodes")
     config = relationship("NodeConfig", back_populates="node")
 
     # the type specification in Authenticatable
     __mapper_args__ = {
-        'polymorphic_identity': 'node',
+        "polymorphic_identity": "node",
     }
 
     @validates("api_key")
@@ -79,8 +80,8 @@ class Node(Authenticatable):
             True if the provided key matches the stored key, False otherwise
         """
         if self.api_key is not None:
-            expected_hash = self.api_key.encode('utf8')
-            return bcrypt.checkpw(key.encode('utf8'), expected_hash)
+            expected_hash = self.api_key.encode("utf8")
+            return bcrypt.checkpw(key.encode("utf8"), expected_hash)
         return False
 
     @classmethod
@@ -122,7 +123,7 @@ class Node(Authenticatable):
         """
         session = DatabaseSessionManager.get_session()
 
-        result = session.query(cls).filter_by(status='online').all()
+        result = session.query(cls).filter_by(status="online").all()
         session.commit()
         return result
 
@@ -145,10 +146,13 @@ class Node(Authenticatable):
             False otherwise.
         """
         session = DatabaseSessionManager.get_session()
-        result = session.query(cls).filter_by(
-            organization_id=organization_id,
-            collaboration_id=collaboration_id
-        ).scalar()
+        result = (
+            session.query(cls)
+            .filter_by(
+                organization_id=organization_id, collaboration_id=collaboration_id
+            )
+            .scalar()
+        )
         session.commit()
         return result
 

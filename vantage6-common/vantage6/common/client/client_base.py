@@ -1,4 +1,3 @@
-
 import logging
 import time
 import requests
@@ -11,7 +10,7 @@ from vantage6.common.encryption import RSACryptor, DummyCryptor
 from vantage6.common.globals import STRING_ENCODING
 from vantage6.common.client.utils import print_qr_code
 
-module_name = __name__.split('.')[1]
+module_name = __name__.split(".")[1]
 
 
 class ClientBase(object):
@@ -22,7 +21,7 @@ class ClientBase(object):
     generic requests, create tasks and retrieve results.
     """
 
-    def __init__(self, host: str, port: int, path: str = '/api') -> None:
+    def __init__(self, host: str, port: int, path: str = "/api") -> None:
         """Basic setup for the client
 
         Parameters
@@ -74,7 +73,7 @@ class ClientBase(object):
             Headers
         """
         if self._access_token:
-            return {'Authorization': 'Bearer ' + self._access_token}
+            return {"Authorization": "Bearer " + self._access_token}
         else:
             return {}
 
@@ -154,16 +153,23 @@ class ClientBase(object):
         str
             URL to the endpoint
         """
-        if endpoint.startswith('/'):
+        if endpoint.startswith("/"):
             path = self.base_path + endpoint
         else:
-            path = self.base_path + '/' + endpoint
+            path = self.base_path + "/" + endpoint
 
         return path
 
-    def request(self, endpoint: str, json: dict = None, method: str = 'get',
-                params: dict = None, first_try: bool = True,
-                retry: bool = True, attempts_on_timeout: int = None) -> dict:
+    def request(
+        self,
+        endpoint: str,
+        json: dict = None,
+        method: str = "get",
+        params: dict = None,
+        first_try: bool = True,
+        retry: bool = True,
+        attempts_on_timeout: int = None,
+    ) -> dict:
         """Create http(s) request to the vantage6 server
 
         Parameters
@@ -192,57 +198,60 @@ class ClientBase(object):
 
         # get appropiate method
         rest_method = {
-            'get': requests.get,
-            'post': requests.post,
-            'put': requests.put,
-            'patch': requests.patch,
-            'delete': requests.delete
+            "get": requests.get,
+            "post": requests.post,
+            "put": requests.put,
+            "patch": requests.patch,
+            "delete": requests.delete,
         }.get(method.lower(), requests.get)
 
         # send request to server
         url = self.generate_path_to(endpoint)
-        self.log.debug(f'Making request: {method.upper()} | {url} | {params}')
+        self.log.debug(f"Making request: {method.upper()} | {url} | {params}")
 
         timeout_attempts = 0
         while True:
             try:
-                response = rest_method(url, json=json, headers=self.headers,
-                                       params=params)
+                response = rest_method(
+                    url, json=json, headers=self.headers, params=params
+                )
                 break
             except requests.exceptions.ConnectionError as exc:
                 # we can safely retry as this is a connection error. And we
                 # keep trying (unless a max number of attempts is given)!
                 timeout_attempts += 1
-                if attempts_on_timeout is not None \
-                        and timeout_attempts > attempts_on_timeout:
-                    return {'msg': 'Connection error'}
-                self.log.error('Connection error... Retrying')
+                if (
+                    attempts_on_timeout is not None
+                    and timeout_attempts > attempts_on_timeout
+                ):
+                    return {"msg": "Connection error"}
+                self.log.error("Connection error... Retrying")
                 self.log.debug(exc)
                 time.sleep(1)
 
         # TODO: should check for a non 2xx response
         if response.status_code > 210:
-            self.log.error(
-                f'Server responded with error code: {response.status_code}')
+            self.log.error(f"Server responded with error code: {response.status_code}")
             try:
                 self.log.error(
-                    "msg: %s. Endpoint: %s", response.json().get("msg", ""),
-                    endpoint
+                    "msg: %s. Endpoint: %s", response.json().get("msg", ""), endpoint
                 )
                 if response.json().get("errors"):
-                    self.log.error(
-                        "errors:"+str(response.json().get("errors"))
-                    )
+                    self.log.error("errors:" + str(response.json().get("errors")))
             except json_lib.JSONDecodeError:
-                self.log.error('Did not find a message from the server')
+                self.log.error("Did not find a message from the server")
                 self.log.debug(response.content)
 
             if retry:
                 if first_try:
                     self.refresh_token()
                     return self.request(
-                        endpoint, json, method, params, first_try=False,
-                        attempts_on_timeout=attempts_on_timeout
+                        endpoint,
+                        json,
+                        method,
+                        params,
+                        first_try=False,
+                        attempts_on_timeout=attempts_on_timeout,
                     )
                 else:
                     self.log.error("Nope, refreshing the token didn't fix it.")
@@ -267,10 +276,10 @@ class ClientBase(object):
         AssertionError
             If the client is not authenticated
         """
-        assert self._access_token, \
-            "Encryption can only be setup after authentication"
-        assert self.whoami.organization_id, \
-            "Organization unknown... Did you authenticate?"
+        assert self._access_token, "Encryption can only be setup after authentication"
+        assert (
+            self.whoami.organization_id
+        ), "Organization unknown... Did you authenticate?"
 
         if private_key_file is None:
             self.cryptor = DummyCryptor()
@@ -285,8 +294,7 @@ class ClientBase(object):
         # not the case, this node will not be able to read any messages
         # that are send to him! If this is the case, the new public_key
         # will be uploaded to the central server
-        organization = self.request(
-            f"organization/{self.whoami.organization_id}")
+        organization = self.request(f"organization/{self.whoami.organization_id}")
         pub_key = organization.get("public_key")
         upload_pub_key = False
 
@@ -309,14 +317,13 @@ class ClientBase(object):
             self.request(
                 f"organization/{self.whoami.organization_id}",
                 method="patch",
-                json={"public_key": cryptor.public_key_str}
+                json={"public_key": cryptor.public_key_str},
             )
             self.log.info("The public key on the server is updated!")
 
         self.cryptor = cryptor
 
-    def authenticate(self, credentials: dict,
-                     path: str = "token/user") -> bool:
+    def authenticate(self, credentials: dict, path: str = "token/user") -> bool:
         """Authenticate to the vantage6-server
 
         It allows users, nodes and containers to sign in. Credentials can
@@ -342,11 +349,10 @@ class ClientBase(object):
             Whether or not user is authenticated. Alternative is that user is
             redirected to set up two-factor authentication
         """
-        if 'username' in credentials:
-            self.log.debug(
-                f"Authenticating user {credentials['username']}...")
-        elif 'api_key' in credentials:
-            self.log.debug('Authenticating node...')
+        if "username" in credentials:
+            self.log.debug(f"Authenticating user {credentials['username']}...")
+        elif "api_key" in credentials:
+            self.log.debug("Authenticating node...")
 
         # authenticate to the central server
         url = self.generate_path_to(path)
@@ -361,18 +367,17 @@ class ClientBase(object):
             else:
                 raise Exception("Failed to authenticate")
 
-        if 'qr_uri' in data:
+        if "qr_uri" in data:
             print_qr_code(data)
             return False
         else:
             # Check if there is an access token. If not, there is a problem
             # with authenticating
-            if 'access_token' not in data:
-                if 'msg' in data:
-                    raise Exception(data['msg'])
+            if "access_token" not in data:
+                if "msg" in data:
+                    raise Exception(data["msg"])
                 else:
-                    raise Exception(
-                        "No access token in authentication response!")
+                    raise Exception("No access token in authentication response!")
 
             # store tokens in object
             self.log.info("Successfully authenticated")
@@ -392,8 +397,7 @@ class ClientBase(object):
             Refresh URL not found
         """
         self.log.info("Refreshing token")
-        assert self.__refresh_url, \
-            "Refresh URL not found, did you authenticate?"
+        assert self.__refresh_url, "Refresh URL not found, did you authenticate?"
 
         # if no port is specified explicit, then it should be omit the
         # colon : in the path. Similar (but different) to the property
@@ -404,9 +408,9 @@ class ClientBase(object):
             url = f"{self.__host}{self.__refresh_url}"
 
         # send request to server
-        response = requests.post(url, headers={
-            'Authorization': 'Bearer ' + self.__refresh_token
-        })
+        response = requests.post(
+            url, headers={"Authorization": "Bearer " + self.__refresh_token}
+        )
 
         # server says no!
         if response.status_code != 200:
@@ -450,8 +454,7 @@ class ClientBase(object):
 
         return input_
 
-    def _decrypt_field(self, data: dict, field: str,
-                       is_single_resource: bool) -> dict:
+    def _decrypt_field(self, data: dict, field: str, is_single_resource: bool) -> dict:
         """
         Wrapper function to decrypt and deserialize the a field of one or more
         resources
@@ -473,12 +476,14 @@ class ClientBase(object):
         dict
             Data on the algorithm run(s) with decrypted input
         """
+
         def _decrypt_and_decode(value: str, field: str):
             decrypted = self._decrypt_input(value)
             if not isinstance(decrypted, bytes):
                 self.log.error(
-                    "The field %s is not properly encoded. Expected bytes, got"
-                    " %s.", field, type(decrypted)
+                    "The field %s is not properly encoded. Expected bytes, got" " %s.",
+                    field,
+                    type(decrypted),
                 )
                 if isinstance(decrypted, str):
                     self.log.error(
@@ -490,7 +495,8 @@ class ClientBase(object):
             except Exception:
                 self.log.error(
                     "Failed to decode the field %s. Skipping decoding, "
-                    "returning bytes object.", field
+                    "returning bytes object.",
+                    field,
                 )
                 return decrypted
 
@@ -499,11 +505,9 @@ class ClientBase(object):
                 data[field] = _decrypt_and_decode(data[field], field)
         else:
             # for multiple resources, data is in a 'data' field of a dict
-            for resource in data['data']:
+            for resource in data["data"]:
                 if resource.get(field):
-                    resource[field] = _decrypt_and_decode(
-                        resource[field], field
-                    )
+                    resource[field] = _decrypt_and_decode(resource[field], field)
 
         return data
 
@@ -516,5 +520,6 @@ class ClientBase(object):
         parent : UserClient | AlgorithmClient
             The parent client
         """
+
         def __init__(self, parent) -> None:
             self.parent = parent

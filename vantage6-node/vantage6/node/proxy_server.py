@@ -50,7 +50,7 @@ def get_method(method: str) -> callable:
         "post": requests.post,
         "patch": requests.patch,
         "put": requests.put,
-        "delete": requests.delete
+        "delete": requests.delete,
     }
 
     return loopup.get(method_name, requests.get)
@@ -70,16 +70,20 @@ def make_proxied_request(endpoint: str) -> Response:
     requests.Response
         Response from the vantage6 server
     """
-    present = 'Authorization' in request.headers
-    headers = {'Authorization': request.headers['Authorization']} if present \
-        else None
+    present = "Authorization" in request.headers
+    headers = {"Authorization": request.headers["Authorization"]} if present else None
 
     json = request.get_json() if request.is_json else None
     return make_request(request.method, endpoint, json, request.args, headers)
 
 
-def make_request(method: str, endpoint: str, json: dict = None,
-                 params: dict = None, headers: dict = None) -> Response:
+def make_request(
+    method: str,
+    endpoint: str,
+    json: dict = None,
+    params: dict = None,
+    headers: dict = None,
+) -> Response:
     """
     Make request to the central server
 
@@ -110,17 +114,16 @@ def make_request(method: str, endpoint: str, json: dict = None,
     url = f"{server_url}/{endpoint}"
     for i in range(RETRY):
         try:
-            response: Response = method(url, json=json,
-                                        params=params,
-                                        headers=headers)
+            response: Response = method(url, json=json, params=params, headers=headers)
             # verify that the server gave us a valid response, else we
             # would want to try again
             if response.status_code > 210:
-                log.warn('Proxy server received status code:'
-                         f'{response.status_code}')
-                log.debug(f'method: {request.method}, url: {url}, json: {json}'
-                          f', params: {params}, headers: {headers}')
-                if 'application/json' in response.headers.get('Content-Type'):
+                log.warn("Proxy server received status code:" f"{response.status_code}")
+                log.debug(
+                    f"method: {request.method}, url: {url}, json: {json}"
+                    f", params: {params}, headers: {headers}"
+                )
+                if "application/json" in response.headers.get("Content-Type"):
                     log.debug(response.json().get("msg", "no description..."))
 
             else:
@@ -129,8 +132,9 @@ def make_request(method: str, endpoint: str, json: dict = None,
                 return response
 
         except Exception:
-            log.exception(f'On attempt {i}, the proxy request raised an '
-                          f'exception: <{url}>')
+            log.exception(
+                f"On attempt {i}, the proxy request raised an " f"exception: <{url}>"
+            )
 
     # if all attemps fail, raise an exception to be handled by its parent
     raise Exception("Proxy request failed")
@@ -150,25 +154,24 @@ def decrypt_result(run: dict) -> dict:
     dict
         Run dict with the `result` decrypted
     """
-    client: NodeClient = app.config.get('SERVER_IO')
+    client: NodeClient = app.config.get("SERVER_IO")
 
     # if the result is a None, there is no need to decrypt that..
     try:
-        if run['result']:
+        if run["result"]:
             run["result"] = bytes_to_base64s(
-                client.cryptor.decrypt_str_to_bytes(
-                    run["result"]
-                )
+                client.cryptor.decrypt_str_to_bytes(run["result"])
             )
     except Exception:
-        log.exception("Unable to decrypt and/or decode results, sending them "
-                      "to the algorithm...")
+        log.exception(
+            "Unable to decrypt and/or decode results, sending them "
+            "to the algorithm..."
+        )
 
     return run
 
 
-def get_response_json_and_handle_exceptions(
-        response: Response) -> dict | None:
+def get_response_json_and_handle_exceptions(response: Response) -> dict | None:
     """
     Obtain json content from request response
 
@@ -185,7 +188,7 @@ def get_response_json_and_handle_exceptions(
     try:
         return response.json()
     except (requests.exceptions.JSONDecodeError, Exception):
-        log.exception('Failed to extract JSON')
+        log.exception("Failed to extract JSON")
     return None
 
 
@@ -202,9 +205,11 @@ def proxy_task():
     # We need the server io for the decryption of the results
     client: NodeClient = app.config.get("SERVER_IO")
     if not client:
-        log.error("Task proxy request received but proxy server was not "
-                  "initialized properly.")
-        return jsonify({'msg': 'Proxy server not initialized properly'}), 500
+        log.error(
+            "Task proxy request received but proxy server was not "
+            "initialized properly."
+        )
+        return jsonify({"msg": "Proxy server not initialized properly"}), 500
 
     # All requests from algorithms are unencrypted. We encrypt the input
     # field for a specific organization(s) specified by the algorithm
@@ -216,9 +221,9 @@ def proxy_task():
         return jsonify({"msg": "Organizations missing from input"}), 400
 
     try:
-        headers = {'Authorization': request.headers['Authorization']}
+        headers = {"Authorization": request.headers["Authorization"]}
     except Exception:
-        log.exception('Could not extract headers from request...')
+        log.exception("Could not extract headers from request...")
 
     log.debug(f"{len(organizations)} organizations")
 
@@ -247,38 +252,37 @@ def proxy_task():
 
         # retrieve public key of the organization
         log.debug(f"Retrieving public key of org: {organization_id}")
-        response = make_request('get', f'organization/{organization_id}',
-                                headers=headers)
+        response = make_request(
+            "get", f"organization/{organization_id}", headers=headers
+        )
         public_key = response.json().get("public_key")
 
         # Encrypt the input field
         client: NodeClient = app.config.get("SERVER_IO")
         organization["input"] = client.cryptor.encrypt_bytes_to_str(
-            base64s_to_bytes(input_),
-            public_key
+            base64s_to_bytes(input_), public_key
         )
 
-        log.debug("Input succesfully encrypted for organization "
-                  f"{organization_id}!")
+        log.debug("Input succesfully encrypted for organization " f"{organization_id}!")
         return organization
 
     if client.is_encrypted_collaboration():
-
         log.debug("Applying end-to-end encryption")
         data["organizations"] = [encrypt_input(o) for o in organizations]
 
     # Attempt to send the task to the central server
     try:
-        response = make_request('post', 'task', data, headers=headers)
+        response = make_request("post", "task", data, headers=headers)
     except Exception:
-        log.exception('post task failed')
-        return {'msg': 'Request failed, see node logs'},\
-            HTTPStatus.INTERNAL_SERVER_ERROR
+        log.exception("post task failed")
+        return {
+            "msg": "Request failed, see node logs"
+        }, HTTPStatus.INTERNAL_SERVER_ERROR
 
     return response.json(), HTTPStatus.OK
 
 
-@app.route('/result?task_id=<int:id_>', methods=["GET"])
+@app.route("/result?task_id=<int:id_>", methods=["GET"])
 def proxy_result(id_: int) -> Response:
     """
     Obtain and decrypt all results to belong to a certain task
@@ -296,16 +300,19 @@ def proxy_result(id_: int) -> Response:
     # We need the server io for the decryption of the results
     client = app.config.get("SERVER_IO")
     if not client:
-        return jsonify({'msg': 'Proxy server not initialized properly'}),\
-            HTTPStatus.INTERNAL_SERVER_ERROR
+        return (
+            jsonify({"msg": "Proxy server not initialized properly"}),
+            HTTPStatus.INTERNAL_SERVER_ERROR,
+        )
 
     # Forward the request
     try:
         response: Response = make_proxied_request(f"result?task_id={id_}")
     except Exception:
         log.exception(f'Error on "result?task_id={id_}"')
-        return {'msg': 'Request failed, see node logs'},\
-            HTTPStatus.INTERNAL_SERVER_ERROR
+        return {
+            "msg": "Request failed, see node logs"
+        }, HTTPStatus.INTERNAL_SERVER_ERROR
 
     # Attempt to decrypt the results. The enpoint should have returned
     # a list of results
@@ -318,7 +325,7 @@ def proxy_result(id_: int) -> Response:
     return jsonify(unencrypted), HTTPStatus.OK
 
 
-@app.route('/run/<int:id>', methods=["GET"])
+@app.route("/run/<int:id>", methods=["GET"])
 def proxy_runs(id_: int) -> Response:
     """
     Obtain and decrypt the algorithm run from the vantage6 server to be used by
@@ -337,16 +344,18 @@ def proxy_runs(id_: int) -> Response:
     # We need the server io for the decryption of the results
     client: NodeClient = app.config.get("SERVER_IO")
     if not client:
-        return {'msg': 'Proxy server not initialized properly'},\
-            HTTPStatus.INTERNAL_SERVER_ERROR
+        return {
+            "msg": "Proxy server not initialized properly"
+        }, HTTPStatus.INTERNAL_SERVER_ERROR
 
     # Make the proxied request
     try:
         response: Response = make_proxied_request(f"run/{id_}")
     except Exception:
-        log.exception('Error on /run/<int:id>')
-        return {'msg': 'Request failed, see node logs...'},\
-            HTTPStatus.INTERNAL_SERVER_ERROR
+        log.exception("Error on /run/<int:id>")
+        return {
+            "msg": "Request failed, see node logs..."
+        }, HTTPStatus.INTERNAL_SERVER_ERROR
 
     # Try to decrypt the results
     run = get_response_json_and_handle_exceptions(response)
@@ -355,8 +364,9 @@ def proxy_runs(id_: int) -> Response:
     return run, HTTPStatus.OK
 
 
-@app.route('/<path:central_server_path>', methods=["GET", "POST", "PATCH",
-                                                   "PUT", "DELETE"])
+@app.route(
+    "/<path:central_server_path>", methods=["GET", "POST", "PATCH", "PUT", "DELETE"]
+)
 def proxy(central_server_path: str) -> Response:
     """
     Generalized http proxy request
@@ -374,8 +384,9 @@ def proxy(central_server_path: str) -> Response:
     try:
         response = make_proxied_request(central_server_path)
     except Exception:
-        log.exception('Generic proxy endpoint')
-        return {'msg': 'Request failed, see node logs'},\
-            HTTPStatus.INTERNAL_SERVER_ERROR
+        log.exception("Generic proxy endpoint")
+        return {
+            "msg": "Request failed, see node logs"
+        }, HTTPStatus.INTERNAL_SERVER_ERROR
 
     return response.content, response.status_code, response.headers.items()

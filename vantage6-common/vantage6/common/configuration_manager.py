@@ -33,11 +33,11 @@ class Configuration(collections.UserDict):
         """
         # assert key in self.VALIDATORS.keys(), "Invalid Key!"
         schema = Schema(
-            self.VALIDATORS.get(key, lambda x: True),
-            ignore_extra_keys=True
+            self.VALIDATORS.get(key, lambda x: True), ignore_extra_keys=True
         )
-        assert schema.is_valid(value), \
-            f"Invalid value '{value}' provided for field '{key}'"
+        assert schema.is_valid(
+            value
+        ), f"Invalid value '{value}' provided for field '{key}'"
         super().__setitem__(key, value)
 
     def __getitem__(self, key: str) -> Any:
@@ -88,8 +88,10 @@ class ConfigurationManager(object):
     name: str
         The name of the configuration.
     """
-    def __init__(self, conf_class: Configuration = Configuration,
-                 name: str = None) -> None:
+
+    def __init__(
+        self, conf_class: Configuration = Configuration, name: str = None
+    ) -> None:
         self.config = {}
 
         self.name = name
@@ -145,7 +147,7 @@ class ConfigurationManager(object):
         path: Path | str
             The path to the file to load the configuration from.
         """
-        with open(str(path), 'r') as f:
+        with open(str(path), "r") as f:
             config = yaml.safe_load(f)
 
         self.put(config)
@@ -176,8 +178,9 @@ class ConfigurationManager(object):
             file path.
         """
         name = Path(path).stem
-        assert name, ("Configuration name could not be extracted from "
-                      f"filepath={path}")
+        assert name, (
+            "Configuration name could not be extracted from " f"filepath={path}"
+        )
         conf = cls(name=name, conf_class=conf_class)
         conf.load(path)
         return conf
@@ -192,5 +195,5 @@ class ConfigurationManager(object):
             The path to the file to save the configuration to.
         """
         Path(path).parent.mkdir(parents=True, exist_ok=True)
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             yaml.dump(self.config, f, default_flow_style=False)

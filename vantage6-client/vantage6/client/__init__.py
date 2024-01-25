@@ -21,15 +21,15 @@ from vantage6.common.task_status import has_task_finished
 from vantage6.common.client.client_base import ClientBase
 
 
-module_name = __name__.split('.')[1]
+module_name = __name__.split(".")[1]
 
-LEGACY = 'legacy'
+LEGACY = "legacy"
 
 
 class UserClient(ClientBase):
     """User interface to the vantage6-server"""
 
-    def __init__(self, *args, log_level='debug', **kwargs) -> None:
+    def __init__(self, *args, log_level="debug", **kwargs) -> None:
         """Create user client
 
         All paramters from `ClientBase` can be used here.
@@ -58,7 +58,7 @@ class UserClient(ClientBase):
 
         # Display welcome message
         self.log.info(" Welcome to")
-        for line in pyfiglet.figlet_format(APPNAME, font='big').split('\n'):
+        for line in pyfiglet.figlet_format(APPNAME, font="big").split("\n"):
             self.log.info(line)
         self.log.info(" --> Join us on Discord! https://discord.gg/rwRvwyK")
         self.log.info(" --> Docs: https://docs.vantage6.ai")
@@ -97,14 +97,16 @@ class UserClient(ClientBase):
             logger.setLevel(default_lvl)
             logger.warn(
                 f"You set unknown log level {level}. Available levels are: "
-                f"{', '.join([lvl.value for lvl in LogLevel])}. ")
+                f"{', '.join([lvl.value for lvl in LogLevel])}. "
+            )
             logger.warn(f"Log level now set to {default_lvl}.")
         else:
             logger.setLevel(level)
         return logger
 
-    def authenticate(self, username: str, password: str,
-                     mfa_code: int | str = None) -> None:
+    def authenticate(
+        self, username: str, password: str, mfa_code: int | str = None
+    ) -> None:
         """Authenticate as a user
 
         It also collects some additional info about your user.
@@ -124,8 +126,7 @@ class UserClient(ClientBase):
         }
         if mfa_code:
             auth_json["mfa_code"] = mfa_code
-        auth = super(UserClient, self).authenticate(auth_json,
-                                                    path="token/user")
+        auth = super(UserClient, self).authenticate(auth_json, path="token/user")
         if not auth:
             # user is not authenticated. The super function is responsible for
             # printing useful output
@@ -135,8 +136,7 @@ class UserClient(ClientBase):
         # belongs. This is usefull for some client side checks
         try:
             type_ = "user"
-            id_ = jwt.decode(
-                self.token, options={"verify_signature": False})['sub']
+            id_ = jwt.decode(self.token, options={"verify_signature": False})["sub"]
 
             user = self.request(f"user/{id_}")
             name = user.get("firstname")
@@ -149,15 +149,16 @@ class UserClient(ClientBase):
                 id_=id_,
                 name=name,
                 organization_id=organization_id,
-                organization_name=organization_name
+                organization_name=organization_name,
             )
 
             self.log.info(" --> Succesfully authenticated")
             self.log.info(f" --> Name: {name} (id={id_})")
-            self.log.info(f" --> Organization: {organization_name} "
-                          f"(id={organization_id})")
+            self.log.info(
+                f" --> Organization: {organization_name} " f"(id={organization_id})"
+            )
         except Exception:
-            self.log.info('--> Retrieving additional user info failed!')
+            self.log.info("--> Retrieving additional user info failed!")
             self.log.error(traceback.format_exc())
 
     def wait_for_results(self, task_id: int, interval: float = 1) -> dict:
@@ -182,22 +183,22 @@ class UserClient(ClientBase):
         prev_level = self.log.level
         self.log.setLevel(logging.WARN)
 
-        animation = itertools.cycle(['|', '/', '-', '\\'])
+        animation = itertools.cycle(["|", "/", "-", "\\"])
         t = time.time()
 
-        while not has_task_finished(self.task.get(task_id).get('status')):
+        while not has_task_finished(self.task.get(task_id).get("status")):
             frame = next(animation)
             sys.stdout.write(
-                f'\r{frame} Waiting for task {task_id} ({int(time.time()-t)}s)'
+                f"\r{frame} Waiting for task {task_id} ({int(time.time()-t)}s)"
             )
             sys.stdout.flush()
             time.sleep(interval)
-        sys.stdout.write('\rDone!                  ')
+        sys.stdout.write("\rDone!                  ")
 
         # Re-enable logging
         self.log.setLevel(prev_level)
 
-        result = self.request('result', params={'task_id': task_id})
+        result = self.request("result", params={"task_id": task_id})
         result = self.result._decrypt_result(result, is_single_result=False)
         return result
 
@@ -217,7 +218,7 @@ class UserClient(ClientBase):
                 A dict containing the version number
             """
             return self.parent.request(
-                'version', attempts_on_timeout=attempts_on_timeout
+                "version", attempts_on_timeout=attempts_on_timeout
             )
 
         def get_server_health(self) -> dict:
@@ -228,10 +229,9 @@ class UserClient(ClientBase):
             dict
                 Containing the server health information
             """
-            return self.parent.request('health')
+            return self.parent.request("health")
 
-        def change_my_password(self, current_password: str,
-                               new_password: str) -> dict:
+        def change_my_password(self, current_password: str, new_password: str) -> dict:
             """Change your own password by providing your current password
 
             Parameters
@@ -247,17 +247,18 @@ class UserClient(ClientBase):
                 Message from the server
             """
             result = self.parent.request(
-                'password/change', method='patch', json={
-                    'current_password': current_password,
-                    'new_password': new_password
-                }
+                "password/change",
+                method="patch",
+                json={
+                    "current_password": current_password,
+                    "new_password": new_password,
+                },
             )
-            msg = result.get('msg')
-            self.parent.log.info(f'--> {msg}')
+            msg = result.get("msg")
+            self.parent.log.info(f"--> {msg}")
             return result
 
-        def reset_my_password(self, email: str = None,
-                              username: str = None) -> dict:
+        def reset_my_password(self, email: str = None, username: str = None) -> dict:
             """Start reset password procedure
 
             Either a username of email needs to be provided.
@@ -275,12 +276,13 @@ class UserClient(ClientBase):
                 Message from the server
             """
             assert email or username, "You need to provide username or email!"
-            result = self.parent.request('recover/lost', method='post', json={
-                'username': username,
-                'email': email
-            })
-            msg = result.get('msg')
-            self.parent.log.info(f'--> {msg}')
+            result = self.parent.request(
+                "recover/lost",
+                method="post",
+                json={"username": username, "email": email},
+            )
+            msg = result.get("msg")
+            self.parent.log.info(f"--> {msg}")
             return result
 
         def set_my_password(self, token: str, password: str) -> dict:
@@ -300,12 +302,13 @@ class UserClient(ClientBase):
             dict
                 Message from the server
             """
-            result = self.parent.request('recover/reset', method='post', json={
-                'reset_token': token,
-                'password': password
-            })
-            msg = result.get('msg')
-            self.parent.log.info(f'--> {msg}')
+            result = self.parent.request(
+                "recover/reset",
+                method="post",
+                json={"reset_token": token, "password": password},
+            )
+            msg = result.get("msg")
+            self.parent.log.info(f"--> {msg}")
             return result
 
         def reset_two_factor_auth(
@@ -331,13 +334,13 @@ class UserClient(ClientBase):
             """
             assert email or username, "You need to provide username or email!"
             result = self.parent.request(
-                'recover/2fa/lost', method='post', json={
-                    'username': username,
-                    'email': email,
-                    "password": password
-                }, retry=False)
-            msg = result.get('msg')
-            self.parent.log.info(f'--> {msg}')
+                "recover/2fa/lost",
+                method="post",
+                json={"username": username, "email": email, "password": password},
+                retry=False,
+            )
+            msg = result.get("msg")
+            self.parent.log.info(f"--> {msg}")
             return result
 
         def set_two_factor_auth(self, token: str) -> dict:
@@ -358,14 +361,18 @@ class UserClient(ClientBase):
                 Message from the server
             """
             result = self.parent.request(
-                'recover/2fa/reset', method='post', json={
-                    'reset_token': token,
-                }, retry=False)
-            if 'qr_uri' in result:
+                "recover/2fa/reset",
+                method="post",
+                json={
+                    "reset_token": token,
+                },
+                retry=False,
+            )
+            if "qr_uri" in result:
                 print_qr_code(result)
             else:
-                msg = result.get('msg')
-                self.parent.log.info(f'--> {msg}')
+                msg = result.get("msg")
+                self.parent.log.info(f"--> {msg}")
             return result
 
         def generate_private_key(self, file_: str = None) -> None:
@@ -377,30 +384,36 @@ class UserClient(ClientBase):
                 Path where to store the private key, by default None
             """
             if not file_:
-                self.parent.log.info('--> Using current directory')
+                self.parent.log.info("--> Using current directory")
                 file_ = "private_key.pem"
 
             if isinstance(file_, str):
                 file_ = Path(file_).absolute()
 
-            self.parent.log.info(f'--> Generating private key file: {file_}')
+            self.parent.log.info(f"--> Generating private key file: {file_}")
             private_key = RSACryptor.create_new_rsa_key(file_)
 
-            self.parent.log.info('--> Assigning private key to client')
+            self.parent.log.info("--> Assigning private key to client")
             self.parent.cryptor.private_key = private_key
 
-            self.parent.log.info('--> Encrypting the client and uploading '
-                                 'the public key')
+            self.parent.log.info(
+                "--> Encrypting the client and uploading " "the public key"
+            )
             self.parent.setup_encryption(file_)
 
     class Collaboration(ClientBase.SubClient):
         """Collection of collaboration requests"""
 
         @post_filtering()
-        def list(self, scope: str = 'organization',
-                 name: str = None, encrypted: bool = None,
-                 organization: int = None, page: int = 1,
-                 per_page: int = 20) -> dict:
+        def list(
+            self,
+            scope: str = "organization",
+            name: str = None,
+            encrypted: bool = None,
+            organization: int = None,
+            page: int = 1,
+            per_page: int = 20,
+        ) -> dict:
             """View your collaborations
 
             Parameters
@@ -433,19 +446,24 @@ class UserClient(ClientBase):
               /organization/<id>/collaboration
             """
             params = {
-                'page': page, 'per_page': per_page, 'name': name,
-                'encrypted': encrypted, 'organization_id': organization,
+                "page": page,
+                "per_page": per_page,
+                "name": name,
+                "encrypted": encrypted,
+                "organization_id": organization,
             }
-            if scope == 'organization':
+            if scope == "organization":
                 org_id = self.parent.whoami.organization_id
                 return self.parent.request(
-                    'collaboration', params={'organization_id': org_id}
+                    "collaboration", params={"organization_id": org_id}
                 )
-            elif scope == 'global':
-                return self.parent.request('collaboration', params=params)
+            elif scope == "global":
+                return self.parent.request("collaboration", params=params)
             else:
-                self.parent.log.info('--> Unrecognized `scope`. Needs to be '
-                                     '`organization` or `global`')
+                self.parent.log.info(
+                    "--> Unrecognized `scope`. Needs to be "
+                    "`organization` or `global`"
+                )
 
         @post_filtering(iterable=False)
         def get(self, id_: int) -> dict:
@@ -461,11 +479,12 @@ class UserClient(ClientBase):
             dict
                 Containing the collaboration information
             """
-            return self.parent.request(f'collaboration/{id_}')
+            return self.parent.request(f"collaboration/{id_}")
 
         @post_filtering(iterable=False)
-        def create(self, name: str, organizations: list,
-                   encrypted: bool = False) -> dict:
+        def create(
+            self, name: str, organizations: list, encrypted: bool = False
+        ) -> dict:
             """Create new collaboration
 
             Parameters
@@ -484,11 +503,15 @@ class UserClient(ClientBase):
             dict
                 Containing the new collaboration meta-data
             """
-            return self.parent.request('collaboration', method='post', json={
-                'name': name,
-                'organization_ids': organizations,
-                'encrypted': encrypted
-            })
+            return self.parent.request(
+                "collaboration",
+                method="post",
+                json={
+                    "name": name,
+                    "organization_ids": organizations,
+                    "encrypted": encrypted,
+                },
+            )
 
     class Node(ClientBase.SubClient):
         """Collection of node requests"""
@@ -507,14 +530,21 @@ class UserClient(ClientBase):
             dict
                 Containing the node meta-data
             """
-            return self.parent.request(f'node/{id_}')
+            return self.parent.request(f"node/{id_}")
 
         @post_filtering()
-        def list(self, name: str = None, organization: int = None,
-                 collaboration: int = None, is_online: bool = None,
-                 ip: str = None, last_seen_from: str = None,
-                 last_seen_till: str = None, page: int = 1, per_page: int = 20,
-                 ) -> list[dict]:
+        def list(
+            self,
+            name: str = None,
+            organization: int = None,
+            collaboration: int = None,
+            is_online: bool = None,
+            ip: str = None,
+            last_seen_from: str = None,
+            last_seen_till: str = None,
+            page: int = 1,
+            per_page: int = 20,
+        ) -> list[dict]:
             """List nodes
 
             Parameters
@@ -545,19 +575,23 @@ class UserClient(ClientBase):
                 Containing meta-data of the nodes
             """
             params = {
-                'page': page, 'per_page': per_page,
-                'name': name, 'organization_id': organization,
-                'collaboration_id': collaboration, 'ip': ip,
-                'last_seen_from': last_seen_from,
-                'last_seen_till': last_seen_till
+                "page": page,
+                "per_page": per_page,
+                "name": name,
+                "organization_id": organization,
+                "collaboration_id": collaboration,
+                "ip": ip,
+                "last_seen_from": last_seen_from,
+                "last_seen_till": last_seen_till,
             }
             if is_online is not None:
-                params['status'] = 'online' if is_online else 'offline'
-            return self.parent.request('node', params=params)
+                params["status"] = "online" if is_online else "offline"
+            return self.parent.request("node", params=params)
 
         @post_filtering(iterable=False)
-        def create(self, collaboration: int, organization: int = None,
-                   name: str = None) -> dict:
+        def create(
+            self, collaboration: int, organization: int = None, name: str = None
+        ) -> dict:
             """Register new node
 
             Parameters
@@ -579,15 +613,24 @@ class UserClient(ClientBase):
             if not organization:
                 organization = self.parent.whoami.organization_id
 
-            return self.parent.request('node', method='post', json={
-                'organization_id': organization,
-                'collaboration_id': collaboration,
-                'name': name
-            })
+            return self.parent.request(
+                "node",
+                method="post",
+                json={
+                    "organization_id": organization,
+                    "collaboration_id": collaboration,
+                    "name": name,
+                },
+            )
 
         @post_filtering(iterable=False)
-        def update(self, id_: int, name: str = None, organization: int = None,
-                   collaboration: int = None) -> dict:
+        def update(
+            self,
+            id_: int,
+            name: str = None,
+            organization: int = None,
+            collaboration: int = None,
+        ) -> dict:
             """Update node information
 
             Parameters
@@ -608,11 +651,15 @@ class UserClient(ClientBase):
             dict
                 Containing the meta-data of the updated node
             """
-            return self.parent.request(f'node/{id_}', method='patch', json={
-                'name': name,
-                'organization_id': organization,
-                'collaboration_id': collaboration
-            })
+            return self.parent.request(
+                f"node/{id_}",
+                method="patch",
+                json={
+                    "name": name,
+                    "organization_id": organization,
+                    "collaboration_id": collaboration,
+                },
+            )
 
         def delete(self, id_: int) -> dict:
             """Deletes a node
@@ -627,7 +674,7 @@ class UserClient(ClientBase):
             dict
                 Message from the server
             """
-            return self.parent.request(f'node/{id_}', method='delete')
+            return self.parent.request(f"node/{id_}", method="delete")
 
         def kill_tasks(self, id_: int) -> dict:
             """
@@ -644,7 +691,7 @@ class UserClient(ClientBase):
                 Message from the server
             """
             return self.parent.request(
-                'kill/node/tasks', method='post', json={'id': id_}
+                "kill/node/tasks", method="post", json={"id": id_}
             )
 
     class Organization(ClientBase.SubClient):
@@ -652,8 +699,12 @@ class UserClient(ClientBase):
 
         @post_filtering()
         def list(
-            self, name: str = None, country: int = None,
-            collaboration: int = None, page: int = None, per_page: int = None,
+            self,
+            name: str = None,
+            country: int = None,
+            collaboration: int = None,
+            page: int = None,
+            per_page: int = None,
         ) -> list[dict]:
             """List organizations
 
@@ -676,10 +727,13 @@ class UserClient(ClientBase):
                 Containing meta-data information of the organizations
             """
             params = {
-                'page': page, 'per_page': per_page, 'name': name,
-                'country': country, 'collaboration_id': collaboration
+                "page": page,
+                "per_page": per_page,
+                "name": name,
+                "country": country,
+                "collaboration_id": collaboration,
             }
-            return self.parent.request('organization', params=params)
+            return self.parent.request("organization", params=params)
 
         @post_filtering(iterable=False)
         def get(self, id_: int = None) -> dict:
@@ -700,13 +754,20 @@ class UserClient(ClientBase):
             if not id_:
                 id_ = self.parent.whoami.organization_id
 
-            return self.parent.request(f'organization/{id_}')
+            return self.parent.request(f"organization/{id_}")
 
         @post_filtering(iterable=False)
-        def update(self, id_: int = None, name: str = None,
-                   address1: str = None, address2: str = None,
-                   zipcode: str = None, country: str = None,
-                   domain: str = None, public_key: str = None) -> dict:
+        def update(
+            self,
+            id_: int = None,
+            name: str = None,
+            address1: str = None,
+            address2: str = None,
+            zipcode: str = None,
+            country: str = None,
+            domain: str = None,
+            public_key: str = None,
+        ) -> dict:
             """Update organization information
 
             Parameters
@@ -737,21 +798,29 @@ class UserClient(ClientBase):
                 id_ = self.parent.whoami.organization_id
 
             return self.parent.request(
-                f'organization/{id_}',
-                method='patch',
+                f"organization/{id_}",
+                method="patch",
                 json={
-                    'name': name,
-                    'address1': address1,
-                    'address2': address2,
-                    'zipcode': zipcode,
-                    'country': country,
-                    'domain': domain,
-                    'public_key': public_key
-                }
+                    "name": name,
+                    "address1": address1,
+                    "address2": address2,
+                    "zipcode": zipcode,
+                    "country": country,
+                    "domain": domain,
+                    "public_key": public_key,
+                },
             )
 
-        def create(self, name: str, address1: str, address2: str, zipcode: str,
-                   country: str, domain: str, public_key: str = None) -> dict:
+        def create(
+            self,
+            name: str,
+            address1: str,
+            address2: str,
+            zipcode: str,
+            country: str,
+            domain: str,
+            public_key: str = None,
+        ) -> dict:
             """Create new organization
 
             Parameters
@@ -778,31 +847,35 @@ class UserClient(ClientBase):
                 Containing the information of the new organization
             """
             json_data = {
-                'name': name,
-                'address1': address1,
-                'address2': address2,
-                'zipcode': zipcode,
-                'country': country,
-                'domain': domain,
+                "name": name,
+                "address1": address1,
+                "address2": address2,
+                "zipcode": zipcode,
+                "country": country,
+                "domain": domain,
             }
 
             if public_key:
-                json_data['public_key'] = public_key
+                json_data["public_key"] = public_key
 
-            return self.parent.request(
-                'organization',
-                method='post',
-                json=json_data
-            )
+            return self.parent.request("organization", method="post", json=json_data)
 
     class User(ClientBase.SubClient):
-
         @post_filtering()
-        def list(self, username: str = None, organization: int = None,
-                 firstname: str = None, lastname: str = None,
-                 email: str = None, role: int = None, rule: int = None,
-                 last_seen_from: str = None, last_seen_till: str = None,
-                 page: int = 1, per_page: int = 20) -> list:
+        def list(
+            self,
+            username: str = None,
+            organization: int = None,
+            firstname: str = None,
+            lastname: str = None,
+            email: str = None,
+            role: int = None,
+            rule: int = None,
+            last_seen_from: str = None,
+            last_seen_till: str = None,
+            page: int = 1,
+            per_page: int = 20,
+        ) -> list:
             """List users
 
             Parameters
@@ -836,14 +909,19 @@ class UserClient(ClientBase):
                 Containing the meta-data of the users
             """
             params = {
-                'page': page, 'per_page': per_page,
-                'username': username, 'organization_id': organization,
-                'firstname': firstname, 'lastname': lastname, 'email': email,
-                'role_id': role, 'rule_id': rule,
-                'last_seen_from': last_seen_from,
-                'last_seen_till': last_seen_till,
+                "page": page,
+                "per_page": per_page,
+                "username": username,
+                "organization_id": organization,
+                "firstname": firstname,
+                "lastname": lastname,
+                "email": email,
+                "role_id": role,
+                "rule_id": rule,
+                "last_seen_from": last_seen_from,
+                "last_seen_till": last_seen_till,
             }
-            return self.parent.request('user', params=params)
+            return self.parent.request("user", params=params)
 
         @post_filtering(iterable=False)
         def get(self, id_: int = None) -> dict:
@@ -862,13 +940,19 @@ class UserClient(ClientBase):
             """
             if not id_:
                 id_ = self.parent.whoami.id_
-            return self.parent.request(f'user/{id_}')
+            return self.parent.request(f"user/{id_}")
 
         @post_filtering(iterable=False)
-        def update(self, id_: int = None, firstname: str = None,
-                   lastname: str = None, organization: int = None,
-                   rules: list = None, roles: list = None, email: str = None
-                   ) -> dict:
+        def update(
+            self,
+            id_: int = None,
+            firstname: str = None,
+            lastname: str = None,
+            organization: int = None,
+            rules: list = None,
+            roles: list = None,
+            email: str = None,
+        ) -> dict:
             """Update user details
 
             In case you do not supply a user_id, your user is being
@@ -908,20 +992,27 @@ class UserClient(ClientBase):
                 "organization_id": organization,
                 "rules": rules,
                 "roles": roles,
-                "email": email
+                "email": email,
             }
 
             # only submit supplied keys
             json_body = {k: v for k, v in json_body.items() if v is not None}
 
-            user = self.parent.request(f'user/{id_}', method='patch',
-                                       json=json_body)
+            user = self.parent.request(f"user/{id_}", method="patch", json=json_body)
             return user
 
         @post_filtering(iterable=False)
-        def create(self, username: str, firstname: str, lastname: str,
-                   password: str, email: str, organization: int = None,
-                   roles: list = [], rules: list = []) -> dict:
+        def create(
+            self,
+            username: str,
+            firstname: str,
+            lastname: str,
+            password: str,
+            email: str,
+            organization: int = None,
+            roles: list = [],
+            rules: list = [],
+        ) -> dict:
             """Create new user
 
             Parameters
@@ -935,6 +1026,8 @@ class UserClient(ClientBase):
                 Lastname of the new user
             password : str
                 Password of the new user
+            email : str
+                Email address of the new user
             organization : int
                 Organization `id` this user should belong to
             roles : list of ints
@@ -951,24 +1044,30 @@ class UserClient(ClientBase):
                 Containing data of the new user
             """
             user_data = {
-                'username': username,
-                'firstname': firstname,
-                'lastname': lastname,
-                'password': password,
-                'email': email,
-                'organization_id': organization,
-                'roles': roles,
-                'rules': rules
+                "username": username,
+                "firstname": firstname,
+                "lastname": lastname,
+                "password": password,
+                "email": email,
+                "organization_id": organization,
+                "roles": roles,
+                "rules": rules,
             }
-            return self.parent.request('user', json=user_data, method='post')
+            return self.parent.request("user", json=user_data, method="post")
 
     class Role(ClientBase.SubClient):
-
         @post_filtering()
-        def list(self, name: str = None, description: str = None,
-                 organization: int = None, rule: int = None, user: int = None,
-                 include_root: bool = None, page: int = 1, per_page: int = 20,
-                 ) -> list[dict]:
+        def list(
+            self,
+            name: str = None,
+            description: str = None,
+            organization: int = None,
+            rule: int = None,
+            user: int = None,
+            include_root: bool = None,
+            page: int = 1,
+            per_page: int = 20,
+        ) -> list[dict]:
             """List of roles
 
             Parameters
@@ -997,12 +1096,16 @@ class UserClient(ClientBase):
                 Containing roles meta-data
             """
             params = {
-                'page': page, 'per_page': per_page,
-                'name': name, 'description': description,
-                'organization_id': organization, 'rule_id': rule,
-                'include_root': include_root, 'user_id': user,
+                "page": page,
+                "per_page": per_page,
+                "name": name,
+                "description": description,
+                "organization_id": organization,
+                "rule_id": rule,
+                "include_root": include_root,
+                "user_id": user,
             }
-            return self.parent.request('role', params=params)
+            return self.parent.request("role", params=params)
 
         @post_filtering(iterable=True)
         def get(self, id_: int) -> dict:
@@ -1018,11 +1121,12 @@ class UserClient(ClientBase):
             dict
                 Containing meta-data of the role
             """
-            return self.parent.request(f'role/{id_}')
+            return self.parent.request(f"role/{id_}")
 
         @post_filtering(iterable=True)
-        def create(self, name: str, description: str, rules: list,
-                   organization: int = None) -> dict:
+        def create(
+            self, name: str, description: str, rules: list, organization: int = None
+        ) -> dict:
             """Register new role
 
             Parameters
@@ -1045,16 +1149,25 @@ class UserClient(ClientBase):
             """
             if not organization:
                 organization = self.parent.whoami.organization_id
-            return self.parent.request('role', method='post', json={
-                'name': name,
-                'description': description,
-                'rules': rules,
-                'organization_id': organization
-            })
+            return self.parent.request(
+                "role",
+                method="post",
+                json={
+                    "name": name,
+                    "description": description,
+                    "rules": rules,
+                    "organization_id": organization,
+                },
+            )
 
         @post_filtering(iterable=True)
-        def update(self, role: int, name: str = None, description: str = None,
-                   rules: list = None) -> dict:
+        def update(
+            self,
+            role: int,
+            name: str = None,
+            description: str = None,
+            rules: list = None,
+        ) -> dict:
             """Update role
 
             Parameters
@@ -1075,11 +1188,11 @@ class UserClient(ClientBase):
             dict
                 Containing the updated role data
             """
-            return self.parent.request(f'role/{role}', method='patch', json={
-                'name': name,
-                'description': description,
-                'rules': rules
-            })
+            return self.parent.request(
+                f"role/{role}",
+                method="patch",
+                json={"name": name, "description": description, "rules": rules},
+            )
 
         def delete(self, role: int) -> dict:
             """Delete role
@@ -1095,11 +1208,10 @@ class UserClient(ClientBase):
             dict
                 Message from the server
             """
-            res = self.parent.request(f'role/{role}', method='delete')
+            res = self.parent.request(f"role/{role}", method="delete")
             self.parent.log.info(f'--> {res.get("msg")}')
 
     class Task(ClientBase.SubClient):
-
         @post_filtering(iterable=False)
         def get(self, id_: int, include_results: bool = False) -> dict:
             """View specific task
@@ -1117,17 +1229,27 @@ class UserClient(ClientBase):
                 Containing the task data
             """
             params = {}
-            params['include'] = 'results' if include_results else None
-            return self.parent.request(f'task/{id_}', params=params)
+            params["include"] = "results" if include_results else None
+            return self.parent.request(f"task/{id_}", params=params)
 
         @post_filtering()
         def list(
-            self, initiating_org: int = None, initiating_user: int = None,
-            collaboration: int = None, image: str = None, parent: int = None,
-            job: int = None, name: str = None, include_results: bool = False,
-            description: str = None, database: str = None, run: int = None,
-            status: str = None, user_created: bool = None, page: int = 1,
-            per_page: int = 20
+            self,
+            initiating_org: int = None,
+            initiating_user: int = None,
+            collaboration: int = None,
+            image: str = None,
+            parent: int = None,
+            job: int = None,
+            name: str = None,
+            include_results: bool = False,
+            description: str = None,
+            database: str = None,
+            run: int = None,
+            status: str = None,
+            user_created: bool = None,
+            page: int = 1,
+            per_page: int = 20,
         ) -> dict:
             """List tasks
 
@@ -1179,26 +1301,40 @@ class UserClient(ClientBase):
             # if the param is None, it will not be passed on to the
             # request
             params = {
-                'init_org_id': initiating_org, 'init_user_id': initiating_user,
-                'collaboration_id': collaboration,
-                'image': image, 'parent_id': parent, 'job_id': job,
-                'name': name, 'page': page, 'per_page': per_page,
-                'description': description, 'database': database,
-                'run_id': run, 'status': status,
+                "init_org_id": initiating_org,
+                "init_user_id": initiating_user,
+                "collaboration_id": collaboration,
+                "image": image,
+                "parent_id": parent,
+                "job_id": job,
+                "name": name,
+                "page": page,
+                "per_page": per_page,
+                "description": description,
+                "database": database,
+                "run_id": run,
+                "status": status,
             }
             includes = []
             if include_results:
-                includes.append('results')
-            params['include'] = includes
+                includes.append("results")
+            params["include"] = includes
             if user_created is not None:
-                params['is_user_created'] = 1 if user_created else 0
+                params["is_user_created"] = 1 if user_created else 0
 
-            return self.parent.request('task', params=params)
+            return self.parent.request("task", params=params)
 
         @post_filtering(iterable=False)
-        def create(self, collaboration: int, organizations: list, name: str,
-                   image: str, description: str, input_: dict,
-                   databases: list[dict] = None) -> dict:
+        def create(
+            self,
+            collaboration: int,
+            organizations: list,
+            name: str,
+            image: str,
+            description: str,
+            input_: dict,
+            databases: list[dict] = None,
+        ) -> dict:
             """Create a new task
 
             Parameters
@@ -1232,14 +1368,13 @@ class UserClient(ClientBase):
 
             if organizations is None:
                 raise ValueError(
-                    'No organizations specified! Cannot create task without '
-                    'assigning it to at least one organization.'
+                    "No organizations specified! Cannot create task without "
+                    "assigning it to at least one organization."
                 )
 
-            if isinstance(databases, str):
-                # it is not unlikely that users specify a single database as a
-                # str, in that case we convert it to a list
-                databases = [{'label': databases}]
+            if databases is None:
+                databases = []
+            databases = self._parse_arg_databases(databases)
 
             # Data will be serialized in JSON.
             serialized_input = serialize(input_)
@@ -1248,22 +1383,84 @@ class UserClient(ClientBase):
             # public key.
             organization_json_list = []
             for org_id in organizations:
-                pub_key = self.parent.request(f"organization/{org_id}")\
-                    .get("public_key")
-                organization_json_list.append({
-                    "id": org_id,
-                    "input": self.parent.cryptor.encrypt_bytes_to_str(
-                        serialized_input, pub_key)
-                })
+                pub_key = self.parent.request(f"organization/{org_id}").get(
+                    "public_key"
+                )
+                organization_json_list.append(
+                    {
+                        "id": org_id,
+                        "input": self.parent.cryptor.encrypt_bytes_to_str(
+                            serialized_input, pub_key
+                        ),
+                    }
+                )
 
-            return self.parent.request('task', method='post', json={
-                "name": name,
-                "image": image,
-                "collaboration_id": collaboration,
-                "description": description,
-                "organizations": organization_json_list,
-                'databases': databases
-            })
+            return self.parent.request(
+                "task",
+                method="post",
+                json={
+                    "name": name,
+                    "image": image,
+                    "collaboration_id": collaboration,
+                    "description": description,
+                    "organizations": organization_json_list,
+                    "databases": databases,
+                },
+            )
+
+        @staticmethod
+        def _parse_arg_databases(databases: list[dict] | str) -> list[dict]:
+            """Parse the databases argument
+
+            Parameters
+            ----------
+            databases: list[dict] | str
+                Each dict should contain at least a 'label' key. A single str
+                can be passed and will be interpreted as a single database with
+                that label.
+
+            Returns
+            -------
+            list[dict]
+                The parsed databases argument
+
+            Raises
+            ------
+            ValueError: if 'label' is missing from the database dict or an
+                        invalid label is provided.
+
+            Note
+            ----
+            We are looking before we leap (LBYL) rather than attempting to
+            catch an exception later on (EAFP) because the task will be created
+            on the server before nodes might even get a chance to complain.
+            """
+            if isinstance(databases, str):
+                # it is not unlikely that users specify a single database as a
+                # str, in that case we convert it to a list
+                databases = [{"label": databases}]
+
+            for db in databases:
+                try:
+                    label_input = db.get("label")
+                except AttributeError:
+                    raise ValueError(
+                        "Databases specified should be a list of dicts with"
+                        "label keys or a single str"
+                    )
+                if not label_input or not isinstance(label_input, str):
+                    raise ValueError(
+                        "Each database should have a 'label' key with a string" "value."
+                    )
+                # Labels will become part of env var names in algo container,
+                # some chars are not allowed in some shells.
+                if not label_input.isidentifier():
+                    raise ValueError(
+                        "Database labels should be made up of letters, digits"
+                        " (except first character) and underscores only. "
+                        f"Invalid label: {db.get('label')}"
+                    )
+            return databases
 
         def delete(self, id_: int) -> dict:
             """Delete a task
@@ -1280,8 +1477,8 @@ class UserClient(ClientBase):
             dict
                 Message from the server
             """
-            msg = self.parent.request(f'task/{id_}', method='delete')
-            self.parent.log.info(f'--> {msg}')
+            msg = self.parent.request(f"task/{id_}", method="delete")
+            self.parent.log.info(f"--> {msg}")
 
         def kill(self, id_: int) -> dict:
             """Kill a task running on one or more nodes
@@ -1299,13 +1496,10 @@ class UserClient(ClientBase):
             dict
                 Message from the server
             """
-            msg = self.parent.request('/kill/task', method='post', json={
-                'id': id_
-            })
-            self.parent.log.info(f'--> {msg}')
+            msg = self.parent.request("/kill/task", method="post", json={"id": id_})
+            self.parent.log.info(f"--> {msg}")
 
     class Run(ClientBase.SubClient):
-
         @post_filtering(iterable=False)
         def get(self, id_: int, include_task: bool = False) -> dict:
             """View a specific run
@@ -1322,11 +1516,11 @@ class UserClient(ClientBase):
             dict
                 Containing the run data
             """
-            self.parent.log.info('--> Attempting to decrypt results!')
+            self.parent.log.info("--> Attempting to decrypt results!")
 
             # get run from the API
-            params = {'include': 'task'} if include_task else {}
-            run = self.parent.request(endpoint=f'run/{id_}', params=params)
+            params = {"include": "task"} if include_task else {}
+            run = self.parent.request(endpoint=f"run/{id_}", params=params)
 
             # decrypt input
             run = self._decrypt_input(run_data=run, is_single_run=True)
@@ -1334,13 +1528,20 @@ class UserClient(ClientBase):
             return run
 
         @post_filtering()
-        def list(self, task: int = None, organization: int = None,
-                 state: str = None, node: int = None,
-                 include_task: bool = False, started: tuple[str, str] = None,
-                 assigned: tuple[str, str] = None,
-                 finished: tuple[str, str] = None, port: int = None,
-                 page: int = None, per_page: int = None,
-                 ) -> dict | list[dict]:
+        def list(
+            self,
+            task: int = None,
+            organization: int = None,
+            state: str = None,
+            node: int = None,
+            include_task: bool = False,
+            started: tuple[str, str] = None,
+            assigned: tuple[str, str] = None,
+            finished: tuple[str, str] = None,
+            port: int = None,
+            page: int = None,
+            per_page: int = None,
+        ) -> dict | list[dict]:
             """List runs
 
             Parameters
@@ -1376,33 +1577,38 @@ class UserClient(ClientBase):
             """
             includes = []
             if include_task:
-                includes.append('task')
+                includes.append("task")
 
             s_from, s_till = started if started else (None, None)
             a_from, a_till = assigned if assigned else (None, None)
             f_from, f_till = finished if finished else (None, None)
 
             params = {
-                'task_id': task, 'organization_id': organization,
-                'state': state, 'node_id': node, 'page': page,
-                'per_page': per_page, 'include': includes,
-                'started_from': s_from, 'started_till': s_till,
-                'assigned_from': a_from, 'assigned_till': a_till,
-                'finished_from': f_from, 'finished_till': f_till,
-                'port': port
+                "task_id": task,
+                "organization_id": organization,
+                "state": state,
+                "node_id": node,
+                "page": page,
+                "per_page": per_page,
+                "include": includes,
+                "started_from": s_from,
+                "started_till": s_till,
+                "assigned_from": a_from,
+                "assigned_till": a_till,
+                "finished_from": f_from,
+                "finished_till": f_till,
+                "port": port,
             }
 
             # get runs from the API
-            runs = self.parent.request(endpoint='run', params=params)
+            runs = self.parent.request(endpoint="run", params=params)
 
             # decrypt input data
             runs = self._decrypt_input(run_data=runs, is_single_run=False)
 
             return runs
 
-        def from_task(
-            self, task_id: int, include_task: bool = False
-        ) -> list[dict]:
+        def from_task(self, task_id: int, include_task: bool = False) -> list[dict]:
             """
             Get all algorithm runs from a specific task
 
@@ -1418,15 +1624,15 @@ class UserClient(ClientBase):
             list[dict]
                 Containing the results
             """
-            self.parent.log.info('--> Attempting to decrypt results!')
+            self.parent.log.info("--> Attempting to decrypt results!")
 
             # get all algorithm runs from a specific task
             params = {}
             if include_task:
-                params['include'] = 'task'
+                params["include"] = "task"
             if task_id:
-                params['task_id'] = task_id
-            runs = self.parent.request(endpoint='run', params=params)
+                params["task_id"] = task_id
+            runs = self.parent.request(endpoint="run", params=params)
 
             # decrypt input data
             runs = self._decrypt_input(run_data=runs, is_single_run=False)
@@ -1451,13 +1657,14 @@ class UserClient(ClientBase):
                 Data on the algorithm run(s) with decrypted input
             """
             return self.parent._decrypt_field(
-                data=run_data, field='input', is_single_resource=is_single_run
+                data=run_data, field="input", is_single_resource=is_single_run
             )
 
     class Result(ClientBase.SubClient):
         """
         Client to get the results of one or multiple algorithm runs
         """
+
         @post_filtering(iterable=False)
         def get(self, id_: int) -> dict:
             """View a specific result
@@ -1472,14 +1679,12 @@ class UserClient(ClientBase):
             dict
                 Containing the run data
             """
-            self.parent.log.info('--> Attempting to decrypt results!')
+            self.parent.log.info("--> Attempting to decrypt results!")
 
-            result = self.parent.request(endpoint=f'result/{id_}')
-            result = self._decrypt_result(
-                result_data=result, is_single_result=True
-            )
+            result = self.parent.request(endpoint=f"result/{id_}")
+            result = self._decrypt_result(result_data=result, is_single_result=True)
 
-            return result['result']
+            return result["result"]
 
         def from_task(self, task_id: int):
             """
@@ -1495,16 +1700,13 @@ class UserClient(ClientBase):
             list[dict]
                 Containing the results
             """
-            self.parent.log.info('--> Attempting to decrypt results!')
+            self.parent.log.info("--> Attempting to decrypt results!")
 
-            results = self.parent.request(
-                'result', params={'task_id': task_id}
-            )
+            results = self.parent.request("result", params={"task_id": task_id})
             results = self._decrypt_result(results, False)
             return results
 
-        def _decrypt_result(self, result_data: dict,
-                            is_single_result: bool) -> dict:
+        def _decrypt_result(self, result_data: dict, is_single_result: bool) -> dict:
             """
             Wrapper function to decrypt and deserialize the input of one or
             more runs
@@ -1522,12 +1724,10 @@ class UserClient(ClientBase):
                 Data on the algorithm run(s) with decrypted input
             """
             return self.parent._decrypt_field(
-                data=result_data, field='result',
-                is_single_resource=is_single_result
+                data=result_data, field="result", is_single_resource=is_single_result
             )
 
     class Rule(ClientBase.SubClient):
-
         @post_filtering(iterable=False)
         def get(self, id_: int) -> dict:
             """View specific rule
@@ -1542,12 +1742,18 @@ class UserClient(ClientBase):
             dict
                 Containing the information about this rule
             """
-            return self.parent.request(f'rule/{id_}')
+            return self.parent.request(f"rule/{id_}")
 
         @post_filtering()
-        def list(self, name: str = None, operation: str = None,
-                 scope: str = None, role: int = None, page: int = 1,
-                 per_page: int = 20) -> list:
+        def list(
+            self,
+            name: str = None,
+            operation: str = None,
+            scope: str = None,
+            role: int = None,
+            page: int = 1,
+            per_page: int = 20,
+        ) -> list:
             """List of all available rules
 
             Parameters
@@ -1571,10 +1777,14 @@ class UserClient(ClientBase):
                 Containing all the rules from the vantage6 server
             """
             params = {
-                'page': page, 'per_page': per_page, 'name': name,
-                'operation': operation, 'scope': scope, 'role_id': role
+                "page": page,
+                "per_page": per_page,
+                "name": name,
+                "operation": operation,
+                "scope": scope,
+                "role_id": role,
             }
-            return self.parent.request('rule', params=params)
+            return self.parent.request("rule", params=params)
 
 
 # Alias the UserClient to Client for easy usage for Python users

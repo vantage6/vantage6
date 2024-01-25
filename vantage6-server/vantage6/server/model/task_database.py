@@ -1,4 +1,3 @@
-
 from sqlalchemy import Column, Integer, ForeignKey, String
 from sqlalchemy.orm import relationship
 
@@ -13,8 +12,9 @@ class TaskDatabase(Base):
     task with a certain ``task_id``. Each task will usually have zero, one or
     multiple databases assigned to it.
     """
+
     # fields
-    task_id = Column('task_id', Integer, ForeignKey('task.id'))
+    task_id = Column("task_id", Integer, ForeignKey("task.id"))
     database = Column(String)
     parameters = Column(String)
 

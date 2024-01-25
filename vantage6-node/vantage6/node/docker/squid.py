@@ -19,7 +19,7 @@ from vantage6.common.docker.addons import (
     remove_container,
     running_in_docker,
     remove_container_if_exists,
-    pull_if_newer
+    pull_if_newer,
 )
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.docker_manager import NetworkManager
@@ -36,10 +36,14 @@ class SquidConfig:
 
 
 class Squid(DockerBaseManager):
-
-    def __init__(self, isolated_network_mgr: NetworkManager, config: dict,
-                 node_name: str, config_volume: str,
-                 squid_image: str | None = None) -> None:
+    def __init__(
+        self,
+        isolated_network_mgr: NetworkManager,
+        config: dict,
+        node_name: str,
+        config_volume: str,
+        squid_image: str | None = None,
+    ) -> None:
         """
         Create a tunnel from the isolated network to a remote machine and
         bind the remote port to a local ssh-tunnel container to be used by
@@ -75,11 +79,12 @@ class Squid(DockerBaseManager):
         # known_hosts file.
         self.config_volume = config_volume
 
-        self.config_folder = Path("/mnt/squid") if running_in_docker() else \
-            Path(self.config_volume)
+        self.config_folder = (
+            Path("/mnt/squid") if running_in_docker() else Path(self.config_volume)
+        )
 
         # hostname of the squid which can be used by the algorithm containers
-        self.hostname = 'squid'
+        self.hostname = "squid"
         # This is the default port of the squid container, which is exposed
         # to the algorithm containers.
         self.port = 3128
@@ -213,10 +218,8 @@ class Squid(DockerBaseManager):
         """
         log.debug("Creating Squid config file")
         environment = Environment(
-            loader=FileSystemLoader(
-                PACKAGE_FOLDER / APPNAME / "node" / "template"
-            ),
-            autoescape=True
+            loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "node" / "template"),
+            autoescape=True,
         )
         template = environment.get_template("squid.conf.j2")
 
@@ -238,28 +241,25 @@ class Squid(DockerBaseManager):
 
         # Contains the (ssh) config and known_hosts file
         mounts = {
-            self.config_volume: {'bind': '/etc/squid/conf.d/', 'mode': 'rw'},
+            self.config_volume: {"bind": "/etc/squid/conf.d/", "mode": "rw"},
         }
 
         # Start the SSH tunnel container. We can do this prior connecting it
         # to the isolated network as the tunnel is not reliant on the network.
         log.debug("Starting Squid container")
-        remove_container_if_exists(
-            docker_client=self.docker, name=self.container_name
-        )
+        remove_container_if_exists(docker_client=self.docker, name=self.container_name)
         self.container = self.docker.containers.run(
             image=self.image,
             volumes=mounts,
             detach=True,
             name=self.container_name,
             restart_policy={"Name": "always"},
-            auto_remove=False
+            auto_remove=False,
         )
 
         # Connect to both the internal network and make an alias (=hostname).
         # This alias can be used by the algorithm containers.
-        self.isolated_network_mgr.connect(self.container,
-                                          aliases=[self.hostname])
+        self.isolated_network_mgr.connect(self.container, aliases=[self.hostname])
 
     def stop(self) -> None:
         """

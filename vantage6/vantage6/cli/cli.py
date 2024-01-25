@@ -5,6 +5,7 @@ from vantage6.cli.server.files import cli_server_files
 from vantage6.cli.server.import_ import cli_server_import
 from vantage6.cli.server.list import cli_server_configuration_list
 from vantage6.cli.server.new import cli_server_new
+from vantage6.cli.server.remove import cli_server_remove
 from vantage6.cli.server.shell import cli_server_shell
 from vantage6.cli.server.start import cli_server_start
 from vantage6.cli.server.stop import cli_server_stop
@@ -26,10 +27,12 @@ from vantage6.cli.dev.start import start_demo_network
 from vantage6.cli.dev.stop import stop_demo_network
 from vantage6.cli.algorithm.create import cli_algorithm_create
 from vantage6.cli.algorithm.update import cli_algorithm_update
+from vantage6.cli.test.feature_tester import cli_test_features
+from vantage6.cli.test.integration_test import cli_test_integration
 
 
 # Define the server group
-@click.group(name='server')
+@click.group(name="server")
 def cli_server() -> None:
     """
     Manage your vantage6 server instances.
@@ -37,15 +40,16 @@ def cli_server() -> None:
 
 
 # Define the commands for the server group
-cli_server.add_command(cli_server_attach, name='attach')
-cli_server.add_command(cli_server_files, name='files')
-cli_server.add_command(cli_server_import, name='import')
-cli_server.add_command(cli_server_configuration_list, name='list')
-cli_server.add_command(cli_server_new, name='new')
-cli_server.add_command(cli_server_shell, name='shell')
-cli_server.add_command(cli_server_start, name='start')
-cli_server.add_command(cli_server_stop, name='stop')
-cli_server.add_command(cli_server_version, name='version')
+cli_server.add_command(cli_server_attach, name="attach")
+cli_server.add_command(cli_server_files, name="files")
+cli_server.add_command(cli_server_import, name="import")
+cli_server.add_command(cli_server_configuration_list, name="list")
+cli_server.add_command(cli_server_new, name="new")
+cli_server.add_command(cli_server_remove, name="remove")
+cli_server.add_command(cli_server_shell, name="shell")
+cli_server.add_command(cli_server_start, name="start")
+cli_server.add_command(cli_server_stop, name="stop")
+cli_server.add_command(cli_server_version, name="version")
 
 
 # Define the node group
@@ -100,8 +104,21 @@ cli_algorithm.add_command(cli_algorithm_create, name="create")
 cli_algorithm.add_command(cli_algorithm_update, name="update")
 
 
+# Define the test group
+@click.group(name="test")
+def cli_test() -> None:
+    """
+    Execute tests on your vantage6 infrastructure.
+    """
+
+
+# Define the commands for the test group
+cli_test.add_command(cli_test_features, name="feature-test")
+cli_test.add_command(cli_test_integration, name="integration-test")
+
+
 # Define the overall group
-@click.group(name='cli')
+@click.group(name="cli")
 def cli_complete() -> None:
     """
     The `v6` command line interface allows you to manage your vantage6
@@ -116,3 +133,4 @@ cli_complete.add_command(cli_node)
 cli_complete.add_command(cli_server)
 cli_complete.add_command(cli_dev)
 cli_complete.add_command(cli_algorithm)
+cli_complete.add_command(cli_test)
