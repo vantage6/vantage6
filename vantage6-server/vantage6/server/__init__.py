@@ -19,6 +19,7 @@ import logging
 import uuid
 import json
 import time
+import re
 import datetime as dt
 import traceback
 
@@ -108,8 +109,13 @@ class ServerApp:
         # Setup Principal, granular API access manegement
         self.principal = Principal(self.app, use_sessions=False)
 
-        # Enable cross-origin resource sharing
-        self.cors = CORS(self.app)
+        # Enable cross-origin resource sharing. Note that Flask-CORS interprets
+        # the origins as regular expressions.
+        cors_allowed_origins = self.ctx.config.get("cors_allowed_origins", "*")
+        self.cors = CORS(
+            self.app,
+            resources={r"/*": {"origins": cors_allowed_origins}},
+        )
 
         # SWAGGER documentation
         self.swagger = Swagger(self.app, template=swagger_template)
@@ -150,6 +156,33 @@ class ServerApp:
             SocketIO object
         """
 
+        def _is_allowed_cors_origin(origin: str) -> bool:
+            """
+            Check if the origin is allowed to connect to the socketio server.
+
+            Note that this function is written because it is not possible to
+            directly insert regex into the cors settings for flask-socketio
+            (see https://github.com/miguelgrinberg/python-engineio/issues/264)
+
+            Parameters
+            ----------
+            origin: str
+                The origin to check
+
+            Returns
+            -------
+            bool:
+                Whether the origin is allowed
+            """
+            allowed = self.ctx.config.get("cors_allowed_origins", "*")
+            if allowed == "*":
+                return True
+            allowed = [re.compile(rf"{origin}") for origin in allowed]
+            for regex in allowed:
+                if regex.match(origin):
+                    return True
+            return False
+
         msg_queue = self.ctx.config.get("rabbitmq", {}).get("uri")
         if msg_queue:
             log.debug(f"Connecting to msg queue: {msg_queue}")
@@ -157,13 +190,14 @@ class ServerApp:
         debug_mode = self.debug.get("socketio", False)
         if debug_mode:
             log.debug("SocketIO debug mode enabled")
+
         try:
             socketio = SocketIO(
                 self.app,
                 async_mode="gevent_uwsgi",
                 message_queue=msg_queue,
                 ping_timeout=60,
-                cors_allowed_origins="*",
+                cors_allowed_origins=_is_allowed_cors_origin,
                 logger=debug_mode,
                 engineio_logger=debug_mode,
             )
@@ -179,7 +213,7 @@ class ServerApp:
                 self.app,
                 message_queue=msg_queue,
                 ping_timeout=60,
-                cors_allowed_origins="*",
+                cors_allowed_origins=_is_allowed_cors_origin,
                 logger=debug_mode,
                 engineio_logger=debug_mode,
             )
