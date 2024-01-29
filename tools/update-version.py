@@ -18,7 +18,7 @@ def info(msg: str):
 
 # pattern to use in the regex to update version
 pattern = (
-    r"(version_info\s*=\s*\()(\s*\d+,\s*\d+,\s*\d+,)(\s*)('\w*')"
+    r"(version_info\s*=\s*\()(\s*\d+,\s*\d+,\s*\d+,)(\s*)(\"\w*\")"
     r"(,\s*__build__)(,\s*)(\d+)(\))"
 )
 
@@ -50,7 +50,7 @@ def update_version_spec(spec: str) -> None:
         with open(file, "r") as f:
             content = f.read()
             new_content = re.sub(
-                pattern, r"\1\2\g<3>'{}'\5\6\7\8".format(spec), content
+                pattern, r'\1\2\g<3>"{}"\5\6\7\8'.format(spec), content
             )
 
         info("Writing to file")

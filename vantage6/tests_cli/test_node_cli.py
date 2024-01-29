@@ -224,6 +224,17 @@ class NodeCLITest(unittest.TestCase):
             config_dir=Path("configs"),
             databases=[{"label": "some_label", "uri": "data.csv", "type": "csv"}],
         )
+
+        # cli_node_start() tests for truth value of a set-like object derived
+        # from ctx.config.get('node_extra_env', {}). Default MagicMock() will
+        # evaluate to True, empty dict to False. False signifies no overwritten
+        # env vars, hence no error.
+        def config_get_side_effect(key, default=None):
+            if key == "node_extra_env":
+                return {}
+            return MagicMock()
+
+        ctx.config.get.side_effect = config_get_side_effect
         ctx.get_data_file.return_value = "data.csv"
         ctx.name = "some-name"
         context.return_value = ctx
