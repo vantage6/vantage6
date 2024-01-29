@@ -276,6 +276,15 @@ def server_configuration_questionaire(instance_name: str) -> dict:
     if is_mfa:
         config["two_factor_auth"] = is_mfa
 
+    current_server_url = f"http://localhost:{config['port']}{config['api_path']}"
+    config["server_url"] = q.text(
+        "What is the server url exposed to the users? If you are running a"
+        " development server running locally, this is the same as the "
+        "server url. If you are running a production server, this is the "
+        "url that users will connect to.",
+        default=current_server_url,
+    ).ask()
+
     is_add_vpn = q.confirm("Do you want to add a VPN server?", default=False).ask()
     if is_add_vpn:
         vpn_config = q.prompt(

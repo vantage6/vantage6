@@ -201,6 +201,27 @@ class AlgorithmStoreBase(ServicesResources):
             headers=headers,
         )
 
+    def _get_server_url(self, server_url_from_request: str | None) -> str:
+        """ "
+        Get the server url from the server configuration, or from the request
+        data if it is not present in the configuration.
+
+        Parameters
+        ----------
+        server_url_from_request : str | None
+            Server url from the request data.
+
+        Returns
+        -------
+        str | None
+            The server url
+        """
+        return (
+            self.config["server_url"]
+            if "server_url" in self.config
+            else server_url_from_request
+        )
+
 
 class AlgorithmStores(AlgorithmStoreBase):
     """Resource for /algorithm"""
@@ -365,7 +386,9 @@ class AlgorithmStores(AlgorithmStoreBase):
                   server_url:
                     type: string
                     description: URL to this vantage6 server. This is used to
-                      whitelist this server at the algorithm store.
+                      whitelist this server at the algorithm store. Note that
+                      this is ignored if the server configuration contains
+                      the 'server_url' key.
                   collaboration_id:
                     type: integer
                     description: Collaboration id to which the algorithm store
@@ -460,10 +483,18 @@ class AlgorithmStores(AlgorithmStoreBase):
                 "'force' flag to true, but only do so for development servers!"
             }, HTTPStatus.BAD_REQUEST
 
+        server_url = self._get_server_url(data.get("server_url"))
+        if not server_url:
+            return {
+                "msg": "The 'server_url' key is required in the server "
+                "configuration, or as a parameter. Please add it or ask your "
+                "server administrator to specify it in the server configuration."
+            }, HTTPStatus.BAD_REQUEST
+
         # whitelist this vantage6 server url for the algorithm store
         response, status = self._request_algo_store(
             algorithm_store_url,
-            data["server_url"],
+            server_url,
             endpoint="vantage6-server",
             method="post",
             force=force,
@@ -696,7 +727,9 @@ class AlgorithmStore(AlgorithmStoreBase):
             schema:
               type: string
             description: URL to this vantage6 server. This is used to delete
-              the whitelisting of this server at the algorithm store.
+              the whitelisting of this server at the algorithm store. Note that
+              this is ignored if the server configuration contains the
+              'server_url' key.
 
         responses:
           200:
@@ -730,7 +763,7 @@ class AlgorithmStore(AlgorithmStoreBase):
         if len(other_algorithm_stores) == 1:
             # only this algorithm store uses this url, so delete the
             # whitelisting
-            server_url = request.args.get("server_url", None)
+            server_url = self._get_server_url(request.args.get("server_url"))
             if not server_url:
                 return {
                     "msg": "The 'server_url' query parameter is required"

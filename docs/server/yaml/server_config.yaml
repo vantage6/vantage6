@@ -19,6 +19,13 @@ port: 5000
 # here also.
 api_path: /api
 
+# Let the server know where it is hosted. This is used as a setting to
+# communicate back and forth with other vantage6 components such as the
+# algorithm store.
+server_url: https://cotopaxi.vantage6.ai
+# or if you are running the server locally with default settings:
+# server_url: http://localhost:5000/api
+
 # The URI to the server database. This should be a valid SQLAlchemy URI,
 # e.g. for an Sqlite database: sqlite:///database-name.sqlite,
 # or Postgres: postgresql://username:password@172.17.0.1/database).
@@ -43,29 +50,28 @@ jwt_secret_key: super-secret-key! # recommended but optional
 
 # Settings for the logger
 logging:
-
   # Controls the logging output level. Could be one of the following
   # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
-  level:        DEBUG
+  level: DEBUG
 
   # Filename of the log-file, used by RotatingFileHandler
-  file:         test.log
+  file: test.log
 
   # Whether the output is shown in the console or not
-  use_console:  True
+  use_console: True
 
   # The number of log files that are kept, used by RotatingFileHandler
   backup_count: 5
 
   # Size in kB of a single log file, used by RotatingFileHandler
-  max_size:     1024
+  max_size: 1024
 
   # format: input for logging.Formatter,
-  format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
-  datefmt:      "%Y-%m-%d %H:%M:%S"
+  format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+  datefmt: "%Y-%m-%d %H:%M:%S"
 
-# (optional) set the individual log levels per logger name, for example
-# mute some loggers that are too verbose.
+  # (optional) set the individual log levels per logger name, for example
+  # mute some loggers that are too verbose.
   loggers:
     - name: urllib3
       level: warning
@@ -82,7 +88,6 @@ logging:
 
 # Additional debug flags
 debug:
-
   # Set to `true` to enable debug mode for the socketio server
   socketio: false
 
