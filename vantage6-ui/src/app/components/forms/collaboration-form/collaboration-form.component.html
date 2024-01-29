@@ -1,0 +1,43 @@
+<ng-container *ngIf="!isLoading; else loading">
+  <form class="form" [formGroup]="form" (ngSubmit)="handleSubmit()">
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>{{ "collaboration.name" | translate }}</mat-label>
+      <input matInput type="text" formControlName="name" />
+    </mat-form-field>
+    <mat-checkbox formControlName="encrypted" color="primary" labelPosition="before">
+      {{ "collaboration.encrypted" | translate }}
+    </mat-checkbox>
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>{{ "collaboration.organizations" | translate }}</mat-label>
+      <mat-select
+        multiple
+        formControlName="organizations"
+        (selectionChange)="handleOrganizationChange($event)"
+        [compareWith]="compareOrganizationsForSelection"
+      >
+        <mat-option *ngFor="let organization of organizations" [value]="organization">
+          {{ organization.name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-checkbox
+      formControlName="registerNodes"
+      color="primary"
+      labelPosition="before"
+      *ngIf="!isEdit || (isEdit && newOrganizations.length > 0)"
+    >
+      {{
+        isEdit
+          ? ("collaboration-create.register-nodes-edit" | translate: { organizations: newOrganizationNames })
+          : ("collaboration-create.register-nodes" | translate)
+      }}
+    </mat-checkbox>
+    <div class="button-container">
+      <button mat-flat-button type="submit" color="primary">{{ "general.submit" | translate }}</button>
+      <button mat-flat-button (click)="handleCancel()">{{ "general.cancel" | translate }}</button>
+    </div>
+  </form>
+</ng-container>
+<ng-template #loading>
+  <mat-spinner diameter="48"></mat-spinner>
+</ng-template>

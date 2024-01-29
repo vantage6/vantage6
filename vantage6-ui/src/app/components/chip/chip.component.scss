@@ -1,0 +1,63 @@
+@import "../../styles/config.scss";
+
+.chip {
+  display: inline-flex;
+  padding: $spacing-px-2 $spacing-px-3;
+  border-radius: $spacing-px-4;
+  font-size: 0.875rem;
+  line-height: 1rem;
+  background-color: rgb(224, 224, 224);
+  font-weight: 400;
+  color: $dark-primary-text;
+  outline: none;
+
+  &--small {
+    padding: $spacing-px-1 $spacing-px-3;
+  }
+
+  &--active {
+    background-color: $active-500;
+
+    &.chip--clickable:hover,
+    &.chip--clickable:focus-visible {
+      background-color: $active-600;
+    }
+  }
+
+  &--success {
+    background-color: $success-500;
+
+    &.chip--clickable:hover,
+    &.chip--clickable:focus-visible {
+      background-color: $success-600;
+    }
+  }
+
+  &--warning {
+    background-color: $warning-500;
+
+    &.chip--clickable:hover,
+    &.chip--clickable:focus-visible {
+      background-color: $warning-600;
+    }
+  }
+
+  &--error {
+    background-color: $error-500;
+    color: $light-primary-text;
+
+    &.chip--clickable:hover,
+    &.chip--clickable:focus-visible {
+      background-color: $error-600;
+    }
+  }
+
+  &--clickable {
+    cursor: pointer;
+
+    &:focus-visible,
+    &:hover {
+      background-color: #e0e0e0;
+    }
+  }
+}

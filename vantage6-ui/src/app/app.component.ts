@@ -1,28 +1,13 @@
-import { Component, ViewChild } from '@angular/core';
-import { MatSidenav } from '@angular/material/sidenav';
-import { TokenStorageService } from 'src/app/services/common/token-storage.service';
+import { Component } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss'],
+  templateUrl: './app.component.html'
 })
 export class AppComponent {
-  isLoggedIn: boolean;
-  showAdminBoard = false;
-  showModeratorBoard = false;
-  username?: string;
-
-  @ViewChild(MatSidenav)
-  sidenav!: MatSidenav;
-
-  constructor(private tokenStorage: TokenStorageService) {
-    this.isLoggedIn = false;
-  }
-
-  ngOnInit(): void {
-    this.tokenStorage.isLoggedIn().subscribe((loggedIn: boolean) => {
-      this.isLoggedIn = loggedIn;
-    });
+  constructor(translate: TranslateService) {
+    translate.setDefaultLang('en');
+    translate.use('en');
   }
 }

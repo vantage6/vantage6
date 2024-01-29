@@ -1,0 +1,11 @@
+<app-page-header title="Choose a collaboration"></app-page-header>
+<div class="tile-grid">
+  <button mat-raised-button *ngFor="let collaboration of collaborations" (click)="handleCollaborationClick(collaboration)">
+    {{ collaboration.name }}
+  </button>
+</div>
+<mat-card *ngIf="collaborations.length === 0">
+  <mat-card-content>
+    <p>{{ "start.no-collaborations" | translate }}</p>
+  </mat-card-content>
+</mat-card>

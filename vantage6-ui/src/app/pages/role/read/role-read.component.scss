@@ -1,0 +1,19 @@
+@import "../../../styles/config.scss";
+
+.role-read {
+  &__tab-content {
+    margin-top: $spacing-px-4;
+  }
+  &__buttons {
+    margin-bottom: $spacing-px-4;
+  }
+
+  &__submit-buttons {
+    margin-top: $spacing-px-4;
+    display: block;
+  }
+
+  &__error-message {
+    color: $error-900;
+  }
+}

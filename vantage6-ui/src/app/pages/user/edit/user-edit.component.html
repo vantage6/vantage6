@@ -1,0 +1,15 @@
+<ng-container *ngIf="!isLoading && !isSubmitting && user; else loading">
+  <app-page-header [title]="user.username"></app-page-header>
+  <mat-card>
+    <mat-card-content>
+      <app-user-form [user]="user" (submitted)="handleSubmit($event)" (cancelled)="handleCancel()"></app-user-form>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
+<ng-template #loading>
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-template>

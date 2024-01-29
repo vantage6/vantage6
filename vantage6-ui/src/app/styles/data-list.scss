@@ -1,0 +1,29 @@
+@import "config.scss";
+
+.data-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $spacing-px-4;
+
+  &__item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-px-1;
+    word-break: break-all;
+    padding-bottom: $spacing-px-1;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+
+    &--big {
+      grid-column: span 2;
+    }
+
+    &--full {
+      grid-column: span 3;
+    }
+  }
+
+  &__header {
+    margin: $spacing-px-4 0 $spacing-px-1 0;
+  }
+}

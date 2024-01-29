@@ -1,0 +1,17 @@
+@import "../../../styles/config.scss";
+
+.user-form {
+  &__header {
+    padding: 0 16px 16px;
+  }
+  &__label {
+    transform-origin: 0 0;
+    transform: scale(0.75);
+    color: var(--mdc-filled-text-field-label-text-color);
+    font-size: var(--mdc-filled-text-field-label-text-size);
+    font-weight: var(--mdc-filled-text-field-label-text-weight);
+  }
+  &__button-container {
+    margin-top: $spacing-px-4;
+  }
+}

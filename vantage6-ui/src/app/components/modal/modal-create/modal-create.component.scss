@@ -1,9 +1,0 @@
-@use 'src/app/shared/scss/variables' as v;
-
-.btn-offline {
-    background-color: v.$red !important;
-}
-
-.btn-online {
-background-color: v.$green !important;
-}

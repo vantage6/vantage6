@@ -1,0 +1,75 @@
+$dark-primary-text: rgba(black, 0.87);
+$light-primary-text: white;
+
+$active-50: #f1f8e9;
+$active-100: #dcedc8;
+$active-200: #c5e1a5;
+$active-300: #aed581;
+$active-400: #9ccc65;
+$active-500: #8bc34a;
+$active-600: #7cb342;
+$active-700: #689f38;
+$active-800: #558b2f;
+$active-900: #33691e;
+
+$success-50: #e8f5e9;
+$success-100: #c8e6c9;
+$success-200: #a5d6a7;
+$success-300: #81c784;
+$success-400: #66bb6a;
+$success-500: #4caf50;
+$success-600: #43a047;
+$success-700: #388e3c;
+$success-800: #2e7d32;
+$success-900: #1b5e20;
+
+$warning-50: #fff3e0;
+$warning-100: #ffe0b2;
+$warning-200: #ffcc80;
+$warning-300: #ffb74d;
+$warning-400: #ffa726;
+$warning-500: #ff9800;
+$warning-600: #fb8c00;
+$warning-700: #f57c00;
+$warning-800: #ef6c00;
+$warning-900: #e65100;
+
+$error-50: #ffebee;
+$error-100: #ffcdd2;
+$error-200: #ef9a9a;
+$error-300: #e57373;
+$error-400: #ef5350;
+$error-500: #f44336;
+$error-600: #e53935;
+$error-700: #d32f2f;
+$error-800: #c62828;
+$error-900: #b71c1c;
+
+$spacing-px-1: 4px;
+$spacing-px-2: 8px;
+$spacing-px-3: 12px;
+$spacing-px-4: 16px;
+$spacing-px-5: 20px;
+$spacing-px-6: 24px;
+$spacing-px-8: 32px;
+$spacing-px-10: 40px;
+$spacing-px-12: 48px;
+$spacing-px-16: 64px;
+
+$spacing-px-minus-1: -4px;
+$spacing-px-minus-2: -8px;
+$spacing-px-minus-3: -12px;
+$spacing-px-minus-4: -16px;
+$spacing-px-minus-5: -20px;
+$spacing-px-minus-6: -24px;
+$spacing-px-minus-8: -32px;
+$spacing-px-minus-10: -40px;
+$spacing-px-minus-12: -48px;
+$spacing-px-minus-16: -64px;
+
+$breakpoints: (
+  lt-sm: 599.9px,
+  lt-md: 959.9px,
+  lt-lg: 1279.9px,
+  lt-xl: 1919.9px
+);
