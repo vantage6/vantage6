@@ -31,9 +31,6 @@ Release notes
  - Node logs were not persisted properly. This has been fixed
    (`Issue#993 <https://github.com/vantage6/vantage6/issues/993>`_,
    `PR#1009 <https://github.com/vantage6/vantage6/pull/1009>`_).
- - Running encrypted algorithms failed due to a bug in the proxy server
-   (`Issue#955 <https://github.com/vantage6/vantage6/issues/955>`_,
-   `PR#1008 <https://github.com/vantage6/vantage6/pull/1008>`_).
 
 4.2.1
 -----
