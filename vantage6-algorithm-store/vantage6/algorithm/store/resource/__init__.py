@@ -40,7 +40,9 @@ def with_authentication() -> callable:
                 return {'msg': msg}, HTTPStatus.UNAUTHORIZED
 
             # check if token is valid
+
             url = f"{request.headers['Server-Url']}/token/user/validate"
+            log.debug(f"Sending verification to {url}")
             try:
                 response = requests.post(url, headers=request.headers)
             except requests.exceptions.ConnectionError:

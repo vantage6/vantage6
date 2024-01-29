@@ -8,6 +8,7 @@ from vantage6.algorithm.store.model.function import Function
 from vantage6.algorithm.store.model import Base
 from vantage6.algorithm.store.model.role import Role
 from vantage6.algorithm.store.model.rule import Rule
+from vantage6.algorithm.store.model.user import User
 from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 from vantage6.server.resource.common.output_schema import (
     BaseHATEOASModelSchema
@@ -62,6 +63,8 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
                 lambda obj: self.create_hateoas("rule", obj))
         setattr(self, "role",
                 lambda obj: self.create_hateoas("role", obj))
+        setattr(self, "role",
+                lambda obj: self.create_hateoas("user", obj))
 
         # call super class. Do this after setting the attributes above, because
         # the super class initializer will call the attributes.
@@ -118,3 +121,51 @@ class RuleOutputSchema(HATEOASModelSchema):
     class Meta:
         model = Rule
         exclude = ('roles',)
+
+
+class UserSchema(HATEOASModelSchema):
+
+    class Meta:
+        model = User
+
+    roles = fields.Function(lambda obj: create_one_to_many_link(
+        obj, link_to='role', link_from='user_id'
+    ))
+    rules = fields.Function(lambda obj: create_one_to_many_link(
+        obj, link_to='rule', link_from='user_id'
+    ))
+
+
+# class UserWithPermissionDetailsSchema(UserSchema):
+#     """
+#     A schema for API responses that contains regular user details plus
+#     additional permission details for the user to be used by the UI.
+#     """
+#     permissions = fields.Method("permissions_")
+#
+#     @staticmethod
+#     def permissions_(obj: User) -> dict:
+#         """
+#         Returns a dictionary containing permission details for the user to be
+#         used by the UI.
+#
+#         Parameters
+#         ----------
+#         obj : User
+#             The user to get permission details for.
+#
+#         Returns
+#         -------
+#         dict
+#             A dictionary containing permission details for the user.
+#         """
+#         role_ids = [role.id for role in obj.roles]
+#         rule_ids = list(set(
+#             [rule.id for rule in obj.rules] + \
+#             [rule.id for role in obj.roles for rule in role.rules]
+#         ))
+#
+#         return {
+#             "roles": role_ids,
+#             "rules": rule_ids
+#         }

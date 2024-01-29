@@ -48,7 +48,8 @@ from vantage6.algorithm.store.resource.schema.output_schema import HATEOASModelS
 from vantage6.algorithm.store.permission import PermissionManager
 from vantage6.algorithm.store.globals import (
     RESOURCES,
-    SERVER_MODULE_NAME
+    SERVER_MODULE_NAME,
+    SUPER_USER_INFO
 )
 
 
@@ -272,7 +273,24 @@ class AlgorithmStoreApp:
         (re)set where appropriate.
         """
         self._add_default_roles()
+
+        # create root user if it is not in the DB yet
+        try:
+            db.User.get_by_username(SUPER_USER_INFO['username'])
+        except Exception:
+            log.warn("No root user found! Is this the first run?")
+
+            # TODO use constant instead of 'Root' literal
+            root = db.Role.get_by_name("Root")
+
+            log.warn(f"Creating root user")
+
+            user = db.User(id_server=SUPER_USER_INFO['id_server'],
+                           username=SUPER_USER_INFO['username'],
+                           roles=[root])
+            user.save()
         return self
+
 
 def run_server(config: str, system_folders: bool = True) -> AlgorithmStoreApp:
     """

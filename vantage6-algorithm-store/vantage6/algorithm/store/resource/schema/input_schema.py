@@ -1,6 +1,7 @@
 from marshmallow import (
     Schema, fields, ValidationError, validates
 )
+from marshmallow.validate import Range
 
 from vantage6.algorithm.store.model.common.enums import (
     Partitioning, FunctionType, ArgumentType
@@ -83,6 +84,14 @@ class ArgumentInputSchema(_NameDescriptionSchema):
                 f"Argument type '{value}' is not one of the allowed values "
                 f"{types}"
             )
+
+
+class UserInputSchema(Schema):
+    """ Schema for validating input for creating a user. """
+
+    id_server = fields.Integer(validate=Range(min=1))
+    roles = fields.List(fields.Integer(validate=Range(min=1)))
+    rules = fields.List(fields.Integer(validate=Range(min=1)))
 
 
 class Vantage6ServerInputSchema(Schema):
