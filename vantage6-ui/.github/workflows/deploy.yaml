@@ -147,7 +147,7 @@ jobs:
   # TODO this should be moved to a separate workflow so build and deployment are separated
   deploy:
     runs-on: ubuntu-latest
-    needs: build
+    needs: [version, build]
     env:
       stage: ${{ needs.version.outputs.stage }}
     environment:
