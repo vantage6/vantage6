@@ -16,6 +16,7 @@ help:
 	@echo "  install              : do a regular install of all vantage6 packages"
 	@echo "  install-dev          : do an editable install of all vantage6 packages"
 	@echo "  image                : build the node/server docker image"
+	@echo "  algorithm-store-image: build the algorithm store docker image"
 	@echo "  base-image           : build the infrastructure base image"
 	@echo "  algorithm-base-image : build the algorithm base image"
 	@echo "  support-image        : build the supporing images"
@@ -164,6 +165,17 @@ image:
 		--build-arg BASE=${BASE} \
 		--platform ${PLATFORMS} \
 		-f ./docker/node-and-server.Dockerfile \
+		--push .
+
+algorithm-store-image:
+	@echo "Building ${REGISTRY}/infrastructure/algorithm-store:${TAG}"
+	docker buildx build \
+		--tag ${REGISTRY}/infrastructure/algorithm-store:${TAG} \
+		--tag ${REGISTRY}/infrastructure/algorithm-store:latest \
+		--build-arg TAG=${TAG} \
+		--build-arg BASE=${BASE} \
+		--platform ${PLATFORMS} \
+		-f ./docker/algorithm-store.Dockerfile \
 		--push .
 
 rebuild:
