@@ -1,0 +1,33 @@
+<form class="form" [formGroup]="form" (ngSubmit)="handleSubmit()">
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ "organization.name" | translate }}</mat-label>
+    <input matInput type="text" formControlName="name" />
+  </mat-form-field>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ "organization.address1" | translate }}</mat-label>
+    <input matInput type="text" formControlName="address1" />
+  </mat-form-field>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ "organization.address2" | translate }}</mat-label>
+    <input matInput type="text" formControlName="address2" />
+  </mat-form-field>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ "organization.country" | translate }}</mat-label>
+    <input matInput type="text" formControlName="country" />
+  </mat-form-field>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ "organization.domain" | translate }}</mat-label>
+    <input matInput type="text" formControlName="domain" />
+  </mat-form-field>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label *ngIf="!organization?.public_key">{{ "organization.public-key" | translate }}</mat-label>
+    <mat-label *ngIf="organization?.public_key">{{ "organization.public-key-new" | translate }}</mat-label>
+    <input matInput value="{{ selectedFile?.name }}" disabled />
+    <input hidden (change)="selectFile($event)" #fileInput type="file" id="file" />
+    <button mat-flat-button type="button" matSuffix color="primary" (click)="fileInput.click()">Select file</button>
+  </mat-form-field>
+  <div class="button-container">
+    <button mat-flat-button type="submit" color="primary">{{ "general.submit" | translate }}</button>
+    <button mat-flat-button (click)="handleCancel()">{{ "general.cancel" | translate }}</button>
+  </div>
+</form>

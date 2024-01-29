@@ -1,0 +1,76 @@
+<ng-container *ngIf="!isLoading && organization">
+  <app-page-header title="{{ organization.name }}">
+    <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="canEdit">
+      <mat-icon>more_vert</mat-icon>
+    </button>
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item *ngIf="canEdit" [routerLink]="[routes.organizationEdit, id]">
+        <mat-icon>edit</mat-icon>
+        <span>{{ "general.edit" | translate }}</span>
+      </button>
+    </mat-menu>
+  </app-page-header>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ "organization-read.card-details.title" | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="data-list">
+        <div class="data-list__item">
+          <b>{{ "general.id" | translate }}</b>
+          <span>{{ organization.id || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "organization.name" | translate }}</b>
+          <span>{{ organization.name || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "organization.address1" | translate }}</b>
+          <span>{{ organization.address1 || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "organization.address2" | translate }}</b>
+          <span>{{ organization.address2 || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "organization.country" | translate }}</b>
+          <span>{{ organization.country || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "organization.domain" | translate }}</b>
+          <span>{{ organization.domain || "-" }}</span>
+        </div>
+      </div>
+      <div class="details-actions">
+        <button mat-flat-button color="primary" (click)="handleDownload()">Download public key</button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ "organization-read.card-collaborations.title" | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <app-table [data]="collaborationTable" (rowClick)="handleCollaborationClick($event)"></app-table>
+    </mat-card-content>
+  </mat-card>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ "organization-read.card-nodes.title" | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="chip-container">
+        <app-chip
+          *ngFor="let node of organization.nodes"
+          label="{{ node.status === nodeStatus.Online ? node.name : node.name + ' (' + ('general.offline' | translate) + ')' }}"
+          [type]="node.status === nodeStatus.Online ? 'success' : 'error'"
+        ></app-chip>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
+<mat-card *ngIf="isLoading">
+  <mat-card-content>
+    <mat-spinner diameter="48"></mat-spinner>
+  </mat-card-content>
+</mat-card>

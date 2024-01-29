@@ -1,0 +1,46 @@
+<mat-toolbar color="primary">
+  <button mat-icon-button *ngIf="hideSideMenu" (click)="sideNav.toggle()"><mat-icon>menu</mat-icon></button>
+  <img src="/assets/images/logo.png" class="logo" alt="vantage6" />
+  <div class="actions">
+    <button mat-flat-button [routerLink]="handleToggleAdmin()">
+      {{ isAdministration ? ("header.actions.admin-leave" | translate) : ("header.actions.admin" | translate) }}
+    </button>
+    <button mat-mini-fab [matMenuTriggerFor]="headerMenu">
+      <mat-icon>person</mat-icon>
+    </button>
+    <mat-menu #headerMenu="matMenu">
+      <button mat-menu-item [routerLink]="routes.passwordChange">
+        <mat-icon>key</mat-icon>
+        <span>{{ "header.actions.change_password" | translate }}</span>
+      </button>
+      <button mat-menu-item (click)="handleLogout()">
+        <mat-icon>logout</mat-icon>
+        <span>{{ "header.actions.logout" | translate }}</span>
+      </button>
+    </mat-menu>
+  </div>
+</mat-toolbar>
+<mat-sidenav-container autosize>
+  <mat-sidenav #sideNav *ngIf="!hideMenu" [mode]="hideSideMenu ? 'over' : 'side'" [fixedInViewport]="hideSideMenu" fixedTopGap="56">
+    <mat-nav-list>
+      <button mat-flat-button color="primary" *ngIf="!isStartPage && !isAdministration" [routerLink]="routes.start">
+        <mat-icon>arrow_back</mat-icon>{{ (chosenCollaborationService.collaboration$ | async)?.name }}
+      </button>
+      <mat-list-item
+        *ngFor="let link of navigationLinks"
+        [routerLink]="[link.route]"
+        [routerLinkActive]="['mdc-list-item--activated']"
+        [routerLinkActiveOptions]="{ exact: !!link.shouldBeExact }"
+      >
+        <mat-icon matListItemIcon>{{ link.icon }}</mat-icon>
+        <a matLine>{{ link.label }}</a>
+      </mat-list-item>
+    </mat-nav-list>
+  </mat-sidenav>
+  <mat-sidenav-content>
+    <div class="layout-container">
+      <app-breadcrumbs></app-breadcrumbs>
+      <router-outlet *ngIf="chosenCollaborationService.isInitialized$ | async"></router-outlet>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

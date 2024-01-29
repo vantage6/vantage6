@@ -1,0 +1,43 @@
+.card-container {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-px-4;
+}
+
+mat-card {
+  table {
+    width: calc(100% + $spacing-px-8);
+    margin-left: $spacing-px-minus-4;
+  }
+
+  mat-spinner {
+    margin: auto;
+  }
+}
+
+.auth-card {
+  margin: 0 $spacing-px-4;
+  max-width: 600px;
+}
+
+.card-accordion {
+  mat-expansion-panel.mat-expansion-panel {
+    width: calc(100% + $spacing-px-8);
+    margin: 0 0 0 $spacing-px-minus-4;
+    box-shadow: none;
+    border-radius: 0 !important;
+
+    &:first-of-type {
+      border-top: 1px solid rgba(0, 0, 0, 0.12);
+    }
+
+    .mat-expansion-panel-header {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    }
+
+    .mat-expansion-panel-body {
+      margin-top: $spacing-px-4;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    }
+  }
+}

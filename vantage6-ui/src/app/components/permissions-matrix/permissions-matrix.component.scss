@@ -1,0 +1,66 @@
+@import "../../styles/config.scss";
+
+.roles-table {
+  border-collapse: collapse;
+  position: relative;
+
+  width: 100%;
+  max-width: 800px;
+  margin-left: 0; // Needed to undo the anti-pattern that is defined on 'mat-card table'
+
+  &__body {
+    font-size: 0.9em;
+  }
+
+  &__resource-header,
+  &__resource {
+    text-align: left;
+    padding-left: $spacing-px-4;
+    padding-right: $spacing-px-4;
+    width: 120px;
+  }
+
+  &__scope-header,
+  &__scope {
+    text-align: right;
+    padding-left: $spacing-px-4;
+    padding-right: $spacing-px-4;
+    width: 120px;
+  }
+
+  &__resource-header,
+  &__scope-header,
+  &__operation-header {
+    padding-bottom: $spacing-px-4;
+  }
+
+  @media only screen and (max-width: map-get($breakpoints, lt-md)) {
+    &__operation-header {
+      width: 5em;
+      transform: rotate(270deg) translate(0px, 32px);
+      transform-origin: left center;
+      text-align: left;
+    }
+  }
+  &__even-row {
+    background-color: #f0f0f0;
+  }
+
+  &__operation-permission-select {
+    text-align: center;
+  }
+
+  &__check {
+    margin: 2px;
+    color: rgba(0, 0, 0, 0.87);
+    &--secondary {
+      color: $success-700;
+      border: 1px solid $success-700;
+      border-radius: 5px;
+    }
+  }
+
+  .mdc-checkbox--disabled {
+    opacity: 0.3;
+  }
+}

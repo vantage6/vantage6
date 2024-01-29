@@ -6,7 +6,7 @@ LABEL maintainer="Bart van Beusekom <b.vanbeusekom@iknl.nl>, Frank Martin <f.mar
 WORKDIR /app
 COPY . /app
 RUN npm install
-RUN npm run build --prod
+RUN npm run build
 
 # run
 FROM nginx:alpine

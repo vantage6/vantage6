@@ -1,8 +1,0 @@
-<mat-card>
-  <h4>View task #{{task.id}}</h4>
-  <app-task-view
-    [task]="task"
-		[org_id]="organization_id"
-    (deletingResource)="goBackToPreviousPage()"
-  ></app-task-view>
-</mat-card>

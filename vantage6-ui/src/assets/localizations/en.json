@@ -1,0 +1,422 @@
+{
+  "general": {
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "close": "Close",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "name": "Name",
+    "offline": "Offline",
+    "online": "Online",
+    "none": "None",
+    "id": "ID",
+    "visualization": "Visualization"
+  },
+  "home": {
+    "title": "Home"
+  },
+  "start": {
+    "no-collaborations": "Your organization is not part of any collaborations yet. Please contact your vantage6 project manager to set up a collaboration or go to the administration section to create a new collaboration."
+  },
+  "table": {
+    "search-placeholder": "Search"
+  },
+  "task": {
+    "algorithm": "Algorithm",
+    "database": "Database",
+    "description": "Description",
+    "function": "Function",
+    "parameters": "Parameters",
+    "organization": "Initiating organization",
+    "name": "Name",
+    "created-at": "Created",
+    "parent": "Parent task",
+    "children": "Child tasks",
+    "query": "Query",
+    "sheet": "Sheet name",
+    "status": "Status",
+    "user": "Initiating user",
+    "preprocessor": "Preprocessor",
+    "preprocessing-function": "Preprocessing function",
+    "filter": "Filter",
+    "filter-function": "Filter function",
+    "alert-node-offline": "The node '{{name}}' is offline. This task will be handled when the node is back online."
+  },
+  "task-run": {
+    "assigned-at": "Created",
+    "started-at": "Started",
+    "finished-at": "Finished",
+    "node": "Assigned node",
+    "show-log": "Show logs",
+    "alert-node-offline": "Task can't start, node is offline."
+  },
+  "task-list": {
+    "title": "Tasks"
+  },
+  "task-create": {
+    "title": "Create task",
+    "step-package": {
+      "title": "Select package"
+    },
+    "step-function": {
+      "title": "Select function",
+      "organization": "Organization(s) to run this function"
+    },
+    "step-database": {
+      "title": "Select databases"
+    },
+    "step-preprocessing": {
+      "title": "Extend data",
+      "get-columns": "Obtaining columns from data stations...",
+      "actions": {
+        "add-preprocessor": "Create new variable"
+      }
+    },
+    "step-filter": {
+      "title": "Filter data",
+      "actions": {
+        "add-filter": "Add filter"
+      }
+    },
+    "step-parameters": {
+      "title": "Define parameters"
+    },
+    "alert-no-online-nodes": "You cannot create a task right now because no nodes are online in your collaboration. Online nodes are required to collect information on available databases and columns. Please try again later or contact your collaboration manager."
+  },
+  "task-read": {
+    "title": "Task",
+    "card-general": {
+      "title": "General"
+    },
+    "card-status": {
+      "title": "Status",
+      "child-title": "Subtasks",
+      "actions": {
+        "kill": "Kill task"
+      }
+    },
+    "card-results": {
+      "title": "Results",
+      "actions": {
+        "visualization": "Visualization",
+        "download": "Download JSON result"
+      }
+    },
+    "card-algorithm": {
+      "title": "Algorithm"
+    },
+    "card-runs": {
+      "title": "Runs"
+    },
+    "delete-dialog": {
+      "title": "Are you sure you want to delete the task '{{name}}'?",
+      "content": "Note, this will also delete all subtasks and results.\nThis operation cannot be undone."
+    },
+    "kill-dialog": {
+      "title": "Are you sure you want to kill the task '{{name}}'?",
+      "content": "Note, this will also kill all subtasks.\nThis operation cannot be undone."
+    },
+    "repeat": "Repeat task"
+  },
+  "template-task-create": {
+    "title": "Quick task",
+    "actions": {
+      "select": "Select quick task"
+    }
+  },
+  "organization": {
+    "name": "Name",
+    "address1": "Address 1",
+    "address2": "Address 2",
+    "country": "Country",
+    "domain": "Domain",
+    "public-key": "Upload public key",
+    "public-key-new": "Upload new public key"
+  },
+  "organization-list": {
+    "title": "Organizations"
+  },
+  "organization-read": {
+    "title": "Organization",
+    "card-details": {
+      "title": "Details"
+    },
+    "card-collaborations": {
+      "title": "Collaborations"
+    },
+    "card-nodes": {
+      "title": "Nodes"
+    }
+  },
+  "organization-create": {
+    "title": "Create organization"
+  },
+  "collaboration": {
+    "name": "Name",
+    "encrypted": "Encrypted",
+    "organizations": "Organizations",
+    "algorithm-store": {
+      "url": "Web address",
+      "actions": {
+        "edit": "Edit",
+        "delete": "Remove from collaboration"
+      },
+      "delete-dialog": {
+        "title": "Are you sure you want to remove the algorithm store '{{name}}' from the collaboration '{{collaboration}}'?",
+        "content": "Users will no longer be able to create tasks in this collaboration with the algorithms in this store.\nThe algorithm store can be added back to the collaboration at any time."
+      }
+    }
+  },
+  "collaboration-create": {
+    "title": "Create collaboration",
+    "register-nodes": "Register nodes",
+    "register-nodes-edit": "Register nodes for new organizations: {{organizations}}"
+  },
+  "api-key-download-dialog": {
+    "title": "API key download",
+    "create-message": "The API keys have been downloaded.",
+    "edit-message": "The API keys for the new organizations in the collaboration have been downloaded.",
+    "reset-message": "Your API key has been reset. Please read your new key in the file that has been downloaded.",
+    "security-message": "Please distribute each of these keys privately to each of the organizations. Note that they may reset their API key so that no-one but them knows it."
+  },
+  "collaboration-list": {
+    "title": "Collaborations"
+  },
+  "collaboration-read": {
+    "title": "Collaboration",
+    "card-details": {
+      "title": "Details"
+    },
+    "card-nodes": {
+      "title": "Nodes"
+    },
+    "card-algorithm-stores": {
+      "title": "Algorithm stores available to this collaboration",
+      "add": "Add algorithm store"
+    },
+    "delete-dialog": {
+      "title": "Are you sure you want to delete the collaboration '{{name}}'?",
+      "content": "Note, this will also delete all nodes and tasks related to this collaboration.\nThis operation cannot be undone."
+    }
+  },
+  "algorithm-store-add": {
+    "title": "Add algorithm store to your collaboration",
+    "name": "Name",
+    "url": "Algorithm store URL",
+    "server_url": "Vantage6 server URL",
+    "form": {
+      "name-hint": "This name will be used to identify the algorithm store in your collaboration(s).",
+      "url-hint": "The web address of the algorithm store. This should be the address of the algorithm store without '/api' at the end.",
+      "server-url-hint": "The web address of this vantage6 server. This should be the address of the vantage6 server's including the API path.",
+      "all-collaborations": "Make this algorithm store available to all collaborations"
+    },
+    "localhost-dialog": {
+      "title": "Adding localhost algorithm store",
+      "content": "You are adding an algorithm store running on localhost. This is insecure and should only be done for development servers. Are you sure you want to continue?",
+      "confirm": "I understand, proceed."
+    }
+  },
+  "role-create": {
+    "title": "Create role",
+    "formlabels": {
+      "name": "Name",
+      "description": "Description",
+      "organization": "Organization"
+    },
+    "all-organizations": "All organizations"
+  },
+  "role-submit-buttons": {
+    "error-minimal-selection": "Select at least one permission."
+  },
+  "role-list": {
+    "title": "roles",
+    "name": "Role"
+  },
+  "role-read": {
+    "title": "view",
+    "organization": "Organization",
+    "all-organizations": "All organizations",
+    "no-users": "No users have been assigned to the selected role.",
+    "edit-permissions": "Edit permissions",
+    "tab": {
+      "permissions": "Permissions",
+      "users": "Users"
+    }
+  },
+  "rule": {
+    "resource": {
+      "label": "Resource",
+      "organization": "Organization",
+      "collaboration": "Collaboration",
+      "role": "Role",
+      "node": "Node",
+      "task": "Task",
+      "user": "User",
+      "run": "Run",
+      "event": "Event",
+      "port": "Port"
+    },
+
+    "scope": {
+      "label": "Scope",
+      "own": "Own",
+      "organization": "Organization",
+      "collaboration": "Collaboration",
+      "global": "Global"
+    },
+
+    "operation": {
+      "create": "Create",
+      "edit": "Edit",
+      "delete": "Delete",
+      "view": "View",
+      "send": "Send",
+      "receive": "Receive"
+    }
+  },
+  "user": {
+    "username": "Username",
+    "email": "Email",
+    "password": "Password",
+    "password-repeat": "Repeat password",
+    "first-name": "First name",
+    "last-name": "Last name",
+    "organization": "Organization",
+    "roles": "Roles",
+    "permissions": "Permissions"
+  },
+  "user-list": {
+    "title": "Users"
+  },
+  "user-create": {
+    "title": "Create user"
+  },
+  "user-read": {
+    "title": "User",
+    "card-details": {
+      "title": "Details"
+    },
+    "delete-dialog": {
+      "title": "Are you sure you want to delete the user '{{name}}'?",
+      "content": "Note, this will also delete all tasks this user created.\nThis operation cannot be undone."
+    }
+  },
+  "node": {
+    "name": "Name",
+    "status": "Status",
+    "last-seen": "Last seen",
+    "organization": "Organization",
+    "collaboration": "Collaboration"
+  },
+  "node-read": {
+    "title": "Nodes",
+    "actions": {
+      "filter": "Filter"
+    }
+  },
+  "node-edit": {
+    "actions": {
+      "edit": "Change name",
+      "new-api-key": "Reset API key"
+    }
+  },
+  "task-status": {
+    "Active": "Active",
+    "Completed": "Completed",
+    "Crashed": "Error during execution",
+    "Failed": "Failed",
+    "Initializing": "Initializing",
+    "Killed": "Killed by user",
+    "NoDockerImage": "Non-existing Docker image",
+    "Pending": "Pending",
+    "StartFailed": "Start failed"
+  },
+  "log-dialog": {
+    "title": "Log"
+  },
+  "header": {
+    "actions": {
+      "admin": "Administration",
+      "admin-leave": "Leave administration",
+      "logout": "Logout",
+      "change_password": "Change password"
+    }
+  },
+  "login": {
+    "title": "Login",
+    "username": "Username",
+    "password": "Password",
+    "forgot-password": "Forgot your password?",
+    "lost": {
+      "title": "Lost your password?",
+      "instruction": "Fill in your username *or* email address in order to reset your password.",
+      "request-token": "Request reset token",
+      "enter-token": "Enter your reset token",
+      "already-reset": "Already have a reset token?"
+    },
+    "recover": {
+      "title": "Enter your reset token and new password",
+      "message": "Enter the reset token you received at your registered email address and choose a new password.",
+      "token-field": "Reset token",
+      "new-password": "New password",
+      "new-password-repeat": "Repeat new password",
+      "submit": "Submit",
+      "error": "Resetting password failed: {{error}}"
+    }
+  },
+  "mfa": {
+    "enter": {
+      "title": "Enter two-factor authentication code",
+      "code": "Code"
+    },
+    "setup": {
+      "title": "Setup two-factor authentication",
+      "message": "Your system administrator requires you to set up two-factor authentication. Scan the QR code below with your favorite authenticator app to set this up.",
+      "recommend": "You may use your favorite authentication app. We recommend using Lastpass or Google authenticator.",
+      "done": "I'm done!",
+      "help": "I need help!",
+      "manual": {
+        "title": "Setup two-factor authentication manually",
+        "message": "If you are having difficulties scanning the QR code, please enter the following code manually in your authentication app:"
+      }
+    },
+    "lost": {
+      "title": "Lost your code?",
+      "instruction": "In order to reset your two-factor authentication code, you need to get a reset token. You will receive this at your registered email address.",
+      "request-token": "Request reset token",
+      "enter-token": "Enter your reset token",
+      "already-reset": "Already have a reset token?"
+    },
+    "recover": {
+      "title": "Enter your reset token",
+      "message": "Enter the reset token you received at your registered email address.",
+      "token-field": "Reset token",
+      "submit": "Submit",
+      "error": "Resetting two-factor authentication failed: {{error}}"
+    }
+  },
+  "change-password": {
+    "title": "Change password",
+    "old-password": "Old password",
+    "new-password": "New password",
+    "new-password-repeat": "Repeat new password",
+    "success-dialog": {
+      "title": "Password changed",
+      "message": "Your password has been changed successfully."
+    }
+  },
+  "password": {
+    "validation": {
+      "unequal": "New password cannot be the same as the old password",
+      "compare": "Passwords do not match",
+      "roles-unavailable": "Select an organization to determine available roles",
+      "length": "Password must be at least 8 characters long",
+      "pattern": "Password must contain a lowercase letter, uppercase letter, number and special character"
+    }
+  }
+}
