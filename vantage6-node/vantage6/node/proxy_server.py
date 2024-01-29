@@ -282,8 +282,8 @@ def proxy_task():
     return response.json(), HTTPStatus.OK
 
 
-@app.route("/result?task_id=<int:id_>", methods=["GET"])
-def proxy_result(id_: int) -> Response:
+@app.route("/result", methods=["GET"])
+def proxy_result() -> Response:
     """
     Obtain and decrypt all results to belong to a certain task
 
@@ -305,36 +305,42 @@ def proxy_result(id_: int) -> Response:
             HTTPStatus.INTERNAL_SERVER_ERROR,
         )
 
+    try:
+        task_id = request.args["task_id"]
+    except KeyError:
+        log.exception("No task id found in request for results...")
+        return {
+            "msg": "No task id found in request from algorithm..."
+        }, HTTPStatus.BAD_REQUEST
+
     # Forward the request
     try:
-        response: Response = make_proxied_request(f"result?task_id={id_}")
+        response: Response = make_proxied_request(f"result?task_id={task_id}")
     except Exception:
-        log.exception(f'Error on "result?task_id={id_}"')
+        log.exception(f'Error on "result?task_id={task_id}"')
         return {
             "msg": "Request failed, see node logs"
         }, HTTPStatus.INTERNAL_SERVER_ERROR
 
     # Attempt to decrypt the results. The enpoint should have returned
     # a list of results
-    unencrypted = []
-    runs = get_response_json_and_handle_exceptions(response)
-    for run in runs:
-        run = decrypt_result(run)
-        unencrypted.append(run)
+    results = get_response_json_and_handle_exceptions(response)
+    for result in results["data"]:
+        result = decrypt_result(result)
 
-    return jsonify(unencrypted), HTTPStatus.OK
+    return jsonify(results), HTTPStatus.OK
 
 
-@app.route("/run/<int:id>", methods=["GET"])
-def proxy_runs(id_: int) -> Response:
+@app.route("/result/<int:id>", methods=["GET"])
+def proxy_results(id_: int) -> Response:
     """
-    Obtain and decrypt the algorithm run from the vantage6 server to be used by
-    an algorithm container.
+    Obtain and decrypt the algorithm result from the vantage6 server to be used
+    by an algorithm container.
 
     Parameters
     ----------
     id_ : int
-        Id of the run to be obtained
+        Id of the result to be obtained
 
     Returns
     -------
@@ -350,18 +356,18 @@ def proxy_runs(id_: int) -> Response:
 
     # Make the proxied request
     try:
-        response: Response = make_proxied_request(f"run/{id_}")
+        response: Response = make_proxied_request(f"result/{id_}")
     except Exception:
-        log.exception("Error on /run/<int:id>")
+        log.exception("Error on /result/<int:id>")
         return {
             "msg": "Request failed, see node logs..."
         }, HTTPStatus.INTERNAL_SERVER_ERROR
 
     # Try to decrypt the results
-    run = get_response_json_and_handle_exceptions(response)
-    run = decrypt_result(run)
+    result = get_response_json_and_handle_exceptions(response)
+    result = decrypt_result(result)
 
-    return run, HTTPStatus.OK
+    return result, HTTPStatus.OK
 
 
 @app.route(
