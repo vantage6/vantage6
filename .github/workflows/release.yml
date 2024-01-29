@@ -3,10 +3,9 @@ name: Build & Release
 on:
   push:
     tags:
-      - 'version/*.*.*'
+      - "version/*.*.*"
 
 jobs:
-
   # From the tag we split the individual version components:
   # major.minor.patch.stage<N>. Note that post releases are not part
   # of this schema as they are only used for releasing updated docker
@@ -15,7 +14,6 @@ jobs:
     name: Apply version
     runs-on: ubuntu-latest
     steps:
-
       - name: split
         id: split
         run: |
@@ -45,11 +43,11 @@ jobs:
       - name: Get branch on which the tag is based
         id: branchname
         run: |
-         # get the branch on which the tag is based
-         raw=$(git branch -r --contains ${{ github.ref }})
-         # delete the name of the branch up to and including 'origin/'
-         branch=$(echo $raw | sed 's/.*origin\///')
-         echo "branch=${branch}" >> $GITHUB_OUTPUT
+          # get the branch on which the tag is based
+          raw=$(git branch -r --contains ${{ github.ref }})
+          # delete the name of the branch up to and including 'origin/'
+          branch=$(echo $raw | sed 's/.*origin\///')
+          echo "branch=${branch}" >> $GITHUB_OUTPUT
 
       - name: Checkout branch on which tag was pushed
         uses: actions/checkout@v3
@@ -105,13 +103,13 @@ jobs:
       stage: ${{ needs.version.outputs.stage }}
       branch: ${{ needs.version.outputs.branch }}
     steps:
-    - uses: actions/checkout@v3
-      with:
-        ref: ${{env.branch}}
-    - name: Release
-      uses: softprops/action-gh-release@v1
-      with:
-        prerelease: ${{ env.stage != '' }}
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{env.branch}}
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          prerelease: ${{ env.stage != '' }}
 
   support-images:
     name: Build support images
@@ -122,7 +120,6 @@ jobs:
       branch: ${{ needs.version.outputs.branch }}
 
     steps:
-
       - name: Login to harbor2.vantage6.ai
         env:
           USERNAME: ${{ secrets.DOCKER_USERNAME }}
@@ -159,7 +156,6 @@ jobs:
       branch: ${{ needs.version.outputs.branch }}
 
     steps:
-
       - name: Login to harbor2.vantage6.ai
         env:
           USERNAME: ${{ secrets.DOCKER_USERNAME }}
@@ -192,6 +188,10 @@ jobs:
       - # build the actual infrastructure images
         name: Build Docker image
         run: make image TAG=$version BASE=${major}.${minor}
+
+      - # build the algorithm store image
+        name: Build Docker algorithm store image
+        run: make algorithm-store-image TAG=$version BASE=${major}.${minor}
 
   algorithm-base-image:
     name: Build algorithm base image
@@ -229,7 +229,6 @@ jobs:
       - name: Build Algorithm OMOP base image
         run: make algorithm-omop-base-image BASE=${major}.${minor} TAG=${major}.${minor}
 
-
   # Update the server and node images on harbor2 for this major version,
   # including the 'live' tag that triggers a redeployment of the IKNL deployment
   deploy:
@@ -243,7 +242,6 @@ jobs:
       stage: ${{ needs.version.outputs.stage }}
       major_name: ${{ needs.version.outputs.major_name }}
     steps:
-
       - name: Login to harbor2.vantage6.ai
         env:
           USERNAME: ${{ secrets.DOCKER_USERNAME }}
@@ -255,6 +253,7 @@ jobs:
         run: |
           docker pull harbor2.vantage6.ai/infrastructure/server:${version}
           docker pull harbor2.vantage6.ai/infrastructure/node:${version}
+          docker pull harbor2.vantage6.ai/infrastructure/algorithm-store:${version}
 
       - name: Tag docker images
         if: ${{  env.stage == ''  &&  env.major_name != '' }}
@@ -262,6 +261,7 @@ jobs:
           docker tag harbor2.vantage6.ai/infrastructure/server:${version} harbor2.vantage6.ai/infrastructure/server:${major_name}
           docker tag harbor2.vantage6.ai/infrastructure/server:${version} harbor2.vantage6.ai/infrastructure/server:${major_name}-live
           docker tag harbor2.vantage6.ai/infrastructure/node:${version} harbor2.vantage6.ai/infrastructure/node:${major_name}
+          docker tag harbor2.vantage6.ai/infrastructure/algorithm-store:${version} harbor2.vantage6.ai/infrastructure/algorithm-store:${major_name}
 
       - # Release a node image for major.minor. This is released for any
         # non-candidate release or if no non-candidate release has been made yet
@@ -278,13 +278,13 @@ jobs:
           docker push harbor2.vantage6.ai/infrastructure/server:${major_name}
           docker push harbor2.vantage6.ai/infrastructure/server:${major_name}-live
           docker push harbor2.vantage6.ai/infrastructure/node:${major_name}
+          docker push harbor2.vantage6.ai/infrastructure/algorithm-store:${major_name}
 
   # Build an release all the vantage6 infrastructure packages. For all
   # the packages it will (1) update the version as specified in the tag,
   # (2) build the package, (3) upload it to pypi, and (4) build and push
   # the Docker image
   build-n-release:
-
     name: Build and release the project
     runs-on: ubuntu-latest
     # Note: infrastructure-images is not a required dependency, but we want
@@ -300,7 +300,6 @@ jobs:
       branch: ${{ needs.version.outputs.branch }}
 
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
@@ -341,7 +340,6 @@ jobs:
       stage: ${{ needs.version.outputs.stage }}
       branch: ${{ needs.version.outputs.branch }}
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
