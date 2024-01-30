@@ -18,6 +18,7 @@ case of the node with a local database URIs.
     functionality but is tailored to the Docker environment.
 
 """
+
 # TODO BvB 2023-01-10 we should have a look at all context classes and define
 # them in the same place. Now the DockerNodeContext is defined in the node, but
 # the server only has a TestServerContext there. This should be made consistent

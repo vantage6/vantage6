@@ -1,6 +1,7 @@
 """
 Common functions that are used in node CLI commands
 """
+
 from typing import Iterable
 
 import questionary as q
