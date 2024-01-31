@@ -47,6 +47,12 @@ from vantage6.cli.test.common.diagnostic_runner import DiagnosticRunner
     help="Run the diagnostic test on only nodes that are online",
 )
 @click.option("--no-vpn", is_flag=True, help="Don't execute VPN tests")
+@click.option(
+    "--private-key",
+    type=str,
+    default=None,
+    help="Path to the private key for end-to-end encryption",
+)
 def cli_test_features(
     host: str,
     port: int,
@@ -58,6 +64,7 @@ def cli_test_features(
     all_nodes: bool,
     online_only: bool,
     no_vpn: bool,
+    private_key: str | None,
 ) -> list[dict]:
     """
     Run diagnostic checks on an existing vantage6 network.
@@ -74,7 +81,7 @@ def cli_test_features(
 
     client = UserClient(host=host, port=port, path=api_path, log_level="critical")
     client.authenticate(username=username, password=password)
-    client.setup_encryption(None)
+    client.setup_encryption(private_key)
     diagnose = DiagnosticRunner(client, collaboration, organizations, online_only)
     res = diagnose(base=True, vpn=not no_vpn)
     return res
