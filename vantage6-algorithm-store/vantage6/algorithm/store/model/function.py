@@ -1,5 +1,5 @@
 from __future__ import annotations
-from sqlalchemy import Column, String, ForeignKey
+from sqlalchemy import Column, String, ForeignKey, Integer
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base
@@ -20,7 +20,7 @@ class Function(Base):
         Description of the function
     type_ : str
         Type of function
-    algorithm_id : str
+    algorithm_id : int
         ID of the algorithm that this function belongs to
     algorithm : :class:`~.model.algorithm.algorithm`
         Algorithm that this function belongs to
@@ -34,7 +34,7 @@ class Function(Base):
     name = Column(String)
     description = Column(String)
     type_ = Column(String)
-    algorithm_id = Column(String, ForeignKey("algorithm.id"))
+    algorithm_id = Column(Integer, ForeignKey("algorithm.id"))
 
     # relationships
     algorithm = relationship("Algorithm", back_populates="functions")
