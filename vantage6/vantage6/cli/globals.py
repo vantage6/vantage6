@@ -1,6 +1,7 @@
 """
 This module contains global variables that are used throughout the CLI.
 """
+
 from enum import Enum
 from pathlib import Path
 from vantage6.common.globals import APPNAME

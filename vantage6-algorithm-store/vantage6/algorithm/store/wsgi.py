@@ -2,6 +2,7 @@
 This is the WSGI entry-point for the vantage6 server. When the
 server is started using the `v6 server start` command, it is started from here.
 """
+
 import sys
 
 from vantage6.common import error

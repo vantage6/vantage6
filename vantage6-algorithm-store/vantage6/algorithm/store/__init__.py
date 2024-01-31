@@ -6,6 +6,7 @@ the API. Note that is possible to couple multiple algorithm stores to a
 vantage6 server. This allows both coupling a community store and a private
 store to a vantage6 server.
 """
+
 import os
 from gevent import monkey
 
