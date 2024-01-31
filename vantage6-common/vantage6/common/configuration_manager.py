@@ -4,7 +4,7 @@ import collections
 
 from typing import Any, Type
 from pathlib import Path
-from schema import Schema
+from schema import Schema, SchemaError
 
 
 class Configuration(collections.UserDict):
@@ -75,7 +75,13 @@ class Configuration(collections.UserDict):
             Whether or not the configuration is valid.
         """
         schema = Schema(self.VALIDATORS, ignore_extra_keys=True)
-        return schema.is_valid(self.data)
+        is_valid = schema.is_valid(self.data)
+        if not is_valid:
+            try:
+                schema.validate(self.data)
+            except SchemaError as exc:
+                raise SchemaError(f"Invalid configuration: {exc}") from exc
+        return is_valid
 
 
 class ConfigurationManager(object):
