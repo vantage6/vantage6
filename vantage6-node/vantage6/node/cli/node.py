@@ -6,6 +6,7 @@ container, and are mostly intended for development purposes.
 Some commands, such as ``vnode-local start``, are used within the Docker
 container when ``v6 node start`` is used.
 """
+
 import click
 import os
 import sys

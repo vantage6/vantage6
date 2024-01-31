@@ -1,6 +1,7 @@
 """
 Resources below '/<api_base>/version'
 """
+
 import logging
 
 from flask_restful import Api

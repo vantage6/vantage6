@@ -7,6 +7,7 @@ All classes are derived from the abstract AppContext class and provide the
 vantage6 applications with naming conventions, standard file locations, and
 more.
 """
+
 from colorama import Fore, Style
 
 from vantage6.common.globals import InstanceType

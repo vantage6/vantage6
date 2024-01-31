@@ -1,6 +1,7 @@
 """
 Utility functions for the CLI
 """
+
 from __future__ import annotations
 
 import re

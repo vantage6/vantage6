@@ -1,6 +1,7 @@
 """
 Resources below '/<api_base>/token'
 """
+
 import logging
 import pyotp
 import json

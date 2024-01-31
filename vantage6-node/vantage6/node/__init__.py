@@ -22,6 +22,7 @@ The node connects to the server using a websocket connection. This connection
 is mainly used for sharing status updates. This avoids the need for polling to
 see if there are new tasks available.
 """
+
 import sys
 import os
 import random

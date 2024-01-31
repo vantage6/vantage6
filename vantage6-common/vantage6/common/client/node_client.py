@@ -2,6 +2,7 @@
 This module provides a client interface for the node to communicate with the
 central server.
 """
+
 import jwt
 import datetime
 import time
