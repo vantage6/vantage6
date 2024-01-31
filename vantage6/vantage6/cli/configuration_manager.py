@@ -24,7 +24,7 @@ class ServerConfiguration(Configuration):
         "description": Use(str),
         "ip": Use(str),
         "port": Use(int),
-        "api_path": Use(str),
+        Optional("api_path"): str,
         "uri": Use(str),
         "allow_drop_all": Use(bool),
         "logging": {**LOGGING_VALIDATORS, "file": Use(str)},
