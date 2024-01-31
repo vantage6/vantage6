@@ -18,6 +18,7 @@ from http import HTTPStatus
 
 from vantage6 import server
 from vantage6.common.task_status import has_task_finished
+from vantage6.common.globals import MAIN_VERSION_NAME
 from vantage6.server import db
 from vantage6.server.model.user import User
 from vantage6.server.resource import with_node, ServicesResources
@@ -153,7 +154,8 @@ class UserToken(ServicesResources):
                 # server requires mfa but user hasn't set it up yet. Return
                 # an URI to generate a QR code
                 log.info(f"Redirecting user {username} to setup MFA")
-                return create_qr_uri(user), HTTPStatus.OK
+                server_name = self.config.get("server_name", MAIN_VERSION_NAME)
+                return create_qr_uri(user, server_name), HTTPStatus.OK
             else:
                 # 2nd authentication factor: check the OTP secret of the user
                 mfa_code = body.get("mfa_code")

@@ -2,6 +2,10 @@
 # your peers to identify the server
 description: Test
 
+# Human readable name of the server instance. This can help users identify
+# the server quickly. It's used for example in the TOTP issuer for 2FA.
+server_name: demo
+
 # Should be prod, acc, test or dev. In case the type is set to test
 # the JWT-tokens expiration is set to 1 day (default is 6 hours). The
 # other types can be used in future releases of vantage6

@@ -28,6 +28,7 @@ class ServerConfiguration(Configuration):
             "format": Use(str),
             "datefmt": Use(str),
         },
+        Optional("server_name"): str,
     }
 
 
