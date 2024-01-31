@@ -103,7 +103,9 @@ class AlgorithmStoreBase(ServicesResources):
             response = self._execute_algo_store_request(
                 algo_store_url, server_url, endpoint, method, force
             )
-        except requests.exceptions.ConnectionError:
+        except Exception as e:
+            log.warning("Request to algorithm store failed")
+            log.exception(e)
             response = None
 
         if not response and (
@@ -118,7 +120,9 @@ class AlgorithmStoreBase(ServicesResources):
                 response = self._execute_algo_store_request(
                     algo_store_url, server_url, endpoint, method, force
                 )
-            except requests.exceptions.ConnectionError:
+            except Exception as e:
+                log.warning("Request to algorithm store failed")
+                log.exception(e)
                 response = None
 
         if response is None:
@@ -129,9 +133,15 @@ class AlgorithmStoreBase(ServicesResources):
             }, HTTPStatus.BAD_REQUEST
         elif response.status_code not in [HTTPStatus.CREATED, HTTPStatus.OK]:
             try:
-                msg = f"Algorithm store error: {response.json()['msg']}"
-            except KeyError:
-                msg = "Communication to algorithm store failed"
+                msg = (
+                    f"Algorithm store error: {response.json()['msg']} HTTP status: "
+                    f"{response.status_code}"
+                )
+            except (KeyError, requests.exceptions.JSONDecodeError):
+                msg = (
+                    "Communication to algorithm store failed. HTTP status: "
+                    f"{response.status_code}"
+                )
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
         # else: server has been registered at algorithm store, proceed
         return response, response.status_code
@@ -176,9 +186,10 @@ class AlgorithmStoreBase(ServicesResources):
         if force:
             param_dict["force"] = True
 
-        # add server_url header
-        headers = {k: v for k, v in request.headers.items()}
-        headers["server_url"] = server_url
+        # set headers
+        # TODO FM 31-01-204: I dont think this is used by any of the endpoints? So
+        # we might be able to remove this.
+        headers = {"server_url": server_url}
 
         params = None
         json = None

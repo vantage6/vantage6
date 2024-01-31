@@ -41,8 +41,9 @@ def with_authentication() -> callable:
 
             # check if token is valid
             url = f"{request.headers['Server-Url']}/token/user/validate"
+            headers = {"Authorization": request.headers["Authorization"]}
             try:
-                response = requests.post(url, headers=request.headers)
+                response = requests.post(url, headers=headers)
             except requests.exceptions.ConnectionError:
                 pass
 
@@ -59,7 +60,7 @@ def with_authentication() -> callable:
                         "127.0.0.1", "host.docker.internal"
                     )
                 try:
-                    response = requests.post(url, headers=request.headers)
+                    response = requests.post(url, headers=headers)
                 except requests.exceptions.ConnectionError:
                     pass
 
