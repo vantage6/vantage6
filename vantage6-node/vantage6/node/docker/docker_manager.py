@@ -6,6 +6,7 @@ is a wrapper around the docker module. It has methods
 for creating docker networks, docker volumes, start containers and retrieve
 results from finished containers.
 """
+
 import os
 import time
 import logging

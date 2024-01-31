@@ -6,6 +6,7 @@ The Squid container is used to whitelist ips, domains and ports for the
 algorithm container. This can then be used by the algorithm containers to
 access the data sources or other services.
 """
+
 import logging
 import os
 
