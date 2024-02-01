@@ -5,7 +5,7 @@ import datetime as dt
 from sqlalchemy import Column, String, Integer, ForeignKey, DateTime
 from sqlalchemy.orm import relationship, validates
 
-from vantage6.algorithm.store.model.base import Base,  DatabaseSessionManager
+from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
 from vantage6.algorithm.store.model.rule import Operation, Rule
 
 
@@ -32,6 +32,10 @@ class User(Base):
                          secondary="Permission")
     # rules = relationship("Rule", back_populates="users",
     #                      secondary="UserPermission")
+
+    algorithms = relationship("Algorithm", back_populates='developer',
+                              secondary="developer_algorithm_association")
+    reviews = relationship("Review", back_populates="reviewers")
 
     def __repr__(self) -> str:
         """
@@ -92,8 +96,9 @@ class User(Base):
         session = DatabaseSessionManager.get_session()
         result = session.query(cls).filter_by(server_id=server_id).one()
         session.commit()
-        return result@classmethod
+        return result @ classmethod
 
+    @classmethod
     def get_by_username(cls, username: str) -> User:
         """
         Get a user by their username

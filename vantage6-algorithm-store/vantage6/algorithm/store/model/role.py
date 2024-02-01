@@ -13,7 +13,7 @@ log = logging.getLogger(module_name)
 
 
 class Role(Base):
-    """Collection of :class:`.~vantage6.server.model.rule.Rule` permissions
+    """Collection of :class:`.~vantage6.algorithm.store.model.rule.Rule` permissions
 
     Attributes
     ----------

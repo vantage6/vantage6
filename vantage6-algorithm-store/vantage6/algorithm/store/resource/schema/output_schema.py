@@ -9,6 +9,7 @@ from vantage6.algorithm.store.model import Base
 from vantage6.algorithm.store.model.role import Role
 from vantage6.algorithm.store.model.rule import Rule
 from vantage6.algorithm.store.model.user import User
+from vantage6.algorithm.store.model.review import Review
 from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 from vantage6.server.resource.common.output_schema import (
     BaseHATEOASModelSchema
@@ -63,8 +64,10 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
                 lambda obj: self.create_hateoas("rule", obj))
         setattr(self, "role",
                 lambda obj: self.create_hateoas("role", obj))
-        setattr(self, "role",
+        setattr(self, "user",
                 lambda obj: self.create_hateoas("user", obj))
+        setattr(self, "review",
+                lambda obj: self.create_hateoas("review", obj))
 
         # call super class. Do this after setting the attributes above, because
         # the super class initializer will call the attributes.
@@ -133,6 +136,19 @@ class UserSchema(HATEOASModelSchema):
     ))
     rules = fields.Function(lambda obj: create_one_to_many_link(
         obj, link_to='rule', link_from='user_id'
+    ))
+    algorithm = fields.Function(lambda obj: create_one_to_many_link(
+        obj, link_to='algorithm', link_from='user_id'
+    ))
+
+
+class Review(HATEOASModelSchema):
+
+    class Meta:
+        model = Review
+
+    reviewers = fields.Function(lambda obj: create_one_to_many_link(
+        obj, link_to='user_id', link_from='review'
     ))
 
 

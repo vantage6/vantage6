@@ -24,3 +24,10 @@ class ArgumentType(str, enum.Enum):
     JSON = "json"
     ORGANIZATIONS = "organizations"
     ORGANIZATION = "organization"
+
+
+class ReviewStatus(str, enum.Enum):
+    """ Enum for review status """
+    DRAFT = "draft"
+    UNDER_REVIEW = "under review"
+    APPROVED = "approved"

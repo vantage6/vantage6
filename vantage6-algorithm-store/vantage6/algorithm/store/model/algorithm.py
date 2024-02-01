@@ -38,7 +38,9 @@ class Algorithm(Base):
 
     # relationships
     functions = relationship("Function", back_populates='algorithm')
-    # developers = relationship("Developer", back_populates='algorithms')
-    # reviewers = relationship("Reviewer", back_populates='algorithms')
+
+    developer = relationship("User", back_populates='algorithms',
+                             secondary="developer_algorithm_association")
+
     # preprocessing = relationship("Preprocessing",
     #                              back_populates='algorithms')
