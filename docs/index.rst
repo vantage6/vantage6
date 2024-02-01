@@ -57,6 +57,7 @@ This documentation space consists of the following main sections:
 * :doc:`/user/index` |rarr| *How to use vantage6 as a researcher*
 * :doc:`/node/index` |rarr| *How to install and configure vantage6 nodes*
 * :doc:`/server/index` |rarr| *How to configure and deploy vantage6 servers*
+* :doc:`/algorithm_store/index` |rarr| *How to configure and deploy vantage6 algorithm stores*
 * :doc:`/features/index` (Under construction) |rarr|
   *Documentation of vantage6 features*
 * :doc:`/devops/index` |rarr| *How to collaborate on the development of the
@@ -116,6 +117,7 @@ Index
    user/index
    node/index
    server/index
+   algorithm_store/index
    algorithms/index
    features/index
    devops/index
