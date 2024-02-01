@@ -104,8 +104,7 @@ class AlgorithmStoreBase(ServicesResources):
                 algo_store_url, server_url, endpoint, method, force
             )
         except Exception as e:
-            log.warning("Request to algorithm store failed")
-            log.exception(e)
+            # lets try again before logging the exception
             response = None
 
         if not response and (
@@ -186,9 +185,7 @@ class AlgorithmStoreBase(ServicesResources):
         if force:
             param_dict["force"] = True
 
-        # set headers
-        # TODO FM 31-01-204: I dont think this is used by any of the endpoints? So
-        # we might be able to remove this.
+        # provide server_url for the algorithm store for auth token validation
         headers = {"server_url": server_url}
 
         params = None
