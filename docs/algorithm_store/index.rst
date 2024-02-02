@@ -16,9 +16,7 @@ start your algorithm store.
     introduction
     requirements
     install
-    .. deploy
-    .. optional
-    .. use
-    .. configure
-    .. permissions
-    .. shell
+    deploy
+    use
+    configure
+    permissions
