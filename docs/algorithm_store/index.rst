@@ -15,7 +15,7 @@ start your algorithm store.
 
     introduction
     requirements
-    .. install
+    install
     .. deploy
     .. optional
     .. use

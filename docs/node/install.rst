@@ -4,7 +4,7 @@
 Install
 -------
 
-To install the **vantage6-node** make sure you have met the
+To install the **vantage6 node** make sure you have met the
 :ref:`requirements <node-requirements>`. Then, we provide a command-line
 interface (CLI) with which you can manage your node. The CLI is a Python
 package that can be installed using pip. We always recommend to install the CLI
