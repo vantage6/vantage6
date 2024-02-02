@@ -1,6 +1,37 @@
 Release notes
 =============
 
+4.2.2
+-----
+
+*26 January 2024*
+
+- **Feature**
+
+ - Configuration options for the node to add extra mounts and extra environment
+   variables for the node itself
+   (`Issue#961 <https://github.com/vantage6/vantage6/issues/961>`_,
+   `PR#963 <https://github.com/vantage6/vantage6/pull/963>`_).
+
+- **Change**
+
+ - The entire repository is now formatted with Black code style. Additionally,
+   a pipeline was added to check this for new PRs and commit hooks are provided
+   for developers (`PR#992 <https://github.com/vantage6/vantage6/pull/992>`_).
+ - When the ``PKG_NAME`` environeent variable was not set in the Dockerfile,
+   a clear error is now raised
+   (`Issue#995 <https://github.com/vantage6/vantage6/issues/995>`_,
+   `PR#1010 <https://github.com/vantage6/vantage6/pull/1010>`_).
+
+- **Bugfix**
+
+ - Running encrypted algorithms failed due to a bug in the proxy server
+   (`Issue#955 <https://github.com/vantage6/vantage6/issues/955>`_,
+   `PR#1008 <https://github.com/vantage6/vantage6/pull/1008>`_).
+ - Node logs were not persisted properly. This has been fixed
+   (`Issue#993 <https://github.com/vantage6/vantage6/issues/993>`_,
+   `PR#1009 <https://github.com/vantage6/vantage6/pull/1009>`_).
+
 4.2.1
 -----
 

@@ -241,7 +241,7 @@ class RuleCollection(dict):
         """
         scopes: list[Scope] = self._get_scopes_from(scope)
         for s in scopes:
-            perm = getattr(self, f"{operation}_{s}")
+            perm = getattr(self, f"{operation}_{s}", None)
             if perm and perm.can():
                 return True
         return False
