@@ -8,12 +8,12 @@ from vantage6.common.docker.addons import (
     remove_container_if_exists,
 )
 from vantage6.common.globals import APPNAME, InstanceType
-from vantage6.cli.common.decorator import insert_context
+from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 
 
 @click.command()
-@insert_context(InstanceType.ALGORITHM_STORE)
+@click_insert_context(InstanceType.ALGORITHM_STORE)
 @click.option("--all", "all_servers", flag_value=True, help="Stop all servers")
 def cli_algo_store_stop(ctx: AlgorithmStoreContext, all_servers: bool):
     """
