@@ -44,7 +44,21 @@ in the near future.
 
 To deploy a UI, follow the instructions on the `UI Github
 page <https://github.com/vantage6/vantage6-UI>`__. We also provide a Docker
-image that runs the UI.
+image that runs the UI. Below is an example of how you may deploy a UI using
+Docker compose; obviously, you may need to adjust the configuration to your
+own environment.
+
+.. code:: yaml
+
+    name: run-ui
+    services:
+      ui:
+        image: harbor2.vantage6.ai/infrastructure/ui:cotopaxi
+        ports:
+          - "8000:80"
+        environment:
+          - SERVER_URL=https://<url_to_my_server>
+          - API_PATH=/api
 
 The UI is not compatible with older versions (<3.3) of vantage6.
 

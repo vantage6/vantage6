@@ -141,7 +141,10 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
 
     private_key = "" if not encryption else q.text("Path to private key file:").ask()
 
-    config["encryption"] = {"enabled": encryption == "true", "private_key": private_key}
+    config["encryption"] = {
+        "enabled": encryption is True or encryption == "true",
+        "private_key": private_key,
+    }
 
     return config
 
