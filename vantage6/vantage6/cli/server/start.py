@@ -14,7 +14,8 @@ from vantage6.common.globals import (
 from vantage6.cli.globals import DEFAULT_UI_PORT, ServerGlobals
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
-from vantage6.cli.server.common import click_insert_context, stop_ui
+from vantage6.cli.server.common import stop_ui
+from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
     attach_logs,
     check_for_start,
@@ -64,7 +65,7 @@ from vantage6.cli.common.start import (
     default=False,
     help="Print server logs to the console after start",
 )
-@click_insert_context
+@click_insert_context(type_="server")
 def cli_server_start(
     ctx: ServerContext,
     ip: str,

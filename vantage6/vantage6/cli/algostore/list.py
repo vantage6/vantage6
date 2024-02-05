@@ -6,10 +6,10 @@ from vantage6.cli.common.utils import get_server_configuration_list
 
 
 @click.command()
-def cli_server_configuration_list() -> None:
+def cli_algo_store_configuration_list() -> None:
     """
     Print the available server configurations.
     """
     check_docker_running()
 
-    get_server_configuration_list(InstanceType.SERVER)
+    get_server_configuration_list(InstanceType.ALGORITHM_STORE)

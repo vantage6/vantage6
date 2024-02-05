@@ -16,7 +16,8 @@ from vantage6.common.globals import (
 )
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.utils import check_config_name_allowed
-from vantage6.cli.server.common import click_insert_context, print_log_worker
+from vantage6.cli.common.decorator import click_insert_context
+from vantage6.cli.server.common import print_log_worker
 
 
 # TODO this method has a lot of duplicated code from `start`
@@ -41,7 +42,7 @@ from vantage6.cli.server.common import click_insert_context, print_log_worker
     help="Keep image after finishing. Useful for debugging",
 )
 @click.option("--wait", default=False, help="Wait for the import to finish")
-@click_insert_context
+@click_insert_context(type_="server")
 def cli_server_import(
     ctx: ServerContext,
     file: str,
