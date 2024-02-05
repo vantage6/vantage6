@@ -2,7 +2,8 @@
 import logging
 import datetime
 
-from flask import request, render_template, g
+import gevent
+from flask import request, render_template, g, current_app
 from flask_jwt_extended import create_access_token, decode_token
 from flask_restful import Api
 from jwt.exceptions import DecodeError
@@ -18,7 +19,11 @@ from vantage6.server.globals import (
     DEFAULT_EMAIL_FROM_ADDRESS,
 )
 from vantage6.server.resource import ServicesResources, with_user
-from vantage6.server.resource.common.auth_helper import create_qr_uri, user_login
+from vantage6.server.resource.common.auth_helper import (
+    create_qr_uri,
+    user_login,
+    handle_password_recovery,
+)
 from vantage6.server.resource.common.input_schema import (
     ChangePasswordInputSchema,
     RecoverPasswordInputSchema,
@@ -222,52 +227,17 @@ class RecoverPassword(ServicesResources):
         username = body.get("username")
         email = body.get("email")
 
-        # find user in the database, if not here we stop!
-        try:
-            if username:
-                user = db.User.get_by_username(username)
-            else:
-                user = db.User.get_by_email(email)
-        except NoResultFound:
-            account_name = email if email else username
-            log.info(
-                "Someone request 2FA reset for non-existing account" f" {account_name}"
-            )
-            # we do not tell them.... But we won't continue either
-            return ret
-
-        log.info(f"Password reset requested for '{user.username}'")
-
-        # generate a token that can reset their password
-        smtp_settings = self.config.get("smtp", {})
-        minutes_token_valid = smtp_settings.get(
-            "email_token_validity_minutes", DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES
-        )
-        expires = datetime.timedelta(minutes=minutes_token_valid)
-        reset_token = create_access_token({"id": str(user.id)}, expires_delta=expires)
-
-        email_from = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
-        support_email = self.config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
-
-        self.mail.send_email(
-            f"Password reset {APPNAME}",
-            sender=email_from,
-            recipients=[user.email],
-            text_body=render_template(
-                "mail/reset_token.txt",
-                token=reset_token,
-                firstname=user.firstname,
-                reset_type="password",
-                what_to_do="simply ignore this message",
-            ),
-            html_body=render_template(
-                "mail/reset_token.html",
-                token=reset_token,
-                firstname=user.firstname,
-                reset_type="password",
-                support_email=support_email,
-                what_to_do="simply ignore this message",
-            ),
+        log.debug("Scheduling handling of password recovery request")
+        # we don't want to wait on handle_password_recovery in any way to
+        # minimize timing attacks
+        gevent.spawn_later(
+            3,
+            handle_password_recovery,
+            current_app._get_current_object(),
+            username,
+            email,
+            self.config,
+            self.mail,
         )
 
         return ret
