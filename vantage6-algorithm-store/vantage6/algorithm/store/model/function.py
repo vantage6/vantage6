@@ -33,7 +33,7 @@ class Function(Base):
     # fields
     name = Column(String)
     description = Column(String)
-    type_ = Column(String)
+    type_ = Column("type", String)
     algorithm_id = Column(Integer, ForeignKey("algorithm.id"))
 
     # relationships
