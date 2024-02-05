@@ -8,14 +8,14 @@ import click
 from vantage6.common import info
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.context.node import NodeContext
-from vantage6.cli.server.common import click_insert_context
+from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.server.remove import cli_server_remove
 from vantage6.cli.utils import remove_file
 from vantage6.common.globals import InstanceType
 
 
 @click.command()
-@click_insert_context
+@click_insert_context(type_="server")
 @click.pass_context
 def remove_demo_network(click_ctx: click.Context, ctx: ServerContext) -> None:
     """Remove all related demo network files and folders.

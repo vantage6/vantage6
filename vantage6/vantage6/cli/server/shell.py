@@ -8,11 +8,11 @@ from vantage6.common import info, error, debug as debug_msg
 from vantage6.common.docker.addons import check_docker_running
 from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.cli.context.server import ServerContext
-from vantage6.cli.server.common import click_insert_context
+from vantage6.cli.common.decorator import click_insert_context
 
 
 @click.command()
-@click_insert_context
+@click_insert_context(type_="server")
 def cli_server_shell(ctx: ServerContext) -> None:
     """
     Run an iPython shell within a running server. This can be used to modify

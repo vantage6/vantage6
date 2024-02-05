@@ -10,7 +10,7 @@ from vantage6.cli.context import select_context_class, get_context
 
 # TODO to make this decorator usable by nodes as well, we should make the
 # default for --user/--system configurable
-def insert_context(type_: InstanceType) -> callable:
+def click_insert_context(type_: InstanceType) -> callable:
     """
     Supply the Click function with an additional context parameter. The context
     is passed to the function as the first argument.
@@ -27,7 +27,7 @@ def insert_context(type_: InstanceType) -> callable:
 
     Examples
     --------
-    >>> @insert_context(InstanceType.SERVER)
+    >>> @click_insert_context(InstanceType.SERVER)
     >>> def cli_server_start(ctx: ServerContext, *args, **kwargs) -> None:
     >>>     pass
     """
