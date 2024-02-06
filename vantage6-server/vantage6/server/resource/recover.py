@@ -303,7 +303,7 @@ class RecoverTwoFactorSecret(ServicesResources):
         ---
         description: >-
           Request a recover token if two-factor authentication secret is lost.
-          A password and either email address or username must be supplied.
+          A password and a username must be supplied.
 
         requestBody:
           content:
@@ -313,10 +313,6 @@ class RecoverTwoFactorSecret(ServicesResources):
                   username:
                     type: string
                     description: Username from which the 2fa needs to be reset
-                  email:
-                    type: string
-                    description: Email of user from which the 2fa needs to be
-                      reset
                   password:
                     type: string
                     description: Password of user whose 2fa needs to be reset
@@ -329,12 +325,6 @@ class RecoverTwoFactorSecret(ServicesResources):
 
         tags: ["Account recovery"]
         """
-        # default return string
-        ret = {
-            "msg": "If you sent a correct combination of username/email and"
-            "password, you will soon receive an email."
-        }
-
         # obtain parameters from request
         body = request.get_json()
 
@@ -347,28 +337,15 @@ class RecoverTwoFactorSecret(ServicesResources):
             }, HTTPStatus.BAD_REQUEST
 
         username = body.get("username")
-        email = body.get("email")
         password = body.get("password")
 
-        # find user in the database, if not here we stop!
-        try:
-            if username:
-                user = db.User.get_by_username(username)
-            else:
-                user = db.User.get_by_email(email)
-        except NoResultFound:
-            account_name = email if email else username
-            log.info(
-                "Someone request 2FA reset for non-existing account" f" {account_name}"
-            )
-            # we do not tell them.... But we won't continue either
-            return ret, HTTPStatus.OK
-
-        # check password
-        user, code = user_login(self.config, user.username, password, self.mail)
-        if code != HTTPStatus.OK:
-            log.error(f"Failed to reset 2FA for user {username}, wrong " "password")
-            return user, code
+        # check credentials
+        user, login_status = user_login(self.config, username, password, self.mail)
+        if login_status != HTTPStatus.OK:
+            log.error(f"Failed attempt to reset 2FA for submitted user '%s'", username)
+            # Note: user_login() returns a dict with an error message if login
+            #       failed as first returned element ('user')
+            return user, login_status
 
         log.info(f"2FA reset requested for '{user.username}'")
 
@@ -392,7 +369,7 @@ class RecoverTwoFactorSecret(ServicesResources):
                 token=reset_token,
                 firstname=user.firstname,
                 reset_type="two-factor authentication code",
-                what_to_do=("please reset your password! It has been " "compromised"),
+                what_to_do=("please reset your password! It has been compromised"),
             ),
             html_body=render_template(
                 "mail/reset_token.html",
@@ -400,11 +377,14 @@ class RecoverTwoFactorSecret(ServicesResources):
                 firstname=user.firstname,
                 reset_type="two-factor authentication code",
                 support_email=support_email,
-                what_to_do=("please reset your password! It has been " "compromised"),
+                what_to_do=("please reset your password! It has been compromised"),
             ),
         )
+        log.info("2FA reset request email sent for '%s'", user.username)
 
-        return ret, HTTPStatus.OK
+        return {
+            "msg": "You should have received an email that will allow you to reset your 2FA."
+        }, login_status
 
 
 class ChangePassword(ServicesResources):
