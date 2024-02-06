@@ -23,6 +23,7 @@ export class SocketioConnectService {
       // connect to tasks namespace
       const namespace = '/tasks';
       this.socket = io(`${environment.server_url}${namespace}`, {
+        withCredentials: true,
         extraHeaders: {
           Authorization: `Bearer ${token}`
         }
