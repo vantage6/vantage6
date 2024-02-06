@@ -216,11 +216,7 @@ class AlgorithmStoreBase(ServicesResources):
         str | None
             The server url
         """
-        return (
-            self.config["server_url"]
-            if "server_url" in self.config
-            else server_url_from_request
-        )
+        return self.config.get("server_url", server_url_from_request)
 
 
 class AlgorithmStores(AlgorithmStoreBase):
