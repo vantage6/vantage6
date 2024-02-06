@@ -22,7 +22,7 @@ from vantage6.server.resource import ServicesResources, with_user
 from vantage6.server.resource.common.auth_helper import (
     create_qr_uri,
     user_login,
-    handle_password_recovery,
+    _handle_password_recovery,
 )
 from vantage6.server.resource.common.input_schema import (
     ChangePasswordInputSchema,
@@ -228,11 +228,12 @@ class RecoverPassword(ServicesResources):
         email = body.get("email")
 
         log.debug("Scheduling handling of password recovery request")
-        # we don't want to wait on handle_password_recovery in any way to
-        # minimize timing attacks
+        # we schedule _handle_password_recovery in '3' seconds to make it very
+        # likely we'll respond to the user's request (HTTP) before we start
+        # executing its code. We do this to avoid potential timing attacks
         gevent.spawn_later(
             3,
-            handle_password_recovery,
+            _handle_password_recovery,
             current_app._get_current_object(),
             username,
             email,

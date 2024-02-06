@@ -242,11 +242,43 @@ def __notify_user_blocked(
     user.save()
 
 
-def handle_password_recovery(
+def _handle_password_recovery(
     app: Flask, username: str, email: str, config: dict, mail: Mail
 ) -> None:
-    if not (username or email):
-        raise ValueError("'username' or 'email' is required")
+    """
+    Send an email to user with a password reset token.
+
+    This function also checks whether such an email has been sent recently, and
+    if so avoids sending it.
+
+    Parameters
+    ----------
+    app: flask.Flask
+        The current Flask app
+    username: str
+        User for who the password reset is being requested
+    email: str
+        Email address associated to an account for which the password reset is
+        being requested
+    config: dict
+        Dictionary with configuration settings
+    mail: flask_mail.Mail
+        An instance of the Flask mail class. Used to send email to user in case
+        of too many failed login attempts.
+    """
+    # read settings
+    password_policy = config.get("password_policy", {})
+    minutes_between_password_reset_emails = password_policy.get(
+        "between_user_emails_minutes",
+        DEFAULT_BETWEEN_USER_EMAILS_MINUTES,
+    )
+    smtp_settings = config.get("smtp", {})
+    minutes_token_valid = smtp_settings.get(
+        "email_token_validity_minutes", DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES
+    )
+    expires = dt.timedelta(minutes=minutes_token_valid)
+    email_from = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
+    support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
 
     try:
         user = User.get_by_username(username) if username else User.get_by_email(email)
@@ -261,11 +293,6 @@ def handle_password_recovery(
     log.debug("Password reset requested for '%s'", user.username)
 
     # check that email has not already been sent recently
-    password_policy = config.get("password_policy", {})
-    minutes_between_password_reset_emails = password_policy.get(
-        "between_user_emails_minutes",
-        DEFAULT_BETWEEN_USER_EMAILS_MINUTES,
-    )
     email_sent_recently = user.last_email_recover_password_sent and (
         dt.datetime.now()
         < user.last_email_recover_password_sent
@@ -274,15 +301,6 @@ def handle_password_recovery(
     if email_sent_recently:
         log.info("Skipping sending password reset email to '%s'", user.username)
         return
-
-    # TODO: Set default settings at init settings read
-    smtp_settings = config.get("smtp", {})
-    minutes_token_valid = smtp_settings.get(
-        "email_token_validity_minutes", DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES
-    )
-    expires = dt.timedelta(minutes=minutes_token_valid)
-    email_from = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
-    support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
 
     with app.app_context():
         # generate a token that can reset their password
