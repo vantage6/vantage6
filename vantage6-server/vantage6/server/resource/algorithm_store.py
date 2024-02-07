@@ -119,7 +119,7 @@ class AlgorithmStoreBase(ServicesResources):
                 response = self._execute_algo_store_request(
                     algo_store_url, server_url, endpoint, method, force
                 )
-            except requests.exceptions.ConnectionError:
+            except requests.exceptions.ConnectionError as exc:
                 log.warning("Request to algorithm store failed")
                 log.exception(exc)
                 response = None
