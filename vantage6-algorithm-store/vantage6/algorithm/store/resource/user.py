@@ -20,7 +20,7 @@ from vantage6.algorithm.store.permission import (
 # )
 from vantage6.algorithm.store.resource.schema.input_schema import UserInputSchema
 from vantage6.algorithm.store.resource.schema.output_schema import (
-    UserSchema, UserWithPermissionDetailsSchema
+    UserSchema
 )
 
 
@@ -74,6 +74,8 @@ def permissions(permissions: PermissionManager) -> None:
     permissions : PermissionManager
         Permission manager instance to which permissions are added
     """
+
+    log.debug(f"Loading module users permission")
     add = permissions.appender(module_name)
     add(P.VIEW,
         description='View any user')

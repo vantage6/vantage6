@@ -17,7 +17,7 @@ Permission = Table(
     'Permission',
     Base.metadata,
     Column('user_id', Integer, ForeignKey('user.id')),
-    Column('algorithm_id', Integer, ForeignKey('role.id'))
+    Column('role_id', Integer, ForeignKey('role.id'))
 )
 
 # UserPermission = Table(

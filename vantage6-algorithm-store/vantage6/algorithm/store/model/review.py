@@ -31,7 +31,7 @@ class Review(Base):
     status = Column(Text)
 
     # relationships
-    reviewers = relationship("User", back_populates="reviews")#, back_populates="reviews")
+    reviewers = relationship("User", back_populates="reviews")
 
     def __repr__(self) -> str:
         """

@@ -70,17 +70,16 @@ class User(Base):
             on the resource
         """
         rule = Rule.get_by_(resource, operation)
-        return rule in self.rules or \
-            any(rule in role.rules for role in self.roles)
+        return any(rule in role.rules for role in self.roles)
 
     @classmethod
-    def get_by_server_id(cls, server_id: int) -> User:
+    def get_by_id_server(cls, id_server: int) -> User:
         """
         Get a user by their v6 server id
 
         Parameters
         ----------
-        server_id: int
+        id_server: int
             v6 server id of the user
 
         Returns
@@ -94,9 +93,9 @@ class User(Base):
             If no user with the given username exists
         """
         session = DatabaseSessionManager.get_session()
-        result = session.query(cls).filter_by(server_id=server_id).one()
+        result = session.query(cls).filter_by(id_server=id_server).one()
         session.commit()
-        return result @ classmethod
+        return result
 
     @classmethod
     def get_by_username(cls, username: str) -> User:
