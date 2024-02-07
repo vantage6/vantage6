@@ -99,17 +99,18 @@ class AlgorithmStoreBase(ServicesResources):
         """
         # TODO this is not pretty, but it works for now. This should change
         # when we have a separate auth service
+        is_localhost_algo_store = self._contains_localhost(algo_store_url)
         try:
             response = self._execute_algo_store_request(
                 algo_store_url, server_url, endpoint, method, force
             )
-        except requests.exceptions.ConnectionError:
+        except requests.exceptions.ConnectionError as exc:
+            if not is_localhost_algo_store:
+                log.warning("Request to algorithm store failed")
+                log.exception(exc)
             response = None
 
-        if not response and (
-            algo_store_url.startswith("http://localhost")
-            or algo_store_url.startswith("http://127.0.0.1")
-        ):
+        if not response and is_localhost_algo_store:
             # try again with the docker host ip
             algo_store_url = algo_store_url.replace(
                 "localhost", "host.docker.internal"
@@ -119,6 +120,8 @@ class AlgorithmStoreBase(ServicesResources):
                     algo_store_url, server_url, endpoint, method, force
                 )
             except requests.exceptions.ConnectionError:
+                log.warning("Request to algorithm store failed")
+                log.exception(exc)
                 response = None
 
         if response is None:
@@ -129,12 +132,23 @@ class AlgorithmStoreBase(ServicesResources):
             }, HTTPStatus.BAD_REQUEST
         elif response.status_code not in [HTTPStatus.CREATED, HTTPStatus.OK]:
             try:
-                msg = f"Algorithm store error: {response.json()['msg']}"
+                msg = (
+                    f"Algorithm store error: {response.json()['msg']}, HTTP status: "
+                    f"{response.status_code}"
+                )
             except KeyError:
-                msg = "Communication to algorithm store failed"
+                msg = (
+                    "Communication to algorithm store failed. HTTP status: "
+                    f"{response.status_code}"
+                )
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
         # else: server has been registered at algorithm store, proceed
         return response, response.status_code
+
+    @staticmethod
+    def _contains_localhost(url: str) -> bool:
+        """Check if the url refers to localhost address"""
+        return url.startswith("localhost") or url.startswith("127.0.0.1")
 
     # TODO this function and above should be moved to some kind of client lib
     @staticmethod
@@ -177,8 +191,7 @@ class AlgorithmStoreBase(ServicesResources):
             param_dict["force"] = True
 
         # add server_url header
-        headers = {k: v for k, v in request.headers.items()}
-        headers["server_url"] = server_url
+        headers = {"server_url": server_url}
 
         params = None
         json = None

@@ -922,8 +922,8 @@ class Node:
         while not self.socketIO.connected:
             if i > TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET:
                 self.log.critical(
-                    "Could not connect to the websocket "
-                    "channels, do you have a slow connection?"
+                    "Could not connect to the websocket channels, do you have a "
+                    "slow connection?"
                 )
                 exit(1)
             self.log.debug("Waiting for socket connection...")
@@ -935,7 +935,7 @@ class Node:
         )
 
         self.log.debug(
-            "Starting thread to ping the server to notify this node" " is online."
+            "Starting thread to ping the server to notify this node is online."
         )
         self.socketIO.start_background_task(self.__socket_ping_worker)
 
