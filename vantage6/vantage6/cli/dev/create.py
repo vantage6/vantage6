@@ -431,12 +431,10 @@ def create_demo_network(
             f"{Style.RESET_ALL}."
         )
     else:
-        error(
-            f"Configuration {Fore.RED}{server_name}{Style.RESET_ALL} " "already exists!"
-        )
+        error(f"Configuration {Fore.RED}{server_name}{Style.RESET_ALL} already exists!")
         exit(1)
     (node_config, server_import_config, server_config) = demo
-    ctx = get_server_context(server_name, True)
+    ctx = get_server_context(server_name, True, ServerContext)
     click_ctx.invoke(
         cli_server_import,
         ctx=ctx,

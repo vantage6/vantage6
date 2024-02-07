@@ -27,8 +27,9 @@ def with_authentication() -> callable:
         @wraps(fn)
         def decorator(*args, **kwargs):
             def __make_request(url: str) -> requests.Response:
+                headers = {"Authorization": request.headers["Authorization"]}
                 try:
-                    return requests.post(url, headers=request.headers)
+                    return requests.post(url, headers=headers)
                 except requests.exceptions.ConnectionError:
                     return None
 
@@ -73,7 +74,7 @@ def with_authentication() -> callable:
 
             if response is None or response.status_code == HTTPStatus.NOT_FOUND:
                 msg = (
-                    "Could not connect to the vantage6 server. Please check"
+                    f"Could not connect to the vantage6 server at {url}. Please check"
                     " the server URL."
                 )
                 log.warning(msg)
