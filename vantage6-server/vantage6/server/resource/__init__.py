@@ -11,6 +11,7 @@ from flask_socketio import SocketIO
 
 
 from vantage6.common import logger_name
+from vantage6.backend.common.services_resources import BaseServicesResources
 from vantage6.server import db
 from vantage6.server.utils import obtain_auth_collaborations, obtain_auth_organization
 from vantage6.server.model.authenticatable import Authenticatable
