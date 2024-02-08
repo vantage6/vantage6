@@ -81,9 +81,9 @@ API endpoints
 .. warning::
     The API endpoints are also documented on the ``/apidocs`` endpoint of the
     server (e.g. ``https://cotopaxi.vantage6.ai/apidocs``). That documentation
-    requires a different format than the one used here. We are therefore
-    not including the API documentation here. Instead, we merely list the
-    supporting functions and classes.
+    requires a different format than the one used to create this documentation.
+    We are therefore not including the API documentation here. Instead, we
+    merely list the supporting functions and classes.
 
 vantage6.server.resource
 ++++++++++++++++++++++++
