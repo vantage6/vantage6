@@ -1,99 +1,23 @@
 import datetime
-from http import HTTPStatus
 import logging
 
 from functools import wraps
 
 from flask import g, request
-from flask_restful import Resource, Api
+from flask_restful import Api
 from flask_mail import Mail
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 from flask_socketio import SocketIO
 
 
 from vantage6.common import logger_name
+from vantage6.backend.common.services_resources import BaseServicesResources
 from vantage6.server import db
 from vantage6.server.utils import obtain_auth_collaborations, obtain_auth_organization
 from vantage6.server.model.authenticatable import Authenticatable
-from vantage6.server.resource.common.output_schema import HATEOASModelSchema
 from vantage6.server.permission import PermissionManager
-from vantage6.server.resource.common.pagination import Page
 
 log = logging.getLogger(logger_name(__name__))
-
-
-class BaseServicesResources(Resource):
-    """
-    Flask resource base class
-
-    Attributes
-    ----------
-    api : Api
-        Api instance
-    config: dict
-        Configuration dictionary
-    """
-
-    def __init__(self, api: Api, config: dict):
-        self.api = api
-        self.config = config
-
-    @staticmethod
-    def is_included(field) -> bool:
-        """
-        Check that a `field` is included in the request argument context.
-
-        Parameters
-        ----------
-        field : str
-            Name of the field to check
-
-        Returns
-        -------
-        bool
-            True if the field is included, False otherwise
-        """
-        # The logic below intends to find 'x' both in 'include=y&include=x' and
-        # 'include=x,y'.
-        return field in [
-            val for item in request.args.getlist("include") for val in item.split(",")
-        ]
-
-    def dump(self, page: Page, schema: HATEOASModelSchema) -> dict:
-        """
-        Dump based on the request context (to paginate or not)
-
-        Parameters
-        ----------
-        page : Page
-            Page object to dump
-        schema : HATEOASModelSchema
-            Schema to use for dumping
-
-        Returns
-        -------
-        dict
-            Dumped page
-        """
-        return schema.meta_dump(page)
-
-    def response(self, page: Page, schema: HATEOASModelSchema):
-        """
-        Prepare a valid HTTP OK response from a page object
-
-        Parameters
-        ----------
-        page : Page
-            Page object to dump
-        schema : HATEOASModelSchema
-            Schema to use for dumping
-
-        Returns
-        -------
-        tuple
-            Tuple of (dumped page, HTTPStatus.OK, headers of the page)
-        """
-        return self.dump(page, schema), HTTPStatus.OK, page.headers
 
 
 class ServicesResources(BaseServicesResources):
@@ -188,22 +112,6 @@ class ServicesResources(BaseServicesResources):
             List of collaborations
         """
         return obtain_auth_collaborations()
-
-
-class AlgorithmStoreResources(BaseServicesResources):
-    """
-    Flask resource class for the algorithm store.
-
-    Attributes
-    ----------
-    api : Api
-        Api instance
-    config: dict
-        Configuration dictionary
-    """
-
-    # TODO implement this class when necessary
-    # TODO move this class elsewhere?
 
 
 # ------------------------------------------------------------------------------

@@ -7,8 +7,25 @@ from flask import request
 
 from vantage6.common import logger_name
 from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
+from vantage6.backend.common.services_resources import BaseServicesResources
 
 log = logging.getLogger(logger_name(__name__))
+
+
+class AlgorithmStoreResources(BaseServicesResources):
+    """
+    Flask resource class for the algorithm store.
+
+    Attributes
+    ----------
+    api : Api
+        Api instance
+    config: dict
+        Configuration dictionary
+    """
+
+    # TODO implement this class when necessary
+    # TODO move this class elsewhere?
 
 
 def with_authentication() -> callable:
