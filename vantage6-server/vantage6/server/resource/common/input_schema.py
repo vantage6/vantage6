@@ -558,6 +558,6 @@ class AlgorithmStoreInputSchema(Schema):
 
     name = fields.String(required=True)
     algorithm_store_url = fields.Url(required=True)
-    server_url = fields.Url(required=True)
+    server_url = fields.Url()
     collaboration_id = fields.Integer(validate=Range(min=1))
     force = fields.Boolean()

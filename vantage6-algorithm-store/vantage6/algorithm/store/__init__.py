@@ -34,7 +34,7 @@ from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.algorithm.store._version import __version__
-from vantage6.algorithm.store.globals import API_PATH
+from vantage6.algorithm.store.globals import API_PATH, HOST_URI_ENV
 
 # TODO the following are simply copies of the same files in the server - refactor
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager, Database
@@ -97,6 +97,11 @@ class AlgorithmStoreApp:
 
         # set the server version
         self.__version__ = __version__
+
+        # set environment variable for dev environment
+        host_uri = self.ctx.config.get("dev", {}).get("host_uri")
+        if host_uri:
+            os.environ[HOST_URI_ENV] = host_uri
 
         log.info("Initialization done")
 

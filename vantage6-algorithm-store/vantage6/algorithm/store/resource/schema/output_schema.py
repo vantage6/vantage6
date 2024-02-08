@@ -36,6 +36,9 @@ class AlgorithmOutputSchema(HATEOASModelSchema):
 class FunctionOutputSchema(HATEOASModelSchema):
     class Meta:
         model = Function
+        exclude = ["type_"]
+
+    type = fields.String(attribute="type_")
 
     databases = fields.Nested("DatabaseOutputSchema", many=True, exclude=["id"])
     arguments = fields.Nested("ArgumentOutputSchema", many=True, exclude=["id"])
@@ -49,6 +52,9 @@ class DatabaseOutputSchema(HATEOASModelSchema):
 class ArgumentOutputSchema(HATEOASModelSchema):
     class Meta:
         model = Argument
+        exclude = ["type_"]
+
+    type = fields.String(attribute="type_")
 
 
 class Vantage6ServerOutputSchema(HATEOASModelSchema):

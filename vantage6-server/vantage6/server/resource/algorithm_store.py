@@ -99,17 +99,18 @@ class AlgorithmStoreBase(ServicesResources):
         """
         # TODO this is not pretty, but it works for now. This should change
         # when we have a separate auth service
+        is_localhost_algo_store = self._contains_localhost(algo_store_url)
         try:
             response = self._execute_algo_store_request(
                 algo_store_url, server_url, endpoint, method, force
             )
-        except requests.exceptions.ConnectionError:
+        except requests.exceptions.ConnectionError as exc:
+            if not is_localhost_algo_store:
+                log.warning("Request to algorithm store failed")
+                log.exception(exc)
             response = None
 
-        if not response and (
-            algo_store_url.startswith("http://localhost")
-            or algo_store_url.startswith("http://127.0.0.1")
-        ):
+        if not response and is_localhost_algo_store:
             # try again with the docker host ip
             algo_store_url = algo_store_url.replace(
                 "localhost", "host.docker.internal"
@@ -118,7 +119,9 @@ class AlgorithmStoreBase(ServicesResources):
                 response = self._execute_algo_store_request(
                     algo_store_url, server_url, endpoint, method, force
                 )
-            except requests.exceptions.ConnectionError:
+            except requests.exceptions.ConnectionError as exc:
+                log.warning("Request to algorithm store failed")
+                log.exception(exc)
                 response = None
 
         if response is None:
@@ -129,12 +132,23 @@ class AlgorithmStoreBase(ServicesResources):
             }, HTTPStatus.BAD_REQUEST
         elif response.status_code not in [HTTPStatus.CREATED, HTTPStatus.OK]:
             try:
-                msg = f"Algorithm store error: {response.json()['msg']}"
+                msg = (
+                    f"Algorithm store error: {response.json()['msg']}, HTTP status: "
+                    f"{response.status_code}"
+                )
             except KeyError:
-                msg = "Communication to algorithm store failed"
+                msg = (
+                    "Communication to algorithm store failed. HTTP status: "
+                    f"{response.status_code}"
+                )
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
         # else: server has been registered at algorithm store, proceed
         return response, response.status_code
+
+    @staticmethod
+    def _contains_localhost(url: str) -> bool:
+        """Check if the url refers to localhost address"""
+        return url.startswith("localhost") or url.startswith("127.0.0.1")
 
     # TODO this function and above should be moved to some kind of client lib
     @staticmethod
@@ -177,8 +191,7 @@ class AlgorithmStoreBase(ServicesResources):
             param_dict["force"] = True
 
         # add server_url header
-        headers = {k: v for k, v in request.headers.items()}
-        headers["server_url"] = server_url
+        headers = {"server_url": server_url}
 
         params = None
         json = None
@@ -200,6 +213,23 @@ class AlgorithmStoreBase(ServicesResources):
             json=json,
             headers=headers,
         )
+
+    def _get_server_url(self, server_url_from_request: str | None) -> str:
+        """ "
+        Get the server url from the server configuration, or from the request
+        data if it is not present in the configuration.
+
+        Parameters
+        ----------
+        server_url_from_request : str | None
+            Server url from the request data.
+
+        Returns
+        -------
+        str | None
+            The server url
+        """
+        return self.config.get("server_url", server_url_from_request)
 
 
 class AlgorithmStores(AlgorithmStoreBase):
@@ -365,7 +395,9 @@ class AlgorithmStores(AlgorithmStoreBase):
                   server_url:
                     type: string
                     description: URL to this vantage6 server. This is used to
-                      whitelist this server at the algorithm store.
+                      whitelist this server at the algorithm store. Note that
+                      this is ignored if the server configuration contains
+                      the 'server_url' key.
                   collaboration_id:
                     type: integer
                     description: Collaboration id to which the algorithm store
@@ -460,10 +492,18 @@ class AlgorithmStores(AlgorithmStoreBase):
                 "'force' flag to true, but only do so for development servers!"
             }, HTTPStatus.BAD_REQUEST
 
+        server_url = self._get_server_url(data.get("server_url"))
+        if not server_url:
+            return {
+                "msg": "The 'server_url' key is required in the server "
+                "configuration, or as a parameter. Please add it or ask your "
+                "server administrator to specify it in the server configuration."
+            }, HTTPStatus.BAD_REQUEST
+
         # whitelist this vantage6 server url for the algorithm store
         response, status = self._request_algo_store(
             algorithm_store_url,
-            data["server_url"],
+            server_url,
             endpoint="vantage6-server",
             method="post",
             force=force,
@@ -696,7 +736,9 @@ class AlgorithmStore(AlgorithmStoreBase):
             schema:
               type: string
             description: URL to this vantage6 server. This is used to delete
-              the whitelisting of this server at the algorithm store.
+              the whitelisting of this server at the algorithm store. Note that
+              this is ignored if the server configuration contains the
+              'server_url' key.
 
         responses:
           200:
@@ -730,7 +772,7 @@ class AlgorithmStore(AlgorithmStoreBase):
         if len(other_algorithm_stores) == 1:
             # only this algorithm store uses this url, so delete the
             # whitelisting
-            server_url = request.args.get("server_url", None)
+            server_url = self._get_server_url(request.args.get("server_url"))
             if not server_url:
                 return {
                     "msg": "The 'server_url' query parameter is required"

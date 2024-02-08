@@ -17,7 +17,7 @@ from vantage6.common.docker.addons import (
 )
 from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.cli.rabbitmq import split_rabbitmq_uri
-
+from vantage6.cli.context.server import ServerContext
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 from vantage6.cli.server.common import get_server_context, stop_ui
 
@@ -91,7 +91,7 @@ def _stop_server_containers(
     scope = "system" if system_folders else "user"
     config_name = get_server_config_name(container_name, scope)
 
-    ctx = get_server_context(config_name, system_folders)
+    ctx = get_server_context(config_name, system_folders, ServerContext)
 
     # kill the UI container (if it exists)
     stop_ui(client, ctx)

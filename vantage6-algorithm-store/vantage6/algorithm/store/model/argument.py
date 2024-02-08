@@ -30,7 +30,7 @@ class Argument(Base):
     name = Column(String)
     description = Column(String)
     function_id = Column(Integer, ForeignKey("function.id"))
-    type_ = Column(String)
+    type_ = Column("type", String)
 
     # relationships
     function = relationship("Function", back_populates="arguments")

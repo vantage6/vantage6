@@ -13,7 +13,7 @@ from vantage6.cli.common.start import (
 )
 from vantage6.cli.globals import AlgoStoreGlobals
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
-from vantage6.cli.common.decorator import insert_context
+from vantage6.cli.common.decorator import click_insert_context
 
 
 @click.command()
@@ -36,7 +36,7 @@ from vantage6.cli.common.decorator import insert_context
     default=False,
     help="Print server logs to the console after start",
 )
-@insert_context(InstanceType.ALGORITHM_STORE)
+@click_insert_context(InstanceType.ALGORITHM_STORE)
 def cli_algo_store_start(
     ctx: AlgorithmStoreContext,
     ip: str,
