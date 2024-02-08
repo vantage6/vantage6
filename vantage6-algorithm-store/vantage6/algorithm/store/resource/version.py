@@ -10,7 +10,7 @@ from vantage6.common import logger_name
 from vantage6.algorithm.store._version import __version__
 
 # TODO move to common / refactor
-from vantage6.server.resource import AlgorithmStoreResources
+from vantage6.algorithm.store.resource import AlgorithmStoreResources
 
 
 module_name = logger_name(__name__)

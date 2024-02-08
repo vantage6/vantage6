@@ -37,6 +37,7 @@ RUN pip install -e /vantage6/vantage6-client
 RUN pip install -e /vantage6/vantage6-algorithm-tools
 RUN pip install -e /vantage6/vantage6
 RUN pip install -e /vantage6/vantage6-node
+RUN pip install -e /vantage6/vantage6-backend-common
 RUN pip install -e /vantage6/vantage6-server
 
 # Overwrite uWSGI installation from the requirements.txt

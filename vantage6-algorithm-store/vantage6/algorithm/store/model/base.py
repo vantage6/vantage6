@@ -15,7 +15,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker, RelationshipProperty
 from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common import logger_name, Singleton
-from vantage6.server import session
+from vantage6.backend.common import session
 
 
 module_name = logger_name(__name__)
@@ -107,6 +107,8 @@ class Database(metaclass=Singleton):
         self.session_a = scoped_session(sessionmaker(autocommit=False, autoflush=False))
         self.session_a.configure(bind=self.engine)
 
+        # TODO BvB 7/2/2024 I think this session is not necessary as algorithm
+        # store does not use iPython shell
         # because the Session factory returns the same session (if one exists
         # already) we need a second factory to create an alternative session.
         # this is required if we use both the flask session and the iPython.

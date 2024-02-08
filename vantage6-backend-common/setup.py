@@ -15,61 +15,33 @@ with codecs.open(path.join(parent_dir, "README.md"), encoding="utf-8") as f:
 
 # Read the API version from disk. This file should be located in the package
 # folder, since it's also used to set the pkg.__version__ variable.
-version_path = os.path.join(here, "vantage6", "server", "_version.py")
+version_path = os.path.join(here, "vantage6", "common", "server", "_version.py")
 version_ns = {"__file__": version_path}
 with codecs.open(version_path) as f:
     exec(f.read(), {}, version_ns)
 
 # setup the package
 setup(
-    name="vantage6-server",
+    name="vantage6-backend-common",
     version=version_ns["__version__"],
-    description="Vantage6 server",
+    description="Vantage6 common backend functionalities",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/vantage6/vantage6",
     packages=find_namespace_packages(),
     python_requires=">=3.10",
     install_requires=[
-        "bcrypt==4.0.1",
-        "flasgger==0.9.5",
         "flask==2.2.5",
-        "Flask-Cors==3.0.10",
-        "Flask-JWT-Extended==4.4.4",
-        "Flask-Mail==0.9.1",
-        "Flask-Principal==0.4.0",
         "Flask-RESTful==0.3.10",
-        "flask-marshmallow==0.15.0",
-        "Flask-SocketIO==5.3.6",
-        "gevent==23.9.1",
-        "ipython==8.10.0",
-        "kombu==5.2.4",
         "marshmallow==3.19.0",
-        "PyJWT==2.6.0",
-        "pyotp==2.8.0",
-        "requests==2.31.0",
-        "requests-oauthlib==1.3.1",
-        "schema==0.7.5",
+        "marshmallow-sqlalchemy==0.29.0",
         "SQLAlchemy==1.4.46",
-        "werkzeug==3.0.1",
-        f'vantage6 == {version_ns["__version__"]}',
         f'vantage6-common == {version_ns["__version__"]}',
     ],
-    extras_require={
-        "dev": [
-            "coverage==6.4.4",
-            "black",
-            "pre-commit",
-        ]
-    },
+    extras_require={"dev": ["coverage==6.4.4"]},
     package_data={
-        "vantage6.server": [
+        "vantage6.backend.common": [
             "__build__",
-            "_data/**/*.yaml",
-            "server_data/*.yaml",
         ],
-    },
-    entry_points={
-        "console_scripts": ["vserver-local=vantage6.server.cli.server:cli_server"]
     },
 )

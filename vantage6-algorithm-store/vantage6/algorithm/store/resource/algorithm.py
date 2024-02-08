@@ -13,7 +13,8 @@ from vantage6.algorithm.store.model.function import Function
 from vantage6.algorithm.store.resource import with_authentication
 
 # TODO move to common / refactor
-from vantage6.server.resource import AlgorithmStoreResources
+from vantage6.algorithm.store.resource import AlgorithmStoreResources
+
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)

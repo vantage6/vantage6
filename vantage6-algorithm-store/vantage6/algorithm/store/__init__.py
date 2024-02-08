@@ -15,6 +15,7 @@ if not os.environ.get("READTHEDOCS"):
     # flake8: noqa: E402 (ignore import error)
     monkey.patch_all()
 
+# pylint: disable=C0413, C0411
 import importlib
 import logging
 import json
@@ -32,18 +33,17 @@ from pathlib import Path
 
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
+from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
+
+# TODO move this to common, then remove dependency on CLI in algorithm store
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.algorithm.store._version import __version__
 from vantage6.algorithm.store.globals import API_PATH, HOST_URI_ENV
+from vantage6.algorithm.store.globals import RESOURCES, SERVER_MODULE_NAME
 
 # TODO the following are simply copies of the same files in the server - refactor
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager, Database
 from vantage6.algorithm.store import db
-
-# TODO move server imports to common / refactor
-from vantage6.server.resource.common.output_schema import HATEOASModelSchema
-from vantage6.server.permission import PermissionManager
-from vantage6.algorithm.store.globals import RESOURCES, SERVER_MODULE_NAME
 
 
 module_name = logger_name(__name__)
@@ -203,7 +203,7 @@ class AlgorithmStoreApp:
         """Define global API output and its structure."""
 
         # helper to create HATEOAS schemas
-        HATEOASModelSchema.api = self.api
+        BaseHATEOASModelSchema.api = self.api
 
         # whatever you get try to json it
         @self.api.representation("application/json")

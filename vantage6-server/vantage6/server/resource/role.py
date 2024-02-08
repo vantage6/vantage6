@@ -21,7 +21,7 @@ from vantage6.server.permission import (
 from vantage6.server.model.rule import Operation, Scope
 from vantage6.server.resource.common.output_schema import RoleSchema, RuleSchema
 from vantage6.server.resource.common.input_schema import RoleInputSchema
-from vantage6.server.resource.common.pagination import Pagination
+from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.default_roles import DefaultRole
 
 module_name = logger_name(__name__)
