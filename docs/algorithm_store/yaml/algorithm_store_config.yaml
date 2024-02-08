@@ -1,0 +1,64 @@
+# Human readable description of the algorithm store instance. This is to help
+# your peers to identify the store
+description: Test
+
+# IP adress to which the algorithm store server binds. In case you specify 0.0.0.0
+# the server listens on all interfaces
+ip: 0.0.0.0
+
+# Port to which the algorithm store binds
+port: 5000
+
+# The URI to the algorithm store database. This should be a valid SQLAlchemy URI,
+# e.g. for an Sqlite database: sqlite:///database-name.sqlite,
+# or Postgres: postgresql://username:password@172.17.0.1/database).
+uri: sqlite:///test.sqlite
+
+# This should be set to false in production as this allows to completely
+# wipe the database in a single command. Useful to set to true when
+# testing/developing.
+allow_drop_all: True
+
+# Settings for the logger
+logging:
+  # Controls the logging output level. Could be one of the following
+  # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+  level: DEBUG
+
+  # Filename of the log-file, used by RotatingFileHandler
+  file: test.log
+
+  # Whether the output is shown in the console or not
+  use_console: True
+
+  # The number of log files that are kept, used by RotatingFileHandler
+  backup_count: 5
+
+  # Size in kB of a single log file, used by RotatingFileHandler
+  max_size: 1024
+
+  # format: input for logging.Formatter,
+  format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+  datefmt: "%Y-%m-%d %H:%M:%S"
+
+  # (optional) set the individual log levels per logger name, for example
+  # mute some loggers that are too verbose.
+  loggers:
+    - name: urllib3
+      level: warning
+    - name: sqlalchemy.engine
+      level: warning
+
+# Additional debug flags
+debug:
+  # Set to `true` to enable debug mode in the Flask app
+  flask: false
+
+# development mode settings. Only use when running both the algorithm store and
+# the server that it communicates with locally
+dev:
+  # Specify the URI to the host. This is used to generate the correct URIs to
+  # communicate with the server. On Windows and Mac, you can use the special
+  # hostname `host.docker.internal` to refer to the host machine. On Linux, you
+  # should normally use http://172.17.0.1.
+  host_uri: http://host.docker.internal

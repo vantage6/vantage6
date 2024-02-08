@@ -9,9 +9,9 @@ The vantage6-server requires a configuration file to run. This is a
 ``yaml`` file with a specific format.
 
 The next sections describes how to configure the server. It first provides a few
-quick answers on setting up your server, then shows an example of all
-configuration file options, and finally explains where your vantage6
-configuration files are stored.
+quick answers on setting up your server, then explains where your vantage6
+configuration files are stored, and finally shows an example of all
+configuration file options.
 
 How to create a configuration file
 """"""""""""""""""""""""""""""""""
@@ -33,17 +33,14 @@ command
     v6 server files
 
 .. warning::
-    This command will usually only work for local test deployments of the
-    vantage6 server. If you have deployed the server on a remote server,
-    this command will probably not work.
+    This command will only work for if the server has been deployed using the
+    ``v6`` commands.
 
     Also, note that on local deployments you may need to specify the
     ``--user`` flag if you put your configuration file in the
     :ref:`user folder <server-configure-location>`.
 
-You can create and edit this file
-manually. To create an initial configuration file you can also use the
-configuration wizard: ``v6 server new``.
+You can also create and edit this file manually.
 
 .. _server-config-file-structure:
 
@@ -67,7 +64,7 @@ You can download this file here: :download:`server_config.yaml <yaml/server_conf
 Configuration file location
 """""""""""""""""""""""""""
 
-The directory where to store the configuration file depends on you
+The directory where to store the configuration file depends on your
 operating system (OS). It is possible to store the configuration file at
 **system** or at **user** level. At the user level, configuration files are only
 available for your user. By default, server configuration files are stored at
