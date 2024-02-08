@@ -19,4 +19,3 @@ start your algorithm store.
     deploy
     use
     configure
-    permissions
