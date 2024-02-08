@@ -1,10 +1,10 @@
 from functools import wraps
+from pathlib import Path
 import click
 
 from vantage6.common import error
 from vantage6.common.globals import InstanceType
 from vantage6.cli.configuration_wizard import select_configuration_questionaire
-from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 from vantage6.cli.context import select_context_class, get_context
 
 
@@ -93,6 +93,8 @@ def click_insert_context(
                 ctx = get_context(type_, name, system_folders)
             extra_args = []
             if include_name:
+                if not name:
+                    name = Path(config).stem
                 extra_args.append(name)
             if include_system_folders:
                 extra_args.append(system_folders)
