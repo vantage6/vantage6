@@ -18,7 +18,7 @@ from vantage6.server.model import (
     Run,
     Node,
     Rule,
-    Role
+    Role,
 )
 from vantage6.server.model.rule import Scope, Operation
 
@@ -29,14 +29,14 @@ logging.basicConfig(level=logging.CRITICAL)
 
 
 class TestBaseModel(unittest.TestCase):
-
     @classmethod
     def setUpClass(cls):
         Database().connect("sqlite://", allow_drop_all=True)
 
         # FIXME: move path generation to a function in vantage6.server
-        file_ = str(PACKAGE_FOLDER / APPNAME / "server" / "_data" /
-                    "unittest_fixtures.yaml")
+        file_ = str(
+            PACKAGE_FOLDER / APPNAME / "server" / "_data" / "unittest_fixtures.yaml"
+        )
         with open(file_) as f:
             cls.entities = yaml.safe_load(f.read())
         load(cls.entities)
@@ -55,7 +55,6 @@ class TestBaseModel(unittest.TestCase):
 
 
 class TestUserModel(TestBaseModel):
-
     def test_relations(self):
         organization = self.entities.get("organizations")[0]
         user = organization.get("users")[0]
@@ -79,14 +78,14 @@ class TestUserModel(TestBaseModel):
             lastname="it",
             organization=db_organization,
             email="unit@org.org",
-            password="unit_pass"
+            password="unit_pass",
         )
         user.save()
         db_user = User.get_by_username("unit")
         self.assertEqual(db_user, user)
 
     def test_methods(self):
-        """"Test model methods."""
+        """ "Test model methods."""
         user = self.entities.get("organizations")[0].get("users")[0]
         # print(user)
         # print(User.get())
@@ -106,16 +105,13 @@ class TestUserModel(TestBaseModel):
 
 
 class TestCollaborationModel(TestBaseModel):
-
     def test_read(self):
         for col in self.entities.get("collaborations"):
             db_collaboration = Collaboration.find_by_name(col.get("name"))
             self.assertEqual(db_collaboration.name, col.get("name"))
 
     def test_insert(self):
-        col = Collaboration(
-            name="unit_collaboration"
-        )
+        col = Collaboration(name="unit_collaboration")
         col.save()
         db_col = Collaboration.find_by_name("unit_collaboration")
         self.assertEqual(db_col, col)
@@ -137,7 +133,6 @@ class TestCollaborationModel(TestBaseModel):
 
 
 class TestNodeModel(TestBaseModel):
-
     def test_read(self):
         for node in Node.get():
             self.assertIsInstance(node.name, str)
@@ -150,7 +145,7 @@ class TestNodeModel(TestBaseModel):
             name="unit_node",
             api_key="that-we-never-use",
             collaboration=collaboration,
-            organization=organization
+            organization=organization,
         )
         node.save()
 
@@ -179,7 +174,6 @@ class TestNodeModel(TestBaseModel):
 
 
 class TestOrganizationModel(TestBaseModel):
-
     def test_read(self):
         for organization in self.entities.get("organizations"):
             org = Organization.get_by_name(organization.get("name"))
@@ -193,10 +187,7 @@ class TestOrganizationModel(TestBaseModel):
             for user in organization.get("users"):
                 db_user = User.get_by_username(user.get("username"))
                 self.assertIsNotNone(db_user)
-                self.assertEqual(
-                    db_user.organization.name,
-                    organization.get("name")
-                )
+                self.assertEqual(db_user.organization.name, organization.get("name"))
 
     def test_insert(self):
         col = Collaboration.get()
@@ -206,7 +197,7 @@ class TestOrganizationModel(TestBaseModel):
             address1="memorylane 1",
             zipcode="bla",
             country="RAM",
-            collaborations=col
+            collaborations=col,
         )
         org.save()
 
@@ -230,7 +221,6 @@ class TestOrganizationModel(TestBaseModel):
 
 
 class TestRunModel(TestBaseModel):
-
     def test_read(self):
         for run in Run.get():
             self.assertIsInstance(run, Run)
@@ -241,11 +231,7 @@ class TestRunModel(TestBaseModel):
 
     def test_insert(self):
         task = Task(name="unit_task")
-        run = Run(
-            task=task,
-            organization=Organization.get()[0],
-            input="something"
-        )
+        run = Run(task=task, organization=Organization.get()[0], input="something")
         run.save()
         self.assertEqual(run, run)
 
@@ -262,7 +248,6 @@ class TestRunModel(TestBaseModel):
 
 
 class TestTaskModel(TestBaseModel):
-
     def test_read(self):
         db_tasks = Task.get()
         for task in db_tasks:
@@ -281,7 +266,7 @@ class TestTaskModel(TestBaseModel):
             name="unit_task",
             image="some-image",
             collaboration=Collaboration.get()[0],
-            job_id=1
+            job_id=1,
         )
         task.save()
         db_task = None
@@ -309,10 +294,8 @@ class TestTaskModel(TestBaseModel):
 
 
 class TestRuleModel(TestBaseModel):
-
     def test_read(self):
-        rule = Rule(name="some-name", operation=Operation.CREATE,
-                    scope=Scope.GLOBAL)
+        rule = Rule(name="some-name", operation=Operation.CREATE, scope=Scope.GLOBAL)
         rule.save()
 
         rules = Rule.get()
@@ -333,7 +316,6 @@ class TestRuleModel(TestBaseModel):
     #     rule.save()
 
     def test_methods(self):
-
         # check that error is raised
         self.assertIsNone(Rule.get_by_("non-existant", 1, 1))
 

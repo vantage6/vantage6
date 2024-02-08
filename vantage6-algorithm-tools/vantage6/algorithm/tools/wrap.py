@@ -6,11 +6,11 @@ from typing import Any
 
 from vantage6.common.client import deserialization
 from vantage6.common import serialization
-from vantage6.algorithm.tools.util import info, error
+from vantage6.algorithm.tools.util import info, error, get_env_var
 from vantage6.algorithm.tools.exceptions import DeserializationException
 
 
-def wrap_algorithm(module: str, log_traceback: bool = True) -> None:
+def wrap_algorithm(log_traceback: bool = True) -> None:
     """
     Wrap an algorithm module to provide input and output handling for the
     vantage6 infrastructure.
@@ -41,10 +41,19 @@ def wrap_algorithm(module: str, log_traceback: bool = True) -> None:
         default False. Algorithm developers should set this to False if
         the error messages may contain sensitive information. By default True.
     """
+    # get the module name from the environment variable. Note that this env var
+    # is set in the Dockerfile and is therefore not encoded.
+    module = os.environ.get("PKG_NAME")
+    if not module:
+        error(
+            "No PKG_NAME specified! Make sure that the PKG_NAME environment "
+            "variable is specified in the Dockerfile. Exiting..."
+        )
+        exit(1)
     info(f"wrapper for {module}")
 
     # read input from the mounted input file.
-    input_file = os.environ["INPUT_FILE"]
+    input_file = get_env_var("INPUT_FILE")
     info(f"Reading input file {input_file}")
     input_data = load_input(input_file)
 
@@ -54,14 +63,15 @@ def wrap_algorithm(module: str, log_traceback: bool = True) -> None:
 
     # write output from the method to mounted output file. Which will be
     # transferred back to the server by the node-instance.
-    output_file = os.environ["OUTPUT_FILE"]
+    output_file = get_env_var("OUTPUT_FILE")
     info(f"Writing output to {output_file}")
 
     _write_output(output, output_file)
 
 
-def _run_algorithm_method(input_data: dict, module: str,
-                          log_traceback: bool = True) -> Any:
+def _run_algorithm_method(
+    input_data: dict, module: str, log_traceback: bool = True
+) -> Any:
     """
     Load the algorithm module and call the correct method to run an algorithm.
 
@@ -89,6 +99,8 @@ def _run_algorithm_method(input_data: dict, module: str,
         info(f"Module '{module}' imported!")
     except ModuleNotFoundError:
         error(f"Module '{module}' can not be imported! Exiting...")
+        if log_traceback:
+            error(traceback.print_exc())
         exit(1)
 
     # get algorithm method and attempt to load it
@@ -97,6 +109,8 @@ def _run_algorithm_method(input_data: dict, module: str,
         method = getattr(lib, method_name)
     except AttributeError:
         error(f"Method '{method_name}' not found!\n")
+        if log_traceback:
+            error(traceback.print_exc())
         exit(1)
 
     # get the args and kwargs input for this function.
@@ -138,7 +152,7 @@ def load_input(input_file: str) -> Any:
         try:
             input_data = deserialization.deserialize(fp)
         except DeserializationException:
-            raise DeserializationException('Could not deserialize input')
+            raise DeserializationException("Could not deserialize input")
     return input_data
 
 
@@ -153,6 +167,6 @@ def _write_output(output: Any, output_file: str) -> None:
     output_file : str
         Path to the output file
     """
-    with open(output_file, 'wb') as fp:
+    with open(output_file, "wb") as fp:
         serialized = serialization.serialize(output)
         fp.write(serialized)

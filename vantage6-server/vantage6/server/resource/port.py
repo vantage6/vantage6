@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 
 from flask import g, request
@@ -6,15 +5,8 @@ from flask_restful import Api
 from http import HTTPStatus
 
 from vantage6.common import logger_name
-from vantage6.server.permission import (
-    PermissionManager,
-    Scope as S,
-    Operation as P
-)
-from vantage6.server.resource import (
-    with_node,
-    ServicesResources
-)
+from vantage6.server.permission import PermissionManager, Scope as S, Operation as P
+from vantage6.server.resource import with_node, ServicesResources
 from vantage6.server import db
 from vantage6.server.resource.common.output_schema import PortSchema
 from vantage6.server.resource.common.input_schema import PortInputSchema
@@ -47,16 +39,16 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     api.add_resource(
         Ports,
         path,
-        endpoint='port_without_id',
-        methods=('POST', 'DELETE'),
-        resource_class_kwargs=services
+        endpoint="port_without_id",
+        methods=("POST", "DELETE"),
+        resource_class_kwargs=services,
     )
     api.add_resource(
         VPNAddress,
-        api_base + '/vpn/algorithm/addresses',
-        endpoint='vpn_address',
-        methods=('GET',),
-        resource_class_kwargs=services
+        api_base + "/vpn/algorithm/addresses",
+        endpoint="vpn_address",
+        methods=("GET",),
+        resource_class_kwargs=services,
     )
 
 
@@ -83,9 +75,13 @@ def permissions(permissions: PermissionManager) -> None:
     add = permissions.appender(module_name)
 
     add(scope=S.GLOBAL, operation=P.VIEW, description="view any port")
-    add(scope=S.ORGANIZATION, operation=P.VIEW, assign_to_container=True,
-        assign_to_node=True, description="view ports of your organizations "
-        "collaborations")
+    add(
+        scope=S.ORGANIZATION,
+        operation=P.VIEW,
+        assign_to_container=True,
+        assign_to_node=True,
+        description="view ports of your organizations " "collaborations",
+    )
 
 
 # ------------------------------------------------------------------------------
@@ -142,21 +138,24 @@ class Ports(PortBase):
         # validate request body
         errors = port_input_schema.validate(data)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
         # The only entity that is allowed to algorithm ports is the node where
         # those algorithms are running.
-        run_id = data['run_id']
+        run_id = data["run_id"]
         linked_run = g.session.query(Run).filter(Run.id == run_id).one()
         if g.node.id != linked_run.node.id:
-            return {'msg': 'You lack the permissions to do that!'}, \
-                HTTPStatus.UNAUTHORIZED
+            return {
+                "msg": "You lack the permissions to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         port = AlgorithmPort(
-            port=data['port'],
+            port=data["port"],
             run_id=run_id,
-            label=data.get('label' ''),
+            label=data.get("label" ""),
         )
         port.save()
 
@@ -164,7 +163,7 @@ class Ports(PortBase):
 
     @with_node
     def delete(self):
-        """ Delete ports by run_id
+        """Delete ports by run_id
         ---
         description: >-
           Deletes descriptions of a port that is available for VPN
@@ -198,29 +197,26 @@ class Ports(PortBase):
         tags: ["VPN"]
         """
         args = request.args
-        if 'run_id' not in args:
-            return {'msg': 'The run_id argument is required!'}, \
-              HTTPStatus.BAD_REQUEST
+        if "run_id" not in args:
+            return {"msg": "The run_id argument is required!"}, HTTPStatus.BAD_REQUEST
 
         # The only entity that is allowed to delete algorithm ports is the node
         # where those algorithms are running.
-        run_id = args['run_id']
+        run_id = args["run_id"]
         linked_run = g.session.query(Run).filter(Run.id == run_id).one()
         if g.node.id != linked_run.node.id:
-            return {'msg': 'You lack the permissions to do that!'}, \
-                HTTPStatus.UNAUTHORIZED
+            return {
+                "msg": "You lack the permissions to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         # all checks passed: delete the port entries
-        g.session.query(AlgorithmPort).filter(
-            AlgorithmPort.run_id == run_id
-        ).delete()
+        g.session.query(AlgorithmPort).filter(AlgorithmPort.run_id == run_id).delete()
         g.session.commit()
 
         return {"msg": "Ports removed from the database."}, HTTPStatus.OK
 
 
 class VPNAddress(ServicesResources):
-
     @with_container
     def get(self):
         """
@@ -300,48 +296,44 @@ class VPNAddress(ServicesResources):
 
         tags: ["VPN"]
         """
-        task_id = g.container['task_id']
+        task_id = g.container["task_id"]
         task_ids = [task_id]
 
         task = db.Task.get(task_id)
 
         args = request.args
-        include_children = True if args.get('include_children') else False
-        include_parent = True if args.get('include_parent') else False
+        include_children = True if args.get("include_children") else False
+        include_parent = True if args.get("include_parent") else False
 
-        only_children = True if args.get('only_children') else False
-        only_parent = True if args.get('only_parent') else False
-        only_siblings = True if args.get('only_siblings') else False
-        only_self = True if args.get('only_self') else False
+        only_children = True if args.get("only_children") else False
+        only_parent = True if args.get("only_parent") else False
+        only_siblings = True if args.get("only_siblings") else False
+        only_self = True if args.get("only_self") else False
 
         # check that args are compatible
         # Note that siblings and self are included by default, so that's why
         # they are not included in the list of args to check.
-        include_args = [
-            include_children, include_parent, False, False
-        ]
-        only_args = [
-            only_children, only_parent, only_siblings, only_self
-        ]
+        include_args = [include_children, include_parent, False, False]
+        only_args = [only_children, only_parent, only_siblings, only_self]
         combined_args = [
             include and only for include, only in zip(include_args, only_args)
         ]
         if only_args.count(True) > 1:
             return {
-                'msg': 'You can only specify one of the only_<...> parameters!'
+                "msg": "You can only specify one of the only_<...> parameters!"
             }, HTTPStatus.BAD_REQUEST
         elif combined_args.count(True) > 1:
             return {
-                'msg': "You are using incompatible 'only_<...>' and "
+                "msg": "You are using incompatible 'only_<...>' and "
                 "'include_<...>' parameters! You can only combine them for the"
                 " same level of the task hierarchy."
             }, HTTPStatus.BAD_REQUEST
 
         # include child tasks if requested
         if include_children or only_children:
-            subtasks = g.session.query(db.Task).filter(
-                db.Task.parent_id == task_id
-            ).all()
+            subtasks = (
+                g.session.query(db.Task).filter(db.Task.parent_id == task_id).all()
+            )
             if only_children:
                 task_ids = [t.id for t in subtasks]
             else:
@@ -349,9 +341,11 @@ class VPNAddress(ServicesResources):
 
         # include parent task if requested
         if include_parent or only_parent:
-            parent = g.session.query(db.Task).filter(
-                db.Task.id == task.parent_id
-            ).one_or_none()
+            parent = (
+                g.session.query(db.Task)
+                .filter(db.Task.id == task.parent_id)
+                .one_or_none()
+            )
             if parent:
                 if only_parent:
                     task_ids = [parent.id]
@@ -363,19 +357,17 @@ class VPNAddress(ServicesResources):
             task_ids = [task_id]
 
         # get all ports for the tasks requested
-        q = g.session.query(AlgorithmPort)\
-                     .join(Run)\
-                     .filter(Run.task_id.in_(task_ids))
+        q = g.session.query(AlgorithmPort).join(Run).filter(Run.task_id.in_(task_ids))
 
         # apply sibling and self filters
-        org_id = g.container['organization_id']
+        org_id = g.container["organization_id"]
         if only_siblings:
             q = q.filter(Run.organization_id != org_id)
         elif only_self:
             q = q.filter(Run.organization_id == org_id)
 
         # filter by label if requested
-        filter_label = request.args.get('label')
+        filter_label = request.args.get("label")
         if filter_label:
             q = q.filter(AlgorithmPort.label == filter_label)
 
@@ -385,13 +377,13 @@ class VPNAddress(ServicesResources):
         addresses = []
         for port in ports:
             d = {
-                'port': port.port,
-                'label': port.label,
-                'ip': port.run.node.ip,
-                'organization_id': port.run.organization_id,
-                'task_id': port.run.task_id,
-                'parent_id': port.run.task.parent_id,
+                "port": port.port,
+                "label": port.label,
+                "ip": port.run.node.ip,
+                "organization_id": port.run.organization_id,
+                "task_id": port.run.task_id,
+                "parent_id": port.run.task.parent_id,
             }
             addresses.append(d)
 
-        return {'addresses': addresses}, HTTPStatus.OK
+        return {"addresses": addresses}, HTTPStatus.OK

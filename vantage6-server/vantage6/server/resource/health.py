@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 
 from http import HTTPStatus
@@ -32,9 +31,9 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     api.add_resource(
         Health,
         path,
-        endpoint='health',
-        methods=('GET',),
-        resource_class_kwargs=services
+        endpoint="health",
+        methods=("GET",),
+        resource_class_kwargs=services,
     )
 
 
@@ -42,7 +41,6 @@ def setup(api: Api, api_base: str, services: dict) -> None:
 # Resources / API's
 # ------------------------------------------------------------------------------
 class Health(ServicesResources):
-
     def get(self):
         """Displays the health of services
         ---
@@ -63,10 +61,10 @@ class Health(ServicesResources):
         # test DB
         db_ok = False
         try:
-            g.session.execute('SELECT 1')
+            g.session.execute("SELECT 1")
             db_ok = True
         except Exception as e:
             log.error("DB not responding")
             log.debug(e)
 
-        return {'database': db_ok}, HTTPStatus.OK
+        return {"database": db_ok}, HTTPStatus.OK

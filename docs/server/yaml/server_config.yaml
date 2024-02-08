@@ -19,6 +19,13 @@ port: 5000
 # here also.
 api_path: /api
 
+# Let the server know where it is hosted. This is used as a setting to
+# communicate back and forth with other vantage6 components such as the
+# algorithm store.
+server_url: https://cotopaxi.vantage6.ai
+# or if you are running the server locally with default settings:
+# server_url: http://localhost:5000/api
+
 # The URI to the server database. This should be a valid SQLAlchemy URI,
 # e.g. for an Sqlite database: sqlite:///database-name.sqlite,
 # or Postgres: postgresql://username:password@172.17.0.1/database).
@@ -43,29 +50,28 @@ jwt_secret_key: super-secret-key! # recommended but optional
 
 # Settings for the logger
 logging:
-
   # Controls the logging output level. Could be one of the following
   # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
-  level:        DEBUG
+  level: DEBUG
 
   # Filename of the log-file, used by RotatingFileHandler
-  file:         test.log
+  file: test.log
 
   # Whether the output is shown in the console or not
-  use_console:  True
+  use_console: True
 
   # The number of log files that are kept, used by RotatingFileHandler
   backup_count: 5
 
   # Size in kB of a single log file, used by RotatingFileHandler
-  max_size:     1024
+  max_size: 1024
 
   # format: input for logging.Formatter,
-  format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
-  datefmt:      "%Y-%m-%d %H:%M:%S"
+  format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+  datefmt: "%Y-%m-%d %H:%M:%S"
 
-# (optional) set the individual log levels per logger name, for example
-# mute some loggers that are too verbose.
+  # (optional) set the individual log levels per logger name, for example
+  # mute some loggers that are too verbose.
   loggers:
     - name: urllib3
       level: warning
@@ -82,7 +88,6 @@ logging:
 
 # Additional debug flags
 debug:
-
   # Set to `true` to enable debug mode for the socketio server
   socketio: false
 
@@ -94,14 +99,17 @@ debug:
 # OPTIONAL
 smtp:
   port: 587
-  server: smtp.yourmailserver.com
+  server: smtp.yourmailserver.example.com
+  # credentials for authenticating with the SMTP server
   username: your-username
   password: super-secret-password
+  # email address to send emails from (header)
+  # (defaults to noreply@vantage6.ai)
+  email_from: noreply@example.com
 
 # Set an email address you want to direct your users to for support
-# (defaults to the address you set above in the SMTP server or otherwise
-# to support@vantage6.ai)
-support_email: your-support@email.com
+# (defaults to support@vantage6.ai)
+support_email: your-support@example.com
 
 # set how long reset token provided via email are valid (default 1 hour)
 email_token_validity_minutes: 60
@@ -154,3 +162,17 @@ ui:
 
   # port at which the UI will be available on your local machine
   port: 3456
+
+# set password policies for the server
+password_policy:
+  # maximum number of failed login attempts before the user is locked out for
+  # a certain amount of time. Default is 5.
+  max_failed_attempts: 5
+
+  # number of minutes the user is locked out after the maximum number of failed
+  # login attempts is reached. Default is 15.
+  inactivation_minutes: 15
+
+  # number of minutes to wait between emails that alert a user that someone is
+  # trying to log in to their account. Default is 60.
+  between_email_blocked_login_minutes: 60

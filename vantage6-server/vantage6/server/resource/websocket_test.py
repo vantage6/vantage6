@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 
 from http import HTTPStatus
@@ -29,11 +28,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
-        Test,
-        path,
-        endpoint='test',
-        methods=('GET',),
-        resource_class_kwargs=services
+        Test, path, endpoint="test", methods=("GET",), resource_class_kwargs=services
     )
 
 
@@ -41,7 +36,6 @@ def setup(api: Api, api_base: str, services: dict) -> None:
 # Resources / API's
 # ------------------------------------------------------------------------------
 class Test(ServicesResources):
-
     def get(self):
         """Web socket test
         ---
@@ -54,5 +48,5 @@ class Test(ServicesResources):
 
         tags: ["Other"]
         """
-        self.socketio.send("you're welcome!", room='all_nodes')
+        self.socketio.send("you're welcome!", room="all_nodes")
         return self.socketio.server.manager.rooms, HTTPStatus.OK

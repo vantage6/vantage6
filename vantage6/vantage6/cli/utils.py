@@ -1,6 +1,7 @@
 """
 Utility functions for the CLI
 """
+
 from __future__ import annotations
 
 import re
@@ -25,16 +26,17 @@ def check_config_name_allowed(name: str) -> None:
     if name.count(" ") > 0:
         name = name.replace(" ", "-")
         info(f"Replaced spaces from configuration name: {name}")
-    if not re.match('^[a-zA-Z0-9_.-]+$', name):
-        error(f"Name '{name}' is not allowed. Please use only the following "
-              "characters: a-zA-Z0-9_.-")
+    if not re.match("^[a-zA-Z0-9_.-]+$", name):
+        error(
+            f"Name '{name}' is not allowed. Please use only the following "
+            "characters: a-zA-Z0-9_.-"
+        )
         # FIXME: FM, 2023-01-03: I dont think this is a good side effect. This
         # should be handled by the caller.
         exit(1)
 
 
-def check_if_docker_daemon_is_running(
-        docker_client: docker.DockerClient) -> None:
+def check_if_docker_daemon_is_running(docker_client: docker.DockerClient) -> None:
     """
     Check if Docker daemon is running
 

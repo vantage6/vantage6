@@ -28,9 +28,7 @@ class AlgorithmStore(Base):
     url = Column(String)
     collaboration_id = Column(Integer, ForeignKey("collaboration.id"))
 
-    collaboration = relationship(
-        "Collaboration", back_populates="algorithm_stores"
-    )
+    collaboration = relationship("Collaboration", back_populates="algorithm_stores")
 
     @classmethod
     def get_by_url(cls, url: str) -> list[AlgorithmStore]:

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 import datetime as dt
 
@@ -11,14 +10,10 @@ from vantage6.common import logger_name
 from vantage6.common.task_status import has_task_finished, TaskStatus
 from vantage6.server.resource import ServicesResources, with_user
 from vantage6.server import db
-from vantage6.server.permission import (
-    Scope,
-    Operation,
-    PermissionManager
-)
+from vantage6.server.permission import Scope, Operation, PermissionManager
 from vantage6.server.resource.common.input_schema import (
     KillNodeTasksInputSchema,
-    KillTaskInputSchema
+    KillTaskInputSchema,
 )
 
 module_name = logger_name(__name__)
@@ -43,18 +38,18 @@ def setup(api: Api, api_base: str, services: dict) -> None:
 
     api.add_resource(
         KillTask,
-        api_base+'/kill/task',
-        endpoint='kill_task',
-        methods=('POST',),
-        resource_class_kwargs=services
+        api_base + "/kill/task",
+        endpoint="kill_task",
+        methods=("POST",),
+        resource_class_kwargs=services,
     )
 
     api.add_resource(
         KillNodeTasks,
-        api_base+'/kill/node/tasks',
-        endpoint='kill_node_tasks',
-        methods=('POST',),
-        resource_class_kwargs=services
+        api_base + "/kill/node/tasks",
+        endpoint="kill_node_tasks",
+        methods=("POST",),
+        resource_class_kwargs=services,
     )
 
 
@@ -72,18 +67,36 @@ def permissions(permissions: PermissionManager) -> None:
     """
     add = permissions.appender(module_name)
 
-    add(scope=Scope.ORGANIZATION, operation=Operation.RECEIVE,
-        description="view websocket events of your organization")
-    add(scope=Scope.COLLABORATION, operation=Operation.RECEIVE,
-        description="view websocket events of your collaborations")
-    add(scope=Scope.GLOBAL, operation=Operation.RECEIVE,
-        description="view websocket events")
-    add(scope=Scope.ORGANIZATION, operation=Operation.SEND,
-        description="send websocket events for your organization")
-    add(scope=Scope.COLLABORATION, operation=Operation.SEND,
-        description="send websocket events for your collaborations")
-    add(scope=Scope.GLOBAL, operation=Operation.SEND,
-        description="send websocket events to all collaborations")
+    add(
+        scope=Scope.ORGANIZATION,
+        operation=Operation.RECEIVE,
+        description="view websocket events of your organization",
+    )
+    add(
+        scope=Scope.COLLABORATION,
+        operation=Operation.RECEIVE,
+        description="view websocket events of your collaborations",
+    )
+    add(
+        scope=Scope.GLOBAL,
+        operation=Operation.RECEIVE,
+        description="view websocket events",
+    )
+    add(
+        scope=Scope.ORGANIZATION,
+        operation=Operation.SEND,
+        description="send websocket events for your organization",
+    )
+    add(
+        scope=Scope.COLLABORATION,
+        operation=Operation.SEND,
+        description="send websocket events for your collaborations",
+    )
+    add(
+        scope=Scope.GLOBAL,
+        operation=Operation.SEND,
+        description="send websocket events to all collaborations",
+    )
 
 
 kill_task_schema = KillTaskInputSchema()
@@ -94,7 +107,7 @@ kill_node_tasks_schema = KillNodeTasksInputSchema()
 # Resources / API's
 # ------------------------------------------------------------------------------
 class KillTask(ServicesResources):
-    """ Provide endpoint to kill all containers executing a certain task """
+    """Provide endpoint to kill all containers executing a certain task"""
 
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
@@ -143,8 +156,10 @@ class KillTask(ServicesResources):
         # validate request body
         errors = kill_task_schema.validate(body)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
         id_ = body.get("id")
         task = db.Task.get(id_)
@@ -154,7 +169,7 @@ class KillTask(ServicesResources):
         if has_task_finished(task.status):
             return {
                 "msg": f"Task {id_} already finished with status "
-                       f"'{task.status}', so cannot kill it!"
+                f"'{task.status}', so cannot kill it!"
             }, HTTPStatus.BAD_REQUEST
 
         # Check permissions. If someone doesn't have global permissions, we
@@ -162,8 +177,9 @@ class KillTask(ServicesResources):
         if not self.r.s_glo.can():
             orgs = task.collaboration.organizations
             if not (self.r.s_col.can() and g.user.organization in orgs):
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
+                return {
+                    "msg": "You lack the permission to do that!"
+                }, HTTPStatus.UNAUTHORIZED
 
         # call function to kill the task. This function is outside of the
         # endpoint as it is also used in other endpoints
@@ -171,12 +187,13 @@ class KillTask(ServicesResources):
 
         return {
             "msg": "Nodes have been instructed to kill any containers running "
-                   f"for task {id_}."
+            f"for task {id_}."
         }, HTTPStatus.OK
 
 
 class KillNodeTasks(ServicesResources):
-    """ Provide endpoint to kill all tasks on a certain node """
+    """Provide endpoint to kill all tasks on a certain node"""
+
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
         self.r = getattr(self.permissions, "task")
@@ -226,15 +243,17 @@ class KillNodeTasks(ServicesResources):
         # validate request body
         errors = kill_node_tasks_schema.validate(body)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
         id_ = body.get("id")
         node = db.Node.get(id_)
         if not node:
             return {"msg": f"Node id={id_} not found"}, HTTPStatus.NOT_FOUND
 
-        if node.status != 'online':
+        if node.status != "online":
             return {
                 "msg": f"Node {id_} is not online so cannot kill its tasks!"
             }, HTTPStatus.BAD_REQUEST
@@ -244,25 +263,26 @@ class KillNodeTasks(ServicesResources):
         if not self.r.s_glo.can():
             collab_orgs = node.collaboration.organizations
             if not (
-                (self.r.s_col.can() and g.user.organization in collab_orgs) or
-                (self.r.s_org.can() and
-                    node.organization_id == g.user.organization_id)
+                (self.r.s_col.can() and g.user.organization in collab_orgs)
+                or (
+                    self.r.s_org.can()
+                    and node.organization_id == g.user.organization_id
+                )
             ):
-                return {'msg': 'You lack the permission to do that!'}, \
-                    HTTPStatus.UNAUTHORIZED
+                return {
+                    "msg": "You lack the permission to do that!"
+                }, HTTPStatus.UNAUTHORIZED
 
         self.socketio.emit(
-            'kill_containers', {
-                'node_id': node.id,
-                'collaboration_id': node.collaboration_id
-            },
-            namespace='/tasks',
+            "kill_containers",
+            {"node_id": node.id, "collaboration_id": node.collaboration_id},
+            namespace="/tasks",
             room=f"collaboration_{node.collaboration_id}",
         )
 
         return {
             "msg": f"Node {node.id} has been instructed to kill all containers"
-                   " running on it."
+            " running on it."
         }, HTTPStatus.OK
 
 
@@ -283,19 +303,16 @@ def kill_task(task: db.Task, socket: SocketIO) -> None:
     child_task_ids = [child.id for child in task.children]
     all_task_ids = [task.id] + child_task_ids
 
-    kill_list = [{
-        'task_id': task_id,
-        'run_id': run.id,
-        'organization_id': run.organization_id
-    } for run, task_id in zip(all_runs, all_task_ids)]
+    kill_list = [
+        {"task_id": task_id, "run_id": run.id, "organization_id": run.organization_id}
+        for run, task_id in zip(all_runs, all_task_ids)
+    ]
 
     # emit socket event to the node to execute the container kills
     socket.emit(
-        'kill_containers', {
-            'kill_list': kill_list,
-            'collaboration_id': task.collaboration.id
-        },
-        namespace='/tasks',
+        "kill_containers",
+        {"kill_list": kill_list, "collaboration_id": task.collaboration.id},
+        namespace="/tasks",
         room=f"collaboration_{task.collaboration_id}",
     )
 

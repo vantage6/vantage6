@@ -5,7 +5,7 @@ from vantage6.cli.configuration_manager import ServerConfigurationManager
 from vantage6.cli.globals import (
     DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL,
     ServerType,
-    AlgoStoreGlobals
+    AlgoStoreGlobals,
 )
 from vantage6.cli._version import __version__
 from vantage6.cli.context.base_server import BaseServerContext
@@ -23,11 +23,13 @@ class AlgorithmStoreContext(BaseServerContext):
     system_folders : bool, optional
         System wide or user configuration, by default S_FOL
     """
+
     INST_CONFIG_MANAGER = ServerConfigurationManager
 
     def __init__(self, instance_name: str, system_folders: bool = S_FOL):
-        super().__init__(InstanceType.ALGORITHM_STORE, instance_name,
-                         system_folders=system_folders)
+        super().__init__(
+            InstanceType.ALGORITHM_STORE, instance_name, system_folders=system_folders
+        )
         self.log.info("vantage6 version '%s'", __version__)
 
     def get_database_uri(self) -> str:
@@ -53,13 +55,11 @@ class AlgorithmStoreContext(BaseServerContext):
         str
             Server's docker container name
         """
-        return (
-            f"{APPNAME}-{self.name}-{self.scope}-{ServerType.ALGORITHM_STORE}"
-        )
+        return f"{APPNAME}-{self.name}-{self.scope}-{ServerType.ALGORITHM_STORE}"
 
     @classmethod
     def from_external_config_file(
-            cls, path: str, system_folders: bool = S_FOL
+        cls, path: str, system_folders: bool = S_FOL
     ) -> AlgorithmStoreContext:
         """
         Create a server context from an external configuration file. External
@@ -79,13 +79,14 @@ class AlgorithmStoreContext(BaseServerContext):
             Server context object
         """
         return super().from_external_config_file(
-            path, ServerType.ALGORITHM_STORE,
-            AlgoStoreGlobals.CONFIG_NAME_ENV_VAR, system_folders
+            path,
+            ServerType.ALGORITHM_STORE,
+            AlgoStoreGlobals.CONFIG_NAME_ENV_VAR,
+            system_folders,
         )
 
     @classmethod
-    def config_exists(cls, instance_name: str,
-                      system_folders: bool = S_FOL) -> bool:
+    def config_exists(cls, instance_name: str, system_folders: bool = S_FOL) -> bool:
         """
         Check if a configuration file exists.
 
@@ -107,8 +108,9 @@ class AlgorithmStoreContext(BaseServerContext):
         )
 
     @classmethod
-    def available_configurations(cls, system_folders: bool = S_FOL) \
-            -> tuple[list, list]:
+    def available_configurations(
+        cls, system_folders: bool = S_FOL
+    ) -> tuple[list, list]:
         """
         Find all available server configurations in the default folders.
 

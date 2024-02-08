@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Resources below '/<api_base>/version'
-"""
 import logging
 
 from flask import g, request
@@ -9,15 +5,16 @@ from flask_restful import Api
 from http import HTTPStatus
 from vantage6.common import logger_name
 from vantage6.algorithm.store.resource.schema.input_schema import (
-    Vantage6ServerInputSchema
+    Vantage6ServerInputSchema,
 )
 from vantage6.algorithm.store.resource.schema.output_schema import (
-    Vantage6ServerOutputSchema
+    Vantage6ServerOutputSchema,
 )
 from vantage6.algorithm.store.model.vantage6_server import (
-    Vantage6Server as db_Vantage6Server
+    Vantage6Server as db_Vantage6Server,
 )
 from vantage6.algorithm.store.resource import with_authentication
+
 # TODO move to common / refactor
 from vantage6.server.resource import AlgorithmStoreResources
 
@@ -44,18 +41,18 @@ def setup(api: Api, api_base: str, services: dict) -> None:
 
     api.add_resource(
         Vantage6Servers,
-        api_base + '/vantage6-server',
-        endpoint='server_without_id',
-        methods=('GET', 'POST'),
-        resource_class_kwargs=services
+        api_base + "/vantage6-server",
+        endpoint="server_without_id",
+        methods=("GET", "POST"),
+        resource_class_kwargs=services,
     )
 
     api.add_resource(
         Vantage6Server,
-        api_base + '/vantage6-server/<int:id>',
-        endpoint='server_with_id',
-        methods=('GET', 'DELETE'),
-        resource_class_kwargs=services
+        api_base + "/vantage6-server/<int:id>",
+        endpoint="server_with_id",
+        methods=("GET", "DELETE"),
+        resource_class_kwargs=services,
     )
 
 
@@ -67,7 +64,7 @@ v6_server_output_schema = Vantage6ServerOutputSchema()
 # Resources / API's
 # ------------------------------------------------------------------------------
 class Vantage6Servers(AlgorithmStoreResources):
-    """ Resource for /algorithm """
+    """Resource for /algorithm"""
 
     @with_authentication()
     def get(self):
@@ -101,12 +98,11 @@ class Vantage6Servers(AlgorithmStoreResources):
         args = request.args
         q = g.session.query(db_Vantage6Server)
 
-        if 'url' in args:
-            q = q.filter(db_Vantage6Server.url.like(args['url']))
+        if "url" in args:
+            q = q.filter(db_Vantage6Server.url.like(args["url"]))
 
         servers = q.all()
-        return v6_server_output_schema.dump(servers, many=True), \
-            HTTPStatus.OK
+        return v6_server_output_schema.dump(servers, many=True), HTTPStatus.OK
 
     # Note: this endpoint is not authenticated, because it is used by the
     # vantage6 server to whitelist itself.
@@ -146,15 +142,15 @@ class Vantage6Servers(AlgorithmStoreResources):
         # validate the request body
         errors = v6_server_input_schema.validate(data)
         if errors:
-            return {'msg': "Request body is incorrect", 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
         # issue a warning if someone tries to whitelist localhost
-        force = data.get('force', False)
+        force = data.get("force", False)
         # TODO make function in common to test for localhost
-        if not force and (
-            "localhost" in data['url'] or "127.0.0.1" in data['url']
-        ):
+        if not force and ("localhost" in data["url"] or "127.0.0.1" in data["url"]):
             return {
                 "msg": "You are trying to whitelist a localhost address for a "
                 "vantage6 server. This is not secure and should only be "
@@ -164,20 +160,19 @@ class Vantage6Servers(AlgorithmStoreResources):
             }, HTTPStatus.BAD_REQUEST
 
         # delete any existing record with the same url to prevent duplicates
-        existing_server = db_Vantage6Server.get_by_url(data['url'])
+        existing_server = db_Vantage6Server.get_by_url(data["url"])
         if existing_server:
             existing_server.delete()
 
         # create the whitelisted server record
-        server = db_Vantage6Server(url=data['url'])
+        server = db_Vantage6Server(url=data["url"])
         server.save()
 
-        return v6_server_output_schema.dump(server, many=False), \
-            HTTPStatus.CREATED
+        return v6_server_output_schema.dump(server, many=False), HTTPStatus.CREATED
 
 
 class Vantage6Server(AlgorithmStoreResources):
-    """ Resource for /algorithm/<id> """
+    """Resource for /algorithm/<id>"""
 
     @with_authentication()
     def get(self, id):
@@ -207,10 +202,9 @@ class Vantage6Server(AlgorithmStoreResources):
         """
         server = db_Vantage6Server.get(id)
         if not server:
-            return {'msg': 'Vantage6 server not found'}, HTTPStatus.NOT_FOUND
+            return {"msg": "Vantage6 server not found"}, HTTPStatus.NOT_FOUND
 
-        return v6_server_output_schema.dump(server, many=False), \
-            HTTPStatus.OK
+        return v6_server_output_schema.dump(server, many=False), HTTPStatus.OK
 
     @with_authentication()
     def delete(self, id):
@@ -240,10 +234,9 @@ class Vantage6Server(AlgorithmStoreResources):
         """
         server = db_Vantage6Server.get(id)
         if not server:
-            return {'msg': 'Vantage6 server not found'}, HTTPStatus.NOT_FOUND
+            return {"msg": "Vantage6 server not found"}, HTTPStatus.NOT_FOUND
 
         url = server.url
         server.delete()
 
-        return {'msg': f"Server '{url}' was successfully deleted"}, \
-            HTTPStatus.OK
+        return {"msg": f"Server '{url}' was successfully deleted"}, HTTPStatus.OK

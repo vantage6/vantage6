@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 
 from flask import request, g
@@ -12,14 +11,10 @@ from vantage6.server.permission import (
     Scope as S,
     Operation as P,
     PermissionManager,
-    RuleCollection
+    RuleCollection,
 )
-from vantage6.server.resource.common.input_schema import (
-    OrganizationInputSchema
-)
-from vantage6.server.resource import (
-    only_for, with_user, ServicesResources
-)
+from vantage6.server.resource.common.input_schema import OrganizationInputSchema
+from vantage6.server.resource import only_for, with_user, ServicesResources
 from vantage6.server.resource.common.output_schema import OrganizationSchema
 
 
@@ -46,16 +41,16 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     api.add_resource(
         Organizations,
         path,
-        endpoint='organization_without_id',
-        methods=('GET', 'POST'),
-        resource_class_kwargs=services
-     )
+        endpoint="organization_without_id",
+        methods=("GET", "POST"),
+        resource_class_kwargs=services,
+    )
     api.add_resource(
         Organization,
-        path + '/<int:id>',
-        endpoint='organization_with_id',
-        methods=('GET', 'PATCH'),
-        resource_class_kwargs=services
+        path + "/<int:id>",
+        endpoint="organization_with_id",
+        methods=("GET", "PATCH"),
+        resource_class_kwargs=services,
     )
 
 
@@ -73,22 +68,34 @@ def permissions(permissions: PermissionManager) -> None:
     """
     add = permissions.appender(module_name)
 
-    add(scope=S.GLOBAL, operation=P.VIEW,
-        description="view any organization")
-    add(scope=S.ORGANIZATION, operation=P.VIEW,
+    add(scope=S.GLOBAL, operation=P.VIEW, description="view any organization")
+    add(
+        scope=S.ORGANIZATION,
+        operation=P.VIEW,
         description="view your own organization info",
-        assign_to_container=True, assign_to_node=True)
-    add(scope=S.COLLABORATION, operation=P.VIEW,
-        description='view collaborating organizations',
-        assign_to_container=True, assign_to_node=True)
-    add(scope=S.GLOBAL, operation=P.EDIT,
-        description="edit any organization")
-    add(scope=S.ORGANIZATION, operation=P.EDIT,
-        description="edit your own organization info", assign_to_node=True)
-    add(scope=S.COLLABORATION, operation=P.EDIT,
-        description='edit collaborating organizations')
-    add(scope=S.GLOBAL, operation=P.CREATE,
-        description="create a new organization")
+        assign_to_container=True,
+        assign_to_node=True,
+    )
+    add(
+        scope=S.COLLABORATION,
+        operation=P.VIEW,
+        description="view collaborating organizations",
+        assign_to_container=True,
+        assign_to_node=True,
+    )
+    add(scope=S.GLOBAL, operation=P.EDIT, description="edit any organization")
+    add(
+        scope=S.ORGANIZATION,
+        operation=P.EDIT,
+        description="edit your own organization info",
+        assign_to_node=True,
+    )
+    add(
+        scope=S.COLLABORATION,
+        operation=P.EDIT,
+        description="edit collaborating organizations",
+    )
+    add(scope=S.GLOBAL, operation=P.CREATE, description="create a new organization")
 
 
 # ------------------------------------------------------------------------------
@@ -99,17 +106,15 @@ org_input_schema = OrganizationInputSchema()
 
 
 class OrganizationBase(ServicesResources):
-
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
 
 
 class Organizations(OrganizationBase):
-
     @only_for(("user", "node", "container"))
     def get(self):
-        """ Returns a list organizations
+        """Returns a list organizations
         ---
         description: >-
             Get a list of organizations based on filters and user permissions\n
@@ -187,27 +192,32 @@ class Organizations(OrganizationBase):
         g.session.commit()
 
         # filter by a field of this endpoint
-        if 'name' in args:
-            q = q.filter(db.Organization.name.like(args['name']))
-        if 'country' in args:
-            q = q.filter(db.Organization.country == args['country'])
-        if 'collaboration_id' in args:
-            if not self.r.can_for_col(P.VIEW, int(args['collaboration_id'])):
+        if "name" in args:
+            q = q.filter(db.Organization.name.like(args["name"]))
+        if "country" in args:
+            q = q.filter(db.Organization.country == args["country"])
+        if "collaboration_id" in args:
+            if not self.r.can_for_col(P.VIEW, int(args["collaboration_id"])):
                 return {
-                    'msg': 'You lack the permission to get all organizations '
-                    'in your collaboration!'
+                    "msg": "You lack the permission to get all organizations "
+                    "in your collaboration!"
                 }, HTTPStatus.UNAUTHORIZED
-            q = q.join(db.Member).join(db.Collaboration)\
-                 .filter(db.Collaboration.id == args['collaboration_id'])
+            q = (
+                q.join(db.Member)
+                .join(db.Collaboration)
+                .filter(db.Collaboration.id == args["collaboration_id"])
+            )
 
         # filter the list of organizations based on the scope
         if self.r.v_glo.can():
             pass  # don't apply filters
         elif self.r.v_col.can():
             # obtain collaborations your organization participates in
-            collabs = g.session.query(db.Collaboration).filter(
-                db.Collaboration.organizations.any(id=auth_org.id)
-            ).all()
+            collabs = (
+                g.session.query(db.Collaboration)
+                .filter(db.Collaboration.organizations.any(id=auth_org.id))
+                .all()
+            )
             g.session.commit()
 
             # filter orgs in own collaborations, and add own organization in
@@ -222,14 +232,15 @@ class Organizations(OrganizationBase):
         elif self.r.v_org.can():
             q = q.filter(db.Organization.id == auth_org.id)
         else:
-            return {'msg': 'You lack the permission to do that!'}, \
-                HTTPStatus.UNAUTHORIZED
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         # paginate the results
         try:
             page = Pagination.from_query(q, request, db.Organization)
         except (ValueError, AttributeError) as e:
-            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
 
         # serialization of DB model
         return self.response(page, org_schema)
@@ -270,17 +281,20 @@ class Organizations(OrganizationBase):
         """
 
         if not self.r.c_glo.can():
-            return {'msg': 'You lack the permissions to do that!'},\
-                HTTPStatus.UNAUTHORIZED
+            return {
+                "msg": "You lack the permissions to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         # validate request body
         data = request.get_json()
         errors = org_input_schema.validate(data)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
-        name = data.get('name')
+        name = data.get("name")
         if db.Organization.exists("name", name):
             return {
                 "msg": f"Organization with name '{name}' already exists!"
@@ -288,21 +302,19 @@ class Organizations(OrganizationBase):
 
         organization = db.Organization(
             name=name,
-            address1=data.get('address1', ''),
-            address2=data.get('address2' ''),
-            zipcode=data.get('zipcode', ''),
-            country=data.get('country', ''),
-            public_key=data.get('public_key', ''),
-            domain=data.get('domain', '')
+            address1=data.get("address1", ""),
+            address2=data.get("address2" ""),
+            zipcode=data.get("zipcode", ""),
+            country=data.get("country", ""),
+            public_key=data.get("public_key", ""),
+            domain=data.get("domain", ""),
         )
         organization.save()
 
-        return org_schema.dump(organization, many=False), \
-            HTTPStatus.CREATED
+        return org_schema.dump(organization, many=False), HTTPStatus.CREATED
 
 
 class Organization(OrganizationBase):
-
     @only_for(("user", "node", "container"))
     def get(self, id):
         """Get organization
@@ -347,13 +359,13 @@ class Organization(OrganizationBase):
         # retrieve requested organization
         req_org = db.Organization.get(id)
         if not req_org:
-            return {'msg': f'Organization id={id} not found!'}, \
-                HTTPStatus.NOT_FOUND
+            return {"msg": f"Organization id={id} not found!"}, HTTPStatus.NOT_FOUND
 
         # Check if auth has enough permissions
         if not self.r.can_for_org(P.VIEW, id):
-            return {'msg': 'You do not have permission to do that!'}, \
-                HTTPStatus.UNAUTHORIZED
+            return {
+                "msg": "You do not have permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         return org_schema.dump(req_org, many=False), HTTPStatus.OK
 
@@ -410,29 +422,29 @@ class Organization(OrganizationBase):
         data = request.get_json()
         errors = org_input_schema.validate(data, partial=True)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
         organization = db.Organization.get(id)
         if not organization:
-            return {"msg": f"Organization with id={id} not found"}, \
-                HTTPStatus.NOT_FOUND
+            return {"msg": f"Organization with id={id} not found"}, HTTPStatus.NOT_FOUND
 
         if not self.r.can_for_org(P.EDIT, id):
-            return {'msg': 'You lack the permission to do that!'}, \
-                HTTPStatus.UNAUTHORIZED
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
-        name = data.get('name', None)
+        name = data.get("name", None)
         if name:
-            if organization.name != name and \
-                    db.Organization.exists("name", name):
+            if organization.name != name and db.Organization.exists("name", name):
                 return {
                     "msg": f"Organization with name '{name}' already exists!"
                 }, HTTPStatus.BAD_REQUEST
             organization.name = name
 
-        fields = ["address1", "address2", "zipcode", "country",
-                  "public_key", "domain"]
+        fields = ["address1", "address2", "zipcode", "country", "public_key", "domain"]
         for field in fields:
             if field in data and data[field] is not None:
                 setattr(organization, field, data[field])

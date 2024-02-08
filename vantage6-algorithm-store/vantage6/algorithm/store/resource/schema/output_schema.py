@@ -11,9 +11,7 @@ from vantage6.algorithm.store.model.rule import Rule
 from vantage6.algorithm.store.model.user import User
 from vantage6.algorithm.store.model.review import Review
 from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
-from vantage6.server.resource.common.output_schema import (
-    BaseHATEOASModelSchema
-)
+from vantage6.server.resource.common.output_schema import BaseHATEOASModelSchema
 
 
 def create_one_to_many_link(obj: Base, link_to: str, link_from: str) -> str:
@@ -48,8 +46,8 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
     """
     This class is used to convert foreign-key fields to HATEOAS specification.
     """
-    def __init__(self, *args, **kwargs) -> None:
 
+    def __init__(self, *args, **kwargs) -> None:
         # set lambda functions to create links for one to one relationship
         # TODO check if all below are used
         setattr(self, "algorithm",
@@ -78,21 +76,18 @@ class AlgorithmOutputSchema(HATEOASModelSchema):
     class Meta:
         model = Algorithm
 
-    functions = fields.Nested(
-        'FunctionOutputSchema', many=True, exclude=['id']
-    )
+    functions = fields.Nested("FunctionOutputSchema", many=True, exclude=["id"])
 
 
 class FunctionOutputSchema(HATEOASModelSchema):
     class Meta:
         model = Function
+        exclude = ["type_"]
 
-    databases = fields.Nested(
-        'DatabaseOutputSchema', many=True, exclude=['id']
-    )
-    arguments = fields.Nested(
-        'ArgumentOutputSchema', many=True, exclude=['id']
-    )
+    type = fields.String(attribute="type_")
+
+    databases = fields.Nested("DatabaseOutputSchema", many=True, exclude=["id"])
+    arguments = fields.Nested("ArgumentOutputSchema", many=True, exclude=["id"])
 
 
 class DatabaseOutputSchema(HATEOASModelSchema):
@@ -103,6 +98,9 @@ class DatabaseOutputSchema(HATEOASModelSchema):
 class ArgumentOutputSchema(HATEOASModelSchema):
     class Meta:
         model = Argument
+        exclude = ["type_"]
+
+    type = fields.String(attribute="type_")
 
 
 class Vantage6ServerOutputSchema(HATEOASModelSchema):

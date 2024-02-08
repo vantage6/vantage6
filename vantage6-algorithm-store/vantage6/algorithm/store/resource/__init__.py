@@ -1,6 +1,6 @@
+import os
 import logging
 import requests
-from sys import platform
 from functools import wraps
 from http import HTTPStatus
 from flask import request
@@ -14,6 +14,14 @@ log = logging.getLogger(logger_name(__name__))
 
 
 def authenticate_with_server(*args, **kwargs):
+
+    def __make_request(url: str) -> requests.Response:
+        headers = {"Authorization": request.headers["Authorization"]}
+        try:
+            return requests.post(url, headers=headers)
+        except requests.exceptions.ConnectionError:
+            return None
+
     msg = 'Missing Server-Url header'
     if not request.headers.get('Server-Url'):
         log.warning(msg)
@@ -30,14 +38,28 @@ def authenticate_with_server(*args, **kwargs):
     # check if token is valid
 
     url = f"{request.headers['Server-Url']}/token/user/validate"
-    url = url.replace('localhost', 'host.docker.internal') \
-        .replace('127.0.0.1', 'host.docker.internal')
+    # if we are looking for a localhost server, we probably have to
+    # check host.docker.internal (Windows) or 172.17.0.1 (Linux)
+    # instead. The user can set the environment variable HOST_URI_ENV_VAR
+    # to the correct value by providing config file option
+    # config['dev']['host_uri']
+    if "localhost" in url or "127.0.0.1" in url:
+        host_uri = os.environ.get("HOST_URI_ENV_VAR", None)
+        if not host_uri:
+            msg = (
+                "You are trying to connect to a localhost server, but "
+                "this refers to the container itself. Please set the "
+                " configuration option 'host_uri' in the dev section "
+                " of the config file to the host's IP address."
+            )
+            log.warning(msg)
+            return {"msg": msg}, HTTPStatus.UNAUTHORIZED
+        # try replacing localhost with the host_uri from the config file
+        url = url.replace("localhost", host_uri).replace("127.0.0.1", host_uri)
+        # replace double http:// with single
+        url = url.replace("http://http://", "http://")
 
-    try:
-        response = requests.post(url, headers=request.headers)
-    except requests.exceptions.ConnectionError as e:
-        log.warning(f"Received the following exception: {e}")
-        pass
+    response = __make_request(url)
 
     if response is None or \
             response.status_code == HTTPStatus.NOT_FOUND:
@@ -66,6 +88,7 @@ def with_authentication() -> callable:
         Decorated function that can be used to access endpoints that require
         authentication.
     """
+
     def protection_decorator(fn):
         @wraps(fn)
         def decorator(*args, **kwargs):
@@ -121,10 +144,13 @@ def with_permission(resource: str, operation: Operation) -> callable:
 
             if not flag:
                 msg = f"This user is not allowed to perform this operation"
+
                 log.warning(msg)
-                return {'msg': msg}, HTTPStatus.UNAUTHORIZED
+                return {"msg": msg}, HTTPStatus.UNAUTHORIZED
 
             # all good, proceed with function
             return fn(*args, **kwargs)
+
         return decorator
+
     return protection_decorator

@@ -5,12 +5,12 @@ exist. It allows the users and nodes to authenticate and subsequently interact
 through the API the server hosts. Finally, it also communicates with
 authenticated nodes and users via the socketIO server that is run here.
 """
-# -*- coding: utf-8 -*-
+
 import os
 from gevent import monkey
 
 # This is a workaround for readthedocs
-if not os.environ.get('READTHEDOCS'):
+if not os.environ.get("READTHEDOCS"):
     # flake8: noqa: E402 (ignore import error)
     monkey.patch_all()
 
@@ -26,8 +26,13 @@ from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
 from flasgger import Swagger
 from flask import (
-    Flask, make_response, current_app, request, send_from_directory, Request,
-    Response
+    Flask,
+    make_response,
+    current_app,
+    request,
+    send_from_directory,
+    Request,
+    Response,
 )
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
@@ -55,7 +60,7 @@ from vantage6.server.globals import (
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
     MIN_TOKEN_VALIDITY_SECONDS,
     MIN_REFRESH_TOKEN_EXPIRY_DELTA,
-    SERVER_MODULE_NAME
+    SERVER_MODULE_NAME,
 )
 from vantage6.server.resource.common.swagger_templates import swagger_template
 from vantage6.server._version import __version__
@@ -85,11 +90,12 @@ class ServerApp:
 
         # initialize, configure Flask
         self.app = Flask(
-            SERVER_MODULE_NAME, root_path=Path(__file__),
-            template_folder=Path(__file__).parent / 'templates',
-            static_folder=Path(__file__).parent / 'static'
+            SERVER_MODULE_NAME,
+            root_path=Path(__file__),
+            template_folder=Path(__file__).parent / "templates",
+            static_folder=Path(__file__).parent / "static",
         )
-        self.debug: dict = self.ctx.config.get('debug', {})
+        self.debug: dict = self.ctx.config.get("debug", {})
         self.configure_flask()
 
         # Setup SQLAlchemy and Marshmallow for marshalling/serializing
@@ -144,36 +150,38 @@ class ServerApp:
             SocketIO object
         """
 
-        msg_queue = self.ctx.config.get('rabbitmq', {}).get('uri')
+        msg_queue = self.ctx.config.get("rabbitmq", {}).get("uri")
         if msg_queue:
-            log.debug(f'Connecting to msg queue: {msg_queue}')
+            log.debug(f"Connecting to msg queue: {msg_queue}")
 
-        debug_mode = self.debug.get('socketio', False)
+        debug_mode = self.debug.get("socketio", False)
         if debug_mode:
             log.debug("SocketIO debug mode enabled")
         try:
             socketio = SocketIO(
                 self.app,
-                async_mode='gevent_uwsgi',
+                async_mode="gevent_uwsgi",
                 message_queue=msg_queue,
                 ping_timeout=60,
-                cors_allowed_origins='*',
+                cors_allowed_origins="*",
                 logger=debug_mode,
-                engineio_logger=debug_mode
+                engineio_logger=debug_mode,
             )
         except Exception as e:
-            log.warning('Default socketio settings failed, attempt to run '
-                        'without gevent_uwsgi packages! This leads to '
-                        'performance issues and possible issues concerning '
-                        'the websocket channels!')
+            log.warning(
+                "Default socketio settings failed, attempt to run "
+                "without gevent_uwsgi packages! This leads to "
+                "performance issues and possible issues concerning "
+                "the websocket channels!"
+            )
             log.debug(e)
             socketio = SocketIO(
                 self.app,
                 message_queue=msg_queue,
                 ping_timeout=60,
-                cors_allowed_origins='*',
+                cors_allowed_origins="*",
                 logger=debug_mode,
-                engineio_logger=debug_mode
+                engineio_logger=debug_mode,
             )
 
         # FIXME: temporary fix to get socket object into the namespace class
@@ -186,40 +194,37 @@ class ServerApp:
         """Configure the Flask settings of the vantage6 server."""
 
         # let us handle exceptions
-        self.app.config['PROPAGATE_EXCEPTIONS'] = True
+        self.app.config["PROPAGATE_EXCEPTIONS"] = True
 
         # patch where to obtain token
-        self.app.config['JWT_AUTH_URL_RULE'] = '/api/token'
+        self.app.config["JWT_AUTH_URL_RULE"] = "/api/token"
 
         # If no secret is set in the config file, one is generated. This
         # implies that all (even refresh) tokens will be invalidated on restart
-        self.app.config['JWT_SECRET_KEY'] = self.ctx.config.get(
-            'jwt_secret_key',
-            str(uuid.uuid1())
+        self.app.config["JWT_SECRET_KEY"] = self.ctx.config.get(
+            "jwt_secret_key", str(uuid.uuid1())
         )
 
         # Default expiration time
         token_expiry_seconds = self._get_jwt_expiration_seconds(
-            config_key='token_expires_hours',
-            default_hours=ACCESS_TOKEN_EXPIRES_HOURS
+            config_key="token_expires_hours", default_hours=ACCESS_TOKEN_EXPIRES_HOURS
         )
-        self.app.config['JWT_ACCESS_TOKEN_EXPIRES'] = token_expiry_seconds
+        self.app.config["JWT_ACCESS_TOKEN_EXPIRES"] = token_expiry_seconds
 
         # Set refresh token expiration time
-        self.app.config['JWT_REFRESH_TOKEN_EXPIRES'] = \
-                self._get_jwt_expiration_seconds(
-            config_key='refresh_token_expires_hours',
+        self.app.config["JWT_REFRESH_TOKEN_EXPIRES"] = self._get_jwt_expiration_seconds(
+            config_key="refresh_token_expires_hours",
             default_hours=REFRESH_TOKENS_EXPIRE_HOURS,
             longer_than=token_expiry_seconds + MIN_REFRESH_TOKEN_EXPIRY_DELTA,
-            is_refresh=True
+            is_refresh=True,
         )
 
         # Open Api Specification (f.k.a. swagger)
-        self.app.config['SWAGGER'] = {
-            'title': APPNAME,
-            'uiversion': "3",
-            'openapi': '3.0.0',
-            'version': __version__
+        self.app.config["SWAGGER"] = {
+            "title": APPNAME,
+            "uiversion": "3",
+            "openapi": "3.0.0",
+            "version": __version__,
         }
 
         # Mail settings
@@ -227,15 +232,12 @@ class ServerApp:
         self.app.config["MAIL_PORT"] = mail_config.get("port", 1025)
         self.app.config["MAIL_SERVER"] = mail_config.get("server", "localhost")
         self.app.config["MAIL_USERNAME"] = mail_config.get(
-            "username",
-            DEFAULT_SUPPORT_EMAIL_ADDRESS
+            "username", DEFAULT_SUPPORT_EMAIL_ADDRESS
         )
         self.app.config["MAIL_PASSWORD"] = mail_config.get("password", "")
-        self.app.config["MAIL_USE_TLS"] = mail_config.get("MAIL_USE_TLS",
-                                                          True)
-        self.app.config["MAIL_USE_SSL"] = mail_config.get("MAIL_USE_SSL",
-                                                          False)
-        debug_mode = self.debug.get('flask', False)
+        self.app.config["MAIL_USE_TLS"] = mail_config.get("MAIL_USE_TLS", True)
+        self.app.config["MAIL_USE_SSL"] = mail_config.get("MAIL_USE_SSL", False)
+        debug_mode = self.debug.get("flask", False)
         if debug_mode:
             log.debug("Flask debug mode enabled")
         self.app.debug = debug_mode
@@ -255,15 +257,16 @@ class ServerApp:
             string:
                 The endpoint path of the request
             """
-            return request.url.replace(request.url_root, '')
+            return request.url.replace(request.url_root, "")
 
         # before request
         @self.app.before_request
         def do_before_request():
             """Before every flask request method."""
             # Add log message before each request
-            log.debug(f"Received request: {request.method} "
-                      f"{_get_request_path(request)}")
+            log.debug(
+                f"Received request: {request.method} " f"{_get_request_path(request)}"
+            )
 
             # This will obtain a (scoped) db session from the session factory
             # that is linked to the flask request global `g`. In every endpoint
@@ -290,10 +293,9 @@ class ServerApp:
             sessions.
             """
             if error.code == 404:
-                log.debug(
-                    f"404 error for route '{_get_request_path(request)}'")
+                log.debug(f"404 error for route '{_get_request_path(request)}'")
             else:
-                log.warn('HTTP Exception occured during request')
+                log.warn("HTTP Exception occured during request")
                 log.debug(traceback.format_exc())
             DatabaseSessionManager.clear_session()
             return error.get_response()
@@ -305,20 +307,22 @@ class ServerApp:
             It is important to close the db session to avoid having dangling
             sessions.
             """
-            log.exception('Exception occured during request')
+            log.exception("Exception occured during request")
             DatabaseSessionManager.clear_session()
-            return {'msg': f'An unexpected error occurred on the server!'}, \
-                HTTPStatus.INTERNAL_SERVER_ERROR
+            return {
+                "msg": f"An unexpected error occurred on the server!"
+            }, HTTPStatus.INTERNAL_SERVER_ERROR
 
-        @self.app.route('/robots.txt')
+        @self.app.route("/robots.txt")
         def static_from_root():
-            return send_from_directory(self.app.static_folder,
-                                       request.path[1:])
+            return send_from_directory(self.app.static_folder, request.path[1:])
 
     def _get_jwt_expiration_seconds(
-        self, config_key: str, default_hours: int,
+        self,
+        config_key: str,
+        default_hours: int,
         longer_than: int = MIN_TOKEN_VALIDITY_SECONDS,
-        is_refresh: bool = False
+        is_refresh: bool = False,
     ) -> int:
         """
         Return the expiration time for JWT tokens.
@@ -347,25 +351,32 @@ class ServerApp:
         if hours_expire is None:
             # No value is present in the config file, use default
             seconds_expire = int(float(default_hours) * 3600)
-        elif isinstance(hours_expire, (int, float)) or \
-                hours_expire.replace(".", "").isnumeric():
+        elif (
+            isinstance(hours_expire, (int, float))
+            or hours_expire.replace(".", "").isnumeric()
+        ):
             # Numeric value is present in the config file
             seconds_expire = int(float(hours_expire) * 3600)
             if seconds_expire < longer_than:
                 log.warning(
                     f"Invalid value for '{config_key}': {hours_expire}. Tokens"
                     f" must be valid for at least {longer_than} seconds. Using"
-                    f" default value: {default_hours} hours")
+                    f" default value: {default_hours} hours"
+                )
                 if is_refresh:
-                    log.warning("Note that refresh tokens should be valid at "
-                                f"least {MIN_REFRESH_TOKEN_EXPIRY_DELTA} "
-                                "seconds longer than access tokens.")
+                    log.warning(
+                        "Note that refresh tokens should be valid at "
+                        f"least {MIN_REFRESH_TOKEN_EXPIRY_DELTA} "
+                        "seconds longer than access tokens."
+                    )
                 seconds_expire = int(float(default_hours) * 3600)
         else:
             # Non-numeric value is present in the config file. Warn and use
             # default
-            log.error(f"Invalid value for '{config_key}': {hours_expire}. "
-                      f"Using default value: {default_hours} hours")
+            log.error(
+                f"Invalid value for '{config_key}': {hours_expire}. "
+                f"Using default value: {default_hours} hours"
+            )
             seconds_expire = int(float(default_hours) * 3600)
 
         return seconds_expire
@@ -377,11 +388,10 @@ class ServerApp:
         HATEOASModelSchema.api = self.api
 
         # whatever you get try to json it
-        @self.api.representation('application/json')
+        @self.api.representation("application/json")
         # pylint: disable=unused-argument
         def output_json(
-            data: db.Base | list[db.Base], code: HTTPStatus,
-            headers: dict = None
+            data: db.Base | list[db.Base], code: HTTPStatus, headers: dict = None
         ) -> Response:
             """
             Return jsonified data for request responses.
@@ -398,8 +408,7 @@ class ServerApp:
 
             if isinstance(data, db.Base):
                 data = db.jsonable(data)
-            elif isinstance(data, list) and len(data) and \
-                    isinstance(data[0], db.Base):
+            elif isinstance(data, list) and len(data) and isinstance(data[0], db.Base):
                 data = db.jsonable(data)
 
             resp = make_response(json.dumps(data), code)
@@ -411,8 +420,7 @@ class ServerApp:
 
         @self.jwt.additional_claims_loader
         # pylint: disable=unused-argument
-        def additional_claims_loader(
-                identity: db.Authenticatable | dict) -> dict:
+        def additional_claims_loader(identity: db.Authenticatable | dict) -> dict:
             """
             Create additional claims for JWT tokens: set user type and for
             users, set their roles.
@@ -429,29 +437,28 @@ class ServerApp:
             """
             roles = []
             if isinstance(identity, db.User):
-                type_ = 'user'
+                type_ = "user"
                 roles = [role.name for role in identity.roles]
 
             elif isinstance(identity, db.Node):
-                type_ = 'node'
+                type_ = "node"
             elif isinstance(identity, dict):
-                type_ = 'container'
+                type_ = "container"
             else:
                 log.error(f"could not create claims from {str(identity)}")
                 return
 
             claims = {
-                'client_type': type_,
-                'roles': roles,
+                "client_type": type_,
+                "roles": roles,
             }
 
             return claims
 
         @self.jwt.user_identity_loader
         # pylint: disable=unused-argument
-        def user_identity_loader(
-                identity: db.Authenticatable | dict) -> str | dict:
-            """"
+        def user_identity_loader(identity: db.Authenticatable | dict) -> str | dict:
+            """ "
             JSON serializing identity to be used by ``create_access_token``.
 
             Parameters
@@ -470,8 +477,10 @@ class ServerApp:
             if isinstance(identity, dict):
                 return identity
 
-            log.error(f"Could not create a JSON serializable identity \
-                        from '{str(identity)}'")
+            log.error(
+                f"Could not create a JSON serializable identity \
+                        from '{str(identity)}'"
+            )
 
         @self.jwt.user_lookup_loader
         # pylint: disable=unused-argument
@@ -494,29 +503,26 @@ class ServerApp:
                 The user, node or container identity. If the identity is a
                 container, a dict is returned.
             """
-            identity = jwt_headers['sub']
+            identity = jwt_headers["sub"]
             auth_identity = Identity(identity)
 
             # in case of a user or node an auth id is shared as identity
             if isinstance(identity, int):
-
                 # auth_identity = Identity(identity)
 
                 auth = db.Authenticatable.get(identity)
 
                 if isinstance(auth, db.Node):
-
                     for rule in db.Role.get_by_name(DefaultRole.NODE).rules:
                         auth_identity.provides.add(
-                                RuleNeed(
-                                    name=rule.name,
-                                    scope=rule.scope,
-                                    operation=rule.operation
-                                )
+                            RuleNeed(
+                                name=rule.name,
+                                scope=rule.scope,
+                                operation=rule.operation,
                             )
+                        )
 
                 if isinstance(auth, db.User):
-
                     # add role permissions
                     for role in auth.roles:
                         for rule in role.rules:
@@ -524,7 +530,7 @@ class ServerApp:
                                 RuleNeed(
                                     name=rule.name,
                                     scope=rule.scope,
-                                    operation=rule.operation
+                                    operation=rule.operation,
                                 )
                             )
 
@@ -534,12 +540,13 @@ class ServerApp:
                             RuleNeed(
                                 name=rule.name,
                                 scope=rule.scope,
-                                operation=rule.operation
+                                operation=rule.operation,
                             )
                         )
 
-                identity_changed.send(current_app._get_current_object(),
-                                      identity=auth_identity)
+                identity_changed.send(
+                    current_app._get_current_object(), identity=auth_identity
+                )
 
                 return auth
             else:
@@ -548,13 +555,12 @@ class ServerApp:
                 for rule in db.Role.get_by_name(DefaultRole.CONTAINER).rules:
                     auth_identity.provides.add(
                         RuleNeed(
-                            name=rule.name,
-                            scope=rule.scope,
-                            operation=rule.operation
+                            name=rule.name, scope=rule.scope, operation=rule.operation
                         )
                     )
-                identity_changed.send(current_app._get_current_object(),
-                                      identity=auth_identity)
+                identity_changed.send(
+                    current_app._get_current_object(), identity=auth_identity
+                )
                 log.debug(identity)
                 return identity
 
@@ -568,12 +574,12 @@ class ServerApp:
             "mail": self.mail,
             "api": self.api,
             "permissions": self.permissions,
-            "config": self.ctx.config
+            "config": self.ctx.config,
         }
 
         for res in RESOURCES:
-            module = importlib.import_module('vantage6.server.resource.' + res)
-            module.setup(self.api, self.ctx.config['api_path'], services)
+            module = importlib.import_module("vantage6.server.resource." + res)
+            module.setup(self.api, self.ctx.config["api_path"], services)
 
     # TODO consider moving this method elsewhere. This is not trivial at the
     # moment because of the circular import issue with `db`, see
@@ -581,12 +587,12 @@ class ServerApp:
     @staticmethod
     def _add_default_roles() -> None:
         for role in get_default_roles(db):
-            if not db.Role.get_by_name(role['name']):
+            if not db.Role.get_by_name(role["name"]):
                 log.warn(f"Creating new default role {role['name']}...")
                 new_role = db.Role(
-                    name=role['name'],
-                    description=role['description'],
-                    rules=role['rules']
+                    name=role["name"],
+                    description=role["description"],
+                    rules=role["rules"],
                 )
                 new_role.save()
 
@@ -602,7 +608,7 @@ class ServerApp:
 
         # create root user if it is not in the DB yet
         try:
-            db.User.get_by_username(SUPER_USER_INFO['username'])
+            db.User.get_by_username(SUPER_USER_INFO["username"])
         except Exception:
             log.warn("No root user found! Is this the first run?")
 
@@ -612,15 +618,21 @@ class ServerApp:
             # TODO use constant instead of 'Root' literal
             root = db.Role.get_by_name("Root")
 
-            log.warn(f"Creating root user: "
-                     f"username={SUPER_USER_INFO['username']}, "
-                     f"password={SUPER_USER_INFO['password']}")
+            log.warn(
+                f"Creating root user: "
+                f"username={SUPER_USER_INFO['username']}, "
+                f"password={SUPER_USER_INFO['password']}"
+            )
 
-            user = db.User(username=SUPER_USER_INFO['username'], roles=[root],
-                           organization=org, email="root@domain.ext",
-                           password=SUPER_USER_INFO['password'],
-                           failed_login_attempts=0,
-                           last_login_attempt=None)
+            user = db.User(
+                username=SUPER_USER_INFO["username"],
+                roles=[root],
+                organization=org,
+                email="root@domain.ext",
+                password=SUPER_USER_INFO["password"],
+                failed_login_attempts=0,
+                last_login_attempt=None,
+            )
             user.save()
         return self
 
@@ -646,10 +658,10 @@ class ServerApp:
                 online_status_nodes = db.Node.get_online_nodes()
                 for node in online_status_nodes:
                     if node.last_seen < before_wait:
-                        node.status = 'offline'
+                        node.status = "offline"
                         node.save()
             except Exception:
-                log.exception('Node-status thread had an exception')
+                log.exception("Node-status thread had an exception")
                 time.sleep(PING_INTERVAL_SECONDS)
 
 
@@ -669,13 +681,9 @@ def run_server(config: str, system_folders: bool = True) -> ServerApp:
     ServerApp
         A running instance of the vantage6 server
     """
-    ctx = ServerContext.from_external_config_file(
-        config,
-        system_folders
-    )
+    ctx = ServerContext.from_external_config_file(config, system_folders)
     allow_drop_all = ctx.config["allow_drop_all"]
-    Database().connect(uri=ctx.get_database_uri(),
-                       allow_drop_all=allow_drop_all)
+    Database().connect(uri=ctx.get_database_uri(), allow_drop_all=allow_drop_all)
     return ServerApp(ctx).start()
 
 
@@ -688,8 +696,8 @@ def run_dev_server(server_app: ServerApp, *args, **kwargs) -> None:
     server_app: ServerApp
         Instance of a vantage6 server
     """
-    log.warn('*'*80)
-    log.warn(' DEVELOPMENT SERVER '.center(80, '*'))
-    log.warn('*'*80)
-    kwargs.setdefault('log_output', False)
+    log.warn("*" * 80)
+    log.warn(" DEVELOPMENT SERVER ".center(80, "*"))
+    log.warn("*" * 80)
+    kwargs.setdefault("log_output", False)
     server_app.socketio.run(server_app.app, *args, **kwargs)

@@ -8,21 +8,22 @@ users. Apart from roles, users may be assigned extra permissions that allow
 them to execute one specific action. This table is used to store those, and
 may contain multiple entries for the same user.
 """
+
 from sqlalchemy import Column, Integer, ForeignKey, Table
 
 from .base import Base
 
 
 Permission = Table(
-    'Permission',
+    "Permission",
     Base.metadata,
-    Column('role_id', Integer, ForeignKey('role.id')),
-    Column('user_id', Integer, ForeignKey('user.id'))
+    Column("role_id", Integer, ForeignKey("role.id")),
+    Column("user_id", Integer, ForeignKey("user.id")),
 )
 
 UserPermission = Table(
-    'UserPermission',
+    "UserPermission",
     Base.metadata,
-    Column('rule_id', Integer, ForeignKey('rule.id')),
-    Column('user_id', Integer, ForeignKey('user.id'))
+    Column("rule_id", Integer, ForeignKey("rule.id")),
+    Column("user_id", Integer, ForeignKey("user.id")),
 )

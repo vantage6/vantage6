@@ -18,7 +18,7 @@ def info(msg: str):
 
 # pattern to use in the regex to update version
 pattern = (
-    r"(version_info\s*=\s*\()(\s*\d+,\s*\d+,\s*\d+,)(\s*)('\w*')"
+    r"(version_info\s*=\s*\()(\s*\d+,\s*\d+,\s*\d+,)(\s*)(\"\w*\")"
     r"(,\s*__build__)(,\s*)(\d+)(\))"
 )
 
@@ -37,25 +37,24 @@ def update_version_spec(spec: str) -> None:
     AssertionError
         If the spec is not one of the following: final, beta, alpha, candidate
     """
-    assert spec in ('final', 'beta', 'alpha', 'candidate')
+    assert spec in ("final", "beta", "alpha", "candidate")
     # find all _version.py files
     files = [
-        file_ for file_ in Path("../").rglob("_version.py")
-        if 'build' not in str(file_)
+        file_ for file_ in Path("../").rglob("_version.py") if "build" not in str(file_)
     ]
-    info(f'found files={files}')
+    info(f"found files={files}")
     # update spec in all files
     for file in files:
-        info(f'File: {file}')
-        info(f'Updating spec to: {spec}')
-        with open(file, 'r') as f:
+        info(f"File: {file}")
+        info(f"Updating spec to: {spec}")
+        with open(file, "r") as f:
             content = f.read()
             new_content = re.sub(
-                pattern, r"\1\2\g<3>'{}'\5\6\7\8".format(spec), content
+                pattern, r'\1\2\g<3>"{}"\5\6\7\8'.format(spec), content
             )
 
-        info('Writing to file')
-        with open(file, 'w') as f:
+        info("Writing to file")
+        with open(file, "w") as f:
             f.write(new_content)
 
 
@@ -77,29 +76,28 @@ def update_version(version: str) -> None:
     assert re.match(r"\d+.\d+.\d+", version)
     # find all _version.py files
     files = [
-        file_ for file_ in Path("../").rglob("_version.py")
-        if 'build' not in str(file_)
+        file_ for file_ in Path("../").rglob("_version.py") if "build" not in str(file_)
     ]
     # update version in all files
     for file in files:
-        info(f'File: {file}')
+        info(f"File: {file}")
         info(f"Updating version to {version}")
         major, minor, patch = version.split(".")
-        with open(file, 'r') as f:
+        with open(file, "r") as f:
             content = f.read()
             new_content = re.sub(
                 pattern,
                 r"\g<1>{}, {}, {},\3\4\5\6\7\8".format(major, minor, patch),
-                content
+                content,
             )
 
-        info('Writing to file')
-        with open(file, 'w') as f:
+        info("Writing to file")
+        with open(file, "w") as f:
             f.write(new_content)
 
 
 def update_build(build: int) -> None:
-    """ Update build number in all instances of __build__
+    """Update build number in all instances of __build__
 
     Parameters
     ----------
@@ -109,13 +107,13 @@ def update_build(build: int) -> None:
     files = Path("../").rglob("__build__")
     info(f"Updating build number to {build}")
     for file in files:
-        info(f'File: {file}')
-        with open(file, 'w') as f:
+        info(f"File: {file}")
+        with open(file, "w") as f:
             f.write(build)
 
 
 def update_post(post: str) -> None:
-    """ Update post release version in all instances of _version.py
+    """Update post release version in all instances of _version.py
 
     Parameters
     ----------
@@ -123,20 +121,17 @@ def update_post(post: str) -> None:
         The new post release version to which to update.
     """
     files = [
-        file_ for file_ in Path("../").rglob("_version.py")
-        if 'build' not in str(file_)
+        file_ for file_ in Path("../").rglob("_version.py") if "build" not in str(file_)
     ]
     info(f"Setting post-release version to: {post}")
     for file_ in files:
-        info(f'File: {file_}')
-        with open(file_, 'r') as f:
+        info(f"File: {file_}")
+        with open(file_, "r") as f:
             content = f.read()
-            new_content = re.sub(
-                pattern, r"\1\2\3\4\5\g<6>{}\8".format(post), content
-            )
+            new_content = re.sub(pattern, r"\1\2\3\4\5\g<6>{}\8".format(post), content)
 
-        info('Writing to file')
-        with open(file_, 'w') as f:
+        info("Writing to file")
+        with open(file_, "w") as f:
             f.write(new_content)
 
 
@@ -154,34 +149,33 @@ def update_version_docker_files(version: str) -> None:
     # update version label in infrastructure-base
     info("Updating version in infrastructure-base/Dockerfile")
     file = Path("../docker/infrastructure-base.Dockerfile")
-    with open(file, 'r') as f:
+    with open(file, "r") as f:
         content = f.read()
         new_content = re.sub(
             r"(LABEL version=\")(\d+.\d+)\"",
             r"\g<1>{}".format(major_minor + '"'),
-            content
+            content,
         )
-    with open(file, 'w') as f:
+    with open(file, "w") as f:
         f.write(new_content)
 
     # update version label in node-and-server
     info("Updating version in node-and-server/Dockerfile")
     file = Path("../docker/node-and-server.Dockerfile")
-    with open(file, 'r') as f:
+    with open(file, "r") as f:
         content = f.read()
         new_content = re.sub(
             r"(ARG BASE=)(\d+.\d+)", r"\g<1>{}".format(major_minor), content
         )
-    with open(file, 'w') as f:
+    with open(file, "w") as f:
         f.write(new_content)
 
 
 @click.command()
-@click.option('--spec', default='final', help="final, candidate, beta, alpha")
-@click.option('--version', default='0.0.0', help="major.minor.patch")
-@click.option('--build', default="0",
-              help="build number for non-final versions")
-@click.option('--post', default="0", help=".postN")
+@click.option("--spec", default="final", help="final, candidate, beta, alpha")
+@click.option("--version", default="0.0.0", help="major.minor.patch")
+@click.option("--build", default="0", help="build number for non-final versions")
+@click.option("--post", default="0", help=".postN")
 def set_version(spec: str, version: str, build: int, post: int) -> None:
     """
     Update version information in all instances of _version.py and __build__
@@ -213,5 +207,5 @@ def set_version(spec: str, version: str, build: int, post: int) -> None:
     info("Docker files updated")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     set_version()

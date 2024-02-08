@@ -29,8 +29,9 @@ class ServerContext(BaseServerContext):
     INST_CONFIG_MANAGER = ServerConfigurationManager
 
     def __init__(self, instance_name: str, system_folders: bool = S_FOL):
-        super().__init__(InstanceType.SERVER, instance_name,
-                         system_folders=system_folders)
+        super().__init__(
+            InstanceType.SERVER, instance_name, system_folders=system_folders
+        )
         self.log.info("vantage6 version '%s'", __version__)
 
     def get_database_uri(self) -> str:
@@ -80,13 +81,11 @@ class ServerContext(BaseServerContext):
             Server context object
         """
         return super().from_external_config_file(
-            path, ServerType.V6SERVER, ServerGlobals.CONFIG_NAME_ENV_VAR,
-            system_folders
+            path, ServerType.V6SERVER, ServerGlobals.CONFIG_NAME_ENV_VAR, system_folders
         )
 
     @classmethod
-    def config_exists(cls, instance_name: str,
-                      system_folders: bool = S_FOL) -> bool:
+    def config_exists(cls, instance_name: str, system_folders: bool = S_FOL) -> bool:
         """
         Check if a configuration file exists.
 
@@ -103,12 +102,14 @@ class ServerContext(BaseServerContext):
         bool
             Whether the configuration file exists or not
         """
-        return super().config_exists(InstanceType.SERVER, instance_name,
-                                     system_folders=system_folders)
+        return super().config_exists(
+            InstanceType.SERVER, instance_name, system_folders=system_folders
+        )
 
     @classmethod
-    def available_configurations(cls, system_folders: bool = S_FOL) \
-            -> tuple[list, list]:
+    def available_configurations(
+        cls, system_folders: bool = S_FOL
+    ) -> tuple[list, list]:
         """
         Find all available server configurations in the default folders.
 
@@ -123,6 +124,4 @@ class ServerContext(BaseServerContext):
             The first list contains validated configuration files, the second
             list contains invalid configuration files.
         """
-        return super().available_configurations(
-            InstanceType.SERVER, system_folders
-        )
+        return super().available_configurations(InstanceType.SERVER, system_folders)

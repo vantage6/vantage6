@@ -15,6 +15,7 @@ When writing the Docker file for the algorithm, the correct wrapper will
 automatically be selected based on the database type. The database type is set
 by the vantage6 node based on its configuration file.
 """
+
 from __future__ import annotations
 import io
 import pandas as pd
@@ -46,6 +47,7 @@ class DatabaseType(str, Enum):
     OMOP : str
         OMOP database
     """
+
     CSV = "csv"
     SQL = "sql"
     EXCEL = "excel"
@@ -54,8 +56,9 @@ class DatabaseType(str, Enum):
     OMOP = "omop"
 
 
-def load_data(database_uri: str, db_type: str = None, query: str = None,
-              sheet_name: str = None) -> pd.DataFrame:
+def load_data(
+    database_uri: str, db_type: str = None, query: str = None, sheet_name: str = None
+) -> pd.DataFrame:
     """
     Read data from database and give it back to the algorithm.
 
@@ -87,8 +90,10 @@ def load_data(database_uri: str, db_type: str = None, query: str = None,
 
     loader = _select_loader(db_type)
     if not loader:
-        error(f"Unknown database type '{db_type}' for database {database_uri}."
-              " Please check the node configuration.")
+        error(
+            f"Unknown database type '{db_type}' for database {database_uri}."
+            " Please check the node configuration."
+        )
         info(f"Available database types: {', '.join(DatabaseType)}")
         exit(1)
 
@@ -105,8 +110,9 @@ def load_data(database_uri: str, db_type: str = None, query: str = None,
     return df
 
 
-def get_column_names(database_uri: str, db_type: str = None, query: str = None,
-                     sheet_name: str = None) -> list[str]:
+def get_column_names(
+    database_uri: str, db_type: str = None, query: str = None, sheet_name: str = None
+) -> list[str]:
     """
     Get the column names of dataframe that will be loaded into an algorithm
 
@@ -162,7 +168,6 @@ def _select_loader(database_type: str) -> callable | None:
         return load_omop_data
     else:
         return None
-
 
 
 def load_csv_data(database_uri: str) -> pd.DataFrame:
@@ -249,7 +254,6 @@ def load_parquet_data(database_uri: str) -> pd.DataFrame:
     return pd.read_parquet(database_uri)
 
 
-
 def load_sql_data(database_uri: str, query: str) -> pd.DataFrame:
     """
     Load the local privacy-sensitive data from the database.
@@ -267,7 +271,6 @@ def load_sql_data(database_uri: str, query: str) -> pd.DataFrame:
         The data from the database
     """
     return pd.read_sql(database_uri, query)
-
 
 
 def load_omop_data(database_uri: str, query: str) -> pd.DataFrame:

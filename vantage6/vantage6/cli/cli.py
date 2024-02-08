@@ -33,10 +33,12 @@ from vantage6.cli.algostore.attach import cli_algo_store_attach
 from vantage6.cli.algostore.new import cli_algo_store_new
 from vantage6.cli.algostore.start import cli_algo_store_start
 from vantage6.cli.algostore.stop import cli_algo_store_stop
+from vantage6.cli.algostore.files import cli_algo_store_files
+from vantage6.cli.algostore.list import cli_algo_store_configuration_list
 
 
 # Define the server group
-@click.group(name='server')
+@click.group(name="server")
 def cli_server() -> None:
     """
     Manage your vantage6 server instances.
@@ -44,16 +46,16 @@ def cli_server() -> None:
 
 
 # Define the commands for the server group
-cli_server.add_command(cli_server_attach, name='attach')
-cli_server.add_command(cli_server_files, name='files')
-cli_server.add_command(cli_server_import, name='import')
-cli_server.add_command(cli_server_configuration_list, name='list')
-cli_server.add_command(cli_server_new, name='new')
-cli_server.add_command(cli_server_remove, name='remove')
-cli_server.add_command(cli_server_shell, name='shell')
-cli_server.add_command(cli_server_start, name='start')
-cli_server.add_command(cli_server_stop, name='stop')
-cli_server.add_command(cli_server_version, name='version')
+cli_server.add_command(cli_server_attach, name="attach")
+cli_server.add_command(cli_server_files, name="files")
+cli_server.add_command(cli_server_import, name="import")
+cli_server.add_command(cli_server_configuration_list, name="list")
+cli_server.add_command(cli_server_new, name="new")
+cli_server.add_command(cli_server_remove, name="remove")
+cli_server.add_command(cli_server_shell, name="shell")
+cli_server.add_command(cli_server_start, name="start")
+cli_server.add_command(cli_server_stop, name="stop")
+cli_server.add_command(cli_server_version, name="version")
 
 
 # Define the node group
@@ -134,10 +136,12 @@ cli_algo_store.add_command(cli_algo_store_attach, name="attach")
 cli_algo_store.add_command(cli_algo_store_new, name="new")
 cli_algo_store.add_command(cli_algo_store_start, name="start")
 cli_algo_store.add_command(cli_algo_store_stop, name="stop")
+cli_algo_store.add_command(cli_algo_store_files, name="files")
+cli_algo_store.add_command(cli_algo_store_configuration_list, name="list")
 
 
 # Define the overall group
-@click.group(name='cli')
+@click.group(name="cli")
 def cli_complete() -> None:
     """
     The `v6` command line interface allows you to manage your vantage6

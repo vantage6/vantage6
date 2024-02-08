@@ -2,9 +2,7 @@ from __future__ import annotations
 import vantage6.server.globals as constants
 
 from vantage6.common.context import AppContext
-from vantage6.cli.configuration_manager import (
-    TestingConfigurationManager
-)
+from vantage6.cli.configuration_manager import TestingConfigurationManager
 
 
 class TestContext(AppContext):
@@ -42,5 +40,10 @@ class TestContext(AppContext):
         str
             Path to the unittest configuration file
         """
-        return (constants.PACKAGE_FOLDER / constants.APPNAME /
-                "server" / "_data" / "unittest_config.yaml")
+        return (
+            constants.PACKAGE_FOLDER
+            / constants.APPNAME
+            / "server"
+            / "_data"
+            / "unittest_config.yaml"
+        )

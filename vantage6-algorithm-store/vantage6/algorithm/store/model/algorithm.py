@@ -42,5 +42,3 @@ class Algorithm(Base):
     developer = relationship("User", back_populates='algorithms',
                              secondary="developer_algorithm_association")
 
-    # preprocessing = relationship("Preprocessing",
-    #                              back_populates='algorithms')

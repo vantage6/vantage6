@@ -1,19 +1,20 @@
 import click
 import docker
-from colorama import (Fore, Style)
+from colorama import Fore, Style
 
 from vantage6.common import info, warning, error
 from vantage6.common.docker.addons import (
-    check_docker_running, remove_container_if_exists
+    check_docker_running,
+    remove_container_if_exists,
 )
 from vantage6.common.globals import APPNAME, InstanceType
-from vantage6.cli.common.decorator import insert_context
+from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 
 
 @click.command()
-@insert_context(InstanceType.ALGORITHM_STORE)
-@click.option('--all', 'all_servers', flag_value=True, help="Stop all servers")
+@click_insert_context(InstanceType.ALGORITHM_STORE)
+@click.option("--all", "all_servers", flag_value=True, help="Stop all servers")
 def cli_algo_store_stop(ctx: AlgorithmStoreContext, all_servers: bool):
     """
     Stop one or all running server(s).
@@ -22,7 +23,8 @@ def cli_algo_store_stop(ctx: AlgorithmStoreContext, all_servers: bool):
     client = docker.from_env()
 
     running_servers = client.containers.list(
-        filters={"label": f"{APPNAME}-type={InstanceType.ALGORITHM_STORE}"})
+        filters={"label": f"{APPNAME}-type={InstanceType.ALGORITHM_STORE}"}
+    )
 
     if not running_servers:
         warning("No servers are currently running.")

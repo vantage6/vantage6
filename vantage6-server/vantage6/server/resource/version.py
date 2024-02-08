@@ -1,7 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 Resources below '/<api_base>/version'
 """
+
 import logging
 
 from flask_restful import Api
@@ -34,9 +34,9 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     api.add_resource(
         Version,
         path,
-        endpoint='version',
-        methods=('GET',),
-        resource_class_kwargs=services
+        endpoint="version",
+        methods=("GET",),
+        resource_class_kwargs=services,
     )
 
 
@@ -44,7 +44,6 @@ def setup(api: Api, api_base: str, services: dict) -> None:
 # Resources / API's
 # ------------------------------------------------------------------------------
 class Version(ServicesResources):
-
     def get(self):
         """Get version
         ---

@@ -1,13 +1,14 @@
-# -*- coding: utf-8 -*-
 """
 Resources below '/<api_base>/version'
 """
+
 import logging
 
 from flask_restful import Api
 from http import HTTPStatus
 from vantage6.common import logger_name
 from vantage6.algorithm.store._version import __version__
+
 # TODO move to common / refactor
 from vantage6.server.resource import AlgorithmStoreResources
 
@@ -35,9 +36,9 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     api.add_resource(
         Version,
         path,
-        endpoint='version',
-        methods=('GET',),
-        resource_class_kwargs=services
+        endpoint="version",
+        methods=("GET",),
+        resource_class_kwargs=services,
     )
 
 
@@ -45,7 +46,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
 # Resources / API's
 # ------------------------------------------------------------------------------
 class Version(AlgorithmStoreResources):
-    """ Version resource """
+    """Version resource"""
 
     def get(self):
         """Get version

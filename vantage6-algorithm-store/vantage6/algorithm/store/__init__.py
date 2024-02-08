@@ -1,18 +1,19 @@
 """
-The server has a central function in the vantage6 architecture. It stores
-in the database which organizations, collaborations, users, etc.
-exist. It allows the users and nodes to authenticate and subsequently interact
-through the API the server hosts. Finally, it also communicates with
-authenticated nodes and users via the socketIO server that is run here.
+The algorithm store holds the algorithms that are available to the vantage6
+nodes. It is a repository of algorithms that can be coupled to a vantage6
+server. The algorithms are stored in a database and can be managed through
+the API. Note that is possible to couple multiple algorithm stores to a
+vantage6 server. This allows both coupling a community store and a private
+store to a vantage6 server.
 """
-# -*- coding: utf-8 -*-
+
 import os
 from gevent import monkey
 
 from vantage6.algorithm.store.default_roles import get_default_roles
 
 # This is a workaround for readthedocs
-if not os.environ.get('READTHEDOCS'):
+if not os.environ.get("READTHEDOCS"):
     # flake8: noqa: E402 (ignore import error)
     monkey.patch_all()
 
@@ -23,9 +24,7 @@ import traceback
 
 from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
-from flask import (
-    Flask, make_response, request, send_from_directory, Request, Response
-)
+from flask import Flask, make_response, request, send_from_directory, Request, Response
 from flask_cors import CORS
 from flask_marshmallow import Marshmallow
 from flask_restful import Api
@@ -37,12 +36,12 @@ from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.algorithm.store._version import __version__
-from vantage6.algorithm.store.globals import API_PATH
+from vantage6.algorithm.store.globals import API_PATH, HOST_URI_ENV
+
 # TODO the following are simply copies of the same files in the server - refactor
-from vantage6.algorithm.store.model.base import (
-    Base, DatabaseSessionManager, Database
-)
+from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager, Database
 from vantage6.algorithm.store import db
+
 # TODO move server imports to common / refactor
 from vantage6.algorithm.store.resource.schema.output_schema import HATEOASModelSchema
 from vantage6.algorithm.store.permission import PermissionManager
@@ -74,11 +73,12 @@ class AlgorithmStoreApp:
 
         # initialize, configure Flask
         self.app = Flask(
-            SERVER_MODULE_NAME, root_path=Path(__file__),
-            template_folder=Path(__file__).parent / 'templates',
-            static_folder=Path(__file__).parent / 'static'
+            SERVER_MODULE_NAME,
+            root_path=Path(__file__),
+            template_folder=Path(__file__).parent / "templates",
+            static_folder=Path(__file__).parent / "static",
         )
-        self.debug: dict = self.ctx.config.get('debug', {})
+        self.debug: dict = self.ctx.config.get("debug", {})
         self.configure_flask()
 
         # Setup SQLAlchemy and Marshmallow for marshalling/serializing
@@ -104,23 +104,28 @@ class AlgorithmStoreApp:
         # set the server version
         self.__version__ = __version__
 
+        # set environment variable for dev environment
+        host_uri = self.ctx.config.get("dev", {}).get("host_uri")
+        if host_uri:
+            os.environ[HOST_URI_ENV] = host_uri
+
         log.info("Initialization done")
 
     def configure_flask(self) -> None:
         """Configure the Flask settings of the vantage6 server."""
 
         # let us handle exceptions
-        self.app.config['PROPAGATE_EXCEPTIONS'] = True
+        self.app.config["PROPAGATE_EXCEPTIONS"] = True
 
         # Open Api Specification (f.k.a. swagger)
-        self.app.config['SWAGGER'] = {
-            'title': f"{APPNAME} algorithm store",
-            'uiversion': "3",
-            'openapi': '3.0.0',
-            'version': __version__
+        self.app.config["SWAGGER"] = {
+            "title": f"{APPNAME} algorithm store",
+            "uiversion": "3",
+            "openapi": "3.0.0",
+            "version": __version__,
         }
 
-        debug_mode = self.debug.get('flask', False)
+        debug_mode = self.debug.get("flask", False)
         if debug_mode:
             log.debug("Flask debug mode enabled")
         self.app.debug = debug_mode
@@ -140,15 +145,16 @@ class AlgorithmStoreApp:
             string:
                 The endpoint path of the request
             """
-            return request.url.replace(request.url_root, '')
+            return request.url.replace(request.url_root, "")
 
         # before request
         @self.app.before_request
         def do_before_request():
             """Before every flask request method."""
             # Add log message before each request
-            log.debug("Received request: %s %s",
-                      request.method, _get_request_path(request))
+            log.debug(
+                "Received request: %s %s", request.method, _get_request_path(request)
+            )
 
             # This will obtain a (scoped) db session from the session factory
             # that is linked to the flask request global `g`. In every endpoint
@@ -175,11 +181,10 @@ class AlgorithmStoreApp:
             sessions.
             """
             if error.code == 404:
-                log.debug(
-                    "404 error for route '%s'", _get_request_path(request))
+                log.debug("404 error for route '%s'", _get_request_path(request))
             else:
-                log.warning('HTTP Exception occured during request')
-                log.debug('%s', traceback.format_exc())
+                log.warning("HTTP Exception occured during request")
+                log.debug("%s", traceback.format_exc())
             DatabaseSessionManager.clear_session()
             return error.get_response()
 
@@ -190,15 +195,15 @@ class AlgorithmStoreApp:
             It is important to close the db session to avoid having dangling
             sessions.
             """
-            log.exception('Exception occured during request')
+            log.exception("Exception occured during request")
             DatabaseSessionManager.clear_session()
-            return {'msg': 'An unexpected error occurred on the server!'}, \
-                HTTPStatus.INTERNAL_SERVER_ERROR
+            return {
+                "msg": "An unexpected error occurred on the server!"
+            }, HTTPStatus.INTERNAL_SERVER_ERROR
 
-        @self.app.route('/robots.txt')
+        @self.app.route("/robots.txt")
         def static_from_root():
-            return send_from_directory(self.app.static_folder,
-                                       request.path[1:])
+            return send_from_directory(self.app.static_folder, request.path[1:])
 
     def configure_api(self) -> None:
         """Define global API output and its structure."""
@@ -207,11 +212,10 @@ class AlgorithmStoreApp:
         HATEOASModelSchema.api = self.api
 
         # whatever you get try to json it
-        @self.api.representation('application/json')
+        @self.api.representation("application/json")
         # pylint: disable=unused-argument
         def output_json(
-            data: Base | list[Base], code: HTTPStatus,
-            headers: dict = None
+            data: Base | list[Base], code: HTTPStatus, headers: dict = None
         ) -> Response:
             """
             Return jsonified data for request responses.
@@ -228,8 +232,7 @@ class AlgorithmStoreApp:
 
             if isinstance(data, Base):
                 data = db.jsonable(data)
-            elif isinstance(data, list) and len(data) and \
-                    isinstance(data[0], Base):
+            elif isinstance(data, list) and len(data) and isinstance(data[0], Base):
                 data = db.jsonable(data)
 
             resp = make_response(json.dumps(data), code)
@@ -244,13 +247,11 @@ class AlgorithmStoreApp:
         services = {
             "api": self.api,
             # "permissions": self.permissions,
-            "config": self.ctx.config
+            "config": self.ctx.config,
         }
 
         for res in RESOURCES:
-            module = importlib.import_module(
-                'vantage6.algorithm.store.resource.' + res
-            )
+            module = importlib.import_module("vantage6.algorithm.store.resource." + res)
             module.setup(self.api, API_PATH, services)
 
     @staticmethod
@@ -308,13 +309,9 @@ def run_server(config: str, system_folders: bool = True) -> AlgorithmStoreApp:
     AlgorithmStoreApp
         A running instance of the vantage6 server
     """
-    ctx = AlgorithmStoreContext.from_external_config_file(
-        config,
-        system_folders
-    )
+    ctx = AlgorithmStoreContext.from_external_config_file(config, system_folders)
     allow_drop_all = ctx.config["allow_drop_all"]
-    Database().connect(uri=ctx.get_database_uri(),
-                       allow_drop_all=allow_drop_all)
+    Database().connect(uri=ctx.get_database_uri(), allow_drop_all=allow_drop_all)
     return AlgorithmStoreApp(ctx).start()
 
 
@@ -327,8 +324,8 @@ def run_dev_server(server_app: AlgorithmStoreApp, *args, **kwargs) -> None:
     server_app: AlgorithmStoreApp
         Instance of a vantage6 server
     """
-    log.warning('*'*80)
-    log.warning(' DEVELOPMENT SERVER '.center(80, '*'))
-    log.warning('*'*80)
-    kwargs.setdefault('log_output', False)
+    log.warning("*" * 80)
+    log.warning(" DEVELOPMENT SERVER ".center(80, "*"))
+    log.warning("*" * 80)
+    kwargs.setdefault("log_output", False)
     server_app.socketio.run(server_app.app, *args, **kwargs)

@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Resources below '/<api_base>/version'
-"""
 import logging
 
 from flask import g, request
@@ -10,12 +6,8 @@ from http import HTTPStatus
 
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.common import logger_name
-from vantage6.algorithm.store.resource.schema.input_schema import (
-    AlgorithmInputSchema
-)
-from vantage6.algorithm.store.resource.schema.output_schema import (
-    AlgorithmOutputSchema
-)
+from vantage6.algorithm.store.resource.schema.input_schema import AlgorithmInputSchema
+from vantage6.algorithm.store.resource.schema.output_schema import AlgorithmOutputSchema
 from vantage6.algorithm.store.model.algorithm import Algorithm as db_Algorithm
 from vantage6.algorithm.store.model.argument import Argument
 from vantage6.algorithm.store.model.database import Database
@@ -51,9 +43,9 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     api.add_resource(
         Algorithms,
         path,
-        endpoint='algorithm_without_id',
-        methods=('GET', 'POST'),
-        resource_class_kwargs=services
+        endpoint="algorithm_without_id",
+        methods=("GET", "POST"),
+        resource_class_kwargs=services,
     )
 
     api.add_resource(
@@ -93,7 +85,7 @@ def permissions(permissions: PermissionManager) -> None:
 
 
 class Algorithms(AlgorithmStoreResources):
-    """ Resource for /algorithm """
+    """Resource for /algorithm"""
 
     @with_permission(module_name, Operation.VIEW)
     def get(self):
@@ -147,8 +139,7 @@ class Algorithms(AlgorithmStoreResources):
         # TODO add pagination
         # TODO add filtering
         algorithms = g.session.query(db_Algorithm).all()
-        return algorithm_output_schema.dump(algorithms, many=True), \
-            HTTPStatus.OK
+        return algorithm_output_schema.dump(algorithms, many=True), HTTPStatus.OK
 
     @with_permission(module_name, Operation.CREATE)
     def post(self):
@@ -247,57 +238,58 @@ class Algorithms(AlgorithmStoreResources):
         # validate the request body
         errors = algorithm_input_schema.validate(data)
         if errors:
-            return {'msg': "Request body is incorrect", 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
         # create the algorithm
         algorithm = db_Algorithm(
-            name=data['name'],
-            description=data.get('description', ''),
-            image=data['image'],
-            partitioning=data['partitioning'],
-            vantage6_version=data['vantage6_version']
+            name=data["name"],
+            description=data.get("description", ""),
+            image=data["image"],
+            partitioning=data["partitioning"],
+            vantage6_version=data["vantage6_version"],
         )
         algorithm.save()
 
         # create the algorithm's subresources
-        for function in data['functions']:
+        for function in data["functions"]:
             # create the function
             func = Function(
-                name=function['name'],
-                description=function.get('description', ''),
-                type=function['type'],
-                algorithm_id=algorithm.id
+                name=function["name"],
+                description=function.get("description", ""),
+                type_=function["type"],
+                algorithm_id=algorithm.id,
             )
             func.save()
             # create the arguments
-            arguments = function.get('arguments')
+            arguments = function.get("arguments")
             if arguments:
                 for argument in arguments:
                     arg = Argument(
-                        name=argument['name'],
-                        description=argument.get('description', ''),
-                        type=argument['type'],
-                        function_id=func.id
+                        name=argument["name"],
+                        description=argument.get("description", ""),
+                        type_=argument["type"],
+                        function_id=func.id,
                     )
                     arg.save()
             # create the databases
-            databases = function.get('databases')
+            databases = function.get("databases")
             if databases:
                 for database in databases:
                     db = Database(
-                        name=database['name'],
-                        description=database.get('description', ''),
-                        function_id=func.id
+                        name=database["name"],
+                        description=database.get("description", ""),
+                        function_id=func.id,
                     )
                     db.save()
 
-        return algorithm_output_schema.dump(algorithm, many=False), \
-            HTTPStatus.CREATED
+        return algorithm_output_schema.dump(algorithm, many=False), HTTPStatus.CREATED
 
 
 class Algorithm(AlgorithmStoreResources):
-    """ Resource for /algorithm/<id> """
+    """Resource for /algorithm/<id>"""
 
     @with_permission(module_name, Operation.VIEW)
     def get(self, id):
@@ -327,10 +319,9 @@ class Algorithm(AlgorithmStoreResources):
         """
         algorithm = db_Algorithm.get(id)
         if not algorithm:
-            return {'msg': 'Algorithm not found'}, HTTPStatus.NOT_FOUND
+            return {"msg": "Algorithm not found"}, HTTPStatus.NOT_FOUND
 
-        return algorithm_output_schema.dump(algorithm, many=False), \
-            HTTPStatus.OK
+        return algorithm_output_schema.dump(algorithm, many=False), HTTPStatus.OK
 
     @with_permission(module_name, Operation.DELETE)
     def delete(self, id):
@@ -360,7 +351,7 @@ class Algorithm(AlgorithmStoreResources):
         """
         algorithm = db_Algorithm.get(id)
         if not algorithm:
-            return {'msg': 'Algorithm not found'}, HTTPStatus.NOT_FOUND
+            return {"msg": "Algorithm not found"}, HTTPStatus.NOT_FOUND
 
         # delete all subresources and finally the algorithm itself
         for function in algorithm.functions:

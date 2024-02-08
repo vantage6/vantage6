@@ -1,9 +1,8 @@
-# Dockerfile for the node an server images
+# Dockerfile for the algorithm store
 #
-# IMAGES
-# ------
-# * harbor2.vantage6.ai/infrastructure/node:x.x.x
-# * harbor2.vantage6.ai/infrastructure/server:x.x.x
+# IMAGE
+# -----
+# * harbor2.vantage6.ai/infrastructure/algorithm-store:x.x.x
 #
 ARG TAG=latest
 ARG BASE=4.1
@@ -15,15 +14,7 @@ LABEL maintainer="Frank Martin <f.martin@iknl.nl>; Bart van Beusekom <b.vanbeuse
 RUN apt update -y
 RUN apt upgrade -y
 
-# Enable SSH access in Azure App service
-RUN apt install openssh-server sudo -y
-RUN useradd -rm -d /home/ubuntu -s /bin/bash -g root -G sudo -u 1000 test
-RUN echo 'root:Docker!' | chpasswd
-
-COPY sshd_config /etc/ssh/
-RUN mkdir /run/sshd
-
-# Fix DB issue
+# # Fix DB issue
 RUN apt install python-psycopg2 -y
 RUN pip install psycopg2-binary
 
@@ -31,9 +22,10 @@ RUN pip install psycopg2-binary
 COPY . /vantage6
 
 # install individual packages
+# TODO check which dependencies are needed - remove at least server
 RUN pip install -e /vantage6/vantage6-common
+RUN pip install -e /vantage6/vantage6-client
 RUN pip install -e /vantage6/vantage6
-# TODO remove dependency on server?
 RUN pip install -e /vantage6/vantage6-server
 RUN pip install -e /vantage6/vantage6-algorithm-store
 
@@ -47,8 +39,3 @@ RUN CFLAGS="-I/usr/local/opt/openssl/include" \
   pip install uwsgi -Iv
 
 RUN chmod +x /vantage6/vantage6-algorithm-store/server.sh
-
-# expose the proxy server port
-ARG port=80
-EXPOSE ${port} 2222
-ENV PROXY_SERVER_PORT ${port}

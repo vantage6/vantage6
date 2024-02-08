@@ -12,8 +12,6 @@ class Vantage6Server(Base):
 
     Attributes
     ----------
-    name : str
-        Name of the vantage6 server
     url : str
         URL of the vantage6 server
     """

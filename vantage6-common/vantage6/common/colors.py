@@ -65,11 +65,12 @@ class _AnsiColorStreamHandler(logging.StreamHandler):
 
     This handler is used for non-Windows systems.
     """
-    DEFAULT = '\x1b[0m'
-    RED = '\x1b[31m'
-    GREEN = '\x1b[32m'
-    YELLOW = '\x1b[33m'
-    CYAN = '\x1b[36m'
+
+    DEFAULT = "\x1b[0m"
+    RED = "\x1b[31m"
+    GREEN = "\x1b[32m"
+    YELLOW = "\x1b[33m"
+    CYAN = "\x1b[36m"
 
     CRITICAL = RED
     ERROR = RED
@@ -136,7 +137,8 @@ class _AnsiColorStreamHandler(logging.StreamHandler):
 
 
 class _WinColorStreamHandler(logging.StreamHandler):
-    """ Color stream handler for Windows systems."""
+    """Color stream handler for Windows systems."""
+
     # wincon.h
     FOREGROUND_BLACK = 0x0000
     FOREGROUND_BLUE = 0x0001
@@ -160,8 +162,9 @@ class _WinColorStreamHandler(logging.StreamHandler):
     BACKGROUND_INTENSITY = 0x0080  # background color is intensified.
 
     DEFAULT = FOREGROUND_WHITE
-    CRITICAL = (BACKGROUND_YELLOW | FOREGROUND_RED | FOREGROUND_INTENSITY |
-                BACKGROUND_INTENSITY)
+    CRITICAL = (
+        BACKGROUND_YELLOW | FOREGROUND_RED | FOREGROUND_INTENSITY | BACKGROUND_INTENSITY
+    )
     ERROR = FOREGROUND_RED | FOREGROUND_INTENSITY
     WARNING = FOREGROUND_YELLOW | FOREGROUND_INTENSITY
     INFO = FOREGROUND_GREEN
@@ -197,6 +200,7 @@ class _WinColorStreamHandler(logging.StreamHandler):
 
     def _set_color(self, code) -> None:
         import ctypes
+
         ctypes.windll.kernel32.SetConsoleTextAttribute(self._outhdl, code)
 
     def __init__(self, stream=None):
@@ -204,6 +208,7 @@ class _WinColorStreamHandler(logging.StreamHandler):
         # get file handle for the stream
         import ctypes
         import ctypes.util
+
         # for some reason find_msvcrt() sometimes doesn't find msvcrt.dll on
         # my system?
         crtname = ctypes.util.find_msvcrt()
@@ -228,7 +233,7 @@ class _WinColorStreamHandler(logging.StreamHandler):
 
 
 # select ColorStreamHandler based on platform
-if platform.system() == 'Windows':
+if platform.system() == "Windows":
     ColorStreamHandler = _WinColorStreamHandler
 else:
     ColorStreamHandler = _AnsiColorStreamHandler

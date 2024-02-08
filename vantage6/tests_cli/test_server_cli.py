@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 from pathlib import Path
 from click.testing import CliRunner
 
-from vantage6.cli.globals import APPNAME, InstanceType
+from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.cli.server.start import cli_server_start
 from vantage6.cli.server.list import cli_server_configuration_list
 from vantage6.cli.server.files import cli_server_files
@@ -15,16 +15,23 @@ from vantage6.cli.server.attach import cli_server_attach
 
 
 class ServerCLITest(unittest.TestCase):
-
     @patch("vantage6.cli.server.start.NetworkManager")
     @patch("vantage6.cli.server.start.docker.types.Mount")
     @patch("os.makedirs")
-    @patch("vantage6.cli.server.start.pull_if_newer")
-    @patch("vantage6.cli.server.common.ServerContext")
+    @patch("vantage6.cli.common.start.pull_if_newer")
+    @patch("vantage6.cli.common.decorator.get_context")
     @patch("vantage6.cli.server.start.docker.from_env")
-    @patch("vantage6.cli.server.start.check_docker_running", return_value=True)
-    def test_start(self, docker_check, containers, context,
-                   pull, os_makedirs, mount, network_manager):
+    @patch("vantage6.cli.common.start.check_docker_running", return_value=True)
+    def test_start(
+        self,
+        docker_check,
+        containers,
+        context,
+        pull,
+        os_makedirs,
+        mount,
+        network_manager,
+    ):
         """Start server without errors"""
         container1 = MagicMock()
         container1.containers.name = f"{APPNAME}-iknl-system"
@@ -34,15 +41,12 @@ class ServerCLITest(unittest.TestCase):
         # mount.types.Mount.return_value = MagicMock()
 
         ctx = MagicMock(
-            config={
-                'uri': 'sqlite:///file.db',
-                'port': 9999
-            },
+            config={"uri": "sqlite:///file.db", "port": 9999},
             config_file="/config.yaml",
-            data_dir=Path(".")
+            data_dir=Path("."),
         )
         ctx.config_exists.return_value = True
-        ctx.name = 'not-running'
+        ctx.name = "not-running"
         context.return_value = ctx
 
         runner = CliRunner()
@@ -69,13 +73,12 @@ class ServerCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertIsNone(result.exception)
 
-    @patch("vantage6.cli.server.common.ServerContext")
+    @patch("vantage6.cli.common.decorator.get_context")
     def test_files(self, context):
         """Configuration files without errors."""
 
         ctx = context.return_value = MagicMock(
-            log_file="/log_file.log",
-            config_file="/iknl.yaml"
+            log_file="/log_file.log", config_file="/iknl.yaml"
         )
         ctx.get_database_uri.return_value = "sqlite:///test.db"
 
@@ -88,24 +91,21 @@ class ServerCLITest(unittest.TestCase):
     @patch("docker.DockerClient.containers")
     @patch("vantage6.cli.server.import_.print_log_worker")
     @patch("vantage6.cli.server.import_.click.Path")
-    @patch("vantage6.cli.server.import_.check_docker_running",
-           return_value=True)
-    @patch("vantage6.cli.server.common.ServerContext")
+    @patch("vantage6.cli.server.import_.check_docker_running", return_value=True)
+    @patch("vantage6.cli.common.decorator.get_context")
     def test_import(self, context, docker_check, click_path, log, containers):
         """Import entities without errors."""
         click_path.return_value = MagicMock()
 
         ctx = MagicMock()
-        ctx.name = 'some-name'
+        ctx.name = "some-name"
         context.return_value = ctx
 
         runner = CliRunner()
         with runner.isolated_filesystem():
             with open("some.yaml", "w") as fp:
                 fp.write("does-not-matter")
-            result = runner.invoke(cli_server_import, [
-                "--name", "iknl", "some.yaml"
-            ])
+            result = runner.invoke(cli_server_import, ["--name", "iknl", "some.yaml"])
 
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)

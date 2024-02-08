@@ -19,13 +19,10 @@ from vantage6.cli.node.stop import cli_node_stop
 from vantage6.cli.node.attach import cli_node_attach
 from vantage6.cli.node.create_private_key import cli_node_create_private_key
 from vantage6.cli.node.clean import cli_node_clean
-from vantage6.cli.node.common import (
-    create_client_and_authenticate, print_log_worker
-)
+from vantage6.cli.node.common import create_client_and_authenticate, print_log_worker
 
 
 class NodeCLITest(unittest.TestCase):
-
     @classmethod
     def setUpClass(cls):
         logging.getLogger("docker.utils.config").setLevel(logging.WARNING)
@@ -34,7 +31,7 @@ class NodeCLITest(unittest.TestCase):
     @patch("docker.DockerClient.ping")
     def test_list_docker_not_running(self, docker_ping):
         """An error is printed when docker is not running"""
-        docker_ping.side_effect = Exception('Boom!')
+        docker_ping.side_effect = Exception("Boom!")
 
         runner = CliRunner()
         result = runner.invoke(cli_node_list, [])
@@ -82,7 +79,7 @@ class NodeCLITest(unittest.TestCase):
             "-----------------------------------------------------\n"
             "iknl                     Not running     System \n"
             "iknl                     Running         User   \n"
-            "-----------------------------------------------------\n"
+            "-----------------------------------------------------\n",
         )
 
     @patch("vantage6.cli.node.new.configuration_wizard")
@@ -95,9 +92,13 @@ class NodeCLITest(unittest.TestCase):
         wizard.return_value = "/some/file/path"
 
         runner = CliRunner()
-        result = runner.invoke(cli_node_new_configuration, [
-            "--name", "some-name",
-        ])
+        result = runner.invoke(
+            cli_node_new_configuration,
+            [
+                "--name",
+                "some-name",
+            ],
+        )
 
         # check that info message is produced
         self.assertEqual(result.output[:7], "[info ]")
@@ -110,13 +111,17 @@ class NodeCLITest(unittest.TestCase):
         """Whitespaces are replaced in the name."""
 
         runner = CliRunner()
-        result = runner.invoke(cli_node_new_configuration, [
-            "--name", "some name",
-        ])
+        result = runner.invoke(
+            cli_node_new_configuration,
+            [
+                "--name",
+                "some name",
+            ],
+        )
 
         self.assertEqual(
             result.output[:60],
-            "[info ] - Replaced spaces from configuration name: some-name"
+            "[info ] - Replaced spaces from configuration name: some-name",
         )
 
     @patch("vantage6.cli.node.new.NodeContext")
@@ -126,9 +131,13 @@ class NodeCLITest(unittest.TestCase):
         context.config_exists.return_value = True
 
         runner = CliRunner()
-        result = runner.invoke(cli_node_new_configuration, [
-            "--name", "some-name",
-        ])
+        result = runner.invoke(
+            cli_node_new_configuration,
+            [
+                "--name",
+                "some-name",
+            ],
+        )
 
         # check that error is produced
         self.assertEqual(result.output[:7], "[error]")
@@ -145,9 +154,13 @@ class NodeCLITest(unittest.TestCase):
         permissions.return_value = False
 
         runner = CliRunner()
-        result = runner.invoke(cli_node_new_configuration, [
-            "--name", "some-name",
-        ])
+        result = runner.invoke(
+            cli_node_new_configuration,
+            [
+                "--name",
+                "some-name",
+            ],
+        )
 
         # check that error is produced
         self.assertEqual(result.output[:7], "[error]")
@@ -163,12 +176,9 @@ class NodeCLITest(unittest.TestCase):
 
         common_context.config_exists.return_value = True
         context.return_value = MagicMock(
-            config_file="/file.yaml",
-            log_file="/log.log",
-            data_dir="/dir"
+            config_file="/file.yaml", log_file="/log.log", data_dir="/dir"
         )
-        context.return_value.databases.items.return_value = \
-            [["label", "/file.db"]]
+        context.return_value.databases.items.return_value = [["label", "/file.db"]]
         select_config.return_value = "iknl"
 
         runner = CliRunner()
@@ -187,7 +197,7 @@ class NodeCLITest(unittest.TestCase):
         context.config_exists.return_value = False
 
         runner = CliRunner()
-        result = runner.invoke(cli_node_files, ['--name', 'non-existing'])
+        result = runner.invoke(cli_node_files, ["--name", "non-existing"])
 
         # Check that error is produced
         self.assertEqual(result.output[:7], "[error]")
@@ -201,7 +211,6 @@ class NodeCLITest(unittest.TestCase):
     @patch("docker.DockerClient.containers")
     @patch("vantage6.cli.node.start.check_docker_running", return_value=True)
     def test_start(self, check_docker, client, context, pull, volumes):
-
         # client.containers = MagicMock(name="docker.DockerClient.containers")
         client.list.return_value = []
         volume = MagicMock()
@@ -213,39 +222,43 @@ class NodeCLITest(unittest.TestCase):
             data_dir=Path("data"),
             log_dir=Path("logs"),
             config_dir=Path("configs"),
-            databases=[{
-                "label": "some-label",
-                "uri": "data.csv",
-                "type": "csv"
-            }]
+            databases=[{"label": "some_label", "uri": "data.csv", "type": "csv"}],
         )
+
+        # cli_node_start() tests for truth value of a set-like object derived
+        # from ctx.config.get('node_extra_env', {}). Default MagicMock() will
+        # evaluate to True, empty dict to False. False signifies no overwritten
+        # env vars, hence no error.
+        def config_get_side_effect(key, default=None):
+            if key == "node_extra_env":
+                return {}
+            return MagicMock()
+
+        ctx.config.get.side_effect = config_get_side_effect
         ctx.get_data_file.return_value = "data.csv"
-        ctx.name = 'some-name'
+        ctx.name = "some-name"
         context.return_value = ctx
 
         runner = CliRunner()
 
         with runner.isolated_filesystem():
-            result = runner.invoke(cli_node_start, ['--name', 'some-name'])
+            result = runner.invoke(cli_node_start, ["--name", "some-name"])
 
         self.assertEqual(result.exit_code, 0)
 
     @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.node.stop.check_docker_running",
-           return_value=True)
+    @patch("vantage6.cli.node.stop.check_docker_running", return_value=True)
     def test_stop(self, check_docker, containers):
-
         container1 = MagicMock()
         container1.name = f"{APPNAME}-iknl-user"
         containers.list.return_value = [container1]
 
         runner = CliRunner()
 
-        result = runner.invoke(cli_node_stop, ['--name', 'iknl'])
+        result = runner.invoke(cli_node_stop, ["--name", "iknl"])
 
         self.assertEqual(
-            result.output,
-            "[info ] - Stopped the vantage6-iknl-user Node.\n"
+            result.output, "[info ] - Stopped the vantage6-iknl-user Node.\n"
         )
 
         self.assertEqual(result.exit_code, 0)
@@ -264,13 +277,13 @@ class NodeCLITest(unittest.TestCase):
         time_.sleep.side_effect = KeyboardInterrupt()
 
         runner = CliRunner()
-        result = runner.invoke(cli_node_attach, ['--name', 'iknl'])
+        result = runner.invoke(cli_node_attach, ["--name", "iknl"])
 
         self.assertEqual(
             result.output,
             "[info ] - Closing log file. Keyboard Interrupt.\n"
             "[info ] - Note that your node is still running! Shut it down "
-            "with 'v6 node stop'\n"
+            "with 'v6 node stop'\n",
         )
         self.assertEqual(result.exit_code, 0)
 
@@ -293,21 +306,17 @@ class NodeCLITest(unittest.TestCase):
         # check exit code
         self.assertEqual(result.exit_code, 0)
 
-    @patch(
-        "vantage6.cli.node.create_private_key.create_client_and_authenticate")
+    @patch("vantage6.cli.node.create_private_key.create_client_and_authenticate")
     @patch("vantage6.cli.node.common.NodeContext")
     @patch("vantage6.cli.node.create_private_key.NodeContext")
     def test_create_private_key(self, context, common_context, client):
         common_context.config_exists.return_value = True
         context.return_value.type_data_folder.return_value = Path(".")
-        client.return_value = MagicMock(
-            whoami=MagicMock(organization_name="Test")
-        )
+        client.return_value = MagicMock(whoami=MagicMock(organization_name="Test"))
         # client.whoami.organization_name = "Test"
         runner = CliRunner()
 
-        result = runner.invoke(cli_node_create_private_key,
-                               ["--name", "application"])
+        result = runner.invoke(cli_node_create_private_key, ["--name", "application"])
 
         self.assertEqual(result.exit_code, 0)
 
@@ -315,18 +324,16 @@ class NodeCLITest(unittest.TestCase):
         os.remove("privkey_Test.pem")
 
     @patch("vantage6.cli.node.create_private_key.RSACryptor")
-    @patch(
-        "vantage6.cli.node.create_private_key.create_client_and_authenticate")
+    @patch("vantage6.cli.node.create_private_key.create_client_and_authenticate")
     @patch("vantage6.cli.node.common.NodeContext")
     @patch("vantage6.cli.node.create_private_key.NodeContext")
-    def test_create_private_key_overwite(self, context, common_context, client,
-                                         cryptor):
+    def test_create_private_key_overwite(
+        self, context, common_context, client, cryptor
+    ):
         common_context.config_exists.return_value = True
         context.return_value.type_data_folder.return_value = Path(".")
-        client.return_value = MagicMock(
-            whoami=MagicMock(organization_name="Test")
-        )
-        cryptor.create_public_key_bytes.return_value = b''
+        client.return_value = MagicMock(whoami=MagicMock(organization_name="Test"))
+        cryptor.create_public_key_bytes.return_value = b""
         # client.whoami.organization_name = "Test"
 
         runner = CliRunner()
@@ -336,13 +343,10 @@ class NodeCLITest(unittest.TestCase):
             with open("privkey_iknl.pem", "w") as f:
                 f.write("does-not-matter")
 
-            result = runner.invoke(cli_node_create_private_key, [
-                "--name",
-                "application",
-                "--overwrite",
-                "--organization-name",
-                "iknl"
-            ])
+            result = runner.invoke(
+                cli_node_create_private_key,
+                ["--name", "application", "--overwrite", "--organization-name", "iknl"],
+            )
         self.assertEqual(result.exit_code, 0)
 
         # do not overwrite
@@ -350,12 +354,10 @@ class NodeCLITest(unittest.TestCase):
             with open("privkey_iknl.pem", "w") as f:
                 f.write("does-not-matter")
 
-            result = runner.invoke(cli_node_create_private_key, [
-                "--name",
-                "application",
-                "--organization-name",
-                "iknl"
-            ])
+            result = runner.invoke(
+                cli_node_create_private_key,
+                ["--name", "application", "--organization-name", "iknl"],
+            )
 
             # print(result.output)
 
@@ -366,8 +368,7 @@ class NodeCLITest(unittest.TestCase):
         context.config_exists.return_value = False
 
         runner = CliRunner()
-        result = runner.invoke(cli_node_create_private_key,
-                               ["--name", "application"])
+        result = runner.invoke(cli_node_create_private_key, ["--name", "application"])
 
         self.assertEqual(result.exit_code, 1)
 
@@ -375,7 +376,6 @@ class NodeCLITest(unittest.TestCase):
     @patch("docker.DockerClient.volumes")
     @patch("vantage6.common.docker.addons.check_docker_running")
     def test_clean_docker_error(self, check_docker, volumes, q):
-
         volume1 = MagicMock()
         volume1.name = "some-name-tmpvol"
         volume1.remove.side_effect = APIError("Testing")
@@ -404,13 +404,8 @@ class NodeCLITest(unittest.TestCase):
     @patch("vantage6.cli.node.common.UserClient")
     @patch("vantage6.cli.node.common.q")
     def test_client(self, q, client, error, debug, info):
-
         ctx = MagicMock(
-            config={
-                "server_url": "localhost",
-                "port": 5000,
-                "api_path": ""
-            }
+            config={"server_url": "localhost", "port": 5000, "api_path": ""}
         )
 
         # should not trigger an exception

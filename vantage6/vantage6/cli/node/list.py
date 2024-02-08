@@ -23,40 +23,34 @@ def cli_node_list() -> None:
 
     running_node_names = find_running_node_names(client)
 
-    header = \
-        "\nName"+(21*" ") + \
-        "Status"+(10*" ") + \
-        "System/User"
+    header = "\nName" + (21 * " ") + "Status" + (10 * " ") + "System/User"
 
     click.echo(header)
-    click.echo("-"*len(header))
+    click.echo("-" * len(header))
 
     running = Fore.GREEN + "Running" + Style.RESET_ALL
     stopped = Fore.RED + "Not running" + Style.RESET_ALL
 
     # system folders
-    configs, f1 = NodeContext.available_configurations(
-        system_folders=True)
+    configs, f1 = NodeContext.available_configurations(system_folders=True)
     for config in configs:
-        status = running if f"{APPNAME}-{config.name}-system" in \
-            running_node_names else stopped
-        click.echo(
-            f"{config.name:25}"
-            f"{status:25}System "
+        status = (
+            running
+            if f"{APPNAME}-{config.name}-system" in running_node_names
+            else stopped
         )
+        click.echo(f"{config.name:25}" f"{status:25}System ")
 
     # user folders
-    configs, f2 = NodeContext.available_configurations(
-        system_folders=False)
+    configs, f2 = NodeContext.available_configurations(system_folders=False)
     for config in configs:
-        status = running if f"{APPNAME}-{config.name}-user" in \
-            running_node_names else stopped
-        click.echo(
-            f"{config.name:25}"
-            f"{status:25}User   "
+        status = (
+            running
+            if f"{APPNAME}-{config.name}-user" in running_node_names
+            else stopped
         )
+        click.echo(f"{config.name:25}" f"{status:25}User   ")
 
-    click.echo("-"*53)
-    if len(f1)+len(f2):
-        warning(
-             f"{Fore.RED}Failed imports: {len(f1)+len(f2)}{Style.RESET_ALL}")
+    click.echo("-" * 53)
+    if len(f1) + len(f2):
+        warning(f"{Fore.RED}Failed imports: {len(f1)+len(f2)}{Style.RESET_ALL}")
