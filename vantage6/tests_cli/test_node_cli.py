@@ -207,7 +207,7 @@ class NodeCLITest(unittest.TestCase):
 
     @patch("docker.DockerClient.volumes")
     @patch("vantage6.cli.node.start.pull_if_newer")
-    @patch("vantage6.cli.node.start.NodeContext")
+    @patch("vantage6.cli.common.decorator.get_context")
     @patch("docker.DockerClient.containers")
     @patch("vantage6.cli.node.start.check_docker_running", return_value=True)
     def test_start(self, check_docker, client, context, pull, volumes):
