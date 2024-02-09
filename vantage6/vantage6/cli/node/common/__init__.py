@@ -2,32 +2,16 @@
 Common functions that are used in node CLI commands
 """
 
-from typing import Iterable
-
 import questionary as q
 import docker
 from colorama import Fore, Style
 
 from vantage6.common import error, info, debug
-from vantage6.common.globals import STRING_ENCODING, APPNAME, InstanceType
+from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.client import UserClient
 
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.configuration_wizard import select_configuration_questionaire
-
-
-#  helper functions
-def print_log_worker(logs_stream: Iterable[bytes]) -> None:
-    """
-    Print the logs from the logs stream.
-
-    Parameters
-    ----------
-    logs_stream : Iterable[bytes]
-        Output of the container.attach() method
-    """
-    for log in logs_stream:
-        print(log.decode(STRING_ENCODING), end="")
 
 
 def create_client(ctx: NodeContext) -> UserClient:

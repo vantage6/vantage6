@@ -24,15 +24,16 @@ from vantage6.common.docker.addons import (
     check_docker_running,
 )
 
+from vantage6.cli.common.utils import print_log_worker
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.configuration_wizard import (
     configuration_wizard,
     select_configuration_questionaire,
 )
+from vantage6.cli.node.common import create_client
 from vantage6.cli.utils import check_config_name_allowed
 from vantage6.cli import __version__
-from vantage6.cli.node.common import print_log_worker, create_client
 
 
 @click.command()
