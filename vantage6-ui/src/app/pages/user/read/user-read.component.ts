@@ -55,11 +55,7 @@ export class UserReadComponent implements OnInit, OnDestroy {
 
   private async initData(): Promise<void> {
     this.user = await this.userService.getUser(this.id, [UserLazyProperties.Organization, UserLazyProperties.Roles]);
-    this.canDelete =
-      !!this.user.organization &&
-      this.permissionService.isAllowedForOrg(ResourceType.USER, OperationType.DELETE, this.user.organization.id);
-    this.canEdit =
-      !!this.user.organization && this.permissionService.isAllowedForOrg(ResourceType.USER, OperationType.EDIT, this.user.organization.id);
+    this.setPermissions();
 
     this.allUserRules = await this.ruleService.getRules({ user_id: this.user.id, no_pagination: 1 });
     this.rolesRules = await this.ruleService.getRulesOfRoles(this.user.roles.map((role) => role.id));
@@ -104,6 +100,22 @@ export class UserReadComponent implements OnInit, OnDestroy {
           this.isLoading = true;
           await this.userService.deleteUser(this.user.id);
           this.router.navigate([routePaths.users]);
+        }
+      });
+  }
+
+  private setPermissions() {
+    this.permissionService
+      .isInitialized()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((initialized) => {
+        if (initialized) {
+          this.canDelete =
+            !!this.user?.organization &&
+            this.permissionService.isAllowedForOrg(ResourceType.USER, OperationType.DELETE, this.user.organization.id);
+          this.canEdit =
+            !!this.user?.organization &&
+            this.permissionService.isAllowedForOrg(ResourceType.USER, OperationType.EDIT, this.user.organization.id);
         }
       });
   }

@@ -1,7 +1,8 @@
-import { Component, HostBinding, OnInit } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Subject, takeUntil } from 'rxjs';
 import { SearchRequest } from 'src/app/components/table/table.component';
 import { getApiSearchParameters } from 'src/app/helpers/api.helper';
 import { unlikeApiParameter } from 'src/app/helpers/general.helper';
@@ -18,8 +19,9 @@ import { RoleService } from 'src/app/services/role.service';
   templateUrl: './role-list.component.html',
   styleUrls: ['./role-list.component.scss']
 })
-export class RoleListComponent implements OnInit {
+export class RoleListComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
+  destroy$ = new Subject();
 
   isLoading: boolean = false;
   canCreate: boolean = false;
@@ -37,8 +39,12 @@ export class RoleListComponent implements OnInit {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    this.canCreate = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.ROLE, OperationType.CREATE);
+    this.setPermissions();
     await this.initData(1, {});
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next(true);
   }
 
   private async initData(page: number, parameters: GetRoleParameters) {
@@ -83,5 +89,16 @@ export class RoleListComponent implements OnInit {
 
   async handlePageEvent(e: PageEvent) {
     await this.initData(e.pageIndex + 1, this.getRoleParameters);
+  }
+
+  private setPermissions() {
+    this.permissionService
+      .isInitialized()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((initialized) => {
+        if (initialized) {
+          this.canCreate = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.ROLE, OperationType.CREATE);
+        }
+      });
   }
 }

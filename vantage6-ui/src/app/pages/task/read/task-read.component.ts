@@ -63,21 +63,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    this.canDelete = this.permissionService.isAllowedForCollab(
-      ResourceType.TASK,
-      OperationType.DELETE,
-      this.chosenCollaborationService.collaboration$.value
-    );
-    this.canCreate = this.permissionService.isAllowedForCollab(
-      ResourceType.TASK,
-      OperationType.CREATE,
-      this.chosenCollaborationService.collaboration$.value
-    );
-    this.canKill = this.permissionService.isAllowedForCollab(
-      ResourceType.EVENT,
-      OperationType.SEND,
-      this.chosenCollaborationService.collaboration$.value
-    );
+    this.setPermissions();
     this.visualization.valueChanges.subscribe((value) => {
       this.selectedOutput = this.function?.output?.[value || 0] || null;
     });
@@ -344,5 +330,30 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     if (run) {
       run.node.status = nodeStatus.online ? NodeStatus.Online : NodeStatus.Offline;
     }
+  }
+
+  private setPermissions() {
+    this.permissionService
+      .isInitialized()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((initialized) => {
+        if (initialized) {
+          this.canDelete = this.permissionService.isAllowedForCollab(
+            ResourceType.TASK,
+            OperationType.DELETE,
+            this.chosenCollaborationService.collaboration$.value
+          );
+          this.canCreate = this.permissionService.isAllowedForCollab(
+            ResourceType.TASK,
+            OperationType.CREATE,
+            this.chosenCollaborationService.collaboration$.value
+          );
+          this.canKill = this.permissionService.isAllowedForCollab(
+            ResourceType.EVENT,
+            OperationType.SEND,
+            this.chosenCollaborationService.collaboration$.value
+          );
+        }
+      });
   }
 }

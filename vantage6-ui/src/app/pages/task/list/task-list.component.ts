@@ -2,7 +2,7 @@ import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription, takeUntil } from 'rxjs';
 import { SearchRequest } from 'src/app/components/table/table.component';
 import { getApiSearchParameters } from 'src/app/helpers/api.helper';
 import { unlikeApiParameter } from 'src/app/helpers/general.helper';
@@ -33,6 +33,8 @@ export class TaskListComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   tableRows = TableRows;
   routes = routePaths;
+  destroy$ = new Subject();
+
   tasks: BaseTask[] = [];
   table?: TableData;
   displayedColumns: string[] = [TableRows.ID, TableRows.Name, TableRows.Status];
@@ -53,11 +55,8 @@ export class TaskListComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit() {
-    this.canCreate = this.permissionService.isAllowedForCollab(
-      ResourceType.TASK,
-      OperationType.CREATE,
-      this.chosenCollaborationService.collaboration$.value
-    );
+    this.setPermissions();
+
     await this.initData(this.currentPage, { sort: TaskSortProperties.ID, is_user_created: 1 });
     this.taskStatusUpdateSubscription = this.socketioConnectService
       .getAlgorithmStatusUpdates()
@@ -67,6 +66,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroy$.next(true);
     this.taskStatusUpdateSubscription?.unsubscribe();
   }
 
@@ -150,5 +150,20 @@ export class TaskListComponent implements OnInit, OnDestroy {
     if (task) {
       task.status = statusUpdate.status as TaskStatus;
     }
+  }
+
+  private setPermissions() {
+    this.permissionService
+      .isInitialized()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((initialized) => {
+        if (initialized) {
+          this.canCreate = this.permissionService.isAllowedForCollab(
+            ResourceType.TASK,
+            OperationType.CREATE,
+            this.chosenCollaborationService.collaboration$.value
+          );
+        }
+      });
   }
 }

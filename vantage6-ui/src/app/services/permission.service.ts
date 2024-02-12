@@ -5,6 +5,8 @@ import { Collaboration } from '../models/api/collaboration.model';
 import { BaseUser } from '../models/api/user.model';
 import { ApiService } from './api.service';
 import { USER_ID } from '../models/constants/sessionStorage';
+import { TokenStorageService } from './token-storage.service';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 const requiredScopeLevel: Record<ScopeType, ScopeType[]> = {
   [ScopeType.ANY]: [ScopeType.OWN, ScopeType.ORGANIZATION, ScopeType.COLLABORATION, ScopeType.GLOBAL],
@@ -20,8 +22,16 @@ const requiredScopeLevel: Record<ScopeType, ScopeType[]> = {
 export class PermissionService {
   activeRules: Rule[] | null = null;
   activeUser: BaseUser | null = null;
+  initialized$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private tokenStorageService: TokenStorageService
+  ) {
+    this.tokenStorageService.loginObservable().subscribe((loggedIn: boolean) => {
+      if (loggedIn) this.initData();
+    });
+  }
 
   async initData(): Promise<void> {
     if (this.activeRules === null) {
@@ -32,7 +42,12 @@ export class PermissionService {
       // get user (knowing the user organization id is required to determine
       // what they are allowed to see for which organizations)
       this.activeUser = await this.getUser();
+      this.initialized$.next(true);
     }
+  }
+
+  isInitialized(): Observable<boolean> {
+    return this.initialized$.asObservable();
   }
 
   clear(): void {

@@ -1,7 +1,8 @@
-import { Component, HostBinding, OnInit } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Subject, takeUntil } from 'rxjs';
 import { SearchRequest } from 'src/app/components/table/table.component';
 import { getApiSearchParameters } from 'src/app/helpers/api.helper';
 import { unlikeApiParameter } from 'src/app/helpers/general.helper';
@@ -17,9 +18,10 @@ import { PermissionService } from 'src/app/services/permission.service';
   selector: 'app-collaboration-list',
   templateUrl: './collaboration-list.component.html'
 })
-export class CollaborationListComponent implements OnInit {
+export class CollaborationListComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   routes = routePaths;
+  destroy$ = new Subject();
 
   isLoading: boolean = false;
   canCreate: boolean = false;
@@ -36,8 +38,12 @@ export class CollaborationListComponent implements OnInit {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    this.canCreate = this.permissionService.isAllowed(ScopeType.GLOBAL, ResourceType.COLLABORATION, OperationType.CREATE);
+    this.setPermissions();
     await this.initData(1, {});
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next(true);
   }
 
   async handlePageEvent(e: PageEvent) {
@@ -83,5 +89,16 @@ export class CollaborationListComponent implements OnInit {
   public handleSearchChanged(searchRequests: SearchRequest[]): void {
     const parameters: GetCollaborationParameters = getApiSearchParameters<GetCollaborationParameters>(searchRequests);
     this.initData(1, parameters);
+  }
+
+  private setPermissions() {
+    this.permissionService
+      .isInitialized()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((initialized) => {
+        if (initialized) {
+          this.canCreate = this.permissionService.isAllowed(ScopeType.GLOBAL, ResourceType.COLLABORATION, OperationType.CREATE);
+        }
+      });
   }
 }

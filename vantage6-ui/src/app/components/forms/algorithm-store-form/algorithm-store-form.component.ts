@@ -1,6 +1,7 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
 import { AlgorithmStore, AlgorithmStoreForm } from 'src/app/models/api/algorithmStore.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { PermissionService } from 'src/app/services/permission.service';
@@ -10,7 +11,7 @@ import { PermissionService } from 'src/app/services/permission.service';
   templateUrl: './algorithm-store-form.component.html',
   styleUrls: ['./algorithm-store-form.component.scss']
 })
-export class AlgorithmStoreFormComponent implements OnInit {
+export class AlgorithmStoreFormComponent implements OnInit, OnDestroy {
   @Input() algorithmStore?: AlgorithmStore;
   @Output() cancelled: EventEmitter<void> = new EventEmitter();
   @Output() submitted: EventEmitter<AlgorithmStoreForm> = new EventEmitter();
@@ -22,6 +23,7 @@ export class AlgorithmStoreFormComponent implements OnInit {
     collaboration_id: '',
     all_collaborations: false
   });
+  destroy$ = new Subject();
   canSetAllCollaborations = false;
 
   constructor(
@@ -31,13 +33,17 @@ export class AlgorithmStoreFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.canSetAllCollaborations = this.permissionService.isAllowed(ScopeType.GLOBAL, ResourceType.COLLABORATION, OperationType.EDIT);
+    this.setPermissions();
     if (this.algorithmStore) {
       this.form.controls.name.setValue(this.algorithmStore.name);
       this.form.controls.algorithm_store_url.setValue(this.algorithmStore.url);
     }
     // get ID from router
     this.form.controls.collaboration_id.setValue(this.router.url.split('/').pop() as string);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next(true);
   }
 
   handleSubmit() {
@@ -48,5 +54,16 @@ export class AlgorithmStoreFormComponent implements OnInit {
 
   handleCancel() {
     this.cancelled.emit();
+  }
+
+  private setPermissions() {
+    this.permissionService
+      .isInitialized()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((initialized) => {
+        if (initialized) {
+          this.canSetAllCollaborations = this.permissionService.isAllowed(ScopeType.GLOBAL, ResourceType.COLLABORATION, OperationType.EDIT);
+        }
+      });
   }
 }

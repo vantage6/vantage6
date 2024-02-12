@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription, takeUntil } from 'rxjs';
 import { downloadFile } from 'src/app/helpers/file.helper';
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { Organization, OrganizationLazyProperties } from 'src/app/models/api/organization.model';
@@ -22,6 +22,7 @@ export class OrganizationReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   routes = routePaths;
   nodeStatus = NodeStatus;
+  destroy$ = new Subject();
 
   @Input() id: string = '';
 
@@ -50,6 +51,7 @@ export class OrganizationReadComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroy$.next(true);
     this.nodeStatusUpdateSubscription?.unsubscribe();
   }
 
@@ -70,8 +72,7 @@ export class OrganizationReadComponent implements OnInit, OnDestroy {
       columns: [{ id: 'name', label: this.translateService.instant('collaboration.name') }],
       rows: this.organization.collaborations.map((_) => ({ id: _.id.toString(), columnData: { name: _.name } }))
     };
-    this.canEdit =
-      !!this.organization && this.permissionService.isAllowedForOrg(ResourceType.ORGANIZATION, OperationType.EDIT, this.organization.id);
+    this.setPermissions();
     this.isLoading = false;
   }
 
@@ -81,5 +82,18 @@ export class OrganizationReadComponent implements OnInit, OnDestroy {
     if (node) {
       node.status = nodeStatusUpdate.online ? NodeStatus.Online : NodeStatus.Offline;
     }
+  }
+
+  private setPermissions() {
+    this.permissionService
+      .isInitialized()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((initialized) => {
+        if (initialized) {
+          this.canEdit =
+            !!this.organization &&
+            this.permissionService.isAllowedForOrg(ResourceType.ORGANIZATION, OperationType.EDIT, this.organization.id);
+        }
+      });
   }
 }
