@@ -171,7 +171,7 @@ export class TemplateTaskCreateComponent implements OnInit {
     let taskDatabases: TaskDatabase[] = [];
     if (this.templateTask?.fixed?.databases) {
       this.templateTask.fixed.databases.forEach((fixedDatabase) => {
-        const taskDatabase: TaskDatabase = { label: fixedDatabase.name, query: fixedDatabase.query, sheet: fixedDatabase.sheet };
+        const taskDatabase: TaskDatabase = { label: fixedDatabase.name, query: fixedDatabase.query, sheet_name: fixedDatabase.sheet };
         taskDatabases.push(taskDatabase);
       });
     } else {

@@ -89,10 +89,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       this.handleFunctionChange(functionName);
     });
 
-    this.databaseForm.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (_) => {
-      this.handleDatabaseChange();
-    });
-
     this.nodeStatusUpdateSubscription = this.socketioConnectService
       .getNodeStatusUpdates()
       .subscribe((nodeStatusUpdate: NodeOnlineStatusMsg | null) => {
@@ -167,7 +163,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     // Note: the database step is not setup here because the database child
     // component may not yet be initialized when we get here. Instead, we
     // setup the database step in the database child component when it is
-    // initialized.
+    // initialized in the function handleDatabaseStepInitialized().
 
     // set parameter step
     for (const parameter of this.repeatedTask.input?.parameters || []) {
@@ -197,6 +193,10 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     // Now, setup the database step
     // set database step for task repeat
     this.databaseStepComponent?.setDatabasesFromPreviousTask(this.repeatedTask?.databases, this.function?.databases);
+
+    // retrieve column names as we dont go through the HTML steppers manually
+    // (where this is otherwise triggered)
+    this.retrieveColumns();
 
     // TODO repeat preprocessing and filtering when backend is ready
   }
@@ -277,13 +277,12 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     if (taskDatabase.query) {
       columnRetrieveData.query = taskDatabase.query;
     }
-    if (taskDatabase.sheet) {
-      columnRetrieveData.sheet_name = taskDatabase.sheet;
+    if (taskDatabase.sheet_name) {
+      columnRetrieveData.sheet_name = taskDatabase.sheet_name;
     }
 
     // call /column endpoint. This returns either a list of columns or a task
     // that will retrieve the columns
-    // TODO handle errors (both for retrieving columns and for retrieving the task)
     // TODO enable user to exit requesting column names if it takes too long
     const columnsOrTask = await this.taskService.getColumnNames(columnRetrieveData);
     if (columnsOrTask.columns) {
@@ -292,18 +291,27 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       // a task has been started to retrieve the columns
       const task = await this.taskService.waitForResults(columnsOrTask.id);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const decodedResult: any = JSON.parse(atob(task.results?.[0].result || ''));
-      this.columns = decodedResult;
+      try {
+        const decodedResult: any = JSON.parse(atob(task.results?.[0].result || ''));
+        this.columns = decodedResult;
+      } catch (e) {
+        // TODO handle errors (both for retrieving columns and for retrieving the task)
+        console.error('Error decoding result from task', e);
+      }
     }
     this.isLoadingColumns = false;
   }
 
   shouldShowColumnDropdown(argument: Argument): boolean {
-    return argument.type === this.argumentType.Column && this.columns.length > 0;
+    return argument.type === this.argumentType.Column && (this.columns.length > 0 || this.isLoadingColumns);
+  }
+
+  containsColumnArguments(): boolean {
+    return this.function?.arguments.some((arg) => arg.type === this.argumentType.Column) || false;
   }
 
   shouldShowColumnDropdownForAnyArg(): boolean {
-    return this.function?.arguments.some((arg) => this.shouldShowColumnDropdown(arg)) || false;
+    return this.containsColumnArguments();
   }
 
   // compare function for mat-select
@@ -357,13 +365,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     //Delay setting function, so that form controls are added
     this.function = selectedFunction;
-  }
-
-  private async handleDatabaseChange(): Promise<void> {
-    if (this.databaseForm.invalid || Object.keys(this.databaseForm.controls).length === 0) return;
-
-    // gather data to retrieve columns - these are often required in the steps that follow
-    await this.retrieveColumns();
   }
 
   private async getOnlineNode(): Promise<BaseNode | null> {

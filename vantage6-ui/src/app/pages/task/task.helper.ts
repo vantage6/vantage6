@@ -47,7 +47,7 @@ export const getTaskDatabaseFromForm = (func: AlgorithmFunction | null, form: Fo
     }
     const sheet = form.get(`${functionDatabase.name}_sheet`)?.value || '';
     if (sheet) {
-      taskDatabase.sheet = sheet;
+      taskDatabase.sheet_name = sheet;
     }
     taskDatabases.push(taskDatabase);
   });

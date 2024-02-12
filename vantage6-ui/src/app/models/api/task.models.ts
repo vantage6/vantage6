@@ -119,7 +119,7 @@ export interface TaskResult {
 export interface TaskDatabase {
   label: string;
   query?: string;
-  sheet?: string;
+  sheet_name?: string;
 }
 
 export interface CreateTask {

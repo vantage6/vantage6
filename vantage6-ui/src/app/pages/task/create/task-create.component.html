@@ -92,12 +92,13 @@
           ></app-database-step>
           <div>
             <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
-            <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+            <button mat-button matStepperNext (click)="retrieveColumns()">{{ "general.next" | translate }}</button>
           </div>
         </mat-step>
         <mat-step *ngIf="shouldShowPreprocessorStep" [stepControl]="preprocessingForm">
           <ng-template matStepLabel>{{ "task-create.step-preprocessing.title" | translate }}</ng-template>
           <ng-container *ngIf="!isLoadingColumns; else loadingColumns">
+            <!-- TODO probably should remove calls to retrieve columns below as they are already obtained above -->
             <app-preprocessing-step
               [form]="preprocessingForm"
               [functions]="algorithm?.select || []"
@@ -128,7 +129,7 @@
         <mat-step *ngIf="shouldShowParameterStep" [stepControl]="parameterForm">
           <form class="form" [formGroup]="parameterForm">
             <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
-            <ng-container *ngIf="!shouldShowColumnDropdownForAnyArg() || !isLoadingColumns; else loadingColumns">
+            <ng-container *ngIf="containsColumnArguments() && !isLoadingColumns; else loadingColumns">
               <ng-container *ngFor="let argument of function?.arguments">
                 <b>{{ argument.description }}</b>
                 <p *ngIf="argument.type === argumentType.Json">Please provide valid JSON input.</p>
