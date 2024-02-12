@@ -51,8 +51,7 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    this.canDelete = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.COLLABORATION, OperationType.DELETE);
-    this.canEdit = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.COLLABORATION, OperationType.EDIT);
+    this.setPermissions();
     await this.initData();
     this.nodeStatusUpdateSubscription = this.socketioConnectService
       .getNodeStatusUpdates()
@@ -81,6 +80,18 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
     if (node) {
       node.status = nodeStatusUpdate.online ? NodeStatus.Online : NodeStatus.Offline;
     }
+  }
+
+  private setPermissions() {
+    this.permissionService
+      .isInitialized()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((initialized) => {
+        if (initialized) {
+          this.canDelete = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.COLLABORATION, OperationType.DELETE);
+          this.canEdit = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.COLLABORATION, OperationType.EDIT);
+        }
+      });
   }
 
   selectAlgoStore(id: number): void {

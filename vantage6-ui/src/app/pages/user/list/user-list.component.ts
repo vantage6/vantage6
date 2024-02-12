@@ -3,7 +3,7 @@ import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { SearchRequest } from 'src/app/components/table/table.component';
 import { getApiSearchParameters } from 'src/app/helpers/api.helper';
 import { unlikeApiParameter } from 'src/app/helpers/general.helper';
@@ -96,7 +96,7 @@ export class UserListComponent implements OnInit, OnDestroy {
         };
       }
     });
-    this.canCreate = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.USER, OperationType.CREATE);
+    this.setPermissions();
     await this.initData(this.currentPage, this.getUserParameters);
   }
 
@@ -164,5 +164,16 @@ export class UserListComponent implements OnInit, OnDestroy {
   handleSearchChanged(searchRequests: SearchRequest[]): void {
     const parameters = getApiSearchParameters<GetUserParameters>(searchRequests);
     this.initData(1, parameters);
+  }
+
+  private setPermissions() {
+    this.permissionService
+      .isInitialized()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((initialized) => {
+        if (initialized) {
+          this.canCreate = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.USER, OperationType.CREATE);
+        }
+      });
   }
 }

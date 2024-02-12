@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { LoginForm, LostPasswordForm, MFAResetTokenForm, PasswordResetTokenForm } from '../models/forms/login-form.model';
 import { ApiService } from './api.service';
 import { AuthResult, ChangePassword, Login, LoginSubmit, LoginRecoverLost, SetupMFA, LoginRecoverSubmit } from '../models/api/auth.model';
-import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_ID } from '../models/constants/sessionStorage';
 import { PermissionService } from './permission.service';
 import { TokenStorageService } from './token-storage.service';
 import { SocketioConnectService } from './socketio-connect.service';
@@ -26,20 +25,11 @@ export class AuthService {
   ) {}
 
   async isAuthenticated(): Promise<AuthResult> {
-    const token = this.tokenStorageService.getToken();
-    if (!token) {
-      return AuthResult.Failure;
+    const authResult = await this.tokenStorageService.isAuthenticated();
+    if (authResult === AuthResult.Success) {
+      this.socketConnectService.connect();
     }
-
-    const isExpired = Date.now() >= JSON.parse(atob(token.split('.')[1])).exp * 1000;
-    if (!isExpired) {
-      await this.permissionService.initData();
-      await this.socketConnectService.connect();
-    }
-    if (!isExpired) {
-      return AuthResult.Success;
-    }
-    return AuthResult.Failure;
+    return authResult;
   }
 
   async login(loginForm: LoginForm): Promise<AuthResult> {

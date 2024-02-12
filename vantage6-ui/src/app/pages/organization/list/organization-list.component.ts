@@ -1,7 +1,8 @@
-import { Component, HostBinding, OnInit } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Subject, takeUntil } from 'rxjs';
 import { SearchRequest } from 'src/app/components/table/table.component';
 import { getApiSearchParameters } from 'src/app/helpers/api.helper';
 import { unlikeApiParameter } from 'src/app/helpers/general.helper';
@@ -17,9 +18,10 @@ import { PermissionService } from 'src/app/services/permission.service';
   selector: 'app-organization-list',
   templateUrl: './organization-list.component.html'
 })
-export class OrganizationListComponent implements OnInit {
+export class OrganizationListComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   routes = routePaths;
+  destroy$ = new Subject();
 
   isLoading: boolean = false;
   canCreate: boolean = false;
@@ -36,8 +38,12 @@ export class OrganizationListComponent implements OnInit {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    this.canCreate = this.permissionService.isAllowed(ScopeType.GLOBAL, ResourceType.ORGANIZATION, OperationType.CREATE);
+    this.setPermissions();
     await this.initData(1, {});
+  }
+
+  async ngOnDestroy(): Promise<void> {
+    this.destroy$.next(true);
   }
 
   async handlePageEvent(e: PageEvent) {
@@ -55,6 +61,17 @@ export class OrganizationListComponent implements OnInit {
     const getParameters = { ...parameters, sort: OrganizationSortProperties.Name };
     await this.getOrganizations(page, getParameters);
     this.isLoading = false;
+  }
+
+  private setPermissions() {
+    this.permissionService
+      .isInitialized()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((initialized) => {
+        if (initialized) {
+          this.canCreate = this.permissionService.isAllowed(ScopeType.GLOBAL, ResourceType.ORGANIZATION, OperationType.CREATE);
+        }
+      });
   }
 
   private async getOrganizations(page: number, parameters: GetOrganizationParameters) {

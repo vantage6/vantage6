@@ -73,7 +73,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private setNavigationLinks() {
+  private setNavigationLinks(): void {
     if (this.isStartPage || this.hideMenu) {
       this.navigationLinks = [];
       return;
