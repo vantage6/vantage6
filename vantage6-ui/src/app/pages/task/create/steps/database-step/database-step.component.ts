@@ -19,6 +19,7 @@ export class DatabaseStepComponent implements OnDestroy, OnChanges {
   @Output() isReady = new EventEmitter<boolean>();
 
   availableDatabases: Database[] = [];
+  selectedDatabase?: Database;
 
   ngOnDestroy(): void {
     this.destroy$.next(true);
@@ -81,7 +82,8 @@ export class DatabaseStepComponent implements OnDestroy, OnChanges {
           });
 
           //Add form controls for selected database
-          const type = this.availableDatabases.find((_) => _.name === dataBaseName)?.type;
+          this.selectedDatabase = this.availableDatabases.find((_) => _.name === dataBaseName);
+          const type = this.selectedDatabase?.type;
           if (type === DatabaseType.SQL || type === DatabaseType.Sparql) {
             this.form.addControl(`${database.name}_query`, new FormControl(null, [Validators.required]));
           }

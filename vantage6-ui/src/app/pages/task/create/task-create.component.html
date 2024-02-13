@@ -11,6 +11,7 @@
         <mat-step [stepControl]="packageForm">
           <form class="form" [formGroup]="packageForm">
             <ng-template matStepLabel>{{ "task-create.step-package.title" | translate }}</ng-template>
+            <div class="field-description">{{ "task-create.step-package.description.algorithm" | translate }}</div>
             <mat-form-field subscriptSizing="dynamic">
               <mat-label>{{ "task.algorithm" | translate }}</mat-label>
               <mat-select formControlName="algorithmID" [compareWith]="compareIDsForSelection">
@@ -19,10 +20,12 @@
                 </mat-option>
               </mat-select>
             </mat-form-field>
+            <div class="field-description">{{ "task-create.step-package.description.name" | translate }}</div>
             <mat-form-field subscriptSizing="dynamic">
               <mat-label>{{ "task.name" | translate }}</mat-label>
               <input matInput type="text" formControlName="name" />
             </mat-form-field>
+            <div class="field-description">{{ "task-create.step-package.description.description" | translate }}</div>
             <mat-form-field subscriptSizing="dynamic">
               <mat-label>{{ "task.description" | translate }}</mat-label>
               <input matInput type="text" formControlName="description" />
@@ -35,42 +38,54 @@
         <mat-step [stepControl]="functionForm">
           <form class="form" [formGroup]="functionForm">
             <ng-template matStepLabel>{{ "task-create.step-function.title" | translate }}</ng-template>
+            <div class="field-description">{{ "task-create.step-function.description.function" | translate }}</div>
             <mat-form-field subscriptSizing="dynamic">
               <mat-label>{{ "task.function" | translate }}</mat-label>
               <mat-select formControlName="functionName">
                 <mat-option *ngFor="let function of algorithm?.functions" [value]="function.name">
                   {{ function.name }}
+                  <small
+                    ><i>({{ function.type }})</i></small
+                  >
                 </mat-option>
               </mat-select>
             </mat-form-field>
-            <mat-form-field *ngIf="function" subscriptSizing="dynamic">
-              <mat-label>{{ "task-create.step-function.organization" | translate }}</mat-label>
-              <mat-select
-                *ngIf="function.type === functionType.Central"
-                formControlName="organizationIDs"
-                [compareWith]="compareIDsForSelection"
-              >
-                <mat-option
-                  *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
-                  [value]="organization.id"
+            <div *ngIf="function">
+              <div class="field-description" *ngIf="function.type === functionType.Central">
+                {{ "task-create.step-function.description.organization-central" | translate }}
+              </div>
+              <div class="field-description" *ngIf="function.type === functionType.Federated">
+                {{ "task-create.step-function.description.organization-partial" | translate }}
+              </div>
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ "task-create.step-function.organization" | translate }}</mat-label>
+                <mat-select
+                  *ngIf="function.type === functionType.Central"
+                  formControlName="organizationIDs"
+                  [compareWith]="compareIDsForSelection"
                 >
-                  {{ organization.name }}
-                </mat-option>
-              </mat-select>
-              <mat-select
-                *ngIf="function.type !== functionType.Central"
-                formControlName="organizationIDs"
-                [compareWith]="compareIDsForSelection"
-                multiple
-              >
-                <mat-option
-                  *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
-                  [value]="organization.id"
+                  <mat-option
+                    *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
+                    [value]="organization.id"
+                  >
+                    {{ organization.name }}
+                  </mat-option>
+                </mat-select>
+                <mat-select
+                  *ngIf="function.type !== functionType.Central"
+                  formControlName="organizationIDs"
+                  [compareWith]="compareIDsForSelection"
+                  multiple
                 >
-                  {{ organization.name }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
+                  <mat-option
+                    *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
+                    [value]="organization.id"
+                  >
+                    {{ organization.name }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
             <app-alert
               class="node-alert"
               *ngIf="node && node?.status !== 'online'"
@@ -84,6 +99,7 @@
         </mat-step>
         <mat-step [stepControl]="databaseForm" *ngIf="shouldShowDatabaseStep">
           <ng-template matStepLabel>{{ "task-create.step-database.title" | translate }}</ng-template>
+          <div class="field-description">{{ "task-create.step-database.description.database" | translate }}</div>
           <app-database-step
             [form]="databaseForm"
             [functionDatabases]="function?.databases || []"
@@ -130,6 +146,7 @@
           <form class="form" [formGroup]="parameterForm">
             <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
             <ng-container *ngIf="containsColumnArguments() && !isLoadingColumns; else loadingColumns">
+              <div class="field-description">{{ "task-create.step-parameters.description" | translate }}</div>
               <ng-container *ngFor="let argument of function?.arguments">
                 <b>{{ argument.description }}</b>
                 <p *ngIf="argument.type === argumentType.Json">Please provide valid JSON input.</p>

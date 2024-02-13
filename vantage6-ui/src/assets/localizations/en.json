@@ -61,14 +61,29 @@
   "task-create": {
     "title": "Create task",
     "step-package": {
-      "title": "Select package"
+      "title": "Select algorithm",
+      "description": {
+        "algorithm": "Select which algorithm you want to run",
+        "name": "Provide a suitable name for your task",
+        "description": "Optionally, describe your task so you can find it back later"
+      }
     },
     "step-function": {
       "title": "Select function",
-      "organization": "Organization(s) to run this function"
+      "organization": "Organization(s) to run this function",
+      "description": {
+        "function": "Select which function you want to run",
+        "organization-central": "Select the organization that will run this function. Note that you have selected a central function, which will probably create subtasks for other organizations in the collaboration",
+        "organization-partial": "Select the organizations that will carry out a partial function"
+      }
     },
     "step-database": {
-      "title": "Select databases"
+      "title": "Select databases",
+      "description": {
+        "database": "Select the database(s) you want to use. The options in the dropdown represent the database labels defined in the node configuration file.",
+        "query": "This database is a {{dbType}} database. Provide a query to select the data",
+        "worksheet": "This database is an Excel file. Provide the name of the worksheet to use"
+      }
     },
     "step-preprocessing": {
       "title": "Extend data",
@@ -84,7 +99,8 @@
       }
     },
     "step-parameters": {
-      "title": "Define parameters"
+      "title": "Define parameters",
+      "description": "Provide parameter values for the selected algorithm function"
     },
     "alert-no-online-nodes": "You cannot create a task right now because no nodes are online in your collaboration. Online nodes are required to collect information on available databases and columns. Please try again later or contact your collaboration manager."
   },
