@@ -1,6 +1,6 @@
 from pathlib import Path
 import csv
-
+import yaml
 import click
 from jinja2 import Environment, FileSystemLoader
 from colorama import Fore, Style
@@ -445,6 +445,28 @@ def create_demo_network(
         keep=False,
         wait=True,
     )
+    info(
+        "Development network was set up successfully! You can now start the "
+        f"server and nodes with {Fore.GREEN}v6 server start-demo-network"
+        f"{Style.RESET_ALL}"
+    )
+    # find user credentials to print. Read from server import file
+    with open(server_import_config, "r") as f:
+        server_import_config = yaml.safe_load(f)
+
+    try:
+        user = server_import_config["organizations"][0]["users"][0]
+        username = user["username"]
+        password = user["password"]
+        info(
+            "You can login with the following credentials:\n"
+            f"Username: {username}\n"
+            f"Password: {password}\n"
+        )
+    except KeyError:
+        # No user found, skip printing credentials
+        pass
+
     return {
         "node_configs": node_config,
         "server_import_config": server_import_config,
