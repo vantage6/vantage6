@@ -24,9 +24,10 @@ from vantage6.common.docker.addons import (
 
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.context.node import NodeContext
+from vantage6.cli.common.utils import print_log_worker
+from vantage6.cli.node.common import create_client
 from vantage6.cli.utils import check_config_name_allowed
 from vantage6.cli import __version__
-from vantage6.cli.node.common import print_log_worker, create_client
 
 
 @click.command()

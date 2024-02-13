@@ -1,10 +1,8 @@
-from typing import Iterable
-
 from docker.client import DockerClient
 from colorama import Fore, Style
 
 from vantage6.common import error, info
-from vantage6.common.globals import STRING_ENCODING, APPNAME
+from vantage6.common.globals import APPNAME
 from vantage6.common.docker.addons import remove_container, get_container
 from vantage6.common.context import AppContext
 
@@ -47,19 +45,6 @@ def get_server_context(
     ctx = ctx_class(name, system_folders=system_folders)
 
     return ctx
-
-
-def print_log_worker(logs_stream: Iterable[bytes]) -> None:
-    """
-    Print the logs from the docker container to the terminal.
-
-    Parameters
-    ----------
-    logs_stream : Iterable[bytes]
-        Output of the `container.attach(.)` method
-    """
-    for log in logs_stream:
-        print(log.decode(STRING_ENCODING), end="")
 
 
 def stop_ui(client: DockerClient, ctx: ServerContext) -> None:

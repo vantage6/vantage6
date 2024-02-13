@@ -10,8 +10,9 @@ from vantage6.common import warning, error, info
 from vantage6.common.globals import APPNAME
 from vantage6.common.docker.addons import check_docker_running
 
+from vantage6.cli.common.utils import print_log_worker
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
-from vantage6.cli.node.common import find_running_node_names, print_log_worker
+from vantage6.cli.node.common import find_running_node_names
 
 
 @click.command()
