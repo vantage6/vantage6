@@ -12,7 +12,7 @@ from vantage6.common.docker.addons import check_docker_running
 from vantage6.common.globals import APPNAME, InstanceType
 
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
-from vantage6.cli.server.common import print_log_worker
+from vantage6.cli.common.utils import print_log_worker
 
 
 @click.command()

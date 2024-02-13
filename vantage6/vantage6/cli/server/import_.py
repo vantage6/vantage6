@@ -17,7 +17,7 @@ from vantage6.common.globals import (
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.utils import check_config_name_allowed
 from vantage6.cli.common.decorator import click_insert_context
-from vantage6.cli.server.common import print_log_worker
+from vantage6.cli.common.utils import print_log_worker
 
 
 # TODO this method has a lot of duplicated code from `start`
