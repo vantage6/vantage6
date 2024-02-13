@@ -36,7 +36,7 @@ jobs:
           echo "major_name=${MAJOR_NAME}" >> $GITHUB_OUTPUT
 
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -50,7 +50,7 @@ jobs:
           echo "branch=${branch}" >> $GITHUB_OUTPUT
 
       - name: Checkout branch on which tag was pushed
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ env.branch }}
@@ -103,7 +103,7 @@ jobs:
       stage: ${{ needs.version.outputs.stage }}
       branch: ${{ needs.version.outputs.branch }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{env.branch}}
       - name: Release
@@ -127,7 +127,7 @@ jobs:
         run: docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
 
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ env.branch }}
 
@@ -163,7 +163,7 @@ jobs:
         run: docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
 
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ env.branch }}
 
@@ -210,7 +210,7 @@ jobs:
         run: docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
 
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ env.branch }}
 
@@ -301,7 +301,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ env.branch }}
 
@@ -341,7 +341,7 @@ jobs:
       branch: ${{ needs.version.outputs.branch }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ env.branch }}
 
