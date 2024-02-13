@@ -7,6 +7,7 @@ from flask import g
 from flask_restful import Api
 from sqlalchemy import or_
 
+from vantage6.algorithm.store.resource import with_permission
 # from vantage6.algorithm.store import db
 # from vantage6.algorithm.store.resource import (
 #     get_org_ids_from_collabs,
@@ -21,6 +22,11 @@ from vantage6.algorithm.store.permission import (
 )
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.algorithm.store.default_roles import DefaultRole
+from vantage6.algorithm.store.resource.schema.output_schema import RoleOutputSchema
+# from vantage6.algorithm.store.resource.schema.input_schema import RoleInputSchema
+from vantage6.server.resource import ServicesResources, BaseServicesResources
+from vantage6.algorithm.store import db
+from vantage6.server.resource.common.pagination import Pagination
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -39,17 +45,16 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     services : dict
         Dictionary with services required for the resource endpoints
     """
-    pass
-    # path = "/".join([api_base, module_name])
-    # log.info(f'Setting up "{path}" and subdirectories')
-    #
-    # api.add_resource(
-    #     Roles,
-    #     path,
-    #     endpoint='role_without_id',
-    #     methods=('GET', 'POST'),
-    #     resource_class_kwargs=services
-    # )
+    path = "/".join([api_base, module_name])
+    log.info(f'Setting up "{path}" and subdirectories')
+
+    api.add_resource(
+        Roles,
+        path,
+        endpoint='role_without_id',
+        methods=('GET', 'POST'),
+        resource_class_kwargs=services
+    )
     # api.add_resource(
     #     Role,
     #     path + '/<int:id>',
@@ -92,224 +97,148 @@ def permissions(permissions: PermissionManager) -> None:
 # -----------------------------------------------------------------------------
 # Resources / API's
 # -----------------------------------------------------------------------------
-# role_schema = RoleSchema()
+role_schema = RoleOutputSchema()
 # rule_schema = RuleSchema()
 # role_input_schema = RoleInputSchema()
-#
-#
-# class RoleBase(ServicesResources):
-#
-#     def __init__(self, socketio, mail, api, permissions, config):
-#         super().__init__(socketio, mail, api, permissions, config)
-#         self.r: RuleCollection = getattr(self.permissions, module_name)
-#
-#
-# class Roles(RoleBase):
-#
-#     @with_user
-#     def get(self):
-#         """Returns a list of roles
-#         ---
-#
-#         description: >-
-#             Returns a list of roles. Depending on your permission, you get all
-#             the roles at the server or only the roles that belong to your
-#             organization.\n
-#
-#             ### Permission Table\n
-#             |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-#             Description|\n
-#             |--|--|--|--|--|--|\n
-#             |Role|Global|View|❌|❌|View all roles|\n
-#             |Role|Collaboration|View|❌|❌|View all roles in your
-#             collaborations|\n
-#             |Role|Organization|View|❌|❌|View roles that are part of your
-#             organization|\n
-#
-#             Accesible to users.
-#
-#         parameters:
-#             - in: query
-#               name: name
-#               schema:
-#                 type: string
-#               description: >-
-#                 Name to match with a LIKE operator. \n
-#                 * The percent sign (%) represents zero, one, or multiple
-#                 characters\n
-#                 * underscore sign (_) represents one, single character
-#             - in: query
-#               name: description
-#               schema:
-#                 type: string
-#               description: >-
-#                 Description to match with a LIKE operator. \n
-#                 * The percent sign (%) represents zero, one, or multiple
-#                 characters\n
-#                 * underscore sign (_) represents one, single character
-#             - in: query
-#               name: organization_id
-#               schema:
-#                 type: array
-#                 items:
-#                   type: integer
-#                   description: Organization id of which you want to get roles
-#             - in: query
-#               name: collaboration_id
-#               schema:
-#               type: integer
-#               description: Collaboration id
-#             - in: query
-#               name: rule_id
-#               schema:
-#                 type: integer
-#               description: Get roles that this role id is part of
-#             - in: query
-#               name: user_id
-#               schema:
-#                 type: integer
-#               description: Get roles for this user id
-#             - in: query
-#               name: include_root
-#               schema:
-#                  type: boolean
-#               description: Whether or not to include root role (default=False)
-#             - in: query
-#               name: page
-#               schema:
-#                 type: integer
-#               description: Page number for pagination (default=1)
-#             - in: query
-#               name: per_page
-#               schema:
-#                 type: integer
-#               description: Number of items per page (default=10)
-#             - in: query
-#               name: sort
-#               schema:
-#                 type: string
-#               description: >-
-#                 Sort by one or more fields, separated by a comma. Use a minus
-#                 sign (-) in front of the field to sort in descending order.
-#
-#         responses:
-#           200:
-#             description: Ok
-#           401:
-#             description: Unauthorized
-#           400:
-#             description: Improper values for pagination or sorting parameters
-#
-#         security:
-#             - bearerAuth: []
-#
-#         tags: ["Role"]
-#         """
-#         q = g.session.query(db.Role)
-#
-#         auth_org = self.obtain_auth_organization()
-#         args = request.args
-#
-#         # filter by organization ids (include root role if desired)
-#         org_filters = args.getlist('organization_id')
-#         if org_filters:
-#             for org_id in org_filters:
-#                 if not self.r.can_for_org(P.VIEW, org_id):
-#                     return {
-#                         'msg': 'You lack the permission view all roles from '
-#                         f'organization {org_id}!'
-#                     }, HTTPStatus.UNAUTHORIZED
-#             if 'include_root' in args and args['include_root']:
-#                 q = q.filter(or_(
-#                     db.Role.organization_id.in_(org_filters),
-#                     db.Role.organization_id.is_(None)
-#                 ))
-#             else:
-#                 q = q.filter(db.Role.organization_id.in_(org_filters))
-#
-#         # filter by collaboration id
-#         if 'collaboration_id' in args:
-#             if not self.r.can_for_col(P.VIEW, args['collaboration_id']):
-#                 return {
-#                     'msg': 'You lack the permission view all roles from '
-#                     f'collaboration {args["collaboration_id"]}!'
-#                 }, HTTPStatus.UNAUTHORIZED
-#             org_ids = get_org_ids_from_collabs(g.user,
-#                                                args['collaboration_id'])
-#             if 'include_root' in args and args['include_root']:
-#                 q = q.filter(or_(
-#                     db.Role.organization_id.in_(org_ids),
-#                     db.Role.organization_id.is_(None)
-#                 ))
-#             else:
-#                 q = q.filter(db.Role.organization_id.in_(org_ids))
-#
-#         # filter by one or more names or descriptions
-#         for param in ['name', 'description']:
-#             filters = args.getlist(param)
-#             if filters:
-#                 q = q.filter(or_(*[
-#                     getattr(db.Role, param).like(f) for f in filters
-#                 ]))
-#
-#         # find roles containing a specific rule
-#         if 'rule_id' in args:
-#             rule = db.Rule.get(args['rule_id'])
-#             if not rule:
-#                 return {'msg': f'Rule with id={args["rule_id"]} does not '
-#                         'exist!'}, HTTPStatus.BAD_REQUEST
-#             q = q.join(db.role_rule_association).join(db.Rule)\
-#                  .filter(db.Rule.id == args['rule_id'])
-#
-#         if 'user_id' in args:
-#             user = db.User.get(args['user_id'])
-#             if not user:
-#                 return {'msg': f'User with id={args["user_id"]} does not '
-#                         'exist!'}, HTTPStatus.BAD_REQUEST
-#             elif not self.r.can_for_org(P.VIEW, user.organization_id) and not \
-#                     g.user.id == user.id:
-#                 return {
-#                     'msg': 'You lack the permission view roles from the '
-#                     f'organization that user id={user.id} belongs to!'
-#                 }, HTTPStatus.UNAUTHORIZED
-#             q = q.join(db.Permission).join(db.User)\
-#                  .filter(db.User.id == args['user_id'])
-#
-#         if not self.r.v_glo.can():
-#             own_role_ids = [role.id for role in g.user.roles]
-#             if self.r.v_col.can():
-#                 q = q.filter(or_(
-#                     db.Role.id.in_(own_role_ids),
-#                     db.Role.organization_id.is_(None),
-#                     db.Role.organization_id.in_(
-#                         [
-#                             org.id
-#                             for col in self.obtain_auth_collaborations()
-#                             for org in col.organizations
-#                         ]
-#                     )
-#                 ))
-#             elif self.r.v_org.can():
-#                 # allow user to view all roles of their organization and any
-#                 # other roles they may have themselves, or default roles from
-#                 # the root organization
-#                 q = q.filter(or_(
-#                         db.Role.organization_id == auth_org.id,
-#                         db.Role.id.in_(own_role_ids),
-#                         db.Role.organization_id.is_(None)
-#                     ))
-#             else:
-#                 # allow users without permission to view only their own roles
-#                 q = q.filter(db.Role.id.in_(own_role_ids))
-#
-#         # paginate results
-#         try:
-#             page = Pagination.from_query(q, request, db.Role)
-#         except (ValueError, AttributeError) as e:
-#             return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
-#
-#         return self.response(page, role_schema)
-#
+
+
+class RoleBase(ServicesResources):
+
+    def __init__(self, socketio, mail, api, permissions, config):
+        super().__init__(socketio, mail, api, permissions, config)
+        self.r: RuleCollection = getattr(self.permissions, module_name)
+
+
+class Roles(RoleBase):
+
+    @with_permission(module_name, Operation.VIEW)
+    def get(self):
+        """Returns a list of roles
+        ---
+
+        description: >-
+            Returns a list of roles. Depending on your permission, you get all
+            the roles at the server or only the roles that belong to your
+            organization.\n
+
+            ### Permission Table\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+            Description|\n
+            |--|--|--|--|--|--|\n
+            |Role|Global|View|❌|❌|View all roles|\n
+            |Role|Collaboration|View|❌|❌|View all roles in your
+            collaborations|\n
+            |Role|Organization|View|❌|❌|View roles that are part of your
+            organization|\n
+
+            Accesible to users.
+
+        parameters:
+            - in: query
+              name: name
+              schema:
+                type: string
+              description: >-
+                Name to match with a LIKE operator. \n
+                * The percent sign (%) represents zero, one, or multiple
+                characters\n
+                * underscore sign (_) represents one, single character
+            - in: query
+              name: description
+              schema:
+                type: string
+              description: >-
+                Description to match with a LIKE operator. \n
+                * The percent sign (%) represents zero, one, or multiple
+                characters\n
+                * underscore sign (_) represents one, single character
+            - in: query
+              name: organization_id
+              schema:
+                type: array
+                items:
+                  type: integer
+                  description: Organization id of which you want to get roles
+            - in: query
+              name: collaboration_id
+              schema:
+              type: integer
+              description: Collaboration id
+            - in: query
+              name: rule_id
+              schema:
+                type: integer
+              description: Get roles that this role id is part of
+            - in: query
+              name: user_id
+              schema:
+                type: integer
+              description: Get roles for this user id
+            - in: query
+              name: include_root
+              schema:
+                 type: boolean
+              description: Whether or not to include root role (default=False)
+            - in: query
+              name: page
+              schema:
+                type: integer
+              description: Page number for pagination (default=1)
+            - in: query
+              name: per_page
+              schema:
+                type: integer
+              description: Number of items per page (default=10)
+            - in: query
+              name: sort
+              schema:
+                type: string
+              description: >-
+                Sort by one or more fields, separated by a comma. Use a minus
+                sign (-) in front of the field to sort in descending order.
+
+        responses:
+          200:
+            description: Ok
+          401:
+            description: Unauthorized
+          400:
+            description: Improper values for pagination or sorting parameters
+
+        security:
+            - bearerAuth: []
+
+        tags: ["Role"]
+        """
+        q = g.session.query(db.Role)
+
+        args = request.args
+
+        # filter by one or more names or descriptions
+        for param in ['name', 'description']:
+            filters = args.getlist(param)
+            if filters:
+                q = q.filter(or_(*[
+                    getattr(db.Role, param).like(f) for f in filters
+                ]))
+
+        if 'user_id' in args:
+            user = db.User.get(args['user_id'])
+            if not user:
+                return {'msg': f'User with id={args["user_id"]} does not '
+                        'exist!'}, HTTPStatus.BAD_REQUEST
+
+            q = q.join(db.Permission).join(db.User)\
+                 .filter(db.User.id == args['user_id'])
+
+        # paginate results
+        try:
+            page = Pagination.from_query(q, request, db.Role)
+        except (ValueError, AttributeError) as e:
+            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
+
+        return self.response(page, role_schema)
+
 #     @with_user
 #     def post(self):
 #         """Creates a new role.

@@ -1,3 +1,5 @@
+import logging
+
 from marshmallow import fields
 from flask import url_for
 
@@ -111,7 +113,7 @@ class Vantage6ServerOutputSchema(HATEOASModelSchema):
 class RoleOutputSchema(HATEOASModelSchema):
 
     rules = fields.Function(lambda obj: create_one_to_many_link(
-        obj, link_to='rule', link_from='role_id'
+        obj, link_to='rule', link_from='role'
     ))
 
     class Meta:
@@ -124,7 +126,7 @@ class RuleOutputSchema(HATEOASModelSchema):
         exclude = ('roles',)
 
 
-class UserSchema(HATEOASModelSchema):
+class UserOutputSchema(HATEOASModelSchema):
 
     class Meta:
         model = User
@@ -132,9 +134,9 @@ class UserSchema(HATEOASModelSchema):
     roles = fields.Function(lambda obj: create_one_to_many_link(
         obj, link_to='role', link_from='user_id'
     ))
-    rules = fields.Function(lambda obj: create_one_to_many_link(
-        obj, link_to='rule', link_from='user_id'
-    ))
+    # rules = fields.Function(lambda obj: create_one_to_many_link(
+    #     obj, link_to='rule', link_from='user'
+    # ))
     algorithm = fields.Function(lambda obj: create_one_to_many_link(
         obj, link_to='algorithm', link_from='user_id'
     ))
@@ -146,7 +148,7 @@ class Review(HATEOASModelSchema):
         model = Review
 
     reviewers = fields.Function(lambda obj: create_one_to_many_link(
-        obj, link_to='user_id', link_from='review'
+        obj, link_to='user', link_from='review'
     ))
 
 

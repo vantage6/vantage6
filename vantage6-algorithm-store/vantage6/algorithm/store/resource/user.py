@@ -1,28 +1,27 @@
 # -*- coding: utf-8 -*-
 import logging
-import sqlalchemy.exc
 
 from http import HTTPStatus
 from flask import g, request
 from flask_restful import Api
 
+from vantage6.algorithm.store.model.rule import Operation
+from vantage6.algorithm.store.resource import with_permission
 from vantage6.common import logger_name
 from vantage6.algorithm.store import db
 from vantage6.algorithm.store.permission import (
     Operation as P,
-    PermissionManager,
-    RuleCollection
+    PermissionManager
 )
-# from vantage6.algorithm.store.resource import (
-#     get_org_ids_from_collabs,
-#     with_user,
-#     ServicesResources
-# )
+from vantage6.algorithm.store.model.user import User as db_User
+
 from vantage6.algorithm.store.resource.schema.input_schema import UserInputSchema
 from vantage6.algorithm.store.resource.schema.output_schema import (
-    UserSchema
+    UserOutputSchema
 )
+from vantage6.server.resource import ServicesResources, BaseServicesResources
 
+from vantage6.server.resource.common.pagination import Pagination
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -43,24 +42,23 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     """
 
     pass
-#     path = "/".join([api_base, module_name])
-#     log.info(f'Setting up "{path}" and subdirectories')
-#
-#     api.add_resource(
-#         Users,
-#         path,
-#         endpoint='user_without_id',
-#         methods=('GET', 'POST'),
-#         resource_class_kwargs=services
-#     )
-#     api.add_resource(
-#         User,
-#         path + '/<int:id>',
-#         endpoint='user_with_id',
-#         methods=('GET', 'PATCH', 'DELETE'),
-#         resource_class_kwargs=services
-#     )
+    path = "/".join([api_base, module_name])
+    log.info(f'Setting up "{path}" and subdirectories')
 
+    api.add_resource(
+        Users,
+        path,
+        endpoint='user_without_id',
+        methods=('GET', 'POST'),
+        resource_class_kwargs=services
+    )
+    # api.add_resource(
+    #     User,
+    #     path + '/<int:id>',
+    #     endpoint='user_with_id',
+    #     methods=('GET', 'PATCH', 'DELETE'),
+    #     resource_class_kwargs=services
+    # )
 
 # ------------------------------------------------------------------------------
 # Permissions
@@ -89,215 +87,151 @@ def permissions(permissions: PermissionManager) -> None:
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-# user_schema = UserSchema()
-# user_input_schema = UserInputSchema()
+user_output_schema = UserOutputSchema()
+user_input_schema = UserInputSchema()
 # user_schema_with_permissions = UserWithPermissionDetailsSchema()
-#
-# class UserBase(ServicesResources):
-#
-#     def __init__(self, socketio, mail, api, permissions, config):
-#         super().__init__(socketio, mail, api, permissions, config)
-#         self.r: RuleCollection = getattr(self.permissions, module_name)
-#
-#
-# class Users(UserBase):
-#
-#     @with_user
-#     def get(self):
-#         """List users
-#         ---
-#         description: >-
-#             Returns a list of users that you are allowed to see.
-#
-#             ### Permission Table\n
-#             |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-#             Description|\n
-#             |--|--|--|--|--|--|\n
-#             |User|Global|View|❌|❌|View any user details|\n
-#             |User|Collaboration|View|❌|❌|View user details from your
-#             collaborations|\n
-#             |User|Organization|View|❌|❌|View users from your organization|\n
-#
-#             Accessible to users.
-#
-#         parameters:
-#           - in: query
-#             name: username
-#             schema:
-#               type: string
-#             description: >-
-#               Name to match with a LIKE operator. \n
-#               * The percent sign (%) represents zero, one, or multiple
-#               characters\n
-#               * underscore sign (_) represents one, single character
-#           - in: query
-#             name: organization_id
-#             schema:
-#               type: integer
-#             description: Organization id
-#           - in: query
-#             name: collaboration_id
-#             schema:
-#               type: integer
-#             description: Collaboration id
-#           - in: query
-#             name: firstname
-#             schema:
-#               type: string
-#             description: >-
-#               Name to match with a LIKE operator. \n
-#               * The percent sign (%) represents zero, one, or multiple
-#               characters\n
-#               * underscore sign (_) represents one, single character
-#           - in: query
-#             name: lastname
-#             schema:
-#               type: string
-#             description: >-
-#               Name to match with a LIKE operator. \n
-#               * The percent sign (%) represents zero, one, or multiple
-#               characters\n
-#               * underscore sign (_) represents one, single character
-#           - in: query
-#             name: email
-#             schema:
-#               type: string
-#             description: >-
-#               Email to match with a LIKE operator. \n
-#               * The percent sign (%) represents zero, one, or multiple
-#               characters\n
-#               * underscore sign (_) represents one, single character
-#           - in: query
-#             name: role_id
-#             schema:
-#               type: integer
-#             description: Role that is assigned to user
-#           - in: query
-#             name: rule_id
-#             schema:
-#               type: integer
-#             description: Rule that is assigned to user
-#           - in: query
-#             name: last_seen_from
-#             schema:
-#               type: date (yyyy-mm-dd)
-#             description: Show only users seen since this date
-#           - in: query
-#             name: last_seen_till
-#             schema:
-#               type: date (yyyy-mm-dd)
-#             description: Show only users last seen before this date
-#           - in: query
-#             name: page
-#             schema:
-#               type: integer
-#             description: Page number for pagination (default=1)
-#           - in: query
-#             name: per_page
-#             schema:
-#               type: integer
-#             description: Number of items per page (default=10)
-#           - in: query
-#             name: sort
-#             schema:
-#               type: string
-#             description: >-
-#               Sort by one or more fields, separated by a comma. Use a minus
-#               sign (-) in front of the field to sort in descending order.
-#
-#         responses:
-#           200:
-#             description: Ok
-#           401:
-#             description: Unauthorized
-#           400:
-#             description: Invalid values provided for request parameters
-#
-#         security:
-#             - bearerAuth: []
-#
-#         tags: ["User"]
-#         """
-#         args = request.args
-#         q = g.session.query(db.User)
-#
-#         # filter by any field of this endpoint
-#         for param in ['username', 'firstname', 'lastname', 'email']:
-#             if param in args:
-#                 q = q.filter(getattr(db.User, param).like(args[param]))
-#         if 'organization_id' in args:
-#             if not self.r.can_for_org(P.VIEW, args['organization_id']):
-#                 return {
-#                     'msg': 'You lack the permission view users from the '
-#                     f'organization with id {args["organization_id"]}!'
-#                 }, HTTPStatus.UNAUTHORIZED
-#             q = q.filter(db.User.organization_id == args['organization_id'])
-#         if 'last_seen_till' in args:
-#             q = q.filter(db.User.last_seen <= args['last_seen_till'])
-#         if 'last_seen_from' in args:
-#             q = q.filter(db.User.last_seen >= args['last_seen_from'])
-#
-#         # find users with a particulare role or rule assigned
-#         if 'role_id' in args:
-#             role = db.Role.get(args['role_id'])
-#             if not role:
-#                 return {
-#                     'msg': f'Role with id={args["role_id"]} does not exist!'
-#                 }, HTTPStatus.BAD_REQUEST
-#             # note: We check if role has organization to ensure that users
-#             # with limited permissions can still see who have default roles
-#             elif not self.r.can_for_org(P.VIEW, role.organization_id) and \
-#                     role.organization:
-#                 return {
-#                     'msg': 'You lack the permission view users from the '
-#                     f'organization that role with id={role.organization_id} '
-#                     'belongs to!'
-#                 }, HTTPStatus.UNAUTHORIZED
-#             q = q.join(db.Permission).join(db.Role)\
-#                  .filter(db.Role.id == args['role_id'])
-#
-#         if 'rule_id' in args:
-#             rule = db.Rule.query.get(args['rule_id'])
-#             if not rule:
-#                 return {
-#                     'msg': f'Rule with id={args["rule_id"]} does not exist!'
-#                 }, HTTPStatus.BAD_REQUEST
-#             q = q.join(db.UserPermission).join(db.Rule)\
-#                  .filter(db.Rule.id == args['rule_id'])
-#
-#         if 'collaboration_id' in args:
-#             if not self.r.can_for_col(P.VIEW, args['collaboration_id']):
-#                 return {
-#                     'msg': 'You lack the permission view all users from '
-#                     f'collaboration {args["collaboration_id"]}!'
-#                 }, HTTPStatus.UNAUTHORIZED
-#             q = q.filter(db.User.organization_id.in_(
-#                 get_org_ids_from_collabs(g.user, args['collaboration_id'])
-#             ))
-#
-#         # check permissions and apply filter if neccessary
-#         if not self.r.v_glo.can():
-#             if self.r.v_col.can():
-#                 q = q.filter(db.User.organization_id.in_(
-#                     [org.id
-#                      for col in g.user.organization.collaborations
-#                      for org in col.organizations]
-#                 ))
-#             elif self.r.v_org.can():
-#                 q = q.filter(db.User.organization_id == g.user.organization_id)
-#             else:
-#                 return {'msg': 'You lack the permission to do that!'}, \
-#                     HTTPStatus.UNAUTHORIZED
-#
-#         # paginate results
-#         try:
-#             page = Pagination.from_query(q, request, db.User)
-#         except (ValueError, AttributeError) as e:
-#             return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
-#
-#         # model serialization
-#         return self.response(page, user_schema)
-#
+
+
+class Users(BaseServicesResources):
+
+    @with_permission(module_name, Operation.VIEW)
+    def get(self):
+        """List users
+        ---
+        description: >-
+            Returns a list of users that you are allowed to see.
+
+            ### Permission Table\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+            Description|\n
+            |--|--|--|--|--|--|\n
+            |User|Global|View|❌|❌|View any user details|\n
+            |User|Collaboration|View|❌|❌|View user details from your
+            collaborations|\n
+            |User|Organization|View|❌|❌|View users from your organization|\n
+
+            Accessible to users.
+
+        parameters:
+          - in: query
+            name: username
+            schema:
+              type: string
+            description: >-
+              Name to match with a LIKE operator. \n
+              * The percent sign (%) represents zero, one, or multiple
+              characters\n
+              * underscore sign (_) represents one, single character
+          - in: query
+            name: organization_id
+            schema:
+              type: integer
+            description: Organization id
+          - in: query
+            name: collaboration_id
+            schema:
+              type: integer
+            description: Collaboration id
+          - in: query
+            name: firstname
+            schema:
+              type: string
+            description: >-
+              Name to match with a LIKE operator. \n
+              * The percent sign (%) represents zero, one, or multiple
+              characters\n
+              * underscore sign (_) represents one, single character
+          - in: query
+            name: lastname
+            schema:
+              type: string
+            description: >-
+              Name to match with a LIKE operator. \n
+              * The percent sign (%) represents zero, one, or multiple
+              characters\n
+              * underscore sign (_) represents one, single character
+          - in: query
+            name: email
+            schema:
+              type: string
+            description: >-
+              Email to match with a LIKE operator. \n
+              * The percent sign (%) represents zero, one, or multiple
+              characters\n
+              * underscore sign (_) represents one, single character
+          - in: query
+            name: role_id
+            schema:
+              type: integer
+            description: Role that is assigned to user
+          - in: query
+            name: rule_id
+            schema:
+              type: integer
+            description: Rule that is assigned to user
+          - in: query
+            name: last_seen_from
+            schema:
+              type: date (yyyy-mm-dd)
+            description: Show only users seen since this date
+          - in: query
+            name: last_seen_till
+            schema:
+              type: date (yyyy-mm-dd)
+            description: Show only users last seen before this date
+          - in: query
+            name: page
+            schema:
+              type: integer
+            description: Page number for pagination (default=1)
+          - in: query
+            name: per_page
+            schema:
+              type: integer
+            description: Number of items per page (default=10)
+          - in: query
+            name: sort
+            schema:
+              type: string
+            description: >-
+              Sort by one or more fields, separated by a comma. Use a minus
+              sign (-) in front of the field to sort in descending order.
+
+        responses:
+          200:
+            description: Ok
+          401:
+            description: Unauthorized
+          400:
+            description: Invalid values provided for request parameters
+
+        security:
+            - bearerAuth: []
+
+        tags: ["User"]
+        """
+        args = request.args
+        q = g.session.query(db_User)
+
+        # filter by any field of this endpoint
+        for param in ['username', 'id_server']:
+            if param in args:
+                q = q.filter(getattr(db.User, param).like(args[param]))
+
+        # find users with a particular role
+        if 'role_id' in args:
+            role = db.Role.get(args['role_id'])
+            if not role:
+                return {
+                    'msg': f'Role with id={args["role_id"]} does not exist!'
+                }, HTTPStatus.BAD_REQUEST
+
+            q = q.join(db.Permission).join(db.Role)\
+                 .filter(db.Role.id == args['role_id'])
+
+        page = Pagination.from_query(q, request, db.User)
+        return self.response(page, user_output_schema)
+
 #     @with_user
 #     def post(self):
 #         """Create user
