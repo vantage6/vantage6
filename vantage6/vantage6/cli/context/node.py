@@ -61,7 +61,7 @@ class NodeContext(AppContext):
             Node context object
         """
         return super().from_external_config_file(
-            os.path.abspath(path), InstanceType.NODE, system_folders
+            Path(path).resolve(), InstanceType.NODE, system_folders
         )
 
     @classmethod
