@@ -3,7 +3,9 @@ export enum ArgumentType {
   Integer = 'int',
   Float = 'float',
   Json = 'json',
-  Column = 'column'
+  Column = 'column',
+  Organization = 'organization',
+  OrganizationList = 'organizations'
 }
 
 export enum OutputType {

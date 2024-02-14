@@ -302,6 +302,14 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isLoadingColumns = false;
   }
 
+  shouldShowParameterSimpleInput(argument: Argument): boolean {
+    return !this.shouldShowColumnDropdown(argument) && !this.shouldShowOrganizationDropdown(argument);
+  }
+
+  shouldShowOrganizationDropdown(argument: Argument): boolean {
+    return argument.type === this.argumentType.Organization || argument.type === this.argumentType.OrganizationList;
+  }
+
   shouldShowColumnDropdown(argument: Argument): boolean {
     return argument.type === this.argumentType.Column && (this.columns.length > 0 || this.isLoadingColumns);
   }
