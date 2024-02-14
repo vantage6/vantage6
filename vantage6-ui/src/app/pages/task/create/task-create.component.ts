@@ -17,6 +17,8 @@ import { NodeService } from 'src/app/services/node.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
 import { MatStepper } from '@angular/material/stepper';
+import { SnackbarService } from 'src/app/services/snackbar.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-task-create',
@@ -74,7 +76,9 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     private taskService: TaskService,
     private nodeService: NodeService,
     public chosenCollaborationService: ChosenCollaborationService,
-    private socketioConnectService: SocketioConnectService
+    private socketioConnectService: SocketioConnectService,
+    private snackBarService: SnackbarService,
+    private translateService: TranslateService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -421,6 +425,29 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     // if no node is selected or the selected node is offline, try to get an online node
     if (!this.node || this.node.status === NodeStatus.Offline) {
       this.node = await this.getOnlineNode();
+    }
+    if (this.node && nodeStatusUpdate.online) {
+      // Our selected node just came online, and we need to refresh which
+      // databases are available. These are obtained from the configuration that
+      // the node shares with the server after coming online. So we need to wait
+      // a bit and then refresh the node to get the node configuration
+      let attempts = 0;
+      const maxAttempts = 3;
+      const secondsBetweenAttempts = 4;
+      let success = false;
+      while (attempts < maxAttempts) {
+        await new Promise((f) => setTimeout(f, secondsBetweenAttempts * 1000));
+        this.node = await this.getOnlineNode();
+        if (this.node && this.node.config.length > 1000) {
+          // stop if we have configuration info
+          success = true;
+          break;
+        }
+        attempts++;
+      }
+      if (!success) {
+        this.snackBarService.showMessage(this.translateService.instant('task-create.step-database.error-db-update'));
+      }
     }
   }
 }

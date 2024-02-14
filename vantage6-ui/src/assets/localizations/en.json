@@ -83,7 +83,8 @@
         "database": "Select the database(s) you want to use. The options in the dropdown represent the database labels defined in the node configuration file.",
         "query": "This database is a {{dbType}} database. Provide a query to select the data",
         "worksheet": "This database is an Excel file. Provide the name of the worksheet to use"
-      }
+      },
+      "error-db-update": "Could not retrieve node configuration. The database step will not be available. Please try again later."
     },
     "step-preprocessing": {
       "title": "Extend data",
