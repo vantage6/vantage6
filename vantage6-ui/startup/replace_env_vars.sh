@@ -10,3 +10,9 @@ if [ ! -z "${SERVER_URL}" ]; then
     SERVER_URL_NO_HTTP=`echo $SERVER_URL | sed 's/^http[s]*:\/\///g'`
 fi
 sed -i "s/<SERVER_URL>/$SERVER_URL_NO_HTTP/g" /etc/nginx/nginx.conf
+# also whitelist the allowed algorithm stores in the CSP header
+ALLOWED_ALGORITHM_STORES_NO_HTTP="*"
+if [ ! -z "${ALLOWED_ALGORITHM_STORES}" ]; then
+    ALLOWED_ALGORITHM_STORES_NO_HTTP=`echo $ALLOWED_ALGORITHM_STORES | sed 's/^http[s]*:\/\///g'`
+fi
+sed -i "s/<ALGORITHM_STORE_URLS>/$ALLOWED_ALGORITHM_STORES_NO_HTTP/g" /etc/nginx/nginx.conf
