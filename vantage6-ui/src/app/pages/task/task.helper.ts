@@ -24,13 +24,13 @@ export const addParameterFormControlsForFunction = (func: AlgorithmFunction, for
     if (argument.type === ArgumentType.String || argument.type === ArgumentType.Column) {
       form.addControl(argument.name, new FormControl(null, Validators.required));
     }
-    if (argument.type === ArgumentType.Integer) {
+    if (argument.type === ArgumentType.Integer || argument.type === ArgumentType.Organization) {
       form.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(integerRegex)]));
     }
     if (argument.type === ArgumentType.Float) {
       form.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(floatRegex)]));
     }
-    if (argument.type === ArgumentType.Json) {
+    if (argument.type === ArgumentType.Json || argument.type === ArgumentType.OrganizationList) {
       form.addControl(argument.name, new FormControl(null, [Validators.required, jsonValidator()]));
     }
   });

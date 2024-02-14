@@ -60,22 +60,9 @@
               <mat-form-field subscriptSizing="dynamic">
                 <mat-label>{{ "task-create.step-function.organization" | translate }}</mat-label>
                 <mat-select
-                  *ngIf="function.type === functionType.Central"
                   formControlName="organizationIDs"
                   [compareWith]="compareIDsForSelection"
-                >
-                  <mat-option
-                    *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
-                    [value]="organization.id"
-                  >
-                    {{ organization.name }}
-                  </mat-option>
-                </mat-select>
-                <mat-select
-                  *ngIf="function.type !== functionType.Central"
-                  formControlName="organizationIDs"
-                  [compareWith]="compareIDsForSelection"
-                  multiple
+                  [multiple]="function.type !== functionType.Central"
                 >
                   <mat-option
                     *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
@@ -145,7 +132,7 @@
         <mat-step *ngIf="shouldShowParameterStep" [stepControl]="parameterForm">
           <form class="form" [formGroup]="parameterForm">
             <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
-            <ng-container *ngIf="containsColumnArguments() && !isLoadingColumns; else loadingColumns">
+            <ng-container *ngIf="!containsColumnArguments() || !isLoadingColumns; else loadingColumns">
               <div class="field-description">{{ "task-create.step-parameters.description" | translate }}</div>
               <ng-container *ngFor="let argument of function?.arguments">
                 <b>{{ argument.description }}</b>
@@ -155,8 +142,21 @@
                   <mat-select *ngIf="shouldShowColumnDropdown(argument)" [formControlName]="argument.name">
                     <mat-option *ngFor="let column of columns" [value]="column">{{ column }}</mat-option>
                   </mat-select>
+                  <mat-select
+                    *ngIf="shouldShowOrganizationDropdown(argument)"
+                    [formControlName]="argument.name"
+                    [compareWith]="compareIDsForSelection"
+                    [multiple]="argument.type === argumentType.OrganizationList"
+                  >
+                    <mat-option
+                      *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
+                      [value]="organization.id"
+                    >
+                      {{ organization.name }}
+                    </mat-option>
+                  </mat-select>
                   <input
-                    *ngIf="!shouldShowColumnDropdown(argument)"
+                    *ngIf="shouldShowParameterSimpleInput(argument)"
                     matInput
                     appNumberOnly
                     [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
