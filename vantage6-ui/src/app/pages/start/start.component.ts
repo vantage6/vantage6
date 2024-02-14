@@ -14,6 +14,7 @@ import { PermissionService } from 'src/app/services/permission.service';
 export class StartComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
   collaborations: BaseCollaboration[] = [];
+  isLoading = true;
 
   constructor(
     private router: Router,
@@ -24,6 +25,7 @@ export class StartComponent implements OnInit {
 
   async ngOnInit() {
     await this.initData();
+    this.isLoading = false;
   }
 
   handleCollaborationClick(collaboration: BaseCollaboration) {
