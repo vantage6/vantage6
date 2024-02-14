@@ -71,3 +71,21 @@ If you don't enter environment variables, the UI points to
 Note that you can also use another UI image tag than `ui:latest`. For example,
 you can specify a version of the UI such as `ui:3.6.0`. Another option is
 to use the tag `ui:cotopaxi`, which defaults to the latest v4 version.
+
+#### Security settings
+
+Finally, there is also an environment variable `ALLOWED_ALGORITHM_STORES` that
+you can specify. If you do so, the appropriate
+[CSP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) will be
+set so that your UI can only access the vantage6 server and algorithm stores
+to collect data from. You define them same as other environment variables, with
+spaces in between each algorithm store you want to allow traffic from:
+
+```
+docker run --env ALLOWED_ALGORITHM_STORES="store.cotopaxi.vantage6.ai myotherstore.com" ...
+```
+
+Note that if you do *not* specify this environment variable, the CSP policy
+will be very lenient. In order for the UI to work properly, algorithm store
+resources should be obtained, so if no algorithm stores are provided, all
+URIs will be allowed.
