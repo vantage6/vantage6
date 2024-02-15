@@ -1,16 +1,18 @@
 from functools import wraps
+from pathlib import Path
 import click
 
 from vantage6.common import error
 from vantage6.common.globals import InstanceType
 from vantage6.cli.configuration_wizard import select_configuration_questionaire
-from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 from vantage6.cli.context import select_context_class, get_context
 
 
-# TODO to make this decorator usable by nodes as well, we should make the
-# default for --user/--system configurable
-def click_insert_context(type_: InstanceType) -> callable:
+def click_insert_context(
+    type_: InstanceType,
+    include_name: bool = False,
+    include_system_folders: bool = False,
+) -> callable:
     """
     Supply the Click function with an additional context parameter. The context
     is passed to the function as the first argument.
@@ -19,6 +21,10 @@ def click_insert_context(type_: InstanceType) -> callable:
     ----------
     type_ : InstanceType
         The type of instance for which the context should be inserted
+    include_name : bool
+        Include the name of the configuration as an argument
+    include_system_folders : bool
+        Include whether or not to use the system folders as an argument
 
     Returns
     -------
@@ -38,19 +44,19 @@ def click_insert_context(type_: InstanceType) -> callable:
             "-c",
             "--config",
             default=None,
-            help="Absolute path to " "configuration-file; overrides --name",
+            help="Path to configuration-file; overrides --name",
         )
         @click.option(
             "--system",
             "system_folders",
             flag_value=True,
-            help="Use system folders instead of user folders. This " "is the default",
+            help="Use system folders instead of user folders. This is the default",
         )
         @click.option(
             "--user",
             "system_folders",
             flag_value=False,
-            default=DEFAULT_SERVER_SYSTEM_FOLDERS,
+            default=False if type_ == InstanceType.NODE else True,
             help="Use user folders instead of system folders",
         )
         @wraps(func)
@@ -85,7 +91,14 @@ def click_insert_context(type_: InstanceType) -> callable:
                         exit(1)
 
                 ctx = get_context(type_, name, system_folders)
-            return func(ctx, *args, **kwargs)
+            extra_args = []
+            if include_name:
+                if not name:
+                    name = Path(config).stem
+                extra_args.append(name)
+            if include_system_folders:
+                extra_args.append(system_folders)
+            return func(ctx, *extra_args, *args, **kwargs)
 
         return decorator
 

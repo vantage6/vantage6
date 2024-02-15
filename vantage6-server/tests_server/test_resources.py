@@ -18,7 +18,8 @@ from vantage6.common.task_status import TaskStatus
 from vantage6.common.serialization import serialize
 from vantage6.common import bytes_to_base64s
 from vantage6.server.globals import PACKAGE_FOLDER
-from vantage6.server import ServerApp, session
+from vantage6.server import ServerApp
+from vantage6.backend.common import session
 from vantage6.server.model import (
     Rule,
     Role,

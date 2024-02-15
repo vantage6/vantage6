@@ -5,7 +5,7 @@
 # * harbor2.vantage6.ai/infrastructure/algorithm-store:x.x.x
 #
 ARG TAG=latest
-ARG BASE=4.1
+ARG BASE=4.3
 FROM harbor2.vantage6.ai/infrastructure/infrastructure-base:${BASE}
 
 LABEL version=${TAG}
@@ -26,7 +26,7 @@ COPY . /vantage6
 RUN pip install -e /vantage6/vantage6-common
 RUN pip install -e /vantage6/vantage6-client
 RUN pip install -e /vantage6/vantage6
-RUN pip install -e /vantage6/vantage6-server
+RUN pip install -e /vantage6/vantage6-backend-common
 RUN pip install -e /vantage6/vantage6-algorithm-store
 
 # Overwrite uWSGI installation from the requirements.txt

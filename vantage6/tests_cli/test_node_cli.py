@@ -11,6 +11,7 @@ from docker.errors import APIError
 
 from vantage6.cli.globals import APPNAME
 from vantage6.common import STRING_ENCODING
+from vantage6.cli.common.utils import print_log_worker
 from vantage6.cli.node.list import cli_node_list
 from vantage6.cli.node.new import cli_node_new_configuration
 from vantage6.cli.node.files import cli_node_files
@@ -19,7 +20,7 @@ from vantage6.cli.node.stop import cli_node_stop
 from vantage6.cli.node.attach import cli_node_attach
 from vantage6.cli.node.create_private_key import cli_node_create_private_key
 from vantage6.cli.node.clean import cli_node_clean
-from vantage6.cli.node.common import create_client_and_authenticate, print_log_worker
+from vantage6.cli.node.common import create_client_and_authenticate
 
 
 class NodeCLITest(unittest.TestCase):
@@ -207,7 +208,7 @@ class NodeCLITest(unittest.TestCase):
 
     @patch("docker.DockerClient.volumes")
     @patch("vantage6.cli.node.start.pull_if_newer")
-    @patch("vantage6.cli.node.start.NodeContext")
+    @patch("vantage6.cli.common.decorator.get_context")
     @patch("docker.DockerClient.containers")
     @patch("vantage6.cli.node.start.check_docker_running", return_value=True)
     def test_start(self, check_docker, client, context, pull, volumes):

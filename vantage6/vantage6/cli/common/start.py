@@ -13,7 +13,7 @@ from vantage6.common.context import AppContext
 from vantage6.common.globals import InstanceType, APPNAME, DEFAULT_DOCKER_REGISTRY
 from vantage6.common.docker.addons import check_docker_running, pull_if_newer
 from vantage6.cli.context import AlgorithmStoreContext, ServerContext
-from vantage6.cli.server.common import print_log_worker
+from vantage6.cli.common.utils import print_log_worker
 from vantage6.cli.utils import check_config_name_allowed
 from vantage6.cli.globals import ServerGlobals, AlgoStoreGlobals
 

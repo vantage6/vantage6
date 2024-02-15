@@ -1,11 +1,9 @@
-import sys
 from pathlib import Path
 from threading import Thread
 import time
 import os.path
 
 import click
-import questionary as q
 import docker
 
 from colorama import Fore, Style
@@ -24,35 +22,15 @@ from vantage6.common.docker.addons import (
     check_docker_running,
 )
 
+from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.context.node import NodeContext
-from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
-from vantage6.cli.configuration_wizard import (
-    configuration_wizard,
-    select_configuration_questionaire,
-)
+from vantage6.cli.common.utils import print_log_worker
+from vantage6.cli.node.common import create_client
 from vantage6.cli.utils import check_config_name_allowed
 from vantage6.cli import __version__
-from vantage6.cli.node.common import print_log_worker, create_client
 
 
 @click.command()
-@click.option("-n", "--name", default=None, help="Configuration name")
-@click.option(
-    "-c", "--config", default=None, help="Path to configuration-file; overrides NAME"
-)
-@click.option(
-    "--system",
-    "system_folders",
-    flag_value=True,
-    help="Search for the configuration in the system folders",
-)
-@click.option(
-    "--user",
-    "system_folders",
-    flag_value=False,
-    default=N_FOL,
-    help="Search for the configuration in the user folders. This is " "the default",
-)
 @click.option("-i", "--image", default=None, help="Node Docker image to use")
 @click.option(
     "--keep/--auto-remove",
@@ -75,9 +53,10 @@ from vantage6.cli.node.common import print_log_worker, create_client
     help="Override vantage6 source code in container with the source"
     " code in this path",
 )
+@click_insert_context(InstanceType.NODE, include_name=True, include_system_folders=True)
 def cli_node_start(
+    ctx: NodeContext,
     name: str,
-    config: str,
     system_folders: bool,
     image: str,
     keep: bool,
@@ -93,27 +72,6 @@ def cli_node_start(
     info("Finding Docker daemon")
     docker_client = docker.from_env()
     NodeContext.LOGGING_ENABLED = False
-    if config:
-        name = Path(config).stem
-        ctx = NodeContext(name, system_folders, config)
-
-    else:
-        # in case no name is supplied, ask the user to select one
-        if not name:
-            name = select_configuration_questionaire(InstanceType.NODE, system_folders)
-
-        # check that config exists, if not a questionaire will be invoked
-        if not NodeContext.config_exists(name, system_folders):
-            warning(f"Configuration {Fore.RED}{name}{Style.RESET_ALL} does not exist.")
-
-            if q.confirm("Create this configuration now?").ask():
-                configuration_wizard(InstanceType.NODE, name, system_folders)
-
-            else:
-                error("Config file couldn't be loaded")
-                sys.exit(0)
-
-        ctx = NodeContext(name, system_folders)
 
     # check if config name is allowed docker name, else exit
     check_config_name_allowed(ctx.name)

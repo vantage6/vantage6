@@ -14,7 +14,7 @@ from vantage6.algorithm.store.model.database import Database
 from vantage6.algorithm.store.model.function import Function
 from vantage6.algorithm.store.resource import with_permission
 # TODO move to common / refactor
-from vantage6.server.resource import AlgorithmStoreResources
+from vantage6.algorithm.store.resource import AlgorithmStoreResources
 from vantage6.algorithm.store.permission import (
     PermissionManager,
     Operation as P,

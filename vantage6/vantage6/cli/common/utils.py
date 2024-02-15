@@ -1,11 +1,12 @@
 import questionary as q
-import docker
-import click
-
 from colorama import Fore, Style
+import click
+from typing import Iterable
+import docker
+
 
 from vantage6.common import warning, error
-from vantage6.common.globals import APPNAME, InstanceType
+from vantage6.common.globals import APPNAME, InstanceType, STRING_ENCODING
 from vantage6.cli.context import select_context_class
 
 
@@ -114,3 +115,23 @@ def get_server_configuration_list(instance_type: InstanceType.SERVER) -> None:
     click.echo("-" * 85)
     if len(f1) + len(f2):
         warning(f"{Fore.RED}Failed imports: {len(f1)+len(f2)}{Style.RESET_ALL}")
+
+
+def print_log_worker(logs_stream: Iterable[bytes]) -> None:
+    """
+    Print the logs from the logs stream.
+
+    Parameters
+    ----------
+    logs_stream : Iterable[bytes]
+        Output of the container.attach() method
+    """
+    for log in logs_stream:
+        try:
+            print(log.decode(STRING_ENCODING), end="")
+        except UnicodeDecodeError:
+            print(
+                "ERROR DECODING LOGS!!! Printing raw bytes. Please check the logs in "
+                "the container."
+            )
+            print(log)

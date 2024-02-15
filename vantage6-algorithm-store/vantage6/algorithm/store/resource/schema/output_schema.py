@@ -3,6 +3,7 @@ import logging
 from marshmallow import fields
 from flask import url_for
 
+from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
 from vantage6.algorithm.store.model.algorithm import Algorithm
 from vantage6.algorithm.store.model.argument import Argument
 from vantage6.algorithm.store.model.database import Database
@@ -13,7 +14,6 @@ from vantage6.algorithm.store.model.rule import Rule
 from vantage6.algorithm.store.model.user import User
 from vantage6.algorithm.store.model.review import Review
 from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
-from vantage6.server.resource.common.output_schema import BaseHATEOASModelSchema
 
 
 def create_one_to_many_link(obj: Base, link_to: str, link_from: str) -> str:

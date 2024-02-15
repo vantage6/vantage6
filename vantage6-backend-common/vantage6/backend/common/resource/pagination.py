@@ -2,14 +2,15 @@ from __future__ import annotations
 
 import math
 import logging
+from urllib.parse import urlencode
 import flask
 import sqlalchemy
+from sqlalchemy.orm.decl_api import DeclarativeMeta
 
-from urllib.parse import urlencode
 
 from vantage6.common import logger_name
-from vantage6.server.globals import DEFAULT_PAGE, DEFAULT_PAGE_SIZE
-from vantage6.server import db
+from vantage6.backend.common.globals import DEFAULT_PAGE, DEFAULT_PAGE_SIZE
+
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -21,7 +22,7 @@ class Page:
 
     Parameters
     ----------
-    items : list[db.Base]
+    items : list[DeclarativeMeta]
         List of database resources on this page
     page : int
         Current page number
@@ -34,7 +35,7 @@ class Page:
     ----------
     current_page : int
         Current page number
-    items : list[db.Base]
+    items : list[DeclarativeMeta]
         List of resources on the current page
     previous_page : int
         Page number of the previous page
@@ -51,7 +52,7 @@ class Page:
     """
 
     def __init__(
-        self, items: list[db.Base], page: int, page_size: int, total: int
+        self, items: list[DeclarativeMeta], page: int, page_size: int, total: int
     ) -> None:
         self.current_page = page
         self.items = items
@@ -74,7 +75,7 @@ class Pagination:
 
     Parameters
     ----------
-    items : list[db.Base]
+    items : list[DeclarativeMeta]
         List of database resources to paginate
     page : int
         Current page number
@@ -95,7 +96,7 @@ class Pagination:
 
     def __init__(
         self,
-        items: list[db.Base],
+        items: list[DeclarativeMeta],
         page: int,
         page_size: int,
         total: int,
@@ -169,7 +170,7 @@ class Pagination:
         cls,
         query: sqlalchemy.orm.query,
         request: flask.Request,
-        resource_model: db.Base,
+        resource_model: DeclarativeMeta,
         paginate: bool = True,
     ) -> Pagination:
         """
@@ -181,7 +182,7 @@ class Pagination:
             Query to paginate
         request : flask.Request
             Request object
-        resource_model : db.Base
+        resource_model : DeclarativeMeta
             SQLAlchemy model of the resource whose endpoint is being called
         paginate : bool
             Whether to paginate the query or not, default True
@@ -277,7 +278,7 @@ class Pagination:
 
     @staticmethod
     def _add_sorting(
-        query: sqlalchemy.orm.query, sort_string: str, resource_model: db.Base
+        query: sqlalchemy.orm.query, sort_string: str, resource_model: DeclarativeMeta
     ) -> sqlalchemy.orm.query:
         """
         Add sorting to a query.
@@ -290,7 +291,7 @@ class Pagination:
             The sorting to add. This can be a comma separated list of fields to
             sort on. The fields can be prefixed with a '-' to indicate a
             descending sort.
-        resource_model : db.Base
+        resource_model : DeclarativeMeta
             SQLAlchemy model of the resource whose endpoint is being called
         """
         sort_list = sort_string.split(",")
