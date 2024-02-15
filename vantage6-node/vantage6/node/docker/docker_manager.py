@@ -138,7 +138,7 @@ class DockerManager(DockerBaseManager):
         self.failed_tasks: list[DockerTaskManager] = []
 
         # before a task is executed it gets exposed to these policies
-        self._policies = config.get("policies", {})
+        self._policies = self._setup_policies(config)
 
         # node name is used to identify algorithm containers belonging
         # to this node. This is required as multiple nodes may run at
@@ -228,6 +228,30 @@ class DockerManager(DockerBaseManager):
             device = docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])
             device_requests.append(device)
         self.algorithm_device_requests = device_requests
+
+    def _setup_policies(self, config: dict) -> dict:
+        """
+        Set up policies for the node.
+
+        Parameters
+        ----------
+        config: dict
+            Configuration dictionary
+
+        Returns
+        -------
+        dict
+            Dictionary with the policies
+        """
+        policies = config.get("policies", {})
+        if not policies or not policies.get("allowed_algorithms"):
+            self.log.warning(
+                "No policies on allowed algorithms have been set for this node!"
+            )
+            self.log.warning(
+                "This means that all algorithms are allowed to run on this node."
+            )
+        return policies
 
     def create_volume(self, volume_name: str) -> None:
         """

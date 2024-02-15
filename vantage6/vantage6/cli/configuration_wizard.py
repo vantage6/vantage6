@@ -96,6 +96,32 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
             default="10.76.0.0/16",
         ).ask()
 
+    is_policies = q.confirm(
+        "Do you want to add limit the algorithms allowed to run on your node? This "
+        "should always be done for production scenarios.",
+        default=True,
+    ).ask()
+    if is_policies:
+        allowed_algorithms = []
+        print("Below you can add algorithms that are allowed to run on your node.")
+        print("You can use regular expressions to match multiple algorithms.")
+        print("Examples:")
+        # pylint: disable=W1401
+        # flake8: noqa: W605
+        print("^harbor2\.vantage6\.ai/demo/average    Allow the demo average algorithm")
+        print(
+            "^harbor2\.vantage6\.ai/algorithms/.*   Allow all algorithms from "
+            "harbor2.vantage6.ai/algorithms"
+        )
+        while True:
+            algo = q.text(message="Enter your algorithm expression:").ask()
+            allowed_algorithms.append(algo)
+            if not q.confirm(
+                "Do you want to add another algorithm?", default=True
+            ).ask():
+                break
+        config["policies"] = {"allowed_algorithms": allowed_algorithms}
+
     config["logging"] = {
         "level": res,
         "use_console": True,
