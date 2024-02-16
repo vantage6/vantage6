@@ -6,7 +6,7 @@ from vantage6.common import generate_apikey
 from vantage6.common.globals import DATABASE_TYPES, InstanceType
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.context import AppContext
-from vantage6.common import error, warning
+from vantage6.common import error, warning, info
 from vantage6.cli.context import select_context_class
 from vantage6.cli.configuration_manager import (
     NodeConfigurationManager,
@@ -103,13 +103,13 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
     ).ask()
     if is_policies:
         allowed_algorithms = []
-        print("Below you can add algorithms that are allowed to run on your node.")
-        print("You can use regular expressions to match multiple algorithms.")
-        print("Examples:")
+        info("Below you can add algorithms that are allowed to run on your node.")
+        info("You can use regular expressions to match multiple algorithms.")
+        info("Examples:")
         # pylint: disable=W1401
         # flake8: noqa: W605
-        print("^harbor2\.vantage6\.ai/demo/average    Allow the demo average algorithm")
-        print(
+        info("^harbor2\.vantage6\.ai/demo/average    Allow the demo average algorithm")
+        info(
             "^harbor2\.vantage6\.ai/algorithms/.*   Allow all algorithms from "
             "harbor2.vantage6.ai/algorithms"
         )
