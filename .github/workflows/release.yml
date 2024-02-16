@@ -176,10 +176,6 @@ jobs:
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - # vpn images
-        name: Build Docker support images
-        run: make support-image TAG=$version
-
       - # we only release a new base image if it is a major or minor release
         name: Build Docker base image
         if: ${{ env.patch == 0 }}
@@ -254,6 +250,11 @@ jobs:
           docker pull harbor2.vantage6.ai/infrastructure/server:${version}
           docker pull harbor2.vantage6.ai/infrastructure/node:${version}
           docker pull harbor2.vantage6.ai/infrastructure/algorithm-store:${version}
+          docker pull harbor2.vantage6.ai/infrastructure/alpine:${version}
+          docker pull harbor2.vantage6.ai/infrastructure/vpn-client:${version}
+          docker pull harbor2.vantage6.ai/infrastructure/vpn-configurator:${version}
+          docker pull harbor2.vantage6.ai/infrastructure/ssh-tunnel:${version}
+          docker pull harbor2.vantage6.ai/infrastructure/squid:${version}
 
       - name: Tag docker images
         if: ${{  env.stage == ''  &&  env.major_name != '' }}
@@ -279,6 +280,28 @@ jobs:
           docker push harbor2.vantage6.ai/infrastructure/server:${major_name}-live
           docker push harbor2.vantage6.ai/infrastructure/node:${major_name}
           docker push harbor2.vantage6.ai/infrastructure/algorithm-store:${major_name}
+
+      - # Release matching support images for major.minor. This is released for any
+        # non-candidate release or if no non-candidate release has been made yet
+        # for the current minor version
+        name: Build latest minor version support images
+        if: ${{ env.stage == '' || env.patch == 0 }}
+        run: |
+          docker tag harbor2.vantage6.ai/infrastructure/alpine:${version} harbor2.vantage6.ai/infrastructure/alpine:${major}.${minor}
+          docker push harbor2.vantage6.ai/infrastructure/alpine:${major}.${minor}
+
+          docker tag harbor2.vantage6.ai/infrastructure/vpn-client:${version} harbor2.vantage6.ai/infrastructure/vpn-client:${major}.${minor}
+          docker push harbor2.vantage6.ai/infrastructure/vpn-client:${major}.${minor}
+
+          docker tag harbor2.vantage6.ai/infrastructure/vpn-configurator:${version} harbor2.vantage6.ai/infrastructure/vpn-configurator:${major}.${minor}
+          docker push harbor2.vantage6.ai/infrastructure/vpn-configurator:${major}.${minor}
+
+          docker tag harbor2.vantage6.ai/infrastructure/ssh-tunnel:${version} harbor2.vantage6.ai/infrastructure/ssh-tunnel:${major}.${minor}
+          docker push harbor2.vantage6.ai/infrastructure/ssh-tunnel:${major}.${minor}
+
+          docker tag harbor2.vantage6.ai/infrastructure/squid:${version} harbor2.vantage6.ai/infrastructure/squid:${major}.${minor}
+          docker push harbor2.vantage6.ai/infrastructure/squid:${major}.${minor}
+
 
   # Build an release all the vantage6 infrastructure packages. For all
   # the packages it will (1) update the version as specified in the tag,

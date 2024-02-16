@@ -25,6 +25,7 @@ from vantage6.node.globals import (
 )
 from vantage6.common.client.node_client import NodeClient
 from vantage6.node.docker.docker_base import DockerBaseManager
+from vantage6.node._version import major_minor
 
 
 class VPNManager(DockerBaseManager):
@@ -72,12 +73,20 @@ class VPNManager(DockerBaseManager):
         self.vpn_volume_name = vpn_volume_name
         self.client = node_client
         self.subnet = vpn_subnet
-        self.alpine_image = ALPINE_IMAGE if not alpine_image else alpine_image
+
+        # get the proper versions of the VPN images
+        self.alpine_image = (
+            f"{ALPINE_IMAGE}:{major_minor}" if not alpine_image else alpine_image
+        )
         self.vpn_client_image = (
-            VPN_CLIENT_IMAGE if not vpn_client_image else vpn_client_image
+            f"{VPN_CLIENT_IMAGE}:{major_minor}"
+            if not vpn_client_image
+            else vpn_client_image
         )
         self.network_config_image = (
-            NETWORK_CONFIG_IMAGE if not network_config_image else network_config_image
+            f"{NETWORK_CONFIG_IMAGE}:{major_minor}"
+            if not network_config_image
+            else network_config_image
         )
 
         self._update_images()

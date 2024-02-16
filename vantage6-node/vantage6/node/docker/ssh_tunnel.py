@@ -25,6 +25,7 @@ from vantage6.common.docker.addons import (
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.docker_manager import NetworkManager
 from vantage6.node.globals import SSH_TUNNEL_IMAGE, PACKAGE_FOLDER
+from vantage6.node._version import major_minor
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -141,7 +142,9 @@ class SSHTunnel(DockerBaseManager):
             raise KeyError(f"Invalid SSH tunnel configuration: {e}")
 
         # The image is overridable by the user configuration
-        self.image = tunnel_image if tunnel_image else SSH_TUNNEL_IMAGE
+        self.image = (
+            tunnel_image if tunnel_image else f"{SSH_TUNNEL_IMAGE}:{major_minor}"
+        )
         log.debug(f"SSH tunnel image: {self.image}")
 
         # Create the SSH configuration files
