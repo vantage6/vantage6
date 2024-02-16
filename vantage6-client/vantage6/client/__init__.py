@@ -19,6 +19,7 @@ from vantage6.common.client.utils import print_qr_code
 from vantage6.client.utils import LogLevel
 from vantage6.common.task_status import has_task_finished
 from vantage6.common.client.client_base import ClientBase
+from vantage6.client.subclients.algorithm_store import AlgorithmStoreSubClient
 
 
 module_name = __name__.split(".")[1]
@@ -55,6 +56,11 @@ class UserClient(ClientBase):
         self.role = self.Role(self)
         self.node = self.Node(self)
         self.rule = self.Rule(self)
+        self.algorithm_store = self.AlgorithmStore(self)
+
+        # set collaboration id to None
+        self.collaboration_id = None
+        self.current_collaboration = None
 
         # Display welcome message
         self.log.info(" Welcome to")
@@ -160,6 +166,28 @@ class UserClient(ClientBase):
         except Exception:
             self.log.info("--> Retrieving additional user info failed!")
             self.log.error(traceback.format_exc())
+
+    def setup_collaboration(self, collaboration_id: int) -> None:
+        """Setup the collaboration.
+
+        This gets the collaboration from the server and stores its details in
+        the client and sets the algorithm stores available for this collaboration.
+        When this has been called, other functions no longer require
+        the `collaboration_id` to be provided.
+
+        Parameters
+        ----------
+        collaboration_id : int
+            Id of the collaboration
+        """
+        self.collaboration_id = collaboration_id
+        self.log.info("Setting up collaboration %s", collaboration_id)
+        response = self.request(f"collaboration/{collaboration_id}")
+        if "msg" in response:
+            self.log.info("--> %s", response["msg"])
+            return
+        # set current collaboration
+        self.current_collaboration = response
 
     def wait_for_results(self, task_id: int, interval: float = 1) -> dict:
         """
@@ -554,7 +582,8 @@ class UserClient(ClientBase):
             organization: int, optional
                 Filter by organization id
             collaboration: int, optional
-                Filter by collaboration id
+                Filter by collaboration id. If no id is provided but collaboration was
+                defined earlier by user, filtering on that collaboration
             is_online: bool, optional
                 Filter on whether nodes are online or not
             ip: str, optional
@@ -574,6 +603,8 @@ class UserClient(ClientBase):
             list of dicts
                 Containing meta-data of the nodes
             """
+            if collaboration is None:
+                collaboration = self.parent.collaboration_id
             params = {
                 "page": page,
                 "per_page": per_page,
@@ -590,14 +621,15 @@ class UserClient(ClientBase):
 
         @post_filtering(iterable=False)
         def create(
-            self, collaboration: int, organization: int = None, name: str = None
+            self, collaboration: int = None, organization: int = None, name: str = None
         ) -> dict:
             """Register new node
 
             Parameters
             ----------
             collaboration : int
-                Collaboration id to which this node belongs
+                Collaboration id to which this node belongs. If no id provided the
+                collaboration that the user set up earlier is used.
             organization : int, optional
                 Organization id to which this node belongs. If no id provided
                 the users organization is used. Default value is None
@@ -610,6 +642,14 @@ class UserClient(ClientBase):
             dict
                 Containing the meta-data of the new node
             """
+            if collaboration is None:
+                collaboration = self.parent.collaboration_id
+                # if still none, raise error
+                if collaboration is None:
+                    raise ValueError(
+                        "No collaboration id provided, please set the "
+                        "collaboration id or use `client.setup_collaboration`"
+                    )
             if not organization:
                 organization = self.parent.whoami.organization_id
 
@@ -651,6 +691,8 @@ class UserClient(ClientBase):
             dict
                 Containing the meta-data of the updated node
             """
+            # note that we are explicitly NOT using the parent's collaboration_id
+            # here as usually people don't want to change a node's collaboration id
             return self.parent.request(
                 f"node/{id_}",
                 method="patch",
@@ -715,7 +757,8 @@ class UserClient(ClientBase):
             country: str, optional
                 Filter by country
             collaboration: int, optional
-                Filter by collaboration id
+                Filter by collaboration id. If client.setup_collaboration() was called,
+                the previously setup collaboration is used. Default value is None
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional
@@ -726,6 +769,8 @@ class UserClient(ClientBase):
             list[dict]
                 Containing meta-data information of the organizations
             """
+            if collaboration is None:
+                collaboration = self.parent.collaboration_id
             params = {
                 "page": page,
                 "per_page": per_page,
@@ -1264,7 +1309,8 @@ class UserClient(ClientBase):
             initiating_user: int, optional
                 Filter by initiating user
             collaboration: int, optional
-                Filter by collaboration
+                Filter by collaboration. If no id is provided but collaboration was
+                defined earlier by setup_collaboration(), filtering on that collaboration
             image: str, optional
                 Filter by Docker image name (with LIKE operator)
             parent: int, optional
@@ -1298,6 +1344,8 @@ class UserClient(ClientBase):
                 tasks and a key 'links' containing the pagination
                 metadata
             """
+            if collaboration is None:
+                collaboration = self.parent.collaboration_id
             # if the param is None, it will not be passed on to the
             # request
             params = {
@@ -1327,12 +1375,12 @@ class UserClient(ClientBase):
         @post_filtering(iterable=False)
         def create(
             self,
-            collaboration: int,
             organizations: list,
             name: str,
             image: str,
             description: str,
             input_: dict,
+            collaboration: int = None,
             databases: list[dict] = None,
         ) -> dict:
             """Create a new task
@@ -1340,7 +1388,9 @@ class UserClient(ClientBase):
             Parameters
             ----------
             collaboration : int
-                Id of the collaboration to which this task belongs
+                Id of the collaboration to which this task belongs. If collaboration
+                was defined earlier by setup_collaboration(), this collaboration
+                is used. Default value is None
             organizations : list
                 Organization ids (within the collaboration) which need
                 to execute this task
@@ -1365,6 +1415,14 @@ class UserClient(ClientBase):
                 from the server if the task could not be created
             """
             assert self.parent.cryptor, "Encryption has not yet been setup!"
+
+            if collaboration is None:
+                collaboration = self.parent.collaboration_id
+                if collaboration is None:
+                    raise ValueError(
+                        "No collaboration id provided, please set the "
+                        "collaboration id or use `client.setup_collaboration`"
+                    )
 
             if organizations is None:
                 raise ValueError(
@@ -1785,6 +1843,8 @@ class UserClient(ClientBase):
                 "role_id": role,
             }
             return self.parent.request("rule", params=params)
+
+    AlgorithmStore = AlgorithmStoreSubClient
 
 
 # Alias the UserClient to Client for easy usage for Python users

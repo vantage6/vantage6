@@ -598,6 +598,11 @@ class AlgorithmStore(AlgorithmStoreBase):
     @with_user
     def patch(self, id):
         """Update algorithm store record
+
+        Note that the algorithm store's URL cannot be changed, because it cannot be
+        checked if the new URL represents the same algorithm store as the old URL. In
+        such cases, please delete and re-add the algorithm store link.
+
         ---
         description: >-
           Updates the linked algorithm store with the specified id. Note that
@@ -630,9 +635,6 @@ class AlgorithmStore(AlgorithmStoreBase):
                   name:
                     type: string
                     description: Human readable label
-                  url:
-                    type: string
-                    description: URL to the algorithm store
                   collaboration_id:
                     type: integer
                     description: Collaboration id to which the algorithm store
@@ -678,20 +680,22 @@ class AlgorithmStore(AlgorithmStoreBase):
             }, HTTPStatus.UNAUTHORIZED
 
         # verify permissions - check permission for new collaboration (if
-        # specified)
+        # specified) AND the old one
         data = request.get_json()
         if "collaboration_id" in data:
             collaboration_id_new = data["collaboration_id"]
-            if not self.r_col.can_for_col(P.EDIT, collaboration_id_new):
+            if not self.r_col.can_for_col(
+                P.EDIT, collaboration_id_new
+            ) or not self.r_col.can_for_col(P.EDIT, collaboration_id_old):
                 return {
                     "msg": "You lack the permission to do that!"
                 }, HTTPStatus.UNAUTHORIZED
 
         # only update fields that are provided
-        fields = ["name", "url"]
-        for field in fields:
-            if field in data and data[field] is not None:
-                setattr(algorithm_store, field, data[field])
+        name = data.get("name")
+        if name is not None:
+            algorithm_store.name = name
+
         # update collaboration_id if specified - also if it is set to None (
         # that makes it available to all collaborations)
         if "collaboration_id" in data:
@@ -704,8 +708,6 @@ class AlgorithmStore(AlgorithmStoreBase):
             HTTPStatus.OK,
         )  # 200
 
-    # TODO this endpoint should also remove the server URL at the algorithm
-    # store (whitelisting it) if it is the last collaboration that uses it.
     @with_user
     def delete(self, id):
         """Delete linked algorithm store record
