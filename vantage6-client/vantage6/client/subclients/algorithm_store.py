@@ -5,6 +5,29 @@ from vantage6.common.client.client_base import ClientBase
 class AlgorithmStoreSubClient(ClientBase.SubClient):
     """Subclient for the algorithm store."""
 
+    def __init__(self, parent: ClientBase):
+        super().__init__(parent)
+        self.store_url = None
+
+    def set(self, id_: int) -> dict:
+        """ "
+        Set the algorithm store to use for the client.
+
+        Parameters
+        ----------
+        id_ : int
+            The id of the algorithm store.
+
+        Returns
+        -------
+        dict
+            The algorithm store.
+        """
+        store = self.get(id_)
+        if "url" in store:
+            self.store_url = store["url"]
+        return store
+
     @post_filtering(iterable=False)
     def get(self, id_: int) -> dict:
         """Get an algorithm store by its id.
@@ -110,7 +133,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
             "name": name,
             "collaboration_id": collaboration,
             "force": force,
-            "server_url": f"{self.parent.host}:{self.parent.port}{self.parent.path}",
+            "server_url": self.parent.base_path,
         }
         return self.parent.request("algorithmstore", method="post", json=data)
 
@@ -154,6 +177,6 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
             f"algorithmstore/{id_}",
             method="delete",
             params={
-                "server_url": f"{self.parent.host}:{self.parent.port}{self.parent.path}"
+                "server_url": self.parent.base_path,
             },
         )

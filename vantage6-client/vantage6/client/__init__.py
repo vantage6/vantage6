@@ -9,6 +9,7 @@ import sys
 import traceback
 
 from pathlib import Path
+from vantage6.client.subclients.algorithm import AlgorithmSubClient
 
 from vantage6.common.globals import APPNAME
 from vantage6.common.encryption import RSACryptor
@@ -56,7 +57,8 @@ class UserClient(ClientBase):
         self.role = self.Role(self)
         self.node = self.Node(self)
         self.rule = self.Rule(self)
-        self.algorithm_store = self.AlgorithmStore(self)
+        self.algorithm_store = AlgorithmStoreSubClient(self)
+        self.algorithm = AlgorithmSubClient(self)
 
         # set collaboration id to None
         self.collaboration_id = None
@@ -1843,8 +1845,6 @@ class UserClient(ClientBase):
                 "role_id": role,
             }
             return self.parent.request("rule", params=params)
-
-    AlgorithmStore = AlgorithmStoreSubClient
 
 
 # Alias the UserClient to Client for easy usage for Python users
