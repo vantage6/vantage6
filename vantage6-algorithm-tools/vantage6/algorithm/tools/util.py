@@ -52,6 +52,8 @@ def get_env_var(var_name: str, default: str | None = None) -> str:
     ----------
     var_name : str
         Name of the environment variable
+    default : str | None
+        Default value to return if the environment variable is not found
 
     Returns
     -------
