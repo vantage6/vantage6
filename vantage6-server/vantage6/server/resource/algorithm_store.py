@@ -148,7 +148,7 @@ class AlgorithmStoreBase(ServicesResources):
     @staticmethod
     def _contains_localhost(url: str) -> bool:
         """Check if the url refers to localhost address"""
-        return url.startswith("localhost") or url.startswith("127.0.0.1")
+        return url.startswith("http://localhost") or url.startswith("http://127.0.0.1")
 
     # TODO this function and above should be moved to some kind of client lib
     @staticmethod
@@ -190,8 +190,11 @@ class AlgorithmStoreBase(ServicesResources):
         if force:
             param_dict["force"] = True
 
-        # add server_url header
+        # set headers
         headers = {"server_url": server_url}
+        current_headers = request.headers
+        if "Authorization" in current_headers:
+            headers["Authorization"] = current_headers["Authorization"]
 
         params = None
         json = None

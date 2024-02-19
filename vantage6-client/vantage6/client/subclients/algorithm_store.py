@@ -109,11 +109,10 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
             "algorithm_store_url": algorithm_store_url,
             "name": name,
             "collaboration_id": collaboration,
-            "all_collaborations": all_collaborations,
             "force": force,
-            "server_url": f"{self.parent.host}/{self.parent.path}",
+            "server_url": f"{self.parent.host}:{self.parent.port}{self.parent.path}",
         }
-        return self.parent.request("algorithmstore", method="post", data=data)
+        return self.parent.request("algorithmstore", method="post", json=data)
 
     def update(
         self,
@@ -141,7 +140,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         }
         if collaboration is not None or all_collaborations:
             data["collaboration_id"] = collaboration
-        return self.parent.request(f"algorithmstore/{id_}", method="patch", data=data)
+        return self.parent.request(f"algorithmstore/{id_}", method="patch", json=data)
 
     def delete(self, id_: int):
         """Delete an algorithm store.
@@ -151,4 +150,10 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         id_ : int
             The id of the algorithm store.
         """
-        return self.parent.request(f"algorithmstore/{id_}", method="delete")
+        return self.parent.request(
+            f"algorithmstore/{id_}",
+            method="delete",
+            params={
+                "server_url": f"{self.parent.host}:{self.parent.port}{self.parent.path}"
+            },
+        )
