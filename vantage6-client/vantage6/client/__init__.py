@@ -624,13 +624,7 @@ class UserClient(ClientBase):
             )
 
         @post_filtering(iterable=False)
-        def update(
-            self,
-            id_: int,
-            name: str = None,
-            organization: int = None,
-            collaboration: int = None,
-        ) -> dict:
+        def update(self, id_: int, name: str = None, clear_ip: bool = None) -> dict:
             """Update node information
 
             Parameters
@@ -639,26 +633,23 @@ class UserClient(ClientBase):
                 Id of the node you want to update
             name : str, optional
                 New node name, by default None
-            organization : int, optional
-                Change the owning organization of the node, by default
-                None
-            collaboration : int, optional
-                Changes the collaboration to which the node belongs, by
-                default None
+            clear_ip : bool, optional
+                Clear the VPN IP address of the node, by default None
 
             Returns
             -------
             dict
                 Containing the meta-data of the updated node
             """
+            data = {
+                "name": name,
+            }
+            if clear_ip is not None:
+                data["clear_ip"] = clear_ip
             return self.parent.request(
                 f"node/{id_}",
                 method="patch",
-                json={
-                    "name": name,
-                    "organization_id": organization,
-                    "collaboration_id": collaboration,
-                },
+                json=data,
             )
 
         def delete(self, id_: int) -> dict:

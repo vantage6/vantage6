@@ -571,12 +571,6 @@ class Node(NodeBase):
             application/json:
               schema:
                 properties:
-                  collaboration_id:
-                    type: integer
-                    description: Collaboration id
-                  organization_id:
-                    type: integer
-                    description: Organization id
                   name:
                     type: string
                     description: Node name
@@ -629,51 +623,6 @@ class Node(NodeBase):
                     "msg": f"Node name '{name}' already exists!"
                 }, HTTPStatus.BAD_REQUEST
             node.name = name
-
-        # organization goes before collaboration (!)
-        org_id = data.get("organization_id")
-        updated_org = org_id and org_id != node.organization.id
-        if updated_org:
-            if not self.r.e_glo.can():
-                return {
-                    "msg": "You lack the permission to do that!"
-                }, HTTPStatus.UNAUTHORIZED
-            organization = db.Organization.get(data["organization_id"])
-            if not organization:
-                return {
-                    "msg": f'Organization id={data["organization_id"]} ' "not found!"
-                }, HTTPStatus.NOT_FOUND
-            node.organization = organization
-
-        auth = self.obtain_auth()
-        col_id = data.get("collaboration_id")
-        updated_col = col_id and col_id != node.collaboration.id
-        if updated_col:
-            collaboration = db.Collaboration.get(col_id)
-            if not collaboration:
-                return {
-                    "msg": f"collaboration id={col_id} not found!"
-                }, HTTPStatus.NOT_FOUND
-
-            if not self.r.e_glo.can():
-                if auth.organization not in collaboration.organizations:
-                    return {
-                        "msg": f"Organization id={auth.organization.id} "
-                        "of this node is not part of this collaboration id"
-                        f"={collaboration.id}"
-                    }
-
-            node.collaboration = collaboration
-
-        # validate that node does not already exist when we change either
-        # the organization and/or collaboration
-        if updated_org or updated_col:
-            if db.Node.exists_by_id(node.organization.id, node.collaboration.id):
-                return {
-                    "msg": "A node with organization id="
-                    f"{node.organization.id} and collaboration id="
-                    f"{node.collaboration.id} already exists!"
-                }, HTTPStatus.BAD_REQUEST
 
         # update node IP address if it is given
         ip = data.get("ip")
