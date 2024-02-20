@@ -47,6 +47,7 @@ extensions = [
     "sphinx_autodoc_typehints",
     "sphinx.ext.intersphinx",
     "sphinx_click.ext",
+    "sphinxcontrib.plantuml",
 ]
 
 # napoleon_use_rtype = False
@@ -95,3 +96,8 @@ add_module_names = False
 pygments_style = None
 
 numfig = True
+
+# -- PlantUML configuration ---------------------------------------------------
+plantuml_output_format = "svg_img"
+local_plantuml_path = os.path.join(os.path.dirname(__file__), "java", "plantuml.jar")
+plantuml = f"java -jar {local_plantuml_path}"
