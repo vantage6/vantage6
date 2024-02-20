@@ -41,7 +41,16 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
       this.isAdministration = event.url.startsWith(routePaths.adminHome);
 
       this.hideMenu = route.snapshot.data?.['hideMenu'] || false;
-      this.setNavigationLinks();
+
+      // ensure permissions are initialized before setting navigation links
+      this.permissionService
+        .isInitialized()
+        .pipe(takeUntil(this.destroy$))
+        .subscribe((initialized) => {
+          if (initialized) {
+            this.setNavigationLinks();
+          }
+        });
     });
   }
 
@@ -112,9 +121,9 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
         newLinks.push({ route: routePaths.tasks, label: 'Tasks', icon: 'science' });
       }
       //Template tasks
-      if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.CREATE)) {
-        newLinks.push({ route: routePaths.templateTaskCreate, label: 'Quick tasks', icon: 'assignment' });
-      }
+      // if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.CREATE)) {
+      //   newLinks.push({ route: routePaths.templateTaskCreate, label: 'Quick tasks', icon: 'assignment' });
+      // }
     }
 
     this.navigationLinks = newLinks;

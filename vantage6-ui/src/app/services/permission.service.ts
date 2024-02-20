@@ -95,6 +95,8 @@ export class PermissionService {
     if (minScope !== ScopeType.GLOBAL) scopes.push(ScopeType.COLLABORATION);
     if (minScope !== ScopeType.COLLABORATION) scopes.push(ScopeType.ORGANIZATION);
     if (minScope !== ScopeType.ORGANIZATION) scopes.push(ScopeType.OWN);
+    console.log(scopes);
+    console.log(resource, operation);
 
     // check if user has at least one of the scopes
     return scopes.some((s) => this.isAllowed(s, resource, operation));
