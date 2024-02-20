@@ -605,6 +605,13 @@ class Node(NodeBase):
                 "msg": "Request body is incorrect",
                 "errors": errors,
             }, HTTPStatus.BAD_REQUEST
+        # for patching, organization_id and collaboration_id are not allowed fields
+        if "organization_id" in data:
+            return {"msg": "Organization id cannot be updated!"}, HTTPStatus.BAD_REQUEST
+        elif "collaboration_id" in data:
+            return {
+                "msg": "Collaboration id cannot be updated!"
+            }, HTTPStatus.BAD_REQUEST
 
         node = db.Node.get(id)
         if not node:
