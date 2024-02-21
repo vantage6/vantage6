@@ -3,12 +3,14 @@ import logging
 import datetime
 
 import gevent
-from flask import request, render_template, g, current_app
+from flask import request, render_template, g, current_app, Flask
 from flask_jwt_extended import create_access_token, decode_token
 from flask_restful import Api
+from flask_mail import Mail
 from jwt.exceptions import DecodeError
 from http import HTTPStatus
 from sqlalchemy.orm.exc import NoResultFound
+import datetime as dt
 
 from vantage6.common import logger_name, generate_apikey
 from vantage6.common.globals import APPNAME
@@ -17,13 +19,11 @@ from vantage6.server.globals import (
     DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
     DEFAULT_EMAIL_FROM_ADDRESS,
+    DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES,
+    DEFAULT_BETWEEN_USER_EMAILS_MINUTES,
 )
 from vantage6.server.resource import ServicesResources, with_user
-from vantage6.server.resource.common.auth_helper import (
-    create_qr_uri,
-    user_login,
-    _handle_password_recovery,
-)
+from vantage6.server.resource.common.auth_helper import create_qr_uri, user_login
 from vantage6.server.resource.common.input_schema import (
     ChangePasswordInputSchema,
     RecoverPasswordInputSchema,
@@ -32,6 +32,7 @@ from vantage6.server.resource.common.input_schema import (
     Reset2FAInputSchema,
     ResetAPIKeyInputSchema,
 )
+from vantage6.server.model.user import User
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -108,6 +109,97 @@ recover_2fa_schema = Recover2FAInputSchema()
 reset_2fa_schema = Reset2FAInputSchema()
 reset_api_key_schema = ResetAPIKeyInputSchema()
 change_pw_schema = ChangePasswordInputSchema()
+
+
+# used by RecoverPassword.post()
+def _handle_password_recovery(
+    app: Flask, username: str, email: str, config: dict, mail: Mail
+) -> None:
+    """
+    Send an email to user with a password reset token.
+
+    This function also checks whether such an email has been sent recently, and
+    if so avoids sending it.
+
+    Parameters
+    ----------
+    app: flask.Flask
+        The current Flask app
+    username: str
+        User for who the password reset is being requested
+    email: str
+        Email address associated to an account for which the password reset is
+        being requested
+    config: dict
+        Dictionary with configuration settings
+    mail: flask_mail.Mail
+        An instance of the Flask mail class. Used to send email to user in case
+        of too many failed login attempts.
+    """
+    # read settings
+    password_policy = config.get("password_policy", {})
+    minutes_between_password_reset_emails = password_policy.get(
+        "between_user_emails_minutes",
+        DEFAULT_BETWEEN_USER_EMAILS_MINUTES,
+    )
+    smtp_settings = config.get("smtp", {})
+    minutes_token_valid = smtp_settings.get(
+        "email_token_validity_minutes", DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES
+    )
+    expires = dt.timedelta(minutes=minutes_token_valid)
+    email_from = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
+    support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
+
+    try:
+        user = User.get_by_username(username) if username else User.get_by_email(email)
+    except NoResultFound:
+        account_name = username or email
+        log.info(
+            "Someone requested password recovery for non-existing account '%s'",
+            account_name,
+        )
+        return
+
+    log.debug("Password reset requested for '%s'", user.username)
+
+    # check that email has not already been sent recently
+    email_sent_recently = user.last_email_recover_password_sent and (
+        dt.datetime.now()
+        < user.last_email_recover_password_sent
+        + dt.timedelta(minutes=minutes_between_password_reset_emails)
+    )
+    if email_sent_recently:
+        log.info("Skipping sending password reset email to '%s'", user.username)
+        return
+
+    with app.app_context():
+        # generate a token that can reset their password
+        reset_token = create_access_token({"id": str(user.id)}, expires_delta=expires)
+        log.info("Sending password reset email to '%s'", user.email)
+        mail.send_email(
+            f"Password reset {APPNAME}",
+            sender=email_from,
+            recipients=[user.email],
+            text_body=render_template(
+                "mail/reset_token.txt",
+                token=reset_token,
+                firstname=user.firstname,
+                reset_type="password",
+                what_to_do="simply ignore this message",
+            ),
+            html_body=render_template(
+                "mail/reset_token.html",
+                token=reset_token,
+                firstname=user.firstname,
+                reset_type="password",
+                support_email=support_email,
+                what_to_do="simply ignore this message",
+            ),
+        )
+
+    # Update last password reset email sent date
+    user.last_email_recover_password_sent = dt.datetime.now()
+    user.save()
 
 
 # ------------------------------------------------------------------------------
