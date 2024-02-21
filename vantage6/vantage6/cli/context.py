@@ -199,9 +199,15 @@ class NodeContext(AppContext):
     INST_CONFIG_MANAGER = NodeConfigurationManager
 
     def __init__(
-        self, instance_name: str, system_folders: bool = N_FOL, config_file: str = None
+        self,
+        instance_name: str,
+        system_folders: bool = N_FOL,
+        config_file: str = None,
+        print_log_header: bool = True,
     ):
-        super().__init__("node", instance_name, system_folders, config_file)
+        super().__init__(
+            "node", instance_name, system_folders, config_file, print_log_header
+        )
         self.log.info(f"vantage6 version '{__version__}'")
 
     @classmethod
