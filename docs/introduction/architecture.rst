@@ -4,37 +4,48 @@ Architecture
 Network Actors
 --------------
 
-As we saw in Figure :numref:`architecture-figure`, vantage6 consists of a
+As we saw before, the vantage6 :ref:`network <architecture-figure>` consists of a
 central server, a number of nodes and a client. This section explains in some
-more detail what these network actors are responsible for.
+more detail what these network actors are responsible for, and which subcomponents they
+contain.
 
 Server
 ++++++
 
-.. note::
-    When we refer to the server, this is not just the *vantage6 server*, but
-    also other infrastructure components that the vantage6 server relies on.
+The vantage6 server is the central point of contact for all communication in
+vantage6. However, it also relies on other infrastructure components to function
+properly. The following components are required for proper functioning of the server.
 
-The server is responsible for coordinating all communication in the vantage6
-network. It consists of several components:
-
-**vantage6 server**
+**Vantage6 server**
     Contains the users, organizations, collaborations, tasks and their results.
     It handles authentication and authorization to the system and is the
     central point of contact for clients and nodes.
 
 **Docker registry**
-    Contains algorithms stored in `Images <https://en.wikipedia.org/wiki/OS-level_virtualization>`_
+    Contains algorithms stored in `images <https://en.wikipedia.org/wiki/OS-level_virtualization>`_
     which can be used by clients to request a computation. The node will
     retrieve the algorithm from this registry and execute it.
 
-**VPN server (optionally)**
+**Algorithm store (optional but recommended)**
+    The algorithm store is intended to be used as a repository for trusted algorithms
+    within a certain project. Algorithm stores can be coupled to specific collaborations
+    or to all collaborations on a given server. Note that you can also couple the
+    community algorithm store (https://store.cotopaxi.vantage6.ai) to your server.
+    This store contains a number of community algorithms that you may find useful.
+
+    .. note::
+        The algorithm store is required when using the :ref:`user interface <ui-component>`. If no algorithm
+        store is coupled to collaborations, no algorithms can be run from the user
+        interface. It is also possible to couple collaborations to an algorithm store
+        that you do not host yourself.
+
+**VPN server (optional)**
     If algorithms need to be able to engage in peer-to-peer communication, a
     VPN server can be set up to help them do so. This is usually the case when
     working with MPC, and is also often required for machine learning
     applications.
 
-**RabbitMQ message queue (optionally)**
+**RabbitMQ message queue (optional)**
     The *vantage6 server* uses the socketIO protocol to communicate between
     server, nodes and clients. If there are multiple instances of the vantage6
     server, it is important that the messages are communicated to all relevant
@@ -46,7 +57,7 @@ network. It consists of several components:
 Data Station
 ++++++++++++
 
-**vantage6 node**
+**Vantage6 node**
     The node is responsible for executing the algorithms on the **local data**.
     It protects the data by allowing only specified algorithms to be executed after
     verifying their origin. The **node** is responsible for picking up the
@@ -54,66 +65,52 @@ Data Station
     node needs access to local data. For more details see the
     :ref:`technical documentation of the node <node-api-refs>`.
 
-**database**
+**Database**
     The database may be in any format that the algorithms relevant to your use
     case support. The currently supported database types are listed
     :ref:`here <wrapper-function-docs>`.
 
+**Algorithm**
+    When the node receives a task from the central server, it will download the
+    algorithm from the Docker registry and execute it on the local data. The algorithm
+    is therefore a temporary component that is automatically created by the node and
+    only present during the execution of a task.
 
 User or Application
 +++++++++++++++++++
 
-.. todo add refs for client/UI
+Users or applications can interact with the vantage6 server in order
+to create tasks and retrieve their results, or manage entities at the server (i.e.
+creating or editing users, organizations and collaborations).
 
-A user or application interacts with the *vantage6 server*. They can create
-tasks and retrieve their results, or manage entities at the server (i.e.
-creating or editing users, organizations and collaborations). This can be done
-using clients or via the user interface.
+The vantage6 server is an API, which means that there are many ways to interact
+with it programatically. There are however a number of applications available that make
+is easier for users to interact with the vantage6 server. These are explained in more
+detail in the :ref:`User guide <user-guide>` but are also briefly mentioned here:
 
+.. _ui-component:
 
-End to end encryption
----------------------
+**User interface**
+    The :ref:`user interface <ui>` is a web application that allows users to interact with
+    the server. It is used to create and manage organizations, collaborations,
+    users, tasks and algorithms. It also allows users to view and download the results
+    of tasks. Use of the user interface recommended for ease of use.
 
-Encryption in vantage6 is handled at organization level. Whether
-encryption is used or not, is set at collaboration level. All the nodes
-in the collaboration need to agree on this setting. You can enable or
-disable encryption in the node configuration file, see the example in
-:ref:`node-configure-structure`.
+**Python client**
+    The `vantage6 python client <python-client>` is a Python package that allows users
+    to interact with the server from a Python environment. This is helpful for data
+    scientists who want to integrate vantage6 into their existing Python workflow.
 
-.. figure:: /images/encryption.png
-
-   Encryption takes place between organizations therefore all nodes and
-   users from the a single organization should use the same private key.
-
-The encryption module encrypts data so that the server is unable to read
-communication between users and nodes. The only messages that go from
-one organization to another through the server are computation requests
-and their results. Only the algorithm input and output are encrypted.
-Other metadata (e.g. time started, finished, etc), can be read by the
-server.
-
-The encryption module uses RSA keys. The public key is uploaded to the
-vantage6 server. Tasks and other users can use this public key (this is
-automatically handled by the python-client and R-client) to send
-messages to the other parties.
+**API**
+    It is also possible to interact with the server :ref:`using the API directly <server-api>`.
 
 .. note::
-    The RSA key is used to create a shared secret which is used for encryption
-    and decryption of the payload.
+    There is also an :ref:`R client <r-client>` but this is not actively maintained and
+    does not support all functionality.
 
-When the node starts, it checks that the public key stored at the server
-is derived from the local private key. If this is not the case, the node
-will replace the public key at the server.
+Learn more?
++++++++++++
 
-.. warning::
-    If an organization has multiple nodes and/or users, they must use the same
-    private key.
-
-In case you want to generate a new private key, you can use the command
-``v6 node create-private-key``. If a key already exists at the local
-system, the existing key is reused (unless you use the ``--force``
-flag). This way, it is easy to configure multiple nodes to use the same
-key.
-
-It is also possible to generate the key yourself and upload it by using the
-endpoint ``https://SERVER[/api_path]/organization/<ID>``.
+If you want to learn more about specific components or features of vantage6, check out
+the :ref:`feature section <feature-docs>` of the documentation. It contains detailed
+information about the different features of vantage6 and how to use them.
