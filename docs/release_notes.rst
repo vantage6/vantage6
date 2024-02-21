@@ -1,6 +1,24 @@
 Release notes
 =============
 
+4.2.3
+-----
+
+*21 February 2024*
+
+- **Security**
+
+    - Updated ``cryptography`` dependency to version ``42.0.2``
+      (`PR#1047 <https://github.com/vantage6/vantage6/pull/1047>`_,
+      `PR#1048 <https://github.com/vantage6/vantage6/pull/1048>`_).
+
+- **Bugfix**
+
+     - Using the whitelisting feature without VPN prevented algorithm containers from
+       starting (`PR#1055 <https://github.com/vantage6/vantage6/pull/1055>`_)
+     - Shutting down the node did not properly remove all containers / networks
+       (`PR#1059 <https://github.com/vantage6/vantage6/pull/1059>`_).
+
 4.2.2
 -----
 
