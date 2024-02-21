@@ -12,7 +12,7 @@ Release notes
       (`PR#1047 <https://github.com/vantage6/vantage6/pull/1047>`_,
       `PR#1048 <https://github.com/vantage6/vantage6/pull/1048>`_).
 
-- **Feaure**
+- **Feature**
 
     - Added the option to specify a private key file when using the
       ``v6 test feature-test`` command
