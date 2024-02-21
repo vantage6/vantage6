@@ -22,7 +22,6 @@ from vantage6.common import get_database_config
 from vantage6.common.docker.addons import (
     get_container,
     running_in_docker,
-    delete_volume_if_exists,
 )
 from vantage6.common.globals import APPNAME, BASIC_PROCESSING_IMAGE
 from vantage6.common.task_status import TaskStatus, has_task_failed
