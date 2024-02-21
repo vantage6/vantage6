@@ -208,7 +208,8 @@ class NodeContext(AppContext):
         super().__init__(
             "node", instance_name, system_folders, config_file, print_log_header
         )
-        self.log.info(f"vantage6 version '{__version__}'")
+        if print_log_header:
+            self.log.info(f"vantage6 version '{__version__}'")
 
     @classmethod
     def from_external_config_file(
