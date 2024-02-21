@@ -134,11 +134,16 @@ export class RoleReadComponent implements OnInit, OnDestroy {
   }
 
   public get editEnabled(): boolean {
-    return this.canEdit && !!this.role?.organization;
+    return this.canEdit && !this.role?.is_default_role;
   }
 
   public get submitDisabled(): boolean {
     return this.changedRules?.length === 0;
+  }
+
+  getDefaultRoleLabel(): string {
+    if (!this.role) return '';
+    return this.role.is_default_role ? this.translateService.instant('general.yes') : this.translateService.instant('general.no');
   }
 
   private setPermissions() {

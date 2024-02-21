@@ -258,6 +258,7 @@
     "title": "view",
     "organization": "Organization",
     "all-organizations": "All organizations",
+    "default-role": "Default role",
     "no-users": "No users have been assigned to the selected role.",
     "edit-permissions": "Edit permissions",
     "tab": {
