@@ -392,7 +392,9 @@ class PermissionManager:
         role = Role.get_by_name(fixedrole)
         if not role:
             log.warning(f"{fixedrole} role not found, creating it now!")
-            role = Role(name=fixedrole, description=f"{fixedrole} role")
+            role = Role(
+                name=fixedrole, description=f"{fixedrole} role", is_default_role=True
+            )
 
         rule = Rule.get_by_(resource, scope, operation)
         if not rule:
