@@ -11,6 +11,7 @@ import pathlib
 from dateutil.parser import parse
 from docker.client import DockerClient
 from docker.models.containers import Container
+from docker.models.volumes import Volume
 from docker.models.networks import Network
 
 from vantage6.common import logger_name
@@ -368,6 +369,23 @@ def remove_container(container: Container, kill: bool = False) -> None:
         log.debug(e)
 
 
+def stop_container(container: Container, force: bool = False):
+    """
+    Stop a docker container
+
+    Parameters
+    ----------
+    container: Container
+        The container that should be stopped
+    force: bool
+        Whether to kill the container or if not, try to stop it gently
+    """
+    if force:
+        container.kill()
+    else:
+        container.stop()
+
+
 def get_network(docker_client: DockerClient, **filters) -> Network:
     """Return network if it exists after searching using kwargs
 
@@ -487,3 +505,23 @@ def get_server_config_name(container_name: str, scope: str) -> str:
     idx_scope = container_name.rfind(scope)
     length_app_name = len(APPNAME)
     return container_name[length_app_name + 1 : idx_scope - 1]
+
+
+def delete_volume_if_exists(client: docker.DockerClient, volume_name: Volume) -> None:
+    """
+    Delete a volume if it exists
+
+    Parameters
+    ----------
+    client: docker.DockerClient
+        Docker client
+    volume: Volume
+        Volume to delete
+    """
+    # get docker volume from name
+    volume = client.volumes.get(volume_name)
+    if volume:
+        try:
+            volume.remove()
+        except docker.errors.NotFound:
+            log.warning("Could not delete volume %s", volume.name)

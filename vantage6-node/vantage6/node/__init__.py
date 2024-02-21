@@ -22,6 +22,7 @@ The node connects to the server using a websocket connection. This connection
 is mainly used for sharing status updates. This avoids the need for polling to
 see if there are new tasks available.
 """
+
 import sys
 import os
 import random
@@ -1088,6 +1089,8 @@ class Node:
         self.socketIO.emit("node_info_update", config_to_share, namespace="/tasks")
 
     def cleanup(self) -> None:
+        # TODO add try/catch for all cleanups so that if one fails, the others are
+        # still executed
         if hasattr(self, "socketIO") and self.socketIO:
             self.socketIO.disconnect()
         if hasattr(self, "vpn_manager") and self.vpn_manager:
