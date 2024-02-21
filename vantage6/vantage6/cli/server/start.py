@@ -1,28 +1,29 @@
-import os
-from threading import Thread
-import time
-
 import click
 import docker
-from colorama import Fore, Style
-from sqlalchemy.engine.url import make_url
 from docker.client import DockerClient
 
 from vantage6.common import info, warning, error
-from vantage6.common.docker.addons import pull_if_newer, check_docker_running
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.globals import (
     APPNAME,
-    DEFAULT_DOCKER_REGISTRY,
     DEFAULT_SERVER_IMAGE,
     DEFAULT_UI_IMAGE,
+    InstanceType,
 )
 
-from vantage6.cli.globals import DEFAULT_UI_PORT
-from vantage6.cli.context import ServerContext
-from vantage6.cli.utils import check_config_name_allowed
+from vantage6.cli.globals import DEFAULT_UI_PORT, ServerGlobals
+from vantage6.cli.context.server import ServerContext
 from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
-from vantage6.cli.server.common import click_insert_context, print_log_worker, stop_ui
+from vantage6.cli.server.common import stop_ui
+from vantage6.cli.common.decorator import click_insert_context
+from vantage6.cli.common.start import (
+    attach_logs,
+    check_for_start,
+    get_image,
+    mount_database,
+    mount_source,
+    pull_image,
+)
 
 
 @click.command()
@@ -64,7 +65,7 @@ from vantage6.cli.server.common import click_insert_context, print_log_worker, s
     default=False,
     help="Print server logs to the console after start",
 )
-@click_insert_context
+@click_insert_context(type_="server")
 def cli_server_start(
     ctx: ServerContext,
     ip: str,
@@ -81,47 +82,15 @@ def cli_server_start(
     """
     Start the server.
     """
-    # will print an error if not
-    check_docker_running()
-
     info("Starting server...")
-    info("Finding Docker daemon.")
-    docker_client = docker.from_env()
+    docker_client = check_for_start(ctx, InstanceType.SERVER)
 
-    # check if name is allowed for docker volume, else exit
-    check_config_name_allowed(ctx.name)
-
-    # check that this server is not already running
-    running_servers = docker_client.containers.list(
-        filters={"label": f"{APPNAME}-type=server"}
-    )
-    for server in running_servers:
-        if server.name == f"{APPNAME}-{ctx.name}-{ctx.scope}-server":
-            error(f"Server {Fore.RED}{ctx.name}{Style.RESET_ALL} " "is already running")
-            exit(1)
+    image = get_image(image, ctx, "server", DEFAULT_SERVER_IMAGE)
 
     # check that log directory exists - or create it
     ctx.log_dir.mkdir(parents=True, exist_ok=True)
 
-    # Determine image-name. First we check if the option --image has been used.
-    # Then we check if the image has been specified in the config file, and
-    # finally we use the default settings from the package.
-    if image is None:
-        custom_images: dict = ctx.config.get("images")
-        if custom_images:
-            image = custom_images.get("server")
-        if not image:
-            image = f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_SERVER_IMAGE}"
-
-    info(f"Pulling latest server image '{image}'.")
-    try:
-        pull_if_newer(docker.from_env(), image)
-        # docker_client.images.pull(image)
-    except Exception as e:
-        warning(" ... Getting latest server image failed:")
-        warning(f"     {e}")
-    else:
-        info(" ... success!")
+    pull_image(docker_client, image)
 
     info("Creating mounts")
     config_file = "/mnt/config.yaml"
@@ -130,41 +99,13 @@ def cli_server_start(
         docker.types.Mount("/mnt/log/", str(ctx.log_dir), type="bind"),
     ]
 
-    if mount_src:
-        mount_src = os.path.abspath(mount_src)
-        mounts.append(docker.types.Mount("/vantage6", mount_src, type="bind"))
-    # FIXME: code duplication with cli_server_import()
-    # try to mount database
-    uri = ctx.config["uri"]
-    url = make_url(uri)
-    environment_vars = None
+    src_mount = mount_source(mount_src)
+    if src_mount:
+        mounts.append(src_mount)
 
-    # If host is None, we're dealing with a file-based DB, like SQLite
-    if url.host is None:
-        db_path = url.database
-
-        if not os.path.isabs(db_path):
-            # We're dealing with a relative path here -> make it absolute
-            db_path = ctx.data_dir / url.database
-
-        basename = os.path.basename(db_path)
-        dirname = os.path.dirname(db_path)
-        os.makedirs(dirname, exist_ok=True)
-
-        # we're mounting the entire folder that contains the database
-        mounts.append(docker.types.Mount("/mnt/database/", dirname, type="bind"))
-
-        environment_vars = {
-            "VANTAGE6_DB_URI": f"sqlite:////mnt/database/{basename}",
-            "VANTAGE6_CONFIG_NAME": ctx.config_file_name,
-        }
-
-    else:
-        warning(
-            f"Database could not be transferred, make sure {url.host} "
-            "is reachable from the Docker container"
-        )
-        info("Consider using the docker-compose method to start a server")
+    mount, environment_vars = mount_database(ctx, InstanceType.SERVER)
+    if mount:
+        mounts.append(mount)
 
     # Create a docker network for the server and other services like RabbitMQ
     # to reside in
@@ -209,13 +150,13 @@ def cli_server_start(
     info(cmd)
 
     info("Run Docker container")
-    port_ = str(port or ctx.config["port"] or 5000)
+    port_ = str(port or ctx.config["port"] or ServerGlobals.PORT)
     container = docker_client.containers.run(
         image,
         command=cmd,
         mounts=mounts,
         detach=True,
-        labels={f"{APPNAME}-type": "server", "name": ctx.config_file_name},
+        labels={f"{APPNAME}-type": InstanceType.SERVER, "name": ctx.config_file_name},
         environment=environment_vars,
         ports={f"{internal_port}/tcp": (ip, port_)},
         name=ctx.docker_container_name,
@@ -227,18 +168,7 @@ def cli_server_start(
     info(f"Success! container id = {container.id}")
 
     if attach:
-        logs = container.attach(stream=True, logs=True, stdout=True)
-        Thread(target=print_log_worker, args=(logs,), daemon=True).start()
-        while True:
-            try:
-                time.sleep(1)
-            except KeyboardInterrupt:
-                info("Closing log file. Keyboard Interrupt.")
-                info(
-                    "Note that your server is still running! Shut it down "
-                    f"with {Fore.RED}v6 server stop{Style.RESET_ALL}"
-                )
-                exit(0)
+        attach_logs(container, InstanceType.SERVER)
 
 
 def _start_rabbitmq(
@@ -296,22 +226,9 @@ def _start_ui(client: DockerClient, ctx: ServerContext, ui_port: int) -> None:
         ui_port = DEFAULT_UI_PORT
 
     # find image to use
-    custom_images: dict = ctx.config.get("images")
-    image = None
-    if custom_images:
-        image = custom_images.get("ui")
-    if not image:
-        image = f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_UI_IMAGE}"
+    image = get_image(None, ctx, "ui", DEFAULT_UI_IMAGE)
 
-    info(f"Pulling latest UI image '{image}'.")
-    try:
-        pull_if_newer(docker.from_env(), image)
-        # docker_client.images.pull(image)
-    except Exception as e:
-        warning(" ... Getting latest node image failed:")
-        warning(f"     {e}")
-    else:
-        info(" ... success!")
+    pull_image(client, image)
 
     # set environment variables
     env_vars = {

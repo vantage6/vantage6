@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 import json
 
@@ -27,7 +26,7 @@ from vantage6.server.resource.common.output_schema import (
     TaskWithRunAndResultSchema,
 )
 from vantage6.server.resource.common.input_schema import TaskInputSchema
-from vantage6.server.resource.common.pagination import Pagination
+from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource.event import kill_task
 
 
@@ -670,6 +669,10 @@ class Tasks(TaskBase):
             # may only contain some optional parameters . Save optional
             # parameters as JSON without spaces to database
             label = database.pop("label")
+            # TODO task.id is only set here because in between creating the
+            # task and using the ID here, there are other database operations
+            # that silently update the task.id (i.e. next_job_id() and
+            # db.Task.get()). Task.id should be updated explicitly instead.
             db_records.append(
                 db.TaskDatabase(
                     task_id=task.id,

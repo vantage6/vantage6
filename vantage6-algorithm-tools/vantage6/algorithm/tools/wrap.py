@@ -99,6 +99,8 @@ def _run_algorithm_method(
         info(f"Module '{module}' imported!")
     except ModuleNotFoundError:
         error(f"Module '{module}' can not be imported! Exiting...")
+        if log_traceback:
+            error(traceback.print_exc())
         exit(1)
 
     # get algorithm method and attempt to load it
@@ -107,6 +109,8 @@ def _run_algorithm_method(
         method = getattr(lib, method_name)
     except AttributeError:
         error(f"Method '{method_name}' not found!\n")
+        if log_traceback:
+            error(traceback.print_exc())
         exit(1)
 
     # get the args and kwargs input for this function.

@@ -48,6 +48,7 @@ RESOURCES = [
     "port",
     "event",
     "ui.column",
+    "algorithm_store",
 ]
 
 # Super user information. This user is only created if it is not in the
@@ -62,10 +63,6 @@ DEFAULT_EMAIL_FROM_ADDRESS = "noreply@vantage6.ai"
 
 # default time that token is valid in minutes
 DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES = 60
-
-# pagination settings
-DEFAULT_PAGE = 1
-DEFAULT_PAGE_SIZE = 10
 
 # default password policies
 DEFAULT_MAX_FAILED_ATTEMPTS = 5

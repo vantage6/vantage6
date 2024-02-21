@@ -15,6 +15,7 @@ When writing the Docker file for the algorithm, the correct wrapper will
 automatically be selected based on the database type. The database type is set
 by the vantage6 node based on its configuration file.
 """
+
 from __future__ import annotations
 import io
 import pandas as pd

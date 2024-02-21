@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 from typing import Union
 import sqlalchemy as sa
@@ -23,7 +22,7 @@ from vantage6.server.resource import (
     ServicesResources,
 )
 from vantage6.server.resource.common.input_schema import RunInputSchema
-from vantage6.server.resource.common.pagination import Pagination
+from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource.common.output_schema import (
     RunSchema,
     RunTaskIncludedSchema,

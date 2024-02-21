@@ -1,15 +1,16 @@
 from pathlib import Path
 import csv
-
+import yaml
 import click
 from jinja2 import Environment, FileSystemLoader
 from colorama import Fore, Style
 
-from vantage6.common.globals import APPNAME
+from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.common import info, error, generate_apikey
 
 from vantage6.cli.globals import PACKAGE_FOLDER
-from vantage6.cli.context import ServerContext, NodeContext
+from vantage6.cli.context.server import ServerContext
+from vantage6.cli.context.node import NodeContext
 from vantage6.cli.server.common import get_server_context
 from vantage6.cli.server.import_ import cli_server_import
 from vantage6.cli.utils import prompt_config_name
@@ -233,7 +234,7 @@ def create_vserver_import_config(node_configs: list[dict], server_name: str) -> 
     server_import_config = template.render(
         organizations=organizations, collaboration=collaboration
     )
-    folders = ServerContext.instance_folders("server", server_name, False)
+    folders = ServerContext.instance_folders(InstanceType.SERVER, server_name, False)
 
     demo_dir = Path(folders["dev"])
     demo_dir.mkdir(parents=True, exist_ok=True)
@@ -430,12 +431,10 @@ def create_demo_network(
             f"{Style.RESET_ALL}."
         )
     else:
-        error(
-            f"Configuration {Fore.RED}{server_name}{Style.RESET_ALL} " "already exists!"
-        )
+        error(f"Configuration {Fore.RED}{server_name}{Style.RESET_ALL} already exists!")
         exit(1)
     (node_config, server_import_config, server_config) = demo
-    ctx = get_server_context(server_name, True)
+    ctx = get_server_context(server_name, True, ServerContext)
     click_ctx.invoke(
         cli_server_import,
         ctx=ctx,
@@ -446,6 +445,28 @@ def create_demo_network(
         keep=False,
         wait=True,
     )
+    info(
+        "Development network was set up successfully! You can now start the "
+        f"server and nodes with {Fore.GREEN}v6 server start-demo-network"
+        f"{Style.RESET_ALL}"
+    )
+    # find user credentials to print. Read from server import file
+    with open(server_import_config, "r") as f:
+        server_import_config = yaml.safe_load(f)
+
+    try:
+        user = server_import_config["organizations"][0]["users"][0]
+        username = user["username"]
+        password = user["password"]
+        info(
+            "You can login with the following credentials:\n"
+            f"Username: {username}\n"
+            f"Password: {password}\n"
+        )
+    except KeyError:
+        # No user found, skip printing credentials
+        pass
+
     return {
         "node_configs": node_config,
         "server_import_config": server_import_config,

@@ -1,10 +1,10 @@
 import click
-import questionary as q
 import docker
 
 from vantage6.common import error
 from vantage6.common.docker.addons import check_docker_running
-from vantage6.common.globals import APPNAME
+from vantage6.common.globals import InstanceType
+from vantage6.cli.common.utils import get_server_name, get_running_servers
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 from vantage6.cli import __version__
 
@@ -22,24 +22,11 @@ def cli_server_version(name: str, system_folders: bool) -> None:
     check_docker_running()
     client = docker.from_env()
 
-    running_servers = client.containers.list(
-        filters={"label": f"{APPNAME}-type=server"}
-    )
-    running_server_names = [server.name for server in running_servers]
+    running_server_names = get_running_servers(client, InstanceType.SERVER)
 
-    if not name:
-        if not running_server_names:
-            error(
-                "No servers are running! You can only check the version for "
-                "servers that are running"
-            )
-            exit(1)
-        name = q.select(
-            "Select the server you wish to inspect:", choices=running_server_names
-        ).ask()
-    else:
-        post_fix = "system" if system_folders else "user"
-        name = f"{APPNAME}-{name}-{post_fix}"
+    name = get_server_name(
+        name, system_folders, running_server_names, InstanceType.SERVER
+    )
 
     if name in running_server_names:
         container = client.containers.get(name)

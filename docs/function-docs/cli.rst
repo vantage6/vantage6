@@ -46,6 +46,22 @@ vantage6.cli.context
    :members:
    :show-inheritance:
 
+.. automodule:: vantage6.cli.context.node
+   :members:
+   :show-inheritance:
+
+.. automodule:: vantage6.cli.context.server
+   :members:
+   :show-inheritance:
+
+.. automodule:: vantage6.cli.context.algorithm_store
+   :members:
+   :show-inheritance:
+
+.. automodule:: vantage6.cli.context.base_server
+   :members:
+   :show-inheritance:
+
 vanatge6.cli.configuration_manager
 ----------------------------------
 

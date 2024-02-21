@@ -6,6 +6,7 @@ The Squid container is used to whitelist ips, domains and ports for the
 algorithm container. This can then be used by the algorithm containers to
 access the data sources or other services.
 """
+
 import logging
 import os
 
@@ -24,6 +25,7 @@ from vantage6.common.docker.addons import (
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.docker_manager import NetworkManager
 from vantage6.node.globals import SQUID_IMAGE, PACKAGE_FOLDER
+from vantage6.node._version import major_minor
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -104,7 +106,7 @@ class Squid(DockerBaseManager):
         self.check_safety_of_whitelist(self.squid_config)
 
         # The image is overridable by the user configuration
-        self.image = squid_image if squid_image else SQUID_IMAGE
+        self.image = squid_image if squid_image else f"{SQUID_IMAGE}:{major_minor}"
         pull_if_newer(self.docker, self.image, log)
         log.debug(f"Squid image: {self.image}")
 

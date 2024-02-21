@@ -590,3 +590,13 @@ class ColumnNameInputSchema(Schema):
                 raise ValidationError(
                     "Organization id is required for each organization"
                 )
+
+
+class AlgorithmStoreInputSchema(Schema):
+    """Schema for validating input for creating an algorithm store."""
+
+    name = fields.String(required=True)
+    algorithm_store_url = fields.Url(required=True)
+    server_url = fields.Url()
+    collaboration_id = fields.Integer(validate=Range(min=1))
+    force = fields.Boolean()

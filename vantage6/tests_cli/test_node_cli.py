@@ -11,6 +11,7 @@ from docker.errors import APIError
 
 from vantage6.cli.globals import APPNAME
 from vantage6.common import STRING_ENCODING
+from vantage6.cli.common.utils import print_log_worker
 from vantage6.cli.node.list import cli_node_list
 from vantage6.cli.node.new import cli_node_new_configuration
 from vantage6.cli.node.files import cli_node_files
@@ -19,7 +20,7 @@ from vantage6.cli.node.stop import cli_node_stop
 from vantage6.cli.node.attach import cli_node_attach
 from vantage6.cli.node.create_private_key import cli_node_create_private_key
 from vantage6.cli.node.clean import cli_node_clean
-from vantage6.cli.node.common import create_client_and_authenticate, print_log_worker
+from vantage6.cli.node.common import create_client_and_authenticate
 
 
 class NodeCLITest(unittest.TestCase):
@@ -39,7 +40,7 @@ class NodeCLITest(unittest.TestCase):
         # check exit code
         self.assertEqual(result.exit_code, 1)
 
-    @patch("vantage6.cli.context.NodeContext.available_configurations")
+    @patch("vantage6.cli.context.node.NodeContext.available_configurations")
     @patch("docker.DockerClient.ping")
     @patch("docker.DockerClient.containers")
     def test_list(self, containers, docker_ping, available_configurations):
@@ -207,7 +208,7 @@ class NodeCLITest(unittest.TestCase):
 
     @patch("docker.DockerClient.volumes")
     @patch("vantage6.cli.node.start.pull_if_newer")
-    @patch("vantage6.cli.node.start.NodeContext")
+    @patch("vantage6.cli.common.decorator.get_context")
     @patch("docker.DockerClient.containers")
     @patch("vantage6.cli.node.start.check_docker_running", return_value=True)
     def test_start(self, check_docker, client, context, pull, volumes):
@@ -248,7 +249,9 @@ class NodeCLITest(unittest.TestCase):
 
     @patch("docker.DockerClient.containers")
     @patch("vantage6.cli.node.stop.check_docker_running", return_value=True)
-    def test_stop(self, check_docker, containers):
+    @patch("vantage6.cli.node.stop.NodeContext")
+    @patch("vantage6.cli.node.stop.delete_volume_if_exists")
+    def test_stop(self, delete_volume, node_context, check_docker, containers):
         container1 = MagicMock()
         container1.name = f"{APPNAME}-iknl-user"
         containers.list.return_value = [container1]
@@ -257,9 +260,7 @@ class NodeCLITest(unittest.TestCase):
 
         result = runner.invoke(cli_node_stop, ["--name", "iknl"])
 
-        self.assertEqual(
-            result.output, "[info ] - Stopped the vantage6-iknl-user Node.\n"
-        )
+        self.assertEqual(result.output, "[info ] - Stopped the iknl Node.\n")
 
         self.assertEqual(result.exit_code, 0)
 

@@ -9,10 +9,10 @@ from colorama import Fore, Style
 
 from vantage6.common import info, error
 from vantage6.common.docker.addons import check_docker_running
-from vantage6.common.globals import APPNAME
+from vantage6.common.globals import APPNAME, InstanceType
 
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
-from vantage6.cli.server.common import print_log_worker
+from vantage6.cli.common.utils import print_log_worker
 
 
 @click.command()
@@ -29,7 +29,7 @@ def cli_server_attach(name: str, system_folders: bool) -> None:
     client = docker.from_env()
 
     running_servers = client.containers.list(
-        filters={"label": f"{APPNAME}-type=server"}
+        filters={"label": f"{APPNAME}-type={InstanceType.SERVER}"}
     )
     running_server_names = [node.name for node in running_servers]
 
@@ -39,7 +39,7 @@ def cli_server_attach(name: str, system_folders: bool) -> None:
         ).ask()
     else:
         post_fix = "system" if system_folders else "user"
-        name = f"{APPNAME}-{name}-{post_fix}-server"
+        name = f"{APPNAME}-{name}-{post_fix}-{InstanceType.SERVER}"
 
     if name in running_server_names:
         container = client.containers.get(name)

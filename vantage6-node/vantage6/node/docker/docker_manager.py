@@ -6,6 +6,7 @@ is a wrapper around the docker module. It has methods
 for creating docker networks, docker volumes, start containers and retrieve
 results from finished containers.
 """
+
 import os
 import time
 import logging
@@ -18,12 +19,15 @@ from pathlib import Path
 
 from vantage6.common import logger_name
 from vantage6.common import get_database_config
-from vantage6.common.docker.addons import get_container, running_in_docker
+from vantage6.common.docker.addons import (
+    get_container,
+    running_in_docker,
+)
 from vantage6.common.globals import APPNAME, BASIC_PROCESSING_IMAGE
 from vantage6.common.task_status import TaskStatus, has_task_failed
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.algorithm.tools.wrappers import get_column_names
-from vantage6.cli.context import NodeContext
+from vantage6.cli.context.node import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
@@ -122,6 +126,7 @@ class DockerManager(DockerBaseManager):
         super().__init__(isolated_network_mgr)
 
         self.data_volume_name = ctx.docker_volume_name
+        self.ctx = ctx
         config = ctx.config
         self.algorithm_env = config.get("algorithm_env", {})
         self.vpn_manager = vpn_manager

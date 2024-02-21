@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 
 from http import HTTPStatus
@@ -8,7 +7,7 @@ from flask_restful import Api
 from vantage6.common import generate_apikey
 from vantage6.server.resource import with_user_or_node, with_user
 from vantage6.server.resource import ServicesResources
-from vantage6.server.resource.common.pagination import Pagination
+from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.permission import (
     RuleCollection,
     Scope as S,

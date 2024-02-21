@@ -9,6 +9,7 @@ from vantage6.cli.configuration_wizard import (
     configuration_wizard,
     select_configuration_questionaire,
 )
+from vantage6.common.globals import InstanceType
 
 module_path = "vantage6.cli.configuration_wizard"
 
@@ -86,29 +87,27 @@ class WizardTest(unittest.TestCase):
     @patch(f"{module_path}.server_configuration_questionaire")
     @patch(f"{module_path}.ServerConfigurationManager")
     @patch(f"{module_path}.NodeConfigurationManager")
-    @patch(f"{module_path}.NodeContext")
+    @patch("vantage6.cli.configuration_wizard.AppContext")
     def test_configuration_wizard_interface(
         self, context, node_m, server_m, server_q, node_q
     ):
         context.instance_folders.return_value = {"config": "/some/path/"}
 
-        file_ = configuration_wizard("node", "vtg6", False)
+        file_ = configuration_wizard(InstanceType.NODE, "vtg6", False)
         self.assertEqual(Path("/some/path/vtg6.yaml"), file_)
 
-        file_ = configuration_wizard("server", "vtg6", True)
+        file_ = configuration_wizard(InstanceType.SERVER, "vtg6", True)
         self.assertEqual(Path("/some/path/vtg6.yaml"), file_)
 
-    @patch(f"{module_path}.NodeContext")
-    @patch(f"{module_path}.ServerContext")
-    def test_select_configuration(self, server_c, node_c):
+    @patch("vantage6.cli.configuration_wizard.AppContext.available_configurations")
+    def test_select_configuration(self, available_configurations):
         config = MagicMock()
         config.name = "vtg6"
 
-        server_c.available_configurations.return_value = [[config], []]
-        node_c.available_configurations.return_value = [[config], []]
+        available_configurations.return_value = [[config], []]
 
         with patch(f"{module_path}.q") as q:
             q.select.return_value.ask.return_value = "vtg6"
-            name = select_configuration_questionaire("node", True)
+            name = select_configuration_questionaire(InstanceType.NODE, True)
 
         self.assertEqual(name, "vtg6")

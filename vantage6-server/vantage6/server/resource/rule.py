@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 
 from http import HTTPStatus
@@ -11,7 +10,7 @@ from vantage6.server.resource import with_user, ServicesResources
 from vantage6.common import logger_name
 from vantage6.server import db
 from vantage6.server.resource.common.output_schema import RuleSchema
-from vantage6.server.resource.common.pagination import Pagination
+from vantage6.backend.common.resource.pagination import Pagination
 
 
 module_name = logger_name(__name__)

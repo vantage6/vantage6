@@ -159,16 +159,20 @@ def update_version_docker_files(version: str) -> None:
     with open(file, "w") as f:
         f.write(new_content)
 
-    # update version label in node-and-server
-    info("Updating version in node-and-server/Dockerfile")
-    file = Path("../docker/node-and-server.Dockerfile")
-    with open(file, "r") as f:
-        content = f.read()
-        new_content = re.sub(
-            r"(ARG BASE=)(\d+.\d+)", r"\g<1>{}".format(major_minor), content
-        )
-    with open(file, "w") as f:
-        f.write(new_content)
+    # update version label in node-and-server and algorithm store dockerfile
+    info("Updating version in Dockerfiles for node, server and algorithm store")
+    files = [
+        Path("../docker/node-and-server.Dockerfile"),
+        Path("../docker/algorithm-store.Dockerfile"),
+    ]
+    for file in files:
+        with open(file, "r") as f:
+            content = f.read()
+            new_content = re.sub(
+                r"(ARG BASE=)(\d+.\d+)", r"\g<1>{}".format(major_minor), content
+            )
+        with open(file, "w") as f:
+            f.write(new_content)
 
 
 @click.command()

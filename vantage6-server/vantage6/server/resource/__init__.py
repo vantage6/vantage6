@@ -1,31 +1,28 @@
-# -*- coding: utf-8 -*-
 import datetime
-from http import HTTPStatus
 import logging
 
 from functools import wraps
 
 from flask import g, request
-from flask_restful import Resource, Api
+from flask_restful import Api
 from flask_mail import Mail
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 from flask_socketio import SocketIO
 
 
 from vantage6.common import logger_name
+from vantage6.backend.common.services_resources import BaseServicesResources
 from vantage6.server import db
 from vantage6.server.utils import obtain_auth_collaborations, obtain_auth_organization
 from vantage6.server.model.authenticatable import Authenticatable
-from vantage6.server.resource.common.output_schema import HATEOASModelSchema
 from vantage6.server.permission import PermissionManager
-from vantage6.server.resource.common.pagination import Page
 
 log = logging.getLogger(logger_name(__name__))
 
 
-class ServicesResources(Resource):
+class ServicesResources(BaseServicesResources):
     """
-    Flask resource base class.
+    Flask resource class for the vantage6 server.
 
     Adds functionality like mail, socket, permissions and the api itself.
     Also adds common helper functions.
@@ -52,68 +49,10 @@ class ServicesResources(Resource):
         permissions: PermissionManager,
         config: dict,
     ):
+        super().__init__(api, config)
         self.socketio = socketio
         self.mail = mail
-        self.api = api
         self.permissions = permissions
-        self.config = config
-
-    @staticmethod
-    def is_included(field) -> bool:
-        """
-        Check that a `field` is included in the request argument context.
-
-        Parameters
-        ----------
-        field : str
-            Name of the field to check
-
-        Returns
-        -------
-        bool
-            True if the field is included, False otherwise
-        """
-        # The logic below intends to find 'x' both in 'include=y&include=x' and
-        # 'include=x,y'.
-        return field in [
-            val for item in request.args.getlist("include") for val in item.split(",")
-        ]
-
-    def dump(self, page: Page, schema: HATEOASModelSchema) -> dict:
-        """
-        Dump based on the request context (to paginate or not)
-
-        Parameters
-        ----------
-        page : Page
-            Page object to dump
-        schema : HATEOASModelSchema
-            Schema to use for dumping
-
-        Returns
-        -------
-        dict
-            Dumped page
-        """
-        return schema.meta_dump(page)
-
-    def response(self, page: Page, schema: HATEOASModelSchema):
-        """
-        Prepare a valid HTTP OK response from a page object
-
-        Parameters
-        ----------
-        page : Page
-            Page object to dump
-        schema : HATEOASModelSchema
-            Schema to use for dumping
-
-        Returns
-        -------
-        tuple
-            Tuple of (dumped page, HTTPStatus.OK, headers of the page)
-        """
-        return self.dump(page, schema), HTTPStatus.OK, page.headers
 
     @staticmethod
     def obtain_auth() -> db.Authenticatable | dict:

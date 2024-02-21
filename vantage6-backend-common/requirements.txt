@@ -1,0 +1,5 @@
+flask==2.2.5
+Flask-RESTful==0.3.10
+marshmallow==3.19.0
+marshmallow-sqlalchemy==0.29.0
+SQLAlchemy==1.4.46

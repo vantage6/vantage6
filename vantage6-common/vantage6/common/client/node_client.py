@@ -2,6 +2,7 @@
 This module provides a client interface for the node to communicate with the
 central server.
 """
+
 import jwt
 import datetime
 import time
@@ -10,7 +11,10 @@ from threading import Thread
 
 from vantage6.common import WhoAmI
 from vantage6.common.client.client_base import ClientBase
-from vantage6.common.globals import NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS
+from vantage6.common.globals import (
+    NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS,
+    InstanceType,
+)
 
 
 class NodeClient(ClientBase):
@@ -54,7 +58,7 @@ class NodeClient(ClientBase):
         organization_name = organization.get("name")
 
         self.whoami = WhoAmI(
-            type_="node",
+            type_=InstanceType.NODE,
             id_=id_,
             name=name,
             organization_id=organization_id,

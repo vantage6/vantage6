@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 import logging
 import datetime
 
 import enum
 import sqlalchemy as sql
 
-# TODO this file is akward...
+# TODO this file is awkward...
 from vantage6.server.model import (
     Base,
     Task,
@@ -24,6 +23,7 @@ from vantage6.server.model import (
     AlgorithmPort,
     NodeConfig,
     TaskDatabase,
+    AlgorithmStore,
 )
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING

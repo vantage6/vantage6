@@ -12,6 +12,7 @@ In the case we are sending messages (input/results) we need to encrypt
 it using the public key of the receiving organization. (retreiving
 these public keys is outside the scope of this module).
 """
+
 # TODO handle no public key from other organization (should that happen here?)
 import os
 import logging
