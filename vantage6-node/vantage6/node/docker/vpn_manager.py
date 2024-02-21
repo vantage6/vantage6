@@ -74,23 +74,13 @@ class VPNManager(DockerBaseManager):
         self.subnet = vpn_subnet
 
         # get the proper versions of the VPN images
-        # TODO remove this again
-        # self.alpine_image = (
-        #     f"{ALPINE_IMAGE}:{major_minor}" if not alpine_image else alpine_image
-        # )
-        # self.vpn_client_image = (
-        #     f"{VPN_CLIENT_IMAGE}:{major_minor}"
-        #     if not vpn_client_image
-        #     else vpn_client_image
-        # )
-        # self.network_config_image = (
-        #     f"{NETWORK_CONFIG_IMAGE}:{major_minor}"
-        #     if not network_config_image
-        #     else network_config_image
-        # )
-        self.alpine_image = ALPINE_IMAGE
-        self.vpn_client_image = VPN_CLIENT_IMAGE
-        self.network_config_image = NETWORK_CONFIG_IMAGE
+        self.alpine_image = ALPINE_IMAGE if not alpine_image else alpine_image
+        self.vpn_client_image = (
+            VPN_CLIENT_IMAGE if not vpn_client_image else vpn_client_image
+        )
+        self.network_config_image = (
+            NETWORK_CONFIG_IMAGE if not network_config_image else network_config_image
+        )
 
         self._update_images()
 
