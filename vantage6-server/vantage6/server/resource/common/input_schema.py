@@ -36,6 +36,28 @@ def _validate_name(name: str) -> None:
         raise ValidationError(f"Name cannot be longer than {_MAX_LEN_NAME} characters")
 
 
+def _validate_username(username: str) -> None:
+    """
+    Validate a username field in the request input.
+
+    Parameters
+    ----------
+    username : str
+        Username to validate.
+
+    Raises
+    ------
+    ValidationError
+        If the username is empty, too long or numerical
+    """
+    _validate_name(username)
+    if not username.isidentifier() or not username[0].isalpha():
+        raise ValidationError(
+            f"Username {username} is invalid. Only letters, numbers and "
+            "underscores are allowed, and should start with a letter."
+        )
+
+
 def _validate_password(password: str) -> None:
     """
     Check if the password is strong enough.
@@ -442,13 +464,30 @@ class TaskInputSchema(_NameValidationSchema):
 class TokenUserInputSchema(Schema):
     """Schema for validating input for creating a token for a user."""
 
-    username = fields.String(required=True, validate=Length(min=1, max=_MAX_LEN_NAME))
+    username = fields.String(required=True, validate=Length(min=3, max=_MAX_LEN_NAME))
     # Note that we don't inherit from _PasswordValidationSchema here and
     # don't validate password in case the password does not fulfill the
     # password policy. This is e.g. the case with the default root user created
     # when the server is started for the first time.
     password = fields.String(required=True, validate=Length(min=1, max=_MAX_LEN_PW))
     mfa_code = fields.String(validate=Length(max=10))
+
+    @validates("username")
+    def validate_username(self, username: str):
+        """
+        Check if the username is appropriate
+
+        Parameters
+        ----------
+        username : str
+            Username to validate.
+
+        Raises
+        ------
+        ValidationError
+            If the username is too short, too long or numeric.
+        """
+        _validate_username(username)
 
 
 class TokenNodeInputSchema(Schema):
@@ -487,7 +526,7 @@ class TokenAlgorithmInputSchema(Schema):
 class UserInputSchema(_PasswordValidationSchema):
     """Schema for validating input for creating a user."""
 
-    username = fields.String(required=True, validate=Length(min=1, max=_MAX_LEN_NAME))
+    username = fields.String(required=True, validate=Length(min=3, max=_MAX_LEN_NAME))
     email = fields.Email(required=True)
     firstname = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
     lastname = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
@@ -510,7 +549,7 @@ class UserInputSchema(_PasswordValidationSchema):
         ValidationError
             If the username is too short, too long or numeric.
         """
-        _validate_name(username)
+        _validate_username(username)
 
 
 class VPNConfigUpdateInputSchema(Schema):
