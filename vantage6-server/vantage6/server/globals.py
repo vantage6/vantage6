@@ -49,6 +49,7 @@ RESOURCES = [
     "event",
     "ui.column",
     "algorithm_store",
+    "study",
 ]
 
 # Super user information. This user is only created if it is not in the

@@ -16,3 +16,10 @@ Member = Table(
     Column("organization_id", Integer, ForeignKey("organization.id")),
     Column("collaboration_id", Integer, ForeignKey("collaboration.id")),
 )
+
+StudyMember = Table(
+    "StudyMember",
+    Base.metadata,
+    Column("organization_id", Integer, ForeignKey("organization.id")),
+    Column("study_id", Integer, ForeignKey("study.id")),
+)

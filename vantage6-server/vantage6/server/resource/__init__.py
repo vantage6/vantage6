@@ -113,6 +113,18 @@ class ServicesResources(BaseServicesResources):
         """
         return obtain_auth_collaborations()
 
+    @staticmethod
+    def obtain_auth_collaboration_ids() -> list[int]:
+        """
+        Obtain the collaboration ids that the auth is part of.
+
+        Returns
+        -------
+        list[int]
+            List of collaboration ids
+        """
+        return [col.id for col in obtain_auth_collaborations()]
+
 
 # ------------------------------------------------------------------------------
 # Helper functions/decoraters ...

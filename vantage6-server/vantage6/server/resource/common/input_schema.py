@@ -56,6 +56,28 @@ def _validate_password(password: str) -> None:
         raise ValidationError(str(e))
 
 
+def _validate_organization_ids(organization_ids: list[int]) -> None:
+    """
+    Validate the organization ids in the input.
+
+    Parameters
+    ----------
+    organization_ids : list[int]
+        List of organization ids to validate.
+
+    Raises
+    ------
+    ValidationError
+        If the organization ids are not valid.
+    """
+    if not all(i > 0 for i in organization_ids):
+        raise ValidationError("Organization ids must be greater than 0")
+    if not len(organization_ids) == len(set(organization_ids)):
+        raise ValidationError("Organization ids must be unique")
+    if not len(organization_ids):
+        raise ValidationError("At least one organization id is required")
+
+
 class _OnlyIdSchema(Schema):
     """Schema for validating POST requests that only require an ID field."""
 
@@ -155,15 +177,10 @@ class CollaborationInputSchema(_NameValidationSchema):
         ValidationError
             If the organization ids are not valid.
         """
-        if not all(i > 0 for i in organization_ids):
-            raise ValidationError("Organization ids must be greater than 0")
-        if not len(organization_ids) == len(set(organization_ids)):
-            raise ValidationError("Organization ids must be unique")
-        if not len(organization_ids):
-            raise ValidationError("At least one organization id is required")
+        _validate_organization_ids(organization_ids)
 
 
-class CollaborationAddOrganizationSchema(_OnlyIdSchema):
+class CollaborationChangeOrganizationSchema(_OnlyIdSchema):
     """
     Schema for validating requests that add an organization to a collaboration.
     """
@@ -561,3 +578,35 @@ class AlgorithmStoreInputSchema(Schema):
     server_url = fields.Url()
     collaboration_id = fields.Integer(validate=Range(min=1))
     force = fields.Boolean()
+
+
+class StudyInputSchema(_NameValidationSchema):
+    """Schema for validating input for creating a study"""
+
+    collaboration_id = fields.Integer(required=True, validate=Range(min=1))
+    organization_ids = fields.List(fields.Integer(), required=True)
+
+    @validates("organization_ids")
+    def validate_organization_ids(self, organization_ids):
+        """
+        Validate the organization ids in the input.
+
+        Parameters
+        ----------
+        organization_ids : list[int]
+            List of organization ids to validate.
+
+        Raises
+        ------
+        ValidationError
+            If the organization ids are not valid.
+        """
+        _validate_organization_ids(organization_ids)
+
+
+class StudyChangeOrganizationSchema(_OnlyIdSchema):
+    """
+    Schema for validating requests that add an organization to a study.
+    """
+
+    pass

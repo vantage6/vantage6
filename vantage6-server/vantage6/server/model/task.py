@@ -57,6 +57,7 @@ class Task(Base):
     description = Column(String)
     image = Column(String)
     collaboration_id = Column(Integer, ForeignKey("collaboration.id"))
+    study_id = Column(Integer, ForeignKey("study.id"))
     job_id = Column(Integer)
     parent_id = Column(Integer, ForeignKey("task.id"))
     init_org_id = Column(Integer, ForeignKey("organization.id"))
@@ -74,6 +75,7 @@ class Task(Base):
     init_org = relationship("Organization", back_populates="tasks")
     init_user = relationship("User", back_populates="created_tasks")
     databases = relationship("TaskDatabase", back_populates="task")
+    study = relationship("Study", back_populates="tasks")
 
     # TODO update in v4+, with renaming to 'run'
     @hybrid_property

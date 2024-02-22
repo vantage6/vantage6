@@ -8,7 +8,7 @@ from vantage6.server import db
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource.common.input_schema import (
     CollaborationAddNodeSchema,
-    CollaborationAddOrganizationSchema,
+    CollaborationChangeOrganizationSchema,
     CollaborationInputSchema,
 )
 from vantage6.server.permission import (
@@ -81,7 +81,7 @@ collaboration_schema = CollaborationSchema()
 org_schema = OrganizationSchema()
 node_schema = NodeSchemaSimple()
 collaboration_input_schema = CollaborationInputSchema()
-collaboration_add_organization_schema = CollaborationAddOrganizationSchema()
+collaboration_change_org_schema = CollaborationChangeOrganizationSchema()
 collaboration_add_node_schema = CollaborationAddNodeSchema()
 collab_with_orgs_schema = CollaborationWithOrgsSchema()
 
@@ -688,7 +688,7 @@ class CollaborationOrganization(ServicesResources):
 
         # validate request body
         data = request.get_json()
-        errors = collaboration_add_organization_schema.validate(data)
+        errors = collaboration_change_org_schema.validate(data)
         if errors:
             return {
                 "msg": "Request body is incorrect",
@@ -759,12 +759,22 @@ class CollaborationOrganization(ServicesResources):
                 "msg": f"Collaboration with collaboration_id={id} can " "not be found"
             }, HTTPStatus.NOT_FOUND
 
+        # validate requst body
+        data = request.get_json()
+        errors = collaboration_change_org_schema.validate(data)
+        if errors:
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
+
         # get organization which should be deleted
         data = request.get_json()
-        organization = db.Organization.get(data["id"])
+        org_id = data["id"]
+        organization = db.Organization.get(org_id)
         if not organization:
             return {
-                "msg": f"Organization with id={id} is not found"
+                "msg": f"Organization with id={org_id} is not found"
             }, HTTPStatus.NOT_FOUND
 
         if not self.r.can_for_col(P.EDIT, collaboration.id):
