@@ -19,9 +19,9 @@ from vantage6.algorithm.store.resource.schema.input_schema import UserInputSchem
 from vantage6.algorithm.store.resource.schema.output_schema import (
     UserOutputSchema
 )
-from vantage6.server.resource import ServicesResources, BaseServicesResources
+from vantage6.backend.common.services_resources import BaseServicesResources
 
-from vantage6.server.resource.common.pagination import Pagination
+from vantage6.backend.common.resource.pagination import Pagination
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -101,17 +101,6 @@ class Users(BaseServicesResources):
         description: >-
             Returns a list of users that you are allowed to see.
 
-            ### Permission Table\n
-            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-            Description|\n
-            |--|--|--|--|--|--|\n
-            |User|Global|View|❌|❌|View any user details|\n
-            |User|Collaboration|View|❌|❌|View user details from your
-            collaborations|\n
-            |User|Organization|View|❌|❌|View users from your organization|\n
-
-            Accessible to users.
-
         parameters:
           - in: query
             name: username
@@ -122,72 +111,12 @@ class Users(BaseServicesResources):
               * The percent sign (%) represents zero, one, or multiple
               characters\n
               * underscore sign (_) represents one, single character
-          - in: query
-            name: organization_id
-            schema:
-              type: integer
-            description: Organization id
-          - in: query
-            name: collaboration_id
-            schema:
-              type: integer
-            description: Collaboration id
-          - in: query
-            name: firstname
-            schema:
-              type: string
-            description: >-
-              Name to match with a LIKE operator. \n
-              * The percent sign (%) represents zero, one, or multiple
-              characters\n
-              * underscore sign (_) represents one, single character
-          - in: query
-            name: lastname
-            schema:
-              type: string
-            description: >-
-              Name to match with a LIKE operator. \n
-              * The percent sign (%) represents zero, one, or multiple
-              characters\n
-              * underscore sign (_) represents one, single character
-          - in: query
-            name: email
-            schema:
-              type: string
-            description: >-
-              Email to match with a LIKE operator. \n
-              * The percent sign (%) represents zero, one, or multiple
-              characters\n
-              * underscore sign (_) represents one, single character
+
           - in: query
             name: role_id
             schema:
               type: integer
             description: Role that is assigned to user
-          - in: query
-            name: rule_id
-            schema:
-              type: integer
-            description: Rule that is assigned to user
-          - in: query
-            name: last_seen_from
-            schema:
-              type: date (yyyy-mm-dd)
-            description: Show only users seen since this date
-          - in: query
-            name: last_seen_till
-            schema:
-              type: date (yyyy-mm-dd)
-            description: Show only users last seen before this date
-          - in: query
-            name: page
-            schema:
-              type: integer
-            description: Page number for pagination (default=1)
-          - in: query
-            name: per_page
-            schema:
-              type: integer
             description: Number of items per page (default=10)
           - in: query
             name: sort
@@ -213,6 +142,8 @@ class Users(BaseServicesResources):
         args = request.args
         q = g.session.query(db_User)
 
+        # return user_output_schema.dump(q, many=True), HTTPStatus.OK
+
         # filter by any field of this endpoint
         for param in ['username', 'id_server']:
             if param in args:
@@ -229,27 +160,15 @@ class Users(BaseServicesResources):
             q = q.join(db.Permission).join(db.Role)\
                  .filter(db.Role.id == args['role_id'])
 
-        page = Pagination.from_query(q, request, db.User)
-        return self.response(page, user_output_schema)
+        # TODO: add pagination
+        return user_output_schema.dump(q.all(), many=True), HTTPStatus.OK
 
-#     @with_user
+#     @with_permission(module_name, Operation.CREATE)
 #     def post(self):
 #         """Create user
 #         ---
 #         description: >-
 #           Creates new user from the request data to the users organization.\n
-#
-#           ### Permission Table\n
-#           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-#           Description|\n
-#           |--|--|--|--|--|--|\n
-#           |User|Global|Create|❌|❌|Create a new user|\n
-#           |User|Collaboration|Create|❌|❌|Create a new user for any
-#           organization in your collaborations|\n
-#           |User|Organization|Create|❌|❌|Create a new user as part of your
-#           organization|\n
-#
-#           Accessible to users.
 #
 #         requestBody:
 #           content:
