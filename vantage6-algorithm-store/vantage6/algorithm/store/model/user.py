@@ -24,17 +24,21 @@ class User(Base):
 
     # fields
     # link with the v6 server. This is a temporary solution
-    id_server = Column(Integer, unique=True)
+    id_server = Column(Integer, unique=False)
     username = Column(String, unique=True)
+    v6_server_id = Column(Integer, ForeignKey("vantage6server.id"))
 
     # relationships
-    roles = relationship("Role", back_populates="users",
-                         secondary="Permission")
+    server = relationship("Vantage6Server", back_populates="users")
+    roles = relationship("Role", back_populates="users", secondary="Permission")
     # rules = relationship("Rule", back_populates="users",
     #                      secondary="UserPermission")
 
-    algorithms = relationship("Algorithm", back_populates='developer',
-                              secondary="developer_algorithm_association")
+    algorithms = relationship(
+        "Algorithm",
+        back_populates="developer",
+        secondary="developer_algorithm_association",
+    )
     reviews = relationship("Review", back_populates="reviewers")
 
     def __repr__(self) -> str:
@@ -73,14 +77,16 @@ class User(Base):
         return any(rule in role.rules for role in self.roles)
 
     @classmethod
-    def get_by_id_server(cls, id_server: int) -> User:
+    def get_by_server(cls, id_server: int, v6_server_id: int) -> User:
         """
         Get a user by their v6 server id
 
         Parameters
         ----------
         id_server: int
-            v6 server id of the user
+             id of the user on v6 server
+        v6_server_id: int
+             id whitelisted v6 server
 
         Returns
         -------
@@ -93,7 +99,11 @@ class User(Base):
             If no user with the given username exists
         """
         session = DatabaseSessionManager.get_session()
-        result = session.query(cls).filter_by(id_server=id_server).one()
+        result = (
+            session.query(cls)
+            .filter_by(id_server=id_server, v6_server_id=v6_server_id)
+            .one_or_none()
+        )
         session.commit()
         return result
 

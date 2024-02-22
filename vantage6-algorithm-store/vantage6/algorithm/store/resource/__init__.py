@@ -152,10 +152,18 @@ def with_permission(resource: str, operation: Operation) -> callable:
             else:
                 msg = "Key Error: key user_id not found"
                 log.warning(msg)
-                return {'msg', msg}
+                return {"msg": msg}, HTTPStatus.INTERNAL_SERVER_ERROR
 
             # check if view permissions for this resource are granted
-            user = User.get_by_id_server(user_id)
+
+            server = Vantage6Server.get_by_url(request.headers['Server-Url'])
+
+            user = User.get_by_server(id_server=user_id, v6_server_id=server.id)
+
+            if not user:
+                msg = "User not registered in the store"
+                log.warning(msg)
+                return {"msg": msg}, HTTPStatus.UNAUTHORIZED
 
             flag = user.can(resource, operation)
 
