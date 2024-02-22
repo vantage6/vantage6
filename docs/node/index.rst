@@ -12,6 +12,7 @@ installation process. Finally, we explain how to configure and start your node.
 .. toctree::
     :maxdepth: 3
 
+    introduction
     requirements
     install
     use
