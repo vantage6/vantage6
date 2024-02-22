@@ -24,9 +24,9 @@ from vantage6.algorithm.store.model.rule import Operation
 from vantage6.algorithm.store.default_roles import DefaultRole
 from vantage6.algorithm.store.resource.schema.output_schema import RoleOutputSchema
 # from vantage6.algorithm.store.resource.schema.input_schema import RoleInputSchema
-from vantage6.server.resource import ServicesResources, BaseServicesResources
 from vantage6.algorithm.store import db
-from vantage6.server.resource.common.pagination import Pagination
+from vantage6.backend.common.services_resources import BaseServicesResources
+from vantage6.backend.common.resource.pagination import Pagination
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -102,14 +102,7 @@ role_schema = RoleOutputSchema()
 # role_input_schema = RoleInputSchema()
 
 
-class RoleBase(ServicesResources):
-
-    def __init__(self, socketio, mail, api, permissions, config):
-        super().__init__(socketio, mail, api, permissions, config)
-        self.r: RuleCollection = getattr(self.permissions, module_name)
-
-
-class Roles(RoleBase):
+class Roles(BaseServicesResources):
 
     @with_permission(module_name, Operation.VIEW)
     def get(self):

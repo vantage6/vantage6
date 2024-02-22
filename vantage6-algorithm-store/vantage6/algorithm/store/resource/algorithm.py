@@ -367,7 +367,7 @@ class Algorithm(AlgorithmStoreResources):
 
     @with_permission(module_name, Operation.EDIT)
     def patch(self, id):
-        """Delete algorithm
+        """Patch algorithm
         ---
         description: Modify an algorithm specified by ID.
 

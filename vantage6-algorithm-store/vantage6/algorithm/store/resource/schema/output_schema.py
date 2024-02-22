@@ -16,6 +16,7 @@ from vantage6.algorithm.store.model.review import Review
 from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 
 
+# TODO: Remove duplicated code
 def create_one_to_many_link(obj: Base, link_to: str, link_from: str) -> str:
     """
     Create an API link to get objects related to a given object.
