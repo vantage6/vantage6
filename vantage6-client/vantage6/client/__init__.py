@@ -663,6 +663,7 @@ class UserClient(ClientBase):
             name: str = None,
             organization: int = None,
             collaboration: int = None,
+            study: int = None,
             is_online: bool = None,
             ip: str = None,
             last_seen_from: str = None,
@@ -680,6 +681,8 @@ class UserClient(ClientBase):
                 Filter by organization id
             collaboration: int, optional
                 Filter by collaboration id
+            study: int, optional
+                Filter by study id
             is_online: bool, optional
                 Filter on whether nodes are online or not
             ip: str, optional
@@ -705,6 +708,7 @@ class UserClient(ClientBase):
                 "name": name,
                 "organization_id": organization,
                 "collaboration_id": collaboration,
+                "study_id": study,
                 "ip": ip,
                 "last_seen_from": last_seen_from,
                 "last_seen_till": last_seen_till,
@@ -828,6 +832,7 @@ class UserClient(ClientBase):
             name: str = None,
             country: int = None,
             collaboration: int = None,
+            study: int = None,
             page: int = None,
             per_page: int = None,
         ) -> list[dict]:
@@ -841,6 +846,8 @@ class UserClient(ClientBase):
                 Filter by country
             collaboration: int, optional
                 Filter by collaboration id
+            study: int, optional
+                Filter by study id
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional
@@ -857,6 +864,7 @@ class UserClient(ClientBase):
                 "name": name,
                 "country": country,
                 "collaboration_id": collaboration,
+                "study_id": study,
             }
             return self.parent.request("organization", params=params)
 
@@ -1363,6 +1371,7 @@ class UserClient(ClientBase):
             initiating_org: int = None,
             initiating_user: int = None,
             collaboration: int = None,
+            study: int = None,
             image: str = None,
             parent: int = None,
             job: int = None,
@@ -1390,6 +1399,8 @@ class UserClient(ClientBase):
                 Filter by initiating user
             collaboration: int, optional
                 Filter by collaboration
+            study: int, optional
+                Filter by study
             image: str, optional
                 Filter by Docker image name (with LIKE operator)
             parent: int, optional
@@ -1429,6 +1440,7 @@ class UserClient(ClientBase):
                 "init_org_id": initiating_org,
                 "init_user_id": initiating_user,
                 "collaboration_id": collaboration,
+                "study_id": study,
                 "image": image,
                 "parent_id": parent,
                 "job_id": job,
@@ -1452,20 +1464,19 @@ class UserClient(ClientBase):
         @post_filtering(iterable=False)
         def create(
             self,
-            collaboration: int,
             organizations: list,
             name: str,
             image: str,
             description: str,
             input_: dict,
+            collaboration: int = None,
+            study: int = None,
             databases: list[dict] = None,
         ) -> dict:
             """Create a new task
 
             Parameters
             ----------
-            collaboration : int
-                Id of the collaboration to which this task belongs
             organizations : list
                 Organization ids (within the collaboration) which need
                 to execute this task
@@ -1477,6 +1488,12 @@ class UserClient(ClientBase):
                 Human readable description
             input_ : dict
                 Algorithm input
+            collaboration : int, optional
+                Id of the collaboration to which this task belongs. Should be set if
+                the study is not set
+            study : int, optional
+                Id of the study to which this task belongs. Should be set if the
+                collaboration is not set
             databases: list[dict], optional
                 Databases to be used at the node. Each dict should contain
                 at least a 'label' key. Additional keys are 'query' (if using
@@ -1490,6 +1507,11 @@ class UserClient(ClientBase):
                 from the server if the task could not be created
             """
             assert self.parent.cryptor, "Encryption has not yet been setup!"
+
+            if not collaboration and not study:
+                raise ValueError(
+                    "Either a collaboration or a study should be specified"
+                )
 
             if organizations is None:
                 raise ValueError(
@@ -1527,6 +1549,7 @@ class UserClient(ClientBase):
                     "name": name,
                     "image": image,
                     "collaboration_id": collaboration,
+                    "study_id": study,
                     "description": description,
                     "organizations": organization_json_list,
                     "databases": databases,
