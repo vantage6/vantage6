@@ -300,7 +300,7 @@ class StudySchema(HATEOASModelSchema):
     class Meta:
         model = db.Study
 
-    collaboration = fields.Nested("CollaborationSchema", many=False)
+    collaboration = fields.Method("collaboration")
     organizations = fields.Function(
         lambda obj: create_one_to_many_link(
             obj, link_to="organization", link_from="study_id"

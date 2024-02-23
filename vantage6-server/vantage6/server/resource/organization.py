@@ -207,8 +207,10 @@ class Organizations(OrganizationBase):
                     "msg": "You lack the permission to get all organizations "
                     "in your collaboration!"
                 }, HTTPStatus.UNAUTHORIZED
-            q = q.join(db.Member).filter(
-                db.Member.collaboration_id == args["collaboration_id"]
+            q = (
+                q.join(db.Member)
+                .join(db.Collaboration)
+                .filter(db.Collaboration.id == args["collaboration_id"])
             )
         if "study_id" in args:
             study = db.Study().get(args["study_id"])
@@ -217,8 +219,10 @@ class Organizations(OrganizationBase):
                     "msg": "You lack the permission to get all organizations "
                     "in a study!"
                 }, HTTPStatus.UNAUTHORIZED
-            q = q.join(db.StudyMember).filter(
-                db.StudyMember.study_id == args["study_id"]
+            q = (
+                q.join(db.StudyMember)
+                .join(db.Study)
+                .filter(db.Study.id == args["study_id"])
             )
 
         # filter the list of organizations based on the scope

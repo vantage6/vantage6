@@ -181,6 +181,11 @@ class Nodes(NodeBase):
               type: integer
             description: Collaboration id
           - in: query
+            name: study_id
+            schema:
+              type: integer
+            description: Study id
+          - in: query
             name: status
             schema:
               type: string
@@ -252,6 +257,21 @@ class Nodes(NodeBase):
                     f"collaboration with id {collaboration_id}!"
                 }, HTTPStatus.UNAUTHORIZED
             q = q.filter(db.Node.collaboration_id == collaboration_id)
+
+        if "study_id" in args:
+            study_id = int(args["study_id"])
+            study = db.Study.get(study_id)
+            if not self.r.can_for_col(P.VIEW, study.collaboration_id):
+                return {
+                    "msg": "You lack the permission view nodes from collaboration "
+                    f"{study.collaboration_id} contains the study with id {study_id}!"
+                }, HTTPStatus.UNAUTHORIZED
+            q = (
+                q.join(db.Organization)
+                .join(db.StudyMember)
+                .join(db.Study)
+                .filter(db.Study.id == study_id)
+            )
 
         for param in ["status", "ip"]:
             if param in args:

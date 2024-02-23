@@ -17,7 +17,6 @@ from vantage6.server.permission import (
     PermissionManager,
 )
 from vantage6.server.resource.common.output_schema import (
-    CollaborationSchema,
     OrganizationSchema,
     StudySchema,
     StudyWithOrgsSchema,
@@ -69,7 +68,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
 
 
 # # Schemas
-study_schema = StudySchema
+study_schema = StudySchema()
 org_schema = OrganizationSchema()
 study_with_orgs_schema = StudyWithOrgsSchema()
 study_input_schema = StudyInputSchema()
@@ -144,13 +143,13 @@ class StudyBase(ServicesResources):
         super().__init__(socketio, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
 
-    def _select_schema(self) -> CollaborationSchema:
+    def _select_schema(self) -> StudySchema:
         """
         Select the output schema based on which resources should be included
 
         Returns
         -------
-        CollaborationSchema or derivative of it
+        StudySchema or derivative of it
             Schema to use for serialization
         """
         if self.is_included("organizations"):
@@ -183,7 +182,7 @@ class StudyBase(ServicesResources):
 
 
 class Studies(StudyBase):
-    @only_for(["user", "node"])
+    @only_for(("user", "node"))
     def get(self):
         """Returns a list of studies, which are subsets of organizations from a
         collaboration
@@ -405,7 +404,7 @@ class Studies(StudyBase):
         )
 
         study.save()
-        return study_with_orgs_schema.dump(study), HTTPStatus.OK
+        return study_with_orgs_schema.dump(study), HTTPStatus.CREATED
 
 
 class Study(StudyBase):
@@ -533,8 +532,8 @@ class Study(StudyBase):
           401:
             description: Unauthorized
           400:
-            description: Study name already exists, or organizations are not
-              collaboration members
+            description: Study name already exists, organizations are not
+              collaboration members, or request body is incorrect
 
         security:
           - bearerAuth: []

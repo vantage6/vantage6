@@ -693,7 +693,7 @@ class Run(SingleRunBase):
 class Result(SingleRunBase):
     """Resource for /api/result/<id>"""
 
-    @only_for(["node", "user", "container"])
+    @only_for(("node", "user", "container"))
     def get(self, id):
         """Get a single result
         ---
