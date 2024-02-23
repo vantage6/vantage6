@@ -30,6 +30,7 @@ from vantage6.server.model import (
     Task,
     Run,
     AlgorithmStore,
+    Study,
 )
 from vantage6.server.model.rule import Scope, Operation
 from vantage6.server import context
