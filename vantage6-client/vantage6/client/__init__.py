@@ -513,6 +513,129 @@ class UserClient(ClientBase):
                 },
             )
 
+        @post_filtering(iterable=False)
+        def delete(self, id_: int = None, delete_dependents: bool = None) -> dict:
+            """Deletes a collaboration
+
+            Parameters
+            ----------
+            id_ : int
+                Id of the collaboration you want to delete
+            delete_dependents : bool, optional
+                Whether or not to delete the dependents of the collaboration
+
+            Returns
+            -------
+            dict
+                Message from the server
+            """
+            id_ = self.__get_id(id_)
+            params = {}
+            if delete_dependents:
+                params["delete_dependents"] = delete_dependents
+            return self.parent.request(
+                f"collaboration/{id_}", method="delete", params=params
+            )
+
+        @post_filtering(iterable=False)
+        def update(
+            self,
+            id_: int = None,
+            name: str = None,
+            encrypted: bool = None,
+            organizations: list[int] = None,
+        ) -> dict:
+            """
+            Update collaboration information
+
+            Parameters
+            ----------
+            id_ : int
+                Id of the collaboration you want to update. If no id is provided
+                the value of setup_collaboration() is used.
+            name : str, optional
+                New name of the collaboration
+            encrypted : bool, optional
+                New encryption status of the collaboration
+            organizations : list[int], optional
+                New list of organization ids which participate in the collaboration
+
+            Returns
+            -------
+            dict
+                Containing the updated collaboration information
+            """
+            id_ = self.__get_id(id_)
+            return self.parent.request(
+                f"collaboration/{id_}",
+                method="patch",
+                json={
+                    "name": name,
+                    "encrypted": encrypted,
+                    "organization_ids": organizations,
+                },
+            )
+
+        def add_organization(
+            self, organization_id: int, collaboration_id: int = None
+        ) -> list[dict]:
+            """
+            Add an organization to a collaboration
+
+            Parameters
+            ----------
+            organization_id : int
+                Id of the organization you want to add to the collaboration
+            collaboration_id : int, optional
+                Id of the collaboration you want to add the organization to. If no
+                id is provided the value of setup_collaboration() is used.
+
+            Returns
+            -------
+            list[dict]
+                Containing the updated list of organizations in the collaboration
+            """
+            collaboration_id = self.__get_id(collaboration_id)
+            return self.parent.request(
+                f"collaboration/{collaboration_id}/organization",
+                method="post",
+                json={"organization_id": organization_id},
+            )
+
+        def remove_organization(
+            self, organization_id: int, collaboration_id: int = None
+        ) -> list[dict]:
+            """
+            Remove an organization from a collaboration
+
+            Parameters
+            ----------
+            organization_id : int
+                Id of the organization you want to remove from the collaboration
+            collaboration_id : int, optional
+                Id of the collaboration you want to remove the organization from. If no
+                id is provided the value of setup_collaboration() is used.
+            """
+            collaboration_id = self.__get_id(collaboration_id)
+            return self.parent.request(
+                f"collaboration/{collaboration_id}/organization",
+                method="delete",
+                params={"organization_id": organization_id},
+            )
+
+        def __get_id(self, id_: int = None) -> int:
+            """
+            Get the collaboration id
+            """
+            if not id_:
+                id_ = self.parent.collaboration_id
+                if id_ is None:
+                    raise ValueError(
+                        "No collaboration id provided, please set the "
+                        "collaboration id or use `client.setup_collaboration`"
+                    )
+            return id_
+
     class Node(ClientBase.SubClient):
         """Collection of node requests"""
 
