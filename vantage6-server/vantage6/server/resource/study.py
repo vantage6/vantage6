@@ -182,6 +182,8 @@ class StudyBase(ServicesResources):
 
 
 class Studies(StudyBase):
+    """Resource for /api/study."""
+
     @only_for(("user", "node"))
     def get(self):
         """Returns a list of studies, which are subsets of organizations from a
@@ -219,6 +221,11 @@ class Studies(StudyBase):
             schema:
               type: integer
             description: Filter studies by organization id
+          - in: query
+            name: collaboration_id
+            schema:
+              type: integer
+            description: Filter studies by collaboration id
           - in: query
             name: include
             schema:
@@ -287,6 +294,17 @@ class Studies(StudyBase):
                 return {
                     "msg": "You lack the permission to request studies for this "
                     "organization!"
+                }, HTTPStatus.UNAUTHORIZED
+
+        if "collaboration_id" in args:
+            if self.r.v_glo.can() or (
+                self.r.v_col.can() and args["collaboration_id"] in auth_collab_ids
+            ):
+                q = q.filter(db.Study.collaboration_id == args["collaboration_id"])
+            else:
+                return {
+                    "msg": "You lack the permission to request studies for this "
+                    "collaboration!"
                 }, HTTPStatus.UNAUTHORIZED
 
         # filter based on permissions
