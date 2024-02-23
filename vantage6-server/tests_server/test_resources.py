@@ -2118,6 +2118,24 @@ class TestResources(unittest.TestCase):
         result = self.app.delete(f"/api/collaboration/{col.id}", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
 
+        # ensure that collaboration exists again
+        col = Collaboration()
+        col.save()
+
+        # test that collaboration cannot be deleted if it has resources inside it
+        task = Task(collaboration=col)
+        task.save()
+        rule = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.DELETE)
+        headers = self.create_user_and_login(rules=[rule])
+        result = self.app.delete(f"/api/collaboration/{col.id}", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.BAD_REQUEST)
+
+        # but if defining the delete_dependents parameter it should work
+        result = self.app.delete(
+            f"/api/collaboration/{col.id}?delete_dependents=true", headers=headers
+        )
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+
         # cleanup
         org.delete()
         org_not_member.delete()

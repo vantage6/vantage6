@@ -594,20 +594,23 @@ class Collaboration(CollaborationBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        if collaboration.tasks or collaboration.nodes:
+        if collaboration.tasks or collaboration.nodes or collaboration.studies:
             delete_dependents = request.args.get("delete_dependents", False)
             if not delete_dependents:
                 return {
                     "msg": f"Collaboration id={id} has "
-                    f"{len(collaboration.tasks)} tasks and "
-                    f"{len(collaboration.nodes)} nodes. Please delete them "
-                    "separately or set delete_dependents=True"
+                    f"{len(collaboration.tasks)} tasks, {len(collaboration.nodes)} "
+                    f"nodes and {len(collaboration.studies)} studies. Please delete "
+                    "them separately or set delete_dependents=True"
                 }, HTTPStatus.BAD_REQUEST
             else:
-                log.warn(
-                    f"Deleting collaboration id={id} along with "
-                    f"{len(collaboration.tasks)} tasks and "
-                    f"{len(collaboration.nodes)} nodes"
+                log.warning(
+                    "Deleting collaboration id=%s along with %s tasks, %s nodes and "
+                    "% studies.",
+                    id,
+                    len(collaboration.tasks),
+                    len(collaboration.nodes),
+                    len(collaboration.studies),
                 )
                 for task in collaboration.tasks:
                     task.delete()
