@@ -46,6 +46,7 @@ class AlgorithmClient(ClientBase):
         self.databases = container_identity.get("databases", [])
         self.node_id = container_identity.get("node_id")
         self.collaboration_id = container_identity.get("collaboration_id")
+        self.study_id = container_identity.get("study_id")
         self.organization_id = container_identity.get("organization_id")
         self.log.info(
             f"Container in collaboration_id={self.collaboration_id} \n"
@@ -61,6 +62,7 @@ class AlgorithmClient(ClientBase):
         self.organization = self.Organization(self)
         self.collaboration = self.Collaboration(self)
         self.node = self.Node(self)
+        self.study = self.Study(self)
 
         self._access_token = token
 
@@ -377,6 +379,7 @@ class AlgorithmClient(ClientBase):
                     "name": name,
                     "image": self.parent.image,
                     "collaboration_id": self.parent.collaboration_id,
+                    "study_id": self.parent.study_id,
                     "description": description,
                     "organizations": organization_json_list,
                     "databases": self.parent.databases,
@@ -620,3 +623,42 @@ class AlgorithmClient(ClientBase):
                 running on.
             """
             return self.parent.request(f"node/{self.parent.node_id}")
+
+    class Study(ClientBase.SubClient):
+        """
+        Get information about the study or studies.
+        """
+
+        def get(self, id_) -> dict:
+            """
+            Get the study data by ID.
+
+            Parameters
+            ----------
+            id: int
+                ID of the study to retrieve
+
+            Returns
+            -------
+            dict
+                Dictionary containing study data.
+            """
+            return self.parent.request(f"study/{id_}")
+
+        def list(self) -> list[dict]:
+            """
+            Obtain all studies in the collaboration.
+
+            The container runs in a node which is part of a single
+            collaboration, which may contain zero or more studies. This method retrieves
+            all studies that are part of the collaboration.
+
+            Returns
+            -------
+            list[dict]
+                List of studies in the collaboration.
+            """
+            return self.parent._multi_page_request(
+                endpoint="study",
+                params={"collaboration_id": self.parent.collaboration_id},
+            )
