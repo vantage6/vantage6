@@ -386,9 +386,28 @@ class TaskInputSchema(_NameValidationSchema):
     name = fields.String(required=False)
     description = fields.String(validate=Length(max=_MAX_LEN_STR_LONG))
     image = fields.String(required=True, validate=Length(min=1))
-    collaboration_id = fields.Integer(required=True, validate=Range(min=1))
+    collaboration_id = fields.Integer(validate=Range(min=1))
+    study_id = fields.Integer(validate=Range(min=1))
     organizations = fields.List(fields.Dict(), required=True)
     databases = fields.List(fields.Dict(), allow_none=True)
+
+    @validates_schema
+    def validate_collaboration_or_study(self, data: dict, **kwargs) -> None:
+        """
+        Validate the input, which should contain either a collaboration_id or a study_id
+
+        Parameters
+        ----------
+        data : dict
+            The input data.
+
+        Raises
+        ------
+        ValidationError
+            If the input does not contain a collaboration_id or a study_id.
+        """
+        if not ("collaboration_id" in data or "study_id" in data):
+            raise ValidationError("Collaboration_id or study_id is required")
 
     @validates("organizations")
     def validate_organizations(self, organizations: list[dict]):

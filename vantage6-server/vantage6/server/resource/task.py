@@ -561,27 +561,30 @@ class Tasks(TaskBase):
             }, HTTPStatus.BAD_REQUEST
 
         collaboration_id = data.get("collaboration_id")
-        collaboration = db.Collaboration.get(collaboration_id)
-
-        if not collaboration:
-            return {
-                "msg": f"Collaboration id={collaboration_id} not found!"
-            }, HTTPStatus.NOT_FOUND
-
-        # check study_id
         study_id = data.get("study_id")
-        study = None
+        if collaboration_id:
+            collaboration = db.Collaboration.get(collaboration_id)
         if study_id:
             study = db.Study.get(study_id)
             if not study:
-                return {"msg": f"Study id={study_id} not found!"}, HTTPStatus.NOT_FOUND
-            if study.collaboration_id != collaboration_id:
+                return {"msg": f"Study id={study_id} not found"}, HTTPStatus.NOT_FOUND
+
+            # check if collaboration and study match if both are set
+            if collaboration_id and study.collaboration_id != collaboration_id:
                 return {
                     "msg": (
                         f"The study_id '{study.id}' does not belong to the "
                         f"collaboration_id '{collaboration_id}' that is given."
                     )
                 }, HTTPStatus.BAD_REQUEST
+
+            collaboration_id = study.collaboration_id
+
+        collaboration = db.Collaboration.get(collaboration_id)
+        if not collaboration:
+            return {
+                "msg": f"Collaboration id={collaboration_id} not found!"
+            }, HTTPStatus.NOT_FOUND
 
         organizations_json_list = data.get("organizations")
         org_ids = [org.get("id") for org in organizations_json_list]
