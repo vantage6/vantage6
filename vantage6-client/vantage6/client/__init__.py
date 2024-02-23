@@ -9,6 +9,7 @@ import sys
 import traceback
 
 from pathlib import Path
+from vantage6.client.subclients.study import StudySubClient
 
 from vantage6.common.globals import APPNAME
 from vantage6.common.encryption import RSACryptor
@@ -55,6 +56,7 @@ class UserClient(ClientBase):
         self.role = self.Role(self)
         self.node = self.Node(self)
         self.rule = self.Rule(self)
+        self.study = StudySubClient(self)
 
         # Display welcome message
         self.log.info(" Welcome to")
@@ -413,7 +415,7 @@ class UserClient(ClientBase):
             organization: int = None,
             page: int = 1,
             per_page: int = 20,
-        ) -> dict:
+        ) -> list[dict]:
             """View your collaborations
 
             Parameters
@@ -436,7 +438,7 @@ class UserClient(ClientBase):
 
             Returns
             -------
-            list of dicts
+            list[dict]
                 Containing collabotation information
 
             Notes
@@ -631,8 +633,8 @@ class UserClient(ClientBase):
                 id_ = self.parent.collaboration_id
                 if id_ is None:
                     raise ValueError(
-                        "No collaboration id provided, please set the "
-                        "collaboration id or use `client.setup_collaboration`"
+                        "No collaboration id provided. Please provide the id_ argument"
+                        "or use `client.setup_collaboration` to set it."
                     )
             return id_
 
