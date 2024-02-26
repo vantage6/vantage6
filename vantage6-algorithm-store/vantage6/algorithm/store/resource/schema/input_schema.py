@@ -95,7 +95,7 @@ class UserInputSchema(Schema):
 
     id_server = fields.Integer(validate=Range(min=1))
     roles = fields.List(fields.Integer(validate=Range(min=1)))
-    rules = fields.List(fields.Integer(validate=Range(min=1)))
+    username = fields.String()
 
 
 class Vantage6ServerInputSchema(Schema):

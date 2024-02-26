@@ -3,12 +3,16 @@ import logging
 import requests
 from functools import wraps
 from http import HTTPStatus
-from flask import request
+from flask import request, current_app
+from flask_principal import Identity, identity_changed
+from flask_restful import Api
 
+from vantage6.algorithm.store import PermissionManager
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.common import logger_name
 from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 from vantage6.algorithm.store.model.user import User
+from vantage6.algorithm.store.permission import RuleNeed
 from vantage6.backend.common.services_resources import BaseServicesResources
 
 log = logging.getLogger(logger_name(__name__))
@@ -25,6 +29,15 @@ class AlgorithmStoreResources(BaseServicesResources):
     config: dict
         Configuration dictionary
     """
+
+    def __init__(
+        self,
+        api: Api,
+        config: dict,
+        permissions: PermissionManager,
+    ):
+        super().__init__(api, config)
+        self.permissions = permissions
 
     # TODO implement this class when necessary
     # TODO move this class elsewhere?
@@ -122,7 +135,7 @@ def with_authentication() -> callable:
 
 def with_permission(resource: str, operation: Operation) -> callable:
     """
-    Decorator to verify that the user has view permission on a resource.
+    Decorator to verify that the user has as a permission on a resource.
     Parameters
     ----------
     resource : str
@@ -165,9 +178,23 @@ def with_permission(resource: str, operation: Operation) -> callable:
                 log.warning(msg)
                 return {"msg": msg}, HTTPStatus.UNAUTHORIZED
 
-            flag = user.can(resource, operation)
+            # if the user is registered, load the rules
+            auth_identity = Identity(user_id)
 
-            if not flag:
+            for role in user.roles:
+                for rule in role.rules:
+                    auth_identity.provides.add(
+                        RuleNeed(
+                            name=rule.name,
+                            operation=rule.operation,
+                        )
+                    )
+
+            identity_changed.send(
+                current_app._get_current_object(), identity=auth_identity
+            )
+
+            if not user.can(resource, operation):
                 msg = f"This user is not allowed to perform this operation"
 
                 log.warning(msg)

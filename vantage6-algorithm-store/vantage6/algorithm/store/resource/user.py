@@ -5,13 +5,14 @@ from http import HTTPStatus
 from flask import g, request
 from flask_restful import Api
 
+from vantage6.algorithm.store.model import Vantage6Server
 from vantage6.algorithm.store.model.rule import Operation
-from vantage6.algorithm.store.resource import with_permission
+from vantage6.algorithm.store.resource import with_permission, AlgorithmStoreResources
 from vantage6.common import logger_name
 from vantage6.algorithm.store import db
 from vantage6.algorithm.store.permission import (
     Operation as P,
-    PermissionManager
+    PermissionManager, RuleCollection
 )
 from vantage6.algorithm.store.model.user import User as db_User
 
@@ -60,9 +61,11 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     #     resource_class_kwargs=services
     # )
 
+
 # ------------------------------------------------------------------------------
 # Permissions
 # ------------------------------------------------------------------------------
+
 def permissions(permissions: PermissionManager) -> None:
     """
     Define the permissions for this resource.
@@ -89,10 +92,12 @@ def permissions(permissions: PermissionManager) -> None:
 # ------------------------------------------------------------------------------
 user_output_schema = UserOutputSchema()
 user_input_schema = UserInputSchema()
+
+
 # user_schema_with_permissions = UserWithPermissionDetailsSchema()
 
 
-class Users(BaseServicesResources):
+class Users(AlgorithmStoreResources):
 
     @with_permission(module_name, Operation.VIEW)
     def get(self):
@@ -142,8 +147,6 @@ class Users(BaseServicesResources):
         args = request.args
         q = g.session.query(db_User)
 
-        # return user_output_schema.dump(q, many=True), HTTPStatus.OK
-
         # filter by any field of this endpoint
         for param in ['username', 'id_server']:
             if param in args:
@@ -157,155 +160,90 @@ class Users(BaseServicesResources):
                     'msg': f'Role with id={args["role_id"]} does not exist!'
                 }, HTTPStatus.BAD_REQUEST
 
-            q = q.join(db.Permission).join(db.Role)\
-                 .filter(db.Role.id == args['role_id'])
+            q = q.join(db.Permission).join(db.Role) \
+                .filter(db.Role.id == args['role_id'])
 
         # TODO: add pagination
         return user_output_schema.dump(q.all(), many=True), HTTPStatus.OK
 
-#     @with_permission(module_name, Operation.CREATE)
-#     def post(self):
-#         """Create user
-#         ---
-#         description: >-
-#           Creates new user from the request data to the users organization.\n
-#
-#         requestBody:
-#           content:
-#             application/json:
-#               schema:
-#                 properties:
-#                   username:
-#                     type: string
-#                     description: Unique username
-#                   firstname:
-#                     type: string
-#                     description: First name
-#                   lastname:
-#                     type: string
-#                     description: Last name
-#                   password:
-#                     type: string
-#                     description: Password
-#                   organization_id:
-#                     type: integer
-#                     description: Organization id to which user is assigned
-#                   roles:
-#                     type: array
-#                     items:
-#                       type: integer
-#                     description: User's roles
-#                   rules:
-#                     type: array
-#                     items:
-#                       type: integer
-#                     description: Extra rules for the user on top of the roles
-#                   email:
-#                     type: string
-#                     description: Email address
-#
-#         responses:
-#           201:
-#             description: Ok
-#           400:
-#             description: Username or email already exists
-#           401:
-#             description: Unauthorized
-#           404:
-#             description: Organization id does not exist
-#
-#         security:
-#           - bearerAuth: []
-#
-#         tags: ["User"]
-#         """
-#         data = request.get_json()
-#         # validate request body
-#         errors = user_input_schema.validate(data)
-#         if errors:
-#             return {'msg': 'Request body is incorrect', 'errors': errors}, \
-#                 HTTPStatus.BAD_REQUEST
-#
-#         # check unique constraints
-#         if db.User.username_exists(data["username"]):
-#             return {"msg": "username already exists."}, HTTPStatus.BAD_REQUEST
-#
-#         if db.User.exists("email", data["email"]):
-#             return {"msg": "email already exists."}, HTTPStatus.BAD_REQUEST
-#
-#         # check if the organization has been provided, if this is the case the
-#         # user needs global permissions in case it is not their own
-#         organization_id = g.user.organization_id
-#         if data.get('organization_id'):
-#             if data['organization_id'] != organization_id:
-#                 if self.r.c_glo.can():
-#                     # check if organization exists
-#                     org = db.Organization.get(data['organization_id'])
-#                     if not org:
-#                         return {'msg': "Organization does not exist."}, \
-#                             HTTPStatus.NOT_FOUND
-#             organization_id = data['organization_id']
-#
-#         # check that user is allowed to create users
-#         if not self.r.can_for_org(P.CREATE, organization_id):
-#             return {'msg': 'You lack the permission to do that!'}, \
-#                 HTTPStatus.UNAUTHORIZED
-#
-#         # process the required roles. It is only possible to assign roles with
-#         # rules that you already have permission to. This way we ensure you can
-#         # never extend your power on your own.
-#         potential_roles = data.get("roles")
-#         roles = []
-#         if potential_roles:
-#             for role in potential_roles:
-#                 role_ = db.Role.get(role)
-#                 if role_:
-#                     denied = self.permissions.check_user_rules(role_.rules)
-#                     if denied:
-#                         return denied, HTTPStatus.UNAUTHORIZED
-#                     roles.append(role_)
-#
-#                     # validate that the assigned role is either a general role
-#                     # or a role pertaining to that organization
-#                     if (role_.organization and
-#                             role_.organization.id != organization_id):
-#                         return {'msg': (
-#                             "You can't assign that role as the role belongs to"
-#                             " a different organization than the user."
-#                         )}, HTTPStatus.UNAUTHORIZED
-#
-#         # You can only assign rules that you already have to others.
-#         potential_rules = data.get("rules")
-#         rules = []
-#         if potential_rules:
-#             rules = [db.Rule.get(rule) for rule in potential_rules
-#                      if db.Rule.get(rule)]
-#             denied = self.permissions.check_user_rules(rules)
-#             if denied:
-#                 return denied, HTTPStatus.UNAUTHORIZED
-#
-#         # Ok, looks like we got most of the security hazards out of the way
-#         user = db.User(
-#             username=data["username"],
-#             firstname=data["firstname"],
-#             lastname=data["lastname"],
-#             roles=roles,
-#             rules=rules,
-#             organization_id=organization_id,
-#             email=data["email"],
-#             password=data["password"]
-#         )
-#
-#         # check if the password meets password criteria
-#         msg = user.set_password(data["password"])
-#         if msg:
-#             return {"msg": msg}, HTTPStatus.BAD_REQUEST
-#
-#         user.save()
-#
-#         return user_schema.dump(user), HTTPStatus.CREATED
-#
-#
+    @with_permission(module_name, Operation.CREATE)
+    def post(self):
+        """Create user
+        ---
+        description: >-
+          Creates new user from the request data.\n
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  username:
+                    type: string
+                    description: Unique username
+                  roles:
+                    type: array
+                    items:
+                      type: integer
+                    description: User's roles
+                  id_server:
+                    type: integer
+                    description: ID of the user in the v6 server
+
+        responses:
+          201:
+            description: Ok
+          400:
+            description: User already exists
+          401:
+            description: Unauthorized
+
+        security:
+          - bearerAuth: []
+
+        tags: ["User"]
+        """
+        data = request.get_json()
+        # the assumption is that it is possible to create only users linked to your own server
+        server = Vantage6Server.get_by_url(request.headers['Server-Url'])
+        # validate request body
+        errors = user_input_schema.validate(data)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+
+        # check unique constraints
+        if db.User.get_by_server(id_server=data["id_server"], v6_server_id=server.id):
+            return {"msg": "User already registered."}, HTTPStatus.BAD_REQUEST
+
+        if db.User.username_exists(data["username"]):
+            return {"msg": f"Username already exists."}, HTTPStatus.BAD_REQUEST
+
+        # process the required roles. It is only possible to assign roles with
+        # rules that you already have permission to. This way we ensure you can
+        # never extend your power on your own.
+        potential_roles = data.get("roles")
+        roles = []
+        if potential_roles:
+            for role in potential_roles:
+                role_ = db.Role.get(role)
+                if role_:
+                    denied = self.permissions.check_user_rules(role_.rules)
+                    if denied:
+                        return denied, HTTPStatus.UNAUTHORIZED
+                    roles.append(role_)
+
+        user = db.User(
+            id_server=data["id_server"],
+            username=data["username"],
+            v6_server_id=server.id,
+            roles=roles
+        )
+
+        user.save()
+
+        return user_output_schema.dump(user), HTTPStatus.CREATED
+
 # class User(UserBase):
 #
 #     @with_user

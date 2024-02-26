@@ -77,7 +77,6 @@ class RuleCollection(dict):
         permission = Permission(RuleNeed(self.name, operation))
         self.__setattr__(f'{operation}', permission)
 
-
     def _id_in_list(self, id_: int, resource_list: list[Base]) -> bool:
         """
         Check if resource list contains a resource with a certain ID
@@ -95,6 +94,27 @@ class RuleCollection(dict):
             True if resource is in list, False otherwise
         """
         return any(r.id == id_ for r in resource_list)
+
+    def has_permission(self, operation: Operation) -> bool:
+        """
+        Check if the user has the permission fo a certain operation
+
+        Parameters
+        ----------
+        operation: Operation
+            Operation to check
+
+        Returns
+        -------
+        bool
+            True if the entity has at least the scope, False otherwise
+        """
+        perm = getattr(self, f"{operation}", None)
+
+        if perm and perm.can():
+            return True
+
+        return False
 
 
 class PermissionManager:
@@ -294,25 +314,23 @@ class PermissionManager:
         session.commit()
         return result
 
-    # def check_user_rules(self, rules: list[Rule]) -> dict | None:
-    #     """
-    #     Check if a user, node or container has all the `rules` in a list
-    #
-    #     Parameters
-    #     ----------
-    #     rules: list[:class:`~vantage6.server.model.rule.Rule`]
-    #         List of rules that user is checked to have
-    #
-    #     Returns
-    #     -------
-    #     dict | None
-    #         Dict with a message which rule is missing, else None
-    #     """
-    #     for rule in rules:
-    #         if not self.collections[rule.name].has_at_least_scope(
-    #             rule.scope, rule.operation
-    #         ):
-    #             return {"msg": f"You don't have the rule ({rule.name}, "
-    #                     f"{print_scope(rule.scope)}, "
-    #                     f"{print_operation(rule.operation)})"}
-    #     return None
+    def check_user_rules(self, rules: list[Rule]) -> dict | None:
+        """
+        Check if a user has all the `rules` in a list
+
+        Parameters
+        ----------
+        rules: list[:class:`~vantage6.algorithm.store.model.rule.Rule`]
+            List of rules that user is checked to have
+
+        Returns
+        -------
+        dict | None
+            Dict with a message which rule is missing, else None
+        """
+        for rule in rules:
+
+            if not self.collections[rule.name].has_permission(rule.operation):
+                return {"msg": f"You don't have the rule ({rule.name}, "
+                        f"{print_operation(rule.operation)})"}
+        return None

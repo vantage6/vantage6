@@ -48,7 +48,6 @@ from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager, Da
 from vantage6.algorithm.store import db
 
 # TODO move server imports to common / refactor
-from vantage6.algorithm.store.resource.schema.output_schema import HATEOASModelSchema
 from vantage6.algorithm.store.permission import PermissionManager
 from vantage6.algorithm.store.globals import (
     RESOURCES,
@@ -250,8 +249,8 @@ class AlgorithmStoreApp:
         # make use of 'em.
         services = {
             "api": self.api,
-            # "permissions": self.permissions,
             "config": self.ctx.config,
+            "permissions": self.permissions,
         }
 
         for res in RESOURCES:
