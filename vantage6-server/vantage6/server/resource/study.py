@@ -651,7 +651,7 @@ class Study(StudyBase):
             schema:
               type: boolean
             description: If set to true, the study will be deleted along with all its
-            tasks (default=False)
+              tasks (default=False)
 
         responses:
           200:

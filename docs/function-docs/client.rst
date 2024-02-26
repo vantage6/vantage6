@@ -14,6 +14,10 @@ vantage6.client
    :members:
    :show-inheritance:
 
+.. automodule:: vantage6.client.subclients.study
+   :members:
+   :show-inheritance:
+
 vantage6.client.utils
 +++++++++++++++++++++
 
