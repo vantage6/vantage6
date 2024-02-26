@@ -83,6 +83,10 @@ their relationships.
 -  For each collaboration, each participating organization needs a
    **node** to compute tasks. When a collaboration is created, accounts are also created
    for the nodes so that they can securely communicate with the server.
+-  Collaborations can contain **studies**. A study is a subset of organizations from the
+   collaboration that are involved in a specific research question. By setting up
+   studies, it can be easier to send tasks to a subset of the organizations in a
+   collaboration and to keep track of the results of these analyses.
 -  Each organization has zero or more **users** who can perform certain
    actions.
 -  The permissions of the user are defined by the assigned **rules**.
@@ -110,26 +114,33 @@ in multiple collaborations.
     left to right direction
 
     rectangle Collaboration
-    rectangle Organization
     rectangle Node
+    rectangle Organization
+    rectangle Study
     rectangle Task
     rectangle Result
     rectangle User
     rectangle Role
     rectangle Rule
 
-    Collaboration "n" -- "n" Organization
-    Organization "1" -left- "n" Node
     Collaboration "1" -- "n" Node
+    Collaboration "n" -- "n" Organization
+    Collaboration "1" -- "n" Study
+    Collaboration "1" -- "n" Task
+
+    Study "n" -left- "n" Organization
+    Study "1" -right- "n" Task
+
+    Node "n" -right- "1" Organization
 
     Organization "1" -- "n" User
     Organization "0" -- "n" Role
+    Task "1" -- "n" Result
+
     User "n" -left- "n" Role
     Role "n" -- "n" Rule
     User "n" -- "n" Rule
 
-    Collaboration "1" -- "n" Task
-    Task "1" -- "n" Result
 
 A simple federated average algorithm
 ------------------------------------
