@@ -3,7 +3,7 @@ import logging
 import requests
 from functools import wraps
 from http import HTTPStatus
-from flask import request, current_app
+from flask import request, current_app, g
 from flask_principal import Identity, identity_changed
 from flask_restful import Api
 
@@ -193,6 +193,8 @@ def with_permission(resource: str, operation: Operation) -> callable:
             identity_changed.send(
                 current_app._get_current_object(), identity=auth_identity
             )
+
+            g.user = user
 
             if not user.can(resource, operation):
                 msg = f"This user is not allowed to perform this operation"

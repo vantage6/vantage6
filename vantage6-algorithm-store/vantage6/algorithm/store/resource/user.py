@@ -2,7 +2,9 @@
 import logging
 
 from http import HTTPStatus
-from flask import g, request
+
+import sqlalchemy
+from flask import request, g
 from flask_restful import Api
 
 from vantage6.algorithm.store.model import Vantage6Server
@@ -282,212 +284,129 @@ class User(AlgorithmStoreResources):
 
         return user_output_schema.dump(user, many=False), HTTPStatus.OK
 
-    #     @with_user
-    #     def patch(self, id):
-    #         """Update user
-    #         ---
-    #         description: >-
-    #           Update user information.\n
-    #
-    #           ### Permission Table\n
-    #           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-    #           Description|\n
-    #           |--|--|--|--|--|--|\n
-    #           |User|Global|Edit|❌|❌|Edit any user|\n
-    #           |User|Collaboration|Edit|❌|❌|Edit users in your collaborations|\n
-    #           |User|Organization|Edit|❌|❌|Edit users in your organization|\n
-    #           |User|Own|Edit|❌|❌|Edit your own user account|\n
-    #
-    #           Accessible to users.
-    #
-    #         requestBody:
-    #           content:
-    #             application/json:
-    #               schema:
-    #                 properties:
-    #                   username:
-    #                     type: string
-    #                     description: Unique username
-    #                   firstname:
-    #                     type: string
-    #                     description: First name
-    #                   lastname:
-    #                     type: string
-    #                     description: Last name
-    #                   email:
-    #                     type: string
-    #                     description: Email address
-    #                   roles:
-    #                     type: array
-    #                     items:
-    #                       type: integer
-    #                     description: User's roles
-    #                   rules:
-    #                     type: array
-    #                     items:
-    #                       type: integer
-    #                     description: Extra rules for the user on top of the roles
-    #
-    #         parameters:
-    #           - in: path
-    #             name: id
-    #             schema:
-    #               type: integer
-    #             description: User id
-    #             required: true
-    #
-    #         responses:
-    #           200:
-    #             description: Ok
-    #           400:
-    #             description: User cannot be updated to contents of request body,
-    #               e.g. due to duplicate email address.
-    #           404:
-    #             description: User not found
-    #           401:
-    #             description: Unauthorized
-    #
-    #         security:
-    #           - bearerAuth: []
-    #
-    #         tags: ["User"]
-    #         """
-    #         user = db.User.get(id)
-    #         if not user:
-    #             return {"msg": f"user id={id} not found"}, \
-    #                 HTTPStatus.NOT_FOUND
-    #
-    #         data = request.get_json()
-    #         # validate request body
-    #         errors = user_input_schema.validate(data, partial=True)
-    #         if errors:
-    #             return {'msg': 'Request body is incorrect', 'errors': errors}, \
-    #                 HTTPStatus.BAD_REQUEST
-    #         if data.get("password"):
-    #             return {"msg": "You cannot change your password here!"}, \
-    #                 HTTPStatus.BAD_REQUEST
-    #
-    #         # check permissions
-    #         if not (self.r.e_own.can() and user == g.user) and \
-    #                 not self.r.can_for_org(P.EDIT, user.organization_id):
-    #             return {'msg': 'You lack the permission to do that!'}, \
-    #                 HTTPStatus.UNAUTHORIZED
-    #
-    #         # update user and check for unique constraints
-    #         if data.get("username") is not None:
-    #             if user.username != data["username"]:
-    #                 if db.User.exists("username", data["username"]):
-    #                     return {
-    #                         "msg": "User with that username already exists"
-    #                     }, HTTPStatus.BAD_REQUEST
-    #                 elif user.id != g.user.id:
-    #                     return {
-    #                         "msg": "You cannot change the username of another user"
-    #                     }, HTTPStatus.BAD_REQUEST
-    #             user.username = data["username"]
-    #         if data.get("firstname") is not None:
-    #             user.firstname = data["firstname"]
-    #         if data.get("lastname") is not None:
-    #             user.lastname = data["lastname"]
-    #         if data.get("email") is not None:
-    #             if (user.email != data["email"] and
-    #                     db.User.exists("email", data["email"])):
-    #                 return {
-    #                     "msg": "User with that email already exists."
-    #                 }, HTTPStatus.BAD_REQUEST
-    #             user.email = data["email"]
-    #
-    #         # request parser is awefull with lists
-    #         if 'roles' in data:
-    #             # validate that these roles exist
-    #             roles = []
-    #             for role_id in data['roles']:
-    #                 role = db.Role.get(role_id)
-    #                 if not role:
-    #                     return {'msg': f'Role={role_id} can not be found!'}, \
-    #                         HTTPStatus.NOT_FOUND
-    #                 roles.append(role)
-    #
-    #             # validate that user is not changing their own roles
-    #             if user == g.user:
-    #                 return {'msg': "You can't changes your own roles!"}, \
-    #                     HTTPStatus.UNAUTHORIZED
-    #
-    #             # validate that user can assign these
-    #             for role in roles:
-    #                 denied = self.permissions.check_user_rules(role.rules)
-    #                 if denied:
-    #                     return denied, HTTPStatus.UNAUTHORIZED
-    #
-    #                 # validate that the assigned role is either a general role or a
-    #                 # role pertaining to that organization
-    #                 if (role.organization and
-    #                         role.organization.id != user.organization_id):
-    #                     return {'msg': (
-    #                         "You can't assign that role to that user as the role "
-    #                         "belongs to a different organization than the user "
-    #                     )}, HTTPStatus.UNAUTHORIZED
-    #
-    #             # validate that user is not deleting roles they cannot assign
-    #             # e.g. an organization admin is not allowed to delete a root role
-    #             deleted_roles = [r for r in user.roles if r not in roles]
-    #             for role in deleted_roles:
-    #                 denied = self.permissions.check_user_rules(role.rules)
-    #                 if denied:
-    #                     return {"msg": (
-    #                         f"You are trying to delete the role {role.name} from "
-    #                         "this user but that is not allowed because they have "
-    #                         f"permissions you don't have: {denied['msg']} (and "
-    #                         "they do!)"
-    #                     )}, HTTPStatus.UNAUTHORIZED
-    #
-    #             user.roles = roles
-    #
-    #         if 'rules' in data:
-    #             # validate that these rules exist
-    #             rules = []
-    #             for rule_id in data['rules']:
-    #                 rule = db.Rule.get(rule_id)
-    #                 if not rule:
-    #                     return {'msg': f'Rule={rule_id} can not be found!'}, \
-    #                         HTTPStatus.NOT_FOUND
-    #                 rules.append(rule)
-    #
-    #             # validate that user is not changing their own rules
-    #             if user == g.user:
-    #                 return {'msg': "You can't changes your own rules!"}, \
-    #                     HTTPStatus.UNAUTHORIZED
-    #
-    #             # validate that user can assign these
-    #             denied = self.permissions.check_user_rules(rules)
-    #             if denied:
-    #                 return denied, HTTPStatus.UNAUTHORIZED
-    #
-    #             # validate that user is not deleting rules they do not have
-    #             # themselves
-    #             deleted_rules = [r for r in user.rules if r not in rules]
-    #             denied = self.permissions.check_user_rules(deleted_rules)
-    #             if denied:
-    #                 return {"msg": (
-    #                     f"{denied['msg']}. You can't delete permissions for "
-    #                     "another user that you don't have yourself!"
-    #                 )}, HTTPStatus.UNAUTHORIZED
-    #
-    #             user.rules = rules
-    #
-    #         try:
-    #             user.save()
-    #         except sqlalchemy.exc.IntegrityError as e:
-    #             log.error(e)
-    #             user.session.rollback()
-    #             return {
-    #                 "msg": "User could not be updated with those parameters."
-    #             }, HTTPStatus.BAD_REQUEST
-    #
-    #         return user_schema.dump(user), HTTPStatus.OK
-    #
+    @with_permission(module_name, Operation.EDIT)
+    def patch(self, id):
+        """Update user
+            ---
+            description: >-
+              Update user information.\n
 
-    @with_permission(module_name, Operation.VIEW)
+
+            requestBody:
+              content:
+                application/json:
+                  schema:
+                    properties:
+                      username:
+                        type: string
+                        description: Unique username
+                      roles:
+                        type: array
+                        items:
+                          type: integer
+                        description: User's roles
+
+            parameters:
+              - in: path
+                name: id
+                schema:
+                  type: integer
+                description: User id
+                required: true
+
+            responses:
+              200:
+                description: Ok
+              400:
+                description: User cannot be updated to contents of request body,
+                  e.g. due to duplicate email address.
+              404:
+                description: User not found
+              401:
+                description: Unauthorized
+
+            security:
+              - bearerAuth: []
+
+            tags: ["User"]
+            """
+        user = db.User.get(id)
+        if not user:
+            return {"msg": f"user id={id} not found"}, \
+                HTTPStatus.NOT_FOUND
+
+        data = request.get_json()
+        # validate request body
+        errors = user_input_schema.validate(data, partial=True)
+        if errors:
+            return {'msg': 'Request body is incorrect', 'errors': errors}, \
+                HTTPStatus.BAD_REQUEST
+        if data.get("id_server"):
+            return {"msg": "You cannot change the server id"}, \
+                HTTPStatus.BAD_REQUEST
+
+        # update user and check for unique constraints
+        if data.get("username") is not None:
+            if user.username != data["username"]:
+                if db.User.exists("username", data["username"]):
+                    return {
+                        "msg": "User with that username already exists"
+                    }, HTTPStatus.BAD_REQUEST
+                elif user.id != g.user.id:
+                    return {
+                        "msg": "You cannot change the username of another user"
+                    }, HTTPStatus.BAD_REQUEST
+            user.username = data["username"]
+
+        # request parser is awefull with lists
+        if 'roles' in data:
+            # validate that these roles exist
+            roles = []
+            for role_id in data['roles']:
+                role = db.Role.get(role_id)
+                if not role:
+                    return {'msg': f'Role={role_id} can not be found!'}, \
+                        HTTPStatus.NOT_FOUND
+                roles.append(role)
+
+            # validate that user is not changing their own roles
+
+            if user == g.user:
+                return {'msg': "You can't changes your own roles!"}, \
+                    HTTPStatus.UNAUTHORIZED
+
+            # validate that user can assign these
+            for role in roles:
+                denied = self.permissions.check_user_rules(role.rules)
+                if denied:
+                    return denied, HTTPStatus.UNAUTHORIZED
+
+            # validate that user is not deleting roles they cannot assign
+            deleted_roles = [r for r in user.roles if r not in roles]
+            for role in deleted_roles:
+                denied = self.permissions.check_user_rules(role.rules)
+                if denied:
+                    return {"msg": (
+                        f"You are trying to delete the role {role.name} from "
+                        "this user but that is not allowed because they have "
+                        f"permissions you don't have: {denied['msg']} (and "
+                        "they do!)"
+                    )}, HTTPStatus.UNAUTHORIZED
+
+            user.roles = roles
+
+        try:
+            user.save()
+        except sqlalchemy.exc.IntegrityError as e:
+            log.error(e)
+            user.session.rollback()
+            return {
+                "msg": "User could not be updated with those parameters."
+            }, HTTPStatus.BAD_REQUEST
+
+        return user_output_schema.dump(user), HTTPStatus.OK
+
+    @with_permission(module_name, Operation.DELETE)
     def delete(self, id):
         """Remove user.
         ---
