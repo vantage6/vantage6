@@ -53,13 +53,13 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         methods=('GET', 'POST'),
         resource_class_kwargs=services
     )
-    # api.add_resource(
-    #     User,
-    #     path + '/<int:id>',
-    #     endpoint='user_with_id',
-    #     methods=('GET', 'PATCH', 'DELETE'),
-    #     resource_class_kwargs=services
-    # )
+    api.add_resource(
+        User,
+        path + '/<int:id>',
+        endpoint='user_with_id',
+        methods=('GET', 'PATCH', 'DELETE'),
+        resource_class_kwargs=services
+    )
 
 
 # ------------------------------------------------------------------------------
@@ -244,74 +244,45 @@ class Users(AlgorithmStoreResources):
 
         return user_output_schema.dump(user), HTTPStatus.CREATED
 
-# class User(UserBase):
-#
-#     @with_user
-#     def get(self, id):
-#         """Get user
-#         ---
-#         description: >-
-#             Returns the user specified by the id.\n
-#
-#             ### Permission Table\n
-#             |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-#             Description|\n
-#             |-- |--|--|--|--|--|\n
-#             |User|Global|View|❌|❌|View any user details|\n
-#             |User|Collaboration|View|❌|❌|View users from your
-#             collaborations|\n
-#             |User|Organization|View|❌|❌|View users from your
-#             organization|\n
-#             |User|Organization|Own|❌|❌|View details about your own user|\n
-#
-#             Accessible to users.
-#
-#         parameters:
-#             - in: path
-#               name: id
-#               schema:
-#                 type: integer
-#               description: User id
-#               required: true
-#             - in: path
-#               name: include_permissions
-#               schema:
-#                 type: boolean
-#               description: Whether or not to include extra permission info for
-#                 the user. By default false.
-#
-#         responses:
-#             200:
-#                 description: Ok
-#             404:
-#                 description: User not found
-#             401:
-#                 description: Unauthorized
-#
-#         security:
-#             - bearerAuth: []
-#
-#         tags: ["User"]
-#         """
-#         user = db.User.get(id)
-#         if not user:
-#             return {"msg": f"user id={id} is not found"}, HTTPStatus.NOT_FOUND
-#
-#         schema = user_schema
-#
-#         if request.args.get('include_permissions', False):
-#             schema = user_schema_with_permissions
-#
-#         # allow user to be returned if authenticated user can view users from
-#         # that organization or if the user is the same as the authenticated
-#         # user.
-#         same_user = g.user.id == user.id
-#         if (same_user or self.r.can_for_org(P.VIEW, user.organization_id)):
-#             return schema.dump(user, many=False), HTTPStatus.OK
-#         else:
-#             return {'msg': 'You lack the permission to do that!'}, \
-#                     HTTPStatus.UNAUTHORIZED
-#
+
+class User(AlgorithmStoreResources):
+
+    @with_permission(module_name, Operation.VIEW)
+    def get(self, id):
+        """Get user
+        ---
+        description: >-
+            Returns the user specified by the id.\n
+
+
+        parameters:
+            - in: path
+              name: id
+              schema:
+                type: integer
+              description: User id
+              required: true
+
+        responses:
+            200:
+                description: Ok
+            404:
+                description: User not found
+            401:
+                description: Unauthorized
+
+        security:
+            - bearerAuth: []
+
+        tags: ["User"]
+        """
+        user = db.User.get(id)
+        if not user:
+            return {"msg": f"user id={id} is not found"}, HTTPStatus.NOT_FOUND
+
+        return user_output_schema.dump(user, many=False), HTTPStatus.OK
+
+
 #     @with_user
 #     def patch(self, id):
 #         """Update user
