@@ -579,16 +579,16 @@ class UserClient(ClientBase):
             )
 
         def add_organization(
-            self, organization_id: int, collaboration_id: int = None
+            self, organization: int, collaboration: int = None
         ) -> list[dict]:
             """
             Add an organization to a collaboration
 
             Parameters
             ----------
-            organization_id : int
+            organization : int
                 Id of the organization you want to add to the collaboration
-            collaboration_id : int, optional
+            collaboration : int, optional
                 Id of the collaboration you want to add the organization to. If no
                 id is provided the value of setup_collaboration() is used.
 
@@ -597,32 +597,32 @@ class UserClient(ClientBase):
             list[dict]
                 Containing the updated list of organizations in the collaboration
             """
-            collaboration_id = self.__get_id(collaboration_id)
+            collaboration = self.__get_id(collaboration)
             return self.parent.request(
-                f"collaboration/{collaboration_id}/organization",
+                f"collaboration/{collaboration}/organization",
                 method="post",
-                json={"organization_id": organization_id},
+                json={"organization_id": organization},
             )
 
         def remove_organization(
-            self, organization_id: int, collaboration_id: int = None
+            self, organization: int, collaboration: int = None
         ) -> list[dict]:
             """
             Remove an organization from a collaboration
 
             Parameters
             ----------
-            organization_id : int
+            organization : int
                 Id of the organization you want to remove from the collaboration
-            collaboration_id : int, optional
+            collaboration : int, optional
                 Id of the collaboration you want to remove the organization from. If no
                 id is provided the value of setup_collaboration() is used.
             """
-            collaboration_id = self.__get_id(collaboration_id)
+            collaboration = self.__get_id(collaboration)
             return self.parent.request(
-                f"collaboration/{collaboration_id}/organization",
+                f"collaboration/{collaboration}/organization",
                 method="delete",
-                params={"organization_id": organization_id},
+                params={"organization_id": organization},
             )
 
         def __get_id(self, id_: int = None) -> int:

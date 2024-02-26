@@ -146,3 +146,42 @@ class StudySubClient(ClientBase.SubClient):
                 "organization_ids": organizations,
             },
         )
+
+    def add_organization(self, organization: int, study: int = None) -> list[dict]:
+        """
+        Add an organization to a study
+
+        Parameters
+        ----------
+        organization : int
+            Id of the organization you want to add to the study
+        study : int, optional
+            Id of the study you want to add the organization to.
+
+        Returns
+        -------
+        list[dict]
+            Containing the updated list of organizations in the study
+        """
+        return self.parent.request(
+            f"study/{study}/organization",
+            method="post",
+            json={"organization_id": organization},
+        )
+
+    def remove_organization(self, organization: int, study: int = None) -> list[dict]:
+        """
+        Remove an organization from a study
+
+        Parameters
+        ----------
+        organization : int
+            Id of the organization you want to remove from the study
+        study : int, optional
+            Id of the study you want to remove the organization from
+        """
+        return self.parent.request(
+            f"study/{study}/organization",
+            method="delete",
+            params={"organization_id": organization},
+        )
