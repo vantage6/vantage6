@@ -1,3 +1,4 @@
+from typing import List
 from vantage6.client.filter import post_filtering
 from vantage6.common.client.client_base import ClientBase
 
@@ -29,7 +30,7 @@ class StudySubClient(ClientBase.SubClient):
         include_organizations: bool = False,
         page: int = 1,
         per_page: int = 20,
-    ) -> list[dict]:
+    ) -> List[dict]:
         """View your studies
 
         Parameters
@@ -62,7 +63,7 @@ class StudySubClient(ClientBase.SubClient):
 
     @post_filtering(iterable=False)
     def create(
-        self, name: str, organizations: list[int], collaboration: int = None
+        self, name: str, organizations: List[int], collaboration: int = None
     ) -> dict:
         """Create new study
 
@@ -119,7 +120,7 @@ class StudySubClient(ClientBase.SubClient):
         self,
         id_: int,
         name: str = None,
-        organizations: list[int] = None,
+        organizations: List[int] = None,
     ) -> dict:
         """
         Update study information
@@ -138,16 +139,14 @@ class StudySubClient(ClientBase.SubClient):
         dict
             Containing the updated study information
         """
-        return self.parent.request(
-            f"study/{id_}",
-            method="patch",
-            json={
-                "name": name,
-                "organization_ids": organizations,
-            },
-        )
+        json_data = {}
+        if name:
+            json_data["name"] = name
+        if organizations:
+            json_data["organization_ids"] = organizations
+        return self.parent.request(f"study/{id_}", method="patch", json=json_data)
 
-    def add_organization(self, organization: int, study: int = None) -> list[dict]:
+    def add_organization(self, organization: int, study: int = None) -> List[dict]:
         """
         Add an organization to a study
 
@@ -166,10 +165,10 @@ class StudySubClient(ClientBase.SubClient):
         return self.parent.request(
             f"study/{study}/organization",
             method="post",
-            json={"organization_id": organization},
+            json={"id": organization},
         )
 
-    def remove_organization(self, organization: int, study: int = None) -> list[dict]:
+    def remove_organization(self, organization: int, study: int = None) -> List[dict]:
         """
         Remove an organization from a study
 
@@ -179,9 +178,14 @@ class StudySubClient(ClientBase.SubClient):
             Id of the organization you want to remove from the study
         study : int, optional
             Id of the study you want to remove the organization from
+
+        Returns
+        -------
+        list[dict]
+            Containing the updated list of organizations in the study
         """
         return self.parent.request(
             f"study/{study}/organization",
             method="delete",
-            params={"organization_id": organization},
+            json={"id": organization},
         )

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
+from typing import List
 import jwt
 import pyfiglet
 import itertools
@@ -415,7 +416,7 @@ class UserClient(ClientBase):
             organization: int = None,
             page: int = 1,
             per_page: int = 20,
-        ) -> list[dict]:
+        ) -> List[dict]:
             """View your collaborations
 
             Parameters
@@ -463,8 +464,7 @@ class UserClient(ClientBase):
                 return self.parent.request("collaboration", params=params)
             else:
                 self.parent.log.info(
-                    "--> Unrecognized `scope`. Needs to be "
-                    "`organization` or `global`"
+                    "--> Unrecognized `scope`. Needs to be `organization` or `global`"
                 )
 
         @post_filtering(iterable=False)
@@ -545,7 +545,7 @@ class UserClient(ClientBase):
             id_: int = None,
             name: str = None,
             encrypted: bool = None,
-            organizations: list[int] = None,
+            organizations: List[int] = None,
         ) -> dict:
             """
             Update collaboration information
@@ -580,7 +580,7 @@ class UserClient(ClientBase):
 
         def add_organization(
             self, organization: int, collaboration: int = None
-        ) -> list[dict]:
+        ) -> List[dict]:
             """
             Add an organization to a collaboration
 
@@ -601,12 +601,12 @@ class UserClient(ClientBase):
             return self.parent.request(
                 f"collaboration/{collaboration}/organization",
                 method="post",
-                json={"organization_id": organization},
+                json={"id": organization},
             )
 
         def remove_organization(
             self, organization: int, collaboration: int = None
-        ) -> list[dict]:
+        ) -> List[dict]:
             """
             Remove an organization from a collaboration
 
@@ -617,12 +617,17 @@ class UserClient(ClientBase):
             collaboration : int, optional
                 Id of the collaboration you want to remove the organization from. If no
                 id is provided the value of setup_collaboration() is used.
+
+            Returns
+            -------
+            list[dict]
+                Containing the updated list of organizations in the collaboration
             """
             collaboration = self.__get_id(collaboration)
             return self.parent.request(
                 f"collaboration/{collaboration}/organization",
                 method="delete",
-                params={"organization_id": organization},
+                json={"id": organization},
             )
 
         def __get_id(self, id_: int = None) -> int:
