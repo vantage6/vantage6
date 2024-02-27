@@ -13,7 +13,7 @@ log = logging.getLogger(module_name)
 
 
 class Role(Base):
-    """Collection of :class:`.~vantage6.algorithm.store.model.rule.Rule` permissions
+    """Collection of :class:`.~vantage6.algorithm.store.model.rule.Role` permissions
 
     Attributes
     ----------
@@ -21,13 +21,9 @@ class Role(Base):
         Name of the role
     description : str
         Description of the role
-    organization_id : int
-        Id of the organization this role belongs to
-    rules : list[:class:`.~vantage6.server.model.rule.Rule`]
+    rules : list[:class:`.~vantage6.algorithm.store.model.rule.Rule`]
         List of rules that belong to this role
-    organization : :class:`.~vantage6.server.model.organization.Organization`
-        Organization this role belongs to
-    users : list[:class:`.~vantage6.server.model.user.User`]
+    users : list[:class:`.~vantage6.algorithm.store.model.user.User`]
         List of users that belong to this role
     """
 
@@ -54,7 +50,7 @@ class Role(Base):
 
         Returns
         -------
-        :class:`.~vantage6.server.model.role.Role` | None
+        :class:`.~vantage6.algorithm.store.model.role.Role` | None
             Role with the given name or None if no role with the given name
             exists
         """

@@ -1,7 +1,5 @@
 """
-The role_rule_assocation table defines which rules have been assigned to which
-roles. Each line contains a rule_id that is a member of a certain role_id. Each
-role will usually have multiple rules assigned to it.
+The developer_algorithm_association table defines which user has created which algorithm.
 """
 from sqlalchemy import Column, Integer, ForeignKey, Table
 

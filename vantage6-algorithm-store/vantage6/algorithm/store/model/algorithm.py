@@ -38,7 +38,7 @@ class Algorithm(Base):
 
     # relationships
     functions = relationship("Function", back_populates='algorithm')
-
     developer = relationship("User", back_populates='algorithms',
                              secondary="developer_algorithm_association")
+    review = relationship("Review", back_populates='algorithm')
 

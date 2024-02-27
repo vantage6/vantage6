@@ -197,7 +197,7 @@ def with_permission(resource: str, operation: Operation) -> callable:
             g.user = user
 
             if not user.can(resource, operation):
-                msg = f"This user is not allowed to perform this operation"
+                msg = f"You are not allowed to perform this operation"
 
                 log.warning(msg)
                 return {"msg": msg}, HTTPStatus.UNAUTHORIZED

@@ -1,9 +1,8 @@
 from __future__ import annotations
 from sqlalchemy import Column, Text, Integer, ForeignKey
 from sqlalchemy.orm import relationship
-from sqlalchemy.orm.exc import NoResultFound
 
-from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
+from vantage6.algorithm.store.model.base import Base
 
 
 class Review(Base):
@@ -11,18 +10,12 @@ class Review(Base):
 
     Attributes
     ----------
-    name : str
-        Name of the role
-    description : str
-        Description of the role
-    organization_id : int
-        Id of the organization this role belongs to
-    rules : list[:class:`.~vantage6.server.model.rule.Rule`]
-        List of rules that belong to this role
-    organization : :class:`.~vantage6.server.model.organization.Organization`
-        Organization this role belongs to
-    users : list[:class:`.~vantage6.server.model.user.User`]
-        List of users that belong to this role
+    algorithm_id : int
+        Id of the algorithm
+    reviewer_id : int
+        Id of the user appointed as reviewer
+    status : str
+        Review status
     """
 
     # fields
@@ -32,6 +25,7 @@ class Review(Base):
 
     # relationships
     reviewers = relationship("User", back_populates="reviews")
+    algorithm = relationship("Algorithm", back_populates="review")
 
     def __repr__(self) -> str:
         """
@@ -46,6 +40,6 @@ class Review(Base):
             f"<Review "
             f"algorithm: {self.algorithm_id}, "
             f"status: {self.status}, "
-            f"reviewers: {self.reviewers}, "
+            f"reviewer_id: {self.reviewer_id}, "
             ">"
         )

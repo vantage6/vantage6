@@ -19,8 +19,8 @@ class Operation(str, Enumerate):
 class Rule(Base):
     """Rules to determine permissions in an API endpoint.
 
-    A rule gives access to a single type of action with a given operation,
-    scope and resource on which it acts. Note that rules are defined on startup
+    A rule gives access to a single type of action with a given operation
+    and resource on which it acts. Note that rules are defined on startup
     of the server, based on permissions defined in the endpoints. You cannot
     edit the rules in the database.
 
@@ -32,10 +32,8 @@ class Rule(Base):
         Operation of the rule
     description : str
         Description of the rule
-    roles : list[:class:`.~vantage6.server.model.role.Role`]
+    roles : list[:class:`.~vantage6.algorithm.store.model.role.Role`]
         Roles that have this rule
-    users : list[:class:`.~vantage6.server.model.user.User`]
-        Users that have this rule
     """
 
     # fields
@@ -57,16 +55,14 @@ class Rule(Base):
         Parameters
         ----------
         name : str
-            Name of the resource on which the rule acts, e.g. 'node'
-        scope : str
-            Scope of the rule, e.g. 'organization'
+            Name of the resource on which the rule acts, e.g. 'algorithm'
         operation : str
             Operation of the rule, e.g. 'view'
 
         Returns
         -------
         Rule | None
-            Rule with the given name, scope and operation or None if no rule
+            Rule with the given name and operation or None if no rule
             with the given name, scope and operation exists
         """
         session = DatabaseSessionManager.get_session()

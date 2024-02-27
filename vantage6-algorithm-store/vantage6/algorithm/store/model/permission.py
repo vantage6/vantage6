@@ -20,6 +20,7 @@ Permission = Table(
     Column('role_id', Integer, ForeignKey('role.id'))
 )
 
+# TODO: integrate this with the Permission model from the v6 server
 # UserPermission = Table(
 #     'UserPermission',
 #     Base.metadata,

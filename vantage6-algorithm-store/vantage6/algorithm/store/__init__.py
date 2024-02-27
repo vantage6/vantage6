@@ -51,8 +51,7 @@ from vantage6.algorithm.store import db
 from vantage6.algorithm.store.permission import PermissionManager
 from vantage6.algorithm.store.globals import (
     RESOURCES,
-    SERVER_MODULE_NAME,
-    SUPER_USER_INFO
+    SERVER_MODULE_NAME
 )
 
 module_name = logger_name(__name__)

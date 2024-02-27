@@ -476,16 +476,10 @@ class Algorithm(AlgorithmStoreResources):
             return {'msg': "Request body is incorrect", 'errors': errors}, \
                 HTTPStatus.BAD_REQUEST
 
-        if (name := data.get('name')) is not None:
-            algorithm.name = name
-        if (description := data.get('description')) is not None:
-            algorithm.description = description
-        if (image := data.get('image')) is not None:
-            algorithm.image = image
-        if (partitioning := data.get('partitioning')) is not None:
-            algorithm.partitioning = partitioning
-        if (vantage6_version := data.get('vantage6_version')) is not None:
-            algorithm.vantage6_version = vantage6_version
+        fields = ["name", "description", "image", "partitioning", "vantage6_version"]
+        for field in fields:
+            if field in data and data.get(field) is not None:
+                setattr(algorithm, field, data.get('name'))
 
         if (functions := data.get('functions')) is not None:
             for function in algorithm.functions:
@@ -499,7 +493,7 @@ class Algorithm(AlgorithmStoreResources):
                 func = Function(
                     name=new_function['name'],
                     description=new_function.get('description', ''),
-                    type=new_function['type'],
+                    type_=new_function['type'],
                     algorithm_id=id
                 )
                 func.save()
@@ -510,7 +504,7 @@ class Algorithm(AlgorithmStoreResources):
                         arg = Argument(
                             name=argument['name'],
                             description=argument.get('description', ''),
-                            type=argument['type'],
+                            type_=argument['type'],
                             function_id=func.id
                         )
                         arg.save()

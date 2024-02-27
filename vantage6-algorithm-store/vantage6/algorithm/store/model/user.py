@@ -1,9 +1,7 @@
 from __future__ import annotations
-import bcrypt
-import datetime as dt
 
-from sqlalchemy import Column, String, Integer, ForeignKey, DateTime
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
 from vantage6.algorithm.store.model.rule import Operation, Rule
@@ -20,6 +18,10 @@ class User(Base):
     ----------
     id_server : int
         User id as saved in the V6 server
+    username : str
+        Username
+    v6_server_id : int
+        Id of the whitelisted server through which the user is authenticated
     """
 
     # fields

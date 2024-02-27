@@ -8,22 +8,12 @@ from flask_restful import Api
 from sqlalchemy import or_
 
 from vantage6.algorithm.store.resource import with_permission
-# from vantage6.algorithm.store import db
-# from vantage6.algorithm.store.resource import (
-#     get_org_ids_from_collabs,
-#     with_user,
-#     ServicesResources
-# )
 from vantage6.common import logger_name
 from vantage6.algorithm.store.permission import (
-    PermissionManager,
-    RuleCollection,
-    Operation as P,
+    PermissionManager
 )
 from vantage6.algorithm.store.model.rule import Operation
-from vantage6.algorithm.store.default_roles import DefaultRole
 from vantage6.algorithm.store.resource.schema.output_schema import RoleOutputSchema
-# from vantage6.algorithm.store.resource.schema.input_schema import RoleInputSchema
 from vantage6.algorithm.store import db
 from vantage6.backend.common.services_resources import BaseServicesResources
 from vantage6.backend.common.resource.pagination import Pagination
@@ -110,21 +100,7 @@ class Roles(BaseServicesResources):
         ---
 
         description: >-
-            Returns a list of roles. Depending on your permission, you get all
-            the roles at the server or only the roles that belong to your
-            organization.\n
-
-            ### Permission Table\n
-            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-            Description|\n
-            |--|--|--|--|--|--|\n
-            |Role|Global|View|❌|❌|View all roles|\n
-            |Role|Collaboration|View|❌|❌|View all roles in your
-            collaborations|\n
-            |Role|Organization|View|❌|❌|View roles that are part of your
-            organization|\n
-
-            Accesible to users.
+            Returns a list of roles.
 
         parameters:
             - in: query
@@ -146,32 +122,10 @@ class Roles(BaseServicesResources):
                 characters\n
                 * underscore sign (_) represents one, single character
             - in: query
-              name: organization_id
-              schema:
-                type: array
-                items:
-                  type: integer
-                  description: Organization id of which you want to get roles
-            - in: query
-              name: collaboration_id
-              schema:
-              type: integer
-              description: Collaboration id
-            - in: query
-              name: rule_id
-              schema:
-                type: integer
-              description: Get roles that this role id is part of
-            - in: query
               name: user_id
               schema:
                 type: integer
               description: Get roles for this user id
-            - in: query
-              name: include_root
-              schema:
-                 type: boolean
-              description: Whether or not to include root role (default=False)
             - in: query
               name: page
               schema:
@@ -182,13 +136,6 @@ class Roles(BaseServicesResources):
               schema:
                 type: integer
               description: Number of items per page (default=10)
-            - in: query
-              name: sort
-              schema:
-                type: string
-              description: >-
-                Sort by one or more fields, separated by a comma. Use a minus
-                sign (-) in front of the field to sort in descending order.
 
         responses:
           200:
