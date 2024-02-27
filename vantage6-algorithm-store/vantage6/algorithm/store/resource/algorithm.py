@@ -13,6 +13,7 @@ from vantage6.algorithm.store.model.argument import Argument
 from vantage6.algorithm.store.model.database import Database
 from vantage6.algorithm.store.model.function import Function
 from vantage6.algorithm.store.resource import with_permission
+
 # TODO move to common / refactor
 from vantage6.algorithm.store.resource import AlgorithmStoreResources
 from vantage6.algorithm.store.permission import (
@@ -50,10 +51,10 @@ def setup(api: Api, api_base: str, services: dict) -> None:
 
     api.add_resource(
         Algorithm,
-        path + '/<int:id>',
-        endpoint='algorithm_with_id',
-        methods=('GET', 'DELETE', 'PATCH'),
-        resource_class_kwargs=services
+        path + "/<int:id>",
+        endpoint="algorithm_with_id",
+        methods=("GET", "DELETE", "PATCH"),
+        resource_class_kwargs=services,
     )
 
 
@@ -74,11 +75,12 @@ def permissions(permissions: PermissionManager) -> None:
         Permission manager instance to which permissions are added
     """
     add = permissions.appender(module_name)
-    add(P.VIEW, description='View any algorithm')
-    add(P.CREATE, description='Create a new algorithm')
-    add(P.EDIT, description='Edit any algorithm')
-    add(P.DELETE, description='Delete any algorithm')
-    add(P.REVIEW, description='Edit some fields of the algorithm')
+    add(P.VIEW, description="View any algorithm")
+    add(P.CREATE, description="Create a new algorithm")
+    add(P.EDIT, description="Edit any algorithm")
+    add(P.DELETE, description="Delete any algorithm")
+    add(P.REVIEW, description="Edit some fields of the algorithm")
+
 
 # ------------------------------------------------------------------------------
 # Resources / API's
@@ -363,8 +365,7 @@ class Algorithm(AlgorithmStoreResources):
             function.delete()
         algorithm.delete()
 
-        return {'msg': f'Algorithm id={id} was successfully deleted'}, \
-            HTTPStatus.OK
+        return {"msg": f"Algorithm id={id} was successfully deleted"}, HTTPStatus.OK
 
     @with_permission(module_name, Operation.EDIT)
     def patch(self, id):
@@ -466,22 +467,24 @@ class Algorithm(AlgorithmStoreResources):
         """
         algorithm = db_Algorithm.get(id)
         if not algorithm:
-            return {'msg': 'Algorithm not found'}, HTTPStatus.NOT_FOUND
+            return {"msg": "Algorithm not found"}, HTTPStatus.NOT_FOUND
 
         data = request.get_json()
 
         # validate the request body
         errors = algorithm_input_schema.validate(data, partial=True)
         if errors:
-            return {'msg': "Request body is incorrect", 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
         fields = ["name", "description", "image", "partitioning", "vantage6_version"]
         for field in fields:
             if field in data and data.get(field) is not None:
-                setattr(algorithm, field, data.get('name'))
+                setattr(algorithm, field, data.get("name"))
 
-        if (functions := data.get('functions')) is not None:
+        if (functions := data.get("functions")) is not None:
             for function in algorithm.functions:
                 for argument in function.arguments:
                     argument.delete()
@@ -491,32 +494,32 @@ class Algorithm(AlgorithmStoreResources):
 
             for new_function in functions:
                 func = Function(
-                    name=new_function['name'],
-                    description=new_function.get('description', ''),
-                    type_=new_function['type'],
-                    algorithm_id=id
+                    name=new_function["name"],
+                    description=new_function.get("description", ""),
+                    type_=new_function["type"],
+                    algorithm_id=id,
                 )
                 func.save()
 
-                arguments = new_function.get('arguments')
+                arguments = new_function.get("arguments")
                 if arguments:
                     for argument in arguments:
                         arg = Argument(
-                            name=argument['name'],
-                            description=argument.get('description', ''),
-                            type_=argument['type'],
-                            function_id=func.id
+                            name=argument["name"],
+                            description=argument.get("description", ""),
+                            type_=argument["type"],
+                            function_id=func.id,
                         )
                         arg.save()
 
                 # create the databases
-                databases = new_function.get('databases')
+                databases = new_function.get("databases")
                 if databases:
                     for database in databases:
                         db = Database(
-                            name=database['name'],
-                            description=database.get('description', ''),
-                            function_id=func.id
+                            name=database["name"],
+                            description=database.get("description", ""),
+                            function_id=func.id,
                         )
                         db.save()
 

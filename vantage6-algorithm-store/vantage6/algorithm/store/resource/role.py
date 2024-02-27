@@ -9,9 +9,7 @@ from sqlalchemy import or_
 
 from vantage6.algorithm.store.resource import with_permission
 from vantage6.common import logger_name
-from vantage6.algorithm.store.permission import (
-    PermissionManager
-)
+from vantage6.algorithm.store.permission import PermissionManager
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.algorithm.store.resource.schema.output_schema import RoleOutputSchema
 from vantage6.algorithm.store import db
@@ -41,9 +39,9 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     api.add_resource(
         Roles,
         path,
-        endpoint='role_without_id',
-        methods=('GET', 'POST'),
-        resource_class_kwargs=services
+        endpoint="role_without_id",
+        methods=("GET", "POST"),
+        resource_class_kwargs=services,
     )
     # api.add_resource(
     #     Role,
@@ -74,14 +72,10 @@ def permissions(permissions: PermissionManager) -> None:
         Permission manager instance to which permissions are added
     """
     add = permissions.appender(module_name)
-    add(operation=Operation.CREATE,
-        description="Create role")
-    add(operation=Operation.VIEW,
-        description="View any role")
-    add(operation=Operation.EDIT,
-        description="Edit a role")
-    add(operation=Operation.DELETE,
-        description="Delete a role")
+    add(operation=Operation.CREATE, description="Create role")
+    add(operation=Operation.VIEW, description="View any role")
+    add(operation=Operation.EDIT, description="Edit a role")
+    add(operation=Operation.DELETE, description="Delete a role")
 
 
 # -----------------------------------------------------------------------------
@@ -155,29 +149,32 @@ class Roles(BaseServicesResources):
         args = request.args
 
         # filter by one or more names or descriptions
-        for param in ['name', 'description']:
+        for param in ["name", "description"]:
             filters = args.getlist(param)
             if filters:
-                q = q.filter(or_(*[
-                    getattr(db.Role, param).like(f) for f in filters
-                ]))
+                q = q.filter(or_(*[getattr(db.Role, param).like(f) for f in filters]))
 
-        if 'user_id' in args:
-            user = db.User.get(args['user_id'])
+        if "user_id" in args:
+            user = db.User.get(args["user_id"])
             if not user:
-                return {'msg': f'User with id={args["user_id"]} does not '
-                        'exist!'}, HTTPStatus.BAD_REQUEST
+                return {
+                    "msg": f'User with id={args["user_id"]} does not ' "exist!"
+                }, HTTPStatus.BAD_REQUEST
 
-            q = q.join(db.Permission).join(db.User)\
-                 .filter(db.User.id == args['user_id'])
+            q = (
+                q.join(db.Permission)
+                .join(db.User)
+                .filter(db.User.id == args["user_id"])
+            )
 
         # paginate results
         try:
             page = Pagination.from_query(q, request, db.Role)
         except (ValueError, AttributeError) as e:
-            return {'msg': str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
 
         return self.response(page, role_schema)
+
 
 #     @with_user
 #     def post(self):

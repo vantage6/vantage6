@@ -30,7 +30,8 @@ class ArgumentType(str, enum.Enum):
 
 
 class ReviewStatus(str, enum.Enum):
-    """ Enum for review status """
+    """Enum for review status"""
+
     DRAFT = "draft"
     UNDER_REVIEW = "under review"
     APPROVED = "approved"

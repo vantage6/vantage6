@@ -9,5 +9,7 @@ from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 from vantage6.algorithm.store.model.role_rule_association import role_rule_association
 from vantage6.algorithm.store.model.permission import Permission
 from vantage6.algorithm.store.model.user import User
-from vantage6.algorithm.store.model.developer_algorithm_association import developer_algorithm_association
+from vantage6.algorithm.store.model.developer_algorithm_association import (
+    developer_algorithm_association,
+)
 from vantage6.algorithm.store.model.review import Review

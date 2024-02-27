@@ -32,11 +32,11 @@ class Role(Base):
     description = Column(Text)
 
     # relationships
-    rules = relationship("Rule", back_populates="roles",
-                         secondary="role_rule_association")
+    rules = relationship(
+        "Rule", back_populates="roles", secondary="role_rule_association"
+    )
 
-    users = relationship("User", back_populates="roles",
-                         secondary="Permission")
+    users = relationship("User", back_populates="roles", secondary="Permission")
 
     @classmethod
     def get_by_name(cls, name: str) -> Role | None:

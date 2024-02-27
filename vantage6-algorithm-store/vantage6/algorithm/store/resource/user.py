@@ -12,16 +12,12 @@ from vantage6.algorithm.store.model.rule import Operation
 from vantage6.algorithm.store.resource import with_permission, AlgorithmStoreResources
 from vantage6.common import logger_name
 from vantage6.algorithm.store import db
-from vantage6.algorithm.store.permission import (
-    Operation as P,
-    PermissionManager
-)
+from vantage6.algorithm.store.permission import Operation as P, PermissionManager
 from vantage6.algorithm.store.model.user import User as db_User
 
 from vantage6.algorithm.store.resource.schema.input_schema import UserInputSchema
-from vantage6.algorithm.store.resource.schema.output_schema import (
-    UserOutputSchema
-)
+from vantage6.algorithm.store.resource.schema.output_schema import UserOutputSchema
+
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
@@ -47,22 +43,23 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     api.add_resource(
         Users,
         path,
-        endpoint='user_without_id',
-        methods=('GET', 'POST'),
-        resource_class_kwargs=services
+        endpoint="user_without_id",
+        methods=("GET", "POST"),
+        resource_class_kwargs=services,
     )
     api.add_resource(
         User,
-        path + '/<int:id>',
-        endpoint='user_with_id',
-        methods=('GET', 'PATCH', 'DELETE'),
-        resource_class_kwargs=services
+        path + "/<int:id>",
+        endpoint="user_with_id",
+        methods=("GET", "PATCH", "DELETE"),
+        resource_class_kwargs=services,
     )
 
 
 # ------------------------------------------------------------------------------
 # Permissions
 # ------------------------------------------------------------------------------
+
 
 def permissions(permissions: PermissionManager) -> None:
     """
@@ -76,13 +73,10 @@ def permissions(permissions: PermissionManager) -> None:
 
     log.debug(f"Loading module users permission")
     add = permissions.appender(module_name)
-    add(P.VIEW,
-        description='View any user')
-    add(P.CREATE,
-        description='Create a new user')
-    add(P.EDIT,
-        description='Edit any user')
-    add(P.DELETE, description='Delete any user')
+    add(P.VIEW, description="View any user")
+    add(P.CREATE, description="Create a new user")
+    add(P.EDIT, description="Edit any user")
+    add(P.DELETE, description="Delete any user")
 
 
 # ------------------------------------------------------------------------------
@@ -146,20 +140,23 @@ class Users(AlgorithmStoreResources):
         q = g.session.query(db_User)
 
         # filter by any field of this endpoint
-        for param in ['username', 'id_server']:
+        for param in ["username", "id_server"]:
             if param in args:
                 q = q.filter(getattr(db.User, param).like(args[param]))
 
         # find users with a particular role
-        if 'role_id' in args:
-            role = db.Role.get(args['role_id'])
+        if "role_id" in args:
+            role = db.Role.get(args["role_id"])
             if not role:
                 return {
-                    'msg': f'Role with id={args["role_id"]} does not exist!'
+                    "msg": f'Role with id={args["role_id"]} does not exist!'
                 }, HTTPStatus.BAD_REQUEST
 
-            q = q.join(db.Permission).join(db.Role) \
-                .filter(db.Role.id == args['role_id'])
+            q = (
+                q.join(db.Permission)
+                .join(db.Role)
+                .filter(db.Role.id == args["role_id"])
+            )
 
         # TODO: add pagination
         return user_output_schema.dump(q.all(), many=True), HTTPStatus.OK
@@ -203,12 +200,14 @@ class Users(AlgorithmStoreResources):
         """
         data = request.get_json()
         # the assumption is that it is possible to create only users linked to your own server
-        server = Vantage6Server.get_by_url(request.headers['Server-Url'])
+        server = Vantage6Server.get_by_url(request.headers["Server-Url"])
         # validate request body
         errors = user_input_schema.validate(data)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
 
         # check unique constraints
         if db.User.get_by_server(id_server=data["id_server"], v6_server_id=server.id):
@@ -235,7 +234,7 @@ class Users(AlgorithmStoreResources):
             id_server=data["id_server"],
             username=data["username"],
             v6_server_id=server.id,
-            roles=roles
+            roles=roles,
         )
 
         user.save()
@@ -283,63 +282,63 @@ class User(AlgorithmStoreResources):
     @with_permission(module_name, Operation.EDIT)
     def patch(self, id):
         """Update user
-            ---
-            description: >-
-              Update user information.\n
+        ---
+        description: >-
+          Update user information.\n
 
 
-            requestBody:
-              content:
-                application/json:
-                  schema:
-                    properties:
-                      username:
-                        type: string
-                        description: Unique username
-                      roles:
-                        type: array
-                        items:
-                          type: integer
-                        description: User's roles
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  username:
+                    type: string
+                    description: Unique username
+                  roles:
+                    type: array
+                    items:
+                      type: integer
+                    description: User's roles
 
-            parameters:
-              - in: path
-                name: id
-                schema:
-                  type: integer
-                description: User id
-                required: true
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: User id
+            required: true
 
-            responses:
-              200:
-                description: Ok
-              400:
-                description: User cannot be updated to contents of request body,
-                  e.g. due to duplicate email address.
-              404:
-                description: User not found
-              401:
-                description: Unauthorized
+        responses:
+          200:
+            description: Ok
+          400:
+            description: User cannot be updated to contents of request body,
+              e.g. due to duplicate email address.
+          404:
+            description: User not found
+          401:
+            description: Unauthorized
 
-            security:
-              - bearerAuth: []
+        security:
+          - bearerAuth: []
 
-            tags: ["User"]
-            """
+        tags: ["User"]
+        """
         user = db.User.get(id)
         if not user:
-            return {"msg": f"user id={id} not found"}, \
-                HTTPStatus.NOT_FOUND
+            return {"msg": f"user id={id} not found"}, HTTPStatus.NOT_FOUND
 
         data = request.get_json()
         # validate request body
         errors = user_input_schema.validate(data, partial=True)
         if errors:
-            return {'msg': 'Request body is incorrect', 'errors': errors}, \
-                HTTPStatus.BAD_REQUEST
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
         if data.get("id_server"):
-            return {"msg": "You cannot change the server id"}, \
-                HTTPStatus.BAD_REQUEST
+            return {"msg": "You cannot change the server id"}, HTTPStatus.BAD_REQUEST
 
         # update user and check for unique constraints
         if data.get("username") is not None:
@@ -355,21 +354,23 @@ class User(AlgorithmStoreResources):
             user.username = data["username"]
 
         # request parser is awefull with lists
-        if 'roles' in data:
+        if "roles" in data:
             # validate that these roles exist
             roles = []
-            for role_id in data['roles']:
+            for role_id in data["roles"]:
                 role = db.Role.get(role_id)
                 if not role:
-                    return {'msg': f'Role={role_id} can not be found!'}, \
-                        HTTPStatus.NOT_FOUND
+                    return {
+                        "msg": f"Role={role_id} can not be found!"
+                    }, HTTPStatus.NOT_FOUND
                 roles.append(role)
 
             # validate that user is not changing their own roles
 
             if user == g.user:
-                return {'msg': "You can't changes your own roles!"}, \
-                    HTTPStatus.UNAUTHORIZED
+                return {
+                    "msg": "You can't changes your own roles!"
+                }, HTTPStatus.UNAUTHORIZED
 
             # validate that user can assign these
             for role in roles:
@@ -382,12 +383,14 @@ class User(AlgorithmStoreResources):
             for role in deleted_roles:
                 denied = self.permissions.check_user_rules(role.rules)
                 if denied:
-                    return {"msg": (
-                        f"You are trying to delete the role {role.name} from "
-                        "this user but that is not allowed because they have "
-                        f"permissions you don't have: {denied['msg']} (and "
-                        "they do!)"
-                    )}, HTTPStatus.UNAUTHORIZED
+                    return {
+                        "msg": (
+                            f"You are trying to delete the role {role.name} from "
+                            "this user but that is not allowed because they have "
+                            f"permissions you don't have: {denied['msg']} (and "
+                            "they do!)"
+                        )
+                    }, HTTPStatus.UNAUTHORIZED
 
             user.roles = roles
 
@@ -432,10 +435,8 @@ class User(AlgorithmStoreResources):
         """
         user = db.User.get(id)
         if not user:
-            return {"msg": f"user id={id} not found"}, \
-                HTTPStatus.NOT_FOUND
+            return {"msg": f"user id={id} not found"}, HTTPStatus.NOT_FOUND
 
         user.delete()
         log.info(f"user id={id} is removed from the database")
-        return {"msg": f"user id={id} is removed from the database"}, \
-            HTTPStatus.OK
+        return {"msg": f"user id={id} is removed from the database"}, HTTPStatus.OK

@@ -75,7 +75,7 @@ class RuleCollection(dict):
             What operation the rule applies to
         """
         permission = Permission(RuleNeed(self.name, operation))
-        self.__setattr__(f'{operation}', permission)
+        self.__setattr__(f"{operation}", permission)
 
     def _id_in_list(self, id_: int, resource_list: list[Base]) -> bool:
         """
@@ -133,13 +133,15 @@ class PermissionManager:
         Collect all permission rules from all registered API resources
         """
         for res in RESOURCES:
-            module = importlib.import_module('vantage6.algorithm.store.resource.' + res)
+            module = importlib.import_module("vantage6.algorithm.store.resource." + res)
             try:
                 module.permissions(self)
             except Exception as e:
                 module_name = module.__name__.split(".")[-1]
-                log.debug(f"Resource '{module_name}' contains no or invalid "
-                          f"permissions. Exception {e}")
+                log.debug(
+                    f"Resource '{module_name}' contains no or invalid "
+                    f"permissions. Exception {e}"
+                )
 
     def assign_rule_to_root(self, name: str, operation: Operation) -> None:
         """
@@ -150,11 +152,12 @@ class PermissionManager:
         operation: Operation
             Operation that the rule applies to
         """
-        self.assign_rule_to_fixed_role(DefaultRole.ROOT, name,
-                                       operation)
+        self.assign_rule_to_fixed_role(DefaultRole.ROOT, name, operation)
 
     @staticmethod
-    def assign_rule_to_fixed_role(fixedrole: str, resource: str, operation: Operation) -> None:
+    def assign_rule_to_fixed_role(
+        fixedrole: str, resource: str, operation: Operation
+    ) -> None:
         """
         Attach a rule to a fixed role (not adjustable by users).
 
@@ -178,11 +181,11 @@ class PermissionManager:
 
         if rule not in role.rules:
             role.rules.append(rule)
-            log.info(f"Rule ({resource},{operation}) added to "
-                     f"{fixedrole} role!")
+            log.info(f"Rule ({resource},{operation}) added to " f"{fixedrole} role!")
 
-    def register_rule(self, resource: str,
-                      operation: Operation, description=None) -> None:
+    def register_rule(
+        self, resource: str, operation: Operation, description=None
+    ) -> None:
         """
         Register a permission rule in the database.
 
@@ -210,11 +213,12 @@ class PermissionManager:
         # roles and users
         rule = Rule.get_by_(resource, operation)
         if not rule:
-            rule = Rule(name=resource, operation=operation,
-                        description=description)
+            rule = Rule(name=resource, operation=operation, description=description)
             rule.save()
-            log.debug(f"New auth rule '{resource}' with"
-                      f" operation={operation} is stored in the DB")
+            log.debug(
+                f"New auth rule '{resource}' with"
+                f" operation={operation} is stored in the DB"
+            )
 
         # assign all new rules to root user
         self.assign_rule_to_root(resource, operation)
@@ -237,8 +241,7 @@ class PermissionManager:
         """
         # make sure collection exists
         self.collection(name)
-        return lambda *args, **kwargs: self.register_rule(name, *args,
-                                                          **kwargs)
+        return lambda *args, **kwargs: self.register_rule(name, *args, **kwargs)
 
     def collection(self, name: str) -> RuleCollection:
         """
@@ -290,8 +293,7 @@ class PermissionManager:
             raise e
 
     @staticmethod
-    def rule_exists_in_db(name: str,
-                          operation: Operation) -> bool:
+    def rule_exists_in_db(name: str, operation: Operation) -> bool:
         """Check if the rule exists in the DB.
 
         Parameters
@@ -307,10 +309,14 @@ class PermissionManager:
             Whenever this rule exists in the database or not
         """
         session = DatabaseSessionManager.get_session()
-        result = session.query(Rule).filter_by(
-            name=name,
-            operation=operation,
-        ).scalar()
+        result = (
+            session.query(Rule)
+            .filter_by(
+                name=name,
+                operation=operation,
+            )
+            .scalar()
+        )
         session.commit()
         return result
 
@@ -331,6 +337,8 @@ class PermissionManager:
         for rule in rules:
 
             if not self.collections[rule.name].has_permission(rule.operation):
-                return {"msg": f"You don't have the rule ({rule.name}, "
-                        f"{print_operation(rule.operation)})"}
+                return {
+                    "msg": f"You don't have the rule ({rule.name}, "
+                    f"{print_operation(rule.operation)})"
+                }
         return None

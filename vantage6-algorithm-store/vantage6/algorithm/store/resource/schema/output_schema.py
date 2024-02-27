@@ -53,24 +53,15 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
     def __init__(self, *args, **kwargs) -> None:
         # set lambda functions to create links for one to one relationship
         # TODO check if all below are used
-        setattr(self, "algorithm",
-                lambda obj: self.create_hateoas("algorithm", obj))
-        setattr(self, "function",
-                lambda obj: self.create_hateoas("function", obj))
-        setattr(self, "database",
-                lambda obj: self.create_hateoas("database", obj))
-        setattr(self, "argument",
-                lambda obj: self.create_hateoas("argument", obj))
-        setattr(self, "rule",
-                lambda obj: self.create_hateoas("rule", obj))
-        setattr(self, "role",
-                lambda obj: self.create_hateoas("role", obj))
-        setattr(self, "user",
-                lambda obj: self.create_hateoas("user", obj))
-        setattr(self, "review",
-                lambda obj: self.create_hateoas("review", obj))
-        setattr(self, "server",
-                lambda obj: self.create_hateoas("server", obj))
+        setattr(self, "algorithm", lambda obj: self.create_hateoas("algorithm", obj))
+        setattr(self, "function", lambda obj: self.create_hateoas("function", obj))
+        setattr(self, "database", lambda obj: self.create_hateoas("database", obj))
+        setattr(self, "argument", lambda obj: self.create_hateoas("argument", obj))
+        setattr(self, "rule", lambda obj: self.create_hateoas("rule", obj))
+        setattr(self, "role", lambda obj: self.create_hateoas("role", obj))
+        setattr(self, "user", lambda obj: self.create_hateoas("user", obj))
+        setattr(self, "review", lambda obj: self.create_hateoas("review", obj))
+        setattr(self, "server", lambda obj: self.create_hateoas("server", obj))
 
         # call super class. Do this after setting the attributes above, because
         # the super class initializer will call the attributes.
@@ -114,10 +105,9 @@ class Vantage6ServerOutputSchema(HATEOASModelSchema):
 
 
 class RoleOutputSchema(HATEOASModelSchema):
-
-    rules = fields.Function(lambda obj: create_one_to_many_link(
-        obj, link_to='rule', link_from='role'
-    ))
+    rules = fields.Function(
+        lambda obj: create_one_to_many_link(obj, link_to="rule", link_from="role")
+    )
 
     class Meta:
         model = Role
@@ -126,33 +116,33 @@ class RoleOutputSchema(HATEOASModelSchema):
 class RuleOutputSchema(HATEOASModelSchema):
     class Meta:
         model = Rule
-        exclude = ('roles',)
+        exclude = ("roles",)
 
 
 class UserOutputSchema(HATEOASModelSchema):
-
     class Meta:
         model = User
 
-    roles = fields.Function(lambda obj: create_one_to_many_link(
-        obj, link_to='role', link_from='user_id'
-    ))
+    roles = fields.Function(
+        lambda obj: create_one_to_many_link(obj, link_to="role", link_from="user_id")
+    )
     # rules = fields.Function(lambda obj: create_one_to_many_link(
     #     obj, link_to='rule', link_from='user'
     # ))
-    algorithm = fields.Function(lambda obj: create_one_to_many_link(
-        obj, link_to='algorithm', link_from='user_id'
-    ))
+    algorithm = fields.Function(
+        lambda obj: create_one_to_many_link(
+            obj, link_to="algorithm", link_from="user_id"
+        )
+    )
 
 
 class Review(HATEOASModelSchema):
-
     class Meta:
         model = Review
 
-    reviewers = fields.Function(lambda obj: create_one_to_many_link(
-        obj, link_to='user', link_from='review'
-    ))
+    reviewers = fields.Function(
+        lambda obj: create_one_to_many_link(obj, link_to="user", link_from="review")
+    )
 
 
 # class UserWithPermissionDetailsSchema(UserSchema):

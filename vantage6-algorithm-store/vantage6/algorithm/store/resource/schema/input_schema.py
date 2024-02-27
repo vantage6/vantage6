@@ -1,6 +1,4 @@
-from marshmallow import (
-    Schema, fields, ValidationError, validates
-)
+from marshmallow import Schema, fields, ValidationError, validates
 from marshmallow.validate import Range
 
 from vantage6.algorithm.store.model.common.enums import (
@@ -91,7 +89,7 @@ class ArgumentInputSchema(_NameDescriptionSchema):
 
 
 class UserInputSchema(Schema):
-    """ Schema for validating input for creating a user. """
+    """Schema for validating input for creating a user."""
 
     id_server = fields.Integer(validate=Range(min=1))
     roles = fields.List(fields.Integer(validate=Range(min=1)))

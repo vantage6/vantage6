@@ -8,7 +8,8 @@ from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
 
 
 class Operation(str, Enumerate):
-    """ Enumerator of all available operations """
+    """Enumerator of all available operations"""
+
     VIEW = "v"
     EDIT = "e"
     CREATE = "c"
@@ -42,8 +43,9 @@ class Rule(Base):
     description = Column(String)
 
     # relationships
-    roles = relationship("Role", back_populates="rules",
-                         secondary="role_rule_association")
+    roles = relationship(
+        "Role", back_populates="rules", secondary="role_rule_association"
+    )
     # users = relationship("User", back_populates="rules",
     #                      secondary="UserPermission")
 
@@ -67,10 +69,14 @@ class Rule(Base):
         """
         session = DatabaseSessionManager.get_session()
         try:
-            result = session.query(cls).filter_by(
-                name=name,
-                operation=operation,
-            ).first()
+            result = (
+                session.query(cls)
+                .filter_by(
+                    name=name,
+                    operation=operation,
+                )
+                .first()
+            )
             session.commit()
             return result
         except NoResultFound:
@@ -86,8 +92,5 @@ class Rule(Base):
             String representation of the rule
         """
         return (
-            f"<Rule "
-            f"{self.id}: '{self.name}', "
-            f"operation: {self.operation}"
-            ">"
+            f"<Rule " f"{self.id}: '{self.name}', " f"operation: {self.operation}" ">"
         )
