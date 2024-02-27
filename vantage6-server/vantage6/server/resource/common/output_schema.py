@@ -275,7 +275,11 @@ class CollaborationSchema(HATEOASModelSchema):
             obj, link_to="algorithm_store", link_from="collaboration_id"
         )
     )
-    studies = fields.Nested("StudyIncludedSchema", many=True)
+    studies = fields.Function(
+        lambda obj: create_one_to_many_link(
+            obj, link_to="study", link_from="collaboration_id"
+        )
+    )
 
 
 class CollaborationWithOrgsSchema(CollaborationSchema):
@@ -284,16 +288,6 @@ class CollaborationWithOrgsSchema(CollaborationSchema):
     """
 
     organizations = fields.Nested("OrganizationSchema", many=True)
-
-
-class StudyIncludedSchema(HATEOASModelSchema):
-    """
-    Returns the CollaborationSchema plus the studies participating in it.
-    """
-
-    class Meta:
-        model = db.Study
-        exclude = ("collaboration",)
 
 
 class StudySchema(HATEOASModelSchema):
