@@ -120,6 +120,24 @@
       </mat-accordion>
     </mat-card-content>
   </mat-card>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ "collaboration-read.card-studies.title" | translate }}</mat-card-title>
+      <button
+        actions
+        mat-flat-button
+        class="right-aligned-button"
+        color="primary"
+        *ngIf="canCreateStudy"
+        [routerLink]="[routes.studyCreate, collaboration.id]"
+      >
+        <mat-icon>add</mat-icon>{{ "collaboration-read.card-studies.add" | translate }}
+      </button>
+    </mat-card-header>
+    <mat-card-content>
+      <app-table [data]="studyTable" (rowClick)="handleStudyClick($event)" [isLoading]="isLoading"></app-table>
+    </mat-card-content>
+  </mat-card>
 </ng-container>
 <ng-template #loading>
   <mat-card>
