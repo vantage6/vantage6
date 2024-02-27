@@ -78,6 +78,7 @@ def permissions(permissions: PermissionManager) -> None:
     add(P.CREATE, description='Create a new algorithm')
     add(P.EDIT, description='Edit any algorithm')
     add(P.DELETE, description='Delete any algorithm')
+    add(P.REVIEW, description='Edit some fields of the algorithm')
 
 # ------------------------------------------------------------------------------
 # Resources / API's

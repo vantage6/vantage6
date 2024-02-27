@@ -13,6 +13,7 @@ class Operation(str, Enumerate):
     EDIT = "e"
     CREATE = "c"
     DELETE = "d"
+    REVIEW = "r"
 
 
 class Rule(Base):

@@ -58,7 +58,7 @@ def get_default_roles(db) -> list[dict]:
     # 3. Reviewer role
     REVIEWER_RULES = [
         db.Rule.get_by_('algorithm', Operation.VIEW),
-        db.Rule.get_by_('algorithm', Operation.EDIT)
+        db.Rule.get_by_('algorithm', Operation.REVIEW)
     ]
     REVIEWER_ROLE = {
         'name': DefaultRole.REVIEWER,
@@ -79,7 +79,8 @@ def get_default_roles(db) -> list[dict]:
     # 4. Developer role
     DEVELOPER_RULES = [
         db.Rule.get_by_('algorithm', Operation.VIEW),
-        db.Rule.get_by_('algorithm', Operation.CREATE)
+        db.Rule.get_by_('algorithm', Operation.CREATE),
+        db.Rule.get_by_('algorithm', Operation.EDIT)
     ]
     DEVELOPER_ROLE = {
         'name': DefaultRole.DEVELOPER,
