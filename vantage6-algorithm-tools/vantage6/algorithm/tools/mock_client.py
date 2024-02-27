@@ -33,7 +33,7 @@ class MockAlgorithmClient:
 
         There are also a number of keys that are optional but may be required
         depending on the database type:
-        - query: str (required for SQL/Sparql/OMOP databases)
+        - query: str (required for SQL/Sparql databases)
         - sheet_name: str (optional for Excel databases)
         - preprocessing: dict (optional, see the documentation for
             preprocessing for more information)
