@@ -8,6 +8,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
     def __init__(self, parent: ClientBase):
         super().__init__(parent)
         self.store_url = None
+        self.store_id = None
 
     def set(self, id_: int) -> dict:
         """ "
@@ -24,8 +25,11 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
             The algorithm store.
         """
         store = self.get(id_)
-        if "url" in store:
+        try:
             self.store_url = store["url"]
+            self.store_id = id_
+        except KeyError:
+            self.parent.log.error("Algorithm store URL could not be set.")
         return store
 
     @post_filtering(iterable=False)
@@ -116,18 +120,24 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
             If True, the algorithm store will be linked to the collaboration even for
             localhost urls - which is not recommended in production scenarios for
             security reasons.
+
+        Returns
+        -------
+        dict
+            The algorithm store.
         """
-        if collaboration is None:
-            collaboration = self.parent.collaboration_id
         if all_collaborations:
             collaboration = None
+        elif collaboration is None and self.parent.collaboration_id is not None:
+            collaboration = self.parent.collaboration_id
         elif collaboration is None:
-            raise ValueError(
+            self.parent.log.error(
                 "No collaboration given and default collaboration is not set. "
                 "Please provide a collaboration, set a default collaboration, or make "
                 "the algorithm store available to all collaborations with "
                 "all_collaborations=True."
             )
+            return
         data = {
             "algorithm_store_url": algorithm_store_url,
             "name": name,
@@ -139,17 +149,18 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
 
     def update(
         self,
-        id_: int,
+        id_: int = None,
         name: str = None,
         collaboration: int = None,
         all_collaborations: bool = None,
-    ):
+    ) -> dict:
         """Update an algorithm store.
 
         Parameters
         ----------
         id_ : int
-            The id of the algorithm store.
+            The id of the algorithm store. If not given, the algorithm store must be
+            set with client.algorithm_store.set().
         name : str, optional
             The name of the algorithm store.
         collaboration : int, optional
@@ -157,7 +168,15 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         all_collaborations : bool, optional
             If True, the algorithm store is linked to all collaborations. If False,
             the collaboration_id must be given.
+
+        Returns
+        -------
+        dict
+            The updated algorithm store.
         """
+        id_ = self.__get_store_id(id_)
+        if id_ is None:
+            return
         data = {
             "name": name,
         }
@@ -165,14 +184,23 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
             data["collaboration_id"] = collaboration
         return self.parent.request(f"algorithmstore/{id_}", method="patch", json=data)
 
-    def delete(self, id_: int):
+    def delete(self, id_: int = None) -> dict:
         """Delete an algorithm store.
 
         Parameters
         ----------
         id_ : int
-            The id of the algorithm store.
+            The id of the algorithm store. If not given, the algorithm store must be
+            set with client.algorithm_store.set().
+
+        Returns
+        -------
+        dict
+            The deleted algorithm store.
         """
+        id_ = self.__get_store_id(id_)
+        if id_ is None:
+            return
         return self.parent.request(
             f"algorithmstore/{id_}",
             method="delete",
@@ -180,3 +208,25 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
                 "server_url": self.parent.base_path,
             },
         )
+
+    def __get_store_id(self, id_: int = None) -> int:
+        """
+        Get the algorithm store id.
+
+        Parameters
+        ----------
+        id_ : int
+            The id of the algorithm store. If not given, the algorithm store must be
+            set with client.algorithm_store.set().
+
+        Returns
+        -------
+        int
+            The algorithm store id.
+        """
+        if id_ is None:
+            id_ = self.store_id
+            if id_ is None:
+                self.parent.log.error("No algorithm store id given or set.")
+                return
+        return id_

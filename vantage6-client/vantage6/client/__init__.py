@@ -62,7 +62,6 @@ class UserClient(ClientBase):
 
         # set collaboration id to None
         self.collaboration_id = None
-        self.current_collaboration = None
 
         # Display welcome message
         self.log.info(" Welcome to")
@@ -188,8 +187,6 @@ class UserClient(ClientBase):
         if "msg" in response:
             self.log.info("--> %s", response["msg"])
             return
-        # set current collaboration
-        self.current_collaboration = response
 
     def wait_for_results(self, task_id: int, interval: float = 1) -> dict:
         """
@@ -630,8 +627,8 @@ class UserClient(ClientBase):
             Parameters
             ----------
             collaboration : int
-                Collaboration id to which this node belongs. If no id provided the
-                collaboration that the user set up earlier is used.
+                Collaboration id to which this node belongs. If no ID was provided the,
+                collaboration from `client.setup_collaboration()` is used.
             organization : int, optional
                 Organization id to which this node belongs. If no id provided
                 the users organization is used. Default value is None
