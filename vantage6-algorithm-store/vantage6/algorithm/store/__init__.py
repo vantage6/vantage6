@@ -49,7 +49,6 @@ from vantage6.algorithm.store import db
 
 # TODO move server imports to common / refactor
 from vantage6.algorithm.store.permission import PermissionManager
-from vantage6.algorithm.store.globals import RESOURCES, SERVER_MODULE_NAME
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -286,20 +285,20 @@ class AlgorithmStoreApp:
                 v6_server.save()
 
                 if (username := root_user.get("username")) and (
-                    id := root_user.get("id_server")
+                    id_server := root_user.get("id_server")
                 ):
 
                     v6_server = db.Vantage6Server.get_by_url(whitelisted_uri)
                     # if the user does not exist already, add it
                     if not db.User.get_by_server(
-                        id_server=id, v6_server_id=v6_server.id
+                        id_server=id_server, v6_server_id=v6_server.id
                     ):
                         log.warning("Creating root user")
 
                         root = db.Role.get_by_name("Root")
 
                         user = db.User(
-                            id_server=id,
+                            id_server=id_server,
                             v6_server_id=v6_server.id,
                             username=username,
                             roles=[root],

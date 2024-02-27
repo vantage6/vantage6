@@ -2,7 +2,7 @@ import logging
 import importlib
 
 from collections import namedtuple
-from flask_principal import Permission, PermissionDenied
+from flask_principal import Permission
 
 from vantage6.algorithm.store.globals import RESOURCES
 from vantage6.algorithm.store.default_roles import DefaultRole

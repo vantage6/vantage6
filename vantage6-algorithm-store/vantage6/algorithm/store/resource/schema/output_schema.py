@@ -1,5 +1,3 @@
-import logging
-
 from marshmallow import fields
 from flask import url_for
 
@@ -126,9 +124,6 @@ class UserOutputSchema(HATEOASModelSchema):
     roles = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="role", link_from="user_id")
     )
-    # rules = fields.Function(lambda obj: create_one_to_many_link(
-    #     obj, link_to='rule', link_from='user'
-    # ))
     algorithm = fields.Function(
         lambda obj: create_one_to_many_link(
             obj, link_to="algorithm", link_from="user_id"
@@ -136,45 +131,10 @@ class UserOutputSchema(HATEOASModelSchema):
     )
 
 
-class Review(HATEOASModelSchema):
+class ReviewOutputSchema(HATEOASModelSchema):
     class Meta:
         model = Review
 
     reviewers = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="user", link_from="review")
     )
-
-
-# class UserWithPermissionDetailsSchema(UserSchema):
-#     """
-#     A schema for API responses that contains regular user details plus
-#     additional permission details for the user to be used by the UI.
-#     """
-#     permissions = fields.Method("permissions_")
-#
-#     @staticmethod
-#     def permissions_(obj: User) -> dict:
-#         """
-#         Returns a dictionary containing permission details for the user to be
-#         used by the UI.
-#
-#         Parameters
-#         ----------
-#         obj : User
-#             The user to get permission details for.
-#
-#         Returns
-#         -------
-#         dict
-#             A dictionary containing permission details for the user.
-#         """
-#         role_ids = [role.id for role in obj.roles]
-#         rule_ids = list(set(
-#             [rule.id for rule in obj.rules] + \
-#             [rule.id for role in obj.roles for rule in role.rules]
-#         ))
-#
-#         return {
-#             "roles": role_ids,
-#             "rules": rule_ids
-#         }

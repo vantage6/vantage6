@@ -71,7 +71,7 @@ def permissions(permissions: PermissionManager) -> None:
         Permission manager instance to which permissions are added
     """
 
-    log.debug(f"Loading module users permission")
+    log.debug("Loading module users permission")
     add = permissions.appender(module_name)
     add(P.VIEW, description="View any user")
     add(P.CREATE, description="Create a new user")
@@ -214,7 +214,7 @@ class Users(AlgorithmStoreResources):
             return {"msg": "User already registered."}, HTTPStatus.BAD_REQUEST
 
         if db.User.username_exists(data["username"]):
-            return {"msg": f"Username already exists."}, HTTPStatus.BAD_REQUEST
+            return {"msg": "Username already exists."}, HTTPStatus.BAD_REQUEST
 
         # process the required roles. It is only possible to assign roles with
         # rules that you already have permission to. This way we ensure you can
