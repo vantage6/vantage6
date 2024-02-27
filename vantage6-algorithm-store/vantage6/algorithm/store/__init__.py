@@ -218,7 +218,7 @@ class AlgorithmStoreApp:
         @self.api.representation("application/json")
         # pylint: disable=unused-argument
         def output_json(
-            data: Base | list[Base], code: HTTPStatus, headers: dict = None
+                data: Base | list[Base], code: HTTPStatus, headers: dict = None
         ) -> Response:
             """
             Return jsonified data for request responses.
@@ -278,21 +278,35 @@ class AlgorithmStoreApp:
         """
         self._add_default_roles()
 
-        # create root user if it is not in the DB yet
-        try:
-            db.User.get_by_username(SUPER_USER_INFO['username'])
-        except Exception:
-            log.warn("No root user found! Is this the first run?")
+        # add whitelisted server and root user from config file if they do not exist
 
-            # TODO use constant instead of 'Root' literal
-            root = db.Role.get_by_name("Root")
+        if not db.Vantage6Server.get() and (root_user := self.ctx.config.get("root_user", {})):
 
-            log.warn(f"Creating root user")
+            if whitelisted_uri := root_user.get("v6_server_uri"):
+                log.debug(f"This server will be whitelisted: {whitelisted_uri}")
+                v6_server = db.Vantage6Server(url=whitelisted_uri)
+                v6_server.save()
 
-            user = db.User(id_server=SUPER_USER_INFO['id_server'],
-                           username=SUPER_USER_INFO['username'],
-                           roles=[root])
-            user.save()
+                if (username := root_user.get("username")) and (id := root_user.get("id_server")):
+
+                    v6_server = db.Vantage6Server.get_by_url(whitelisted_uri)
+                    # if the user does not exist already, add it
+                    if not db.User.get_by_server(id_server=id, v6_server_id=v6_server.id):
+                        log.warning("Creating root user")
+
+                        root = db.Role.get_by_name("Root")
+
+                        user = db.User(id_server=id,
+                                       v6_server_id=v6_server.id,
+                                       username=username,
+                                       roles=[root])
+                        user.save()
+                    else:
+                        log.warning("The user already exists")
+
+            else:
+                log.warning("No Vantage6 server found in the configuration file."
+                            "No server will be whitelisted.")
         return self
 
 

@@ -18,7 +18,7 @@ class Vantage6Server(Base):
     """
 
     # fields
-    url = Column(String)
+    url = Column(String, unique=True)
 
     # relationships
     users = relationship("User", back_populates="server")
