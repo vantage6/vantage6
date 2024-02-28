@@ -586,9 +586,13 @@ class AlgorithmClient(ClientBase):
             list[dict]
                 List of organizations in the collaboration.
             """
+            if self.parent.study_id:
+                params = {"study_id": self.parent.study_id}
+            else:
+                params = {"collaboration_id": self.parent.collaboration_id}
             return self.parent._multi_page_request(
                 endpoint="organization",
-                params={"collaboration_id": self.parent.collaboration_id},
+                params=params,
             )
 
     class Collaboration(ClientBase.SubClient):
