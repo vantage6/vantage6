@@ -562,6 +562,7 @@ class Tasks(TaskBase):
 
         collaboration_id = data.get("collaboration_id")
         study_id = data.get("study_id")
+        study = None
         if collaboration_id:
             collaboration = db.Collaboration.get(collaboration_id)
         if study_id:
