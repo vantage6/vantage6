@@ -8,6 +8,27 @@
         <ng-template matStepperIcon="edit">
           <mat-icon>check</mat-icon>
         </ng-template>
+        <mat-step *ngIf="shouldShowStudyStep" [stepControl]="studyForm">
+          <form class="form" [formGroup]="studyForm">
+            <ng-template matStepLabel>{{ "task-create.step-study.title" | translate }}</ng-template>
+            <div class="field-description">{{ "task-create.step-study.explanation" | translate }}</div>
+            <div class="field-description">{{ "task-create.step-study.description" | translate }}</div>
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ "resources.study" | translate }}</mat-label>
+              <mat-select formControlName="studyOrCollabID" [compareWith]="compareStudyOrCollabForSelection">
+                <mat-option [value]="studyOrCollab.Collaboration + collaboration?.id">
+                  {{ "task-create.step-study.select-full-collaboration" | translate }}
+                </mat-option>
+                <mat-option *ngFor="let study of collaboration?.studies" [value]="studyOrCollab.Study + study.id">
+                  {{ study.name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <div>
+              <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+            </div>
+          </form>
+        </mat-step>
         <mat-step [stepControl]="packageForm">
           <form class="form" [formGroup]="packageForm">
             <ng-template matStepLabel>{{ "task-create.step-package.title" | translate }}</ng-template>
@@ -31,6 +52,7 @@
               <input matInput type="text" formControlName="description" />
             </mat-form-field>
             <div>
+              <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
               <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
             </div>
           </form>
@@ -64,10 +86,7 @@
                   [compareWith]="compareIDsForSelection"
                   [multiple]="function.type !== functionType.Central"
                 >
-                  <mat-option
-                    *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
-                    [value]="organization.id"
-                  >
+                  <mat-option *ngFor="let organization of organizations" [value]="organization.id">
                     {{ organization.name }}
                   </mat-option>
                 </mat-select>
@@ -148,10 +167,7 @@
                     [compareWith]="compareIDsForSelection"
                     [multiple]="argument.type === argumentType.OrganizationList"
                   >
-                    <mat-option
-                      *ngFor="let organization of (chosenCollaborationService.collaboration$ | async)?.organizations"
-                      [value]="organization.id"
-                    >
+                    <mat-option *ngFor="let organization of organizations" [value]="organization.id">
                       {{ organization.name }}
                     </mat-option>
                   </mat-select>

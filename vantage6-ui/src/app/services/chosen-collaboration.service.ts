@@ -3,6 +3,9 @@ import { CHOSEN_COLLABORATION } from '../models/constants/sessionStorage';
 import { BehaviorSubject } from 'rxjs';
 import { CollaborationService } from './collaboration.service';
 import { Collaboration, CollaborationLazyProperties } from '../models/api/collaboration.model';
+import { getLazyProperties } from '../helpers/api.helper';
+import { StudyLazyProperties } from '../models/api/study.model';
+import { ApiService } from './api.service';
 
 @Injectable({
   providedIn: 'root'
@@ -11,7 +14,10 @@ export class ChosenCollaborationService {
   isInitialized$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   collaboration$: BehaviorSubject<Collaboration | null> = new BehaviorSubject<Collaboration | null>(null);
 
-  constructor(private collaborationService: CollaborationService) {
+  constructor(
+    private collaborationService: CollaborationService,
+    private apiService: ApiService
+  ) {
     this.initData();
   }
 
@@ -31,9 +37,18 @@ export class ChosenCollaborationService {
   }
 
   private async getCollaboration(id: string): Promise<Collaboration> {
-    return await this.collaborationService.getCollaboration(id, [
+    const collab = await this.collaborationService.getCollaboration(id, [
       CollaborationLazyProperties.Organizations,
-      CollaborationLazyProperties.AlgorithmStores
+      CollaborationLazyProperties.AlgorithmStores,
+      CollaborationLazyProperties.Studies
     ]);
+    // set the organizations within the studies
+    if (collab.studies) {
+      for (const study of collab.studies) {
+        await getLazyProperties(study, study, [StudyLazyProperties.Organizations], this.apiService);
+      }
+    }
+
+    return collab;
   }
 }

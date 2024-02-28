@@ -19,7 +19,8 @@
   },
   "resources": {
     "collaboration": "Collaboration",
-    "organizations": "Organizations"
+    "organizations": "Organizations",
+    "study": "Study"
   },
   "home": {
     "title": "Home"
@@ -64,6 +65,12 @@
   },
   "task-create": {
     "title": "Create task",
+    "step-study": {
+      "title": "Select study",
+      "explanation": "Your collaboration defines studies, which allows you to quickly select a set of organizations to run a certain type of task for.",
+      "description": "Select the study you want to run a task for. If you want to run the task for the entire collaboration, select that option.",
+      "select-full-collaboration": "Entire collaboration"
+    },
     "step-package": {
       "title": "Select algorithm",
       "description": {

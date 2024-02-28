@@ -32,3 +32,8 @@ export type StudyEdit = {
   organization_ids: number[];
 };
 export type StudyCreate = StudyEdit & { collaboration_id: number };
+
+export enum StudyOrCollab {
+  Study = 'study',
+  Collaboration = 'collaboration'
+}
