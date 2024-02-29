@@ -1,5 +1,6 @@
 import uuid
 import ipaddress
+import re
 
 from marshmallow import Schema, fields, ValidationError, validates, validates_schema
 from marshmallow.validate import Length, Range, OneOf
@@ -51,10 +52,11 @@ def _validate_username(username: str) -> None:
         If the username is empty, too long or numerical
     """
     _validate_name(username)
-    if not username.isidentifier() or not username[0].isalpha():
+    username_regex = r"^[a-zA-Z][a-zA-Z0-9_-]+$"
+    if re.match(username_regex, username) is None:
         raise ValidationError(
-            f"Username {username} is invalid. Only letters, numbers and "
-            "underscores are allowed, and should start with a letter."
+            f"Username {username} is invalid. Only letters, numbers, hyphens and "
+            "underscores are allowed, and it should start with a letter."
         )
 
 
