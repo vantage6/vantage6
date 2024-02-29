@@ -18,40 +18,6 @@ log = logging.getLogger(module_name)
 RuleNeed = namedtuple("RuleNeed", ["name", "operation"])
 
 
-# TODO BvB 2023-07-27 this utility is a bit superfluous with the definition
-# of the operation and scope enums. We should remove it but then add longer
-# values to the enums, which leads to many other changes
-def print_operation(operation: Operation) -> str:
-    """
-    String representation of the operation, that is readable by humans.
-
-    Parameters
-    ----------
-    operation : Operation
-        Operation to be printed
-
-    Returns
-    -------
-    str
-        String representation of the operation
-
-    Raises
-    ------
-    ValueError
-        If the operation is not known
-    """
-    if operation.VIEW:
-        return "view"
-    elif operation.EDIT:
-        return "edit"
-    elif operation.CREATE:
-        return "create"
-    elif operation.DELETE:
-        return "delete"
-    else:
-        raise ValueError(f"Unknown operation {operation}")
-
-
 class RuleCollection(dict):
     """
     Class that tracks a set of all rules for a certain resource name
@@ -321,6 +287,6 @@ class PermissionManager:
             if not self.collections[rule.name].has_permission(rule.operation):
                 return {
                     "msg": f"You don't have the rule ({rule.name}, "
-                    f"{print_operation(rule.operation)})"
+                    f"{rule.operation})"
                 }
         return None
