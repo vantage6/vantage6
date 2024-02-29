@@ -288,7 +288,9 @@ class AlgorithmStoreApp:
 
                     v6_server = db.Vantage6Server.get_by_url(whitelisted_uri)
                     # if the user does not exist already, add it
-                    if not db.User.get_by_server(username=username, v6_server_id=v6_server.id):
+                    if not db.User.get_by_server(
+                        username=username, v6_server_id=v6_server.id
+                    ):
                         log.warning("Creating root user")
 
                         root = db.Role.get_by_name("Root")
