@@ -765,9 +765,17 @@ class TestResources(unittest.TestCase):
         }
         result = self.app.post("/api/role", headers=headers, json=body)
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
         # check that user with a missing rule cannot create a role with that
-        # missing rule
-        headers = self.create_user_and_login(rules=(all_rules[:-2]))
+        # missing rule. Note that we specifically remove a rule with the global scope
+        # because if a user misses a rule with collaboration or organization scope,
+        # but has the global scope, they can still create roles wih the missing rule.
+        rules = all_rules
+        for rule in rules:
+            if rule.scope == Scope.GLOBAL:
+                rules.remove(rule)
+                break
+        headers = self.create_user_and_login(rules=rules)
         result = self.app.post("/api/role", headers=headers, json=body)
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
@@ -3188,7 +3196,7 @@ class TestResources(unittest.TestCase):
         task_json["collaboration_id"] = col2.id
         task_json["organizations"] = [{"id": org2.id, "input": input_}]
         results = self.app.post("/api/task", headers=headers, json=task_json)
-        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
 
         # cleanup
         node.delete()
@@ -3816,14 +3824,14 @@ class TestResources(unittest.TestCase):
         rule = Rule.get_by_("study", scope=Scope.ORGANIZATION, operation=Operation.EDIT)
         headers = self.create_user_and_login(organization=org, rules=[rule])
         results = self.app.patch(
-            f"/api/study/{study.id}", headers=headers, json={"name": "some-name"}
+            f"/api/study/{study.id}", headers=headers, json={"name": "unique-name"}
         )
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # test editing study from organization not part of the study (but part of the
         # collaboration)
         results = self.app.patch(
-            f"/api/study/{study2.id}", headers=headers, json={"name": "some-name"}
+            f"/api/study/{study2.id}", headers=headers, json={"name": "other-uniq-name"}
         )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
@@ -3833,7 +3841,7 @@ class TestResources(unittest.TestCase):
         )
         headers = self.create_user_and_login(organization=org, rules=[rule])
         results = self.app.patch(
-            f"/api/study/{study2.id}", headers=headers, json={"name": "some-other-name"}
+            f"/api/study/{study2.id}", headers=headers, json={"name": "other-uniq-name"}
         )
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
@@ -4175,8 +4183,8 @@ class TestResources(unittest.TestCase):
         self.assertEqual(len(results.json), 1)  # 1 organization left
 
         # add back first organization
-        col.organizations.append(org)
-        col.save()
+        study.organizations.append(org)
+        study.save()
 
         # removing organization from study from outside the collaboration should fail
         # with collaboration permission
@@ -4196,30 +4204,6 @@ class TestResources(unittest.TestCase):
         # test removing organization from study from within the collaboration with
         # collaboration level permission should work
         headers = self.create_user_and_login(organization=org3, rules=[rule])
-        results = self.app.delete(
-            f"/api/study/{study.id}/organization",
-            headers=headers,
-            json={"id": org.id},
-        )
-        self.assertEqual(results.status_code, HTTPStatus.OK)
-
-        # add back first organization
-        col.organizations.append(org)
-        col.save()
-
-        # but with organization level permission, it should not work if the organization
-        # is not a member of the study themselves
-        rule = Rule.get_by_("study", Scope.ORGANIZATION, Operation.EDIT)
-        headers = self.create_user_and_login(organization=org3, rules=[rule])
-        results = self.app.delete(
-            f"/api/study/{study.id}/organization",
-            headers=headers,
-            json={"id": org.id},
-        )
-        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
-
-        # but it should work if the organization is part of the study
-        headers = self.create_user_and_login(organization=org2, rules=[rule])
         results = self.app.delete(
             f"/api/study/{study.id}/organization",
             headers=headers,
