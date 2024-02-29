@@ -1,6 +1,6 @@
 from enum import Enum
 
-from vantage6.algorithm.store.model.rule import Operation
+from vantage6.algorithm.store.model.rule import Operation, Rule
 
 
 class DefaultRole(str, Enum):
@@ -13,19 +13,10 @@ class DefaultRole(str, Enum):
     VIEWER = "Viewer"
 
 
-# TODO BvB 22-06-07: we now have to pass this 'db' module as argument to a
-# function because that module has a connection to the database. This should
-# not be necessary. Fix that after fixing the circular imports described in
-# https://github.com/vantage6/vantage6/issues/53
-def get_default_roles(db) -> list[dict]:
+def get_default_roles() -> list[dict]:
     """
     Get a list containing the default roles and their rules, so that they may
     be created in the database
-
-    Parameters
-    ----------
-    db
-        The vantage6.server.db module
 
     Returns
     -------
@@ -45,11 +36,11 @@ def get_default_roles(db) -> list[dict]:
     SUPER_ROLE = {
         "name": DefaultRole.ROOT,
         "description": "Super role",
-        "rules": db.Rule.get(),
+        "rules": Rule.get(),
     }
     # 2. Role for viewing algorithms
     VIEWER_RULES = [
-        db.Rule.get_by_("algorithm", Operation.VIEW),
+        Rule.get_by_("algorithm", Operation.VIEW),
     ]
     VIEWER_ROLE = {
         "name": DefaultRole.VIEWER,
@@ -58,8 +49,8 @@ def get_default_roles(db) -> list[dict]:
     }
     # 3. Reviewer role
     REVIEWER_RULES = [
-        db.Rule.get_by_("algorithm", Operation.VIEW),
-        db.Rule.get_by_("algorithm", Operation.REVIEW),
+        Rule.get_by_("algorithm", Operation.VIEW),
+        Rule.get_by_("algorithm", Operation.REVIEW),
     ]
     REVIEWER_ROLE = {
         "name": DefaultRole.REVIEWER,
@@ -68,11 +59,11 @@ def get_default_roles(db) -> list[dict]:
     }
     # 4. Store manager role
     STORE_MANAGER = [
-        db.Rule.get_by_("algorithm", Operation.VIEW),
-        db.Rule.get_by_("algorithm", Operation.CREATE),
-        db.Rule.get_by_("algorithm", Operation.DELETE),
-        db.Rule.get_by_("user", Operation.CREATE),
-        db.Rule.get_by_("user", Operation.EDIT),
+        Rule.get_by_("algorithm", Operation.VIEW),
+        Rule.get_by_("algorithm", Operation.CREATE),
+        Rule.get_by_("algorithm", Operation.DELETE),
+        Rule.get_by_("user", Operation.CREATE),
+        Rule.get_by_("user", Operation.EDIT),
     ]
     STORE_MANAGER = {
         "name": DefaultRole.STORE_MANAGER,
@@ -81,9 +72,9 @@ def get_default_roles(db) -> list[dict]:
     }
     # 4. Developer role
     DEVELOPER_RULES = [
-        db.Rule.get_by_("algorithm", Operation.VIEW),
-        db.Rule.get_by_("algorithm", Operation.CREATE),
-        db.Rule.get_by_("algorithm", Operation.EDIT),
+        Rule.get_by_("algorithm", Operation.VIEW),
+        Rule.get_by_("algorithm", Operation.CREATE),
+        Rule.get_by_("algorithm", Operation.EDIT),
     ]
     DEVELOPER_ROLE = {
         "name": DefaultRole.DEVELOPER,

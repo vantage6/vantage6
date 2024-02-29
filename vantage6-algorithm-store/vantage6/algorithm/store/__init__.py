@@ -254,7 +254,7 @@ class AlgorithmStoreApp:
 
     @staticmethod
     def _add_default_roles() -> None:
-        for role in get_default_roles(db):
+        for role in get_default_roles():
             if not db.Role.get_by_name(role["name"]):
                 log.warn(f"Creating new default role {role['name']}...")
                 new_role = db.Role(
