@@ -63,13 +63,16 @@ def get_default_roles(db) -> list[dict]:
     ]
     REVIEWER_ROLE = {
         "name": DefaultRole.REVIEWER,
-        "description": "Can view and edit algorithms",
+        "description": "Can view, edit and delete algorithms, and create and edit users",
         "rules": REVIEWER_RULES,
     }
     # 4. Store manager role
     STORE_MANAGER = [
         db.Rule.get_by_("algorithm", Operation.VIEW),
+        db.Rule.get_by_("algorithm", Operation.CREATE),
         db.Rule.get_by_("algorithm", Operation.DELETE),
+        db.Rule.get_by_("user", Operation.CREATE),
+        db.Rule.get_by_("user", Operation.EDIT),
     ]
     STORE_MANAGER = {
         "name": DefaultRole.STORE_MANAGER,
