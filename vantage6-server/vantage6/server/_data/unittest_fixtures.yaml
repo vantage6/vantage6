@@ -12,12 +12,12 @@ organizations:
         lastname: root
         password: root
         email: root@root.org
-      - username: frank@iknl.nl
+      - username: frank-iknl
         firstname: Frank
         lastname: Martin
         password: password
         email: f.martin@iknl.nl
-      - username: melle@iknl.nl
+      - username: melle-iknl
         firstname: Melle
         lastname: Sieswerda
         password: password
