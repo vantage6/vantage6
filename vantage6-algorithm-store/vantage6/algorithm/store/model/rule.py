@@ -39,7 +39,7 @@ class Rule(Base):
 
     # fields
     name = Column(Text)
-    operation = Column(Enum(Operation))
+    operation = Column(String)
     description = Column(String)
 
     # relationships
