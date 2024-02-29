@@ -11,6 +11,7 @@ from vantage6.algorithm.store.model import Vantage6Server
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.algorithm.store.resource import with_permission, AlgorithmStoreResources
 from vantage6.common import logger_name
+from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.algorithm.store import db
 from vantage6.algorithm.store.permission import Operation as P, PermissionManager
 from vantage6.algorithm.store.model.user import User as db_User
@@ -157,8 +158,14 @@ class Users(AlgorithmStoreResources):
                 .filter(db.Role.id == args["role_id"])
             )
 
-        # TODO: add pagination
-        return user_output_schema.dump(q.all(), many=True), HTTPStatus.OK
+        # paginate results
+        try:
+            page = Pagination.from_query(q, request, db.User)
+        except (ValueError, AttributeError) as e:
+            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+
+        # model serialization
+        return self.response(page, user_output_schema)
 
     @with_permission(module_name, Operation.CREATE)
     def post(self):

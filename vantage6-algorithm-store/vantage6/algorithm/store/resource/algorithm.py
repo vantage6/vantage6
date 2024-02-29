@@ -4,6 +4,7 @@ from flask import g, request
 from flask_restful import Api
 from http import HTTPStatus
 
+from vantage6.algorithm.store import db
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.common import logger_name
 from vantage6.algorithm.store.resource.schema.input_schema import AlgorithmInputSchema
@@ -20,6 +21,7 @@ from vantage6.algorithm.store.permission import (
     PermissionManager,
     Operation as P,
 )
+from vantage6.backend.common.resource.pagination import Pagination
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -139,10 +141,17 @@ class Algorithms(AlgorithmStoreResources):
 
         tags: ["Algorithm"]
         """
-        # TODO add pagination
         # TODO add filtering
-        algorithms = g.session.query(db_Algorithm).all()
-        return algorithm_output_schema.dump(algorithms, many=True), HTTPStatus.OK
+        q = g.session.query(db_Algorithm)
+
+        # paginate results
+        try:
+            page = Pagination.from_query(q, request, db.Algorithm)
+        except (ValueError, AttributeError) as e:
+            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+
+        # model serialization
+        return self.response(page, algorithm_output_schema)
 
     @with_permission(module_name, Operation.CREATE)
     def post(self):
