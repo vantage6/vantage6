@@ -11,9 +11,6 @@ class User(Base):
     """
     Table to keep track of Users (persons) that can access the system.
 
-    Users always belong to an organization and can have certain
-    rights within an organization.
-
     Attributes
     ----------
     id_server : int

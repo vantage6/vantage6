@@ -53,7 +53,7 @@ def get_default_roles(db) -> list[dict]:
     ]
     VIEWER_ROLE = {
         "name": DefaultRole.VIEWER,
-        "description": "Can manage their own account and view algorithms",
+        "description": "Can view accounts and algorithms",
         "rules": VIEWER_RULES,
     }
     # 3. Reviewer role

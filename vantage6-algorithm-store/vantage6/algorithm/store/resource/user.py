@@ -36,7 +36,6 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         Dictionary with services required for the resource endpoints
     """
 
-    pass
     path = "/".join([api_base, module_name])
     log.info(f'Setting up "{path}" and subdirectories')
 
@@ -410,7 +409,7 @@ class User(AlgorithmStoreResources):
         """Remove user.
         ---
         description: >-
-          Delete a user account permanently.\n
+          Unregister the vantage6 user account from the algorithm store.\n
 
         parameters:
           - in: path

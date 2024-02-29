@@ -77,24 +77,6 @@ class RuleCollection(dict):
         permission = Permission(RuleNeed(self.name, operation))
         self.__setattr__(f"{operation}", permission)
 
-    def _id_in_list(self, id_: int, resource_list: list[Base]) -> bool:
-        """
-        Check if resource list contains a resource with a certain ID
-
-        Parameters
-        ----------
-        id_ : int
-            ID of the resource
-        resource_list : list[db.Base]
-            List of resources
-
-        Returns
-        -------
-        bool
-            True if resource is in list, False otherwise
-        """
-        return any(r.id == id_ for r in resource_list)
-
     def has_permission(self, operation: Operation) -> bool:
         """
         Check if the user has the permission fo a certain operation

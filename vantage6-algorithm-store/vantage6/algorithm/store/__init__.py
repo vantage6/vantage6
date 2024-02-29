@@ -310,7 +310,9 @@ class AlgorithmStoreApp:
             else:
                 log.warning(
                     "No Vantage6 server found in the configuration file."
-                    "No server will be whitelisted."
+                    "This means no-one can alter resources on this server, "
+                    "unless one or more users are already authorized to make "
+                    "changes to the algorithm store"
                 )
         return self
 

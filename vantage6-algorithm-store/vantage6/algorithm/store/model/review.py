@@ -6,7 +6,7 @@ from vantage6.algorithm.store.model.base import Base
 
 
 class Review(Base):
-    """Collection of :class:`.~vantage6.algorithm.store.model.review.Review` permissions
+    """Database table that describe algorithm reviews and their status
 
     Attributes
     ----------
