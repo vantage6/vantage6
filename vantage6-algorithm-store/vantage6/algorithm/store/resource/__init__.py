@@ -165,10 +165,10 @@ def with_permission(resource: str, operation: Operation) -> callable:
 
             # can connect to server and user verified
 
-            if "user_id" in (res := response.json()):
-                user_id = res["user_id"]
-            else:
-                msg = "Key Error: key user_id not found"
+            try:
+                username = response.json()["username"]
+            except Exception:
+                msg = "Key Error: key username not found"
                 log.warning(msg)
                 return {"msg": msg}, HTTPStatus.INTERNAL_SERVER_ERROR
 
@@ -176,7 +176,7 @@ def with_permission(resource: str, operation: Operation) -> callable:
 
             server = Vantage6Server.get_by_url(request.headers["Server-Url"])
 
-            user = User.get_by_server(id_server=user_id, v6_server_id=server.id)
+            user = User.get_by_server(username=username, v6_server_id=server.id)
 
             if not user:
                 msg = "User not registered in the store"
@@ -184,7 +184,7 @@ def with_permission(resource: str, operation: Operation) -> callable:
                 return {"msg": msg}, HTTPStatus.UNAUTHORIZED
 
             # if the user is registered, load the rules
-            auth_identity = Identity(user_id)
+            auth_identity = Identity(user.id)
 
             for role in user.roles:
                 for rule in role.rules:

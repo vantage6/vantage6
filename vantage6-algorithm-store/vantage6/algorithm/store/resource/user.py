@@ -139,7 +139,7 @@ class Users(AlgorithmStoreResources):
         q = g.session.query(db_User)
 
         # filter by any field of this endpoint
-        for param in ["username", "id_server"]:
+        for param in ["username"]:
             if param in args:
                 q = q.filter(getattr(db.User, param).like(args[param]))
 
@@ -180,9 +180,6 @@ class Users(AlgorithmStoreResources):
                     items:
                       type: integer
                     description: User's roles
-                  id_server:
-                    type: integer
-                    description: ID of the user in the v6 server
 
         responses:
           201:
@@ -209,11 +206,8 @@ class Users(AlgorithmStoreResources):
             }, HTTPStatus.BAD_REQUEST
 
         # check unique constraints
-        if db.User.get_by_server(id_server=data["id_server"], v6_server_id=server.id):
+        if db.User.get_by_server(username=data["username"], v6_server_id=server.id):
             return {"msg": "User already registered."}, HTTPStatus.BAD_REQUEST
-
-        if db.User.username_exists(data["username"]):
-            return {"msg": "Username already exists."}, HTTPStatus.BAD_REQUEST
 
         # process the required roles. It is only possible to assign roles with
         # rules that you already have permission to. This way we ensure you can
@@ -230,7 +224,6 @@ class Users(AlgorithmStoreResources):
                     roles.append(role_)
 
         user = db.User(
-            id_server=data["id_server"],
             username=data["username"],
             v6_server_id=server.id,
             roles=roles,
@@ -291,9 +284,6 @@ class User(AlgorithmStoreResources):
             application/json:
               schema:
                 properties:
-                  username:
-                    type: string
-                    description: Unique username
                   roles:
                     type: array
                     items:
@@ -336,21 +326,6 @@ class User(AlgorithmStoreResources):
                 "msg": "Request body is incorrect",
                 "errors": errors,
             }, HTTPStatus.BAD_REQUEST
-        if data.get("id_server"):
-            return {"msg": "You cannot change the server id"}, HTTPStatus.BAD_REQUEST
-
-        # update user and check for unique constraints
-        if data.get("username") is not None:
-            if user.username != data["username"]:
-                if db.User.exists("username", data["username"]):
-                    return {
-                        "msg": "User with that username already exists"
-                    }, HTTPStatus.BAD_REQUEST
-                elif user.id != g.user.id:
-                    return {
-                        "msg": "You cannot change the username of another user"
-                    }, HTTPStatus.BAD_REQUEST
-            user.username = data["username"]
 
         # request parser is awefull with lists
         if "roles" in data:

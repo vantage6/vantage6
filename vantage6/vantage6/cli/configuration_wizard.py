@@ -370,13 +370,6 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
         default=default_v6_server_uri,
     ).ask()
 
-    root_id = q.text(
-        "Provide the user ID of the Vantage user who will have the root"
-        "access to the algorithm store server."
-        "This is the ID associated with the user in the Vantage6 server",
-        default=default_root_id,
-    ).ask()
-
     root_username = q.text(
         "What is the username of the root user?",
         default=default_root_username,
@@ -384,7 +377,6 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
 
     config["root_user"] = {
         "v6_server_uri": v6_server_uri,
-        "id_server": root_id,
         "username": root_username,
     }
 

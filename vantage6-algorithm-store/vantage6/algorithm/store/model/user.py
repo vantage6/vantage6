@@ -13,8 +13,6 @@ class User(Base):
 
     Attributes
     ----------
-    id_server : int
-        User id as saved in the V6 server
     username : str
         Username
     v6_server_id : int
@@ -23,7 +21,6 @@ class User(Base):
 
     # fields
     # link with the v6 server. This is a temporary solution
-    id_server = Column(Integer, unique=False)
     username = Column(String, unique=True)
     v6_server_id = Column(Integer, ForeignKey("vantage6server.id"))
 
@@ -51,7 +48,7 @@ class User(Base):
         """
         return (
             f"<User "
-            f"id={self.id}, v6_id='{self.id_server}', roles='{self.roles}', "
+            f"id={self.id}, username='{self.username}', roles='{self.roles}', "
             f">"
         )
 
@@ -76,14 +73,14 @@ class User(Base):
         return any(rule in role.rules for role in self.roles)
 
     @classmethod
-    def get_by_server(cls, id_server: int, v6_server_id: int) -> User:
+    def get_by_server(cls, username: str, v6_server_id: int) -> User:
         """
         Get a user by their v6 server id
 
         Parameters
         ----------
-        id_server: int
-             id of the user on v6 server
+        username: str
+             username of the user on v6 server
         v6_server_id: int
              id whitelisted v6 server
 
@@ -100,7 +97,7 @@ class User(Base):
         session = DatabaseSessionManager.get_session()
         result = (
             session.query(cls)
-            .filter_by(id_server=id_server, v6_server_id=v6_server_id)
+            .filter_by(username=username, v6_server_id=v6_server_id)
             .one_or_none()
         )
         session.commit()
