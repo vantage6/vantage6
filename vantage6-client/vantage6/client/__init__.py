@@ -232,6 +232,17 @@ class UserClient(ClientBase):
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
 
+        def _get_server_url_header(self) -> dict:
+            """
+            Get the server url for request header to algorithm store
+
+            Returns
+            -------
+            dict
+                The server url in a dictionary so it can be used as header
+            """
+            return {"server_url": self.parent.base_path}
+
         def get_server_version(self, attempts_on_timeout: int = None) -> dict:
             """View the version number of the vantage6-server
             Parameters
@@ -477,20 +488,16 @@ class UserClient(ClientBase):
                 "per_page": per_page,
                 "name": name,
                 "encrypted": encrypted,
-                "organization_id": organization,
             }
             if scope == "organization":
-                org_id = self.parent.whoami.organization_id
-                return self.parent.request(
-                    "collaboration", params={"organization_id": org_id}
-                )
+                params["organization_id"] = self.parent.whoami.organization_id
             elif scope == "global":
-                return self.parent.request("collaboration", params=params)
+                params["organization_id"] = organization
             else:
                 self.parent.log.info(
-                    "--> Unrecognized `scope`. Needs to be "
-                    "`organization` or `global`"
+                    "--> Unrecognized `scope`. Needs to be `organization` or `global`"
                 )
+            return self.parent.request("collaboration", params=params)
 
         @post_filtering(iterable=False)
         def get(self, id_: int) -> dict:

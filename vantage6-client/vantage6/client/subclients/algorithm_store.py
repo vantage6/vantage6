@@ -7,7 +7,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
 
     def __init__(self, parent: ClientBase):
         super().__init__(parent)
-        self.store_url = None
+        self.url = None
         self.store_id = None
 
     def set(self, id_: int) -> dict:
@@ -26,7 +26,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         """
         store = self.get(id_)
         try:
-            self.store_url = store["url"]
+            self.url = f"{store['url']}/api"
             self.store_id = id_
         except KeyError:
             self.parent.log.error("Algorithm store URL could not be set.")
