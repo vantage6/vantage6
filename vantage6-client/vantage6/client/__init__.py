@@ -21,6 +21,7 @@ from vantage6.client.utils import LogLevel
 from vantage6.common.task_status import has_task_finished
 from vantage6.common.client.client_base import ClientBase
 from vantage6.client.subclients.algorithm_store import AlgorithmStoreSubClient
+from vantage6.client.subclients.store_role import StoreRoleSubClient
 
 
 module_name = __name__.split(".")[1]
@@ -59,6 +60,7 @@ class UserClient(ClientBase):
         self.rule = self.Rule(self)
         self.algorithm_store = AlgorithmStoreSubClient(self)
         self.algorithm = AlgorithmSubClient(self)
+        self.store_role = StoreRoleSubClient(self)
 
         # set collaboration id to None
         self.collaboration_id = None
