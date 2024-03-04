@@ -19,7 +19,10 @@ from pathlib import Path
 
 from vantage6.common import logger_name
 from vantage6.common import get_database_config
-from vantage6.common.docker.addons import get_container, running_in_docker
+from vantage6.common.docker.addons import (
+    get_container,
+    running_in_docker,
+)
 from vantage6.common.globals import APPNAME, BASIC_PROCESSING_IMAGE
 from vantage6.common.task_status import TaskStatus, has_task_failed
 from vantage6.common.docker.network_manager import NetworkManager
@@ -123,6 +126,7 @@ class DockerManager(DockerBaseManager):
         super().__init__(isolated_network_mgr)
 
         self.data_volume_name = ctx.docker_volume_name
+        self.ctx = ctx
         config = ctx.config
         self.algorithm_env = config.get("algorithm_env", {})
         self.vpn_manager = vpn_manager

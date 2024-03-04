@@ -67,6 +67,8 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
 
 
 class AlgorithmOutputSchema(HATEOASModelSchema):
+    """Marshmallow output schema to serialize the Algorithm model"""
+
     class Meta:
         model = Algorithm
 
@@ -74,6 +76,8 @@ class AlgorithmOutputSchema(HATEOASModelSchema):
 
 
 class FunctionOutputSchema(HATEOASModelSchema):
+    """Marshmallow output schema to serialize the Function model"""
+
     class Meta:
         model = Function
         exclude = ["type_"]
@@ -85,11 +89,15 @@ class FunctionOutputSchema(HATEOASModelSchema):
 
 
 class DatabaseOutputSchema(HATEOASModelSchema):
+    """Marshmallow output schema to serialize the Database model"""
+
     class Meta:
         model = Database
 
 
 class ArgumentOutputSchema(HATEOASModelSchema):
+    """Marshmallow output schema to serialize the Argument model"""
+
     class Meta:
         model = Argument
         exclude = ["type_"]
@@ -98,6 +106,8 @@ class ArgumentOutputSchema(HATEOASModelSchema):
 
 
 class Vantage6ServerOutputSchema(HATEOASModelSchema):
+    """Marshmallow output schema to serialize the Vantage6Server model"""
+
     class Meta:
         model = Vantage6Server
 

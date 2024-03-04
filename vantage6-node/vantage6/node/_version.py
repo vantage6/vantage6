@@ -21,3 +21,4 @@ post_release = "" if not version_info[5] else f".post{version_info[5]}"
 
 # Module version accessible using thomas.__version__
 __version__ = f"{version}{pre_release}{post_release}"
+major_minor = ".".join(__version__.split(".")[:2])

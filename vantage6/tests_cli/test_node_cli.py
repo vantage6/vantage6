@@ -249,7 +249,9 @@ class NodeCLITest(unittest.TestCase):
 
     @patch("docker.DockerClient.containers")
     @patch("vantage6.cli.node.stop.check_docker_running", return_value=True)
-    def test_stop(self, check_docker, containers):
+    @patch("vantage6.cli.node.stop.NodeContext")
+    @patch("vantage6.cli.node.stop.delete_volume_if_exists")
+    def test_stop(self, delete_volume, node_context, check_docker, containers):
         container1 = MagicMock()
         container1.name = f"{APPNAME}-iknl-user"
         containers.list.return_value = [container1]
@@ -258,9 +260,7 @@ class NodeCLITest(unittest.TestCase):
 
         result = runner.invoke(cli_node_stop, ["--name", "iknl"])
 
-        self.assertEqual(
-            result.output, "[info ] - Stopped the vantage6-iknl-user Node.\n"
-        )
+        self.assertEqual(result.output, "[info ] - Stopped the iknl Node.\n")
 
         self.assertEqual(result.exit_code, 0)
 

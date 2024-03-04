@@ -3,10 +3,16 @@ import questionary as q
 import docker
 
 from colorama import Fore, Style
+from vantage6.cli.context import NodeContext
 
 from vantage6.common import warning, error, info
 from vantage6.common.globals import APPNAME
-from vantage6.common.docker.addons import check_docker_running
+from vantage6.common.docker.addons import (
+    check_docker_running,
+    delete_volume_if_exists,
+    get_server_config_name,
+    stop_container,
+)
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 
 from vantage6.cli.node.common import find_running_node_names
@@ -58,30 +64,57 @@ def cli_node_stop(
         )
 
     if all_nodes:
-        for name in running_node_names:
-            container = client.containers.get(name)
-            if force:
-                container.kill()
-            else:
-                container.stop()
-            info(f"Stopped the {Fore.GREEN}{name}{Style.RESET_ALL} Node.")
+        for container_name in running_node_names:
+            _stop_node(client, container_name, force, system_folders)
     else:
         if not name:
-            name = q.select(
+            container_name = q.select(
                 "Select the node you wish to stop:", choices=running_node_names
             ).ask()
         else:
             post_fix = "system" if system_folders else "user"
-            name = f"{APPNAME}-{name}-{post_fix}"
+            container_name = f"{APPNAME}-{name}-{post_fix}"
 
-        if name in running_node_names:
-            container = client.containers.get(name)
-            # Stop the container. Using stop() gives the container 10s to exit
-            # itself, if not then it will be killed
-            if force:
-                container.kill()
-            else:
-                container.stop()
+        if container_name in running_node_names:
+            _stop_node(client, container_name, force, system_folders)
             info(f"Stopped the {Fore.GREEN}{name}{Style.RESET_ALL} Node.")
         else:
-            error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running?")
+            error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running?!")
+
+
+def _stop_node(
+    client: docker.DockerClient, container_name: str, force: bool, system_folders: bool
+) -> None:
+    """
+    Stop a node
+
+    Parameters
+    ----------
+    client : docker.DockerClient
+        Docker client
+    name : str
+        Name of the node container to stop
+    force : bool
+        Whether to force the node to stop
+    system_folders : bool
+        Whether to use system folders or not
+    """
+    container = client.containers.get(container_name)
+    # Stop the container. Using stop() gives the container 10s to exit
+    # itself, if not then it will be killed
+    stop_container(container, force)
+
+    # Also delete volumes. This is done here rather than within the node container when
+    # it is stopped, because at that point the volumes are still in use. Here, the node
+    # has already been stopped
+    scope = "system" if system_folders else "user"
+    config_name = get_server_config_name(container_name, scope)
+    ctx = NodeContext(config_name, system_folders, print_log_header=False)
+    docker_client = docker.from_env()
+    for volume in [
+        ctx.docker_volume_name,
+        ctx.docker_squid_volume_name,
+        ctx.docker_ssh_volume_name,
+        ctx.docker_vpn_volume_name,
+    ]:
+        delete_volume_if_exists(docker_client, volume)
