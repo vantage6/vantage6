@@ -165,8 +165,8 @@ def _authorize_user(
 
     if not user.can(resource, operation):
         msg = (
-            f"You are not allowed to perform this operation: {operation}"
-            f"on this resource: {resource}"
+            f"You are not allowed to perform the operation '{operation}' on resource "
+            f"'{resource}'"
         )
 
         log.warning(msg)

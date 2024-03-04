@@ -4,7 +4,7 @@ from vantage6.common.client.client_base import ClientBase
 
 
 class StoreRuleSubClient(ClientBase.SubClient):
-    """Subclient for the roles from the algorithm store."""
+    """Subclient for the rules from the algorithm store."""
 
     @post_filtering(iterable=True)
     def list(
@@ -34,7 +34,7 @@ class StoreRuleSubClient(ClientBase.SubClient):
         Returns
         -------
         list[dict]
-            List of algorithms
+            List of rules
         """
         params = {
             "name": name,

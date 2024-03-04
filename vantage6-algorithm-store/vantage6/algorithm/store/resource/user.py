@@ -90,7 +90,6 @@ user_input_schema = UserInputSchema()
 
 
 class Users(AlgorithmStoreResources):
-
     @with_permission(module_name, Operation.VIEW)
     def get(self):
         """List users
@@ -114,6 +113,16 @@ class Users(AlgorithmStoreResources):
             schema:
               type: integer
             description: Role that is assigned to user
+            description: Number of items per page (default=10)
+          - in: query
+            name: page
+            schema:
+              type: integer
+            description: Page number for pagination (default=1)
+          - in: query
+            name: per_page
+            schema:
+              type: integer
             description: Number of items per page (default=10)
           - in: query
             name: sort
@@ -242,7 +251,6 @@ class Users(AlgorithmStoreResources):
 
 
 class User(AlgorithmStoreResources):
-
     @with_permission(module_name, Operation.VIEW)
     def get(self, id):
         """Get user

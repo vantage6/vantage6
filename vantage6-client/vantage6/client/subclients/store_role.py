@@ -34,7 +34,7 @@ class StoreRoleSubClient(ClientBase.SubClient):
         Returns
         -------
         list[dict]
-            List of algorithms
+            List of roles
         """
         params = {
             "name": name,
