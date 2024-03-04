@@ -13,7 +13,7 @@ from vantage6.algorithm.store.permission import PermissionManager
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.algorithm.store.resource.schema.output_schema import RoleOutputSchema
 from vantage6.algorithm.store import db
-from vantage6.backend.common.services_resources import BaseServicesResources
+from vantage6.algorithm.store.resource import AlgorithmStoreResources
 from vantage6.backend.common.resource.pagination import Pagination
 
 module_name = logger_name(__name__)
@@ -87,7 +87,7 @@ role_schema = RoleOutputSchema()
 # role_input_schema = RoleInputSchema()
 
 
-class Roles(BaseServicesResources):
+class Roles(AlgorithmStoreResources):
     @with_permission(module_name, Operation.VIEW)
     def get(self):
         """Returns a list of roles

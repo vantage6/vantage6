@@ -37,6 +37,8 @@ class AlgorithmStoreResources(BaseServicesResources):
         permissions: PermissionManager,
     ):
         super().__init__(api, config)
+        # TODO move this to BaseServicesResources when merging PermissionManager from
+        # store and server to backend-common
         self.permissions = permissions
 
     # TODO implement this class when necessary
