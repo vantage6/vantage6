@@ -13,7 +13,10 @@ from vantage6.algorithm.store.model.algorithm import Algorithm as db_Algorithm
 from vantage6.algorithm.store.model.argument import Argument
 from vantage6.algorithm.store.model.database import Database
 from vantage6.algorithm.store.model.function import Function
-from vantage6.algorithm.store.resource import with_permission
+from vantage6.algorithm.store.resource import (
+    with_permission,
+    with_permission_to_view_algorithms,
+)
 
 # TODO move to common / refactor
 from vantage6.algorithm.store.resource import AlgorithmStoreResources
@@ -92,7 +95,7 @@ def permissions(permissions: PermissionManager) -> None:
 class Algorithms(AlgorithmStoreResources):
     """Resource for /algorithm"""
 
-    @with_permission(module_name, Operation.VIEW)
+    @with_permission_to_view_algorithms(module_name, Operation.VIEW)
     def get(self):
         """List algorithms
         ---
@@ -303,7 +306,7 @@ class Algorithms(AlgorithmStoreResources):
 class Algorithm(AlgorithmStoreResources):
     """Resource for /algorithm/<id>"""
 
-    @with_permission(module_name, Operation.VIEW)
+    @with_permission_to_view_algorithms(module_name, Operation.VIEW)
     def get(self, id):
         """Get algorithm
         ---

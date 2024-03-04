@@ -87,8 +87,7 @@ class PermissionManager:
             except Exception as e:
                 module_name = module.__name__.split(".")[-1]
                 log.debug(
-                    f"Resource '{module_name}' contains no or invalid "
-                    f"permissions. Exception {e}"
+                    f"Resource '{module_name}' contains no or invalid permissions."
                 )
 
     def assign_rule_to_root(self, name: str, operation: Operation) -> None:
@@ -283,7 +282,6 @@ class PermissionManager:
             Dict with a message which rule is missing, else None
         """
         for rule in rules:
-
             if not self.collections[rule.name].has_permission(rule.operation):
                 return {
                     "msg": f"You don't have the rule ({rule.name}, "

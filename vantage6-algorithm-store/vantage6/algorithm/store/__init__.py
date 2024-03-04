@@ -256,7 +256,7 @@ class AlgorithmStoreApp:
     def _add_default_roles() -> None:
         for role in get_default_roles():
             if not db.Role.get_by_name(role["name"]):
-                log.warn(f"Creating new default role {role['name']}...")
+                log.warn("Creating new default role %s", role["name"])
                 new_role = db.Role(
                     name=role["name"],
                     description=role["description"],
@@ -274,43 +274,46 @@ class AlgorithmStoreApp:
         self._add_default_roles()
 
         # add whitelisted server and root user from config file if they do not exist
+        if root_user := self.ctx.config.get("root_user", {}):
+            whitelisted_uri = root_user.get("v6_server_uri")
+            root_username = root_user.get("username")
+            if whitelisted_uri and root_username:
+                if not (v6_server := db.Vantage6Server.get_by_url(whitelisted_uri)):
+                    log.debug("This server will be whitelisted: %s", whitelisted_uri)
+                    v6_server = db.Vantage6Server(url=whitelisted_uri)
+                    v6_server.save()
 
-        if not db.Vantage6Server.get() and (
-            root_user := self.ctx.config.get("root_user", {})
-        ):
+                # if the user does not exist already, add it
+                if not db.User.get_by_server(
+                    username=root_username, v6_server_id=v6_server.id
+                ):
+                    log.warning("Creating root user")
 
-            if whitelisted_uri := root_user.get("v6_server_uri"):
-                log.debug(f"This server will be whitelisted: {whitelisted_uri}")
-                v6_server = db.Vantage6Server(url=whitelisted_uri)
-                v6_server.save()
+                    root = db.Role.get_by_name("Root")
 
-                if username := root_user.get("username"):
-
-                    v6_server = db.Vantage6Server.get_by_url(whitelisted_uri)
-                    # if the user does not exist already, add it
-                    if not db.User.get_by_server(
-                        username=username, v6_server_id=v6_server.id
-                    ):
-                        log.warning("Creating root user")
-
-                        root = db.Role.get_by_name("Root")
-
-                        user = db.User(
-                            v6_server_id=v6_server.id,
-                            username=username,
-                            roles=[root],
-                        )
-                        user.save()
-                    else:
-                        log.warning("The user already exists")
+                    user = db.User(
+                        v6_server_id=v6_server.id,
+                        username=root_username,
+                        roles=[root],
+                    )
+                    user.save()
+                else:
+                    log.warning("The user already exists")
 
             else:
                 log.warning(
-                    "No Vantage6 server found in the configuration file."
-                    "This means no-one can alter resources on this server, "
-                    "unless one or more users are already authorized to make "
-                    "changes to the algorithm store"
+                    "No v6_server_uri and/or username found in the configuration file "
+                    "in the root_user section. This means no-one can alter resources on"
+                    " this server, unless one or more users were already authorized to "
+                    "make changes to the algorithm store previously."
                 )
+        else:
+            log.warning(
+                "No root user found in the configuration file. This means "
+                "no-one can alter resources on this server, unless one or "
+                "more users were already authorized to make changes to the "
+                "algorithm store prevoiusly."
+            )
         return self
 
 

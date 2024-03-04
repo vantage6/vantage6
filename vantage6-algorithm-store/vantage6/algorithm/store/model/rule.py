@@ -1,7 +1,7 @@
 from __future__ import annotations
 from enum import Enum as Enumerate
 
-from sqlalchemy import Column, Text, String, Enum
+from sqlalchemy import Column, Text, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
@@ -10,11 +10,11 @@ from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
 class Operation(str, Enumerate):
     """Enumerator of all available operations"""
 
-    VIEW = "v"
-    EDIT = "e"
-    CREATE = "c"
-    DELETE = "d"
-    REVIEW = "r"
+    VIEW = "view"
+    EDIT = "edit"
+    CREATE = "create"
+    DELETE = "delete"
+    REVIEW = "review"
 
 
 class Rule(Base):

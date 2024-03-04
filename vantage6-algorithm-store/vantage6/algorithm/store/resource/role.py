@@ -40,7 +40,8 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         Roles,
         path,
         endpoint="role_without_id",
-        methods=("GET", "POST"),
+        methods=("GET",),
+        # methods=("GET", "POST"),
         resource_class_kwargs=services,
     )
     # api.add_resource(
@@ -87,7 +88,6 @@ role_schema = RoleOutputSchema()
 
 
 class Roles(BaseServicesResources):
-
     @with_permission(module_name, Operation.VIEW)
     def get(self):
         """Returns a list of roles

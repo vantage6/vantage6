@@ -44,7 +44,6 @@ class AlgorithmStoreResources(BaseServicesResources):
 
 
 def authenticate_with_server(*args, **kwargs):
-
     def __make_request(url: str) -> requests.Response:
         headers = {"Authorization": request.headers["Authorization"]}
         try:
@@ -109,6 +108,72 @@ def authenticate_with_server(*args, **kwargs):
     return response, HTTPStatus.OK
 
 
+def _authorize_user(
+    auth_response: requests.Response, resource: str, operation: Operation
+) -> tuple | None:
+    """
+    Authorize the user to perform an operation on a resource.
+
+    Parameters
+    ----------
+    auth_response : requests.Response
+        Response object from the authentication request.
+    resource : str
+        Name of the resource to check the view permission of.
+    operation: Operation
+        Operation to check the permission for.
+
+    Returns
+    -------
+    tuple[dict, HTTPStatus] | None
+        Tuple containing an error message and status code if the user is not
+        authorized, None otherwise.
+    """
+    # Check if user can connect to server and user logged in successfully
+    try:
+        username = auth_response.json()["username"]
+    except Exception:
+        msg = "Key Error: key username not found"
+        log.warning(msg)
+        return {"msg": msg}, HTTPStatus.INTERNAL_SERVER_ERROR
+
+    # check if view permissions for this resource are granted
+    server = Vantage6Server.get_by_url(request.headers["Server-Url"])
+    user = User.get_by_server(username=username, v6_server_id=server.id)
+    if not user:
+        msg = "User not registered in the store"
+        log.warning(msg)
+        return {"msg": msg}, HTTPStatus.UNAUTHORIZED
+
+    # if the user is registered, load the rules
+    auth_identity = Identity(user.id)
+
+    for role in user.roles:
+        for rule in role.rules:
+            auth_identity.provides.add(
+                RuleNeed(
+                    name=rule.name,
+                    operation=rule.operation,
+                )
+            )
+
+    identity_changed.send(current_app._get_current_object(), identity=auth_identity)
+
+    g.user = user
+
+    if not user.can(resource, operation):
+        msg = (
+            f"You are not allowed to perform this operation: {operation}"
+            f"on this resource: {resource}"
+        )
+
+        log.warning(msg)
+        return {"msg": msg}, HTTPStatus.UNAUTHORIZED
+
+    # User is authorized
+    return None, None
+
+
 def with_authentication() -> callable:
     """
     Decorator to verify that the user is authenticated with a whitelisted
@@ -157,61 +222,67 @@ def with_permission(resource: str, operation: Operation) -> callable:
     def protection_decorator(fn):
         @wraps(fn)
         def decorator(*args, **kwargs):
-
             response, status = authenticate_with_server(request)
 
             if status != HTTPStatus.OK:
                 return response, status
 
-            # can connect to server and user verified
-
-            try:
-                username = response.json()["username"]
-            except Exception:
-                msg = "Key Error: key username not found"
-                log.warning(msg)
-                return {"msg": msg}, HTTPStatus.INTERNAL_SERVER_ERROR
-
-            # check if view permissions for this resource are granted
-
-            server = Vantage6Server.get_by_url(request.headers["Server-Url"])
-
-            user = User.get_by_server(username=username, v6_server_id=server.id)
-
-            if not user:
-                msg = "User not registered in the store"
-                log.warning(msg)
-                return {"msg": msg}, HTTPStatus.UNAUTHORIZED
-
-            # if the user is registered, load the rules
-            auth_identity = Identity(user.id)
-
-            for role in user.roles:
-                for rule in role.rules:
-                    auth_identity.provides.add(
-                        RuleNeed(
-                            name=rule.name,
-                            operation=rule.operation,
-                        )
-                    )
-
-            identity_changed.send(
-                current_app._get_current_object(), identity=auth_identity
-            )
-
-            g.user = user
-
-            if not user.can(resource, operation):
-                msg = (
-                    f"You are not allowed to perform this operation: {operation}"
-                    f"on this resource: {resource}"
-                )
-
-                log.warning(msg)
-                return {"msg": msg}, HTTPStatus.UNAUTHORIZED
+            response, status = _authorize_user(response, resource, operation)
+            if response is not None:
+                return response, status
 
             # all good, proceed with function
             return fn(*args, **kwargs)
+
+        return decorator
+
+    return protection_decorator
+
+
+def with_permission_to_view_algorithms(resource: str, operation: Operation) -> callable:
+    """
+    Decorator to verify that the user has as a permission on a resource.
+
+    Parameters
+    ----------
+    resource : str
+        Name of the resource to check the view permission of.
+    operation: Operation
+        Operation to check the permission for.
+
+    Returns
+    -------
+    callable
+        Decorated function that can be used to access endpoints that require
+        authentication.
+    """
+
+    def protection_decorator(fn):
+        @wraps(fn)
+        def decorator(self, *args, **kwargs):
+            # check if everyone has permission to view algorithms
+            policies = self.config.get("policies", {})
+            anyone_can_view = policies.get("algorithms_open", False)
+            if anyone_can_view:
+                return fn(self, *args, **kwargs)
+
+            # not everyone has permission: authenticate with server
+            response, status = authenticate_with_server(request)
+            if status != HTTPStatus.OK:
+                return response, status
+
+            # check if all authenticated users have permission to view algorithms
+            any_user_can_view = policies.get("algorithms_open_to_whitelisted", False)
+            if any_user_can_view:
+                return fn(self, *args, **kwargs)
+
+            # not all authenticated users have permission: authorize user
+            response, status = _authorize_user(response, resource, operation)
+            if response is not None:
+                return response, status
+
+            # all good, proceed with function
+            return fn(self, *args, **kwargs)
 
         return decorator
 
