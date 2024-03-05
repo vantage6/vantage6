@@ -159,7 +159,7 @@ class ClientBase(object):
             base_path = self.base_path
         else:
             try:
-                base_path = self.algorithm_store.url
+                base_path = self.store.url
             except AttributeError as exc:
                 raise AttributeError(
                     "Algorithm store not set. Please set the algorithm store first with"
@@ -543,4 +543,10 @@ class ClientBase(object):
         """
 
         def __init__(self, parent) -> None:
-            self.parent = parent
+            # If the parent has a parent, use that as the parent - we don't want
+            # grandparents and so on.
+            # TODO maybe this should ideally get a name of 'main_client' or something
+            if hasattr(parent, "parent"):
+                self.parent = parent.parent
+            else:
+                self.parent = parent

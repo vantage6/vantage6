@@ -1,4 +1,7 @@
 from vantage6.client.filter import post_filtering
+from vantage6.client.subclients.store_role import StoreRoleSubClient
+from vantage6.client.subclients.store_rule import StoreRuleSubClient
+from vantage6.client.subclients.store_user import StoreUserSubClient
 from vantage6.common.client.client_base import ClientBase
 
 
@@ -9,6 +12,12 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         super().__init__(parent)
         self.url = None
         self.store_id = None
+
+        self.base_client = self.parent
+
+        self.role = StoreRoleSubClient(self)
+        self.rule = StoreRuleSubClient(self)
+        self.user = StoreUserSubClient(self)
 
     def set(self, id_: int) -> dict:
         """ "

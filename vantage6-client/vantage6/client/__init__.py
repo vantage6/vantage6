@@ -9,9 +9,6 @@ import sys
 import traceback
 
 from pathlib import Path
-from vantage6.client.subclients.algorithm import AlgorithmSubClient
-from vantage6.client.subclients.store_rule import StoreRuleSubClient
-from vantage6.client.subclients.store_user import StoreUserSubClient
 
 from vantage6.common.globals import APPNAME
 from vantage6.common.encryption import RSACryptor
@@ -23,12 +20,10 @@ from vantage6.client.utils import LogLevel
 from vantage6.common.task_status import has_task_finished
 from vantage6.common.client.client_base import ClientBase
 from vantage6.client.subclients.algorithm_store import AlgorithmStoreSubClient
-from vantage6.client.subclients.store_role import StoreRoleSubClient
+from vantage6.client.subclients.algorithm import AlgorithmSubClient
 
 
 module_name = __name__.split(".")[1]
-
-LEGACY = "legacy"
 
 
 class UserClient(ClientBase):
@@ -60,11 +55,8 @@ class UserClient(ClientBase):
         self.role = self.Role(self)
         self.node = self.Node(self)
         self.rule = self.Rule(self)
-        self.algorithm_store = AlgorithmStoreSubClient(self)
+        self.store = AlgorithmStoreSubClient(self)
         self.algorithm = AlgorithmSubClient(self)
-        self.store_role = StoreRoleSubClient(self)
-        self.store_rule = StoreRuleSubClient(self)
-        self.store_user = StoreUserSubClient(self)
 
         # set collaboration id to None
         self.collaboration_id = None
