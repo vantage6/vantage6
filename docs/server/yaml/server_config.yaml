@@ -172,11 +172,8 @@ password_policy:
 
 # set up with which origins the server should allow CORS requests. The default
 # is to allow all origins. If you want to restrict this, you can specify a list
-# of origins here. Note that these origins are interpreted as regular
-# expressions, so you can use wildcards. Below are examples to allow requests
-# from the Cotopaxi UI, port 3456 on localhost and the entire vantage6.ai
-# domain.
+# of origins here. Below are examples to allow requests from the Cotopaxi UI, and
+#  port 3456 on localhost
 cors_allowed_origins:
-  - ^https://portal\.cotopaxi\.vantage6\.ai
-  - ^http://localhost:3456
-  - ^http://*.vantage6.ai
+  - https://portal.cotopaxi.vantage6.ai
+  - http://localhost:3456

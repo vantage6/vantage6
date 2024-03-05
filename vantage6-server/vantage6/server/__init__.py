@@ -5,6 +5,7 @@ exist. It allows the users and nodes to authenticate and subsequently interact
 through the API the server hosts. Finally, it also communicates with
 authenticated nodes and users via the socketIO server that is run here.
 """
+
 # -*- coding: utf-8 -*-
 import os
 from gevent import monkey
@@ -19,7 +20,6 @@ import logging
 import uuid
 import json
 import time
-import re
 import datetime as dt
 import traceback
 
@@ -36,6 +36,7 @@ from flask import (
     Response,
 )
 from flask_cors import CORS
+from flask_cors.core import probably_regex
 from flask_jwt_extended import JWTManager
 from flask_marshmallow import Marshmallow
 from flask_restful import Api
@@ -112,6 +113,7 @@ class ServerApp:
         # Enable cross-origin resource sharing. Note that Flask-CORS interprets
         # the origins as regular expressions.
         cors_allowed_origins = self.ctx.config.get("cors_allowed_origins", "*")
+        self._warn_if_cors_regex(cors_allowed_origins)
         self.cors = CORS(
             self.app,
             resources={r"/*": {"origins": cors_allowed_origins}},
@@ -144,6 +146,29 @@ class ServerApp:
 
         log.info("Initialization done")
 
+    @staticmethod
+    def _warn_if_cors_regex(origins: str | list[str]) -> None:
+        """
+        Give a warning if CORS origins are regular expressions. This will not work
+        properly for socket events (Flask-SocketIO checks for string equality and does
+        not use regex).
+
+        Parameters
+        ----------
+        origins: str | list[str]
+            The origins to check
+        """
+        if isinstance(origins, str):
+            origins = [origins]
+
+        for origin in origins:
+            if probably_regex(origin):
+                log.warning(
+                    "CORS origin '%s' is a regular expression. Socket events sent from "
+                    "this origin will not be handled properly.",
+                    origin,
+                )
+
     def setup_socket_connection(self) -> SocketIO:
         """
         Setup a socket connection. If a message queue is defined, connect the
@@ -155,34 +180,6 @@ class ServerApp:
         SocketIO
             SocketIO object
         """
-
-        def _is_allowed_cors_origin(origin: str) -> bool:
-            """
-            Check if the origin is allowed to connect to the socketio server.
-
-            Note that this function is written because it is not possible to
-            directly insert regex into the cors settings for flask-socketio
-            (see https://github.com/miguelgrinberg/python-engineio/issues/264)
-
-            Parameters
-            ----------
-            origin: str
-                The origin to check
-
-            Returns
-            -------
-            bool:
-                Whether the origin is allowed
-            """
-            allowed = self.ctx.config.get("cors_allowed_origins", "*")
-            if allowed == "*":
-                return True
-            allowed = [re.compile(rf"{origin}") for origin in allowed]
-            for regex in allowed:
-                if regex.match(origin):
-                    return True
-            return False
-
         msg_queue = self.ctx.config.get("rabbitmq", {}).get("uri")
         if msg_queue:
             log.debug(f"Connecting to msg queue: {msg_queue}")
@@ -191,13 +188,14 @@ class ServerApp:
         if debug_mode:
             log.debug("SocketIO debug mode enabled")
 
+        cors_settings = self.ctx.config.get("cors_allowed_origins", "*")
         try:
             socketio = SocketIO(
                 self.app,
                 async_mode="gevent_uwsgi",
                 message_queue=msg_queue,
                 ping_timeout=60,
-                cors_allowed_origins=_is_allowed_cors_origin,
+                cors_allowed_origins=cors_settings,
                 logger=debug_mode,
                 engineio_logger=debug_mode,
             )
@@ -213,7 +211,7 @@ class ServerApp:
                 self.app,
                 message_queue=msg_queue,
                 ping_timeout=60,
-                cors_allowed_origins=_is_allowed_cors_origin,
+                cors_allowed_origins=cors_settings,
                 logger=debug_mode,
                 engineio_logger=debug_mode,
             )
