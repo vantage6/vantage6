@@ -16,11 +16,11 @@ There are many deployment options. We simply provide a few examples.
 -  …
 
 .. note::
-    From version 3.2+ it is possible to horizontally scale the server (This
-    upgrade is also made available to version 2.3.4)
-
-    Documentation on how to deploy it will be shared here soon. Reach out to us
-    on Discord for now.
+    Because the server uses socketIO to exchange messages with the nodes and
+    users, it is not trivial to horizontally scale the server. To prevent that
+    socket messages get lost, you should deploy a RabbitMQ service and configure
+    the server to use it. :ref:`This section <rabbitmq-install>` explains how to
+    do so.
 
 .. _deploy-nginx:
 

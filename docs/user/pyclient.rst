@@ -415,7 +415,7 @@ Finally, note that you should provide any
 databases that you want to use via the ``databases`` argument. In the example
 above, we use the ``default`` database; using the ``my_other_database`` database
 can be done by simply specifying that label in the dictionary. If you have
-a SQL, SPARQL or OMOP database, you should also provide a ``query`` argument,
+a SQL or SPARQL database, you should also provide a ``query`` argument,
 e.g.
 
 .. code:: python

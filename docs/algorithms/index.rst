@@ -5,7 +5,7 @@ Algorithm Development
 
 This section helps you to develop MPC and FL algorithms that are compatible
 with vantage6. You are **not** going to find a list of algorithms here or help
-on how to use them. In the :ref:`components`, the basic
+on how to use them. In the :ref:`main-intro`, the basic
 concepts and interface between node and algorithm are explained. Then, in the
 :ref:`algo-dev-guide`, the algorithm development process is explained. Finally,
 in the :ref:`classic-algo-tutorial`, an FL algorithm is build from scratch.

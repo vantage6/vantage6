@@ -2,11 +2,6 @@
 # your peers to identify the server
 description: Test
 
-# Should be prod, acc, test or dev. In case the type is set to test
-# the JWT-tokens expiration is set to 1 day (default is 6 hours). The
-# other types can be used in future releases of vantage6
-type: test
-
 # IP adress to which the server binds. In case you specify 0.0.0.0
 # the server listens on all interfaces
 ip: 0.0.0.0

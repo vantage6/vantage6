@@ -17,7 +17,7 @@ You can install the R client by running:
 
 .. code:: r
 
-   devtools::install_github('IKNL/vtg', subdir='src')
+   devtools::install_github('IKNL/vtg')
 
 .. _use-R-client:
 
