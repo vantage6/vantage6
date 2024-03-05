@@ -30,12 +30,18 @@ commands:
 Of course, you only have to install the requirements if you had not done so
 before.
 
+.. note::
+
+    This documentation also includes some UML diagrams which are generated using
+    `PlantUML <https://plantuml.com/>`_. To generate these diagrams, you need to
+    `install Java <https://www.java.com/en/download/help/download_options.html>`_.
+    PlantUML itself is included in the Python requirements, so you do not have to
+    install it separately.
+
 Then you can access the documentation on ``http://127.0.0.1:8000``. The
 ``--watch`` option makes sure that if you make changes to either the
 documentation text or the docstrings, the documentation pages will also be
 reloaded.
-
-.. TODO review part below
 
 This documentation is automatically built and published on a commit (on
 certain branches, including ``main``). Both Frank and Bart have access to the
