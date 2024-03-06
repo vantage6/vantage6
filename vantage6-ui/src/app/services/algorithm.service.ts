@@ -3,6 +3,7 @@ import { ApiService } from './api.service';
 import { Algorithm } from '../models/api/algorithm.model';
 import { ChosenCollaborationService } from './chosen-collaboration.service';
 import { AlgorithmStore } from '../models/api/algorithmStore.model';
+import { Pagination } from '../models/api/pagination.model';
 
 @Injectable({
   providedIn: 'root'
@@ -17,10 +18,11 @@ export class AlgorithmService {
     const algorithmStores = this.getAlgorithmStoresForCollaboration();
     const results = await Promise.all(
       algorithmStores.map(async (algorithmStore) => {
-        const algorithms = await this.apiService.getForAlgorithmApi<Algorithm[]>(`${algorithmStore.url}/api`, '/algorithm', {
+        const result = await this.apiService.getForAlgorithmApi<Pagination<Algorithm>>(`${algorithmStore.url}/api`, '/algorithm', {
           per_page: 9999,
           ...params
         });
+        const algorithms = result.data;
         // set algorithm store url for each algorithm
         algorithms.forEach((algorithm) => {
           algorithm.algorithm_store_url = algorithmStore.url;
