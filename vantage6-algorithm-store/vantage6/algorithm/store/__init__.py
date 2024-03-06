@@ -298,7 +298,10 @@ class AlgorithmStoreApp:
                     )
                     user.save()
                 else:
-                    log.warning("The user already exists")
+                    log.info(
+                        "The root user given in the configuration already exists -"
+                        " no action taken."
+                    )
 
             else:
                 log.warning(
