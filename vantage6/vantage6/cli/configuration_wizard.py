@@ -108,10 +108,14 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
         info("Examples:")
         # pylint: disable=W1401
         # flake8: noqa: W605
-        info("^harbor2\.vantage6\.ai/demo/average    Allow the demo average algorithm")
+        info("^harbor2\.vantage6\.ai/demo/average$    Allow the demo average algorithm")
         info(
             "^harbor2\.vantage6\.ai/algorithms/.*   Allow all algorithms from "
             "harbor2.vantage6.ai/algorithms"
+        )
+        info(
+            "^harbor2\.vantage6\.ai/demo/average:@sha256:82becede...$    Allow a "
+            "specific hash of average algorithm"
         )
         while True:
             algo = q.text(message="Enter your algorithm expression:").ask()
