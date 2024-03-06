@@ -10,7 +10,7 @@ class Study(Base):
     Table that describes which studies are available.
 
     Studies are subsets of one or more organizations within a collaboration that
-    collaborate on a particular substudy. Studies use the same nodes and data
+    collaborate on a particular research question. Studies use the same nodes and data
     as the collaboration they are part of, and also inherit their collaboration's
     settings.
 
@@ -24,7 +24,7 @@ class Study(Base):
             list[:class:`~vantage6.server.model.organization.Organization`]
         List of organizations that are part of this study
     tasks : list[:class:`~vantage6.server.model.task.Task`]
-        List of tasks that are part of this collaboration
+        List of tasks that are part of this study
     """
 
     # fields
@@ -52,6 +52,7 @@ class Study(Base):
         return (
             "<Study "
             f"{self.id}: '{self.name}', "
+            f"collaboration_id={self.collaboration_id}, "
             f"{number_of_organizations} organization(s), "
             f"{number_of_tasks} task(s)"
             ">"

@@ -327,7 +327,7 @@ class Studies(StudyBase):
         try:
             page = Pagination.from_query(q, request, db.Study)
         except (ValueError, AttributeError) as e:
-            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         schema = self._select_schema()
 
@@ -479,7 +479,7 @@ class Study(StudyBase):
         """
         study = db.Study.get(id)
 
-        # check that study exists, unlikely to happen without ID
+        # check that study exists
         if not study:
             return {"msg": f"Study with id={id} not found"}, HTTPStatus.NOT_FOUND
 

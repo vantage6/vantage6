@@ -360,7 +360,7 @@ class AlgorithmStores(AlgorithmStoreBase):
         try:
             page = Pagination.from_query(q, request, db.AlgorithmStore)
         except (ValueError, AttributeError) as e:
-            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         # serialize models
         return self.response(page, algorithm_store_schema)

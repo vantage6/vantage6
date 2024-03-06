@@ -363,7 +363,7 @@ class Runs(MultiRunBase):
         try:
             page = Pagination.from_query(query, request, db.Run)
         except (ValueError, AttributeError) as e:
-            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         # serialization of the models
         s = run_inc_schema if self.is_included("task") else run_schema
@@ -492,7 +492,7 @@ class Results(MultiRunBase):
         try:
             page = Pagination.from_query(query, request, db.Run)
         except (ValueError, AttributeError) as e:
-            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         return self.response(page, result_schema)
 

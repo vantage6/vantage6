@@ -478,7 +478,7 @@ class Tasks(TaskBase):
         try:
             page = Pagination.from_query(q, request, db.Task)
         except (ValueError, AttributeError) as e:
-            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         # serialization schema
         schema = self._select_schema()
@@ -565,6 +565,10 @@ class Tasks(TaskBase):
         study = None
         if collaboration_id:
             collaboration = db.Collaboration.get(collaboration_id)
+            if not collaboration:
+                return {
+                    "msg": f"Collaboration id={collaboration_id} not found!"
+                }, HTTPStatus.NOT_FOUND
         if study_id:
             study = db.Study.get(study_id)
             if not study:
@@ -579,13 +583,9 @@ class Tasks(TaskBase):
                     )
                 }, HTTPStatus.BAD_REQUEST
 
+            # get the collaboration object as well
             collaboration_id = study.collaboration_id
-
-        collaboration = db.Collaboration.get(collaboration_id)
-        if not collaboration:
-            return {
-                "msg": f"Collaboration id={collaboration_id} not found!"
-            }, HTTPStatus.NOT_FOUND
+            collaboration = db.Collaboration.get(collaboration_id)
 
         organizations_json_list = data.get("organizations")
         org_ids = [org.get("id") for org in organizations_json_list]

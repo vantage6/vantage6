@@ -274,7 +274,7 @@ class Collaborations(CollaborationBase):
         try:
             page = Pagination.from_query(q, request, db.Collaboration)
         except (ValueError, AttributeError) as e:
-            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         schema = self._select_schema()
 
@@ -414,7 +414,7 @@ class Collaboration(CollaborationBase):
         """
         collaboration = db.Collaboration.get(id)
 
-        # check that collaboration exists, unlikely to happen without ID
+        # check that collaboration exists
         if not collaboration:
             return {
                 "msg": f"collaboration having id={id} not found"

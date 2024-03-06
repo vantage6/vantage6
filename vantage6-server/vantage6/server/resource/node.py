@@ -303,7 +303,7 @@ class Nodes(NodeBase):
         try:
             page = Pagination.from_query(q, request, db.Node)
         except (ValueError, AttributeError) as e:
-            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         # model serialization
         return self.response(page, node_schema)

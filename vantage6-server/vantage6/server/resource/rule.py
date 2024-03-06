@@ -182,7 +182,7 @@ class Rules(ServicesResources):
         try:
             page = Pagination.from_query(q, request, db.Rule, paginate=paginate)
         except (ValueError, AttributeError) as e:
-            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         # model serialization
         return self.response(page, rule_schema)

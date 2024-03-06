@@ -639,7 +639,7 @@ class AlgorithmClient(ClientBase):
 
             Parameters
             ----------
-            id: int
+            id_: int
                 ID of the study to retrieve
 
             Returns

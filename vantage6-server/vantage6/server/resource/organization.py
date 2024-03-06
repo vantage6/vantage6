@@ -257,7 +257,7 @@ class Organizations(OrganizationBase):
         try:
             page = Pagination.from_query(q, request, db.Organization)
         except (ValueError, AttributeError) as e:
-            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         # serialization of DB model
         return self.response(page, org_schema)

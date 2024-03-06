@@ -394,7 +394,8 @@ class TaskInputSchema(_NameValidationSchema):
     @validates_schema
     def validate_collaboration_or_study(self, data: dict, **kwargs) -> None:
         """
-        Validate the input, which should contain either a collaboration_id or a study_id
+        Validate the input, which should contain a collaboration_id or a study_id. The
+        input may also contain both.
 
         Parameters
         ----------

@@ -551,14 +551,16 @@ class UserClient(ClientBase):
             id_ : int
                 Id of the collaboration you want to delete
             delete_dependents : bool, optional
-                Whether or not to delete the dependents of the collaboration
+                Delete the tasks, nodes and studies that are part of the collaboration
+                as well. If this is False, and dependents exist, the server will refuse
+                to delete the collaboration. Default is False.
 
             Returns
             -------
             dict
                 Message from the server
             """
-            id_ = self.__get_id(id_)
+            id_ = self.__get_id_or_use_provided_id(id_)
             params = {}
             if delete_dependents:
                 params["delete_dependents"] = delete_dependents
@@ -594,7 +596,7 @@ class UserClient(ClientBase):
             dict
                 Containing the updated collaboration information
             """
-            id_ = self.__get_id(id_)
+            id_ = self.__get_id_or_use_provided_id(id_)
             return self.parent.request(
                 f"collaboration/{id_}",
                 method="patch",
@@ -624,7 +626,7 @@ class UserClient(ClientBase):
             list[dict]
                 Containing the updated list of organizations in the collaboration
             """
-            collaboration = self.__get_id(collaboration)
+            collaboration = self.__get_id_or_use_provided_id(collaboration)
             return self.parent.request(
                 f"collaboration/{collaboration}/organization",
                 method="post",
@@ -650,25 +652,31 @@ class UserClient(ClientBase):
             list[dict]
                 Containing the updated list of organizations in the collaboration
             """
-            collaboration = self.__get_id(collaboration)
+            collaboration = self.__get_id_or_use_provided_id(collaboration)
             return self.parent.request(
                 f"collaboration/{collaboration}/organization",
                 method="delete",
                 json={"id": organization},
             )
 
-        def __get_id(self, id_: int = None) -> int:
+        def __get_id_or_use_provided_id(self, id_: int = None) -> int:
             """
-            Get the collaboration id
+            Get the collaboration id from the parent object or use the provided id
             """
-            if not id_:
+            if id_ is None:
                 id_ = self.parent.collaboration_id
-                if id_ is None:
-                    raise ValueError(
-                        "No collaboration id provided. Please provide the id_ argument"
-                        "or use `client.setup_collaboration` to set it."
-                    )
+            self.__validate_id(id_)
             return id_
+
+        def __validate_id(self, id_: int):
+            """
+            Validate the provided collaboration id
+            """
+            if id_ is None:
+                raise ValueError(
+                    "No collaboration id provided. Please provide the id_ argument"
+                    "or use `client.setup_collaboration` to set it."
+                )
 
     class Node(ClientBase.SubClient):
         """Collection of node requests"""
