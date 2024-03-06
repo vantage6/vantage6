@@ -153,6 +153,12 @@ class ServerApp:
         properly for socket events (Flask-SocketIO checks for string equality and does
         not use regex).
 
+        Note that we are using the `probably_regex` function from Flask-CORS to check
+        if the origins are probably regular expressions - the Flask implementation for
+        determining if it is a regex is a bit hacky (see
+        https://github.com/corydolphin/flask-cors/blob/3.0.10/flask_cors/core.py#L275-L285)
+        and Flask-CORS doesn't currently offer an opt out of regex's altogether.
+
         Parameters
         ----------
         origins: str | list[str]
