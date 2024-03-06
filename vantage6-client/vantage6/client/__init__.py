@@ -23,11 +23,10 @@ from vantage6.common.client.client_base import ClientBase
 from vantage6.client.subclients.study import StudySubClient
 from vantage6.client.subclients.algorithm import AlgorithmSubClient
 from vantage6.client.subclients.algorithm_store import AlgorithmStoreSubClient
+from vantage6.client.subclients.algorithm import AlgorithmSubClient
 
 
 module_name = __name__.split(".")[1]
-
-LEGACY = "legacy"
 
 
 class UserClient(ClientBase):
@@ -60,7 +59,7 @@ class UserClient(ClientBase):
         self.node = self.Node(self)
         self.rule = self.Rule(self)
         self.study = StudySubClient(self)
-        self.algorithm_store = AlgorithmStoreSubClient(self)
+        self.store = AlgorithmStoreSubClient(self)
         self.algorithm = AlgorithmSubClient(self)
 
         # set collaboration id to None
@@ -234,6 +233,17 @@ class UserClient(ClientBase):
 
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
+
+        def _get_server_url_header(self) -> dict:
+            """
+            Get the server url for request header to algorithm store
+
+            Returns
+            -------
+            dict
+                The server url in a dictionary so it can be used as header
+            """
+            return {"server_url": self.parent.base_path}
 
         def get_server_version(self, attempts_on_timeout: int = None) -> dict:
             """View the version number of the vantage6-server
@@ -480,19 +490,16 @@ class UserClient(ClientBase):
                 "per_page": per_page,
                 "name": name,
                 "encrypted": encrypted,
-                "organization_id": organization,
             }
             if scope == "organization":
-                org_id = self.parent.whoami.organization_id
-                return self.parent.request(
-                    "collaboration", params={"organization_id": org_id}
-                )
+                params["organization_id"] = self.parent.whoami.organization_id
             elif scope == "global":
-                return self.parent.request("collaboration", params=params)
+                params["organization_id"] = organization
             else:
                 self.parent.log.info(
                     "--> Unrecognized `scope`. Needs to be `organization` or `global`"
                 )
+            return self.parent.request("collaboration", params=params)
 
         @post_filtering(iterable=False)
         def get(self, id_: int) -> dict:
@@ -805,13 +812,7 @@ class UserClient(ClientBase):
             )
 
         @post_filtering(iterable=False)
-        def update(
-            self,
-            id_: int,
-            name: str = None,
-            organization: int = None,
-            collaboration: int = None,
-        ) -> dict:
+        def update(self, id_: int, name: str = None, clear_ip: bool = None) -> dict:
             """Update node information
 
             Parameters
@@ -820,28 +821,23 @@ class UserClient(ClientBase):
                 Id of the node you want to update
             name : str, optional
                 New node name, by default None
-            organization : int, optional
-                Change the owning organization of the node, by default
-                None
-            collaboration : int, optional
-                Changes the collaboration to which the node belongs, by
-                default None
+            clear_ip : bool, optional
+                Clear the VPN IP address of the node, by default None
 
             Returns
             -------
             dict
                 Containing the meta-data of the updated node
             """
-            # note that we are explicitly NOT using the parent's collaboration_id
-            # here as usually people don't want to change a node's collaboration id
+            data = {
+                "name": name,
+            }
+            if clear_ip is not None:
+                data["clear_ip"] = clear_ip
             return self.parent.request(
                 f"node/{id_}",
                 method="patch",
-                json={
-                    "name": name,
-                    "organization_id": organization,
-                    "collaboration_id": collaboration,
-                },
+                json=data,
             )
 
         def delete(self, id_: int) -> dict:

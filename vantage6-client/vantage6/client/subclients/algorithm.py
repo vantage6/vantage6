@@ -23,7 +23,7 @@ class AlgorithmSubClient(ClientBase.SubClient):
         return self.parent.request(
             f"algorithm/{id_}",
             is_for_algorithm_store=True,
-            headers=self.__get_server_url_header(),
+            headers=self.parent.util._get_server_url_header(),
         )
 
     @post_filtering(iterable=True)
@@ -59,7 +59,7 @@ class AlgorithmSubClient(ClientBase.SubClient):
         return self.parent.request(
             "algorithm",
             is_for_algorithm_store=True,
-            headers=self.__get_server_url_header(),
+            headers=self.parent.util._get_server_url_header(),
             params={
                 "name": name,
                 "description": description,
@@ -130,7 +130,7 @@ class AlgorithmSubClient(ClientBase.SubClient):
             "algorithm",
             method="post",
             is_for_algorithm_store=True,
-            headers=self.__get_server_url_header(),
+            headers=self.parent.util._get_server_url_header(),
             json={
                 "name": name,
                 "image": image,
@@ -159,16 +159,5 @@ class AlgorithmSubClient(ClientBase.SubClient):
             f"algorithm/{id_}",
             method="delete",
             is_for_algorithm_store=True,
-            headers=self.__get_server_url_header(),
+            headers=self.parent.util._get_server_url_header(),
         )
-
-    def __get_server_url_header(self) -> dict:
-        """
-        Get the server url for request header
-
-        Returns
-        -------
-        dict
-            The server url in a dictionary so it can be used as header
-        """
-        return {"server_url": self.parent.base_path}

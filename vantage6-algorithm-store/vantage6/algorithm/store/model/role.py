@@ -1,13 +1,19 @@
 from __future__ import annotations
-from sqlalchemy import Column, Text, Integer, ForeignKey, Boolean
+from sqlalchemy import Column, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
-from vantage6.server.model.base import Base, DatabaseSessionManager
+from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
+from vantage6.common import logger_name
+
+import logging
+
+module_name = logger_name(__name__)
+log = logging.getLogger(module_name)
 
 
 class Role(Base):
-    """Collection of :class:`.~vantage6.server.model.rule.Rule` permissions
+    """Collection of :class:`.~vantage6.algorithm.store.model.rule.Role` permissions
 
     Attributes
     ----------
@@ -15,27 +21,21 @@ class Role(Base):
         Name of the role
     description : str
         Description of the role
-    organization_id : int
-        Id of the organization this role belongs to
-    rules : list[:class:`.~vantage6.server.model.rule.Rule`]
+    rules : list[:class:`.~vantage6.algorithm.store.model.rule.Rule`]
         List of rules that belong to this role
-    organization : :class:`.~vantage6.server.model.organization.Organization`
-        Organization this role belongs to
-    users : list[:class:`.~vantage6.server.model.user.User`]
+    users : list[:class:`.~vantage6.algorithm.store.model.user.User`]
         List of users that belong to this role
     """
 
     # fields
     name = Column(Text)
     description = Column(Text)
-    organization_id = Column(Integer, ForeignKey("organization.id"))
-    is_default_role = Column(Boolean, default=False)
 
     # relationships
     rules = relationship(
         "Rule", back_populates="roles", secondary="role_rule_association"
     )
-    organization = relationship("Organization", back_populates="roles")
+
     users = relationship("User", back_populates="roles", secondary="Permission")
 
     @classmethod
@@ -50,7 +50,7 @@ class Role(Base):
 
         Returns
         -------
-        :class:`.~vantage6.server.model.role.Role` | None
+        :class:`.~vantage6.algorithm.store.model.role.Role` | None
             Role with the given name or None if no role with the given name
             exists
         """
@@ -75,6 +75,6 @@ class Role(Base):
             f"<Role "
             f"{self.id}: '{self.name}', "
             f"description: {self.description}, "
-            f"{len(self.users)} user(s)"
+            # f"{len(self.users)} user(s)"
             ">"
         )
