@@ -104,7 +104,10 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
     if is_policies:
         allowed_algorithms = []
         info("Below you can add algorithms that are allowed to run on your node.")
-        info("You can use regular expressions to match multiple algorithms.")
+        info(
+            "You can use regular expressions to match multiple algorithms, or you can "
+            "use strings to provide one algorithm at a time."
+        )
         info("Examples:")
         # pylint: disable=W1401
         # flake8: noqa: W605
@@ -121,7 +124,7 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
             algo = q.text(message="Enter your algorithm expression:").ask()
             allowed_algorithms.append(algo)
             if not q.confirm(
-                "Do you want to add another algorithm?", default=True
+                "Do you want to add another algorithm expression?", default=True
             ).ask():
                 break
         config["policies"] = {"allowed_algorithms": allowed_algorithms}
