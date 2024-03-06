@@ -1,9 +1,11 @@
 from uuid import uuid1
-import yaml
 import unittest
 import logging
 import json
 import uuid
+import random
+import string
+import yaml
 
 from http import HTTPStatus
 from unittest.mock import MagicMock, patch
@@ -83,8 +85,8 @@ class TestResources(unittest.TestCase):
 
         cls.credentials = {
             "root": {"username": "root", "password": "root"},
-            "admin": {"username": "frank@iknl.nl", "password": "password"},
-            "user": {"username": "melle@iknl.nl", "password": "password"},
+            "admin": {"username": "frank-iknl", "password": "password"},
+            "user": {"username": "melle-iknl", "password": "password"},
             "user-to-delete": {"username": "dont-use-me", "password": "password"},
         }
 
@@ -119,7 +121,7 @@ class TestResources(unittest.TestCase):
             organization.save()
 
         # user details
-        username = str(uuid.uuid1())
+        username = random.choice(string.ascii_letters) + str(uuid.uuid1())
 
         # create a temporary organization
         user = User(
