@@ -7,6 +7,10 @@
           <b>{{ "role-read.organization" | translate }}</b>
           <span>{{ roleOrganization?.name || "role-read.all-organizations" | translate }}</span>
         </div>
+        <div class="data-list__item">
+          <b>{{ "role-read.default-role" | translate }}</b>
+          <span>{{ getDefaultRoleLabel() }}</span>
+        </div>
       </div>
     </mat-card-content>
   </mat-card>

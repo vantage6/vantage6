@@ -7,6 +7,7 @@ export interface BaseRole {
   name: string;
   rules: string;
   users: string;
+  is_default_role: boolean;
 }
 
 export interface RoleOrganization {
@@ -21,6 +22,7 @@ export interface Role {
   rules: Rule[];
   users: BaseUser[];
   organization?: RoleOrganization;
+  is_default_role: boolean;
 }
 
 export enum RoleLazyProperties {
