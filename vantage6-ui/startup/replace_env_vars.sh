@@ -11,9 +11,9 @@ if [ -z "${SERVER_URL}" ]; then
     SERVER_URL="https://cotopaxi.vantage6.ai"
 fi
 # Remove http(s) from the server url
-SERVER_URL_NO_HTTP=$(echo $SERVER_URL | sed 's/^https\?:\/\///g')
+SERVER_URL_NO_HTTP=$(echo "$SERVER_URL" | sed 's/^https\?:\/\///g')
 # escape the slashes in the url
-SERVER_URL=$(echo $SERVER_URL | sed 's/\//\\\//g')
+SERVER_URL=$(echo "$SERVER_URL" | sed 's/\//\\\//g')
 sed -i "s/<SERVER_URL>/$SERVER_URL/g" /etc/nginx/nginx.conf
 sed -i "s/<SERVER_URL_NO_HTTP>/$SERVER_URL_NO_HTTP/g" /etc/nginx/nginx.conf
 
@@ -22,5 +22,5 @@ if [ -z "${ALLOWED_ALGORITHM_STORES}" ]; then
     ALLOWED_ALGORITHM_STORES="*"
 fi
 # escape the slashes in the urls
-ALLOWED_ALGORITHM_STORES=$(echo $ALLOWED_ALGORITHM_STORES | sed 's/\//\\\//g')
+ALLOWED_ALGORITHM_STORES=$(echo "$ALLOWED_ALGORITHM_STORES" | sed 's/\//\\\//g')
 sed -i "s/<ALGORITHM_STORE_URLS>/$ALLOWED_ALGORITHM_STORES/g" /etc/nginx/nginx.conf
