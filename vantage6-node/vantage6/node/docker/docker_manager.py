@@ -343,10 +343,6 @@ class DockerManager(DockerBaseManager):
                 )
                 return False
 
-        # if no limits are declared, log warning
-        if not self._policies:
-            self.log.warn("All docker images are allowed on this Node!")
-
         return True
 
     @staticmethod
