@@ -249,7 +249,18 @@ class VPNManager(DockerBaseManager):
                 f"-o {self.isolated_bridge} -j ACCEPT; "
                 '"'
             )
-            self._run_host_network_configure_cmd(command)
+            try:
+                self._run_host_network_configure_cmd(command)
+            except docker.errors.ContainerError:
+                # This error usually occurs when the DOCKER-USER chain does not
+                # exist. In these cases the host often uses `iptables-legacy`
+                # instead of `iptables`. We try again with `iptables-legacy`
+                # instead.
+                # FIXME BvB 2023-08-22: This is a temporary fix. In future,
+                # when iptables-legacy is hardly used anymore on host systems,
+                # this fix should be removed.
+                command = command.replace("iptables", "iptables-legacy")
+                self._run_host_network_configure_cmd(command)
 
     def get_vpn_ip(self) -> str:
         """

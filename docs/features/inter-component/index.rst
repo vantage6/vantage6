@@ -9,4 +9,5 @@ different vantage6 components.
    :caption: Contents:
 
    socket
+   encryption
    vpn

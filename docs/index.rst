@@ -1,9 +1,7 @@
 .. include:: <isonum.txt>
 
-.. _introduction:
-
-Introduction
-============
+Overview
+========
 
 What is vantage6?
 -----------------
@@ -32,12 +30,6 @@ What vantage6 does:
   results
 * providing control (security) at the data-stations to their owners
 
-What vantage6 does *not* (yet) do:
-
-* formatting the data at the data station
-* aligning data across the data stations (for the vertical partitioned use
-  case)
-
 The vantage6 infrastructure is designed with three fundamental functional
 aspects of federated learning.
 
@@ -53,10 +45,14 @@ Overview of this documentation
 
 This documentation space consists of the following main sections:
 
-* **Introduction** |rarr| *You are here now*
+* **Overview** |rarr| *You are here now*
+* :doc:`/introduction/introduction` |rarr| *Introduction to vantage6 concepts*
+* :doc:`/introduction/architecture` |rarr| *An more extensive explanation of vantage6
+  components*
 * :doc:`/user/index` |rarr| *How to use vantage6 as a researcher*
 * :doc:`/node/index` |rarr| *How to install and configure vantage6 nodes*
 * :doc:`/server/index` |rarr| *How to configure and deploy vantage6 servers*
+* :doc:`/algorithm_store/index` |rarr| *How to configure and deploy vantage6 algorithm stores*
 * :doc:`/features/index` (Under construction) |rarr|
   *Documentation of vantage6 features*
 * :doc:`/devops/index` |rarr| *How to collaborate on the development of the
@@ -107,7 +103,8 @@ Index
    :maxdepth: 4
 
    self
-   introduction/concepts
+   introduction/introduction
+   introduction/architecture
 
 .. toctree::
    :numbered: 3
@@ -116,6 +113,7 @@ Index
    user/index
    node/index
    server/index
+   algorithm_store/index
    algorithms/index
    features/index
    devops/index

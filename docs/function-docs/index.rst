@@ -14,7 +14,9 @@ below represents a distinct PyPi package.
 
    node
    server
+   algorithm-store
    cli
    client
    algorithm-tools
+   backend-common
    common
