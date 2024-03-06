@@ -308,8 +308,14 @@ class DockerManager(DockerBaseManager):
             if isinstance(allowed_algorithms, str):
                 allowed_algorithms = [allowed_algorithms]
             found = False
-            for regex_expr in allowed_algorithms:
-                expr_ = re.compile(regex_expr)
+            for algorithm in allowed_algorithms:
+                if not self._is_regex_pattern(algorithm):
+                    # turn regular strings into regex to prevent that something other
+                    # than the exact string is allowed (without this, e.g. putting
+                    # "some-algo" in the config would allow "some-algo-2" as well, or
+                    # any string as long as some-algo is in there).
+                    algorithm = rf"^{algorithm}$"
+                expr_ = re.compile(algorithm)
                 if expr_.match(docker_image_name):
                     found = True
 
@@ -342,6 +348,23 @@ class DockerManager(DockerBaseManager):
             self.log.warn("All docker images are allowed on this Node!")
 
         return True
+
+    @staticmethod
+    def _is_regex_pattern(pattern: str) -> bool:
+        """
+        Check if a string just a string or if it is a regex pattern.
+
+        Parameters
+        ----------
+        pattern: str
+            String to be checked
+
+        Returns
+        -------
+        bool
+            Returns False if the pattern is a normal string, True if it is a regex.
+        """
+        return not re.match(pattern, pattern)
 
     def is_running(self, run_id: int) -> bool:
         """
