@@ -1,5 +1,6 @@
 from __future__ import annotations
 from sqlalchemy import Column, String
+from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
 
@@ -17,7 +18,10 @@ class Vantage6Server(Base):
     """
 
     # fields
-    url = Column(String)
+    url = Column(String, unique=True)
+
+    # relationships
+    users = relationship("User", back_populates="server")
 
     @classmethod
     def get_by_url(cls, url: str) -> Vantage6Server | None:

@@ -359,6 +359,27 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
     config = _get_common_server_config(
         InstanceType.ALGORITHM_STORE, instance_name, include_api_path=False
     )
+
+    default_v6_server_uri = "http://localhost:5000/api"
+    default_root_username = "root"
+    default_root_id = "1"
+
+    v6_server_uri = q.text(
+        "What is the Vantage6 server linked to the algorithm store?"
+        "Provide the link to the server endpoint.",
+        default=default_v6_server_uri,
+    ).ask()
+
+    root_username = q.text(
+        "What is the username of the root user?",
+        default=default_root_username,
+    ).ask()
+
+    config["root_user"] = {
+        "v6_server_uri": v6_server_uri,
+        "username": root_username,
+    }
+
     return config
 
 

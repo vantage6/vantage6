@@ -402,7 +402,11 @@ class ValidateToken(ServicesResources):
 
         # Note: if the token is invalid, the with_user decorator will return
         # an error response. So if we get here, the token is valid.
-        return {"msg": "Token is valid", "user_id": g.user.id}, HTTPStatus.OK
+        return {
+            "msg": "Token is valid",
+            "user_id": g.user.id,
+            "username": g.user.username,
+        }, HTTPStatus.OK
 
 
 def _get_token_dict(user_or_node: db.Authenticatable, api: Api) -> dict:

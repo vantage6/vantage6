@@ -10,6 +10,8 @@ store to a vantage6 server.
 import os
 from gevent import monkey
 
+from vantage6.algorithm.store.default_roles import get_default_roles
+
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
     # flake8: noqa: E402 (ignore import error)
@@ -45,6 +47,8 @@ from vantage6.algorithm.store.globals import RESOURCES, SERVER_MODULE_NAME
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager, Database
 from vantage6.algorithm.store import db
 
+# TODO move server imports to common / refactor
+from vantage6.algorithm.store.permission import PermissionManager
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -88,7 +92,7 @@ class AlgorithmStoreApp:
         self.swagger = Swagger(self.app, template={})
 
         # setup the permission manager for the API endpoints
-        # self.permissions = PermissionManager()
+        self.permissions = PermissionManager()
 
         # Api - REST JSON-rpc
         self.api = Api(self.app)
@@ -240,13 +244,25 @@ class AlgorithmStoreApp:
         # make use of 'em.
         services = {
             "api": self.api,
-            # "permissions": self.permissions,
             "config": self.ctx.config,
+            "permissions": self.permissions,
         }
 
         for res in RESOURCES:
             module = importlib.import_module("vantage6.algorithm.store.resource." + res)
             module.setup(self.api, API_PATH, services)
+
+    @staticmethod
+    def _add_default_roles() -> None:
+        for role in get_default_roles():
+            if not db.Role.get_by_name(role["name"]):
+                log.warn("Creating new default role %s", role["name"])
+                new_role = db.Role(
+                    name=role["name"],
+                    description=role["description"],
+                    rules=role["rules"],
+                )
+                new_role.save()
 
     def start(self) -> None:
         """
@@ -255,6 +271,52 @@ class AlgorithmStoreApp:
         Before server is really started, some database settings are checked and
         (re)set where appropriate.
         """
+        self._add_default_roles()
+
+        # add whitelisted server and root user from config file if they do not exist
+        if root_user := self.ctx.config.get("root_user", {}):
+            whitelisted_uri = root_user.get("v6_server_uri")
+            root_username = root_user.get("username")
+            if whitelisted_uri and root_username:
+                if not (v6_server := db.Vantage6Server.get_by_url(whitelisted_uri)):
+                    log.debug("This server will be whitelisted: %s", whitelisted_uri)
+                    v6_server = db.Vantage6Server(url=whitelisted_uri)
+                    v6_server.save()
+
+                # if the user does not exist already, add it
+                if not db.User.get_by_server(
+                    username=root_username, v6_server_id=v6_server.id
+                ):
+                    log.warning("Creating root user")
+
+                    root = db.Role.get_by_name("Root")
+
+                    user = db.User(
+                        v6_server_id=v6_server.id,
+                        username=root_username,
+                        roles=[root],
+                    )
+                    user.save()
+                else:
+                    log.info(
+                        "The root user given in the configuration already exists -"
+                        " no action taken."
+                    )
+
+            else:
+                log.warning(
+                    "No v6_server_uri and/or username found in the configuration file "
+                    "in the root_user section. This means no-one can alter resources on"
+                    " this server, unless one or more users were already authorized to "
+                    "make changes to the algorithm store previously."
+                )
+        else:
+            log.warning(
+                "No root user found in the configuration file. This means "
+                "no-one can alter resources on this server, unless one or "
+                "more users were already authorized to make changes to the "
+                "algorithm store prevoiusly."
+            )
         return self
 
 

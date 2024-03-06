@@ -1,4 +1,7 @@
 from vantage6.client.filter import post_filtering
+from vantage6.client.subclients.store_role import StoreRoleSubClient
+from vantage6.client.subclients.store_rule import StoreRuleSubClient
+from vantage6.client.subclients.store_user import StoreUserSubClient
 from vantage6.common.client.client_base import ClientBase
 
 
@@ -7,8 +10,14 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
 
     def __init__(self, parent: ClientBase):
         super().__init__(parent)
-        self.store_url = None
+        self.url = None
         self.store_id = None
+
+        self.base_client = self.parent
+
+        self.role = StoreRoleSubClient(self)
+        self.rule = StoreRuleSubClient(self)
+        self.user = StoreUserSubClient(self)
 
     def set(self, id_: int) -> dict:
         """ "
@@ -26,7 +35,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         """
         store = self.get(id_)
         try:
-            self.store_url = store["url"]
+            self.url = f"{store['url']}/api"
             self.store_id = id_
         except KeyError:
             self.parent.log.error("Algorithm store URL could not be set.")

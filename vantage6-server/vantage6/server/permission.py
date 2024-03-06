@@ -2,7 +2,7 @@ import logging
 import importlib
 
 from collections import namedtuple
-from flask_principal import Permission, PermissionDenied
+from flask_principal import Permission
 
 from vantage6.server.globals import RESOURCES
 from vantage6.server.default_roles import DefaultRole
@@ -317,7 +317,7 @@ class PermissionManager:
             except Exception:
                 module_name = module.__name__.split(".")[-1]
                 log.debug(
-                    f"Resource '{module_name}' contains no or invalid " "permissions"
+                    f"Resource '{module_name}' contains no or invalid permissions"
                 )
 
     def assign_rule_to_root(

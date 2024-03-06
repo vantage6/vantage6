@@ -54,6 +54,16 @@ debug:
   # Set to `true` to enable debug mode in the Flask app
   flask: false
 
+# Settings for the algorithm store's policies
+policies:
+  # Set to `true` to allow anyone to view and run the algorithms in the store.
+  algorithms_open: true
+  # Set to `true` to allow any user from whitelisted vantage6 servers to view and run
+  # the algorithms in the store. Superfluous if `algorithms_open` is set to `true`.
+  # If this is set to `false`, only users with specific roles in the algorithm store
+  # can view the algorithms in the store.
+  algorithms_open_to_whitelisted: true
+
 # development mode settings. Only use when running both the algorithm store and
 # the server that it communicates with locally
 dev:
@@ -62,3 +72,13 @@ dev:
   # hostname `host.docker.internal` to refer to the host machine. On Linux, you
   # should normally use http://172.17.0.1.
   host_uri: http://host.docker.internal
+
+# Provide an initial root user for the algorithm store. This user will be created
+# when the store is started for the first time. The root user has full access to
+# the store and can create other users. The root user should be a reference to an
+# existing user in a vantage6 server.
+root_user:
+  # URI to the vantage6 server
+  v6_server_uri: http://localhost:5000/api
+  # username of the vantage6 server's user you want to make root in the algorithm store
+  username: root
