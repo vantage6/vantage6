@@ -2863,47 +2863,33 @@ class TestResources(unittest.TestCase):
         )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
-        # test updatin the `organization_id` with organization permissions
-        org2 = Organization()
-        org2.save()
+        # test updating the `organization_id` (which is not allowed)
         results = self.app.patch(
             f"/api/node/{node.id}", headers=headers, json={"organization_id": org2.id}
         )
-        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
 
-        # test assigning it to a node thats not part of the collaborat
-        col2 = Collaboration(organizations=[org2])
-        col2.save()
+        # test updating the collaboration_id (which is not allowed)
         results = self.app.patch(
-            f"/api/node/{node.id}", headers=headers, json={"collaboration_id": col2.id}
+            f"/api/node/{node.id}", headers=headers, json={"collaboration_id": col.id}
         )
-        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
-
-        # collaboration_id and organization_id. Note that the organization
-        # is assigned before the collaboration is defined.
-        rule = Rule.get_by_("node", Scope.GLOBAL, Operation.EDIT)
-        headers = self.create_user_and_login(org2, rules=[rule])
-        results = self.app.patch(
-            f"/api/node/{node.id}",
-            headers=headers,
-            json={"collaboration_id": col2.id, "organization_id": org2.id},
-        )
-        self.assertEqual(results.status_code, HTTPStatus.OK)
-        self.assertEqual(results.json["organization"]["id"], org2.id)
-        self.assertEqual(results.json["collaboration"]["id"], col2.id)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
 
         # try to patch the node's VPN IP address
+        rule = Rule.get_by_("node", Scope.GLOBAL, Operation.EDIT)
+        headers = self.create_user_and_login(org2, rules=[rule])
         results = self.app.patch(
             f"/api/node/{node.id}", headers=headers, json={"ip": "0.0.0.0"}
         )
         self.assertEqual(results.status_code, HTTPStatus.OK)
         self.assertEqual(results.json["ip"], "0.0.0.0")
 
-        # assign unknow organization
+        # try to clear the node's VPN IP address - this should work
         results = self.app.patch(
-            f"/api/node/{node.id}", headers=headers, json={"organization_id": 9999}
+            f"/api/node/{node.id}", headers=headers, json={"clear_ip": True}
         )
-        self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual(results.json["ip"], None)
 
         # collaboration permission - inside the collaboration
         rule = Rule.get_by_("node", Scope.COLLABORATION, Operation.EDIT)
@@ -2928,7 +2914,6 @@ class TestResources(unittest.TestCase):
         org2.delete()
         org3.delete()
         col.delete()
-        col2.delete()
 
     def test_view_task_permissions_as_user(self):
         # non existing task
