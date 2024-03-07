@@ -141,7 +141,7 @@ cli_algo_store.add_command(cli_algo_store_configuration_list, name="list")
 
 
 # Define the overall group
-@click.group(name="cli")
+@click.group(name="cli", context_settings={"show_default": True})
 def cli_complete() -> None:
     """
     The `v6` command line interface allows you to manage your vantage6
