@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { RouterModule, Routes, Router } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 import { routePaths, routerConfig } from './routes';
 import { LoginComponent } from './pages/auth/login/login.component';
 import { LayoutLoginComponent } from './layouts/layout-login/layout-login.component';
@@ -36,6 +36,9 @@ import { MfaRecoverComponent } from './pages/auth/mfa-recover/mfa-recover.compon
 import { PasswordLostComponent } from './pages/auth/password-lost/password-lost.component';
 import { PasswordRecoverComponent } from './pages/auth/password-recover/password-recover.component';
 import { AddAlgoStoreComponent } from './pages/collaboration/add-algo-store/add-algo-store.component';
+import { StudyReadComponent } from './pages/collaboration/study/read/study-read.component';
+import { StudyCreateComponent } from './pages/collaboration/study/create/study-create.component';
+import { StudyEditComponent } from './pages/collaboration/study/edit/study-edit.component';
 
 const routes: Routes = [
   {
@@ -288,6 +291,30 @@ const routes: Routes = [
         canActivate: [authenticationGuard()],
         data: {
           crumbs: [['node-read.title']]
+        }
+      },
+      {
+        path: routerConfig.study,
+        component: StudyReadComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-read.title']]
+        }
+      },
+      {
+        path: routerConfig.studyCreate,
+        component: StudyCreateComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-read.title']]
+        }
+      },
+      {
+        path: routerConfig.studyEdit,
+        component: StudyEditComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-read.title']]
         }
       }
     ]

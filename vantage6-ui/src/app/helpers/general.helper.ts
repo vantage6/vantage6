@@ -6,3 +6,8 @@ export const isEqualString = (s1: string, s2: string): boolean => {
 export const unlikeApiParameter = (parameter?: string): string | undefined => {
   return parameter ? parameter.replace(/%/g, '') : parameter;
 };
+
+export const compareObjIDs = (obj1: any, obj2: any): boolean => {
+  // Compare that with the ID of the objects are the same
+  return obj1 && obj2 && obj1.id && obj2.id && obj1.id === obj2.id;
+};

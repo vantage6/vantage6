@@ -10,6 +10,7 @@ export enum ResourceType {
   EVENT = 'event',
   PORT = 'port',
   RULE = 'rule',
+  STUDY = 'study',
   ANY = '*'
 }
 

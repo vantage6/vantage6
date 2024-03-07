@@ -30,7 +30,7 @@ export class CollaborationService {
   async getCollaboration(collaborationID: string, lazyProperties: CollaborationLazyProperties[] = []): Promise<Collaboration> {
     const result = await this.apiService.getForApi<BaseCollaboration>(`/collaboration/${collaborationID}`);
 
-    const collaboration: Collaboration = { ...result, organizations: [], nodes: [], tasks: [], algorithm_stores: [] };
+    const collaboration: Collaboration = { ...result, organizations: [], nodes: [], tasks: [], algorithm_stores: [], studies: [] };
     await getLazyProperties(result, collaboration, lazyProperties, this.apiService);
 
     return collaboration;

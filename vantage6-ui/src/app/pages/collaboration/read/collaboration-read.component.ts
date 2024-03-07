@@ -7,8 +7,10 @@ import { Subject, Subscription, takeUntil } from 'rxjs';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { AlgorithmStore, EditAlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { Collaboration, CollaborationLazyProperties } from 'src/app/models/api/collaboration.model';
+import { Study } from 'src/app/models/api/study.model';
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
+import { TableData } from 'src/app/models/application/table.model';
 import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
@@ -33,10 +35,15 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
   collaboration?: Collaboration;
   canDelete = false;
   canEdit = false;
+  canCreateStudy = false;
 
   isEditAlgorithmStore = false;
   selectedAlgoStore?: AlgorithmStore;
   algoStoreNewName = new FormControl<string>('', [Validators.required]);
+
+  isEditStudy = false;
+  selectedStudy?: Study;
+  studyTable?: TableData;
 
   private nodeStatusUpdateSubscription?: Subscription;
 
@@ -69,8 +76,23 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
     this.collaboration = await this.collaborationService.getCollaboration(this.id, [
       CollaborationLazyProperties.Organizations,
       CollaborationLazyProperties.Nodes,
-      CollaborationLazyProperties.AlgorithmStores
+      CollaborationLazyProperties.AlgorithmStores,
+      CollaborationLazyProperties.Studies
     ]);
+    this.studyTable = {
+      columns: [
+        {
+          id: 'name',
+          label: this.translateService.instant('collaboration.name')
+        }
+      ],
+      rows: this.collaboration.studies.map((study) => ({
+        id: study.id.toString(),
+        columnData: {
+          name: study.name
+        }
+      }))
+    };
     this.isLoading = false;
   }
 
@@ -90,12 +112,17 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
         if (initialized) {
           this.canDelete = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.COLLABORATION, OperationType.DELETE);
           this.canEdit = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.COLLABORATION, OperationType.EDIT);
+          this.canCreateStudy = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.STUDY, OperationType.CREATE);
         }
       });
   }
 
   selectAlgoStore(id: number): void {
     this.selectedAlgoStore = this.collaboration?.algorithm_stores.find((algoStore) => algoStore.id === id);
+  }
+
+  handleStudyClick(id: string): void {
+    this.router.navigate([routePaths.study, id]);
   }
 
   async handleDelete(): Promise<void> {

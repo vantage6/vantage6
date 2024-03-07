@@ -17,6 +17,11 @@
     "id": "ID",
     "visualization": "Visualization"
   },
+  "resources": {
+    "collaboration": "Collaboration",
+    "organizations": "Organizations",
+    "study": "Study"
+  },
   "home": {
     "title": "Home"
   },
@@ -60,6 +65,12 @@
   },
   "task-create": {
     "title": "Create task",
+    "step-study": {
+      "title": "Select study",
+      "explanation": "Your collaboration defines studies, which allows you to quickly select a set of organizations to run a certain type of task for.",
+      "description": "Select the study you want to run a task for. If you want to run the task for the entire collaboration, select that option.",
+      "select-full-collaboration": "Entire collaboration"
+    },
     "step-package": {
       "title": "Select algorithm",
       "description": {
@@ -216,10 +227,27 @@
       "title": "Algorithm stores available to this collaboration",
       "add": "Add algorithm store"
     },
+    "card-studies": {
+      "title": "Studies",
+      "add": "Add study"
+    },
     "delete-dialog": {
       "title": "Are you sure you want to delete the collaboration '{{name}}'?",
       "content": "Note, this will also delete all nodes and tasks related to this collaboration.\nThis operation cannot be undone."
     }
+  },
+  "study-read": {
+    "title": "Study",
+    "card-details": {
+      "title": "Details"
+    },
+    "delete-dialog": {
+      "title": "Are you sure you want to delete the study '{{name}}'?",
+      "content": "Note, this will also delete all tasks related to this study.\nThis operation cannot be undone."
+    }
+  },
+  "study-create": {
+    "title": "Create study"
   },
   "algorithm-store-add": {
     "title": "Add algorithm store to your collaboration",

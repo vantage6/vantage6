@@ -56,6 +56,8 @@ export interface BaseTask {
   created_at: string;
   databases: TaskDBOutput[];
   parent?: BaseLink;
+  study?: BaseLink;
+  collaboration?: BaseLink;
 }
 
 export interface Task {
@@ -72,6 +74,8 @@ export interface Task {
   created_at: string;
   databases: TaskDBOutput[];
   parent?: BaseLink;
+  study?: BaseLink;
+  collaboration?: BaseLink;
 }
 
 export interface TaskDBOutput {
@@ -127,6 +131,7 @@ export interface CreateTask {
   description: string;
   image: string;
   collaboration_id: number;
+  study_id?: number;
   databases: TaskDatabase[];
   organizations: Organization[];
 }

@@ -92,6 +92,10 @@ import { PasswordRecoverComponent } from './pages/auth/password-recover/password
 import { RoleSubmitButtonsComponent } from './components/role-submit-buttons/role-submit-buttons.component';
 import { AddAlgoStoreComponent } from './pages/collaboration/add-algo-store/add-algo-store.component';
 import { AlgorithmStoreFormComponent } from './components/forms/algorithm-store-form/algorithm-store-form.component';
+import { StudyReadComponent } from './pages/collaboration/study/read/study-read.component';
+import { StudyCreateComponent } from './pages/collaboration/study/create/study-create.component';
+import { StudyFormComponent } from './components/forms/study-form/study-form.component';
+import { StudyEditComponent } from './pages/collaboration/study/edit/study-edit.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -157,7 +161,11 @@ export function HttpLoaderFactory(http: HttpClient) {
     PasswordRecoverComponent,
     RoleSubmitButtonsComponent,
     AddAlgoStoreComponent,
-    AlgorithmStoreFormComponent
+    AlgorithmStoreFormComponent,
+    StudyReadComponent,
+    StudyCreateComponent,
+    StudyFormComponent,
+    StudyEditComponent
   ],
   imports: [
     BrowserModule,

@@ -2,24 +2,24 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MatSelectChange } from '@angular/material/select';
 import { compareObjIDs } from 'src/app/helpers/general.helper';
-import { Collaboration, CollaborationForm } from 'src/app/models/api/collaboration.model';
-import { BaseOrganization, Organization, OrganizationSortProperties } from 'src/app/models/api/organization.model';
+import { BaseOrganization, OrganizationSortProperties } from 'src/app/models/api/organization.model';
+import { Study, StudyForm } from 'src/app/models/api/study.model';
 import { OrganizationService } from 'src/app/services/organization.service';
 
 @Component({
-  selector: 'app-collaboration-form',
-  templateUrl: './collaboration-form.component.html'
+  selector: 'app-study-form',
+  templateUrl: './study-form.component.html',
+  styleUrls: ['./study-form.component.scss']
 })
-export class CollaborationFormComponent implements OnInit {
-  @Input() collaboration?: Collaboration;
+export class StudyFormComponent implements OnInit {
+  @Input() study?: Study;
+  @Input() collaborationId?: string;
   @Output() cancelled: EventEmitter<void> = new EventEmitter();
-  @Output() submitted: EventEmitter<CollaborationForm> = new EventEmitter();
+  @Output() submitted: EventEmitter<StudyForm> = new EventEmitter();
 
   form = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
-    encrypted: false,
-    organizations: [[] as BaseOrganization[], [Validators.required]],
-    registerNodes: true
+    organizations: [[] as BaseOrganization[], [Validators.required]]
   });
 
   isEdit: boolean = false;
@@ -34,11 +34,10 @@ export class CollaborationFormComponent implements OnInit {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    this.isEdit = !!this.collaboration;
-    if (this.collaboration) {
-      this.form.controls.name.setValue(this.collaboration.name);
-      this.form.controls.encrypted.setValue(this.collaboration.encrypted);
-      this.form.controls.organizations.setValue(this.collaboration.organizations);
+    this.isEdit = !!this.study;
+    if (this.study) {
+      this.form.controls.name.setValue(this.study.name);
+      this.form.controls.organizations.setValue(this.study.organizations);
     }
     await this.initData();
     this.isLoading = false;
@@ -50,9 +49,7 @@ export class CollaborationFormComponent implements OnInit {
 
   async handleOrganizationChange(e: MatSelectChange): Promise<void> {
     if (this.isEdit) {
-      const newOrganizationsIDs = e.value.filter(
-        (id: number) => !this.collaboration?.organizations.find((organization) => organization.id === id)
-      );
+      const newOrganizationsIDs = e.value.filter((id: number) => !this.study?.organizations.find((organization) => organization.id === id));
       this.newOrganizations = this.organizations.filter((organization) => newOrganizationsIDs.includes(organization.id));
     }
   }
@@ -68,6 +65,9 @@ export class CollaborationFormComponent implements OnInit {
   }
 
   private async initData(): Promise<void> {
-    this.organizations = await this.organizationService.getOrganizations({ sort: OrganizationSortProperties.Name });
+    this.organizations = await this.organizationService.getOrganizations({
+      sort: OrganizationSortProperties.Name,
+      collaboration_id: this.collaborationId
+    });
   }
 }

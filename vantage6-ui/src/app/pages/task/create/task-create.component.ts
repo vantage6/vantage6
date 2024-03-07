@@ -19,6 +19,9 @@ import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
 import { MatStepper } from '@angular/material/stepper';
 import { SnackbarService } from 'src/app/services/snackbar.service';
 import { TranslateService } from '@ngx-translate/core';
+import { Collaboration } from 'src/app/models/api/collaboration.model';
+import { Study, StudyOrCollab } from 'src/app/models/api/study.model';
+import { BaseOrganization } from 'src/app/models/api/organization.model';
 
 @Component({
   selector: 'app-task-create',
@@ -40,9 +43,13 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   routes = routePaths;
   argumentType = ArgumentType;
   functionType = FunctionType;
+  studyOrCollab = StudyOrCollab;
 
+  study: Study | null = null;
   algorithms: Algorithm[] = [];
   algorithm: Algorithm | null = null;
+  collaboration?: Collaboration | null = null;
+  organizations: BaseOrganization[] = [];
   function: AlgorithmFunction | null = null;
   node: BaseNode | null = null;
   columns: string[] = [];
@@ -53,6 +60,9 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   isNgInitDone: boolean = false;
   repeatedTask: Task | null = null;
 
+  studyForm = this.fb.nonNullable.group({
+    studyOrCollabID: ['', Validators.required]
+  });
   packageForm = this.fb.nonNullable.group({
     algorithmID: ['', Validators.required],
     name: ['', Validators.required],
@@ -83,23 +93,12 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
   async ngOnInit(): Promise<void> {
     this.isTaskRepeat = this.router.url.startsWith(routePaths.taskCreateRepeat);
-    await this.initData();
 
-    this.packageForm.controls.algorithmID.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (algorithmID) => {
-      this.handleAlgorithmChange(Number(algorithmID));
+    this.chosenCollaborationService.isInitialized$.pipe(takeUntil(this.destroy$)).subscribe((initialized) => {
+      if (initialized && !this.isDataInitialized) {
+        this.initData();
+      }
     });
-
-    this.functionForm.controls.functionName.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (functionName) => {
-      this.handleFunctionChange(functionName);
-    });
-
-    this.nodeStatusUpdateSubscription = this.socketioConnectService
-      .getNodeStatusUpdates()
-      .subscribe((nodeStatusUpdate: NodeOnlineStatusMsg | null) => {
-        if (nodeStatusUpdate) this.onNodeStatusUpdate(nodeStatusUpdate);
-      });
-
-    this.isNgInitDone = true;
   }
 
   async ngAfterViewInit(): Promise<void> {
@@ -122,6 +121,10 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnDestroy(): void {
     this.destroy$.next(true);
     this.nodeStatusUpdateSubscription?.unsubscribe();
+  }
+
+  get shouldShowStudyStep(): boolean {
+    return (this.collaboration && this.collaboration.studies.length > 0) || false;
   }
 
   get shouldShowDatabaseStep(): boolean {
@@ -147,6 +150,15 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     this.repeatedTask = await this.taskService.getTask(Number(taskID));
     if (!this.repeatedTask) {
       return;
+    }
+
+    // set study step
+    if (this.repeatedTask.study?.id) {
+      this.studyForm.controls.studyOrCollabID.setValue(StudyOrCollab.Study + this.repeatedTask.study.id.toString());
+      await this.handleStudyChange(this.repeatedTask.study.id);
+    } else {
+      this.studyForm.controls.studyOrCollabID.setValue(StudyOrCollab.Collaboration + this.collaboration?.id.toString());
+      await this.handleStudyChange(null);
     }
 
     // set algorithm step
@@ -207,6 +219,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
   async handleSubmit(): Promise<void> {
     if (
+      this.studyForm.invalid ||
       this.packageForm.invalid ||
       this.functionForm.invalid ||
       this.databaseForm.invalid ||
@@ -243,13 +256,17 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       name: this.packageForm.controls.name.value,
       description: this.packageForm.controls.description.value,
       image: this.algorithm?.image || '',
-      collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
+      collaboration_id: this.collaboration?.id || -1,
       databases: taskDatabases,
       organizations: selectedOrganizations.map((organizationID) => {
         return { id: Number.parseInt(organizationID), input: btoa(JSON.stringify(input)) || '' };
       })
       //TODO: Add preprocessing and filtering when backend is ready
     };
+
+    if (this.studyForm.controls['studyOrCollabID'].value.startsWith(StudyOrCollab.Study)) {
+      createTask.study_id = Number(this.studyForm.controls['studyOrCollabID'].value.substring(StudyOrCollab.Study.length));
+    }
 
     const newTask = await this.taskService.createTask(createTask);
     if (newTask) {
@@ -269,7 +286,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     const input = { method: 'column_headers' };
 
     const columnRetrieveData: ColumnRetrievalInput = {
-      collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
+      collaboration_id: this.collaboration?.id || -1,
       db_label: taskDatabase.label,
       organizations: [
         {
@@ -339,12 +356,69 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     return id1 === id2;
   }
 
+  compareStudyOrCollabForSelection(val1: number | string, val2: number | string): boolean {
+    return val1 === val2;
+  }
+
+  async setOrganizations() {
+    if (!this.collaboration) return;
+
+    if (this.study) {
+      this.organizations = this.study.organizations;
+    } else {
+      this.organizations = this.collaboration.organizations;
+    }
+  }
+
   private async initData(): Promise<void> {
+    this.collaboration = this.chosenCollaborationService.collaboration$.value;
     this.algorithms = await this.algorithmService.getAlgorithms();
-    // TODO if node is null, alert user that no node is online so no columns and databases can be retrieved - so better not create a task
     this.node = await this.getOnlineNode();
+
+    // set default for study step: full collaboration (this is not visible but required
+    // if there are no studies defined to have a valid form)
+    this.studyForm.controls['studyOrCollabID'].setValue(StudyOrCollab.Collaboration + this.collaboration?.id.toString());
+    this.setOrganizations();
+
+    this.studyForm.controls['studyOrCollabID'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (studyID) => {
+      if (studyID.startsWith(StudyOrCollab.Study)) {
+        this.handleStudyChange(Number(studyID.substring(StudyOrCollab.Study.length)));
+      }
+    });
+
+    this.packageForm.controls.algorithmID.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (algorithmID) => {
+      this.handleAlgorithmChange(Number(algorithmID));
+    });
+
+    this.functionForm.controls.functionName.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (functionName) => {
+      this.handleFunctionChange(functionName);
+    });
+
+    this.nodeStatusUpdateSubscription = this.socketioConnectService
+      .getNodeStatusUpdates()
+      .subscribe((nodeStatusUpdate: NodeOnlineStatusMsg | null) => {
+        if (nodeStatusUpdate) this.onNodeStatusUpdate(nodeStatusUpdate);
+      });
+
+    this.isNgInitDone = true;
+
     if (!this.isTaskRepeat) this.isLoading = false;
     this.isDataInitialized = true;
+  }
+
+  private async handleStudyChange(studyID: number | null): Promise<void> {
+    // clear relevant forms
+    this.clearFunctionStep();
+    this.clearDatabaseStep();
+
+    // select study
+    if (studyID) {
+      this.study = this.collaboration?.studies.find((_) => _.id === studyID) || null;
+    } else {
+      // by deselecting study, defaults to entire collaboration
+      this.study = null;
+    }
+    this.setOrganizations();
   }
 
   private async handleAlgorithmChange(algorithmID: number): Promise<void> {
@@ -389,7 +463,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private async getNodes(): Promise<BaseNode[] | null> {
     return await this.nodeService.getNodes({
-      collaboration_id: this.chosenCollaborationService.collaboration$.value?.id.toString() || ''
+      collaboration_id: this.collaboration?.id.toString() || ''
     });
   }
 
