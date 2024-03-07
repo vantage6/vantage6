@@ -180,6 +180,17 @@ class ChangePasswordInputSchema(Schema):
         _validate_password(password)
 
 
+class BasicAuthInputSchema(Schema):
+    """Schema for validating input for basic authentication using a username and password."""
+
+    username = fields.String(required=True, validate=Length(min=1, max=_MAX_LEN_NAME))
+    # Note that we don't inherit from _PasswordValidationSchema here and
+    # don't validate password in case the password does not fulfill the
+    # password policy. This is e.g. the case with the default root user created
+    # when the server is started for the first time.
+    password = fields.String(required=True, validate=Length(min=1, max=_MAX_LEN_PW))
+
+
 class CollaborationInputSchema(_NameValidationSchema):
     """Schema for validating input for a creating a collaboration."""
 
@@ -329,30 +340,8 @@ class ResetPasswordInputSchema(_PasswordValidationSchema):
     reset_token = fields.String(required=True, validate=Length(max=_MAX_LEN_STR_LONG))
 
 
-class Recover2FAInputSchema(Schema):
+class Recover2FAInputSchema(BasicAuthInputSchema):
     """Schema for validating input for recovering 2FA."""
-
-    email = fields.Email()
-    username = fields.String(validate=Length(max=_MAX_LEN_NAME))
-    password = fields.String(required=True, validate=Length(min=1, max=_MAX_LEN_PW))
-
-    @validates_schema
-    def validate_email_or_username(self, data: dict, **kwargs) -> None:
-        """
-        Validate the input, which should contain either an email or username.
-
-        Parameters
-        ----------
-        data : dict
-            The input data. Should contain an email or username.
-
-        Raises
-        ------
-        ValidationError
-            If the input does not contain an email or username.
-        """
-        if not ("email" in data or "username" in data):
-            raise ValidationError("Email or username is required")
 
 
 class Reset2FAInputSchema(Schema):
@@ -500,15 +489,9 @@ class TaskInputSchema(_NameValidationSchema):
                 )
 
 
-class TokenUserInputSchema(Schema):
+class TokenUserInputSchema(BasicAuthInputSchema):
     """Schema for validating input for creating a token for a user."""
 
-    username = fields.String(required=True, validate=Length(min=3, max=_MAX_LEN_NAME))
-    # Note that we don't inherit from _PasswordValidationSchema here and
-    # don't validate password in case the password does not fulfill the
-    # password policy. This is e.g. the case with the default root user created
-    # when the server is started for the first time.
-    password = fields.String(required=True, validate=Length(min=1, max=_MAX_LEN_PW))
     mfa_code = fields.String(validate=Length(max=10))
 
     @validates("username")
