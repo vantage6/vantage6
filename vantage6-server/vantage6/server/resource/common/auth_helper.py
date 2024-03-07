@@ -13,7 +13,7 @@ from vantage6.server.globals import (
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
     DEFAULT_MAX_FAILED_ATTEMPTS,
     DEFAULT_INACTIVATION_MINUTES,
-    DEFAULT_BETWEEN_BLOCKED_LOGIN_EMAIL_MINUTES,
+    DEFAULT_BETWEEN_USER_EMAILS_MINUTES,
     DEFAULT_EMAIL_FROM_ADDRESS,
 )
 from vantage6.server.model.user import User
@@ -197,8 +197,8 @@ def __notify_user_blocked(
     # check that email has not already been sent recently
     password_policy = config.get("password_policy", {})
     minutes_between_blocked_emails = password_policy.get(
-        "between_email_blocked_login_minutes",
-        DEFAULT_BETWEEN_BLOCKED_LOGIN_EMAIL_MINUTES,
+        "between_user_emails_minutes",
+        DEFAULT_BETWEEN_USER_EMAILS_MINUTES,
     )
     email_sent_recently = user.last_email_failed_login_sent and (
         dt.datetime.now()
