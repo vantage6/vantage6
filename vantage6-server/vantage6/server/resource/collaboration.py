@@ -8,7 +8,7 @@ from vantage6.server import db
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource.common.input_schema import (
     CollaborationAddNodeSchema,
-    CollaborationAddOrganizationSchema,
+    CollaborationChangeOrganizationSchema,
     CollaborationInputSchema,
 )
 from vantage6.server.permission import (
@@ -81,7 +81,7 @@ collaboration_schema = CollaborationSchema()
 org_schema = OrganizationSchema()
 node_schema = NodeSchemaSimple()
 collaboration_input_schema = CollaborationInputSchema()
-collaboration_add_organization_schema = CollaborationAddOrganizationSchema()
+collaboration_change_org_schema = CollaborationChangeOrganizationSchema()
 collaboration_add_node_schema = CollaborationAddNodeSchema()
 collab_with_orgs_schema = CollaborationWithOrgsSchema()
 
@@ -153,7 +153,7 @@ class CollaborationBase(ServicesResources):
 
 
 class Collaborations(CollaborationBase):
-    @only_for(["user", "node"])
+    @only_for(("user", "node"))
     def get(self):
         """Returns a list of collaborations
         ---
@@ -274,7 +274,7 @@ class Collaborations(CollaborationBase):
         try:
             page = Pagination.from_query(q, request, db.Collaboration)
         except (ValueError, AttributeError) as e:
-            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         schema = self._select_schema()
 
@@ -414,7 +414,7 @@ class Collaboration(CollaborationBase):
         """
         collaboration = db.Collaboration.get(id)
 
-        # check that collaboration exists, unlikely to happen without ID
+        # check that collaboration exists
         if not collaboration:
             return {
                 "msg": f"collaboration having id={id} not found"
@@ -594,20 +594,23 @@ class Collaboration(CollaborationBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        if collaboration.tasks or collaboration.nodes:
+        if collaboration.tasks or collaboration.nodes or collaboration.studies:
             delete_dependents = request.args.get("delete_dependents", False)
             if not delete_dependents:
                 return {
                     "msg": f"Collaboration id={id} has "
-                    f"{len(collaboration.tasks)} tasks and "
-                    f"{len(collaboration.nodes)} nodes. Please delete them "
-                    "separately or set delete_dependents=True"
+                    f"{len(collaboration.tasks)} tasks, {len(collaboration.nodes)} "
+                    f"nodes and {len(collaboration.studies)} studies. Please delete "
+                    "them separately or set delete_dependents=True"
                 }, HTTPStatus.BAD_REQUEST
             else:
-                log.warn(
-                    f"Deleting collaboration id={id} along with "
-                    f"{len(collaboration.tasks)} tasks and "
-                    f"{len(collaboration.nodes)} nodes"
+                log.warning(
+                    "Deleting collaboration id=%s along with %s tasks, %s nodes and "
+                    "% studies.",
+                    id,
+                    len(collaboration.tasks),
+                    len(collaboration.nodes),
+                    len(collaboration.studies),
                 )
                 for task in collaboration.tasks:
                     task.delete()
@@ -688,7 +691,7 @@ class CollaborationOrganization(ServicesResources):
 
         # validate request body
         data = request.get_json()
-        errors = collaboration_add_organization_schema.validate(data)
+        errors = collaboration_change_org_schema.validate(data)
         if errors:
             return {
                 "msg": "Request body is incorrect",
@@ -759,12 +762,22 @@ class CollaborationOrganization(ServicesResources):
                 "msg": f"Collaboration with collaboration_id={id} can " "not be found"
             }, HTTPStatus.NOT_FOUND
 
+        # validate requst body
+        data = request.get_json()
+        errors = collaboration_change_org_schema.validate(data)
+        if errors:
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
+
         # get organization which should be deleted
         data = request.get_json()
-        organization = db.Organization.get(data["id"])
+        org_id = data["id"]
+        organization = db.Organization.get(org_id)
         if not organization:
             return {
-                "msg": f"Organization with id={id} is not found"
+                "msg": f"Organization with id={org_id} is not found"
             }, HTTPStatus.NOT_FOUND
 
         if not self.r.can_for_col(P.EDIT, collaboration.id):

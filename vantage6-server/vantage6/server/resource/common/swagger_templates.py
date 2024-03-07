@@ -23,6 +23,7 @@ swagger_template = {
                         "type": "integer",
                         "description": "Collaboration id",
                     },
+                    "study_id": {"type": "integer", "description": "Study id"},
                     "organizations": {
                         "type": "dict",
                         "description": (

@@ -152,6 +152,11 @@ class Organizations(OrganizationBase):
               type: integer
             description: Collaboration id
           - in: query
+            name: study_id
+            schema:
+              type: integer
+            description: Study id
+          - in: query
             name: page
             schema:
               type: integer
@@ -207,6 +212,18 @@ class Organizations(OrganizationBase):
                 .join(db.Collaboration)
                 .filter(db.Collaboration.id == args["collaboration_id"])
             )
+        if "study_id" in args:
+            study = db.Study().get(args["study_id"])
+            if not self.r.can_for_col(P.VIEW, study.collaboration_id):
+                return {
+                    "msg": "You lack the permission to get all organizations "
+                    "in a study!"
+                }, HTTPStatus.UNAUTHORIZED
+            q = (
+                q.join(db.StudyMember)
+                .join(db.Study)
+                .filter(db.Study.id == args["study_id"])
+            )
 
         # filter the list of organizations based on the scope
         if self.r.v_glo.can():
@@ -240,7 +257,7 @@ class Organizations(OrganizationBase):
         try:
             page = Pagination.from_query(q, request, db.Organization)
         except (ValueError, AttributeError) as e:
-            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         # serialization of DB model
         return self.response(page, org_schema)

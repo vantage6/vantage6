@@ -44,6 +44,7 @@ class Collaboration(Base):
     )
     nodes = relationship("Node", back_populates="collaboration")
     tasks = relationship("Task", back_populates="collaboration")
+    studies = relationship("Study", back_populates="collaboration")
     algorithm_stores = relationship("AlgorithmStore", back_populates="collaboration")
 
     def get_organization_ids(self) -> list[int]:

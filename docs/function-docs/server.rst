@@ -98,7 +98,7 @@ vantage6.server.resource.common.output_schema
     still the case (there that module is rewritten)
 
 .. automodule:: vantage6.server.resource.common.output_schema
-    :members: HATEOASModelSchema, create_one_to_many_link
+    :members:
 
 vantage6.server.resource.common.auth_helper
 +++++++++++++++++++++++++++++++++++++++++++

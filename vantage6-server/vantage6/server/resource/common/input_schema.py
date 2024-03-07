@@ -80,6 +80,28 @@ def _validate_password(password: str) -> None:
         raise ValidationError(str(e))
 
 
+def _validate_organization_ids(organization_ids: list[int]) -> None:
+    """
+    Validate the organization ids in the input.
+
+    Parameters
+    ----------
+    organization_ids : list[int]
+        List of organization ids to validate.
+
+    Raises
+    ------
+    ValidationError
+        If the organization ids are not valid.
+    """
+    if not all(i > 0 for i in organization_ids):
+        raise ValidationError("Organization ids must be greater than 0")
+    if not len(organization_ids) == len(set(organization_ids)):
+        raise ValidationError("Organization ids must be unique")
+    if not len(organization_ids):
+        raise ValidationError("At least one organization id is required")
+
+
 class _OnlyIdSchema(Schema):
     """Schema for validating POST requests that only require an ID field."""
 
@@ -179,15 +201,10 @@ class CollaborationInputSchema(_NameValidationSchema):
         ValidationError
             If the organization ids are not valid.
         """
-        if not all(i > 0 for i in organization_ids):
-            raise ValidationError("Organization ids must be greater than 0")
-        if not len(organization_ids) == len(set(organization_ids)):
-            raise ValidationError("Organization ids must be unique")
-        if not len(organization_ids):
-            raise ValidationError("At least one organization id is required")
+        _validate_organization_ids(organization_ids)
 
 
-class CollaborationAddOrganizationSchema(_OnlyIdSchema):
+class CollaborationChangeOrganizationSchema(_OnlyIdSchema):
     """
     Schema for validating requests that add an organization to a collaboration.
     """
@@ -393,9 +410,29 @@ class TaskInputSchema(_NameValidationSchema):
     name = fields.String(required=False)
     description = fields.String(validate=Length(max=_MAX_LEN_STR_LONG))
     image = fields.String(required=True, validate=Length(min=1))
-    collaboration_id = fields.Integer(required=True, validate=Range(min=1))
+    collaboration_id = fields.Integer(validate=Range(min=1))
+    study_id = fields.Integer(validate=Range(min=1))
     organizations = fields.List(fields.Dict(), required=True)
     databases = fields.List(fields.Dict(), allow_none=True)
+
+    @validates_schema
+    def validate_collaboration_or_study(self, data: dict, **kwargs) -> None:
+        """
+        Validate the input, which should contain a collaboration_id or a study_id. The
+        input may also contain both.
+
+        Parameters
+        ----------
+        data : dict
+            The input data.
+
+        Raises
+        ------
+        ValidationError
+            If the input does not contain a collaboration_id or a study_id.
+        """
+        if not ("collaboration_id" in data or "study_id" in data):
+            raise ValidationError("Collaboration_id or study_id is required")
 
     @validates("organizations")
     def validate_organizations(self, organizations: list[dict]):
@@ -602,3 +639,35 @@ class AlgorithmStoreInputSchema(Schema):
     server_url = fields.Url()
     collaboration_id = fields.Integer(validate=Range(min=1))
     force = fields.Boolean()
+
+
+class StudyInputSchema(_NameValidationSchema):
+    """Schema for validating input for creating a study"""
+
+    collaboration_id = fields.Integer(required=True, validate=Range(min=1))
+    organization_ids = fields.List(fields.Integer(), required=True)
+
+    @validates("organization_ids")
+    def validate_organization_ids(self, organization_ids):
+        """
+        Validate the organization ids in the input.
+
+        Parameters
+        ----------
+        organization_ids : list[int]
+            List of organization ids to validate.
+
+        Raises
+        ------
+        ValidationError
+            If the organization ids are not valid.
+        """
+        _validate_organization_ids(organization_ids)
+
+
+class StudyChangeOrganizationSchema(_OnlyIdSchema):
+    """
+    Schema for validating requests that add an organization to a study.
+    """
+
+    pass

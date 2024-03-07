@@ -198,6 +198,11 @@ class Tasks(TaskBase):
               type: int
             description: The collaboration id to which the task belongs
           - in: query
+            name: study_id
+            schema:
+              type: int
+            description: The study id to which the task belongs
+          - in: query
             name: is_user_created
             schema:
               type: int
@@ -380,6 +385,21 @@ class Tasks(TaskBase):
                 }, HTTPStatus.UNAUTHORIZED
             q = q.filter(db.Task.init_user_id == init_user_id)
 
+        if "study_id" in args:
+            study_id = int(args["study_id"])
+            study = db.Study.get(study_id)
+            if not study:
+                return {
+                    "msg": f"Study id={study_id} does not exist!"
+                }, HTTPStatus.BAD_REQUEST
+            elif not self.r.can_for_col(P.VIEW, study.collaboration_id):
+                return {
+                    "msg": "You lack the permission to view tasks "
+                    f"from collaboration id={study.collaboration_id} that the study "
+                    f"with id={study.id} belongs to!"
+                }, HTTPStatus.UNAUTHORIZED
+            q = q.filter(db.Task.study_id == study_id)
+
         if "parent_id" in args:
             parent_id = int(args["parent_id"])
             parent = db.Task.get(parent_id)
@@ -458,7 +478,7 @@ class Tasks(TaskBase):
         try:
             page = Pagination.from_query(q, request, db.Task)
         except (ValueError, AttributeError) as e:
-            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         # serialization schema
         schema = self._select_schema()
@@ -541,12 +561,31 @@ class Tasks(TaskBase):
             }, HTTPStatus.BAD_REQUEST
 
         collaboration_id = data.get("collaboration_id")
-        collaboration = db.Collaboration.get(collaboration_id)
+        study_id = data.get("study_id")
+        study = None
+        if collaboration_id:
+            collaboration = db.Collaboration.get(collaboration_id)
+            if not collaboration:
+                return {
+                    "msg": f"Collaboration id={collaboration_id} not found!"
+                }, HTTPStatus.NOT_FOUND
+        if study_id:
+            study = db.Study.get(study_id)
+            if not study:
+                return {"msg": f"Study id={study_id} not found"}, HTTPStatus.NOT_FOUND
 
-        if not collaboration:
-            return {
-                "msg": f"Collaboration id={collaboration_id} not found!"
-            }, HTTPStatus.NOT_FOUND
+            # check if collaboration and study match if both are set
+            if collaboration_id and study.collaboration_id != collaboration_id:
+                return {
+                    "msg": (
+                        f"The study_id '{study.id}' does not belong to the "
+                        f"collaboration_id '{collaboration_id}' that is given."
+                    )
+                }, HTTPStatus.BAD_REQUEST
+
+            # get the collaboration object as well
+            collaboration_id = study.collaboration_id
+            collaboration = db.Collaboration.get(collaboration_id)
 
         organizations_json_list = data.get("organizations")
         org_ids = [org.get("id") for org in organizations_json_list]
@@ -561,6 +600,16 @@ class Tasks(TaskBase):
                     "the collaboration."
                 )
             }, HTTPStatus.BAD_REQUEST
+        # check that they are within the study (if that has been defined)
+        if study:
+            study_org_ids = [org.id for org in study.organizations]
+            if not set(org_ids).issubset(study_org_ids):
+                return {
+                    "msg": (
+                        "At least one of the supplied organizations in not within "
+                        "the specified study."
+                    )
+                }, HTTPStatus.BAD_REQUEST
 
         # check if all the organizations have a registered node
         nodes = (
@@ -632,6 +681,7 @@ class Tasks(TaskBase):
         # permissions ok, create task record and TaskDatabase records
         task = db.Task(
             collaboration=collaboration,
+            study=study,
             name=data.get("name", ""),
             description=data.get("description", ""),
             image=image,

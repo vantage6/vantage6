@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
+from typing import List
 import jwt
 import pyfiglet
 import itertools
@@ -19,6 +20,8 @@ from vantage6.common.client.utils import print_qr_code
 from vantage6.client.utils import LogLevel
 from vantage6.common.task_status import has_task_finished
 from vantage6.common.client.client_base import ClientBase
+from vantage6.client.subclients.study import StudySubClient
+from vantage6.client.subclients.algorithm import AlgorithmSubClient
 from vantage6.client.subclients.algorithm_store import AlgorithmStoreSubClient
 from vantage6.client.subclients.algorithm import AlgorithmSubClient
 
@@ -55,6 +58,7 @@ class UserClient(ClientBase):
         self.role = self.Role(self)
         self.node = self.Node(self)
         self.rule = self.Rule(self)
+        self.study = StudySubClient(self)
         self.store = AlgorithmStoreSubClient(self)
         self.algorithm = AlgorithmSubClient(self)
 
@@ -449,7 +453,7 @@ class UserClient(ClientBase):
             organization: int = None,
             page: int = 1,
             per_page: int = 20,
-        ) -> dict:
+        ) -> List[dict]:
             """View your collaborations
 
             Parameters
@@ -472,7 +476,7 @@ class UserClient(ClientBase):
 
             Returns
             -------
-            list of dicts
+            list[dict]
                 Containing collabotation information
 
             Notes
@@ -545,6 +549,142 @@ class UserClient(ClientBase):
                 },
             )
 
+        @post_filtering(iterable=False)
+        def delete(self, id_: int = None, delete_dependents: bool = None) -> dict:
+            """Deletes a collaboration
+
+            Parameters
+            ----------
+            id_ : int
+                Id of the collaboration you want to delete
+            delete_dependents : bool, optional
+                Delete the tasks, nodes and studies that are part of the collaboration
+                as well. If this is False, and dependents exist, the server will refuse
+                to delete the collaboration. Default is False.
+
+            Returns
+            -------
+            dict
+                Message from the server
+            """
+            id_ = self.__get_id_or_use_provided_id(id_)
+            params = {}
+            if delete_dependents:
+                params["delete_dependents"] = delete_dependents
+            return self.parent.request(
+                f"collaboration/{id_}", method="delete", params=params
+            )
+
+        @post_filtering(iterable=False)
+        def update(
+            self,
+            id_: int = None,
+            name: str = None,
+            encrypted: bool = None,
+            organizations: List[int] = None,
+        ) -> dict:
+            """
+            Update collaboration information
+
+            Parameters
+            ----------
+            id_ : int
+                Id of the collaboration you want to update. If no id is provided
+                the value of setup_collaboration() is used.
+            name : str, optional
+                New name of the collaboration
+            encrypted : bool, optional
+                New encryption status of the collaboration
+            organizations : list[int], optional
+                New list of organization ids which participate in the collaboration
+
+            Returns
+            -------
+            dict
+                Containing the updated collaboration information
+            """
+            id_ = self.__get_id_or_use_provided_id(id_)
+            return self.parent.request(
+                f"collaboration/{id_}",
+                method="patch",
+                json={
+                    "name": name,
+                    "encrypted": encrypted,
+                    "organization_ids": organizations,
+                },
+            )
+
+        def add_organization(
+            self, organization: int, collaboration: int = None
+        ) -> List[dict]:
+            """
+            Add an organization to a collaboration
+
+            Parameters
+            ----------
+            organization : int
+                Id of the organization you want to add to the collaboration
+            collaboration : int, optional
+                Id of the collaboration you want to add the organization to. If no
+                id is provided the value of setup_collaboration() is used.
+
+            Returns
+            -------
+            list[dict]
+                Containing the updated list of organizations in the collaboration
+            """
+            collaboration = self.__get_id_or_use_provided_id(collaboration)
+            return self.parent.request(
+                f"collaboration/{collaboration}/organization",
+                method="post",
+                json={"id": organization},
+            )
+
+        def remove_organization(
+            self, organization: int, collaboration: int = None
+        ) -> List[dict]:
+            """
+            Remove an organization from a collaboration
+
+            Parameters
+            ----------
+            organization : int
+                Id of the organization you want to remove from the collaboration
+            collaboration : int, optional
+                Id of the collaboration you want to remove the organization from. If no
+                id is provided the value of setup_collaboration() is used.
+
+            Returns
+            -------
+            list[dict]
+                Containing the updated list of organizations in the collaboration
+            """
+            collaboration = self.__get_id_or_use_provided_id(collaboration)
+            return self.parent.request(
+                f"collaboration/{collaboration}/organization",
+                method="delete",
+                json={"id": organization},
+            )
+
+        def __get_id_or_use_provided_id(self, id_: int = None) -> int:
+            """
+            Get the collaboration id from the parent object or use the provided id
+            """
+            if id_ is None:
+                id_ = self.parent.collaboration_id
+            self.__validate_id(id_)
+            return id_
+
+        def __validate_id(self, id_: int):
+            """
+            Validate the provided collaboration id
+            """
+            if id_ is None:
+                raise ValueError(
+                    "No collaboration id provided. Please provide the id_ argument"
+                    "or use `client.setup_collaboration` to set it."
+                )
+
     class Node(ClientBase.SubClient):
         """Collection of node requests"""
 
@@ -570,6 +710,7 @@ class UserClient(ClientBase):
             name: str = None,
             organization: int = None,
             collaboration: int = None,
+            study: int = None,
             is_online: bool = None,
             ip: str = None,
             last_seen_from: str = None,
@@ -588,6 +729,8 @@ class UserClient(ClientBase):
             collaboration: int, optional
                 Filter by collaboration id. If no id is provided but collaboration was
                 defined earlier by user, filtering on that collaboration
+            study: int, optional
+                Filter by study id
             is_online: bool, optional
                 Filter on whether nodes are online or not
             ip: str, optional
@@ -615,6 +758,7 @@ class UserClient(ClientBase):
                 "name": name,
                 "organization_id": organization,
                 "collaboration_id": collaboration,
+                "study_id": study,
                 "ip": ip,
                 "last_seen_from": last_seen_from,
                 "last_seen_till": last_seen_till,
@@ -738,6 +882,7 @@ class UserClient(ClientBase):
             name: str = None,
             country: int = None,
             collaboration: int = None,
+            study: int = None,
             page: int = None,
             per_page: int = None,
         ) -> list[dict]:
@@ -752,6 +897,8 @@ class UserClient(ClientBase):
             collaboration: int, optional
                 Filter by collaboration id. If client.setup_collaboration() was called,
                 the previously setup collaboration is used. Default value is None
+            study: int, optional
+                Filter by study id
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional
@@ -770,6 +917,7 @@ class UserClient(ClientBase):
                 "name": name,
                 "country": country,
                 "collaboration_id": collaboration,
+                "study_id": study,
             }
             return self.parent.request("organization", params=params)
 
@@ -1276,6 +1424,7 @@ class UserClient(ClientBase):
             initiating_org: int = None,
             initiating_user: int = None,
             collaboration: int = None,
+            study: int = None,
             image: str = None,
             parent: int = None,
             job: int = None,
@@ -1303,7 +1452,10 @@ class UserClient(ClientBase):
                 Filter by initiating user
             collaboration: int, optional
                 Filter by collaboration. If no id is provided but collaboration was
-                defined earlier by setup_collaboration(), filtering on that collaboration
+                defined earlier by setup_collaboration(), filtering on that
+                collaboration
+            study: int, optional
+                Filter by study
             image: str, optional
                 Filter by Docker image name (with LIKE operator)
             parent: int, optional
@@ -1345,6 +1497,7 @@ class UserClient(ClientBase):
                 "init_org_id": initiating_org,
                 "init_user_id": initiating_user,
                 "collaboration_id": collaboration,
+                "study_id": study,
                 "image": image,
                 "parent_id": parent,
                 "job_id": job,
@@ -1374,16 +1527,13 @@ class UserClient(ClientBase):
             description: str,
             input_: dict,
             collaboration: int = None,
+            study: int = None,
             databases: list[dict] = None,
         ) -> dict:
             """Create a new task
 
             Parameters
             ----------
-            collaboration : int
-                Id of the collaboration to which this task belongs. If collaboration
-                was defined earlier by setup_collaboration(), this collaboration
-                is used. Default value is None
             organizations : list
                 Organization ids (within the collaboration) which need
                 to execute this task
@@ -1395,6 +1545,12 @@ class UserClient(ClientBase):
                 Human readable description
             input_ : dict
                 Algorithm input
+            collaboration : int, optional
+                Id of the collaboration to which this task belongs. Should be set if
+                the study is not set
+            study : int, optional
+                Id of the study to which this task belongs. Should be set if the
+                collaboration is not set
             databases: list[dict], optional
                 Databases to be used at the node. Each dict should contain
                 at least a 'label' key. Additional keys are 'query' (if using
@@ -1411,11 +1567,10 @@ class UserClient(ClientBase):
 
             if collaboration is None:
                 collaboration = self.parent.collaboration_id
-                if collaboration is None:
-                    raise ValueError(
-                        "No collaboration id provided, please set the "
-                        "collaboration id or use `client.setup_collaboration`"
-                    )
+            if not collaboration and not study:
+                raise ValueError(
+                    "Either a collaboration or a study should be specified"
+                )
 
             if organizations is None:
                 raise ValueError(
@@ -1453,6 +1608,7 @@ class UserClient(ClientBase):
                     "name": name,
                     "image": image,
                     "collaboration_id": collaboration,
+                    "study_id": study,
                     "description": description,
                     "organizations": organization_json_list,
                     "databases": databases,
