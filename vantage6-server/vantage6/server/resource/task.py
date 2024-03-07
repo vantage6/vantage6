@@ -560,6 +560,11 @@ class Tasks(TaskBase):
                 "errors": errors,
             }, HTTPStatus.BAD_REQUEST
 
+        # A task can be created for a collaboration or a study. If it is for a study,
+        # a study_id is always given, and a collaboration_id is optional. If it is for
+        # a collaboration, a collaboration_id is always given, and a study_id is
+        # never set. The following logic checks if the given study_id and
+        # collaboration_id are valid and when both are provided, checks if they match.
         collaboration_id = data.get("collaboration_id")
         study_id = data.get("study_id")
         study = None
