@@ -5,6 +5,7 @@ exist. It allows the users and nodes to authenticate and subsequently interact
 through the API the server hosts. Finally, it also communicates with
 authenticated nodes and users via the socketIO server that is run here.
 """
+
 # -*- coding: utf-8 -*-
 import os
 from gevent import monkey
@@ -35,6 +36,7 @@ from flask import (
     Response,
 )
 from flask_cors import CORS
+from flask_cors.core import probably_regex
 from flask_jwt_extended import JWTManager
 from flask_marshmallow import Marshmallow
 from flask_restful import Api
@@ -108,8 +110,14 @@ class ServerApp:
         # Setup Principal, granular API access manegement
         self.principal = Principal(self.app, use_sessions=False)
 
-        # Enable cross-origin resource sharing
-        self.cors = CORS(self.app)
+        # Enable cross-origin resource sharing. Note that Flask-CORS interprets
+        # the origins as regular expressions.
+        cors_allowed_origins = self.ctx.config.get("cors_allowed_origins", "*")
+        self._warn_if_cors_regex(cors_allowed_origins)
+        self.cors = CORS(
+            self.app,
+            resources={r"/*": {"origins": cors_allowed_origins}},
+        )
 
         # SWAGGER documentation
         self.swagger = Swagger(self.app, template=swagger_template)
@@ -138,6 +146,35 @@ class ServerApp:
 
         log.info("Initialization done")
 
+    @staticmethod
+    def _warn_if_cors_regex(origins: str | list[str]) -> None:
+        """
+        Give a warning if CORS origins are regular expressions. This will not work
+        properly for socket events (Flask-SocketIO checks for string equality and does
+        not use regex).
+
+        Note that we are using the `probably_regex` function from Flask-CORS to check
+        if the origins are probably regular expressions - the Flask implementation for
+        determining if it is a regex is a bit hacky (see
+        https://github.com/corydolphin/flask-cors/blob/3.0.10/flask_cors/core.py#L275-L285)
+        and Flask-CORS doesn't currently offer an opt out of regex's altogether.
+
+        Parameters
+        ----------
+        origins: str | list[str]
+            The origins to check
+        """
+        if isinstance(origins, str):
+            origins = [origins]
+
+        for origin in origins:
+            if probably_regex(origin):
+                log.warning(
+                    "CORS origin '%s' is a regular expression. Socket events sent from "
+                    "this origin will not be handled properly.",
+                    origin,
+                )
+
     def setup_socket_connection(self) -> SocketIO:
         """
         Setup a socket connection. If a message queue is defined, connect the
@@ -149,7 +186,6 @@ class ServerApp:
         SocketIO
             SocketIO object
         """
-
         msg_queue = self.ctx.config.get("rabbitmq", {}).get("uri")
         if msg_queue:
             log.debug(f"Connecting to msg queue: {msg_queue}")
@@ -157,13 +193,15 @@ class ServerApp:
         debug_mode = self.debug.get("socketio", False)
         if debug_mode:
             log.debug("SocketIO debug mode enabled")
+
+        cors_settings = self.ctx.config.get("cors_allowed_origins", "*")
         try:
             socketio = SocketIO(
                 self.app,
                 async_mode="gevent_uwsgi",
                 message_queue=msg_queue,
                 ping_timeout=60,
-                cors_allowed_origins="*",
+                cors_allowed_origins=cors_settings,
                 logger=debug_mode,
                 engineio_logger=debug_mode,
             )
@@ -179,7 +217,7 @@ class ServerApp:
                 self.app,
                 message_queue=msg_queue,
                 ping_timeout=60,
-                cors_allowed_origins="*",
+                cors_allowed_origins=cors_settings,
                 logger=debug_mode,
                 engineio_logger=debug_mode,
             )
