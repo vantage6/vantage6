@@ -314,7 +314,7 @@ class DockerManager(DockerBaseManager):
                     # than the exact string is allowed (without this, e.g. putting
                     # "some-algo" in the config would allow "some-algo-2" as well, or
                     # any string as long as some-algo is in there).
-                    algorithm = rf"^{algorithm}$"
+                    algorithm = self._convert_simple_string_to_regex(algorithm)
                 expr_ = re.compile(algorithm)
                 if expr_.match(docker_image_name):
                     found = True
@@ -346,9 +346,35 @@ class DockerManager(DockerBaseManager):
         return True
 
     @staticmethod
+    def _convert_simple_string_to_regex(pattern: str) -> str:
+        """
+        Convert a normal string to a regex pattern. This is done by marking beginning
+        and end and escaping the dot.
+
+        Parameters
+        ----------
+        pattern: str
+            String to be converted
+
+        Returns
+        -------
+        str
+            Converted string
+        """
+        pattern = pattern.replace(".", "\\.")
+        return rf"^{pattern}$"
+
+    @staticmethod
     def _is_regex_pattern(pattern: str) -> bool:
         """
-        Check if a string just a string or if it is a regex pattern.
+        Check if a string just a string or if it is a regex pattern. Note that there is
+        no failsafe way to do this so we make a best effort.
+
+        Note, for instance, that if a user provides the allowed algorithm "some.name",
+        we will interpret this as a regular string and convert it to "^some\.name$".
+        This prevents that "someXname" is allowed as well. The user is thus not able to
+        define a regex pattern with only a dot as special character - however we expect
+        that this use case is extremely rare.
 
         Parameters
         ----------
@@ -360,7 +386,27 @@ class DockerManager(DockerBaseManager):
         bool
             Returns False if the pattern is a normal string, True if it is a regex.
         """
-        return not re.match(pattern, pattern)
+        # Inspired by
+        # https://github.com/corydolphin/flask-cors/blob/main/flask_cors/core.py#L254.
+        common_regex_chars = [
+            "*",
+            "\\",
+            "?",
+            "$",
+            "^",
+            "[",
+            "]",
+            "(",
+            ")",
+            "{",
+            "}",
+            "|",
+            "+",
+            "\.",
+        ]
+        # Use common characters used in regular expressions as a proxy
+        # for if this string is in fact a regex.
+        return any((c in pattern for c in common_regex_chars))
 
     def is_running(self, run_id: int) -> bool:
         """
