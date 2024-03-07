@@ -34,6 +34,7 @@ class AppContext(metaclass=Singleton):
         instance_name: str,
         system_folders: bool = False,
         config_file: Path | str = None,
+        print_log_header: bool = True,
     ) -> None:
         """
         Create a new AppContext instance.
@@ -50,8 +51,12 @@ class AppContext(metaclass=Singleton):
             Path to a specific config file. If left as None, OS specific folder
             will be used to find the configuration file specified by
             `instance_name`.
+        print_log_header: bool
+            Print a banner to the log file.
         """
-        self.initialize(instance_type, instance_name, system_folders, config_file)
+        self.initialize(
+            instance_type, instance_name, system_folders, config_file, print_log_header
+        )
 
     def initialize(
         self,
@@ -59,6 +64,7 @@ class AppContext(metaclass=Singleton):
         instance_name: str,
         system_folders: bool = False,
         config_file: str | None = None,
+        print_log_header: bool = True,
     ) -> None:
         """
         Initialize the AppContext instance.
@@ -75,6 +81,8 @@ class AppContext(metaclass=Singleton):
             Path to a specific config file. If left as None, OS specific folder
             will be used to find the configuration file specified by
             `instance_name`.
+        print_log_header: bool
+            Print a banner to the log file.
         """
         self.scope: str = "system" if system_folders else "user"
         self.name: str = instance_name
@@ -97,6 +105,13 @@ class AppContext(metaclass=Singleton):
         # FIXME: this should probably be moved to the actual app
         module_name = __name__.split(".")[-1]
         self.log = logging.getLogger(module_name)
+        if print_log_header:
+            self.print_log_header()
+
+    def print_log_header(self) -> None:
+        """
+        Print the log file header.
+        """
         self.log.info("-" * 45)
         # self.log.info(f'#{APPNAME:^78}#')
         self.log.info(" Welcome to")

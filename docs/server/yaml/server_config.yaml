@@ -43,29 +43,28 @@ jwt_secret_key: super-secret-key! # recommended but optional
 
 # Settings for the logger
 logging:
-
   # Controls the logging output level. Could be one of the following
   # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
-  level:        DEBUG
+  level: DEBUG
 
   # Filename of the log-file, used by RotatingFileHandler
-  file:         test.log
+  file: test.log
 
   # Whether the output is shown in the console or not
-  use_console:  True
+  use_console: True
 
   # The number of log files that are kept, used by RotatingFileHandler
   backup_count: 5
 
   # Size in kB of a single log file, used by RotatingFileHandler
-  max_size:     1024
+  max_size: 1024
 
   # format: input for logging.Formatter,
-  format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
-  datefmt:      "%Y-%m-%d %H:%M:%S"
+  format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+  datefmt: "%Y-%m-%d %H:%M:%S"
 
-# (optional) set the individual log levels per logger name, for example
-# mute some loggers that are too verbose.
+  # (optional) set the individual log levels per logger name, for example
+  # mute some loggers that are too verbose.
   loggers:
     - name: urllib3
       level: warning
@@ -82,7 +81,6 @@ logging:
 
 # Additional debug flags
 debug:
-
   # Set to `true` to enable debug mode for the socketio server
   socketio: false
 
@@ -174,3 +172,11 @@ password_policy:
   #  - a 2FA reset request via email
   # (these events have an independent timer). Default is 60.
   between_user_emails_minutes: 60
+
+# set up with which origins the server should allow CORS requests. The default
+# is to allow all origins. If you want to restrict this, you can specify a list
+# of origins here. Below are examples to allow requests from the Cotopaxi UI, and
+#  port 3456 on localhost
+cors_allowed_origins:
+  - https://portal.cotopaxi.vantage6.ai
+  - http://localhost:3456

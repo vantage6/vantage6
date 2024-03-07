@@ -475,7 +475,7 @@ class DockerTaskManager(DockerBaseManager):
             environment_variables["https_proxy"] = self.proxy.address
 
             no_proxy = []
-            if self.__vpn_manager:
+            if self.__vpn_manager.subnet:
                 # Computing all ips in the vpn network is not feasible as the
                 # no_proxy environment variable will be too long for the
                 # container to start. So we only add the net + mask. For some
