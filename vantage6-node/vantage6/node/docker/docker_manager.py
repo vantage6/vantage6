@@ -310,14 +310,13 @@ class DockerManager(DockerBaseManager):
             found = False
             for algorithm in allowed_algorithms:
                 if not self._is_regex_pattern(algorithm):
-                    # turn regular strings into regex to prevent that something other
-                    # than the exact string is allowed (without this, e.g. putting
-                    # "some-algo" in the config would allow "some-algo-2" as well, or
-                    # any string as long as some-algo is in there).
-                    algorithm = self._convert_simple_string_to_regex(algorithm)
-                expr_ = re.compile(algorithm)
-                if expr_.match(docker_image_name):
-                    found = True
+                    # check if string matches exactly
+                    if algorithm == docker_image_name:
+                        found = True
+                else:
+                    expr_ = re.compile(algorithm)
+                    if expr_.match(docker_image_name):
+                        found = True
 
             if not found:
                 self.log.warn(
@@ -346,35 +345,17 @@ class DockerManager(DockerBaseManager):
         return True
 
     @staticmethod
-    def _convert_simple_string_to_regex(pattern: str) -> str:
-        """
-        Convert a normal string to a regex pattern. This is done by marking beginning
-        and end and escaping the dot.
-
-        Parameters
-        ----------
-        pattern: str
-            String to be converted
-
-        Returns
-        -------
-        str
-            Converted string
-        """
-        pattern = pattern.replace(".", "\\.")
-        return rf"^{pattern}$"
-
-    @staticmethod
     def _is_regex_pattern(pattern: str) -> bool:
         """
         Check if a string just a string or if it is a regex pattern. Note that there is
         no failsafe way to do this so we make a best effort.
 
         Note, for instance, that if a user provides the allowed algorithm "some.name",
-        we will interpret this as a regular string and convert it to "^some\.name$".
-        This prevents that "someXname" is allowed as well. The user is thus not able to
-        define a regex pattern with only a dot as special character - however we expect
-        that this use case is extremely rare.
+        we will interpret this as a regular string. This prevents that "someXname" is
+        allowed as well. The user is thus not able to define a regex pattern with only
+        a dot as special character. However we expect that this use case is extremely
+        rare - not doing so is likely to lead to regex's that lead to unintended
+        algorithms passing the filter criteria.
 
         Parameters
         ----------
