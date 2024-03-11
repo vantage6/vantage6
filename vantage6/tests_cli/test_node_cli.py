@@ -260,7 +260,9 @@ class NodeCLITest(unittest.TestCase):
 
         result = runner.invoke(cli_node_stop, ["--name", "iknl"])
 
-        self.assertEqual(result.output, "[info ] - Stopped the iknl Node.\n")
+        self.assertEqual(
+            result.output, "[info ] - Stopped the vantage6-iknl-user Node.\n"
+        )
 
         self.assertEqual(result.exit_code, 0)
 
