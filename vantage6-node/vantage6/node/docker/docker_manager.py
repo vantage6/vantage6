@@ -142,7 +142,7 @@ class DockerManager(DockerBaseManager):
         self.failed_tasks: list[DockerTaskManager] = []
 
         # before a task is executed it gets exposed to these policies
-        self._policies = config.get("policies", {})
+        self._policies = self._setup_policies(config)
 
         # node name is used to identify algorithm containers belonging
         # to this node. This is required as multiple nodes may run at
@@ -233,6 +233,30 @@ class DockerManager(DockerBaseManager):
             device_requests.append(device)
         self.algorithm_device_requests = device_requests
 
+    def _setup_policies(self, config: dict) -> dict:
+        """
+        Set up policies for the node.
+
+        Parameters
+        ----------
+        config: dict
+            Configuration dictionary
+
+        Returns
+        -------
+        dict
+            Dictionary with the policies
+        """
+        policies = config.get("policies", {})
+        if not policies or not policies.get("allowed_algorithms"):
+            self.log.warning(
+                "No policies on allowed algorithms have been set for this node!"
+            )
+            self.log.warning(
+                "This means that all algorithms are allowed to run on this node."
+            )
+        return policies
+
     def create_volume(self, volume_name: str) -> None:
         """
         Create a temporary volume for a single run.
@@ -288,10 +312,15 @@ class DockerManager(DockerBaseManager):
             if isinstance(allowed_algorithms, str):
                 allowed_algorithms = [allowed_algorithms]
             found = False
-            for regex_expr in allowed_algorithms:
-                expr_ = re.compile(regex_expr)
-                if expr_.match(docker_image_name):
-                    found = True
+            for algorithm in allowed_algorithms:
+                if not self._is_regex_pattern(algorithm):
+                    # check if string matches exactly
+                    if algorithm == docker_image_name:
+                        found = True
+                else:
+                    expr_ = re.compile(algorithm)
+                    if expr_.match(docker_image_name):
+                        found = True
 
             if not found:
                 self.log.warn(
@@ -317,11 +346,52 @@ class DockerManager(DockerBaseManager):
                 )
                 return False
 
-        # if no limits are declared, log warning
-        if not self._policies:
-            self.log.warn("All docker images are allowed on this Node!")
-
         return True
+
+    @staticmethod
+    def _is_regex_pattern(pattern: str) -> bool:
+        """
+        Check if a string just a string or if it is a regex pattern. Note that there is
+        no failsafe way to do this so we make a best effort.
+
+        Note, for instance, that if a user provides the allowed algorithm "some.name",
+        we will interpret this as a regular string. This prevents that "someXname" is
+        allowed as well. The user is thus not able to define a regex pattern with only
+        a dot as special character. However we expect that this use case is extremely
+        rare - not doing so is likely to lead to regex's that lead to unintended
+        algorithms passing the filter criteria.
+
+        Parameters
+        ----------
+        pattern: str
+            String to be checked
+
+        Returns
+        -------
+        bool
+            Returns False if the pattern is a normal string, True if it is a regex.
+        """
+        # Inspired by
+        # https://github.com/corydolphin/flask-cors/blob/main/flask_cors/core.py#L254.
+        common_regex_chars = [
+            "*",
+            "\\",
+            "?",
+            "$",
+            "^",
+            "[",
+            "]",
+            "(",
+            ")",
+            "{",
+            "}",
+            "|",
+            "+",
+            "\.",
+        ]
+        # Use common characters used in regular expressions as a proxy
+        # for if this string is in fact a regex.
+        return any((c in pattern for c in common_regex_chars))
 
     def is_running(self, run_id: int) -> bool:
         """

@@ -6,7 +6,7 @@ from vantage6.common import generate_apikey
 from vantage6.common.globals import DATABASE_TYPES, InstanceType
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.context import AppContext
-from vantage6.common import error, warning
+from vantage6.common import error, warning, info
 from vantage6.cli.context import select_context_class
 from vantage6.cli.configuration_manager import (
     NodeConfigurationManager,
@@ -95,6 +95,39 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
             message="Subnet of the VPN server you want to connect to:",
             default="10.76.0.0/16",
         ).ask()
+
+    is_policies = q.confirm(
+        "Do you want to add limit the algorithms allowed to run on your node? This "
+        "should always be done for production scenarios.",
+        default=True,
+    ).ask()
+    if is_policies:
+        allowed_algorithms = []
+        info("Below you can add algorithms that are allowed to run on your node.")
+        info(
+            "You can use regular expressions to match multiple algorithms, or you can "
+            "use strings to provide one algorithm at a time."
+        )
+        info("Examples:")
+        # pylint: disable=W1401
+        # flake8: noqa: W605
+        info("^harbor2\.vantage6\.ai/demo/average$    Allow the demo average algorithm")
+        info(
+            "^harbor2\.vantage6\.ai/algorithms/.*   Allow all algorithms from "
+            "harbor2.vantage6.ai/algorithms"
+        )
+        info(
+            "^harbor2\.vantage6\.ai/demo/average:@sha256:82becede...$    Allow a "
+            "specific hash of average algorithm"
+        )
+        while True:
+            algo = q.text(message="Enter your algorithm expression:").ask()
+            allowed_algorithms.append(algo)
+            if not q.confirm(
+                "Do you want to add another algorithm expression?", default=True
+            ).ask():
+                break
+        config["policies"] = {"allowed_algorithms": allowed_algorithms}
 
     config["logging"] = {
         "level": res,

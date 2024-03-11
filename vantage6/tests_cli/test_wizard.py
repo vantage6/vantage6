@@ -38,6 +38,9 @@ class WizardTest(unittest.TestCase):
                 True,  # add a database
                 False,  # don't enable two-factor authentication
                 True,  # add VPN server
+                True,  # add algorithm policies
+                "some-image",  # algorithm image to whitelist
+                False,  # don't add another algorithm image
                 False,  # don't abort if no server connection is made to pull
                 # collaboration settings
                 True,  # Enable encryption
@@ -58,6 +61,12 @@ class WizardTest(unittest.TestCase):
         ]
         for key in keys:
             self.assertIn(key, config)
+        nested_keys = [["policies", "allowed_algorithms"]]
+        for nesting in nested_keys:
+            current_config = config
+            for key in nesting:
+                self.assertIn(key, current_config)
+                current_config = current_config[key]
 
     def test_server_wizard(self):
         with patch(f"{module_path}.q") as q:
