@@ -518,10 +518,9 @@ def delete_volume_if_exists(client: docker.DockerClient, volume_name: Volume) ->
     volume: Volume
         Volume to delete
     """
-    # get docker volume from name
-    volume = client.volumes.get(volume_name)
-    if volume:
-        try:
+    try:
+        volume = client.volumes.get(volume_name)
+        if volume:
             volume.remove()
-        except (docker.errors.NotFound, docker.errors.APIError):
-            log.warning("Could not delete volume %s", volume.name)
+    except (docker.errors.NotFound, docker.errors.APIError):
+        log.warning("Could not delete volume %s", volume.name)
