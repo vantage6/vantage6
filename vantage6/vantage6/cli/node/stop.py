@@ -77,7 +77,7 @@ def cli_node_stop(
 
         if container_name in running_node_names:
             _stop_node(client, container_name, force, system_folders)
-            info(f"Stopped the {Fore.GREEN}{name}{Style.RESET_ALL} Node.")
+            info(f"Stopped the {Fore.GREEN}{container_name}{Style.RESET_ALL} Node.")
         else:
             error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running?!")
 
