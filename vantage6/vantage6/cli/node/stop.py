@@ -1,3 +1,4 @@
+import time
 import click
 import questionary as q
 import docker
@@ -104,17 +105,21 @@ def _stop_node(
     # itself, if not then it will be killed
     stop_container(container, force)
 
-    # Also delete volumes. This is done here rather than within the node container when
+    # Sleep for 1 second. Not doing so often causes errors that docker volumes deleted
+    # below are 'still in use' when you try to remove them a few ms after the container
+    # has been removed
+    time.sleep(1)
+
+    # Delete volumes. This is done here rather than within the node container when
     # it is stopped, because at that point the volumes are still in use. Here, the node
     # has already been stopped
     scope = "system" if system_folders else "user"
     config_name = get_server_config_name(container_name, scope)
     ctx = NodeContext(config_name, system_folders, print_log_header=False)
-    docker_client = docker.from_env()
     for volume in [
         ctx.docker_volume_name,
         ctx.docker_squid_volume_name,
         ctx.docker_ssh_volume_name,
         ctx.docker_vpn_volume_name,
     ]:
-        delete_volume_if_exists(docker_client, volume)
+        delete_volume_if_exists(client, volume)
