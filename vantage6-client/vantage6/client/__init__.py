@@ -1601,18 +1601,23 @@ class UserClient(ClientBase):
                     }
                 )
 
+            params = {
+                "name": name,
+                "image": image,
+                "description": description,
+                "organizations": organization_json_list,
+                "databases": databases,
+            }
+
+            if collaboration:
+                params["collaboration_id"] = collaboration
+            if study:
+                params["study_id"] = study
+
             return self.parent.request(
                 "task",
                 method="post",
-                json={
-                    "name": name,
-                    "image": image,
-                    "collaboration_id": collaboration,
-                    "study_id": study,
-                    "description": description,
-                    "organizations": organization_json_list,
-                    "databases": databases,
-                },
+                json=params,
             )
 
         @staticmethod
