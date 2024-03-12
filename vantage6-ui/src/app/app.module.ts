@@ -1,169 +1,216 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { FormsModule } from '@angular/forms';
-import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatCardModule } from '@angular/material/card';
-import { MatRadioModule } from '@angular/material/radio';
-import { MatTableModule } from '@angular/material/table';
-import { MatSortModule } from '@angular/material/sort';
-import { MatListModule } from '@angular/material/list';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatExpansionModule } from '@angular/material/expansion';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { CommonModule } from '@angular/common';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { ReactiveFormsModule } from '@angular/forms';
 import { QRCodeModule } from 'angularx-qrcode';
+
+import { MAT_DATE_LOCALE } from '@angular/material/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatListModule } from '@angular/material/list';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatStepperModule } from '@angular/material/stepper';
+import { MatTableModule } from '@angular/material/table';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatDateFnsModule } from '@angular/material-date-fns-adapter';
+import { enCA } from 'date-fns/locale';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { LoginComponent } from './components/login/login/login.component';
-import { HomeComponent } from './components/home/home.component';
-import {
-  AccessGuard,
-  AccessGuardByOrgId,
-  OrgAccessGuard,
-} from './auth/access-guard.guard';
-import { NavbarComponent } from './components/navbar/navbar.component';
-import { OrganizationComponent } from './components/organization/organization.component';
-import { AuthInterceptor } from './auth/auth.interceptor';
-import { PermissionTableComponent } from './components/permission-table/permission-table.component';
-import { UserEditComponent } from './components/edit/user-edit/user-edit.component';
-import { UserViewComponent } from './components/view/user-view/user-view.component';
-import { RoleViewComponent } from './components/view/role-view/role-view.component';
-import { RoleEditComponent } from './components/edit/role-edit/role-edit.component';
-import { ModalDeleteComponent } from './components/modal/modal-delete/modal-delete.component';
-import { ModalMessageComponent } from './components/modal/modal-message/modal-message.component';
-import { OrganizationEditComponent } from './components/edit/organization-edit/organization-edit.component';
-import { CollaborationViewComponent } from './components/view/collaboration-view/collaboration-view.component';
-import { NodeViewComponent } from './components/view/node-view/node-view.component';
-import { ModalEditComponent } from './components/modal/modal-edit/modal-edit.component';
-import { CollaborationEditComponent } from './components/edit/collaboration-edit/collaboration-edit.component';
-import { RoleTableComponent } from './components/table/role-table/role-table.component';
-import { CdkDetailRowDirective } from './components/table/base-table/cdk-detail-row-directive';
-import { UserTableComponent } from './components/table/user-table/user-table.component';
-import { NodeTableComponent } from './components/table/node-table/node-table.component';
-import { CollaborationViewSingleComponent } from './components/view-single/collaboration-view-single/collaboration-view-single.component';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { TaskTableComponent } from './components/table/task-table/task-table.component';
-import { TaskViewComponent } from './components/view/task-view/task-view.component';
-import { TaskViewSingleComponent } from './components/view-single/task-view-single/task-view-single.component';
-import { RunViewComponent } from './components/view/run-view/run-view.component';
-import { ProfileComponent } from './components/profile/profile.component';
-import { CollaborationTableComponent } from './components/table/collaboration-table/collaboration-table.component';
-import { RoleViewSingleComponent } from './components/view-single/role-view-single/role-view-single.component';
-import { UserViewSingleComponent } from './components/view-single/user-view-single/user-view-single.component';
-import { NodeSingleViewComponent } from './components/view-single/node-single-view/node-single-view.component';
-import { ModalLoadingComponent } from './components/modal/modal-loading/modal-loading.component';
-import { PasswordLostComponent } from './components/login/password-lost/password-lost.component';
-import { PasswordRecoverComponent } from './components/login/password-recover/password-recover.component';
-import { LoginPageComponent } from './components/login/login-page/login-page.component';
-import { ChangePasswordComponent } from './components/edit/user-edit/change-password/change-password.component';
-import { SocketioConnectService } from './services/common/socketio-connect.service';
-import { ModalKillComponent } from './components/modal/modal-kill/modal-kill.component';
-import { SocketMessagesComponent } from './components/table/socket-messages/socket-messages.component';
-import { SetupMfaComponent } from './components/login/setup-mfa/setup-mfa.component';
-import { MfaCodeComponent } from './components/login/mfa-code/mfa-code.component';
-import { MfaLostComponent } from './components/login/mfa-lost/mfa-lost.component';
-import { MfaRecoverComponent } from './components/login/mfa-recover/mfa-recover.component';
-import { TaskCreateComponent } from './components/edit/task-create/task-create.component';
-import { ModalCreateComponent } from './components/modal/modal-create/modal-create.component';
+import { LoginComponent } from './pages/auth/login/login.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { LayoutLoginComponent } from './layouts/layout-login/layout-login.component';
+import { HomeComponent } from './pages/home/home.component';
+import { LayoutDefaultComponent } from './layouts/layout-default/layout-default.component';
+import { OrganizationReadComponent } from './pages/organization/read/organization-read.component';
+import { TaskCreateComponent } from './pages/task/create/task-create.component';
+import { StartComponent } from './pages/start/start.component';
+import { TaskListComponent } from './pages/task/list/task-list.component';
+import { TaskReadComponent } from './pages/task/read/task-read.component';
+import { PageHeaderComponent } from './components/page-header/page-header.component';
+import { ChipComponent } from './components/chip/chip.component';
+import { AlertComponent } from './components/alerts/alert/alert.component';
+import { StatusInfoComponent } from './components/status-info/status-info.component';
+import { LogDialogComponent } from './components/dialogs/log/log-dialog.component';
+import { ConfirmDialogComponent } from './components/dialogs/confirm/confirm-dialog.component';
+import { VisualizeResultComponent } from './components/visualize-result/visualize-result.component';
+import { VisualizeTableComponent } from './components/visualize-table/visualize-table.component';
+import { TableComponent } from './components/table/table.component';
+import { CollaborationReadComponent } from './pages/collaboration/read/collaboration-read.component';
+import { CollaborationListComponent } from './pages/collaboration/list/collaboration-list.component';
+import { UserListComponent } from './pages/user/list/user-list.component';
+import { UserReadComponent } from './pages/user/read/user-read.component';
+import { OrganizationCreateComponent } from './pages/organization/create/organization-create.component';
+import { CollaborationCreateComponent } from './pages/collaboration/create/collaboration-create.component';
+import { UserCreateComponent } from './pages/user/create/user-create.component';
+import { OrganizationListComponent } from './pages/organization/list/organization-list.component';
+import { NodeReadComponent } from './pages/node/read/node-read.component';
+import { OrganizationEditComponent } from './pages/organization/edit/organization-edit.component';
+import { OrganizationFormComponent } from './components/forms/organization-form/organization-form.component';
+import { CollaborationFormComponent } from './components/forms/collaboration-form/collaboration-form.component';
+import { CollaborationEditComponent } from './pages/collaboration/edit/collaboration-edit.component';
+import { UserFormComponent } from './components/forms/user-form/user-form.component';
+import { UserEditComponent } from './pages/user/edit/user-edit.component';
+import { VisualizeHistogramComponent } from './components/visualize-histogram/visualize-histogram.component';
+import { PreprocessingStepComponent } from './pages/task/create/steps/preprocessing-step/preprocessing-step.component';
+import { ChangePasswordComponent } from './pages/auth/change-password/change-password.component';
+import { MessageDialogComponent } from './components/dialogs/message-dialog/message-dialog.component';
+import { FilterStepComponent } from './pages/task/create/steps/filter-step/filter-step.component';
+import { NumberOnlyDirective } from './directives/numberOnly.directive';
+import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
+import { TemplateTaskCreateComponent } from './pages/template-task/create/template-task-create.component';
+import { DatabaseStepComponent } from './pages/task/create/steps/database-step/database-step.component';
+import { RoleListComponent } from './pages/role/list/role-list.component';
+import { RoleReadComponent } from './pages/role/read/role-read.component';
+import { RoleCreateComponent } from './pages/role/create/role-create.component';
+import { PermissionsMatrixComponent } from './components/permissions-matrix/permissions-matrix.component';
+import { RoleFormComponent } from './components/role-form/role-form.component';
+import { OrderByPipe } from './pipes/order-by.pipe';
+import { SetupMfaComponent } from './pages/auth/setup-mfa/setup-mfa.component';
+import { MfaCodeComponent } from './pages/auth/mfa-code/mfa-code.component';
+import { MfaRecoverComponent } from './pages/auth/mfa-recover/mfa-recover.component';
+import { MfaLostComponent } from './pages/auth/mfa-lost/mfa-lost.component';
+import { AlertWithButtonComponent } from './components/alerts/alert-with-button/alert-with-button.component';
+import { PasswordLostComponent } from './pages/auth/password-lost/password-lost.component';
+import { PasswordRecoverComponent } from './pages/auth/password-recover/password-recover.component';
+import { RoleSubmitButtonsComponent } from './components/role-submit-buttons/role-submit-buttons.component';
+import { AddAlgoStoreComponent } from './pages/collaboration/add-algo-store/add-algo-store.component';
+import { AlgorithmStoreFormComponent } from './components/forms/algorithm-store-form/algorithm-store-form.component';
+import { StudyReadComponent } from './pages/collaboration/study/read/study-read.component';
+import { StudyCreateComponent } from './pages/collaboration/study/create/study-create.component';
+import { StudyFormComponent } from './components/forms/study-form/study-form.component';
+import { StudyEditComponent } from './pages/collaboration/study/edit/study-edit.component';
+
+export function HttpLoaderFactory(http: HttpClient) {
+  return new TranslateHttpLoader(http, './assets/localizations/');
+}
 
 @NgModule({
   declarations: [
     AppComponent,
+    LayoutLoginComponent,
     LoginComponent,
     HomeComponent,
-    NavbarComponent,
-    OrganizationComponent,
-    PermissionTableComponent,
-    UserEditComponent,
-    UserViewComponent,
-    RoleViewComponent,
-    RoleEditComponent,
-    ModalDeleteComponent,
-    ModalMessageComponent,
+    LayoutDefaultComponent,
+    OrganizationListComponent,
+    OrganizationCreateComponent,
+    OrganizationReadComponent,
+    TaskCreateComponent,
+    StartComponent,
+    TaskListComponent,
+    TaskReadComponent,
+    PageHeaderComponent,
+    ChipComponent,
+    AlertComponent,
+    StatusInfoComponent,
+    LogDialogComponent,
+    ConfirmDialogComponent,
+    VisualizeResultComponent,
+    VisualizeTableComponent,
+    TableComponent,
+    CollaborationReadComponent,
+    CollaborationListComponent,
+    UserListComponent,
+    UserReadComponent,
+    CollaborationCreateComponent,
+    UserCreateComponent,
+    NodeReadComponent,
     OrganizationEditComponent,
-    CollaborationViewComponent,
-    NodeViewComponent,
-    ModalEditComponent,
+    OrganizationFormComponent,
+    CollaborationFormComponent,
     CollaborationEditComponent,
-    RoleTableComponent,
-    CdkDetailRowDirective,
-    UserTableComponent,
-    NodeTableComponent,
-    CollaborationViewSingleComponent,
-    TaskTableComponent,
-    TaskViewComponent,
-    TaskViewSingleComponent,
-    RunViewComponent,
-    ProfileComponent,
-    CollaborationTableComponent,
-    RoleViewSingleComponent,
-    UserViewSingleComponent,
-    NodeSingleViewComponent,
-    ModalLoadingComponent,
-    PasswordLostComponent,
-    PasswordRecoverComponent,
-    LoginPageComponent,
+    UserFormComponent,
+    UserEditComponent,
+    VisualizeHistogramComponent,
+    PreprocessingStepComponent,
     ChangePasswordComponent,
-    ModalKillComponent,
-    SocketMessagesComponent,
+    MessageDialogComponent,
+    FilterStepComponent,
+    NumberOnlyDirective,
+    BreadcrumbsComponent,
+    TemplateTaskCreateComponent,
+    DatabaseStepComponent,
+    RoleListComponent,
+    RoleReadComponent,
+    PermissionsMatrixComponent,
+    RoleCreateComponent,
+    RoleFormComponent,
+    OrderByPipe,
     SetupMfaComponent,
     MfaCodeComponent,
-    MfaLostComponent,
     MfaRecoverComponent,
-    TaskCreateComponent,
-    ModalCreateComponent,
+    MfaLostComponent,
+    AlertWithButtonComponent,
+    PasswordLostComponent,
+    PasswordRecoverComponent,
+    RoleSubmitButtonsComponent,
+    AddAlgoStoreComponent,
+    AlgorithmStoreFormComponent,
+    StudyReadComponent,
+    StudyCreateComponent,
+    StudyFormComponent,
+    StudyEditComponent
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule,
-    FormsModule,
-    HttpClientModule,
-    NoopAnimationsModule,
     BrowserAnimationsModule,
-    MatToolbarModule,
-    MatSidenavModule,
+    AppRoutingModule,
+    HttpClientModule,
+    ReactiveFormsModule,
+    TranslateModule.forRoot({
+      loader: {
+        provide: TranslateLoader,
+        useFactory: HttpLoaderFactory,
+        deps: [HttpClient]
+      },
+      defaultLanguage: 'en'
+    }),
+    MatDateFnsModule,
     MatButtonModule,
-    MatIconModule,
-    MatDividerModule,
     MatCardModule,
-    MatExpansionModule,
-    MatRadioModule,
     MatCheckboxModule,
-    MatTableModule,
-    MatPaginatorModule,
-    MatSortModule,
+    MatDatepickerModule,
+    MatDialogModule,
+    MatExpansionModule,
     MatFormFieldModule,
+    MatIconModule,
     MatInputModule,
-    MatProgressSpinnerModule,
-    MatSnackBarModule,
     MatListModule,
-    CommonModule,
-    NgbModule,
-    QRCodeModule,
+    MatMenuModule,
+    MatPaginatorModule,
+    MatProgressSpinnerModule,
+    MatSelectModule,
+    MatSidenavModule,
+    MatSlideToggleModule,
+    MatSnackBarModule,
+    MatStepperModule,
+    MatTabsModule,
+    MatTableModule,
+    MatToolbarModule,
+    QRCodeModule
   ],
   providers: [
-    AccessGuard,
-    OrgAccessGuard,
-    AccessGuardByOrgId,
-    SocketioConnectService,
     {
-      provide: HTTP_INTERCEPTORS,
-      useClass: AuthInterceptor,
-      multi: true,
-    },
+      provide: MAT_DATE_LOCALE,
+      useValue: enCA
+    }
   ],
-  bootstrap: [AppComponent],
+  bootstrap: [AppComponent]
 })
 export class AppModule {}

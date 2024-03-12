@@ -1,0 +1,64 @@
+<mat-accordion>
+  <mat-expansion-panel hideToggle *ngFor="let formGroup of formGroups; let i = index">
+    <mat-expansion-panel-header>
+      <mat-panel-title>{{ "task.filter" | translate }} {{ i + 1 }}</mat-panel-title>
+      <mat-panel-description *ngIf="getSelectedFilter(i)?.function">{{ getSelectedFilter(i)?.function }}</mat-panel-description>
+      <button mat-icon-button color="warn" (click)="deleteFilter(i)">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </mat-expansion-panel-header>
+    <form class="form" [formGroup]="formGroup">
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ "task.filter-function" | translate }}</mat-label>
+        <mat-select formControlName="filterID" (selectionChange)="handleFilterChange($event, i)">
+          <mat-option *ngFor="let filter of filters" [value]="filter.function">
+            {{ filter.function }}
+          </mat-option>
+        </mat-select>
+        <mat-hint *ngIf="getSelectedFilter(i)?.description">{{ getSelectedFilter(i)?.description }}</mat-hint>
+      </mat-form-field>
+      <ng-container *ngFor="let parameter of getSelectedFilter(i)?.parameters">
+        <mat-form-field
+          *ngIf="
+            parameter.type === filterParameterType.String ||
+            parameter.type === filterParameterType.Integer ||
+            parameter.type === filterParameterType.Float
+          "
+          subscriptSizing="dynamic"
+        >
+          <mat-label>{{ parameter.name }}</mat-label>
+          <input
+            matInput
+            appNumberOnly
+            [type]="parameter.type === filterParameterType.Integer || parameter.type === filterParameterType.Float ? 'number' : 'text'"
+            [formControlName]="parameter.name"
+          />
+          <mat-hint *ngIf="parameter.description">{{ parameter.description }}</mat-hint>
+        </mat-form-field>
+        <mat-form-field *ngIf="parameter.type === filterParameterType.Column" subscriptSizing="dynamic">
+          <mat-label>{{ parameter.name }}</mat-label>
+          <mat-select [formControlName]="parameter.name">
+            <mat-option *ngFor="let column of columns" [value]="column">{{ column }}</mat-option>
+          </mat-select>
+          <mat-hint *ngIf="parameter.description">{{ parameter.description }}</mat-hint>
+        </mat-form-field>
+        <mat-form-field *ngIf="parameter.type === filterParameterType.Date">
+          <mat-label>{{ parameter.name }}</mat-label>
+          <input matInput [matDatepicker]="picker" [formControlName]="parameter.name" />
+          <mat-hint *ngIf="parameter.description">{{ parameter.description }}</mat-hint>
+          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+        <div class="checkbox-form-field" *ngIf="parameter.type === filterParameterType.Boolean">
+          <mat-checkbox [formControlName]="parameter.name">
+            {{ parameter.name }}
+          </mat-checkbox>
+          <mat-hint *ngIf="parameter.description">{{ parameter.description }}</mat-hint>
+        </div>
+      </ng-container>
+    </form>
+  </mat-expansion-panel>
+</mat-accordion>
+<button class="add-button" mat-flat-button color="primary" (click)="addFilter()">
+  {{ "task-create.step-filter.actions.add-filter" | translate }}
+</button>

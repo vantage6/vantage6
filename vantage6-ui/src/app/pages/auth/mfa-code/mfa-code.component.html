@@ -1,0 +1,18 @@
+<mat-card class="login-card">
+  <mat-card-header>
+    <mat-card-title>{{ "mfa.enter.title" | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <form class="form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ "mfa.enter.code" | translate }}</mat-label>
+        <input matInput type="text" formControlName="mfaCode" />
+      </mat-form-field>
+      <button mat-flat-button type="submit" color="primary" [disabled]="!loginForm.valid">Login</button>
+      <button mat-flat-button class="right-button" color="warn" [routerLink]="[routes.mfaLost]">
+        {{ "mfa.lost.title" | translate }}
+      </button>
+    </form>
+    <app-alert class="top-spacer" *ngIf="this.loginErrorService.hasError()" label="{{ this.loginErrorService.getError() }}"></app-alert>
+  </mat-card-content>
+</mat-card>

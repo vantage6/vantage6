@@ -1,395 +1,328 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-
-import { OpsType, ResType, ScopeType } from './shared/enum';
-import {
-  AccessGuard,
-  AccessGuardByOrgId,
-  OrgAccessGuard,
-} from 'src/app/auth/access-guard.guard';
-
-import { HomeComponent } from './components/home/home.component';
-import { OrganizationComponent } from './components/organization/organization.component';
-import { UserEditComponent } from './components/edit/user-edit/user-edit.component';
-import { RoleEditComponent } from './components/edit/role-edit/role-edit.component';
-import { OrganizationEditComponent } from './components/edit/organization-edit/organization-edit.component';
-import { CollaborationEditComponent } from './components/edit/collaboration-edit/collaboration-edit.component';
-import { RoleTableComponent } from './components/table/role-table/role-table.component';
-import { UserTableComponent } from './components/table/user-table/user-table.component';
-import { NodeTableComponent } from './components/table/node-table/node-table.component';
-import { CollaborationViewSingleComponent } from './components/view-single/collaboration-view-single/collaboration-view-single.component';
-import { TaskTableComponent } from './components/table/task-table/task-table.component';
-import { TaskViewSingleComponent } from './components/view-single/task-view-single/task-view-single.component';
-import { ProfileComponent } from './components/profile/profile.component';
-import { CollaborationTableComponent } from './components/table/collaboration-table/collaboration-table.component';
-import { RoleViewSingleComponent } from './components/view-single/role-view-single/role-view-single.component';
-import { UserViewSingleComponent } from './components/view-single/user-view-single/user-view-single.component';
-import { NodeSingleViewComponent } from './components/view-single/node-single-view/node-single-view.component';
-import { LoginPageComponent } from './components/login/login-page/login-page.component';
-import { TaskCreateComponent } from './components/edit/task-create/task-create.component';
-import { SocketMessagesComponent } from './components/table/socket-messages/socket-messages.component';
+import { routePaths, routerConfig } from './routes';
+import { LoginComponent } from './pages/auth/login/login.component';
+import { LayoutLoginComponent } from './layouts/layout-login/layout-login.component';
+import { LayoutDefaultComponent } from './layouts/layout-default/layout-default.component';
+import { HomeComponent } from './pages/home/home.component';
+import { authenticationGuard } from './guards/authentication.guard';
+import { OrganizationReadComponent } from './pages/organization/read/organization-read.component';
+import { TaskCreateComponent } from './pages/task/create/task-create.component';
+import { StartComponent } from './pages/start/start.component';
+import { TaskListComponent } from './pages/task/list/task-list.component';
+import { TaskReadComponent } from './pages/task/read/task-read.component';
+import { CollaborationReadComponent } from './pages/collaboration/read/collaboration-read.component';
+import { CollaborationListComponent } from './pages/collaboration/list/collaboration-list.component';
+import { UserListComponent } from './pages/user/list/user-list.component';
+import { UserReadComponent } from './pages/user/read/user-read.component';
+import { OrganizationCreateComponent } from './pages/organization/create/organization-create.component';
+import { CollaborationCreateComponent } from './pages/collaboration/create/collaboration-create.component';
+import { UserCreateComponent } from './pages/user/create/user-create.component';
+import { OrganizationListComponent } from './pages/organization/list/organization-list.component';
+import { NodeReadComponent } from './pages/node/read/node-read.component';
+import { OrganizationEditComponent } from './pages/organization/edit/organization-edit.component';
+import { CollaborationEditComponent } from './pages/collaboration/edit/collaboration-edit.component';
+import { UserEditComponent } from './pages/user/edit/user-edit.component';
+import { ChangePasswordComponent } from './pages/auth/change-password/change-password.component';
+import { chosenCollaborationGuard } from './guards/chosenCollaboration.guard';
+import { TemplateTaskCreateComponent } from './pages/template-task/create/template-task-create.component';
+import { RoleListComponent } from './pages/role/list/role-list.component';
+import { RoleReadComponent } from './pages/role/read/role-read.component';
+import { RoleCreateComponent } from './pages/role/create/role-create.component';
+import { SetupMfaComponent } from './pages/auth/setup-mfa/setup-mfa.component';
+import { MfaCodeComponent } from './pages/auth/mfa-code/mfa-code.component';
+import { MfaLostComponent } from './pages/auth/mfa-lost/mfa-lost.component';
+import { MfaRecoverComponent } from './pages/auth/mfa-recover/mfa-recover.component';
+import { PasswordLostComponent } from './pages/auth/password-lost/password-lost.component';
+import { PasswordRecoverComponent } from './pages/auth/password-recover/password-recover.component';
+import { AddAlgoStoreComponent } from './pages/collaboration/add-algo-store/add-algo-store.component';
+import { StudyReadComponent } from './pages/collaboration/study/read/study-read.component';
+import { StudyCreateComponent } from './pages/collaboration/study/create/study-create.component';
+import { StudyEditComponent } from './pages/collaboration/study/edit/study-edit.component';
 
 const routes: Routes = [
   {
-    path: 'login',
-    component: LoginPageComponent,
+    path: 'auth',
+    component: LayoutLoginComponent,
+    children: [
+      {
+        path: routerConfig.login,
+        component: LoginComponent
+      },
+      {
+        path: routerConfig.passwordLost,
+        component: PasswordLostComponent
+      },
+      {
+        path: routerConfig.passwordRecover,
+        component: PasswordRecoverComponent
+      },
+      {
+        path: routerConfig.mfaCode,
+        component: MfaCodeComponent
+      },
+      {
+        path: routerConfig.setupMFA,
+        component: SetupMfaComponent
+      },
+      {
+        path: routerConfig.mfaLost,
+        component: MfaLostComponent
+      },
+      {
+        path: routerConfig.mfaRecover,
+        component: MfaRecoverComponent
+      }
+    ]
   },
   {
-    path: 'password_lost',
-    component: LoginPageComponent,
+    path: '',
+    component: LayoutDefaultComponent,
+    data: { crumb: ['home.title', routePaths.home] },
+    children: [
+      {
+        path: routerConfig.home,
+        component: HomeComponent,
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()]
+      },
+      {
+        path: routerConfig.tasks,
+        component: TaskListComponent,
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        data: {
+          crumbs: [['task-list.title']]
+        }
+      },
+      {
+        path: routerConfig.taskCreate,
+        component: TaskCreateComponent,
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        data: {
+          crumbs: [['task-list.title', routePaths.tasks], ['task-create.title']]
+        }
+      },
+      {
+        path: routerConfig.taskCreateRepeat,
+        component: TaskCreateComponent,
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        data: {
+          crumbs: [['task-list.title', routePaths.tasks], ['task-create.title']]
+        }
+      },
+      {
+        path: routerConfig.task,
+        component: TaskReadComponent,
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        data: {
+          crumbs: [['task-list.title', routePaths.tasks], ['task-read.title']]
+        }
+      },
+      {
+        path: routerConfig.templateTaskCreate,
+        component: TemplateTaskCreateComponent,
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()]
+      }
+    ]
   },
   {
-    path: 'password_recover',
-    component: LoginPageComponent,
+    path: '',
+    component: LayoutDefaultComponent,
+    data: { hideMenu: true },
+    children: [
+      {
+        path: routerConfig.start,
+        component: StartComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
+        path: routerConfig.passwordChange,
+        component: ChangePasswordComponent,
+        canActivate: [authenticationGuard()]
+      }
+    ]
   },
   {
-    path: 'setup_mfa',
-    component: LoginPageComponent,
-  },
-  {
-    path: 'mfa_code',
-    component: LoginPageComponent,
-  },
-  {
-    path: 'mfa_lost',
-    component: LoginPageComponent,
-  },
-  {
-    path: 'mfa_recover',
-    component: LoginPageComponent,
-  },
-  {
-    path: 'home',
-    component: HomeComponent,
-    data: { requiresLogin: true },
-    canActivate: [AccessGuard],
-  },
-  { path: '', redirectTo: '/home', pathMatch: 'full' },
-  {
-    path: 'profile',
-    component: ProfileComponent,
-    data: { requiresLogin: true },
-    canActivate: [AccessGuard],
-  },
-  {
-    path: 'organization/create',
-    component: OrganizationEditComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.CREATE,
-      permissionResource: ResType.ORGANIZATION,
-      permissionScope: ScopeType.GLOBAL,
-    },
-    canActivate: [AccessGuard],
-  },
-  {
-    path: 'organization/:id',
-    component: OrganizationComponent,
-    data: {
-      permissionType: OpsType.VIEW,
-    },
-    canActivate: [OrgAccessGuard],
-  },
-  {
-    path: 'organization/:id/edit',
-    component: OrganizationEditComponent,
-    data: {
-      permissionType: OpsType.EDIT,
-    },
-    canActivate: [OrgAccessGuard],
-  },
-  {
-    path: 'user/create/:org_id',
-    component: UserEditComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.CREATE,
-      permissionResource: ResType.USER,
-    },
-    canActivate: [AccessGuard],
-  },
-  {
-    path: 'user/create',
-    component: UserEditComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.CREATE,
-      permissionResource: ResType.USER,
-      permissionScope: ScopeType.GLOBAL,
-    },
-    canActivate: [AccessGuard],
-  },
-  {
-    // TODO think what happens if a user tries to go to edit a user that they're
-    // not allowed to edit, by directly going to the path? Does it work? Otherwise,
-    // change the accessguard
-    path: 'user/:id/edit',
-    component: UserEditComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.EDIT,
-      permissionResource: ResType.USER,
-    },
-    canActivate: [AccessGuard],
-  },
-  {
-    path: 'role/create/:org_id',
-    component: RoleEditComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.CREATE,
-      permissionResource: ResType.ROLE,
-    },
-    canActivate: [AccessGuard],
-  },
-  {
-    path: 'role/create',
-    component: RoleEditComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.CREATE,
-      permissionResource: ResType.ROLE,
-      permissionScope: ScopeType.GLOBAL,
-    },
-    canActivate: [AccessGuard],
-  },
-  {
-    path: 'role/:id/edit',
-    component: RoleEditComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.EDIT,
-      permissionResource: ResType.ROLE,
-    },
-    canActivate: [AccessGuard],
-  },
-  {
-    path: 'node/:id/view/:org_id',
-    component: NodeSingleViewComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.VIEW,
-      permissionResource: ResType.NODE,
-    },
-    canActivate: [AccessGuardByOrgId],
-  },
-  {
-    path: 'collaboration/create',
-    component: CollaborationEditComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.CREATE,
-      permissionResource: ResType.COLLABORATION,
-      permissionScope: ScopeType.GLOBAL,
-    },
-    canActivate: [AccessGuard],
-  },
-  {
-    path: 'collaboration/:id/edit',
-    component: CollaborationEditComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.EDIT,
-      permissionResource: ResType.COLLABORATION,
-      permissionScope: ScopeType.GLOBAL,
-    },
-    canActivate: [AccessGuard],
-  },
-  {
-    path: 'collaboration/:id/:org_id',
-    component: CollaborationViewSingleComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.VIEW,
-      permissionResource: ResType.COLLABORATION,
-    },
-    canActivate: [AccessGuardByOrgId],
-  },
-  {
-    path: 'roles',
-    component: RoleTableComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.VIEW,
-      permissionResource: ResType.ROLE,
-    },
-    canActivate: [AccessGuard],
-  },
-  {
-    path: 'roles/:org_id',
-    component: RoleTableComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.VIEW,
-      permissionResource: ResType.ROLE,
-    },
-    canActivate: [AccessGuardByOrgId],
-  },
-  {
-    path: 'users',
-    component: UserTableComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.VIEW,
-      permissionResource: ResType.USER,
-    },
-    canActivate: [AccessGuard],
-  },
-  {
-    path: 'users/:org_id',
-    component: UserTableComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.VIEW,
-      permissionResource: ResType.USER,
-    },
-    canActivate: [AccessGuardByOrgId],
-  },
-  {
-    path: 'collaborations',
-    component: CollaborationTableComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.VIEW,
-      permissionResource: ResType.COLLABORATION,
-    },
-    canActivate: [AccessGuard],
-  },
-  {
-    path: 'collaborations/:org_id',
-    component: CollaborationTableComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.VIEW,
-      permissionResource: ResType.COLLABORATION,
-    },
-    canActivate: [AccessGuardByOrgId],
-  },
-  {
-    path: 'nodes',
-    component: NodeTableComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.VIEW,
-      permissionResource: ResType.NODE,
-    },
-    canActivate: [AccessGuard],
-  },
-  {
-    path: 'nodes/org/:org_id',
-    component: NodeTableComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.VIEW,
-      permissionResource: ResType.NODE,
-    },
-    canActivate: [AccessGuardByOrgId],
-  },
-  {
-    path: 'nodes/collab/:collab_id',
-    component: NodeTableComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.VIEW,
-      permissionResource: ResType.NODE,
-      permissionScope: ScopeType.GLOBAL,
-    },
-    canActivate: [AccessGuard],
-  },
-  {
-    path: 'tasks',
-    component: TaskTableComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.VIEW,
-      permissionResource: ResType.TASK,
-    },
-    canActivate: [AccessGuard],
-  },
-  {
-    path: 'tasks/org/:org_id',
-    component: TaskTableComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.VIEW,
-      permissionResource: ResType.TASK,
-    },
-    canActivate: [AccessGuardByOrgId],
-  },
-  {
-    path: 'tasks/collab/:collab_id',
-    component: TaskTableComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.VIEW,
-      permissionResource: ResType.TASK,
-    },
-    canActivate: [AccessGuard],
-  },
-  {
-    path: 'task/view/:id/:org_id',
-    component: TaskViewSingleComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.VIEW,
-      permissionResource: ResType.TASK,
-    },
-    canActivate: [AccessGuardByOrgId],
-  },
-  {
-    path: 'task/create/:org_id',
-    component: TaskCreateComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.CREATE,
-      permissionResource: ResType.TASK,
-    },
-    canActivate: [AccessGuard],
-  },
-  {
-    path: 'task/create/:org_id/repeat/:id',
-    component: TaskCreateComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.CREATE,
-      permissionResource: ResType.TASK,
-    },
-    canActivate: [AccessGuard],
-  },
-  {
-    path: 'role/view/:id/:org_id',
-    component: RoleViewSingleComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.VIEW,
-      permissionResource: ResType.ROLE,
-    },
-    canActivate: [AccessGuardByOrgId],
-  },
-  {
-    path: 'user/view/:id/:org_id',
-    component: UserViewSingleComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.VIEW,
-      permissionResource: ResType.USER,
-    },
-    canActivate: [AccessGuardByOrgId],
-  },
-  {
-    path: 'status-messages',
-    component: SocketMessagesComponent,
-    data: {
-      requiresLogin: true,
-      permissionType: OpsType.RECEIVE,
-      permissionResource: ResType.EVENT,
-    },
-  },
+    path: routerConfig.admin,
+    component: LayoutDefaultComponent,
+    data: { crumb: ['home.title', routePaths.adminHome] },
+    children: [
+      {
+        path: routerConfig.adminHome,
+        component: HomeComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
+        path: routerConfig.organizations,
+        component: OrganizationListComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['organization-list.title']]
+        }
+      },
+      {
+        path: routerConfig.organizationCreate,
+        component: OrganizationCreateComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['organization-list.title', routePaths.organizations], ['organization-create.title']]
+        }
+      },
+      {
+        path: routerConfig.organizationEdit,
+        component: OrganizationEditComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['organization-list.title', routePaths.organizations], ['organization-read.title']]
+        }
+      },
+      {
+        path: routerConfig.organization,
+        component: OrganizationReadComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['organization-list.title', routePaths.organizations], ['organization-read.title']]
+        }
+      },
+      {
+        path: routerConfig.collaborations,
+        component: CollaborationListComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['collaboration-list.title']]
+        }
+      },
+      {
+        path: routerConfig.collaborationCreate,
+        component: CollaborationCreateComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-create.title']]
+        }
+      },
+      {
+        path: routerConfig.collaborationEdit,
+        component: CollaborationEditComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-read.title']]
+        }
+      },
+      {
+        path: routerConfig.collaboration,
+        component: CollaborationReadComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-read.title']]
+        }
+      },
+      {
+        path: routerConfig.algorithmStoreAdd,
+        component: AddAlgoStoreComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [
+            ['collaboration-list.title', routePaths.collaborations],
+            // TODO this crumb is not complete: it should include the collaboration for which
+            // the algorithm store is being added, but not sure how to get its ID here
+            // ['collaboration-read.title', Router().url.split('/').pop() || ''],
+            ['algorithm-store-add.title']
+          ]
+        }
+      },
+      {
+        path: routerConfig.roles,
+        component: RoleListComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['role-list.title']]
+        }
+      },
+      {
+        path: routerConfig.roleCreate,
+        component: RoleCreateComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['role-list.title', routePaths.roles], ['role-create.title']]
+        }
+      },
+      {
+        path: routerConfig.role,
+        component: RoleReadComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['role-list.title', routePaths.roles], ['role-read.title']]
+        }
+      },
+      {
+        path: routerConfig.users,
+        component: UserListComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['user-list.title']]
+        }
+      },
+      {
+        path: routerConfig.userCreate,
+        component: UserCreateComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['user-list.title', routePaths.users], ['user-create.title']]
+        }
+      },
+      {
+        path: routerConfig.userEdit,
+        component: UserEditComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['user-list.title', routePaths.users], ['user-read.title']]
+        }
+      },
+      {
+        path: routerConfig.user,
+        component: UserReadComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['user-list.title', routePaths.users], ['user-read.title']]
+        }
+      },
+      {
+        path: routerConfig.nodes,
+        component: NodeReadComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['node-read.title']]
+        }
+      },
+      {
+        path: routerConfig.study,
+        component: StudyReadComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-read.title']]
+        }
+      },
+      {
+        path: routerConfig.studyCreate,
+        component: StudyCreateComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-read.title']]
+        }
+      },
+      {
+        path: routerConfig.studyEdit,
+        component: StudyEditComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-read.title']]
+        }
+      }
+    ]
+  }
 ];
-//TODO add * path with 404 not found page
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule],
+  imports: [RouterModule.forRoot(routes, { bindToComponentInputs: true, useHash: true })],
+  exports: [RouterModule]
 })
 export class AppRoutingModule {}

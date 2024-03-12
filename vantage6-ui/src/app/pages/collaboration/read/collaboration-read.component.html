@@ -1,0 +1,148 @@
+<ng-container *ngIf="!isLoading && collaboration; else loading">
+  <app-page-header [title]="collaboration.name">
+    <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="canDelete || canDelete">
+      <mat-icon>more_vert</mat-icon>
+    </button>
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item *ngIf="canEdit" [routerLink]="[routes.collaborationEdit, id]">
+        <mat-icon>edit</mat-icon>
+        <span>{{ "general.edit" | translate }}</span>
+      </button>
+      <button mat-menu-item *ngIf="canDelete" (click)="handleDelete()">
+        <mat-icon>delete</mat-icon>
+        <span>{{ "general.delete" | translate }}</span>
+      </button>
+    </mat-menu>
+  </app-page-header>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ "collaboration-read.card-details.title" | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="data-list">
+        <div class="data-list__item">
+          <b>{{ "general.id" | translate }}</b>
+          <span>{{ collaboration.id || "-" }}</span>
+        </div>
+        <div class="data-list__item data-list__item--big">
+          <b>{{ "collaboration.name" | translate }}</b>
+          <span>{{ collaboration.name || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "collaboration.encrypted" | translate }}</b>
+          <span>{{ collaboration.encrypted ? ("general.yes" | translate) : ("general.no" | translate) }}</span>
+        </div>
+        <div class="data-list__item data-list__item--full">
+          <b>{{ "collaboration.organizations" | translate }}</b>
+          <span>
+            <div class="chip-container">
+              <app-chip *ngFor="let organization of collaboration.organizations" [label]="organization.name"></app-chip>
+            </div>
+          </span>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ "collaboration-read.card-nodes.title" | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="chip-container">
+        <app-chip
+          *ngFor="let node of collaboration.nodes"
+          label="{{ node.status === nodeStatus.Online ? node.name : node.name + ' (' + ('general.offline' | translate) + ')' }}"
+          [type]="node.status === nodeStatus.Online ? 'success' : 'error'"
+        ></app-chip>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ "collaboration-read.card-algorithm-stores.title" | translate }}</mat-card-title>
+      <button
+        actions
+        mat-flat-button
+        class="right-aligned-button"
+        color="primary"
+        *ngIf="canEdit"
+        [routerLink]="[routes.algorithmStoreAdd, collaboration.id]"
+      >
+        <mat-icon>add</mat-icon>{{ "collaboration-read.card-algorithm-stores.add" | translate }}
+      </button>
+    </mat-card-header>
+    <mat-card-content>
+      <mat-accordion class="card-accordion">
+        <mat-expansion-panel *ngFor="let algo_store of collaboration.algorithm_stores" (opened)="selectAlgoStore(algo_store.id)">
+          <mat-expansion-panel-header>
+            <mat-panel-title>{{ algo_store.name }}</mat-panel-title>
+          </mat-expansion-panel-header>
+          <ng-template matExpansionPanelContent>
+            <mat-spinner *ngIf="!selectedAlgoStore" diameter="48"></mat-spinner>
+            <ng-container *ngIf="selectedAlgoStore">
+              <div class="data-list">
+                <div class="data-list__item">
+                  <b>{{ "general.id" | translate }}</b>
+                  <span>{{ selectedAlgoStore.id || "-" }}</span>
+                </div>
+                <div class="data-list__item">
+                  <ng-container *ngIf="!isEditAlgorithmStore">
+                    <b>{{ "general.name" | translate }}</b>
+                    <span>{{ selectedAlgoStore.name || "-" }}</span>
+                  </ng-container>
+                  <mat-form-field *ngIf="isEditAlgorithmStore" subscriptSizing="dynamic">
+                    <mat-label>{{ "general.name" | translate }}</mat-label>
+                    <input matInput type="text" [formControl]="algoStoreNewName" />
+                  </mat-form-field>
+                </div>
+                <div class="data-list__item">
+                  <b>{{ "collaboration.algorithm-store.url" | translate }}</b>
+                  <span>{{ selectedAlgoStore.url || "-" }}</span>
+                </div>
+              </div>
+            </ng-container>
+            <ng-container *ngIf="canEdit">
+              <div class="algo-store-actions button-container" *ngIf="!isEditAlgorithmStore">
+                <button mat-flat-button color="primary" (click)="handleAlgoStoreEditStart()">
+                  {{ "collaboration.algorithm-store.actions.edit" | translate }}
+                </button>
+                <button mat-flat-button color="warn" (click)="handleAlgoStoreDelete()">
+                  {{ "collaboration.algorithm-store.actions.delete" | translate }}
+                </button>
+              </div>
+              <div class="algo-store-actions button-container" *ngIf="isEditAlgorithmStore">
+                <button mat-flat-button color="primary" (click)="handleAlgoStoreEditSubmit()">{{ "general.submit" | translate }}</button>
+                <button mat-flat-button (click)="handleAlgoStoreEditCancel()">{{ "general.cancel" | translate }}</button>
+              </div>
+            </ng-container>
+          </ng-template>
+        </mat-expansion-panel>
+      </mat-accordion>
+    </mat-card-content>
+  </mat-card>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ "collaboration-read.card-studies.title" | translate }}</mat-card-title>
+      <button
+        actions
+        mat-flat-button
+        class="right-aligned-button"
+        color="primary"
+        *ngIf="canCreateStudy"
+        [routerLink]="[routes.studyCreate, collaboration.id]"
+      >
+        <mat-icon>add</mat-icon>{{ "collaboration-read.card-studies.add" | translate }}
+      </button>
+    </mat-card-header>
+    <mat-card-content>
+      <app-table [data]="studyTable" (rowClick)="handleStudyClick($event)" [isLoading]="isLoading"></app-table>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
+<ng-template #loading>
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-template>

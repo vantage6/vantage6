@@ -1,0 +1,20 @@
+<mat-card class="login-card">
+  <mat-card-header>
+    <mat-card-title>{{ "login.title" | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <form class="form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ "login.username" | translate }}</mat-label>
+        <input matInput type="text" formControlName="username" />
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ "login.password" | translate }}</mat-label>
+        <input matInput type="password" formControlName="password" />
+      </mat-form-field>
+      <button mat-flat-button type="submit" color="primary" [disabled]="!loginForm.valid">Login</button>
+      <button mat-flat-button type="button" [routerLink]="routes.passwordLost">{{ "login.forgot-password" | translate }}</button>
+    </form>
+    <app-alert class="top-spacer" *ngIf="this.loginErrorService.hasError()" label="{{ this.loginErrorService.getError() }}"></app-alert>
+  </mat-card-content>
+</mat-card>

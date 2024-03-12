@@ -1,0 +1,15 @@
+<app-page-header title="{{ 'organization-create.title' | translate }}"></app-page-header>
+<ng-container *ngIf="!isSubmitting; else loading">
+  <mat-card>
+    <mat-card-content>
+      <app-organization-form (submitted)="handleSubmit($event)" (cancelled)="handleCancel()"></app-organization-form>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
+<ng-template #loading>
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-template>

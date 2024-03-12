@@ -42,10 +42,48 @@ jobs:
           if [[ $MAJOR == '3' ]]; then MAJOR_NAME="petronas"; fi
           echo "major_name=${MAJOR_NAME}" >> $GITHUB_OUTPUT
 
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Get branch on which the tag is based
+        id: branchname
+        run: |
+          # get the branch on which the tag is based
+          raw=$(git branch -r --contains ${{ github.ref }})
+          # delete the name of the branch up to and including 'origin/'
+          branch=$(echo $raw | sed 's/.*origin\///')
+          echo "branch=${branch}" >> $GITHUB_OUTPUT
+
+      - name: Checkout branch on which tag was pushed
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ env.branch }}
+          token: ${{ secrets.COMMIT_PAT }}
+
+      - name: Update UI version in package.json
+        env:
+          version: ${{ steps.split.outputs.version }}
+        run: |
+          npm version --no-git-tag-version --allow-same-version $version
+
+      - name: Commit updated version
+        env:
+          version: ${{ steps.split.outputs.version }}
+          branch: ${{ steps.branchname.outputs.branch }}
+        run: |
+          git config --local user.name github-actions
+          git config --local user.email github-actions@github.com
+          git add *
+          git commit -m "Updated the version to ${version}"
+          git push origin HEAD:$branch
     outputs:
       version: ${{ steps.split.outputs.version }}
       stage: ${{ steps.split.outputs.stage }}
       major_name: ${{ steps.split.outputs.major_name }}
+      branch: ${{ steps.branchname.outputs.branch }}
 
   # Build artifact for deployment
   build:
@@ -54,18 +92,17 @@ jobs:
     needs: version
     env:
       version: ${{ needs.version.outputs.version }}
+      branch: ${{ needs.version.outputs.branch }}
 
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Update UI version in package.json
-        run: |
-          npm version --no-git-tag-version --allow-same-version $version
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{env.branch}}
 
       - name: Set up Node.js version
         uses: actions/setup-node@v1
         with:
-          node-version: "16.x"
+          node-version: "20.x"
 
       - name: npm install, build, and test
         run: |
@@ -128,7 +165,9 @@ jobs:
   # TODO this should be moved to a separate workflow so build and deployment are separated
   deploy:
     runs-on: ubuntu-latest
-    needs: build
+    needs: [version, build]
+    env:
+      stage: ${{ needs.version.outputs.stage }}
     environment:
       name: "Production"
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
@@ -143,6 +182,7 @@ jobs:
         run: unzip release.zip
 
       - name: "Deploy to Azure Web App"
+        if: ${{  env.stage == '' }}
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
