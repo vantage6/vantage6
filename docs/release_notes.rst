@@ -48,6 +48,10 @@ Release notes
 
 - **Change**
 
+ - Introducing new package ``vantage6-backend-common`` for code that is shared between
+   the central server and the algorithm store
+   (`Issue#979 <https://github.com/vantage6/vantage6/issues/979>`_,
+   `PR#1037 <https://github.com/vantage6/vantage6/pull/1037>`_).
  - Show the default values for CLI commands when displaying the help text
    (`Issue#1000 <https://github.com/vantage6/vantage6/issues/1000>`_,
    `PR#1070 <https://github.com/vantage6/vantage6/pull/1070>`_).
@@ -56,6 +60,10 @@ Release notes
  - Usernames are now required to be at least three characters long and contain only
    roman letters, numbers, and the characters '_' and '-'
    (`PR#1060 <https://github.com/vantage6/vantage6/pull/1060>`_).
+ - Remove OMOP wrapper since we now have specific connectors to connect to this database
+   type and wrapper was therefore not used
+   (`Issue#1002 <https://github.com/vantage6/vantage6/issues/1002>`_,
+   `PR#1067 <https://github.com/vantage6/vantage6/pull/1067>`_).
  - ``v6 node`` commands no longer require full path when using the ``--config`` option
    (`Issue#870 <https://github.com/vantage6/vantage6/issues/870>`_,
    `PR#1042 <https://github.com/vantage6/vantage6/pull/1042>`_).
