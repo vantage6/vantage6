@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from http import HTTPStatus
 
 import logging
@@ -97,7 +96,7 @@ class ColumnNames(ServicesResources):
                   query:
                     type: string
                     description: The query that is used to obtain the data.
-                      Required for SQL/OMOP/SparQL databases.
+                      Required for SQL and SparQL databases.
 
         responses:
           201:

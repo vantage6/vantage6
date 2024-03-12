@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 from pathlib import Path
 from click.testing import CliRunner
 
-from vantage6.cli.globals import APPNAME
+from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.cli.server.start import cli_server_start
 from vantage6.cli.server.list import cli_server_configuration_list
 from vantage6.cli.server.files import cli_server_files
@@ -18,10 +18,10 @@ class ServerCLITest(unittest.TestCase):
     @patch("vantage6.cli.server.start.NetworkManager")
     @patch("vantage6.cli.server.start.docker.types.Mount")
     @patch("os.makedirs")
-    @patch("vantage6.cli.server.start.pull_if_newer")
-    @patch("vantage6.cli.server.common.ServerContext")
+    @patch("vantage6.cli.common.start.pull_if_newer")
+    @patch("vantage6.cli.common.decorator.get_context")
     @patch("vantage6.cli.server.start.docker.from_env")
-    @patch("vantage6.cli.server.start.check_docker_running", return_value=True)
+    @patch("vantage6.cli.common.start.check_docker_running", return_value=True)
     def test_start(
         self,
         docker_check,
@@ -73,7 +73,7 @@ class ServerCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertIsNone(result.exception)
 
-    @patch("vantage6.cli.server.common.ServerContext")
+    @patch("vantage6.cli.common.decorator.get_context")
     def test_files(self, context):
         """Configuration files without errors."""
 
@@ -92,7 +92,7 @@ class ServerCLITest(unittest.TestCase):
     @patch("vantage6.cli.server.import_.print_log_worker")
     @patch("vantage6.cli.server.import_.click.Path")
     @patch("vantage6.cli.server.import_.check_docker_running", return_value=True)
-    @patch("vantage6.cli.server.common.ServerContext")
+    @patch("vantage6.cli.common.decorator.get_context")
     def test_import(self, context, docker_check, click_path, log, containers):
         """Import entities without errors."""
         click_path.return_value = MagicMock()
@@ -131,7 +131,7 @@ class ServerCLITest(unittest.TestCase):
         """Stop server without errors."""
 
         container1 = MagicMock()
-        container1.name = f"{APPNAME}-iknl-system-server"
+        container1.name = f"{APPNAME}-iknl-system-{InstanceType.SERVER}"
         containers.containers.list.return_value = [container1]
 
         runner = CliRunner()
@@ -145,7 +145,7 @@ class ServerCLITest(unittest.TestCase):
     def test_attach(self, containers, sleep):
         """Attach log to the console without errors."""
         container1 = MagicMock()
-        container1.name = f"{APPNAME}-iknl-system-server"
+        container1.name = f"{APPNAME}-iknl-system-{InstanceType.SERVER}"
         containers.list.return_value = [container1]
 
         sleep.side_effect = KeyboardInterrupt("Boom!")

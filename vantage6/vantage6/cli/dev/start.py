@@ -1,13 +1,14 @@
 import subprocess
 import click
 
-from vantage6.cli.context import ServerContext, NodeContext
-from vantage6.cli.server.common import click_insert_context
+from vantage6.cli.context.server import ServerContext
+from vantage6.cli.context.node import NodeContext
+from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.server.start import cli_server_start
 
 
 @click.command()
-@click_insert_context
+@click_insert_context(type_="server")
 @click.option(
     "--server-image", type=str, default=None, help="Server Docker image to use"
 )

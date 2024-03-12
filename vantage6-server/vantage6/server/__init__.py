@@ -6,7 +6,6 @@ through the API the server hosts. Finally, it also communicates with
 authenticated nodes and users via the socketIO server that is run here.
 """
 
-# -*- coding: utf-8 -*-
 import os
 from gevent import monkey
 
@@ -49,7 +48,7 @@ from pathlib import Path
 from vantage6.common import logger_name
 from vantage6.common.globals import PING_INTERVAL_SECONDS
 from vantage6.server import db
-from vantage6.cli.context import ServerContext
+from vantage6.cli.context.server import ServerContext
 from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.server.resource.common.output_schema import HATEOASModelSchema
 from vantage6.server.permission import RuleNeed, PermissionManager
@@ -631,6 +630,7 @@ class ServerApp:
                     name=role["name"],
                     description=role["description"],
                     rules=role["rules"],
+                    is_default_role=role["is_default_role"],
                 )
                 new_role.save()
 

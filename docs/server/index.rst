@@ -13,6 +13,7 @@ server.
 .. toctree::
     :maxdepth: 3
 
+    introduction
     requirements
     install
     deploy

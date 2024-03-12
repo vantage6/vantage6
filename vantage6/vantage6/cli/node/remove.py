@@ -17,7 +17,7 @@ from vantage6.common.globals import APPNAME
 from vantage6.common.globals import VPN_CONFIG_FILE
 
 
-from vantage6.cli.context import NodeContext
+from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.utils import check_if_docker_daemon_is_running, remove_file
 from vantage6.cli.node.common import select_node, find_running_node_names

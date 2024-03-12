@@ -14,7 +14,7 @@ decorators that are placed on the API endpoints. These decorators check if the
 entity that is trying to access the endpoint is allowed to do so. For example,
 you may see the following decorators on an endpoint:
 
-* ``@only_for(['user', 'container']``: only accessible to users and algorithm
+* ``@only_for(('user', 'container'))``: only accessible to users and algorithm
   containers
 * ``@with_user``: only accessible to users
 

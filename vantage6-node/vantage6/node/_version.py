@@ -7,7 +7,7 @@ with open(os.path.join(here, "__build__")) as fp:
     __build__ = json.load(fp)
 
 # Module version
-version_info = (4, 2, 3, "final", __build__, 0)
+version_info = (4, 3, 0, "final", __build__, 0)
 
 # Module version stage suffix map
 _specifier_ = {"alpha": "a", "beta": "b", "candidate": "rc", "final": ""}
@@ -21,3 +21,4 @@ post_release = "" if not version_info[5] else f".post{version_info[5]}"
 
 # Module version accessible using thomas.__version__
 __version__ = f"{version}{pre_release}{post_release}"
+major_minor = ".".join(__version__.split(".")[:2])

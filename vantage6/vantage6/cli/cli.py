@@ -29,6 +29,12 @@ from vantage6.cli.algorithm.create import cli_algorithm_create
 from vantage6.cli.algorithm.update import cli_algorithm_update
 from vantage6.cli.test.feature_tester import cli_test_features
 from vantage6.cli.test.integration_test import cli_test_integration
+from vantage6.cli.algostore.attach import cli_algo_store_attach
+from vantage6.cli.algostore.new import cli_algo_store_new
+from vantage6.cli.algostore.start import cli_algo_store_start
+from vantage6.cli.algostore.stop import cli_algo_store_stop
+from vantage6.cli.algostore.files import cli_algo_store_files
+from vantage6.cli.algostore.list import cli_algo_store_configuration_list
 
 
 # Define the server group
@@ -117,8 +123,25 @@ cli_test.add_command(cli_test_features, name="feature-test")
 cli_test.add_command(cli_test_integration, name="integration-test")
 
 
+# Define the algorithm-store group
+@click.group(name="algorithm-store")
+def cli_algo_store() -> None:
+    """
+    Manage your vantage6 algorithm store server instances.
+    """
+
+
+# Define the commands for the test group
+cli_algo_store.add_command(cli_algo_store_attach, name="attach")
+cli_algo_store.add_command(cli_algo_store_new, name="new")
+cli_algo_store.add_command(cli_algo_store_start, name="start")
+cli_algo_store.add_command(cli_algo_store_stop, name="stop")
+cli_algo_store.add_command(cli_algo_store_files, name="files")
+cli_algo_store.add_command(cli_algo_store_configuration_list, name="list")
+
+
 # Define the overall group
-@click.group(name="cli")
+@click.group(name="cli", context_settings={"show_default": True})
 def cli_complete() -> None:
     """
     The `v6` command line interface allows you to manage your vantage6
@@ -134,3 +157,4 @@ cli_complete.add_command(cli_server)
 cli_complete.add_command(cli_dev)
 cli_complete.add_command(cli_algorithm)
 cli_complete.add_command(cli_test)
+cli_complete.add_command(cli_algo_store)

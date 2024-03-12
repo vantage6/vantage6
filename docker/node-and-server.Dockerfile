@@ -6,7 +6,7 @@
 # * harbor2.vantage6.ai/infrastructure/server:x.x.x
 #
 ARG TAG=latest
-ARG BASE=4.2
+ARG BASE=4.3
 FROM harbor2.vantage6.ai/infrastructure/infrastructure-base:${BASE}
 
 LABEL version=${TAG}
@@ -29,7 +29,7 @@ COPY . /vantage6
 # This is also done in the base-image to safe build time. We redo it here
 # to allow for dependency upgrades in minor and patch versions.
 RUN pip install -r /vantage6/requirements.txt \
-    --extra-index-url https://www.piwheels.org/simple
+  --extra-index-url https://www.piwheels.org/simple
 
 # install individual packages
 RUN pip install -e /vantage6/vantage6-common
@@ -37,6 +37,7 @@ RUN pip install -e /vantage6/vantage6-client
 RUN pip install -e /vantage6/vantage6-algorithm-tools
 RUN pip install -e /vantage6/vantage6
 RUN pip install -e /vantage6/vantage6-node
+RUN pip install -e /vantage6/vantage6-backend-common
 RUN pip install -e /vantage6/vantage6-server
 
 # Overwrite uWSGI installation from the requirements.txt

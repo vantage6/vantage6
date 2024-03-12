@@ -2,11 +2,6 @@
 # your peers to identify the server
 description: Test
 
-# Should be prod, acc, test or dev. In case the type is set to test
-# the JWT-tokens expiration is set to 1 day (default is 6 hours). The
-# other types can be used in future releases of vantage6
-type: test
-
 # IP adress to which the server binds. In case you specify 0.0.0.0
 # the server listens on all interfaces
 ip: 0.0.0.0
@@ -18,6 +13,13 @@ port: 5000
 # case you use a referse proxy and use a subpath, make sure to include it
 # here also.
 api_path: /api
+
+# Let the server know where it is hosted. This is used as a setting to
+# communicate back and forth with other vantage6 components such as the
+# algorithm store.
+server_url: https://cotopaxi.vantage6.ai
+# or if you are running the server locally with default settings:
+# server_url: http://localhost:5000/api
 
 # The URI to the server database. This should be a valid SQLAlchemy URI,
 # e.g. for an Sqlite database: sqlite:///database-name.sqlite,

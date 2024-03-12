@@ -21,7 +21,18 @@ swagger_template = {
                     },
                     "collaboration_id": {
                         "type": "integer",
-                        "description": "Collaboration id",
+                        "description": (
+                            "Collaboration id. You do not need to provide this if you "
+                            "provide a study id (but you can if you want to)."
+                        ),
+                    },
+                    "study_id": {
+                        "type": "integer",
+                        "description": (
+                            "Study id. You should only provide this if you want to "
+                            "create a task for a specific study. Otherwise, you should "
+                            "provide just a collaboration id."
+                        ),
                     },
                     "organizations": {
                         "type": "dict",

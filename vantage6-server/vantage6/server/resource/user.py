@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 import sqlalchemy.exc
 
@@ -20,7 +19,7 @@ from vantage6.server.resource import (
     ServicesResources,
 )
 from vantage6.server.resource.common.input_schema import UserInputSchema
-from vantage6.server.resource.common.pagination import Pagination
+from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource.common.output_schema import (
     UserSchema,
     UserWithPermissionDetailsSchema,
@@ -317,7 +316,7 @@ class Users(UserBase):
         try:
             page = Pagination.from_query(q, request, db.User)
         except (ValueError, AttributeError) as e:
-            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         # model serialization
         return self.response(page, user_schema)

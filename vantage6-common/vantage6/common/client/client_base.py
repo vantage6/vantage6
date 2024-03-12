@@ -140,23 +140,35 @@ class ClientBase(object):
 
         return f"{self.host}{self.__api_path}"
 
-    def generate_path_to(self, endpoint: str) -> str:
+    def generate_path_to(self, endpoint: str, is_for_algorithm_store: bool) -> str:
         """Generate URL to endpoint using host, port and endpoint
 
         Parameters
         ----------
         endpoint : str
             endpoint to which a fullpath needs to be generated
+        is_for_algorithm_store : bool
+            Whether the request is for the algorithm store or not
 
         Returns
         -------
         str
             URL to the endpoint
         """
-        if endpoint.startswith("/"):
-            path = self.base_path + endpoint
+        if not is_for_algorithm_store:
+            base_path = self.base_path
         else:
-            path = self.base_path + "/" + endpoint
+            try:
+                base_path = self.store.url
+            except AttributeError as exc:
+                raise AttributeError(
+                    "Algorithm store not set. Please set the algorithm store first with"
+                    " `client.algorithm_store.set()`."
+                ) from exc
+        if endpoint.startswith("/"):
+            path = base_path + endpoint
+        else:
+            path = base_path + "/" + endpoint
 
         return path
 
@@ -166,9 +178,11 @@ class ClientBase(object):
         json: dict = None,
         method: str = "get",
         params: dict = None,
+        headers: dict = None,
         first_try: bool = True,
         retry: bool = True,
         attempts_on_timeout: int = None,
+        is_for_algorithm_store: bool = False,
     ) -> dict:
         """Create http(s) request to the vantage6 server
 
@@ -182,6 +196,8 @@ class ClientBase(object):
             Http verb, by default 'get'
         params : dict, optional
             URL parameters, by default None
+        headers : dict, optional
+            Additional headers to be sent with the request, by default None
         first_try : bool, optional
             Whether this is the first attempt of this request. Default True.
         retry: bool, optional
@@ -189,6 +205,8 @@ class ClientBase(object):
         attempts_on_timeout: int, optional
             Number of attempts to make when a timeout occurs. Default None
             which leads to unlimited amount of attempts.
+        is_for_algorithm_store: bool, optional
+            Whether the request is for the algorithm store. Default False.
 
         Returns
         -------
@@ -206,15 +224,16 @@ class ClientBase(object):
         }.get(method.lower(), requests.get)
 
         # send request to server
-        url = self.generate_path_to(endpoint)
+        url = self.generate_path_to(endpoint, is_for_algorithm_store)
         self.log.debug(f"Making request: {method.upper()} | {url} | {params}")
+
+        # add additional headers if any are given
+        headers = self.headers if headers is None else headers | self.headers
 
         timeout_attempts = 0
         while True:
             try:
-                response = rest_method(
-                    url, json=json, headers=self.headers, params=params
-                )
+                response = rest_method(url, json=json, headers=headers, params=params)
                 break
             except requests.exceptions.ConnectionError as exc:
                 # we can safely retry as this is a connection error. And we
@@ -250,8 +269,10 @@ class ClientBase(object):
                         json,
                         method,
                         params,
+                        headers,
                         first_try=False,
                         attempts_on_timeout=attempts_on_timeout,
+                        is_for_algorithm_store=is_for_algorithm_store,
                     )
                 else:
                     self.log.error("Nope, refreshing the token didn't fix it.")
@@ -355,7 +376,7 @@ class ClientBase(object):
             self.log.debug("Authenticating node...")
 
         # authenticate to the central server
-        url = self.generate_path_to(path)
+        url = self.generate_path_to(path, is_for_algorithm_store=False)
         response = requests.post(url, json=credentials)
         data = response.json()
 
@@ -522,4 +543,10 @@ class ClientBase(object):
         """
 
         def __init__(self, parent) -> None:
-            self.parent = parent
+            # If the parent has a parent, use that as the parent - we don't want
+            # grandparents and so on.
+            # TODO maybe this should ideally get a name of 'main_client' or something
+            if hasattr(parent, "parent"):
+                self.parent = parent.parent
+            else:
+                self.parent = parent

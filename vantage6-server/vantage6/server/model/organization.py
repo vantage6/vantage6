@@ -67,6 +67,9 @@ class Organization(Base):
     users = relationship("User", back_populates="organization")
     tasks = relationship("Task", back_populates="init_org")
     roles = relationship("Role", back_populates="organization")
+    studies = relationship(
+        "Study", secondary="StudyMember", back_populates="organizations"
+    )
 
     @classmethod
     def get_by_name(cls, name) -> Organization | None:

@@ -1,13 +1,14 @@
 import click
 
-from vantage6.cli.context import ServerContext, NodeContext
-from vantage6.cli.server.common import click_insert_context
+from vantage6.cli.context.server import ServerContext
+from vantage6.cli.context.node import NodeContext
+from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.server.stop import cli_server_stop
 from vantage6.cli.node.stop import cli_node_stop
 
 
 @click.command()
-@click_insert_context
+@click_insert_context(type_="server")
 @click.pass_context
 def stop_demo_network(click_ctx: click.Context, ctx: ServerContext) -> None:
     """Stops a demo network's server and nodes.

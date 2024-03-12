@@ -140,10 +140,14 @@ You can download this file :download:`here <yaml/batch_import.yaml>`.
 Testing
 """""""
 
-You can test the infrastructure via the ``v6 dev`` commands. The purpose of this
-functionality is to easily setup and run a test server accompanied by `N` nodes
+You can test the infrastructure via the ``v6 dev`` and ``v6 test`` commands. The purpose of
+``v6 dev`` is to easily setup and run a test server accompanied by `N` nodes
 locally. For example, if you have `N = 10` datasets to test a particular
 algorithm on, then you can spawn a server and 10 nodes with a single command.
+
+The ``v6 test`` command is used to run the `v6-diagnostics algorithm <https://github.com/vantage6/v6-diagnostics>`_.
+You can run it on an existing network or create a ``v6 dev`` network and run the test on that in one
+go.
 
 You can view all available commands in the table below, or alternatively, use
 ``v6 dev --help``. By using ``--help`` with the individual commands (e.g.
@@ -151,14 +155,61 @@ You can view all available commands in the table below, or alternatively, use
 execute them.
 
 
-+--------------------------------+--------------------------------------------+
-| **Command**                    | **Description**                            |
-+================================+============================================+
-| ``v6 dev create-demo-network`` | Create a new network with server and nodes |
-+--------------------------------+--------------------------------------------+
-| ``v6 dev start-demo-network``  | Start the network                          |
-+--------------------------------+--------------------------------------------+
-| ``v6 dev stop-demo-network``   | Stop the network                           |
-+--------------------------------+--------------------------------------------+
-| ``v6 dev remove-demo-network`` | Remove the network completely              |
-+--------------------------------+--------------------------------------------+
++--------------------------------+-----------------------------------------------------+
+| **Command**                    | **Description**                                     |
++================================+=====================================================+
+| ``v6 dev create-demo-network`` | Create a new network with server and nodes          |
++--------------------------------+-----------------------------------------------------+
+| ``v6 dev start-demo-network``  | Start the network                                   |
++--------------------------------+-----------------------------------------------------+
+| ``v6 dev stop-demo-network``   | Stop the network                                    |
++--------------------------------+-----------------------------------------------------+
+| ``v6 dev remove-demo-network`` | Remove the network completely                       |
++--------------------------------+-----------------------------------------------------+
+| ``v6 test feature-test``       | Run the feature-tester algorithm on an existing     |
+|                                | network                                             |
++--------------------------------+-----------------------------------------------------+
+| ``v6 test integration-test``   | Create a dev network and run feature-tester on that |
+|                                | network                                             |
++--------------------------------+-----------------------------------------------------+
+
+An overview of the tests that the `v6-diagnostics algorithm <https://github.com/vantage6/v6-diagnostics>`_
+runs is given below.
+
+- **Environment variables**: Reports the environment variables that are set in the algorithm
+  container by the node instance. For example the location of the input,
+  token and output files.
+- **Input file**: Reports the contents of the input file. You can verify that the input
+  set by the client is actually received by the algorithm.
+- **Output file**: Writes 'test' to the output file and reads it back.
+- **Token file**: Prints the contents of the token file. It should contain a JWT that you
+  can decode and verify the payload. The payload contains information like the
+  organization and collaboration ids.
+- **Temporary directory**: Creates a file in the temporary directory. The temporary directory
+  is a directory that is shared between all containers that share the same run id.
+  This checks that the temporary directory is writable.
+- **Local proxy**: Sends a request to the local proxy. The local proxy is used to reach the
+  central server from the algorithm container. This is needed as parent containers
+  need to be able to create child containers (=subtasks). The local proxy also
+  handles encryption/decryption of the input and results as the algorithm container
+  is not allowed to know the private key.
+- **Subtask creation**: Creates a subtask (using the local proxy) and waits for the result.
+- **Isolation test**: Checks if the algorithm container is isolated such that it can not
+  reach the internet. It tests this by trying to reach google.nl, so make sure
+  this is not a whitelisted domain when testing.
+- **External port test**: Check that the algorithm can find its own ports. Algorithms can
+  request a dedicated port for communication with other algorithm containers. The
+  port that they require is stored in the Dockerfile using the ``EXPORT`` and
+  ``LABEL`` keywords. For example:
+
+  .. code:: Dockerfile
+
+     LABEL p8888="port8"
+     EXPOSE 8888
+
+  It however does not check that the application is actually listening on the port.
+- **Database readable**: Check if the file-based database is readable.
+- **VPN connection**: Check if an algorithm container on the node can reach other
+  algorithm containers on other nodes *and* on the same node over the VPN network.
+  This test will not succeed if the VPN connection is not set up - it can also be disabled
+  with ``v6 test feature-test --no-vpn``.

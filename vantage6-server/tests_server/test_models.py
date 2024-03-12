@@ -9,7 +9,7 @@ from vantage6.server.controller.fixture import load
 from vantage6.server.model.base import Database, DatabaseSessionManager
 from vantage6.server.globals import PACKAGE_FOLDER, APPNAME
 
-from vantage6.server import session
+from vantage6.backend.common import session
 from vantage6.server.model import (
     User,
     Organization,

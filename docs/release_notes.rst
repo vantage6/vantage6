@@ -1,6 +1,93 @@
 Release notes
 =============
 
+4.3.0
+-----
+
+*12 March 2024*
+
+- **Security**
+
+ - Implemented configuration option to set CORS origins on the central server. This may
+   be used to further enhance the security profile of your server (
+   `advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-4946-85pr-fvxh>`_,
+   `commit <https://github.com/vantage6/vantage6/commit/70bb4e1d889230a841eb364d6c03accd7dd01a41>`_).
+ - Prevent username enumeration attack on endpoints where password and 2FA are reset (
+   `advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-5h3x-6gwf-73jm>`_,
+   `commit <https://github.com/vantage6/vantage6/commit/aecfd6d0e83165a41a60ebd52d2287b0217be26b`_).
+ - Added HTTP security headers on the user interface to provide an additional layer
+   of security to help mitigate attacks and vulnerabilites (
+   `advisory <https://github.com/vantage6/vantage6-UI/security/advisories/GHSA-gwq3-pvwq-4c9w>`_,
+   `commit <https://github.com/vantage6/vantage6-UI/commit/68dfa661415182da0e5717bd58db3d00aedcbd2e`_).
+ - Updated cryptography dependency
+
+- **Feature**
+
+ - New user interface. The new UI is a complete rewrite of the old UI and is
+   more focused on facilitating the researcher in running tasks and viewing their
+   progress and results (`PR#930 <https://github.com/vantage6/vantage6-UI/pull/246>`_).
+ - New infrastructure component: the algorithm store. The algorithm store is a place
+   to make algorithms easily findable and easier to run. Algorithm stores can be
+   made available to specific collaborations or to all collaborations in an entire
+   vantage6 server. By doing so, the new UI will automatically pick up these algorithms
+   and guide the user through running analyses with them (
+   `Issue#911 <https://github.com/vantage6/vantage6/issues/911>`_,
+   `PR#1048 <https://github.com/vantage6/vantage6/pull/1004>`_ and several other PRs)
+ - Introducing 'study' concept. A study is essentially a 'sub-collaboration', where
+   a subset of organizations of the collaboration can work together on a specific
+   research question. Tasks and results are then easily grouped together for the study
+   (`Issue#812 <https://github.com/vantage6/vantage6/issues/812>`_,
+   `PR#1069 <https://github.com/vantage6/vantage6/pull/1069>`_).
+ - Add flag whether role is default or not
+   (`Issue#949 <https://github.com/vantage6/vantage6/issues/949>`_,
+   `PR#1063 <https://github.com/vantage6/vantage6/pull/1063>`_).
+ - Report username/password combination at the end of the logs when it is created
+   (`Issue#830 <https://github.com/vantage6/vantage6/issues/830>`_,
+   `PR#1041 <https://github.com/vantage6/vantage6/pull/1041>`_).
+
+
+- **Change**
+
+ - Introducing new package ``vantage6-backend-common`` for code that is shared between
+   the central server and the algorithm store
+   (`Issue#979 <https://github.com/vantage6/vantage6/issues/979>`_,
+   `PR#1037 <https://github.com/vantage6/vantage6/pull/1037>`_).
+ - Show the default values for CLI commands when displaying the help text
+   (`Issue#1000 <https://github.com/vantage6/vantage6/issues/1000>`_,
+   `PR#1070 <https://github.com/vantage6/vantage6/pull/1070>`_).
+ - Setting the allowed algorithms is now part of the questionnaire on node setup
+   (`PR#1046 <https://github.com/vantage6/vantage6/pull/1046>`_).
+ - Usernames are now required to be at least three characters long and contain only
+   roman letters, numbers, and the characters '_' and '-'
+   (`PR#1060 <https://github.com/vantage6/vantage6/pull/1060>`_).
+ - Remove OMOP wrapper since we now have specific connectors to connect to this database
+   type and wrapper was therefore not used
+   (`Issue#1002 <https://github.com/vantage6/vantage6/issues/1002>`_,
+   `PR#1067 <https://github.com/vantage6/vantage6/pull/1067>`_).
+ - ``v6 node`` commands no longer require full path when using the ``--config`` option
+   (`Issue#870 <https://github.com/vantage6/vantage6/issues/870>`_,
+   `PR#1042 <https://github.com/vantage6/vantage6/pull/1042>`_).
+ - Apply black code formatting to the entire repository
+   (`Issue#968 <https://github.com/vantage6/vantage6/issues/968>`_,
+   `PR#1012 <https://github.com/vantage6/vantage6/pull/1012>`_).
+ - Remove option to update organization or collaboration of an existing node. Preferred
+   workflow in that case is to delete and re-create it. Also add option ``clear_ip`` to
+   clear the VPN IP address of the node
+   (`PR#1053 <https://github.com/vantage6/vantage6/pull/1053>`_).
+
+- **Bugfix**
+
+ - Fix VPN network cleanup if ``iptables-legacy`` is installed, and improve cleanup of
+   the node's containers, volumes and networks when the node is stopped
+   (`Issue#1058 <https://github.com/vantage6/vantage6/issues/1058>`_,
+   `PR#1059 <https://github.com/vantage6/vantage6/pull/1059>`_).
+ - Prevent logger thread to crash on input that it cannot read
+   (`Issue#879 <https://github.com/vantage6/vantage6/issues/879>`_,
+   `PR#1043 <https://github.com/vantage6/vantage6/pull/1043>`_).
+ - Fixed setting up VPN network on Ubuntu 22.04
+   (`Issue#724 <https://github.com/vantage6/vantage6/issues/724>`_,
+   `PR#1044 <https://github.com/vantage6/vantage6/pull/1044>`_).
+
 4.2.3
 -----
 

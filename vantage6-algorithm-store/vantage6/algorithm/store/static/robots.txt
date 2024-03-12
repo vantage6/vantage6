@@ -1,0 +1,5 @@
+# Block all webcrawlers
+# Note that this doesn't block bots generating ads, so should you purchase ads,
+# the AdsBot will still crawl your website.
+User-agent: *
+Disallow: /

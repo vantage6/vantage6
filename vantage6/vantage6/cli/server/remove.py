@@ -4,13 +4,13 @@ import questionary as q
 
 from vantage6.common import info
 from vantage6.common.docker.addons import check_docker_running
-from vantage6.cli.server.common import click_insert_context
+from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.context import ServerContext
 from vantage6.cli.utils import remove_file
 
 
 @click.command()
-@click_insert_context
+@click_insert_context(type_="server")
 @click.option("-f", "--force", "force", flag_value=True)
 def cli_server_remove(ctx: ServerContext, force: bool) -> None:
     """

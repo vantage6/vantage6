@@ -30,11 +30,25 @@ Server CLI
     :prog: v6 server
     :nested: full
 
+Algorithm store CLI
+-------------------
+
+.. click:: vantage6.cli.cli:cli_algo_store
+    :prog: v6 algorithm-store
+    :nested: full
+
 Local test setup CLI
 --------------------
 
 .. click:: vantage6.cli.cli:cli_dev
     :prog: v6 dev
+    :nested: full
+
+Run test algorithms CLI
+-----------------------
+
+.. click:: vantage6.cli.cli:cli_test
+    :prog: v6 test
     :nested: full
 
 .. _node-context-class:
@@ -43,6 +57,22 @@ vantage6.cli.context
 ---------------------
 
 .. automodule:: vantage6.cli.context
+   :members:
+   :show-inheritance:
+
+.. automodule:: vantage6.cli.context.node
+   :members:
+   :show-inheritance:
+
+.. automodule:: vantage6.cli.context.server
+   :members:
+   :show-inheritance:
+
+.. automodule:: vantage6.cli.context.algorithm_store
+   :members:
+   :show-inheritance:
+
+.. automodule:: vantage6.cli.context.base_server
    :members:
    :show-inheritance:
 

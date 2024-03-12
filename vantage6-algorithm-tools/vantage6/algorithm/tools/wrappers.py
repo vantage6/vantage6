@@ -8,13 +8,13 @@ Currently the following wrappers are available:
     - ``SparqlDockerWrapper``
     - ``ParquetWrapper``
     - ``SQLWrapper``
-    - ``OMOPWrapper``
     - ``ExcelWrapper``
 
 When writing the Docker file for the algorithm, the correct wrapper will
 automatically be selected based on the database type. The database type is set
 by the vantage6 node based on its configuration file.
 """
+
 from __future__ import annotations
 import io
 import pandas as pd
@@ -43,8 +43,6 @@ class DatabaseType(str, Enum):
         SparQL database
     PARQUET : str
         Parquet database
-    OMOP : str
-        OMOP database
     """
 
     CSV = "csv"
@@ -52,7 +50,6 @@ class DatabaseType(str, Enum):
     EXCEL = "excel"
     SPARQL = "sparql"
     PARQUET = "parquet"
-    OMOP = "omop"
 
 
 def load_data(
@@ -62,8 +59,8 @@ def load_data(
     Read data from database and give it back to the algorithm.
 
     If the database type is unknown, this function will exit. Also, a 'query'
-    is required for SQL, OMOP and SparQL databases. If it is not present,
-    this function will exit the algorithm.
+    is required for SQL and SparQL databases. If it is not present, this function will
+    exit the algorithm.
 
     Parameters
     ----------
@@ -71,10 +68,10 @@ def load_data(
         Path to the database file or URI of the database.
     db_type : str
         The type of the database. This should be one of the CSV, SQL,
-        Excel, Sparql, Parquet or OMOP.
+        Excel, Sparql or Parquet.
     query : str
-        The query to execute on the database. This is required for SQL,
-        Sparql and OMOP databases.
+        The query to execute on the database. This is required for SQL and Sparql
+        databases.
     sheet_name : str
         The sheet name to read from the Excel file. This is optional and
         only for Excel databases.
@@ -120,14 +117,14 @@ def get_column_names(
     database_uri : str
         Path to the database file or URI of the database.
     db_type : str
-        The type of the database. This should be one of the CSV, SQL,
-        Excel, Sparql, Parquet or OMOP.
+        The type of the database. This should be one of the CSV, SQL, Excel, Sparql or
+        Parquet.
     query : str
-        The query to execute on the database. This is required for SQL,
-        Sparql and OMOP databases.
+        The query to execute on the database. This is required for SQL and Sparql
+        databases.
     sheet_name : str
-        The sheet name to read from the Excel file. This is optional and
-        only forExcel databases.
+        The sheet name to read from the Excel file. This is optional and only for Excel
+        databases.
 
     Returns
     -------
@@ -163,8 +160,6 @@ def _select_loader(database_type: str) -> callable | None:
         return load_parquet_data
     elif database_type == "sql":
         return load_sql_data
-    elif database_type == "omop":
-        return load_omop_data
     else:
         return None
 
@@ -269,24 +264,4 @@ def load_sql_data(database_uri: str, query: str) -> pd.DataFrame:
     pd.DataFrame
         The data from the database
     """
-    return pd.read_sql(database_uri, query)
-
-
-def load_omop_data(database_uri: str, query: str) -> pd.DataFrame:
-    """
-    Load the local privacy-sensitive data from the database.
-
-    Parameters
-    ----------
-    database_uri : str
-        URI of the OMOP database, supplied by te node
-    query: str
-        Query to retrieve the data from the database
-
-    Returns
-    -------
-    pd.DataFrame
-        The data from the database
-    """
-    # TODO: replace query by OMOP json and convert to SQL
     return pd.read_sql(database_uri, query)
