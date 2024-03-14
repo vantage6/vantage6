@@ -325,3 +325,44 @@ Consider which documentation you need to update:
   `numpy format <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
   Such docstrings can then be used to automatically generate parts of the
   technical documentation space.
+
+
+Roles in the vantage6 community
+-------------------------------
+
+As an open-source community, vantage6 is open to constructive development efforts from
+anyone. Developers that contribute regularly may at some point become official
+members and as such can get more permissions. This section outlines the rules that we
+follow as a community to govern this process.
+
+Community access tiers
+^^^^^^^^^^^^^^^^^^^^^^
+
+A few levels of access are discerned within the vantage6 community:
+
+- **Contributors**: people that have opened pull requests which have been merged
+- **Members**: members of the vantage6 Github organization
+- **Administrators**: administrators of the vantage6 Github organization
+
+Contributor access is available to anyone that wants to contribute to vantage6. They
+can create their own forks of the vantage6 repository and create pull requests from
+there.
+
+Membership gives developers more extensive access, for instance to create branches
+within the official repository and view private repositories within the vantage6
+Github organization. Membership may be given to anyone that requests it and will be
+granted if the majority of the vantage6 members approves of this. There are no hard
+requirements for membership: usually, making several contributions helps in receiving
+membership, but someone may also attain membership if they are, for instance, an
+employee of a trusted organization that plans to invest in vantage6.
+
+Administrator level access gives developers access to merge pull requests into the main
+branch and execute other sensitive actions within the repositories. This level of access
+will only be granted to a small number of developers that have demonstrated their
+knowledge of vantage6 extensively. Administrator access will only be given if all
+administrators agree unanimously that it should be granted. In rare cases, administrator
+access may also be revoked if the other administrators unanimously agree that it should
+be revoked.
+
+Voting for membership and administrator access may be done in the community meetings,
+but can also be done asynchronously via email.
