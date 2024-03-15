@@ -20,8 +20,9 @@ import { MatStepper } from '@angular/material/stepper';
 import { SnackbarService } from 'src/app/services/snackbar.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Collaboration } from 'src/app/models/api/collaboration.model';
-import { Study, StudyOrCollab } from 'src/app/models/api/study.model';
+import { BaseStudy, StudyOrCollab } from 'src/app/models/api/study.model';
 import { BaseOrganization } from 'src/app/models/api/organization.model';
+import { OrganizationService } from 'src/app/services/organization.service';
 
 @Component({
   selector: 'app-task-create',
@@ -45,7 +46,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   functionType = FunctionType;
   studyOrCollab = StudyOrCollab;
 
-  study: Study | null = null;
+  study: BaseStudy | null = null;
   algorithms: Algorithm[] = [];
   algorithm: Algorithm | null = null;
   collaboration?: Collaboration | null = null;
@@ -88,7 +89,8 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     public chosenCollaborationService: ChosenCollaborationService,
     private socketioConnectService: SocketioConnectService,
     private snackBarService: SnackbarService,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    private organizationService: OrganizationService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -364,7 +366,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!this.collaboration) return;
 
     if (this.study) {
-      this.organizations = this.study.organizations;
+      this.organizations = await this.organizationService.getOrganizations({ study_id: this.study.id });
     } else {
       this.organizations = this.collaboration.organizations;
     }

@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { CHOSEN_COLLABORATION } from '../models/constants/sessionStorage';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import { CollaborationService } from './collaboration.service';
 import { Collaboration, CollaborationLazyProperties } from '../models/api/collaboration.model';
 import { getLazyProperties } from '../helpers/api.helper';
 import { StudyLazyProperties } from '../models/api/study.model';
 import { ApiService } from './api.service';
+import { PermissionService } from './permission.service';
 
 @Injectable({
   providedIn: 'root'
@@ -14,12 +15,21 @@ export class ChosenCollaborationService {
   id: string = '';
   isInitialized$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   collaboration$: BehaviorSubject<Collaboration | null> = new BehaviorSubject<Collaboration | null>(null);
+  destroy$ = new Subject();
 
   constructor(
     private collaborationService: CollaborationService,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private permissionService: PermissionService
   ) {
-    this.initData();
+    this.permissionService
+      .isInitialized()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((initialized) => {
+        if (initialized) {
+          this.initData();
+        }
+      });
   }
 
   async setCollaboration(id: string) {
