@@ -181,7 +181,9 @@
     },
     "card-nodes": {
       "title": "Nodes"
-    }
+    },
+    "no-collaborations": "No collaborations are available for this organization yet.",
+    "no-nodes": "No nodes are available for this organization yet."
   },
   "organization-create": {
     "title": "Create organization"
@@ -227,11 +229,13 @@
     },
     "card-algorithm-stores": {
       "title": "Algorithm stores available to this collaboration",
-      "add": "Add algorithm store"
+      "add": "Add algorithm store",
+      "no-stores": "No algorithm stores are available to this collaboration yet."
     },
     "card-studies": {
       "title": "Studies",
-      "add": "Add study"
+      "add": "Add study",
+      "no-studies": "No studies are available to this collaboration yet."
     },
     "delete-dialog": {
       "title": "Are you sure you want to delete the collaboration '{{name}}'?",

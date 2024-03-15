@@ -5,7 +5,7 @@
     <button mat-flat-button [routerLink]="handleToggleAdmin()">
       {{ isAdministration ? ("header.actions.admin-leave" | translate) : ("header.actions.admin" | translate) }}
     </button>
-    <button mat-flat-button color="accent" [matMenuTriggerFor]="headerMenu">
+    <button mat-flat-button [matMenuTriggerFor]="headerMenu">
       <mat-icon>person</mat-icon>
       {{ username }}
     </button>

@@ -72,7 +72,7 @@
       </button>
     </mat-card-header>
     <mat-card-content>
-      <mat-accordion class="card-accordion">
+      <mat-accordion *ngIf="collaboration.algorithm_stores.length > 0; else noAlgoStores" class="card-accordion">
         <mat-expansion-panel *ngFor="let algo_store of collaboration.algorithm_stores" (opened)="selectAlgoStore(algo_store.id)">
           <mat-expansion-panel-header>
             <mat-panel-title>{{ algo_store.name }}</mat-panel-title>
@@ -135,10 +135,23 @@
       </button>
     </mat-card-header>
     <mat-card-content>
-      <app-table [data]="studyTable" (rowClick)="handleStudyClick($event)" [isLoading]="isLoading"></app-table>
+      <div>
+        <app-table
+          *ngIf="collaboration.studies.length > 0; else noStudies"
+          [data]="studyTable"
+          (rowClick)="handleStudyClick($event)"
+          [isLoading]="isLoading"
+        ></app-table>
+      </div>
     </mat-card-content>
   </mat-card>
 </ng-container>
+<ng-template #noAlgoStores>
+  <p>{{ "collaboration-read.card-algorithm-stores.no-stores" | translate }}</p>
+</ng-template>
+<ng-template #noStudies>
+  <p>{{ "collaboration-read.card-studies.no-studies" | translate }}</p>
+</ng-template>
 <ng-template #loading>
   <mat-card>
     <mat-card-content>

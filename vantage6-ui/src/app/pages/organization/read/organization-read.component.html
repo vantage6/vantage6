@@ -51,7 +51,11 @@
       <mat-card-title>{{ "organization-read.card-collaborations.title" | translate }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <app-table [data]="collaborationTable" (rowClick)="handleCollaborationClick($event)"></app-table>
+      <app-table
+        *ngIf="organization.collaborations.length > 0; else noCollaborations"
+        [data]="collaborationTable"
+        (rowClick)="handleCollaborationClick($event)"
+      ></app-table>
     </mat-card-content>
   </mat-card>
   <mat-card>
@@ -59,7 +63,7 @@
       <mat-card-title>{{ "organization-read.card-nodes.title" | translate }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <div class="chip-container">
+      <div *ngIf="organization.nodes.length > 0; else noNodes" class="chip-container">
         <app-chip
           *ngFor="let node of organization.nodes"
           label="{{ node.status === nodeStatus.Online ? node.name : node.name + ' (' + ('general.offline' | translate) + ')' }}"
@@ -74,3 +78,9 @@
     <mat-spinner diameter="48"></mat-spinner>
   </mat-card-content>
 </mat-card>
+<ng-template #noCollaborations>
+  <p>{{ "organization-read.no-collaborations" | translate }}</p>
+</ng-template>
+<ng-template #noNodes>
+  <p>{{ "organization-read.no-nodes" | translate }}</p>
+</ng-template>
