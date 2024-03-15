@@ -370,6 +370,18 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  hasAlgorithmStores(): boolean {
+    return this.collaboration?.algorithm_stores ? this.collaboration.algorithm_stores.length > 0 : false;
+  }
+
+  hasOnlineNode(): boolean {
+    return this.node ? this.node?.status === 'online' : false;
+  }
+
+  hasAlgorithms(): boolean {
+    return this.algorithms.length > 0;
+  }
+
   private async initData(): Promise<void> {
     this.collaboration = this.chosenCollaborationService.collaboration$.value;
     this.algorithms = await this.algorithmService.getAlgorithms();

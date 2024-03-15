@@ -44,9 +44,7 @@ export class AddAlgoStoreComponent implements OnInit {
 
     this.isSubmitting = true;
     try {
-      await this.algorithmStoreService.addAlgorithmStore(addAlgorithmStore);
-      // always refresh the chosen collaboration after adding an algorithm store
-      this.chosenCollaborationService.refresh();
+      await this.addAlgorithmStore(addAlgorithmStore);
     } catch (error) {
       if (this.urlsContainLocalhost(addAlgorithmStore)) {
         await this.handleLocalhostAddition(addAlgorithmStore);
@@ -75,8 +73,14 @@ export class AddAlgoStoreComponent implements OnInit {
     const dialogResponse = await dialogRef.afterClosed().toPromise();
     if (dialogResponse === true) {
       algorithmStoreForm.force = true;
-      await this.algorithmStoreService.addAlgorithmStore(algorithmStoreForm);
+      await this.addAlgorithmStore(algorithmStoreForm);
     }
+  }
+
+  private async addAlgorithmStore(algorithmStoreForm: AddAlgorithmStore): Promise<void> {
+    await this.algorithmStoreService.addAlgorithmStore(algorithmStoreForm);
+    // always refresh the chosen collaboration after adding an algorithm store
+    this.chosenCollaborationService.refresh();
   }
 
   private goToCollaboration(): void {
