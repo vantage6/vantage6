@@ -9,12 +9,19 @@ import {
   GetCollaborationParameters
 } from '../models/api/collaboration.model';
 import { getLazyProperties } from '../helpers/api.helper';
+import { PermissionService } from './permission.service';
+import { OperationType, ResourceType, ScopeType } from '../models/api/rule.model';
+import { StudyService } from './study.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CollaborationService {
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private permissionService: PermissionService,
+    private studyService: StudyService
+  ) {}
 
   async getCollaborations(parameters?: GetCollaborationParameters): Promise<BaseCollaboration[]> {
     //TODO: Add backend no pagination instead of page size 9999
@@ -31,6 +38,15 @@ export class CollaborationService {
     const result = await this.apiService.getForApi<BaseCollaboration>(`/collaboration/${collaborationID}`);
 
     const collaboration: Collaboration = { ...result, organizations: [], nodes: [], tasks: [], algorithm_stores: [], studies: [] };
+    // If studies are in lazyProperties, and user cannot view them at collaboration level,
+    // they need to be requested separately
+    if (
+      lazyProperties.includes(CollaborationLazyProperties.Studies) &&
+      !this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.STUDY, OperationType.VIEW)
+    ) {
+      collaboration.studies = await this.studyService.getStudies({ organization_id: this.permissionService.getActiveOrganizationID() });
+      lazyProperties.splice(lazyProperties.indexOf(CollaborationLazyProperties.Studies), 1);
+    }
     await getLazyProperties(result, collaboration, lazyProperties, this.apiService);
 
     return collaboration;

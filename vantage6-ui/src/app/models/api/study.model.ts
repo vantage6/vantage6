@@ -15,6 +15,7 @@ export interface Study {
 
 export interface GetStudyParameters {
   name?: string;
+  organization_id?: number;
 }
 
 export enum StudyLazyProperties {

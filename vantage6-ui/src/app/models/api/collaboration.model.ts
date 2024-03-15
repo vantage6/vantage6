@@ -1,7 +1,7 @@
 import { AlgorithmStore } from './algorithmStore.model';
 import { BaseNode } from './node.model';
 import { BaseOrganization } from './organization.model';
-import { Study } from './study.model';
+import { BaseStudy } from './study.model';
 import { BaseTask } from './task.models';
 
 export enum CollaborationLazyProperties {
@@ -41,7 +41,7 @@ export interface Collaboration {
   nodes: BaseNode[];
   tasks: BaseTask[];
   algorithm_stores: AlgorithmStore[];
-  studies: Study[];
+  studies: BaseStudy[];
 }
 
 export interface CollaborationForm {
