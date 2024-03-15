@@ -9,6 +9,7 @@ import { AuthService } from 'src/app/services/auth.service';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
+import { TokenStorageService } from 'src/app/services/token-storage.service';
 
 @Component({
   selector: 'app-layout-default',
@@ -24,6 +25,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
   isAdministration: boolean = false;
   isStartPage: boolean = false;
   hideMenu: boolean = false;
+  username: string = '';
 
   @ViewChild(MatSidenav)
   sideNav!: MatSidenav;
@@ -34,7 +36,8 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
     private breakpointObserver: BreakpointObserver,
     private authService: AuthService,
     public chosenCollaborationService: ChosenCollaborationService,
-    private permissionService: PermissionService
+    private permissionService: PermissionService,
+    private tokenStorageService: TokenStorageService
   ) {
     router.events.pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd)).subscribe((event) => {
       this.isStartPage = event.url.startsWith(routePaths.start);
@@ -52,6 +55,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
           }
         });
     });
+    this.username = this.tokenStorageService.getUsername() || '';
   }
 
   ngAfterViewInit(): void {

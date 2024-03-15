@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_ID } from '../models/constants/sessionStorage';
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USERNAME, USER_ID } from '../models/constants/sessionStorage';
 import { Login, AuthResult } from '../models/api/auth.model';
 import { BehaviorSubject, Observable } from 'rxjs';
 
@@ -35,7 +35,11 @@ export class TokenStorageService {
     return sessionStorage.getItem(ACCESS_TOKEN_KEY);
   }
 
-  setSession(result: Login): void {
+  getUsername(): string | null {
+    return sessionStorage.getItem(USERNAME);
+  }
+
+  setSession(result: Login, username: string): void {
     this.clearSession();
 
     if (!result.access_token) return;
@@ -43,6 +47,7 @@ export class TokenStorageService {
     sessionStorage.setItem(ACCESS_TOKEN_KEY, result.access_token);
     sessionStorage.setItem(REFRESH_TOKEN_KEY, result.refresh_token);
     sessionStorage.setItem(USER_ID, result.user_url.split('/').pop() || '');
+    sessionStorage.setItem(USERNAME, username);
   }
 
   clearSession(): void {
