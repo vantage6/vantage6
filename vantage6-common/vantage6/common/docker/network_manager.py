@@ -95,8 +95,7 @@ class NetworkManager(object):
         """
         networks = self.docker.networks.list(names=[self.network_name])
 
-        # network = self.docker.networks.get(self.network_name)
-        self.log.debug(f"Network {self.network_name} already exists. Deleting it.")
+        self.log.debug("Deleting network %s.", self.network_name)
         for network in networks:
             delete_network(network, kill_containers)
 

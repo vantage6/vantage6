@@ -1,7 +1,7 @@
 .. _vpn-feature:
 
-Algorithm-to-algorithm comunication
------------------------------------
+Algorithm-to-algorithm VPN comunication
+---------------------------------------
 
 *Since version 3.0.0*
 

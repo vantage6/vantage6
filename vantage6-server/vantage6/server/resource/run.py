@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 from typing import Union
 import sqlalchemy as sa
@@ -23,7 +22,7 @@ from vantage6.server.resource import (
     ServicesResources,
 )
 from vantage6.server.resource.common.input_schema import RunInputSchema
-from vantage6.server.resource.common.pagination import Pagination
+from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource.common.output_schema import (
     RunSchema,
     RunTaskIncludedSchema,
@@ -364,7 +363,7 @@ class Runs(MultiRunBase):
         try:
             page = Pagination.from_query(query, request, db.Run)
         except (ValueError, AttributeError) as e:
-            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         # serialization of the models
         s = run_inc_schema if self.is_included("task") else run_schema
@@ -493,7 +492,7 @@ class Results(MultiRunBase):
         try:
             page = Pagination.from_query(query, request, db.Run)
         except (ValueError, AttributeError) as e:
-            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         return self.response(page, result_schema)
 
@@ -694,7 +693,7 @@ class Run(SingleRunBase):
 class Result(SingleRunBase):
     """Resource for /api/result/<id>"""
 
-    @only_for(["node", "user", "container"])
+    @only_for(("node", "user", "container"))
     def get(self, id):
         """Get a single result
         ---

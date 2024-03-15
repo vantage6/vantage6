@@ -1,5 +1,6 @@
 import uuid
 import ipaddress
+import re
 
 from marshmallow import Schema, fields, ValidationError, validates, validates_schema
 from marshmallow.validate import Length, Range, OneOf
@@ -36,6 +37,29 @@ def _validate_name(name: str) -> None:
         raise ValidationError(f"Name cannot be longer than {_MAX_LEN_NAME} characters")
 
 
+def _validate_username(username: str) -> None:
+    """
+    Validate a username field in the request input.
+
+    Parameters
+    ----------
+    username : str
+        Username to validate.
+
+    Raises
+    ------
+    ValidationError
+        If the username is empty, too long or numerical
+    """
+    _validate_name(username)
+    username_regex = r"^[a-zA-Z][a-zA-Z0-9_-]+$"
+    if re.match(username_regex, username) is None:
+        raise ValidationError(
+            f"Username {username} is invalid. Only letters, numbers, hyphens and "
+            "underscores are allowed, and it should start with a letter."
+        )
+
+
 def _validate_password(password: str) -> None:
     """
     Check if the password is strong enough.
@@ -54,6 +78,28 @@ def _validate_password(password: str) -> None:
         validate_password(password)
     except ValueError as e:
         raise ValidationError(str(e))
+
+
+def _validate_organization_ids(organization_ids: list[int]) -> None:
+    """
+    Validate the organization ids in the input.
+
+    Parameters
+    ----------
+    organization_ids : list[int]
+        List of organization ids to validate.
+
+    Raises
+    ------
+    ValidationError
+        If the organization ids are not valid.
+    """
+    if not all(i > 0 for i in organization_ids):
+        raise ValidationError("Organization ids must be greater than 0")
+    if not len(organization_ids) == len(set(organization_ids)):
+        raise ValidationError("Organization ids must be unique")
+    if not len(organization_ids):
+        raise ValidationError("At least one organization id is required")
 
 
 class _OnlyIdSchema(Schema):
@@ -134,6 +180,17 @@ class ChangePasswordInputSchema(Schema):
         _validate_password(password)
 
 
+class BasicAuthInputSchema(Schema):
+    """Schema for validating input for basic authentication using a username and password."""
+
+    username = fields.String(required=True, validate=Length(min=1, max=_MAX_LEN_NAME))
+    # Note that we don't inherit from _PasswordValidationSchema here and
+    # don't validate password in case the password does not fulfill the
+    # password policy. This is e.g. the case with the default root user created
+    # when the server is started for the first time.
+    password = fields.String(required=True, validate=Length(min=1, max=_MAX_LEN_PW))
+
+
 class CollaborationInputSchema(_NameValidationSchema):
     """Schema for validating input for a creating a collaboration."""
 
@@ -155,15 +212,10 @@ class CollaborationInputSchema(_NameValidationSchema):
         ValidationError
             If the organization ids are not valid.
         """
-        if not all(i > 0 for i in organization_ids):
-            raise ValidationError("Organization ids must be greater than 0")
-        if not len(organization_ids) == len(set(organization_ids)):
-            raise ValidationError("Organization ids must be unique")
-        if not len(organization_ids):
-            raise ValidationError("At least one organization id is required")
+        _validate_organization_ids(organization_ids)
 
 
-class CollaborationAddOrganizationSchema(_OnlyIdSchema):
+class CollaborationChangeOrganizationSchema(_OnlyIdSchema):
     """
     Schema for validating requests that add an organization to a collaboration.
     """
@@ -288,30 +340,8 @@ class ResetPasswordInputSchema(_PasswordValidationSchema):
     reset_token = fields.String(required=True, validate=Length(max=_MAX_LEN_STR_LONG))
 
 
-class Recover2FAInputSchema(Schema):
+class Recover2FAInputSchema(BasicAuthInputSchema):
     """Schema for validating input for recovering 2FA."""
-
-    email = fields.Email()
-    username = fields.String(validate=Length(max=_MAX_LEN_NAME))
-    password = fields.String(required=True, validate=Length(min=1, max=_MAX_LEN_PW))
-
-    @validates_schema
-    def validate_email_or_username(self, data: dict, **kwargs) -> None:
-        """
-        Validate the input, which should contain either an email or username.
-
-        Parameters
-        ----------
-        data : dict
-            The input data. Should contain an email or username.
-
-        Raises
-        ------
-        ValidationError
-            If the input does not contain an email or username.
-        """
-        if not ("email" in data or "username" in data):
-            raise ValidationError("Email or username is required")
 
 
 class Reset2FAInputSchema(Schema):
@@ -369,9 +399,29 @@ class TaskInputSchema(_NameValidationSchema):
     name = fields.String(required=False)
     description = fields.String(validate=Length(max=_MAX_LEN_STR_LONG))
     image = fields.String(required=True, validate=Length(min=1))
-    collaboration_id = fields.Integer(required=True, validate=Range(min=1))
+    collaboration_id = fields.Integer(validate=Range(min=1))
+    study_id = fields.Integer(validate=Range(min=1))
     organizations = fields.List(fields.Dict(), required=True)
     databases = fields.List(fields.Dict(), allow_none=True)
+
+    @validates_schema
+    def validate_collaboration_or_study(self, data: dict, **kwargs) -> None:
+        """
+        Validate the input, which should contain a collaboration_id or a study_id. The
+        input may also contain both.
+
+        Parameters
+        ----------
+        data : dict
+            The input data.
+
+        Raises
+        ------
+        ValidationError
+            If the input does not contain a collaboration_id or a study_id.
+        """
+        if not ("collaboration_id" in data or "study_id" in data):
+            raise ValidationError("Collaboration_id or study_id is required")
 
     @validates("organizations")
     def validate_organizations(self, organizations: list[dict]):
@@ -439,16 +489,27 @@ class TaskInputSchema(_NameValidationSchema):
                 )
 
 
-class TokenUserInputSchema(Schema):
+class TokenUserInputSchema(BasicAuthInputSchema):
     """Schema for validating input for creating a token for a user."""
 
-    username = fields.String(required=True, validate=Length(min=1, max=_MAX_LEN_NAME))
-    # Note that we don't inherit from _PasswordValidationSchema here and
-    # don't validate password in case the password does not fulfill the
-    # password policy. This is e.g. the case with the default root user created
-    # when the server is started for the first time.
-    password = fields.String(required=True, validate=Length(min=1, max=_MAX_LEN_PW))
     mfa_code = fields.String(validate=Length(max=10))
+
+    @validates("username")
+    def validate_username(self, username: str):
+        """
+        Check if the username is appropriate
+
+        Parameters
+        ----------
+        username : str
+            Username to validate.
+
+        Raises
+        ------
+        ValidationError
+            If the username is too short, too long or numeric.
+        """
+        _validate_username(username)
 
 
 class TokenNodeInputSchema(Schema):
@@ -487,7 +548,7 @@ class TokenAlgorithmInputSchema(Schema):
 class UserInputSchema(_PasswordValidationSchema):
     """Schema for validating input for creating a user."""
 
-    username = fields.String(required=True, validate=Length(min=1, max=_MAX_LEN_NAME))
+    username = fields.String(required=True, validate=Length(min=3, max=_MAX_LEN_NAME))
     email = fields.Email(required=True)
     firstname = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
     lastname = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
@@ -510,7 +571,7 @@ class UserInputSchema(_PasswordValidationSchema):
         ValidationError
             If the username is too short, too long or numeric.
         """
-        _validate_name(username)
+        _validate_username(username)
 
 
 class VPNConfigUpdateInputSchema(Schema):
@@ -551,3 +612,45 @@ class ColumnNameInputSchema(Schema):
                 raise ValidationError(
                     "Organization id is required for each organization"
                 )
+
+
+class AlgorithmStoreInputSchema(Schema):
+    """Schema for validating input for creating an algorithm store."""
+
+    name = fields.String(required=True)
+    algorithm_store_url = fields.Url(required=True)
+    server_url = fields.Url()
+    collaboration_id = fields.Integer(validate=Range(min=1))
+    force = fields.Boolean()
+
+
+class StudyInputSchema(_NameValidationSchema):
+    """Schema for validating input for creating a study"""
+
+    collaboration_id = fields.Integer(required=True, validate=Range(min=1))
+    organization_ids = fields.List(fields.Integer(), required=True)
+
+    @validates("organization_ids")
+    def validate_organization_ids(self, organization_ids):
+        """
+        Validate the organization ids in the input.
+
+        Parameters
+        ----------
+        organization_ids : list[int]
+            List of organization ids to validate.
+
+        Raises
+        ------
+        ValidationError
+            If the organization ids are not valid.
+        """
+        _validate_organization_ids(organization_ids)
+
+
+class StudyChangeOrganizationSchema(_OnlyIdSchema):
+    """
+    Schema for validating requests that add an organization to a study.
+    """
+
+    pass

@@ -54,4 +54,4 @@ container will be started automatically for you. This docker container contains
 a management interface which will be available on port 15672.
 
 For deploying a production server, there are several options to run RabbitMQ.
-For instance, you can install `RabbitMQ on Azure <https://www.golinuxcloud.com/install-rabbitmq-on-azure/>_`.
+For instance, you can install `RabbitMQ on Azure <https://www.golinuxcloud.com/install-rabbitmq-on-azure>`_.

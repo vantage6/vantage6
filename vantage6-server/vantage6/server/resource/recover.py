@@ -1,13 +1,15 @@
-# -*- coding: utf-8 -*-
 import logging
 import datetime
 
-from flask import request, render_template, g
+import gevent
+from flask import request, render_template, g, current_app, Flask
 from flask_jwt_extended import create_access_token, decode_token
 from flask_restful import Api
+from flask_mail import Mail
 from jwt.exceptions import DecodeError
 from http import HTTPStatus
 from sqlalchemy.orm.exc import NoResultFound
+import datetime as dt
 
 from vantage6.common import logger_name, generate_apikey
 from vantage6.common.globals import APPNAME, MAIN_VERSION_NAME
@@ -16,6 +18,8 @@ from vantage6.server.globals import (
     DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
     DEFAULT_EMAIL_FROM_ADDRESS,
+    DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES,
+    DEFAULT_BETWEEN_USER_EMAILS_MINUTES,
 )
 from vantage6.server.resource import ServicesResources, with_user
 from vantage6.server.resource.common.auth_helper import create_qr_uri, user_login
@@ -27,6 +31,7 @@ from vantage6.server.resource.common.input_schema import (
     Reset2FAInputSchema,
     ResetAPIKeyInputSchema,
 )
+from vantage6.server.model.user import User
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -103,6 +108,97 @@ recover_2fa_schema = Recover2FAInputSchema()
 reset_2fa_schema = Reset2FAInputSchema()
 reset_api_key_schema = ResetAPIKeyInputSchema()
 change_pw_schema = ChangePasswordInputSchema()
+
+
+# used by RecoverPassword.post()
+def _handle_password_recovery(
+    app: Flask, username: str, email: str, config: dict, mail: Mail
+) -> None:
+    """
+    Send an email to user with a password reset token.
+
+    This function also checks whether such an email has been sent recently, and
+    if so avoids sending it.
+
+    Parameters
+    ----------
+    app: flask.Flask
+        The current Flask app
+    username: str
+        User for who the password reset is being requested
+    email: str
+        Email address associated to an account for which the password reset is
+        being requested
+    config: dict
+        Dictionary with configuration settings
+    mail: flask_mail.Mail
+        An instance of the Flask mail class. Used to send email to user in case
+        of too many failed login attempts.
+    """
+    # read settings
+    password_policy = config.get("password_policy", {})
+    minutes_between_password_reset_emails = password_policy.get(
+        "between_user_emails_minutes",
+        DEFAULT_BETWEEN_USER_EMAILS_MINUTES,
+    )
+    smtp_settings = config.get("smtp", {})
+    minutes_token_valid = smtp_settings.get(
+        "email_token_validity_minutes", DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES
+    )
+    expires = dt.timedelta(minutes=minutes_token_valid)
+    email_from = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
+    support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
+
+    try:
+        user = User.get_by_username(username) if username else User.get_by_email(email)
+    except NoResultFound:
+        account_name = username or email
+        log.info(
+            "Someone requested password recovery for non-existing account '%s'",
+            account_name,
+        )
+        return
+
+    log.debug("Password reset requested for '%s'", user.username)
+
+    # check that email has not already been sent recently
+    email_sent_recently = user.last_email_recover_password_sent and (
+        dt.datetime.now()
+        < user.last_email_recover_password_sent
+        + dt.timedelta(minutes=minutes_between_password_reset_emails)
+    )
+    if email_sent_recently:
+        log.info("Skipping sending password reset email to '%s'", user.username)
+        return
+
+    with app.app_context():
+        # generate a token that can reset their password
+        reset_token = create_access_token({"id": str(user.id)}, expires_delta=expires)
+        log.info("Sending password reset email to '%s'", user.email)
+        mail.send_email(
+            f"Password reset {APPNAME}",
+            sender=email_from,
+            recipients=[user.email],
+            text_body=render_template(
+                "mail/reset_token.txt",
+                token=reset_token,
+                firstname=user.firstname,
+                reset_type="password",
+                what_to_do="simply ignore this message",
+            ),
+            html_body=render_template(
+                "mail/reset_token.html",
+                token=reset_token,
+                firstname=user.firstname,
+                reset_type="password",
+                support_email=support_email,
+                what_to_do="simply ignore this message",
+            ),
+        )
+
+    # Update last password reset email sent date
+    user.last_email_recover_password_sent = dt.datetime.now()
+    user.save()
 
 
 # ------------------------------------------------------------------------------
@@ -222,52 +318,18 @@ class RecoverPassword(ServicesResources):
         username = body.get("username")
         email = body.get("email")
 
-        # find user in the database, if not here we stop!
-        try:
-            if username:
-                user = db.User.get_by_username(username)
-            else:
-                user = db.User.get_by_email(email)
-        except NoResultFound:
-            account_name = email if email else username
-            log.info(
-                "Someone request 2FA reset for non-existing account" f" {account_name}"
-            )
-            # we do not tell them.... But we won't continue either
-            return ret
-
-        log.info(f"Password reset requested for '{user.username}'")
-
-        # generate a token that can reset their password
-        smtp_settings = self.config.get("smtp", {})
-        minutes_token_valid = smtp_settings.get(
-            "email_token_validity_minutes", DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES
-        )
-        expires = datetime.timedelta(minutes=minutes_token_valid)
-        reset_token = create_access_token({"id": str(user.id)}, expires_delta=expires)
-
-        email_from = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
-        support_email = self.config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
-
-        self.mail.send_email(
-            f"Password reset {APPNAME}",
-            sender=email_from,
-            recipients=[user.email],
-            text_body=render_template(
-                "mail/reset_token.txt",
-                token=reset_token,
-                firstname=user.firstname,
-                reset_type="password",
-                what_to_do="simply ignore this message",
-            ),
-            html_body=render_template(
-                "mail/reset_token.html",
-                token=reset_token,
-                firstname=user.firstname,
-                reset_type="password",
-                support_email=support_email,
-                what_to_do="simply ignore this message",
-            ),
+        log.debug("Scheduling handling of password recovery request")
+        # we schedule _handle_password_recovery in '3' seconds to make it very
+        # likely we'll respond to the user's request (HTTP) before we start
+        # executing its code. We do this to avoid potential timing attacks
+        gevent.spawn_later(
+            3,
+            _handle_password_recovery,
+            current_app._get_current_object(),
+            username,
+            email,
+            self.config,
+            self.mail,
         )
 
         return ret
@@ -333,7 +395,7 @@ class RecoverTwoFactorSecret(ServicesResources):
         ---
         description: >-
           Request a recover token if two-factor authentication secret is lost.
-          A password and either email address or username must be supplied.
+          A password and a username must be supplied.
 
         requestBody:
           content:
@@ -343,10 +405,6 @@ class RecoverTwoFactorSecret(ServicesResources):
                   username:
                     type: string
                     description: Username from which the 2fa needs to be reset
-                  email:
-                    type: string
-                    description: Email of user from which the 2fa needs to be
-                      reset
                   password:
                     type: string
                     description: Password of user whose 2fa needs to be reset
@@ -359,12 +417,6 @@ class RecoverTwoFactorSecret(ServicesResources):
 
         tags: ["Account recovery"]
         """
-        # default return string
-        ret = {
-            "msg": "If you sent a correct combination of username/email and"
-            "password, you will soon receive an email."
-        }
-
         # obtain parameters from request
         body = request.get_json()
 
@@ -377,28 +429,15 @@ class RecoverTwoFactorSecret(ServicesResources):
             }, HTTPStatus.BAD_REQUEST
 
         username = body.get("username")
-        email = body.get("email")
         password = body.get("password")
 
-        # find user in the database, if not here we stop!
-        try:
-            if username:
-                user = db.User.get_by_username(username)
-            else:
-                user = db.User.get_by_email(email)
-        except NoResultFound:
-            account_name = email if email else username
-            log.info(
-                "Someone request 2FA reset for non-existing account" f" {account_name}"
-            )
-            # we do not tell them.... But we won't continue either
-            return ret, HTTPStatus.OK
-
-        # check password
-        user, code = user_login(self.config, user.username, password, self.mail)
-        if code != HTTPStatus.OK:
-            log.error(f"Failed to reset 2FA for user {username}, wrong " "password")
-            return user, code
+        # check credentials
+        user, login_status = user_login(self.config, username, password, self.mail)
+        if login_status != HTTPStatus.OK:
+            log.error(f"Failed attempt to reset 2FA for submitted user '%s'", username)
+            # Note: user_login() returns a dict with an error message if login
+            #       failed as first returned element ('user')
+            return user, login_status
 
         log.info(f"2FA reset requested for '{user.username}'")
 
@@ -422,7 +461,7 @@ class RecoverTwoFactorSecret(ServicesResources):
                 token=reset_token,
                 firstname=user.firstname,
                 reset_type="two-factor authentication code",
-                what_to_do=("please reset your password! It has been " "compromised"),
+                what_to_do=("please reset your password! It has been compromised"),
             ),
             html_body=render_template(
                 "mail/reset_token.html",
@@ -430,11 +469,14 @@ class RecoverTwoFactorSecret(ServicesResources):
                 firstname=user.firstname,
                 reset_type="two-factor authentication code",
                 support_email=support_email,
-                what_to_do=("please reset your password! It has been " "compromised"),
+                what_to_do=("please reset your password! It has been compromised"),
             ),
         )
+        log.info("2FA reset request email sent for '%s'", user.username)
 
-        return ret, HTTPStatus.OK
+        return {
+            "msg": "You should have received an email that will allow you to reset your 2FA."
+        }, login_status
 
 
 class ChangePassword(ServicesResources):

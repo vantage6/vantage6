@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 
 from http import HTTPStatus
@@ -22,7 +21,7 @@ from vantage6.server.permission import (
 from vantage6.server.model.rule import Operation, Scope
 from vantage6.server.resource.common.output_schema import RoleSchema, RuleSchema
 from vantage6.server.resource.common.input_schema import RoleInputSchema
-from vantage6.server.resource.common.pagination import Pagination
+from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.default_roles import DefaultRole
 
 module_name = logger_name(__name__)
@@ -365,7 +364,7 @@ class Roles(RoleBase):
         try:
             page = Pagination.from_query(q, request, db.Role)
         except (ValueError, AttributeError) as e:
-            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         return self.response(page, role_schema)
 

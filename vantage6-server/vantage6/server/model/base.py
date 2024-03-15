@@ -14,7 +14,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker, RelationshipProperty
 from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common import logger_name, Singleton
-from vantage6.server import session
+from vantage6.backend.common import session
 
 
 module_name = logger_name(__name__)

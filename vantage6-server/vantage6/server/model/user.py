@@ -67,6 +67,7 @@ class User(Authenticatable):
     last_login_attempt = Column(DateTime)
     otp_secret = Column(String(32))
     last_email_failed_login_sent = Column(DateTime)
+    last_email_recover_password_sent = Column(DateTime)
 
     # relationships
     organization = relationship("Organization", back_populates="users")

@@ -5,7 +5,7 @@ from colorama import Fore, Style
 from vantage6.common import warning
 from vantage6.common.globals import APPNAME
 from vantage6.common.docker.addons import check_docker_running
-from vantage6.cli.context import NodeContext
+from vantage6.cli.context.node import NodeContext
 from vantage6.cli.node.common import find_running_node_names
 
 

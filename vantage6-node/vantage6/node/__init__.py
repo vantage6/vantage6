@@ -22,6 +22,7 @@ The node connects to the server using a websocket connection. This connection
 is mainly used for sharing status updates. This avoids the need for polling to
 see if there are new tasks available.
 """
+
 import sys
 import os
 import random
@@ -50,7 +51,7 @@ from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.task_status import TaskStatus
 from vantage6.common.log import get_file_logger
-from vantage6.cli.context import NodeContext
+from vantage6.cli.context.node import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.globals import (
     NODE_PROXY_SERVER_HOSTNAME,
@@ -921,8 +922,8 @@ class Node:
         while not self.socketIO.connected:
             if i > TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET:
                 self.log.critical(
-                    "Could not connect to the websocket "
-                    "channels, do you have a slow connection?"
+                    "Could not connect to the websocket channels, do you have a "
+                    "slow connection?"
                 )
                 exit(1)
             self.log.debug("Waiting for socket connection...")
@@ -934,7 +935,7 @@ class Node:
         )
 
         self.log.debug(
-            "Starting thread to ping the server to notify this node" " is online."
+            "Starting thread to ping the server to notify this node is online."
         )
         self.socketIO.start_background_task(self.__socket_ping_worker)
 
@@ -1088,6 +1089,8 @@ class Node:
         self.socketIO.emit("node_info_update", config_to_share, namespace="/tasks")
 
     def cleanup(self) -> None:
+        # TODO add try/catch for all cleanups so that if one fails, the others are
+        # still executed
         if hasattr(self, "socketIO") and self.socketIO:
             self.socketIO.disconnect()
         if hasattr(self, "vpn_manager") and self.vpn_manager:

@@ -12,15 +12,15 @@ address/port).
 There are many deployment options. We simply provide a few examples.
 
 -  :ref:`deploy-nginx`
--  :ref:`deploy-azure`
+-  :ref:`deploy-docker-compose`
 -  …
 
 .. note::
-    From version 3.2+ it is possible to horizontally scale the server (This
-    upgrade is also made available to version 2.3.4)
-
-    Documentation on how to deploy it will be shared here soon. Reach out to us
-    on Discord for now.
+    Because the server uses socketIO to exchange messages with the nodes and
+    users, it is not trivial to horizontally scale the server. To prevent that
+    socket messages get lost, you should deploy a RabbitMQ service and configure
+    the server to use it. :ref:`This section <rabbitmq-install>` explains how to
+    do so.
 
 .. _deploy-nginx:
 
@@ -63,12 +63,25 @@ A basic setup is shown below. Note that SSL is not configured in this example.
     configuration into the ``api_path`` setting
     (e.g. ``api_path: /subpath/api``)
 
-.. _deploy-azure:
+.. _deploy-docker-compose:
 
-Azure app service
-"""""""""""""""""
+Docker compose
+""""""""""""""
 
-.. note::
-    We still have to document this. Reach out to us on Discord for now.
+An alternative to ``v6 server start`` is to use docker-compose. Below is an
+example of a ``docker-compose.yml`` file that may be used to start the server.
+Obviously, you may want to change this to your own situtation. For example, you
+may want to use a different image tag, or you may want to use a different port.
 
-.. TODO
+.. code:: yaml
+
+    services:
+      vantage6-server:
+        image: harbor2.vantage6.ai/infrastructure/server:cotopaxi
+        ports:
+        - "8000:5000"
+        volumes:
+        - /path/to/my/server.yaml:/mnt/config.yaml
+        command: ["/bin/bash", "-c", "/vantage6/vantage6-server/server.sh"]
+
+.. TODO How to deploy on Azure app service

@@ -1,5 +1,6 @@
 import click
 import IPython
+from vantage6.common.globals import InstanceType
 import yaml
 
 from functools import wraps
@@ -14,7 +15,7 @@ from vantage6.server.model.base import Database
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
 from vantage6.server.controller import fixture
 from vantage6.cli.configuration_wizard import select_configuration_questionaire
-from vantage6.cli.context import ServerContext
+from vantage6.cli.context.server import ServerContext
 from vantage6.server._version import __version__
 
 
@@ -61,7 +62,9 @@ def click_insert_context(func: callable) -> callable:
         else:
             if not name:
                 try:
-                    name = select_configuration_questionaire("server", system_folders)
+                    name = select_configuration_questionaire(
+                        InstanceType.SERVER, system_folders
+                    )
                 except Exception:
                     error("No configurations could be found!")
                     exit()

@@ -8,6 +8,7 @@ users. Apart from roles, users may be assigned extra permissions that allow
 them to execute one specific action. This table is used to store those, and
 may contain multiple entries for the same user.
 """
+
 from sqlalchemy import Column, Integer, ForeignKey, Table
 
 from .base import Base

@@ -1,5 +1,5 @@
-The (minimal) requirements of the node and server are
-similar. Note that these are recommendations: it may also work on other
+Below are the minimal requirements for vantage6 infrastructure components. Note
+that these are recommendations: it may also work on other
 hardware, operating systems, versions of Python etc. (but they are not tested
 as much).
 
