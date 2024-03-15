@@ -8,7 +8,7 @@ import { getApiSearchParameters } from 'src/app/helpers/api.helper';
 import { unlikeApiParameter } from 'src/app/helpers/general.helper';
 import { getChipTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
-import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
+import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { BaseTask, GetTaskParameters, TaskSortProperties, TaskStatus } from 'src/app/models/api/task.models';
 import { TableData } from 'src/app/models/application/table.model';
 import { CHOSEN_COLLABORATION, USER_ID } from 'src/app/models/constants/sessionStorage';
