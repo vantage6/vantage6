@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { BaseOrganization } from 'src/app/models/api/organization.model';
 import { StudyCreate, StudyForm } from 'src/app/models/api/study.model';
 import { routePaths } from 'src/app/routes';
+import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { StudyService } from 'src/app/services/study.service';
 
 @Component({
@@ -18,7 +19,8 @@ export class StudyCreateComponent {
 
   constructor(
     private router: Router,
-    private studyService: StudyService
+    private studyService: StudyService,
+    private chosenCollaborationService: ChosenCollaborationService
   ) {}
 
   async handleSubmit(studyForm: StudyForm) {
@@ -32,6 +34,8 @@ export class StudyCreateComponent {
     };
     const study = await this.studyService.createStudy(studyCreate);
     if (study?.id) {
+      // update the chosen collaboration to include the new study
+      this.chosenCollaborationService.refresh(this.id);
       this.router.navigate([routePaths.study, study.id]);
     } else {
       this.isSubmitting = false;

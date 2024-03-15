@@ -9,6 +9,7 @@ import { PermissionService } from 'src/app/services/permission.service';
 import { StudyService } from 'src/app/services/study.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
+import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 
 @Component({
   selector: 'app-study-read',
@@ -32,7 +33,8 @@ export class StudyReadComponent implements OnInit, OnDestroy {
     private router: Router,
     private translateService: TranslateService,
     private permissionService: PermissionService,
-    private studyService: StudyService
+    private studyService: StudyService,
+    private chosenCollaborationService: ChosenCollaborationService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -81,6 +83,8 @@ export class StudyReadComponent implements OnInit, OnDestroy {
           if (!this.study) return;
           this.isLoading = true;
           await this.studyService.deleteStudy(this.study.id.toString());
+          // update the chosen collaboration to remove the deleted study
+          this.chosenCollaborationService.refresh(this.study.collaboration?.id.toString());
           this.router.navigate([routePaths.collaboration, this.study.collaboration?.id]);
         }
       });

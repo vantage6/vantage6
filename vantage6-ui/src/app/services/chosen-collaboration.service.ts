@@ -29,9 +29,11 @@ export class ChosenCollaborationService {
     this.collaboration$.next(collaboration);
   }
 
-  async refresh(refresh_id: string) {
+  async refresh(refresh_id: string | null = null) {
     // only refresh if the updated collaboration is the same as the chosen one
-    if (this.id && this.id === refresh_id) {
+    // if refresh_id is null, refresh anyway (e.g. when algorithm store is added that
+    // is part of all collaborations)
+    if (this.id && refresh_id && this.id === refresh_id) {
       await this.setCollaboration(this.id);
     }
   }

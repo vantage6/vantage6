@@ -6,6 +6,7 @@ import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confi
 import { AddAlgorithmStore, AlgorithmStoreForm } from 'src/app/models/api/algorithmStore.model';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
+import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { SnackbarService } from 'src/app/services/snackbar.service';
 
 @Component({
@@ -22,7 +23,8 @@ export class AddAlgoStoreComponent implements OnInit {
     private router: Router,
     private translateService: TranslateService,
     private algorithmStoreService: AlgorithmStoreService,
-    private snackBarService: SnackbarService
+    private snackBarService: SnackbarService,
+    private chosenCollaborationService: ChosenCollaborationService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -43,6 +45,8 @@ export class AddAlgoStoreComponent implements OnInit {
     this.isSubmitting = true;
     try {
       await this.algorithmStoreService.addAlgorithmStore(addAlgorithmStore);
+      // always refresh the chosen collaboration after adding an algorithm store
+      this.chosenCollaborationService.refresh();
     } catch (error) {
       if (this.urlsContainLocalhost(addAlgorithmStore)) {
         await this.handleLocalhostAddition(addAlgorithmStore);
