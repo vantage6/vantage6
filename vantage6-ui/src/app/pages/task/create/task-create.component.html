@@ -1,7 +1,7 @@
 <app-page-header title="{{ 'task-create.title' | translate }}"></app-page-header>
 <ng-container *ngIf="!isLoading; else loading">
   <mat-card>
-    <mat-card-content *ngIf="!(isDataInitialized && (!node || node?.status !== 'online')); else noOnlineNodes">
+    <mat-card-content *ngIf="isDataInitialized && hasOnlineNode() && hasAlgorithmStores() && hasAlgorithms(); else cannotCreateAlgorithm">
       <mat-stepper [linear]="true" orientation="vertical" #stepper>
         <!-- by default, completed steps get an 'edit' icon to indicate they are completed but still editable.
           We change this to a check mark to show clearly which steps have been filled in -->
@@ -221,6 +221,12 @@
     <div>{{ "task-create.step-preprocessing.get-columns" | translate }}</div>
   </div>
 </ng-template>
-<ng-template #noOnlineNodes>
-  <app-alert class="node-alert" label="{{ 'task-create.alert-no-online-nodes' | translate }}"></app-alert>
+<ng-template #cannotCreateAlgorithm>
+  <app-alert *ngIf="!hasOnlineNode()" class="node-alert" label="{{ 'task-create.alert-no-online-nodes' | translate }}"></app-alert>
+  <app-alert *ngIf="!hasAlgorithmStores()" class="node-alert" label="{{ 'task-create.alert-no-stores' | translate }}"></app-alert>
+  <app-alert
+    *ngIf="hasAlgorithmStores() && !hasAlgorithms()"
+    class="node-alert"
+    label="{{ 'task-create.alert-no-algorithms' | translate }}"
+  ></app-alert>
 </ng-template>

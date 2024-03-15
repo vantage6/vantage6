@@ -114,7 +114,9 @@
       "title": "Define parameters",
       "description": "Provide parameter values for the selected algorithm function"
     },
-    "alert-no-online-nodes": "You cannot create a task right now because no nodes are online in your collaboration. Online nodes are required to collect information on available databases and columns. Please try again later or contact your collaboration manager."
+    "alert-no-online-nodes": "You cannot create a task right now because no nodes are online in your collaboration. Online nodes are required to collect information on available databases and columns. Please try again later or contact your collaboration manager.",
+    "alert-no-stores": "You cannot create a task because no algorithm stores are available to your collaboration. These are required to obtain the available algorithms from. Please contact your collaboration manager.",
+    "alert-no-algorithms": "You cannot create a task because no algorithms can be retrieved from the algorithm stores that are linked to your collaboration. Please contact your collaboration manager."
   },
   "task-read": {
     "title": "Task",

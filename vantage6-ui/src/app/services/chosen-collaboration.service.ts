@@ -33,7 +33,7 @@ export class ChosenCollaborationService {
     // only refresh if the updated collaboration is the same as the chosen one
     // if refresh_id is null, refresh anyway (e.g. when algorithm store is added that
     // is part of all collaborations)
-    if (this.id && refresh_id && this.id === refresh_id) {
+    if (this.id && (!refresh_id || this.id === refresh_id)) {
       await this.setCollaboration(this.id);
     }
   }
