@@ -2,6 +2,10 @@
 # your peers to identify the server
 description: Test
 
+# Human readable name of the server instance. This can help users identify
+# the server quickly. It's used for example in the TOTP issuer for 2FA.
+server_name: demo
+
 # IP adress to which the server binds. In case you specify 0.0.0.0
 # the server listens on all interfaces
 ip: 0.0.0.0

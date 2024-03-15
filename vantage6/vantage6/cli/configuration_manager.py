@@ -28,6 +28,7 @@ class ServerConfiguration(Configuration):
         "uri": Use(str),
         "allow_drop_all": Use(bool),
         "logging": {**LOGGING_VALIDATORS, "file": Use(str)},
+        Optional("server_name"): str,
     }
 
 
