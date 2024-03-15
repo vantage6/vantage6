@@ -307,7 +307,8 @@
       "user": "User",
       "run": "Run",
       "event": "Event",
-      "port": "Port"
+      "port": "Port",
+      "study": "Study"
     },
 
     "scope": {
