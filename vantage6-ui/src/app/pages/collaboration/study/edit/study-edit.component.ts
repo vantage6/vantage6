@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { BaseOrganization } from 'src/app/models/api/organization.model';
 import { Study, StudyCreate, StudyForm, StudyLazyProperties } from 'src/app/models/api/study.model';
 import { routePaths } from 'src/app/routes';
+import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { StudyService } from 'src/app/services/study.service';
 
 @Component({
@@ -20,7 +21,8 @@ export class StudyEditComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private studyService: StudyService
+    private studyService: StudyService,
+    private chosenCollaborationService: ChosenCollaborationService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -46,6 +48,8 @@ export class StudyEditComponent implements OnInit {
     const result = await this.studyService.editStudy(this.study.id.toString(), studyCreate);
 
     if (result?.id) {
+      // update the chosen collaboration to include the edited study
+      this.chosenCollaborationService.refresh(this.study.collaboration.id.toString());
       this.router.navigate([routePaths.study, this.study.id]);
     } else {
       this.isSubmitting = false;

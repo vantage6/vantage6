@@ -11,6 +11,7 @@ import { ApiService } from './api.service';
   providedIn: 'root'
 })
 export class ChosenCollaborationService {
+  id: string = '';
   isInitialized$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   collaboration$: BehaviorSubject<Collaboration | null> = new BehaviorSubject<Collaboration | null>(null);
 
@@ -22,15 +23,26 @@ export class ChosenCollaborationService {
   }
 
   async setCollaboration(id: string) {
+    this.id = id;
     sessionStorage.setItem(CHOSEN_COLLABORATION, id);
     const collaboration = await this.getCollaboration(id);
     this.collaboration$.next(collaboration);
   }
 
+  async refresh(refresh_id: string | null = null) {
+    // only refresh if the updated collaboration is the same as the chosen one
+    // if refresh_id is null, refresh anyway (e.g. when algorithm store is added that
+    // is part of all collaborations)
+    if (this.id && refresh_id && this.id === refresh_id) {
+      await this.setCollaboration(this.id);
+    }
+  }
+
   private async initData() {
     const collaborationIDFromSession = sessionStorage.getItem(CHOSEN_COLLABORATION);
     if (collaborationIDFromSession) {
-      const collaboration = await this.getCollaboration(collaborationIDFromSession);
+      this.id = collaborationIDFromSession;
+      const collaboration = await this.getCollaboration(this.id);
       this.collaboration$.next(collaboration);
     }
     this.isInitialized$.next(true);

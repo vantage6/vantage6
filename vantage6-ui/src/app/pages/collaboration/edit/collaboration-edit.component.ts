@@ -7,6 +7,7 @@ import { Collaboration, CollaborationCreate, CollaborationForm, CollaborationLaz
 import { ApiKeyExport } from 'src/app/models/api/node.model';
 import { BaseOrganization } from 'src/app/models/api/organization.model';
 import { routePaths } from 'src/app/routes';
+import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { CollaborationService } from 'src/app/services/collaboration.service';
 import { FileService } from 'src/app/services/file.service';
 import { NodeService } from 'src/app/services/node.service';
@@ -29,7 +30,8 @@ export class CollaborationEditComponent implements OnInit {
     private nodeService: NodeService,
     private dialog: MatDialog,
     private translateService: TranslateService,
-    private fileService: FileService
+    private fileService: FileService,
+    private chosenCollaborationService: ChosenCollaborationService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -89,6 +91,9 @@ export class CollaborationEditComponent implements OnInit {
           })
         );
       }
+      // update the chosen collaboration
+      this.chosenCollaborationService.refresh(result.id.toString());
+      // go to the collaboration page
       this.router.navigate([routePaths.collaboration, this.id]);
     } else {
       this.isSubmitting = false;
