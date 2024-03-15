@@ -450,7 +450,7 @@
     }
   },
   "change-password": {
-    "title": "Change password",
+    "title": "Change password for '{{username}}'",
     "old-password": "Old password",
     "new-password": "New password",
     "new-password-repeat": "Repeat new password",

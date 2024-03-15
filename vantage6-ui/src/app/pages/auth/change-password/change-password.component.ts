@@ -12,6 +12,7 @@ import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
 import { createUnEqualValidator } from 'src/app/validators/unequal.validator';
 import { LoginErrorService } from 'src/app/services/login-error.service';
+import { TokenStorageService } from 'src/app/services/token-storage.service';
 
 @Component({
   selector: 'app-change-password',
@@ -29,6 +30,7 @@ export class ChangePasswordComponent implements OnInit, OnDestroy {
     },
     { validators: [createCompareValidator('newPassword', 'newPasswordRepeat'), createUnEqualValidator('oldPassword', 'newPassword')] }
   );
+  username: string = '';
 
   constructor(
     public loginErrorService: LoginErrorService,
@@ -36,11 +38,13 @@ export class ChangePasswordComponent implements OnInit, OnDestroy {
     private router: Router,
     private dialog: MatDialog,
     private translateService: TranslateService,
-    private authService: AuthService
+    private authService: AuthService,
+    private tokenStorageService: TokenStorageService
   ) {}
 
   ngOnInit(): void {
     this.loginErrorService.clearError();
+    this.username = this.tokenStorageService.getUsername() || '';
   }
 
   ngOnDestroy(): void {

@@ -54,7 +54,7 @@ export class AuthService {
       return AuthResult.MFACode;
     } else {
       // login success
-      this.tokenStorageService.setSession(result);
+      this.tokenStorageService.setSession(result, this.username);
       return await this.isAuthenticated();
     }
   }
