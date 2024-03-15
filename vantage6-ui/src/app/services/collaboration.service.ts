@@ -38,15 +38,6 @@ export class CollaborationService {
     const result = await this.apiService.getForApi<BaseCollaboration>(`/collaboration/${collaborationID}`);
 
     const collaboration: Collaboration = { ...result, organizations: [], nodes: [], tasks: [], algorithm_stores: [], studies: [] };
-    // If studies are in lazyProperties, and user cannot view them at collaboration level,
-    // they need to be requested separately
-    if (
-      lazyProperties.includes(CollaborationLazyProperties.Studies) &&
-      !this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.STUDY, OperationType.VIEW)
-    ) {
-      collaboration.studies = await this.studyService.getStudies({ organization_id: this.permissionService.getActiveOrganizationID() });
-      lazyProperties.splice(lazyProperties.indexOf(CollaborationLazyProperties.Studies), 1);
-    }
     await getLazyProperties(result, collaboration, lazyProperties, this.apiService);
 
     return collaboration;

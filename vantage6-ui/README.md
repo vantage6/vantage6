@@ -85,7 +85,7 @@ spaces in between each algorithm store you want to allow traffic from:
 docker run --env ALLOWED_ALGORITHM_STORES="store.cotopaxi.vantage6.ai myotherstore.com" ...
 ```
 
-Note that if you do *not* specify this environment variable, the CSP policy
+Note that if you do _not_ specify this environment variable, the CSP policy
 will be very lenient. In order for the UI to work properly, algorithm store
 resources should be obtained, so if no algorithm stores are provided, all
 URIs will be allowed.

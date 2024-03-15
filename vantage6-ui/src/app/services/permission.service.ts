@@ -85,7 +85,7 @@ export class PermissionService {
     const orgsInUserCollabs = collab.organizations.map((org) => org.id);
     return (
       this.isAllowed(ScopeType.GLOBAL, resource, operation) ||
-      (this.activeUser.organization.id in orgsInUserCollabs && this.isAllowed(ScopeType.COLLABORATION, resource, operation))
+      (orgsInUserCollabs.includes(this.activeUser.organization.id) && this.isAllowed(ScopeType.COLLABORATION, resource, operation))
     );
   }
 
