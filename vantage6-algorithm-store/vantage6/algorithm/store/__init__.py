@@ -256,13 +256,22 @@ class AlgorithmStoreApp:
     def _add_default_roles() -> None:
         for role in get_default_roles():
             if not db.Role.get_by_name(role["name"]):
-                log.warn("Creating new default role %s", role["name"])
+                log.warning("Creating new default role %s", role["name"].value)
                 new_role = db.Role(
                     name=role["name"],
                     description=role["description"],
                     rules=role["rules"],
                 )
                 new_role.save()
+            else:
+                current_role = db.Role.get_by_name(role["name"])
+                # check that the rules are the same. Use set() to compare without order
+                if set(current_role.rules) != set(role["rules"]):
+                    log.warning(
+                        "Updating default role %s with new rules", role["name"].value
+                    )
+                    current_role.rules = role["rules"]
+                    current_role.save()
 
     def start(self) -> None:
         """

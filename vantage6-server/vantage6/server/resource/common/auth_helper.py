@@ -239,7 +239,7 @@ def __notify_user_blocked(
     user.save()
 
 
-def create_qr_uri(user: User) -> dict:
+def create_qr_uri(user: User, server_name: str) -> dict:
     """
     Create the URI to generate a QR code for authenticator apps
 
@@ -247,6 +247,8 @@ def create_qr_uri(user: User) -> dict:
     ----------
     user: :class:`~vantage6.server.model.user.User`
         User for whom two-factor authentication is to be set up
+    server_name: str
+        Name of the server. This is used in the issuer name in the URI
 
     Returns
     -------
@@ -256,7 +258,7 @@ def create_qr_uri(user: User) -> dict:
     """
     otp_secret = pyotp.random_base32()
     qr_uri = pyotp.totp.TOTP(otp_secret).provisioning_uri(
-        name=user.username, issuer_name=f"{APPNAME} ({MAIN_VERSION_NAME})"
+        name=user.username, issuer_name=f"{APPNAME} ({server_name})"
     )
     user.otp_secret = otp_secret
     user.save()

@@ -167,7 +167,7 @@ class ServerApp:
             origins = [origins]
 
         for origin in origins:
-            if probably_regex(origin):
+            if probably_regex(origin) and not origin == "*":
                 log.warning(
                     "CORS origin '%s' is a regular expression. Socket events sent from "
                     "this origin will not be handled properly.",
@@ -625,7 +625,7 @@ class ServerApp:
     def _add_default_roles() -> None:
         for role in get_default_roles(db):
             if not db.Role.get_by_name(role["name"]):
-                log.warn(f"Creating new default role {role['name']}...")
+                log.warning("Creating new default role %s...", role["name"].value)
                 new_role = db.Role(
                     name=role["name"],
                     description=role["description"],
@@ -633,6 +633,15 @@ class ServerApp:
                     is_default_role=role["is_default_role"],
                 )
                 new_role.save()
+            else:
+                current_role = db.Role.get_by_name(role["name"])
+                # check that the rules are the same. Use set() to compare without order
+                if set(current_role.rules) != set(role["rules"]):
+                    log.warning(
+                        "Updating default role %s with new rules", role["name"].value
+                    )
+                    current_role.rules = role["rules"]
+                    current_role.save()
 
     def start(self) -> None:
         """

@@ -12,7 +12,7 @@ from sqlalchemy.orm.exc import NoResultFound
 import datetime as dt
 
 from vantage6.common import logger_name, generate_apikey
-from vantage6.common.globals import APPNAME
+from vantage6.common.globals import APPNAME, MAIN_VERSION_NAME
 from vantage6.server import db
 from vantage6.server.globals import (
     DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES,
@@ -381,9 +381,10 @@ class ResetTwoFactorSecret(ServicesResources):
             return {"msg": "Invalid recovery token!"}, HTTPStatus.BAD_REQUEST
 
         user = db.User.get(user_id)
+        server_name = self.config.get("server_name", MAIN_VERSION_NAME)
 
         log.info(f"Resetting two-factor authentication for {user.username}")
-        return create_qr_uri(user), HTTPStatus.OK
+        return create_qr_uri(user, server_name), HTTPStatus.OK
 
 
 class RecoverTwoFactorSecret(ServicesResources):

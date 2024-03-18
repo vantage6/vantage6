@@ -27,7 +27,7 @@ def cli_algo_store_stop(ctx: AlgorithmStoreContext, all_servers: bool):
     )
 
     if not running_servers:
-        warning("No servers are currently running.")
+        warning("No algorithm stores are currently running.")
         return
 
     running_server_names = [server.name for server in running_servers]
