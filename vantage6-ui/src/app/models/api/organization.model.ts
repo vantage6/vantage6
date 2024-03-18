@@ -14,6 +14,7 @@ export enum OrganizationSortProperties {
 export interface GetOrganizationParameters {
   name?: string;
   collaboration_id?: string;
+  study_id?: number;
   sort?: OrganizationSortProperties;
 }
 

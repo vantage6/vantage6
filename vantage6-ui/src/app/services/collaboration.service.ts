@@ -9,12 +9,19 @@ import {
   GetCollaborationParameters
 } from '../models/api/collaboration.model';
 import { getLazyProperties } from '../helpers/api.helper';
+import { PermissionService } from './permission.service';
+import { OperationType, ResourceType, ScopeType } from '../models/api/rule.model';
+import { StudyService } from './study.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CollaborationService {
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private permissionService: PermissionService,
+    private studyService: StudyService
+  ) {}
 
   async getCollaborations(parameters?: GetCollaborationParameters): Promise<BaseCollaboration[]> {
     //TODO: Add backend no pagination instead of page size 9999

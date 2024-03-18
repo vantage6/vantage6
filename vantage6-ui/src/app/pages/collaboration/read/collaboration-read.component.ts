@@ -17,6 +17,7 @@ import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service'
 import { CollaborationService } from 'src/app/services/collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
+import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 
 @Component({
   selector: 'app-collaboration-read',
@@ -54,7 +55,8 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
     private algorithmStoreService: AlgorithmStoreService,
     private translateService: TranslateService,
     private permissionService: PermissionService,
-    private socketioConnectService: SocketioConnectService
+    private socketioConnectService: SocketioConnectService,
+    private chosenCollaborationService: ChosenCollaborationService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -169,6 +171,8 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
         storeToUpdate.name = result.name;
       }
     }
+    // refresh the chosen collaboration
+    this.chosenCollaborationService.refresh(this.collaboration.id.toString());
   }
 
   handleAlgoStoreEditCancel(): void {
@@ -203,6 +207,10 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
             (store) => store.id !== this.selectedAlgoStore?.id
           );
           this.selectedAlgoStore = undefined;
+
+          // refresh the chosen collaboration. Don't specify the collaboration id to
+          // force refresh, as the store may be part of other collaborations as well
+          this.chosenCollaborationService.refresh();
         }
       });
   }

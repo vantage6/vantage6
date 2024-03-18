@@ -79,6 +79,7 @@ export class OrganizationListComponent implements OnInit, OnDestroy {
 
     this.table = {
       columns: [
+        { id: 'id', label: this.translateService.instant('general.id') },
         {
           id: 'name',
           label: this.translateService.instant('organization.name'),
@@ -87,7 +88,7 @@ export class OrganizationListComponent implements OnInit, OnDestroy {
         },
         { id: 'country', label: this.translateService.instant('organization.country') }
       ],
-      rows: result.data.map((_) => ({ id: _.id.toString(), columnData: { name: _.name, country: _.country } }))
+      rows: result.data.map((_) => ({ id: _.id.toString(), columnData: { id: _.id, name: _.name, country: _.country } }))
     };
     this.pagination = result.links;
   }

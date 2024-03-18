@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import { getLazyProperties } from '../helpers/api.helper';
-import { BaseStudy, Study, StudyLazyProperties, StudyCreate, StudyEdit } from '../models/api/study.model';
+import { BaseStudy, Study, StudyLazyProperties, StudyCreate, StudyEdit, GetStudyParameters } from '../models/api/study.model';
+import { Pagination } from '../models/api/pagination.model';
 
 @Injectable({
   providedIn: 'root'
@@ -9,8 +10,13 @@ import { BaseStudy, Study, StudyLazyProperties, StudyCreate, StudyEdit } from '.
 export class StudyService {
   constructor(private apiService: ApiService) {}
 
-  async getStudy(studyID: string, lazyProperties: StudyLazyProperties[] = []): Promise<Study> {
-    const study = await this.apiService.getForApi<Study>(`/study/${studyID}`);
+  async getStudies(params: GetStudyParameters | null = null): Promise<BaseStudy[]> {
+    const result = await this.apiService.getForApi<Pagination<BaseStudy>>('/study', { ...params, per_page: 9999 });
+    return result.data;
+  }
+
+  async getStudy(studyID: string, lazyProperties: StudyLazyProperties[] = [], params: GetStudyParameters | null = null): Promise<Study> {
+    const study = await this.apiService.getForApi<Study>(`/study/${studyID}`, params);
 
     await getLazyProperties(study, study, lazyProperties, this.apiService);
 

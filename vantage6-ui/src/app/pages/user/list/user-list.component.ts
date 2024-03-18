@@ -1,4 +1,3 @@
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
@@ -37,65 +36,10 @@ export class UserListComponent implements OnInit, OnDestroy {
     private router: Router,
     private translateService: TranslateService,
     private userService: UserService,
-    private permissionService: PermissionService,
-    private breakpointObserver: BreakpointObserver
+    private permissionService: PermissionService
   ) {}
 
   async ngOnInit(): Promise<void> {
-    //TODO: Implement responsive columns in table component
-    this.breakpointObserver.observe([Breakpoints.Medium, Breakpoints.Large, Breakpoints.XLarge]).subscribe((result) => {
-      if (!this.table) return;
-
-      if (result.matches) {
-        this.table = {
-          ...this.table,
-          columns: [
-            {
-              id: 'username',
-              label: this.translateService.instant('user.username'),
-              searchEnabled: true,
-              initSearchString: unlikeApiParameter(this.getUserParameters.username)
-            },
-            {
-              id: 'firsname',
-              label: this.translateService.instant('user.first-name'),
-              searchEnabled: true,
-              initSearchString: unlikeApiParameter(this.getUserParameters.firstname)
-            },
-            {
-              id: 'lastname',
-              label: this.translateService.instant('user.last-name'),
-              searchEnabled: true,
-              initSearchString: unlikeApiParameter(this.getUserParameters.lastname)
-            },
-            {
-              id: 'email',
-              label: this.translateService.instant('user.email'),
-              searchEnabled: true,
-              initSearchString: unlikeApiParameter(this.getUserParameters.email)
-            }
-          ]
-        };
-      } else {
-        this.table = {
-          ...this.table,
-          columns: [
-            {
-              id: 'username',
-              label: this.translateService.instant('user.username'),
-              searchEnabled: true,
-              initSearchString: unlikeApiParameter(this.getUserParameters.username)
-            },
-            {
-              id: 'email',
-              label: this.translateService.instant('user.email'),
-              searchEnabled: true,
-              initSearchString: unlikeApiParameter(this.getUserParameters.email)
-            }
-          ]
-        };
-      }
-    });
     this.setPermissions();
     await this.initData(this.currentPage, this.getUserParameters);
   }
@@ -124,6 +68,7 @@ export class UserListComponent implements OnInit, OnDestroy {
     const result = await this.userService.getPaginatedUsers(page, { ...getUserParameters, sort: UserSortProperties.Username });
     this.table = {
       columns: [
+        { id: 'id', label: this.translateService.instant('general.id') },
         {
           id: 'username',
           label: this.translateService.instant('user.username'),
@@ -152,8 +97,10 @@ export class UserListComponent implements OnInit, OnDestroy {
       rows: result.data.map((_) => ({
         id: _.id.toString(),
         columnData: {
+          id: _.id,
           username: _.username,
           firstname: _.firstname,
+          lastname: _.lastname,
           email: _.email
         }
       }))

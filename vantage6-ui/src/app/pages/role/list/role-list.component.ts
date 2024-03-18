@@ -60,6 +60,7 @@ export class RoleListComponent implements OnInit, OnDestroy {
 
     this.table = {
       columns: [
+        { id: 'id', label: this.translateService.instant('general.id') },
         {
           id: 'name',
           label: this.translateService.instant('role-list.name'),
@@ -70,6 +71,7 @@ export class RoleListComponent implements OnInit, OnDestroy {
       rows: result.data.map((role) => ({
         id: role.id.toString(),
         columnData: {
+          id: role.id,
           name: role.name
         }
       }))

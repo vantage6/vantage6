@@ -114,7 +114,9 @@
       "title": "Define parameters",
       "description": "Provide parameter values for the selected algorithm function"
     },
-    "alert-no-online-nodes": "You cannot create a task right now because no nodes are online in your collaboration. Online nodes are required to collect information on available databases and columns. Please try again later or contact your collaboration manager."
+    "alert-no-online-nodes": "You cannot create a task right now because no nodes are online in your collaboration. Online nodes are required to collect information on available databases and columns. Please try again later or contact your collaboration manager.",
+    "alert-no-stores": "You cannot create a task because no algorithm stores are available to your collaboration. These are required to obtain the available algorithms from. Please contact your collaboration manager.",
+    "alert-no-algorithms": "You cannot create a task because no algorithms can be retrieved from the algorithm stores that are linked to your collaboration. Please contact your collaboration manager."
   },
   "task-read": {
     "title": "Task",
@@ -179,7 +181,9 @@
     },
     "card-nodes": {
       "title": "Nodes"
-    }
+    },
+    "no-collaborations": "No collaborations are available for this organization yet.",
+    "no-nodes": "No nodes are available for this organization yet."
   },
   "organization-create": {
     "title": "Create organization"
@@ -225,11 +229,13 @@
     },
     "card-algorithm-stores": {
       "title": "Algorithm stores available to this collaboration",
-      "add": "Add algorithm store"
+      "add": "Add algorithm store",
+      "no-stores": "No algorithm stores are available to this collaboration yet."
     },
     "card-studies": {
       "title": "Studies",
-      "add": "Add study"
+      "add": "Add study",
+      "no-studies": "No studies are available to this collaboration yet."
     },
     "delete-dialog": {
       "title": "Are you sure you want to delete the collaboration '{{name}}'?",
@@ -305,7 +311,8 @@
       "user": "User",
       "run": "Run",
       "event": "Event",
-      "port": "Port"
+      "port": "Port",
+      "study": "Study"
     },
 
     "scope": {
@@ -447,7 +454,7 @@
     }
   },
   "change-password": {
-    "title": "Change password",
+    "title": "Change password for '{{username}}'",
     "old-password": "Old password",
     "new-password": "New password",
     "new-password-repeat": "Repeat new password",
