@@ -395,10 +395,9 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
 
     default_v6_server_uri = "http://localhost:5000/api"
     default_root_username = "root"
-    default_root_id = "1"
 
     v6_server_uri = q.text(
-        "What is the Vantage6 server linked to the algorithm store?"
+        "What is the Vantage6 server linked to the algorithm store? "
         "Provide the link to the server endpoint.",
         default=default_v6_server_uri,
     ).ask()
@@ -412,6 +411,26 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
         "v6_server_uri": v6_server_uri,
         "username": root_username,
     }
+
+    # ask about openness of the algorithm store
+    is_open = q.confirm(
+        "Do you want to open the algorithm store to the public? This will allow anyone "
+        "to view the algorithms, but they cannot modify them.",
+        default=False,
+    ).ask()
+    if is_open:
+        config["policies"] = {"algorithms_open": True}
+    else:
+        is_open_to_whitelist = q.confirm(
+            "Do you want to allow all users of whitelisted vantage6 servers to access "
+            "the algorithms in the store? If not allowing this, you will have to assign"
+            " the appropriate permissions to each user individually.",
+            default=True,
+        ).ask()
+        config["policies"] = {
+            "algorithms_open": False,
+            "algorithms_open_to_whitelisted": is_open_to_whitelist,
+        }
 
     return config
 
