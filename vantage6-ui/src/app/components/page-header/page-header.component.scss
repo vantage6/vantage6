@@ -1,0 +1,20 @@
+@import "../../styles/config.scss";
+
+.page-header {
+  display: flex;
+
+  h2 {
+    margin: 0;
+  }
+
+  &__actions {
+    display: flex;
+    gap: $spacing-px-2;
+    margin-left: auto;
+  }
+
+  &__content:not(:empty) {
+    margin-top: $spacing-px-2;
+    display: inline-flex;
+  }
+}

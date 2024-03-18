@@ -1,0 +1,25 @@
+.searchable-table {
+  position: relative;
+  min-height: 100px; /* Guarantees that the loading is also visible during initial loading. */
+  &--is-loading {
+    & .searchable-table__header-row,
+    & .searchable-table__data-row {
+      opacity: 0.3;
+    }
+    & .searchable-table__loading-indicator {
+      position: absolute;
+      top: min(100px, 50%);
+      left: calc(50% - 24px);
+      display: block;
+    }
+  }
+  &--has-no-search-columns {
+    & .searchable-table__search-header-row {
+      display: none;
+    }
+  }
+
+  &__loading-indicator {
+    display: none;
+  }
+}

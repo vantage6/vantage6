@@ -1,0 +1,7 @@
+@import "config.scss";
+
+.chip-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-px-2;
+}

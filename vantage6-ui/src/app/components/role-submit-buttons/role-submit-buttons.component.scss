@@ -1,0 +1,13 @@
+@import "../../styles/config.scss";
+
+.role-submit-buttons {
+  &__error-message {
+    display: flex;
+    align-items: flex-end;
+    color: $error-900;
+  }
+  &__error-icon {
+    margin-top: $spacing-px-2;
+    margin-right: $spacing-px-2;
+  }
+}
