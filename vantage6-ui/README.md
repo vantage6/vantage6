@@ -13,7 +13,7 @@
 
 ---
 
-This repository is part of **vantage6**, and contains the code for our User Interface.
+This part of the repository contains the code for our User Interface.
 This is a web application that allows you to communicate easily with your **vantage6** server.
 
 ## How to use
@@ -25,20 +25,24 @@ on to https://portal.cotopaxi.vantage6.ai/. Contact us if you would like to have
 a user account.
 
 Note that the user interface is not available for older **vantage6** servers
-such as Harukas (v2). Please consider upgrading your project to Petronas (v3),
-or rather Cotopaxi (v4).
+such as Harukas (v2). Please consider upgrading to Cotopaxi (v4), or alternatively,
+Petronas (v3). Note that in the latter case only an older UI is available.
 
-### Running the UI
+### Running the UI locally
 
-This UI is an [Angular](https://github.com/angular/angular-cli) (version 14.1.3)
-application. For general information on how to work with Angular, we refer to
+The easiest way to run the UI locally is using the ``--with-ui`` flag in the
+``v6 server start`` command. That will automatically start a UI container, by default
+on port 5001.
+
+Alternatively, you can run the UI natively in [Angular](https://github.com/angular/angular-cli).
+For general information on how to work with Angular, we refer to
 the [Angular CLI home page](https://angular.io/cli). You may need to install these
 [requirements](https://angular.io/guide/setup-local) to run Angular
 applications locally.
 
 Before running the application, you may need to update the configuration. Update
-the file in `src/environments/environment.ts` to set where your vantage6 server
-is running (or, alternatively, update `environment.prod.ts` if you want to run a
+the file in `src/environments/environment.development.ts` to set where your vantage6
+server is running (or, alternatively, update `environment.ts` if you want to run a
 production application).
 
 When you have completed the steps above, run
@@ -69,7 +73,7 @@ If you don't enter environment variables, the UI points to
 `https://cotopaxi.vantage6.ai` by default.
 
 Note that you can also use another UI image tag than `ui:latest`. For example,
-you can specify a version of the UI such as `ui:3.6.0`. Another option is
+you can specify a version of the UI such as `ui:4.3.0`. Another option is
 to use the tag `ui:cotopaxi`, which defaults to the latest v4 version.
 
 #### Security settings
@@ -87,5 +91,5 @@ docker run --env ALLOWED_ALGORITHM_STORES="store.cotopaxi.vantage6.ai myothersto
 
 Note that if you do _not_ specify this environment variable, the CSP policy
 will be very lenient. In order for the UI to work properly, algorithm store
-resources should be obtained, so if no algorithm stores are provided, all
-URIs will be allowed.
+resources should be obtained, so if no algorithm stores are provided, the CSP policies
+will be very lenient.

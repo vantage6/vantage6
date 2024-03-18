@@ -1,5 +1,8 @@
+ARG TAG=latest
+ARG BASE=4.3
 FROM node:16 as node
 
+LABEL version=${TAG}
 LABEL maintainer="Bart van Beusekom <b.vanbeusekom@iknl.nl>, Frank Martin <f.martin@iknl.nl>"
 
 # copy and install

@@ -6,6 +6,16 @@ on:
       - "version/*.*.*"
 
 jobs:
+  # Check that the tag that is being used starts with `version/`. If
+  # this is not the case, this tag is not intended for release.
+  verify:
+    name: Verify version tag
+    runs-on: ubuntu-latest
+    steps:
+      - id: verify
+        if: startsWith(github.ref, 'refs/tags/version') != true
+        uses: andymckay/cancel-action@0.2
+
   # From the tag we split the individual version components:
   # major.minor.patch.stage<N>. Note that post releases are not part
   # of this schema as they are only used for releasing updated docker
@@ -13,6 +23,7 @@ jobs:
   version:
     name: Apply version
     runs-on: ubuntu-latest
+    needs: verify
     steps:
       - name: split
         id: split
@@ -56,7 +67,7 @@ jobs:
           ref: ${{ env.branch }}
           token: ${{ secrets.COMMIT_PAT }}
 
-      - name: Update version in packages
+      - name: Update version in Python packages
         id: set_versions
         env:
           build: ${{ steps.split.outputs.build }}
@@ -72,6 +83,12 @@ jobs:
           if [[ $stage == 'rc' ]]; then SPEC="--spec candidate"; fi
           FLAGS="--version ${major}.${minor}.${patch} $BUILD --post 0 $SPEC"
           make set-version FLAGS="$FLAGS"
+
+      - name: Update UI version in package.json
+        env:
+          version: ${{ steps.split.outputs.version }}
+        run: |
+          npm version --no-git-tag-version --allow-same-version $version
 
       - name: commit
         env:
@@ -189,6 +206,10 @@ jobs:
         name: Build Docker algorithm store image
         run: make algorithm-store-image TAG=$version BASE=${major}.${minor}
 
+      - # build the UI image
+        name: Build UI image
+        run: make ui-image TAG=$version BASE=${major}.${minor}
+
   algorithm-base-image:
     name: Build algorithm base image
     runs-on: ubuntu-latest
@@ -250,6 +271,7 @@ jobs:
           docker pull harbor2.vantage6.ai/infrastructure/server:${version}
           docker pull harbor2.vantage6.ai/infrastructure/node:${version}
           docker pull harbor2.vantage6.ai/infrastructure/algorithm-store:${version}
+          docker pull harbor2.vantage6.ai/infrastructure/ui:${version}
           docker pull harbor2.vantage6.ai/infrastructure/alpine:${version}
           docker pull harbor2.vantage6.ai/infrastructure/vpn-client:${version}
           docker pull harbor2.vantage6.ai/infrastructure/vpn-configurator:${version}
@@ -263,6 +285,7 @@ jobs:
           docker tag harbor2.vantage6.ai/infrastructure/server:${version} harbor2.vantage6.ai/infrastructure/server:${major_name}-live
           docker tag harbor2.vantage6.ai/infrastructure/node:${version} harbor2.vantage6.ai/infrastructure/node:${major_name}
           docker tag harbor2.vantage6.ai/infrastructure/algorithm-store:${version} harbor2.vantage6.ai/infrastructure/algorithm-store:${major_name}
+          docker tag harbor2.vantage6.ai/infrastructure/ui:${version} harbor2.vantage6.ai/infrastructure/ui:${major_name}
 
       - # Release a node image for major.minor. This is released for any
         # non-candidate release or if no non-candidate release has been made yet
@@ -280,6 +303,7 @@ jobs:
           docker push harbor2.vantage6.ai/infrastructure/server:${major_name}-live
           docker push harbor2.vantage6.ai/infrastructure/node:${major_name}
           docker push harbor2.vantage6.ai/infrastructure/algorithm-store:${major_name}
+          docker push harbor2.vantage6.ai/infrastructure/ui:${major_name}
 
       - # Release matching support images for major.minor. This is released for any
         # non-candidate release or if no non-candidate release has been made yet

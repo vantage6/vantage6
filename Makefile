@@ -181,6 +181,17 @@ algorithm-store-image:
 		-f ./docker/algorithm-store.Dockerfile \
 		--push .
 
+ui-image:
+	@echo "Building ${REGISTRY}/infrastructure/ui:${TAG}"
+	docker buildx build \
+		--tag ${REGISTRY}/infrastructure/ui:${TAG} \
+		--tag ${REGISTRY}/infrastructure/ui:latest \
+		--build-arg TAG=${TAG} \
+		--build-arg BASE=${BASE} \
+		--platform ${PLATFORMS} \
+		-f ./docker/ui.Dockerfile \
+		--push .
+
 rebuild:
 	@echo "------------------------------------"
 	@echo "         BUILDING PROJECT           "
