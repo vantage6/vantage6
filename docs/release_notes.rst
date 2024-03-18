@@ -1,6 +1,42 @@
 Release notes
 =============
 
+4.3.1
+-----
+
+*18 March 2024*
+
+
+- **Feature**
+
+ - New configuration option to set a server name in the server configuration file, which
+   will be used to identify the server in a two-factor app.
+   (`Issue#1016 <https://github.com/vantage6/vantage6/issues/1016>`_,
+   `PR#1075 <https://github.com/vantage6/vantage6/pull/1075>`_).
+
+- **Change**
+
+ - Allow user with organization scope permission to view studies to retrieve studies
+   for a particular collaboration, even though they may not be able to view them all
+   (`PR#1104 <https://github.com/vantage6/vantage6/pull/1104>`_).
+ - Add option to set policies on openness of algorithm viewing in algorithm store
+   to configuration wizard (`PR#1106 <https://github.com/vantage6/vantage6/pull/1106>`_).
+ - Improved help text in UI in several places and show the username in the top right
+   (`PR#254 <https://github.com/vantage6/vantage6-UI/pull/254>`_,
+   `PR#257 <https://github.com/vantage6/vantage6-UI/pull/257>`_)
+
+- **Bugfix**
+
+ - Update default roles on server startup if they have changed. This may happen on
+   minor version updates (`Issue#1102 <https://github.com/vantage6/vantage6/issues/1102>`_,
+   `PR#1103 <https://github.com/vantage6/vantage6/pull/1103>`_).
+ - Update selected collaboration in the UI when it is updated in the administration
+   section (`PR#253 <https://github.com/vantage6/vantage6-UI/pull/253>`_)
+ - Fix showing the create task button if user has no global permissions
+   (`PR#259 <https://github.com/vantage6/vantage6-UI/pull/259>`_)
+ - Remove wrong message for CORS not functioning properly with default settings
+   (`PR#1107 <https://github.com/vantage6/vantage6/pull/1107>`_).
+
 4.3.0
 -----
 
