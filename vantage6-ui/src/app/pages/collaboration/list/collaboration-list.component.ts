@@ -67,6 +67,7 @@ export class CollaborationListComponent implements OnInit, OnDestroy {
 
     this.table = {
       columns: [
+        { id: 'id', label: this.translateService.instant('general.id') },
         {
           id: 'name',
           label: this.translateService.instant('collaboration.name'),
@@ -78,6 +79,7 @@ export class CollaborationListComponent implements OnInit, OnDestroy {
       rows: result.data.map((_) => ({
         id: _.id.toString(),
         columnData: {
+          id: _.id,
           name: _.name,
           encrypted: _.encrypted ? this.translateService.instant('general.yes') : this.translateService.instant('general.no')
         }
