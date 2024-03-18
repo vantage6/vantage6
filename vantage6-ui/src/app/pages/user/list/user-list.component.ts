@@ -68,6 +68,7 @@ export class UserListComponent implements OnInit, OnDestroy {
     const result = await this.userService.getPaginatedUsers(page, { ...getUserParameters, sort: UserSortProperties.Username });
     this.table = {
       columns: [
+        { id: 'id', label: this.translateService.instant('general.id') },
         {
           id: 'username',
           label: this.translateService.instant('user.username'),
@@ -96,6 +97,7 @@ export class UserListComponent implements OnInit, OnDestroy {
       rows: result.data.map((_) => ({
         id: _.id.toString(),
         columnData: {
+          id: _.id,
           username: _.username,
           firstname: _.firstname,
           lastname: _.lastname,
