@@ -296,9 +296,14 @@ class Studies(StudyBase):
                     "organization!"
                 }, HTTPStatus.UNAUTHORIZED
 
+        # Note that the collaboration_id filter is not allowed in most endpoints if the
+        # user only has organization permission - in those cases they will often
+        # unknowingly miss part of the resources. Here it is allowed because there is a
+        # clear use case: the user wants to see all their studies
         if "collaboration_id" in args:
             if self.r.v_glo.can() or (
-                self.r.v_col.can() and args["collaboration_id"] in auth_collab_ids
+                (self.r.v_col.can() or self.r.v_org.can())
+                and int(args["collaboration_id"]) in auth_collab_ids
             ):
                 q = q.filter(db.Study.collaboration_id == args["collaboration_id"])
             else:
