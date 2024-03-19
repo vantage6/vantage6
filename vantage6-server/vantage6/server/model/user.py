@@ -47,6 +47,8 @@ class User(Authenticatable):
         Rules that the user has
     created_tasks : list[:class:`~.model.task.Task`]
         Tasks that the user has created
+    sessions : list[:class:`~.model.session.Session`]
+        Sessions that the user has created
     """
 
     _hidden_attributes = ["password"]
@@ -75,6 +77,7 @@ class User(Authenticatable):
     roles = relationship("Role", back_populates="users", secondary="Permission")
     rules = relationship("Rule", back_populates="users", secondary="UserPermission")
     created_tasks = relationship("Task", back_populates="init_user")
+    sessions = relationship("Session", back_populates="owner")
 
     def __repr__(self) -> str:
         """
@@ -119,8 +122,7 @@ class User(Authenticatable):
 
     def set_password(self, pw: str) -> str | None:
         """
-        Set the password of the current user. This function doesn't save the
-        new password to the database
+        Set the password of the current user.
 
         Parameters
         ----------
@@ -132,6 +134,11 @@ class User(Authenticatable):
         str | None
             If the new password fails to pass the checks, a message is
             returned. Else, none is returned
+
+        Raises
+        ------
+        ValueError
+            If the password is not valid
         """
         try:
             validate_password(pw)

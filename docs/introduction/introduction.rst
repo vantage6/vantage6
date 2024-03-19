@@ -116,6 +116,7 @@ in multiple collaborations.
     rectangle Collaboration
     rectangle Node
     rectangle Organization
+    rectangle Session
     rectangle Study
     rectangle Task
     rectangle Result
@@ -126,16 +127,19 @@ in multiple collaborations.
     Collaboration "1" -- "n" Node
     Collaboration "n" -- "n" Organization
     Collaboration "1" -- "n" Study
+    Collaboration "1" -- "n" Session
     Collaboration "1" -- "n" Task
 
     Study "n" -left- "n" Organization
     Study "1" -right- "n" Task
+    Task "n" -right- "1" Session
 
     Node "n" -right- "1" Organization
 
     Organization "1" -- "n" User
     Organization "0" -- "n" Role
     Task "1" -- "n" Result
+    Session "n" - "1" User
 
     User "n" -left- "n" Role
     Role "n" -- "n" Rule

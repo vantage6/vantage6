@@ -43,9 +43,12 @@ class Task(Base):
         Time at which this task was created
     algorithm_store_id : int
         Id of the algorithm store that this task belongs to
-
     collaboration : :class:`~.model.collaboration.Collaboration`
         Collaboration that this task belongs to
+    study : :class:`~.model.study.Study`
+        Study that this task belongs to
+    session : :class:`~.model.session.Session`
+        Session that this task belongs to
     parent : :class:`~.model.task.Task`
         Parent task (if any)
     runs : list[:class:`~.model.run.Run`]
@@ -70,6 +73,7 @@ class Task(Base):
     image = Column(String)
     collaboration_id = Column(Integer, ForeignKey("collaboration.id"))
     study_id = Column(Integer, ForeignKey("study.id"))
+    session_id = Column(Integer, ForeignKey("session.id"))
     job_id = Column(Integer)
     parent_id = Column(Integer, ForeignKey("task.id"))
     init_org_id = Column(Integer, ForeignKey("organization.id"))
@@ -90,6 +94,7 @@ class Task(Base):
     databases = relationship("TaskDatabase", back_populates="task")
     study = relationship("Study", back_populates="tasks")
     algorithm_store = relationship("AlgorithmStore", back_populates="tasks")
+    session = relationship("Session", back_populates="tasks")
 
     # TODO update in v4+, with renaming to 'run'
     @hybrid_property

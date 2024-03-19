@@ -32,6 +32,10 @@ class Collaboration(Base):
         List of nodes that are part of this collaboration
     tasks : list[:class:`~vantage6.server.model.task.Task`]
         List of tasks that are part of this collaboration
+    studies : list[:class:`~vantage6.server.model.study.Study`]
+        List of studies that are part of this collaboration
+    sessions : list[:class:`~vantage6.server.model.session.Session`]
+        List of sessions that are part of this collaboration
     """
 
     # fields
@@ -45,6 +49,7 @@ class Collaboration(Base):
     nodes = relationship("Node", back_populates="collaboration")
     tasks = relationship("Task", back_populates="collaboration")
     studies = relationship("Study", back_populates="collaboration")
+    sessions = relationship("Session", back_populates="collaboration")
     algorithm_stores = relationship("AlgorithmStore", back_populates="collaboration")
 
     def get_organization_ids(self) -> list[int]:
