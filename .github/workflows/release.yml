@@ -88,6 +88,7 @@ jobs:
         env:
           version: ${{ steps.split.outputs.version }}
         run: |
+          cd vantage6-ui/
           npm version --no-git-tag-version --allow-same-version $version
 
       - name: commit
