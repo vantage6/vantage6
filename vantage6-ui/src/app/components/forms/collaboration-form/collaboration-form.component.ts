@@ -3,7 +3,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { MatSelectChange } from '@angular/material/select';
 import { compareObjIDs } from 'src/app/helpers/general.helper';
 import { Collaboration, CollaborationForm } from 'src/app/models/api/collaboration.model';
-import { BaseOrganization, Organization, OrganizationSortProperties } from 'src/app/models/api/organization.model';
+import { BaseOrganization, OrganizationSortProperties } from 'src/app/models/api/organization.model';
 import { OrganizationService } from 'src/app/services/organization.service';
 
 @Component({

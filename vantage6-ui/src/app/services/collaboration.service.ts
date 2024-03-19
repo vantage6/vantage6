@@ -9,9 +9,6 @@ import {
   GetCollaborationParameters
 } from '../models/api/collaboration.model';
 import { getLazyProperties } from '../helpers/api.helper';
-import { PermissionService } from './permission.service';
-import { OperationType, ResourceType, ScopeType } from '../models/api/rule.model';
-import { StudyService } from './study.service';
 
 @Injectable({
   providedIn: 'root'
@@ -19,8 +16,6 @@ import { StudyService } from './study.service';
 export class CollaborationService {
   constructor(
     private apiService: ApiService,
-    private permissionService: PermissionService,
-    private studyService: StudyService
   ) {}
 
   async getCollaborations(parameters?: GetCollaborationParameters): Promise<BaseCollaboration[]> {
