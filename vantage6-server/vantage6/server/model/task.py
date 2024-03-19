@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Column, String, ForeignKey, Integer, sql, DateTime
 from sqlalchemy.orm import relationship
@@ -38,9 +38,12 @@ class Task(Base):
         Id of the organization that created this task
     init_user_id : int
         Id of the user that created this task
-
     collaboration : :class:`~.model.collaboration.Collaboration`
         Collaboration that this task belongs to
+    study : :class:`~.model.study.Study`
+        Study that this task belongs to
+    session : :class:`~.model.session.Session`
+        Session that this task belongs to
     parent : :class:`~.model.task.Task`
         Parent task (if any)
     results : list[:class:`~.model.result.Result`]
@@ -58,11 +61,12 @@ class Task(Base):
     image = Column(String)
     collaboration_id = Column(Integer, ForeignKey("collaboration.id"))
     study_id = Column(Integer, ForeignKey("study.id"))
+    session_id = Column(Integer, ForeignKey("session.id"))
     job_id = Column(Integer)
     parent_id = Column(Integer, ForeignKey("task.id"))
     init_org_id = Column(Integer, ForeignKey("organization.id"))
     init_user_id = Column(Integer, ForeignKey("user.id"))
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))
 
     # relationships
     collaboration = relationship("Collaboration", back_populates="tasks")
@@ -76,10 +80,11 @@ class Task(Base):
     init_user = relationship("User", back_populates="created_tasks")
     databases = relationship("TaskDatabase", back_populates="task")
     study = relationship("Study", back_populates="tasks")
+    session = relationship("Session", back_populates="tasks")
 
     # TODO update in v4+, with renaming to 'run'
     @hybrid_property
-    def finished_at(self) -> datetime.datetime | None:
+    def finished_at(self) -> datetime | None:
         """
         Determine the time at which a task was completed. This is the time at
         which the last algorithm run was completed.

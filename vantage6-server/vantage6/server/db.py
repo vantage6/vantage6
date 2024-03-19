@@ -26,6 +26,7 @@ from vantage6.server.model import (
     TaskDatabase,
     User,
     UserPermission,
+    Session,
 )
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING
