@@ -211,7 +211,7 @@ logging:
   # (optional) set the individual log levels per logger name, for example
   # mute some loggers that are too verbose.
   loggers:
-    - name: urllib
+    - name: urllib3
       level: warning
     - name: requests
       level: warning
