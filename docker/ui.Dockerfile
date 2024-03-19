@@ -7,7 +7,7 @@ LABEL maintainer="Bart van Beusekom <b.vanbeusekom@iknl.nl>, Frank Martin <f.mar
 
 # copy and install
 WORKDIR /app
-COPY . /app
+COPY vantage6-ui/ /app
 RUN npm install
 RUN npm run build
 
