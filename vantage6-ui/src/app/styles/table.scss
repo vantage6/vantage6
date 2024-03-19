@@ -1,0 +1,37 @@
+.clickable-table {
+  &.mdc-data-table__table {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  }
+
+  .mat-mdc-cell {
+    position: relative;
+    cursor: pointer;
+
+    &::before {
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      position: absolute;
+      content: "";
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+
+  .mat-mdc-row:hover {
+    .mat-mdc-cell::before {
+      background-color: black;
+      opacity: 0.04;
+    }
+  }
+
+  .mat-mdc-row:focus-visible {
+    outline: none;
+
+    .mat-mdc-cell::before {
+      background-color: black;
+      opacity: 0.12;
+    }
+  }
+}

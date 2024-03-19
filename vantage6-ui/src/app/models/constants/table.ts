@@ -1,0 +1,1 @@
+export const WAIT_TABLE_SEARCH_TIME_MS = 500;

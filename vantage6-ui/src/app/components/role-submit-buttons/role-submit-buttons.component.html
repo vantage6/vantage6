@@ -1,0 +1,11 @@
+<div class="role-submit-buttons">
+  <div class="button-container">
+    <button mat-flat-button [disabled]="submitDisabled" (click)="handleSubmit()" type="submit" color="primary">
+      {{ "general.submit" | translate }}
+    </button>
+    <button mat-flat-button (click)="handleCancel()">{{ "general.cancel" | translate }}</button>
+  </div>
+  <div *ngIf="submitDisabled" class="role-submit-buttons__error-message">
+    <mat-icon class="role-submit-buttons__error-icon">warning</mat-icon> {{ "role-submit-buttons.error-minimal-selection" | translate }}
+  </div>
+</div>

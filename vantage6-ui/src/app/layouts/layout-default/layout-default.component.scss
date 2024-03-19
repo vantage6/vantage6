@@ -1,0 +1,50 @@
+@import "../../styles/config.scss";
+
+.layout-container {
+  margin: $spacing-px-4;
+}
+
+mat-toolbar {
+  .logo {
+    height: $spacing-px-12;
+  }
+}
+
+mat-sidenav {
+  max-width: 275px;
+
+  button {
+    width: calc(100% - ($spacing-px-4 * 2));
+    margin: 0 $spacing-px-4 $spacing-px-2 $spacing-px-4;
+    box-sizing: border-box;
+  }
+
+  mat-list-item {
+    padding: 0 $spacing-px-8;
+
+    mat-icon {
+      margin: 0 $spacing-px-4 0 0;
+    }
+  }
+}
+
+mat-sidenav-container {
+  min-height: calc(100% - 56px);
+
+  @media only screen and (min-width: 600px) {
+    min-height: calc(100% - 64px);
+  }
+}
+
+mat-toolbar {
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: $spacing-px-2;
+    margin-left: auto;
+
+    .mat-mdc-mini-fab {
+      box-shadow: none;
+    }
+  }
+}

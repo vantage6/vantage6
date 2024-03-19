@@ -1,0 +1,8 @@
+<table mat-table [dataSource]="rows" class="result-table">
+  <ng-container *ngFor="let column of columns" [matColumnDef]="column">
+    <th mat-header-cell *matHeaderCellDef>{{ column !== "_row" ? column : "" }}</th>
+    <td mat-cell *matCellDef="let data">{{ data[column] }}</td>
+  </ng-container>
+  <tr mat-header-row *matHeaderRowDef="columns"></tr>
+  <tr mat-row *matRowDef="let row; columns: columns"></tr>
+</table>

@@ -1,0 +1,115 @@
+@use "@angular/material" as mat;
+@import "config.scss";
+
+// ANGULAR MATERIAL SETUP
+@include mat.core();
+
+$vantage-primary: (
+  50: #e4f1f8,
+  100: #bddbf0,
+  200: #96c5e6,
+  300: #72afda,
+  400: #5a9ed4,
+  500: #478fcd,
+  600: #3e82c0,
+  700: #3571af,
+  800: #2e609d,
+  900: #21447d,
+  contrast: (
+    50: $dark-primary-text,
+    100: $dark-primary-text,
+    200: $dark-primary-text,
+    300: $dark-primary-text,
+    400: $dark-primary-text,
+    500: $dark-primary-text,
+    600: $dark-primary-text,
+    700: $dark-primary-text,
+    800: $light-primary-text,
+    900: $light-primary-text
+  )
+);
+
+$vantage-accent: (
+  50: #fffde6,
+  100: #fef8c2,
+  200: #fdf399,
+  300: #fcee6f,
+  400: #fae94d,
+  500: #f8e428,
+  600: #fad527,
+  700: #f9bc1e,
+  800: #f7a415,
+  900: #f47a03,
+  contrast: (
+    50: $dark-primary-text,
+    100: $dark-primary-text,
+    200: $dark-primary-text,
+    300: $dark-primary-text,
+    400: $dark-primary-text,
+    500: $dark-primary-text,
+    600: $dark-primary-text,
+    700: $dark-primary-text,
+    800: $dark-primary-text,
+    900: $dark-primary-text
+  )
+);
+
+$primary-pallette: mat.define-palette($vantage-primary, 900);
+$accent-pallette: mat.define-palette($vantage-accent, 800);
+
+$vantage-theme: mat.define-light-theme(
+  (
+    color: (
+      primary: $primary-pallette,
+      accent: $accent-pallette
+    ),
+    typography: mat.define-typography-config(),
+    density: 0
+  )
+);
+
+@include mat.all-component-themes($vantage-theme);
+@include mat.list-density(-2);
+
+// ANGULAR MATERIAL OVERRIDES
+mat-form-field {
+  width: 100%;
+}
+
+mat-card {
+  mat-card-header {
+    margin-bottom: $spacing-px-2;
+  }
+
+  mat-stepper {
+    .mat-vertical-content {
+      padding: $spacing-px-2 $spacing-px-6;
+    }
+  }
+}
+
+.checkbox-form-field {
+  margin-bottom: $spacing-px-3;
+
+  mat-checkbox {
+    margin-bottom: 0;
+  }
+
+  mat-hint {
+    display: block;
+    margin-left: $spacing-px-4;
+    font-size: var(--mdc-typography-caption-font-size, $spacing-px-3);
+  }
+}
+
+.form {
+  mat-form-field,
+  mat-checkbox {
+    margin-bottom: $spacing-px-4;
+  }
+
+  mat-checkbox {
+    margin-top: $spacing-px-minus-1;
+    margin-bottom: $spacing-px-3;
+  }
+}

@@ -1,0 +1,16 @@
+<app-page-header title="{{ 'collaboration-list.title' | translate }}">
+  <button actions mat-flat-button color="primary" *ngIf="canCreate" [routerLink]="routes.collaborationCreate">
+    <mat-icon>add</mat-icon>{{ "collaboration-create.title" | translate }}
+  </button>
+</app-page-header>
+<mat-card>
+  <mat-card-content>
+    <app-table
+      [data]="table"
+      (rowClick)="handleTableClick($event)"
+      [isLoading]="isLoading"
+      (searchChanged)="handleSearchChanged($event)"
+    ></app-table>
+    <mat-paginator (page)="handlePageEvent($event)" [length]="pagination?.total" pageSize="10" [hidePageSize]="true"></mat-paginator>
+  </mat-card-content>
+</mat-card>
