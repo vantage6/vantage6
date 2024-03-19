@@ -17,7 +17,7 @@ COPY --from=node /app/startup /app/startup
 COPY --from=node /app/dist/vantage6-UI /usr/share/nginx/html
 
 # Copy nginx config file to container
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY vantage6-ui/nginx.conf /etc/nginx/nginx.conf
 
 RUN chmod +x /app/startup/replace_env_vars.sh
 
