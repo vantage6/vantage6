@@ -3711,11 +3711,44 @@ class TestResources(unittest.TestCase):
         # setup organization and collaboration
         org = Organization()
         org2 = Organization()
+        org_outside_collab = Organization()
         col = Collaboration(organizations=[org, org2])
+        other_col = Collaboration(organizations=[org_outside_collab])
         study = Study(collaboration=col, organizations=[org])
         study2 = Study(collaboration=col, organizations=[org2])
         study.save()
         study2.save()
+        other_study = Study(collaboration=other_col, organizations=[org_outside_collab])
+        other_study.save()
+
+        # try view the study without any permissions
+        headers = self.create_user_and_login(organization=org)
+        results = self.app.get("/api/study", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # try to view it with organization permissions - should give one of two studies
+        rule = Rule.get_by_("study", Scope.ORGANIZATION, Operation.VIEW)
+        headers = self.create_user_and_login(organization=org, rules=[rule])
+        results = self.app.get("/api/study", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual(len(results.json["data"]), 1)
+
+        # try to view with collaboration permission - should give both studies within
+        # the collaboration but not the other one
+        rule = Rule.get_by_("study", Scope.COLLABORATION, Operation.VIEW)
+        headers = self.create_user_and_login(organization=org, rules=[rule])
+        results = self.app.get("/api/study", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual(len(results.json["data"]), 2)
+
+        # with global permissions, should get all three
+        rule = Rule.get_by_("study", Scope.GLOBAL, Operation.VIEW)
+        headers = self.create_user_and_login(rules=[rule])
+        results = self.app.get("/api/study", headers=headers)
+        self.assertEqual(results.status_code, HTTPStatus.OK)
+        self.assertEqual(len(results.json["data"]), 3)
+
+        # -----  Now for the endpoint with ID --------
 
         # try view the study without any permissions
         headers = self.create_user_and_login(organization=org)
@@ -3772,6 +3805,9 @@ class TestResources(unittest.TestCase):
         col.delete()
         study.delete()
         study2.delete()
+        org_outside_collab.delete()
+        other_col.delete()
+        other_study.delete()
 
     def test_edit_study_permissions(self):
         # test an unknown study
