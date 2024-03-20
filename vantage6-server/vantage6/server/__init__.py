@@ -732,12 +732,9 @@ class ServerApp:
             )
             return
         if algorithm_stores:
-            # get credentials of a random user to couple the algorithm stores
-            # TODO in the future it may change that not any user can couple stores -
-            # in that case show a useful error below (automated coupling is not possible
-            # for such cases)
-            user = db.User.get_first_user()
-            headers = {"Authorization": f"Bearer {token_dict['access_token']}"}
+            # TODO in the future it may change that not just any algorithm store can
+            # be added to this server - in that case show a useful error below
+            # (automated coupling is not possible for such cases I think?)
 
             # couple the stores
             for store in algorithm_stores:
@@ -759,7 +756,6 @@ class ServerApp:
                             "force": True,
                         },
                         self.ctx.config,
-                        headers,
                     )
                 # else: store already exists, no need to couple it again
 
