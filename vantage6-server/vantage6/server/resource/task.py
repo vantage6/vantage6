@@ -551,6 +551,10 @@ class Tasks(TaskBase):
         ----------
         data : dict
             Task data
+        socketio : SocketIO
+            SocketIO server instance
+        rules : RuleCollection
+            Rule collection instance
         """
         # validate request body
         errors = task_input_schema.validate(data)

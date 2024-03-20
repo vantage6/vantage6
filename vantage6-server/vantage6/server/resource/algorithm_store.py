@@ -64,13 +64,15 @@ class AlgorithmStoreBase(ServicesResources):
         super().__init__(socketio, mail, api, permissions, config)
         self.r_col: RuleCollection = getattr(self.permissions, "collaboration")
 
+    @classmethod
     def _request_algo_store(
-        self,
+        cls,
         algo_store_url: str,
         server_url: str,
         endpoint: str,
         method: str,
         force: bool = False,
+        headers: dict = None,
     ) -> tuple[dict | Response, HTTPStatus]:
         """
         Whitelist this vantage6 server url for the algorithm store.
@@ -89,6 +91,9 @@ class AlgorithmStoreBase(ServicesResources):
         force : bool
             If True, the algorithm store will be added even if the algorithm
             store url is insecure (i.e. localhost)
+        headers : dict
+            Headers to be included in the request. Usually, these will be Authorization
+            headers
 
         Returns
         -------
@@ -99,10 +104,10 @@ class AlgorithmStoreBase(ServicesResources):
         """
         # TODO this is not pretty, but it works for now. This should change
         # when we have a separate auth service
-        is_localhost_algo_store = self._contains_localhost(algo_store_url)
+        is_localhost_algo_store = cls._contains_localhost(algo_store_url)
         try:
-            response = self._execute_algo_store_request(
-                algo_store_url, server_url, endpoint, method, force
+            response = cls._execute_algo_store_request(
+                algo_store_url, server_url, endpoint, method, force, headers
             )
         except requests.exceptions.ConnectionError as exc:
             if not is_localhost_algo_store:
@@ -116,8 +121,8 @@ class AlgorithmStoreBase(ServicesResources):
                 "localhost", "host.docker.internal"
             ).replace("127.0.0.1", "host.docker.internal")
             try:
-                response = self._execute_algo_store_request(
-                    algo_store_url, server_url, endpoint, method, force
+                response = cls._execute_algo_store_request(
+                    algo_store_url, server_url, endpoint, method, force, headers
                 )
             except requests.exceptions.ConnectionError as exc:
                 log.warning("Request to algorithm store failed")
@@ -153,7 +158,12 @@ class AlgorithmStoreBase(ServicesResources):
     # TODO this function and above should be moved to some kind of client lib
     @staticmethod
     def _execute_algo_store_request(
-        algo_store_url: str, server_url: str, endpoint: str, method: str, force: bool
+        algo_store_url: str,
+        server_url: str,
+        endpoint: str,
+        method: str,
+        force: bool,
+        headers: dict = None,
     ) -> requests.Response:
         """
         Send a request to the algorithm store to whitelist this vantage6 server
@@ -174,6 +184,9 @@ class AlgorithmStoreBase(ServicesResources):
         force : bool
             If True, the algorithm store will be added even if the algorithm
             store url is insecure (i.e. localhost)
+        headers : dict
+            Headers to be included in the request. Usually, these will be Authorization
+            headers
 
         Returns
         -------
@@ -191,10 +204,9 @@ class AlgorithmStoreBase(ServicesResources):
             param_dict["force"] = True
 
         # set headers
+        if not headers:
+            headers = {}
         headers = {"server_url": server_url}
-        current_headers = request.headers
-        if "Authorization" in current_headers:
-            headers["Authorization"] = current_headers["Authorization"]
 
         params = None
         json = None
@@ -217,13 +229,16 @@ class AlgorithmStoreBase(ServicesResources):
             headers=headers,
         )
 
-    def _get_server_url(self, server_url_from_request: str | None) -> str:
+    @staticmethod
+    def _get_server_url(config: dict, server_url_from_request: str | None) -> str:
         """ "
         Get the server url from the server configuration, or from the request
         data if it is not present in the configuration.
 
         Parameters
         ----------
+        config : dict
+            Server configuration
         server_url_from_request : str | None
             Server url from the request data.
 
@@ -232,7 +247,22 @@ class AlgorithmStoreBase(ServicesResources):
         str | None
             The server url
         """
-        return self.config.get("server_url", server_url_from_request)
+        return config.get("server_url", server_url_from_request)
+
+    @staticmethod
+    def get_authorization_headers_from_request() -> dict:
+        """
+        Get the authorization headers from the request.
+
+        Returns
+        -------
+        dict
+            The authorization headers
+        """
+        current_headers = request.headers
+        if "Authorization" in current_headers:
+            return {"Authorization": current_headers["Authorization"]}
+        return {}
 
 
 class AlgorithmStores(AlgorithmStoreBase):
@@ -456,7 +486,35 @@ class AlgorithmStores(AlgorithmStoreBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
+        return self.post_algorithm_store(
+            request.get_json(),
+            self.config,
+            self.get_authorization_headers_from_request(),
+        )
+
+    @classmethod
+    def post_algorithm_store(
+        cls, data: dict, config: dict, headers: dict
+    ) -> tuple[dict, HTTPStatus]:
+        """Add algorithm store to a collaboration
+
+        Parameters
+        ----------
+        data : dict
+            Request body as required for POST /algorithmstore request
+        config : dict
+            Server configuration
+        headers : dict
+            Headers to be included in the request. Usually, these will be Authorization
+            headers
+
+        Returns
+        -------
+        tuple[dict, HTTPStatus]
+            Response and HTTP status code
+        """
         # check if algorithm store is already available for the collaboration
+        collaboration_id = data.get("collaboration_id", None)
         algorithm_store_url = data["algorithm_store_url"]
         if algorithm_store_url.endswith("/"):
             algorithm_store_url = algorithm_store_url[:-1]
@@ -495,7 +553,7 @@ class AlgorithmStores(AlgorithmStoreBase):
                 "'force' flag to true, but only do so for development servers!"
             }, HTTPStatus.BAD_REQUEST
 
-        server_url = self._get_server_url(data.get("server_url"))
+        server_url = cls._get_server_url(config, data.get("server_url"))
         if not server_url:
             return {
                 "msg": "The 'server_url' key is required in the server "
@@ -504,12 +562,13 @@ class AlgorithmStores(AlgorithmStoreBase):
             }, HTTPStatus.BAD_REQUEST
 
         # whitelist this vantage6 server url for the algorithm store
-        response, status = self._request_algo_store(
-            algorithm_store_url,
-            server_url,
+        response, status = cls._request_algo_store(
+            algo_store_url=algorithm_store_url,
+            server_url=server_url,
             endpoint="vantage6-server",
             method="post",
             force=force,
+            headers=headers,
         )
         if status != HTTPStatus.CREATED:
             return response, status
@@ -777,7 +836,9 @@ class AlgorithmStore(AlgorithmStoreBase):
         if len(other_algorithm_stores) == 1:
             # only this algorithm store uses this url, so delete the
             # whitelisting
-            server_url = self._get_server_url(request.args.get("server_url"))
+            server_url = self._get_server_url(
+                self.config, request.args.get("server_url")
+            )
             if not server_url:
                 return {
                     "msg": "The 'server_url' query parameter is required"
@@ -788,6 +849,7 @@ class AlgorithmStore(AlgorithmStoreBase):
                 server_url,
                 endpoint="vantage6-server",
                 method="get",
+                headers=self.get_authorization_headers_from_request(),
             )
             if status != HTTPStatus.OK:
                 return response, status
@@ -813,6 +875,7 @@ class AlgorithmStore(AlgorithmStoreBase):
                     server_url,
                     endpoint=f"vantage6-server/{server_id}",
                     method="delete",
+                    headers=self.get_authorization_headers_from_request(),
                 )
             if status != HTTPStatus.OK:
                 return response, status

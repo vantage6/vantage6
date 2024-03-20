@@ -14,6 +14,7 @@ if not os.environ.get("READTHEDOCS"):
     # flake8: noqa: E402 (ignore import error)
     monkey.patch_all()
 
+# pylint: disable=wrong-import-position, wrong-import-order
 import importlib
 import logging
 import uuid
@@ -68,6 +69,7 @@ from vantage6.server._version import __version__
 from vantage6.server.mail_service import MailService
 from vantage6.server.websockets import DefaultSocketNamespace
 from vantage6.server.default_roles import get_default_roles, DefaultRole
+from vantage6.server.resource.algorithm_store import AlgorithmStores
 
 
 module_name = logger_name(__name__)
@@ -134,6 +136,10 @@ class ServerApp:
         self.api = Api(self.app)
         self.configure_api()
         self.load_resources()
+
+        # couple any algoritm stores to the server if defined in config. This should be
+        # done after the resources are loaded to ensure that rules are set up
+        self.couple_algorithm_stores()
 
         # set the server version
         self.__version__ = __version__
@@ -710,6 +716,52 @@ class ServerApp:
             except Exception:
                 log.exception("Node-status thread had an exception")
                 time.sleep(PING_INTERVAL_SECONDS)
+
+    def couple_algorithm_stores(self) -> None:
+        """Couple algorithm stores to the server.
+
+        Checks if default algorithm stores are defined in the configuration and if so,
+        couples them to the server.
+        """
+        algorithm_stores = self.ctx.config.get("algorithm_stores", [])
+        server_url = self.ctx.config.get("server_url")
+        if algorithm_stores and not server_url:
+            log.warning(
+                "Algorithm stores are defined in the configuration, but the server "
+                "url is not. Skipping coupling of algorithm stores."
+            )
+            return
+        if algorithm_stores:
+            # get credentials of a random user to couple the algorithm stores
+            # TODO in the future it may change that not any user can couple stores -
+            # in that case show a useful error below (automated coupling is not possible
+            # for such cases)
+            user = db.User.get_first_user()
+            headers = {"Authorization": f"Bearer {token_dict['access_token']}"}
+
+            # couple the stores
+            for store in algorithm_stores:
+                if not (name := store.get("name")):
+                    log.warning("Algorithm store has no name, skipping coupling")
+                    continue
+                elif not (url := store.get("url")):
+                    log.warning(
+                        "Algorithm store %s has no url, skipping coupling", name
+                    )
+                    continue
+                store = db.AlgorithmStore.get_by_url(url)
+                if not store:
+                    AlgorithmStores.post_algorithm_store(
+                        {
+                            "name": name,
+                            "algorithm_store_url": url,
+                            "server_url": server_url,
+                            "force": True,
+                        },
+                        self.ctx.config,
+                        headers,
+                    )
+                # else: store already exists, no need to couple it again
 
 
 def run_server(config: str, system_folders: bool = True) -> ServerApp:
