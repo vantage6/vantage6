@@ -45,16 +45,16 @@ Release notes
 - **Security**
 
  - Implemented configuration option to set CORS origins on the central server. This may
-   be used to further enhance the security profile of your server (
-   `advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-4946-85pr-fvxh>`_,
+   be used to further enhance the security profile of your server
+   (`advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-4946-85pr-fvxh>`_,
    `commit <https://github.com/vantage6/vantage6/commit/70bb4e1d889230a841eb364d6c03accd7dd01a41>`_).
- - Prevent username enumeration attack on endpoints where password and 2FA are reset (
-   `advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-5h3x-6gwf-73jm>`_,
-   `commit <https://github.com/vantage6/vantage6/commit/aecfd6d0e83165a41a60ebd52d2287b0217be26b`_).
+ - Prevent username enumeration attack on endpoints where password and 2FA are reset
+   (`advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-5h3x-6gwf-73jm>`_,
+   `commit <https://github.com/vantage6/vantage6/commit/aecfd6d0e83165a41a60ebd52d2287b0217be26b>`_).
  - Added HTTP security headers on the user interface to provide an additional layer
-   of security to help mitigate attacks and vulnerabilites (
-   `advisory <https://github.com/vantage6/vantage6-UI/security/advisories/GHSA-gwq3-pvwq-4c9w>`_,
-   `commit <https://github.com/vantage6/vantage6-UI/commit/68dfa661415182da0e5717bd58db3d00aedcbd2e`_).
+   of security to help mitigate attacks and vulnerabilites
+   (`advisory <https://github.com/vantage6/vantage6-UI/security/advisories/GHSA-gwq3-pvwq-4c9w>`_,
+   `commit <https://github.com/vantage6/vantage6-UI/commit/68dfa661415182da0e5717bd58db3d00aedcbd2e>`_).
  - Updated cryptography dependency
 
 - **Feature**
@@ -197,19 +197,19 @@ Release notes
 - **Security**
 
  - Remove option to SSH into node and server containers. The configuration was
-   not completely secure. (
-   `advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-2wgc-48g2-cj5w>`_,
+   not completely secure
+   (`advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-2wgc-48g2-cj5w>`_,
    `commit <https://github.com/vantage6/vantage6/commit/3fcc6e6a8bd1142fd7a558d8fdd2b246e55c8841>`_).
- - Prevent code injection into environment variables (
-   `advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-w9h2-px87-74vx>`_,
+ - Prevent code injection into environment variables
+   (`advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-w9h2-px87-74vx>`_,
    `commit <https://github.com/vantage6/vantage6/commit/eac19db737145d3ca987adf037a454fae0790ddd>`_).
  - Prevent that user can accidentally upload non-encrypted input to the server
-   for an encrypted collaboration. (
-   `advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-rjmv-52mp-gjrr>`_,
+   for an encrypted collaboration.
+   (`advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-rjmv-52mp-gjrr>`_,
    `commit <https://github.com/vantage6/vantage6/commit/6383283733b81abfcacfec7538dc4dc882e98074>`_).
  - Prevent that usernames are findable in brute force attack due to a difference
-   in response time when they exist versus when they don't exist (
-   `advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-45gq-q4xh-cp53>`_,
+   in response time when they exist versus when they don't exist
+   (`advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-45gq-q4xh-cp53>`_,
    `commit <https://github.com/vantage6/vantage6/commit/389f416c445da4f2438c72f34c3b1084485c4e30>`_).
  - Updated dependencies of jinja2, cryptography and Werkzeug. (
    `PR#984 <https://github.com/vantage6/vantage6/pull/984>`_).
