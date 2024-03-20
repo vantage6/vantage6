@@ -83,8 +83,8 @@ class Session(Base):
         return (
             "<Session "
             f"{self.id}: '{self.label}', "
-            f"owner_id={self.user_id}, "
-            f"collaboration_id={self.collaboration_id}, "
+            f"owner_id={self.owner.username}, "
+            f"collaboration={self.collaboration.name}, "
             f"{number_of_tasks} task(s)"
             ">"
         )
