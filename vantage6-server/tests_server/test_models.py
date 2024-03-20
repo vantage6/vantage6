@@ -19,6 +19,9 @@ from vantage6.server.model import (
     Node,
     Rule,
     Role,
+    Session,
+    NodeSession,
+    NodeSessionConfig,
 )
 from vantage6.server.model.rule import Scope, Operation
 
@@ -331,3 +334,6 @@ class TestRuleModel(TestBaseModel):
 
             for user in rule.users:
                 self.assertIsInstance(user, User)
+
+
+class TestSessionModel(TestBaseModel):
