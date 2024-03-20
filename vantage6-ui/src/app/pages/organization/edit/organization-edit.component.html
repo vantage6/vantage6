@@ -1,0 +1,19 @@
+<ng-container *ngIf="!isLoading && !isSubmitting && organization; else loading">
+  <app-page-header [title]="organization.name"></app-page-header>
+  <mat-card>
+    <mat-card-content>
+      <app-organization-form
+        [organization]="organization"
+        (submitted)="handleSubmit($event)"
+        (cancelled)="handleCancel()"
+      ></app-organization-form>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
+<ng-template #loading>
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-template>

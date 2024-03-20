@@ -114,11 +114,17 @@ This repository is home to 6 PyPi packages:
 
 **Note that when using vantage6 you do not install the _server_ and _node_ packages. These are delivered to you in Docker images.**
 
+This repository also hosts the code for the vantage6 user interface (UI). The UI
+is an Angular web application that can be used to interact with the vantage6 server
+easily.
+
 ### Docker images
-The vantage6 infrastructure is delivered in Docker images. All Docker images are stored in our private [Harbor](https://goharbor.io/) registry. The most important images contain the server and node:
+The vantage6 infrastructure is delivered in Docker images. All Docker images are stored in our private [Harbor](https://goharbor.io/) registry. The most important images are:
 
 * `harbor2.vantage6.ai/infrastructure/node:VERSION` -> _Node application Docker image_
 * `harbor2.vantage6.ai/infrastructure/server:VERSION` -> _Server application Docker image_
+* `harbor2.vantage6.ai/infrastructure/ui:VERSION` -> _User interface Docker image_
+* `harbor2.vantage6.ai/infrastructure/algorithm-store:VERSION` -> _Algorithm store Docker image_
 
 with `VERSION` being the full semantic version of the vantage6 infrastructure, e.g. `4.0.0` or `4.1.0rc0`.
 

@@ -13,8 +13,11 @@ docs/_build
 *.sublime-workspace
 .vscode/
 
-# Python build
+# build files
 **/build/
 **/dist/
 *.egg-info
 *.code-workspace
+
+# UI build files
+**/node_modules/

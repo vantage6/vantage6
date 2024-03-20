@@ -1,0 +1,31 @@
+<form class="form" [formGroup]="form">
+  <ng-container *ngFor="let functionDatabase of functionDatabases">
+    <h4>{{ functionDatabase.name }}</h4>
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>{{ "task.database" | translate }}</mat-label>
+      <mat-select [formControlName]="functionDatabase.name + '_name'">
+        <mat-option *ngFor="let availableDatabase of availableDatabases" [value]="availableDatabase.name">
+          {{ availableDatabase.name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <div *ngIf="form.get(functionDatabase.name + '_query')">
+      <div class="field-description">
+        {{ "task-create.step-database.description.query" | translate: { dbType: selectedDatabase?.type || "SQL" } }}
+      </div>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ "task.query" | translate }}</mat-label>
+        <textarea matInput type="text" [formControlName]="functionDatabase.name + '_query'" rows="4"></textarea>
+      </mat-form-field>
+    </div>
+    <div *ngIf="form.get(functionDatabase.name + '_sheet')">
+      <div class="field-description">
+        {{ "task-create.step-database.description.worksheet" | translate }}
+      </div>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ "task.sheet" | translate }}</mat-label>
+        <input matInput type="text" [formControlName]="functionDatabase.name + '_sheet'" />
+      </mat-form-field>
+    </div>
+  </ng-container>
+</form>

@@ -1,0 +1,28 @@
+<ng-container *ngIf="!isLoading; else loading">
+  <form class="form" [formGroup]="form" (ngSubmit)="handleSubmit()">
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>{{ "general.name" | translate }}</mat-label>
+      <input matInput type="text" formControlName="name" />
+    </mat-form-field>
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>{{ "resources.organizations" | translate }}</mat-label>
+      <mat-select
+        multiple
+        formControlName="organizations"
+        (selectionChange)="handleOrganizationChange($event)"
+        [compareWith]="compareOrganizationsForSelection"
+      >
+        <mat-option *ngFor="let organization of organizations" [value]="organization">
+          {{ organization.name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <div class="button-container">
+      <button mat-flat-button type="submit" color="primary">{{ "general.submit" | translate }}</button>
+      <button mat-flat-button (click)="handleCancel()">{{ "general.cancel" | translate }}</button>
+    </div>
+  </form>
+</ng-container>
+<ng-template #loading>
+  <mat-spinner diameter="48"></mat-spinner>
+</ng-template>

@@ -16,9 +16,7 @@ code changes.
 
 Reporting issues
 ----------------
-Issues can be posted at our `Github issue page <https://github.com/vantage6/vantage6/issues>`_,
-or, if you have issues that are specific to the user interface, please post
-them to the `UI issue page <https://github.com/vantage6/vantage6-UI/issues>`_.
+Issues can be posted at our `Github issue page <https://github.com/vantage6/vantage6/issues>`_.
 
 We distinguish between the following types of issues:
 

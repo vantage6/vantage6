@@ -1,0 +1,56 @@
+@import "../../styles/config.scss";
+
+.status-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: $spacing-px-2;
+  border: solid 1px rgba(0, 0, 0, 0.12);
+  border-radius: $spacing-px-1;
+  background-color: rgba(0, 0, 0, 0.04);
+  text-align: center;
+
+  &__icon {
+    width: $spacing-px-10;
+    height: $spacing-px-10;
+    font-size: $spacing-px-10;
+    margin: 0 0 $spacing-px-1 0;
+  }
+
+  &__loader {
+    margin: 0 0 $spacing-px-1 0;
+  }
+
+  &__sub-title {
+    margin-top: $spacing-px-1;
+    font-weight: 500;
+  }
+
+  &__actions:not(:empty) {
+    margin-top: $spacing-px-3;
+  }
+
+  &__action-text:not(:empty) {
+    margin-top: $spacing-px-3;
+    font-weight: 500;
+    color: $warning-700;
+  }
+
+  &--active {
+    background-color: $active-50;
+    border-color: $active-200;
+    color: $active-900;
+  }
+
+  &--success {
+    background-color: $success-50;
+    border-color: $success-200;
+    color: $success-900;
+  }
+
+  &--error {
+    background-color: $error-50;
+    border-color: $error-200;
+    color: $error-900;
+  }
+}

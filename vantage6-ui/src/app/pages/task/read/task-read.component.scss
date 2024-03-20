@@ -1,0 +1,33 @@
+@import "../../../styles/config.scss";
+
+.status-info-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-px-2;
+
+  @media only screen and (min-width: 905px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media only screen and (min-width: 1240px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  app-status-info {
+    display: contents;
+  }
+}
+
+.run {
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: $spacing-px-2;
+  }
+}
+
+.select-visualization {
+  width: auto;
+  min-width: 40%;
+  margin-left: auto;
+}

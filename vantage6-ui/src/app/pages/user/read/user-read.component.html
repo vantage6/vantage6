@@ -1,0 +1,71 @@
+<ng-container *ngIf="!isLoading && user; else loading">
+  <app-page-header [title]="user.username">
+    <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="canDelete">
+      <mat-icon>more_vert</mat-icon>
+    </button>
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item *ngIf="canEdit" [routerLink]="[routes.userEdit, id]">
+        <mat-icon>edit</mat-icon>
+        <span>{{ "general.edit" | translate }}</span>
+      </button>
+      <button mat-menu-item *ngIf="canDelete" (click)="handleDelete()">
+        <mat-icon>delete</mat-icon>
+        <span>{{ "general.delete" | translate }}</span>
+      </button>
+    </mat-menu>
+  </app-page-header>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ "user-read.card-details.title" | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="data-list">
+        <div class="data-list__item">
+          <b>{{ "general.id" | translate }}</b>
+          <span>{{ user.id || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "user.username" | translate }}</b>
+          <span>{{ user.username || "-" }}</span>
+        </div>
+        <div class="data-list__item data-list__item--big">
+          <b>{{ "user.email" | translate }}</b>
+          <span>{{ user.email || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "user.first-name" | translate }}</b>
+          <span>{{ user.firstname || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "user.last-name" | translate }}</b>
+          <span>{{ user.lastname || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "user.organization" | translate }}</b>
+          <span>
+            <app-chip *ngIf="user.organization" [label]="user.organization.name"></app-chip>
+          </span>
+        </div>
+        <div class="data-list__item data-list__item--big">
+          <b>{{ "user.roles" | translate }}</b>
+          <span>
+            <div class="chip-container">
+              <app-chip *ngFor="let role of user.roles" [label]="role.name"></app-chip>
+            </div>
+          </span>
+        </div>
+      </div>
+      <div class="user-read__permissions">
+        <b>{{ "user.permissions" | translate }}</b>
+        <app-permissions-matrix [fixedSelectedPrimary]="rolesRules" [fixedSelectedSecondary]="userSpecificRules"> </app-permissions-matrix>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
+<ng-template #loading>
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-template>

@@ -1,0 +1,21 @@
+@import "./app/styles/config.scss";
+@import "./app/styles/material.scss";
+@import "./app/styles/card.scss";
+@import "./app/styles/chip.scss";
+@import "./app/styles/data-list.scss";
+@import "./app/styles/table.scss";
+@import "./app/styles/other.scss";
+
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+.top-spacer {
+  display: block;
+  margin-top: $spacing-px-2;
+}
