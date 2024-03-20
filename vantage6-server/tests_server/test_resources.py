@@ -3746,7 +3746,7 @@ class TestResources(unittest.TestCase):
         headers = self.create_user_and_login(rules=[rule])
         results = self.app.get("/api/study", headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
-        self.assertEqual(len(results.json["data"]), 3)
+        self.assertEqual(len(results.json["data"]), len(Study.get()))
 
         # -----  Now for the endpoint with ID --------
 
