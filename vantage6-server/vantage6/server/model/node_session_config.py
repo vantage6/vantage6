@@ -6,11 +6,9 @@ from .base import Base
 
 class NodeSessionConfig(Base):
     """
-    Table to store node configuration by key-value pairs.
+    Table to store node session configuration by key-value pairs.
 
-    This information includes e.g. which algorithms are allowed on a certain
-    node. The information is stored in the database while the node is
-    connected.
+    This information includes e.g. which databases are available in the session.
     """
 
     # fields

@@ -18,7 +18,7 @@ class Session(Base):
 
     Sessions allow for users to create a state at the node. This state can be used
     to store data that exchanged between algorithm containers. A session is part of a
-    collaboration and optionally linked to a specific study.
+    collaboration and owned by a user.
 
     Attributes
     ----------
@@ -34,6 +34,8 @@ class Session(Base):
         Date and time of the last usage of the session
     tasks : list[:class:`~vantage6.server.model.task.Task`]
         List of tasks that are part of this study
+    node_sessions : list[:class:`~vantage6.server.model.node_session.NodeSession`]
+        List of nodes and their state that are part of this session
 
     Raises
     ------
