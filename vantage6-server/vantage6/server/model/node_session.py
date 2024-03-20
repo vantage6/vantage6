@@ -60,8 +60,8 @@ class NodeSession(Base):
         """
         return (
             f"<NodeSession {self.id}, "
-            f"node_id={self.node_id}, "
-            f"session_id={self.session_id}, "
+            f"node_id={self.node.name}, "
+            f"session_id={self.session.label}, "
             f"state={self.state}, "
             ">"
         )
