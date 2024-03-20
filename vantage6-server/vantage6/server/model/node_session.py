@@ -11,11 +11,13 @@ from vantage6.server.model.base import Base
 
 class NodeSession(Base):
     """
-    Table that describes which sessions are available.
+    Table that tracks the sessions at node level.
 
-    A session state keeps track of which nodes have prepared a session. When a
-    state is ready it can be used to execute computation tasks. A single session
-    contains multiple nodes, therefore a single session has multiple states.
+    A node session keeps track of which nodes have prepared a session. When a
+    session is ready it can be used to execute computation tasks. A single session
+    contains multiple nodes, therefore a single session has multiple states. Each node
+    session contains also a set of configuration optiosn that are specific to the node
+    and session (e.g. which datasets are created within the session).
 
     Attributes
     ----------
@@ -31,7 +33,7 @@ class NodeSession(Base):
     Raises
     ------
     IntegrityError
-        If the node has a status for a specific session
+        when the node and session combination already exists
     """
 
     # fields
