@@ -21,4 +21,6 @@ from vantage6.server.model import (
     UserPermission,
     role_rule_association,
     Session,
+    NodeSession,
+    NodeSessionConfig,
 )

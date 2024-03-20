@@ -24,6 +24,10 @@ class Node(Authenticatable):
         Collaboration that the node belongs to
     organization : :class:`~.model.organization.Organization`
         Organization that the node belongs to
+    config : :class:`~.model.node_config.NodeConfig`
+        Configuration of the node
+    session_states : list[:class:`~.model.session_state.SessionState`]
+        List of session states that the node has
     """
 
     _hidden_attributes = ["api_key"]
@@ -40,6 +44,7 @@ class Node(Authenticatable):
     collaboration = relationship("Collaboration", back_populates="nodes")
     organization = relationship("Organization", back_populates="nodes")
     config = relationship("NodeConfig", back_populates="node")
+    sessions = relationship("NodeSession", back_populates="node")
 
     # the type specification in Authenticatable
     __mapper_args__ = {
