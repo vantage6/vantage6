@@ -52,7 +52,7 @@ def _validate_username(username: str) -> None:
         If the username is empty, too long or numerical
     """
     _validate_name(username)
-    username_regex = r"^[a-zA-Z][a-zA-Z0-9_-]+$"
+    username_regex = r"^[a-zA-Z][a-zA-Z0-9._-]+$"
     if re.match(username_regex, username) is None:
         raise ValidationError(
             f"Username {username} is invalid. Only letters, numbers, hyphens and "
@@ -494,22 +494,25 @@ class TokenUserInputSchema(BasicAuthInputSchema):
 
     mfa_code = fields.String(validate=Length(max=10))
 
-    @validates("username")
-    def validate_username(self, username: str):
-        """
-        Check if the username is appropriate
+    # TODO in v5+, activate the code below to validate the username (allowed characters
+    # etc). We cannot do this in v4 because some existing usernames do not comply and
+    # those would then no longer be able to login
+    # @validates("username")
+    # def validate_username(self, username: str):
+    #     """
+    #     Check if the username is appropriate
 
-        Parameters
-        ----------
-        username : str
-            Username to validate.
+    #     Parameters
+    #     ----------
+    #     username : str
+    #         Username to validate.
 
-        Raises
-        ------
-        ValidationError
-            If the username is too short, too long or numeric.
-        """
-        _validate_username(username)
+    #     Raises
+    #     ------
+    #     ValidationError
+    #         If the username is too short, too long or numeric.
+    #     """
+    #     _validate_username(username)
 
 
 class TokenNodeInputSchema(Schema):
