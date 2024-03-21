@@ -72,10 +72,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "vantage6-UI:build:production"
+              "buildTarget": "vantage6-UI:build:production"
             },
             "development": {
-              "browserTarget": "vantage6-UI:build:development"
+              "buildTarget": "vantage6-UI:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -83,7 +83,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "vantage6-UI:build"
+            "buildTarget": "vantage6-UI:build"
           }
         },
         "test": {
