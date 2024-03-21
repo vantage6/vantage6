@@ -78,6 +78,10 @@ def permissions(permissions: PermissionManager) -> None:
 
     # create permissions
     add(scope=S.OWN, operation=P.CREATE, description="create a new session")
+    add(scope=S.ORGANIZATION, operation=P.CREATE,
+        description="create a new session for all users within your organization")
+    add(scope=S.COLLABORATION, operation=P.CREATE,
+        description="create a new session for all users within your collaboration")
 
     # edit permissions.
     add(scope=S.COLLABORATION, operation=P.EDIT,
@@ -106,12 +110,13 @@ class SessionBase(ServicesResources):
 
 
 class Sessions(SessionBase):
-    @only_for(("user", "node", "container"))
+
+    @only_for(("user", "node"))
     def get(self):
-        """Returns a list organizations
+        """Returns a list of sessions
         ---
         description: >-
-            Get a list of organizations based on filters and user permissions\n
+            Get a list of sessions based on filters and user permissions\n
 
             ### Permission Table\n
             |Rule name|Scope|Operation|Assigned to node|Assigned to container|
@@ -249,12 +254,12 @@ class Sessions(SessionBase):
 
         # paginate the results
         try:
-            page = Pagination.from_query(q, request, db.Organization)
+            page = Pagination.from_query(q, request, db.Session)
         except (ValueError, AttributeError) as e:
             return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         # serialization of DB model
-        return self.response(page, org_schema)
+        return self.response(page, schema)
 
     @with_user
     def post(self):
