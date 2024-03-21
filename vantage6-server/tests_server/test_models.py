@@ -5,9 +5,7 @@ import datetime
 
 from sqlalchemy.exc import IntegrityError
 
-from vantage6.server.controller.fixture import load
-from vantage6.server.model.base import Database, DatabaseSessionManager
-from vantage6.server.globals import PACKAGE_FOLDER, APPNAME
+from .test_model_base import TestModelBase
 
 from vantage6.backend.common import session
 from vantage6.server.model import (
@@ -19,9 +17,6 @@ from vantage6.server.model import (
     Node,
     Rule,
     Role,
-    Session,
-    NodeSession,
-    NodeSessionConfig,
 )
 from vantage6.server.model.rule import Scope, Operation
 
@@ -31,33 +26,7 @@ log.level = logging.CRITICAL
 logging.basicConfig(level=logging.CRITICAL)
 
 
-class TestBaseModel(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        Database().connect("sqlite://", allow_drop_all=True)
-
-        # FIXME: move path generation to a function in vantage6.server
-        file_ = str(
-            PACKAGE_FOLDER / APPNAME / "server" / "_data" / "unittest_fixtures.yaml"
-        )
-        with open(file_) as f:
-            cls.entities = yaml.safe_load(f.read())
-        load(cls.entities)
-
-    @classmethod
-    def tearDownClass(cls):
-        Database().clear_data()
-
-    @classmethod
-    def setUp(cls):
-        DatabaseSessionManager.get_session()
-
-    @classmethod
-    def tearDown(cls):
-        DatabaseSessionManager.clear_session()
-
-
-class TestUserModel(TestBaseModel):
+class TestUserModel(TestModelBase):
     def test_relations(self):
         organization = self.entities.get("organizations")[0]
         user = organization.get("users")[0]
@@ -107,7 +76,7 @@ class TestUserModel(TestBaseModel):
         session.session.remove()
 
 
-class TestCollaborationModel(TestBaseModel):
+class TestCollaborationModel(TestModelBase):
     def test_read(self):
         for col in self.entities.get("collaborations"):
             db_collaboration = Collaboration.find_by_name(col.get("name"))
@@ -135,7 +104,7 @@ class TestCollaborationModel(TestBaseModel):
             self.assertIsInstance(organization, Organization)
 
 
-class TestNodeModel(TestBaseModel):
+class TestNodeModel(TestModelBase):
     def test_read(self):
         for node in Node.get():
             self.assertIsInstance(node.name, str)
@@ -176,7 +145,7 @@ class TestNodeModel(TestBaseModel):
                 self.assertIsInstance(user, User)
 
 
-class TestOrganizationModel(TestBaseModel):
+class TestOrganizationModel(TestModelBase):
     def test_read(self):
         for organization in self.entities.get("organizations"):
             org = Organization.get_by_name(organization.get("name"))
@@ -223,7 +192,7 @@ class TestOrganizationModel(TestBaseModel):
                 self.assertIsInstance(run, Run)
 
 
-class TestRunModel(TestBaseModel):
+class TestRunModel(TestModelBase):
     def test_read(self):
         for run in Run.get():
             self.assertIsInstance(run, Run)
@@ -250,7 +219,7 @@ class TestRunModel(TestBaseModel):
         self.assertIsInstance(run.task, Task)
 
 
-class TestTaskModel(TestBaseModel):
+class TestTaskModel(TestModelBase):
     def test_read(self):
         db_tasks = Task.get()
         for task in db_tasks:
@@ -296,7 +265,7 @@ class TestTaskModel(TestBaseModel):
                 self.assertIsInstance(user, User)
 
 
-class TestRuleModel(TestBaseModel):
+class TestRuleModel(TestModelBase):
     def test_read(self):
         rule = Rule(name="some-name", operation=Operation.CREATE, scope=Scope.GLOBAL)
         rule.save()
@@ -334,6 +303,3 @@ class TestRuleModel(TestBaseModel):
 
             for user in rule.users:
                 self.assertIsInstance(user, User)
-
-
-class TestSessionModel(TestBaseModel):

@@ -1,15 +1,20 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from sqlalchemy import (Column, String, Integer, ForeignKey, DateTime, exists,
-                        UniqueConstraint)
+from sqlalchemy import (
+    Column,
+    String,
+    Integer,
+    ForeignKey,
+    DateTime,
+    Enum,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.hybrid import hybrid_property
 
 from vantage6.common.session_status import SessionStatus
-
+from vantage6.server.model.rule import Scope
 from vantage6.server.model.base import Base
-from vantage6.server.model.base import DatabaseSessionManager
 
 
 class Session(Base):
@@ -36,6 +41,8 @@ class Session(Base):
         List of tasks that are part of this study
     node_sessions : list[:class:`~vantage6.server.model.node_session.NodeSession`]
         List of nodes and their state that are part of this session
+    scope : Scope
+        Scope of the session
 
     Raises
     ------
@@ -49,8 +56,9 @@ class Session(Base):
     collaboration_id = Column(Integer, ForeignKey("collaboration.id"))
     created_at = Column(DateTime, default=datetime.now(timezone.utc))
     last_used_at = Column(DateTime, default=datetime.now(timezone.utc))
+    scope = Column(Enum(Scope), default=Scope.OWN)
 
-    __table_args__ = (UniqueConstraint("label", "collaboration_id"), )
+    __table_args__ = (UniqueConstraint("label", "collaboration_id"),)
 
     # relationships
     owner = relationship("User", back_populates="sessions")
@@ -68,7 +76,9 @@ class Session(Base):
         bool
             True if the session is ready, False otherwise
         """
-        return all(state.state == SessionStatus.READY for state in self.states)
+        return all(
+            n_session.state == SessionStatus.READY for n_session in self.node_sessions
+        )
 
     def __repr__(self):
         """
