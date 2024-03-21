@@ -1,6 +1,4 @@
 import logging
-import unittest
-import yaml
 import datetime
 
 from sqlalchemy.exc import IntegrityError
