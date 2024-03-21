@@ -8,7 +8,6 @@ export interface AlgorithmStore {
 export interface AlgorithmStoreForm {
   name: string;
   algorithm_store_url: string;
-  server_url: string;
   all_collaborations: boolean;
   collaboration_id?: string;
 }
