@@ -59,14 +59,17 @@ def authenticate_with_server(*args, **kwargs):
         return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
     # check if server is whitelisted
-    server = Vantage6Server.get_by_url(request.headers["Server-Url"])
+    server_url = request.headers["Server-Url"]
+    server = Vantage6Server.get_by_url(server_url)
     if not server:
-        msg = "Server you are trying to authenticate with is not " "whitelisted"
+        msg = (
+            f"Server '{server_url}' you are trying to authenticate with is not "
+            "whitelisted"
+        )
         log.warning(msg)
         return {"msg": msg}, HTTPStatus.UNAUTHORIZED
 
     # check if token is valid
-
     url = f"{request.headers['Server-Url']}/token/user/validate"
     # if we are looking for a localhost server, we probably have to
     # check host.docker.internal (Windows) or 172.17.0.1 (Linux)
