@@ -26,6 +26,18 @@ class Scope(str, Enumerate):
     COLLABORATION = "col"
     GLOBAL = "glo"
 
+    @classmethod
+    def list(cls) -> list[str]:
+        """
+        List all available scopes.
+
+        Returns
+        -------
+        list[str]
+            List of all available scopes
+        """
+        return [scope.value for scope in cls]
+
 
 class Rule(Base):
     """Rules to determine permissions in an API endpoint.

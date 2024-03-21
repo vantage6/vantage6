@@ -424,3 +424,19 @@ class RuleSchema(HATEOASModelSchema):
     class Meta:
         model = db.Rule
         exclude = ("roles",)
+
+
+class SessionSchema(HATEOASModelSchema):
+    class Meta:
+        model = db.Session
+
+    owner = fields.Method("user")
+    collaboration = fields.Method("collaboration")
+    tasks = fields.Function(
+        lambda obj: create_one_to_many_link(obj, link_to="task", link_from="session_id")
+    )
+    node_sessions = fields.Function(
+        lambda obj: create_one_to_many_link(
+            obj, link_to="node_session", link_from="session_id"
+        )
+    )

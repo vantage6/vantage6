@@ -6,6 +6,8 @@ from marshmallow import Schema, fields, ValidationError, validates, validates_sc
 from marshmallow.validate import Length, Range, OneOf
 
 from vantage6.common.task_status import TaskStatus
+from vantage6.common.session_status import SessionStatus
+from vantage6.server.model.rule import Scope
 from vantage6.server.default_roles import DefaultRole
 from vantage6.server.model.common.utils import validate_password
 
@@ -658,3 +660,31 @@ class StudyChangeOrganizationSchema(_OnlyIdSchema):
     """
 
     pass
+
+
+class SessionInputSchema(Schema):
+    """Schema for validating input for creating a session."""
+
+    label = fields.String(required=True)
+    collaboration_id = fields.Integer(required=True, validate=Range(min=1))
+    user_id = fields.Integer(required=True, validate=Range(min=1))
+    scope = fields.String(validate=OneOf(Scope.list), default=Scope.OWN.value)
+
+
+class NodeSessionInputSchema(Schema):
+    """Schema for validating input for creating a node session."""
+
+    node_id = fields.Integer(required=True, validate=Range(min=1))
+    session_id = fields.Integer(required=True, validate=Range(min=1))
+    state = fields.String(
+        validate=OneOf(SessionStatus.list()), default=SessionStatus.PENDING.value
+    )
+    last_updated_at = fields.DateTime()
+
+
+class NodeSessionConfigInputSchema(Schema):
+    """Schema for validating input for creating a node session config."""
+
+    node_session_id = fields.Integer(required=True, validate=Range(min=1))
+    key = fields.String(required=True)
+    value = fields.String(required=True)
