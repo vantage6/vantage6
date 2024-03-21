@@ -31,7 +31,7 @@ export class UserFormComponent implements OnInit, OnDestroy {
       firstname: '',
       lastname: '',
       organization_id: [NaN as number, [Validators.required]],
-      roles: [{ value: [] as number[], disabled: true }, [Validators.required]],
+      roles: [{ value: [] as number[], disabled: true }],
       rules: [{ value: [] as number[], disabled: true }]
     },
     { validators: [createCompareValidator('password', 'passwordRepeat')] }
