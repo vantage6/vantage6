@@ -500,7 +500,7 @@ class Node:
                 " As your node is running inside a Docker container, it cannot"
                 " reach localhost on your host system. Probably, you have to"
                 " change your serverl URL to http://host.docker.internal (Windows/MacOS)"
-                " or look into node config option \"node_extra_hosts\" (Linux)."
+                ' or look into node config option "node_extra_hosts" (Linux).'
             )
         else:
             self.log.debug(
