@@ -38,5 +38,17 @@ class Vantage6Server(Base):
         Vanatge6Server | None
             Vanatge6Server object if found, None otherwise
         """
+
+        def _get_by_url(url):
+            return session.query(Vantage6Server).filter_by(url=url).first()
+
         session = DatabaseSessionManager.get_session()
-        return session.query(Vantage6Server).filter_by(url=url).first()
+        server = _get_by_url(url)
+        if not server:
+            if url.startswith("https") and url.endswith("443"):
+                url = url[:-4]
+                server = _get_by_url(url)
+            elif url.startswith("http") and url.endswith("80"):
+                url = url[:-3]
+                server = _get_by_url(url)
+        return server

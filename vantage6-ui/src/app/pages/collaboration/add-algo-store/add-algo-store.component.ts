@@ -8,6 +8,7 @@ import { routePaths } from 'src/app/routes';
 import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { SnackbarService } from 'src/app/services/snackbar.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-add-algo-store',
@@ -36,7 +37,7 @@ export class AddAlgoStoreComponent implements OnInit {
     const addAlgorithmStore: AddAlgorithmStore = {
       name: algorithmStoreForm.name,
       algorithm_store_url: algorithmStoreForm.algorithm_store_url,
-      server_url: algorithmStoreForm.server_url
+      server_url: environment.server_url + environment.api_path
     };
     if (!algorithmStoreForm.all_collaborations) {
       addAlgorithmStore.collaboration_id = algorithmStoreForm.collaboration_id;

@@ -511,8 +511,10 @@ class DockerManager(DockerBaseManager):
             self.log.debug(f"run_id={run_id} is discarded")
             return TaskStatus.ACTIVE, None
 
+        # we pass self.docker instance, in which we may have logged in to registries
         task = DockerTaskManager(
             image=image,
+            docker_client=self.docker,
             run_id=run_id,
             task_info=task_info,
             vpn_manager=self.vpn_manager,

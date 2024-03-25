@@ -111,6 +111,12 @@ class Vantage6ServerOutputSchema(HATEOASModelSchema):
     class Meta:
         model = Vantage6Server
 
+    users = fields.Function(
+        lambda obj: create_one_to_many_link(
+            obj, link_to="user", link_from="v6_server_id"
+        )
+    )
+
 
 class RoleOutputSchema(HATEOASModelSchema):
     rules = fields.Function(
@@ -139,6 +145,7 @@ class UserOutputSchema(HATEOASModelSchema):
             obj, link_to="algorithm", link_from="user_id"
         )
     )
+    server = fields.Nested("Vantage6ServerOutputSchema", exclude=["users"])
 
 
 class ReviewOutputSchema(HATEOASModelSchema):

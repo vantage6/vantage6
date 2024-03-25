@@ -1,14 +1,16 @@
 <form class="form" [formGroup]="form">
   <ng-container *ngFor="let functionDatabase of functionDatabases">
     <h4>{{ functionDatabase.name }}</h4>
-    <mat-form-field subscriptSizing="dynamic">
-      <mat-label>{{ "task.database" | translate }}</mat-label>
-      <mat-select [formControlName]="functionDatabase.name + '_name'">
-        <mat-option *ngFor="let availableDatabase of availableDatabases" [value]="availableDatabase.name">
-          {{ availableDatabase.name }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
+    <div *ngIf="availableDatabases.length > 0; else noDatabasesBlock">
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ "task.database" | translate }}</mat-label>
+        <mat-select [formControlName]="functionDatabase.name + '_name'">
+          <mat-option *ngFor="let availableDatabase of availableDatabases" [value]="availableDatabase.name">
+            {{ availableDatabase.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
     <div *ngIf="form.get(functionDatabase.name + '_query')">
       <div class="field-description">
         {{ "task-create.step-database.description.query" | translate: { dbType: selectedDatabase?.type || "SQL" } }}
@@ -29,3 +31,15 @@
     </div>
   </ng-container>
 </form>
+<ng-template #noDatabasesBlock>
+  <app-alert
+    class="node-alert"
+    *ngIf="node && node.config.length === 0"
+    label="{{ 'task-create.alert-no-node-config' | translate: { name: node.name } }}"
+  ></app-alert>
+  <app-alert
+    class="node-alert"
+    *ngIf="node && node.config.length > 0 && !nodeConfigContainsDatabases()"
+    label="{{ 'task-create.alert-no-databases' | translate: { name: node.name } }}"
+  ></app-alert>
+</ng-template>
