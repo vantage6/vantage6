@@ -1,6 +1,23 @@
 Release notes
 =============
 
+4.3.2
+-----
+
+*20 March 2024*
+
+
+- **Change**
+
+ - Integrated user interface in main repository
+   `PR#1112 <https://github.com/vantage6/vantage6/pull/1112>`_).
+
+- **Bugfix**
+
+ - Allow usernames to contain dots and don't apply username validation to login
+   endpoints until v5 to allow existing users to login
+   (`PR#1148 <https://github.com/vantage6/vantage6/pull/1148>`_).
+
 4.3.1
 -----
 
