@@ -384,6 +384,16 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     return this.algorithms.length > 0;
   }
 
+  getAlgorithmStoreName(algorithm: Algorithm): string {
+    if (this.collaboration?.algorithm_stores && this.collaboration.algorithm_stores.length > 1) {
+      const store_name = this.collaboration.algorithm_stores.find((_) => _.url === algorithm.algorithm_store_url)?.name;
+      if (store_name) {
+        return `(${store_name})`;
+      }
+    }
+    return '';
+  }
+
   private async initData(): Promise<void> {
     this.collaboration = this.chosenCollaborationService.collaboration$.value;
     this.algorithms = await this.algorithmService.getAlgorithms();

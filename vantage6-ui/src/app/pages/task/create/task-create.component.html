@@ -37,7 +37,7 @@
               <mat-label>{{ "task.algorithm" | translate }}</mat-label>
               <mat-select formControlName="algorithmID" [compareWith]="compareIDsForSelection">
                 <mat-option *ngFor="let algorithm of algorithms" [value]="algorithm.id">
-                  {{ algorithm.name }}
+                  {{ algorithm.name }} <div class="detail-txt">{{ getAlgorithmStoreName(algorithm) }}</div>
                 </mat-option>
               </mat-select>
             </mat-form-field>
