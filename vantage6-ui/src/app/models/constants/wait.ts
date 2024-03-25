@@ -1,0 +1,2 @@
+export const MAX_ATTEMPTS_RENEW_NODE = 3;
+export const SECONDS_BETWEEN_ATTEMPTS_RENEW_NODE = 4;

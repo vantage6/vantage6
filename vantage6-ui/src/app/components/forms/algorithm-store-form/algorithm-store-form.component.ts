@@ -19,7 +19,6 @@ export class AlgorithmStoreFormComponent implements OnInit, OnDestroy {
   form = this.fb.nonNullable.group({
     name: ['', Validators.required],
     algorithm_store_url: ['', Validators.required],
-    server_url: ['', Validators.required],
     collaboration_id: '',
     all_collaborations: false
   });

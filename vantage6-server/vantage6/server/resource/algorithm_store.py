@@ -580,7 +580,9 @@ class AlgorithmStore(AlgorithmStoreBase):
         # always visible
         if not self.r_col.v_glo.can():
             auth_org_id = self.obtain_organization_id()
-            ids = [org.id for org in algorithm_store.collaboration.organizations]
+            ids = []
+            if algorithm_store.collaboration:
+                ids = [org.id for org in algorithm_store.collaboration.organizations]
             if not (
                 self.r_col.v_org.can()
                 and (auth_org_id in ids or not algorithm_store.collaboration_id)

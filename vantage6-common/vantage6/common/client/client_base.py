@@ -213,6 +213,9 @@ class ClientBase(object):
         dict
             Response of the server
         """
+        store_valid = self.__check_algorithm_store_valid(is_for_algorithm_store)
+        if not store_valid:
+            return
 
         # get appropiate method
         rest_method = {
@@ -531,6 +534,33 @@ class ClientBase(object):
                     resource[field] = _decrypt_and_decode(resource[field], field)
 
         return data
+
+    def __check_algorithm_store_valid(self, is_for_algorithm_store: bool) -> bool:
+        """
+        Check if the algorithm store is properly setup before handling algorithm store
+        request
+
+        Parameters
+        ----------
+        is_for_algorithm_store : bool
+            Whether the request is for the algorithm store or not
+
+        Returns
+        -------
+        bool
+            Whether the algorithm store is properly setup
+        """
+        if is_for_algorithm_store:
+            try:
+                int(self.store.id)
+                return True
+            except AttributeError:
+                self.log.error(
+                    "Algorithm store not set. Please set the algorithm store first with"
+                    " `client.store.set()`."
+                )
+                return False
+        return True
 
     class SubClient:
         """

@@ -23,6 +23,7 @@ import { Collaboration } from 'src/app/models/api/collaboration.model';
 import { BaseStudy, StudyOrCollab } from 'src/app/models/api/study.model';
 import { BaseOrganization } from 'src/app/models/api/organization.model';
 import { OrganizationService } from 'src/app/services/organization.service';
+import { MAX_ATTEMPTS_RENEW_NODE, SECONDS_BETWEEN_ATTEMPTS_RENEW_NODE } from 'src/app/models/constants/wait';
 
 @Component({
   selector: 'app-task-create',
@@ -384,6 +385,16 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     return this.algorithms.length > 0;
   }
 
+  getAlgorithmStoreName(algorithm: Algorithm): string {
+    if (this.collaboration?.algorithm_stores && this.collaboration.algorithm_stores.length > 1) {
+      const store_name = this.collaboration.algorithm_stores.find((_) => _.url === algorithm.algorithm_store_url)?.name;
+      if (store_name) {
+        return `(${store_name})`;
+      }
+    }
+    return '';
+  }
+
   private async initData(): Promise<void> {
     this.collaboration = this.chosenCollaborationService.collaboration$.value;
     this.algorithms = await this.algorithmService.getAlgorithms();
@@ -471,8 +482,15 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     //Get all nodes for chosen collaboration
     const nodes = await this.getNodes();
 
-    //Find a random node that is online
-    return nodes?.find((_) => _.status === 'online') || null;
+    //Find a random node that is online and that has shared their configuration
+    const node = nodes?.find((_) => _.status === 'online' && _.config.length > 0) || null;
+    if (!node){
+      // if there is no node that has shared its configuration, go for the next best
+      // thing: an online node (this will not work for tasks that require databases
+      // but it is better than nothing)
+      return nodes?.find((_) => _.status === 'online') || null;
+    }
+    return node;
   }
 
   private async getNodes(): Promise<BaseNode[] | null> {
@@ -520,13 +538,11 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       // the node shares with the server after coming online. So we need to wait
       // a bit and then refresh the node to get the node configuration
       let attempts = 0;
-      const maxAttempts = 3;
-      const secondsBetweenAttempts = 4;
       let success = false;
-      while (attempts < maxAttempts) {
-        await new Promise((f) => setTimeout(f, secondsBetweenAttempts * 1000));
+      while (attempts < MAX_ATTEMPTS_RENEW_NODE) {
+        await new Promise((f) => setTimeout(f, SECONDS_BETWEEN_ATTEMPTS_RENEW_NODE * 1000));
         this.node = await this.getOnlineNode();
-        if (this.node && this.node.config.length > 1000) {
+        if (this.node && this.node.config.length > 0) {
           // stop if we have configuration info
           success = true;
           break;
