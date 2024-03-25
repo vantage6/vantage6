@@ -54,7 +54,7 @@ def get_default_roles() -> list[dict]:
     ]
     REVIEWER_ROLE = {
         "name": DefaultRole.REVIEWER,
-        "description": "Can view, edit and delete algorithms, and create and edit users",
+        "description": "Can view, edit and delete algorithms",
         "rules": REVIEWER_RULES,
     }
     # 4. Store manager role
@@ -67,7 +67,7 @@ def get_default_roles() -> list[dict]:
     ]
     STORE_MANAGER = {
         "name": DefaultRole.STORE_MANAGER,
-        "description": "Can view and delete algorithms.",
+        "description": "Can manage algorithms, and create and edit users.",
         "rules": STORE_MANAGER,
     }
     # 4. Developer role
