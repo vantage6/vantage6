@@ -125,7 +125,7 @@ jobs:
         with:
           ref: ${{env.branch}}
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           prerelease: ${{ env.stage != '' }}
 
@@ -152,7 +152,7 @@ jobs:
       - # Add support for more platforms with QEMU (optional)
         # https://github.com/docker/setup-qemu-action
         name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       # We need this for building multi-arch images
       - name: Set up Docker Buildx
@@ -188,7 +188,7 @@ jobs:
       - # Add support for more platforms with QEMU (optional)
         # https://github.com/docker/setup-qemu-action
         name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - # We need this for building multi-arch images
         name: Set up Docker Buildx
@@ -235,7 +235,7 @@ jobs:
       - # Add support for more platforms with QEMU (optional)
         # https://github.com/docker/setup-qemu-action
         name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       # We need this for building multi-arch images
       - name: Set up Docker Buildx
