@@ -3462,7 +3462,7 @@ class TestResources(unittest.TestCase):
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
     @patch(
-        "vantage6.server.resource.algorithm_store.AlgorithmStores._request_algo_store",
+        "vantage6.server.algo_store_communication.request_algo_store",
         return_value=("success", HTTPStatus.CREATED),
     )
     def test_create_algorithm_store_record(self, _request_algo_store):
@@ -3648,7 +3648,7 @@ class TestResources(unittest.TestCase):
         algo_store.delete()
 
     @patch(
-        "vantage6.server.resource.algorithm_store.AlgorithmStore._request_algo_store",
+        "vantage6.server.resource.algorithm_store.request_algo_store",
     )
     def test_delete_algorithm_store(self, request_algo_store):
         """Test deleting algorithm store records"""
