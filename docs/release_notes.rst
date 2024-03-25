@@ -1,6 +1,40 @@
 Release notes
 =============
 
+4.3.3
+-----
+
+*25 March 2024*
+
+
+- **Change**
+
+ - Improved integration algorithm store in UI (`PR#1163 <https://github.com/vantage6/vantage6/pull/1163>`_).
+ - Improve picking an online node when creating task in the UI: pick one that shares
+   configuration and give more specific information to the user in case certain data
+   could not be retrieved (`PR#1164 <https://github.com/vantage6/vantage6/pull/1164>`_).
+ - UI dependency updates
+
+- **Bugfix**
+
+ - Fix pulling algorithms from registries that require authentication
+   (`Issue#1168 <https://github.com/vantage6/vantage6/issues/1168>`_,
+   `PR#1169 <https://github.com/vantage6/vantage6/pull/1169>`_).
+ - Fix bug in showing create task button in UI
+   (`PR#1165 <https://github.com/vantage6/vantage6/pull/1165>`_).
+ - Could not view studies with collaboration scope permissions
+   (`Issue#1154 <https://github.com/vantage6/vantage6/issues/1154>`_,
+   `PR#1157 <https://github.com/vantage6/vantage6/pull/1157>`_).
+ - Fix bug when viewing algorithm stores with organization scope permissions
+   (`PR#1159 <https://github.com/vantage6/vantage6/pull/1159>`_).
+ - Detect whitelisted server in algorithm store if port ``443`` or ``80`` at the end
+   of the URL is the only difference with the whitelisted URL
+   (`Issue#1155 <https://github.com/vantage6/vantage6/issues/1155>`_,
+   `PR#1162 <https://github.com/vantage6/vantage6/pull/1162>`_).
+ - Better error message in Python client when trying to send requests to algorithm store
+   when it has not yet been set up (`Issue#1134 <https://github.com/vantage6/vantage6/issues/1153>`_,
+   `PR#1158 <https://github.com/vantage6/vantage6/pull/1158>`_).
+
 4.3.2
 -----
 
