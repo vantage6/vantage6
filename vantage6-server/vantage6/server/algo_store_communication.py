@@ -182,6 +182,7 @@ def request_algo_store(
     return response, response.status_code
 
 
+# TODO move this to a utility module - it is also in algo store code
 def _contains_localhost(url: str) -> bool:
     """Check if the url refers to localhost address"""
     return url.startswith("http://localhost") or url.startswith("http://127.0.0.1")
@@ -260,7 +261,7 @@ def _execute_algo_store_request(
     )
 
 
-def get_server_url(config: dict, server_url_from_request: str | None) -> str:
+def get_server_url(config: dict, server_url_from_request: str | None = None) -> str:
     """ "
     Get the server url from the server configuration, or from the request
     data if it is not present in the configuration.
@@ -277,4 +278,9 @@ def get_server_url(config: dict, server_url_from_request: str | None) -> str:
     str | None
         The server url
     """
-    return config.get("server_url", server_url_from_request)
+    server_url = config.get("server_url", server_url_from_request)
+    # make sure that the server url ends with the api path
+    api_path = config.get("api_path")
+    if not server_url.endswith(api_path):
+        server_url = server_url + api_path
+    return server_url

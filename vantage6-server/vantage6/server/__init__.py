@@ -69,8 +69,10 @@ from vantage6.server._version import __version__
 from vantage6.server.mail_service import MailService
 from vantage6.server.websockets import DefaultSocketNamespace
 from vantage6.server.default_roles import get_default_roles, DefaultRole
-from vantage6.server.resource.algorithm_store import AlgorithmStores
-
+from vantage6.server.algo_store_communication import (
+    post_algorithm_store,
+    get_server_url,
+)
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -724,7 +726,7 @@ class ServerApp:
         couples them to the server.
         """
         algorithm_stores = self.ctx.config.get("algorithm_stores", [])
-        server_url = self.ctx.config.get("server_url")
+        server_url = get_server_url(self.ctx.config)
         if algorithm_stores and not server_url:
             log.warning(
                 "Algorithm stores are defined in the configuration, but the server "
@@ -748,7 +750,7 @@ class ServerApp:
                     continue
                 store = db.AlgorithmStore.get_by_url(url)
                 if not store:
-                    AlgorithmStores.post_algorithm_store(
+                    response, status = post_algorithm_store(
                         {
                             "name": name,
                             "algorithm_store_url": url,
@@ -757,6 +759,20 @@ class ServerApp:
                         },
                         self.ctx.config,
                     )
+                    if status == HTTPStatus.CREATED:
+                        log.info(
+                            "Algorithm store '%s' at %s has been coupled to the server",
+                            name,
+                            url,
+                        )
+                    else:
+                        log.error(
+                            "Failed to couple algorithm store '%s' at %s to the server:"
+                            " %s",
+                            name,
+                            url,
+                            response["msg"],
+                        )
                 # else: store already exists, no need to couple it again
 
 

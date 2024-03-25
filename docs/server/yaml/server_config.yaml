@@ -21,9 +21,10 @@ api_path: /api
 # Let the server know where it is hosted. This is used as a setting to
 # communicate back and forth with other vantage6 components such as the
 # algorithm store.
+# Example for the cotopaxi server
 server_url: https://cotopaxi.vantage6.ai
-# or if you are running the server locally with default settings:
-# server_url: http://localhost:5000/api
+# Example for running the server locally with default settings:
+# server_url: http://localhost:5000
 
 # The URI to the server database. This should be a valid SQLAlchemy URI,
 # e.g. for an Sqlite database: sqlite:///database-name.sqlite,
