@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 
 from datetime import datetime, timezone
 from sqlalchemy import (
@@ -11,10 +12,14 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from vantage6.common.session_status import SessionStatus
 from vantage6.server.model.rule import Scope
 from vantage6.server.model.base import Base
+
+if TYPE_CHECKING:
+    from vantage6.server.model.collaboration import Collaboration
 
 
 class Session(Base):
@@ -79,6 +84,23 @@ class Session(Base):
         return all(
             n_session.state == SessionStatus.READY for n_session in self.node_sessions
         )
+
+    @hybrid_property
+    def label_exists(self, session_label: str, collaboration: "Collaboration"):
+        """
+        Check if a session with the given label already exists in the collaboration.
+
+        Parameters
+        ----------
+        session_label : str
+            Label of the session to check
+
+        Returns
+        -------
+        bool
+            True if the session label already exists, False otherwise
+        """
+        return any(session.label == session_label for session in collaboration.sessions)
 
     def __repr__(self):
         """
