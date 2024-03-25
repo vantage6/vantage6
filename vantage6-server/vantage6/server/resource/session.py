@@ -3,6 +3,7 @@ import logging
 from flask import request, g
 from flask_restful import Api
 from http import HTTPStatus
+from sqlalchemy import or_, and_
 
 from vantage6.common import logger_name
 from vantage6.server import db
@@ -13,9 +14,9 @@ from vantage6.server.permission import (
     PermissionManager,
     RuleCollection,
 )
-from vantage6.server.resource.common.input_schema import OrganizationInputSchema
+from vantage6.server.resource.common.input_schema import SessionInputSchema
 from vantage6.server.resource import only_for, with_user, ServicesResources
-from vantage6.server.resource.common.output_schema import OrganizationSchema
+from vantage6.server.resource.common.output_schema import SessionSchema
 
 
 module_name = logger_name(__name__)
@@ -68,39 +69,68 @@ def permissions(permissions: PermissionManager) -> None:
     """
     add = permissions.appender(module_name)
 
-    # view permissions
+    # view
     add(scope=S.GLOBAL, operation=P.VIEW, description="view any session")
-    add(scope=S.COLLABORATION, operation=P.VIEW,
-        description="view any session within your collaborations")
-    add(scope=S.ORGANIZATION, operation=P.VIEW,
-        description="view any session initiated from your organization")
+    add(
+        scope=S.COLLABORATION,
+        operation=P.VIEW,
+        description="view any session within your collaborations",
+        assign_to_node=True,
+    )
+    add(
+        scope=S.ORGANIZATION,
+        operation=P.VIEW,
+        description="view any session initiated from your organization",
+    )
     add(scope=S.OWN, operation=P.VIEW, description="view your own session")
 
-    # create permissions
+    # create
     add(scope=S.OWN, operation=P.CREATE, description="create a new session")
-    add(scope=S.ORGANIZATION, operation=P.CREATE,
-        description="create a new session for all users within your organization")
-    add(scope=S.COLLABORATION, operation=P.CREATE,
-        description="create a new session for all users within your collaboration")
+    add(
+        scope=S.ORGANIZATION,
+        operation=P.CREATE,
+        description="create a new session for all users within your organization",
+    )
+    add(
+        scope=S.COLLABORATION,
+        operation=P.CREATE,
+        description="create a new session for all users within your collaboration",
+    )
 
     # edit permissions.
-    add(scope=S.COLLABORATION, operation=P.EDIT,
-        description="edit any session within your collaboration", assign_to_node=True)
+    add(scope=S.OWN, operation=P.EDIT, description="edit your own session")
+    add(
+        scope=S.ORGANIZATION,
+        operation=P.EDIT,
+        description="edit any session initiated from your organization",
+    )
+    add(
+        scope=S.COLLABORATION,
+        operation=P.EDIT,
+        description="edit any session within your collaboration",
+        assign_to_node=True,
+    )
 
     # delete permissions
     add(scope=S.OWN, operation=P.DELETE, description="delete your own session")
-    add(scope=S.ORGANIZATION, operation=P.DELETE,
-        description="delete any session initiated from your organization")
-    add(scope=S.COLLABORATION, operation=P.DELETE,
-        description="delete any session within your collaborations")
+    add(
+        scope=S.ORGANIZATION,
+        operation=P.DELETE,
+        description="delete any session initiated from your organization",
+    )
+    add(
+        scope=S.COLLABORATION,
+        operation=P.DELETE,
+        description="delete any session within your collaborations",
+    )
     add(scope=S.GLOBAL, operation=P.DELETE, description="delete any session")
 
 
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-# org_schema = OrganizationSchema()
-# org_input_schema = OrganizationInputSchema()
+session_schema = SessionSchema()
+session_input_schema = SessionInputSchema()
 
 
 class SessionBase(ServicesResources):
@@ -122,17 +152,18 @@ class Sessions(SessionBase):
             |Rule name|Scope|Operation|Assigned to node|Assigned to container|
             Description|\n
             |--|--|--|--|--|--|\n
-            |Organization|Global|View|❌|❌|View all organizations|\n
-            |Organization|Collaboration|View|✅|✅|View a list of organizations
-            within the scope of the collaboration|\n
-            |Organization|Organization|View|✅|✅|View a 'list' of just the
-            organization you are part of|\n
+            |Session|Global|View|❌|❌|View all available sessions|\n
+            |Session|Collaboration|View|✅|❌|View all available sessions within the
+            scope of the collaboration|\n
+            |Session|Organization|View|❌|❌|View all available sessions that have been
+            initiated from a user within your organization|\n
+            |Session|Own|View|❌|❌|View all sessions created by you
 
             Accessible to users.
 
         parameters:
           - in: query
-            name: name
+            name: label
             schema:
               type: string
             description: >-
@@ -141,20 +172,27 @@ class Sessions(SessionBase):
               characters\n
               * underscore sign (_) represents one, single character
           - in: query
-            name: country
+            name: user
             schema:
-              type: string
-            description: Country
+              type: integer
+            description: User id
           - in: query
-            name: collaboration_id
+            name: user
+            schema:
+              type: integer
+            description: User id
+          - in: query
+            name: collaboration
             schema:
               type: integer
             description: Collaboration id
           - in: query
-            name: study_id
+            name: scope
             schema:
-              type: integer
-            description: Study id
+              type: string
+            description: >-
+              Scope of the session. Possible values are: GLOBAL, COLLABORATION,
+              ORGANIZATION, OWN
           - in: query
             name: page
             schema:
@@ -184,73 +222,65 @@ class Sessions(SessionBase):
         security:
           - bearerAuth: []
 
-        tags: ["Organization"]
+        tags: ["Session"]
         """
 
         # Obtain the organization of the requester
         auth_org = self.obtain_auth_organization()
-        args = request.args
+        args = request.get_json()
 
         # query
-        q = g.session.query(db.Organization)
+        q = g.session.query(db.Session)
         g.session.commit()
 
         # filter by a field of this endpoint
-        if "name" in args:
-            q = q.filter(db.Organization.name.like(args["name"]))
-        if "country" in args:
-            q = q.filter(db.Organization.country == args["country"])
-        if "collaboration_id" in args:
-            if not self.r.can_for_col(P.VIEW, int(args["collaboration_id"])):
+        if "label" in args:
+            q = q.filter(db.Session.label.like(args["label"]))
+        if "user" in args:
+            q = q.filter(db.Session.user_id == args["user"])
+        if "collaboration" in args:
+            q = q.filter(db.Session.collaboration_id == args["collaboration"])
+        if "scope" in args:
+            q = q.filter(db.Session.scope == args["scope"])
+
+        # filter the list of organizations based on the scope. If you have collaboration
+        # permissions you can see all sessions within the collaboration. If you have
+        # organization permissions you can see all sessions withing your organization
+        # and the sessions from other organization that have scope collaboration.
+        # Finally when you have own permissions you can see the sessions that you have
+        # created, the sessions from your organization with scope organization and you
+        # can see the sessions in the collaboration that have a scope collaboration.
+        if not self.r.v_glo.can():
+            if self.r.v_col.can():
+                q = q.filter(db.Session.collaboration_id.in_(auth_org.collaborations))
+            elif self.r.v_org.can():
+                q = q.filter(
+                    or_(
+                        db.Session.organization_id == auth_org.id,
+                        and_(
+                            db.Session.collaboration_id.in_(auth_org.collaborations),
+                            db.Session.scope == S.COLLABORATION,
+                        ),
+                    )
+                )
+            elif self.r.v_own.can():
+                q = q.filter(
+                    or_(
+                        db.Session.user_id == g.user.id,
+                        and_(
+                            db.Session.organization_id == auth_org.id,
+                            db.Session.scope == S.ORGANIZATION,
+                        ),
+                        and_(
+                            db.Session.collaboration_id.in_(auth_org.collaborations),
+                            db.Session.scope == S.COLLABORATION,
+                        ),
+                    )
+                )
+            else:
                 return {
-                    "msg": "You lack the permission to get all organizations "
-                    "in your collaboration!"
+                    "msg": "You lack the permission to do that!"
                 }, HTTPStatus.UNAUTHORIZED
-            q = (
-                q.join(db.Member)
-                .join(db.Collaboration)
-                .filter(db.Collaboration.id == args["collaboration_id"])
-            )
-        if "study_id" in args:
-            study = db.Study().get(args["study_id"])
-            if not self.r.can_for_col(P.VIEW, study.collaboration_id):
-                return {
-                    "msg": "You lack the permission to get all organizations "
-                    "in a study!"
-                }, HTTPStatus.UNAUTHORIZED
-            q = (
-                q.join(db.StudyMember)
-                .join(db.Study)
-                .filter(db.Study.id == args["study_id"])
-            )
-
-        # filter the list of organizations based on the scope
-        if self.r.v_glo.can():
-            pass  # don't apply filters
-        elif self.r.v_col.can():
-            # obtain collaborations your organization participates in
-            collabs = (
-                g.session.query(db.Collaboration)
-                .filter(db.Collaboration.organizations.any(id=auth_org.id))
-                .all()
-            )
-            g.session.commit()
-
-            # filter orgs in own collaborations, and add own organization in
-            # case this organization does not participate in any collaborations
-            # yet
-            org_ids = [o.id for col in collabs for o in col.organizations]
-            org_ids = list(set(org_ids + [auth_org.id]))
-
-            # select only the organizations in the collaborations
-            q = q.filter(db.Organization.id.in_(org_ids))
-
-        elif self.r.v_org.can():
-            q = q.filter(db.Organization.id == auth_org.id)
-        else:
-            return {
-                "msg": "You lack the permission to do that!"
-            }, HTTPStatus.UNAUTHORIZED
 
         # paginate the results
         try:
@@ -259,20 +289,23 @@ class Sessions(SessionBase):
             return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         # serialization of DB model
-        return self.response(page, schema)
+        return self.response(page, session_schema)
 
     @with_user
     def post(self):
-        """Create new organization
+        """Create new session
         ---
         description: >-
-          Creates a new organization from the specified values\n
+          Creates a new session in a collaboration\n
 
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Organization|Global|Create|❌|❌|Create a new organization|\n
+          |Session|Collaboration|Create|❌|❌|Create session to be used by the entire
+          collaboration|\n
+          |Session|Organization|Create|❌|❌|Create session to be used by your organization|\n
+          |Session|Own|Create|❌|❌|Create session only to be used by you|\n
 
           Accessible to users.
 
@@ -280,7 +313,7 @@ class Sessions(SessionBase):
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Organization'
+                $ref: '#/components/schemas/Session'
 
         responses:
           201:
@@ -288,120 +321,162 @@ class Sessions(SessionBase):
           401:
             description: Unauthorized
           400:
-            description: Organization with that name already exists
+            description: Session with that label already exists within the collaboration
+          404:
+            description: Collaboration not found
 
         security:
           - bearerAuth: []
 
-        tags: ["Organization"]
+        tags: ["Session"]
         """
-
-        if not self.r.c_glo.can():
+        if not self.r.has_at_least_scope(S.OWN, P.CREATE):
             return {
-                "msg": "You lack the permissions to do that!"
+                "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        # validate request body
         data = request.get_json()
-        errors = org_input_schema.validate(data)
+        errors = session_input_schema.validate(data)
+
         if errors:
             return {
                 "msg": "Request body is incorrect",
                 "errors": errors,
             }, HTTPStatus.BAD_REQUEST
 
-        name = data.get("name")
-        if db.Organization.exists("name", name):
+        # Check if the user has the permission to create a session for the scope
+        if not self.r.has_at_least_scope(data["scope"], P.CREATE):
             return {
-                "msg": f"Organization with name '{name}' already exists!"
+                "msg": (
+                    "You lack the permission to create a session for "
+                    f"the {data['scope']} scope!"
+                )
+            }, HTTPStatus.UNAUTHORIZED
+
+        collaboration: db.Collaboration = db.Collaboration.get(data["collaboration_id"])
+        if not collaboration:
+            return {"msg": "Collaboration not found"}, HTTPStatus.NOT_FOUND
+
+        # Check if the session label already exists in the collaboration
+        if db.Session.label_exists(data["label"], data["collaboration_id"]):
+            return {
+                "msg": "Session with that label already exists within the collaboration!"
             }, HTTPStatus.BAD_REQUEST
 
-        organization = db.Organization(
-            name=name,
-            address1=data.get("address1", ""),
-            address2=data.get("address2" ""),
-            zipcode=data.get("zipcode", ""),
-            country=data.get("country", ""),
-            public_key=data.get("public_key", ""),
-            domain=data.get("domain", ""),
+        # Create parent session object.
+        session = db.Session(
+            label=data["label"],
+            user_id=g.user.id,
+            collaboration=collaboration,
+            scope=data["scope"],
         )
-        organization.save()
+        session.save()
+        # Each node gets assigned a NodeSession to keep track of each individual node's
+        # state.
+        for node in collaboration.nodes:
+            db.NodeSession(
+                session=session,
+                node=node,
+            ).save()
 
-        return org_schema.dump(organization, many=False), HTTPStatus.CREATED
+        return session_schema.dump(session, many=False), HTTPStatus.CREATED
 
 
 class Session(SessionBase):
+
     @only_for(("user", "node", "container"))
     def get(self, id):
-        """Get organization
+        """View specific session
         ---
         description: >-
-          Returns the organization specified by the id\n
+            Returns the session specified by the id\n
 
-          ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-          Description|\n
-          |--|--|--|--|--|--|\n
-          |Organization|Global|View|❌|❌|View all organizations|\n
-          |Organization|Collaboration|View|✅|✅|View a list of organizations
-          within the scope of the collaboration|\n
-          |Organization|Organization|View|✅|✅|View a list of organizations
-          that the user is part of|\n
+            ### Permission Table\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+            Description|\n
+            |--|--|--|--|--|--|\n
+            |Session|Global|View|❌|❌|View any session|\n
+            |Session|Collaboration|View|❌|❌|View any session within your
+            collaborations|\n
+            |Session|Organization|View|❌|❌|View any session that has been
+            initiated from your organization or shared with your organization|\n
+            |Session|Own|View|❌|❌|View any session you created or that is shared
+            with you|\n
 
-          Accessible to users.
+            Accessible to users.
 
         parameters:
-          - in: path
+            - in: path
             name: id
             schema:
               type: integer
-            description: Organization id
+            description: Session id
             required: true
 
         responses:
-          200:
-            description: Ok
-          404:
-            description: Organization not found
-          401:
-            description: Unauthorized
+            200:
+              description: Ok
+            404:
+              description: Session not found
+            401:
+              description: Unauthorized
 
         security:
-          - bearerAuth: []
+            - bearerAuth: []
 
-        tags: ["Organization"]
+        tags: ["Session"]
         """
 
         # retrieve requested organization
-        req_org = db.Organization.get(id)
-        if not req_org:
-            return {"msg": f"Organization id={id} not found!"}, HTTPStatus.NOT_FOUND
+        session: db.Session = db.Session.get(id)
+        if not session:
+            return {"msg": f"Session id={id} not found!"}, HTTPStatus.NOT_FOUND
 
-        # Check if auth has enough permissions
-        if not self.r.can_for_org(P.VIEW, id):
-            return {
-                "msg": "You do not have permission to do that!"
-            }, HTTPStatus.UNAUTHORIZED
+        is_owner = session.user_id = g.user.id
+        if not (is_owner and self.r.has_at_least_scope(S.OWN, P.VIEW)):
 
-        return org_schema.dump(req_org, many=False), HTTPStatus.OK
+            # check that the session is within a collaboration of this user
+            if not (session.collaboration_id in self.obtain_auth_collaboration_ids()):
+                return {
+                    "msg": "You lack the permission to do that!"
+                }, HTTPStatus.UNAUTHORIZED
 
-    @only_for(("user", "node"))
+            # we know the user is not the owner but the session is within the
+            # collaboration. So now we need to check the scope of the session
+            if session.scope == S.OWN:
+                return {
+                    "msg": "You lack the permission to do that!"
+                }, HTTPStatus.UNAUTHORIZED
+            elif session.scope == S.ORGANIZATION:
+                if not session.owner.organization_id == self.obtain_organization_id():
+                    return {
+                        "msg": "You lack the permission to do that!"
+                    }, HTTPStatus.UNAUTHORIZED
+
+        # Here we know that one of the following statements is true:
+        # * the session scope is collaboration and the user has access to this
+        #   collaboration.
+        # * the session scope is organization and the user is part of the sessions
+        #   organization.
+        # * the session belongs to this user
+        return session_schema.dump(session, many=False), HTTPStatus.OK
+
+    @with_user
     def patch(self, id):
-        """Update organization
+        """Update session
         ---
         description: >-
-          Updates the organization with the specified id.\n
+          Updates the scope or label of the session.\n
 
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Organization|Global|Edit|❌|❌|Update an organization with
-          specified id|\n
-          |Organization|Collaboration|Edit|❌|❌|Update an organization within
+          |Session|Collaboration|Edit|❌|❌|Update an session within
           the collaboration the user is part of|\n
-          |Organization|Organization|Edit|❌|❌|Update the organization that
-          the user is part of|\n
+          |Session|Organization|Edit|❌|❌|Update the session that is initiated from
+          a user within your organization|\n
+          |Session|Own|Edit|❌|❌|Update a session that you created|\n
 
           Accessible to users.
 
@@ -410,60 +485,78 @@ class Session(SessionBase):
             name: id
             schema:
               type: integer
-            description: Organization id
-            required: tr
+            description: Session id
+            required: true
 
         requestBody:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Organization'
+                properties:
+                  label:
+                    type: string
+                    description: Name of the session
+                  scope:
+                    type: string
+                    description: Scope of the session
 
         responses:
           200:
             description: Ok
-          404:
-            description: Organization with specified id is not found
           401:
             description: Unauthorized
+          404:
+            description: Session not found
           400:
-            description: Organization with that name already exists
+            decription: Session with that label already exists within the collaboration
 
         security:
           - bearerAuth: []
 
-        tags: ["Organization"]
+        tags: ["Session"]
         """
         # validate request body
         data = request.get_json()
-        errors = org_input_schema.validate(data, partial=True)
+        errors = session_input_schema.validate(data, partial=True)
         if errors:
             return {
                 "msg": "Request body is incorrect",
                 "errors": errors,
             }, HTTPStatus.BAD_REQUEST
 
-        organization = db.Organization.get(id)
-        if not organization:
-            return {"msg": f"Organization with id={id} not found"}, HTTPStatus.NOT_FOUND
+        session: db.Session = db.Session.get(id)
+        if not session:
+            return {"msg": f"Session with id={id} not found"}, HTTPStatus.NOT_FOUND
 
-        if not self.r.can_for_org(P.EDIT, id):
-            return {
-                "msg": "You lack the permission to do that!"
-            }, HTTPStatus.UNAUTHORIZED
-
-        name = data.get("name", None)
-        if name:
-            if organization.name != name and db.Organization.exists("name", name):
+        # If you are the owner of the session you only require edit permissions at
+        # own level. In case you are not the owner, the session needs to be within
+        # you scope in order to edit it.
+        is_owner = session.owner_id == g.user.id
+        if not (is_owner and self.r.has_at_least_scope(S.OWN, P.EDIT)):
+            if not self.r.has_at_least_scope(session.scope, P.EDIT):
                 return {
-                    "msg": f"Organization with name '{name}' already exists!"
+                    "msg": "You lack the permission to do that!"
+                }, HTTPStatus.UNAUTHORIZED
+
+        if "label" in data:
+            if db.Session.label_exists(data["label"], session.collaboration_id):
+                return {
+                    "msg": "Session with that label already exists within the "
+                    "collaboration!"
                 }, HTTPStatus.BAD_REQUEST
-            organization.name = name
 
-        fields = ["address1", "address2", "zipcode", "country", "public_key", "domain"]
-        for field in fields:
-            if field in data and data[field] is not None:
-                setattr(organization, field, data[field])
+            session.label = data["label"]
 
-        organization.save()
-        return org_schema.dump(organization, many=False), HTTPStatus.OK
+        if "scope" in data:
+            if not self.r.has_at_least_scope(data["scope"], P.EDIT):
+                return {
+                    "msg": (
+                        "You lack the permission to change the scope of the session "
+                        f"to {data['scope']}!"
+                    )
+                }, HTTPStatus.UNAUTHORIZED
+
+            session.scope = data["scope"]
+
+        session.save()
+        return session_schema.dump(session, many=False), HTTPStatus.OK

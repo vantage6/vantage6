@@ -122,6 +122,18 @@ swagger_template = {
                 "properties": {"collaboration_id": {"type": "integer"}},
                 "example": {"collaboration_id": 1},
             },
+            "Session": {
+                "properties": {
+                    "label": {"type": "string"},
+                    "collaboration_id": {"type": "integer"},
+                    "scope": {"type": "string"},
+                },
+                "example": {
+                    "label": "session-label",
+                    "collaboration_id": 1,
+                    "scope": "OWN",
+                },
+            },
             "Node": {
                 "example": {"api_key": "unique-uuid-string"},
                 "properties": {"api_key": {"type": "string"}},
