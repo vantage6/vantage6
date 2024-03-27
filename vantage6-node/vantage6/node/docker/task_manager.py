@@ -7,6 +7,7 @@ import json
 import base64
 
 from pathlib import Path
+from docker import DockerClient
 
 from vantage6.common.globals import APPNAME, ENV_VAR_EQUALS_REPLACEMENT, STRING_ENCODING
 from vantage6.common.docker.addons import (
@@ -42,6 +43,7 @@ class DockerTaskManager(DockerBaseManager):
     def __init__(
         self,
         image: str,
+        docker_client: DockerClient,
         vpn_manager: VPNManager,
         node_name: str,
         run_id: int,
@@ -61,6 +63,8 @@ class DockerTaskManager(DockerBaseManager):
         ----------
         image: str
             Name of docker image to be run
+        docker_client: DockerClient
+            Docker client instance to use
         vpn_manager: VPNManager
             VPN manager required to set up traffic forwarding via VPN
         node_name: str
@@ -86,7 +90,7 @@ class DockerTaskManager(DockerBaseManager):
         self.task_id = task_info["id"]
         self.log = logging.getLogger(f"task ({self.task_id})")
 
-        super().__init__(isolated_network_mgr)
+        super().__init__(isolated_network_mgr, docker_client=docker_client)
         self.image = image
         self.__vpn_manager = vpn_manager
         self.run_id = run_id

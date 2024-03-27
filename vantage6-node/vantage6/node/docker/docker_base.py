@@ -1,5 +1,7 @@
 import docker
 
+from docker import DockerClient
+
 from vantage6.common.docker.network_manager import NetworkManager
 
 
@@ -9,11 +11,25 @@ class DockerBaseManager(object):
     by multiple derived classes
     """
 
-    def __init__(self, isolated_network_mgr: NetworkManager) -> None:
+    def __init__(
+        self,
+        isolated_network_mgr: NetworkManager,
+        docker_client: DockerClient = None,
+    ) -> None:
+        """
+        Constructor for DockerBaseManager
+
+        Parameters
+        ----------
+        isolated_network_mgr: NetworkManager
+            Manager of an isolated network
+        docker_client: DockerClient
+            Docker client to use. If None is provided, a new client will be created
+        """
         self.isolated_network_mgr = isolated_network_mgr
 
         # Connect to docker daemon
-        self.docker = docker.from_env()
+        self.docker = docker_client if docker_client else docker.from_env()
 
     def get_isolated_netw_ip(self, container) -> str:
         """

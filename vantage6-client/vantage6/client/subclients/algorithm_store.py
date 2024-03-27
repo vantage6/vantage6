@@ -169,7 +169,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         ----------
         id_ : int
             The id of the algorithm store. If not given, the algorithm store must be
-            set with client.algorithm_store.set().
+            set with client.store.set().
         name : str, optional
             The name of the algorithm store.
         collaboration : int, optional
@@ -200,7 +200,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         ----------
         id_ : int
             The id of the algorithm store. If not given, the algorithm store must be
-            set with client.algorithm_store.set().
+            set with client.store.set().
 
         Returns
         -------
@@ -226,7 +226,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         ----------
         id_ : int
             The id of the algorithm store. If not given, the algorithm store must be
-            set with client.algorithm_store.set().
+            set with client.store.set().
 
         Returns
         -------

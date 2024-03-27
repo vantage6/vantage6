@@ -2,7 +2,7 @@ import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject, Subscription, takeUntil } from 'rxjs';
+import { Subject, Subscription, combineLatest, takeUntil } from 'rxjs';
 import { SearchRequest } from 'src/app/components/table/table.component';
 import { getApiSearchParameters } from 'src/app/helpers/api.helper';
 import { unlikeApiParameter } from 'src/app/helpers/general.helper';
@@ -153,17 +153,18 @@ export class TaskListComponent implements OnInit, OnDestroy {
   }
 
   private setPermissions() {
-    this.permissionService
-      .isInitialized()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((initialized) => {
-        if (initialized) {
-          this.canCreate = this.permissionService.isAllowedForCollab(
-            ResourceType.TASK,
-            OperationType.CREATE,
-            this.chosenCollaborationService.collaboration$.value
-          );
-        }
-      });
+    // to determine whether we can create task, both the permission service AND the chosen
+    // collaboration have to be initialized
+    const permissionInit = this.permissionService.isInitialized();
+    const chosenCollab = this.chosenCollaborationService.collaboration$.asObservable();
+    combineLatest([permissionInit, chosenCollab]).pipe(takeUntil(this.destroy$)).subscribe(([initialized, collab]) => {
+      if (initialized && collab !== null) {
+        this.canCreate = this.permissionService.isAllowedForCollab(
+          ResourceType.TASK,
+          OperationType.CREATE,
+          this.chosenCollaborationService.collaboration$.value
+        );
+      }
+    });
   }
 }

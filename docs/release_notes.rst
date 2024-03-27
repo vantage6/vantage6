@@ -1,6 +1,57 @@
 Release notes
 =============
 
+4.3.3
+-----
+
+*25 March 2024*
+
+
+- **Change**
+
+ - Improved integration algorithm store in UI (`PR#1163 <https://github.com/vantage6/vantage6/pull/1163>`_).
+ - Improve picking an online node when creating task in the UI: pick one that shares
+   configuration and give more specific information to the user in case certain data
+   could not be retrieved (`PR#1164 <https://github.com/vantage6/vantage6/pull/1164>`_).
+ - UI dependency updates
+
+- **Bugfix**
+
+ - Fix pulling algorithms from registries that require authentication
+   (`Issue#1168 <https://github.com/vantage6/vantage6/issues/1168>`_,
+   `PR#1169 <https://github.com/vantage6/vantage6/pull/1169>`_).
+ - Fix bug in showing create task button in UI
+   (`PR#1165 <https://github.com/vantage6/vantage6/pull/1165>`_).
+ - Could not view studies with collaboration scope permissions
+   (`Issue#1154 <https://github.com/vantage6/vantage6/issues/1154>`_,
+   `PR#1157 <https://github.com/vantage6/vantage6/pull/1157>`_).
+ - Fix bug when viewing algorithm stores with organization scope permissions
+   (`PR#1159 <https://github.com/vantage6/vantage6/pull/1159>`_).
+ - Detect whitelisted server in algorithm store if port ``443`` or ``80`` at the end
+   of the URL is the only difference with the whitelisted URL
+   (`Issue#1155 <https://github.com/vantage6/vantage6/issues/1155>`_,
+   `PR#1162 <https://github.com/vantage6/vantage6/pull/1162>`_).
+ - Better error message in Python client when trying to send requests to algorithm store
+   when it has not yet been set up (`Issue#1134 <https://github.com/vantage6/vantage6/issues/1153>`_,
+   `PR#1158 <https://github.com/vantage6/vantage6/pull/1158>`_).
+
+4.3.2
+-----
+
+*20 March 2024*
+
+
+- **Change**
+
+ - Integrated user interface in main repository
+   `PR#1112 <https://github.com/vantage6/vantage6/pull/1112>`_).
+
+- **Bugfix**
+
+ - Allow usernames to contain dots and don't apply username validation to login
+   endpoints until v5 to allow existing users to login
+   (`PR#1148 <https://github.com/vantage6/vantage6/pull/1148>`_).
+
 4.3.1
 -----
 
@@ -45,16 +96,16 @@ Release notes
 - **Security**
 
  - Implemented configuration option to set CORS origins on the central server. This may
-   be used to further enhance the security profile of your server (
-   `advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-4946-85pr-fvxh>`_,
+   be used to further enhance the security profile of your server
+   (`advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-4946-85pr-fvxh>`_,
    `commit <https://github.com/vantage6/vantage6/commit/70bb4e1d889230a841eb364d6c03accd7dd01a41>`_).
- - Prevent username enumeration attack on endpoints where password and 2FA are reset (
-   `advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-5h3x-6gwf-73jm>`_,
-   `commit <https://github.com/vantage6/vantage6/commit/aecfd6d0e83165a41a60ebd52d2287b0217be26b`_).
+ - Prevent username enumeration attack on endpoints where password and 2FA are reset
+   (`advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-5h3x-6gwf-73jm>`_,
+   `commit <https://github.com/vantage6/vantage6/commit/aecfd6d0e83165a41a60ebd52d2287b0217be26b>`_).
  - Added HTTP security headers on the user interface to provide an additional layer
-   of security to help mitigate attacks and vulnerabilites (
-   `advisory <https://github.com/vantage6/vantage6-UI/security/advisories/GHSA-gwq3-pvwq-4c9w>`_,
-   `commit <https://github.com/vantage6/vantage6-UI/commit/68dfa661415182da0e5717bd58db3d00aedcbd2e`_).
+   of security to help mitigate attacks and vulnerabilites
+   (`advisory <https://github.com/vantage6/vantage6-UI/security/advisories/GHSA-gwq3-pvwq-4c9w>`_,
+   `commit <https://github.com/vantage6/vantage6-UI/commit/68dfa661415182da0e5717bd58db3d00aedcbd2e>`_).
  - Updated cryptography dependency
 
 - **Feature**
@@ -197,19 +248,19 @@ Release notes
 - **Security**
 
  - Remove option to SSH into node and server containers. The configuration was
-   not completely secure. (
-   `advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-2wgc-48g2-cj5w>`_,
+   not completely secure
+   (`advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-2wgc-48g2-cj5w>`_,
    `commit <https://github.com/vantage6/vantage6/commit/3fcc6e6a8bd1142fd7a558d8fdd2b246e55c8841>`_).
- - Prevent code injection into environment variables (
-   `advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-w9h2-px87-74vx>`_,
+ - Prevent code injection into environment variables
+   (`advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-w9h2-px87-74vx>`_,
    `commit <https://github.com/vantage6/vantage6/commit/eac19db737145d3ca987adf037a454fae0790ddd>`_).
  - Prevent that user can accidentally upload non-encrypted input to the server
-   for an encrypted collaboration. (
-   `advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-rjmv-52mp-gjrr>`_,
+   for an encrypted collaboration.
+   (`advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-rjmv-52mp-gjrr>`_,
    `commit <https://github.com/vantage6/vantage6/commit/6383283733b81abfcacfec7538dc4dc882e98074>`_).
  - Prevent that usernames are findable in brute force attack due to a difference
-   in response time when they exist versus when they don't exist (
-   `advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-45gq-q4xh-cp53>`_,
+   in response time when they exist versus when they don't exist
+   (`advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-45gq-q4xh-cp53>`_,
    `commit <https://github.com/vantage6/vantage6/commit/389f416c445da4f2438c72f34c3b1084485c4e30>`_).
  - Updated dependencies of jinja2, cryptography and Werkzeug. (
    `PR#984 <https://github.com/vantage6/vantage6/pull/984>`_).

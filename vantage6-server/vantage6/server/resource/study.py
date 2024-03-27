@@ -317,7 +317,7 @@ class Studies(StudyBase):
             if self.r.v_col.can():
                 q = q.join(
                     db.Collaboration,
-                    on=(db.Study.collaboration_id == db.Collaboration.id),
+                    db.Study.collaboration_id == db.Collaboration.id,
                 ).filter(db.Collaboration.id.in_(auth_collab_ids))
             elif self.r.v_org.can():
                 q = q.join(db.Organization, db.Study.organizations).filter(
