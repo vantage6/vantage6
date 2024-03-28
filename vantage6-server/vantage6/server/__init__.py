@@ -48,6 +48,7 @@ from pathlib import Path
 
 from vantage6.common import logger_name
 from vantage6.common.globals import PING_INTERVAL_SECONDS
+from vantage6.backend.common.globals import HOST_URI_ENV
 from vantage6.server import db
 from vantage6.cli.context.server import ServerContext
 from vantage6.server.model.base import DatabaseSessionManager, Database
@@ -142,6 +143,11 @@ class ServerApp:
         # couple any algoritm stores to the server if defined in config. This should be
         # done after the resources are loaded to ensure that rules are set up
         self.couple_algorithm_stores()
+
+        # set environment variable for dev environment
+        host_uri = self.ctx.config.get("dev", {}).get("host_uri")
+        if host_uri:
+            os.environ[HOST_URI_ENV] = host_uri
 
         # set the server version
         self.__version__ = __version__

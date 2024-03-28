@@ -1,3 +1,4 @@
+import os
 import logging
 import requests
 from flask import Response
@@ -148,9 +149,21 @@ def request_algo_store(
 
     if not response and is_localhost_algo_store:
         # try again with the docker host ip
+        host_uri = os.environ.get("HOST_URI_ENV_VAR", None)
+        if not host_uri:
+            msg = (
+                "You are trying to connect to a localhost algorithm store, but this "
+                "refers to the container itself. Please set the configuration option "
+                "'host_uri' in the 'dev' section  of the config file to the host's IP "
+                "address."
+            )
+            log.warning(msg)
+            return {"msg": msg}, HTTPStatus.BAD_REQUEST
         algo_store_url = algo_store_url.replace(
             "localhost", "host.docker.internal"
         ).replace("127.0.0.1", "host.docker.internal")
+        # replace double http:// with single
+        algo_store_url = algo_store_url.replace("http://http://", "http://")
         try:
             response = _execute_algo_store_request(
                 algo_store_url, server_url, endpoint, method, force, headers

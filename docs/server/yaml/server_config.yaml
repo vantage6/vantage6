@@ -197,3 +197,12 @@ algorithm_stores:
   # Each store should have a name and a URL.
   - name: Community store
     url: https://store.cotopaxi.vantage6.ai
+
+# development mode settings. Only use when running both the server and the algorithm
+# store that it communicates with locally
+dev:
+  # Specify the URI to the host. This is used to generate the correct URIs to
+  # communicate with the algorithm store. On Windows and Mac, you can use the special
+  # hostname `host.docker.internal` to refer to the host machine. On Linux, you
+  # should normally use http://172.17.0.1.
+  host_uri: http://host.docker.internal
