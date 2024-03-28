@@ -667,7 +667,7 @@ class SessionInputSchema(Schema):
 
     label = fields.String(required=True)
     collaboration_id = fields.Integer(required=True, validate=Range(min=1))
-    scope = fields.String(validate=OneOf(Scope.list), default=Scope.OWN.value)
+    scope = fields.String(validate=OneOf(Scope.list()), default=Scope.OWN.value)
 
 
 class NodeSessionInputSchema(Schema):

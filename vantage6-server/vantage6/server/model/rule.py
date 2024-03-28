@@ -36,7 +36,7 @@ class Scope(str, Enumerate):
         list[str]
             List of all available scopes
         """
-        return [scope.value for scope in cls]
+        return [scope.name.lower() for scope in cls]
 
 
 class Rule(Base):

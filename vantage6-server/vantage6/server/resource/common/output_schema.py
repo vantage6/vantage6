@@ -24,6 +24,9 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
     def __init__(self, *args, **kwargs) -> None:
         # set lambda functions to create links for one to one relationship
         setattr(self, "node", lambda obj: self.create_hateoas("node", obj))
+
+        setattr(self, "get_session", lambda obj: self.create_hateoas("session", obj))
+
         setattr(
             self, "organization", lambda obj: self.create_hateoas("organization", obj)
         )
@@ -31,6 +34,11 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
             self, "collaboration", lambda obj: self.create_hateoas("collaboration", obj)
         )
         setattr(self, "user", lambda obj: self.create_hateoas("user", obj))
+        setattr(
+            self,
+            "owner",
+            lambda obj: self.create_hateoas("owner", obj, endpoint="user"),
+        )
         setattr(self, "run", lambda obj: self.create_hateoas("run", obj))
         setattr(self, "task", lambda obj: self.create_hateoas("task", obj))
         setattr(self, "port", lambda obj: self.create_hateoas("port", obj))
@@ -430,7 +438,7 @@ class SessionSchema(HATEOASModelSchema):
     class Meta:
         model = db.Session
 
-    owner = fields.Method("user")
+    owner = fields.Method("owner")
     collaboration = fields.Method("collaboration")
     tasks = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="task", link_from="session_id")
@@ -440,3 +448,12 @@ class SessionSchema(HATEOASModelSchema):
             obj, link_to="node_session", link_from="session_id"
         )
     )
+    ready = fields.Function(lambda obj: obj.is_ready)
+
+
+class NodeSessionSchema(HATEOASModelSchema):
+    class Meta:
+        model = db.NodeSession
+
+    node = fields.Method("node")
+    session = fields.Method("get_session")

@@ -85,8 +85,8 @@ class Session(Base):
             n_session.state == SessionStatus.READY for n_session in self.node_sessions
         )
 
-    @hybrid_property
-    def label_exists(self, session_label: str, collaboration: "Collaboration"):
+    @staticmethod
+    def label_exists(session_label: str, collaboration: "Collaboration"):
         """
         Check if a session with the given label already exists in the collaboration.
 
