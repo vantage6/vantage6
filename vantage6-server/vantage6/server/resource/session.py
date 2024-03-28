@@ -16,7 +16,10 @@ from vantage6.server.permission import (
 )
 from vantage6.server.resource.common.input_schema import SessionInputSchema
 from vantage6.server.resource import only_for, with_user, ServicesResources
-from vantage6.server.resource.common.output_schema import SessionSchema
+from vantage6.server.resource.common.output_schema import (
+    SessionSchema,
+    NodeSessionSchema,
+)
 
 
 module_name = logger_name(__name__)
@@ -50,7 +53,17 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         Session,
         path + "/<int:id>",
         endpoint="session_with_id",
-        methods=("GET", "PATCH"),
+        methods=("GET", "PATCH", "DELETE"),
+        resource_class_kwargs=services,
+    )
+    api.add_resource(
+        NodeSessions,
+        path + "/<int:session_id>/node",
+        endpoint="node_session_without_id",
+        methods=(
+            "GET",
+            "PATCH",
+        ),
         resource_class_kwargs=services,
     )
 
@@ -131,12 +144,35 @@ def permissions(permissions: PermissionManager) -> None:
 # ------------------------------------------------------------------------------
 session_schema = SessionSchema()
 session_input_schema = SessionInputSchema()
+node_session_schema = NodeSessionSchema()
 
 
 class SessionBase(ServicesResources):
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
+
+    def can_view_session(self, session: db.Session) -> bool:
+        """Check if the user can view the session"""
+        if self.r.v_glo.can():
+            return True
+
+        if (
+            self.r.v_col.can()
+            and session.collaboration_id in self.obtain_auth_collaboration_ids()
+        ):
+            return True
+
+        if (
+            self.r.v_org.can()
+            and session.organization_id == self.obtain_organization_id()
+        ):
+            return True
+
+        if self.r.v_own.can() and session.user_id == g.user.id:
+            return True
+
+        return False
 
 
 class Sessions(SessionBase):
@@ -227,7 +263,7 @@ class Sessions(SessionBase):
 
         # Obtain the organization of the requester
         auth_org = self.obtain_auth_organization()
-        args = request.get_json()
+        args = request.args
 
         # query
         q = g.session.query(db.Session)
@@ -345,7 +381,8 @@ class Sessions(SessionBase):
             }, HTTPStatus.BAD_REQUEST
 
         # Check if the user has the permission to create a session for the scope
-        if not self.r.has_at_least_scope(data["scope"], P.CREATE):
+        scope = getattr(S, data["scope"].upper())
+        if not self.r.has_at_least_scope(scope, P.CREATE):
             return {
                 "msg": (
                     "You lack the permission to create a session for "
@@ -358,7 +395,7 @@ class Sessions(SessionBase):
             return {"msg": "Collaboration not found"}, HTTPStatus.NOT_FOUND
 
         # Check if the session label already exists in the collaboration
-        if db.Session.label_exists(data["label"], data["collaboration_id"]):
+        if db.Session.label_exists(data["label"], collaboration):
             return {
                 "msg": "Session with that label already exists within the collaboration!"
             }, HTTPStatus.BAD_REQUEST
@@ -368,7 +405,7 @@ class Sessions(SessionBase):
             label=data["label"],
             user_id=g.user.id,
             collaboration=collaboration,
-            scope=data["scope"],
+            scope=scope,
         )
         session.save()
         # Each node gets assigned a NodeSession to keep track of each individual node's
@@ -384,7 +421,7 @@ class Sessions(SessionBase):
 
 class Session(SessionBase):
 
-    @only_for(("user", "node", "container"))
+    @only_for(("user", "node"))
     def get(self, id):
         """View specific session
         ---
@@ -432,33 +469,11 @@ class Session(SessionBase):
         if not session:
             return {"msg": f"Session id={id} not found!"}, HTTPStatus.NOT_FOUND
 
-        is_owner = session.user_id = g.user.id
-        if not (is_owner and self.r.has_at_least_scope(S.OWN, P.VIEW)):
+        if not self.can_view_session(session):
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
-            # check that the session is within a collaboration of this user
-            if not (session.collaboration_id in self.obtain_auth_collaboration_ids()):
-                return {
-                    "msg": "You lack the permission to do that!"
-                }, HTTPStatus.UNAUTHORIZED
-
-            # we know the user is not the owner but the session is within the
-            # collaboration. So now we need to check the scope of the session
-            if session.scope == S.OWN:
-                return {
-                    "msg": "You lack the permission to do that!"
-                }, HTTPStatus.UNAUTHORIZED
-            elif session.scope == S.ORGANIZATION:
-                if not session.owner.organization_id == self.obtain_organization_id():
-                    return {
-                        "msg": "You lack the permission to do that!"
-                    }, HTTPStatus.UNAUTHORIZED
-
-        # Here we know that one of the following statements is true:
-        # * the session scope is collaboration and the user has access to this
-        #   collaboration.
-        # * the session scope is organization and the user is part of the sessions
-        #   organization.
-        # * the session belongs to this user
         return session_schema.dump(session, many=False), HTTPStatus.OK
 
     @with_user
@@ -559,4 +574,209 @@ class Session(SessionBase):
             session.scope = data["scope"]
 
         session.save()
+        return session_schema.dump(session, many=False), HTTPStatus.OK
+
+    @only_for(("user",))
+    def delete(self, id):
+        """Delete session
+        ---
+        description: >-
+          Deletes the session specified by the id\n
+
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Session|Global|Delete|❌|❌|Delete any session|\n
+          |Session|Collaboration|Delete|❌|❌|Delete any session within your
+          collaborations|\n
+          |Session|Organization|Delete|❌|❌|Delete any session that has been
+          initiated from your organization|\n
+          |Session|Own|Delete|❌|❌|Delete any session you created|\n
+
+          Accessible to users.
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: Session id
+            required: true
+
+        responses:
+          204:
+            description: Ok
+          401:
+            description: Unauthorized
+          404:
+            description: Session not found
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Session"]
+        """
+        session: db.Session = db.Session.get(id)
+        if not session:
+            return {"msg": f"Session with id={id} not found"}, HTTPStatus.NOT_FOUND
+
+        accepted = False
+
+        if self.r.d_glo.can():
+            accepted = True
+
+        elif (
+            self.r.d_col.can()
+            and session.collaboration_id in self.obtain_auth_collaboration_ids()
+        ):
+            accepted = True
+
+        elif (
+            self.r.d_org.can()
+            and session.organization_id == self.obtain_organization_id()
+        ):
+            accepted = True
+
+        elif self.r.d_own.can() and session.user_id == g.user.id:
+            accepted = True
+
+        if not accepted:
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
+
+        for node_session in session.node_sessions:
+            for config in node_session.configurations:
+                config.delete()
+            node_session.delete()
+
+        session.delete()
+        return {"msg": f"Successfully deleted session id={id}"}, HTTPStatus.OK
+
+
+class NodeSessions(SessionBase):
+
+    @only_for(("user", "node"))
+    def get(self, session_id):
+        """Get node session
+        ---
+        description: >-
+        Returns the 'node sessions' for the specified session\n
+
+        ### Permissions\n
+        |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+        Description|\n
+        |--|--|--|--|--|--|\n
+        |Session|Global|View|❌|❌|View any session|\n
+        |Session|Collaboration|View|✅|❌|View any session within your
+        collaborations|\n
+        |Session|Organization|View|❌|❌|View any session that has been
+        initiated from your organization or shared with your organization|\n
+        |Session|Own|View|❌|❌|View any session you created or that is shared
+        with you|\n
+
+        Accessible to users.
+
+        parameters:
+        - in: path
+            name: session_id
+            schema:
+            type: integer
+            description: Session id
+            required: true
+
+        responses:
+        200:
+            description: Ok
+        404:
+            description: Session not found
+        401:
+            description: Unauthorized
+
+        security:
+        - bearerAuth: []
+
+        tags: ["Session"]
+        """
+        session: db.Session = db.Session.get(session_id)
+        if not session:
+            return {
+                "msg": f"Session with id={session_id} not found"
+            }, HTTPStatus.NOT_FOUND
+
+        if not self.can_view_session(session):
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
+
+        return node_session_schema.dump(session.node_sessions, many=True), HTTPStatus.OK
+
+    @only_for(("node",))
+    def patch(self, session_id):
+        """Update node session
+        ---
+        description: >-
+        Update the state of the node session\n
+
+        ### Permission Table\n
+        |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+        Description|\n
+        |--|--|--|--|--|--|\n
+        |NodeSession|Global|Edit|❌|❌|Update any node session|\n
+        |NodeSession|Collaboration|Edit|❌|❌|Update any node session within your
+        collaborations|\n
+        |NodeSession|Organization|Edit|❌|❌|Update any node session that has been
+        initiated from your organization|\n
+        |NodeSession|Own|Edit|❌|❌|Update any node session you created|\n
+
+        Accessible to users.
+
+        parameters:
+        - in: path
+            name: session_id
+            schema:
+            type: integer
+            description: Session id
+            required: true
+
+        requestBody:
+        content:
+            application/json:
+            schema:
+                properties:
+                state:
+                    type: string
+                    description: State of the node session
+
+        responses:
+        200:
+            description: Ok
+        401:
+            description: Unauthorized
+        404:
+            description: Session not found
+
+        security:
+        - bearerAuth: []
+
+        tags: ["Session"]
+        """
+        data = request.get_json()
+        # TODO validate input
+        session: db.Session = db.Session.get(session_id)
+        if not session:
+            return {
+                "msg": f"Session with id={session_id} not found"
+            }, HTTPStatus.NOT_FOUND
+
+        if not session.collaboration_id in self.obtain_auth_collaboration_ids():
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
+
+        for node_session in session.node_sessions:
+            node_session.state = data["state"]
+            node_session.save()
+
         return session_schema.dump(session, many=False), HTTPStatus.OK
