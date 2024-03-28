@@ -145,8 +145,7 @@ def inspect_remote_image_timestamp(
         Timestamp containing the creation date of the image and its digest, or
         None if the remote image could not be found.
     """
-    # check if a tag has been profided
-
+    # check if a tag has been provided
     image_tag = re.split(":", image)
     img = image_tag[0]
     tag = image_tag[1] if len(image_tag) == 2 else "latest"
@@ -154,57 +153,220 @@ def inspect_remote_image_timestamp(
     try:
         reg, rep, img_ = re.split("/", img)
     except ValueError:
-        log.warn("Could not construct remote URL, " "are you using a local image?")
-        log.warn("Or an image from docker hub?")
-        log.warn(
-            "We'll make a final attempt when running the image to pull"
-            " it without any checks..."
-        )
-        return None, None
+        log.warn("Could not construct remote URL - will try to pull from Docker Hub!")
+        return _get_dockerhub_timestamp_digest(img, tag)
 
-    # figure out API of the docker repo
+    # figure out API version of the docker repo if it is a harbor repo. Harbor
+    # registries provide the 'pushed' time which the OCI specification does not, and
+    # this is convenient to have.
+    v2_check = requests.get(f"https://{reg}/api/v2.0/health")
+    if v2_check.status_code == 200:
+        return _get_harbor_v2_timestamp_digest(docker_client, reg, rep, img_, tag)
+    # TODO: consider dropping harbor v1 support (v2 is available since May 2020)
     v1_check = requests.get(f"https://{reg}/api/health")
-    v1 = v1_check.status_code == 200
-    v2 = False
-    if not v1:
-        v2_check = requests.get(f"https://{reg}/api/v2.0/health")
-        v2 = v2_check.status_code == 200
+    if v1_check.status_code == 200:
+        return _get_harbor_v1_timestamp_digest(docker_client, reg, rep, img_, tag)
 
-    if not v1 and not v2:
-        log.error(f"Could not determine version of the registry! {reg}")
-        log.error("Is this a Harbor registry?")
-        log.error("Or is the harbor server offline?")
+    # warning for non-harbor registries
+    log.warning(f"Could not determine version of the registry '{reg}'!")
+    log.warning("This should not happen if you are using a harbor registry.")
+    log.warning("If you are, please check if the harbor server is online.")
+
+    return _get_generic_timestamp_digest(docker_client, reg, rep, img_, tag)
+
+
+def _get_generic_timestamp_digest(
+    docker_client: DockerClient, reg: str, rep: str, image: str, tag: str
+) -> tuple[datetime, str] | None:
+    """
+    Get creation timestamp object and digest from remote image for generic registry.
+
+    Parameters
+    ----------
+    docker_client: DockerClient
+        Docker client
+    reg: str
+        Registry name
+    rep: str
+        Repository name
+    image: str
+        Image name
+    tag: str
+        Tag name
+    """
+    # Use OCI endpoints to get manifest info, which contains the digest
+    image_info = f"https://{reg}/v2/{rep}/{image}/manifests/{tag}"
+    result = requests.get(
+        image_info, headers=registry_basic_auth_header(docker_client, reg)
+    )
+    # Check that response is OK
+    if not _check_response_status(result):
+        return None, None
+    try:
+        digest = result.json().get("config").get("digest")
+    except AttributeError:
+        log.warn("Could not find digest in the manifest!")
         return None, None
 
-    if v1:
-        image = f"https://{reg}/api/repositories/{rep}/{img_}/tags/{tag}"
-    else:
-        image = (
-            f"https://{reg}/api/v2.0/projects/{rep}/repositories/"
-            f"{img_}/artifacts/{tag}"
-        )
-
-    # retrieve info from the Harbor server
-    result = requests.get(image, headers=registry_basic_auth_header(docker_client, reg))
-
-    # verify that we got an result
-    if result.status_code == 404:
-        log.warn(f"Remote image not found! {image}")
-        return None, None
-
-    if result.status_code != 200:
-        log.warn(
-            f"Remote info could not be fetched! ({result.status_code}) " f"{image}"
-        )
-        return None, None
-
-    if v1:
+    # Use OCI endpoint to get the creation timestamp using the digest
+    image_info = f"https://{reg}/v2/{rep}/{image}/blobs/{digest}"
+    result = requests.get(
+        image_info, headers=registry_basic_auth_header(docker_client, reg)
+    )
+    # Check that response is OK
+    if not _check_response_status(result):
+        return None, digest
+    try:
         timestamp = parse(result.json().get("created"))
-        digest = None
-    else:
-        timestamp = parse(result.json().get("push_time"))
-        digest = result.json().get("digest")
+    except AttributeError:
+        log.warn("Could not find creation timestamp!")
+        return None, digest
+
     return timestamp, digest
+
+
+def _get_dockerhub_timestamp_digest(
+    image: str, tag: str
+) -> tuple[datetime, str] | None:
+    """
+    Obtain creation timestamp object and digest from remote image for Docker Hub.
+
+    Parameters
+    ----------
+    image: str
+        Image name
+    tag: str
+        Tag name
+
+    Returns
+    -------
+    tuple[datetime, str] | None
+        Timestamp containing the creation date of the image and its digest, or
+        None if the remote image could not be found.
+    """
+    image_info = f"https://hub.docker.com/v2/repositories/{image}/tags/{tag}"
+    result = requests.get(image_info)
+    # Check that response is OK
+    if not _check_response_status(result):
+        return None, None
+    try:
+        digest = result.json().get("digest")
+        timestamp = parse(result.json().get("last_updated"))
+    except AttributeError:
+        log.warn("Could not find digest in the manifest!")
+        return None, None
+
+    return timestamp, digest
+
+
+def _get_harbor_v2_timestamp_digest(
+    docker_client, registry: str, repository: str, image: str, tag: str
+) -> tuple[datetime, str] | None:
+    """
+    Obtain creation timestamp object and digest from remote image for Harbor v2.
+
+    Parameters
+    ----------
+    docker_client: DockerClient
+        Docker client
+    registry: str
+        Registry name (e.g. harbor2.vantage6.ai)
+    repository: str
+        Repository name
+    image: str
+        Image name
+    tag: str
+        Tag name
+
+    Returns
+    -------
+    tuple[datetime, str] | None
+        Timestamp containing the creation date of the image and its digest, or
+        None if the remote image could not be found.
+    """
+    image_info = (
+        f"https://{registry}/api/v2.0/projects/{repository}/repositories/"
+        f"{image}/artifacts/{tag}"
+    )
+
+    result = requests.get(
+        image_info, headers=registry_basic_auth_header(docker_client, registry)
+    )
+
+    # Check that response is OK
+    if not _check_response_status(result):
+        return None, None
+
+    timestamp = parse(result.json().get("push_time"))
+    digest = result.json().get("digest")
+    return timestamp, digest
+
+
+def _get_harbor_v1_timestamp_digest(
+    docker_client, registry: str, repository: str, image: str, tag: str
+) -> tuple[datetime, str] | None:
+    """
+    Obtain creation timestamp object and digest from remote image for Harbor v1.
+
+    Parameters
+    ----------
+    docker_client: DockerClient
+        Docker client
+    registry: str
+        Registry name (e.g. harbor2.vantage6.ai)
+    repository: str
+        Repository name
+    image: str
+        Image name
+    tag: str
+        Tag name
+
+    Returns
+    -------
+    tuple[datetime, str] | None
+        Timestamp containing the creation date of the image and its digest, or
+        None if the remote image could not be found.
+    """
+    image_info = f"https://{registry}/api/repositories/{repository}/{image}/tags/{tag}"
+
+    result = requests.get(
+        image_info, headers=registry_basic_auth_header(docker_client, registry)
+    )
+
+    # Check that response is OK
+    if not _check_response_status(result):
+        return None, None
+
+    timestamp = parse(result.json().get("created"))
+    # digest is not available in the v1 API
+    return timestamp, None
+
+
+def _check_response_status(response: requests.Response) -> bool:
+    """
+    Check if the response status is OK. otherwise log an error and raise an exception
+
+    Parameters
+    ----------
+    response: requests.Response
+        The response object
+
+    Returns
+    -------
+    bool
+        True if the response status is OK, False otherwise
+    """
+    if response.status_code == 404:
+        log.warn(f"Remote image info not found! {response.url}")
+        return False
+    elif response.status_code != 200:
+        log.warn(
+            "Remote image info could not be fetched! (%s) %s",
+            response.status_code,
+            response.url,
+        )
+        return False
+    return True
 
 
 def inspect_local_image_timestamp(
