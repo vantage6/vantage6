@@ -294,6 +294,6 @@ def get_server_url(config: dict, server_url_from_request: str | None = None) -> 
     server_url = config.get("server_url", server_url_from_request)
     # make sure that the server url ends with the api path
     api_path = config.get("api_path")
-    if not server_url.endswith(api_path):
+    if server_url and not server_url.endswith(api_path):
         server_url = server_url + api_path
     return server_url
