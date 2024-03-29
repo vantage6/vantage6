@@ -186,70 +186,70 @@ class Sessions(SessionBase):
         """Returns a list of sessions
         ---
         description: >-
-            Get a list of sessions based on filters and user permissions\n
+          Get a list of sessions based on filters and user permissions\n
 
-            ### Permission Table\n
-            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-            Description|\n
-            |--|--|--|--|--|--|\n
-            |Session|Global|View|❌|❌|View all available sessions|\n
-            |Session|Collaboration|View|✅|❌|View all available sessions within the
-            scope of the collaboration|\n
-            |Session|Organization|View|❌|❌|View all available sessions that have been
-            initiated from a user within your organization|\n
-            |Session|Own|View|❌|❌|View all sessions created by you
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Session|Global|View|❌|❌|View all available sessions|\n
+          |Session|Collaboration|View|✅|❌|View all available sessions within the
+          scope of the collaboration|\n
+          |Session|Organization|View|❌|❌|View all available sessions that have been
+          initiated from a user within your organization|\n
+          |Session|Own|View|❌|❌|View all sessions created by you
 
-            Accessible to users.
+          Accessible to users.
 
         parameters:
-          - in: query
-            name: label
-            schema:
-              type: string
-            description: >-
-              Name to match with a LIKE operator. \n
-              * The percent sign (%) represents zero, one, or multiple
-              characters\n
-              * underscore sign (_) represents one, single character
-          - in: query
-            name: user
-            schema:
-              type: integer
-            description: User id
-          - in: query
-            name: user
-            schema:
-              type: integer
-            description: User id
-          - in: query
-            name: collaboration
-            schema:
-              type: integer
-            description: Collaboration id
-          - in: query
-            name: scope
-            schema:
-              type: string
-            description: >-
-              Scope of the session. Possible values are: GLOBAL, COLLABORATION,
-              ORGANIZATION, OWN
-          - in: query
-            name: page
-            schema:
-              type: integer
-            description: Page number for pagination (default=1)
-          - in: query
-            name: per_page
-            schema:
-              type: integer
-            description: Number of items per page (default=10)
-          - in: query
-            name: sort
-            schema:
-              type: string
-            description: >-
-              Sort by one or more fields, separated by a comma. Use a minus
-              sign (-) in front of the field to sort in descending order.
+        - in: query
+          name: label
+          schema:
+            type: string
+          description: >-
+            Name to match with a LIKE operator. \n
+            * The percent sign (%) represents zero, one, or multiple
+            characters\n
+            * underscore sign (_) represents one, single character
+        - in: query
+          name: user
+          schema:
+            type: integer
+          description: User id
+        - in: query
+          name: user
+          schema:
+            type: integer
+          description: User id
+        - in: query
+          name: collaboration
+          schema:
+            type: integer
+          description: Collaboration id
+        - in: query
+          name: scope
+          schema:
+            type: string
+          description: >-
+            Scope of the session. Possible values are: GLOBAL, COLLABORATION,
+            ORGANIZATION, OWN
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: Page number for pagination (default=1)
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+          description: Number of items per page (default=10)
+        - in: query
+          name: sort
+          schema:
+            type: string
+          description: >-
+            Sort by one or more fields, separated by a comma. Use a minus
+            sign (-) in front of the field to sort in descending order.
 
         responses:
           200:
@@ -260,7 +260,7 @@ class Sessions(SessionBase):
             description: Improper values for pagination or sorting parameters
 
         security:
-          - bearerAuth: []
+        - bearerAuth: []
 
         tags: ["Session"]
         """
@@ -366,7 +366,7 @@ class Sessions(SessionBase):
             description: Collaboration not found
 
         security:
-          - bearerAuth: []
+        - bearerAuth: []
 
         tags: ["Session"]
         """
@@ -430,40 +430,40 @@ class Session(SessionBase):
         """View specific session
         ---
         description: >-
-            Returns the session specified by the id\n
+          Returns the session specified by the id\n
 
-            ### Permission Table\n
-            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-            Description|\n
-            |--|--|--|--|--|--|\n
-            |Session|Global|View|❌|❌|View any session|\n
-            |Session|Collaboration|View|❌|❌|View any session within your
-            collaborations|\n
-            |Session|Organization|View|❌|❌|View any session that has been
-            initiated from your organization or shared with your organization|\n
-            |Session|Own|View|❌|❌|View any session you created or that is shared
-            with you|\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Session|Global|View|❌|❌|View any session|\n
+          |Session|Collaboration|View|❌|❌|View any session within your
+          collaborations|\n
+          |Session|Organization|View|❌|❌|View any session that has been
+          initiated from your organization or shared with your organization|\n
+          |Session|Own|View|❌|❌|View any session you created or that is shared
+          with you|\n
 
-            Accessible to users.
+          Accessible to users.
 
         parameters:
-            - in: path
-            name: id
-            schema:
-              type: integer
-            description: Session id
-            required: true
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: Session id
+          required: true
 
         responses:
-            200:
-              description: Ok
-            404:
-              description: Session not found
-            401:
-              description: Unauthorized
+          200:
+            description: Ok
+          404:
+            description: Session not found
+          401:
+            description: Unauthorized
 
         security:
-            - bearerAuth: []
+        - bearerAuth: []
 
         tags: ["Session"]
         """
@@ -480,7 +480,7 @@ class Session(SessionBase):
 
         return session_schema.dump(session, many=False), HTTPStatus.OK
 
-    @with_user
+    @only_for(("user",))
     def patch(self, id):
         """Update session
         ---
@@ -500,12 +500,12 @@ class Session(SessionBase):
           Accessible to users.
 
         parameters:
-          - in: path
-            name: id
-            schema:
-              type: integer
-            description: Session id
-            required: true
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: Session id
+          required: true
 
         requestBody:
           content:
@@ -530,7 +530,7 @@ class Session(SessionBase):
             decription: Session with that label already exists within the collaboration
 
         security:
-          - bearerAuth: []
+        - bearerAuth: []
 
         tags: ["Session"]
         """
@@ -585,7 +585,8 @@ class Session(SessionBase):
         """Delete session
         ---
         description: >-
-          Deletes the session specified by the id\n
+          Deletes the session specified by the id. This also deletes all node sessions
+          and configurations that are part of the session.\n
 
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
@@ -601,12 +602,12 @@ class Session(SessionBase):
           Accessible to users.
 
         parameters:
-          - in: path
-            name: id
-            schema:
-              type: integer
-            description: Session id
-            required: true
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: Session id
+          required: true
 
         responses:
           204:
@@ -666,36 +667,36 @@ class NodeSessions(SessionBase):
         """Get node session
         ---
         description: >-
-        Returns the 'node sessions' for the specified session\n
+          Returns the 'node sessions' for the specified session\n
 
-        ### Permissions\n
-        |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-        Description|\n
-        |--|--|--|--|--|--|\n
-        |Session|Global|View|❌|❌|View any session|\n
-        |Session|Collaboration|View|✅|❌|View any session within your
-        collaborations|\n
-        |Session|Organization|View|❌|❌|View any session that has been
-        initiated from your organization or shared with your organization|\n
-        |Session|Own|View|❌|❌|View any session you created or that is shared
-        with you|\n
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Session|Global|View|❌|❌|View any session|\n
+          |Session|Collaboration|View|✅|❌|View any session within your
+          collaborations|\n
+          |Session|Organization|View|❌|❌|View any session that has been
+          initiated from your organization or shared with your organization|\n
+          |Session|Own|View|❌|❌|View any session you created or that is shared
+          with you|\n
 
-        Accessible to users.
+          Accessible to users.
 
         parameters:
         - in: path
-            name: session_id
-            schema:
-            type: integer
-            description: Session id
-            required: true
+          name: session_id
+          schema:
+          type: integer
+          description: Session id
+          required: true
 
         responses:
-        200:
+          200:
             description: Ok
-        404:
+          404:
             description: Session not found
-        401:
+          401:
             description: Unauthorized
 
         security:
@@ -721,38 +722,36 @@ class NodeSessions(SessionBase):
         """Update node session
         ---
         description: >-
-        Update the state of the node session\n
+          Update the state of the node session\n
 
-        ### Permissions\n
-        Only accessable by nodes.
+          ### Permissions\n
+          Only accessable by nodes.
 
-        Note that this endpoint deletes all config options when new configuration
-        settings are provided.
+          Note that this endpoint deletes all config options when new configuration
+          settings are provided.
 
         parameters:
         - in: path
-            name: session_id
-            schema:
-            type: integer
-            description: Session id
-            required: true
+          name: session_id
+          schema:
+          type: integer
+          description: Session id
+          required: true
 
         requestBody:
-        content:
+          content:
             application/json:
-            schema:
+              schema:
                 properties:
-                state:
+                  state:
                     type: string
                     description: State of the node session
 
         responses:
-        200:
+          200:
             description: Ok
-        401:
-            description: Unauthorized
-        404:
-            description: Session not found
+          404:
+            description: Session or node session not found
 
         security:
         - bearerAuth: []
