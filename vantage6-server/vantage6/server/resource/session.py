@@ -550,7 +550,7 @@ class Session(SessionBase):
         # If you are the owner of the session you only require edit permissions at
         # own level. In case you are not the owner, the session needs to be within
         # you scope in order to edit it.
-        is_owner = session.owner_id == g.user.id
+        is_owner = session.owner.id == g.user.id
         if not (is_owner and self.r.has_at_least_scope(S.OWN, P.EDIT)):
             if not self.r.has_at_least_scope(session.scope, P.EDIT):
                 return {
@@ -558,7 +558,9 @@ class Session(SessionBase):
                 }, HTTPStatus.UNAUTHORIZED
 
         if "label" in data:
-            if db.Session.label_exists(data["label"], session.collaboration_id):
+            if data["label"] != session.label and db.Session.label_exists(
+                data["label"], session.collaboration
+            ):
                 return {
                     "msg": "Session with that label already exists within the "
                     "collaboration!"
@@ -567,7 +569,8 @@ class Session(SessionBase):
             session.label = data["label"]
 
         if "scope" in data:
-            if not self.r.has_at_least_scope(data["scope"], P.EDIT):
+            scope = getattr(S, data["scope"].upper())
+            if not self.r.has_at_least_scope(scope, P.EDIT):
                 return {
                     "msg": (
                         "You lack the permission to change the scope of the session "
@@ -575,7 +578,7 @@ class Session(SessionBase):
                     )
                 }, HTTPStatus.UNAUTHORIZED
 
-            session.scope = data["scope"]
+            session.scope = scope
 
         session.save()
         return session_schema.dump(session, many=False), HTTPStatus.OK
@@ -652,7 +655,7 @@ class Session(SessionBase):
             }, HTTPStatus.UNAUTHORIZED
 
         for node_session in session.node_sessions:
-            for config in node_session.configurations:
+            for config in node_session.config:
                 config.delete()
             node_session.delete()
 
@@ -746,6 +749,16 @@ class NodeSessions(SessionBase):
                   state:
                     type: string
                     description: State of the node session
+                  config:
+                    type: array
+                    items:
+                      properties:
+                        key:
+                          type: string
+                          description: Configuration key
+                        value:
+                          type: string
+                          description: Configuration value
 
         responses:
           200:
