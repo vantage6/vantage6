@@ -670,20 +670,17 @@ class SessionInputSchema(Schema):
     scope = fields.String(validate=OneOf(Scope.list()), default=Scope.OWN.value)
 
 
-class NodeSessionInputSchema(Schema):
-    """Schema for validating input for creating a node session."""
-
-    node_id = fields.Integer(required=True, validate=Range(min=1))
-    session_id = fields.Integer(required=True, validate=Range(min=1))
-    state = fields.String(
-        validate=OneOf(SessionStatus.list()), default=SessionStatus.PENDING.value
-    )
-    last_updated_at = fields.DateTime()
-
-
 class NodeSessionConfigInputSchema(Schema):
     """Schema for validating input for creating a node session config."""
 
-    node_session_id = fields.Integer(required=True, validate=Range(min=1))
     key = fields.String(required=True)
     value = fields.String(required=True)
+
+
+class NodeSessionInputSchema(Schema):
+    """Schema for validating input for creating a node session."""
+
+    state = fields.String(
+        validate=OneOf(SessionStatus.list()), default=SessionStatus.PENDING.value
+    )
+    config = fields.List(fields.Nested(NodeSessionConfigInputSchema), required=False)

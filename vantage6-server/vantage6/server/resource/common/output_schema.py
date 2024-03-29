@@ -457,3 +457,10 @@ class NodeSessionSchema(HATEOASModelSchema):
 
     node = fields.Method("node")
     session = fields.Method("get_session")
+
+    config = fields.Nested("NodeSessionConfigSchema", many=True, exclude=["id"])
+
+
+class NodeSessionConfigSchema(HATEOASModelSchema):
+    class Meta:
+        model = db.NodeSessionConfig

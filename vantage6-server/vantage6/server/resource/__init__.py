@@ -54,6 +54,30 @@ class ServicesResources(BaseServicesResources):
         self.mail = mail
 
     @staticmethod
+    def is_user() -> bool:
+        """
+        Check if the current auth is a user.
+
+        Returns
+        -------
+        bool
+            True if the current auth is a user, False otherwise
+        """
+        return g.user is not None
+
+    @staticmethod
+    def is_node() -> bool:
+        """
+        Check if the current auth is a node.
+
+        Returns
+        -------
+        bool
+            True if the current auth is a node, False otherwise
+        """
+        return g.node is not None
+
+    @staticmethod
     def obtain_auth() -> db.Authenticatable | dict:
         """
         Read authenticatable object or dict from the flask global context.
