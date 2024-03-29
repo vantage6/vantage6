@@ -18,4 +18,4 @@ class SessionStatus(str, Enum):
     @classmethod
     def list(cls):
         """Return a list of all the status values"""
-        return [status.value for status in cls]
+        return [status.value.lower() for status in cls]

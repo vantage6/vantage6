@@ -3,10 +3,11 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, ForeignKey, DateTime, Enum, UniqueConstraint
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common.session_status import SessionStatus
 
-from vantage6.server.model.base import Base
+from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
 class NodeSession(Base):
@@ -42,12 +43,41 @@ class NodeSession(Base):
     state = Column(Enum(SessionStatus), default=SessionStatus.PENDING)
     last_updated_at = Column(DateTime, default=datetime.now(timezone.utc))
 
-    __table_args__ = (UniqueConstraint("node_id", "session_id"), )
+    __table_args__ = (UniqueConstraint("node_id", "session_id"),)
 
     # relationships
     node = relationship("Node", back_populates="sessions")
     session = relationship("Session", back_populates="node_sessions")
     config = relationship("NodeSessionConfig", back_populates="node_session")
+
+    @classmethod
+    def get_by_node_and_session(cls, node_id: int, session_id: int) -> NodeSession:
+        """
+        Retrieve a NodeSession based on node_id and session_id.
+
+        Parameters
+        ----------
+        node_id : int
+            ID of the node
+        session_id : int
+            ID of the session
+
+        Returns
+        -------
+        NodeSession
+            The NodeSession object matching the given node_id and session_id
+        """
+        session = DatabaseSessionManager.get_session()
+        try:
+            result = (
+                session.query(cls)
+                .filter_by(node_id=node_id, session_id=session_id)
+                .first()
+            )
+            session.commit()
+            return result
+        except NoResultFound:
+            return None
 
     def __repr__(self):
         """

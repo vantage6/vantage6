@@ -14,8 +14,11 @@ from vantage6.server.permission import (
     PermissionManager,
     RuleCollection,
 )
-from vantage6.server.resource.common.input_schema import SessionInputSchema
 from vantage6.server.resource import only_for, with_user, ServicesResources
+from vantage6.server.resource.common.input_schema import (
+    SessionInputSchema,
+    NodeSessionInputSchema,
+)
 from vantage6.server.resource.common.output_schema import (
     SessionSchema,
     NodeSessionSchema,
@@ -145,6 +148,7 @@ def permissions(permissions: PermissionManager) -> None:
 session_schema = SessionSchema()
 session_input_schema = SessionInputSchema()
 node_session_schema = NodeSessionSchema()
+node_session_input_schema = NodeSessionInputSchema()
 
 
 class SessionBase(ServicesResources):
@@ -169,7 +173,7 @@ class SessionBase(ServicesResources):
         ):
             return True
 
-        if self.r.v_own.can() and session.user_id == g.user.id:
+        if self.is_user() and self.r.v_own.can() and session.user_id == g.user.id:
             return True
 
         return False
@@ -719,18 +723,11 @@ class NodeSessions(SessionBase):
         description: >-
         Update the state of the node session\n
 
-        ### Permission Table\n
-        |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-        Description|\n
-        |--|--|--|--|--|--|\n
-        |NodeSession|Global|Edit|❌|❌|Update any node session|\n
-        |NodeSession|Collaboration|Edit|❌|❌|Update any node session within your
-        collaborations|\n
-        |NodeSession|Organization|Edit|❌|❌|Update any node session that has been
-        initiated from your organization|\n
-        |NodeSession|Own|Edit|❌|❌|Update any node session you created|\n
+        ### Permissions\n
+        Only accessable by nodes.
 
-        Accessible to users.
+        Note that this endpoint deletes all config options when new configuration
+        settings are provided.
 
         parameters:
         - in: path
@@ -763,20 +760,40 @@ class NodeSessions(SessionBase):
         tags: ["Session"]
         """
         data = request.get_json()
-        # TODO validate input
+        errors = node_session_input_schema.validate(data)
+        if errors:
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
+
         session: db.Session = db.Session.get(session_id)
         if not session:
             return {
                 "msg": f"Session with id={session_id} not found"
             }, HTTPStatus.NOT_FOUND
 
-        if not session.collaboration_id in self.obtain_auth_collaboration_ids():
+        node_session: db.NodeSession = db.NodeSession.get_by_node_and_session(
+            g.node.id, session.id
+        )
+        if not node_session:
             return {
-                "msg": "You lack the permission to do that!"
-            }, HTTPStatus.UNAUTHORIZED
+                "msg": f"Node session with node id={g.node.id} and session "
+                f"id={session.id} not found"
+            }, HTTPStatus.NOT_FOUND
 
-        for node_session in session.node_sessions:
+        if "config" in data:
+            # Delete old configuration
+            for item in node_session.config:
+                item.delete()
+            # add new
+            for config in data["config"]:
+                db.NodeSessionConfig(
+                    node_session=node_session, key=config["key"], value=config["value"]
+                ).save()
+
+        if "state" in data:
             node_session.state = data["state"]
             node_session.save()
 
-        return session_schema.dump(session, many=False), HTTPStatus.OK
+        return node_session_schema.dump(node_session, many=False), HTTPStatus.OK
