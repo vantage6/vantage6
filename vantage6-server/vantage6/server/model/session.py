@@ -57,8 +57,8 @@ class Session(Base):
 
     # fields
     label = Column(String)
-    user_id = Column(Integer, ForeignKey("user.id"))
-    collaboration_id = Column(Integer, ForeignKey("collaboration.id"))
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    collaboration_id = Column(Integer, ForeignKey("collaboration.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.now(timezone.utc))
     last_used_at = Column(DateTime, default=datetime.now(timezone.utc))
     scope = Column(Enum(Scope), default=Scope.OWN)
