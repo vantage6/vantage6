@@ -406,6 +406,7 @@ class TaskInputSchema(_NameValidationSchema):
     store_id = fields.Integer(validate=Range(min=1))
     organizations = fields.List(fields.Dict(), required=True)
     databases = fields.List(fields.Dict(), allow_none=True)
+    session_id = fields.Integer(validate=Range(min=1))
 
     @validates_schema
     def validate_collaboration_or_study(self, data: dict, **kwargs) -> None:
