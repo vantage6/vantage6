@@ -304,14 +304,6 @@ class ContainerToken(ServicesResources):
             )
             return {"msg": "Parent task does not exist!"}, HTTPStatus.BAD_REQUEST
 
-        # verify that task the token is requested for exists
-        if claim_image != db_task.image:
-            log.warning(
-                f"Node {g.node.id} attempts to generate key for image "
-                f"{claim_image} that does not belong to task {task_id}."
-            )
-            return {"msg": "Image and task do no match"}, HTTPStatus.UNAUTHORIZED
-
         # check if the node is in the collaboration to which the task is
         # enlisted
         if g.node.collaboration_id != db_task.collaboration_id:
@@ -323,6 +315,17 @@ class ContainerToken(ServicesResources):
             return {
                 "msg": "You are not within the collaboration"
             }, HTTPStatus.UNAUTHORIZED
+
+        # verify that task the token is requested for exists
+        collaboration = db.Collaboration.get(db_task.collaboration_id)
+        if collaboration.session_restrict_to_same_image:
+            if claim_image != db_task.image:
+                log.warning(
+                    f"Node {g.node.id} attempts to generate key for image {claim_image}"
+                    f"that does not belong to task {task_id} and the "
+                    "'session_restrict_to_same_image' option is set to True."
+                )
+                return {"msg": "Image and task do no match"}, HTTPStatus.UNAUTHORIZED
 
         # validate that the task not has been finished yet
         if has_task_finished(db_task.status):

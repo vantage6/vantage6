@@ -25,6 +25,9 @@ class Collaboration(Base):
         Name of the collaboration
     encrypted : bool
         Whether the collaboration is encrypted or not
+    session_restrict_to_same_image : bool
+        when set to True, enforces that all functions calls in a single session must
+        originate from the same image
     organizations :
             list[:class:`~vantage6.server.model.organization.Organization`]
         List of organizations that are part of this collaboration
@@ -41,6 +44,7 @@ class Collaboration(Base):
     # fields
     name = Column(String, unique=True)
     encrypted = Column(Boolean, default=1)
+    session_restrict_to_same_image = Column(Boolean, default=0)
 
     # relationships
     organizations = relationship(
