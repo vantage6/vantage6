@@ -285,6 +285,11 @@ class Tasks(TaskBase):
             description: Filter by task status, e.g. 'active' for active
               tasks, 'completed' for finished or 'crashed' for failed tasks.
           - in: query
+            name: session
+            schema:
+              type: int
+            description: A session id that belongs to the task
+          - in: query
             name: page
             schema:
               type: integer
@@ -466,6 +471,10 @@ class Tasks(TaskBase):
                     "msg": f"Algorithm store id={store_id} does not exist!"
                 }, HTTPStatus.BAD_REQUEST
             q = q.filter(db.Task.algorithmstore_id == store_id)
+
+        if "session" in args:
+            session_id = int(args["session"])
+            q = q.filter(db.Task.session_id == session_id)
 
         if "database" in args:
             q = q.join(db.TaskDatabase).filter(

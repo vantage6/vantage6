@@ -92,6 +92,7 @@ class TaskSchema(HATEOASModelSchema):
     databases = fields.Method("databases_")
     study = fields.Method("study")
     algorithm_store = fields.Method("algorithm_store")
+    session = fields.Method("get_session")
 
     @staticmethod
     def databases_(obj):
