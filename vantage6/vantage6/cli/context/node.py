@@ -230,23 +230,22 @@ class NodeContext(AppContext):
     def proxy_log_file(self):
         return self.log_file_name(type_="proxy_server")
 
-    def docker_temporary_volume_name(self, job_id: int) -> str:
+    def docker_session_volume_name(self, session_id: int) -> str:
         """
-        Docker volume in which temporary data is stored. Temporary data is
-        linked to a specific run. Multiple algorithm containers can have the
-        same run id, and therefore the share same temporary volume.
+        Docker volume in which session data is stored. Session data is shared between
+        algorithm containers in the same session.
 
         Parameters
         ----------
-        job_id : int
-            run id provided by the server
+        session_id : int
+            session id
 
         Returns
         -------
         str
             Docker volume name
         """
-        return f"{APPNAME}-{self.name}-{self.scope}-{job_id}-tmpvol"
+        return f"{APPNAME}-{self.name}-{self.scope}-{session_id}-session"
 
     def get_database_uri(self, label: str = "default") -> str:
         """
