@@ -535,11 +535,12 @@ class Tasks(TaskBase):
           posted.\n
 
           ## Accessed as `Container`\n
-          When this endpoint is accessed by an algorithm container, it is
-          considered to be a child-task of the container, and will get the
-          `job_id` from the initial task. Containers have limited permissions
-          to create tasks: they are only allowed to create tasks in the same
-          collaboration using the same image.\n
+          When this endpoint is accessed by an algorithm container, it is considered to
+          be a child-task of the container, and will get the `job_id` from the initial
+          task. Containers have limited permissions to create tasks: they are only
+          allowed to create tasks in the same collaboration and in case the option
+          'session_restrict_to_same_image' it requires to use the same image as that
+          it originates from.\n
 
         requestBody:
           content:
@@ -896,18 +897,29 @@ class Tasks(TaskBase):
     def __verify_container_permissions(container, image, collaboration_id):
         """Validates that the container is allowed to create the task."""
 
+        # check that node id is indeed part of the collaboration
+        if not container["collaboration_id"] == collaboration_id:
+            log.warning(
+                f"Container attempts to create a task outside "
+                f"collaboration_id={container['collaboration_id']} in "
+                f"collaboration_id={collaboration_id}!"
+            )
+            return False
+
         # check that the image is allowed: algorithm containers can only
         # create tasks with the same image
-        if not image.endswith(container["image"]):
-            log.warning(
-                (
-                    f"Container from node={container['node_id']} "
-                    f"attempts to post a task using illegal image!?"
+        collaboration: db.Collaboration = db.Collaboration.get(collaboration_id)
+        if collaboration.session_restrict_to_same_image:
+            if not image.endswith(container["image"]):
+                log.warning(
+                    (
+                        f"Container from node={container['node_id']} "
+                        f"attempts to post a task using illegal image!?"
+                    )
                 )
-            )
-            log.warning(f"  task image: {image}")
-            log.warning(f"  container image: {container['image']}")
-            return False
+                log.warning(f"  task image: {image}")
+                log.warning(f"  container image: {container['image']}")
+                return False
 
         # check that parent task is not completed yet
         if has_task_finished(db.Task.get(container["task_id"]).status):
@@ -915,15 +927,6 @@ class Tasks(TaskBase):
                 f"Container from node={container['node_id']} "
                 f"attempts to start sub-task for a completed "
                 f"task={container['task_id']}"
-            )
-            return False
-
-        # check that node id is indeed part of the collaboration
-        if not container["collaboration_id"] == collaboration_id:
-            log.warning(
-                f"Container attempts to create a task outside "
-                f"collaboration_id={container['collaboration_id']} in "
-                f"collaboration_id={collaboration_id}!"
             )
             return False
 
