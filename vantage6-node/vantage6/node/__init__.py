@@ -332,12 +332,14 @@ class Node:
         # notify that we are processing this task
         self.client.set_task_start_time(task_incl_run["id"])
 
+        # FIXME: FM 02-04-24 This should only be requested for the `compute` container
+        # role.
         token = self.client.request_token_for_container(task["id"], task["image"])
         token = token["container_token"]
 
-        # create a temporary volume for each job_id
-        vol_name = self.ctx.docker_temporary_volume_name(task["job_id"])
-        self.__docker.create_volume(vol_name)
+        # get t for each session
+        session_vol_name = self.ctx.docker_session_volume_name(task["session_id"])
+        self.__docker.create_volume_if_not_exists(session_vol_name)
 
         # For some reason, if the key 'input' consists of JSON, it is
         # automatically marshalled? This causes trouble, so we'll serialize it
@@ -353,7 +355,7 @@ class Node:
             task_info=task,
             image=task["image"],
             docker_input=task_incl_run["input"],
-            tmp_vol_name=vol_name,
+            session_vol_name=session_vol_name,
             token=token,
             databases_to_use=task.get("databases", []),
         )

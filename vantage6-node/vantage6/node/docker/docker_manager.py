@@ -264,7 +264,7 @@ class DockerManager(DockerBaseManager):
             )
         return policies
 
-    def create_volume(self, volume_name: str) -> None:
+    def create_volume_if_not_exists(self, volume_name: str) -> None:
         """
         Create a temporary volume for a single run.
 

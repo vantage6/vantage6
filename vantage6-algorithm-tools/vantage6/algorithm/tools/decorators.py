@@ -323,7 +323,7 @@ def metadata(func: callable) -> callable:
             node_id=payload["node_id"],
             collaboration_id=payload["collaboration_id"],
             organization_id=payload["organization_id"],
-            temporary_directory=Path(os.environ["TEMPORARY_FOLDER"]),
+            temporary_directory=Path(os.environ["SESSION_FOLDER"]),
             output_file=Path(os.environ["OUTPUT_FILE"]),
             input_file=Path(os.environ["INPUT_FILE"]),
             token_file=Path(os.environ["TOKEN_FILE"]),
@@ -371,7 +371,7 @@ def get_ohdsi_metadata(label: str) -> OHDSIMetaData:
     for var in expected_env_vars:
         _check_environment_var_exists_or_exit(f"{label_}_DB_PARAM_{var}")
 
-    tmp = Path(os.environ["TEMPORARY_FOLDER"])
+    tmp = Path(os.environ["SESSION_FOLDER"])
     metadata = OHDSIMetaData(
         database=os.environ[f"{label_}_DB_PARAM_CDM_DATABASE"],
         cdm_schema=os.environ[f"{label_}_DB_PARAM_CDM_SCHEMA"],

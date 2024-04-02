@@ -121,8 +121,12 @@ class DockerTaskManager(DockerBaseManager):
 
         # FIXME: these values should be retrieved from DockerNodeContext
         #   in some way.
-        self.tmp_folder = "/mnt/tmp"
         self.data_folder = "/mnt/data"
+        self.session_folder = "/mnt/session"
+        # FIXME: this `tmp_folder` might be used by some algorithms.In v5+ the
+        # `TEMPORARY_FOLDER` environment variable should be removed and all these
+        # algorithms should be updated to use the `SESSION_FOLDER` environment variable.
+        self.tmp_folder = "/mnt/tmp"
 
         # keep track of the task status
         self.status: TaskStatus = TaskStatus.INITIALIZING
@@ -226,7 +230,7 @@ class DockerTaskManager(DockerBaseManager):
     def run(
         self,
         docker_input: bytes,
-        tmp_vol_name: str,
+        session_vol_name: str,
         token: str,
         algorithm_env: dict,
         databases_to_use: list[str],
@@ -241,8 +245,8 @@ class DockerTaskManager(DockerBaseManager):
         ----------
         docker_input: bytes
             Input that can be read by docker container
-        tmp_vol_name: str
-            Name of temporary docker volume assigned to the algorithm
+        session_vol_name: str
+            Name of session docker volume assigned to the algorithm
         token: str
             Bearer token that the container can use
         algorithm_env: dict
@@ -261,7 +265,7 @@ class DockerTaskManager(DockerBaseManager):
 
         # prepare volumes
         self.docker_input = docker_input
-        self.volumes = self._prepare_volumes(tmp_vol_name, token)
+        self.volumes = self._prepare_volumes(session_vol_name, token)
         self.log.debug("volumes: %s", self.volumes)
 
         # setup environment variables
@@ -406,14 +410,14 @@ class DockerTaskManager(DockerBaseManager):
         os.makedirs(self.task_folder_path, exist_ok=True)
         self.output_file = os.path.join(self.task_folder_path, "output")
 
-    def _prepare_volumes(self, tmp_vol_name: str, token: str) -> dict:
+    def _prepare_volumes(self, session_vol_name: str, token: str) -> dict:
         """
         Generate docker volumes required to run the algorithm
 
         Parameters
         ----------
-        tmp_vol_name: str
-            Name of temporary docker volume assigned to the algorithm
+        session_vol_name: str
+            Name of session docker volume assigned to the algorithm
         token: str
             Bearer token that the container can use
 
@@ -440,7 +444,7 @@ class DockerTaskManager(DockerBaseManager):
                 fp.write(data)
 
         volumes = {
-            tmp_vol_name: {"bind": self.tmp_folder, "mode": "rw"},
+            session_vol_name: {"bind": self.session_folder, "mode": "rw"},
         }
 
         if running_in_docker():
@@ -484,7 +488,8 @@ class DockerTaskManager(DockerBaseManager):
             "INPUT_FILE": f"{self.data_folder}/{self.task_folder_name}/input",
             "OUTPUT_FILE": f"{self.data_folder}/{self.task_folder_name}/output",
             "TOKEN_FILE": f"{self.data_folder}/{self.task_folder_name}/token",
-            "TEMPORARY_FOLDER": self.tmp_folder,
+            "TEMPORARY_FOLDER": self.session_folder,
+            "SESSION_FOLDER": self.session_folder,
             "HOST": f"http://{proxy_host}",
             "PORT": os.environ.get("PROXY_SERVER_PORT", 8080),
             "API_PATH": "",
