@@ -19,6 +19,10 @@ swagger_template = {
                         "type": "string",
                         "description": "Human-readable task name",
                     },
+                    "session_id": {
+                        "type": "integer",
+                        "description": "Session id to which this task belongs",
+                    },
                     "collaboration_id": {
                         "type": "integer",
                         "description": (
