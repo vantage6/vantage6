@@ -159,9 +159,9 @@ def request_algo_store(
             )
             log.warning(msg)
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
-        algo_store_url = algo_store_url.replace(
-            "localhost", "host.docker.internal"
-        ).replace("127.0.0.1", "host.docker.internal")
+        algo_store_url = algo_store_url.replace("localhost", host_uri).replace(
+            "127.0.0.1", host_uri
+        )
         # replace double http:// with single
         algo_store_url = algo_store_url.replace("http://http://", "http://")
         try:
