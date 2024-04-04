@@ -46,7 +46,7 @@ def check_docker_running() -> None:
         log.error(
             "Cannot reach the Docker engine! Please make sure Docker " "is running."
         )
-        log.warn("Exiting...")
+        log.warning("Exiting...")
         log.debug(e)
         exit(1)
 
@@ -146,14 +146,22 @@ def inspect_remote_image_timestamp(
         None if the remote image could not be found.
     """
     # check if a tag has been provided
-    image_tag = re.split(":", image)
-    img = image_tag[0]
-    tag = image_tag[1] if len(image_tag) == 2 else "latest"
+    img_split_colon = re.split(":", image)
+    img = ":".join(img_split_colon[:-1])
+    tag = img_split_colon[-1] if len(img_split_colon) > 1 else "latest"
 
-    try:
-        reg, rep, img_ = re.split("/", img)
-    except ValueError:
-        log.warn("Could not construct remote URL - will try to pull from Docker Hub!")
+    img_split_slash = re.split("/", img)
+    if len(img_split_slash) > 3:
+        # docker registry is part before first slash, repository is everything
+        # in between, image is the last part (see
+        # https://github.com/goharbor/harbor/issues/3162)
+        reg = img_split_slash[0]
+        rep = "/".join(img_split_slash[1:-1])
+        img_ = img_split_slash[-1]
+    elif len(img_split_slash) < 3:
+        log.warning(
+            "Could not construct remote URL - will try to pull from Docker Hub!"
+        )
         return _get_dockerhub_timestamp_digest(img, tag)
 
     # figure out API version of the docker repo if it is a harbor repo. Harbor
@@ -167,12 +175,21 @@ def inspect_remote_image_timestamp(
     if v1_check.status_code == 200:
         return _get_harbor_v1_timestamp_digest(docker_client, reg, rep, img_, tag)
 
-    # warning for non-harbor registries
-    log.warning(f"Could not determine version of the registry '{reg}'!")
-    log.warning("This should not happen if you are using a harbor registry.")
-    log.warning("If you are, please check if the harbor server is online.")
+    # if the registry is not a harbor registry, we will try to get the timestamp
+    # and digest using OCI endpoints
+    timestamp, digest = _get_generic_timestamp_digest(
+        docker_client, reg, rep, img_, tag
+    )
 
-    return _get_generic_timestamp_digest(docker_client, reg, rep, img_, tag)
+    # warning for non-harbor registries
+    if not timestamp:
+        log.warning(
+            "Could not find image info for %s! If you are using a private Docker "
+            "such as harbor, please check that it is online.",
+            image,
+        )
+
+    return timestamp, digest
 
 
 def _get_generic_timestamp_digest(
@@ -205,7 +222,7 @@ def _get_generic_timestamp_digest(
     try:
         digest = result.json().get("config").get("digest")
     except AttributeError:
-        log.warn("Could not find digest in the manifest!")
+        log.warning("Could not find digest in the manifest!")
         return None, None
 
     # Use OCI endpoint to get the creation timestamp using the digest
@@ -219,7 +236,7 @@ def _get_generic_timestamp_digest(
     try:
         timestamp = parse(result.json().get("created"))
     except AttributeError:
-        log.warn("Could not find creation timestamp!")
+        log.warning("Could not find creation timestamp!")
         return None, digest
 
     return timestamp, digest
@@ -253,7 +270,7 @@ def _get_dockerhub_timestamp_digest(
         digest = result.json().get("digest")
         timestamp = parse(result.json().get("last_updated"))
     except AttributeError:
-        log.warn("Could not find digest in the manifest!")
+        log.warning("Could not find digest in the manifest!")
         return None, None
 
     return timestamp, digest
@@ -357,10 +374,10 @@ def _check_response_status(response: requests.Response) -> bool:
         True if the response status is OK, False otherwise
     """
     if response.status_code == 404:
-        log.warn(f"Remote image info not found! {response.url}")
+        log.warning(f"Remote image info not found! {response.url}")
         return False
     elif response.status_code != 200:
-        log.warn(
+        log.warning(
             "Remote image info could not be fetched! (%s) %s",
             response.status_code,
             response.url,
@@ -448,14 +465,14 @@ def pull_if_newer(
         elif remote_time == local_time:
             log.debug(f"Local image is up-to-date: {image}")
         elif remote_time < local_time:
-            log.warn(f"Local image is newer! Are you testing? {image}")
+            log.warning(f"Local image is newer! Are you testing? {image}")
     elif local_time:
-        log.warn(f"Only a local image has been found! {image}")
+        log.warning(f"Only a local image has been found! {image}")
     elif remote_time:
         log.debug("No local image found, pulling from remote!")
         pull = True
     elif not local_time and not remote_time:
-        log.warn(
+        log.warning(
             f"Cannot locate image {image} locally or remotely. Will try "
             "to pull it from Docker Hub..."
         )
@@ -509,7 +526,7 @@ def remove_container_if_exists(docker_client: DockerClient, **filters) -> None:
     """
     container = get_container(docker_client, **filters)
     if container:
-        log.warn("Removing container that was already running: " f"{container.name}")
+        log.warning("Removing container that was already running: " f"{container.name}")
         remove_container(container, kill=True)
 
 
@@ -581,13 +598,13 @@ def delete_network(network: Network, kill_containers: bool = True) -> None:
         merely disconnected)
     """
     if not network:
-        log.warn("Network not defined! Not removing anything, continuing...")
+        log.warning("Network not defined! Not removing anything, continuing...")
         return
     network.reload()
     for container in network.containers:
         log.info(f"Removing container {container.name} in old network")
         if kill_containers:
-            log.warn(f"Killing container {container.name}")
+            log.warning(f"Killing container {container.name}")
             remove_container(container, kill=True)
         else:
             network.disconnect(container)
@@ -595,7 +612,7 @@ def delete_network(network: Network, kill_containers: bool = True) -> None:
     try:
         network.remove()
     except Exception:
-        log.warn(f"Could not delete existing network {network.name}")
+        log.warning(f"Could not delete existing network {network.name}")
 
 
 def get_networks_of_container(container: Container) -> dict:
