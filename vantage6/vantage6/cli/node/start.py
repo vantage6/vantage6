@@ -294,6 +294,9 @@ def cli_node_start(
         exit(1)
     env.update(extra_env)
 
+    # Add extra hosts to the environment
+    extra_hosts = ctx.config.get("node_extra_hosts", {})
+
     remove_container_if_exists(
         docker_client=docker_client, name=ctx.docker_container_name
     )
@@ -313,6 +316,7 @@ def cli_node_start(
         name=ctx.docker_container_name,
         auto_remove=not keep,
         tty=True,
+        extra_hosts=extra_hosts,
     )
 
     info("Node container was successfully started!")
