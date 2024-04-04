@@ -21,9 +21,10 @@ api_path: /api
 # Let the server know where it is hosted. This is used as a setting to
 # communicate back and forth with other vantage6 components such as the
 # algorithm store.
+# Example for the cotopaxi server
 server_url: https://cotopaxi.vantage6.ai
-# or if you are running the server locally with default settings:
-# server_url: http://localhost:5000/api
+# Example for running the server locally with default settings:
+# server_url: http://localhost:5000
 
 # The URI to the server database. This should be a valid SQLAlchemy URI,
 # e.g. for an Sqlite database: sqlite:///database-name.sqlite,
@@ -186,3 +187,22 @@ password_policy:
 cors_allowed_origins:
   - https://portal.cotopaxi.vantage6.ai
   - http://localhost:3456
+
+# set up which algorithm stores are available for all collaborations in the server.
+# In the example below, the vantage6 community algorithm store is made available to
+# this server. Note that the 'server_url' *has* to be set in the configuration file
+# for this to work (it is required to communicate with the algorithm store what the
+# server's address is).
+algorithm_stores:
+  # Each store should have a name and a URL.
+  - name: Community store
+    url: https://store.cotopaxi.vantage6.ai
+
+# development mode settings. Only use when running both the server and the algorithm
+# store that it communicates with locally
+dev:
+  # Specify the URI to the host. This is used to generate the correct URIs to
+  # communicate with the algorithm store. On Windows and Mac, you can use the special
+  # hostname `host.docker.internal` to refer to the host machine. On Linux, you
+  # should normally use http://172.17.0.1.
+  host_uri: http://host.docker.internal

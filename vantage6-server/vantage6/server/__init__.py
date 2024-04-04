@@ -14,6 +14,7 @@ if not os.environ.get("READTHEDOCS"):
     # flake8: noqa: E402 (ignore import error)
     monkey.patch_all()
 
+# pylint: disable=wrong-import-position, wrong-import-order
 import importlib
 import logging
 import uuid
@@ -47,6 +48,7 @@ from pathlib import Path
 
 from vantage6.common import logger_name
 from vantage6.common.globals import PING_INTERVAL_SECONDS
+from vantage6.backend.common.globals import HOST_URI_ENV
 from vantage6.server import db
 from vantage6.cli.context.server import ServerContext
 from vantage6.server.model.base import DatabaseSessionManager, Database
@@ -68,7 +70,10 @@ from vantage6.server._version import __version__
 from vantage6.server.mail_service import MailService
 from vantage6.server.websockets import DefaultSocketNamespace
 from vantage6.server.default_roles import get_default_roles, DefaultRole
-
+from vantage6.server.algo_store_communication import (
+    post_algorithm_store,
+    get_server_url,
+)
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -134,6 +139,15 @@ class ServerApp:
         self.api = Api(self.app)
         self.configure_api()
         self.load_resources()
+
+        # couple any algoritm stores to the server if defined in config. This should be
+        # done after the resources are loaded to ensure that rules are set up
+        self.couple_algorithm_stores()
+
+        # set environment variable for dev environment
+        host_uri = self.ctx.config.get("dev", {}).get("host_uri")
+        if host_uri:
+            os.environ[HOST_URI_ENV] = host_uri
 
         # set the server version
         self.__version__ = __version__
@@ -710,6 +724,62 @@ class ServerApp:
             except Exception:
                 log.exception("Node-status thread had an exception")
                 time.sleep(PING_INTERVAL_SECONDS)
+
+    def couple_algorithm_stores(self) -> None:
+        """Couple algorithm stores to the server.
+
+        Checks if default algorithm stores are defined in the configuration and if so,
+        couples them to the server.
+        """
+        algorithm_stores = self.ctx.config.get("algorithm_stores", [])
+        server_url = get_server_url(self.ctx.config)
+        if algorithm_stores and not server_url:
+            log.warning(
+                "Algorithm stores are defined in the configuration, but the server "
+                "url is not. Skipping coupling of algorithm stores."
+            )
+            return
+        if algorithm_stores:
+            # TODO in the future it may change that not just any algorithm store can
+            # be added to this server - in that case show a useful error below
+            # (automated coupling is not possible for such cases I think?)
+
+            # couple the stores
+            for store in algorithm_stores:
+                if not (name := store.get("name")):
+                    log.warning("Algorithm store has no name, skipping coupling")
+                    continue
+                elif not (url := store.get("url")):
+                    log.warning(
+                        "Algorithm store %s has no url, skipping coupling", name
+                    )
+                    continue
+                store = db.AlgorithmStore.get_by_url(url)
+                if not store:
+                    response, status = post_algorithm_store(
+                        {
+                            "name": name,
+                            "algorithm_store_url": url,
+                            "server_url": server_url,
+                            "force": True,
+                        },
+                        self.ctx.config,
+                    )
+                    if status == HTTPStatus.CREATED:
+                        log.info(
+                            "Algorithm store '%s' at %s has been coupled to the server",
+                            name,
+                            url,
+                        )
+                    else:
+                        log.error(
+                            "Failed to couple algorithm store '%s' at %s to the server:"
+                            " %s",
+                            name,
+                            url,
+                            response["msg"],
+                        )
+                # else: store already exists, no need to couple it again
 
 
 def run_server(config: str, system_folders: bool = True) -> ServerApp:
