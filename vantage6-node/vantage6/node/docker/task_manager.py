@@ -659,5 +659,5 @@ class DockerTaskManager(DockerBaseManager):
 
         encoded_environment_variables = {}
         for key, val in environment_variables.items():
-            encoded_environment_variables[key] = _encode(val)
+            encoded_environment_variables[key] = _encode(str(val))
         return encoded_environment_variables
