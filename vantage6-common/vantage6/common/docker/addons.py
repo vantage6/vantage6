@@ -13,6 +13,8 @@ from docker.client import DockerClient
 from docker.models.containers import Container
 from docker.models.volumes import Volume
 from docker.models.networks import Network
+from docker.utils import parse_repository_tag as docker_parse_repository_tag
+from docker.auth import resolve_repository_name as docker_resolve_repository_name
 
 from vantage6.common import logger_name
 from vantage6.common import ClickLogger
@@ -307,6 +309,8 @@ def delete_volume_if_exists(client: docker.DockerClient, volume_name: Volume) ->
 def split_tag_from_image(image: str) -> tuple:
     """
     Split the tag from the image name
+        log.warning("Could not delete volume %s", volume.name)
+
 
     Parameters
     ----------
@@ -360,3 +364,30 @@ def is_hex_digest(tag: str) -> bool:
         True if the tag is a hex digest, False otherwise
     """
     return re.match(r"^[0-9a-f]{64}$", tag)
+
+
+def parse_image_name(image: str):
+    """
+    Parse image name into registry, repository, tag
+
+    Parameters
+    ----------
+    image: str
+        Image name. E.g. "harbor2.vantage6.ai/algorithms/average:latest" or
+        "library/hello-world"
+
+    Returns
+    -------
+    tuple[str, str, str]
+        Registry, repository, tag
+        tag is "latest" if not specified in 'image'
+    """
+
+    # Caution! We are using internal docker-py functions here, which may change
+    # without notice in future versions. Tests are in place to help catch these
+    # potential future changes.
+    registry_repository, tag = docker_parse_repository_tag(image)
+    tag = tag or "latest"
+    registry, repository = docker_resolve_repository_name(registry_repository)
+
+    return registry, repository, tag
