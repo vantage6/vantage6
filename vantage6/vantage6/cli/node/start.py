@@ -17,7 +17,6 @@ from vantage6.common.globals import (
     InstanceType,
 )
 from vantage6.common.docker.addons import (
-    pull_if_newer,
     remove_container_if_exists,
     check_docker_running,
 )
@@ -136,8 +135,7 @@ def cli_node_start(
 
     info(f"Pulling latest node image '{image}'")
     try:
-        # docker_client.images.pull(image)
-        pull_if_newer(docker.from_env(), image)
+        docker_client.images.pull(image)
 
     except Exception as e:
         warning(" ... Getting latest node image failed:")

@@ -22,7 +22,6 @@ from vantage6.cli.common.start import (
     get_image,
     mount_database,
     mount_source,
-    pull_image,
 )
 
 
@@ -90,7 +89,8 @@ def cli_server_start(
     # check that log directory exists - or create it
     ctx.log_dir.mkdir(parents=True, exist_ok=True)
 
-    pull_image(docker_client, image)
+    info("Pulling server image...")
+    docker_client.images.pull(image)
 
     info("Creating mounts")
     config_file = "/mnt/config.yaml"
@@ -228,7 +228,7 @@ def _start_ui(client: DockerClient, ctx: ServerContext, ui_port: int) -> None:
     # find image to use
     image = get_image(None, ctx, "ui", DEFAULT_UI_IMAGE)
 
-    pull_image(client, image)
+    client.images.pull(image)
 
     # set environment variables
     env_vars = {
