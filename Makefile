@@ -22,7 +22,7 @@ PUSH_REG ?= false
 # See: https://www.gnu.org/software/make/manual/html_node/Conditional-Functions.html
 _condition_push :=
 ifeq ($(PUSH_REG), true)
-	_condition_push := not_emtpy_so_true
+	_condition_push := not_empty_so_true
 endif
 
 help:
