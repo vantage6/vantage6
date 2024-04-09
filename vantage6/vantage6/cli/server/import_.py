@@ -7,7 +7,7 @@ from sqlalchemy.engine.url import make_url
 from vantage6.cli.globals import ServerGlobals
 
 from vantage6.common import info, warning
-from vantage6.common.docker.addons import check_docker_running
+from vantage6.common.docker.addons import check_docker_running, pull_image
 from vantage6.common.globals import (
     APPNAME,
     DEFAULT_DOCKER_REGISTRY,
@@ -77,13 +77,7 @@ def cli_server_import(
             "image", f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_SERVER_IMAGE}"
         )
     info(f"Pulling latest server image '{image}'.")
-    try:
-        docker_client.images.pull(image)
-    except Exception as e:
-        warning(" ... Getting latest node image failed:")
-        warning(f"     {e}")
-    else:
-        info(" ... success!")
+    pull_image(docker_client, image)
 
     info("Creating mounts")
     mounts = [

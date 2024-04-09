@@ -50,6 +50,7 @@ class NodeConfiguration(Configuration):
         "encryption": {"enabled": bool, Optional("private_key"): Use(str)},
         Optional("node_extra_env"): dict,
         Optional("node_extra_mounts"): [str],
+        Optional("node_extra_hosts"): dict,
     }
 
 

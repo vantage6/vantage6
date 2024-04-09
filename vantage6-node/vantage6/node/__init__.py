@@ -498,9 +498,10 @@ class Node:
             self.log.warn(
                 f"You are trying to reach the server at {self.client.host}."
                 " As your node is running inside a Docker container, it cannot"
-                " reach localhost on your host system. Probably, you have to "
-                "change your serverl URL to http://host.docker.internal "
-                "(Windows/MacOS) or http://172.17.0.1 (Linux)."
+                " reach localhost on your host system. Probably, you have to"
+                " change your server URL to http://host.docker.internal (Windows/MacOS)"
+                ' or look into node config option "node_extra_hosts" if using'
+                " http://172.17.0.1 does not work (Linux)."
             )
         else:
             self.log.debug(
