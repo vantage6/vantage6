@@ -2,6 +2,7 @@ import click
 
 from vantage6.common import info
 from vantage6.common.globals import APPNAME, DEFAULT_ALGO_STORE_IMAGE, InstanceType
+from vantage6.common.docker.addons import pull_image
 from vantage6.cli.common.start import (
     attach_logs,
     check_for_start,
@@ -9,7 +10,6 @@ from vantage6.cli.common.start import (
     mount_config_file,
     mount_database,
     mount_source,
-    pull_image,
 )
 from vantage6.cli.globals import AlgoStoreGlobals
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
@@ -54,6 +54,7 @@ def cli_algo_store_start(
 
     image = get_image(image, ctx, "algorithm-store", DEFAULT_ALGO_STORE_IMAGE)
 
+    info("Pulling algorithm store image...")
     pull_image(docker_client, image)
 
     config_file = "/mnt/config.yaml"

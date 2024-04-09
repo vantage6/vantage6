@@ -13,7 +13,6 @@ from vantage6.common.globals import APPNAME, ENV_VAR_EQUALS_REPLACEMENT, STRING_
 from vantage6.common.docker.addons import (
     remove_container_if_exists,
     remove_container,
-    pull_if_newer,
     running_in_docker,
 )
 from vantage6.common.docker.network_manager import NetworkManager
@@ -188,8 +187,7 @@ class DockerTaskManager(DockerBaseManager):
         """Pull the latest docker image."""
         try:
             self.log.info(f"Retrieving latest image: '{self.image}'")
-            pull_if_newer(self.docker, self.image, self.log)
-
+            self.docker.images.pull(self.image)
         except docker.errors.APIError as e:
             self.log.debug("Failed to pull image: could not find image")
             self.log.exception(e)

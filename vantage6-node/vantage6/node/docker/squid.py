@@ -20,7 +20,7 @@ from vantage6.common.docker.addons import (
     remove_container,
     running_in_docker,
     remove_container_if_exists,
-    pull_if_newer,
+    pull_image,
 )
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.docker_manager import NetworkManager
@@ -90,7 +90,7 @@ class Squid(DockerBaseManager):
         # This is the default port of the squid container, which is exposed
         # to the algorithm containers.
         self.port = 3128
-        log.debug(f"Squid hostname: {self.hostname}, port: {self.port}")
+        log.debug("Squid hostname: %s, port: %s", self.hostname, self.port)
 
         try:
             # Create squid configuration, which can later be mounted by the
@@ -100,15 +100,17 @@ class Squid(DockerBaseManager):
             # parent class should handle this
             raise KeyError(f"Invalid Squid configuration: {e}")
 
-        log.debug(f"Squid configuration: {self.squid_config}")
+        log.debug("Squid configuration: %s", self.squid_config)
 
         # Check if the whitelist is safe, if not, log a warning
         self.check_safety_of_whitelist(self.squid_config)
 
         # The image is overridable by the user configuration
         self.image = squid_image if squid_image else f"{SQUID_IMAGE}:{major_minor}"
-        pull_if_newer(self.docker, self.image, log)
-        log.debug(f"Squid image: {self.image}")
+        log.info("Pulling Squid image: %s", self.image)
+        pull_image(self.docker, self.image)
+
+        log.debug("Squid image: %s", self.image)
 
         # Create the SSH configuration files
         self.create_squid_config_file(self.squid_config)
