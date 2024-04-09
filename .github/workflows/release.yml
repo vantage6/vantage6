@@ -158,8 +158,8 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build support images
-        run: make support-image TAG=$version
+      - name: Build and push support images
+        run: make support-image TAG=$version PUSH_REG=true
 
   infrastructure-images:
     name: Build infrastructure images
@@ -195,21 +195,21 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - # we only release a new base image if it is a major or minor release
-        name: Build Docker base image
+        name: Build and push Docker base image
         if: ${{ env.patch == 0 }}
-        run: make base-image TAG=${major}.${minor}
+        run: make base-image TAG=${major}.${minor} PUSH_REG=true
 
       - # build the actual infrastructure images
-        name: Build Docker image
-        run: make image TAG=$version BASE=${major}.${minor}
+        name: Build and push Docker image
+        run: make image TAG=$version BASE=${major}.${minor} PUSH_REG=true
 
       - # build the algorithm store image
-        name: Build Docker algorithm store image
-        run: make algorithm-store-image TAG=$version BASE=${major}.${minor}
+        name: Build and push Docker algorithm store image
+        run: make algorithm-store-image TAG=$version BASE=${major}.${minor} PUSH_REG=true
 
       - # build the UI image
-        name: Build UI image
-        run: make ui-image TAG=$version BASE=${major}.${minor}
+        name: Build and push UI image
+        run: make ui-image TAG=$version BASE=${major}.${minor} PUSH_REG=true
 
   algorithm-base-image:
     name: Build algorithm base image
@@ -241,11 +241,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Algorithm base image
-        run: make algorithm-base-image TAG=${major}.${minor}
+      - name: Build and push Algorithm base image
+        run: make algorithm-base-image TAG=${major}.${minor} PUSH_REG=true
 
-      - name: Build Algorithm OMOP base image
-        run: make algorithm-omop-base-image BASE=${major}.${minor} TAG=${major}.${minor}
+      - name: Build and push Algorithm OMOP base image
+        run: make algorithm-omop-base-image BASE=${major}.${minor} TAG=${major}.${minor} PUSH_REG=true
 
   # Update the server and node images on harbor2 for this major version,
   # including the 'live' tag that triggers a redeployment of the IKNL deployment
