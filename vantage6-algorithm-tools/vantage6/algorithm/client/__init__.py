@@ -372,18 +372,21 @@ class AlgorithmClient(ClientBase):
             for org_id in organizations:
                 organization_json_list.append({"id": org_id, "input": serialized_input})
 
+            json_body = {
+                "name": name,
+                "image": self.parent.image,
+                "collaboration_id": self.parent.collaboration_id,
+                "description": description,
+                "organizations": organization_json_list,
+                "databases": self.parent.databases,
+            }
+            if self.parent.study_id:
+                json_body["study_id"] = self.parent.study_id
+
             return self.parent.request(
                 "task",
                 method="post",
-                json={
-                    "name": name,
-                    "image": self.parent.image,
-                    "collaboration_id": self.parent.collaboration_id,
-                    "study_id": self.parent.study_id,
-                    "description": description,
-                    "organizations": organization_json_list,
-                    "databases": self.parent.databases,
-                },
+                json=json_body,
             )
 
     class VPN(ClientBase.SubClient):

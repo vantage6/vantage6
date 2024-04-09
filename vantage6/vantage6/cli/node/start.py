@@ -9,6 +9,7 @@ import docker
 from colorama import Fore, Style
 
 from vantage6.common import warning, error, info, debug, get_database_config
+from vantage6.common.docker.addons import pull_image
 from vantage6.common.globals import (
     APPNAME,
     DEFAULT_DOCKER_REGISTRY,
@@ -17,7 +18,6 @@ from vantage6.common.globals import (
     InstanceType,
 )
 from vantage6.common.docker.addons import (
-    pull_if_newer,
     remove_container_if_exists,
     check_docker_running,
 )
@@ -135,17 +135,7 @@ def cli_node_start(
             image = f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_NODE_IMAGE}"
 
     info(f"Pulling latest node image '{image}'")
-    try:
-        # docker_client.images.pull(image)
-        pull_if_newer(docker.from_env(), image)
-
-    except Exception as e:
-        warning(" ... Getting latest node image failed:")
-        warning(f"     {e}")
-    else:
-        info(" ... success!")
-
-    info("Creating Docker data volume")
+    pull_image(docker_client, image)
 
     data_volume = docker_client.volumes.create(ctx.docker_volume_name)
     vpn_volume = docker_client.volumes.create(ctx.docker_vpn_volume_name)
@@ -294,6 +284,9 @@ def cli_node_start(
         exit(1)
     env.update(extra_env)
 
+    # Add extra hosts to the environment
+    extra_hosts = ctx.config.get("node_extra_hosts", {})
+
     remove_container_if_exists(
         docker_client=docker_client, name=ctx.docker_container_name
     )
@@ -313,6 +306,7 @@ def cli_node_start(
         name=ctx.docker_container_name,
         auto_remove=not keep,
         tty=True,
+        extra_hosts=extra_hosts,
     )
 
     info("Node container was successfully started!")

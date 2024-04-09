@@ -18,7 +18,7 @@ class ServerCLITest(unittest.TestCase):
     @patch("vantage6.cli.server.start.NetworkManager")
     @patch("vantage6.cli.server.start.docker.types.Mount")
     @patch("os.makedirs")
-    @patch("vantage6.cli.common.start.pull_if_newer")
+    @patch("vantage6.cli.server.start.pull_image")
     @patch("vantage6.cli.common.decorator.get_context")
     @patch("vantage6.cli.server.start.docker.from_env")
     @patch("vantage6.cli.common.start.check_docker_running", return_value=True)
@@ -91,9 +91,10 @@ class ServerCLITest(unittest.TestCase):
     @patch("docker.DockerClient.containers")
     @patch("vantage6.cli.server.import_.print_log_worker")
     @patch("vantage6.cli.server.import_.click.Path")
+    @patch("vantage6.cli.server.import_.pull_image")
     @patch("vantage6.cli.server.import_.check_docker_running", return_value=True)
     @patch("vantage6.cli.common.decorator.get_context")
-    def test_import(self, context, docker_check, click_path, log, containers):
+    def test_import(self, context, docker_check, pull, click_path, log, containers):
         """Import entities without errors."""
         click_path.return_value = MagicMock()
 

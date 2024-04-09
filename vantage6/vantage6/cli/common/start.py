@@ -11,7 +11,7 @@ from sqlalchemy.engine.url import make_url
 from vantage6.common import error, info, warning
 from vantage6.common.context import AppContext
 from vantage6.common.globals import InstanceType, APPNAME, DEFAULT_DOCKER_REGISTRY
-from vantage6.common.docker.addons import check_docker_running, pull_if_newer
+from vantage6.common.docker.addons import check_docker_running
 from vantage6.cli.context import AlgorithmStoreContext, ServerContext
 from vantage6.cli.common.utils import print_log_worker
 from vantage6.cli.utils import check_config_name_allowed
@@ -28,6 +28,11 @@ def check_for_start(ctx: AppContext, type_: InstanceType) -> DockerClient:
         The context object
     type_ : InstanceType
         The type of instance to check for
+
+    Returns
+    -------
+    DockerClient
+        A Docker client instance
     """
     # will print an error if not
     check_docker_running()
@@ -81,27 +86,6 @@ def get_image(
         if not image:
             image = f"{DEFAULT_DOCKER_REGISTRY}/{default_image}"
     return image
-
-
-def pull_image(docker_client: DockerClient, image: str) -> None:
-    """
-    Pull the image if it is not already available.
-
-    Parameters
-    ----------
-    docker : DockerClient
-        The docker client
-    image : str
-        The image name
-    """
-    info(f"Pulling latest image '{image}'.")
-    try:
-        pull_if_newer(docker_client.from_env(), image)
-    except Exception as e:
-        warning(" ... Getting latest server image failed:")
-        warning(f"     {e}")
-    else:
-        info(" ... success!")
 
 
 def mount_config_file(ctx: AppContext, config_file: str) -> list[docker.types.Mount]:

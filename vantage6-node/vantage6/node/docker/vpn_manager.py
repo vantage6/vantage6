@@ -12,7 +12,7 @@ from vantage6.common.globals import APPNAME, VPN_CONFIG_FILE
 from vantage6.common.docker.addons import (
     remove_container_if_exists,
     remove_container,
-    pull_if_newer,
+    pull_image,
 )
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.node.globals import (
@@ -101,9 +101,12 @@ class VPNManager(DockerBaseManager):
     def _update_images(self) -> None:
         """Pulls the latest version of the VPN images"""
         self.log.info("Updating VPN images...")
-        pull_if_newer(self.docker, self.alpine_image, self.log)
-        pull_if_newer(self.docker, self.vpn_client_image, self.log)
-        pull_if_newer(self.docker, self.network_config_image, self.log)
+        self.log.debug("Pulling Alpine image")
+        pull_image(self.docker, self.alpine_image)
+        self.log.debug("Pulling VPN client image")
+        pull_image(self.docker, self.vpn_client_image)
+        self.log.debug("Pulling network config image")
+        pull_image(self.docker, self.network_config_image)
         self.log.info("Done updating VPN images")
 
     def connect_vpn(self) -> None:

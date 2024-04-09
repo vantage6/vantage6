@@ -119,7 +119,10 @@ def make_request(
             # verify that the server gave us a valid response, else we
             # would want to try again
             if response.status_code > 210:
-                log.warn("Proxy server received status code:" f"{response.status_code}")
+                log.warning(
+                    "Proxy server received status code %s", response.status_code
+                )
+                log.warning("Error messages: %s", response.json())
                 log.debug(
                     f"method: {request.method}, url: {url}, json: {json}"
                     f", params: {params}, headers: {headers}"

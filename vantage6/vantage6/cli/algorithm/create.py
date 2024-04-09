@@ -42,6 +42,10 @@ def cli_algorithm_create(name: str, directory: str) -> dict:
             "Directory to put the algorithm in:", default=default_dir
         ).ask()
 
-    run_copy(ALGORITHM_TEMPLATE_REPO, directory, data={"algorithm_name": name})
+    # Create the template. The `unsafe` flag is used to allow running a Python script
+    # after creating the template that cleans up some things.
+    run_copy(
+        ALGORITHM_TEMPLATE_REPO, directory, data={"algorithm_name": name}, unsafe=True
+    )
     info("Template created!")
     info(f"You can find your new algorithm in: {directory}")

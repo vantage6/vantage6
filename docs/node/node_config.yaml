@@ -40,6 +40,15 @@ node_extra_env:
 node_extra_mounts:
   - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro
 
+node_extra_hosts:
+  # In Linux (no Docker Desktop) you can use this (special) mapping to access
+  # the host from the node.
+  # See: https://docs.docker.com/reference/cli/docker/container/run/#add-host
+  host.docker.internal: host-gateway
+  # For testing purposes, it can also be used to map a public domain to a
+  # private IP address, allowing you to avoid breaking TLS hostname verification
+  v6server.example.com: 192.168.1.10
+
 # specify custom Docker images to use for starting the different
 # components.
 # OPTIONAL
