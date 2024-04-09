@@ -1,6 +1,6 @@
 {
   "name": "vantage6-UI",
-  "version": "4.3.4",
+  "version": "4.4.0-a1",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
