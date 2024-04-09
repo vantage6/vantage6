@@ -1,4 +1,3 @@
-from __future__ import annotations
 from sqlalchemy import Column, String
 from sqlalchemy.orm import relationship
 
@@ -42,3 +41,4 @@ class Algorithm(Base):
         "User", back_populates="algorithms", secondary="developer_algorithm_association"
     )
     review = relationship("Review", back_populates="algorithm")
+    ui_visualizations = relationship("UIVisualization", back_populates="algorithm")

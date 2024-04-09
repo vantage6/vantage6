@@ -7,6 +7,7 @@ from http import HTTPStatus
 from vantage6.algorithm.store import db
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.common import logger_name
+from vantage6.algorithm.store.model.ui_visualization import UIVisualization
 from vantage6.algorithm.store.resource.schema.input_schema import AlgorithmInputSchema
 from vantage6.algorithm.store.resource.schema.output_schema import AlgorithmOutputSchema
 from vantage6.algorithm.store.model.algorithm import Algorithm as db_Algorithm
@@ -234,6 +235,24 @@ class Algorithms(AlgorithmStoreResources):
                                 description: Type of argument. Can be 'string',
                                   'integer', 'float', 'boolean', 'json',
                                   'column', 'organizations' or 'organization'
+                  ui_visualizations:
+                    type: array
+                    description: List of visualizations that are available in
+                      the algorithm
+                    items:
+                      properties:
+                        name:
+                          type: string
+                          description: Name of the visualization
+                        description:
+                          type: string
+                          description: Description of the visualization
+                        type:
+                          type: string
+                          description: Type of visualization.
+                        schema:
+                          type: object
+                          description: Schema that describes the visualization
 
         responses:
           201:
@@ -299,6 +318,16 @@ class Algorithms(AlgorithmStoreResources):
                         function_id=func.id,
                     )
                     db.save()
+
+        for visualization in data.get("ui_visualizations", []):
+            vis = UIVisualization(
+                name=visualization["name"],
+                description=visualization.get("description", ""),
+                type_=visualization["type"],
+                schema=visualization.get("schema", {}),
+                algorithm_id=algorithm.id,
+            )
+            vis.save()
 
         return algorithm_output_schema.dump(algorithm, many=False), HTTPStatus.CREATED
 

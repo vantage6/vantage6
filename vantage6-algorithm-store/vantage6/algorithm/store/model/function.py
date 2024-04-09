@@ -1,4 +1,3 @@
-from __future__ import annotations
 from sqlalchemy import Column, String, ForeignKey, Integer
 from sqlalchemy.orm import relationship
 

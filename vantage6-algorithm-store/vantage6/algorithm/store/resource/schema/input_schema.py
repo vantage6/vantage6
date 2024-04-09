@@ -1,10 +1,15 @@
-from marshmallow import Schema, fields, ValidationError, validates
+from marshmallow import Schema, fields, ValidationError, validates, validates_schema
 from marshmallow.validate import Range
+from jsonschema import validate as json_validate
 
 from vantage6.algorithm.store.model.common.enums import (
     Partitioning,
     FunctionType,
     ArgumentType,
+    VisualizationType,
+)
+from vantage6.algorithm.store.model.common.ui_visualization_schemas import (
+    get_schema_for_visualization,
 )
 
 
@@ -26,6 +31,7 @@ class AlgorithmInputSchema(_NameDescriptionSchema):
     partitioning = fields.String(required=True)
     vantage6_version = fields.String(required=True)
     functions = fields.Nested("FunctionInputSchema", many=True, required=True)
+    ui_visualizations = fields.Nested("UIVisualizationInputSchema", many=True)
 
     @validates("partitioning")
     def validate_partitioning(self, value):
@@ -86,6 +92,43 @@ class ArgumentInputSchema(_NameDescriptionSchema):
             raise ValidationError(
                 f"Argument type '{value}' is not one of the allowed values: {types}"
             )
+
+
+class UIVisualizationInputSchema(_NameDescriptionSchema):
+    """
+    Schema for the input of a UI visualization.
+    """
+
+    type = fields.String(required=True)
+    schema = fields.Dict()
+
+    @validates("type")
+    def validate_type(self, value):
+        """
+        Validate that the type is one of the allowed values.
+        """
+        types = [v.value for v in VisualizationType]
+        if value not in types:
+            raise ValidationError(
+                f"UI visualization type '{value}' is not one of the allowed values "
+                f"{types}"
+            )
+
+    @validates_schema
+    def validate_schema(self, data, **kwargs):
+        """
+        Validate that the schema is a valid JSON schema.
+        """
+        schema = data.get("schema")
+        type_ = data.get("type")
+        if schema and type_:
+            try:
+                json_validate(schema, get_schema_for_visualization(type_))
+            except Exception as exc:
+                raise ValidationError(
+                    "Schema does not match requirements for that visualization type: "
+                    f"{exc}",
+                ) from exc
 
 
 class UserInputSchema(Schema):
