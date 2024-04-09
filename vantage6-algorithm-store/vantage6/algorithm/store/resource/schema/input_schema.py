@@ -84,7 +84,7 @@ class ArgumentInputSchema(_NameDescriptionSchema):
         types = [a.value for a in ArgumentType]
         if value not in types:
             raise ValidationError(
-                f"Argument type '{value}' is not one of the allowed values " f"{types}"
+                f"Argument type '{value}' is not one of the allowed values: {types}"
             )
 
 
