@@ -1,6 +1,43 @@
 Release notes
 =============
 
+4.3.4
+-----
+
+*09 April 2024*
+
+
+- **Security**
+
+ - Updated express dependency in UI to 4.19.2
+
+- **Feature**
+
+ - Added option to add hostname mappings in the node configuration
+   (`Issue#1094 <https://github.com/vantage6/vantage6/issues/1094>`_,
+   `PR#1167 <https://github.com/vantage6/vantage6/pull/1167>`_).
+
+- **Change**
+
+ - Always pull new Docker images instead of checking timestamps and only pulling
+   image if the remote image is newer
+   (`Issue#1188 <https://github.com/vantage6/vantage6/issues/1188>`_,
+   `Issue#1105 <https://github.com/vantage6/vantage6/issues/1105>`_,
+   `PR#1169 <https://github.com/vantage6/vantage6/pull/1189>`_).
+ - Changed behaviour of ``v6 algorithm update`` to skip previously-answered questions
+   by default, and added flag that allows changing them. Also added flag to allow using
+   a Python script in the updated copier template
+   (`PR#1176 <https://github.com/vantage6/vantage6/pull/1176>`_).
+
+- **Bugfix**
+
+ - Fix encoding of non-string algorithm environment variables by casting them to string
+   (`PR#1186 <https://github.com/vantage6/vantage6/pull/1186>`_).
+ - Fix bug in algorithm client: only send study ID when it is defined
+   (`PR#1184 <https://github.com/vantage6/vantage6/pull/1184>`_).
+ - Update copier dependency which was causing a CLI error
+   (`PR#1187 <https://github.com/vantage6/vantage6/pull/1187>`_).
+
 4.3.3
 -----
 
