@@ -1,4 +1,4 @@
-import { AbstractControl, FormArray, FormControl, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { floatListRegex, floatRegex, intListRegex, integerRegex, stringListRegex } from 'src/app/helpers/regex.helper';
 import { AlgorithmFunction, ArgumentType } from 'src/app/models/api/algorithm.model';
 import { TaskDatabase } from 'src/app/models/api/task.models';
