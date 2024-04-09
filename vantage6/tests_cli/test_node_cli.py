@@ -207,10 +207,11 @@ class NodeCLITest(unittest.TestCase):
         self.assertNotEqual(result.exit_code, 0)
 
     @patch("docker.DockerClient.volumes")
+    @patch("vantage6.cli.node.start.pull_image")
     @patch("vantage6.cli.common.decorator.get_context")
     @patch("docker.DockerClient.containers")
     @patch("vantage6.cli.node.start.check_docker_running", return_value=True)
-    def test_start(self, check_docker, client, context, volumes):
+    def test_start(self, check_docker, client, context, pull, volumes):
         # client.containers = MagicMock(name="docker.DockerClient.containers")
         client.list.return_value = []
         volume = MagicMock()

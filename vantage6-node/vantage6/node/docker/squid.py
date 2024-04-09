@@ -20,6 +20,7 @@ from vantage6.common.docker.addons import (
     remove_container,
     running_in_docker,
     remove_container_if_exists,
+    pull_image,
 )
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.docker_manager import NetworkManager
@@ -107,7 +108,7 @@ class Squid(DockerBaseManager):
         # The image is overridable by the user configuration
         self.image = squid_image if squid_image else f"{SQUID_IMAGE}:{major_minor}"
         log.info("Pulling Squid image: %s", self.image)
-        self.docker.images.pull(self.image)
+        pull_image(self.docker, self.image)
 
         log.debug("Squid image: %s", self.image)
 

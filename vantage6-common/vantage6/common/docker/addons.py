@@ -63,6 +63,31 @@ def running_in_docker() -> bool:
     return pathlib.Path("/.dockerenv").exists()
 
 
+def pull_image(docker_client: DockerClient, image: str) -> None:
+    """
+    Pull a docker image
+
+    Parameters
+    ----------
+    docker_client: DockerClient
+        A Docker client
+    image: str
+        Name of the image to pull
+
+    Raises
+    ------
+    docker.errors.APIError
+        If the image could not be pulled
+    """
+    try:
+        docker_client.images.pull(image)
+        log.debug("Succeeded to pull image %s", image)
+    except docker.errors.APIError as e:
+        log.error("Failed to pull image! %s", image)
+        log.error(e)
+        raise docker.errors.APIError("Failed to pull image") from e
+
+
 def get_container(docker_client: DockerClient, **filters) -> Container:
     """
     Return container if it exists after searching using kwargs
