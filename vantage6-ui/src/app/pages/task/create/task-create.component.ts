@@ -247,7 +247,15 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       Object.keys(this.parameterForm.controls).forEach((control) => {
         if (control === arg.name) {
           const value = this.parameterForm.get(control)?.value;
-          kwargs[arg.name] = arg.type === ArgumentType.Json ? JSON.parse(value) : value;
+          if (arg.type === ArgumentType.Json) {
+            kwargs[arg.name] = JSON.parse(value);
+          } else if (arg.type === ArgumentType.Float || arg.type === ArgumentType.Integer) {
+            kwargs[arg.name] = Number(value);
+          } else if (arg.type === ArgumentType.FloatList || arg.type === ArgumentType.IntegerList || arg.type === ArgumentType.OrganizationList) {
+            kwargs[arg.name] = value.map((_: string) => Number(_));
+          } else {
+            kwargs[arg.name] = value;
+          }
         }
       });
     });
@@ -360,7 +368,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
   addInputFieldForArg(argument: Argument): void {
     (this.parameterForm.get(argument.name) as FormArray).push(this.getNewControlForInputList(argument));
-    console.log(this.parameterForm.controls[argument.name].value);
   }
 
   getFormArrayControls(argument: Argument) {
