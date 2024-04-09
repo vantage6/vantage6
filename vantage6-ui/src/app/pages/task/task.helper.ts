@@ -1,5 +1,5 @@
-import { AbstractControl, FormControl, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
+import { AbstractControl, FormArray, FormControl, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { floatListRegex, floatRegex, intListRegex, integerRegex, stringListRegex } from 'src/app/helpers/regex.helper';
 import { AlgorithmFunction, ArgumentType } from 'src/app/models/api/algorithm.model';
 import { TaskDatabase } from 'src/app/models/api/task.models';
 
@@ -30,8 +30,31 @@ export const addParameterFormControlsForFunction = (func: AlgorithmFunction, for
     if (argument.type === ArgumentType.Float) {
       form.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(floatRegex)]));
     }
-    if (argument.type === ArgumentType.Json || argument.type === ArgumentType.OrganizationList) {
+    if (argument.type === ArgumentType.Json) {
       form.addControl(argument.name, new FormControl(null, [Validators.required, jsonValidator()]));
+    }
+    if (argument.type === ArgumentType.Boolean) {
+      form.addControl(argument.name, new FormControl(false, Validators.required));
+    }
+    if (argument.type === ArgumentType.OrganizationList || argument.type === ArgumentType.IntegerList) {
+      // validate that the input is a list of integers
+      form.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(intListRegex)]));
+    }
+    if (argument.type === ArgumentType.IntegerList) {
+      // validate that the input is a list of integers
+      form.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(intListRegex)]));
+    }
+    if (argument.type === ArgumentType.FloatList) {
+      // validate that the input is a list of floats
+      form.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(floatListRegex)]));
+    }
+    if (argument.type === ArgumentType.ColumnList) {
+      // validate that the input is a list of strings
+      form.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(stringListRegex)]));
+    }
+    if (argument.type === ArgumentType.StringList) {
+      // validate that the input is a list of strings
+      form.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(stringListRegex)]));
     }
   });
 };

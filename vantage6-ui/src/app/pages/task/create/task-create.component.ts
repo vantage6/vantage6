@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { AbstractControl, Form, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { Algorithm, ArgumentType, AlgorithmFunction, Argument, FunctionType } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
@@ -24,6 +24,7 @@ import { BaseStudy, StudyOrCollab } from 'src/app/models/api/study.model';
 import { BaseOrganization } from 'src/app/models/api/organization.model';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { MAX_ATTEMPTS_RENEW_NODE, SECONDS_BETWEEN_ATTEMPTS_RENEW_NODE } from 'src/app/models/constants/wait';
+import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 
 @Component({
   selector: 'app-task-create',
@@ -77,7 +78,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   databaseForm = this.fb.nonNullable.group({});
   preprocessingForm = this.fb.array([]);
   filterForm = this.fb.array([]);
-  parameterForm = this.fb.nonNullable.group({});
+  parameterForm: FormGroup = this.fb.nonNullable.group({});
 
   private nodeStatusUpdateSubscription?: Subscription;
 
@@ -327,7 +328,18 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   shouldShowParameterSimpleInput(argument: Argument): boolean {
-    return !this.shouldShowColumnDropdown(argument) && !this.shouldShowOrganizationDropdown(argument);
+    return !this.shouldShowColumnDropdown(argument) && !this.shouldShowOrganizationDropdown(argument) && !(this.shouldShowParameterBooleanInput(argument));
+  }
+  shouldIncludeFormField(argument: Argument): boolean {
+    return !this.shouldShowParameterBooleanInput(argument) && !this.shouldShowMultipleInput(argument);
+  }
+
+  shouldShowMultipleInput(argument: Argument): boolean {
+    return argument.type === this.argumentType.IntegerList || argument.type === this.argumentType.FloatList || argument.type === this.argumentType.StringList;
+  }
+
+  shouldShowParameterBooleanInput(argument: Argument): boolean {
+    return argument.type === this.argumentType.Boolean;
   }
 
   shouldShowOrganizationDropdown(argument: Argument): boolean {
@@ -335,7 +347,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   shouldShowColumnDropdown(argument: Argument): boolean {
-    return argument.type === this.argumentType.Column && (this.columns.length > 0 || this.isLoadingColumns);
+    return (argument.type === this.argumentType.Column || argument.type === this.argumentType.ColumnList) && (this.columns.length > 0 || this.isLoadingColumns);
   }
 
   containsColumnArguments(): boolean {
@@ -345,6 +357,29 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   shouldShowColumnDropdownForAnyArg(): boolean {
     return this.containsColumnArguments();
   }
+
+  addInputFieldForArg(argument: Argument): void {
+    (this.parameterForm.get(argument.name) as FormArray).push(this.getNewControlForInputList(argument));
+    console.log(this.parameterForm.controls[argument.name].value);
+  }
+
+  getFormArrayControls(argument: Argument) {
+    if ((this.parameterForm.get(argument.name) as FormArray).controls === undefined){
+      this.parameterForm.setControl(argument.name, this.fb.array([this.getNewControlForInputList(argument)]));
+    }
+    return (this.parameterForm.get(argument.name) as FormArray).controls;
+  }
+
+  private getNewControlForInputList(argument: Argument): AbstractControl {
+    if (argument.type === this.argumentType.IntegerList) {
+      return this.fb.control('', [Validators.required, Validators.pattern(integerRegex)]);
+    } else if (argument.type === this.argumentType.FloatList) {
+      return this.fb.control('', [Validators.required, Validators.pattern(floatRegex)]);
+    } else {
+      return this.fb.control('', Validators.required);
+    }
+  }
+
 
   // compare function for mat-select
   compareIDsForSelection(id1: number | string, id2: number | string): boolean {

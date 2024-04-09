@@ -156,9 +156,10 @@
               <ng-container *ngFor="let argument of function?.arguments">
                 <b>{{ argument.description }}</b>
                 <p *ngIf="argument.type === argumentType.Json">Please provide valid JSON input.</p>
-                <mat-form-field subscriptSizing="dynamic">
+                <!-- Show form field for dropdowns or single input fields (float, int, string) -->
+                <mat-form-field *ngIf="shouldIncludeFormField(argument)" subscriptSizing="dynamic">
                   <mat-label>{{ argument.name }}</mat-label>
-                  <mat-select *ngIf="shouldShowColumnDropdown(argument)" [formControlName]="argument.name">
+                  <mat-select *ngIf="shouldShowColumnDropdown(argument)" [formControlName]="argument.name" [multiple]="argument.type === argumentType.ColumnList">
                     <mat-option *ngFor="let column of columns" [value]="column">{{ column }}</mat-option>
                   </mat-select>
                   <mat-select
@@ -172,13 +173,32 @@
                     </mat-option>
                   </mat-select>
                   <input
-                    *ngIf="shouldShowParameterSimpleInput(argument)"
-                    matInput
-                    appNumberOnly
-                    [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
-                    [formControlName]="argument.name"
+                  *ngIf="shouldShowParameterSimpleInput(argument)"
+                  matInput
+                  appNumberOnly
+                  [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
+                  [formControlName]="argument.name"
                   />
                 </mat-form-field>
+                <!-- Show checkbox for boolean parameters -->
+                <mat-checkbox class="newLineCheckbox" *ngIf="shouldShowParameterBooleanInput(argument)" [formControlName]="argument.name" [checked]="false">
+                  {{argument.name}}
+                </mat-checkbox>
+                <!-- Show expandable list for multiple inputs (list of str, int, or float) -->
+                <div *ngIf="shouldShowMultipleInput(argument)">
+                  <div formArrayName="{{argument.name}}" *ngFor="let input of getFormArrayControls(argument); let idx = index">
+                  <mat-form-field subscriptSizing="dynamic">
+                    <mat-label>{{ argument.name }} {{ idx + 1 }}</mat-label>
+                    <input
+                      matInput
+                      appNumberOnly
+                      [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
+                      [formControlName]="idx"
+                    />
+                  </mat-form-field>
+                  </div>
+                  <button mat-raised-button color="primary" (click)="addInputFieldForArg(argument)">Add More</button>
+                </div>
               </ng-container>
             </ng-container>
             <div>

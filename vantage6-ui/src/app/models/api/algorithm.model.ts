@@ -1,11 +1,16 @@
 export enum ArgumentType {
-  String = 'str',
-  Integer = 'int',
+  String = 'string',
+  StringList = 'string_list',
+  Integer = 'integer',
+  IntegerList = 'integer_list',
   Float = 'float',
-  Json = 'json',
+  FloatList = 'float_list',
   Column = 'column',
+  ColumnList = 'column_list',
   Organization = 'organization',
-  OrganizationList = 'organizations'
+  OrganizationList = 'organization_list',
+  Json = 'json',
+  Boolean = 'boolean'
 }
 
 export enum OutputType {
