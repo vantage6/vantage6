@@ -187,15 +187,18 @@
                 <!-- Show expandable list for multiple inputs (list of str, int, or float) -->
                 <div *ngIf="shouldShowMultipleInput(argument)">
                   <div formArrayName="{{argument.name}}" *ngFor="let input of getFormArrayControls(argument); let idx = index">
-                  <mat-form-field subscriptSizing="dynamic">
-                    <mat-label>{{ argument.name }} {{ idx + 1 }}</mat-label>
-                    <input
-                      matInput
-                      appNumberOnly
-                      [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
-                      [formControlName]="idx"
-                    />
-                  </mat-form-field>
+                    <div style="display: flex; align-items: center;">
+                      <mat-form-field subscriptSizing="dynamic">
+                        <mat-label>{{ argument.name }} {{ idx + 1 }}</mat-label>
+                        <input
+                          matInput
+                          appNumberOnly
+                          [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
+                          [formControlName]="idx"
+                        />
+                      </mat-form-field>
+                      <button mat-raised-button color="warn" (click)="removeInputFieldForArg(argument, idx)">Delete</button>
+                    </div>
                   </div>
                   <button mat-raised-button color="primary" (click)="addInputFieldForArg(argument)">Add More</button>
                 </div>

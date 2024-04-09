@@ -370,6 +370,10 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     (this.parameterForm.get(argument.name) as FormArray).push(this.getNewControlForInputList(argument));
   }
 
+  removeInputFieldForArg(argument: Argument, index: number): void {
+    (this.parameterForm.get(argument.name) as FormArray).removeAt(index);
+  }
+
   getFormArrayControls(argument: Argument) {
     if ((this.parameterForm.get(argument.name) as FormArray).controls === undefined){
       this.parameterForm.setControl(argument.name, this.fb.array([this.getNewControlForInputList(argument)]));
