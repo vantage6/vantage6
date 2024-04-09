@@ -5,9 +5,25 @@
 TAG ?= cotopaxi
 REGISTRY ?= harbor2.vantage6.ai
 PLATFORMS ?= linux/arm64,linux/amd64
+# Example for local development
+# TAG ?= local
+# REGISTRY ?= localhost
+# PLATFORMS ?= linux/amd64
 
 # infrastructure base image version
 BASE ?= 4.0
+
+# Use `make PUSH_REG=true` to push images to registry after building
+PUSH_REG ?= false
+
+
+# We use a conditional (true on any non-empty string) later. To avoid
+# accidents, we don't use user-controlled PUSH_REG directly.
+# See: https://www.gnu.org/software/make/manual/html_node/Conditional-Functions.html
+_condition_push :=
+ifeq ($(PUSH_REG), true)
+	_condition_push := not_emtpy_so_true
+endif
 
 help:
 	@echo "Available commands to 'make':"
@@ -80,7 +96,7 @@ base-image:
 		--tag ${REGISTRY}/infrastructure/infrastructure-base:latest \
 		--platform ${PLATFORMS} \
 		-f ./docker/infrastructure-base.Dockerfile \
-		--push .
+		$(if ${_condition_push},--push .,.)
 
 algorithm-base-image:
 	@echo "Building ${REGISTRY}/algorithms/algorithm-base:${TAG}"
@@ -90,7 +106,7 @@ algorithm-base-image:
 		--platform ${PLATFORMS} \
 		--build-arg TAG=${TAG} \
 		-f ./docker/algorithm-base.Dockerfile \
-		--push .
+		$(if ${_condition_push},--push .,.)
 
 # FIXME FM 17-10-2023: This fails to build for arm64, this is because of
 # the r-base image.
@@ -103,7 +119,7 @@ algorithm-omop-base-image:
 		--build-arg TAG=${TAG} \
 		--platform linux/amd64 \
 		-f ./docker/algorithm-ohdsi-base.Dockerfile \
-		--push .
+		$(if ${_condition_push},--push .,.)
 
 support-image:
 	@echo "Building support images"
@@ -121,7 +137,7 @@ support-squid-image:
 		--tag ${REGISTRY}/infrastructure/squid:latest \
 		--platform ${PLATFORMS} \
 		-f ./docker/squid.Dockerfile \
-		--push .
+		$(if ${_condition_push},--push .,.)
 
 support-alpine-image:
 	@echo "Building ${REGISTRY}/infrastructure/alpine:${TAG}"
@@ -130,7 +146,7 @@ support-alpine-image:
 		--tag ${REGISTRY}/infrastructure/alpine:latest \
 		--platform ${PLATFORMS} \
 		-f ./docker/alpine.Dockerfile \
-		--push .
+		$(if ${_condition_push},--push .,.)
 
 support-vpn-client-image:
 	@echo "Building ${REGISTRY}/infrastructure/vpn-client:${TAG}"
@@ -139,7 +155,7 @@ support-vpn-client-image:
 		--tag ${REGISTRY}/infrastructure/vpn-client:latest \
 		--platform ${PLATFORMS} \
 		-f ./docker/vpn-client.Dockerfile \
-		--push .
+		$(if ${_condition_push},--push .,.)
 
 support-vpn-configurator-image:
 	@echo "Building ${REGISTRY}/infrastructure/vpn-configurator:${TAG}"
@@ -148,7 +164,7 @@ support-vpn-configurator-image:
 		--tag ${REGISTRY}/infrastructure/vpn-configurator:latest \
 		--platform ${PLATFORMS} \
 		-f ./docker/vpn-configurator.Dockerfile \
-		--push .
+		$(if ${_condition_push},--push .,.)
 
 support-ssh-tunnel-image:
 	@echo "Building ${REGISTRY}/infrastructure/ssh-tunnel:${TAG}"
@@ -157,7 +173,7 @@ support-ssh-tunnel-image:
 		--tag ${REGISTRY}/infrastructure/ssh-tunnel:latest \
 		--platform ${PLATFORMS} \
 		-f ./docker/ssh-tunnel.Dockerfile \
-		--push .
+		$(if ${_condition_push},--push .,.)
 
 image:
 	@echo "Building ${REGISTRY}/infrastructure/node:${TAG}"
@@ -169,7 +185,7 @@ image:
 		--build-arg BASE=${BASE} \
 		--platform ${PLATFORMS} \
 		-f ./docker/node-and-server.Dockerfile \
-		--push .
+		$(if ${_condition_push},--push .,.)
 
 algorithm-store-image:
 	@echo "Building ${REGISTRY}/infrastructure/algorithm-store:${TAG}"
@@ -180,7 +196,7 @@ algorithm-store-image:
 		--build-arg BASE=${BASE} \
 		--platform ${PLATFORMS} \
 		-f ./docker/algorithm-store.Dockerfile \
-		--push .
+		$(if ${_condition_push},--push .,.)
 
 ui-image:
 	@echo "Building ${REGISTRY}/infrastructure/ui:${TAG}"
@@ -191,7 +207,7 @@ ui-image:
 		--build-arg BASE=${BASE} \
 		--platform ${PLATFORMS} \
 		-f ./docker/ui.Dockerfile \
-		--push .
+		$(if ${_condition_push},--push .,.)
 
 rebuild:
 	@echo "------------------------------------"
