@@ -17,6 +17,14 @@ class User(Base):
         Username
     v6_server_id : int
         Id of the whitelisted server through which the user is authenticated
+    server : :class:`~.model.vantage6_server.Vantage6Server`
+        Server through which the user is authenticated
+    roles : list[:class:`~.model.role.Role`]
+        List of roles that the user has
+    algorithms : list[:class:`~.model.algorithm.Algorithm`]
+        List of algorithms that the user has developed
+    reviews : list[:class:`~.model.review.Review`]
+        List of reviews that the user has written
     """
 
     # fields

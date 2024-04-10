@@ -15,6 +15,8 @@ class Vantage6Server(Base):
     ----------
     url : str
         URL of the vantage6 server
+    users : list[:class:`~.model.user.User`]
+        List of known vantage6 users from that server
     """
 
     # fields

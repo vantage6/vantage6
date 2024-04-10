@@ -20,6 +20,8 @@ class UIVisualization(Base):
         Schema that describes the visualization, e.g. column names of a table
     function_id : int
         Id of the function that the visualization is linked to
+    function : Function
+        Function that the visualization is linked to
     """
 
     # fields
