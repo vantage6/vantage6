@@ -3,8 +3,6 @@ This file describes how the JSON schema for different types of UI visualizations
 should be structured. The schema is used to validate input data.
 """
 
-# import jsonschema
-
 from vantage6.algorithm.store.model.common.enums import VisualizationType
 
 
