@@ -23,6 +23,10 @@ class Algorithm(Base):
 
     functions : list[:class:`~.model.function.function`]
         List of functions that are available in the algorithm
+    developer : list[:class:`~.model.user.User`]
+        List of users that have developed the algorithm
+    review : :class:`~.model.review.Review`
+        Review of the algorithm
     """
 
     # fields
@@ -41,4 +45,3 @@ class Algorithm(Base):
         "User", back_populates="algorithms", secondary="developer_algorithm_association"
     )
     review = relationship("Review", back_populates="algorithm")
-    ui_visualizations = relationship("UIVisualization", back_populates="algorithm")

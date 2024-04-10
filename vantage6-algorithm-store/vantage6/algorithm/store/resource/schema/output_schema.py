@@ -74,9 +74,6 @@ class AlgorithmOutputSchema(HATEOASModelSchema):
         model = Algorithm
 
     functions = fields.Nested("FunctionOutputSchema", many=True, exclude=["id"])
-    ui_visualizations = fields.Nested(
-        "UIVisualizationOutputSchema", many=True, exclude=["id"]
-    )
 
 
 class FunctionOutputSchema(HATEOASModelSchema):
@@ -90,6 +87,9 @@ class FunctionOutputSchema(HATEOASModelSchema):
 
     databases = fields.Nested("DatabaseOutputSchema", many=True, exclude=["id"])
     arguments = fields.Nested("ArgumentOutputSchema", many=True, exclude=["id"])
+    ui_visualizations = fields.Nested(
+        "UIVisualizationOutputSchema", many=True, exclude=["id"]
+    )
 
 
 class DatabaseOutputSchema(HATEOASModelSchema):

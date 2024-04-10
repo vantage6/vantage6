@@ -31,7 +31,6 @@ class AlgorithmInputSchema(_NameDescriptionSchema):
     partitioning = fields.String(required=True)
     vantage6_version = fields.String(required=True)
     functions = fields.Nested("FunctionInputSchema", many=True, required=True)
-    ui_visualizations = fields.Nested("UIVisualizationInputSchema", many=True)
 
     @validates("partitioning")
     def validate_partitioning(self, value):
@@ -53,6 +52,7 @@ class FunctionInputSchema(_NameDescriptionSchema):
     type = fields.String(required=True)
     databases = fields.Nested("DatabaseInputSchema", many=True)
     arguments = fields.Nested("ArgumentInputSchema", many=True)
+    ui_visualizations = fields.Nested("UIVisualizationInputSchema", many=True)
 
     @validates("type")
     def validate_type(self, value):

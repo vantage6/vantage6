@@ -18,8 +18,8 @@ class UIVisualization(Base):
         Type of the visualization. Currently available: 'table'
     schema : dict
         Schema that describes the visualization, e.g. column names of a table
-    algorithm_id : int
-        Id of the algorithm
+    function_id : int
+        Id of the function that the visualization is linked to
     """
 
     # fields
@@ -27,7 +27,7 @@ class UIVisualization(Base):
     description = Column(String)
     type_ = Column("type", String)
     schema = Column(JSON)
-    algorithm_id = Column(Integer, ForeignKey("algorithm.id"))
+    function_id = Column(Integer, ForeignKey("function.id"))
 
     # relationships
-    algorithm = relationship("Algorithm", back_populates="ui_visualizations")
+    function = relationship("Function", back_populates="ui_visualizations")

@@ -21,12 +21,14 @@ class Function(Base):
         Type of function
     algorithm_id : int
         ID of the algorithm that this function belongs to
-    algorithm : :class:`~.model.algorithm.algorithm`
+    algorithm : :class:`~.model.algorithm.Algorithm`
         Algorithm that this function belongs to
-    databases : list[:class:`~.model.database.database`]
+    databases : list[:class:`~.model.database.Database`]
         List of databases that this function uses
-    arguments : list[:class:`~.model.argument.argument`]
+    arguments : list[:class:`~.model.argument.Argument`]
         List of arguments that this function uses
+    ui_visualizations : list[:class:`~.model.ui_visualization.UIVisualization`]
+        List of user interface visualizations that this function produces
     """
 
     # fields
@@ -39,4 +41,4 @@ class Function(Base):
     algorithm = relationship("Algorithm", back_populates="functions")
     databases = relationship("Database", back_populates="function")
     arguments = relationship("Argument", back_populates="function")
-    # output = relationship("Output", back_populates='function')
+    ui_visualizations = relationship("UIVisualization", back_populates="function")
