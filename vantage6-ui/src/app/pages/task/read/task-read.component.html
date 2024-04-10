@@ -79,12 +79,12 @@
       <div *ngFor="let result of task.results">
         <ng-container *ngIf="result.decoded_result">
           <b *ngIf="function?.type === functionType.Federated">{{ getRunForResult(result.id)?.node?.name }}</b>
-          <app-visualize-result [result]="result.decoded_result" [visualization]="selectedVisualization"></app-visualize-result>
+          <app-visualize-result [result]="result.decoded_result" [visualization]="selectedVisualization" [result_id]="result.id.toString()"></app-visualize-result>
           <!-- TODO only display text result if there are no visualizations -->
           <!-- <p>{{ displayTextResult(result.decoded_result) }}</p> -->
           <br />
           <button mat-flat-button color="primary" (click)="downloadResult(result)">
-            {{ "task-read.card-results.actions.download" | translate }}
+            {{ "task-read.card-results.actions.download-json" | translate }}
           </button>
         </ng-container>
       </div>

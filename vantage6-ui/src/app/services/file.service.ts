@@ -5,10 +5,14 @@ import { saveAs } from 'file-saver';
   providedIn: 'root'
 })
 export class FileService {
-  constructor() {}
 
   downloadTxtFile(text: string, filename: string): void {
     const blob = new Blob([text], { type: 'text/txt' });
+    saveAs(blob, filename);
+  }
+
+  downloadCsvFile(data: string, filename: string): void {
+    const blob = new Blob([data], { type: 'text/csv' });
     saveAs(blob, filename);
   }
 }

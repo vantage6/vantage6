@@ -16,6 +16,7 @@ export class VisualizeResultComponent implements OnChanges {
 
   @Input() visualization?: Visualization | null;
   @Input() result: any = '';
+  @Input() result_id: string = '';
 
   // visualizeResults: VisualizeResult[] = [];
 

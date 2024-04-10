@@ -1,5 +1,6 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { Visualization } from 'src/app/models/api/algorithm.model';
+import { FileService } from 'src/app/services/file.service';
 
 @Component({
   selector: 'app-visualize-table',
@@ -10,19 +11,22 @@ export class VisualizeTableComponent implements OnChanges {
   @Input() visualization?: Visualization | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   @Input() result: any[] = [];
+  @Input() result_id: string = '';
 
   columns: string[] = [];
   rows: string[][] = [];
   name?: string;
   description?: string;
 
+  constructor(private fileService: FileService) {}
+
   ngOnChanges(): void {
     // if the result is found at a key, use that key. E.g. if the result is { data: [1, 2, 3] },
     // location should be ['data'] to get the array
-    let table_data = this.result;
+    let tableData = this.result;
     if (this.visualization?.schema?.location) {
       this.visualization.schema.location.forEach((key: any) => {
-        table_data = table_data[key];
+        tableData = tableData[key];
       });
     }
 
@@ -30,12 +34,22 @@ export class VisualizeTableComponent implements OnChanges {
     if (this.visualization?.schema?.columns) {
       this.columns = this.visualization.schema.columns;
     } else {
-      this.columns = Object.keys(table_data[0]);
+      this.columns = Object.keys(tableData[0]);
     }
-    this.rows = table_data;
+    this.rows = tableData;
 
     // set table name and description
     this.name = this.visualization?.name;
     this.description = this.visualization?.description;
+  }
+
+  exportToCsv(): void {
+    // Convert data to CSV format
+    let csvData = this.columns.join(',') + '\n';
+    this.rows.forEach(row => {
+      csvData += Object.values(row).join(',') + '\n';
+    });
+
+    this.fileService.downloadCsvFile(csvData, `vantage6_results_${this.result_id}.csv`);
   }
 }
