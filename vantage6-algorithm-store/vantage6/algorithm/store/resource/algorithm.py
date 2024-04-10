@@ -531,7 +531,7 @@ class Algorithm(AlgorithmStoreResources):
         fields = ["name", "description", "image", "partitioning", "vantage6_version"]
         for field in fields:
             if field in data and data.get(field) is not None:
-                setattr(algorithm, field, data.get("name"))
+                setattr(algorithm, field, data.get(field))
 
         if (functions := data.get("functions")) is not None:
             for function in algorithm.functions:
