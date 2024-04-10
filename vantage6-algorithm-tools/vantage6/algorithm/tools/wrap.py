@@ -52,8 +52,11 @@ def wrap_algorithm(log_traceback: bool = True) -> None:
         exit(1)
     info(f"wrapper for {module}")
 
+    # Decode environment variables that are encoded by the node.
+    _decode_env_vars()
+
     # read input from the mounted input file.
-    input_file = get_env_var("INPUT_FILE")
+    input_file = os.environ["INPUT_FILE"]
     info(f"Reading input file {input_file}")
     input_data = load_input(input_file)
 
@@ -63,7 +66,7 @@ def wrap_algorithm(log_traceback: bool = True) -> None:
 
     # write output from the method to mounted output file. Which will be
     # transferred back to the server by the node-instance.
-    output_file = get_env_var("OUTPUT_FILE")
+    output_file = os.environ["OUTPUT_FILE"]
     info(f"Writing output to {output_file}")
 
     _write_output(output, output_file)
@@ -170,3 +173,11 @@ def _write_output(output: Any, output_file: str) -> None:
     with open(output_file, "wb") as fp:
         serialized = serialization.serialize(output)
         fp.write(serialized)
+
+
+def _decode_env_vars() -> None:
+    """
+    Decode environment variables that are encoded by the node
+    """
+    for env_var in os.environ:
+        os.environ[env_var] = get_env_var(env_var)

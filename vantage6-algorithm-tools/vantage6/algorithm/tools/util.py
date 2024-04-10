@@ -1,6 +1,8 @@
 import sys
 import os
 import base64
+import binascii
+
 from vantage6.common.globals import STRING_ENCODING, ENV_VAR_EQUALS_REPLACEMENT
 
 
@@ -40,6 +42,9 @@ def error(msg: str) -> None:
     sys.stdout.write(f"error > {msg}\n")
 
 
+# TODO v5+ move this function to wrap.py and no longer expose it to be used by
+# algorithms but as part of _decode_env_vars. It is kept here for backwards
+# compatibility with 4.2/4.3 algorithms
 def get_env_var(var_name: str, default: str | None = None) -> str:
     """
     Get the value of an environment variable. Environment variables are encoded
@@ -69,3 +74,6 @@ def get_env_var(var_name: str, default: str | None = None) -> str:
         return base64.b32decode(encoded_env_var_value).decode(STRING_ENCODING)
     except KeyError:
         return default
+    except binascii.Error:
+        # If the decoding fails, return the original value
+        return os.environ[var_name]
