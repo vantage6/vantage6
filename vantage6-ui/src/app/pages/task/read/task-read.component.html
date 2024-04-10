@@ -69,17 +69,17 @@
       <mat-form-field class="select-visualization">
         <mat-label>{{ "task-read.card-results.actions.visualization" | translate }}</mat-label>
         <mat-select [formControl]="visualization">
-          <mat-option *ngFor="let output of function?.output; index as index" [value]="index">
-            {{ output.title || ("general.visualization" | translate) + " " + index + 1 }}
+          <mat-option *ngFor="let visualization of function?.ui_visualizations; index as index" [value]="index">
+            {{ visualization.name || ("general.visualization" | translate) + " " + index + 1 }}
           </mat-option>
         </mat-select>
       </mat-form-field>
     </mat-card-header>
     <mat-card-content>
       <div *ngFor="let result of task.results">
-        <ng-container *ngIf="result.result">
-          <b>{{ getRunForResult(result.id)?.node?.name }}</b>
-          <app-visualize-result [result]="result.decoded_result" [functionOutput]="selectedOutput"></app-visualize-result>
+        <ng-container *ngIf="result.decoded_result">
+          <b *ngIf="function?.type === functionType.Federated">{{ getRunForResult(result.id)?.node?.name }}</b>
+          <app-visualize-result [result]="result.decoded_result" [visualization]="selectedVisualization"></app-visualize-result>
           <!-- TODO only display text result if there are no visualizations -->
           <!-- <p>{{ displayTextResult(result.decoded_result) }}</p> -->
           <br />

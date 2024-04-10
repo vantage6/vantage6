@@ -34,12 +34,7 @@ table_schema = {
                 "type": "string",
             },
         },
-        # if True, transpose the table.
-        "transpose": {
-            "type": "boolean",
-        },
     },
-    # "required": ["columns"],
     "additionalProperties": False,
 }
 

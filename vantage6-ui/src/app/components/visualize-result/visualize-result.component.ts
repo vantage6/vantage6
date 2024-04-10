@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, Input, OnChanges } from '@angular/core';
-import { Output, OutputVisualizeType } from 'src/app/models/api/algorithm.model';
+import { Visualization, VisualizationType } from 'src/app/models/api/algorithm.model';
 
 interface VisualizeResult {
-  output: Output;
+  visualization: Visualization;
   results: any[];
 }
 
@@ -12,25 +12,27 @@ interface VisualizeResult {
   templateUrl: './visualize-result.component.html'
 })
 export class VisualizeResultComponent implements OnChanges {
-  outputVisualizeType = OutputVisualizeType;
+  visualizationType = VisualizationType;
 
-  @Input() functionOutput: Output | null = null;
+  @Input() visualization?: Visualization | null;
   @Input() result: any = '';
 
-  visualizeResults: VisualizeResult[] = [];
+  // visualizeResults: VisualizeResult[] = [];
 
   ngOnChanges(): void {
-    if (!this.functionOutput || !this.result) return;
-    this.visualizeResults = [];
+    // if (!this.visualization || !this.result) return;
+    // this.visualizeResults = [];
+    // console.log(this.result)
 
-    const visualizeResult = {
-      output: this.functionOutput,
-      results: this.getFilteredResults(this.functionOutput)
-    };
-    this.visualizeResults.push(visualizeResult);
+    // const visualizeResult = {
+    //   visualization: this.visualization,
+    //   results: this.result
+    //   // results: this.getFilteredResults(this.visualization)
+    // };
+    // this.visualizeResults.push(visualizeResult);
   }
 
-  private getFilteredResults(output: Output): any[] {
+  private getFilteredResults(visualization: Visualization): any[] {
     const filteredResults: any[] = [];
     // TODO This may not work for the case where the output is an array - fix that. Old code kept (but commented out) below
 
