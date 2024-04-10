@@ -183,21 +183,39 @@ class DockerTaskManager(DockerBaseManager):
             results = fp.read()
         return results
 
-    def pull(self):
-        """Pull the latest docker image."""
+    def pull(self, local_exists: bool) -> None:
+        """
+        Pull the latest docker image.
+
+        Parameters
+        ----------
+        local_exists: bool
+            Whether the image already exists locally
+
+        Raises
+        ------
+        PermanentAlgorithmStartFail
+            If the image could not be pulled and does not exist locally
+        """
         try:
             self.log.info(f"Retrieving latest image: '{self.image}'")
             self.docker.images.pull(self.image)
         except docker.errors.APIError as e:
-            self.log.debug("Failed to pull image: could not find image")
-            self.log.exception(e)
-            self.status = TaskStatus.NO_DOCKER_IMAGE
-            raise PermanentAlgorithmStartFail
+            self.log.warning("Failed to pull image: could not find image")
+            if not local_exists:
+                self.log.exception(e)
+                self.status = TaskStatus.NO_DOCKER_IMAGE
+                raise PermanentAlgorithmStartFail
+            else:
+                self.log.info("Using local image")
         except Exception as e:
-            self.log.debug("Failed to pull image")
-            self.log.exception(e)
-            self.status = TaskStatus.FAILED
-            raise PermanentAlgorithmStartFail
+            self.log.warning("Failed to pull image")
+            if not local_exists:
+                self.log.exception(e)
+                self.status = TaskStatus.FAILED
+                raise PermanentAlgorithmStartFail
+            else:
+                self.log.info("Using local image")
 
     def run(
         self,
@@ -272,7 +290,8 @@ class DockerTaskManager(DockerBaseManager):
         helper_container_name = container_name + "-helper"
 
         # Try to pull the latest image
-        self.pull()
+        local_exists = len(self.docker.images.list(name=self.image)) > 0
+        self.pull(local_exists=local_exists)
 
         # remove algorithm containers if they were already running
         self.log.debug("Check if algorithm container is already running")
