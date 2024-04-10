@@ -30,6 +30,11 @@ export class VisualizeTableComponent implements OnChanges {
       });
     }
 
+    // if the result is a single table row, convert it to an array of rows
+    if (!Array.isArray(tableData)) {
+      tableData = [tableData];
+    }
+
     // if columns are defined, use them. Otherwise use the keys of the first result
     if (this.visualization?.schema?.columns) {
       this.columns = this.visualization.schema.columns;
