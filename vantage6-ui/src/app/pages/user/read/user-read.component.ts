@@ -57,7 +57,7 @@ export class UserReadComponent implements OnInit, OnDestroy {
     this.user = await this.userService.getUser(this.id, [UserLazyProperties.Organization, UserLazyProperties.Roles]);
     this.setPermissions();
 
-    this.allUserRules = await this.ruleService.getRules({ user_id: this.user.id, no_pagination: 1 });
+    this.allUserRules = await this.ruleService.getRules({ user_id: this.user.id });
     this.rolesRules = await this.ruleService.getRulesOfRoles(this.user.roles.map((role) => role.id));
     this.userSpecificRules = this.determineUserRules(this.rolesRules, this.allUserRules);
     this.isLoading = false;

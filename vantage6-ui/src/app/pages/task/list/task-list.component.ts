@@ -109,7 +109,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
     if (!collaborationID || !userID) return;
 
     parameters = { ...parameters, collaboration_id: collaborationID };
-    const taskData = await this.taskService.getTasks(page, parameters);
+    const taskData = await this.taskService.getPaginatedTasks(page, parameters);
     this.tasks = taskData.data;
     this.pagination = taskData.links;
 

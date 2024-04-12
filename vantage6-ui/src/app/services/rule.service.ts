@@ -9,15 +9,8 @@ import { Pagination } from '../models/api/pagination.model';
 export class RuleService {
   constructor(private apiService: ApiService) {}
 
-  async getAllRules(roleId?: string): Promise<Rule[]> {
-    const params: GetRuleParameters = { no_pagination: 1 };
-    if (roleId) params.role_id = roleId;
-    return this.getRules(params);
-  }
-
   async getRules(parameters?: GetRuleParameters): Promise<Rule[]> {
-    //TODO: Add backend no pagination instead of page size 9999
-    const result = await this.apiService.getForApi<Pagination<Rule>>('/rule', { ...parameters });
+    const result = await this.apiService.getForApi<Pagination<Rule>>('/rule', { ...parameters, no_pagination: 1 });
     return result.data;
   }
 
