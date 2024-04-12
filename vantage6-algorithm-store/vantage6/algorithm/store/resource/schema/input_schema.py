@@ -49,12 +49,12 @@ class FunctionInputSchema(_NameDescriptionSchema):
     Schema for the input of a function.
     """
 
-    type = fields.String(required=True)
+    type_ = fields.String(required=True, data_key="type")
     databases = fields.Nested("DatabaseInputSchema", many=True)
     arguments = fields.Nested("ArgumentInputSchema", many=True)
     ui_visualizations = fields.Nested("UIVisualizationInputSchema", many=True)
 
-    @validates("type")
+    @validates("type_")
     def validate_type(self, value):
         """
         Validate that the type is one of the allowed values.
@@ -80,9 +80,9 @@ class ArgumentInputSchema(_NameDescriptionSchema):
     Schema for the input of an argument.
     """
 
-    type = fields.String(required=True)
+    type_ = fields.String(required=True, data_key="type")
 
-    @validates("type")
+    @validates("type_")
     def validate_type(self, value):
         """
         Validate that the type is one of the allowed values.
@@ -99,10 +99,10 @@ class UIVisualizationInputSchema(_NameDescriptionSchema):
     Schema for the input of a UI visualization.
     """
 
-    type = fields.String(required=True)
+    type_ = fields.String(required=True, data_key="type")
     schema = fields.Dict()
 
-    @validates("type")
+    @validates("type_")
     def validate_type(self, value):
         """
         Validate that the type is one of the allowed values.
@@ -120,7 +120,7 @@ class UIVisualizationInputSchema(_NameDescriptionSchema):
         Validate that the schema is a valid JSON schema.
         """
         schema = data.get("schema")
-        type_ = data.get("type")
+        type_ = data.get("type_")
         if schema and type_:
             try:
                 json_validate(schema, get_schema_for_visualization(type_))

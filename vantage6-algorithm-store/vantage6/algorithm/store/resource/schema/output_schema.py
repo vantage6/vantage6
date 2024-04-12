@@ -81,9 +81,8 @@ class FunctionOutputSchema(HATEOASModelSchema):
 
     class Meta:
         model = Function
-        exclude = ["type_"]
 
-    type = fields.String(attribute="type_")
+    type_ = fields.String(data_key="type")
 
     databases = fields.Nested("DatabaseOutputSchema", many=True, exclude=["id"])
     arguments = fields.Nested("ArgumentOutputSchema", many=True, exclude=["id"])
@@ -104,9 +103,8 @@ class ArgumentOutputSchema(HATEOASModelSchema):
 
     class Meta:
         model = Argument
-        exclude = ["type_"]
 
-    type = fields.String(attribute="type_")
+    type_ = fields.String(data_key="type")
 
 
 class UIVisualizationOutputSchema(HATEOASModelSchema):
@@ -114,9 +112,8 @@ class UIVisualizationOutputSchema(HATEOASModelSchema):
 
     class Meta:
         model = UIVisualization
-        exclude = ["type_"]
 
-    type = fields.String(attribute="type_")
+    type_ = fields.String(data_key="type")
 
 
 class Vantage6ServerOutputSchema(HATEOASModelSchema):
