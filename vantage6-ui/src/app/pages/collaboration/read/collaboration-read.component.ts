@@ -18,6 +18,7 @@ import { CollaborationService } from 'src/app/services/collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
+import { NodeService } from 'src/app/services/node.service';
 
 @Component({
   selector: 'app-collaboration-read',
@@ -56,7 +57,8 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
     private translateService: TranslateService,
     private permissionService: PermissionService,
     private socketioConnectService: SocketioConnectService,
-    private chosenCollaborationService: ChosenCollaborationService
+    private chosenCollaborationService: ChosenCollaborationService,
+    private nodeService: NodeService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -72,6 +74,10 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next(true);
     this.nodeStatusUpdateSubscription?.unsubscribe();
+  }
+
+  public isMissingNodes(): boolean {
+    return this.collaboration !== undefined && this.collaboration.nodes.length < this.collaboration.organizations.length
   }
 
   private async initData(): Promise<void> {
@@ -117,6 +123,17 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
           this.canCreateStudy = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.STUDY, OperationType.CREATE);
         }
       });
+  }
+
+  async onRegisterMissingNodes(): Promise<void> {
+    if (!this.collaboration) return;
+    // find organizations that are not yet registered
+    const missingOrganizations = this.collaboration?.organizations.filter(
+      (organization) => !this.collaboration?.nodes.some((node) => node.organization.id === organization.id)
+    );
+    await this.nodeService.registerNodes(this.collaboration, missingOrganizations);
+    // refresh the collaboration
+    this.initData();
   }
 
   selectAlgoStore(id: number): void {
