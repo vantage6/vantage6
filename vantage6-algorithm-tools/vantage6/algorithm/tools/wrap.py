@@ -7,7 +7,7 @@ from typing import Any
 from vantage6.common.client import deserialization
 from vantage6.common import serialization
 from vantage6.algorithm.tools.util import info, error, get_env_var
-from vantage6.algorithm.tools.exceptions import DeserializationException
+from vantage6.algorithm.tools.exceptions import DeserializationError
 
 
 def wrap_algorithm(log_traceback: bool = True) -> None:
@@ -148,14 +148,14 @@ def load_input(input_file: str) -> Any:
 
     Raises
     ------
-    DeserializationException
+    DeserializationError
         Failed to deserialize input data
     """
     with open(input_file, "rb") as fp:
         try:
             input_data = deserialization.deserialize(fp)
-        except DeserializationException:
-            raise DeserializationException("Could not deserialize input")
+        except DeserializationError:
+            raise DeserializationError("Could not deserialize input")
     return input_data
 
 
