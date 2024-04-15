@@ -178,6 +178,11 @@ def _write_output(output: Any, output_file: str) -> None:
 def _decode_env_vars() -> None:
     """
     Decode environment variables that are encoded by the node
+
+    Note that environment variables may be present that are not specific to vantage6,
+    such as HOME, PATH, etc. These are not encoded by the node and should not be
+    decoded here. The `get_env_var` function handles these properly so that the
+    original value is returned if the environment variable is not encoded.
     """
     for env_var in os.environ:
         os.environ[env_var] = get_env_var(env_var)
