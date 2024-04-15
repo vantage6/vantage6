@@ -38,6 +38,7 @@ setup(
         "flask-marshmallow==0.15.0",
         "Flask-RESTful==0.3.10",
         "gevent==23.9.1",
+        "jsonschema==4.21.1",
         "marshmallow==3.19.0",
         "requests==2.31.0",
         "schema==0.7.5",

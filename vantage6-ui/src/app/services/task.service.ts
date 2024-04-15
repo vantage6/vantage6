@@ -55,6 +55,14 @@ export class TaskService {
       for (const result of task.results) {
         if (result.result) {
           result.decoded_result = JSON.parse(atob(result.result));
+          // often, the parsed result is a stringified JSON object
+          try {
+            if (typeof result.decoded_result === 'string'){
+              result.decoded_result = JSON.parse(result.decoded_result);
+            }
+          } catch (e) {
+            // do nothing
+          }
         }
       }
     }

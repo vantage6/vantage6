@@ -40,7 +40,7 @@ export class AlgorithmService {
   }
 
   async getAlgorithmByUrl(url: string): Promise<Algorithm | null> {
-    const result = await this.getAlgorithms({ image: encodeURIComponent(url) });
+    const result = await this.getAlgorithms({ image: url });
     if (result.length === 0) {
       return null;
     }

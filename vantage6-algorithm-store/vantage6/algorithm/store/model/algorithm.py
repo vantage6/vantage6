@@ -1,4 +1,3 @@
-from __future__ import annotations
 from sqlalchemy import Column, String
 from sqlalchemy.orm import relationship
 
@@ -24,6 +23,10 @@ class Algorithm(Base):
 
     functions : list[:class:`~.model.function.function`]
         List of functions that are available in the algorithm
+    developer : list[:class:`~.model.user.User`]
+        List of users that have developed the algorithm
+    review : :class:`~.model.review.Review`
+        Review of the algorithm
     """
 
     # fields

@@ -136,7 +136,8 @@
       "title": "Results",
       "actions": {
         "visualization": "Visualization",
-        "download": "Download JSON result"
+        "download-json": "Download JSON",
+        "download-csv": "Download CSV"
       }
     },
     "card-algorithm": {

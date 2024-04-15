@@ -20,10 +20,10 @@ class Argument(Base):
         Description of the argument
     function_id : int
         ID of the algorithm that this function belongs to
-    function : :class:`~.model.algorithm.algorithm`
-        Algorithm function that this argument belongs to
     type_ : str
         Type of the argument
+    function : :class:`~.model.algorithm.algorithm`
+        Algorithm function that this argument belongs to
     """
 
     # fields

@@ -1,19 +1,20 @@
-<ng-container *ngFor="let visualizeResult of visualizeResults">
-  <ng-container *ngIf="visualizeResult.output.visualize === outputVisualizeType.Table">
+<!-- <ng-container *ngFor="let visualizeResult of visualizeResults"> -->
+  <ng-container *ngIf="visualization?.type === visualizationType.Table">
+    <!-- *ngFor="let result of visualizeResult.results" -->
     <app-visualize-table
-      *ngFor="let result of visualizeResult.results"
-      [output]="visualizeResult.output"
-      [results]="[result]"
+      [visualization]="visualization"
+      [result]="result"
+      [result_id]="result_id"
     ></app-visualize-table>
   </ng-container>
-  <ng-container *ngIf="visualizeResult.output.visualize === outputVisualizeType.TableGrouped">
+  <!-- <ng-container *ngIf="visualizeResult.visualization.type === visualizationType.TableGrouped">
     <app-visualize-table [output]="visualizeResult.output" [results]="visualizeResult.results"></app-visualize-table>
-  </ng-container>
-  <ng-container *ngIf="visualizeResult.output.visualize === outputVisualizeType.Histogram">
+  </ng-container> -->
+  <!-- <ng-container *ngIf="visualizeResult.visualization.type === visualizationType.Histogram">
     <app-visualize-histogram
       *ngFor="let result of visualizeResult.results"
-      [output]="visualizeResult.output"
+      [visualization]="visualizeResult.visualization"
       [result]="result"
     ></app-visualize-histogram>
-  </ng-container>
-</ng-container>
+  </ng-container> -->
+<!-- </ng-container> -->

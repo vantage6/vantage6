@@ -1,3 +1,5 @@
+<h4>{{ name }}</h4>
+<p>{{description}}</p>
 <table mat-table [dataSource]="rows" class="result-table">
   <ng-container *ngFor="let column of columns" [matColumnDef]="column">
     <th mat-header-cell *matHeaderCellDef>{{ column !== "_row" ? column : "" }}</th>
@@ -6,3 +8,6 @@
   <tr mat-header-row *matHeaderRowDef="columns"></tr>
   <tr mat-row *matRowDef="let row; columns: columns"></tr>
 </table>
+<button mat-flat-button color="primary" (click)="exportToCsv()">
+  {{ "task-read.card-results.actions.download-csv" | translate }}
+</button>

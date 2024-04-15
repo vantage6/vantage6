@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { getChipTypeForStatus, getStatusType, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
-import { Algorithm, AlgorithmFunction, Output } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmFunction, FunctionType, Visualization } from 'src/app/models/api/algorithm.model';
 import { Task, TaskLazyProperties, TaskRun, TaskStatus, TaskResult, BaseTask, TaskStatusGroup } from 'src/app/models/api/task.models';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
@@ -28,6 +28,7 @@ import { NodeStatus } from 'src/app/models/api/node.model';
 export class TaskReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   @Input() id = '';
+  functionType = FunctionType;
 
   destroy$ = new Subject();
   waitTaskComplete$ = new Subject();
@@ -39,7 +40,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   childTasks: BaseTask[] = [];
   algorithm: Algorithm | null = null;
   function: AlgorithmFunction | null = null;
-  selectedOutput: Output | null = null;
+  selectedVisualization: Visualization | null = null;
   isLoading = true;
   canDelete = false;
   canCreate = false;
@@ -65,7 +66,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   async ngOnInit(): Promise<void> {
     this.setPermissions();
     this.visualization.valueChanges.subscribe((value) => {
-      this.selectedOutput = this.function?.output?.[value || 0] || null;
+      this.selectedVisualization = this.function?.ui_visualizations?.[value || 0] || null;
     });
     await this.initData();
 
@@ -110,7 +111,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     }
     this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image);
     this.function = this.algorithm?.functions.find((_) => _.name === this.task?.input?.method) || null;
-    this.selectedOutput = this.function?.output?.[0] || null;
+    this.selectedVisualization = this.function?.ui_visualizations?.[0] || null;
     this.isLoading = false;
   }
 
