@@ -36,6 +36,6 @@ RUN apt-get install --no-install-recommends --no-install-suggests -y \
 RUN CFLAGS="-I/usr/local/opt/openssl/include" \
   LDFLAGS="-L/usr/local/opt/openssl/lib" \
   UWSGI_PROFILE_OVERRIDE=ssl=true \
-  pip install uwsgi -Iv
+  pip install uwsgi==2.0.24 -Iv
 
 RUN chmod +x /vantage6/vantage6-algorithm-store/server.sh
