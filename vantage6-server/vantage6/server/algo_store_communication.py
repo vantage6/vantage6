@@ -4,6 +4,7 @@ import requests
 from flask import Response
 from http import HTTPStatus
 
+from vantage6.backend.common.globals import HOST_URI_ENV
 from vantage6.server import db
 
 
@@ -149,7 +150,7 @@ def request_algo_store(
 
     if not response and is_localhost_algo_store:
         # try again with the docker host ip
-        host_uri = os.environ.get("HOST_URI_ENV_VAR", None)
+        host_uri = os.environ.get(HOST_URI_ENV, None)
         if not host_uri:
             msg = (
                 "You are trying to connect to a localhost algorithm store, but this "

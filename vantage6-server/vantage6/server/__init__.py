@@ -140,14 +140,14 @@ class ServerApp:
         self.configure_api()
         self.load_resources()
 
-        # couple any algoritm stores to the server if defined in config. This should be
-        # done after the resources are loaded to ensure that rules are set up
-        self.couple_algorithm_stores()
-
         # set environment variable for dev environment
         host_uri = self.ctx.config.get("dev", {}).get("host_uri")
         if host_uri:
             os.environ[HOST_URI_ENV] = host_uri
+
+        # couple any algoritm stores to the server if defined in config. This should be
+        # done after the resources are loaded to ensure that rules are set up
+        self.couple_algorithm_stores()
 
         # set the server version
         self.__version__ = __version__
