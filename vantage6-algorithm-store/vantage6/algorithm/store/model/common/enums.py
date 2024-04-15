@@ -19,14 +19,23 @@ class ArgumentType(str, enum.Enum):
     """Enum for argument types"""
 
     COLUMN = "column"
+    COLUMNS = "column_list"
     STRING = "string"
+    STRINGS = "string_list"
     INTEGER = "integer"
+    INTEGERS = "integer_list"
     FLOAT = "float"
+    FLOATS = "float_list"
     BOOLEAN = "boolean"
-    DATE = "date"
     JSON = "json"
-    ORGANIZATIONS = "organizations"
     ORGANIZATION = "organization"
+    ORGANIZATIONS = "organization_list"
+
+
+class VisualizationType(str, enum.Enum):
+    """Enum for visualization types"""
+
+    TABLE = "table"
 
 
 class ReviewStatus(str, enum.Enum):

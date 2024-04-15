@@ -13,7 +13,7 @@ export class RoleService {
 
   async getRoles(parameters?: GetRoleParameters): Promise<Role[]> {
     //TODO: Add backend no pagination instead of page size 9999
-    const result = await this.apiService.getForApi<Pagination<Role>>('/role', { ...parameters });
+    const result = await this.apiService.getForApi<Pagination<Role>>('/role', { ...parameters, per_page: 9999 });
     return result.data;
   }
 
@@ -35,6 +35,10 @@ export class RoleService {
       ...roleForm
     };
     return await this.apiService.postForApi<Role>(`/role`, roleCreate);
+  }
+
+  async deleteRole(roleID: number): Promise<boolean> {
+    return await this.apiService.deleteForApi(`/role/${roleID}`);
   }
 
   async patchRole(role: Role): Promise<Role | null> {

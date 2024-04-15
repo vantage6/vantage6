@@ -9,6 +9,7 @@ from vantage6.algorithm.store.model.function import Function
 from vantage6.algorithm.store.model import Base
 from vantage6.algorithm.store.model.role import Role
 from vantage6.algorithm.store.model.rule import Rule
+from vantage6.algorithm.store.model.ui_visualization import UIVisualization
 from vantage6.algorithm.store.model.user import User
 from vantage6.algorithm.store.model.review import Review
 from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
@@ -80,12 +81,14 @@ class FunctionOutputSchema(HATEOASModelSchema):
 
     class Meta:
         model = Function
-        exclude = ["type_"]
 
-    type = fields.String(attribute="type_")
+    type_ = fields.String(data_key="type")
 
     databases = fields.Nested("DatabaseOutputSchema", many=True, exclude=["id"])
     arguments = fields.Nested("ArgumentOutputSchema", many=True, exclude=["id"])
+    ui_visualizations = fields.Nested(
+        "UIVisualizationOutputSchema", many=True, exclude=["id"]
+    )
 
 
 class DatabaseOutputSchema(HATEOASModelSchema):
@@ -100,9 +103,17 @@ class ArgumentOutputSchema(HATEOASModelSchema):
 
     class Meta:
         model = Argument
-        exclude = ["type_"]
 
-    type = fields.String(attribute="type_")
+    type_ = fields.String(data_key="type")
+
+
+class UIVisualizationOutputSchema(HATEOASModelSchema):
+    """Marshmallow output schema to serialize the UIVisualization model"""
+
+    class Meta:
+        model = UIVisualization
+
+    type_ = fields.String(data_key="type")
 
 
 class Vantage6ServerOutputSchema(HATEOASModelSchema):

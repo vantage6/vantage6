@@ -371,6 +371,28 @@ def server_configuration_questionaire(instance_name: str) -> dict:
             "start_with_server": run_rabbit_locally,
         }
 
+    # add algorithm stores to this server
+    is_add_community_store = q.confirm(
+        "Do you want to make the algorithms from the community algorithm store "
+        "available to your users?"
+    ).ask()
+    algorithm_stores = []
+    if is_add_community_store:
+        algorithm_stores.append(
+            {"name": "Community store", "url": "https://store.cotopaxi.vantage6.ai"}
+        )
+    add_more_stores = q.confirm(
+        "Do you want to add more algorithm stores?", default=False
+    ).ask()
+    while add_more_stores:
+        store_name = q.text(message="Enter the name of the store:").ask()
+        store_url = q.text(message="Enter the URL of the store:").ask()
+        algorithm_stores.append({"name": store_name, "url": store_url})
+        add_more_stores = q.confirm(
+            "Do you want to add more algorithm stores?", default=False
+        ).ask()
+    config["algorithm_stores"] = algorithm_stores
+
     return config
 
 

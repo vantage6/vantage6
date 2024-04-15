@@ -22,7 +22,12 @@ import { isTaskFinished } from '../helpers/task.helper';
 export class TaskService {
   constructor(private apiService: ApiService) {}
 
-  async getTasks(currentPage: number, parameters?: GetTaskParameters): Promise<Pagination<BaseTask>> {
+  async getTasks(parameters?: GetTaskParameters): Promise<BaseTask[]> {
+    const result = await this.apiService.getForApi<Pagination<BaseTask>>('/task', { ...parameters, per_page: 9999 });
+    return result.data;
+  }
+
+  async getPaginatedTasks(currentPage: number, parameters?: GetTaskParameters): Promise<Pagination<BaseTask>> {
     const result = await this.apiService.getForApiWithPagination<BaseTask>(`/task`, currentPage, parameters);
     return result;
   }
@@ -55,6 +60,14 @@ export class TaskService {
       for (const result of task.results) {
         if (result.result) {
           result.decoded_result = JSON.parse(atob(result.result));
+          // often, the parsed result is a stringified JSON object
+          try {
+            if (typeof result.decoded_result === 'string'){
+              result.decoded_result = JSON.parse(result.decoded_result);
+            }
+          } catch (e) {
+            // do nothing
+          }
         }
       }
     }

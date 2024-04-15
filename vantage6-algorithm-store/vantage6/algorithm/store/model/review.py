@@ -16,6 +16,10 @@ class Review(Base):
         Id of the user appointed as reviewer
     status : str
         Review status
+    reviewers : list[:class:`~.model.user.User`]
+        List of users that have written reviews
+    algorithm : :class:`~.model.algorithm.Algorithm`
+        Algorithm that the review is linked to
     """
 
     # fields

@@ -258,9 +258,13 @@ class AlgorithmClient(ClientBase):
             self.parent.log.info("--> Attempting to decode results!")
             result = None
             if response.get("result"):
-                result = json_lib.loads(
-                    base64s_to_bytes(response.get("result")).decode()
-                )
+                try:
+                    result = json_lib.loads(
+                        base64s_to_bytes(response.get("result")).decode()
+                    )
+                except Exception as e:
+                    self.parent.log.error("Unable to load results")
+                    self.parent.log.debug(e)
             return result
 
         def from_task(self, task_id: int) -> list[Any]:

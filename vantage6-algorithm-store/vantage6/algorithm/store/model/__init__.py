@@ -13,3 +13,4 @@ from vantage6.algorithm.store.model.developer_algorithm_association import (
     developer_algorithm_association,
 )
 from vantage6.algorithm.store.model.review import Review
+from vantage6.algorithm.store.model.ui_visualization import UIVisualization

@@ -13,7 +13,7 @@ export const getLazyProperties = async (result: any, data: any, lazyProperties: 
         const resultProperty = await apiService.getForApi<any>((result as any)[lazyProperty].link);
         data[lazyProperty] = resultProperty;
       } else {
-        const resultProperty = await apiService.getForApi<Pagination<any>>(result[lazyProperty]);
+        const resultProperty = await apiService.getForApi<Pagination<any>>(result[lazyProperty], { per_page: 9999 });
         data[lazyProperty] = resultProperty.data;
       }
     })

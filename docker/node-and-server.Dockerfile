@@ -6,7 +6,7 @@
 # * harbor2.vantage6.ai/infrastructure/server:x.x.x
 #
 ARG TAG=latest
-ARG BASE=4.3
+ARG BASE=4.4
 FROM harbor2.vantage6.ai/infrastructure/infrastructure-base:${BASE}
 
 LABEL version=${TAG}
@@ -47,7 +47,7 @@ RUN apt-get install --no-install-recommends --no-install-suggests -y \
 RUN CFLAGS="-I/usr/local/opt/openssl/include" \
   LDFLAGS="-L/usr/local/opt/openssl/lib" \
   UWSGI_PROFILE_OVERRIDE=ssl=true \
-  pip install uwsgi -Iv
+  pip install uwsgi==2.0.24 -Iv
 
 RUN chmod +x /vantage6/vantage6-server/server.sh
 

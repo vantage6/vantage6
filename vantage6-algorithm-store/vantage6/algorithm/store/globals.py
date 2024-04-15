@@ -17,6 +17,3 @@ API_PATH = "/api"
 # Which resources should be initialized. These names correspond to the
 # file-names in the resource directory
 RESOURCES = ["version", "algorithm", "vantage6_server", "role", "rule", "user"]
-
-# environment variable name for host URI
-HOST_URI_ENV = "HOST_URI_ENV_VAR"

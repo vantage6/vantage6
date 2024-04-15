@@ -1,11 +1,15 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
+import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { Organization } from 'src/app/models/api/organization.model';
 import { Role, RoleLazyProperties } from 'src/app/models/api/role.model';
 import { OperationType, ResourceType, Rule, ScopeType } from 'src/app/models/api/rule.model';
 import { TableData } from 'src/app/models/application/table.model';
+import { routePaths } from 'src/app/routes';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { RoleService } from 'src/app/services/role.service';
@@ -22,6 +26,7 @@ export class RoleReadComponent implements OnInit, OnDestroy {
   destroy$ = new Subject();
 
   canEdit = false;
+  canDelete = false;
   isLoading = true;
   isEditing: boolean = false;
 
@@ -40,16 +45,17 @@ export class RoleReadComponent implements OnInit, OnDestroy {
   errorMessage?: string;
 
   constructor(
+    private dialog: MatDialog,
+    private router: Router,
     private roleService: RoleService,
     private ruleService: RuleService,
     private organizationService: OrganizationService,
     private translateService: TranslateService,
     private permissionService: PermissionService
-  ) {}
+  ) { }
 
   async ngOnInit(): Promise<void> {
-    this.setPermissions();
-    this.allRules = await this.ruleService.getAllRules();
+    this.allRules = await this.ruleService.getRules();
     try {
       await this.initData();
     } catch (error) {
@@ -68,6 +74,7 @@ export class RoleReadComponent implements OnInit, OnDestroy {
 
   private async initData(): Promise<void> {
     this.role = await this.roleService.getRole(this.id, [RoleLazyProperties.Users]);
+    this.setPermissions();
     const organizationId = this.role.organization?.id.toString();
     if (organizationId) {
       this.roleOrganization = await this.organizationService.getOrganization(organizationId as string);
@@ -84,7 +91,7 @@ export class RoleReadComponent implements OnInit, OnDestroy {
         columnData: { ...user }
       }))
     };
-    this.roleRules = await this.ruleService.getAllRules(this.id);
+    this.roleRules = await this.ruleService.getRules({ role_id: this.id });
     this.enterEditMode(false);
     this.isLoading = false;
   }
@@ -100,6 +107,31 @@ export class RoleReadComponent implements OnInit, OnDestroy {
       this.fixedSelectedRules = this.roleRules;
       this.selectableRules = this.roleRules;
     }
+  }
+
+  public handleDeleteRole(): void {
+    if (!this.role) return;
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: this.translateService.instant('role-read.delete-dialog.title', { name: this.role.name }),
+        content: this.translateService.instant('role-read.delete-dialog.content'),
+        confirmButtonText: this.translateService.instant('general.delete'),
+        confirmButtonType: 'warn',
+      }
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(async (result) => {
+        if (result === true) {
+          if (!this.role) return;
+          this.isLoading = true;
+          await this.roleService.deleteRole(this.role.id);
+          this.router.navigate([routePaths.roles]);
+        }
+      });
   }
 
   public handleEnterEditMode(): void {
@@ -137,6 +169,10 @@ export class RoleReadComponent implements OnInit, OnDestroy {
     return this.canEdit && !this.role?.is_default_role;
   }
 
+  public get deleteEnabled(): boolean {
+    return this.canDelete && !this.role?.is_default_role;
+  }
+
   public get submitDisabled(): boolean {
     return this.changedRules?.length === 0;
   }
@@ -151,8 +187,9 @@ export class RoleReadComponent implements OnInit, OnDestroy {
       .isInitialized()
       .pipe(takeUntil(this.destroy$))
       .subscribe((initialized) => {
-        if (initialized) {
-          this.canEdit = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.ROLE, OperationType.EDIT);
+        if (initialized && this.role) {
+          this.canEdit = this.permissionService.isAllowedForOrg(ResourceType.ROLE, OperationType.EDIT, this.role.organization?.id || null);
+          this.canDelete = this.permissionService.isAllowedForOrg(ResourceType.ROLE, OperationType.DELETE, this.role.organization?.id || null);
         }
       });
   }

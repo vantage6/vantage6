@@ -1,6 +1,51 @@
 Release notes
 =============
 
+4.4.0
+-----
+
+*15 April 2024*
+
+- **Feature**
+
+ - Added visualization of a results table to the UI. The algorithm store is used to
+   store how the table should be visualized.
+   (`Issue#1057 <https://github.com/vantage6/vantage6/issues/1057>`_,
+   `PR#1195 <https://github.com/vantage6/vantage6/pull/1195>`_).
+ - Support for more types of algorithm arguments via the UI: lists of strings, ints,
+   floats and columns, and booleans
+   (`Issue#1119 <https://github.com/vantage6/vantage6/issues/1119>`_,
+   `PR#1190 <https://github.com/vantage6/vantage6/pull/1190>`_).
+ - Added configuration option to link algorithm stores to a server via the server
+   configuration (`PR#1156 <https://github.com/vantage6/vantage6/pull/1156>`_).
+ - Added a bunch of custom exceptions for algorithms to the algorithm tools
+   (`Issue#1185 <https://github.com/vantage6/vantage6/issues/1185>`_,
+   `PR#1205 <https://github.com/vantage6/vantage6/pull/1205>`_).
+ - Decoding the environment variables automatically in the algorithm wrapper, to prevent
+   that a user has to decode them manually
+   (`Issue#1056 <https://github.com/vantage6/vantage6/issues/1056>`_,
+   `PR#1197 <https://github.com/vantage6/vantage6/pull/1197>`_).
+ - Add option to delete roles in the UI
+   (`Issue#1113 <https://github.com/vantage6/vantage6/issues/1113>`_,
+   `PR#1199 <https://github.com/vantage6/vantage6/pull/1199>`_).
+ - Add option to register a node in the UI *after* creating/editing the collaboration
+   (`Issue#1122 <https://github.com/vantage6/vantage6/issues/1122>`_,
+   `PR#1202 <https://github.com/vantage6/vantage6/pull/1202>`_).
+
+- **Change**
+
+ - Updated idna dependency
+
+- **Bugfix**
+
+ - Do not mark algorithm runs as killed if they were completed before the user killed
+   the task to which the runs belong
+   (`Issue#1045 <https://github.com/vantage6/vantage6/issues/1045>`_,
+   `PR#1204 <https://github.com/vantage6/vantage6/pull/1204>`_).
+ - Fix UI code in a few places where pagination was not implemented properly
+   (`Issue#1126 <https://github.com/vantage6/vantage6/issues/1126>`_,
+   `PR#1203 <https://github.com/vantage6/vantage6/pull/1203>`_).
+
 4.3.4
 -----
 
