@@ -87,7 +87,19 @@ class CollectResultsError(ClientError):
 
 
 class InputError(AlgorithmError):
-    """Generic error raised with input handling."""
+    """Generic error raised with algorithm input handling.
+    Example usage:
+    - User input is invalid.
+    - Subtask fails due to invalid input received from the parent task.
+    """
+
+
+class UserInputError(InputError):
+    """Raised when user input is invalid.
+
+    Example usage:
+    - User input is not in the expected format.
+    """
 
 
 class DeserializationError(InputError):
