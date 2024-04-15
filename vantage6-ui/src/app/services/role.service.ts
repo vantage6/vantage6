@@ -37,6 +37,10 @@ export class RoleService {
     return await this.apiService.postForApi<Role>(`/role`, roleCreate);
   }
 
+  async deleteRole(roleID: number): Promise<boolean> {
+    return await this.apiService.deleteForApi(`/role/${roleID}`);
+  }
+
   async patchRole(role: Role): Promise<Role | null> {
     try {
       const requestBody: RolePatch = {

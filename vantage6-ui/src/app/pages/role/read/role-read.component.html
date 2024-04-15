@@ -19,10 +19,14 @@
       <mat-tab-group dynamicHeight mat-stretch-tabs="false" mat-align-tabs="start">
         <mat-tab label="{{ 'role-read.tab.permissions' | translate }}">
           <div class="role-read__tab-content">
-            <div *ngIf="editEnabled" class="role-read__buttons">
-              <button *ngIf="!isEditing" mat-flat-button (click)="handleEnterEditMode()">
+            <div class="role-read__buttons">
+              <button *ngIf="editEnabled && !isEditing" mat-flat-button (click)="handleEnterEditMode()">
                 <mat-icon>edit</mat-icon>
                 <span>{{ "role-read.edit-permissions" | translate }}</span>
+              </button>
+              <button *ngIf="deleteEnabled" mat-flat-button color="warn" (click)="handleDeleteRole()">
+                <mat-icon>delete</mat-icon>
+                <span>{{ "general.delete" | translate }}</span>
               </button>
             </div>
 

@@ -303,6 +303,10 @@
     "tab": {
       "permissions": "Permissions",
       "users": "Users"
+    },
+    "delete-dialog": {
+      "title": "Are you sure you want to delete the role '{{name}}'?",
+      "content": "Note, this will also remove this role from all users.\nThis operation cannot be undone."
     }
   },
   "rule": {
