@@ -136,7 +136,8 @@
       "title": "Results",
       "actions": {
         "visualization": "Visualization",
-        "download": "Download JSON result"
+        "download-json": "Download JSON",
+        "download-csv": "Download CSV"
       }
     },
     "card-algorithm": {
@@ -227,7 +228,8 @@
       "title": "Details"
     },
     "card-nodes": {
-      "title": "Nodes"
+      "title": "Nodes",
+      "add": "Register missing nodes"
     },
     "card-algorithm-stores": {
       "title": "Algorithm stores available to this collaboration",
@@ -242,7 +244,8 @@
     "delete-dialog": {
       "title": "Are you sure you want to delete the collaboration '{{name}}'?",
       "content": "Note, this will also delete all nodes and tasks related to this collaboration.\nThis operation cannot be undone."
-    }
+    },
+    "alert-missing-nodes": "Not all organizations have registered nodes for this collaboration. Please ensure that they are registered and active before sending tasks."
   },
   "study-read": {
     "title": "Study",

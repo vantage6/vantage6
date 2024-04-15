@@ -32,6 +32,12 @@ class ArgumentType(str, enum.Enum):
     ORGANIZATIONS = "organization_list"
 
 
+class VisualizationType(str, enum.Enum):
+    """Enum for visualization types"""
+
+    TABLE = "table"
+
+
 class ReviewStatus(str, enum.Enum):
     """Enum for review status"""
 

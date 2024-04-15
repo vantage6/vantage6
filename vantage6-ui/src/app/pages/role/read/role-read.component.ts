@@ -52,10 +52,10 @@ export class RoleReadComponent implements OnInit, OnDestroy {
     private organizationService: OrganizationService,
     private translateService: TranslateService,
     private permissionService: PermissionService
-  ) {}
+  ) { }
 
   async ngOnInit(): Promise<void> {
-    this.allRules = await this.ruleService.getAllRules();
+    this.allRules = await this.ruleService.getRules();
     try {
       await this.initData();
     } catch (error) {
@@ -91,7 +91,7 @@ export class RoleReadComponent implements OnInit, OnDestroy {
         columnData: { ...user }
       }))
     };
-    this.roleRules = await this.ruleService.getAllRules(this.id);
+    this.roleRules = await this.ruleService.getRules({ role_id: this.id });
     this.enterEditMode(false);
     this.isLoading = false;
   }
@@ -114,7 +114,7 @@ export class RoleReadComponent implements OnInit, OnDestroy {
 
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
-        title: this.translateService.instant('role-read.delete-dialog.title', { name : this.role.name }),
+        title: this.translateService.instant('role-read.delete-dialog.title', { name: this.role.name }),
         content: this.translateService.instant('role-read.delete-dialog.content'),
         confirmButtonText: this.translateService.instant('general.delete'),
         confirmButtonType: 'warn',
@@ -122,16 +122,16 @@ export class RoleReadComponent implements OnInit, OnDestroy {
     });
 
     dialogRef
-    .afterClosed()
-    .pipe(takeUntil(this.destroy$))
-    .subscribe(async (result) => {
-      if (result === true) {
-        if (!this.role) return;
-        this.isLoading = true;
-        await this.roleService.deleteRole(this.role.id);
-        this.router.navigate([routePaths.roles]);
-      }
-    });
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(async (result) => {
+        if (result === true) {
+          if (!this.role) return;
+          this.isLoading = true;
+          await this.roleService.deleteRole(this.role.id);
+          this.router.navigate([routePaths.roles]);
+        }
+      });
   }
 
   public handleEnterEditMode(): void {

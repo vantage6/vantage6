@@ -7,6 +7,7 @@ from http import HTTPStatus
 from vantage6.algorithm.store import db
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.common import logger_name
+from vantage6.algorithm.store.model.ui_visualization import UIVisualization
 from vantage6.algorithm.store.resource.schema.input_schema import AlgorithmInputSchema
 from vantage6.algorithm.store.resource.schema.output_schema import AlgorithmOutputSchema
 from vantage6.algorithm.store.model.algorithm import Algorithm as db_Algorithm
@@ -144,8 +145,18 @@ class Algorithms(AlgorithmStoreResources):
 
         tags: ["Algorithm"]
         """
-        # TODO add filtering
         q = g.session.query(db_Algorithm)
+
+        # filter on properties
+        for field in [
+            "name",
+            "description",
+            "image",
+            "partitioning",
+            "vantage6_version",
+        ]:
+            if (value := request.args.get(field)) is not None:
+                q = q.filter(getattr(db_Algorithm, field).like(f"%{value}%"))
 
         # paginate results
         try:
@@ -234,6 +245,24 @@ class Algorithms(AlgorithmStoreResources):
                                 description: Type of argument. Can be 'string',
                                   'integer', 'float', 'boolean', 'json',
                                   'column', 'organizations' or 'organization'
+                        ui_visualizations:
+                          type: array
+                          description: List of visualizations that are available in
+                            the algorithm
+                          items:
+                            properties:
+                              name:
+                                type: string
+                                description: Name of the visualization
+                              description:
+                                type: string
+                                description: Description of the visualization
+                              type:
+                                type: string
+                                description: Type of visualization.
+                              schema:
+                                type: object
+                                description: Schema that describes the visualization
 
         responses:
           201:
@@ -279,26 +308,32 @@ class Algorithms(AlgorithmStoreResources):
             )
             func.save()
             # create the arguments
-            arguments = function.get("arguments")
-            if arguments:
-                for argument in arguments:
-                    arg = Argument(
-                        name=argument["name"],
-                        description=argument.get("description", ""),
-                        type_=argument["type"],
-                        function_id=func.id,
-                    )
-                    arg.save()
+            for argument in function.get("arguments", []):
+                arg = Argument(
+                    name=argument["name"],
+                    description=argument.get("description", ""),
+                    type_=argument["type"],
+                    function_id=func.id,
+                )
+                arg.save()
             # create the databases
-            databases = function.get("databases")
-            if databases:
-                for database in databases:
-                    db = Database(
-                        name=database["name"],
-                        description=database.get("description", ""),
-                        function_id=func.id,
-                    )
-                    db.save()
+            for database in function.get("databases", []):
+                db = Database(
+                    name=database["name"],
+                    description=database.get("description", ""),
+                    function_id=func.id,
+                )
+                db.save()
+            # create the visualizations
+            for visualization in function.get("ui_visualizations", []):
+                vis = UIVisualization(
+                    name=visualization["name"],
+                    description=visualization.get("description", ""),
+                    type_=visualization["type"],
+                    schema=visualization.get("schema", {}),
+                    function_id=func.id,
+                )
+                vis.save()
 
         return algorithm_output_schema.dump(algorithm, many=False), HTTPStatus.CREATED
 
@@ -374,6 +409,8 @@ class Algorithm(AlgorithmStoreResources):
                 database.delete()
             for argument in function.arguments:
                 argument.delete()
+            for visualization in function.ui_visualizations:
+                visualization.delete()
             function.delete()
         algorithm.delete()
 
@@ -494,7 +531,7 @@ class Algorithm(AlgorithmStoreResources):
         fields = ["name", "description", "image", "partitioning", "vantage6_version"]
         for field in fields:
             if field in data and data.get(field) is not None:
-                setattr(algorithm, field, data.get("name"))
+                setattr(algorithm, field, data.get(field))
 
         if (functions := data.get("functions")) is not None:
             for function in algorithm.functions:
@@ -502,6 +539,8 @@ class Algorithm(AlgorithmStoreResources):
                     argument.delete()
                 for db in function.databases:
                     db.delete()
+                for visualization in function.ui_visualizations:
+                    visualization.delete()
                 function.delete()
 
             for new_function in functions:
@@ -513,27 +552,30 @@ class Algorithm(AlgorithmStoreResources):
                 )
                 func.save()
 
-                arguments = new_function.get("arguments")
-                if arguments:
-                    for argument in arguments:
-                        arg = Argument(
-                            name=argument["name"],
-                            description=argument.get("description", ""),
-                            type_=argument["type"],
-                            function_id=func.id,
-                        )
-                        arg.save()
-
-                # create the databases
-                databases = new_function.get("databases")
-                if databases:
-                    for database in databases:
-                        db = Database(
-                            name=database["name"],
-                            description=database.get("description", ""),
-                            function_id=func.id,
-                        )
-                        db.save()
+                for argument in new_function.get("arguments", []):
+                    arg = Argument(
+                        name=argument["name"],
+                        description=argument.get("description", ""),
+                        type_=argument["type"],
+                        function_id=func.id,
+                    )
+                    arg.save()
+                for database in new_function.get("databases", []):
+                    db = Database(
+                        name=database["name"],
+                        description=database.get("description", ""),
+                        function_id=func.id,
+                    )
+                    db.save()
+                for visualization in new_function.get("ui_visualizations", []):
+                    vis = UIVisualization(
+                        name=visualization["name"],
+                        description=visualization.get("description", ""),
+                        type_=visualization["type"],
+                        schema=visualization.get("schema", {}),
+                        function_id=func.id,
+                    )
+                    vis.save()
 
         algorithm.save()
 

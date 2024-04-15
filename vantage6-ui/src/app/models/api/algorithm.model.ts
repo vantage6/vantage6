@@ -18,12 +18,6 @@ export enum OutputType {
   Dict = 'dict'
 }
 
-export enum OutputVisualizeType {
-  Table = 'table',
-  TableGrouped = 'table_grouped',
-  Histogram = 'histogram'
-}
-
 export enum SelectParameterType {
   Column = 'column',
   String = 'string',
@@ -52,6 +46,11 @@ export enum FunctionType {
   Federated = 'federated'
 }
 
+export enum VisualizationType {
+  Table = 'table',
+  Histogram = 'histogram',
+}
+
 // TODO this interface must be updated to match the API
 export interface Algorithm {
   id: number;
@@ -72,7 +71,7 @@ export interface AlgorithmFunction {
   type: FunctionType;
   arguments: Argument[];
   databases: FunctionDatabase[];
-  output: Output[];
+  ui_visualizations: Visualization[];
 }
 
 export interface Select {
@@ -113,11 +112,10 @@ export interface FunctionDatabase {
   name: string;
   description?: string;
 }
-export interface Output {
-  visualize?: OutputVisualizeType | null;
-  title?: string;
-  type: OutputType;
-  keys?: string[] | null;
-  filter_property?: string;
-  filter_value?: string;
+
+export interface Visualization {
+  name: string;
+  description?: string;
+  type: VisualizationType;
+  schema?: any;
 }

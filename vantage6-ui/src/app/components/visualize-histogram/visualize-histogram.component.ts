@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AfterViewInit, Component, ElementRef, Input, OnChanges, ViewChild } from '@angular/core';
-import { Output } from 'src/app/models/api/algorithm.model';
 import * as Plot from '@observablehq/plot';
+import { Visualization } from 'src/app/models/api/algorithm.model';
 
 @Component({
   selector: 'app-visualize-histogram',
@@ -10,7 +10,7 @@ import * as Plot from '@observablehq/plot';
 })
 export class VisualizeHistogramComponent implements OnChanges, AfterViewInit {
   @ViewChild('histogram') container?: ElementRef;
-  @Input() output!: Output;
+  @Input() visualization!: Visualization;
   @Input() result!: any;
 
   ngOnChanges(): void {
