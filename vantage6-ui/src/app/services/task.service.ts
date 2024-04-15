@@ -22,7 +22,12 @@ import { isTaskFinished } from '../helpers/task.helper';
 export class TaskService {
   constructor(private apiService: ApiService) {}
 
-  async getTasks(currentPage: number, parameters?: GetTaskParameters): Promise<Pagination<BaseTask>> {
+  async getTasks(parameters?: GetTaskParameters): Promise<BaseTask[]> {
+    const result = await this.apiService.getForApi<Pagination<BaseTask>>('/task', { ...parameters, per_page: 9999 });
+    return result.data;
+  }
+
+  async getPaginatedTasks(currentPage: number, parameters?: GetTaskParameters): Promise<Pagination<BaseTask>> {
     const result = await this.apiService.getForApiWithPagination<BaseTask>(`/task`, currentPage, parameters);
     return result;
   }

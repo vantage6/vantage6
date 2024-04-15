@@ -51,7 +51,7 @@ export class RoleCreateComponent implements OnInit {
 
   /* TODO: bundle promises */
   private async initData(): Promise<void> {
-    this.selectableRules = await this.ruleService.getAllRules();
+    this.selectableRules = await this.ruleService.getRules();
     this.selectableOrganizations = await this.organizationService.getAllowedOrganizations(ResourceType.ROLE, OperationType.CREATE);
   }
 }

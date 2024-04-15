@@ -132,7 +132,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   }
 
   async getChildTasks(): Promise<BaseTask[]> {
-    return await this.taskService.getTasks(1, { parent_id: this.task?.id, include: 'results,runs' }).then((data) => data.data);
+    return await this.taskService.getTasks({ parent_id: this.task?.id, include: 'results,runs' });
   }
 
   isTaskNotComplete(): boolean {

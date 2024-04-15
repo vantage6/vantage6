@@ -49,7 +49,7 @@ export class RoleReadComponent implements OnInit, OnDestroy {
 
   async ngOnInit(): Promise<void> {
     this.setPermissions();
-    this.allRules = await this.ruleService.getAllRules();
+    this.allRules = await this.ruleService.getRules();
     try {
       await this.initData();
     } catch (error) {
@@ -84,7 +84,7 @@ export class RoleReadComponent implements OnInit, OnDestroy {
         columnData: { ...user }
       }))
     };
-    this.roleRules = await this.ruleService.getAllRules(this.id);
+    this.roleRules = await this.ruleService.getRules({role_id: this.id});
     this.enterEditMode(false);
     this.isLoading = false;
   }
