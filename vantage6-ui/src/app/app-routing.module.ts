@@ -86,6 +86,27 @@ const routes: Routes = [
         canActivate: [authenticationGuard(), chosenCollaborationGuard()]
       },
       {
+        path: routerConfig.passwordChange,
+        component: ChangePasswordComponent,
+        canActivate: [authenticationGuard()]
+      }
+    ]
+  },
+  {
+    path: routerConfig.analyze,
+    component: LayoutDefaultComponent,
+    data: { crumb: ['links.title', routePaths.analyzeHome] },
+    children: [
+      {
+        path: routerConfig.analyzeHome,
+        component: HomeComponent
+      },
+      {
+        path: routerConfig.start,
+        component: StartComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
         path: routerConfig.tasks,
         component: TaskListComponent,
         canActivate: [authenticationGuard(), chosenCollaborationGuard()],
@@ -121,23 +142,6 @@ const routes: Routes = [
         path: routerConfig.templateTaskCreate,
         component: TemplateTaskCreateComponent,
         canActivate: [authenticationGuard(), chosenCollaborationGuard()]
-      }
-    ]
-  },
-  {
-    path: '',
-    component: LayoutDefaultComponent,
-    data: { hideMenu: true },
-    children: [
-      {
-        path: routerConfig.start,
-        component: StartComponent,
-        canActivate: [authenticationGuard()]
-      },
-      {
-        path: routerConfig.passwordChange,
-        component: ChangePasswordComponent,
-        canActivate: [authenticationGuard()]
       }
     ]
   },

@@ -2,9 +2,6 @@
   <button mat-icon-button *ngIf="hideSideMenu" (click)="sideNav.toggle()"><mat-icon>menu</mat-icon></button>
   <img src="/assets/images/logo.png" class="logo" alt="vantage6" />
   <div class="actions">
-    <button mat-flat-button [routerLink]="handleToggleAdmin()">
-      {{ isAdministration ? ("header.actions.admin-leave" | translate) : ("header.actions.admin" | translate) }}
-    </button>
     <button mat-flat-button [matMenuTriggerFor]="headerMenu">
       <mat-icon>person</mat-icon>
       {{ username }}
@@ -24,23 +21,37 @@
 <mat-sidenav-container autosize>
   <mat-sidenav #sideNav *ngIf="!hideMenu" [mode]="hideSideMenu ? 'over' : 'side'" [fixedInViewport]="hideSideMenu" fixedTopGap="56">
     <mat-nav-list>
-      <button mat-flat-button color="primary" *ngIf="!isStartPage && !isAdministration" [routerLink]="routes.start">
-        <mat-icon>arrow_back</mat-icon>{{ (chosenCollaborationService.collaboration$ | async)?.name }}
-      </button>
-      <mat-list-item
-        *ngFor="let link of navigationLinks"
-        [routerLink]="[link.route]"
-        [routerLinkActive]="['mdc-list-item--activated']"
-        [routerLinkActiveOptions]="{ exact: !!link.shouldBeExact }"
-      >
-        <mat-icon matListItemIcon>{{ link.icon }}</mat-icon>
-        <a matLine>{{ link.label }}</a>
-      </mat-list-item>
+      <div *ngFor="let link of navigationLinks">
+        <mat-list-item class="parent" (click)="goToFirstSubmenu(link)">
+          <mat-icon matListItemIcon>{{ link.icon }}</mat-icon>
+          <a matLine>{{ link.label }}</a>
+        </mat-list-item>
+        <div *ngFor="let sublink of link.submenus" class="submenu" [ngClass]="{ expanded: link.expanded }">
+          <mat-list-item
+            [routerLink]="[sublink.route]"
+            [routerLinkActive]="['mdc-list-item--activated']"
+            [routerLinkActiveOptions]="{ exact: !!sublink.shouldBeExact }"
+          >
+            <mat-icon matListItemIcon>{{ sublink.icon }}</mat-icon>
+            <a matLine>{{ sublink.label }}</a>
+          </mat-list-item>
+        </div>
+      </div>
     </mat-nav-list>
   </mat-sidenav>
   <mat-sidenav-content>
     <div class="layout-container">
       <app-breadcrumbs></app-breadcrumbs>
+      <div *ngIf="isAnalyze && (chosenCollaborationService.collaboration$ | async) && router.url !== routes.start">
+        <mat-card class="collaboration-choose-alert">
+          <div>
+            {{ "chosen-collaboration-alert.content" | translate: { name: chosenCollaborationService.collaboration$.value?.name } }}
+            <button mat-flat-button class="right-aligned-button" color="primary" [routerLink]="routes.start">
+              {{ "chosen-collaboration-alert.change" | translate }}
+            </button>
+          </div>
+        </mat-card>
+      </div>
       <router-outlet *ngIf="chosenCollaborationService.isInitialized$ | async"></router-outlet>
     </div>
   </mat-sidenav-content>

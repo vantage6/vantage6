@@ -6,7 +6,6 @@ export const routePaths = {
   mfaCode: '/auth/mfa/code',
   mfaLost: '/auth/mfa/lost',
   mfaRecover: '/auth/mfa/recover',
-  start: '/start',
   home: '/',
   passwordChange: '/password/change',
   adminHome: '/admin',
@@ -30,11 +29,13 @@ export const routePaths = {
   userEdit: '/admin/users/edit',
   user: '/admin/users',
   nodes: '/admin/nodes',
-  tasks: '/tasks',
-  taskCreate: '/tasks/create',
-  taskCreateRepeat: '/tasks/create/repeat',
-  task: '/tasks',
-  templateTaskCreate: '/template-tasks/create'
+  analyzeHome: '/analyze',
+  start: '/analyze/start', // TODO let this refer to analyze?
+  tasks: '/analyze/tasks',
+  taskCreate: '/analyze/tasks/create',
+  taskCreateRepeat: '/analyze/tasks/create/repeat',
+  task: '/analyze/tasks',
+  templateTaskCreate: '/analyze/template-tasks/create'
 };
 
 export const routerConfig = {
@@ -70,6 +71,8 @@ export const routerConfig = {
   userEdit: 'users/edit/:id',
   user: 'users/:id',
   nodes: 'nodes',
+  analyze: 'analyze',
+  analyzeHome: '',
   tasks: 'tasks',
   taskCreate: 'tasks/create',
   taskCreateRepeat: 'tasks/create/repeat/:id',

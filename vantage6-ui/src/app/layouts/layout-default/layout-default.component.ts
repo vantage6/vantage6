@@ -3,13 +3,14 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { MatSidenav } from '@angular/material/sidenav';
 import { Subject, delay, filter, takeUntil } from 'rxjs';
 import { routePaths } from 'src/app/routes';
-import { NavigationLink } from 'src/app/models/application/navigation-link.model';
+import { NavigationLink, NavigationLinkType } from 'src/app/models/application/navigation-link.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { AuthService } from 'src/app/services/auth.service';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { TokenStorageService } from 'src/app/services/token-storage.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-layout-default',
@@ -23,25 +24,27 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
   hideSideMenu = false;
   navigationLinks: NavigationLink[] = [];
   isAdministration: boolean = false;
-  isStartPage: boolean = false;
+  isAnalyze: boolean = false;
   hideMenu: boolean = false;
   username: string = '';
+  showAdminSubmenu = false;
 
   @ViewChild(MatSidenav)
   sideNav!: MatSidenav;
 
   constructor(
-    private router: Router,
+    public router: Router,
     route: ActivatedRoute,
     private breakpointObserver: BreakpointObserver,
     private authService: AuthService,
     public chosenCollaborationService: ChosenCollaborationService,
     private permissionService: PermissionService,
-    private tokenStorageService: TokenStorageService
+    private tokenStorageService: TokenStorageService,
+    private translateService: TranslateService
   ) {
     router.events.pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd)).subscribe((event) => {
-      this.isStartPage = event.url.startsWith(routePaths.start);
-      this.isAdministration = event.url.startsWith(routePaths.adminHome);
+      this.isAdministration = event.url.startsWith('/admin');
+      this.isAnalyze = event.url.startsWith('/analyze');
 
       this.hideMenu = route.snapshot.data?.['hideMenu'] || false;
 
@@ -76,65 +79,146 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
     this.destroy$.next(true);
   }
 
-  handleToggleAdmin(): string {
-    if (this.isAdministration && this.chosenCollaborationService.collaboration$.value) {
-      return routePaths.home;
-    } else if (this.isAdministration) {
-      return routePaths.start;
-    } else {
-      return routePaths.adminHome;
-    }
-  }
-
   private setNavigationLinks(): void {
-    if (this.isStartPage || this.hideMenu) {
+    if (this.hideMenu) {
       this.navigationLinks = [];
       return;
     }
 
     const newLinks: NavigationLink[] = [];
 
-    if (this.isAdministration) {
-      //Home
-      newLinks.push({ route: routePaths.adminHome, label: 'Home', icon: 'home', shouldBeExact: true });
-      //Organizations
-      if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.ORGANIZATION, OperationType.VIEW)) {
-        newLinks.push({ route: routePaths.organizations, label: 'Organizations', icon: 'location_city' });
-      }
-      //Collaborations
-      if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.VIEW)) {
-        newLinks.push({ route: routePaths.collaborations, label: 'Collaborations', icon: 'train' });
-      }
-      //Roles
-      if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.VIEW)) {
-        newLinks.push({ route: routePaths.roles, label: 'Roles', icon: 'groups' });
-      }
-      //Users
-      if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.USER, OperationType.VIEW)) {
-        newLinks.push({ route: routePaths.users, label: 'Users', icon: 'people' });
-      }
-      //Nodes
-      if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.NODE, OperationType.VIEW)) {
-        newLinks.push({ route: routePaths.nodes, label: 'Nodes', icon: 'data_object' });
-      }
-    } else {
-      //Home
-      newLinks.push({ route: routePaths.home, label: 'Home', icon: 'home', shouldBeExact: true });
-      //Tasks
-      if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.VIEW)) {
-        newLinks.push({ route: routePaths.tasks, label: 'Tasks', icon: 'science' });
-      }
-      //Template tasks
-      // if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.CREATE)) {
-      //   newLinks.push({ route: routePaths.templateTaskCreate, label: 'Quick tasks', icon: 'assignment' });
-      // }
+    // Home
+    newLinks.push({
+      route: routePaths.home,
+      label: this.translateService.instant('links.home'),
+      icon: 'home',
+      shouldBeExact: true,
+      linkType: NavigationLinkType.Home
+    });
+
+    const analyzeLink = this.getAnalyzeLink();
+    if (analyzeLink.submenus) {
+      newLinks.push(analyzeLink);
+    }
+
+    // TODO get rid of adminHome route
+
+    //Main admin menu
+    const adminLink = this.getAdminLink();
+    if (adminLink.submenus) {
+      newLinks.push(this.getAdminLink());
     }
 
     this.navigationLinks = newLinks;
   }
 
+  goToFirstSubmenu(link: NavigationLink): void {
+    if (link.linkType === NavigationLinkType.Home) {
+      this.router.navigate([link.route]);
+    } else if (link.submenus && link.submenus.length > 0) {
+      this.router.navigate([link.submenus[0].route]);
+    }
+  }
+
   handleLogout() {
     this.authService.logout();
     this.router.navigate([routePaths.login]);
+  }
+
+  private getAnalyzeLink(): NavigationLink {
+    const link: NavigationLink = {
+      route: routePaths.tasks,
+      label: this.translateService.instant('links.analyze'),
+      icon: 'bar_chart',
+      expanded: this.isAnalyze,
+      linkType: NavigationLinkType.Analyze
+    };
+
+    //Tasks
+    const submenus: NavigationLink[] = [];
+    if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.VIEW)) {
+      submenus.push({
+        route: routePaths.tasks,
+        label: this.translateService.instant('resources.tasks'),
+        icon: 'science',
+        linkType: NavigationLinkType.Analyze
+      });
+    }
+    //Template tasks
+    // if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.CREATE)) {
+    //   newLinks.push({ route: routePaths.templateTaskCreate, label: 'Quick tasks', icon: 'assignment' });
+    // }
+    if (submenus.length > 0) {
+      link.submenus = submenus;
+      link.route = submenus[0].route;
+    }
+    // if collaboration has not been chosen yet, link to that page
+    if (!this.chosenCollaborationService.collaboration$.value) {
+      link.route = routePaths.start;
+    }
+    return link;
+  }
+
+  private getAdminLink(): NavigationLink {
+    const adminLink: NavigationLink = {
+      route: routePaths.adminHome,
+      label: this.translateService.instant('links.admin'),
+      icon: 'settings',
+      expanded: this.isAdministration,
+      linkType: NavigationLinkType.Admin
+    };
+
+    // admin submenus
+    const adminSubmenus: NavigationLink[] = [];
+    //Collaborations
+    if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.VIEW)) {
+      adminSubmenus.push({
+        route: routePaths.collaborations,
+        label: this.translateService.instant('resources.collaborations'),
+        icon: 'train',
+        linkType: NavigationLinkType.Admin
+      });
+    }
+    //Organizations
+    if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.ORGANIZATION, OperationType.VIEW)) {
+      adminSubmenus.push({
+        route: routePaths.organizations,
+        label: this.translateService.instant('resources.organizations'),
+        icon: 'location_city',
+        linkType: NavigationLinkType.Admin
+      });
+    }
+    //Roles
+    if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.VIEW)) {
+      adminSubmenus.push({
+        route: routePaths.roles,
+        label: this.translateService.instant('resources.roles'),
+        icon: 'groups',
+        linkType: NavigationLinkType.Admin
+      });
+    }
+    //Users
+    if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.USER, OperationType.VIEW)) {
+      adminSubmenus.push({
+        route: routePaths.users,
+        label: this.translateService.instant('resources.users'),
+        icon: 'people',
+        linkType: NavigationLinkType.Admin
+      });
+    }
+    //Nodes
+    if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.NODE, OperationType.VIEW)) {
+      adminSubmenus.push({
+        route: routePaths.nodes,
+        label: this.translateService.instant('resources.nodes'),
+        icon: 'data_object',
+        linkType: NavigationLinkType.Admin
+      });
+    }
+    if (adminSubmenus.length > 0) {
+      adminLink.submenus = adminSubmenus;
+      adminLink.route = adminSubmenus[0].route;
+    }
+    return adminLink;
   }
 }
