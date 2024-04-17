@@ -124,8 +124,12 @@ def make_request(
                 )
                 log.warning("Error messages: %s", response.json())
                 log.debug(
-                    f"method: {request.method}, url: {url}, json: {json}"
-                    f", params: {params}, headers: {headers}"
+                    "method: %s, url: %s, json: %s, params: %s, headers: %s",
+                    request.method,
+                    url,
+                    json,
+                    params,
+                    headers,
                 )
                 if "application/json" in response.headers.get("Content-Type"):
                     log.debug(response.json().get("msg", "no description..."))
@@ -137,7 +141,7 @@ def make_request(
 
         except Exception:
             log.exception(
-                f"On attempt {i}, the proxy request raised an " f"exception: <{url}>"
+                "On attempt %s, the proxy request raised an exception: <%s>", i, url
             )
 
     # if all attemps fail, raise an exception to be handled by its parent
@@ -229,7 +233,7 @@ def proxy_task():
     except Exception:
         log.exception("Could not extract headers from request...")
 
-    log.debug(f"{len(organizations)} organizations")
+    log.debug("%s organizations", len(organizations))
 
     # For every organization we need to encrypt the input field. This is done
     # in parallel as the client (algorithm) is waiting for a timely response.
@@ -255,7 +259,7 @@ def proxy_task():
         organization_id = organization.get("id")
 
         # retrieve public key of the organization
-        log.debug(f"Retrieving public key of org: {organization_id}")
+        log.debug("Retrieving public key of org: %s", organization_id)
         response = make_request(
             "get", f"organization/{organization_id}", headers=headers
         )
@@ -267,7 +271,7 @@ def proxy_task():
             base64s_to_bytes(input_), public_key
         )
 
-        log.debug("Input succesfully encrypted for organization " f"{organization_id}!")
+        log.debug("Input succesfully encrypted for organization %s!", organization_id)
         return organization
 
     if client.is_encrypted_collaboration():

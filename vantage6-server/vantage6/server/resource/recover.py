@@ -159,7 +159,7 @@ def _handle_password_recovery(
         )
         return
 
-    log.debug("Password reset requested for '%s'", user.username)
+    log.info("Password reset requested for '%s'", user.username)
 
     # check that email has not already been sent recently
     email_sent_recently = user.last_email_recover_password_sent and (
@@ -529,7 +529,7 @@ class ChangePassword(ServicesResources):
         new_password = body.get("new_password")
 
         user = g.user
-        log.debug(f"Changing password for user {user.id}")
+        log.info(f"Changing password for user {user.id}")
 
         # check if the old password is correct
         pw_correct = user.check_password(old_password)

@@ -317,7 +317,7 @@ class PermissionManager:
             except Exception:
                 module_name = module.__name__.split(".")[-1]
                 log.debug(
-                    f"Resource '{module_name}' contains no or invalid permissions"
+                    "Resource '%s' contains no or invalid permissions", module_name
                 )
 
     def assign_rule_to_root(
@@ -449,8 +449,10 @@ class PermissionManager:
             )
             rule.save()
             log.debug(
-                f"New auth rule '{resource}' with scope={scope}"
-                f" and operation={operation} is stored in the DB"
+                "New auth rule '%s' with scope=%s and operation=%s is stored in the DB",
+                resource,
+                scope,
+                operation,
             )
 
         if assign_to_container:

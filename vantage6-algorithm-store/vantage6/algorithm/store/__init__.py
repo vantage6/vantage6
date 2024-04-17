@@ -183,7 +183,7 @@ class AlgorithmStoreApp:
                 log.debug("404 error for route '%s'", _get_request_path(request))
             else:
                 log.warning("HTTP Exception occured during request")
-                log.debug("%s", traceback.format_exc())
+                log.warning("%s", traceback.format_exc())
             DatabaseSessionManager.clear_session()
             return error.get_response()
 
@@ -289,7 +289,7 @@ class AlgorithmStoreApp:
             root_username = root_user.get("username")
             if whitelisted_uri and root_username:
                 if not (v6_server := db.Vantage6Server.get_by_url(whitelisted_uri)):
-                    log.debug("This server will be whitelisted: %s", whitelisted_uri)
+                    log.info("This server will be whitelisted: %s", whitelisted_uri)
                     v6_server = db.Vantage6Server(url=whitelisted_uri)
                     v6_server.save()
 

@@ -126,7 +126,7 @@ class VPNConfig(ServicesResources):
                 f"Node <{g.node.id}> tries to obtain a vpn config. "
                 "However the VPN server is unreachable!"
             )
-            log.debug(e)
+            log.exception(e)
             return {
                 "msg": "VPN server unreachable. Please contact your server"
                 " administrator"
@@ -218,7 +218,7 @@ class VPNConfig(ServicesResources):
                 f"Node <{g.node.id}> tries to obtain a VPN config. "
                 "However the VPN server is unreachable!"
             )
-            log.debug(e)
+            log.exception(e)
             return {"msg": "VPN server unreachable"}, HTTPStatus.SERVICE_UNAVAILABLE
 
         return {"ovpn_config": ovpn_config}, HTTPStatus.OK
@@ -226,7 +226,7 @@ class VPNConfig(ServicesResources):
     def _is_server_configured(self) -> bool:
         """Check if vpn server is available in configuration"""
         if "vpn_server" not in self.config:
-            log.debug(
+            log.warning(
                 f"Node <{g.node.id}> tries to obtain a vpn config but "
                 "this server has not configured a VPN server!"
             )

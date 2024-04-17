@@ -329,8 +329,6 @@ class RSACryptor(CryptorBase):
         # Decrypt the shared key using asymmetric encryption
         shared_key = self.private_key.decrypt(encrypted_key_bytes, padding.PKCS1v15())
 
-        self.log.debug("Decrypted shared key: %s", shared_key)
-
         # Use the shared key for symmetric encryption/decryption of the payload
         cipher = Cipher(
             algorithms.AES(shared_key), modes.CTR(iv_bytes), backend=default_backend()

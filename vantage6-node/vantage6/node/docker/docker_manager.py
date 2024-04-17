@@ -214,7 +214,7 @@ class DockerManager(DockerBaseManager):
                 "type": db_config["type"],
                 "env": db_config.get("env", {}),
             }
-        self.log.debug(f"Databases: {self.databases}")
+        self.log.debug("Databases: %s", self.databases)
 
     def _set_algorithm_device_requests(self, device_requests_config: dict) -> None:
         """
@@ -272,10 +272,10 @@ class DockerManager(DockerBaseManager):
         """
         try:
             self.docker.volumes.get(volume_name)
-            self.log.debug(f"Volume {volume_name} already exists.")
+            self.log.debug("Volume %s already exists.", volume_name)
 
         except docker.errors.NotFound:
-            self.log.debug(f"Creating volume {volume_name}")
+            self.log.debug("Creating volume %s", volume_name)
             self.docker.volumes.create(volume_name)
 
     def is_docker_image_allowed(self, docker_image_name: str, task_info: dict) -> bool:
@@ -429,7 +429,7 @@ class DockerManager(DockerBaseManager):
         """
         run_ids_killed = []
         if self.active_tasks:
-            self.log.debug(f"Killing {len(self.active_tasks)} active task(s)")
+            self.log.debug("Killing %s active task(s)", len(self.active_tasks))
         while self.active_tasks:
             task = self.active_tasks.pop()
             task.cleanup()
@@ -507,8 +507,8 @@ class DockerManager(DockerBaseManager):
 
         # Check that this task is not already running
         if self.is_running(run_id):
-            self.log.warn("Task is already being executed, discarding task")
-            self.log.debug(f"run_id={run_id} is discarded")
+            self.log.warning("Task is already being executed, discarding task")
+            self.log.debug("run_id=%s is discarded", run_id)
             return TaskStatus.ACTIVE, None
 
         # we pass self.docker instance, in which we may have logged in to registries
@@ -602,7 +602,7 @@ class DockerManager(DockerBaseManager):
             # at least one task is finished
 
             finished_task = finished_tasks.pop()
-            self.log.debug(f"Run id={finished_task.run_id} is finished")
+            self.log.debug("Run id=%s is finished", finished_task.run_id)
 
             # Check exit status and report
             logs = finished_task.report_status()
@@ -651,7 +651,7 @@ class DockerManager(DockerBaseManager):
                 self.log.info(f"Logged in to {registry.get('registry')}")
             except docker.errors.APIError as e:
                 self.log.warn(f"Could not login to {registry.get('registry')}")
-                self.log.debug(e)
+                self.log.warn(e)
 
     def link_container_to_network(self, container_name: str, config_alias: str) -> None:
         """

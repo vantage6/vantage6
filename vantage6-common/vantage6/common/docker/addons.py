@@ -42,12 +42,12 @@ def check_docker_running() -> None:
     try:
         docker_client = docker.from_env()
         docker_client.ping()
-    except Exception as e:
+    except Exception as exc:
         log.error(
             "Cannot reach the Docker engine! Please make sure Docker " "is running."
         )
-        log.warn("Exiting...")
-        log.debug(e)
+        log.error(exc)
+        log.warning("Exiting...")
         exit(1)
 
 
@@ -144,7 +144,7 @@ def remove_container(container: Container, kill: bool = False) -> None:
         container.remove(force=kill)
     except Exception as e:
         log.exception(f"Failed to remove container {container.name}")
-        log.debug(e)
+        log.exception(e)
 
 
 def stop_container(container: Container, force: bool = False):

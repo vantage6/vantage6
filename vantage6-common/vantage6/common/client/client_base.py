@@ -248,7 +248,7 @@ class ClientBase(object):
                 ):
                     return {"msg": "Connection error"}
                 self.log.error("Connection error... Retrying")
-                self.log.debug(exc)
+                self.log.info(exc)
                 time.sleep(1)
 
         # TODO: should check for a non 2xx response
@@ -262,7 +262,7 @@ class ClientBase(object):
                     self.log.error("errors:" + str(response.json().get("errors")))
             except json_lib.JSONDecodeError:
                 self.log.error("Did not find a message from the server")
-                self.log.debug(response.content)
+                self.log.error(response.content)
 
             if retry:
                 if first_try:
@@ -474,7 +474,7 @@ class ClientBase(object):
             input_ = cryptor.decrypt_str_to_bytes(input_)
 
         except Exception as e:
-            self.log.debug(e)
+            self.log.exception(e)
 
         return input_
 
