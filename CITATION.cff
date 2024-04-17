@@ -1,0 +1,116 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: vantage6
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Frank
+    family-names: Martin
+    email: f.martin@iknl.nl
+    affiliation: IKNL
+    orcid: 'https://orcid.org/0000-0002-5897-1569'
+  - given-names: Bart
+    family-names: Beusekom
+    name-particle: van
+    email: b.vanbeusekom@iknl.nl
+    affiliation: IKNL
+    orcid: 'https://orcid.org/0000-0002-2183-2901'
+  - given-names: Richard
+    family-names: Leurs
+  - given-names: Melle
+    family-names: Sieswerda
+    email: m.sieswerda@iknl.nl
+    affiliation: IKNL
+    orcid: 'https://orcid.org/0000-0003-2025-0771'
+  - given-names: Johan
+    name-particle: van
+    family-names: Soest
+    email: johan.vansoest@medicaldataworks.nl
+    affiliation: Maastro
+    orcid: 'https://orcid.org/0000-0003-2548-0330'
+  - given-names: Hasan
+    family-names: Alradhi
+    email: h.alradhi@iknl.nl
+    affiliation: IKNL
+    orcid: 'https://orcid.org/0000-0001-7887-3926'
+  - email: a.moncadatorres@iknl.nl
+    given-names: 'Arturo '
+    family-names: Moncada-Torres
+    affiliation: IKNL
+  - given-names: Walter
+    family-names: Baccinelli
+    email: w.baccinelli@esciencecenter.nl
+    affiliation: Netherlands eScience Center
+    orcid: 'https://orcid.org/0000-0001-8888-4792'
+  - given-names: Djura
+    family-names: Smits
+    email: d.smits@esciencecenter.nl
+    affiliation: Netherlands eScience Center
+    orcid: 'https://orcid.org/0000-0003-4096-0260'
+  - given-names: Luis
+    family-names: Sanchez Gomez
+    email: luis.sanchezgomez@medicaldataworks.nl
+    affiliation: medical data works
+  - given-names: Alexander
+    family-names: Harms
+    affiliation: Erasmus MC
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.7221216
+    description: DOI of the code published on zenodo
+repository-code: 'https://github.com/vantage6/vantage6'
+url: 'https://vantage6.ai/'
+abstract: >+
+  Vantage6 stands for privacy preserving federated learning
+  infrastructure for secure insight exchange.
+
+
+
+  The project is inspired by the Personal Health Train (PHT)
+  concept. In this analogy vantage6 is the tracks and
+  stations. Compatible algorithms are the trains, and
+  computation tasks are the journey. Vantage6 is completely
+  open source under the Apache License.
+
+
+  What vantage6 does:
+
+
+  delivering algorithms to data stations and collecting
+  their results
+
+
+  managing users, organizations, collaborations, computation
+  tasks and their results
+
+
+  providing control (security) at the data-stations to their
+  owners
+
+
+  The vantage6 infrastructure is designed with three
+  fundamental functional aspects of federated learning.
+
+
+  Autonomy. All involved parties should remain independent
+  and autonomous.
+
+
+  Heterogeneity. Parties should be allowed to have
+  differences in hardware and operating systems.
+
+
+  Flexibility. Related to the latter, a federated learning
+  infrastructure should not limit the use of relevant data.
+
+keywords:
+  - federated learning
+  - machine learning
+  - data analysis
+  - secure multiparty computation
+  - privacy enhancing technology
+license: Apache-2.0
