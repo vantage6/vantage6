@@ -21,6 +21,8 @@ authors:
     orcid: 'https://orcid.org/0000-0002-2183-2901'
   - given-names: Richard
     family-names: Leurs
+    email: richard.leurs@elastique.nl
+    affiliation: Elastique
   - given-names: Melle
     family-names: Sieswerda
     email: m.sieswerda@iknl.nl
@@ -38,9 +40,11 @@ authors:
     affiliation: IKNL
     orcid: 'https://orcid.org/0000-0001-7887-3926'
   - email: a.moncadatorres@iknl.nl
-    given-names: 'Arturo '
+    given-names: 'Arturo'
     family-names: Moncada-Torres
     affiliation: IKNL
+    email: arturomoncadatorres@gmail.com
+    orcid: https://orcid.org/0000-0001-7233-2117
   - given-names: Walter
     family-names: Baccinelli
     email: w.baccinelli@esciencecenter.nl
@@ -113,4 +117,5 @@ keywords:
   - data analysis
   - secure multiparty computation
   - privacy enhancing technology
+  - personal health train
 license: Apache-2.0
