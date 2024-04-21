@@ -39,6 +39,7 @@ import { AddAlgoStoreComponent } from './pages/collaboration/add-algo-store/add-
 import { StudyReadComponent } from './pages/collaboration/study/read/study-read.component';
 import { StudyCreateComponent } from './pages/collaboration/study/create/study-create.component';
 import { StudyEditComponent } from './pages/collaboration/study/edit/study-edit.component';
+import { AlgorithmListComponent } from './pages/algorithm/list/algorithm-list.component';
 
 const routes: Routes = [
   {
@@ -136,6 +137,14 @@ const routes: Routes = [
         canActivate: [authenticationGuard(), chosenCollaborationGuard()],
         data: {
           crumbs: [['task-list.title', routePaths.tasks], ['task-read.title']]
+        }
+      },
+      {
+        path: routerConfig.algorithms,
+        component: AlgorithmListComponent,
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        data: {
+          crumbs: [['algorithm-list.title']]
         }
       },
       {

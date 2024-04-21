@@ -96,6 +96,7 @@ import { StudyReadComponent } from './pages/collaboration/study/read/study-read.
 import { StudyCreateComponent } from './pages/collaboration/study/create/study-create.component';
 import { StudyFormComponent } from './components/forms/study-form/study-form.component';
 import { StudyEditComponent } from './pages/collaboration/study/edit/study-edit.component';
+import { AlgorithmListComponent } from './pages/algorithm/list/algorithm-list.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -165,7 +166,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     StudyReadComponent,
     StudyCreateComponent,
     StudyFormComponent,
-    StudyEditComponent
+    StudyEditComponent,
+    AlgorithmListComponent
   ],
   imports: [
     BrowserModule,

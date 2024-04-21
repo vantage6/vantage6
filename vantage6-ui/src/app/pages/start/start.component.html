@@ -1,4 +1,4 @@
-<app-page-header title="Choose a collaboration"></app-page-header>
+<app-page-header title="{{ 'start.title' | translate }}"></app-page-header>
 <ng-container *ngIf="!isLoading; else loading">
   <div class="tile-grid">
     <button mat-raised-button *ngFor="let collaboration of collaborations" (click)="handleCollaborationClick(collaboration)">

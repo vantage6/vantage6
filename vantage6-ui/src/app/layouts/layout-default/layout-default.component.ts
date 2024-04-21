@@ -144,6 +144,12 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
         linkType: NavigationLinkType.Analyze
       });
     }
+    submenus.push({
+      route: routePaths.algorithms,
+      label: this.translateService.instant('resources.algorithms'),
+      icon: 'memory',
+      linkType: NavigationLinkType.Analyze
+    });
     //Template tasks
     // if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.CREATE)) {
     //   newLinks.push({ route: routePaths.templateTaskCreate, label: 'Quick tasks', icon: 'assignment' });
@@ -215,6 +221,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
         linkType: NavigationLinkType.Admin
       });
     }
+    // TODO for algorithm store, use <mat-icon> store_mall_directory</mat-icon>
     if (adminSubmenus.length > 0) {
       adminLink.submenus = adminSubmenus;
       adminLink.route = adminSubmenus[0].route;
