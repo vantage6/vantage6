@@ -221,7 +221,6 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
         linkType: NavigationLinkType.Admin
       });
     }
-    // TODO for algorithm store, use <mat-icon> store_mall_directory</mat-icon>
     if (adminSubmenus.length > 0) {
       adminLink.submenus = adminSubmenus;
       adminLink.route = adminSubmenus[0].route;
