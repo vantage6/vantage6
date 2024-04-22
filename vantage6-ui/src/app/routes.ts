@@ -36,6 +36,7 @@ export const routePaths = {
   taskCreateRepeat: '/analyze/tasks/create/repeat',
   task: '/analyze/tasks',
   algorithms: '/analyze/algorithms',
+  algorithm: '/analyze/algorithms',
   templateTaskCreate: '/analyze/template-tasks/create'
 };
 
@@ -79,5 +80,6 @@ export const routerConfig = {
   taskCreateRepeat: 'tasks/create/repeat/:id',
   task: 'tasks/:id',
   algorithms: 'algorithms',
+  algorithm: 'algorithms/:id/:algo_store_id',
   templateTaskCreate: 'template-tasks/create'
 };

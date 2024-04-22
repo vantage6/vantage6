@@ -2,6 +2,7 @@ import { Component, HostBinding, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
+import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 
@@ -28,7 +29,7 @@ export class AlgorithmListComponent implements OnInit {
   }
 
   handleAlgorithmClick(algorithm: Algorithm) {
-    console.log('click');
+    this.router.navigate([routePaths.algorithm, algorithm.id, algorithm.algorith_store_id]);
   }
 
   private async initData(): Promise<void> {

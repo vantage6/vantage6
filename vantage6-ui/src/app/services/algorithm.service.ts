@@ -26,6 +26,7 @@ export class AlgorithmService {
         // set algorithm store url for each algorithm
         algorithms.forEach((algorithm) => {
           algorithm.algorithm_store_url = algorithmStore.url;
+          algorithm.algorith_store_id = algorithmStore.id;
         });
         return algorithms;
       })
@@ -35,7 +36,7 @@ export class AlgorithmService {
   }
 
   async getAlgorithm(algorithm_store_url: string, id: string): Promise<Algorithm> {
-    const result = await this.apiService.getForAlgorithmApi<Algorithm>(algorithm_store_url, `/algorithm/${id}`);
+    const result = await this.apiService.getForAlgorithmApi<Algorithm>(algorithm_store_url, `/api/algorithm/${id}`);
     return result;
   }
 

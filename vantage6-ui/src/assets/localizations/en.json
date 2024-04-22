@@ -15,7 +15,8 @@
     "online": "Online",
     "none": "None",
     "id": "ID",
-    "visualization": "Visualization"
+    "visualization": "Visualization",
+    "description": "Description"
   },
   "resources": {
     "collaboration": "Collaboration",
@@ -178,9 +179,41 @@
       "select": "Select quick task"
     }
   },
+  "algorithm": {
+    "image": "Image",
+    "partitioning": "Data partioning type",
+    "description": "Description",
+    "v6version": "Written for vantage6 version",
+    "function": {
+      "type": "Type of function",
+      "argument": {
+        "title": "Parameters",
+        "type": "Type of argument"
+      },
+      "databases": "Databases",
+      "visualization": {
+        "title": "Visualizations",
+        "type": "Type of visualization",
+        "details": "Visualization details"
+      }
+    }
+  },
   "algorithm-list": {
     "title": "Algorithms",
     "no-algorithms": "No algorithms are available for your collaboration!"
+  },
+  "algorithm-read": {
+    "card-details": {
+      "title": "Details"
+    },
+    "crumb-title": "Algorithm",
+    "card-functions": {
+      "title": "Functions",
+      "no-functions": "This algorithm does not contain any functions. Please contact the algorithm store administrator.",
+      "no-parameters": "This function does not take any parameters.",
+      "no-databases": "This function does not use any data.",
+      "no-visualizations": "There are no preprogrammed visualizations available for this user interface."
+    }
   },
   "organization": {
     "name": "Name",
