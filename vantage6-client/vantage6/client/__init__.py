@@ -451,6 +451,7 @@ class UserClient(ClientBase):
             name: str = None,
             encrypted: bool = None,
             organization: int = None,
+            algorithm_store: int = None,
             page: int = 1,
             per_page: int = 20,
         ) -> List[dict]:
@@ -467,6 +468,9 @@ class UserClient(ClientBase):
                 Filter collaborations by name
             organization: int, optional
                 Filter collaborations by organization id
+            algorithm_store: int, optional
+                Filter collaborations by algorithm store id that is available for the
+                collaboration
             encrypted: bool, optional
                 Filter collaborations by whether or not they are encrypted
             page: int, optional
@@ -490,6 +494,7 @@ class UserClient(ClientBase):
                 "per_page": per_page,
                 "name": name,
                 "encrypted": encrypted,
+                "algorithm_store_id": algorithm_store,
             }
             if scope == "organization":
                 params["organization_id"] = self.parent.whoami.organization_id

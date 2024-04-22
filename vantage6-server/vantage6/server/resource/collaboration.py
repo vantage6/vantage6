@@ -3,7 +3,6 @@ import logging
 from flask import request, g
 from flask_restful import Api
 from http import HTTPStatus
-from sqlalchemy import or_
 
 from vantage6.server import db
 from vantage6.backend.common.resource.pagination import Pagination
@@ -266,13 +265,18 @@ class Collaborations(CollaborationBase):
             # organization: the arg 'organization_id' is then superfluous
 
         if "algorithm_store_id" in args:
-            # filter on collaborations that have access to this algorithm store
-            q = q.join(db.AlgorithmStore).filter(
-                or_(
+            # If this algorithm store is available for all collaborations, no filter is
+            # needed
+            store = db.AlgorithmStore.get(args["algorithm_store_id"])
+            if not store:
+                return {
+                    "msg": f"Algorithm store with id={args['algorithm_store_id']} not found"
+                }, HTTPStatus.NOT_FOUND
+            elif store.collaboration_id is not None:
+                # filter on collaborations that have access to this algorithm store
+                q = q.join(db.AlgorithmStore).filter(
                     db.AlgorithmStore.collaboration_id == db.Collaboration.id,
-                    db.AlgorithmStore.collaboration_id == None,
                 )
-            )
 
         # filter based on permissions
         if not self.r.v_glo.can():

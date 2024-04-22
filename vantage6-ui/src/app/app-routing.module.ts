@@ -41,6 +41,8 @@ import { StudyCreateComponent } from './pages/collaboration/study/create/study-c
 import { StudyEditComponent } from './pages/collaboration/study/edit/study-edit.component';
 import { AlgorithmListComponent } from './pages/algorithm/list/algorithm-list.component';
 import { AlgorithmReadComponent } from './pages/algorithm/read/algorithm-read.component';
+import { AlgorithmStoreListComponent } from './pages/algorithm-stores/list/algorithm-store-list.component';
+import { AlgorithmStoreReadComponent } from './pages/algorithm-stores/read/algorithm-store-read.component';
 
 const routes: Routes = [
   {
@@ -337,6 +339,22 @@ const routes: Routes = [
         canActivate: [authenticationGuard()],
         data: {
           crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-read.title']]
+        }
+      },
+      {
+        path: routerConfig.stores,
+        component: AlgorithmStoreListComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['algorithm-store-list.title']]
+        }
+      },
+      {
+        path: routerConfig.store,
+        component: AlgorithmStoreReadComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['algorithm-store-list.title', routePaths.stores], ['algorithm-store-read.title']]
         }
       }
     ]

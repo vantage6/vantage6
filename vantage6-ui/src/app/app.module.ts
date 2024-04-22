@@ -99,6 +99,8 @@ import { StudyEditComponent } from './pages/collaboration/study/edit/study-edit.
 import { AlgorithmListComponent } from './pages/algorithm/list/algorithm-list.component';
 import { AlgorithmReadComponent } from './pages/algorithm/read/algorithm-read.component';
 import { DisplayAlgorithmsComponent } from './components/algorithm/display-algorithms/display-algorithms.component';
+import { AlgorithmStoreListComponent } from './pages/algorithm-stores/list/algorithm-store-list.component';
+import { AlgorithmStoreReadComponent } from './pages/algorithm-stores/read/algorithm-store-read.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -171,7 +173,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     StudyEditComponent,
     AlgorithmListComponent,
     AlgorithmReadComponent,
-    DisplayAlgorithmsComponent
+    DisplayAlgorithmsComponent,
+    AlgorithmStoreListComponent,
+    AlgorithmStoreReadComponent
   ],
   imports: [
     BrowserModule,

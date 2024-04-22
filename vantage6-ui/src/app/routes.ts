@@ -29,6 +29,8 @@ export const routePaths = {
   userEdit: '/admin/users/edit',
   user: '/admin/users',
   nodes: '/admin/nodes',
+  stores: '/admin/stores',
+  store: '/admin/stores',
   analyzeHome: '/analyze',
   start: '/analyze/start', // TODO let this refer to analyze?
   tasks: '/analyze/tasks',
@@ -73,6 +75,8 @@ export const routerConfig = {
   userEdit: 'users/edit/:id',
   user: 'users/:id',
   nodes: 'nodes',
+  stores: 'stores',
+  store: 'stores/:id',
   analyze: 'analyze',
   analyzeHome: '',
   tasks: 'tasks',

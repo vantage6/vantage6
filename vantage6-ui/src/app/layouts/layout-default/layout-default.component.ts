@@ -221,6 +221,15 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
         linkType: NavigationLinkType.Admin
       });
     }
+    //Stores
+    if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.VIEW)) {
+      adminSubmenus.push({
+        route: routePaths.stores,
+        label: this.translateService.instant('resources.stores'),
+        icon: 'store',
+        linkType: NavigationLinkType.Admin
+      });
+    }
     if (adminSubmenus.length > 0) {
       adminLink.submenus = adminSubmenus;
       adminLink.route = adminSubmenus[0].route;

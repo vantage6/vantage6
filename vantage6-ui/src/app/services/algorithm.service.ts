@@ -18,21 +18,25 @@ export class AlgorithmService {
     const algorithmStores = this.getAlgorithmStoresForCollaboration();
     const results = await Promise.all(
       algorithmStores.map(async (algorithmStore) => {
-        const result = await this.apiService.getForAlgorithmApi<Pagination<Algorithm>>(`${algorithmStore.url}/api`, '/algorithm', {
-          per_page: 9999,
-          ...params
-        });
-        const algorithms = result.data;
-        // set algorithm store url for each algorithm
-        algorithms.forEach((algorithm) => {
-          algorithm.algorithm_store_url = algorithmStore.url;
-          algorithm.algorith_store_id = algorithmStore.id;
-        });
-        return algorithms;
+        return await this.getAlgorithmsForAlgorithmStore(algorithmStore, params);
       })
     );
     // combine the list of lists of algorithms
     return results.reduce((accumulator, val) => accumulator.concat(val), []);
+  }
+
+  async getAlgorithmsForAlgorithmStore(algorithmStore: AlgorithmStore, params: object = {}): Promise<Algorithm[]> {
+    const result = await this.apiService.getForAlgorithmApi<Pagination<Algorithm>>(`${algorithmStore.url}/api`, '/algorithm', {
+      per_page: 9999,
+      ...params
+    });
+    const algorithms = result.data;
+    // set algorithm store url for each algorithm
+    algorithms.forEach((algorithm) => {
+      algorithm.algorithm_store_url = algorithmStore.url;
+      algorithm.algorith_store_id = algorithmStore.id;
+    });
+    return algorithms;
   }
 
   async getAlgorithm(algorithm_store_url: string, id: string): Promise<Algorithm> {
