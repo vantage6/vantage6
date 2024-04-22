@@ -40,7 +40,7 @@ import { StudyReadComponent } from './pages/collaboration/study/read/study-read.
 import { StudyCreateComponent } from './pages/collaboration/study/create/study-create.component';
 import { StudyEditComponent } from './pages/collaboration/study/edit/study-edit.component';
 import { AlgorithmListComponent } from './pages/algorithm/list/algorithm-list.component';
-import { AlgorithmReadComponent } from './pages/algorithm/read/algorithm-read.component';
+import { AlgorithmReadOnlyComponent } from './pages/algorithm/read-only/algorithm-read-only.component';
 import { AlgorithmStoreListComponent } from './pages/algorithm-stores/list/algorithm-store-list.component';
 import { AlgorithmStoreReadComponent } from './pages/algorithm-stores/read/algorithm-store-read.component';
 
@@ -152,7 +152,7 @@ const routes: Routes = [
       },
       {
         path: routerConfig.algorithm,
-        component: AlgorithmReadComponent,
+        component: AlgorithmReadOnlyComponent,
         canActivate: [authenticationGuard(), chosenCollaborationGuard()],
         data: {
           crumbs: [['algorithm-list.title', routePaths.algorithms], ['algorithm-read.crumb-title']]

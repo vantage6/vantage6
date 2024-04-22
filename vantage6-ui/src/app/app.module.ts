@@ -97,7 +97,7 @@ import { StudyCreateComponent } from './pages/collaboration/study/create/study-c
 import { StudyFormComponent } from './components/forms/study-form/study-form.component';
 import { StudyEditComponent } from './pages/collaboration/study/edit/study-edit.component';
 import { AlgorithmListComponent } from './pages/algorithm/list/algorithm-list.component';
-import { AlgorithmReadComponent } from './pages/algorithm/read/algorithm-read.component';
+import { AlgorithmReadOnlyComponent } from './pages/algorithm/read-only/algorithm-read-only.component';
 import { DisplayAlgorithmsComponent } from './components/algorithm/display-algorithms/display-algorithms.component';
 import { AlgorithmStoreListComponent } from './pages/algorithm-stores/list/algorithm-store-list.component';
 import { AlgorithmStoreReadComponent } from './pages/algorithm-stores/read/algorithm-store-read.component';
@@ -172,7 +172,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     StudyFormComponent,
     StudyEditComponent,
     AlgorithmListComponent,
-    AlgorithmReadComponent,
+    AlgorithmReadOnlyComponent,
     DisplayAlgorithmsComponent,
     AlgorithmStoreListComponent,
     AlgorithmStoreReadComponent

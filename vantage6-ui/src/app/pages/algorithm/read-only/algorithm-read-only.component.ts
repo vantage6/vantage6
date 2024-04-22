@@ -6,11 +6,11 @@ import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 
 @Component({
-  selector: 'app-algorithm-read',
-  templateUrl: './algorithm-read.component.html',
-  styleUrl: './algorithm-read.component.scss'
+  selector: 'app-algorithm-read-only',
+  templateUrl: './algorithm-read-only.component.html',
+  styleUrl: './algorithm-read-only.component.scss'
 })
-export class AlgorithmReadComponent implements OnInit {
+export class AlgorithmReadOnlyComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
   @Input() id: string = '';
   @Input() algo_store_id: string = '';
