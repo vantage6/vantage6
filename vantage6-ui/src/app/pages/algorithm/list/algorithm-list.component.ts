@@ -1,6 +1,7 @@
 import { Component, HostBinding, OnInit } from '@angular/core';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
+import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 
 @Component({
@@ -11,6 +12,8 @@ import { AlgorithmService } from 'src/app/services/algorithm.service';
 export class AlgorithmListComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
   isLoading = true;
+  routePaths = routePaths;
+
   algorithms: Algorithm[] = [];
   stores: AlgorithmStore[] = [];
 

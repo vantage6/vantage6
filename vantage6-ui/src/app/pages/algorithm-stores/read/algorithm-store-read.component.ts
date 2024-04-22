@@ -3,6 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
 import { AlgorithmStore, AlgorithmStoreLazyProperties } from 'src/app/models/api/algorithmStore.model';
 import { TableData } from 'src/app/models/application/table.model';
+import { routePaths } from 'src/app/routes';
 import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 
@@ -14,6 +15,7 @@ import { AlgorithmService } from 'src/app/services/algorithm.service';
 export class AlgorithmStoreReadComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
   @Input() id = '';
+  routePaths = routePaths;
 
   algorithmStore?: AlgorithmStore;
   algorithms?: Algorithm[];
@@ -49,6 +51,5 @@ export class AlgorithmStoreReadComponent implements OnInit {
 
     // collect algorithms
     this.algorithms = await this.algorithmService.getAlgorithmsForAlgorithmStore(this.algorithmStore);
-    console.log(this.algorithms);
   }
 }

@@ -43,6 +43,7 @@ import { AlgorithmListComponent } from './pages/algorithm/list/algorithm-list.co
 import { AlgorithmReadOnlyComponent } from './pages/algorithm/read-only/algorithm-read-only.component';
 import { AlgorithmStoreListComponent } from './pages/algorithm-stores/list/algorithm-store-list.component';
 import { AlgorithmStoreReadComponent } from './pages/algorithm-stores/read/algorithm-store-read.component';
+import { AlgorithmReadComponent } from './pages/algorithm/read/algorithm-read.component';
 
 const routes: Routes = [
   {
@@ -355,6 +356,18 @@ const routes: Routes = [
         canActivate: [authenticationGuard()],
         data: {
           crumbs: [['algorithm-store-list.title', routePaths.stores], ['algorithm-store-read.title']]
+        }
+      },
+      {
+        path: routerConfig.algorithmManage,
+        component: AlgorithmReadComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [
+            ['algorithm-store-list.title', routePaths.stores],
+            ['algorithm-store-read.title', routePaths.store],
+            ['resources.algorithm']
+          ]
         }
       }
     ]

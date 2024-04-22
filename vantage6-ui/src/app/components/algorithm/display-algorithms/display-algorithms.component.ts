@@ -10,11 +10,12 @@ import { routePaths } from 'src/app/routes';
 })
 export class DisplayAlgorithmsComponent {
   @Input() algorithms: Algorithm[] = [];
+  @Input() routeOnClick: string = '';
   routePaths = routePaths;
 
   constructor(private router: Router) {}
 
   handleAlgorithmClick(algorithm: Algorithm) {
-    this.router.navigate([routePaths.algorithm, algorithm.id, algorithm.algorith_store_id]);
+    this.router.navigate([this.routeOnClick, algorithm.id, algorithm.algorith_store_id]);
   }
 }

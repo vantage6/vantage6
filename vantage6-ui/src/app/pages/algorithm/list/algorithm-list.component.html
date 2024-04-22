@@ -1,6 +1,6 @@
 <app-page-header title="{{ 'resources.algorithms' | translate }}"></app-page-header>
 <ng-container *ngIf="!isLoading; else loading">
-  <app-display-algorithms [algorithms]="algorithms"></app-display-algorithms>
+  <app-display-algorithms [algorithms]="algorithms" [routeOnClick]="routePaths.algorithm"></app-display-algorithms>
   <mat-card *ngIf="algorithms.length === 0">
     <mat-card-content>
       <p>{{ "algorithm-list.no-algorithms" | translate }}</p>
