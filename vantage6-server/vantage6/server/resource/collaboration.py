@@ -3,6 +3,7 @@ import logging
 from flask import request, g
 from flask_restful import Api
 from http import HTTPStatus
+from sqlalchemy import or_
 
 from vantage6.server import db
 from vantage6.backend.common.resource.pagination import Pagination
@@ -193,6 +194,11 @@ class Collaborations(CollaborationBase):
               type: integer
             description: Organization id
           - in: query
+            name: algorithm_store_id
+            schema:
+              type: integer
+            description: Algorithm store ID that is available to the collaboration
+          - in: query
             name: include
             schema:
               type: array
@@ -258,6 +264,15 @@ class Collaborations(CollaborationBase):
                 )
             # else: no filter if user can only view collaborations of own
             # organization: the arg 'organization_id' is then superfluous
+
+        if "algorithm_store_id" in args:
+            # filter on collaborations that have access to this algorithm store
+            q = q.join(db.AlgorithmStore).filter(
+                or_(
+                    db.AlgorithmStore.collaboration_id == db.Collaboration.id,
+                    db.AlgorithmStore.collaboration_id == None,
+                )
+            )
 
         # filter based on permissions
         if not self.r.v_glo.can():
