@@ -6,10 +6,10 @@ import { AlgorithmService } from 'src/app/services/algorithm.service';
 
 @Component({
   selector: 'app-algorithm-list',
-  templateUrl: './algorithm-list.component.html',
-  styleUrl: './algorithm-list.component.scss'
+  templateUrl: './algorithm-list-read-only.component.html',
+  styleUrl: './algorithm-list-read-only.component.scss'
 })
-export class AlgorithmListComponent implements OnInit {
+export class AlgorithmListReadOnlyComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
   isLoading = true;
   routePaths = routePaths;

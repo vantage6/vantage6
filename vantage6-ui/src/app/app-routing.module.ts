@@ -39,11 +39,11 @@ import { AddAlgoStoreComponent } from './pages/collaboration/add-algo-store/add-
 import { StudyReadComponent } from './pages/collaboration/study/read/study-read.component';
 import { StudyCreateComponent } from './pages/collaboration/study/create/study-create.component';
 import { StudyEditComponent } from './pages/collaboration/study/edit/study-edit.component';
-import { AlgorithmListComponent } from './pages/algorithm/list/algorithm-list.component';
-import { AlgorithmReadOnlyComponent } from './pages/algorithm/read-only/algorithm-read-only.component';
+import { AlgorithmListReadOnlyComponent } from './pages/algorithm/researcher/list/algorithm-list-read-only.component';
+import { AlgorithmReadOnlyComponent } from './pages/algorithm/researcher/read-only/algorithm-read-only.component';
 import { AlgorithmStoreListComponent } from './pages/algorithm-stores/list/algorithm-store-list.component';
 import { AlgorithmStoreReadComponent } from './pages/algorithm-stores/read/algorithm-store-read.component';
-import { AlgorithmReadComponent } from './pages/algorithm/read/algorithm-read.component';
+import { AlgorithmReadComponent } from './pages/algorithm/admin/read/algorithm-read.component';
 import { chosenStoreGuard } from './guards/chosenStore.guard';
 
 const routes: Routes = [
@@ -146,7 +146,7 @@ const routes: Routes = [
       },
       {
         path: routerConfig.algorithms,
-        component: AlgorithmListComponent,
+        component: AlgorithmListReadOnlyComponent,
         canActivate: [authenticationGuard(), chosenCollaborationGuard()],
         data: {
           crumbs: [['algorithm-list.title']]
