@@ -1,4 +1,5 @@
-import { Component, HostBinding, OnInit } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
+import { Subject, takeUntil } from 'rxjs';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { routePaths } from 'src/app/routes';
@@ -10,10 +11,11 @@ import { ChosenStoreService } from 'src/app/services/chosen-store.service';
   templateUrl: './algorithm-list.component.html',
   styleUrl: './algorithm-list.component.scss'
 })
-export class AlgorithmListComponent implements OnInit {
+export class AlgorithmListComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   isLoading = true;
   routePaths = routePaths;
+  destroy$ = new Subject<void>();
 
   algorithms: Algorithm[] = [];
   stores: AlgorithmStore[] = [];
@@ -24,8 +26,15 @@ export class AlgorithmListComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
-    await this.initData();
-    this.isLoading = false;
+    this.chosenStoreService.isInitialized$.pipe(takeUntil(this.destroy$)).subscribe((initialized) => {
+      if (initialized) {
+        this.initData();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
   }
 
   private async initData(): Promise<void> {
@@ -33,5 +42,6 @@ export class AlgorithmListComponent implements OnInit {
     if (!store) return;
 
     this.algorithms = await this.algorithmService.getAlgorithmsForAlgorithmStore(store);
+    this.isLoading = false;
   }
 }

@@ -3,8 +3,10 @@ import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { Algorithm, AlgorithmFunction } from 'src/app/models/api/algorithm.model';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
+import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
+import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 
 @Component({
   selector: 'app-algorithm-read-only',
@@ -25,7 +27,8 @@ export class AlgorithmReadOnlyComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private algorithmService: AlgorithmService,
-    private chosenCollaborationService: ChosenCollaborationService
+    private chosenCollaborationService: ChosenCollaborationService,
+    private chosenStoreService: ChosenStoreService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -51,5 +54,14 @@ export class AlgorithmReadOnlyComponent implements OnInit, OnDestroy {
 
     this.algorithm = await this.algorithmService.getAlgorithm(this.algorithm_store.url, this.id);
     this.isLoading = false;
+  }
+
+  goToAlgorithm(algorithm: Algorithm): void {
+    const chosenStore = this.chosenStoreService.store$.value;
+    if (chosenStore && chosenStore.id.toString() === this.algo_store_id) {
+      this.router.navigate([routePaths.algorithmManage, algorithm.id]);
+    } else {
+      this.router.navigate([routePaths.algorithmsManage]);
+    }
   }
 }

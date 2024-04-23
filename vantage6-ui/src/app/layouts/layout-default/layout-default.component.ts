@@ -188,18 +188,18 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
     const storeSubmenus: NavigationLink[] = [];
     // we can only view stores if we have the permissions to view collaborations
     if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.VIEW)) {
-      // algorithms
-      storeSubmenus.push({
-        route: routePaths.algorithmManage,
-        label: this.translateService.instant('resources.algorithms'),
-        icon: 'memory',
-        linkType: NavigationLinkType.Store
-      });
       // overview
       storeSubmenus.push({
         route: routePaths.store,
         label: this.translateService.instant('general.overview'),
         icon: 'store',
+        linkType: NavigationLinkType.Store
+      });
+      // algorithms
+      storeSubmenus.push({
+        route: routePaths.algorithmManage,
+        label: this.translateService.instant('resources.algorithms'),
+        icon: 'memory',
         linkType: NavigationLinkType.Store
       });
     }

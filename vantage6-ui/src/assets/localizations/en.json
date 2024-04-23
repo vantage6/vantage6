@@ -208,7 +208,8 @@
   },
   "algorithm-list": {
     "title": "Algorithms",
-    "no-algorithms": "No algorithms are available for your collaboration!"
+    "no-algorithms": "No algorithms are available for your collaboration!",
+    "manage": "Manage algorithms"
   },
   "algorithm-read": {
     "card-details": {
@@ -221,7 +222,8 @@
       "no-parameters": "This function does not take any parameters.",
       "no-databases": "This function does not use any data.",
       "no-visualizations": "There are no preprogrammed visualizations available for this user interface."
-    }
+    },
+    "manage": "Manage algorithm"
   },
   "organization": {
     "name": "Name",

@@ -28,7 +28,7 @@ export class AlgorithmStoreListComponent implements OnInit {
 
   handleAlgorithmStoreClick(store: BaseAlgorithmStore) {
     this.chosenStoreService.setStore(store.id.toString());
-    this.router.navigate([routePaths.store]);
+    this.router.navigate([routePaths.algorithmsManage]);
   }
 
   private async initData(): Promise<void> {
