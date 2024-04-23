@@ -1,9 +1,8 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
 import { Algorithm, AlgorithmFunction } from 'src/app/models/api/algorithm.model';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
-import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
+import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 
 @Component({
   selector: 'app-algorithm-read',
@@ -13,7 +12,6 @@ import { AlgorithmService } from 'src/app/services/algorithm.service';
 export class AlgorithmReadComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
   @Input() id: string = '';
-  @Input() algo_store_id: string = '';
 
   algorithm?: Algorithm;
   algorithm_store?: AlgorithmStore;
@@ -21,9 +19,8 @@ export class AlgorithmReadComponent implements OnInit {
   isLoading = true;
 
   constructor(
-    private router: Router,
     private algorithmService: AlgorithmService,
-    private algorithmStoreService: AlgorithmStoreService
+    private chosenStoreService: ChosenStoreService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -32,9 +29,9 @@ export class AlgorithmReadComponent implements OnInit {
   }
 
   private async initData(): Promise<void> {
-    this.algorithm_store = await this.algorithmStoreService.getAlgorithmStore(this.algo_store_id);
-    if (!this.algorithm_store) return;
+    const chosenStore = this.chosenStoreService.store$.value;
+    if (!chosenStore) return;
 
-    this.algorithm = await this.algorithmService.getAlgorithm(this.algorithm_store.url, this.id);
+    this.algorithm = await this.algorithmService.getAlgorithm(chosenStore.url, this.id);
   }
 }

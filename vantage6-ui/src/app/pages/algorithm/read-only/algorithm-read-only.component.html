@@ -1,6 +1,18 @@
 <ng-container *ngIf="!isLoading && algorithm">
   <app-page-header title="{{ algorithm.name }}">
-    <!-- TODO include link to algo store admin -->
+    <!-- <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="canDelete || canDelete">
+      <mat-icon>more_vert</mat-icon>
+    </button>
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item *ngIf="canEdit" [routerLink]="[routes.collaborationEdit, id]">
+        <mat-icon>edit</mat-icon>
+        <span>{{ "general.edit" | translate }}</span>
+      </button>
+      <button mat-menu-item *ngIf="canDelete" (click)="handleDelete()">
+        <mat-icon>delete</mat-icon>
+        <span>{{ "general.delete" | translate }}</span>
+      </button>
+    </mat-menu> -->
   </app-page-header>
   <app-display-algorithm [algorithm]="algorithm"></app-display-algorithm>
 </ng-container>

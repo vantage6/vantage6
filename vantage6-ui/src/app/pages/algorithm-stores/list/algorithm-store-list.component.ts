@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { BaseAlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
+import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 
 @Component({
   selector: 'app-algorithm-store-list',
@@ -16,7 +17,8 @@ export class AlgorithmStoreListComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private algorithmStoreService: AlgorithmStoreService
+    private algorithmStoreService: AlgorithmStoreService,
+    private chosenStoreService: ChosenStoreService
   ) {}
 
   async ngOnInit() {
@@ -25,11 +27,11 @@ export class AlgorithmStoreListComponent implements OnInit {
   }
 
   handleAlgorithmStoreClick(store: BaseAlgorithmStore) {
-    this.router.navigate([routePaths.store, store.id]);
+    this.chosenStoreService.setStore(store.id.toString());
+    this.router.navigate([routePaths.store]);
   }
 
   private async initData(): Promise<void> {
     this.algorithmStores = await this.algorithmStoreService.getAlgorithmStores();
-    console.log(this.algorithmStores);
   }
 }

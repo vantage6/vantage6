@@ -44,6 +44,7 @@ import { AlgorithmReadOnlyComponent } from './pages/algorithm/read-only/algorith
 import { AlgorithmStoreListComponent } from './pages/algorithm-stores/list/algorithm-store-list.component';
 import { AlgorithmStoreReadComponent } from './pages/algorithm-stores/read/algorithm-store-read.component';
 import { AlgorithmReadComponent } from './pages/algorithm/read/algorithm-read.component';
+import { chosenStoreGuard } from './guards/chosenStore.guard';
 
 const routes: Routes = [
   {
@@ -173,7 +174,7 @@ const routes: Routes = [
     children: [
       {
         path: routerConfig.adminHome,
-        component: HomeComponent,
+        component: CollaborationListComponent,
         canActivate: [authenticationGuard()]
       },
       {
@@ -341,6 +342,18 @@ const routes: Routes = [
         data: {
           crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-read.title']]
         }
+      }
+    ]
+  },
+  {
+    path: routerConfig.storeBase,
+    component: LayoutDefaultComponent,
+    data: { crumb: ['home.title', routePaths.storeHome] },
+    children: [
+      {
+        path: routerConfig.storeHome,
+        component: AlgorithmStoreListComponent,
+        canActivate: [authenticationGuard()]
       },
       {
         path: routerConfig.stores,
@@ -353,7 +366,7 @@ const routes: Routes = [
       {
         path: routerConfig.store,
         component: AlgorithmStoreReadComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
         data: {
           crumbs: [['algorithm-store-list.title', routePaths.stores], ['algorithm-store-read.title']]
         }
@@ -361,7 +374,7 @@ const routes: Routes = [
       {
         path: routerConfig.algorithmManage,
         component: AlgorithmReadComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
         data: {
           crumbs: [
             ['algorithm-store-list.title', routePaths.stores],

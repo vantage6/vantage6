@@ -4,6 +4,7 @@ export enum NavigationLinkType {
   Home = 'home',
   Analyze = 'analyze',
   Admin = 'admin',
+  Store = 'store',
   Other = 'other'
 }
 

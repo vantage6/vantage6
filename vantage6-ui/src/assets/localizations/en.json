@@ -16,7 +16,8 @@
     "none": "None",
     "id": "ID",
     "visualization": "Visualization",
-    "description": "Description"
+    "description": "Description",
+    "overview": "Overview"
   },
   "resources": {
     "collaboration": "Collaboration",
@@ -28,12 +29,14 @@
     "nodes": "Nodes",
     "tasks": "Tasks",
     "algorithms": "Algorithms",
+    "algorithm": "Algorithm",
     "stores": "Algorithm stores"
   },
   "links": {
     "admin": "Administration",
     "home": "Home",
-    "analyze": "Analyze"
+    "analyze": "Analyze",
+    "stores": "Algorithm store"
   },
   "home": {
     "title": "Home"

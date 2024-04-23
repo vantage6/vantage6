@@ -11,6 +11,7 @@ import { ChosenCollaborationService } from 'src/app/services/chosen-collaboratio
 import { PermissionService } from 'src/app/services/permission.service';
 import { TokenStorageService } from 'src/app/services/token-storage.service';
 import { TranslateService } from '@ngx-translate/core';
+import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 
 @Component({
   selector: 'app-layout-default',
@@ -25,6 +26,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
   navigationLinks: NavigationLink[] = [];
   isAdministration: boolean = false;
   isAnalyze: boolean = false;
+  isInStore: boolean = false;
   hideMenu: boolean = false;
   username: string = '';
   showAdminSubmenu = false;
@@ -38,6 +40,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
     private breakpointObserver: BreakpointObserver,
     private authService: AuthService,
     public chosenCollaborationService: ChosenCollaborationService,
+    private chosenStoreService: ChosenStoreService,
     private permissionService: PermissionService,
     private tokenStorageService: TokenStorageService,
     private translateService: TranslateService
@@ -45,6 +48,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
     router.events.pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd)).subscribe((event) => {
       this.isAdministration = event.url.startsWith('/admin');
       this.isAnalyze = event.url.startsWith('/analyze');
+      this.isInStore = event.url.startsWith('/store');
 
       this.hideMenu = route.snapshot.data?.['hideMenu'] || false;
 
@@ -109,6 +113,12 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
       newLinks.push(this.getAdminLink());
     }
 
+    // store menu
+    const storeLink = this.getStoreLink();
+    if (storeLink.submenus) {
+      newLinks.push(storeLink);
+    }
+
     this.navigationLinks = newLinks;
   }
 
@@ -165,6 +175,45 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
     return link;
   }
 
+  private getStoreLink(): NavigationLink {
+    const storeLink: NavigationLink = {
+      route: routePaths.stores,
+      label: this.translateService.instant('links.stores'),
+      icon: 'shopping_cart',
+      linkType: NavigationLinkType.Store,
+      expanded: this.isInStore
+    };
+
+    // store submenus
+    const storeSubmenus: NavigationLink[] = [];
+    // we can only view stores if we have the permissions to view collaborations
+    if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.VIEW)) {
+      // overview
+      storeSubmenus.push({
+        route: routePaths.store,
+        label: this.translateService.instant('general.overview'),
+        icon: 'store',
+        linkType: NavigationLinkType.Store
+      });
+      // algorithms
+      storeSubmenus.push({
+        route: routePaths.algorithmManage,
+        label: this.translateService.instant('resources.algorithms'),
+        icon: 'memory',
+        linkType: NavigationLinkType.Store
+      });
+    }
+    if (storeSubmenus.length > 0) {
+      storeLink.submenus = storeSubmenus;
+      storeLink.route = storeSubmenus[0].route;
+    }
+    // if store has not been chosen yet, link to that page
+    if (!this.chosenStoreService.store$.value) {
+      storeLink.route = routePaths.stores;
+    }
+    return storeLink;
+  }
+
   private getAdminLink(): NavigationLink {
     const adminLink: NavigationLink = {
       route: routePaths.adminHome,
@@ -218,15 +267,6 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
         route: routePaths.nodes,
         label: this.translateService.instant('resources.nodes'),
         icon: 'data_object',
-        linkType: NavigationLinkType.Admin
-      });
-    }
-    //Stores
-    if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.VIEW)) {
-      adminSubmenus.push({
-        route: routePaths.stores,
-        label: this.translateService.instant('resources.stores'),
-        icon: 'store',
         linkType: NavigationLinkType.Admin
       });
     }

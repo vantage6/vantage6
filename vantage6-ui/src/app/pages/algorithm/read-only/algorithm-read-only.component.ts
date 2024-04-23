@@ -1,5 +1,6 @@
-import { Component, HostBinding, Input, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
 import { Algorithm, AlgorithmFunction } from 'src/app/models/api/algorithm.model';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
@@ -10,10 +11,11 @@ import { ChosenCollaborationService } from 'src/app/services/chosen-collaboratio
   templateUrl: './algorithm-read-only.component.html',
   styleUrl: './algorithm-read-only.component.scss'
 })
-export class AlgorithmReadOnlyComponent implements OnInit {
+export class AlgorithmReadOnlyComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   @Input() id: string = '';
   @Input() algo_store_id: string = '';
+  destroy$ = new Subject<void>();
 
   algorithm?: Algorithm;
   algorithm_store?: AlgorithmStore;
@@ -27,8 +29,15 @@ export class AlgorithmReadOnlyComponent implements OnInit {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    await this.initData();
-    this.isLoading = false;
+    this.chosenCollaborationService.isInitialized$.pipe(takeUntil(this.destroy$)).subscribe((initialized) => {
+      if (initialized) {
+        this.initData();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
   }
 
   private async initData(): Promise<void> {
@@ -41,5 +50,6 @@ export class AlgorithmReadOnlyComponent implements OnInit {
     if (!this.algorithm_store) return;
 
     this.algorithm = await this.algorithmService.getAlgorithm(this.algorithm_store.url, this.id);
+    this.isLoading = false;
   }
 }
