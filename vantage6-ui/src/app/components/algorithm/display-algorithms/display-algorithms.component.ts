@@ -16,6 +16,10 @@ export class DisplayAlgorithmsComponent {
   constructor(private router: Router) {}
 
   handleAlgorithmClick(algorithm: Algorithm) {
-    this.router.navigate([this.routeOnClick, algorithm.id, algorithm.algorith_store_id]);
+    if (this.routeOnClick.startsWith('/analyze')) {
+      this.router.navigate([this.routeOnClick, algorithm.id, algorithm.algorith_store_id]);
+    } else {
+      this.router.navigate([this.routeOnClick, algorithm.id]);
+    }
   }
 }

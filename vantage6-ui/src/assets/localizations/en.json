@@ -49,6 +49,10 @@
     "content": "You have selected the collaboration '{{name}}'. The content displayed is specific to this collaboration.",
     "change": "Change collaboration"
   },
+  "chosen-store-alert": {
+    "content": "You have selected the algorithm store '{{name}}'. The content displayed is specific to this algorithm store.",
+    "change": "Change store"
+  },
   "table": {
     "search-placeholder": "Search"
   },

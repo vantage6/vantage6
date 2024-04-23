@@ -45,6 +45,7 @@ import { AlgorithmStoreListComponent } from './pages/algorithm-stores/list/algor
 import { AlgorithmStoreReadComponent } from './pages/algorithm-stores/read/algorithm-store-read.component';
 import { AlgorithmReadComponent } from './pages/algorithm/admin/read/algorithm-read.component';
 import { chosenStoreGuard } from './guards/chosenStore.guard';
+import { AlgorithmListComponent } from './pages/algorithm/admin/list/algorithm-list.component';
 
 const routes: Routes = [
   {
@@ -368,7 +369,15 @@ const routes: Routes = [
         component: AlgorithmStoreReadComponent,
         canActivate: [authenticationGuard(), chosenStoreGuard()],
         data: {
-          crumbs: [['algorithm-store-list.title', routePaths.stores], ['algorithm-store-read.title']]
+          crumbs: [['algorithm-store-read.title']]
+        }
+      },
+      {
+        path: routerConfig.algorithmsManage,
+        component: AlgorithmListComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['algorithm-list.title']]
         }
       },
       {
@@ -376,11 +385,7 @@ const routes: Routes = [
         component: AlgorithmReadComponent,
         canActivate: [authenticationGuard(), chosenStoreGuard()],
         data: {
-          crumbs: [
-            ['algorithm-store-list.title', routePaths.stores],
-            ['algorithm-store-read.title', routePaths.store],
-            ['resources.algorithm']
-          ]
+          crumbs: [['algorithm-list.title', routePaths.algorithmsManage], ['resources.algorithm']]
         }
       }
     ]

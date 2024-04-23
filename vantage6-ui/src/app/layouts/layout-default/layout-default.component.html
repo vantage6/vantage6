@@ -43,11 +43,21 @@
     <div class="layout-container">
       <app-breadcrumbs></app-breadcrumbs>
       <div *ngIf="isAnalyze && (chosenCollaborationService.collaboration$ | async) && router.url !== routes.start">
-        <mat-card class="collaboration-choose-alert">
+        <mat-card class="choice-alert">
           <div>
             {{ "chosen-collaboration-alert.content" | translate: { name: chosenCollaborationService.collaboration$.value?.name } }}
             <button mat-flat-button class="right-aligned-button" color="primary" [routerLink]="routes.start">
               {{ "chosen-collaboration-alert.change" | translate }}
+            </button>
+          </div>
+        </mat-card>
+      </div>
+      <div *ngIf="isInStore && (chosenStoreService.store$ | async) && router.url !== routes.stores">
+        <mat-card class="choice-alert">
+          <div>
+            {{ "chosen-store-alert.content" | translate: { name: chosenStoreService.store$.value?.name } }}
+            <button mat-flat-button class="right-aligned-button" color="primary" [routerLink]="routes.stores">
+              {{ "chosen-store-alert.change" | translate }}
             </button>
           </div>
         </mat-card>

@@ -103,6 +103,7 @@ import { AlgorithmStoreListComponent } from './pages/algorithm-stores/list/algor
 import { AlgorithmStoreReadComponent } from './pages/algorithm-stores/read/algorithm-store-read.component';
 import { AlgorithmReadComponent } from './pages/algorithm/admin/read/algorithm-read.component';
 import { DisplayAlgorithmComponent } from './components/algorithm/display-algorithm/display-algorithm.component';
+import { AlgorithmListComponent } from './pages/algorithm/admin/list/algorithm-list.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -179,7 +180,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     AlgorithmStoreListComponent,
     AlgorithmStoreReadComponent,
     AlgorithmReadComponent,
-    DisplayAlgorithmComponent
+    DisplayAlgorithmComponent,
+    AlgorithmListComponent
   ],
   imports: [
     BrowserModule,
