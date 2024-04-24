@@ -46,6 +46,7 @@ import { AlgorithmStoreReadComponent } from './pages/algorithm-stores/read/algor
 import { AlgorithmReadComponent } from './pages/algorithm/admin/read/algorithm-read.component';
 import { chosenStoreGuard } from './guards/chosenStore.guard';
 import { AlgorithmListComponent } from './pages/algorithm/admin/list/algorithm-list.component';
+import { AlgorithmCreateComponent } from './pages/algorithm/admin/create/algorithm-create.component';
 
 const routes: Routes = [
   {
@@ -378,6 +379,14 @@ const routes: Routes = [
         canActivate: [authenticationGuard(), chosenStoreGuard()],
         data: {
           crumbs: [['algorithm-list.title']]
+        }
+      },
+      {
+        path: routerConfig.algorithmCreate,
+        component: AlgorithmCreateComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['algorithm-list.title', routePaths.algorithmsManage], ['algorithm-create.short-title']]
         }
       },
       {

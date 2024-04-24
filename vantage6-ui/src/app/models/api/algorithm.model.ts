@@ -36,7 +36,7 @@ export enum FilterParameterType {
   Date = 'date'
 }
 
-enum PartitioningType {
+export enum PartitioningType {
   Horizontal = 'horizontal',
   Vertical = 'vertical'
 }
@@ -123,4 +123,29 @@ export interface Visualization {
   description?: string;
   type: VisualizationType;
   schema?: any;
+}
+
+interface NameDescriptionForm {
+  name: string;
+  description?: string;
+}
+
+interface ArgumentForm extends NameDescriptionForm {
+  type: string;
+}
+
+interface FunctionForm extends NameDescriptionForm {
+  arguments: ArgumentForm[];
+  databases: NameDescriptionForm[];
+  type: string;
+  // TODO UI visualizations
+}
+
+export interface AlgorithmForm {
+  name: string;
+  description?: string;
+  image: string;
+  partitioning: string;
+  vantage6_version: string;
+  // functions: FunctionForm[];
 }

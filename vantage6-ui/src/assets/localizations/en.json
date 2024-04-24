@@ -225,6 +225,25 @@
     },
     "manage": "Manage algorithm"
   },
+  "algorithm-create": {
+    "title": "Add a new algorithm to the algorithm store",
+    "short-title": "Add algorithm",
+    "function": {
+      "title": "Function",
+      "add": "Add function",
+      "delete": "Delete function",
+      "parameter": {
+        "title": "Parameter",
+        "add": "Add parameter",
+        "delete": "Delete parameter"
+      },
+      "database": {
+        "title": "Database",
+        "add": "Add database",
+        "delete": "Delete database"
+      }
+    }
+  },
   "organization": {
     "name": "Name",
     "address1": "Address 1",

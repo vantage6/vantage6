@@ -1,4 +1,8 @@
-<app-page-header title="{{ 'resources.algorithms' | translate }}"></app-page-header>
+<app-page-header title="{{ 'resources.algorithms' | translate }}">
+  <button actions mat-flat-button color="primary" *ngIf="canAddAlgorithm" [routerLink]="routes.algorithmCreate">
+    <mat-icon>add</mat-icon>{{ "algorithm-create.short-title" | translate }}
+  </button>
+</app-page-header>
 <ng-container *ngIf="!isLoading; else loading">
   <app-display-algorithms [algorithms]="algorithms" [routeOnClick]="routePaths.algorithmManage"></app-display-algorithms>
   <mat-card *ngIf="algorithms.length === 0">
