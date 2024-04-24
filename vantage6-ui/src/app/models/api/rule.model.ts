@@ -14,6 +14,13 @@ export enum ResourceType {
   ANY = '*'
 }
 
+export enum StoreResourceType {
+  ALGORITHM = 'algorithm',
+  USER = 'user',
+  ROLE = 'role',
+  ANY = '*'
+}
+
 export enum ScopeType {
   OWN = 'own',
   ORGANIZATION = 'organization',
@@ -32,16 +39,31 @@ export enum OperationType {
   ANY = '*'
 }
 
-export interface Rule {
+interface BaseRule {
   id: number;
   type: string;
   operation: OperationType;
-  name: ResourceType;
-  scope: ScopeType;
 }
 
-export interface GetRuleParameters {
+export interface Rule extends BaseRule {
+  scope: ScopeType;
+  name: ResourceType;
+}
+
+export interface StoreRule extends BaseRule {
+  name: StoreResourceType;
+}
+
+interface BaseGetRuleParameters {
   no_pagination?: 0 | 1;
   role_id?: string;
+}
+
+export interface GetRuleParameters extends BaseGetRuleParameters {
   user_id?: number;
+}
+
+export interface GetStoreRuleParameters extends BaseGetRuleParameters {
+  username?: string;
+  server_url?: string;
 }

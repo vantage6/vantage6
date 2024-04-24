@@ -4,6 +4,7 @@ import { AlgorithmStore, AlgorithmStoreLazyProperties } from '../models/api/algo
 import { AlgorithmStoreService } from './algorithm-store.service';
 import { PermissionService } from './permission.service';
 import { CHOSEN_ALGORITHM_STORE } from '../models/constants/sessionStorage';
+import { StorePermissionService } from './store-permission.service';
 
 @Injectable({
   providedIn: 'root'
@@ -16,7 +17,8 @@ export class ChosenStoreService {
 
   constructor(
     private algorithmStoreService: AlgorithmStoreService,
-    private permissionService: PermissionService
+    private permissionService: PermissionService,
+    private storePermissionService: StorePermissionService
   ) {
     this.permissionService
       .isInitialized()
@@ -31,18 +33,23 @@ export class ChosenStoreService {
   async setStore(id: string) {
     this.id = id;
     sessionStorage.setItem(CHOSEN_ALGORITHM_STORE, id);
-    const collaboration = await this.getStore(id);
-    this.store$.next(collaboration);
+    this.setup();
   }
 
   private async initData() {
     const storeIDFromSession = sessionStorage.getItem(CHOSEN_ALGORITHM_STORE);
     if (storeIDFromSession) {
       this.id = storeIDFromSession;
-      const collaboration = await this.getStore(this.id);
-      this.store$.next(collaboration);
+      await this.setup();
     }
     this.isInitialized$.next(true);
+  }
+
+  private async setup() {
+    const store = await this.getStore(this.id);
+    this.store$.next(store);
+    // initialize store permission service
+    this.storePermissionService.initialize(store);
   }
 
   private async getStore(id: string): Promise<AlgorithmStore> {
