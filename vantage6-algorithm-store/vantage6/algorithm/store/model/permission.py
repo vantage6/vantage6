@@ -21,6 +21,8 @@ Permission = Table(
     Column("role_id", Integer, ForeignKey("role.id")),
 )
 
+# TODO when this is activated, also include the changes in the rule endpoints (e.g.
+# where there is a filter by user)
 # TODO: integrate this with the Permission model from the v6 server
 # UserPermission = Table(
 #     'UserPermission',
