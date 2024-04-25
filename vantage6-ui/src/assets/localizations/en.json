@@ -223,7 +223,11 @@
       "no-databases": "This function does not use any data.",
       "no-visualizations": "There are no preprogrammed visualizations available for this user interface."
     },
-    "manage": "Manage algorithm"
+    "manage": "Manage algorithm",
+    "delete-dialog": {
+      "title": "Are you sure you want to delete the algorithm '{{name}}' from the store '{{store}}'?",
+      "content": "This operation cannot be undone."
+    }
   },
   "algorithm-create": {
     "title": "Add a new algorithm to the algorithm store",
@@ -234,12 +238,12 @@
       "delete": "Delete function",
       "parameter": {
         "title": "Parameter",
-        "add": "Add parameter",
+        "add": "Add function parameter",
         "delete": "Delete parameter"
       },
       "database": {
         "title": "Database",
-        "add": "Add database",
+        "add": "Add function database",
         "delete": "Delete database"
       }
     }

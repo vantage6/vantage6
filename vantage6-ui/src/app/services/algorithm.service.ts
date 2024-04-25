@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { Algorithm } from '../models/api/algorithm.model';
+import { Algorithm, AlgorithmForm } from '../models/api/algorithm.model';
 import { ChosenCollaborationService } from './chosen-collaboration.service';
 import { AlgorithmStore } from '../models/api/algorithmStore.model';
 import { Pagination } from '../models/api/pagination.model';
+import { ChosenStoreService } from './chosen-store.service';
 
 @Injectable({
   providedIn: 'root'
@@ -11,7 +12,8 @@ import { Pagination } from '../models/api/pagination.model';
 export class AlgorithmService {
   constructor(
     private apiService: ApiService,
-    private chosenCollaborationService: ChosenCollaborationService
+    private chosenCollaborationService: ChosenCollaborationService,
+    private chosenStoreService: ChosenStoreService
   ) {}
 
   async getAlgorithms(params: object = {}): Promise<Algorithm[]> {
@@ -50,6 +52,19 @@ export class AlgorithmService {
       return null;
     }
     return result[0];
+  }
+
+  async createAlgorithm(algorithm: AlgorithmForm): Promise<Algorithm | undefined> {
+    const algorithmStore = this.chosenStoreService.store$.value;
+    if (!algorithmStore) return;
+    const result = await this.apiService.postForAlgorithmApi<Algorithm>(algorithmStore.url, '/api/algorithm', algorithm);
+    return result;
+  }
+
+  async deleteAlgorithm(algorithmId: string): Promise<void> {
+    const algorithmStore = this.chosenStoreService.store$.value;
+    if (!algorithmStore) return;
+    return await this.apiService.deleteForAlgorithmApi(algorithmStore.url, `/api/algorithm/${algorithmId}`);
   }
 
   private getAlgorithmStoresForCollaboration(): AlgorithmStore[] {

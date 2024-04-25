@@ -27,7 +27,6 @@ export class StorePermissionService {
   async initialize(store: AlgorithmStore): Promise<void> {
     this.store = store;
     this.activeRules = await this.getStoreRules();
-    console.log(this.activeRules);
     this.initialized$.next(true);
   }
 

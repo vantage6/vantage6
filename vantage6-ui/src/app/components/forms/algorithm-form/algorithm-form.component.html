@@ -24,7 +24,8 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
-    <mat-card class="subcard" *ngFor="let functionFormGroup of functionFormGroups; let idx = index">
+    <!-- Card per function -->
+    <mat-card class="subcard" *ngFor="let functionFormGroup of functionFormGroups; let funcIdx = index">
       <mat-card-header>
         <mat-card-title>{{ "algorithm-create.function.title" | translate }}</mat-card-title>
       </mat-card-header>
@@ -46,6 +47,61 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
+          <!-- Card per parameter -->
+          <mat-card class="subcard" *ngFor="let parameterFormGroup of getParamFormGroups(funcIdx); let paramIdx = index">
+            <mat-card-header>
+              <mat-card-title>{{ "algorithm-create.function.parameter.title" | translate }}</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <form class="form" [formGroup]="parameterFormGroup">
+                <mat-form-field subscriptSizing="dynamic">
+                  <mat-label>{{ "general.name" | translate }}</mat-label>
+                  <input matInput type="text" formControlName="name" />
+                </mat-form-field>
+                <mat-form-field subscriptSizing="dynamic">
+                  <mat-label>{{ "general.description" | translate }}</mat-label>
+                  <input matInput type="text" formControlName="description" />
+                </mat-form-field>
+                <mat-form-field subscriptSizing="dynamic">
+                  <mat-label>{{ "algorithm.function.argument.type" | translate }}</mat-label>
+                  <mat-select formControlName="type">
+                    <mat-option *ngFor="let paramType of paramTypes" [value]="paramType">
+                      {{ paramType }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <div class="button-container button-container-separate">
+                  <button mat-flat-button color="warn" (click)="deleteParameter(functionFormGroup, paramIdx)">
+                    {{ "algorithm-create.function.parameter.delete" | translate }}
+                  </button>
+                </div>
+              </form>
+            </mat-card-content>
+          </mat-card>
+          <!-- Card per database -->
+          <mat-card class="subcard" *ngFor="let databaseFormGroup of getDatabaseFormGroups(funcIdx); let dbIdx = index">
+            <mat-card-header>
+              <mat-card-title>{{ "algorithm-create.function.database.title" | translate }}</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <form class="form" [formGroup]="databaseFormGroup">
+                <mat-form-field subscriptSizing="dynamic">
+                  <mat-label>{{ "general.name" | translate }}</mat-label>
+                  <input matInput type="text" formControlName="name" />
+                </mat-form-field>
+                <mat-form-field subscriptSizing="dynamic">
+                  <mat-label>{{ "general.description" | translate }}</mat-label>
+                  <input matInput type="text" formControlName="description" />
+                </mat-form-field>
+                <div class="button-container button-container-separate">
+                  <button mat-flat-button color="warn" (click)="deleteDatabase(functionFormGroup, dbIdx)">
+                    {{ "algorithm-create.function.database.delete" | translate }}
+                  </button>
+                </div>
+              </form>
+            </mat-card-content>
+          </mat-card>
+          <!-- Buttons per function -->
           <div class="button-container button-container-separate">
             <button mat-flat-button color="primary" (click)="addParameter(functionFormGroup)">
               {{ "algorithm-create.function.parameter.add" | translate }}
@@ -53,7 +109,9 @@
             <button mat-flat-button color="primary" (click)="addDatabase(functionFormGroup)">
               {{ "algorithm-create.function.database.add" | translate }}
             </button>
-            <button mat-flat-button color="warn" (click)="deleteFunction(idx)">{{ "algorithm-create.function.delete" | translate }}</button>
+            <button mat-flat-button color="warn" (click)="deleteFunction(funcIdx)">
+              {{ "algorithm-create.function.delete" | translate }}
+            </button>
           </div>
         </form>
       </mat-card-content>

@@ -21,22 +21,12 @@ export class AlgorithmCreateComponent {
 
   async handleSubmit(algorithmForm: AlgorithmForm) {
     this.isSubmitting = true;
-
-    // // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    // const collaborationCreate: CollaborationCreate = {
-    //   name: collaborationForm.name,
-    //   encrypted: collaborationForm.encrypted,
-    //   organization_ids: collaborationForm.organizations.map((organization: BaseOrganization) => organization.id)
-    // };
-    // const collaboration = await this.collaborationService.createCollaboration(collaborationCreate);
-    // if (collaboration?.id) {
-    //   if (collaborationForm.registerNodes && collaborationForm.organizations) {
-    //     this.nodeService.registerNodes(collaboration, collaborationForm.organizations);
-    //   }
-    //   this.router.navigate([routePaths.collaborations]);
-    // } else {
-    //   this.isSubmitting = false;
-    // }
+    const newAlgorithm = await this.algorithmService.createAlgorithm(algorithmForm);
+    if (newAlgorithm?.id) {
+      this.router.navigate([routePaths.algorithmManage, newAlgorithm.id]);
+    } else {
+      this.isSubmitting = false;
+    }
   }
 
   handleCancel(): void {

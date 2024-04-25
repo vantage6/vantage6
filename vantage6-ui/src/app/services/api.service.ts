@@ -82,6 +82,29 @@ export class ApiService {
     );
   }
 
+  async postForAlgorithmApi<T>(algo_store_url: string, path: string, body: object): Promise<T> {
+    if (algo_store_url.endsWith('/')) {
+      algo_store_url = algo_store_url.slice(0, -1);
+    }
+    return await this.handleResult(
+      this.http.post<T>(algo_store_url + path, body, {
+        headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() }
+      })
+    );
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async deleteForAlgorithmApi(algo_store_url: string, path: string): Promise<any> {
+    if (algo_store_url.endsWith('/')) {
+      algo_store_url = algo_store_url.slice(0, -1);
+    }
+    return await this.handleResult(
+      this.http.delete(algo_store_url + path, {
+        headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() }
+      })
+    );
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private getApiAuthenticationHeaders(): any {
     const accessToken = sessionStorage.getItem(ACCESS_TOKEN_KEY);
