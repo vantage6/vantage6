@@ -1,7 +1,11 @@
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChildren } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatExpansionPanel } from '@angular/material/expansion';
+import { readFile } from 'src/app/helpers/file.helper';
 import { Algorithm, AlgorithmForm, ArgumentType, FunctionType, PartitioningType } from 'src/app/models/api/algorithm.model';
+import { MessageDialogComponent } from '../../dialogs/message-dialog/message-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-algorithm-form',
@@ -9,7 +13,7 @@ import { Algorithm, AlgorithmForm, ArgumentType, FunctionType, PartitioningType 
   styleUrl: './algorithm-form.component.scss'
 })
 export class AlgorithmFormComponent implements OnInit, AfterViewInit {
-  @Input() algorithm?: Algorithm;
+  @Input() algorithm?: Algorithm | AlgorithmForm;
   @Output() cancelled: EventEmitter<void> = new EventEmitter();
   @Output() submitted: EventEmitter<AlgorithmForm> = new EventEmitter();
   @ViewChildren('expansionPanel') matExpansionPanels?: QueryList<MatExpansionPanel>;
@@ -19,6 +23,10 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   partitionTypes = Object.values(PartitioningType);
   functionTypes = Object.values(FunctionType);
   paramTypes = Object.values(ArgumentType);
+  selectedFile: File | null = null;
+  uploadForm = this.fb.nonNullable.group({
+    jsonFile: ''
+  });
 
   // FIXME these forms are also defined in a separate function at the end but we need
   // to define them here to prevent type errors in the form... find a solution to define
@@ -51,6 +59,8 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
 
   constructor(
     private fb: FormBuilder,
+    private dialog: MatDialog,
+    private translateService: TranslateService,
     private changeDetectorRef: ChangeDetectorRef
   ) {}
 
@@ -120,11 +130,33 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     return this.form.controls.functions.controls[functionIndex].controls.databases.controls as FormGroup[];
   }
 
+  async selectedJsonFile(event: Event) {
+    this.selectedFile = (event.target as HTMLInputElement).files?.item(0) || null;
+
+    if (!this.selectedFile) return;
+    const fileData = await readFile(this.selectedFile);
+
+    this.uploadForm.controls.jsonFile.setValue(fileData || '');
+    try {
+      const algorithmForm: AlgorithmForm = JSON.parse(this.uploadForm.controls.jsonFile.value);
+      this.algorithm = algorithmForm;
+      this.initializeFormFromAlgorithm();
+      // to prevent visual overload, attempt to close the expansion panels
+      // TODO hacky solution - better not to rely on timeout. For edit it is done via
+      // ngAfterViewInit, but for upload it is not possible to do it there - find out how
+      setTimeout(() => {
+        this.closeFunctionExpansionPanels();
+      }, 500);
+    } catch (error) {
+      this.showJsonUploadError(error);
+    }
+  }
+
   private initializeFormFromAlgorithm(): void {
     if (!this.algorithm) return;
     // initialize the form with the values of the algorithm
     this.form.controls.name.setValue(this.algorithm.name);
-    this.form.controls.description.setValue(this.algorithm.description);
+    this.form.controls.description.setValue(this.algorithm?.description || '');
     this.form.controls.image.setValue(this.algorithm.image);
     this.form.controls.partitioning.setValue(this.algorithm.partitioning);
     this.form.controls.vantage6_version.setValue(this.algorithm.vantage6_version);
@@ -188,6 +220,17 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     return this.fb.group({
       name: ['', [Validators.required]],
       description: ['']
+    });
+  }
+
+  private showJsonUploadError(error: any): void {
+    this.dialog.open(MessageDialogComponent, {
+      data: {
+        title: this.translateService.instant('algorithm-create.card-from-json.error-title'),
+        content: [error.message],
+        confirmButtonText: this.translateService.instant('general.close'),
+        confirmButtonType: 'default'
+      }
     });
   }
 }

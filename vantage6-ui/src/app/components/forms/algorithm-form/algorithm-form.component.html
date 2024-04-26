@@ -1,151 +1,179 @@
-<ng-container *ngIf="!isLoading; else loading">
-  <form class="form" [formGroup]="form" (ngSubmit)="handleSubmit()">
-    <mat-form-field subscriptSizing="dynamic">
-      <mat-label>{{ "general.name" | translate }}</mat-label>
-      <input matInput type="text" formControlName="name" />
-    </mat-form-field>
-    <mat-form-field subscriptSizing="dynamic">
-      <mat-label>{{ "general.description" | translate }}</mat-label>
-      <input matInput type="text" formControlName="description" />
-    </mat-form-field>
-    <mat-form-field subscriptSizing="dynamic">
-      <mat-label>{{ "algorithm.image" | translate }}</mat-label>
-      <input matInput type="text" formControlName="image" />
-    </mat-form-field>
-    <mat-form-field subscriptSizing="dynamic">
-      <mat-label>{{ "algorithm.v6version" | translate }}</mat-label>
-      <input matInput type="text" formControlName="vantage6_version" />
-    </mat-form-field>
-    <mat-form-field subscriptSizing="dynamic">
-      <mat-label>{{ "algorithm.partitioning" | translate }}</mat-label>
-      <mat-select formControlName="partitioning">
-        <mat-option *ngFor="let partitionType of partitionTypes" [value]="partitionType">
-          {{ partitionType }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-    <!-- Card per function -->
-    <mat-accordion
-      *ngFor="let functionFormGroup of functionFormGroups; let funcIdx = index"
-      class="card-accordion sub-accordion"
-      [multi]="true"
-    >
-      <mat-expansion-panel #expansionPanel [expanded]="true">
-        <mat-expansion-panel-header>
-          <mat-panel-title
-            >{{ "algorithm-create.function.title" | translate }} {{ functionFormGroup.get("name")?.value || "" }}</mat-panel-title
-          >
-        </mat-expansion-panel-header>
-        <ng-template matExpansionPanelContent>
-          <form class="form" [formGroup]="functionFormGroup">
-            <mat-form-field subscriptSizing="dynamic">
-              <mat-label>{{ "general.name" | translate }}</mat-label>
-              <input matInput type="text" formControlName="name" />
-            </mat-form-field>
-            <mat-form-field subscriptSizing="dynamic">
-              <mat-label>{{ "general.description" | translate }}</mat-label>
-              <input matInput type="text" formControlName="description" />
-            </mat-form-field>
-            <mat-form-field subscriptSizing="dynamic">
-              <mat-label>{{ "algorithm.function.type" | translate }}</mat-label>
-              <mat-select formControlName="type">
-                <mat-option *ngFor="let functionType of functionTypes" [value]="functionType">
-                  {{ functionType }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-            <!-- Accordion per parameter -->
-            <mat-accordion class="card-accordion subaccordion" [multi]="true">
-              <mat-expansion-panel [expanded]="true" *ngFor="let parameterFormGroup of getParamFormGroups(funcIdx); let paramIdx = index">
-                <mat-expansion-panel-header>
-                  <mat-panel-title
-                    >{{ "algorithm-create.function.parameter.title" | translate }} {{ parameterFormGroup.get("name")?.value || "" }}
-                  </mat-panel-title>
-                </mat-expansion-panel-header>
-                <ng-template matExpansionPanelContent>
-                  <form class="form" [formGroup]="parameterFormGroup">
-                    <mat-form-field subscriptSizing="dynamic">
-                      <mat-label>{{ "general.name" | translate }}</mat-label>
-                      <input matInput type="text" formControlName="name" />
-                    </mat-form-field>
-                    <mat-form-field subscriptSizing="dynamic">
-                      <mat-label>{{ "general.description" | translate }}</mat-label>
-                      <input matInput type="text" formControlName="description" />
-                    </mat-form-field>
-                    <mat-form-field subscriptSizing="dynamic">
-                      <mat-label>{{ "algorithm.function.argument.type" | translate }}</mat-label>
-                      <mat-select formControlName="type">
-                        <mat-option *ngFor="let paramType of paramTypes" [value]="paramType">
-                          {{ paramType }}
-                        </mat-option>
-                      </mat-select>
-                    </mat-form-field>
-                    <div class="button-container button-container-separate">
-                      <button mat-flat-button color="warn" (click)="deleteParameter(functionFormGroup, paramIdx)">
-                        {{ "algorithm-create.function.parameter.delete" | translate }}
-                      </button>
-                    </div>
-                  </form>
-                </ng-template>
-              </mat-expansion-panel>
-            </mat-accordion>
-            <!-- Card per database -->
-            <mat-accordion
-              class="card-accordion subaccordion"
-              *ngFor="let databaseFormGroup of getDatabaseFormGroups(funcIdx); let dbIdx = index"
-              [multi]="true"
-            >
-              <mat-expansion-panel [expanded]="true">
-                <mat-expansion-panel-header>
-                  <mat-panel-title
-                    >{{ "algorithm-create.function.database.title" | translate }}
-                    {{ databaseFormGroup.get("name")?.value || "" }}</mat-panel-title
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>{{ "algorithm-create.card-from-json.title" | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <p>{{ "algorithm-create.card-from-json.description" | translate }}</p>
+    <form class="form" [formGroup]="uploadForm">
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ "algorithm-create.card-from-json.file-label" | translate }}</mat-label>
+        <input matInput value="{{ selectedFile?.name }}" disabled />
+        <input hidden (change)="selectedJsonFile($event)" #fileInput type="file" id="file" />
+        <button mat-flat-button type="button" matSuffix color="primary" (click)="fileInput.click()">
+          {{ "general.file-select" | translate }}
+        </button>
+      </mat-form-field>
+    </form>
+  </mat-card-content>
+</mat-card>
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>{{ "algorithm-create.subtitle" | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <ng-container *ngIf="!isLoading; else loading">
+      <form class="form" [formGroup]="form" (ngSubmit)="handleSubmit()">
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ "general.name" | translate }}</mat-label>
+          <input matInput type="text" formControlName="name" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ "general.description" | translate }}</mat-label>
+          <input matInput type="text" formControlName="description" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ "algorithm.image" | translate }}</mat-label>
+          <input matInput type="text" formControlName="image" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ "algorithm.v6version" | translate }}</mat-label>
+          <input matInput type="text" formControlName="vantage6_version" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ "algorithm.partitioning" | translate }}</mat-label>
+          <mat-select formControlName="partitioning">
+            <mat-option *ngFor="let partitionType of partitionTypes" [value]="partitionType">
+              {{ partitionType }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <!-- Card per function -->
+        <mat-accordion
+          *ngFor="let functionFormGroup of functionFormGroups; let funcIdx = index"
+          class="card-accordion sub-accordion"
+          [multi]="true"
+        >
+          <mat-expansion-panel #expansionPanel [expanded]="true">
+            <mat-expansion-panel-header>
+              <mat-panel-title
+                >{{ "algorithm-create.function.title" | translate }} {{ functionFormGroup.get("name")?.value || "" }}</mat-panel-title
+              >
+            </mat-expansion-panel-header>
+            <ng-template matExpansionPanelContent>
+              <form class="form" [formGroup]="functionFormGroup">
+                <mat-form-field subscriptSizing="dynamic">
+                  <mat-label>{{ "general.name" | translate }}</mat-label>
+                  <input matInput type="text" formControlName="name" />
+                </mat-form-field>
+                <mat-form-field subscriptSizing="dynamic">
+                  <mat-label>{{ "general.description" | translate }}</mat-label>
+                  <input matInput type="text" formControlName="description" />
+                </mat-form-field>
+                <mat-form-field subscriptSizing="dynamic">
+                  <mat-label>{{ "algorithm.function.type" | translate }}</mat-label>
+                  <mat-select formControlName="type">
+                    <mat-option *ngFor="let functionType of functionTypes" [value]="functionType">
+                      {{ functionType }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <!-- Accordion per parameter -->
+                <mat-accordion class="card-accordion subaccordion" [multi]="true">
+                  <mat-expansion-panel
+                    [expanded]="true"
+                    *ngFor="let parameterFormGroup of getParamFormGroups(funcIdx); let paramIdx = index"
                   >
-                </mat-expansion-panel-header>
-                <ng-template matExpansionPanelContent>
-                  <form class="form" [formGroup]="databaseFormGroup">
-                    <mat-form-field subscriptSizing="dynamic">
-                      <mat-label>{{ "general.name" | translate }}</mat-label>
-                      <input matInput type="text" formControlName="name" />
-                    </mat-form-field>
-                    <mat-form-field subscriptSizing="dynamic">
-                      <mat-label>{{ "general.description" | translate }}</mat-label>
-                      <input matInput type="text" formControlName="description" />
-                    </mat-form-field>
-                    <div class="button-container button-container-separate">
-                      <button mat-flat-button color="warn" (click)="deleteDatabase(functionFormGroup, dbIdx)">
-                        {{ "algorithm-create.function.database.delete" | translate }}
-                      </button>
-                    </div>
-                  </form>
-                </ng-template>
-              </mat-expansion-panel>
-            </mat-accordion>
-            <!-- Buttons per function -->
-            <div class="button-container button-container-separate">
-              <button mat-flat-button color="primary" (click)="addParameter(functionFormGroup)">
-                {{ "algorithm-create.function.parameter.add" | translate }}
-              </button>
-              <button mat-flat-button color="primary" (click)="addDatabase(functionFormGroup)">
-                {{ "algorithm-create.function.database.add" | translate }}
-              </button>
-              <button mat-flat-button color="warn" (click)="deleteFunction(funcIdx)">
-                {{ "algorithm-create.function.delete" | translate }}
-              </button>
-            </div>
-          </form>
-        </ng-template>
-      </mat-expansion-panel>
-    </mat-accordion>
-    <div class="button-container button-container-separate">
-      <button mat-flat-button color="primary" (click)="addFunction()">{{ "algorithm-create.function.add" | translate }}</button>
-    </div>
-    <div class="button-container">
-      <button mat-flat-button type="submit" color="primary">{{ "general.submit" | translate }}</button>
-      <button mat-flat-button (click)="handleCancel()">{{ "general.cancel" | translate }}</button>
-    </div>
-  </form>
-</ng-container>
-<ng-template #loading>
-  <mat-spinner diameter="48"></mat-spinner>
-</ng-template>
+                    <mat-expansion-panel-header>
+                      <mat-panel-title
+                        >{{ "algorithm-create.function.parameter.title" | translate }} {{ parameterFormGroup.get("name")?.value || "" }}
+                      </mat-panel-title>
+                    </mat-expansion-panel-header>
+                    <ng-template matExpansionPanelContent>
+                      <form class="form" [formGroup]="parameterFormGroup">
+                        <mat-form-field subscriptSizing="dynamic">
+                          <mat-label>{{ "general.name" | translate }}</mat-label>
+                          <input matInput type="text" formControlName="name" />
+                        </mat-form-field>
+                        <mat-form-field subscriptSizing="dynamic">
+                          <mat-label>{{ "general.description" | translate }}</mat-label>
+                          <input matInput type="text" formControlName="description" />
+                        </mat-form-field>
+                        <mat-form-field subscriptSizing="dynamic">
+                          <mat-label>{{ "algorithm.function.argument.type" | translate }}</mat-label>
+                          <mat-select formControlName="type">
+                            <mat-option *ngFor="let paramType of paramTypes" [value]="paramType">
+                              {{ paramType }}
+                            </mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                        <div class="button-container button-container-separate">
+                          <button mat-flat-button color="warn" (click)="deleteParameter(functionFormGroup, paramIdx)">
+                            {{ "algorithm-create.function.parameter.delete" | translate }}
+                          </button>
+                        </div>
+                      </form>
+                    </ng-template>
+                  </mat-expansion-panel>
+                </mat-accordion>
+                <!-- Card per database -->
+                <mat-accordion
+                  class="card-accordion subaccordion"
+                  *ngFor="let databaseFormGroup of getDatabaseFormGroups(funcIdx); let dbIdx = index"
+                  [multi]="true"
+                >
+                  <mat-expansion-panel [expanded]="true">
+                    <mat-expansion-panel-header>
+                      <mat-panel-title
+                        >{{ "algorithm-create.function.database.title" | translate }}
+                        {{ databaseFormGroup.get("name")?.value || "" }}</mat-panel-title
+                      >
+                    </mat-expansion-panel-header>
+                    <ng-template matExpansionPanelContent>
+                      <form class="form" [formGroup]="databaseFormGroup">
+                        <mat-form-field subscriptSizing="dynamic">
+                          <mat-label>{{ "general.name" | translate }}</mat-label>
+                          <input matInput type="text" formControlName="name" />
+                        </mat-form-field>
+                        <mat-form-field subscriptSizing="dynamic">
+                          <mat-label>{{ "general.description" | translate }}</mat-label>
+                          <input matInput type="text" formControlName="description" />
+                        </mat-form-field>
+                        <div class="button-container button-container-separate">
+                          <button mat-flat-button color="warn" (click)="deleteDatabase(functionFormGroup, dbIdx)">
+                            {{ "algorithm-create.function.database.delete" | translate }}
+                          </button>
+                        </div>
+                      </form>
+                    </ng-template>
+                  </mat-expansion-panel>
+                </mat-accordion>
+                <!-- Buttons per function -->
+                <div class="button-container button-container-separate">
+                  <button mat-flat-button color="primary" (click)="addParameter(functionFormGroup)">
+                    {{ "algorithm-create.function.parameter.add" | translate }}
+                  </button>
+                  <button mat-flat-button color="primary" (click)="addDatabase(functionFormGroup)">
+                    {{ "algorithm-create.function.database.add" | translate }}
+                  </button>
+                  <button mat-flat-button color="warn" (click)="deleteFunction(funcIdx)">
+                    {{ "algorithm-create.function.delete" | translate }}
+                  </button>
+                </div>
+              </form>
+            </ng-template>
+          </mat-expansion-panel>
+        </mat-accordion>
+        <div class="button-container button-container-separate">
+          <button mat-flat-button color="primary" (click)="addFunction()">{{ "algorithm-create.function.add" | translate }}</button>
+        </div>
+        <div class="button-container">
+          <button mat-flat-button type="submit" color="primary">{{ "general.submit" | translate }}</button>
+          <button mat-flat-button (click)="handleCancel()">{{ "general.cancel" | translate }}</button>
+        </div>
+      </form>
+    </ng-container>
+    <ng-template #loading>
+      <mat-spinner diameter="48"></mat-spinner>
+    </ng-template>
+  </mat-card-content>
+</mat-card>

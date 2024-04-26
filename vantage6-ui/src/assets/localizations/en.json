@@ -17,7 +17,8 @@
     "id": "ID",
     "visualization": "Visualization",
     "description": "Description",
-    "overview": "Overview"
+    "overview": "Overview",
+    "file-select": "Select file"
   },
   "resources": {
     "collaboration": "Collaboration",
@@ -227,10 +228,16 @@
     "delete-dialog": {
       "title": "Are you sure you want to delete the algorithm '{{name}}' from the store '{{store}}'?",
       "content": "This operation cannot be undone."
+    },
+    "card-download-json": {
+      "title": "Download algorithm description",
+      "description": "You can use the algorithm JSON representation to upload this algorithm into another algorithm store. Also, it is recommended to store it in your algorithm's git repository so that you and others can easily upload it into algorithm stores in the future.",
+      "download-button": "Download JSON"
     }
   },
   "algorithm-create": {
     "title": "Add a new algorithm to the algorithm store",
+    "subtitle": "Add algorithm details",
     "short-title": "Add algorithm",
     "function": {
       "title": "Function",
@@ -246,6 +253,22 @@
         "add": "Add function database",
         "delete": "Delete database"
       }
+    },
+    "card-from-json": {
+      "title": "Upload algorithm from JSON",
+      "description": "You can prefill this form by uploading an algorithm from a JSON file. This file is present when creating an algorithm with `v6 algorithm create`, or you may have downloaded it from another vantage6 algorithm store.",
+      "file-label": "Upload JSON file",
+      "error-title": "Error uploading algorithm from JSON"
+    }
+  },
+  "algorithm-edit": {
+    "success-dialog": {
+      "title": "Algorithm updated",
+      "message": "The algorithm has been updated successfully."
+    },
+    "error-dialog": {
+      "title": "Error updating algorithm",
+      "message": "An error occurred while updating the algorithm: {{error}}"
     }
   },
   "organization": {
