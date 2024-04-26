@@ -60,7 +60,7 @@
               <!-- Separate accordeon for arguments -->
               <div class="data-list__item data-list__item--full">
                 <h4>{{ "algorithm.function.argument.title" | translate }}</h4>
-                <mat-accordion *ngIf="function.arguments.length > 0; else noArguments" class="card-accordion sub-accordeon">
+                <mat-accordion *ngIf="function.arguments.length > 0; else noArguments" class="card-accordion sub-accordeon" [multi]="true">
                   <mat-expansion-panel *ngFor="let argument of function.arguments">
                     <mat-expansion-panel-header>
                       <mat-panel-title>{{ argument.name }}</mat-panel-title>
@@ -87,7 +87,7 @@
               <!-- Separate accordeon for databases -->
               <div class="data-list__item data-list__item--full">
                 <h4>{{ "algorithm.function.databases" | translate }}</h4>
-                <mat-accordion *ngIf="function.databases.length > 0; else noDatabases" class="card-accordion sub-accordeon">
+                <mat-accordion *ngIf="function.databases.length > 0; else noDatabases" class="card-accordion sub-accordeon" [multi]="true">
                   <mat-expansion-panel *ngFor="let db of function.databases">
                     <mat-expansion-panel-header>
                       <mat-panel-title>{{ db.name }}</mat-panel-title>
@@ -110,7 +110,11 @@
               <!-- Separate accordeon for visualizations -->
               <div class="data-list__item data-list__item--full">
                 <h4>{{ "algorithm.function.visualization.title" | translate }}</h4>
-                <mat-accordion *ngIf="function.ui_visualizations.length > 0; else noVisualizations" class="card-accordion sub-accordeon">
+                <mat-accordion
+                  *ngIf="function.ui_visualizations.length > 0; else noVisualizations"
+                  class="card-accordion sub-accordeon"
+                  [multi]="true"
+                >
                   <mat-expansion-panel *ngFor="let vis of function.ui_visualizations">
                     <mat-expansion-panel-header>
                       <mat-panel-title>{{ vis.name }}</mat-panel-title>

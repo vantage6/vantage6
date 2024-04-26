@@ -1,5 +1,6 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChildren } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { MatExpansionPanel } from '@angular/material/expansion';
 import { AlgorithmForm, ArgumentType, FunctionType, PartitioningType } from 'src/app/models/api/algorithm.model';
 
 @Component({
@@ -11,6 +12,7 @@ export class AlgorithmFormComponent implements OnInit {
   @Input() algorithm?: Algorithm;
   @Output() cancelled: EventEmitter<void> = new EventEmitter();
   @Output() submitted: EventEmitter<AlgorithmForm> = new EventEmitter();
+  @ViewChildren('expansionPanel') matExpansionPanels?: QueryList<MatExpansionPanel>;
 
   isEdit: boolean = false;
   isLoading: boolean = true;
@@ -18,6 +20,9 @@ export class AlgorithmFormComponent implements OnInit {
   functionTypes = Object.values(FunctionType);
   paramTypes = Object.values(ArgumentType);
 
+  // FIXME these forms are also defined in a separate function at the end but we need
+  // to define them here to prevent type errors in the form... find a solution to define
+  // only once
   databaseForm = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
     description: ['']
@@ -59,7 +64,6 @@ export class AlgorithmFormComponent implements OnInit {
   }
 
   handleSubmit() {
-    console.log(this.form);
     if (this.form.valid) {
       this.submitted.emit(this.form.getRawValue());
     }
@@ -70,7 +74,9 @@ export class AlgorithmFormComponent implements OnInit {
   }
 
   addFunction(): void {
-    this.form.controls.functions.push(this.functionForm);
+    // close expansion panels of existing functions, then add a new function
+    this.closeFunctionExpansionPanels();
+    this.form.controls.functions.push(this.getFunctionForm());
   }
 
   deleteFunction(index: number): void {
@@ -78,7 +84,7 @@ export class AlgorithmFormComponent implements OnInit {
   }
 
   addParameter(functionFormGroup: FormGroup): void {
-    (functionFormGroup.controls['arguments'] as FormArray).push(this.argumentForm);
+    (functionFormGroup.controls['arguments'] as FormArray).push(this.getArgumentForm());
   }
 
   deleteParameter(functionFormGroup: FormGroup, index: number): void {
@@ -86,7 +92,7 @@ export class AlgorithmFormComponent implements OnInit {
   }
 
   addDatabase(functionFormGroup: FormGroup): void {
-    (functionFormGroup.controls['databases'] as FormArray).push(this.databaseForm);
+    (functionFormGroup.controls['databases'] as FormArray).push(this.getDatabaseForm());
   }
 
   deleteDatabase(functionFormGroup: FormGroup, index: number): void {
@@ -112,5 +118,36 @@ export class AlgorithmFormComponent implements OnInit {
     this.addFunction();
     this.form.controls.functions.controls[0].controls.arguments.clear();
     this.form.controls.functions.controls[0].controls.databases.clear();
+  }
+
+  private closeFunctionExpansionPanels(): void {
+    if (this.matExpansionPanels) {
+      this.matExpansionPanels.forEach((panel) => panel.close());
+    }
+  }
+
+  private getFunctionForm(): FormGroup {
+    return this.fb.group({
+      name: ['', [Validators.required]],
+      description: [''],
+      type: ['', [Validators.required]],
+      arguments: this.fb.array([]),
+      databases: this.fb.array([])
+    });
+  }
+
+  private getArgumentForm(): FormGroup {
+    return this.fb.group({
+      name: ['', [Validators.required]],
+      description: [''],
+      type: ['', [Validators.required]]
+    });
+  }
+
+  private getDatabaseForm(): FormGroup {
+    return this.fb.group({
+      name: ['', [Validators.required]],
+      description: ['']
+    });
   }
 }
