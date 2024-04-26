@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { Algorithm, ArgumentType, AlgorithmFunction, Argument, FunctionType } from 'src/app/models/api/algorithm.model';
@@ -85,6 +85,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(
     private fb: FormBuilder,
     private router: Router,
+    private changeDetectorRef: ChangeDetectorRef,
     private algorithmService: AlgorithmService,
     private taskService: TaskService,
     private nodeService: NodeService,
@@ -116,10 +117,12 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     // setup repeating task if needed
     if (this.isTaskRepeat) {
       this.isLoading = true;
-      const taskID = this.router.url.split('/')[4];
+      const splitted = this.router.url.split('/');
+      const taskID = splitted[splitted.length - 1];
       await this.setupRepeatTask(taskID);
       this.isLoading = false;
     }
+    this.changeDetectorRef.detectChanges();
   }
 
   ngOnDestroy(): void {
