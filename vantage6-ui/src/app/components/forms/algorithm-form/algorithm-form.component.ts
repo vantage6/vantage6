@@ -1,14 +1,14 @@
-import { Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChildren } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChildren } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatExpansionPanel } from '@angular/material/expansion';
-import { AlgorithmForm, ArgumentType, FunctionType, PartitioningType } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmForm, ArgumentType, FunctionType, PartitioningType } from 'src/app/models/api/algorithm.model';
 
 @Component({
   selector: 'app-algorithm-form',
   templateUrl: './algorithm-form.component.html',
   styleUrl: './algorithm-form.component.scss'
 })
-export class AlgorithmFormComponent implements OnInit {
+export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   @Input() algorithm?: Algorithm;
   @Output() cancelled: EventEmitter<void> = new EventEmitter();
   @Output() submitted: EventEmitter<AlgorithmForm> = new EventEmitter();
@@ -49,18 +49,27 @@ export class AlgorithmFormComponent implements OnInit {
     functions: this.fb.nonNullable.array([this.functionForm])
   });
 
-  constructor(private fb: FormBuilder) {}
+  constructor(
+    private fb: FormBuilder,
+    private changeDetectorRef: ChangeDetectorRef
+  ) {}
 
   async ngOnInit(): Promise<void> {
     this.isEdit = !!this.algorithm;
     if (this.algorithm) {
-      // this.form.controls.name.setValue(this.collaboration.name);
-      // this.form.controls.encrypted.setValue(this.collaboration.encrypted);
-      // this.form.controls.organizations.setValue(this.collaboration.organizations);
+      this.initializeFormFromAlgorithm();
     } else {
       this.initializeFormForCreate();
     }
     this.isLoading = false;
+  }
+
+  ngAfterViewInit(): void {
+    // if editing algorithm, close the expansion panels to prevent information overload
+    if (this.isEdit) {
+      this.closeFunctionExpansionPanels();
+    }
+    this.changeDetectorRef.detectChanges();
   }
 
   handleSubmit() {
@@ -109,6 +118,37 @@ export class AlgorithmFormComponent implements OnInit {
 
   getDatabaseFormGroups(functionIndex: number): FormGroup[] {
     return this.form.controls.functions.controls[functionIndex].controls.databases.controls as FormGroup[];
+  }
+
+  private initializeFormFromAlgorithm(): void {
+    if (!this.algorithm) return;
+    // initialize the form with the values of the algorithm
+    this.form.controls.name.setValue(this.algorithm.name);
+    this.form.controls.description.setValue(this.algorithm.description);
+    this.form.controls.image.setValue(this.algorithm.image);
+    this.form.controls.partitioning.setValue(this.algorithm.partitioning);
+    this.form.controls.vantage6_version.setValue(this.algorithm.vantage6_version);
+    this.form.controls.functions.clear();
+    this.algorithm.functions.forEach((func) => {
+      const functionFormGroup = this.getFunctionForm();
+      functionFormGroup.controls['name'].setValue(func.name);
+      functionFormGroup.controls['description'].setValue(func.description);
+      functionFormGroup.controls['type'].setValue(func.type);
+      func.arguments.forEach((arg) => {
+        const argumentFormGroup = this.getArgumentForm();
+        argumentFormGroup.controls['name'].setValue(arg.name);
+        argumentFormGroup.controls['description'].setValue(arg.description);
+        argumentFormGroup.controls['type'].setValue(arg.type);
+        (functionFormGroup.controls['arguments'] as FormArray).push(argumentFormGroup);
+      });
+      func.databases.forEach((db) => {
+        const databaseFormGroup = this.getDatabaseForm();
+        databaseFormGroup.controls['name'].setValue(db.name);
+        databaseFormGroup.controls['description'].setValue(db.description);
+        (functionFormGroup.controls['databases'] as FormArray).push(databaseFormGroup);
+      });
+      (this.form.controls.functions as FormArray).push(functionFormGroup);
+    });
   }
 
   private initializeFormForCreate(): void {

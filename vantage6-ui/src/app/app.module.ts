@@ -106,6 +106,7 @@ import { DisplayAlgorithmComponent } from './components/algorithm/display-algori
 import { AlgorithmListComponent } from './pages/algorithm/admin/list/algorithm-list.component';
 import { AlgorithmCreateComponent } from './pages/algorithm/admin/create/algorithm-create.component';
 import { AlgorithmFormComponent } from './components/forms/algorithm-form/algorithm-form.component';
+import { AlgorithmEditComponent } from './pages/algorithm/admin/edit/algorithm-edit.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -185,7 +186,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     DisplayAlgorithmComponent,
     AlgorithmListComponent,
     AlgorithmCreateComponent,
-    AlgorithmFormComponent
+    AlgorithmFormComponent,
+    AlgorithmEditComponent
   ],
   imports: [
     BrowserModule,

@@ -47,6 +47,7 @@ import { AlgorithmReadComponent } from './pages/algorithm/admin/read/algorithm-r
 import { chosenStoreGuard } from './guards/chosenStore.guard';
 import { AlgorithmListComponent } from './pages/algorithm/admin/list/algorithm-list.component';
 import { AlgorithmCreateComponent } from './pages/algorithm/admin/create/algorithm-create.component';
+import { AlgorithmEditComponent } from './pages/algorithm/admin/edit/algorithm-edit.component';
 
 const routes: Routes = [
   {
@@ -392,6 +393,14 @@ const routes: Routes = [
       {
         path: routerConfig.algorithmManage,
         component: AlgorithmReadComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['algorithm-list.title', routePaths.algorithmsManage], ['resources.algorithm']]
+        }
+      },
+      {
+        path: routerConfig.algorithmEdit,
+        component: AlgorithmEditComponent,
         canActivate: [authenticationGuard(), chosenStoreGuard()],
         data: {
           crumbs: [['algorithm-list.title', routePaths.algorithmsManage], ['resources.algorithm']]

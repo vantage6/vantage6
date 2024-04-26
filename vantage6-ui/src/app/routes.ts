@@ -34,6 +34,7 @@ export const routePaths = {
   store: '/store/store',
   algorithmsManage: '/store/algorithms',
   algorithmCreate: '/store/algorithms/create',
+  algorithmEdit: '/store/algorithms/edit',
   algorithmManage: '/store/algorithms',
   analyzeHome: '/analyze',
   start: '/analyze/start', // TODO let this refer to analyze?
@@ -85,6 +86,7 @@ export const routerConfig = {
   store: 'store',
   algorithmsManage: 'algorithms',
   algorithmCreate: 'algorithms/create',
+  algorithmEdit: 'algorithms/edit/:id',
   algorithmManage: 'algorithms/:id',
   analyze: 'analyze',
   analyzeHome: '',

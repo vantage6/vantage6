@@ -61,6 +61,13 @@ export class AlgorithmService {
     return result;
   }
 
+  async editAlgorithm(algorithmId: string, algorithm: AlgorithmForm): Promise<Algorithm | undefined> {
+    const algorithmStore = this.chosenStoreService.store$.value;
+    if (!algorithmStore) return;
+    const result = await this.apiService.patchForAlgorithmApi<Algorithm>(algorithmStore.url, `/api/algorithm/${algorithmId}`, algorithm);
+    return result;
+  }
+
   async deleteAlgorithm(algorithmId: string): Promise<void> {
     const algorithmStore = this.chosenStoreService.store$.value;
     if (!algorithmStore) return;

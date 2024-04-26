@@ -21,6 +21,7 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   @Input() id: string = '';
   destroy$ = new Subject<void>();
+  routes = routePaths;
 
   algorithm?: Algorithm;
   algorithm_store?: AlgorithmStore;

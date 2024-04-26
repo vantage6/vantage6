@@ -4,10 +4,10 @@
       <mat-icon>more_vert</mat-icon>
     </button>
     <mat-menu #menu="matMenu">
-      <!-- <button mat-menu-item *ngIf="canEdit" [routerLink]="[routes.collaborationEdit, id]">
+      <button mat-menu-item *ngIf="canEdit" [routerLink]="[routes.algorithmEdit, id]">
         <mat-icon>edit</mat-icon>
         <span>{{ "general.edit" | translate }}</span>
-      </button> -->
+      </button>
       <button mat-menu-item *ngIf="canDelete" (click)="handleDelete()">
         <mat-icon>delete</mat-icon>
         <span>{{ "general.delete" | translate }}</span>

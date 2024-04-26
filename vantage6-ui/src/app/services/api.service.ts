@@ -93,6 +93,17 @@ export class ApiService {
     );
   }
 
+  async patchForAlgorithmApi<T>(algo_store_url: string, path: string, body: object): Promise<T> {
+    if (algo_store_url.endsWith('/')) {
+      algo_store_url = algo_store_url.slice(0, -1);
+    }
+    return await this.handleResult(
+      this.http.patch<T>(algo_store_url + path, body, {
+        headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() }
+      })
+    );
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async deleteForAlgorithmApi(algo_store_url: string, path: string): Promise<any> {
     if (algo_store_url.endsWith('/')) {
