@@ -46,7 +46,14 @@
   <mat-card>
     <mat-card-header>
       <mat-card-title>{{ "collaboration-read.card-nodes.title" | translate }}</mat-card-title>
-      <button actions mat-flat-button class="right-aligned-button" color="primary" *ngIf="canEdit" (click)="onRegisterMissingNodes()">
+      <button
+        actions
+        mat-flat-button
+        class="right-aligned-button"
+        color="primary"
+        *ngIf="canEdit && isMissingNodes()"
+        (click)="onRegisterMissingNodes()"
+      >
         <mat-icon>add</mat-icon>{{ "collaboration-read.card-nodes.add" | translate }}
       </button>
     </mat-card-header>
