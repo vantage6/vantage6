@@ -162,5 +162,5 @@ def _convert_envvar_to_int(
         raise EnvironmentVariableError(
             f"Environment variable '{envvar_name}' has value '{envvar_value}' but a "
             "positive integer value is required."
-        ) from exc
+        )
     return envvar_value
