@@ -111,6 +111,17 @@ DeserializationException = DeserializationError
 
 
 class EnvironmentVariableError(InputError):
+    """
+    Error raised when environment variable handling fails.
+
+    Example usage:
+    - Environment variables have conflicting values
+    - Environment variable has an invalid value (e.g. not a number where number is
+    expected)
+    """
+
+
+class EnvironmentVariableNotFoundError(EnvironmentVariableError):
     """Raised when environment variable is not found."""
 
 
@@ -135,4 +146,17 @@ class MethodNotFoundError(AlgorithmInitializationError):
 
     This error may be raised if the user calls a non-existing method, or if the
     algorithm image is not built correctly.
+    """
+
+
+# ---------------- Exceptions for conflicts with node settings ----------------
+
+
+class NodePermissionException(AlgorithmError):
+    """
+    Generic error raised when the node does not allow the computation of a certain
+    request.
+
+    Example usage:
+    - The node does not allow the computation to be executed on a certain data column.
     """
