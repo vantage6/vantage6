@@ -330,14 +330,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     } else {
       // a task has been started to retrieve the columns
       const task = await this.taskService.waitForResults(columnsOrTask.id);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      try {
-        const decodedResult: any = JSON.parse(atob(task.results?.[0].result || ''));
-        this.columns = decodedResult;
-      } catch (e) {
-        // TODO handle errors (both for retrieving columns and for retrieving the task)
-        console.error('Error decoding result from task', e);
-      }
+      this.columns = task.results?.[0].decoded_result || JSON.parse('');
     }
     this.isLoadingColumns = false;
   }

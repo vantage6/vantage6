@@ -10,6 +10,17 @@
       <p>{{ "start.no-collaborations" | translate }}</p>
     </mat-card-content>
   </mat-card>
+  <mat-card *ngIf="decryptionService.privateKey$ | async">
+    <mat-card-header>
+      <mat-card-title>{{ "start.card-private-key.title" | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p>{{ "start.card-private-key.description" | translate }}</p>
+      <button mat-flat-button type="button" color="primary" [routerLink]="routes.keyUpload">
+        {{ "start.card-private-key.button" | translate }}
+      </button>
+    </mat-card-content>
+  </mat-card>
 </ng-container>
 <ng-template #loading>
   <mat-spinner diameter="48"></mat-spinner>

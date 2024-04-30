@@ -38,6 +38,7 @@ export const routePaths = {
   algorithmManage: '/store/algorithms',
   analyzeHome: '/analyze',
   start: '/analyze/start', // TODO let this refer to analyze?
+  keyUpload: '/analyze/key/upload',
   tasks: '/analyze/tasks',
   taskCreate: '/analyze/tasks/create',
   taskCreateRepeat: '/analyze/tasks/create/repeat',
@@ -56,6 +57,7 @@ export const routerConfig = {
   mfaLost: 'mfa/lost',
   mfaRecover: 'mfa/recover',
   start: 'start',
+  keyUpload: 'key/upload',
   home: '',
   passwordChange: 'password/change',
   admin: 'admin',

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { CHOSEN_COLLABORATION } from '../models/constants/sessionStorage';
+import { CHOSEN_COLLABORATION, IS_CHOSEN_COLLAB_ENCRYPTED, CHOSEN_COLLAB_PRIVATE_KEY } from '../models/constants/sessionStorage';
 import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import { CollaborationService } from './collaboration.service';
 import { Collaboration, CollaborationLazyProperties } from '../models/api/collaboration.model';
@@ -14,7 +14,9 @@ import { PermissionService } from './permission.service';
 export class ChosenCollaborationService {
   id: string = '';
   isInitialized$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  encrypted$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   collaboration$: BehaviorSubject<Collaboration | null> = new BehaviorSubject<Collaboration | null>(null);
+
   destroy$ = new Subject();
 
   constructor(
@@ -37,6 +39,9 @@ export class ChosenCollaborationService {
     sessionStorage.setItem(CHOSEN_COLLABORATION, id);
     const collaboration = await this.getCollaboration(id);
     this.collaboration$.next(collaboration);
+    // set encryption status
+    this.encrypted$.next(collaboration.encrypted);
+    sessionStorage.setItem(IS_CHOSEN_COLLAB_ENCRYPTED, collaboration.encrypted.toString());
   }
 
   async refresh(refresh_id: string | null = null) {
@@ -48,12 +53,17 @@ export class ChosenCollaborationService {
     }
   }
 
+  isEncrypted(): boolean {
+    return this.encrypted$.value;
+  }
+
   private async initData() {
     const collaborationIDFromSession = sessionStorage.getItem(CHOSEN_COLLABORATION);
     if (collaborationIDFromSession) {
       this.id = collaborationIDFromSession;
       const collaboration = await this.getCollaboration(this.id);
       this.collaboration$.next(collaboration);
+      this.encrypted$.next(collaboration.encrypted);
     }
     this.isInitialized$.next(true);
   }

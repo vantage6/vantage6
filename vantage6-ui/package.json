@@ -28,6 +28,7 @@
     "@observablehq/plot": "^0.6.11",
     "angularx-qrcode": "^17.0.0",
     "file-saver": "^2.0.5",
+    "jsencrypt": "^3.3.2",
     "rxjs": "~7.8.0",
     "socket.io-client": "^4.7.4",
     "tslib": "^2.6.2",

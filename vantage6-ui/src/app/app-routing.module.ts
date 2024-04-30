@@ -8,7 +8,7 @@ import { HomeComponent } from './pages/home/home.component';
 import { authenticationGuard } from './guards/authentication.guard';
 import { OrganizationReadComponent } from './pages/organization/read/organization-read.component';
 import { TaskCreateComponent } from './pages/task/create/task-create.component';
-import { StartComponent } from './pages/start/start.component';
+import { ChooseCollaborationComponent } from './pages/choose-collaboration/choose-collaboration';
 import { TaskListComponent } from './pages/task/list/task-list.component';
 import { TaskReadComponent } from './pages/task/read/task-read.component';
 import { CollaborationReadComponent } from './pages/collaboration/read/collaboration-read.component';
@@ -48,6 +48,7 @@ import { chosenStoreGuard } from './guards/chosenStore.guard';
 import { AlgorithmListComponent } from './pages/algorithm/admin/list/algorithm-list.component';
 import { AlgorithmCreateComponent } from './pages/algorithm/admin/create/algorithm-create.component';
 import { AlgorithmEditComponent } from './pages/algorithm/admin/edit/algorithm-edit.component';
+import { UploadPrivateKeyComponent } from './pages/choose-collaboration/upload-private-key/upload-private-key.component';
 
 const routes: Routes = [
   {
@@ -112,7 +113,12 @@ const routes: Routes = [
       },
       {
         path: routerConfig.start,
-        component: StartComponent,
+        component: ChooseCollaborationComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
+        path: routerConfig.keyUpload,
+        component: UploadPrivateKeyComponent,
         canActivate: [authenticationGuard()]
       },
       {

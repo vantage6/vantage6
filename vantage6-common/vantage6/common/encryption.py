@@ -328,6 +328,7 @@ class RSACryptor(CryptorBase):
 
         # Decrypt the shared key using asymmetric encryption
         shared_key = self.private_key.decrypt(encrypted_key_bytes, padding.PKCS1v15())
+        print(shared_key)
 
         self.log.debug("Decrypted shared key: %s", shared_key)
 

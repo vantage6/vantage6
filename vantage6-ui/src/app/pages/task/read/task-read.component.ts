@@ -68,7 +68,6 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     this.visualization.valueChanges.subscribe((value) => {
       this.selectedVisualization = this.function?.ui_visualizations?.[value || 0] || null;
     });
-    await this.initData();
 
     // subscribe to reload task data when url changes (i.e. other task is viewed)
     this.activatedRoute.params.pipe(takeUntil(this.destroy$)).subscribe(async (params) => {

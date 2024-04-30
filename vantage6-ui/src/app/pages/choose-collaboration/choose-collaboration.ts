@@ -5,23 +5,26 @@ import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.
 import { routePaths } from 'src/app/routes';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { CollaborationService } from 'src/app/services/collaboration.service';
+import { DecryptionService } from 'src/app/services/decryption.service';
 import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-start',
-  templateUrl: './start.component.html',
-  styleUrls: ['./start.component.scss']
+  templateUrl: './choose-collaboration.component.html',
+  styleUrls: ['./choose-collaboration.scss']
 })
-export class StartComponent implements OnInit {
+export class ChooseCollaborationComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
   collaborations: BaseCollaboration[] = [];
   isLoading = true;
+  routes = routePaths;
 
   constructor(
     private router: Router,
     private collaborationService: CollaborationService,
     private chosenCollaborationService: ChosenCollaborationService,
-    private permissionService: PermissionService
+    private permissionService: PermissionService,
+    public decryptionService: DecryptionService
   ) {}
 
   async ngOnInit() {
@@ -29,13 +32,15 @@ export class StartComponent implements OnInit {
     this.isLoading = false;
   }
 
-  handleCollaborationClick(collaboration: BaseCollaboration) {
-    this.chosenCollaborationService.setCollaboration(collaboration.id.toString());
+  async handleCollaborationClick(collaboration: BaseCollaboration) {
+    this.isLoading = true;
+    await this.chosenCollaborationService.setCollaboration(collaboration.id.toString());
     if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.VIEW)) {
       this.router.navigate([routePaths.tasks]);
     } else {
       this.router.navigate([routePaths.analyzeHome]);
     }
+    this.isLoading = false;
   }
 
   private async initData(): Promise<void> {
