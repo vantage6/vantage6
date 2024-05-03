@@ -1,17 +1,16 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { CHOSEN_COLLAB_PRIVATE_KEY } from '../models/constants/sessionStorage';
-import JSEncrypt from 'jsencrypt';
 import { Buffer } from 'buffer';
-import * as crypto from 'crypto';
 import * as CryptoJS from 'crypto-js';
-import * as NodeRSA from 'node-rsa';
+import forge from 'node-forge';
 import { OrganizationService } from './organization.service';
+import { ENCRYPTION_SEPARATOR } from '../models/constants/encryption';
 
 @Injectable({
   providedIn: 'root'
 })
-export class DecryptionService {
+export class EncryptionService {
   privateKey$: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
 
   constructor(private organizationService: OrganizationService) {
@@ -122,119 +121,42 @@ export class DecryptionService {
     return encryptedData;
   }
 
-  async encryptData(data: string = 'test'): Promise<string> {
-    const SEPARATOR = '$';
-    const organizationId = 1;
-
-    const organization = await this.organizationService.getOrganization(organizationId.toString());
+  async encryptData(data: string, organizationID: number): Promise<string> {
+    // get the public key of the organization
+    const organization = await this.organizationService.getOrganization(organizationID.toString());
     if (!organization) {
       return data;
     }
     const pubKey = organization.public_key;
     const pubKeyDecoded = atob(pubKey);
 
-    // TODO use these random keys later - for now fixed for testing
-    // const iv = CryptoJS.lib.WordArray.random(16);
-    // const sharedKey = CryptoJS.lib.WordArray.random(32);
+    // Define the shared key and iv
+    const sharedKey = CryptoJS.lib.WordArray.random(32);
+    const iv = CryptoJS.lib.WordArray.random(16);
 
-    const sharedKeyBytes = [
-      141, 81, 85, 156, 198, 163, 208, 195, 106, 38, 64, 253, 146, 76, 166, 154, 140, 247, 121, 187, 98, 68, 56, 24, 126, 151, 154, 130,
-      250, 129, 82, 67
-    ];
-    const ivBytes = [47, 80, 108, 139, 64, 98, 121, 99, 69, 230, 7, 11, 61, 106, 97, 104];
-    const iv = this.bytestowordarray(ivBytes);
-    const sharedKey = this.bytestowordarray(sharedKeyBytes);
-    // const sharedKey
-
-    // const sharedKeyTest = CryptoJS.lib.WordArray.random(32);
-    // console.log(sharedKeyTest);
-    // const sharedKey = CryptoJS.lib.WordArray.create(sharedKeyBytes);
-    const sharedKeyPlainText = 'ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb';
-    // const sharedKey = CryptoJS.enc.Hex.parse(sharedKeyPlainText);
-    // console.log(sharedKey);
-    // console.log(sharedKey.toString());
-    // console.log('sharedkey', sharedKey);
-
-    // const iv = CryptoJS.lib.WordArray.random(16);
-    // const iv2 = CryptoJS.lib.WordArray.create(ivBytes, 16);
-    // console.log('iv', iv2);
-    // console.log(this.wordarraytobytes(iv2));
-    // const iv = CryptoJS.enc.Hex.parse('3e23e8160039594a33894f6564e1b134');
-    console.log('iv', iv);
-    console.log(this.wordarraytobytes(iv));
-
-    // console.log(this.wordarraytobytes(sharedKey));
-
-    //         cipher = Cipher(
-    //   algorithms.AES(shared_key), modes.CTR(iv_bytes), backend=default_backend()
-    // )
-    // encryptor = cipher.encryptor()
-    // encrypted_msg_bytes = encryptor.update(data) + encryptor.finalize()
-
-    // Encrypt the data synchronously. This is done syncronously because asynchronous
-    // encryption is slow and produces bigger encrypted data.
+    // Encrypt the data synchronously using the shared key. This is done syncronously
+    // because asynchronous encryption is slower and produces bigger encrypted data.
     const syncEncryptor = CryptoJS.algo.AES.createEncryptor(sharedKey, {
       mode: CryptoJS.mode.CTR,
       iv: iv,
       padding: CryptoJS.pad.NoPadding
     });
-    syncEncryptor.process(data);
-    const encryptedMsgBytes = syncEncryptor.finalize();
-    // console.log(encryptedMsgBytes);
-    // console.log(this.wordarraytobytes(encryptedMsgBytes));
-    const encryptedMsg = CryptoJS.enc.Base64.stringify(encryptedMsgBytes);
-    console.log(encryptedMsg);
+    const firstEncryptedPart = syncEncryptor.process(data);
+    const secondEncryptedPart = syncEncryptor.finalize();
+    const encryptedMsgBytes = firstEncryptedPart.concat(secondEncryptedPart);
 
-    // # Create a public key instance.
-    // pubkey = load_pem_public_key(
-    //     base64s_to_bytes(pubkey_base64s), backend=default_backend()
-    // )
-    // encrypted_key_bytes = pubkey.encrypt(shared_key, padding.PKCS1v15())
+    // convert the encrypted message to base64 string
+    const encryptedMsgB64 = CryptoJS.enc.Base64.stringify(encryptedMsgBytes);
 
     // encrypt the shared key asynchronously (i.e. using the public key)
-    const asyncEncryptor = new JSEncrypt();
-    asyncEncryptor.setPublicKey(pubKeyDecoded);
-    // console.log('pub key length', pubKeyDecoded.length);
-    console.log(sharedKey);
-    console.log(sharedKey.toString(CryptoJS.enc.Base64));
-    console.log(sharedKey.toString());
-    const encryptedKey = asyncEncryptor.encrypt(sharedKey.toString(CryptoJS.enc.Base64));
-    if (!encryptedKey) {
-      throw new Error('Failed to encrypt shared key using public key.');
-    }
-    console.log(encryptedKey);
-    console.log('length', encryptedKey.length);
-    const blub = Buffer.from(encryptedKey, 'base64');
-    console.log(blub);
-    const blubber = blub.toString('base64');
-    console.log(blubber);
-    console.log('length', blubber.length);
-    // // decrypt the shared key using the private key
-    // if (!this.privateKey$.value) {
-    //   throw new Error('No private key set.');
-    // }
-    // const decrypt = new JSEncrypt();
-    // decrypt.setPrivateKey(this.privateKey$.value);
-    // const decryptedKey = decrypt.decrypt(encryptedKey);
-    // console.log(decryptedKey);
+    const publicKey = forge.pki.publicKeyFromPem(pubKeyDecoded);
+    const encryptedKey = publicKey.encrypt(sharedKey.toString(CryptoJS.enc.Base64), 'RSAES-PKCS1-V1_5');
 
-    // encrypted_key = self.bytes_to_str(encrypted_key_bytes)
-    // iv = self.bytes_to_str(iv_bytes)
-    // encrypted_msg = self.bytes_to_str(encrypted_msg_bytes)
+    // convert the encrypted key and iv to base64 string
+    const encryptedKeyB64 = btoa(encryptedKey);
+    const ivB64 = this.bytesToBase64(this.wordArrayToBytes(iv));
 
-    // return SEPARATOR.join([encrypted_key, iv, encrypted_msg])
-    const encryptedKeyB64 = this.bytesToBase64(Buffer.from(encryptedKey));
-    const ivB64 = this.bytesToBase64(this.wordarraytobytes(iv));
-
-    // console.log(encryptedKeyB64);
-    // console.log('');
-    // console.log('');
-    // console.log('');
-    // console.log(ivB64);
-    // console.log(encryptedMsg);
-    // console.log('');
-    // console.log(encryptedKeyB64 + SEPARATOR + ivB64 + SEPARATOR + encryptedMsg);
-    return encryptedKeyB64 + SEPARATOR + ivB64 + SEPARATOR + encryptedMsg;
+    return encryptedKeyB64 + ENCRYPTION_SEPARATOR + ivB64 + ENCRYPTION_SEPARATOR + encryptedMsgB64;
   }
 
   private bytesToBase64(bytes: Uint8Array): string {
@@ -245,7 +167,7 @@ export class DecryptionService {
     return btoa(binary);
   }
 
-  private wordarraytobytes(wordArray: CryptoJS.lib.WordArray): Uint8Array {
+  private wordArrayToBytes(wordArray: CryptoJS.lib.WordArray): Uint8Array {
     const words = wordArray.words;
     const sigBytes = wordArray.sigBytes;
     const bytes = [];

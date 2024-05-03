@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { readFile } from 'src/app/helpers/file.helper';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { routePaths } from 'src/app/routes';
-import { DecryptionService } from 'src/app/services/decryption.service';
+import { EncryptionService } from 'src/app/services/encryption.service';
 import { PermissionService } from 'src/app/services/permission.service';
 
 // import * as JSEncrypt from 'jsencrypt';
@@ -26,7 +26,7 @@ export class UploadPrivateKeyComponent {
     private router: Router,
     private fb: FormBuilder,
     private permissionService: PermissionService,
-    private decryptionService: DecryptionService
+    private encryptionService: EncryptionService
   ) {}
 
   async onFileUpload(event: Event) {
@@ -36,7 +36,7 @@ export class UploadPrivateKeyComponent {
     const fileData = await readFile(this.selectedFile);
     if (!fileData) return;
 
-    this.decryptionService.setPrivateKey(fileData);
+    this.encryptionService.setPrivateKey(fileData);
     if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.VIEW)) {
       this.router.navigate([routePaths.tasks]);
     } else {

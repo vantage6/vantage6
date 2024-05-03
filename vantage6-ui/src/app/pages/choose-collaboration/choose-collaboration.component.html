@@ -10,7 +10,7 @@
       <p>{{ "start.no-collaborations" | translate }}</p>
     </mat-card-content>
   </mat-card>
-  <mat-card *ngIf="decryptionService.privateKey$ | async">
+  <mat-card *ngIf="encryptionService.privateKey$ | async">
     <mat-card-header>
       <mat-card-title>{{ "start.card-private-key.title" | translate }}</mat-card-title>
     </mat-card-header>

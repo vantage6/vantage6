@@ -502,9 +502,7 @@ class ClientBase(object):
         """
 
         def _decrypt_and_decode(value: str, field: str):
-            print(value)
             decrypted = self._decrypt_input(value)
-            print(decrypted)
             if not isinstance(decrypted, bytes):
                 self.log.error(
                     "The field %s is not properly encoded. Expected bytes, got" " %s.",

@@ -19,7 +19,7 @@ import { isTaskFinished } from '../helpers/task.helper';
 import { SnackbarService } from './snackbar.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ChosenCollaborationService } from './chosen-collaboration.service';
-import { DecryptionService } from './decryption.service';
+import { EncryptionService } from './encryption.service';
 
 @Injectable({
   providedIn: 'root'
@@ -30,7 +30,7 @@ export class TaskService {
     private snackBarService: SnackbarService,
     private translateService: TranslateService,
     private chosenCollaborationService: ChosenCollaborationService,
-    private decryptionService: DecryptionService
+    private encryptionService: EncryptionService
   ) {}
 
   async getTasks(parameters?: GetTaskParameters): Promise<BaseTask[]> {
@@ -127,8 +127,11 @@ export class TaskService {
     if (this.chosenCollaborationService.isEncrypted()) {
       // console.log('decrypting result');
       // console.log(taskResult.result);
-      taskResult.result = this.decryptionService.decryptData(taskResult.result);
-      this.decryptionService.encryptData();
+      taskResult.result = this.encryptionService.decryptData(taskResult.result);
+      this.encryptionService.encryptData(
+        'testwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww',
+        1
+      );
       // console.log(taskResult.result);
     }
     // decode result

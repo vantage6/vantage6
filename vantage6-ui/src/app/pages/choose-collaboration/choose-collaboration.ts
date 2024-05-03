@@ -5,7 +5,7 @@ import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.
 import { routePaths } from 'src/app/routes';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { CollaborationService } from 'src/app/services/collaboration.service';
-import { DecryptionService } from 'src/app/services/decryption.service';
+import { EncryptionService } from 'src/app/services/encryption.service';
 import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
@@ -24,7 +24,7 @@ export class ChooseCollaborationComponent implements OnInit {
     private collaborationService: CollaborationService,
     private chosenCollaborationService: ChosenCollaborationService,
     private permissionService: PermissionService,
-    public decryptionService: DecryptionService
+    public encryptionService: EncryptionService
   ) {}
 
   async ngOnInit() {
