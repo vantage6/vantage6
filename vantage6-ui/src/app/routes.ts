@@ -6,7 +6,6 @@ export const routePaths = {
   mfaCode: '/auth/mfa/code',
   mfaLost: '/auth/mfa/lost',
   mfaRecover: '/auth/mfa/recover',
-  start: '/start',
   home: '/',
   passwordChange: '/password/change',
   adminHome: '/admin',
@@ -30,11 +29,22 @@ export const routePaths = {
   userEdit: '/admin/users/edit',
   user: '/admin/users',
   nodes: '/admin/nodes',
-  tasks: '/tasks',
-  taskCreate: '/tasks/create',
-  taskCreateRepeat: '/tasks/create/repeat',
-  task: '/tasks',
-  templateTaskCreate: '/template-tasks/create'
+  storeHome: '/store',
+  stores: '/store/choose',
+  store: '/store/store',
+  algorithmsManage: '/store/algorithms',
+  algorithmCreate: '/store/algorithms/create',
+  algorithmEdit: '/store/algorithms/edit',
+  algorithmManage: '/store/algorithms',
+  analyzeHome: '/analyze',
+  start: '/analyze/start', // TODO let this refer to analyze?
+  tasks: '/analyze/tasks',
+  taskCreate: '/analyze/tasks/create',
+  taskCreateRepeat: '/analyze/tasks/create/repeat',
+  task: '/analyze/tasks',
+  algorithms: '/analyze/algorithms',
+  algorithm: '/analyze/algorithms',
+  templateTaskCreate: '/analyze/template-tasks/create'
 };
 
 export const routerConfig = {
@@ -70,9 +80,21 @@ export const routerConfig = {
   userEdit: 'users/edit/:id',
   user: 'users/:id',
   nodes: 'nodes',
+  storeBase: 'store',
+  storeHome: '',
+  stores: 'choose',
+  store: 'store',
+  algorithmsManage: 'algorithms',
+  algorithmCreate: 'algorithms/create',
+  algorithmEdit: 'algorithms/edit/:id',
+  algorithmManage: 'algorithms/:id',
+  analyze: 'analyze',
+  analyzeHome: '',
   tasks: 'tasks',
   taskCreate: 'tasks/create',
   taskCreateRepeat: 'tasks/create/repeat/:id',
   task: 'tasks/:id',
+  algorithms: 'algorithms',
+  algorithm: 'algorithms/:id/:algo_store_id',
   templateTaskCreate: 'template-tasks/create'
 };

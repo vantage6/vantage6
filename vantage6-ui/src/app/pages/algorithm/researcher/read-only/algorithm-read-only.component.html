@@ -1,0 +1,13 @@
+<ng-container *ngIf="!isLoading && algorithm">
+  <app-page-header title="{{ algorithm.name }}">
+    <button actions mat-flat-button color="primary" (click)="goToAlgorithm(algorithm)">
+      {{ "algorithm-read.manage" | translate }}
+    </button>
+  </app-page-header>
+  <app-display-algorithm [algorithm]="algorithm"></app-display-algorithm>
+</ng-container>
+<mat-card *ngIf="isLoading">
+  <mat-card-content>
+    <mat-spinner diameter="48"></mat-spinner>
+  </mat-card-content>
+</mat-card>

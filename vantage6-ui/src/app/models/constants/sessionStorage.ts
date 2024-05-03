@@ -3,3 +3,4 @@ export const REFRESH_TOKEN_KEY = 'refresh_token';
 export const USER_ID = 'user_id';
 export const USERNAME = 'username';
 export const CHOSEN_COLLABORATION = 'chosen_collaboration';
+export const CHOSEN_ALGORITHM_STORE = 'chosen_algorithm_store';

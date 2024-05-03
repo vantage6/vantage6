@@ -1,0 +1,11 @@
+<app-page-header title="{{ 'algorithm-create.title' | translate }}"></app-page-header>
+<ng-container *ngIf="!isSubmitting; else loading">
+  <app-algorithm-form (submitted)="handleSubmit($event)" (cancelled)="handleCancel()"></app-algorithm-form>
+</ng-container>
+<ng-template #loading>
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-template>

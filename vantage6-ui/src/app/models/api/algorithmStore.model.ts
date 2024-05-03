@@ -1,8 +1,18 @@
-export interface AlgorithmStore {
+import { BaseCollaboration } from './collaboration.model';
+
+export interface BaseAlgorithmStore {
   id: number;
   name: string;
   url: string;
   collaborations: string;
+}
+
+export interface AlgorithmStore {
+  id: number;
+  name: string;
+  url: string;
+  collaborations: BaseCollaboration[];
+  all_collaborations: boolean;
 }
 
 export interface AlgorithmStoreForm {
@@ -22,4 +32,8 @@ export interface AddAlgorithmStore {
 
 export interface EditAlgorithmStore {
   name: string;
+}
+
+export enum AlgorithmStoreLazyProperties {
+  Collaborations = 'collaborations'
 }

@@ -73,7 +73,7 @@ class AlgorithmOutputSchema(HATEOASModelSchema):
     class Meta:
         model = Algorithm
 
-    functions = fields.Nested("FunctionOutputSchema", many=True, exclude=["id"])
+    functions = fields.Nested("FunctionOutputSchema", many=True)
 
 
 class FunctionOutputSchema(HATEOASModelSchema):
@@ -84,11 +84,9 @@ class FunctionOutputSchema(HATEOASModelSchema):
 
     type_ = fields.String(data_key="type")
 
-    databases = fields.Nested("DatabaseOutputSchema", many=True, exclude=["id"])
-    arguments = fields.Nested("ArgumentOutputSchema", many=True, exclude=["id"])
-    ui_visualizations = fields.Nested(
-        "UIVisualizationOutputSchema", many=True, exclude=["id"]
-    )
+    databases = fields.Nested("DatabaseOutputSchema", many=True)
+    arguments = fields.Nested("ArgumentOutputSchema", many=True)
+    ui_visualizations = fields.Nested("UIVisualizationOutputSchema", many=True)
 
 
 class DatabaseOutputSchema(HATEOASModelSchema):

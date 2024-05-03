@@ -345,8 +345,12 @@ class AlgorithmStoreSchema(HATEOASModelSchema):
         model = db.AlgorithmStore
 
     collaborations = fields.Function(
-        lambda obj: create_one_to_many_link(
-            obj, link_to="collaboration", link_from="algorithm_store_id"
+        lambda obj: (
+            create_one_to_many_link(
+                obj, link_to="collaboration", link_from="algorithm_store_id"
+            )
+            if obj.collaboration_id
+            else None
         )
     )
 

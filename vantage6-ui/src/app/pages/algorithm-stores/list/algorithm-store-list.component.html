@@ -1,0 +1,16 @@
+<app-page-header title="{{ 'resources.stores' | translate }}"></app-page-header>
+<ng-container *ngIf="!isLoading; else loading">
+  <div class="tile-grid">
+    <button mat-raised-button *ngFor="let store of algorithmStores" (click)="handleAlgorithmStoreClick(store)">
+      {{ store.name }}
+    </button>
+  </div>
+  <mat-card *ngIf="algorithmStores.length === 0">
+    <mat-card-content>
+      <p>{{ "algorithm-store-list.no-stores" | translate }}</p>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
+<ng-template #loading>
+  <mat-spinner diameter="48"></mat-spinner>
+</ng-template>

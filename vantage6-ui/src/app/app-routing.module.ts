@@ -39,6 +39,15 @@ import { AddAlgoStoreComponent } from './pages/collaboration/add-algo-store/add-
 import { StudyReadComponent } from './pages/collaboration/study/read/study-read.component';
 import { StudyCreateComponent } from './pages/collaboration/study/create/study-create.component';
 import { StudyEditComponent } from './pages/collaboration/study/edit/study-edit.component';
+import { AlgorithmListReadOnlyComponent } from './pages/algorithm/researcher/list/algorithm-list-read-only.component';
+import { AlgorithmReadOnlyComponent } from './pages/algorithm/researcher/read-only/algorithm-read-only.component';
+import { AlgorithmStoreListComponent } from './pages/algorithm-stores/list/algorithm-store-list.component';
+import { AlgorithmStoreReadComponent } from './pages/algorithm-stores/read/algorithm-store-read.component';
+import { AlgorithmReadComponent } from './pages/algorithm/admin/read/algorithm-read.component';
+import { chosenStoreGuard } from './guards/chosenStore.guard';
+import { AlgorithmListComponent } from './pages/algorithm/admin/list/algorithm-list.component';
+import { AlgorithmCreateComponent } from './pages/algorithm/admin/create/algorithm-create.component';
+import { AlgorithmEditComponent } from './pages/algorithm/admin/edit/algorithm-edit.component';
 
 const routes: Routes = [
   {
@@ -86,6 +95,27 @@ const routes: Routes = [
         canActivate: [authenticationGuard(), chosenCollaborationGuard()]
       },
       {
+        path: routerConfig.passwordChange,
+        component: ChangePasswordComponent,
+        canActivate: [authenticationGuard()]
+      }
+    ]
+  },
+  {
+    path: routerConfig.analyze,
+    component: LayoutDefaultComponent,
+    data: { crumb: ['links.title', routePaths.analyzeHome] },
+    children: [
+      {
+        path: routerConfig.analyzeHome,
+        component: HomeComponent
+      },
+      {
+        path: routerConfig.start,
+        component: StartComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
         path: routerConfig.tasks,
         component: TaskListComponent,
         canActivate: [authenticationGuard(), chosenCollaborationGuard()],
@@ -118,26 +148,25 @@ const routes: Routes = [
         }
       },
       {
+        path: routerConfig.algorithms,
+        component: AlgorithmListReadOnlyComponent,
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        data: {
+          crumbs: [['algorithm-list.title']]
+        }
+      },
+      {
+        path: routerConfig.algorithm,
+        component: AlgorithmReadOnlyComponent,
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        data: {
+          crumbs: [['algorithm-list.title', routePaths.algorithms], ['algorithm-read.crumb-title']]
+        }
+      },
+      {
         path: routerConfig.templateTaskCreate,
         component: TemplateTaskCreateComponent,
         canActivate: [authenticationGuard(), chosenCollaborationGuard()]
-      }
-    ]
-  },
-  {
-    path: '',
-    component: LayoutDefaultComponent,
-    data: { hideMenu: true },
-    children: [
-      {
-        path: routerConfig.start,
-        component: StartComponent,
-        canActivate: [authenticationGuard()]
-      },
-      {
-        path: routerConfig.passwordChange,
-        component: ChangePasswordComponent,
-        canActivate: [authenticationGuard()]
       }
     ]
   },
@@ -148,7 +177,7 @@ const routes: Routes = [
     children: [
       {
         path: routerConfig.adminHome,
-        component: HomeComponent,
+        component: CollaborationListComponent,
         canActivate: [authenticationGuard()]
       },
       {
@@ -315,6 +344,66 @@ const routes: Routes = [
         canActivate: [authenticationGuard()],
         data: {
           crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-read.title']]
+        }
+      }
+    ]
+  },
+  {
+    path: routerConfig.storeBase,
+    component: LayoutDefaultComponent,
+    data: { crumb: ['home.title', routePaths.storeHome] },
+    children: [
+      {
+        path: routerConfig.storeHome,
+        component: AlgorithmStoreListComponent,
+        canActivate: [authenticationGuard()]
+      },
+      {
+        path: routerConfig.stores,
+        component: AlgorithmStoreListComponent,
+        canActivate: [authenticationGuard()],
+        data: {
+          crumbs: [['algorithm-store-list.title']]
+        }
+      },
+      {
+        path: routerConfig.store,
+        component: AlgorithmStoreReadComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['algorithm-store-read.title']]
+        }
+      },
+      {
+        path: routerConfig.algorithmsManage,
+        component: AlgorithmListComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['algorithm-list.title']]
+        }
+      },
+      {
+        path: routerConfig.algorithmCreate,
+        component: AlgorithmCreateComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['algorithm-list.title', routePaths.algorithmsManage], ['algorithm-create.short-title']]
+        }
+      },
+      {
+        path: routerConfig.algorithmManage,
+        component: AlgorithmReadComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['algorithm-list.title', routePaths.algorithmsManage], ['resources.algorithm']]
+        }
+      },
+      {
+        path: routerConfig.algorithmEdit,
+        component: AlgorithmEditComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['algorithm-list.title', routePaths.algorithmsManage], ['resources.algorithm']]
         }
       }
     ]
