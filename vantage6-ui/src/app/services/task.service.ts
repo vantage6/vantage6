@@ -79,6 +79,7 @@ export class TaskService {
           try {
             result.decoded_result = this.getDecodedResult(result);
           } catch (e) {
+            console.error(e);
             this.snackBarService.showMessage(this.translateService.instant('task.alert-failed-read-result'));
           }
         }
@@ -124,14 +125,15 @@ export class TaskService {
     if (!taskResult.result) return undefined;
     // decrypt result
     if (this.chosenCollaborationService.isEncrypted()) {
-      console.log('decrypting result');
-      console.log(taskResult.result);
+      // console.log('decrypting result');
+      // console.log(taskResult.result);
       taskResult.result = this.decryptionService.decryptData(taskResult.result);
-      console.log(taskResult.result);
+      this.decryptionService.encryptData();
+      // console.log(taskResult.result);
     }
     // decode result
     const decodedResult = JSON.parse(atob(taskResult.result));
-    console.log(decodedResult);
+    // console.log(decodedResult);
     if (typeof decodedResult === 'string') {
       return JSON.parse(decodedResult);
     }
