@@ -29,10 +29,8 @@
     "angularx-qrcode": "^17.0.0",
     "crypto-js": "^4.2.0",
     "file-saver": "^2.0.5",
-    "node-rsa": "^1.1.1",
     "rxjs": "~7.8.0",
     "socket.io-client": "^4.7.4",
-    "stream-browserify": "^3.0.0",
     "tslib": "^2.6.2",
     "zone.js": "^0.14.4"
   },
