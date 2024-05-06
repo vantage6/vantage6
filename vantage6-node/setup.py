@@ -34,7 +34,7 @@ setup(
         "click==8.1.3",
         "docker==6.1.2",
         "gevent==23.9.1",
-        "jinja2==3.1.3",
+        "jinja2==3.1.4",
         "python-socketio==5.7.2",
         "requests==2.31.0",
         f'vantage6 == {version_ns["__version__"]}',
