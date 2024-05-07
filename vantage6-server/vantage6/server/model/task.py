@@ -2,7 +2,7 @@ import datetime
 import os
 
 from sqlalchemy import Column, String, ForeignKey, Integer, sql, DateTime
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from vantage6.common.task_status import TaskStatus, has_task_failed
@@ -13,11 +13,23 @@ class Task(Base):
     """
     Table that describes all tasks.
 
-    A Task can create algorithm Runs for multiple organizations. The input
-    of the task is different for each organization (due to the encryption).
-    Therefore the input for the task is encrypted for each organization
-    separately. The task originates from an organization to which the Runs
-    need to be encrypted, therefore the originating organization is also logged
+    A single Task can create algorithm Runs for multiple organizations.
+
+    A task always belongs to a session and collaboration. Optionally it can be assigned
+    to a study. A task can have a parent task or can depend on other tasks. A task can
+    have multiple runs and results. A single task can require multiple datasets to be
+    profided.
+
+    Each Task is associated with a specific session and collaboration. It can optionally
+    be assigned to a study.
+
+    A Task can have a parent task or can depend on other tasks. It can also have
+    multiple runs and results.
+
+    The input for each Task differs per organization due to encryption, in other words
+    each Task's input is encrypted separately for each organization.
+
+    A single Task may require multiple datasets to be provided.
 
     Attributes
     ----------
@@ -31,10 +43,14 @@ class Task(Base):
         Id of the collaboration that this task belongs to
     study_id : int
         Id of the study that this task belongs to
+    session_id : int
+        Id of the session that this task belongs to
     job_id : int
         Id of the job that this task belongs to
     parent_id : int
         Id of the parent task (if any)
+    depends_on_id : int
+        Id of the task that this task depends on
     init_org_id : int
         Id of the organization that created this task
     init_user_id : int
@@ -43,14 +59,19 @@ class Task(Base):
         Time at which this task was created
     algorithm_store_id : int
         Id of the algorithm store that this task belongs to
+
+    Relationships
+    -------------
     collaboration : :class:`~.model.collaboration.Collaboration`
         Collaboration that this task belongs to
-    study : :class:`~.model.study.Study`
-        Study that this task belongs to
-    session : :class:`~.model.session.Session`
-        Session that this task belongs to
     parent : :class:`~.model.task.Task`
         Parent task (if any)
+    children : list[:class:`~.model.task.Task`]
+        List of child tasks
+    depends_on : :class:`~.model.task.Task`
+        Task that this task depends on
+    required_by : list[:class:`~.model.task.Task`]
+        List of tasks that depend on this task
     runs : list[:class:`~.model.run.Run`]
         List of runs that are part of this task
     results : list[:class:`~.model.result.Result`]
@@ -65,6 +86,8 @@ class Task(Base):
         Study that this task belongs to
     algorithm_store : :class:`~.model.algorithm_store.AlgorithmStore`
         Algorithm store that this task uses
+    session : :class:`~.model.session.Session`
+        Session that this task belongs to
     """
 
     # fields
@@ -76,6 +99,7 @@ class Task(Base):
     session_id = Column(Integer, ForeignKey("session.id"))
     job_id = Column(Integer)
     parent_id = Column(Integer, ForeignKey("task.id"))
+    depends_on_id = Column(Integer, ForeignKey("task.id"))
     init_org_id = Column(Integer, ForeignKey("organization.id"))
     init_user_id = Column(Integer, ForeignKey("user.id"))
     created_at = Column(DateTime, default=datetime.datetime.now(datetime.timezone.utc))
@@ -83,11 +107,22 @@ class Task(Base):
 
     # relationships
     collaboration = relationship("Collaboration", back_populates="tasks")
-    parent = relationship("Task", remote_side="Task.id", backref="children")
+    parent = relationship(
+        "Task",
+        remote_side="Task.id",
+        foreign_keys=[parent_id],
+        backref=backref("children"),
+    )
+    depends_on = relationship(
+        "Task",
+        remote_side="Task.id",
+        foreign_keys=[depends_on_id],
+        backref=backref("required_by"),
+    )
     runs = relationship("Run", back_populates="task")
-    # This second relationship is needed when constructing output JSON (
-    # including results with the task). It is marked 'view_only' to prevent
-    # write conflicts with the runs relationship.
+    # This second `Run` relationship is needed when constructing output JSON (
+    # including results with the task). It is marked 'view_only' to prevent write
+    # conflicts with the runs relationship.
     results = relationship("Run", back_populates="task", viewonly=True)
     init_org = relationship("Organization", back_populates="tasks")
     init_user = relationship("User", back_populates="created_tasks")

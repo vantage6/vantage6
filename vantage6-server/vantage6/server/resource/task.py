@@ -285,7 +285,7 @@ class Tasks(TaskBase):
             description: Filter by task status, e.g. 'active' for active
               tasks, 'completed' for finished or 'crashed' for failed tasks.
           - in: query
-            name: session
+            name: session_id
             schema:
               type: int
             description: A session id that belongs to the task
@@ -472,8 +472,8 @@ class Tasks(TaskBase):
                 }, HTTPStatus.BAD_REQUEST
             q = q.filter(db.Task.algorithmstore_id == store_id)
 
-        if "session" in args:
-            session_id = int(args["session"])
+        if "session_id" in args:
+            session_id = int(args["session_id"])
             q = q.filter(db.Task.session_id == session_id)
 
         if "database" in args:
@@ -610,6 +610,12 @@ class Tasks(TaskBase):
         # collaboration_id are valid and when both are provided, checks if they match.
         collaboration_id = data.get("collaboration_id")
         study_id = data.get("study_id")
+
+        if not collaboration_id and not study_id:
+            return {
+                "msg": "Either a collaboration_id or a study_id should be provided!"
+            }, HTTPStatus.BAD_REQUEST
+
         study = None
         if collaboration_id:
             collaboration = db.Collaboration.get(collaboration_id)
@@ -760,6 +766,26 @@ class Tasks(TaskBase):
             store = parent.algorithm_store
             image_with_hash = parent.image
 
+        # A task can be dependent on another task
+        dependant_task_id = data.get("depends_on_id")
+        if dependant_task_id:
+            dependant_task = db.Task.get(dependant_task_id)
+            if not dependant_task:
+                return {
+                    "msg": f"Task with id={dependant_task_id} not found!"
+                }, HTTPStatus.NOT_FOUND
+            if dependant_task.session_id != session_id:
+                log.debug(dependant_task)
+                log.debug(f"{dependant_task.session_id} {session_id}")
+                return {
+                    "msg": (
+                        "The task you are trying to depend on is not part of the "
+                        "same session."
+                    )
+                }, HTTPStatus.BAD_REQUEST
+        else:
+            dependant_task = None
+
         # check that the input is valid. If the collaboration is encrypted, it
         # should not be possible to read the input, and we should not save it
         # to the database as it may be sensitive information. Vice versa, if
@@ -782,6 +808,7 @@ class Tasks(TaskBase):
             algorithm_store=store,
             created_at=datetime.datetime.now(datetime.timezone.utc),
             session=session,
+            depends_on=dependant_task,
         )
 
         # create job_id. Users can only create top-level -tasks (they will not
@@ -800,9 +827,7 @@ class Tasks(TaskBase):
 
         # save the databases that the task uses
         databases = data.get("databases")
-        if isinstance(databases, str):
-            databases = [{"label": databases}]
-        elif databases is None:
+        if databases is None:
             databases = []
         db_records = []
         for database in databases:
