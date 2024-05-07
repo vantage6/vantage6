@@ -269,4 +269,3 @@ def load_sql_data(database_uri: str, query: str) -> pd.DataFrame:
     df = pd.read_sql(query, engine)
     engine.dispose()  # Close the connection
     return df
-
