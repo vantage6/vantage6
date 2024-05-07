@@ -18,6 +18,7 @@ by the vantage6 node based on its configuration file.
 from __future__ import annotations
 import io
 import pandas as pd
+from sqlalchemy import create_engine
 from enum import Enum
 
 from SPARQLWrapper import SPARQLWrapper, CSV
@@ -255,7 +256,7 @@ def load_sql_data(database_uri: str, query: str) -> pd.DataFrame:
     Parameters
     ----------
     database_uri : str
-        URI of the sql database, supplied by te node
+        URI of the sql database, supplied by the node
     query: str
         Query to retrieve the data from the database
 
@@ -264,4 +265,7 @@ def load_sql_data(database_uri: str, query: str) -> pd.DataFrame:
     pd.DataFrame
         The data from the database
     """
-    return pd.read_sql(database_uri, query)
+    engine = create_engine(database_uri)
+    df = pd.read_sql(query, engine)
+    engine.dispose()  # Close the connection
+    return df
