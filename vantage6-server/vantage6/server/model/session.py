@@ -8,7 +8,6 @@ from sqlalchemy import (
     Integer,
     ForeignKey,
     DateTime,
-    Enum,
     UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
@@ -34,20 +33,31 @@ class Session(Base):
     ----------
     label : str
         Label of the session
-    owner : :class:`~vantage6.server.model.user.User`
-        User that owns the session
-    collaboration : :class:`~vantage6.server.model.collaboration.Collaboration`
-        Collaboration that this session is part of
+    user_id : int
+        ID of the user that owns the session
+    collaboration_id : int
+        ID of the collaboration that this session is part of
+    study_id : int
+        ID of the study that this session is part of
     created_at : datetime.datetime
         Date and time of the creation of the session
     last_used_at : datetime.datetime
         Date and time of the last usage of the session
+    scope : str
+        Scope of the session
+
+    Relationships
+    -------------
+    owner : :class:`~vantage6.server.model.user.User`
+        User that owns the session
+    collaboration : :class:`~vantage6.server.model.collaboration.Collaboration`
+        Collaboration that this session is part of
+    study : :class:`~vantage6.server.model.study.Study`
+        Study that this session is part of
     tasks : list[:class:`~vantage6.server.model.task.Task`]
         List of tasks that are part of this study
     node_sessions : list[:class:`~vantage6.server.model.node_session.NodeSession`]
         List of nodes and their state that are part of this session
-    scope : Scope
-        Scope of the session
 
     Raises
     ------
@@ -59,15 +69,17 @@ class Session(Base):
     label = Column(String)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     collaboration_id = Column(Integer, ForeignKey("collaboration.id"), nullable=False)
+    study_id = Column(Integer, ForeignKey("study.id"))
     created_at = Column(DateTime, default=datetime.now(timezone.utc))
     last_used_at = Column(DateTime, default=datetime.now(timezone.utc))
-    scope = Column(Enum(Scope), default=Scope.OWN)
+    scope = Column(String, default=Scope.OWN.value)
 
     __table_args__ = (UniqueConstraint("label", "collaboration_id"),)
 
     # relationships
     owner = relationship("User", back_populates="sessions")
     collaboration = relationship("Collaboration", back_populates="sessions")
+    study = relationship("Study", back_populates="sessions")
     tasks = relationship("Task", back_populates="session")
     node_sessions = relationship("NodeSession", back_populates="session")
 
@@ -101,6 +113,35 @@ class Session(Base):
             True if the session label already exists, False otherwise
         """
         return any(session.label == session_label for session in collaboration.sessions)
+
+    def organizations(self):
+        """
+        Returns the organizations that are part of the session. In case a the session
+        is scoped to a study, the organizations of the study are returned. Otherwise,
+        the organizations of the collaboration are returned.
+
+        Returns
+        -------
+        list[:class:`~vantage6.server.model.organization.Organization`]
+            List of organizations that are part of the session
+        """
+        if self.study:
+            return self.study.organizations
+        else:
+            return self.collaboration.organizations
+
+    def organization_ids(self):
+        """
+        Returns the organization IDs that are part of the session. In case a the session
+        is scoped to a study, the organization IDs of the study are returned. Otherwise,
+        the organization IDs of the collaboration are returned.
+
+        Returns
+        -------
+        list[int]
+            List of organization IDs that are part of the session
+        """
+        return [org.id for org in self.organizations()]
 
     def __repr__(self):
         """

@@ -405,6 +405,7 @@ class TaskInputSchema(_NameValidationSchema):
     collaboration_id = fields.Integer(validate=Range(min=1))
     study_id = fields.Integer(validate=Range(min=1))
     store_id = fields.Integer(validate=Range(min=1))
+    depends_on_id = fields.Integer(validate=Range(min=1))
     organizations = fields.List(fields.Dict(), required=True)
     databases = fields.List(fields.Dict(), allow_none=True)
     session_id = fields.Integer(validate=Range(min=1))
@@ -664,12 +665,54 @@ class StudyChangeOrganizationSchema(_OnlyIdSchema):
     pass
 
 
+class SessionTaskInputSchema(Schema):
+    """Schema for validating input for creating a session task."""
+
+    image = fields.String(required=True)
+    organizations = fields.List(fields.Dict(), required=True)
+
+    @validates("organizations")
+    def validate_organizations(self, organizations: list[dict]):
+        """
+        Validate the organizations in the input.
+
+        Parameters
+        ----------
+        organizations : list[dict]
+            List of organizations to validate. Each organization must have at
+            least an organization id.
+
+        Raises
+        ------
+        ValidationError
+            If the organizations are not valid.
+        """
+        if not len(organizations):
+            raise ValidationError("At least one organization is required")
+        for organization in organizations:
+            if "id" not in organization:
+                raise ValidationError(
+                    "Organization id is required for each organization"
+                )
+
+
+class SessionDatabaseInputSchema(Schema):
+    """Schema for validating input for creating a session database."""
+
+    handle = fields.String(required=True)
+    label = fields.String(required=True)
+    data_extraction = fields.Nested(SessionTaskInputSchema, required=True)
+    preprocessing = fields.List(fields.Nested(SessionTaskInputSchema), required=False)
+
+
 class SessionInputSchema(Schema):
     """Schema for validating input for creating a session."""
 
     label = fields.String(required=True)
     collaboration_id = fields.Integer(required=True, validate=Range(min=1))
+    study_id = fields.Integer(validate=Range(min=1))
     scope = fields.String(validate=OneOf(Scope.list()), default=Scope.OWN.value)
+    pipelines = fields.List(fields.Nested(SessionDatabaseInputSchema), required=True)
 
 
 class NodeSessionConfigInputSchema(Schema):

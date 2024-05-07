@@ -23,6 +23,7 @@ from vantage6.server.resource.common.output_schema import (
     SessionSchema,
     NodeSessionSchema,
 )
+from vantage6.server.resource.task import Tasks
 
 
 module_name = logger_name(__name__)
@@ -347,7 +348,7 @@ class Sessions(SessionBase):
           |Session|Organization|Create|❌|❌|Create session to be used by your organization|\n
           |Session|Own|Create|❌|❌|Create session only to be used by you|\n
 
-          Accessible to users.
+          Only accessible to users.
 
         requestBody:
           content:
@@ -362,14 +363,17 @@ class Sessions(SessionBase):
             description: Unauthorized
           400:
             description: Session with that label already exists within the collaboration
+                or Request body is incorrect
           404:
-            description: Collaboration not found
+            description: Collaboration or study not found
+
 
         security:
         - bearerAuth: []
 
         tags: ["Session"]
         """
+        # TODO if any of the steps fails... we need to rolback the entire session
         if not self.r.has_at_least_scope(S.OWN, P.CREATE):
             return {
                 "msg": "You lack the permission to do that!"
@@ -398,6 +402,8 @@ class Sessions(SessionBase):
         if not collaboration:
             return {"msg": "Collaboration not found"}, HTTPStatus.NOT_FOUND
 
+
+
         # Check if the session label already exists in the collaboration
         if db.Session.label_exists(data["label"], collaboration):
             return {
@@ -410,8 +416,10 @@ class Sessions(SessionBase):
             user_id=g.user.id,
             collaboration=collaboration,
             scope=scope,
+            study_id=data.get("study_id"),
         )
         session.save()
+
         # Each node gets assigned a NodeSession to keep track of each individual node's
         # state.
         for node in collaboration.nodes:
@@ -420,7 +428,80 @@ class Sessions(SessionBase):
                 node=node,
             ).save()
 
+        # A pipeline is a list of tasks that need to be executed in order to initialize
+        # the session. A single session can have multiple pipelines, each with a
+        # different database or different user inputs.
+        for database in data["pipelines"]:
+
+            # This label is used to identify the database, this label should match the
+            # label in the node configuration file.
+            source_db_label = database["label"]
+
+            # This handle can be used by the `preprocessing` and `compute` tasks that
+            # are send after the data extraction task. This handle is profided to the
+            # user so that they can identify the data that they want to use.
+            handle = database["handle"]
+            for n_session in session.node_sessions:
+                db.NodeSessionConfig(
+                    node_session=n_session, key="df_handle", value=handle
+                ).save()
+
+            # First step of a pipeline is always a single data extraction step.
+            #TODO we need change the database workflow
+            extraction_details = database["data_extraction"]
+            response, status_code = self.create_session_task(
+                session=session,
+                #database={"label": source_db_label, "handle": handle},
+                database=[{"label": source_db_label}],
+                description="Data extraction step",
+                **extraction_details,
+            )
+            if status_code != HTTPStatus.CREATED:
+                Session.delete_session(session)
+                return response, status_code
+
+            # If there is a preprocessing task, add each task sequentially so that
+            # each task depends on the previous task.
+            if "preprocessing" in database:
+                for preprocessing_task in database["preprocessing"]:
+                    response, status_code = self.create_session_task(
+                        session=session,
+                        # database={"handle": handle, "handle": handle},
+                        database=[{"label": source_db_label}],
+                        description="Preprocessing step",
+                        depends_on_id=response["id"],
+                        **preprocessing_task,
+                    )
+                    if status_code != HTTPStatus.CREATED:
+                        Session.delete_session(session)
+                        return response, status_code
+
         return session_schema.dump(session, many=False), HTTPStatus.CREATED
+
+    def create_session_task(
+        self,
+        session: db.Session,
+        image: str,
+        organizations: dict,
+        database: dict,
+        description="",
+        depends_on_id=None,
+    ) -> int:
+        """Create a task to initialize a session"""
+        input_ = {
+            "collaboration_id": session.collaboration_id,
+            "study_id": session.study_id,
+            "session_id": session.id,
+            "name": f"Session initialization: {session.label}",
+            "description": description,
+            "image": image,
+            "organizations": organizations,
+            "databases": database,
+            "depends_on_id": depends_on_id,
+        }
+        # remove empty values
+        input_ = {k: v for k, v in input_.items() if v is not None}
+        return Tasks.post_task(input_, self.socketio, getattr(self.permissions, "task"))
 
 
 class Session(SessionBase):
@@ -654,13 +735,32 @@ class Session(SessionBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
+        self.delete_session(session)
+
+        return {"msg": f"Successfully deleted session id={id}"}, HTTPStatus.OK
+
+    @staticmethod
+    def delete_session(session: db.Session) -> None:
+        """
+        Delete a session and all associated node sessions and configurations.
+
+        Parameters
+        ----------
+        session : db.Session
+            Session to delete
+        """
+
         for node_session in session.node_sessions:
             for config in node_session.config:
                 config.delete()
             node_session.delete()
 
+        for task in session.tasks:
+            for result in task.results:
+                result.delete()
+            task.delete()
+
         session.delete()
-        return {"msg": f"Successfully deleted session id={id}"}, HTTPStatus.OK
 
 
 class NodeSessions(SessionBase):

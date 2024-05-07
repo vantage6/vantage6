@@ -130,12 +130,34 @@ swagger_template = {
                 "properties": {
                     "label": {"type": "string"},
                     "collaboration_id": {"type": "integer"},
+                    "study_id": {"type": "integer"},
                     "scope": {"type": "string"},
+                    "databases": {"type": "array", "items": {"type": "dict"}},
                 },
                 "example": {
                     "label": "session-label",
                     "collaboration_id": 1,
                     "scope": "OWN",
+                    "pipelines": [
+                        {
+                            "label": "my-database-label",
+                            "handle": "my-database-handle",
+                            "data_extraction": {
+                                "image": "my-data-extaction-image",
+                                "organizations": [
+                                    {"id": 1, "input": "encrypted-method-and-input"}
+                                ],
+                            },
+                            "preprocessing": [
+                                {
+                                    "image": "my-preprocessing-image",
+                                    "organizations": [
+                                        {"id": 1, "input": "encrypted-method-and-input"}
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
                 },
             },
             "Node": {
