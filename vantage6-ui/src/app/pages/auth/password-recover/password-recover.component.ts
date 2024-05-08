@@ -5,6 +5,7 @@ import { PasswordResetTokenForm } from 'src/app/models/forms/login-form.model';
 import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
 import { LoginErrorService } from 'src/app/services/login-error.service';
+import { createCompareValidator } from 'src/app/validators/compare.validator';
 
 @Component({
   selector: 'app-password-recover',
@@ -12,11 +13,14 @@ import { LoginErrorService } from 'src/app/services/login-error.service';
   styleUrls: ['./password-recover.component.scss']
 })
 export class PasswordRecoverComponent implements OnInit {
-  recoverForm = this.fb.nonNullable.group({
-    resetToken: ['', Validators.required],
-    password: ['', Validators.required],
-    passwordRepeat: ['', Validators.required]
-  });
+  recoverForm = this.fb.nonNullable.group(
+    {
+      resetToken: ['', Validators.required],
+      password: ['', Validators.required],
+      passwordRepeat: ['', Validators.required]
+    },
+    { validators: [createCompareValidator('password', 'passwordRepeat')] }
+  );
 
   constructor(
     public loginErrorService: LoginErrorService,
