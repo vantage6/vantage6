@@ -112,7 +112,7 @@ const routes: Routes = [
         component: HomeComponent
       },
       {
-        path: routerConfig.start,
+        path: routerConfig.chooseCollaboration,
         component: ChooseCollaborationComponent,
         canActivate: [authenticationGuard()]
       },

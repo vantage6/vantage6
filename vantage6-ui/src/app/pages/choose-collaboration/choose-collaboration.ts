@@ -9,7 +9,7 @@ import { EncryptionService } from 'src/app/services/encryption.service';
 import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
-  selector: 'app-start',
+  selector: 'app-choose-collaboration',
   templateUrl: './choose-collaboration.component.html',
   styleUrls: ['./choose-collaboration.scss']
 })

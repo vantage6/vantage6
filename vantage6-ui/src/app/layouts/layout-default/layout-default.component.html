@@ -42,11 +42,11 @@
   <mat-sidenav-content>
     <div class="layout-container">
       <app-breadcrumbs></app-breadcrumbs>
-      <div *ngIf="isAnalyze && (chosenCollaborationService.collaboration$ | async) && router.url !== routes.start">
+      <div *ngIf="isAnalyze && (chosenCollaborationService.collaboration$ | async) && router.url !== routes.chooseCollaboration">
         <mat-card class="choice-alert">
           <div>
             {{ "chosen-collaboration-alert.content" | translate: { name: chosenCollaborationService.collaboration$.value?.name } }}
-            <button mat-flat-button class="right-aligned-button" color="primary" [routerLink]="routes.start">
+            <button mat-flat-button class="right-aligned-button" color="primary" [routerLink]="routes.chooseCollaboration">
               {{ "chosen-collaboration-alert.change" | translate }}
             </button>
           </div>

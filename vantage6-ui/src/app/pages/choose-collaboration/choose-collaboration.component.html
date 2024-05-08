@@ -1,4 +1,4 @@
-<app-page-header title="{{ 'start.title' | translate }}"></app-page-header>
+<app-page-header title="{{ 'choose-collaboration.title' | translate }}"></app-page-header>
 <ng-container *ngIf="!isLoading; else loading">
   <div class="tile-grid">
     <button mat-raised-button *ngFor="let collaboration of collaborations" (click)="handleCollaborationClick(collaboration)">
@@ -7,17 +7,17 @@
   </div>
   <mat-card *ngIf="collaborations.length === 0">
     <mat-card-content>
-      <p>{{ "start.no-collaborations" | translate }}</p>
+      <p>{{ "choose-collaboration.no-collaborations" | translate }}</p>
     </mat-card-content>
   </mat-card>
   <mat-card *ngIf="encryptionService.privateKey$ | async">
     <mat-card-header>
-      <mat-card-title>{{ "start.card-private-key.title" | translate }}</mat-card-title>
+      <mat-card-title>{{ "choose-collaboration.card-private-key.title" | translate }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <p>{{ "start.card-private-key.description" | translate }}</p>
+      <p>{{ "choose-collaboration.card-private-key.description" | translate }}</p>
       <button mat-flat-button type="button" color="primary" [routerLink]="routes.keyUpload">
-        {{ "start.card-private-key.button" | translate }}
+        {{ "choose-collaboration.card-private-key.button" | translate }}
       </button>
     </mat-card-content>
   </mat-card>

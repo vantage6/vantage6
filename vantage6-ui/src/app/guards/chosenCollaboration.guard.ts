@@ -9,7 +9,7 @@ export function chosenCollaborationGuard(): CanActivateFn {
 
     const chosenCollaboration = sessionStorage.getItem(CHOSEN_COLLABORATION);
     if (!chosenCollaboration) {
-      router.navigate([routePaths.start]);
+      router.navigate([routePaths.chooseCollaboration]);
       return false;
     }
     const encryptionStatus = sessionStorage.getItem(IS_CHOSEN_COLLAB_ENCRYPTED);
