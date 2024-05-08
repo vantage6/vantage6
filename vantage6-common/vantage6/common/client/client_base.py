@@ -381,9 +381,21 @@ class ClientBase(object):
         # authenticate to the central server
         url = self.generate_path_to(path, is_for_algorithm_store=False)
         response = requests.post(url, json=credentials)
-        data = response.json()
+        if response.status_code == 404:
+            self.log.error(
+                "Server not found at %s. Please check the address and whether the "
+                "server is running!",
+                url,
+            )
+            self.log.info(
+                "If the server is running and reachable, %s/health should give a "
+                "response.",
+                self.base_path,
+            )
+            return False
 
         # handle negative responses
+        data = response.json()
         if response.status_code > 200:
             self.log.critical(f"Failed to authenticate: {data.get('msg')}")
             if response.status_code == 401:
