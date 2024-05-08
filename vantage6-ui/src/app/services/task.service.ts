@@ -124,19 +124,15 @@ export class TaskService {
   private getDecodedResult(taskResult: TaskResult): object | undefined {
     if (!taskResult.result) return undefined;
     // decrypt result
+    let decryptedResult: string;
     if (this.chosenCollaborationService.isEncrypted()) {
-      // console.log('decrypting result');
-      // console.log(taskResult.result);
-      taskResult.result = this.encryptionService.decryptData(taskResult.result);
-      this.encryptionService.encryptData(
-        'testwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww',
-        1
-      );
-      // console.log(taskResult.result);
+      decryptedResult = this.encryptionService.decryptData(taskResult.result);
+    } else {
+      // if not decrypted, just decode it
+      decryptedResult = atob(taskResult.result);
     }
     // decode result
-    const decodedResult = JSON.parse(atob(taskResult.result));
-    // console.log(decodedResult);
+    const decodedResult = JSON.parse(decryptedResult);
     if (typeof decodedResult === 'string') {
       return JSON.parse(decodedResult);
     }
@@ -145,6 +141,13 @@ export class TaskService {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private getDecodedInput(taskRunInput: string): any {
-    return JSON.parse(atob(taskRunInput));
+    let decryptedInput: string;
+    if (this.chosenCollaborationService.isEncrypted()) {
+      decryptedInput = this.encryptionService.decryptData(taskRunInput);
+    } else {
+      decryptedInput = atob(taskRunInput);
+    }
+    // decode input
+    return JSON.parse(decryptedInput);
   }
 }

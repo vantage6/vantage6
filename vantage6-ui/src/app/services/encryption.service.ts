@@ -22,6 +22,11 @@ export class EncryptionService {
     sessionStorage.setItem(CHOSEN_COLLAB_PRIVATE_KEY, privateKey);
   }
 
+  clear() {
+    this.privateKey$.next(null);
+    sessionStorage.removeItem(CHOSEN_COLLAB_PRIVATE_KEY);
+  }
+
   private async initData() {
     const privateKey = sessionStorage.getItem(CHOSEN_COLLAB_PRIVATE_KEY);
     if (privateKey) {
@@ -34,91 +39,47 @@ export class EncryptionService {
 
     // split the encrypted data
     const splittedData = encryptedData.split('$');
-    const encryptedKey = splittedData[0];
-    const iv = splittedData[1];
-    const encrypted_msg = splittedData[2];
-    // console.log(encryptedKey);
+    const encryptedSharedKey = splittedData[0];
+    const encryptedIV = splittedData[1];
+    const encryptedMsg = splittedData[2];
 
     // to bytes array
-    // const encrypted_key_bytes = atob(encrypted_key);
-    // const iv_bytes = atob(iv);
-    // const encrypted_msg_bytes = atob(encrypted_msg);
-    const encrypted_key_bytes = Buffer.from(encryptedKey, 'base64');
-    const iv_bytes = Buffer.from(iv, 'base64');
-    const encrypted_msg_bytes = Buffer.from(encrypted_msg, 'base64');
-    // console.log(encrypted_key_bytes);
-    // console.log(iv_bytes);
-    // console.log(encrypted_msg_bytes);
-    // console.log(Buffer.from(encrypted_key_bytes, 'utf8'));
-    // console.log(Buffer.from(encrypted_key, 'utf8'));
+    const encryptedSharedKeyBytes = Buffer.from(encryptedSharedKey, 'base64');
+    const encryptedIVBytes = Buffer.from(encryptedIV, 'base64');
 
-    // --------------------------------------------
-    // -----  FYI python reproduced until here ----
-    // --------------------------------------------
+    // decrypt shared key using assymetric encryption
+    const privateKey = forge.pki.privateKeyFromPem(this.privateKey$.value);
+    const decryptedSharedKey = privateKey.decrypt(encryptedSharedKeyBytes.toString('binary'), 'RSAES-PKCS1-V1_5');
+    let decryptedSharedKeyBytes;
+    try {
+      // shared key has additional layer of base64 encoding if it was encoded by the UI
+      decryptedSharedKeyBytes = Buffer.from(atob(decryptedSharedKey), 'binary');
+    } catch (error) {
+      // if that didn't work, it was encrypted by Python - no additional layer of base64 encoding
+      decryptedSharedKeyBytes = Buffer.from(decryptedSharedKey, 'binary');
+    }
 
-    // // // decrypt shared key using assymetric encryption
-    // // const decrypt = new JSEncrypt();
-    // // decrypt.setPrivateKey(this.privateKey$.value);
-    // // const sharedKey = decrypt.decrypt(encrypted_key_bytes);
-    // // console.log(sharedKey);
-    // // decrypt shared key using assymetric encryption
-    // const key = CryptoJS.lib.WordArray.create(encrypted_key_bytes);
-    // const keyb64 = CryptoJS.enc.Base64.stringify(key);
-    // const ivKey = CryptoJS.lib.WordArray.create(iv_bytes);
-    // const tryKey = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Base64.parse(encryptedKey));
-    // console.log(encryptedKey);
-    // console.log(tryKey);
-    // // CryptoJS.enc.Hex.parse(encryptedKey);
+    // convert shared key and IV to WordArray
+    const decryptedSharedKeyWordArray = this.bufferToWordArray(decryptedSharedKeyBytes);
+    const ivWordArray = this.bufferToWordArray(encryptedIVBytes);
 
-    // // Reproduce Python code below
-    // // shared_key = self.private_key.decrypt(encrypted_key_bytes, padding.PKCS1v15())
-    // try {
-    //   console.log(keyb64);
-    //   const sharedKey = CryptoJS.AES.decrypt(encryptedKey, this.privateKey$.value);
-    //   // const sharedKey = CryptoJS.AES.decrypt(encryptedKey, this.privateKey$.value, { iv: ivKey });
-    //   console.log(sharedKey);
-    //   console.log(sharedKey.toString());
-    //   const sharedKeyHex = CryptoJS.enc.Hex.stringify(sharedKey);
-    //   const sharedKeyBytes = [];
-    //   for (let i = 0; i < sharedKeyHex.length; i += 2) {
-    //     sharedKeyBytes.push(parseInt(sharedKeyHex.substr(i, 2), 16));
-    //   }
-    //   console.log(sharedKeyBytes);
-    // } catch (error) {
-    //   console.log(error);
-    // }
-    // const decrypt = new JSEncrypt();
-    // decrypt.setPrivateKey(this.privateKey$.value);
-    // const sharedKey = decrypt.decrypt(encrypted_key_bytes.toString());
-    // console.log(sharedKey);
+    // decrypt message with symmetric encryption using the shared key
+    const decipher = CryptoJS.AES.decrypt(encryptedMsg, decryptedSharedKeyWordArray, {
+      iv: ivWordArray,
+      mode: CryptoJS.mode.CTR,
+      padding: CryptoJS.pad.NoPadding
+    });
 
-    // TODO reproduce Python code below
-    // # Use the shared key for symmetric encryption/decryption of the payload
-    // cipher = Cipher(
-    //     algorithms.AES(shared_key), modes.CTR(iv_bytes), backend=default_backend()
-    // )
-    // const cipher = CryptoJS.AES.encrypt(encrypted_msg, sharedKey.toString());
+    // convert the decrypted message to string
+    const decryptedMsg = decipher.toString(CryptoJS.enc.Utf8);
 
-    // TODO reproduce Python code below
-    // decryptor = cipher.decryptor()
-    // result = decryptor.update(encrypted_msg_bytes) + decryptor.finalize()
-
-    // const key = crypto.privateDecrypt(this.privateKey$.value, encrypted_key_bytes);
-    // console.log(key);
-
-    // Use the shared key for symmetric encryption/decryption of the payload
-    // const decipher = crypto.createDecipheriv('aes-256-ctr', Buffer.from(sharedKey, 'hex'), iv_bytes);
-    // let decrypted = decipher.update(encrypted_msg_bytes);
-    // console.log(decrypted);
-    // decrypted = Buffer.concat([decrypted, decipher.finalize()]);
-
-    // const cipher = crypto.createCipher('aes-128-ecb', key);
-    // console.log(cipher);
-    // let tokenHex = cipher.update('HELLO\x00\x00', 'utf8', 'hex');
-    // tokenHex = tokenHex.toString('utf8')
-
-    // return decrypt.decrypt(encryptedData) || encryptedData;
-    return encryptedData;
+    // if the decrypted message was encrypted by the UI, there is an additional layer
+    // of base64 encoding that needs to be removed
+    try {
+      return atob(decryptedMsg);
+    } catch (error) {
+      return decryptedMsg;
+    }
   }
 
   async encryptData(data: string, organizationID: number): Promise<string> {
@@ -145,12 +106,13 @@ export class EncryptionService {
     const secondEncryptedPart = syncEncryptor.finalize();
     const encryptedMsgBytes = firstEncryptedPart.concat(secondEncryptedPart);
 
-    // convert the encrypted message to base64 string
+    // convert the encrypted message and key to base64 string
     const encryptedMsgB64 = CryptoJS.enc.Base64.stringify(encryptedMsgBytes);
+    const sharedKeyB64 = sharedKey.toString(CryptoJS.enc.Base64);
 
     // encrypt the shared key asynchronously (i.e. using the public key)
     const publicKey = forge.pki.publicKeyFromPem(pubKeyDecoded);
-    const encryptedKey = publicKey.encrypt(sharedKey.toString(CryptoJS.enc.Base64), 'RSAES-PKCS1-V1_5');
+    const encryptedKey = publicKey.encrypt(sharedKeyB64, 'RSAES-PKCS1-V1_5');
 
     // convert the encrypted key and iv to base64 string
     const encryptedKeyB64 = btoa(encryptedKey);
@@ -178,17 +140,12 @@ export class EncryptionService {
     return new Uint8Array(bytes);
   }
 
-  private bytestowordarray(bytes: number[]): CryptoJS.lib.WordArray {
-    // const ivWords = [];
-    // for (let i = 0; i < ivBytes.length; i += 4) {
-    //   ivWords.push((ivBytes[i] << 24) | (ivBytes[i + 1] << 16) | (ivBytes[i + 2] << 8) | ivBytes[i + 3]);
-    // }
-    // const iv2 = CryptoJS.lib.WordArray.create(ivWords);
+  private bufferToWordArray(buffer: Buffer): CryptoJS.lib.WordArray {
     const words = [];
-    for (let i = 0; i < bytes.length; i += 4) {
-      const word = (bytes[i] << 24) | (bytes[i + 1] << 16) | (bytes[i + 2] << 8) | bytes[i + 3];
+    for (let i = 0; i < buffer.length; i += 4) {
+      const word = (buffer[i] << 24) | (buffer[i + 1] << 16) | (buffer[i + 2] << 8) | buffer[i + 3];
       words.push(word);
     }
-    return CryptoJS.lib.WordArray.create(words, bytes.length);
+    return CryptoJS.lib.WordArray.create(words, buffer.length);
   }
 }
