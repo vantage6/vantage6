@@ -6,6 +6,7 @@ import * as CryptoJS from 'crypto-js';
 import forge from 'node-forge';
 import { OrganizationService } from './organization.service';
 import { ENCRYPTION_SEPARATOR } from '../models/constants/encryption';
+import { ChosenCollaborationService } from './chosen-collaboration.service';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +14,10 @@ import { ENCRYPTION_SEPARATOR } from '../models/constants/encryption';
 export class EncryptionService {
   privateKey$: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
 
-  constructor(private organizationService: OrganizationService) {
+  constructor(
+    private organizationService: OrganizationService,
+    private chosenCollaborationService: ChosenCollaborationService
+  ) {
     this.initData();
   }
 
@@ -35,7 +39,9 @@ export class EncryptionService {
   }
 
   decryptData(encryptedData: string): string {
-    if (!this.privateKey$.value) return encryptedData;
+    if (!this.privateKey$.value || this.chosenCollaborationService.isEncrypted() === false) {
+      return encryptedData;
+    }
 
     // split the encrypted data
     const splittedData = encryptedData.split('$');
@@ -83,6 +89,11 @@ export class EncryptionService {
   }
 
   async encryptData(data: string, organizationID: number): Promise<string> {
+    // if collaboration is not encrypted, return the data as is
+    if (this.chosenCollaborationService.isEncrypted() === false) {
+      return data;
+    }
+
     // get the public key of the organization
     const organization = await this.organizationService.getOrganization(organizationID.toString());
     if (!organization) {

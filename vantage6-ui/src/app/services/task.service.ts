@@ -79,7 +79,6 @@ export class TaskService {
           try {
             result.decoded_result = this.getDecodedResult(result);
           } catch (e) {
-            console.error(e);
             this.snackBarService.showMessage(this.translateService.instant('task.alert-failed-read-result'));
           }
         }
