@@ -431,28 +431,27 @@ class Sessions(SessionBase):
         # A pipeline is a list of tasks that need to be executed in order to initialize
         # the session. A single session can have multiple pipelines, each with a
         # different database or different user inputs.
-        for database in data["pipelines"]:
+        for pipeline in data["pipelines"]:
 
             # This label is used to identify the database, this label should match the
             # label in the node configuration file.
-            source_db_label = database["label"]
+            source_db_label = pipeline["label"]
 
             # This handle can be used by the `preprocessing` and `compute` tasks that
             # are send after the data extraction task. This handle is profided to the
             # user so that they can identify the data that they want to use.
-            handle = database["handle"]
+            handle = pipeline["handle"]
             for n_session in session.node_sessions:
                 db.NodeSessionConfig(
                     node_session=n_session, key="df_handle", value=handle
                 ).save()
 
             # First step of a pipeline is always a single data extraction step.
-            #TODO we need change the database workflow
-            extraction_details = database["data_extraction"]
+            extraction_details = pipeline["data_extraction"]
             response, status_code = self.create_session_task(
                 session=session,
                 #database={"label": source_db_label, "handle": handle},
-                database=[{"label": source_db_label}],
+                database=[{"label": source_db_label, "type": "source"}],
                 description="Data extraction step",
                 **extraction_details,
             )
@@ -462,12 +461,12 @@ class Sessions(SessionBase):
 
             # If there is a preprocessing task, add each task sequentially so that
             # each task depends on the previous task.
-            if "preprocessing" in database:
-                for preprocessing_task in database["preprocessing"]:
+            if "preprocessing" in pipeline:
+                for preprocessing_task in pipeline["preprocessing"]:
                     response, status_code = self.create_session_task(
                         session=session,
                         # database={"handle": handle, "handle": handle},
-                        database=[{"label": source_db_label}],
+                        database=[{"label": handle, "type": "handle"}],
                         description="Preprocessing step",
                         depends_on_id=response["id"],
                         **preprocessing_task,
@@ -736,6 +735,8 @@ class Session(SessionBase):
             }, HTTPStatus.UNAUTHORIZED
 
         self.delete_session(session)
+        #TODO create socket event so the node knows that it should clear the session
+        # data too.
 
         return {"msg": f"Successfully deleted session id={id}"}, HTTPStatus.OK
 

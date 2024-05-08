@@ -831,15 +831,14 @@ class Tasks(TaskBase):
             databases = []
         db_records = []
         for database in databases:
-            if "label" not in database:
-                return {
-                    "msg": "Database label missing! The dictionary "
-                    f"{database} should contain a 'label' key"
-                }, HTTPStatus.BAD_REQUEST
-            # remove label from the database dictionary, which apart from it
-            # may only contain some optional parameters . Save optional
-            # parameters as JSON without spaces to database
-            label = database.pop("label")
+
+            for key in ["label", "type"]:
+                if key not in database:
+                    return {
+                        "msg": f"Database {key} missing! The dictionary "
+                        f"{database} should contain a '{key}' key"
+                    }, HTTPStatus.BAD_REQUEST
+
             # TODO task.id is only set here because in between creating the
             # task and using the ID here, there are other database operations
             # that silently update the task.id (i.e. next_job_id() and
@@ -847,8 +846,8 @@ class Tasks(TaskBase):
             db_records.append(
                 db.TaskDatabase(
                     task_id=task.id,
-                    database=label,
-                    parameters=json.dumps(database, separators=(",", ":")),
+                    database=database["label"],
+                    type_=database["type"],
                 )
             )
 

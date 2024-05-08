@@ -474,20 +474,8 @@ class TaskInputSchema(_NameValidationSchema):
         for database in databases:
             if "label" not in database:
                 raise ValidationError("Database label is required for each database")
-            if "preprocessing" in database:
-                if not isinstance(database["preprocessing"], list):
-                    raise ValidationError(
-                        "Database preprocessing must be a list of dictionaries"
-                    )
-                # TODO we may add further validation on the preprocessing
-                # parameters when that is completed
-                for prepro in database["preprocessing"]:
-                    if "function" not in prepro:
-                        raise ValidationError(
-                            f"Database preprocessing {prepro} is missing a "
-                            "'function'"
-                        )
-            allowed_keys = {"label", "preprocessing", "query", "sheet_name"}
+
+            allowed_keys = {"label", "type"}
             if not set(database.keys()).issubset(set(allowed_keys)):
                 raise ValidationError(
                     f"Database {database} contains unknown keys. Allowed keys "
