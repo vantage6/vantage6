@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { CHOSEN_COLLABORATION, IS_CHOSEN_COLLAB_ENCRYPTED, CHOSEN_COLLAB_PRIVATE_KEY } from '../models/constants/sessionStorage';
+import { CHOSEN_COLLABORATION, IS_CHOSEN_COLLAB_ENCRYPTED } from '../models/constants/sessionStorage';
 import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import { CollaborationService } from './collaboration.service';
 import { Collaboration, CollaborationLazyProperties } from '../models/api/collaboration.model';
