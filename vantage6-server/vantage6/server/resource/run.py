@@ -5,9 +5,10 @@ import sqlalchemy as sa
 from flask import g, request
 from flask_restful import Api
 from http import HTTPStatus
-from sqlalchemy import desc
+from sqlalchemy import desc, or_, and_
 
 from vantage6.common import logger_name
+from vantage6.common.task_status import TaskStatus
 from vantage6.server import db
 from vantage6.server.permission import (
     RuleCollection,
@@ -150,6 +151,7 @@ class MultiRunBase(RunBase):
         """
         auth_org = self.obtain_auth_organization()
         args = request.args
+        log.debug(f"Querying runs with args: {args}")
 
         q = g.session.query(db_Run)
 
@@ -202,9 +204,42 @@ class MultiRunBase(RunBase):
             if f"{param}_from" in args:
                 q = q.filter(db_Run.assigned_at >= args[f"{param}_from"])
 
-        # custom filters
+        # The state can be one of the following:
+        #   open:
+        #       Runs that are not finished and depending runs are completed or do not
+        #       exist
+        #   waiting:
+        #       Runs that are not finished and depending runs are not completed
+        #   finished:
+        #       Runs that are finished
+        #
         if args.get("state") == "open":
-            q = q.filter(db_Run.finished_at.is_(None))
+            # It will return all Run objects that either do not depend on any task, or
+            # depend on a task where all associated runs have finished, and that have
+            # not finished themselves.
+            q = q.join(db_Run.task).filter(
+                and_(
+                    or_(
+                        ~db.Task.depends_on.has(None),
+                        db.Task.depends_on.has(~db.Task.runs.any(db.Run.finished_at.is_(None)))
+                    ),
+                    db_Run.finished_at.is_(None)
+                )
+            )
+
+        elif args.get("state") == "waiting":
+            q = q.join(db_Run.task).filter(
+                and_(
+                    or_(
+                        db.Task.depends_on.has(None),
+                        db.Task.depends_on.has(db.Task.runs.any(db.Run.finished_at.is_(None)))
+                    ),
+                    db_Run.finished_at.is_(None)
+                )
+            )
+
+        elif args.get("state") == "finished":
+            q = q.filter(db_Run.finished_at.isnot(None))
 
         q = q.join(Organization).join(Node).join(Task, db_Run.task).join(Collaboration)
 

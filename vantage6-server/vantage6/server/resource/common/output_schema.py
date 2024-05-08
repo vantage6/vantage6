@@ -74,6 +74,11 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
         )
         setattr(
             self,
+            "depends_on",
+            lambda obj: self.create_hateoas("depends_on", obj, endpoint="task"),
+        )
+        setattr(
+            self,
             "init_org_",
             lambda obj: self.create_hateoas("init_org", obj, endpoint="organization"),
         )
@@ -108,7 +113,10 @@ class TaskSchema(HATEOASModelSchema):
     results = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="result", link_from="task_id")
     )
+
     parent = fields.Method("parent_")
+    depends_on = fields.Method("depends_on")
+
     children = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="task", link_from="parent_id")
     )
@@ -122,7 +130,7 @@ class TaskSchema(HATEOASModelSchema):
     @staticmethod
     def databases_(obj):
         return [
-            {"label": db.database, "parameters": db.parameters} for db in obj.databases
+            {"label": db.database, "type": db.type_} for db in obj.databases
         ]
 
 
