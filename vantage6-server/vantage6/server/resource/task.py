@@ -573,7 +573,13 @@ class Tasks(TaskBase):
 
     # TODO this function should be refactored to make it more readable
     @staticmethod
-    def post_task(data: dict, socketio: SocketIO, rules: RuleCollection, config: dict):
+    def post_task(
+        data: dict,
+        socketio: SocketIO,
+        rules: RuleCollection,
+        config: dict,
+        action: LocalAction,
+    ):
         """
         Create new task and algorithm runs. Send the task to the nodes.
 
@@ -807,6 +813,7 @@ class Tasks(TaskBase):
             algorithm_store=store,
             session=session,
             depends_on=dependant_task,
+            action=action,
         )
 
         # create job_id. Users can only create top-level -tasks (they will not

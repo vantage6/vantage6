@@ -6,6 +6,7 @@ from http import HTTPStatus
 from sqlalchemy import or_, and_
 
 from vantage6.common import logger_name
+from vantage6.common.enums import LocalAction
 from vantage6.server import db
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.permission import (
@@ -402,8 +403,6 @@ class Sessions(SessionBase):
         if not collaboration:
             return {"msg": "Collaboration not found"}, HTTPStatus.NOT_FOUND
 
-
-
         # Check if the session label already exists in the collaboration
         if db.Session.label_exists(data["label"], collaboration):
             return {
@@ -450,9 +449,10 @@ class Sessions(SessionBase):
             extraction_details = pipeline["data_extraction"]
             response, status_code = self.create_session_task(
                 session=session,
-                #database={"label": source_db_label, "handle": handle},
+                # database={"label": source_db_label, "handle": handle},
                 database=[{"label": source_db_label, "type": "source"}],
                 description="Data extraction step",
+                action=LocalAction.DATA_EXTRACTION,
                 **extraction_details,
             )
             if status_code != HTTPStatus.CREATED:
@@ -469,6 +469,7 @@ class Sessions(SessionBase):
                         database=[{"label": handle, "type": "handle"}],
                         description="Preprocessing step",
                         depends_on_id=response["id"],
+                        action=LocalAction.PREPROCESSING,
                         **preprocessing_task,
                     )
                     if status_code != HTTPStatus.CREATED:
@@ -483,6 +484,7 @@ class Sessions(SessionBase):
         image: str,
         organizations: dict,
         database: dict,
+        action: LocalAction,
         description="",
         depends_on_id=None,
     ) -> int:
@@ -500,7 +502,9 @@ class Sessions(SessionBase):
         }
         # remove empty values
         input_ = {k: v for k, v in input_.items() if v is not None}
-        return Tasks.post_task(input_, self.socketio, getattr(self.permissions, "task"))
+        return Tasks.post_task(
+            input_, self.socketio, getattr(self.permissions, "task"), action
+        )
 
 
 class Session(SessionBase):
@@ -735,7 +739,7 @@ class Session(SessionBase):
             }, HTTPStatus.UNAUTHORIZED
 
         self.delete_session(session)
-        #TODO create socket event so the node knows that it should clear the session
+        # TODO create socket event so the node knows that it should clear the session
         # data too.
 
         return {"msg": f"Successfully deleted session id={id}"}, HTTPStatus.OK
