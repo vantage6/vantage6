@@ -9,6 +9,20 @@ class NodeSessionConfig(Base):
     Table to store node session configuration by key-value pairs.
 
     This information includes e.g. which databases are available in the session.
+
+    Attributes
+    ----------
+    node_session_id : int
+        ID of the node session that this configuration belongs to
+    key : str
+        Key of the configuration
+    value : str
+        Value of the configuration
+
+    Relationships
+    -------------
+    node_session : :class:`~vantage6.server.model.node_session.NodeSession`
+        Node session that this configuration belongs to
     """
 
     # fields

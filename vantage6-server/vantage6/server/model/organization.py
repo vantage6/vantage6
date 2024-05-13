@@ -13,10 +13,9 @@ from vantage6.server.model.base import Base, DatabaseSessionManager
 class Organization(Base):
     """Table that describes which organizations are available.
 
-    An organization is the legal entity that plays a central role in managing
-    distributed tasks. Each organization contains a public key which other
-    organizations can use to send encrypted messages that only this
-    organization can read.
+    An organization is the legal entity that plays a central role in managing tasks.
+    Each organization contains a public key which other organizations can use to send
+    encrypted messages that only this organization can read.
 
     Attributes
     ----------
@@ -34,6 +33,9 @@ class Organization(Base):
         Country of the organization
     _public_key : bytes
         Public key of the organization
+
+    Relationships
+    -------------
     collaborations :
             list[:class:`~vantage6.server.model.collaboration.Collaboration`]
         List of collaborations that this organization is part of
@@ -46,7 +48,7 @@ class Organization(Base):
     tasks : list[:class:`~vantage6.server.model.task.Task`]
         List of tasks that are created by this organization
     roles : list[:class:`~vantage6.server.model.role.Role`]
-
+        List of roles that are available to this organization
     """
 
     # fields

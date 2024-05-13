@@ -28,6 +28,9 @@ class Collaboration(Base):
     session_restrict_to_same_image : bool
         when set to True, enforces that all functions calls in a single session must
         originate from the same image
+
+    Relationships
+    -------------
     organizations :
             list[:class:`~vantage6.server.model.organization.Organization`]
         List of organizations that are part of this collaboration
@@ -39,6 +42,7 @@ class Collaboration(Base):
         List of studies that are part of this collaboration
     sessions : list[:class:`~vantage6.server.model.session.Session`]
         List of sessions that are part of this collaboration
+
     """
 
     # fields

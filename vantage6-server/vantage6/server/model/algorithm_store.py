@@ -17,10 +17,14 @@ class AlgorithmStore(Base):
     url: str
         The url of the algorithm store
     collaboration_id: int
-        The id of the
-        :class:`~vantage6.server.model.collaboration.Collaboration` that this
-        algorithm store belongs to. If it is ``None``, then it is available for
-        all collaborations.
+        The collaboration ID of the that this algorithm store belongs to. If it is
+        ``None``, then it is available for all collaborations.
+
+    Relationships
+    -------------
+    collaboration: :class:`~vantage6.server.model.collaboration.Collaboration`
+        The collaboration that this algorithm store belongs to or ``None`` if
+        it is available for all collaborations.
     """
 
     # fields
@@ -28,6 +32,7 @@ class AlgorithmStore(Base):
     url = Column(String)
     collaboration_id = Column(Integer, ForeignKey("collaboration.id"))
 
+    # relationships
     collaboration = relationship("Collaboration", back_populates="algorithm_stores")
     tasks = relationship("Task", back_populates="algorithm_store")
 

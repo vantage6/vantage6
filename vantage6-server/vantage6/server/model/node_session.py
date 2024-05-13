@@ -22,14 +22,23 @@ class NodeSession(Base):
 
     Attributes
     ----------
-    node : :class:`~vantage6.server.model.node.Node`
-        Node that has prepared the session
-    session : :class:`~vantage6.server.model.session.Session`
-        Session that is prepared by the node
+    node_id : int
+        ID of the node that has prepared the session
+    session_id : int
+        ID of the session that is prepared by the node
     state : SessionStatus
         State of the session
     last_updated_at : datetime.datetime
         Date and time of the last update of the session state
+
+    Relationships
+    -------------
+    node : :class:`~vantage6.server.model.node.Node`
+        Node that has prepared the session
+    session : :class:`~vantage6.server.model.session.Session`
+        Session that is prepared by the node
+    config : :class:`~vantage6.server.model.node_session_config.NodeSessionConfig`
+        Configuration of the node session
 
     Raises
     ------

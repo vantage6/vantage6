@@ -39,6 +39,9 @@ class User(Authenticatable):
         Date and time of the last login attempt
     otp_secret : str
         Secret key for one time passwords
+
+    Relationships
+    -------------
     organization : :class:`~.model.organization.Organization`
         Organization to which the user belongs
     roles : list[:class:`~.model.role.Role`]
@@ -49,6 +52,7 @@ class User(Authenticatable):
         Tasks that the user has created
     sessions : list[:class:`~.model.session.Session`]
         Sessions that the user has created
+
     """
 
     _hidden_attributes = ["password"]

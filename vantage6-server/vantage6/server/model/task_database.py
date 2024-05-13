@@ -28,6 +28,10 @@ class TaskDatabase(Base):
     type : str
         Type of the database (e.g. source or handle)
 
+    Relationships
+    -------------
+    task : :class:`~vantage6.server.model.task.Task`
+        Task that uses the database
     """
 
     # fields

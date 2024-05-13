@@ -17,12 +17,16 @@ class Role(Base):
         Description of the role
     organization_id : int
         Id of the organization this role belongs to
+
+    Relationships
+    -------------
     rules : list[:class:`.~vantage6.server.model.rule.Rule`]
         List of rules that belong to this role
     organization : :class:`.~vantage6.server.model.organization.Organization`
         Organization this role belongs to
     users : list[:class:`.~vantage6.server.model.user.User`]
         List of users that belong to this role
+
     """
 
     # fields

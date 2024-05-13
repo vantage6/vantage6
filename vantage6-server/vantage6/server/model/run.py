@@ -42,10 +42,13 @@ class Run(Base):
         Status of the task
     log : str
         Log of the task
-    task : :class:`.~vantage6.server.model.task.Task`
-        Task that was executed
     action : :class:`.~vantage6.common.LocalAction`
         Action type of the task
+
+    Relationships
+    -------------
+    task : :class:`.~vantage6.server.model.task.Task`
+        Task that was executed
     organization : :class:`.~vantage6.server.model.organization.Organization`
         Organization that executed the task
     ports : list[:class:`.~vantage6.server.model.algorithm_port.AlgorithmPort`]
