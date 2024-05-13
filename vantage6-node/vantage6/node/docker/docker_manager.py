@@ -27,7 +27,7 @@ from vantage6.common.docker.addons import (
     running_in_docker,
 )
 from vantage6.common.globals import APPNAME, BASIC_PROCESSING_IMAGE, NodePolicy
-from vantage6.common.task_status import TaskStatus, has_task_failed
+from vantage6.common.enums import TaskStatus
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.algorithm.tools.wrappers import get_column_names
 from vantage6.cli.context.node import NodeContext
@@ -657,7 +657,7 @@ class DockerManager(DockerBaseManager):
             attempts += 1
 
         # keep track of the active container
-        if has_task_failed(task.status):
+        if TaskStatus.has_task_failed(task.status):
             self.failed_tasks.append(task)
             return task.status, None
         else:

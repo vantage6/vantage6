@@ -8,7 +8,7 @@ from http import HTTPStatus
 from sqlalchemy import desc, or_, and_
 
 from vantage6.common import logger_name
-from vantage6.common.task_status import TaskStatus
+from vantage6.common.enums import TaskStatus
 from vantage6.server import db
 from vantage6.server.permission import (
     RuleCollection,
@@ -218,9 +218,11 @@ class MultiRunBase(RunBase):
                 and_(
                     or_(
                         ~db.Task.depends_on.has(None),
-                        db.Task.depends_on.has(~db.Task.runs.any(db.Run.finished_at.is_(None)))
+                        db.Task.depends_on.has(
+                            ~db.Task.runs.any(db.Run.finished_at.is_(None))
+                        ),
                     ),
-                    db_Run.finished_at.is_(None)
+                    db_Run.finished_at.is_(None),
                 )
             )
         elif args.get("state") == "waiting":
@@ -228,9 +230,11 @@ class MultiRunBase(RunBase):
                 and_(
                     or_(
                         db.Task.depends_on.has(None),
-                        db.Task.depends_on.has(db.Task.runs.any(db.Run.finished_at.is_(None)))
+                        db.Task.depends_on.has(
+                            db.Task.runs.any(db.Run.finished_at.is_(None))
+                        ),
                     ),
-                    db_Run.finished_at.is_(None)
+                    db_Run.finished_at.is_(None),
                 )
             )
         elif args.get("state") == "finished":

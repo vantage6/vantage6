@@ -11,9 +11,8 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.hybrid import hybrid_property
 
-from vantage6.common.session_status import SessionStatus
+from vantage6.common.enums import SessionStatus
 from vantage6.server.model.rule import Scope
 from vantage6.server.model.base import Base
 

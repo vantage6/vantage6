@@ -3,7 +3,7 @@ import logging
 from socketio import ClientNamespace
 
 from vantage6.common import logger_name
-from vantage6.common.task_status import TaskStatus, has_task_failed
+from vantage6.common.enums import TaskStatus
 
 
 class NodeTaskNamespace(ClientNamespace):
@@ -89,7 +89,7 @@ class NodeTaskNamespace(ClientNamespace):
         """
         status = data.get("status")
         job_id = data.get("job_id")
-        if has_task_failed(status):
+        if TaskStatus.has_task_failed(status):
             # TODO handle run sequence at this node. Maybe terminate all
             #     containers with the same job_id?
             if status == TaskStatus.NOT_ALLOWED:

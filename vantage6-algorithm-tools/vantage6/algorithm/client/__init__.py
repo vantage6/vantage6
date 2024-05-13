@@ -8,7 +8,7 @@ from typing import Any
 
 from vantage6.common.client.client_base import ClientBase
 from vantage6.common import base64s_to_bytes, bytes_to_base64s
-from vantage6.common.task_status import has_task_finished
+from vantage6.common.task_status import TaskStatus
 from vantage6.common.serialization import serialize
 from vantage6.algorithm.tools.util import info
 
@@ -143,7 +143,7 @@ class AlgorithmClient(ClientBase):
             List of task results.
         """
         status = self.task.get(task_id).get("status")
-        while not has_task_finished(status):
+        while not TaskStatus.has_task_finished(status):
             info(f"Waiting for results of task {task_id}...")
             time.sleep(interval)
             status = self.task.get(task_id).get("status")

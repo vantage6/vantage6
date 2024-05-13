@@ -5,7 +5,7 @@ from sqlalchemy import Column, String, ForeignKey, Integer, sql, DateTime
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from vantage6.common.task_status import TaskStatus, has_task_failed
+from vantage6.common.enums import TaskStatus
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
@@ -167,7 +167,7 @@ class Task(Base):
             return ""
         # TODO what if there are no result ids? -> currently returns unknown
         run_statuses = [r.status for r in self.runs]
-        if any([has_task_failed(status) for status in run_statuses]):
+        if any([TaskStatus.has_task_failed(status) for status in run_statuses]):
             return TaskStatus.FAILED.value
         elif TaskStatus.ACTIVE in run_statuses:
             return TaskStatus.ACTIVE.value

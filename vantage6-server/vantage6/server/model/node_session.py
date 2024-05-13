@@ -5,7 +5,7 @@ from sqlalchemy import Column, Integer, ForeignKey, DateTime, Enum, UniqueConstr
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
-from vantage6.common.session_status import SessionStatus
+from vantage6.common.enums import SessionStatus
 
 from vantage6.server.model.base import Base, DatabaseSessionManager
 

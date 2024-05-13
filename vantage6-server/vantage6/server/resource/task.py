@@ -10,7 +10,7 @@ from sqlalchemy import desc
 from sqlalchemy.sql import visitors
 
 from vantage6.common.globals import STRING_ENCODING, NodePolicy
-from vantage6.common.task_status import TaskStatus, has_task_finished
+from vantage6.common.enums import TaskStatus
 from vantage6.common.encryption import DummyCryptor
 from vantage6.server import db
 from vantage6.server.algo_store_communication import get_server_url, request_algo_store
@@ -857,7 +857,8 @@ class Tasks(TaskBase):
 
         # send socket event that task has been created
         # FIXME: FM 02-04-2024: @Bart, Is this signal used by the UI? It is not used
-        # in the node. If it is not used, it should be removed.
+        # in the node and I dont see it either in de front-end search. If it is not
+        # used, it should be removed.
         socketio.emit(
             "task_created",
             {
@@ -946,7 +947,7 @@ class Tasks(TaskBase):
                 return False
 
         # check that parent task is not completed yet
-        if has_task_finished(db.Task.get(container["task_id"]).status):
+        if TaskStatus.has_task_finished(db.Task.get(container["task_id"]).status):
             log.warning(
                 f"Container from node={container['node_id']} "
                 f"attempts to start sub-task for a completed "
@@ -1235,7 +1236,7 @@ class Task(TaskBase):
             }, HTTPStatus.UNAUTHORIZED
 
         # kill the task if it is still running
-        if not has_task_finished(task.status):
+        if not TaskStatus.has_task_finished(task.status):
             kill_task(task, self.socketio)
 
         # retrieve runs that belong to this task

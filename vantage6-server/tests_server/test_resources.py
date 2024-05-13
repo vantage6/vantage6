@@ -6,8 +6,7 @@ from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 
 from vantage6.common import logger_name
-
-from vantage6.common.task_status import TaskStatus
+from vantage6.common.enums import TaskStatus
 from vantage6.common.serialization import serialize
 from vantage6.common import bytes_to_base64s
 from vantage6.backend.common import session
