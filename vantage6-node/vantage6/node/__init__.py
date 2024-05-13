@@ -442,22 +442,6 @@ class Node:
         while True:
             try:
                 results = self.__docker.get_result()
-
-                # notify socket channel of algorithm status change
-                self.socketIO.emit(
-                    "algorithm_status_change",
-                    data={
-                        "node_id": self.client.whoami.id_,
-                        "status": results.status,
-                        "run_id": results.run_id,
-                        "task_id": results.task_id,
-                        "collaboration_id": self.client.collaboration_id,
-                        "organization_id": self.client.whoami.organization_id,
-                        "parent_id": results.parent_id,
-                    },
-                    namespace="/tasks",
-                )
-
                 self.log.info(f"Sending result (run={results.run_id}) to the server!")
 
                 # FIXME: why are we retrieving the result *again*? Shouldn't we
@@ -491,6 +475,21 @@ class Node:
                         "finished_at": datetime.datetime.now().isoformat(),
                     },
                     init_org_id=init_org.get("id"),
+                )
+
+                # notify socket channel of algorithm status change
+                self.socketIO.emit(
+                    "algorithm_status_change",
+                    data={
+                        "node_id": self.client.whoami.id_,
+                        "status": results.status,
+                        "run_id": results.run_id,
+                        "task_id": results.task_id,
+                        "collaboration_id": self.client.collaboration_id,
+                        "organization_id": self.client.whoami.organization_id,
+                        "parent_id": results.parent_id,
+                    },
+                    namespace="/tasks",
                 )
             except Exception:
                 self.log.exception("Speaking thread had an exception")
