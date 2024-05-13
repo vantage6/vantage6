@@ -20,6 +20,13 @@ class Node(Authenticatable):
         Name of the node
     api_key : str
         API key of the node
+    collaboration_id : int
+        ID of the collaboration that the node belongs to
+    organization_id : int
+        ID of the organization that the node belongs to
+
+    Relationships
+    -------------
     collaboration : :class:`~.model.collaboration.Collaboration`
         Collaboration that the node belongs to
     organization : :class:`~.model.organization.Organization`

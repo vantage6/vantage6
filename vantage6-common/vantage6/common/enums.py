@@ -5,7 +5,7 @@ class EnumBase(str, Enum):
     """Base class for all enums in this module"""
 
     @classmethod
-    def list(cls):
+    def list(cls) -> list[str]:
         """Return a list of all the status values"""
         return [status.value.lower() for status in cls]
 
