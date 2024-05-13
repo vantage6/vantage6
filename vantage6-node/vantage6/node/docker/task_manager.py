@@ -16,7 +16,7 @@ from vantage6.common.docker.addons import (
     running_in_docker,
 )
 from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.common.task_status import TaskStatus
+from vantage6.common.enums import TaskStatus
 from vantage6.node.util import get_parent_id
 from vantage6.node.globals import ALPINE_IMAGE, ENV_VARS_NOT_SETTABLE_BY_NODE
 from vantage6.node.docker.vpn_manager import VPNManager

@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 
 from vantage6.server.model.session import Session
 from vantage6.server.model.node_session import NodeSession
-from vantage6.common.session_status import SessionStatus
+from vantage6.common.enums import SessionStatus
 
 from .test_model_base import TestModelBase
 

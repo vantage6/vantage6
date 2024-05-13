@@ -15,7 +15,7 @@ from werkzeug.utils import cached_property
 from vantage6.server import context
 from vantage6.server.model.base import Database, DatabaseSessionManager
 from vantage6.common.globals import APPNAME
-from vantage6.common.task_status import TaskStatus
+from vantage6.common.enums import TaskStatus
 from vantage6.server.controller.fixture import load
 from vantage6.server.globals import PACKAGE_FOLDER
 from vantage6.server import ServerApp
