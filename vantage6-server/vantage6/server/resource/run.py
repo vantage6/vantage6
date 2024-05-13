@@ -214,9 +214,6 @@ class MultiRunBase(RunBase):
         #       Runs that are finished
         #
         if args.get("state") == "open":
-            # It will return all Run objects that either do not depend on any task, or
-            # depend on a task where all associated runs have finished, and that have
-            # not finished themselves.
             q = q.join(db_Run.task).filter(
                 and_(
                     or_(
@@ -226,7 +223,6 @@ class MultiRunBase(RunBase):
                     db_Run.finished_at.is_(None)
                 )
             )
-
         elif args.get("state") == "waiting":
             q = q.join(db_Run.task).filter(
                 and_(
@@ -237,7 +233,6 @@ class MultiRunBase(RunBase):
                     db_Run.finished_at.is_(None)
                 )
             )
-
         elif args.get("state") == "finished":
             q = q.filter(db_Run.finished_at.isnot(None))
 
