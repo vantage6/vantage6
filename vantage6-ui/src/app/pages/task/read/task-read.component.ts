@@ -109,10 +109,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       this.task = await this.getMainTask();
       this.childTasks = await this.getChildTasks();
     }
-    console.log(this.task);
-    console.log(this.task.image);
     this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image);
-    console.log(this.algorithm);
     this.function = this.algorithm?.functions.find((_) => _.name === this.task?.input?.method) || null;
     this.selectedVisualization = this.function?.ui_visualizations?.[0] || null;
     this.isLoading = false;
