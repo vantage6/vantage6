@@ -357,7 +357,8 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     return (
       argument.type === this.argumentType.IntegerList ||
       argument.type === this.argumentType.FloatList ||
-      argument.type === this.argumentType.StringList
+      argument.type === this.argumentType.StringList ||
+      (argument.type === this.argumentType.ColumnList && this.columns.length === 0)
     );
   }
 
