@@ -1,6 +1,27 @@
 Release notes
 =============
 
+4.4.1
+-----
+
+*8 May 2024*
+
+- **Security**
+
+ - Updated dependencies Werkzeug to 3.0.3 and Jinja2 to 3.1.4
+
+- **Change**
+
+ - When columns cannot be retrieved in the UI when creating a task, give the user the
+   option to fill in column names manually
+   (`PR#1212 <https://github.com/vantage6/vantage6/pull/1212>`_).
+
+- **Bugfix**
+
+ - Updated PyYAML dependency to 6.0.1 to allow building on Python 3.12
+   (`PR#1233 <https://github.com/vantage6/vantage6/pull/1233>`_).
+
+
 4.4.0
 -----
 

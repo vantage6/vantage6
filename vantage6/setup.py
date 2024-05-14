@@ -38,7 +38,7 @@ setup(
         "copier==9.2.0",
         "docker==6.1.2",
         "ipython==8.10.0",
-        "jinja2==3.1.3",
+        "jinja2==3.1.4",
         "questionary==1.10.0",
         "rich==13.5.2",
         "schema==0.7.5",
