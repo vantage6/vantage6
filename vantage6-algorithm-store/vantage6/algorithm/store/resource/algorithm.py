@@ -156,7 +156,7 @@ class Algorithms(AlgorithmStoreResources):
             "vantage6_version",
         ]:
             if (value := request.args.get(field)) is not None:
-                q = q.filter(getattr(db_Algorithm, field).like(f"%{value}%"))
+                q = q.filter(getattr(db_Algorithm, field).like(value))
 
         # paginate results
         try:
