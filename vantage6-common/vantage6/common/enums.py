@@ -67,7 +67,7 @@ class TaskStatus(EnumBase):
     UNKNOWN_ERROR = "unknown error"
 
     @classmethod
-    def has_task_failed(cls: "TaskStatus", status: "TaskStatus" | str) -> bool:
+    def has_task_failed(cls, status) -> bool:
         """
         Check if task has failed to run to completion
 
@@ -89,7 +89,7 @@ class TaskStatus(EnumBase):
         ]
 
     @classmethod
-    def has_task_finished(cls: "TaskStatus", status: "TaskStatus" | str) -> bool:
+    def has_task_finished(cls, status) -> bool:
         """
         Check if task has finished or failed
 
