@@ -1,91 +1,90 @@
 <mat-toolbar color="primary">
-    <button mat-icon-button *ngIf="hideSideMenu" (click)="sideNav.toggle()"><mat-icon>menu</mat-icon></button>
-    <img src="/assets/images/logo.png" class="logo" alt="vantage6" />
-    <div class="actions">
-        <button mat-flat-button [matMenuTriggerFor]="headerMenu">
-            <mat-icon>person</mat-icon>
-            {{ username }}
-        </button>
-        <mat-menu #headerMenu="matMenu">
-            <button mat-menu-item [routerLink]="routes.passwordChange">
-                <mat-icon>key</mat-icon>
-                <span>{{ "header.actions.change_password" | translate }}</span>
-            </button>
-            <button mat-menu-item (click)="handleLogout()">
-                <mat-icon>logout</mat-icon>
-                <span>{{ "header.actions.logout" | translate }}</span>
-            </button>
-        </mat-menu>
-    </div>
+  <button mat-icon-button *ngIf="hideSideMenu" (click)="sideNav.toggle()"><mat-icon>menu</mat-icon></button>
+  <img src="/assets/images/logo.png" class="logo" alt="vantage6" />
+  <div class="actions">
+    <button mat-flat-button [matMenuTriggerFor]="headerMenu">
+      <mat-icon>person</mat-icon>
+      {{ username }}
+    </button>
+    <mat-menu #headerMenu="matMenu">
+      <button mat-menu-item [routerLink]="routes.passwordChange">
+        <mat-icon>key</mat-icon>
+        <span>{{ "header.actions.change_password" | translate }}</span>
+      </button>
+      <button mat-menu-item (click)="handleLogout()">
+        <mat-icon>logout</mat-icon>
+        <span>{{ "header.actions.logout" | translate }}</span>
+      </button>
+    </mat-menu>
+  </div>
 </mat-toolbar>
 <mat-sidenav-container autosize>
-    <mat-sidenav #sideNav *ngIf="!hideMenu" [mode]="hideSideMenu ? 'over' : 'side'" [fixedInViewport]="hideSideMenu"
-        fixedTopGap="56">
-        <mat-nav-list>
-            <div *ngFor="let link of navigationLinks">
-                <mat-list-item class="parent" (click)="goToFirstSubmenu(link)">
-                    <mat-icon matListItemIcon>{{ link.icon }}</mat-icon>
-                    <a matLine>{{ link.label }}</a>
-                </mat-list-item>
-                <div *ngFor="let sublink of link.submenus" class="submenu" [ngClass]="{ expanded: link.expanded }">
-                    <mat-list-item [routerLink]="[sublink.route]" [routerLinkActive]="['mdc-list-item--activated']"
-                        [routerLinkActiveOptions]="{ exact: !!sublink.shouldBeExact }">
-                        <mat-icon matListItemIcon>{{ sublink.icon }}</mat-icon>
-                        <a matLine>{{ sublink.label }}</a>
-                    </mat-list-item>
-                </div>
-            </div>
-        </mat-nav-list>
-    </mat-sidenav>
-    <mat-sidenav-content>
-        <div class="layout-container">
-            <app-breadcrumbs></app-breadcrumbs>
-            <div
-                *ngIf="isAnalyze && (chosenCollaborationService.collaboration$ | async) && router.url !== routes.start">
-                <mat-card class="choice-alert">
-                    <mat-card-content>
-                        <span>
-                            <span class="low-importance">
-                                {{ "chosen-collaboration-alert.content" | translate}}
-                            </span>&nbsp;
-                            <strong>
-                                {{ chosenCollaborationService.collaboration$.value?.name}}
-                            </strong>
-                        </span>
-                        <span class="low-importance">
-                            <mat-icon>info_outline</mat-icon>&nbsp;
-                            {{ "chosen-collaboration-alert.info" | translate}}
-                        </span>
-                        <button mat-flat-button class="right-aligned-button" [routerLink]="routes.start">
-                            <mat-icon>swap_horiz</mat-icon>
-                            {{ "chosen-collaboration-alert.change" | translate }}
-                        </button>
-                    </mat-card-content>
-                </mat-card>
-            </div>
-            <div *ngIf="isInStore && (chosenStoreService.store$ | async) && router.url !== routes.stores">
-                <mat-card class="choice-alert">
-                    <mat-card-content>
-                        <span>
-                            <span class="low-importance">
-                                {{ "chosen-store-alert.content" | translate}}
-                            </span>&nbsp;
-                            <strong>
-                                {{ chosenStoreService.store$.value?.name}}
-                            </strong>
-                        </span>
-                        <span class="low-importance">
-                            <mat-icon>info_outline</mat-icon>&nbsp;
-                            {{ "chosen-store-alert.info" | translate}}
-                        </span>
-                        <button mat-flat-button class="right-aligned-button" [routerLink]="routes.start">
-                            <mat-icon>swap_horiz</mat-icon>
-                            {{ "chosen-store-alert.change" | translate }}
-                        </button>
-                    </mat-card-content>
-                </mat-card>
-            </div>
-            <router-outlet *ngIf="chosenCollaborationService.isInitialized$ | async"></router-outlet>
+  <mat-sidenav #sideNav *ngIf="!hideMenu" [mode]="hideSideMenu ? 'over' : 'side'" [fixedInViewport]="hideSideMenu"
+    fixedTopGap="56">
+    <mat-nav-list>
+      <div *ngFor="let link of navigationLinks">
+        <mat-list-item class="parent" (click)="goToFirstSubmenu(link)">
+          <mat-icon matListItemIcon>{{ link.icon }}</mat-icon>
+          <a matLine>{{ link.label }}</a>
+        </mat-list-item>
+        <div *ngFor="let sublink of link.submenus" class="submenu" [ngClass]="{ expanded: link.expanded }">
+          <mat-list-item [routerLink]="[sublink.route]" [routerLinkActive]="['mdc-list-item--activated']"
+            [routerLinkActiveOptions]="{ exact: !!sublink.shouldBeExact }">
+            <mat-icon matListItemIcon>{{ sublink.icon }}</mat-icon>
+            <a matLine>{{ sublink.label }}</a>
+          </mat-list-item>
         </div>
-    </mat-sidenav-content>
+      </div>
+    </mat-nav-list>
+  </mat-sidenav>
+  <mat-sidenav-content>
+    <div class="layout-container">
+      <app-breadcrumbs></app-breadcrumbs>
+      <div *ngIf="isAnalyze && (chosenCollaborationService.collaboration$ | async) && router.url !== routes.start">
+        <mat-card class="choice-alert">
+          <mat-card-content>
+            <span>
+              <span class="low-importance">
+                {{ "chosen-collaboration-alert.content" | translate}}
+              </span>&nbsp;
+              <strong>
+                {{ chosenCollaborationService.collaboration$.value?.name}}
+              </strong>
+            </span>
+            <span class="low-importance">
+              <mat-icon>info_outline</mat-icon>&nbsp;
+              {{ "chosen-collaboration-alert.info" | translate}}
+            </span>
+            <button mat-flat-button class="right-aligned-button" [routerLink]="routes.start">
+              <mat-icon>swap_horiz</mat-icon>
+              {{ "chosen-collaboration-alert.change" | translate }}
+            </button>
+          </mat-card-content>
+        </mat-card>
+      </div>
+      <div *ngIf="isInStore && (chosenStoreService.store$ | async) && router.url !== routes.stores">
+        <mat-card class="choice-alert">
+          <mat-card-content>
+            <span>
+              <span class="low-importance">
+                {{ "chosen-store-alert.content" | translate}}
+              </span>&nbsp;
+              <strong>
+                {{ chosenStoreService.store$.value?.name}}
+              </strong>
+            </span>
+            <span class="low-importance">
+              <mat-icon>info_outline</mat-icon>&nbsp;
+              {{ "chosen-store-alert.info" | translate}}
+            </span>
+            <button mat-flat-button class="right-aligned-button" [routerLink]="routes.start">
+              <mat-icon>swap_horiz</mat-icon>
+              {{ "chosen-store-alert.change" | translate }}
+            </button>
+          </mat-card-content>
+        </mat-card>
+      </div>
+      <router-outlet *ngIf="chosenCollaborationService.isInitialized$ | async"></router-outlet>
+    </div>
+  </mat-sidenav-content>
 </mat-sidenav-container>
