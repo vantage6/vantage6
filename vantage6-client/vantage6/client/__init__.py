@@ -20,7 +20,7 @@ from vantage6.common.serialization import serialize
 from vantage6.client.filter import post_filtering
 from vantage6.common.client.utils import print_qr_code
 from vantage6.client.utils import LogLevel
-from vantage6.common.task_status import TaskStatus
+from vantage6.common.enums import TaskStatus
 from vantage6.common.client.client_base import ClientBase
 from vantage6.client.subclients.study import StudySubClient
 from vantage6.client.subclients.store.algorithm import AlgorithmSubClient
