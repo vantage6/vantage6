@@ -85,7 +85,7 @@ def pull_image(docker_client: DockerClient, image: str) -> None:
     except docker.errors.APIError as exc:
         log.error("Failed to pull image! %s", image)
         log.exception(exc)
-        raise docker.errors.APIError("Failed to pull image") from e
+        raise docker.errors.APIError("Failed to pull image") from exc
 
 
 def get_container(docker_client: DockerClient, **filters) -> Container:
