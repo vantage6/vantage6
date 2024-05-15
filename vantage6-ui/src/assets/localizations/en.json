@@ -448,7 +448,6 @@
       "port": "Port",
       "study": "Study"
     },
-
     "scope": {
       "label": "Scope",
       "own": "Own",
@@ -456,7 +455,6 @@
       "collaboration": "Collaboration",
       "global": "Global"
     },
-
     "operation": {
       "create": "Create",
       "edit": "Edit",
@@ -541,7 +539,7 @@
     "forgot-password": "Forgot your password?",
     "lost": {
       "title": "Lost your password?",
-      "instruction": "Fill in your username *or* email address in order to reset your password.",
+      "instruction": "Fill in your email address in order to reset your password.",
       "request-token": "Request reset token",
       "enter-token": "Enter your reset token",
       "already-reset": "Already have a reset token?"
