@@ -507,7 +507,7 @@ class DockerManager(DockerBaseManager):
 
         # Check that this task is not already running
         if self.is_running(run_id):
-            self.log.warning("Task is already being executed, discarding task")
+            self.log.info("Task is already being executed, discarding task")
             self.log.debug("run_id=%s is discarded", run_id)
             return TaskStatus.ACTIVE, None
 
@@ -650,8 +650,8 @@ class DockerManager(DockerBaseManager):
                 )
                 self.log.info(f"Logged in to {registry.get('registry')}")
             except docker.errors.APIError as e:
-                self.log.warn(f"Could not login to {registry.get('registry')}")
-                self.log.warn(e)
+                self.log.warning(f"Could not login to {registry.get('registry')}")
+                self.log.warning(e)
 
     def link_container_to_network(self, container_name: str, config_alias: str) -> None:
         """

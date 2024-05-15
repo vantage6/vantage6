@@ -46,7 +46,7 @@ def check_docker_running() -> None:
         log.error(
             "Cannot reach the Docker engine! Please make sure Docker " "is running."
         )
-        log.error(exc)
+        log.exception(exc)
         log.warning("Exiting...")
         exit(1)
 
@@ -82,9 +82,9 @@ def pull_image(docker_client: DockerClient, image: str) -> None:
     try:
         docker_client.images.pull(image)
         log.debug("Succeeded to pull image %s", image)
-    except docker.errors.APIError as e:
+    except docker.errors.APIError as exc:
         log.error("Failed to pull image! %s", image)
-        log.error(e)
+        log.exception(exc)
         raise docker.errors.APIError("Failed to pull image") from e
 
 

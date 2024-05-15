@@ -688,7 +688,7 @@ class Node:
             )
         except Exception as e:
             self.log.critical("Squid proxy failed to initialize. Continuing without.")
-            self.log.info(e, exc_info=True)
+            self.log.exception(e, exc_info=True)
             squid = None
 
         return squid

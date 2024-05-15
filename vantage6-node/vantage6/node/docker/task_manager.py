@@ -514,12 +514,12 @@ class DockerTaskManager(DockerBaseManager):
                 # In this case the algorithm might crash if it tries to access
                 # the DATABASE_LABEL environment variable
                 self.log.warning(
-                    "A user specified a database that does not "
-                    "exist. Available databases are: "
-                    f"{self.databases.keys()}. This is likely to "
-                    "result in an algorithm crash."
+                    "A user specified a database '%s' that does not exist. Available "
+                    "databases are: %s. This is likely to result in an algorithm "
+                    "crash.",
+                    database,
+                    self.databases.keys(),
                 )
-                self.log.warning(f"User specified database: {database}")
             # define env vars for the preprocessing and extra parameters such
             # as query and sheet_name
             extra_params = (
