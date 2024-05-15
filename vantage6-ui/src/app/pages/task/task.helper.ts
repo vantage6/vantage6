@@ -63,7 +63,10 @@ export const getTaskDatabaseFromForm = (func: AlgorithmFunction | null, form: Fo
   const taskDatabases: TaskDatabase[] = [];
   func?.databases.forEach((functionDatabase) => {
     const selected_database = form.get(`${functionDatabase.name}_name`)?.value || '';
-    const taskDatabase: TaskDatabase = { label: selected_database };
+    const taskDatabase: TaskDatabase = {
+        label: selected_database.name,
+        type: selected_database.type,
+    };
     const query = form.get(`${functionDatabase.name}_query`)?.value || '';
     if (query) {
       taskDatabase.query = query;

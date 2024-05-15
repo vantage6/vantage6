@@ -122,6 +122,7 @@ export interface TaskResult {
 
 export interface TaskDatabase {
   label: string;
+  type?: string;
   query?: string;
   sheet_name?: string;
 }
