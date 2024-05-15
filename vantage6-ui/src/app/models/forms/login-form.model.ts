@@ -15,6 +15,5 @@ export interface MFAResetTokenForm {
 }
 
 export interface LostPasswordForm {
-  email?: string;
-  username?: string;
+  email: string;
 }
