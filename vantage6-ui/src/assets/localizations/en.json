@@ -47,12 +47,14 @@
     "no-collaborations": "Your organization is not part of any collaborations yet. Please contact your vantage6 project manager to set up a collaboration or go to the administration section to create a new collaboration."
   },
   "chosen-collaboration-alert": {
-    "content": "You have selected the collaboration '{{name}}'. The content displayed is specific to this collaboration.",
-    "change": "Change collaboration"
+    "content": "Selected collaboration",
+    "change": "Change collaboration",
+    "info": "The content displayed is specific to this collaboration"
   },
   "chosen-store-alert": {
-    "content": "You have selected the algorithm store '{{name}}'. The content displayed is specific to this algorithm store.",
-    "change": "Change store"
+    "content": "Selected store",
+    "change": "Change store",
+    "info": "The content displayed is specific to this algorithm store"
   },
   "table": {
     "search-placeholder": "Search"
@@ -448,7 +450,6 @@
       "port": "Port",
       "study": "Study"
     },
-
     "scope": {
       "label": "Scope",
       "own": "Own",
@@ -456,7 +457,6 @@
       "collaboration": "Collaboration",
       "global": "Global"
     },
-
     "operation": {
       "create": "Create",
       "edit": "Edit",
