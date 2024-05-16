@@ -16,7 +16,7 @@ from vantage6.common.docker.addons import (
     running_in_docker,
 )
 from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.common.enums import TaskStatus
+from vantage6.common.enums import TaskStatus, LocalAction
 from vantage6.node.util import get_parent_id
 from vantage6.node.globals import ALPINE_IMAGE, ENV_VARS_NOT_SETTABLE_BY_NODE
 from vantage6.node.docker.vpn_manager import VPNManager
@@ -48,6 +48,7 @@ class DockerTaskManager(DockerBaseManager):
         run_id: int,
         task_info: dict,
         tasks_dir: Path,
+        action: LocalAction,
         isolated_network_mgr: NetworkManager,
         databases: dict,
         docker_volume_name: str,
@@ -75,6 +76,8 @@ class DockerTaskManager(DockerBaseManager):
             Dictionary with info about the task
         tasks_dir: Path
             Directory in which this task's data are stored
+        action: LocalAction
+            Action to be performed by the container
         isolated_network_mgr: NetworkManager
             Manager of isolated network to which algorithm needs to connect
         databases: dict
@@ -98,6 +101,7 @@ class DockerTaskManager(DockerBaseManager):
         self.__vpn_manager = vpn_manager
         self.run_id = run_id
         self.task_id = task_info["id"]
+        self.action = action
         self.parent_id = get_parent_id(task_info)
         self.__tasks_dir = tasks_dir
         self.databases = databases
@@ -181,15 +185,20 @@ class DockerTaskManager(DockerBaseManager):
 
     def get_results(self) -> bytes:
         """
-        Read results output file of the algorithm container
+        If the action is to compute, read results output file of the algorithm
+        container. Otherwise, return an empty byte string.
 
         Returns
         -------
         bytes:
             Results of the algorithm container
         """
-        with open(self.output_file, "rb") as fp:
-            results = fp.read()
+        if self.action == LocalAction.COMPUTE:
+            with open(self.output_file, "rb") as fp:
+                results = fp.read()
+        else:
+            results = b""
+
         return results
 
     def pull(self, local_exists: bool) -> None:
@@ -231,7 +240,7 @@ class DockerTaskManager(DockerBaseManager):
         self,
         docker_input: bytes,
         session_vol_name: str,
-        token: str,
+        token: str | None,
         algorithm_env: dict,
         databases_to_use: list[str],
     ) -> list[dict] | None:
@@ -247,8 +256,8 @@ class DockerTaskManager(DockerBaseManager):
             Input that can be read by docker container
         session_vol_name: str
             Name of session docker volume assigned to the algorithm
-        token: str
-            Bearer token that the container can use
+        token: str | None
+            Bearer token that the container can use to authenticate with the server
         algorithm_env: dict
             Dictionary with additional environment variables to set
         databases_to_use: list[str]
@@ -418,8 +427,8 @@ class DockerTaskManager(DockerBaseManager):
         ----------
         session_vol_name: str
             Name of session docker volume assigned to the algorithm
-        token: str
-            Bearer token that the container can use
+        token: str | None
+            Bearer token that the container can use to authenticate with the server
 
         Returns
         -------
@@ -434,8 +443,10 @@ class DockerTaskManager(DockerBaseManager):
         io_files = [
             ("input", self.docker_input),
             ("output", b""),
-            ("token", token.encode("ascii")),
         ]
+
+        if token:
+            io_files.append(("token", token.encode("ascii")))
 
         for filename, data in io_files:
             filepath = os.path.join(self.task_folder_path, filename)
@@ -487,13 +498,16 @@ class DockerTaskManager(DockerBaseManager):
         environment_variables = {
             "INPUT_FILE": f"{self.data_folder}/{self.task_folder_name}/input",
             "OUTPUT_FILE": f"{self.data_folder}/{self.task_folder_name}/output",
-            "TOKEN_FILE": f"{self.data_folder}/{self.task_folder_name}/token",
-            "TEMPORARY_FOLDER": self.session_folder,
             "SESSION_FOLDER": self.session_folder,
             "HOST": f"http://{proxy_host}",
             "PORT": os.environ.get("PROXY_SERVER_PORT", 8080),
             "API_PATH": "",
         }
+
+        if self.action == LocalAction.COMPUTE:
+            environment_variables["TOKEN_FILE"] = (
+                f"{self.data_folder}/{self.task_folder_name}/token"
+            )
 
         # Add squid proxy environment variables
         if self.proxy:

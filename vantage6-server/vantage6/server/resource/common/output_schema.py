@@ -104,9 +104,7 @@ class TaskSchema(HATEOASModelSchema):
 
     @staticmethod
     def databases_(obj):
-        return [
-            {"label": db.database, "type": db.type_} for db in obj.databases
-        ]
+        return [{"label": db.database, "type": db.type_} for db in obj.databases]
 
 
 class ResultSchema(HATEOASModelSchema):
@@ -171,6 +169,7 @@ class RunSchema(HATEOASModelSchema):
     ports = fields.Function(
         serialize=lambda obj: RunPortSchema().dump(obj.ports, many=True)
     )
+    action = fields.String()
 
     @staticmethod
     def result_link(obj):

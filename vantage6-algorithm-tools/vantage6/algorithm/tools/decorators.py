@@ -93,16 +93,23 @@ def _algorithm_client() -> callable:
             """
             if mock_client is not None:
                 return func(mock_client, *args, **kwargs)
+
+            # read token from the environment
+            token_file = os.environ.get("TOKEN_FILE")
+            if not token_file:
+                error("Token file not found. Are you running a `compute` container? "
+                      "Exiting...")
+                exit(1)
+
+            info("Reading token")
+            with open(token_file) as fp:
+                token = fp.read().strip()
+
             # read server address from the environment
             host = os.environ["HOST"]
             port = os.environ["PORT"]
             api_path = os.environ["API_PATH"]
 
-            # read token from the environment
-            token_file = os.environ["TOKEN_FILE"]
-            info("Reading token")
-            with open(token_file) as fp:
-                token = fp.read().strip()
 
             client = AlgorithmClient(token=token, host=host, port=port, path=api_path)
             return func(client, *args, **kwargs)
@@ -211,7 +218,6 @@ def data(number_of_databases: int = 1) -> callable:
         return decorator
 
     return protection_decorator
-
 
 def database_connection(types: list[str], include_metadata: bool = True) -> callable:
     """

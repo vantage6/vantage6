@@ -567,7 +567,7 @@ class DockerManager(DockerBaseManager):
         image: str,
         docker_input: bytes,
         tmp_vol_name: str,
-        token: str,
+        token: str | None,
         databases_to_use: list[str],
     ) -> tuple[TaskStatus, list[dict] | None]:
         """
@@ -586,8 +586,8 @@ class DockerManager(DockerBaseManager):
             Input that can be read by docker container
         tmp_vol_name: str
             Name of temporary docker volume assigned to the algorithm
-        token: str
-            Bearer token that the container can use
+        token: str | None
+            Bearer token that the container can use to authenticate with the server
         databases_to_use: list[str]
             Labels of the databases to use
 
