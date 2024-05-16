@@ -301,4 +301,4 @@ def delete_volume_if_exists(client: docker.DockerClient, volume_name: Volume) ->
         if volume:
             volume.remove()
     except (docker.errors.NotFound, docker.errors.APIError):
-        log.warning("Could not delete volume %s", volume.name)
+        log.warning("Could not delete volume %s", volume_name)

@@ -43,7 +43,7 @@ setup(
         "requests==2.31.0",
         "schema==0.7.5",
         "SQLAlchemy==1.4.46",
-        "werkzeug==3.0.1",
+        "werkzeug==3.0.3",
         f'vantage6 == {version_ns["__version__"]}',
         f'vantage6-common == {version_ns["__version__"]}',
     ],
