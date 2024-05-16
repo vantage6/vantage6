@@ -251,11 +251,10 @@ def load_parquet_data(database_uri: str) -> pd.DataFrame:
     return pd.read_parquet(database_uri)
 
 
-def _sqlachemy_uri_preprocess (database_uri: str) -> str:
+def _sqldb_uri_preprocess (database_uri: str) -> str:
     """
-    Transforms the URI of a file-based/embedded RDBMS on a SQLachemy-compliant one, when this URI
-    follows the convention /<file system path>/<dbname>.<supported db type>, where supported embedded
-    databases are: .sqlit or .firebird (or any other supported by SQalchemy in the future). 
+    Transforms the URI of a file-based/embedded RDBMS on a fully-qualified one, when this URI
+    follows the convention /<file system path>/<dbname>.<supported db type>.         
     When these conditions are not met, the original URI is returned.
 
     Pre-condition:
@@ -265,13 +264,14 @@ def _sqlachemy_uri_preprocess (database_uri: str) -> str:
     - database_path (str): The path to the database file.
 
     Returns:
-    - str: A SQLAlchemy URI compatible with the database type or the original string if no match found.
+    - str: A fully-qualified URI compatible with the database type or the original string if no match found.
     """
 
-    # Mapping between file extensions and SQLAlchemy URIs
+    # Mapping between file extensions and embedded db URIs.
+    # Other embedded DB would be included when its support
+    # is validated (e.g., H2)
     embedded_db_extensions = {
-        "sqlite": "sqlite:///{0}",
-        "firebird": "firebird+pyodbc://{0}",
+        "sqlite": "sqlite:///{0}"
     }
 
     # Check if the URI is a unix-absolute file path
@@ -308,6 +308,6 @@ def load_sql_data(database_uri: str, query: str) -> pd.DataFrame:
         The data from the database
     """
     
-    db_connection = _sqlachemy_uri_preprocess(database_uri)
+    db_connection = _sqldb_uri_preprocess(database_uri)
     df = cx.read_sql(db_connection, query)
     return df
