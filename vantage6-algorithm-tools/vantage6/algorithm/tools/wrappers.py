@@ -251,10 +251,10 @@ def load_parquet_data(database_uri: str) -> pd.DataFrame:
     return pd.read_parquet(database_uri)
 
 
-def _sqldb_uri_preprocess (database_uri: str) -> str:
+def _sqldb_uri_preprocess(database_uri: str) -> str:
     """
     Transforms the URI of a file-based/embedded RDBMS on a fully-qualified one, when this URI
-    follows the convention /<file system path>/<dbname>.<supported db type>.         
+    follows the convention /<file system path>/<dbname>.<supported db type>.
     When these conditions are not met, the original URI is returned.
 
     Pre-condition:
@@ -270,22 +270,18 @@ def _sqldb_uri_preprocess (database_uri: str) -> str:
     # Mapping between file extensions and embedded db URIs.
     # Other embedded DB would be included when its support
     # is validated (e.g., H2)
-    embedded_db_extensions = {
-        "sqlite": "sqlite:///{0}"
-    }
+    embedded_db_extensions = {"sqlite": "sqlite:///{0}"}
 
     # Check if the URI is a unix-absolute file path
-    if (os.path.isabs(database_uri)) and not database_uri.endswith('/'):
-        database_extension = database_uri.split('/')[-1].split('.')[-1]
+    if (os.path.isabs(database_uri)) and not database_uri.endswith("/"):
+        database_extension = database_uri.split("/")[-1].split(".")[-1]
 
         for supported_db_extension, uri_format in embedded_db_extensions.items():
-            if (supported_db_extension == database_extension):
+            if supported_db_extension == database_extension:
                 # Format the SQLalchemy URI using the database_path and the corresponding URI format
                 return uri_format.format(database_uri)
-            
         # Return the original string if no matching extension found
         return database_uri
-    
     else:
         # Return the original string if the URI is not an absolute unix file path
         return database_uri
@@ -307,7 +303,7 @@ def load_sql_data(database_uri: str, query: str) -> pd.DataFrame:
     pd.DataFrame
         The data from the database
     """
-    
+
     db_connection = _sqldb_uri_preprocess(database_uri)
     df = cx.read_sql(db_connection, query)
     return df
