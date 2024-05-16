@@ -16,6 +16,7 @@ There are many deployment options. We simply provide a few examples.
 -  …
 
 .. note::
+
     Because the server uses socketIO to exchange messages with the nodes and
     users, it is not trivial to horizontally scale the server. To prevent that
     socket messages get lost:
@@ -28,12 +29,50 @@ There are many deployment options. We simply provide a few examples.
 
 NGINX
 """""
+Two examples are provided below. The first example shows how to configure NGINX with
+a basic setup, which is suitable if you do not require the horizontal scaling feature.
+The second example shows how to configure NGINX with sticky sessions.
 
-A basic setup is shown below. This example shows how to configure NGINX where there
-are 3 backend servers that are load balanced. The load balancer is configured to use
-sticky sessions.
+.. note::
 
-Note that SSL is not configured in this example.
+    SSL is not configured in these examples.
+
+The most basic setup is to have a single backend server.
+
+.. code:: nginx
+
+    server {
+
+        # Public port
+        listen 80;
+        server_name _;
+
+        # vantage6-server. In the case you use a sub-path here, make sure
+        # to forward also it to the proxy_pass
+        location /subpath {
+            include proxy_params;
+
+            # internal ip and port
+            proxy_pass http://127.0.0.1:5000/subpath;
+        }
+
+        # Allow the websocket traffic
+        location /socket.io {
+            include proxy_params;
+            proxy_http_version 1.1;
+            proxy_buffering off;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
+            proxy_pass http://127.0.0.1:5000/socket.io;
+        }
+    }
+
+
+
+The following example shows how to configure NGINX where there are 3 backend servers
+that are behind a load balancer. The load balancer is configured to use sticky sessions.
+
+
 
 .. code:: nginx
 
@@ -72,10 +111,9 @@ Note that SSL is not configured in this example.
    }
 
 .. note::
-    When you :ref:`server-configure` the server, make
-    sure to include the ``/subpath`` that has been set in the NGINX
-    configuration into the ``api_path`` setting
-    (e.g. ``api_path: /subpath/api``)
+    When you :ref:`server-configure` the server, make sure to include the ``/subpath``
+    that has been set in the NGINX configuration into the ``api_path`` setting (e.g.
+    ``api_path: /subpath/api``)
 
 .. _deploy-docker-compose:
 
