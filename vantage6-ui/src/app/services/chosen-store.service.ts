@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, takeUntil } from 'rxjs';
 import { AlgorithmStore, AlgorithmStoreLazyProperties } from '../models/api/algorithmStore.model';
 import { AlgorithmStoreService } from './algorithm-store.service';
 import { PermissionService } from './permission.service';
@@ -34,6 +34,10 @@ export class ChosenStoreService {
     this.id = id;
     sessionStorage.setItem(CHOSEN_ALGORITHM_STORE, id);
     this.setup();
+  }
+
+  isInitialized(): Observable<boolean> {
+    return this.isInitialized$.asObservable();
   }
 
   private async initData() {
