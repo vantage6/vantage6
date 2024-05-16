@@ -36,11 +36,18 @@ will replace the public key at the server.
     If an organization has multiple nodes and/or users, they must use the same
     private key.
 
-In case you want to generate a new private key, you can use the command
-``v6 node create-private-key``. If a key already exists at the local
-system, the existing key is reused (unless you use the ``--force``
-flag). This way, it is easy to configure multiple nodes to use the same
-key.
+To create a new keypair, you can use the command ``v6 node create-private-key``.
+This will create the keypair and share the public key with the server. The private key
+is stored locally. If a private key already exists locally, the existing key is reused
+(unless you use the ``--force`` flag). This way, it is easy to configure multiple nodes
+to use the same key.
 
-It is also possible to generate the key yourself and upload it by using the
-endpoint ``https://SERVER[/api_path]/organization/<ID>``.
+It is also possible to generate the keypair yourself and upload the public key yourself
+via UI, Python client, or REST API.
+
+.. warning::
+
+    We recommend to always create a new keypair for use within vantage6, and not use
+    an existing keypair that you use for other purposes. This way, an attacker that
+    steals your private key elsewhere cannot use it to decrypt data in vantage6 and
+    *vice versa*.
