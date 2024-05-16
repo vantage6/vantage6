@@ -1,14 +1,15 @@
+from io import BufferedReader
 import json
-from typing import BinaryIO, Any
+from typing import Any
 
 
-def deserialize(file: BinaryIO) -> Any:
+def deserialize(file: BufferedReader) -> Any:
     """
     Deserialize data from a file using JSON
 
     Parameters
     ----------
-    file: BinaryIO
+    file: BufferedReader
         The file to deserialize the data from
 
     Returns
