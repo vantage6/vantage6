@@ -502,6 +502,7 @@ class DockerTaskManager(DockerBaseManager):
             "HOST": f"http://{proxy_host}",
             "PORT": os.environ.get("PROXY_SERVER_PORT", 8080),
             "API_PATH": "",
+            "CONTAINER_ACTION": self.action.value,
         }
 
         if self.action == LocalAction.COMPUTE:
