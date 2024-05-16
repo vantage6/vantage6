@@ -51,6 +51,23 @@ export enum VisualizationType {
   Histogram = 'histogram'
 }
 
+interface VisualizationSchemaBase {
+  // defines the type of keys and values that these schemas contain
+  [key: string]: string[] | undefined;
+}
+
+export interface TableVisualizationSchema extends VisualizationSchemaBase {
+  location: string[];
+  columns: string[];
+}
+
+export interface HistogramVisualizationSchema extends VisualizationSchemaBase {
+  [key: string]: string[] | undefined;
+  location: string[];
+}
+
+export type VisualizationSchema = TableVisualizationSchema | HistogramVisualizationSchema;
+
 // TODO this interface must be updated to match the API
 export interface Algorithm {
   id: number;
@@ -122,6 +139,7 @@ export interface Visualization {
   name: string;
   description?: string;
   type: VisualizationType;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   schema?: any;
 }
 
@@ -134,11 +152,16 @@ interface ArgumentForm extends NameDescriptionForm {
   type: string;
 }
 
+interface VisualizationForm extends NameDescriptionForm {
+  type: VisualizationType;
+  schema: VisualizationSchema;
+}
+
 interface FunctionForm extends NameDescriptionForm {
   arguments: ArgumentForm[];
   databases: NameDescriptionForm[];
+  visualizations: VisualizationForm[];
   type: string;
-  // TODO UI visualizations
 }
 
 export interface AlgorithmForm {

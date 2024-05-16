@@ -2,7 +2,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, OnIni
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatExpansionPanel } from '@angular/material/expansion';
 import { readFile } from 'src/app/helpers/file.helper';
-import { Algorithm, AlgorithmForm, ArgumentType, FunctionType, PartitioningType } from 'src/app/models/api/algorithm.model';
+import { AlgorithmForm, ArgumentType, FunctionType, PartitioningType } from 'src/app/models/api/algorithm.model';
 import { MessageDialogComponent } from '../../dialogs/message-dialog/message-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,9 +13,11 @@ import { TranslateService } from '@ngx-translate/core';
   styleUrl: './algorithm-form.component.scss'
 })
 export class AlgorithmFormComponent implements OnInit, AfterViewInit {
-  @Input() algorithm?: Algorithm | AlgorithmForm;
+  @Input() algorithm?: AlgorithmForm;
   @Output() cancelled: EventEmitter<void> = new EventEmitter();
-  @Output() submitted: EventEmitter<AlgorithmForm> = new EventEmitter();
+  // Note: we are using any because the form is dynamic and the structure is not known
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  @Output() submitted: EventEmitter<any> = new EventEmitter();
   @ViewChildren('expansionPanel') matExpansionPanels?: QueryList<MatExpansionPanel>;
 
   isEdit: boolean = false;
@@ -40,12 +42,19 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     description: [''],
     type: ['', [Validators.required]]
   });
+  visualizationForm = this.fb.nonNullable.group({
+    name: ['', [Validators.required]],
+    description: [''],
+    type: ['', [Validators.required]],
+    schema: this.fb.nonNullable.group({})
+  });
   functionForm = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
     description: [''],
     type: ['', [Validators.required]],
     arguments: this.fb.nonNullable.array([this.argumentForm]),
-    databases: this.fb.nonNullable.array([this.databaseForm])
+    databases: this.fb.nonNullable.array([this.databaseForm]),
+    visualizations: this.fb.nonNullable.array([this.visualizationForm])
   });
   form = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
@@ -118,6 +127,14 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     (functionFormGroup.controls['databases'] as FormArray).removeAt(index);
   }
 
+  addVisualization(functionFormGroup: FormGroup): void {
+    (functionFormGroup.controls['visualizations'] as FormArray).push(this.getVisualizationForm());
+  }
+
+  deleteVisualization(functionFormGroup: FormGroup, index: number): void {
+    (functionFormGroup.controls['visualizations'] as FormArray).removeAt(index);
+  }
+
   get functionFormGroups(): FormGroup[] {
     return this.form.controls.functions.controls as FormGroup[];
   }
@@ -179,6 +196,17 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
         databaseFormGroup.controls['description'].setValue(db.description);
         (functionFormGroup.controls['databases'] as FormArray).push(databaseFormGroup);
       });
+      func.visualizations.forEach((vis) => {
+        const visualizationFormGroup = this.getVisualizationForm();
+        visualizationFormGroup.controls['name'].setValue(vis.name);
+        visualizationFormGroup.controls['description'].setValue(vis.description);
+        visualizationFormGroup.controls['type'].setValue(vis.type);
+        const visSchemaForm = <FormGroup>visualizationFormGroup.controls['schema'];
+        Object.keys(vis.schema).forEach((key) => {
+          visSchemaForm.addControl(key, this.fb.control(vis.schema[key]));
+        });
+        (functionFormGroup.controls['visualizations'] as FormArray).push(visualizationFormGroup);
+      });
       (this.form.controls.functions as FormArray).push(functionFormGroup);
     });
   }
@@ -190,6 +218,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     this.addFunction();
     this.form.controls.functions.controls[0].controls.arguments.clear();
     this.form.controls.functions.controls[0].controls.databases.clear();
+    this.form.controls.functions.controls[0].controls.visualizations.clear();
   }
 
   private closeFunctionExpansionPanels(): void {
@@ -204,7 +233,8 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       description: [''],
       type: ['', [Validators.required]],
       arguments: this.fb.array([]),
-      databases: this.fb.array([])
+      databases: this.fb.array([]),
+      visualizations: this.fb.array([])
     });
   }
 
@@ -223,6 +253,16 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     });
   }
 
+  private getVisualizationForm(): FormGroup {
+    return this.fb.group({
+      name: ['', [Validators.required]],
+      description: [''],
+      type: ['', [Validators.required]],
+      schema: this.fb.nonNullable.group({})
+    });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private showJsonUploadError(error: any): void {
     this.dialog.open(MessageDialogComponent, {
       data: {

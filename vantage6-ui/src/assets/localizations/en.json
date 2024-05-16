@@ -252,6 +252,11 @@
         "title": "Database",
         "add": "Add function database",
         "delete": "Delete database"
+      },
+      "visualization": {
+        "title": "Visualization",
+        "add": "Add function visualization",
+        "delete": "Delete visualization"
       }
     },
     "card-from-json": {

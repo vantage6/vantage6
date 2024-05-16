@@ -22,6 +22,7 @@ export class AlgorithmEditComponent implements OnInit, OnDestroy {
   isLoading: boolean = true;
   isSubmitting: boolean = false;
   algorithm?: Algorithm;
+  algorithmForm?: AlgorithmForm;
 
   constructor(
     private router: Router,
@@ -51,6 +52,44 @@ export class AlgorithmEditComponent implements OnInit, OnDestroy {
     const chosenStore = this.chosenStoreService.store$.value;
     if (!chosenStore) return;
     this.algorithm = await this.algorithmService.getAlgorithm(chosenStore.url, this.id);
+
+    // parse algorithm to form
+    this.algorithmForm = {
+      name: this.algorithm.name,
+      description: this.algorithm.description,
+      partitioning: this.algorithm.partitioning,
+      image: this.algorithm.image,
+      vantage6_version: this.algorithm.vantage6_version,
+      functions: this.algorithm.functions.map((func) => {
+        return {
+          name: func.name,
+          description: func.description,
+          type: func.type,
+          arguments: func.arguments.map((arg) => {
+            return {
+              name: arg.name,
+              type: arg.type,
+              description: arg.description
+            };
+          }),
+          databases: func.databases.map((db) => {
+            return {
+              name: db.name,
+              description: db.description
+            };
+          }),
+          visualizations: func.ui_visualizations.map((vis) => {
+            return {
+              name: vis.name,
+              description: vis.description,
+              type: vis.type,
+              schema: vis.schema
+            };
+          })
+        };
+      })
+    };
+
     this.isLoading = false;
   }
 
