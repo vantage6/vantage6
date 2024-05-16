@@ -47,7 +47,6 @@ def get_env_var(
     var_name: str,
     default: str | None = None,
     as_type="str",
-    only_positive: bool = False,
 ) -> str:
     """
     Get the value of an environment variable. Environment variables are encoded
@@ -65,9 +64,6 @@ def get_env_var(
     as_type : str
         Type to convert the environment variable to. Default is 'str', other options
         are 'bool' and 'int'.
-    only_positive : bool
-        If True, the environment variable must be a positive. Only relevant if as_type
-        is 'int'.
 
     Returns
     -------
@@ -98,7 +94,7 @@ def get_env_var(
     elif as_type == "bool":
         return _convert_envvar_to_bool(var_name, value)
     elif as_type == "int":
-        return _convert_envvar_to_int(var_name, value, only_positive)
+        return _convert_envvar_to_int(var_name, value)
 
 
 def _convert_envvar_to_bool(envvar_name, envvar_value: str) -> bool:
@@ -133,9 +129,7 @@ def _convert_envvar_to_bool(envvar_name, envvar_value: str) -> bool:
         )
 
 
-def _convert_envvar_to_int(
-    envvar_name: str, envvar_value: str, only_positive: bool
-) -> int:
+def _convert_envvar_to_int(envvar_name: str, envvar_value: str) -> int:
     """
     Convert an environment variable to an integer value.
 
@@ -152,15 +146,32 @@ def _convert_envvar_to_int(
         The integer value of the environment variable.
     """
     try:
-        envvar_value = int(envvar_value)
+        return int(envvar_value)
     except ValueError as exc:
         raise EnvironmentVariableError(
             f"Environment variable '{envvar_name}' has value '{envvar_value}' which "
             "cannot be converted to an integer."
         ) from exc
-    if envvar_value < 0 and only_positive:
+
+
+def check_envvar_value_positive(envvar_name: str, envvar_value: int | float) -> None:
+    """
+    Check whether an environment variable is a positive integer.
+
+    Parameters
+    ----------
+    envvar_name : str
+        The environment variable name.
+    envvar_value : int | float
+        The value to check.
+
+    Raises
+    ------
+    EnvironmentVariableError
+        If the value is not a positive integer.
+    """
+    if envvar_value < 0:
         raise EnvironmentVariableError(
-            f"Environment variable '{envvar_name}' has value '{envvar_value}' but a "
-            "positive integer value is required."
+            f"Environment variable '{envvar_name}' has value '{envvar_value}' while a "
+            "positive value is required."
         )
-    return envvar_value
