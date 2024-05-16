@@ -813,7 +813,6 @@ class Tasks(TaskBase):
             algorithm_store=store,
             session=session,
             depends_on=dependant_task,
-            action=action,
         )
 
         # create job_id. Users can only create top-level -tasks (they will not
@@ -893,6 +892,7 @@ class Tasks(TaskBase):
                 organization=organization,
                 input=input_,
                 status=TaskStatus.PENDING,
+                action=action,
             )
             run.save()
 

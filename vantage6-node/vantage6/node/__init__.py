@@ -48,7 +48,7 @@ from vantage6.common.docker.addons import (
 from vantage6.common.globals import VPN_CONFIG_FILE, PING_INTERVAL_SECONDS, NodePolicy
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.common.enums import TaskStatus
+from vantage6.common.enums import TaskStatus, LocalAction
 from vantage6.common.log import get_file_logger
 from vantage6.cli.context.node import NodeContext
 from vantage6.node.context import DockerNodeContext
@@ -332,12 +332,16 @@ class Node:
         # notify that we are processing this task
         self.client.set_task_start_time(task_incl_run["id"])
 
-        # FIXME: FM 02-04-24 This should only be requested for the `compute` container
-        # role.
-        token = self.client.request_token_for_container(task["id"], task["image"])
-        token = token["container_token"]
 
-        # get t for each session
+        # Only compute containers need a token as they are the only ones that should
+        # create subtasks
+        if task_incl_run["action"] == LocalAction.COMPUTE:
+            token = self.client.request_token_for_container(task["id"], task["image"])
+            token = token["container_token"]
+        else:
+            token = None
+
+        # each session has their own session storage
         session_vol_name = self.ctx.docker_session_volume_name(task["session_id"])
         self.__docker.create_volume_if_not_exists(session_vol_name)
 
@@ -351,6 +355,7 @@ class Node:
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
         task_status, vpn_ports = self.__docker.run(
+            action=task_incl_run["action"],
             run_id=task_incl_run["id"],
             task_info=task,
             image=task["image"],
