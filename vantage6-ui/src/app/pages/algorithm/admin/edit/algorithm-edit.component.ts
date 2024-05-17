@@ -78,7 +78,7 @@ export class AlgorithmEditComponent implements OnInit, OnDestroy {
               description: db.description
             };
           }),
-          visualizations: func.ui_visualizations.map((vis) => {
+          ui_visualizations: func.ui_visualizations.map((vis) => {
             return {
               name: vis.name,
               description: vis.description,

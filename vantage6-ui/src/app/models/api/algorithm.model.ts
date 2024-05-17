@@ -1,3 +1,6 @@
+import { NameDescription } from './base.model';
+import { Visualization, VisualizationForm } from './visualization.model';
+
 export enum ArgumentType {
   String = 'string',
   StringList = 'string_list',
@@ -45,28 +48,6 @@ export enum FunctionType {
   Central = 'central',
   Federated = 'federated'
 }
-
-export enum VisualizationType {
-  Table = 'table',
-  Histogram = 'histogram'
-}
-
-interface VisualizationSchemaBase {
-  // defines the type of keys and values that these schemas contain
-  [key: string]: string[] | undefined;
-}
-
-export interface TableVisualizationSchema extends VisualizationSchemaBase {
-  location: string[];
-  columns: string[];
-}
-
-export interface HistogramVisualizationSchema extends VisualizationSchemaBase {
-  [key: string]: string[] | undefined;
-  location: string[];
-}
-
-export type VisualizationSchema = TableVisualizationSchema | HistogramVisualizationSchema;
 
 // TODO this interface must be updated to match the API
 export interface Algorithm {
@@ -134,33 +115,13 @@ export interface FunctionDatabase {
   description?: string;
 }
 
-export interface Visualization {
-  id: number;
-  name: string;
-  description?: string;
-  type: VisualizationType;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  schema?: any;
-}
-
-interface NameDescriptionForm {
-  name: string;
-  description?: string;
-}
-
-interface ArgumentForm extends NameDescriptionForm {
+interface ArgumentForm extends NameDescription {
   type: string;
 }
-
-interface VisualizationForm extends NameDescriptionForm {
-  type: VisualizationType;
-  schema: VisualizationSchema;
-}
-
-interface FunctionForm extends NameDescriptionForm {
+export interface FunctionForm extends NameDescription {
   arguments: ArgumentForm[];
-  databases: NameDescriptionForm[];
-  visualizations: VisualizationForm[];
+  databases: NameDescription[];
+  ui_visualizations: VisualizationForm[];
   type: string;
 }
 

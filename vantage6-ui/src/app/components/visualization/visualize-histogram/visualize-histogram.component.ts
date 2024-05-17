@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AfterViewInit, Component, ElementRef, Input, OnChanges, ViewChild } from '@angular/core';
 import * as Plot from '@observablehq/plot';
-import { Visualization } from 'src/app/models/api/algorithm.model';
+import { Visualization } from 'src/app/models/api/visualization.model';
 
 @Component({
   selector: 'app-visualize-histogram',
