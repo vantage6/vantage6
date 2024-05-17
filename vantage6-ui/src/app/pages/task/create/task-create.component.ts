@@ -241,7 +241,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       ? this.functionForm.controls.organizationIDs.value
       : [this.functionForm.controls.organizationIDs.value];
 
-    const taskDatabases = getTaskDatabaseFromForm(this.function, this.databaseForm);
+    const taskDatabases: TaskDatabase[] = getTaskDatabaseFromForm(this.function, this.databaseForm);
 
     // setup input for task. Parse string to JSON if needed
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
