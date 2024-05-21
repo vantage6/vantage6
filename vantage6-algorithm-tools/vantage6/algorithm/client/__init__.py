@@ -1,3 +1,5 @@
+""" Client for the algorithm container to communicate with the central server. """
+
 import jwt
 import json as json_lib
 import time

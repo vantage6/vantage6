@@ -43,12 +43,14 @@ author = (
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",
     "sphinx.ext.intersphinx",
     "sphinx_click.ext",
     "sphinxcontrib.plantuml",
 ]
+autosummary_generate = True  # Turn on sphinx.ext.autosummary
 
 # napoleon_use_rtype = False
 napoleon_use_ivar = True

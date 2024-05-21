@@ -1,4 +1,5 @@
 import datetime
+import os
 
 from sqlalchemy import Column, String, ForeignKey, Integer, sql, DateTime
 from sqlalchemy.orm import relationship
@@ -106,6 +107,11 @@ class Task(Base):
         str
             Status of task
         """
+        # The following is necessary because if readthedocs executes this code to
+        # generate function docs, it will fail with a sqlalchemy error (because there
+        # are no runs?).
+        if os.environ.get("READTHEDOCS"):
+            return ""
         # TODO what if there are no result ids? -> currently returns unknown
         run_statuses = [r.status for r in self.runs]
         if any([has_task_failed(status) for status in run_statuses]):

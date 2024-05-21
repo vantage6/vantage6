@@ -1,7 +1,6 @@
 """
-A node in its simplest would retrieve a task from the central server by
-an API call, run this task and finally return the results to the central
-server again.
+The vantage6 node's core function is to retrieve tasks from the central server, run them
+and return the results.
 
 The node application runs four threads:
 
