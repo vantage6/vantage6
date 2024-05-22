@@ -43,7 +43,7 @@
           <mat-label>{{ "algorithm.partitioning" | translate }}</mat-label>
           <mat-select formControlName="partitioning">
             <mat-option *ngFor="let partitionType of partitionTypes" [value]="partitionType">
-              {{ partitionType }}
+              {{ partitionType | titlecase }}
             </mat-option>
           </mat-select>
         </mat-form-field>
@@ -73,16 +73,21 @@
                   <mat-label>{{ "algorithm.function.type" | translate }}</mat-label>
                   <mat-select formControlName="type">
                     <mat-option *ngFor="let functionType of functionTypes" [value]="functionType">
-                      {{ functionType }}
+                      {{ functionType | titlecase }}
                     </mat-option>
                   </mat-select>
                 </mat-form-field>
                 <!-- Accordion per parameter -->
-                <mat-accordion class="card-accordion subaccordion" [multi]="true">
+                <mat-accordion class="card-accordion" [multi]="true">
                   <mat-expansion-panel
+                    class="subpanel"
                     [expanded]="true"
-                    *ngFor="let parameterFormGroup of getParamFormGroups(funcIdx); let paramIdx = index"
+                    *ngFor="
+                      let parameterFormGroup of form.controls.functions.controls[funcIdx].controls.arguments.controls;
+                      let paramIdx = index
+                    "
                   >
+                    <!-- *ngFor="let parameterFormGroup of getParamFormGroups(funcIdx); let paramIdx = index" -->
                     <mat-expansion-panel-header>
                       <mat-panel-title
                         >{{ "algorithm-create.function.parameter.title" | translate }} {{ parameterFormGroup.get("name")?.value || "" }}
@@ -102,7 +107,7 @@
                           <mat-label>{{ "algorithm.function.argument.type" | translate }}</mat-label>
                           <mat-select formControlName="type">
                             <mat-option *ngFor="let paramType of paramTypes" [value]="paramType">
-                              {{ paramType }}
+                              {{ paramType | titlecase }}
                             </mat-option>
                           </mat-select>
                         </mat-form-field>
@@ -117,11 +122,11 @@
                 </mat-accordion>
                 <!-- Card per database -->
                 <mat-accordion
-                  class="card-accordion subaccordion"
-                  *ngFor="let databaseFormGroup of getDatabaseFormGroups(funcIdx); let dbIdx = index"
+                  class="card-accordion"
+                  *ngFor="let databaseFormGroup of form.controls.functions.controls[funcIdx].controls.databases.controls; let dbIdx = index"
                   [multi]="true"
                 >
-                  <mat-expansion-panel [expanded]="true">
+                  <mat-expansion-panel class="subpanel" [expanded]="true">
                     <mat-expansion-panel-header>
                       <mat-panel-title
                         >{{ "algorithm-create.function.database.title" | translate }}
@@ -147,6 +152,68 @@
                     </ng-template>
                   </mat-expansion-panel>
                 </mat-accordion>
+                <!-- Card per visualization -->
+                <mat-accordion
+                  class="card-accordion"
+                  *ngFor="
+                    let visualizationFormGroup of form.controls.functions.controls[funcIdx].controls.ui_visualizations.controls;
+                    let visIdx = index
+                  "
+                  [multi]="true"
+                >
+                  <mat-expansion-panel class="subpanel" [expanded]="true">
+                    <mat-expansion-panel-header>
+                      <mat-panel-title
+                        >{{ "algorithm-create.function.visualization.title" | translate }}
+                        {{ visualizationFormGroup.get("name")?.value || "" }}</mat-panel-title
+                      >
+                    </mat-expansion-panel-header>
+                    <ng-template matExpansionPanelContent>
+                      <form class="form" [formGroup]="visualizationFormGroup">
+                        <div class="field-description">{{ "algorithm-create.function.visualization.explanation" | translate }}</div>
+                        <mat-form-field subscriptSizing="dynamic">
+                          <mat-label>{{ "general.name" | translate }}</mat-label>
+                          <input matInput type="text" formControlName="name" />
+                        </mat-form-field>
+                        <mat-form-field subscriptSizing="dynamic">
+                          <mat-label>{{ "general.description" | translate }}</mat-label>
+                          <input matInput type="text" formControlName="description" />
+                        </mat-form-field>
+                        <mat-form-field subscriptSizing="dynamic">
+                          <mat-label>{{ "algorithm.function.visualization.type" | translate }}</mat-label>
+                          <mat-select formControlName="type" (selectionChange)="setVisSchema(funcIdx, visIdx, $event.value)">
+                            <mat-option *ngFor="let visType of visualizationTypes" [value]="visType">
+                              {{ visType | titlecase }}
+                            </mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                        <!-- generate dynamic input for visualization details -->
+                        <form class="form" [formGroup]="visualizationFormGroup.controls.schema">
+                          <ng-container *ngFor="let control of visualizationFormGroup.controls.schema.controls | keyvalue">
+                            <div class="field-description" *ngIf="true">
+                              <div>
+                                <b>{{ getVisSchemaField(funcIdx, visIdx, control.key, "description") }}</b>
+                              </div>
+                              <div>
+                                <i>{{ getVisSchemaField(funcIdx, visIdx, control.key, "example") }}</i>
+                              </div>
+                            </div>
+                            <mat-form-field subscriptSizing="dynamic">
+                              <mat-label>{{ control.key }}</mat-label>
+                              <input matInput type="text" [formControlName]="control.key" />
+                            </mat-form-field>
+                          </ng-container>
+                        </form>
+                        <!-- // -->
+                        <div class="button-container button-container-separate">
+                          <button mat-flat-button color="warn" (click)="deleteVisualization(functionFormGroup, visIdx)">
+                            {{ "algorithm-create.function.visualization.delete" | translate }}
+                          </button>
+                        </div>
+                      </form>
+                    </ng-template>
+                  </mat-expansion-panel>
+                </mat-accordion>
                 <!-- Buttons per function -->
                 <div class="button-container button-container-separate">
                   <button mat-flat-button color="primary" (click)="addParameter(functionFormGroup)">
@@ -154,6 +221,9 @@
                   </button>
                   <button mat-flat-button color="primary" (click)="addDatabase(functionFormGroup)">
                     {{ "algorithm-create.function.database.add" | translate }}
+                  </button>
+                  <button mat-flat-button color="primary" (click)="addVisualization(functionFormGroup)">
+                    {{ "algorithm-create.function.visualization.add" | translate }}
                   </button>
                   <button mat-flat-button color="warn" (click)="deleteFunction(funcIdx)">
                     {{ "algorithm-create.function.delete" | translate }}

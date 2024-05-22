@@ -114,7 +114,7 @@ class NodeClient(ClientBase):
             The container token.
         """
         self.log.debug(
-            f"requesting container token for task_id={task_id} " f"and image={image}"
+            "Requesting container token for task_id=%s and image=%s", task_id, image
         )
         return self.request(
             "/token/container", method="post", json={"task_id": task_id, "image": image}
@@ -152,8 +152,8 @@ class NodeClient(ClientBase):
             run_data = self.parent.request(endpoint="run", params=params)
 
             if isinstance(run_data, str):
-                self.parent.log.warn("Requesting algorithm runs failed")
-                self.parent.log.debug(f"Fail message: {run_data}")
+                self.parent.log.warning("Requesting algorithm runs failed")
+                self.parent.log.warning(f"Fail message: {run_data}")
                 return {}
 
             # if there are multiple pages of algorithm runs, get them all

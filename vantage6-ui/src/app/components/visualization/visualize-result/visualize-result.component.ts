@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, Input, OnChanges } from '@angular/core';
-import { Visualization, VisualizationType } from 'src/app/models/api/algorithm.model';
+import { Visualization, VisualizationType } from 'src/app/models/api/visualization.model';
 
 // interface VisualizeResult {
 //   visualization: Visualization;
@@ -24,7 +24,6 @@ export class VisualizeResultComponent implements OnChanges {
     // if (!this.visualization || !this.result) return;
     // this.visualizeResults = [];
     // console.log(this.result)
-
     // const visualizeResult = {
     //   visualization: this.visualization,
     //   results: this.result

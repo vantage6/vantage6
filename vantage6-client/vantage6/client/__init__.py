@@ -1,3 +1,5 @@
+""" Python client for user to communicate with the vantage6 server """
+
 from __future__ import annotations
 
 import logging
@@ -23,7 +25,6 @@ from vantage6.common.client.client_base import ClientBase
 from vantage6.client.subclients.study import StudySubClient
 from vantage6.client.subclients.algorithm import AlgorithmSubClient
 from vantage6.client.subclients.algorithm_store import AlgorithmStoreSubClient
-from vantage6.client.subclients.algorithm import AlgorithmSubClient
 
 
 module_name = __name__.split(".")[1]
@@ -32,7 +33,7 @@ module_name = __name__.split(".")[1]
 class UserClient(ClientBase):
     """User interface to the vantage6-server"""
 
-    def __init__(self, *args, log_level="debug", **kwargs) -> None:
+    def __init__(self, *args, log_level="info", **kwargs) -> None:
         """Create user client
 
         All paramters from `ClientBase` can be used here.
@@ -40,7 +41,7 @@ class UserClient(ClientBase):
         Parameters
         ----------
         log_level : str, optional
-            The log level to use, by default 'debug'
+            The log level to use, by default 'info'
         """
         super(UserClient, self).__init__(*args, **kwargs)
 

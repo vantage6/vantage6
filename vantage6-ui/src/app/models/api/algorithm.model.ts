@@ -1,3 +1,6 @@
+import { NameDescription } from './base.model';
+import { Visualization, VisualizationForm } from './visualization.model';
+
 export enum ArgumentType {
   String = 'string',
   StringList = 'string_list',
@@ -44,11 +47,6 @@ export enum PartitioningType {
 export enum FunctionType {
   Central = 'central',
   Federated = 'federated'
-}
-
-export enum VisualizationType {
-  Table = 'table',
-  Histogram = 'histogram'
 }
 
 // TODO this interface must be updated to match the API
@@ -117,28 +115,14 @@ export interface FunctionDatabase {
   description?: string;
 }
 
-export interface Visualization {
-  id: number;
-  name: string;
-  description?: string;
-  type: VisualizationType;
-  schema?: any;
-}
-
-interface NameDescriptionForm {
-  name: string;
-  description?: string;
-}
-
-interface ArgumentForm extends NameDescriptionForm {
+interface ArgumentForm extends NameDescription {
   type: string;
 }
-
-interface FunctionForm extends NameDescriptionForm {
+export interface FunctionForm extends NameDescription {
   arguments: ArgumentForm[];
-  databases: NameDescriptionForm[];
+  databases: NameDescription[];
+  ui_visualizations: VisualizationForm[];
   type: string;
-  // TODO UI visualizations
 }
 
 export interface AlgorithmForm {

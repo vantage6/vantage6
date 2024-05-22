@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { Visualization } from 'src/app/models/api/algorithm.model';
+import { Visualization } from 'src/app/models/api/visualization.model';
 import { FileService } from 'src/app/services/file.service';
 
 @Component({

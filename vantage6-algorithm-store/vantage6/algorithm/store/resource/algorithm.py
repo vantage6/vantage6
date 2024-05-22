@@ -500,6 +500,25 @@ class Algorithm(AlgorithmStoreResources):
                                 description: Type of argument. Can be 'string',
                                   'integer', 'float', 'boolean', 'json',
                                   'column', 'organizations' or 'organization'
+                        ui_visualizations:
+                          type: array
+                          description: List of visualizations that are available in
+                            the algorithm
+                          items:
+                            properties:
+                              name:
+                                type: string
+                                description: Name of the visualization
+                              description:
+                                type: string
+                                description: Description of the visualization
+                              type:
+                                type: string
+                                description: Type of visualization.
+                              schema:
+                                type: object
+                                description: Schema that describes the visualization.
+
 
         responses:
           201:

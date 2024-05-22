@@ -33,7 +33,7 @@ setup(
     install_requires=[
         "flasgger==0.9.5",
         "flask==2.2.5",
-        "Flask-Cors==3.0.10",
+        "Flask-Cors==4.0.1",
         "Flask-Principal==0.4.0",
         "flask-marshmallow==0.15.0",
         "Flask-RESTful==0.3.10",

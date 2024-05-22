@@ -57,12 +57,14 @@
     "file-label": "Upload PEM file"
   },
   "chosen-collaboration-alert": {
-    "content": "You have selected the collaboration '{{name}}'. The content displayed is specific to this collaboration.",
-    "change": "Change collaboration"
+    "content": "Selected collaboration",
+    "change": "Change collaboration",
+    "info": "The content displayed is specific to this collaboration"
   },
   "chosen-store-alert": {
-    "content": "You have selected the algorithm store '{{name}}'. The content displayed is specific to this algorithm store.",
-    "change": "Change store"
+    "content": "Selected store",
+    "change": "Change store",
+    "info": "The content displayed is specific to this algorithm store"
   },
   "table": {
     "search-placeholder": "Search"
@@ -150,7 +152,8 @@
     },
     "step-parameters": {
       "title": "Define parameters",
-      "description": "Provide parameter values for the selected algorithm function"
+      "description": "Provide parameter values for the selected algorithm function",
+      "valid-json": "Please provide valid JSON input."
     },
     "alert-no-online-nodes": "You cannot create a task right now because no nodes are online in your collaboration. Online nodes are required to collect information on available databases and columns. Please try again later or contact your collaboration manager.",
     "alert-no-stores": "You cannot create a task because no algorithm stores are available to your collaboration. These are required to obtain the available algorithms from. Please contact your collaboration manager.",
@@ -264,6 +267,12 @@
         "title": "Database",
         "add": "Add function database",
         "delete": "Delete database"
+      },
+      "visualization": {
+        "title": "Visualization",
+        "explanation": "By adding this visualization, the results of your algorithm will automatically be visualized in this user interface.",
+        "add": "Add function visualization",
+        "delete": "Delete visualization"
       }
     },
     "card-from-json": {
@@ -460,7 +469,6 @@
       "port": "Port",
       "study": "Study"
     },
-
     "scope": {
       "label": "Scope",
       "own": "Own",
@@ -468,7 +476,6 @@
       "collaboration": "Collaboration",
       "global": "Global"
     },
-
     "operation": {
       "create": "Create",
       "edit": "Edit",
@@ -553,7 +560,7 @@
     "forgot-password": "Forgot your password?",
     "lost": {
       "title": "Lost your password?",
-      "instruction": "Fill in your username *or* email address in order to reset your password.",
+      "instruction": "Fill in your email address in order to reset your password.",
       "request-token": "Request reset token",
       "enter-token": "Enter your reset token",
       "already-reset": "Already have a reset token?"

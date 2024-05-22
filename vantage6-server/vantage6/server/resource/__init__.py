@@ -154,7 +154,6 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
 
             # check that identity has access to endpoint
             g.type = claims["client_type"]
-            # log.debug(f"Endpoint accessed as {g.type}")
 
             if g.type not in types:
                 # FIXME BvB 23-10-19: user gets a 500 error, would be better to

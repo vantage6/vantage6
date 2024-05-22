@@ -10,7 +10,7 @@ import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
 import { Router } from '@angular/router';
 import { PreprocessingStepComponent } from './steps/preprocessing-step/preprocessing-step.component';
-import { addParameterFormControlsForFunction, getTaskDatabaseFromForm } from '../task.helper';
+import { addParameterFormControlsForFunction, getTaskDatabaseFromForm, getDatabaseTypesFromForm } from '../task.helper';
 import { DatabaseStepComponent } from './steps/database-step/database-step.component';
 import { FilterStepComponent } from './steps/filter-step/filter-step.component';
 import { NodeService } from 'src/app/services/node.service';
@@ -310,7 +310,18 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!this.node) return;
 
     // collect data to collect columns from database
-    const taskDatabases: TaskDatabase[] = getTaskDatabaseFromForm(this.function, this.databaseForm);
+    const taskDatabases = getTaskDatabaseFromForm(this.function, this.databaseForm);
+    const databases =  getDatabaseTypesFromForm(this.function, this.databaseForm);
+
+    // the other and omop database types do not make use of the wrapper to load their
+    // data, so we cannot process them in this way. This will be improved when sessions
+    // are implemented
+    const database = databases[0];
+    if (database.type == 'other' || database.type == 'omop') {
+        this.isLoadingColumns = false;
+        return;
+    }
+
     // TODO modify when choosing database for preprocessing is implemented
     const taskDatabase = taskDatabases[0];
 

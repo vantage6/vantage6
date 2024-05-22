@@ -140,8 +140,8 @@ class DockerTaskManager(DockerBaseManager):
             self.container.reload()
         except (docker.errors.NotFound, AttributeError):
             self.log.error("Container not found")
-            self.log.debug(f"- task id: {self.task_id}")
-            self.log.debug(f"- result id: {self.task_id}")
+            self.log.error("- task id: %s", self.task_id)
+            self.log.error("- result id: %s", self.task_id)
             self.status = TaskStatus.UNKNOWN_ERROR
             raise AlgorithmContainerNotFound
 
@@ -256,7 +256,7 @@ class DockerTaskManager(DockerBaseManager):
         # prepare volumes
         self.docker_input = docker_input
         self.volumes = self._prepare_volumes(tmp_vol_name, token)
-        self.log.debug(f"volumes: {self.volumes}")
+        self.log.debug("volumes: %s", self.volumes)
 
         # setup environment variables
         self.environment_variables = self._setup_environment_vars(
@@ -465,8 +465,8 @@ class DockerTaskManager(DockerBaseManager):
             proxy_host = os.environ["PROXY_SERVER_HOST"]
 
         except Exception:
-            self.log.warn("PROXY_SERVER_HOST not set, using " "host.docker.internal")
-            self.log.debug(os.environ)
+            self.log.warn("PROXY_SERVER_HOST not set, using host.docker.internal")
+            self.log.debug("environment: %s", os.environ)
             proxy_host = "host.docker.internal"
 
         # define environment variables for the docker-container, the
@@ -514,12 +514,12 @@ class DockerTaskManager(DockerBaseManager):
                 # In this case the algorithm might crash if it tries to access
                 # the DATABASE_LABEL environment variable
                 self.log.warning(
-                    "A user specified a database that does not "
-                    "exist. Available databases are: "
-                    f"{self.databases.keys()}. This is likely to "
-                    "result in an algorithm crash."
+                    "A user specified a database '%s' that does not exist. Available "
+                    "databases are: %s. This is likely to result in an algorithm "
+                    "crash.",
+                    database,
+                    self.databases.keys(),
                 )
-                self.log.debug(f"User specified database: {database}")
             # define env vars for the preprocessing and extra parameters such
             # as query and sheet_name
             extra_params = (

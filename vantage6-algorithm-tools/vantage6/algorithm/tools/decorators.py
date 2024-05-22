@@ -45,6 +45,7 @@ class OHDSIMetaData:
     incremental_folder: Path | None
     cohort_statistics_folder: Path | None
     export_folder: Path | None
+    dbms: str | None
 
 
 def _algorithm_client() -> callable:
@@ -339,18 +340,33 @@ def get_ohdsi_metadata(label: str) -> OHDSIMetaData:
     The following environment variables are expected to be set in the
     node configuration in the `env` key of the `database` section:
 
-    - `CDM_DATABASE`
-    - `CDM_SCHEMA`
-    - `RESULTS_SCHEMA`
+    ```yaml
+    ...
+    databases:
+      - label: my_database
+        type: OMOP
+        uri: jdbc:postgresql://host.docker.internal:5454/postgres
+        env:
+            CDM_DATABASE: "my_user"
+            CDM_SCHEMA: "my_password"
+            RESULTS_SCHEMA: "my_password"
+            DBMS: "postgresql"
+    ...
+    ```
 
     In case these are not set, the algorithm execution is terminated.
+
+    Parameters
+    ----------
+    label : str
+        Label of the database to connect to
 
     Example
     -------
     >>> get_ohdsi_metadata("my_database")
     """
     # check that all node environment variables are set
-    expected_env_vars = ["CDM_DATABASE", "CDM_SCHEMA", "RESULTS_SCHEMA"]
+    expected_env_vars = ("CDM_DATABASE", "CDM_SCHEMA", "RESULTS_SCHEMA", "DBMS")
     label_ = label.upper()
     for var in expected_env_vars:
         _check_environment_var_exists_or_exit(f"{label_}_DB_PARAM_{var}")
@@ -363,6 +379,7 @@ def get_ohdsi_metadata(label: str) -> OHDSIMetaData:
         incremental_folder=tmp / "incremental",
         cohort_statistics_folder=tmp / "cohort_statistics",
         export_folder=tmp / "export",
+        dbms=os.environ[f"{label_}_DB_PARAM_DBMS"],
     )
     return metadata
 
@@ -413,7 +430,7 @@ def _create_omop_database_connection(label: str) -> callable:
     label_ = label.upper()
 
     # check that the required environment variables are set
-    for var in ("DBMS", "USER", "PASSWORD"):
+    for var in ("DBMS", "USER", "PASSWORD", "URI"):
         _check_environment_var_exists_or_exit(f"{label_}_DB_PARAM_{var}")
 
     info("Reading OHDSI environment variables")

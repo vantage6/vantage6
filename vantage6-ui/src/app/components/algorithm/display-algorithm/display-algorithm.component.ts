@@ -1,5 +1,6 @@
 import { Component, HostBinding, Input } from '@angular/core';
-import { Algorithm, AlgorithmFunction, Visualization } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmFunction } from 'src/app/models/api/algorithm.model';
+import { Visualization } from 'src/app/models/api/visualization.model';
 
 @Component({
   selector: 'app-display-algorithm',
