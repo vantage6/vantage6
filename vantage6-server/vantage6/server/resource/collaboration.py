@@ -543,6 +543,17 @@ class Collaboration(CollaborationBase):
                 }, HTTPStatus.BAD_REQUEST
             collaboration.name = name
         if "organization_ids" in data:
+            # Users with permission to edit a collaboration at collaboration scope are
+            # not allowed to change the organizations of the collaboration: that would
+            # be a permission escalation as doing so may allow them to also do other
+            # actions for newly added organizations. Therefore, only users with global
+            # permission can alter the organizations in a collaboration.
+            if not self.r.e_glo.can():
+                return {
+                    "msg": "You lack the permission to change the organizations of a "
+                    "collaboration!"
+                }, HTTPStatus.UNAUTHORIZED
+            # set new organizations
             collaboration.organizations = [
                 db.Organization.get(org_id)
                 for org_id in data["organization_ids"]
