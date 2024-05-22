@@ -99,6 +99,19 @@ Note that some features of vantage6, such as timestamp based retrieval of the
 newest image, or multi-arch images, are not supported by the Docker Hub
 registry.
 
+.. note::
+
+  If you are using a private docker registry, your nodes need to login to it in order
+  to be able to retrieve the algorithms. You can do this by adding the following
+  to the node configuration file:
+
+  .. code:: yaml
+
+      docker_registries:
+        - registry: docker-registry.org
+          username: docker-registry-user
+          password: docker-registry-password
+
 .. _eduvpn-install:
 
 EduVPN

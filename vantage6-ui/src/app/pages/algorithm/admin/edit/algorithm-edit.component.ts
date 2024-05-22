@@ -1,45 +1,96 @@
-import { Component, HostBinding, Input, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Subject, takeUntil } from 'rxjs';
 import { MessageDialogComponent } from 'src/app/components/dialogs/message-dialog/message-dialog.component';
 import { Algorithm, AlgorithmForm } from 'src/app/models/api/algorithm.model';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
-import { FileService } from 'src/app/services/file.service';
 
 @Component({
   selector: 'app-algorithm-edit',
   templateUrl: './algorithm-edit.component.html',
   styleUrl: './algorithm-edit.component.scss'
 })
-export class AlgorithmEditComponent implements OnInit {
+export class AlgorithmEditComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   @Input() id: string = '';
+  destroy$ = new Subject<void>();
 
   isLoading: boolean = true;
   isSubmitting: boolean = false;
   algorithm?: Algorithm;
+  algorithmForm?: AlgorithmForm;
 
   constructor(
     private router: Router,
     private algorithmService: AlgorithmService,
     private dialog: MatDialog,
     private translateService: TranslateService,
-    private fileService: FileService,
     private chosenStoreService: ChosenStoreService
   ) {}
 
   async ngOnInit(): Promise<void> {
-    await this.initData();
-    this.isLoading = false;
+    this.chosenStoreService
+      .isInitialized()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((initialized) => {
+        if (initialized) {
+          this.initData();
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private async initData(): Promise<void> {
     const chosenStore = this.chosenStoreService.store$.value;
     if (!chosenStore) return;
     this.algorithm = await this.algorithmService.getAlgorithm(chosenStore.url, this.id);
+
+    // parse algorithm to form
+    this.algorithmForm = {
+      name: this.algorithm.name,
+      description: this.algorithm.description,
+      partitioning: this.algorithm.partitioning,
+      image: this.algorithm.image,
+      vantage6_version: this.algorithm.vantage6_version,
+      functions: this.algorithm.functions.map((func) => {
+        return {
+          name: func.name,
+          description: func.description,
+          type: func.type,
+          arguments: func.arguments.map((arg) => {
+            return {
+              name: arg.name,
+              type: arg.type,
+              description: arg.description
+            };
+          }),
+          databases: func.databases.map((db) => {
+            return {
+              name: db.name,
+              description: db.description
+            };
+          }),
+          ui_visualizations: func.ui_visualizations.map((vis) => {
+            return {
+              name: vis.name,
+              description: vis.description,
+              type: vis.type,
+              schema: vis.schema
+            };
+          })
+        };
+      })
+    };
+
+    this.isLoading = false;
   }
 
   async handleSubmit(algorithmForm: AlgorithmForm) {

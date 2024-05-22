@@ -39,5 +39,10 @@ mat-card {
       margin-top: $spacing-px-4;
       border-bottom: 1px solid rgba(0, 0, 0, 0.12);
     }
+
+    .subpanel {
+      margin-left: $spacing-px-8;
+      width: 100%;
+    }
   }
 }
