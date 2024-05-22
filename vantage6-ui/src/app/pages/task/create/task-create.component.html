@@ -66,10 +66,7 @@
               <mat-label>{{ "task.function" | translate }}</mat-label>
               <mat-select formControlName="functionName">
                 <mat-option *ngFor="let function of algorithm?.functions" [value]="function.name">
-                  {{ function.name }}
-                  <small
-                    ><i>({{ function.type }})</i></small
-                  >
+                  {{ function.name }} <span class="detail-txt">({{ function.type }})</span>
                 </mat-option>
               </mat-select>
             </mat-form-field>

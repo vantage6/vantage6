@@ -2,6 +2,7 @@ import { AbstractControl, FormControl, FormGroup, ValidationErrors, ValidatorFn,
 import { floatListRegex, floatRegex, intListRegex, integerRegex, stringListRegex } from 'src/app/helpers/regex.helper';
 import { AlgorithmFunction, ArgumentType } from 'src/app/models/api/algorithm.model';
 import { TaskDatabase } from 'src/app/models/api/task.models';
+import { Database } from 'src/app/models/api/node.model';
 
 function jsonValidator(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -60,19 +61,32 @@ export const addParameterFormControlsForFunction = (func: AlgorithmFunction, for
 };
 
 export const getTaskDatabaseFromForm = (func: AlgorithmFunction | null, form: FormGroup): TaskDatabase[] => {
-  const taskDatabases: TaskDatabase[] = [];
-  func?.databases.forEach((functionDatabase) => {
-    const selected_database = form.get(`${functionDatabase.name}_name`)?.value || '';
-    const taskDatabase: TaskDatabase = { label: selected_database };
-    const query = form.get(`${functionDatabase.name}_query`)?.value || '';
-    if (query) {
-      taskDatabase.query = query;
-    }
-    const sheet = form.get(`${functionDatabase.name}_sheet`)?.value || '';
-    if (sheet) {
-      taskDatabase.sheet_name = sheet;
-    }
-    taskDatabases.push(taskDatabase);
-  });
-  return taskDatabases;
-};
+    const taskDatabases: TaskDatabase[] = [];
+    func?.databases.forEach((functionDatabase) => {
+      const selected_database = form.get(`${functionDatabase.name}_name`)?.value || '';
+      const taskDatabase: TaskDatabase = {label: selected_database.name};
+      const query = form.get(`${functionDatabase.name}_query`)?.value || '';
+      if (query) {
+        taskDatabase.query = query;
+      }
+      const sheet = form.get(`${functionDatabase.name}_sheet`)?.value || '';
+      if (sheet) {
+        taskDatabase.sheet_name = sheet;
+      }
+      taskDatabases.push(taskDatabase);
+    });
+    return taskDatabases;
+  };
+
+  export const getDatabaseTypesFromForm = (func: AlgorithmFunction | null, form: FormGroup): Database[] => {
+    const databases: Database[] = [];
+    func?.databases.forEach((functionDatabase) => {
+      const selected_database = form.get(`${functionDatabase.name}_name`)?.value || '';
+      const database: Database = {
+          name: selected_database.name,
+          type: selected_database.type,
+      };
+      databases.push(database);
+    });
+    return databases;
+  }
