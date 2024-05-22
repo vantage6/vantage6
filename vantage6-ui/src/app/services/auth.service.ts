@@ -6,6 +6,7 @@ import { PermissionService } from './permission.service';
 import { TokenStorageService } from './token-storage.service';
 import { SocketioConnectService } from './socketio-connect.service';
 import { LoginErrorService } from './login-error.service';
+import { EncryptionService } from './encryption.service';
 
 @Injectable({
   providedIn: 'root'
@@ -22,7 +23,8 @@ export class AuthService {
     private tokenStorageService: TokenStorageService,
     private socketConnectService: SocketioConnectService,
     private loginErrorService: LoginErrorService,
-    private storePermissionService: PermissionService
+    private storePermissionService: PermissionService,
+    private encryptionService: EncryptionService
   ) {}
 
   async isAuthenticated(): Promise<AuthResult> {
@@ -65,6 +67,7 @@ export class AuthService {
     this.permissionService.clear();
     this.storePermissionService.clear();
     this.socketConnectService.disconnect();
+    this.encryptionService.clear();
   }
 
   async changePassword(oldPassword: string, newPassword: string): Promise<void> {

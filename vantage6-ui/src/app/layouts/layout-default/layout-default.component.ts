@@ -170,7 +170,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
     }
     // if collaboration has not been chosen yet, link to that page
     if (!this.chosenCollaborationService.collaboration$.value) {
-      link.route = routePaths.start;
+      link.route = routePaths.chooseCollaboration;
     }
     return link;
   }

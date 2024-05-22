@@ -42,9 +42,19 @@
   "home": {
     "title": "Home"
   },
-  "start": {
+  "choose-collaboration": {
     "title": "Choose a collaboration",
-    "no-collaborations": "Your organization is not part of any collaborations yet. Please contact your vantage6 project manager to set up a collaboration or go to the administration section to create a new collaboration."
+    "no-collaborations": "Your organization is not part of any collaborations yet. Please contact your vantage6 project manager to set up a collaboration or go to the administration section to create a new collaboration.",
+    "card-private-key": {
+      "title": "Upload private key",
+      "description": "Please upload a new private key if you want to want to change the key that is currently in use.",
+      "button": "Change private key"
+    }
+  },
+  "upload-key": {
+    "title": "Upload encryption key",
+    "description": "The collaboration that you selected is encrypted. To be able to view the analyses, you need to upload your private key. This key will be used to decrypt the data locally, and does not leave your browser.",
+    "file-label": "Upload PEM file"
   },
   "chosen-collaboration-alert": {
     "content": "Selected collaboration",
@@ -78,7 +88,9 @@
     "preprocessing-function": "Preprocessing function",
     "filter": "Filter",
     "filter-function": "Filter function",
-    "alert-node-offline": "The node '{{name}}' is offline. This task will be handled when the node is back online."
+    "alert-node-offline": "The node '{{name}}' is offline. This task will be handled when the node is back online.",
+    "alert-failed-read-input": "Failed to parse task input",
+    "alert-failed-read-result": "Failed to parse task result"
   },
   "task-run": {
     "assigned-at": "Created",

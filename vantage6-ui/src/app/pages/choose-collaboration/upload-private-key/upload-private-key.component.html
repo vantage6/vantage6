@@ -1,0 +1,16 @@
+<app-page-header title="{{ 'upload-key.title' | translate }}"></app-page-header>
+<mat-card>
+  <mat-card-content>
+    <p>{{ "upload-key.description" | translate }}</p>
+    <form class="form" [formGroup]="uploadForm">
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ "upload-key.file-label" | translate }}</mat-label>
+        <input matInput value="{{ selectedFile?.name }}" disabled />
+        <input hidden (change)="onFileUpload($event)" #fileInput type="file" id="file" />
+        <button mat-flat-button type="button" matSuffix color="primary" (click)="fileInput.click()">
+          {{ "general.file-select" | translate }}
+        </button>
+      </mat-form-field>
+    </form>
+  </mat-card-content>
+</mat-card>

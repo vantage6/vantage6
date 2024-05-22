@@ -16,6 +16,7 @@ these public keys is outside the scope of this module).
 # TODO handle no public key from other organization (should that happen here?)
 import os
 import logging
+import json
 
 from pathlib import Path
 
@@ -280,14 +281,16 @@ class RSACryptor(CryptorBase):
             The encrypted data encoded as base64 string.
         """
 
-        # Use the shared key for symmetric encryption/decryption of the payload
+        # Use the shared key for symmetric encryption of the payload
         shared_key = os.urandom(32)
         iv_bytes = os.urandom(16)
 
+        # encrypt the data symmetrically with the shared key. This is done because
+        # symmetric encryption is faster than asymmetric encryption and results in a
+        # smaller result.
         cipher = Cipher(
             algorithms.AES(shared_key), modes.CTR(iv_bytes), backend=default_backend()
         )
-
         encryptor = cipher.encryptor()
         encrypted_msg_bytes = encryptor.update(data) + encryptor.finalize()
 
@@ -296,12 +299,13 @@ class RSACryptor(CryptorBase):
             base64s_to_bytes(pubkey_base64s), backend=default_backend()
         )
 
+        # Encrypt the shared key using the public key (i.e. assymmetrically)
         encrypted_key_bytes = pubkey.encrypt(shared_key, padding.PKCS1v15())
 
+        # Join the encrypted key, iv and encrypted message into a single string
         encrypted_key = self.bytes_to_str(encrypted_key_bytes)
         iv = self.bytes_to_str(iv_bytes)
         encrypted_msg = self.bytes_to_str(encrypted_msg_bytes)
-
         return SEPARATOR.join([encrypted_key, iv, encrypted_msg])
 
     def decrypt_str_to_bytes(self, data: str) -> bytes:
@@ -318,10 +322,11 @@ class RSACryptor(CryptorBase):
         bytes
             The decrypted data.
         """
-
+        # Note that the decryption process is the reverse of the encryption process
+        # in the function above
         (encrypted_key, iv, encrypted_msg) = data.split(SEPARATOR)
 
-        # Yes, this can be done more efficiently.
+        # Convert the strings to back to bytes
         encrypted_key_bytes = self.str_to_bytes(encrypted_key)
         iv_bytes = self.str_to_bytes(iv)
         encrypted_msg_bytes = self.str_to_bytes(encrypted_msg)
@@ -329,13 +334,35 @@ class RSACryptor(CryptorBase):
         # Decrypt the shared key using asymmetric encryption
         shared_key = self.private_key.decrypt(encrypted_key_bytes, padding.PKCS1v15())
 
-        # Use the shared key for symmetric encryption/decryption of the payload
+        # In the UI, the bytes have to be base64 encoded before encryption (we cannot
+        # encrypt bytes directly in javascript) - so if this key was encrypted in the
+        # UI, we need to decode it here as extra step. If it fails, ignore it as it is
+        # apparently not needed.
+        # TODO v5+ add additional encoding step in Python so that we always have the
+        # same process
+        try:
+            shared_key = base64s_to_bytes(shared_key.decode("utf-8"))
+        except UnicodeDecodeError:
+            pass
+
+        # Use the shared key for symmetric decryption of the payload
         cipher = Cipher(
             algorithms.AES(shared_key), modes.CTR(iv_bytes), backend=default_backend()
         )
-
         decryptor = cipher.decryptor()
         result = decryptor.update(encrypted_msg_bytes) + decryptor.finalize()
+
+        # In the UI, the result has an extra base64 encoding step also for the
+        # symmetrical part of the encryption. If it fails, ignore it as it is
+        # apparently not needed.
+        # TODO v5+ adapt as stated above in decrypting shared key
+        try:
+            json.loads(result.decode("utf-8"))
+        except json.decoder.JSONDecodeError:
+            try:
+                result = base64s_to_bytes(result.decode("utf-8"))
+            except UnicodeDecodeError:
+                pass
 
         return result
 

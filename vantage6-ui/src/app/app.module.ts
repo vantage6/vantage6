@@ -40,7 +40,7 @@ import { HomeComponent } from './pages/home/home.component';
 import { LayoutDefaultComponent } from './layouts/layout-default/layout-default.component';
 import { OrganizationReadComponent } from './pages/organization/read/organization-read.component';
 import { TaskCreateComponent } from './pages/task/create/task-create.component';
-import { StartComponent } from './pages/start/start.component';
+import { ChooseCollaborationComponent } from './pages/choose-collaboration/choose-collaboration';
 import { TaskListComponent } from './pages/task/list/task-list.component';
 import { TaskReadComponent } from './pages/task/read/task-read.component';
 import { PageHeaderComponent } from './components/page-header/page-header.component';
@@ -107,6 +107,7 @@ import { AlgorithmListComponent } from './pages/algorithm/admin/list/algorithm-l
 import { AlgorithmCreateComponent } from './pages/algorithm/admin/create/algorithm-create.component';
 import { AlgorithmFormComponent } from './components/forms/algorithm-form/algorithm-form.component';
 import { AlgorithmEditComponent } from './pages/algorithm/admin/edit/algorithm-edit.component';
+import { UploadPrivateKeyComponent } from './pages/choose-collaboration/upload-private-key/upload-private-key.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -123,7 +124,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     OrganizationCreateComponent,
     OrganizationReadComponent,
     TaskCreateComponent,
-    StartComponent,
+    ChooseCollaborationComponent,
     TaskListComponent,
     TaskReadComponent,
     PageHeaderComponent,
@@ -187,7 +188,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     AlgorithmListComponent,
     AlgorithmCreateComponent,
     AlgorithmFormComponent,
-    AlgorithmEditComponent
+    AlgorithmEditComponent,
+    UploadPrivateKeyComponent
   ],
   imports: [
     BrowserModule,
