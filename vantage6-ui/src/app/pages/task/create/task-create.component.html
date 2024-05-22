@@ -37,7 +37,8 @@
               <mat-label>{{ "task.algorithm" | translate }}</mat-label>
               <mat-select formControlName="algorithmID" [compareWith]="compareIDsForSelection">
                 <mat-option *ngFor="let algorithm of algorithms" [value]="algorithm.id">
-                  {{ algorithm.name }} <div class="detail-txt">{{ getAlgorithmStoreName(algorithm) }}</div>
+                  {{ algorithm.name }}
+                  <div class="detail-txt">{{ getAlgorithmStoreName(algorithm) }}</div>
                 </mat-option>
               </mat-select>
             </mat-form-field>
@@ -155,11 +156,15 @@
               <div class="field-description">{{ "task-create.step-parameters.description" | translate }}</div>
               <ng-container *ngFor="let argument of function?.arguments">
                 <b>{{ argument.description }}</b>
-                <p *ngIf="argument.type === argumentType.Json">Please provide valid JSON input.</p>
+                <p *ngIf="argument.type === argumentType.Json">{{ "task-create.step-parameters.valid-json" | translate }}</p>
                 <!-- Show form field for dropdowns or single input fields (float, int, string) -->
                 <mat-form-field *ngIf="shouldIncludeFormField(argument)" subscriptSizing="dynamic">
                   <mat-label>{{ argument.name }}</mat-label>
-                  <mat-select *ngIf="shouldShowColumnDropdown(argument)" [formControlName]="argument.name" [multiple]="argument.type === argumentType.ColumnList">
+                  <mat-select
+                    *ngIf="shouldShowColumnDropdown(argument)"
+                    [formControlName]="argument.name"
+                    [multiple]="argument.type === argumentType.ColumnList"
+                  >
                     <mat-option *ngFor="let column of columns" [value]="column">{{ column }}</mat-option>
                   </mat-select>
                   <mat-select
@@ -173,21 +178,26 @@
                     </mat-option>
                   </mat-select>
                   <input
-                  *ngIf="shouldShowParameterSimpleInput(argument)"
-                  matInput
-                  appNumberOnly
-                  [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
-                  [formControlName]="argument.name"
+                    *ngIf="shouldShowParameterSimpleInput(argument)"
+                    matInput
+                    appNumberOnly
+                    [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
+                    [formControlName]="argument.name"
                   />
                 </mat-form-field>
                 <!-- Show checkbox for boolean parameters -->
-                <mat-checkbox class="newLineCheckbox" *ngIf="shouldShowParameterBooleanInput(argument)" [formControlName]="argument.name" [checked]="false">
-                  {{argument.name}}
+                <mat-checkbox
+                  class="newLineCheckbox"
+                  *ngIf="shouldShowParameterBooleanInput(argument)"
+                  [formControlName]="argument.name"
+                  [checked]="false"
+                >
+                  {{ argument.name }}
                 </mat-checkbox>
                 <!-- Show expandable list for multiple inputs (list of str, int, or float) -->
                 <div *ngIf="shouldShowMultipleInput(argument)">
-                  <div formArrayName="{{argument.name}}" *ngFor="let input of getFormArrayControls(argument); let idx = index">
-                    <div style="display: flex; align-items: center;">
+                  <div formArrayName="{{ argument.name }}" *ngFor="let input of getFormArrayControls(argument); let idx = index">
+                    <div style="display: flex; align-items: center">
                       <mat-form-field subscriptSizing="dynamic">
                         <mat-label>{{ argument.name }} {{ idx + 1 }}</mat-label>
                         <input

@@ -138,7 +138,8 @@
     },
     "step-parameters": {
       "title": "Define parameters",
-      "description": "Provide parameter values for the selected algorithm function"
+      "description": "Provide parameter values for the selected algorithm function",
+      "valid-json": "Please provide valid JSON input."
     },
     "alert-no-online-nodes": "You cannot create a task right now because no nodes are online in your collaboration. Online nodes are required to collect information on available databases and columns. Please try again later or contact your collaboration manager.",
     "alert-no-stores": "You cannot create a task because no algorithm stores are available to your collaboration. These are required to obtain the available algorithms from. Please contact your collaboration manager.",
@@ -252,6 +253,12 @@
         "title": "Database",
         "add": "Add function database",
         "delete": "Delete database"
+      },
+      "visualization": {
+        "title": "Visualization",
+        "explanation": "By adding this visualization, the results of your algorithm will automatically be visualized in this user interface.",
+        "add": "Add function visualization",
+        "delete": "Delete visualization"
       }
     },
     "card-from-json": {
