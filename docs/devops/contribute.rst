@@ -117,6 +117,21 @@ From the same page you should request a CVE number so we can alert dependent
 software projects. Github will review the request. We are not sure what this
 entails, but so far they approved all advisories.
 
+Community sprints
+-----------------
+
+We organize community sprints to work on new features and bug fixes. In cycles of four
+weeks, we work across multiple organizations to improve the vantage6 infrastructure.
+We work [sprint boards](https://github.com/orgs/vantage6/projects/1) where we track
+the progress of the issues that are scheduled for the sprint. Each sprint starts with a
+planning meeting where we decide which issues we will work on. At the end of the sprint,
+we have a review meeting where we discuss the progress.
+
+The sprints are open to any developer who wants to contribute significantly to the
+infrastructure during that period. It is possible to decide per sprint whether you want
+to participate or not. Please reach out on `Discord <https://discord.gg/yAyFf6Y>`_ if
+you want to join one or more sprints.
+
 .. _community-meetings:
 
 Community Meetings
