@@ -236,7 +236,7 @@ class Node:
 
         # this is where we try to find a port for the proxyserver
         for try_number in range(5):
-            self.log.info(f"Starting proxyserver at '{proxy_host}:{proxy_port}'")
+            self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)
             http_server = WSGIServer(
                 ("0.0.0.0", proxy_port), proxy_server.app, log=self.proxy_log
             )
@@ -245,12 +245,12 @@ class Node:
                 http_server.serve_forever()
 
             except OSError as e:
-                self.log.debug(f"Error during attempt {try_number}")
-                self.log.debug(f"{type(e)}: {e}")
+                self.log.info("Error during attempt %s", try_number)
+                self.log.info("%s: %s", type(e), e)
 
                 if e.errno == 48:
                     proxy_port = random.randint(2048, 16384)
-                    self.log.critical(f"Retrying with a different port: {proxy_port}")
+                    self.log.warning("Retrying with a different port: %s", proxy_port)
                     os.environ["PROXY_SERVER_PORT"] = str(proxy_port)
 
                 else:
@@ -266,11 +266,11 @@ class Node:
 
         # request open tasks from the server
         task_results = self.client.run.list(state="open", include_task=True)
-        self.log.debug(task_results)
+        self.log.debug("task_results: %s", task_results)
 
         # add the tasks to the queue
         self.__add_tasks_to_queue(task_results)
-        self.log.info(f"Received {self.queue._qsize()} tasks")
+        self.log.info("Received %s tasks", self.queue._qsize())
 
     def get_task_and_add_to_queue(self, task_id: int) -> None:
         """
@@ -421,7 +421,7 @@ class Node:
                 self.socketIO.wait()
             except Exception as e:
                 self.log.error("Listening thread had an exception")
-                self.log.debug(e)
+                self.log.exception(e)
 
     def __speaking_worker(self) -> None:
         """
@@ -494,17 +494,18 @@ class Node:
         """Print error message when node cannot find the server"""
         self.log.warning("Could not connect to the server. Retrying in 10 seconds")
         if self.client.host == "http://localhost" and running_in_docker():
-            self.log.warn(
-                f"You are trying to reach the server at {self.client.host}."
+            self.log.warning(
+                "You are trying to reach the server at %s."
                 " As your node is running inside a Docker container, it cannot"
                 " reach localhost on your host system. Probably, you have to"
                 " change your server URL to http://host.docker.internal (Windows/MacOS)"
                 ' or look into node config option "node_extra_hosts" if using'
-                " http://172.17.0.1 does not work (Linux)."
+                " http://172.17.0.1 does not work (Linux).",
+                self.client.host,
             )
         else:
-            self.log.debug(
-                "Are you sure the server can be reached at " f"{self.client.base_path}?"
+            self.log.info(
+                "Are you sure the server can be reached at %s?", self.client.base_path
             )
 
     def authenticate(self) -> None:
@@ -526,7 +527,7 @@ class Node:
             except AuthenticationException as e:
                 msg = "Authentication failed: API key is wrong!"
                 self.log.warning(msg)
-                self.log.debug(e)
+                self.log.warning(e)
                 break
             except requests.exceptions.ConnectionError:
                 self.__print_connection_error_logs()
@@ -537,7 +538,7 @@ class Node:
                     f"{SLEEP_BTWN_NODE_LOGIN_TRIES} seconds!"
                 )
                 self.log.warning(msg)
-                self.log.debug(e)
+                self.log.warning(e)
                 time.sleep(SLEEP_BTWN_NODE_LOGIN_TRIES)
 
             else:
@@ -685,10 +686,8 @@ class Node:
                 isolated_network_mgr, config, self.ctx.name, volume, custom_squid_image
             )
         except Exception as e:
-            self.log.critical(
-                "Squid proxy failed to initialize. " "Continuing without."
-            )
-            self.log.debug(e, exc_info=True)
+            self.log.critical("Squid proxy failed to initialize. Continuing without.")
+            self.log.exception(e, exc_info=True)
             squid = None
 
         return squid
@@ -859,6 +858,11 @@ class Node:
                 # try again in another fashion
                 if next_mode:
                     self._connect_vpn(vpn_manager, next_mode, ovpn_file)
+                else:
+                    self.log.warning(
+                        "Disabling node-to-node communication as VPN "
+                        "connection could not be established."
+                    )
 
     def _get_vpn_config_file(self, ovpn_file: str) -> bool:
         """
@@ -978,12 +982,12 @@ class Node:
                         pass
 
                     except Exception as e:
-                        self.log.debug(e)
+                        self.log.warning(e)
 
                 if kill_listener.kill_now:
                     raise InterruptedError
 
-                # if task comes available, attempt to execute it
+                # if task becomes available, attempt to execute it
                 try:
                     self.__start_task(taskresult)
                 except Exception as e:
@@ -1085,7 +1089,7 @@ class Node:
         if col_names:
             config_to_share["database_columns"] = col_names
 
-        self.log.debug(f"Sharing node configuration: {config_to_share}")
+        self.log.debug("Sharing node configuration: %s", config_to_share)
         self.socketIO.emit("node_info_update", config_to_share, namespace="/tasks")
 
     def cleanup(self) -> None:

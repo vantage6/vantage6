@@ -42,12 +42,12 @@ def check_docker_running() -> None:
     try:
         docker_client = docker.from_env()
         docker_client.ping()
-    except Exception as e:
+    except Exception as exc:
         log.error(
             "Cannot reach the Docker engine! Please make sure Docker " "is running."
         )
-        log.warn("Exiting...")
-        log.debug(e)
+        log.exception(exc)
+        log.warning("Exiting...")
         exit(1)
 
 
@@ -82,10 +82,10 @@ def pull_image(docker_client: DockerClient, image: str) -> None:
     try:
         docker_client.images.pull(image)
         log.debug("Succeeded to pull image %s", image)
-    except docker.errors.APIError as e:
+    except docker.errors.APIError as exc:
         log.error("Failed to pull image! %s", image)
-        log.error(e)
-        raise docker.errors.APIError("Failed to pull image") from e
+        log.exception(exc)
+        raise docker.errors.APIError("Failed to pull image") from exc
 
 
 def get_container(docker_client: DockerClient, **filters) -> Container:
@@ -144,7 +144,7 @@ def remove_container(container: Container, kill: bool = False) -> None:
         container.remove(force=kill)
     except Exception as e:
         log.exception(f"Failed to remove container {container.name}")
-        log.debug(e)
+        log.exception(e)
 
 
 def stop_container(container: Container, force: bool = False):

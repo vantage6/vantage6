@@ -42,7 +42,7 @@ class MailService:
                 self.mail.send(msg)
             except Exception as e:
                 log.error("Mailserver error!")
-                log.debug(e)
+                log.exception(e)
 
     def send_email(
         self,
