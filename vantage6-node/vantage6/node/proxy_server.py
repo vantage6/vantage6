@@ -10,10 +10,11 @@ to access other places in the network.
 import requests
 import logging
 
+from time import sleep
 from http import HTTPStatus
 from requests import Response
 
-from flask import Flask, request, jsonify
+from flask import Flask, request
 
 from vantage6.common import bytes_to_base64s, base64s_to_bytes, logger_name
 from vantage6.common.client.node_client import NodeClient
@@ -46,7 +47,7 @@ def get_method(method: str) -> callable:
     """
     method_name: str = method.lower()
 
-    loopup = {
+    method_map = {
         "get": requests.get,
         "post": requests.post,
         "patch": requests.patch,
@@ -54,7 +55,7 @@ def get_method(method: str) -> callable:
         "delete": requests.delete,
     }
 
-    return loopup.get(method_name, requests.get)
+    return method_map.get(method_name, requests.get)
 
 
 def make_proxied_request(endpoint: str) -> Response:
@@ -137,16 +138,17 @@ def make_request(
 
         except Exception:
             log.exception(
-                f"On attempt {i}, the proxy request raised an " f"exception: <{url}>"
+                f"On attempt {i} to reach {url}, the proxy request raised an exception"
             )
+            sleep(1)
 
-    # if all attemps fail, raise an exception to be handled by its parent
+    # if all attempts fail, raise an exception to be handled by its parent
     raise Exception("Proxy request failed")
 
 
 def decrypt_result(run: dict) -> dict:
     """
-    Decrypt the `result` from a run dictonary
+    Decrypt the `result` from a run dictionary
 
     Parameters
     ----------
@@ -213,7 +215,10 @@ def proxy_task():
             "Task proxy request received but proxy server was not "
             "initialized properly."
         )
-        return jsonify({"msg": "Proxy server not initialized properly"}), 500
+        return (
+            {"msg": "Proxy server not initialized properly"},
+            HTTPStatus.INTERNAL_SERVER_ERROR,
+        )
 
     # All requests from algorithms are unencrypted. We encrypt the input
     # field for a specific organization(s) specified by the algorithm
@@ -222,7 +227,7 @@ def proxy_task():
 
     if not organizations:
         log.error("No organizations found in proxy request..")
-        return jsonify({"msg": "Organizations missing from input"}), 400
+        return {"msg": "Organizations missing from input"}, HTTPStatus.BAD_REQUEST
 
     try:
         headers = {"Authorization": request.headers["Authorization"]}
@@ -233,7 +238,7 @@ def proxy_task():
 
     # For every organization we need to encrypt the input field. This is done
     # in parallel as the client (algorithm) is waiting for a timely response.
-    # For every organizationn the public key is retrieved an the input is
+    # For every organization the public key is retrieved an the input is
     # encrypted specifically for them.
     def encrypt_input(organization: dict) -> dict:
         """
@@ -267,7 +272,9 @@ def proxy_task():
             base64s_to_bytes(input_), public_key
         )
 
-        log.debug("Input succesfully encrypted for organization " f"{organization_id}!")
+        log.debug(
+            "Input successfully encrypted for organization " f"{organization_id}!"
+        )
         return organization
 
     if client.is_encrypted_collaboration():
@@ -283,7 +290,7 @@ def proxy_task():
             "msg": "Request failed, see node logs"
         }, HTTPStatus.INTERNAL_SERVER_ERROR
 
-    return response.json(), HTTPStatus.OK
+    return response.content, response.status_code, response.headers.items()
 
 
 @app.route("/result", methods=["GET"])
@@ -299,13 +306,13 @@ def proxy_result() -> Response:
     Returns
     -------
     requests.Response
-        Reponse from the vantage6 server
+        Response from the vantage6 server
     """
     # We need the server io for the decryption of the results
     client = app.config.get("SERVER_IO")
     if not client:
         return (
-            jsonify({"msg": "Proxy server not initialized properly"}),
+            {"msg": "Proxy server not initialized properly"},
             HTTPStatus.INTERNAL_SERVER_ERROR,
         )
 
@@ -326,13 +333,13 @@ def proxy_result() -> Response:
             "msg": "Request failed, see node logs"
         }, HTTPStatus.INTERNAL_SERVER_ERROR
 
-    # Attempt to decrypt the results. The enpoint should have returned
+    # Attempt to decrypt the results. The endpoint should have returned
     # a list of results
     results = get_response_json_and_handle_exceptions(response)
     for result in results["data"]:
         result = decrypt_result(result)
 
-    return jsonify(results), HTTPStatus.OK
+    return results, response.status_code, response.headers.items()
 
 
 @app.route("/result/<int:id>", methods=["GET"])
@@ -371,7 +378,7 @@ def proxy_results(id_: int) -> Response:
     result = get_response_json_and_handle_exceptions(response)
     result = decrypt_result(result)
 
-    return result, HTTPStatus.OK
+    return result, response.status_code, response.headers.items()
 
 
 @app.route(
