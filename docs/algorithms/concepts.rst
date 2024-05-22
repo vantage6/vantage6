@@ -12,8 +12,8 @@ task from the vantage6-server. The node will then retrieve the algorithm,
 execute it and return the results to the server.
 
 Algorithms are shared using `Docker images <https://docs.docker.com/get-started
-/#what-is-a-container-image>`_ which are stored in a `Docker image registry
-<https://docs.vantage6.ai/installation/server/docker-registry>`_. The node
+/#what-is-a-container-image>`_ which are stored in a :ref:`Docker image registry
+<docker-registry>`. The node
 downloads the algorithms from the Docker registry. In the following sections we
 explain the fundamentals of algorithm containers.
 
