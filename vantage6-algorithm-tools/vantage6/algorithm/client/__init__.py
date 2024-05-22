@@ -1,4 +1,4 @@
-""" Client for the algorithm container to communicate with the central server. """
+""" Client for the algorithm container to communicate with the vantage6 server. """
 
 import jwt
 import json as json_lib
