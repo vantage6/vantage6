@@ -347,7 +347,7 @@ class ServerApp:
                 log.debug("404 error for route '%s'", _get_request_path(request))
             else:
                 log.warning("HTTP Exception occured during request")
-                log.warning(traceback.format_exc())
+                log.debug("Details exception: %s", traceback.format_exc())
             DatabaseSessionManager.clear_session()
             return error.get_response()
 
