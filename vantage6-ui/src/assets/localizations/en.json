@@ -15,18 +15,44 @@
     "online": "Online",
     "none": "None",
     "id": "ID",
-    "visualization": "Visualization"
+    "visualization": "Visualization",
+    "description": "Description",
+    "overview": "Overview",
+    "file-select": "Select file"
   },
   "resources": {
     "collaboration": "Collaboration",
+    "collaborations": "Collaborations",
     "organizations": "Organizations",
-    "study": "Study"
+    "study": "Study",
+    "roles": "Roles",
+    "users": "Users",
+    "nodes": "Nodes",
+    "tasks": "Tasks",
+    "algorithms": "Algorithms",
+    "algorithm": "Algorithm",
+    "stores": "Algorithm stores"
+  },
+  "links": {
+    "admin": "Administration",
+    "home": "Home",
+    "analyze": "Analyze",
+    "stores": "Algorithm store"
   },
   "home": {
     "title": "Home"
   },
   "start": {
+    "title": "Choose a collaboration",
     "no-collaborations": "Your organization is not part of any collaborations yet. Please contact your vantage6 project manager to set up a collaboration or go to the administration section to create a new collaboration."
+  },
+  "chosen-collaboration-alert": {
+    "content": "You have selected the collaboration '{{name}}'. The content displayed is specific to this collaboration.",
+    "change": "Change collaboration"
+  },
+  "chosen-store-alert": {
+    "content": "You have selected the algorithm store '{{name}}'. The content displayed is specific to this algorithm store.",
+    "change": "Change store"
   },
   "table": {
     "search-placeholder": "Search"
@@ -162,6 +188,89 @@
       "select": "Select quick task"
     }
   },
+  "algorithm": {
+    "image": "Image",
+    "partitioning": "Data partioning type",
+    "description": "Description",
+    "v6version": "Written for vantage6 version",
+    "function": {
+      "type": "Type of function",
+      "argument": {
+        "title": "Parameters",
+        "type": "Type of argument"
+      },
+      "databases": "Databases",
+      "visualization": {
+        "title": "Visualizations",
+        "type": "Type of visualization",
+        "details": "Visualization details"
+      }
+    }
+  },
+  "algorithm-list": {
+    "title": "Algorithms",
+    "no-algorithms": "No algorithms are available for your collaboration!",
+    "manage": "Manage algorithms"
+  },
+  "algorithm-read": {
+    "card-details": {
+      "title": "Details"
+    },
+    "crumb-title": "Algorithm",
+    "card-functions": {
+      "title": "Functions",
+      "no-functions": "This algorithm does not contain any functions. Please contact the algorithm store administrator.",
+      "no-parameters": "This function does not take any parameters.",
+      "no-databases": "This function does not use any data.",
+      "no-visualizations": "There are no preprogrammed visualizations available for this user interface."
+    },
+    "manage": "Manage algorithm",
+    "delete-dialog": {
+      "title": "Are you sure you want to delete the algorithm '{{name}}' from the store '{{store}}'?",
+      "content": "This operation cannot be undone."
+    },
+    "card-download-json": {
+      "title": "Download algorithm description",
+      "description": "You can use the algorithm JSON representation to upload this algorithm into another algorithm store. Also, it is recommended to store it in your algorithm's git repository so that you and others can easily upload it into algorithm stores in the future.",
+      "download-button": "Download JSON"
+    }
+  },
+  "algorithm-create": {
+    "title": "Add a new algorithm to the algorithm store",
+    "subtitle": "Add algorithm details",
+    "short-title": "Add algorithm",
+    "function": {
+      "title": "Function",
+      "add": "Add function",
+      "delete": "Delete function",
+      "parameter": {
+        "title": "Parameter",
+        "add": "Add function parameter",
+        "delete": "Delete parameter"
+      },
+      "database": {
+        "title": "Database",
+        "add": "Add function database",
+        "delete": "Delete database"
+      }
+    },
+    "card-from-json": {
+      "title": "Upload algorithm from JSON",
+      "description": "You can prefill this form by uploading an algorithm from a JSON file. This file is present when creating an algorithm with `v6 algorithm create`, or you may have downloaded it from another vantage6 algorithm store.",
+      "file-label": "Upload JSON file",
+      "error-title": "Error uploading algorithm from JSON"
+    }
+  },
+  "algorithm-edit": {
+    "success-dialog": {
+      "title": "Algorithm updated",
+      "message": "The algorithm has been updated successfully."
+    },
+    "error-dialog": {
+      "title": "Error updating algorithm",
+      "message": "An error occurred while updating the algorithm: {{error}}"
+    }
+  },
   "organization": {
     "name": "Name",
     "address1": "Address 1",
@@ -275,6 +384,22 @@
       "title": "Adding localhost algorithm store",
       "content": "You are adding an algorithm store running on localhost. This is insecure and should only be done for development servers. Are you sure you want to continue?",
       "confirm": "I understand, proceed."
+    }
+  },
+  "algorithm-store-list": {
+    "title": "Algorithm stores",
+    "no-stores": "No algorithm stores have been coupled to any of the collaborations you are allowed to view."
+  },
+  "algorithm-store-read": {
+    "title": "Algorithm store",
+    "card-collaborations": {
+      "title": "Collaborations",
+      "description": "This algorithm store is available to the following collaborations:"
+    },
+    "for-all-collaborations": "This algorithm store is available to all collaborations.",
+    "card-algorithms": {
+      "title": "Algorithms",
+      "description": "This algorithm store contains the following algorithms:"
     }
   },
   "role-create": {

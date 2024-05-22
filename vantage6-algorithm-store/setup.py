@@ -33,7 +33,7 @@ setup(
     install_requires=[
         "flasgger==0.9.5",
         "flask==2.2.5",
-        "Flask-Cors==3.0.10",
+        "Flask-Cors==4.0.1",
         "Flask-Principal==0.4.0",
         "flask-marshmallow==0.15.0",
         "Flask-RESTful==0.3.10",
@@ -43,7 +43,7 @@ setup(
         "requests==2.31.0",
         "schema==0.7.5",
         "SQLAlchemy==1.4.46",
-        "werkzeug==3.0.1",
+        "werkzeug==3.0.3",
         f'vantage6 == {version_ns["__version__"]}',
         f'vantage6-common == {version_ns["__version__"]}',
     ],

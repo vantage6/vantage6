@@ -96,6 +96,17 @@ import { StudyReadComponent } from './pages/collaboration/study/read/study-read.
 import { StudyCreateComponent } from './pages/collaboration/study/create/study-create.component';
 import { StudyFormComponent } from './components/forms/study-form/study-form.component';
 import { StudyEditComponent } from './pages/collaboration/study/edit/study-edit.component';
+import { AlgorithmListReadOnlyComponent } from './pages/algorithm/researcher/list/algorithm-list-read-only.component';
+import { AlgorithmReadOnlyComponent } from './pages/algorithm/researcher/read-only/algorithm-read-only.component';
+import { DisplayAlgorithmsComponent } from './components/algorithm/display-algorithms/display-algorithms.component';
+import { AlgorithmStoreListComponent } from './pages/algorithm-stores/list/algorithm-store-list.component';
+import { AlgorithmStoreReadComponent } from './pages/algorithm-stores/read/algorithm-store-read.component';
+import { AlgorithmReadComponent } from './pages/algorithm/admin/read/algorithm-read.component';
+import { DisplayAlgorithmComponent } from './components/algorithm/display-algorithm/display-algorithm.component';
+import { AlgorithmListComponent } from './pages/algorithm/admin/list/algorithm-list.component';
+import { AlgorithmCreateComponent } from './pages/algorithm/admin/create/algorithm-create.component';
+import { AlgorithmFormComponent } from './components/forms/algorithm-form/algorithm-form.component';
+import { AlgorithmEditComponent } from './pages/algorithm/admin/edit/algorithm-edit.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -165,7 +176,18 @@ export function HttpLoaderFactory(http: HttpClient) {
     StudyReadComponent,
     StudyCreateComponent,
     StudyFormComponent,
-    StudyEditComponent
+    StudyEditComponent,
+    AlgorithmListReadOnlyComponent,
+    AlgorithmReadOnlyComponent,
+    DisplayAlgorithmsComponent,
+    AlgorithmStoreListComponent,
+    AlgorithmStoreReadComponent,
+    AlgorithmReadComponent,
+    DisplayAlgorithmComponent,
+    AlgorithmListComponent,
+    AlgorithmCreateComponent,
+    AlgorithmFormComponent,
+    AlgorithmEditComponent
   ],
   imports: [
     BrowserModule,

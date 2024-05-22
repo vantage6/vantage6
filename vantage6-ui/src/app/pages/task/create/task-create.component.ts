@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { Algorithm, ArgumentType, AlgorithmFunction, Argument, FunctionType } from 'src/app/models/api/algorithm.model';
@@ -85,6 +85,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(
     private fb: FormBuilder,
     private router: Router,
+    private changeDetectorRef: ChangeDetectorRef,
     private algorithmService: AlgorithmService,
     private taskService: TaskService,
     private nodeService: NodeService,
@@ -116,10 +117,12 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     // setup repeating task if needed
     if (this.isTaskRepeat) {
       this.isLoading = true;
-      const taskID = this.router.url.split('/')[4];
+      const splitted = this.router.url.split('/');
+      const taskID = splitted[splitted.length - 1];
       await this.setupRepeatTask(taskID);
       this.isLoading = false;
     }
+    this.changeDetectorRef.detectChanges();
   }
 
   ngOnDestroy(): void {
@@ -251,7 +254,11 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
             kwargs[arg.name] = JSON.parse(value);
           } else if (arg.type === ArgumentType.Float || arg.type === ArgumentType.Integer) {
             kwargs[arg.name] = Number(value);
-          } else if (arg.type === ArgumentType.FloatList || arg.type === ArgumentType.IntegerList || arg.type === ArgumentType.OrganizationList) {
+          } else if (
+            arg.type === ArgumentType.FloatList ||
+            arg.type === ArgumentType.IntegerList ||
+            arg.type === ArgumentType.OrganizationList
+          ) {
             kwargs[arg.name] = value.map((_: string) => Number(_));
           } else {
             kwargs[arg.name] = value;
@@ -336,14 +343,23 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   shouldShowParameterSimpleInput(argument: Argument): boolean {
-    return !this.shouldShowColumnDropdown(argument) && !this.shouldShowOrganizationDropdown(argument) && !(this.shouldShowParameterBooleanInput(argument));
+    return (
+      !this.shouldShowColumnDropdown(argument) &&
+      !this.shouldShowOrganizationDropdown(argument) &&
+      !this.shouldShowParameterBooleanInput(argument)
+    );
   }
   shouldIncludeFormField(argument: Argument): boolean {
     return !this.shouldShowParameterBooleanInput(argument) && !this.shouldShowMultipleInput(argument);
   }
 
   shouldShowMultipleInput(argument: Argument): boolean {
-    return argument.type === this.argumentType.IntegerList || argument.type === this.argumentType.FloatList || argument.type === this.argumentType.StringList;
+    return (
+      argument.type === this.argumentType.IntegerList ||
+      argument.type === this.argumentType.FloatList ||
+      argument.type === this.argumentType.StringList ||
+      (argument.type === this.argumentType.ColumnList && this.columns.length === 0)
+    );
   }
 
   shouldShowParameterBooleanInput(argument: Argument): boolean {
@@ -355,7 +371,10 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   shouldShowColumnDropdown(argument: Argument): boolean {
-    return (argument.type === this.argumentType.Column || argument.type === this.argumentType.ColumnList) && (this.columns.length > 0 || this.isLoadingColumns);
+    return (
+      (argument.type === this.argumentType.Column || argument.type === this.argumentType.ColumnList) &&
+      (this.columns.length > 0 || this.isLoadingColumns)
+    );
   }
 
   containsColumnArguments(): boolean {
@@ -375,7 +394,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   getFormArrayControls(argument: Argument) {
-    if ((this.parameterForm.get(argument.name) as FormArray).controls === undefined){
+    if ((this.parameterForm.get(argument.name) as FormArray).controls === undefined) {
       this.parameterForm.setControl(argument.name, this.fb.array([this.getNewControlForInputList(argument)]));
     }
     return (this.parameterForm.get(argument.name) as FormArray).controls;
@@ -390,7 +409,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       return this.fb.control('', Validators.required);
     }
   }
-
 
   // compare function for mat-select
   compareIDsForSelection(id1: number | string, id2: number | string): boolean {
@@ -530,7 +548,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     //Find a random node that is online and that has shared their configuration
     const node = nodes?.find((_) => _.status === 'online' && _.config.length > 0) || null;
-    if (!node){
+    if (!node) {
       // if there is no node that has shared its configuration, go for the next best
       // thing: an online node (this will not work for tasks that require databases
       // but it is better than nothing)

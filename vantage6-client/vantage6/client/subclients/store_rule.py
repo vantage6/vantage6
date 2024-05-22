@@ -12,6 +12,8 @@ class StoreRuleSubClient(ClientBase.SubClient):
         name: str = None,
         operation: str = None,
         role: int = None,
+        username: str = None,
+        serverUrl: str = None,
         page: int = 1,
         per_page: int = 10,
     ) -> List[dict]:
@@ -26,6 +28,12 @@ class StoreRuleSubClient(ClientBase.SubClient):
             Filter by operation (view, create, update, delete, or review).
         role : int
             Filter by role id.
+        username : str
+            Filter by user using the username. Used in combination with 'serverUrl' to
+            identify a user.
+        serverUrl : str
+            Filter by user. Used in combination with 'username' to identify a user. If
+            not given, defaults to the server this client is connected to.
         page : int
             Page number for pagination (default=1)
         per_page : int
@@ -43,6 +51,10 @@ class StoreRuleSubClient(ClientBase.SubClient):
             "page": page,
             "per_page": per_page,
         }
+        if username:
+            params["username"] = username
+            params["server_url"] = serverUrl or self.parent.base_path
+
         return self.parent.request(
             "rule",
             is_for_algorithm_store=True,

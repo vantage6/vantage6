@@ -48,3 +48,37 @@ mat-toolbar {
     }
   }
 }
+
+.submenu {
+  overflow-y: hidden;
+  transition: transform 300ms ease;
+  height: 0;
+  // slight indent of submenus
+  padding-left: 20px;
+}
+.submenu.expanded {
+  height: auto;
+}
+
+.choice-alert {
+  width: 100%;
+  margin-bottom: $spacing-px-2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  // background-color: $warning-50;
+
+  div {
+    width: 100%;
+    flex-grow: 1;
+    display: inline-block;
+    margin-left: $spacing-px-2;
+    margin-top: $spacing-px-2;
+    margin-bottom: $spacing-px-2;
+  }
+
+  .right-aligned-button {
+    float: right;
+    margin-right: $spacing-px-2;
+  }
+}

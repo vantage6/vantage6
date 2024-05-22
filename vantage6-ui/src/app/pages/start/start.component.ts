@@ -1,6 +1,7 @@
 import { Component, HostBinding, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { BaseCollaboration, CollaborationSortProperties, GetCollaborationParameters } from 'src/app/models/api/collaboration.model';
+import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { routePaths } from 'src/app/routes';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { CollaborationService } from 'src/app/services/collaboration.service';
@@ -30,7 +31,11 @@ export class StartComponent implements OnInit {
 
   handleCollaborationClick(collaboration: BaseCollaboration) {
     this.chosenCollaborationService.setCollaboration(collaboration.id.toString());
-    this.router.navigate([routePaths.home]);
+    if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.VIEW)) {
+      this.router.navigate([routePaths.tasks]);
+    } else {
+      this.router.navigate([routePaths.analyzeHome]);
+    }
   }
 
   private async initData(): Promise<void> {

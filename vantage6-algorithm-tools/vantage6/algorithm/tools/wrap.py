@@ -1,6 +1,7 @@
 import os
 import importlib
 import traceback
+import json
 
 from typing import Any
 
@@ -154,8 +155,13 @@ def load_input(input_file: str) -> Any:
     with open(input_file, "rb") as fp:
         try:
             input_data = deserialization.deserialize(fp)
-        except DeserializationError:
-            raise DeserializationError("Could not deserialize input")
+        except DeserializationError as exc:
+            raise DeserializationError("Could not deserialize input") from exc
+        except json.decoder.JSONDecodeError as exc:
+            msg = "Algorithm input file does not contain vaild JSON data!"
+            error(msg)
+            error("Please check that the task input is JSON serializable.")
+            raise DeserializationError(msg) from exc
     return input_data
 
 

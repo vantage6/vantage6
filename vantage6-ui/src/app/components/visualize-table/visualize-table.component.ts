@@ -51,7 +51,7 @@ export class VisualizeTableComponent implements OnChanges {
   exportToCsv(): void {
     // Convert data to CSV format
     let csvData = this.columns.join(',') + '\n';
-    this.rows.forEach(row => {
+    this.rows.forEach((row) => {
       csvData += Object.values(row).join(',') + '\n';
     });
 

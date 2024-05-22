@@ -21,7 +21,8 @@ export class AuthService {
     private permissionService: PermissionService,
     private tokenStorageService: TokenStorageService,
     private socketConnectService: SocketioConnectService,
-    private loginErrorService: LoginErrorService
+    private loginErrorService: LoginErrorService,
+    private storePermissionService: PermissionService
   ) {}
 
   async isAuthenticated(): Promise<AuthResult> {
@@ -62,6 +63,7 @@ export class AuthService {
   logout(): void {
     this.tokenStorageService.clearSession();
     this.permissionService.clear();
+    this.storePermissionService.clear();
     this.socketConnectService.disconnect();
   }
 

@@ -5,7 +5,6 @@ import { saveAs } from 'file-saver';
   providedIn: 'root'
 })
 export class FileService {
-
   downloadTxtFile(text: string, filename: string): void {
     const blob = new Blob([text], { type: 'text/txt' });
     saveAs(blob, filename);

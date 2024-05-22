@@ -1,0 +1,35 @@
+<ng-container *ngIf="!isLoading && algorithm">
+  <app-page-header title="{{ algorithm.name }}">
+    <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="canDelete || canDelete">
+      <mat-icon>more_vert</mat-icon>
+    </button>
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item *ngIf="canEdit" [routerLink]="[routes.algorithmEdit, id]">
+        <mat-icon>edit</mat-icon>
+        <span>{{ "general.edit" | translate }}</span>
+      </button>
+      <button mat-menu-item *ngIf="canDelete" (click)="handleDelete()">
+        <mat-icon>delete</mat-icon>
+        <span>{{ "general.delete" | translate }}</span>
+      </button>
+    </mat-menu>
+  </app-page-header>
+  <app-display-algorithm [algorithm]="algorithm"></app-display-algorithm>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ "algorithm-read.card-download-json.title" | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p>{{ "algorithm-read.card-download-json.description" | translate }}</p>
+      <button mat-raised-button color="primary" (click)="downloadAlgorithmJson()">
+        <mat-icon>file_download</mat-icon>
+        <span>{{ "algorithm-read.card-download-json.download-button" | translate }}</span>
+      </button>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
+<mat-card *ngIf="isLoading">
+  <mat-card-content>
+    <mat-spinner diameter="48"></mat-spinner>
+  </mat-card-content>
+</mat-card>
