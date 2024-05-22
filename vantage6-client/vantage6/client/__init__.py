@@ -1,3 +1,5 @@
+""" Python client for user to communicate with the vantage6 server """
+
 from __future__ import annotations
 
 import logging
@@ -23,7 +25,6 @@ from vantage6.common.client.client_base import ClientBase
 from vantage6.client.subclients.study import StudySubClient
 from vantage6.client.subclients.algorithm import AlgorithmSubClient
 from vantage6.client.subclients.algorithm_store import AlgorithmStoreSubClient
-from vantage6.client.subclients.algorithm import AlgorithmSubClient
 
 
 module_name = __name__.split(".")[1]
