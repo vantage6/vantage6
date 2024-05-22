@@ -75,13 +75,9 @@ export class AuthService {
   }
 
   async passwordLost(forgotPasswordForm: LostPasswordForm): Promise<string> {
-    const data: LoginRecoverSubmit = {};
-    if (forgotPasswordForm.email) {
-      data.email = forgotPasswordForm.email;
-    }
-    if (forgotPasswordForm.username) {
-      data.username = forgotPasswordForm.username;
-    }
+    const data: LoginRecoverSubmit = {
+        email: forgotPasswordForm.email
+    };
     const result = await this.apiService.postForApi<LoginRecoverLost>('/recover/lost', data);
     if (result.msg) {
       return result.msg;

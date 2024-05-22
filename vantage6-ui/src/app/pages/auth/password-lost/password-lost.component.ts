@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ValidationErrors } from '@angular/forms';
+import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
 import { LoginErrorService } from 'src/app/services/login-error.service';
@@ -10,31 +10,16 @@ import { LoginErrorService } from 'src/app/services/login-error.service';
   styleUrls: ['./password-lost.component.scss']
 })
 export class PasswordLostComponent implements OnInit {
-  private emailOrUsername(group: FormGroup): ValidationErrors | null {
-    const email = group.controls['email'].value;
-    const username = group.controls['username'].value;
-    const hasAtLeastOne = email || username;
-    return hasAtLeastOne
-      ? null
-      : {
-          emailOrUsername: true
-        };
-  }
+  forgotPasswordForm = new FormGroup({
+    email: new FormControl('', [Validators.required, Validators.email])
+  });
 
-  forgotPasswordForm = this.fb.group(
-    {
-      username: [''],
-      email: ['']
-    },
-    { validator: this.emailOrUsername }
-  );
   executed_request = false;
   responseMsg = '';
   routes = routePaths;
 
   constructor(
     public loginErrorService: LoginErrorService,
-    private fb: FormBuilder,
     private authService: AuthService
   ) {}
 
@@ -45,10 +30,13 @@ export class PasswordLostComponent implements OnInit {
   async onSubmit(): Promise<void> {
     if (!this.forgotPasswordForm.valid) return;
 
-    const responseMsg = await this.authService.passwordLost(this.forgotPasswordForm.value);
-    if (responseMsg) {
-      this.executed_request = true;
-      this.responseMsg = responseMsg;
+    const emailValue = this.forgotPasswordForm.get('email')?.value;
+    if (emailValue) {
+      const responseMsg = await this.authService.passwordLost({ email: emailValue });
+      if (responseMsg) {
+        this.executed_request = true;
+        this.responseMsg = responseMsg;
+      }
     }
   }
 }
