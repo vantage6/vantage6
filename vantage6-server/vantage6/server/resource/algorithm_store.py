@@ -199,7 +199,12 @@ class AlgorithmStores(AlgorithmStoreBase):
         if not self.r_col.v_glo.can():
             collab_ids = [c.id for c in auth_org.collaborations]
             if self.r_col.v_org.can():
-                q = q.filter(db.AlgorithmStore.collaboration_id.in_(collab_ids))
+                q = q.filter(
+                    or_(
+                        db.AlgorithmStore.collaboration_id.in_(collab_ids),
+                        db.AlgorithmStore.collaboration_id.is_(None),
+                    )
+                )
             else:
                 return {
                     "msg": "You lack the permission to do that!"
