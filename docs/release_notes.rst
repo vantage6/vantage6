@@ -1,6 +1,74 @@
 Release notes
 =============
 
+4.5.0
+-----
+
+*23 May 2024*
+
+- **Security**
+
+ - Prevent that a collaboration admin extends their own permissions by expanding the
+   collaboration (`advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-99r4-cjp4-3hmx>`_,
+   `commit <https://github.com/vantage6/vantage6/commit/27f4ee3fade5f4cbcf3e60899c9a2a91145e0b56>`_).
+
+- **Feature**
+
+ - Visualization and management of algorithms in the UI
+   (`Issue#1115 <https://github.com/vantage6/vantage6/issues/1115>`_,
+   `PR#1261 <https://github.com/vantage6/vantage6/pull/1261>`_).
+ - Support encryption and decryption of results and task input in the UI
+   (`Issue#1140 <https://github.com/vantage6/vantage6/issues/1140>`_,
+   `PR#1248 <https://github.com/vantage6/vantage6/pull/1248>`_).
+ - Added client function ``client.algorithm.update()`` to update store algorithms
+   (`Issue#1089 <https://github.com/vantage6/vantage6/issues/1089>`_,
+   `PR#1277 <https://github.com/vantage6/vantage6/pull/1277>`_).
+ - Pass ``dbms`` environment variable to algorithm for OMOP connections
+   (`Issue#1036 <https://github.com/vantage6/vantage6/issues/1036>`_,
+   `PR#1267 <https://github.com/vantage6/vantage6/pull/1267>`_).
+ - Improved error message in client when wrong API path is provided
+   (`Issue#1001 <https://github.com/vantage6/vantage6/issues/1001>`_,
+   `PR#1252 <https://github.com/vantage6/vantage6/pull/1252>`_).
+
+- **Change**
+
+ - Default logging level changed from ``debug`` to ``info``
+   (`Issue#692 <https://github.com/vantage6/vantage6/issues/692>`_,
+   `PR#1216 <https://github.com/vantage6/vantage6/pull/1216>`_).
+ - Don't send column names request for OMOP and other databases
+   (`Issue#1117 <https://github.com/vantage6/vantage6/issues/1117>`_,
+   `PR#1272 <https://github.com/vantage6/vantage6/pull/1272>`_).
+ - Function documentation generated with Sphinx autosummary
+   (`PR#1279 <https://github.com/vantage6/vantage6/pull/1279>`_).
+ - New error classes and extra functionality for getting environment variables in the
+   algorithm tools (`PR#1226 <https://github.com/vantage6/vantage6/pull/1226>`_).
+ - Improved codacy and DOI badges in README (`PR#1271 <https://github.com/vantage6/vantage6/pull/1271>`_).
+ - Unpin uWSGI version which was fixed to mitigate a build issue with a previous latest
+   version of uWSGI
+   (`Issue#1208 <https://github.com/vantage6/vantage6/issues/1208>`_,
+   `PR#1217 <https://github.com/vantage6/vantage6/pull/1217>`_).
+
+- **Bugfix**
+
+ - Ensure button to register missing nodes does not show up when all nodes have been
+   registered (`Issue#1229 <https://github.com/vantage6/vantage6/issues/1229>`_,
+   `PR#1225 <https://github.com/vantage6/vantage6/pull/1225>`_).
+ - Prevent returning wrong status code by proxy server when creating subtasks
+   (`Issue#1241 <https://github.com/vantage6/vantage6/issues/1241>`_,
+   `PR#1268 <https://github.com/vantage6/vantage6/pull/1268>`_).
+ - In UI, when resetting password, fix check that the users enters the same new password
+   twice (`Issue#1228 <https://github.com/vantage6/vantage6/issues/1228>`_,
+   `PR#1256 <https://github.com/vantage6/vantage6/pull/1256>`_).
+ - In UI, fix console errors when repeating a task
+   (`Issue#1125 <https://github.com/vantage6/vantage6/issues/1125>`_,
+   `PR#1261 <https://github.com/vantage6/vantage6/pull/1261>`_).
+ - Fix error with undefined variable in deleting docker volumes
+   (`Issue#1263 <https://github.com/vantage6/vantage6/issues/1263>`_,
+   `PR#1264 <https://github.com/vantage6/vantage6/pull/1264>`_).
+ - Fixed an error in the ``MockClient`` that modified local mock data is shared with
+   subsequent calls
+   (`PR#1284 <https://github.com/vantage6/vantage6/pull/1284>`_).
+
 4.4.1
 -----
 
