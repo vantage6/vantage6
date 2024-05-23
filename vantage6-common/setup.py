@@ -41,7 +41,7 @@ setup(
         "PyYAML==6.0.1",
         "python-dateutil==2.8.2",
         "qrcode==7.3.1",
-        "requests==2.31.0",
+        "requests==2.32.2",
         "schema==0.7.5",
     ],
     extras_require={
