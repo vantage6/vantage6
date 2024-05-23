@@ -219,9 +219,11 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
         // add controls for all fields of the schema
         this.setSchemaControls(visSchemaForm, vis.type, funcIdx, visIdx);
         // set the values of the schema that were already defined before
-        Object.keys(vis.schema).forEach((key) => {
-          visSchemaForm.controls[key].setValue(vis.schema[key]);
-        });
+        if (vis.schema) {
+          Object.keys(vis.schema).forEach((key) => {
+            visSchemaForm.controls[key].setValue(vis.schema[key]);
+          });
+        }
         (functionFormGroup.controls['ui_visualizations'] as FormArray).push(visualizationFormGroup);
       });
       (this.form.controls.functions as FormArray).push(functionFormGroup);
