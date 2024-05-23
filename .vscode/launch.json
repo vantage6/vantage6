@@ -1,0 +1,34 @@
+{
+    "configurations": [
+        {
+            "name": "Debug: Server Planets",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "127.0.6.1",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "/vantage6"
+                }
+            ]
+        },
+        {
+            "name": "Debug: Node Mars",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "127.0.6.10",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "/vantage6"
+                }
+            ]
+        },
+    ]
+}

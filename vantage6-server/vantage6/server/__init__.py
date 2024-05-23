@@ -22,6 +22,7 @@ import json
 import time
 import datetime as dt
 import traceback
+import yaml
 
 from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
@@ -74,6 +75,7 @@ from vantage6.server.algo_store_communication import (
     post_algorithm_store,
     get_server_url,
 )
+from vantage6.server.controller import fixture
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -144,6 +146,16 @@ class ServerApp:
         host_uri = self.ctx.config.get("dev", {}).get("host_uri")
         if host_uri:
             os.environ[HOST_URI_ENV] = host_uri
+
+        fixtures = self.ctx.config.get("dev", {}).get("fixtures")
+        fixtures_drop_all = self.ctx.config.get("dev", {}).get("fixtures_drop_all", False)
+        if fixtures:
+            log.warning("Loading fixtures. This is meant for development purposes.")
+            with open(fixtures) as f:
+                entities = yaml.safe_load(f.read())
+
+            log.info("Adding entities to database.")
+            fixture.load(entities, drop_all=fixtures_drop_all)
 
         # couple any algoritm stores to the server if defined in config. This should be
         # done after the resources are loaded to ensure that rules are set up
@@ -818,3 +830,27 @@ def run_dev_server(server_app: ServerApp, *args, **kwargs) -> None:
     log.warn("*" * 80)
     kwargs.setdefault("log_output", False)
     server_app.socketio.run(server_app.app, *args, **kwargs)
+
+def run_dev_debug_server(config: str, system_folders: bool = True) -> Flask:
+    """
+    Run a vantage6 development server for debugging purposes.
+
+    Parameters
+    ----------
+    config: str
+        Configuration file path
+    system_folders: bool
+        Whether to use system or user folders. Default is True.
+
+    Returns
+    -------
+    Flask
+        A running instance of the vantage6 server
+    """
+    log.warn("*" * 80)
+    log.warn(" DEVELOPMENT DEBUGGING SERVER ".center(80, "*"))
+    log.warn("*" * 80)
+    ctx = ServerContext.from_external_config_file(config, system_folders)
+    allow_drop_all = ctx.config["allow_drop_all"]
+    Database().connect(uri=ctx.get_database_uri(), allow_drop_all=allow_drop_all)
+    return ServerApp(ctx).start().app

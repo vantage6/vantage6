@@ -1,6 +1,7 @@
 import click
 import docker
 from docker.client import DockerClient
+from pathlib import Path
 
 from vantage6.common import info, warning, error
 from vantage6.common.docker.network_manager import NetworkManager
@@ -139,19 +140,38 @@ def cli_server_start(
     if start_ui or ctx.config.get("ui") and ctx.config["ui"].get("enabled"):
         _start_ui(docker_client, ctx, ui_port)
 
-    # The `ip` and `port` refer here to the ip and port within the container.
-    # So we do not really care that is it listening on all interfaces.
-    internal_port = 5000
-    cmd = (
-        f"uwsgi --http :{internal_port} --gevent 1000 --http-websockets "
-        "--master --callable app --disable-logging "
-        "--wsgi-file /vantage6/vantage6-server/vantage6/server/wsgi.py "
-        f"--pyargv {config_file}"
-    )
-    info(cmd)
+    # port within the container
+    internal_port = ctx.config.get("internal_port", 5000)
+    # port on the host mapped to the internal port
+    host_port = str(port or ctx.config["port"] or ServerGlobals.PORT)
+    host_ip = ip or ctx.config.get("ip", "0.0.0.0")
+    ports={f"{internal_port}/tcp": (host_ip, host_port)}
+    # init script server.sh will read these env vars
+    environment_vars["VANTAGE6_SERVER_PORT"] = internal_port
+    # TODO: investigate & better way?
+    # NOTE: since it will listen within the container, something like 127.0.6.1 will not work
+    environment_vars["VANTAGE6_SERVER_HOST"] = "0.0.0.0"
 
-    info("Run Docker container")
-    port_ = str(port or ctx.config["port"] or ServerGlobals.PORT)
+    dev = ctx.config.get("dev", False)
+    if dev:
+        debugpy_path = dev.get("debugpy", {}).get("path", None)
+        if debugpy_path:
+            debugpy_port = dev.get("debugpy", {}).get("port", 5678)
+            debugpy_host = dev.get("debugpy", {}).get("host", host_ip)
+            environment_vars['VANTAGE6_DEV_DEBUGPY_RUN'] = "True"
+            environment_vars['VANTAGE6_DEV_DEBUGPY_PATH'] = debugpy_path
+            # TODO: investigate & better way?
+            # NOTE: since it will listen within the container, something like
+            #       127.0.6.1 will not work
+            environment_vars['VANTAGE6_DEV_DEBUGPY_HOST'] = "0.0.0.0"
+            environment_vars['VANTAGE6_DEV_DEBUGPY_PORT'] = debugpy_port
+            ports[f"{debugpy_port}/tcp"] = (debugpy_host, debugpy_port)
+            info("Debug mode enabled! Will run with debugpy")
+        warning("Will run in development mode")
+
+    cmd = "/vantage6/vantage6-server/server.sh"
+
+    info("Starting Docker container")
     container = docker_client.containers.run(
         image,
         command=cmd,
@@ -159,7 +179,7 @@ def cli_server_start(
         detach=True,
         labels={f"{APPNAME}-type": InstanceType.SERVER, "name": ctx.config_file_name},
         environment=environment_vars,
-        ports={f"{internal_port}/tcp": (ip, port_)},
+        ports=ports,
         name=ctx.docker_container_name,
         auto_remove=not keep,
         tty=True,

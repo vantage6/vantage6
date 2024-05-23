@@ -1,0 +1,45 @@
+algorithm_stores:
+- name: Community store
+  url: https://store.cotopaxi.vantage6.ai
+allow_drop_all: 'True'
+api_path: /api
+description: Development server
+ip: 127.0.6.1
+logging:
+  backup_count: 5
+  datefmt: '%Y-%m-%d %H:%M:%S'
+  file: dev-planets.log
+  format: '%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s'
+  level: DEBUG
+  loggers:
+  - level: warning
+    name: urllib3
+  - level: warning
+    name: socketIO-client
+  - level: warning
+    name: socketio.server
+  - level: warning
+    name: engineio.server
+  - level: warning
+    name: sqlalchemy.engine
+  - level: warning
+    name: requests_oauthlib.oauth2_session
+  max_size: 1024
+  use_console: true
+port: '5000'
+server_url: http://localhost:5000/api
+uri: sqlite:///default.sqlite
+
+cors_allowed_origins:
+  - '*'
+
+dev:
+  # path within container to yaml containing fixtures to be loaded
+  fixtures: /vantage6/dev/servers/planets/entities.yaml
+  debugpy:
+    # path within container to debugpy package
+    path: /vantage6/dev/debugpy
+    # port to listen on (optional)
+    port: 5678
+  # TODO: dropping in fixtures seems to be brokoen
+  fixtures_drop_all: False
