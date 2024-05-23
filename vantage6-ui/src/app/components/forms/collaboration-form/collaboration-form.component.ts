@@ -1,10 +1,13 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MatSelectChange } from '@angular/material/select';
+import { Subject, takeUntil } from 'rxjs';
 import { compareObjIDs } from 'src/app/helpers/general.helper';
 import { Collaboration, CollaborationForm } from 'src/app/models/api/collaboration.model';
 import { BaseOrganization, OrganizationSortProperties } from 'src/app/models/api/organization.model';
+import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { OrganizationService } from 'src/app/services/organization.service';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-collaboration-form',
@@ -14,6 +17,7 @@ export class CollaborationFormComponent implements OnInit {
   @Input() collaboration?: Collaboration;
   @Output() cancelled: EventEmitter<void> = new EventEmitter();
   @Output() submitted: EventEmitter<CollaborationForm> = new EventEmitter();
+  destroy$ = new Subject();
 
   form = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
@@ -23,6 +27,7 @@ export class CollaborationFormComponent implements OnInit {
   });
 
   isEdit: boolean = false;
+  canEditOrganizations: boolean = false;
   isLoading: boolean = true;
   newOrganizations: BaseOrganization[] = [];
   organizations: BaseOrganization[] = [];
@@ -30,11 +35,13 @@ export class CollaborationFormComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private organizationService: OrganizationService
+    private organizationService: OrganizationService,
+    private permissionService: PermissionService
   ) {}
 
   async ngOnInit(): Promise<void> {
     this.isEdit = !!this.collaboration;
+    this.setPermissions();
     if (this.collaboration) {
       this.form.controls.name.setValue(this.collaboration.name);
       this.form.controls.encrypted.setValue(this.collaboration.encrypted);
@@ -46,6 +53,17 @@ export class CollaborationFormComponent implements OnInit {
 
   get newOrganizationNames() {
     return this.newOrganizations.map((organization) => organization.name).join(', ');
+  }
+
+  private setPermissions() {
+    this.permissionService
+      .isInitialized()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((initialized) => {
+        if (initialized) {
+          this.canEditOrganizations = this.permissionService.isAllowed(ScopeType.GLOBAL, ResourceType.COLLABORATION, OperationType.EDIT);
+        }
+      });
   }
 
   async handleOrganizationChange(e: MatSelectChange): Promise<void> {
