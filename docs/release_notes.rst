@@ -65,6 +65,9 @@ Release notes
  - Fix error with undefined variable in deleting docker volumes
    (`Issue#1263 <https://github.com/vantage6/vantage6/issues/1263>`_,
    `PR#1264 <https://github.com/vantage6/vantage6/pull/1264>`_).
+ - Fixed an error in the ``MockClient`` that modified local mock data is shared with
+   subsequent calls
+   (`PR#1284 <https://github.com/vantage6/vantage6/pull/1284>`_).
 
 4.4.1
 -----
