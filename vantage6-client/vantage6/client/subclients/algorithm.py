@@ -184,12 +184,12 @@ class AlgorithmSubClient(ClientBase.SubClient):
     def update(
         self,
         id_: int,
-        name: str,
-        description: str,
-        image: str,
-        partitioning: str,
-        vantage6_version: str,
-        functions: List[dict],
+        name: str = None,
+        description: str = None,
+        image: str = None,
+        partitioning: str = None,
+        vantage6_version: str = None,
+        functions: List[dict] = None,
     ) -> dict:
         """
         Update an algorithm in the algorithm store
@@ -258,17 +258,24 @@ class AlgorithmSubClient(ClientBase.SubClient):
         dict
             The updated algorithm
         """
+        body = {}
+        if name:
+            body["name"] = name
+        if description:
+            body["description"] = description
+        if image:
+            body["image"] = image
+        if partitioning:
+            body["partitioning"] = partitioning
+        if vantage6_version:
+            body["vantage6_version"] = vantage6_version
+        if functions:
+            body["functions"] = functions
+
         return self.parent.request(
             f"algorithm/{id_}",
             method="PATCH",
             is_for_algorithm_store=True,
             headers=self.parent.util._get_server_url_header(),
-            json={
-                "name": name,
-                "image": image,
-                "partitioning": partitioning,
-                "vantage6_version": vantage6_version,
-                "functions": functions,
-                "description": description,
-            },
+            json=body,
         )

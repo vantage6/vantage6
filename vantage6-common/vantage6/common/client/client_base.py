@@ -564,7 +564,7 @@ class ClientBase(object):
         """
         if is_for_algorithm_store:
             try:
-                int(self.store.id)
+                int(self.store.store_id)
                 return True
             except AttributeError:
                 self.log.error(
