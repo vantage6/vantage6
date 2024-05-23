@@ -3551,10 +3551,15 @@ class TestResources(unittest.TestCase):
         algo_store.save()
         rule = Rule.get_by_("collaboration", Scope.ORGANIZATION, Operation.VIEW)
         headers = self.create_user_and_login(organization=org, rules=[rule])
-        # list
+
+        # list. We expect to find all stores without specified collaboration and this one
         results = self.app.get("/api/algorithmstore", headers=headers)
+        all_stores = AlgorithmStore.get()
+        num_stores_to_find = (
+            len([store for store in all_stores if store.collaboration_id == None]) + 1
+        )
         self.assertEqual(results.status_code, HTTPStatus.OK)
-        self.assertEqual(len(results.json["data"]), 1)
+        self.assertEqual(len(results.json["data"]), num_stores_to_find)
         # single record
         results = self.app.get(f"/api/algorithmstore/{algo_store.id}", headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
