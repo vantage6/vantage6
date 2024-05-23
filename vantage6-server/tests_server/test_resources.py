@@ -3556,7 +3556,7 @@ class TestResources(unittest.TestCase):
         results = self.app.get("/api/algorithmstore", headers=headers)
         all_stores = AlgorithmStore.get()
         num_stores_to_find = (
-            len([store for store in all_stores if store.collaboration_id == None]) + 1
+            len([store for store in all_stores if store.collaboration_id is None]) + 1
         )
         self.assertEqual(results.status_code, HTTPStatus.OK)
         self.assertEqual(len(results.json["data"]), num_stores_to_find)
