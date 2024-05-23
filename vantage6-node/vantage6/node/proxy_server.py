@@ -296,7 +296,7 @@ def proxy_task():
             "msg": "Request failed, see node logs"
         }, HTTPStatus.INTERNAL_SERVER_ERROR
 
-    return response.content, response.status_code, response.headers.items()
+    return response.content, response.status_code
 
 
 @app.route("/result", methods=["GET"])
@@ -345,7 +345,7 @@ def proxy_result() -> Response:
     for result in results["data"]:
         result = decrypt_result(result)
 
-    return results, response.status_code, response.headers.items()
+    return results, response.status_code
 
 
 @app.route("/result/<int:id>", methods=["GET"])
@@ -384,7 +384,7 @@ def proxy_results(id_: int) -> Response:
     result = get_response_json_and_handle_exceptions(response)
     result = decrypt_result(result)
 
-    return result, response.status_code, response.headers.items()
+    return result, response.status_code
 
 
 @app.route(
