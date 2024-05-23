@@ -248,7 +248,7 @@ class ClientBase(object):
                 ):
                     return {"msg": "Connection error"}
                 self.log.error("Connection error... Retrying")
-                self.log.debug(exc)
+                self.log.info(exc)
                 time.sleep(1)
 
         # TODO: should check for a non 2xx response
@@ -262,7 +262,7 @@ class ClientBase(object):
                     self.log.error("errors:" + str(response.json().get("errors")))
             except json_lib.JSONDecodeError:
                 self.log.error("Did not find a message from the server")
-                self.log.debug(response.content)
+                self.log.error(response.content)
 
             if retry:
                 if first_try:
@@ -381,9 +381,21 @@ class ClientBase(object):
         # authenticate to the central server
         url = self.generate_path_to(path, is_for_algorithm_store=False)
         response = requests.post(url, json=credentials)
-        data = response.json()
+        if response.status_code == 404:
+            self.log.error(
+                "Server not found at %s. Please check the address and whether the "
+                "server is running!",
+                url,
+            )
+            self.log.info(
+                "If the server is running and reachable, %s/health should give a "
+                "response.",
+                self.base_path,
+            )
+            return False
 
         # handle negative responses
+        data = response.json()
         if response.status_code > 200:
             self.log.critical(f"Failed to authenticate: {data.get('msg')}")
             if response.status_code == 401:
@@ -474,7 +486,7 @@ class ClientBase(object):
             input_ = cryptor.decrypt_str_to_bytes(input_)
 
         except Exception as e:
-            self.log.debug(e)
+            self.log.exception(e)
 
         return input_
 
@@ -552,7 +564,7 @@ class ClientBase(object):
         """
         if is_for_algorithm_store:
             try:
-                int(self.store.id)
+                int(self.store.store_id)
                 return True
             except AttributeError:
                 self.log.error(

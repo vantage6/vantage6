@@ -8,19 +8,30 @@ import {
   GetTaskParameters,
   KillTask,
   Task,
-  TaskLazyProperties
+  TaskLazyProperties,
+  TaskResult
 } from '../models/api/task.models';
 import { Pagination } from '../models/api/pagination.model';
 import { getLazyProperties } from '../helpers/api.helper';
 import { mockDataCrossTabTemplateTask, mockDataQualityTemplateTask } from '../pages/template-task/create/mock';
 import { TemplateTask } from '../models/api/templateTask.models';
 import { isTaskFinished } from '../helpers/task.helper';
+import { SnackbarService } from './snackbar.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ChosenCollaborationService } from './chosen-collaboration.service';
+import { EncryptionService } from './encryption.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TaskService {
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private snackBarService: SnackbarService,
+    private translateService: TranslateService,
+    private chosenCollaborationService: ChosenCollaborationService,
+    private encryptionService: EncryptionService
+  ) {}
 
   async getTasks(parameters?: GetTaskParameters): Promise<BaseTask[]> {
     const result = await this.apiService.getForApi<Pagination<BaseTask>>('/task', { ...parameters, per_page: 9999 });
@@ -40,7 +51,13 @@ export class TaskService {
 
     //Handle base64 input
     if (Array.isArray(task.runs) && task.runs.length > 0) {
-      const input = JSON.parse(atob(task.runs[0].input));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let input: any = undefined;
+      try {
+        input = this.getDecodedInput(task.runs[0].input);
+      } catch (e) {
+        this.snackBarService.showMessage(this.translateService.instant('task.alert-failed-read-input'));
+      }
       // TODO this may not always true: what if different runs have different inputs?
       if (input) {
         task.input = {
@@ -59,14 +76,11 @@ export class TaskService {
     if (Array.isArray(task.results) && task.results.length > 0) {
       for (const result of task.results) {
         if (result.result) {
-          result.decoded_result = JSON.parse(atob(result.result));
           // often, the parsed result is a stringified JSON object
           try {
-            if (typeof result.decoded_result === 'string'){
-              result.decoded_result = JSON.parse(result.decoded_result);
-            }
+            result.decoded_result = this.getDecodedResult(result);
           } catch (e) {
-            // do nothing
+            this.snackBarService.showMessage(this.translateService.instant('task.alert-failed-read-result'));
           }
         }
       }
@@ -105,5 +119,35 @@ export class TaskService {
       task = await this.getTask(id);
     }
     return task;
+  }
+
+  private getDecodedResult(taskResult: TaskResult): object | undefined {
+    if (!taskResult.result) return undefined;
+    // decrypt result
+    let decryptedResult: string;
+    if (this.chosenCollaborationService.isEncrypted()) {
+      decryptedResult = this.encryptionService.decryptData(taskResult.result);
+    } else {
+      // if not decrypted, just decode it
+      decryptedResult = atob(taskResult.result);
+    }
+    // decode result
+    const decodedResult = JSON.parse(decryptedResult);
+    if (typeof decodedResult === 'string') {
+      return JSON.parse(decodedResult);
+    }
+    return decodedResult;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private getDecodedInput(taskRunInput: string): any {
+    let decryptedInput: string;
+    if (this.chosenCollaborationService.isEncrypted()) {
+      decryptedInput = this.encryptionService.decryptData(taskRunInput);
+    } else {
+      decryptedInput = atob(taskRunInput);
+    }
+    // decode input
+    return JSON.parse(decryptedInput);
   }
 }

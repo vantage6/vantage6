@@ -120,6 +120,25 @@ class AlgorithmSubClient(ClientBase.SubClient):
                 - type: str
                     Type of the argument. Can be 'string', 'integer', 'float',
                     'boolean', 'json', 'column', 'organization' or 'organizations'
+            - ui_visualizations: list[dict]
+                List of UI visualizations of the function. Each visualization
+                is a dict with the following keys:
+                - name: str
+                    Name of the visualization
+                - description: str, optional
+                    Description of the visualization
+                - type: str
+                    Type of the visualization. Can be 'table'
+                - schema: dict, optional
+                    Visualization details. For example, for a table, the schema
+                    could be a dict with the following keys:
+                    - location: list[str]
+                        Where data to be visualized are stored in the results. For
+                        example, if the data is stored in the 'data' key of the
+                        results, the location would be ['data'].
+                    - columns: list[str]
+                        List of column names to visualize
+
 
         Returns
         -------
@@ -160,4 +179,103 @@ class AlgorithmSubClient(ClientBase.SubClient):
             method="delete",
             is_for_algorithm_store=True,
             headers=self.parent.util._get_server_url_header(),
+        )
+
+    def update(
+        self,
+        id_: int,
+        name: str = None,
+        description: str = None,
+        image: str = None,
+        partitioning: str = None,
+        vantage6_version: str = None,
+        functions: List[dict] = None,
+    ) -> dict:
+        """
+        Update an algorithm in the algorithm store
+
+        Parameters
+        ----------
+        id_ : int
+            Id of the algorithm
+        name : str
+            Name of the algorithm
+        description : str
+            Description of the algorithm
+        image : str
+            Docker image of the algorithm
+        partitioning : str
+            Partitioning of the algorithm (horizontal or vertical)
+        vantage6_version : str
+            Vantage6 version of the algorithm
+        functions : list[dict]
+            List of functions of the algorithm. Each function is a dict with
+            the following keys:
+            - name: str
+                Name of the function
+            - description: str, optional
+                Description of the function
+            - type: string
+                Type of the function (central or federated)
+            - databases: list[dict]
+                List of databases of the function. Each database is a dict with
+                the following keys:
+                - name: str
+                    Name of the database
+                - description: str, optional
+                    Description of the database
+            - arguments: list[dict]
+                List of arguments of the function. Each argument is a dict with
+                the following keys:
+                - name: str
+                    Name of the argument
+                - description: str, optional
+                    Description of the argument
+                - type: str
+                    Type of the argument. Can be 'string', 'integer', 'float',
+                    'boolean', 'json', 'column', 'organization' or 'organizations'
+            - ui_visualizations: list[dict]
+                List of UI visualizations of the function. Each visualization
+                is a dict with the following keys:
+                - name: str
+                    Name of the visualization
+                - description: str, optional
+                    Description of the visualization
+                - type: str
+                    Type of the visualization. Can be 'table'
+                - schema: dict, optional
+                    Visualization details. For example, for a table, the schema
+                    could be a dict with the following keys:
+                    - location: list[str]
+                        Where data to be visualized are stored in the results. For
+                        example, if the data is stored in the 'data' key of the
+                        results, the location would be ['data'].
+                    - columns: list[str]
+                        List of column names to visualize
+
+        Returns
+        -------
+        dict
+            The updated algorithm
+        """
+        body = {}
+        if name:
+            body["name"] = name
+        if description:
+            body["description"] = description
+        if image:
+            body["image"] = image
+        if partitioning:
+            body["partitioning"] = partitioning
+        if vantage6_version:
+            body["vantage6_version"] = vantage6_version
+        if functions:
+            body["functions"] = functions
+
+        return self.parent.request(
+            f"algorithm/{id_}",
+            method="PATCH",
+            is_for_algorithm_store=True,
+            headers=self.parent.util._get_server_url_header(),
+            json=body,
         )

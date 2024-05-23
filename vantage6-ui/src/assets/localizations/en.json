@@ -15,18 +15,56 @@
     "online": "Online",
     "none": "None",
     "id": "ID",
-    "visualization": "Visualization"
+    "visualization": "Visualization",
+    "description": "Description",
+    "overview": "Overview",
+    "file-select": "Select file"
   },
   "resources": {
     "collaboration": "Collaboration",
+    "collaborations": "Collaborations",
     "organizations": "Organizations",
-    "study": "Study"
+    "study": "Study",
+    "roles": "Roles",
+    "users": "Users",
+    "nodes": "Nodes",
+    "tasks": "Tasks",
+    "algorithms": "Algorithms",
+    "algorithm": "Algorithm",
+    "stores": "Algorithm stores"
+  },
+  "links": {
+    "admin": "Administration",
+    "home": "Home",
+    "analyze": "Analyze",
+    "stores": "Algorithm store"
   },
   "home": {
     "title": "Home"
   },
-  "start": {
-    "no-collaborations": "Your organization is not part of any collaborations yet. Please contact your vantage6 project manager to set up a collaboration or go to the administration section to create a new collaboration."
+  "choose-collaboration": {
+    "title": "Choose a collaboration",
+    "no-collaborations": "Your organization is not part of any collaborations yet. Please contact your vantage6 project manager to set up a collaboration or go to the administration section to create a new collaboration.",
+    "card-private-key": {
+      "title": "Upload private key",
+      "description": "Please upload a new private key if you want to want to change the key that is currently in use.",
+      "button": "Change private key"
+    }
+  },
+  "upload-key": {
+    "title": "Upload encryption key",
+    "description": "The collaboration that you selected is encrypted. To be able to view the analyses, you need to upload your private key. This key will be used to decrypt the data locally, and does not leave your browser.",
+    "file-label": "Upload PEM file"
+  },
+  "chosen-collaboration-alert": {
+    "content": "Selected collaboration",
+    "change": "Change collaboration",
+    "info": "The content displayed is specific to this collaboration"
+  },
+  "chosen-store-alert": {
+    "content": "Selected store",
+    "change": "Change store",
+    "info": "The content displayed is specific to this algorithm store"
   },
   "table": {
     "search-placeholder": "Search"
@@ -50,7 +88,9 @@
     "preprocessing-function": "Preprocessing function",
     "filter": "Filter",
     "filter-function": "Filter function",
-    "alert-node-offline": "The node '{{name}}' is offline. This task will be handled when the node is back online."
+    "alert-node-offline": "The node '{{name}}' is offline. This task will be handled when the node is back online.",
+    "alert-failed-read-input": "Failed to parse task input",
+    "alert-failed-read-result": "Failed to parse task result"
   },
   "task-run": {
     "assigned-at": "Created",
@@ -112,7 +152,8 @@
     },
     "step-parameters": {
       "title": "Define parameters",
-      "description": "Provide parameter values for the selected algorithm function"
+      "description": "Provide parameter values for the selected algorithm function",
+      "valid-json": "Please provide valid JSON input."
     },
     "alert-no-online-nodes": "You cannot create a task right now because no nodes are online in your collaboration. Online nodes are required to collect information on available databases and columns. Please try again later or contact your collaboration manager.",
     "alert-no-stores": "You cannot create a task because no algorithm stores are available to your collaboration. These are required to obtain the available algorithms from. Please contact your collaboration manager.",
@@ -160,6 +201,95 @@
     "title": "Quick task",
     "actions": {
       "select": "Select quick task"
+    }
+  },
+  "algorithm": {
+    "image": "Image",
+    "partitioning": "Data partioning type",
+    "description": "Description",
+    "v6version": "Written for vantage6 version",
+    "function": {
+      "type": "Type of function",
+      "argument": {
+        "title": "Parameters",
+        "type": "Type of argument"
+      },
+      "databases": "Databases",
+      "visualization": {
+        "title": "Visualizations",
+        "type": "Type of visualization",
+        "details": "Visualization details"
+      }
+    }
+  },
+  "algorithm-list": {
+    "title": "Algorithms",
+    "no-algorithms": "No algorithms are available for your collaboration!",
+    "manage": "Manage algorithms"
+  },
+  "algorithm-read": {
+    "card-details": {
+      "title": "Details"
+    },
+    "crumb-title": "Algorithm",
+    "card-functions": {
+      "title": "Functions",
+      "no-functions": "This algorithm does not contain any functions. Please contact the algorithm store administrator.",
+      "no-parameters": "This function does not take any parameters.",
+      "no-databases": "This function does not use any data.",
+      "no-visualizations": "There are no preprogrammed visualizations available for this user interface."
+    },
+    "manage": "Manage algorithm",
+    "delete-dialog": {
+      "title": "Are you sure you want to delete the algorithm '{{name}}' from the store '{{store}}'?",
+      "content": "This operation cannot be undone."
+    },
+    "card-download-json": {
+      "title": "Download algorithm description",
+      "description": "You can use the algorithm JSON representation to upload this algorithm into another algorithm store. Also, it is recommended to store it in your algorithm's git repository so that you and others can easily upload it into algorithm stores in the future.",
+      "download-button": "Download JSON"
+    }
+  },
+  "algorithm-create": {
+    "title": "Add a new algorithm to the algorithm store",
+    "subtitle": "Add algorithm details",
+    "short-title": "Add algorithm",
+    "function": {
+      "title": "Function",
+      "add": "Add function",
+      "delete": "Delete function",
+      "parameter": {
+        "title": "Parameter",
+        "add": "Add function parameter",
+        "delete": "Delete parameter"
+      },
+      "database": {
+        "title": "Database",
+        "add": "Add function database",
+        "delete": "Delete database"
+      },
+      "visualization": {
+        "title": "Visualization",
+        "explanation": "By adding this visualization, the results of your algorithm will automatically be visualized in this user interface.",
+        "add": "Add function visualization",
+        "delete": "Delete visualization"
+      }
+    },
+    "card-from-json": {
+      "title": "Upload algorithm from JSON",
+      "description": "You can prefill this form by uploading an algorithm from a JSON file. This file is present when creating an algorithm with `v6 algorithm create`, or you may have downloaded it from another vantage6 algorithm store.",
+      "file-label": "Upload JSON file",
+      "error-title": "Error uploading algorithm from JSON"
+    }
+  },
+  "algorithm-edit": {
+    "success-dialog": {
+      "title": "Algorithm updated",
+      "message": "The algorithm has been updated successfully."
+    },
+    "error-dialog": {
+      "title": "Error updating algorithm",
+      "message": "An error occurred while updating the algorithm: {{error}}"
     }
   },
   "organization": {
@@ -277,6 +407,22 @@
       "confirm": "I understand, proceed."
     }
   },
+  "algorithm-store-list": {
+    "title": "Algorithm stores",
+    "no-stores": "No algorithm stores have been coupled to any of the collaborations you are allowed to view."
+  },
+  "algorithm-store-read": {
+    "title": "Algorithm store",
+    "card-collaborations": {
+      "title": "Collaborations",
+      "description": "This algorithm store is available to the following collaborations:"
+    },
+    "for-all-collaborations": "This algorithm store is available to all collaborations.",
+    "card-algorithms": {
+      "title": "Algorithms",
+      "description": "This algorithm store contains the following algorithms:"
+    }
+  },
   "role-create": {
     "title": "Create role",
     "formlabels": {
@@ -323,7 +469,6 @@
       "port": "Port",
       "study": "Study"
     },
-
     "scope": {
       "label": "Scope",
       "own": "Own",
@@ -331,7 +476,6 @@
       "collaboration": "Collaboration",
       "global": "Global"
     },
-
     "operation": {
       "create": "Create",
       "edit": "Edit",
@@ -416,7 +560,7 @@
     "forgot-password": "Forgot your password?",
     "lost": {
       "title": "Lost your password?",
-      "instruction": "Fill in your username *or* email address in order to reset your password.",
+      "instruction": "Fill in your email address in order to reset your password.",
       "request-token": "Request reset token",
       "enter-token": "Enter your reset token",
       "already-reset": "Already have a reset token?"

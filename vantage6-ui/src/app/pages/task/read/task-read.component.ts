@@ -1,7 +1,8 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { getChipTypeForStatus, getStatusType, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
-import { Algorithm, AlgorithmFunction, FunctionType, Visualization } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmFunction, FunctionType } from 'src/app/models/api/algorithm.model';
+import { Visualization } from 'src/app/models/api/visualization.model';
 import { Task, TaskLazyProperties, TaskRun, TaskStatus, TaskResult, BaseTask, TaskStatusGroup } from 'src/app/models/api/task.models';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
@@ -68,7 +69,6 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     this.visualization.valueChanges.subscribe((value) => {
       this.selectedVisualization = this.function?.ui_visualizations?.[value || 0] || null;
     });
-    await this.initData();
 
     // subscribe to reload task data when url changes (i.e. other task is viewed)
     this.activatedRoute.params.pipe(takeUntil(this.destroy$)).subscribe(async (params) => {

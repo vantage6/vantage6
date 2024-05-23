@@ -8,6 +8,7 @@ import { TaskDBOutput } from 'src/app/models/api/task.models';
 
 @Component({
   selector: 'app-database-step',
+  styleUrls: ['./database-step.component.scss'],
   templateUrl: './database-step.component.html'
 })
 export class DatabaseStepComponent implements OnDestroy, OnChanges {

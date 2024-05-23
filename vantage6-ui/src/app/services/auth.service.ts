@@ -6,6 +6,7 @@ import { PermissionService } from './permission.service';
 import { TokenStorageService } from './token-storage.service';
 import { SocketioConnectService } from './socketio-connect.service';
 import { LoginErrorService } from './login-error.service';
+import { EncryptionService } from './encryption.service';
 
 @Injectable({
   providedIn: 'root'
@@ -21,7 +22,9 @@ export class AuthService {
     private permissionService: PermissionService,
     private tokenStorageService: TokenStorageService,
     private socketConnectService: SocketioConnectService,
-    private loginErrorService: LoginErrorService
+    private loginErrorService: LoginErrorService,
+    private storePermissionService: PermissionService,
+    private encryptionService: EncryptionService
   ) {}
 
   async isAuthenticated(): Promise<AuthResult> {
@@ -62,7 +65,9 @@ export class AuthService {
   logout(): void {
     this.tokenStorageService.clearSession();
     this.permissionService.clear();
+    this.storePermissionService.clear();
     this.socketConnectService.disconnect();
+    this.encryptionService.clear();
   }
 
   async changePassword(oldPassword: string, newPassword: string): Promise<void> {
@@ -73,13 +78,9 @@ export class AuthService {
   }
 
   async passwordLost(forgotPasswordForm: LostPasswordForm): Promise<string> {
-    const data: LoginRecoverSubmit = {};
-    if (forgotPasswordForm.email) {
-      data.email = forgotPasswordForm.email;
-    }
-    if (forgotPasswordForm.username) {
-      data.username = forgotPasswordForm.username;
-    }
+    const data: LoginRecoverSubmit = {
+        email: forgotPasswordForm.email
+    };
     const result = await this.apiService.postForApi<LoginRecoverLost>('/recover/lost', data);
     if (result.msg) {
       return result.msg;

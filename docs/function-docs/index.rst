@@ -5,18 +5,27 @@ Function documentation
 
 This part of the documentation documents the code of the vantage6
 infrastructure. It lists all the functions and classes and describes what they
-do and how they may be used. It is ordered by package: each of the subsections
-below represents a distinct PyPi package.
+do and how they may be used. Each part of the code is documented separately below.
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Contents:
+.. autosummary::
+   :toctree: _autosummary
+   :template: custom-module-template.rst
+   :recursive:
 
-   node
-   server
-   algorithm-store
-   cli
-   client
-   algorithm-tools
-   backend-common
-   common
+   vantage6.cli
+   vantage6.client
+   vantage6.algorithm.client
+   vantage6.algorithm.tools
+   vantage6.node
+   vantage6.server
+   vantage6.algorithm.store
+   vantage6.backend.common
+   vantage6.common
+
+.. note::
+
+   The API documentation is also included in this section, but as they are
+   formatted differently they are not displayed optimally. To view them as intended,
+   please view the :ref:`API documentation <oas3>` directly.
+
+

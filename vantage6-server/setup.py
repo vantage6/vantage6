@@ -34,7 +34,7 @@ setup(
         "bcrypt==4.0.1",
         "flasgger==0.9.5",
         "flask==2.2.5",
-        "Flask-Cors==3.0.10",
+        "Flask-Cors==4.0.1",
         "Flask-JWT-Extended==4.4.4",
         "Flask-Mail==0.9.1",
         "Flask-Principal==0.4.0",

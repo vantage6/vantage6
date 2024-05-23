@@ -1,4 +1,13 @@
+@import "../../../../../styles/config.scss";
+
 .field-description {
-  // font-style: italic;
-  margin-bottom: $spacing-px-2;
+    // font-style: italic;
+    margin-bottom: $spacing-px-2;
 }
+
+.detail-txt {
+    font-size: small;
+    color: grey;
+    display: inline;
+  }
+

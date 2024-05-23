@@ -58,7 +58,7 @@ def jsonable(value: list[Base] | Base) -> list | dict:
         return [jsonable(i) for i in value]
 
     elif isinstance(value, Base):
-        log.debug(f"preparing={value}")
+        log.debug("preparing=%s", value)
         retval = dict()
         mapper = sql.inspect(value.__class__)
 
@@ -67,7 +67,6 @@ def jsonable(value: list[Base] | Base) -> list | dict:
         ]
 
         for column in columns:
-            # log.debug(f"processing column={column}")
             column_value = getattr(value, column)
 
             if isinstance(column_value, enum.Enum):

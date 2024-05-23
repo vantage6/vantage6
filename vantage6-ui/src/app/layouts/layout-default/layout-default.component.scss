@@ -48,3 +48,46 @@ mat-toolbar {
     }
   }
 }
+
+.submenu {
+  overflow-y: hidden;
+  transition: transform 300ms ease;
+  height: 0;
+  // slight indent of submenus
+  padding-left: 20px;
+}
+
+.submenu.expanded {
+  height: auto;
+}
+
+.choice-alert {
+
+  background-color: map-get($vantage-primary, 900);
+  margin-bottom: $spacing-px-2;
+
+  mat-card-content {
+    display: flex;
+    justify-content: space-between;
+
+    @media (max-width: 1200px) {
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+
+      >*:not(:last-child) {
+        margin-bottom: $spacing-px-2;
+      }
+    }
+  }
+
+  span {
+    color: map-get($vantage-primary, 50);
+    display: flex;
+    align-items: center;
+
+    &.low-importance {
+      color: map-get($vantage-primary, 200);
+    }
+  }
+}

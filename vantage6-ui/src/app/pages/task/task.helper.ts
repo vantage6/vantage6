@@ -2,6 +2,7 @@ import { AbstractControl, FormControl, FormGroup, ValidationErrors, ValidatorFn,
 import { floatListRegex, floatRegex, intListRegex, integerRegex, stringListRegex } from 'src/app/helpers/regex.helper';
 import { AlgorithmFunction, ArgumentType } from 'src/app/models/api/algorithm.model';
 import { TaskDatabase } from 'src/app/models/api/task.models';
+import { Database } from 'src/app/models/api/node.model';
 
 function jsonValidator(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -75,4 +76,17 @@ export const getTaskDatabaseFromForm = (func: AlgorithmFunction | null, form: Fo
     taskDatabases.push(taskDatabase);
   });
   return taskDatabases;
+};
+
+export const getDatabaseTypesFromForm = (func: AlgorithmFunction | null, form: FormGroup): Database[] => {
+  const databases: Database[] = [];
+  func?.databases.forEach((functionDatabase) => {
+    const selected_database = form.get(`${functionDatabase.name}_name`)?.value || '';
+    const database: Database = {
+      name: selected_database.name,
+      type: selected_database.type
+    };
+    databases.push(database);
+  });
+  return databases;
 };

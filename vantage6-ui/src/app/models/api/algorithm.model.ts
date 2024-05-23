@@ -1,3 +1,6 @@
+import { NameDescription } from './base.model';
+import { Visualization, VisualizationForm } from './visualization.model';
+
 export enum ArgumentType {
   String = 'string',
   StringList = 'string_list',
@@ -36,7 +39,7 @@ export enum FilterParameterType {
   Date = 'date'
 }
 
-enum PartitioningType {
+export enum PartitioningType {
   Horizontal = 'horizontal',
   Vertical = 'vertical'
 }
@@ -44,11 +47,6 @@ enum PartitioningType {
 export enum FunctionType {
   Central = 'central',
   Federated = 'federated'
-}
-
-export enum VisualizationType {
-  Table = 'table',
-  Histogram = 'histogram',
 }
 
 // TODO this interface must be updated to match the API
@@ -63,9 +61,11 @@ export interface Algorithm {
   select?: Select[];
   filter?: Filter[];
   algorithm_store_url?: string;
+  algorith_store_id?: number;
 }
 
 export interface AlgorithmFunction {
+  id: number;
   name: string;
   description: string;
   type: FunctionType;
@@ -103,19 +103,33 @@ export interface FilterParameter {
 }
 
 export interface Argument {
+  id: number;
   name: string;
   type: ArgumentType;
   description?: string;
 }
 
 export interface FunctionDatabase {
+  id: number;
   name: string;
   description?: string;
 }
 
-export interface Visualization {
+interface ArgumentForm extends NameDescription {
+  type: string;
+}
+export interface FunctionForm extends NameDescription {
+  arguments: ArgumentForm[];
+  databases: NameDescription[];
+  ui_visualizations: VisualizationForm[];
+  type: string;
+}
+
+export interface AlgorithmForm {
   name: string;
   description?: string;
-  type: VisualizationType;
-  schema?: any;
+  image: string;
+  partitioning: string;
+  vantage6_version: string;
+  functions: FunctionForm[];
 }

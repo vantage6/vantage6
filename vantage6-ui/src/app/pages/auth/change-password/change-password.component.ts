@@ -78,7 +78,6 @@ export class ChangePasswordComponent implements OnInit, OnDestroy {
   }
 
   private goToPreviousPage(): void {
-    //TODO: Navigate to profile page
-    this.router.navigate([routePaths.start]);
+    this.router.navigate([routePaths.home]);
   }
 }

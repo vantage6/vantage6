@@ -40,17 +40,17 @@ import { HomeComponent } from './pages/home/home.component';
 import { LayoutDefaultComponent } from './layouts/layout-default/layout-default.component';
 import { OrganizationReadComponent } from './pages/organization/read/organization-read.component';
 import { TaskCreateComponent } from './pages/task/create/task-create.component';
-import { StartComponent } from './pages/start/start.component';
+import { ChooseCollaborationComponent } from './pages/choose-collaboration/choose-collaboration';
 import { TaskListComponent } from './pages/task/list/task-list.component';
 import { TaskReadComponent } from './pages/task/read/task-read.component';
 import { PageHeaderComponent } from './components/page-header/page-header.component';
-import { ChipComponent } from './components/chip/chip.component';
+import { ChipComponent } from './components/helpers/chip/chip.component';
 import { AlertComponent } from './components/alerts/alert/alert.component';
-import { StatusInfoComponent } from './components/status-info/status-info.component';
+import { StatusInfoComponent } from './components/helpers/status-info/status-info.component';
 import { LogDialogComponent } from './components/dialogs/log/log-dialog.component';
 import { ConfirmDialogComponent } from './components/dialogs/confirm/confirm-dialog.component';
-import { VisualizeResultComponent } from './components/visualize-result/visualize-result.component';
-import { VisualizeTableComponent } from './components/visualize-table/visualize-table.component';
+import { VisualizeResultComponent } from './components/visualization/visualize-result/visualize-result.component';
+import { VisualizeTableComponent } from './components/visualization/visualize-table/visualize-table.component';
 import { TableComponent } from './components/table/table.component';
 import { CollaborationReadComponent } from './pages/collaboration/read/collaboration-read.component';
 import { CollaborationListComponent } from './pages/collaboration/list/collaboration-list.component';
@@ -67,7 +67,7 @@ import { CollaborationFormComponent } from './components/forms/collaboration-for
 import { CollaborationEditComponent } from './pages/collaboration/edit/collaboration-edit.component';
 import { UserFormComponent } from './components/forms/user-form/user-form.component';
 import { UserEditComponent } from './pages/user/edit/user-edit.component';
-import { VisualizeHistogramComponent } from './components/visualize-histogram/visualize-histogram.component';
+import { VisualizeHistogramComponent } from './components/visualization/visualize-histogram/visualize-histogram.component';
 import { PreprocessingStepComponent } from './pages/task/create/steps/preprocessing-step/preprocessing-step.component';
 import { ChangePasswordComponent } from './pages/auth/change-password/change-password.component';
 import { MessageDialogComponent } from './components/dialogs/message-dialog/message-dialog.component';
@@ -80,7 +80,7 @@ import { RoleListComponent } from './pages/role/list/role-list.component';
 import { RoleReadComponent } from './pages/role/read/role-read.component';
 import { RoleCreateComponent } from './pages/role/create/role-create.component';
 import { PermissionsMatrixComponent } from './components/permissions-matrix/permissions-matrix.component';
-import { RoleFormComponent } from './components/role-form/role-form.component';
+import { RoleFormComponent } from './components/forms/role-form/role-form.component';
 import { OrderByPipe } from './pipes/order-by.pipe';
 import { SetupMfaComponent } from './pages/auth/setup-mfa/setup-mfa.component';
 import { MfaCodeComponent } from './pages/auth/mfa-code/mfa-code.component';
@@ -89,13 +89,25 @@ import { MfaLostComponent } from './pages/auth/mfa-lost/mfa-lost.component';
 import { AlertWithButtonComponent } from './components/alerts/alert-with-button/alert-with-button.component';
 import { PasswordLostComponent } from './pages/auth/password-lost/password-lost.component';
 import { PasswordRecoverComponent } from './pages/auth/password-recover/password-recover.component';
-import { RoleSubmitButtonsComponent } from './components/role-submit-buttons/role-submit-buttons.component';
+import { RoleSubmitButtonsComponent } from './components/helpers/role-submit-buttons/role-submit-buttons.component';
 import { AddAlgoStoreComponent } from './pages/collaboration/add-algo-store/add-algo-store.component';
 import { AlgorithmStoreFormComponent } from './components/forms/algorithm-store-form/algorithm-store-form.component';
 import { StudyReadComponent } from './pages/collaboration/study/read/study-read.component';
 import { StudyCreateComponent } from './pages/collaboration/study/create/study-create.component';
 import { StudyFormComponent } from './components/forms/study-form/study-form.component';
 import { StudyEditComponent } from './pages/collaboration/study/edit/study-edit.component';
+import { AlgorithmListReadOnlyComponent } from './pages/algorithm/researcher/list/algorithm-list-read-only.component';
+import { AlgorithmReadOnlyComponent } from './pages/algorithm/researcher/read-only/algorithm-read-only.component';
+import { DisplayAlgorithmsComponent } from './components/algorithm/display-algorithms/display-algorithms.component';
+import { AlgorithmStoreListComponent } from './pages/algorithm-stores/list/algorithm-store-list.component';
+import { AlgorithmStoreReadComponent } from './pages/algorithm-stores/read/algorithm-store-read.component';
+import { AlgorithmReadComponent } from './pages/algorithm/admin/read/algorithm-read.component';
+import { DisplayAlgorithmComponent } from './components/algorithm/display-algorithm/display-algorithm.component';
+import { AlgorithmListComponent } from './pages/algorithm/admin/list/algorithm-list.component';
+import { AlgorithmCreateComponent } from './pages/algorithm/admin/create/algorithm-create.component';
+import { AlgorithmFormComponent } from './components/forms/algorithm-form/algorithm-form.component';
+import { AlgorithmEditComponent } from './pages/algorithm/admin/edit/algorithm-edit.component';
+import { UploadPrivateKeyComponent } from './pages/choose-collaboration/upload-private-key/upload-private-key.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -112,7 +124,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     OrganizationCreateComponent,
     OrganizationReadComponent,
     TaskCreateComponent,
-    StartComponent,
+    ChooseCollaborationComponent,
     TaskListComponent,
     TaskReadComponent,
     PageHeaderComponent,
@@ -165,7 +177,19 @@ export function HttpLoaderFactory(http: HttpClient) {
     StudyReadComponent,
     StudyCreateComponent,
     StudyFormComponent,
-    StudyEditComponent
+    StudyEditComponent,
+    AlgorithmListReadOnlyComponent,
+    AlgorithmReadOnlyComponent,
+    DisplayAlgorithmsComponent,
+    AlgorithmStoreListComponent,
+    AlgorithmStoreReadComponent,
+    AlgorithmReadComponent,
+    DisplayAlgorithmComponent,
+    AlgorithmListComponent,
+    AlgorithmCreateComponent,
+    AlgorithmFormComponent,
+    AlgorithmEditComponent,
+    UploadPrivateKeyComponent
   ],
   imports: [
     BrowserModule,

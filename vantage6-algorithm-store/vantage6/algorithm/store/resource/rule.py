@@ -83,6 +83,18 @@ class Rules(AlgorithmStoreResources):
                 type: integer
               description: Get rules for a specific role
             - in: query
+              name: username
+              schema:
+                type: string
+              description: Get rules for a specific user. Should be used in combination
+                with server_url, as you need both to identify a user.
+            - in: query
+              name: server_url
+              schema:
+                type: string
+              description: Get rules for a specific user - server combination. Should be
+                used in combination with username, as you need both to identify a user.
+            - in: query
               name: page
               schema:
                 type: integer
@@ -139,30 +151,41 @@ class Rules(AlgorithmStoreResources):
                 .filter(db.Role.id == args["role_id"])
             )
 
-        # TODO implement user_id filter - should also take server into account
-        # # find all rules of a specific user. This is done by first joining all
-        # # tables to find all rules originating from a user's roles. Then, we
-        # # do an outer join to find all rules that are directly assigned to the
-        # # user.
-        # if "user_id" in args:
-        #     user = db.User.get(args["user_id"])
-        #     if not user:
-        #         return {
-        #             "msg": f'User with id={args["user_id"]} does not exist!'
-        #         }, HTTPStatus.BAD_REQUEST
-        #     q = (
-        #         q.join(db.role_rule_association)
-        #         .join(db.Role)
-        #         .join(db.Permission)
-        #         .join(db.User)
-        #         .outerjoin(db.UserPermission, db.Rule.id == db.UserPermission.c.rule_id)
-        #         .filter(
-        #             or_(
-        #                 db.User.id == args["user_id"],
-        #                 db.UserPermission.c.user_id == args["user_id"],
-        #             )
-        #         )
-        #     )
+        # filters to get rules of a specific user
+        username = args.get("username")
+        server_url = args.get("server_url")
+        if (username and not server_url) or (server_url and not username):
+            return {
+                "msg": "Both username and server_url are required to filter by user!"
+            }, HTTPStatus.BAD_REQUEST
+        elif username and server_url:
+            server = db.Vantage6Server.get_by_url(server_url)
+            if not server:
+                return {
+                    "msg": f'Server with url="{server_url}" is not whitelisted at this'
+                    "algorithm store!"
+                }, HTTPStatus.BAD_REQUEST
+            user = db.User.get_by_server(username, server.id)
+            if not user:
+                return {
+                    "msg": f'User with username="{username}" from server with url='
+                    f'"{server_url}" is not registered at this algorithm store!'
+                }, HTTPStatus.BAD_REQUEST
+            # TODO when algorithm store gets option to assign loose rules to users,
+            # uncomment and modify the lines in the query below
+            q = (
+                q.join(db.role_rule_association)
+                .join(db.Role)
+                .join(db.Permission)
+                .join(db.User)
+                # .outerjoin(db.UserPermission, db.Rule.id == db.UserPermission.c.rule_id)
+                .filter(
+                    # or_(
+                    db.User.username == username,
+                    # db.UserPermission.c.user_id == args["user_id"],
+                    # )
+                )
+            )
 
         # check if pagination is disabled
         paginate = True

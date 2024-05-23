@@ -1,0 +1,15 @@
+@import "../../../styles/config.scss";
+
+.button-container-separate {
+  margin-top: $spacing-px-4;
+  margin-bottom: $spacing-px-4;
+}
+
+mat-card {
+  margin-bottom: $spacing-px-4;
+}
+
+.field-description {
+  // font-style: italic;
+  margin-bottom: $spacing-px-2;
+}

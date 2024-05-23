@@ -1,3 +1,5 @@
+""" Client for the algorithm container to communicate with the vantage6 server. """
+
 import jwt
 import json as json_lib
 import time
@@ -264,7 +266,7 @@ class AlgorithmClient(ClientBase):
                     )
                 except Exception as e:
                     self.parent.log.error("Unable to load results")
-                    self.parent.log.debug(e)
+                    self.parent.log.exception(e)
             return result
 
         def from_task(self, task_id: int) -> list[Any]:
@@ -304,7 +306,7 @@ class AlgorithmClient(ClientBase):
                 ]
             except Exception as e:
                 self.parent.log.error("Unable to load results")
-                self.parent.log.debug(e)
+                self.parent.log.error(e)
 
             return decoded_results
 

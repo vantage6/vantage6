@@ -1,3 +1,7 @@
+"""
+Common functionality used in multiple vantage6 components.
+"""
+
 import os
 import base64
 import click

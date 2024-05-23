@@ -7,7 +7,7 @@
     <mat-checkbox formControlName="encrypted" color="primary" labelPosition="before">
       {{ "collaboration.encrypted" | translate }}
     </mat-checkbox>
-    <mat-form-field subscriptSizing="dynamic">
+    <mat-form-field subscriptSizing="dynamic" *ngIf="canEditOrganizations">
       <mat-label>{{ "collaboration.organizations" | translate }}</mat-label>
       <mat-select
         multiple

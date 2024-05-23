@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { Algorithm, ArgumentType, AlgorithmFunction, Argument, FunctionType } from 'src/app/models/api/algorithm.model';
@@ -10,7 +10,7 @@ import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
 import { Router } from '@angular/router';
 import { PreprocessingStepComponent } from './steps/preprocessing-step/preprocessing-step.component';
-import { addParameterFormControlsForFunction, getTaskDatabaseFromForm } from '../task.helper';
+import { addParameterFormControlsForFunction, getTaskDatabaseFromForm, getDatabaseTypesFromForm } from '../task.helper';
 import { DatabaseStepComponent } from './steps/database-step/database-step.component';
 import { FilterStepComponent } from './steps/filter-step/filter-step.component';
 import { NodeService } from 'src/app/services/node.service';
@@ -25,6 +25,7 @@ import { BaseOrganization } from 'src/app/models/api/organization.model';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { MAX_ATTEMPTS_RENEW_NODE, SECONDS_BETWEEN_ATTEMPTS_RENEW_NODE } from 'src/app/models/constants/wait';
 import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
+import { EncryptionService } from 'src/app/services/encryption.service';
 
 @Component({
   selector: 'app-task-create',
@@ -85,6 +86,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(
     private fb: FormBuilder,
     private router: Router,
+    private changeDetectorRef: ChangeDetectorRef,
     private algorithmService: AlgorithmService,
     private taskService: TaskService,
     private nodeService: NodeService,
@@ -92,7 +94,8 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     private socketioConnectService: SocketioConnectService,
     private snackBarService: SnackbarService,
     private translateService: TranslateService,
-    private organizationService: OrganizationService
+    private organizationService: OrganizationService,
+    private encryptionService: EncryptionService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -116,10 +119,12 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     // setup repeating task if needed
     if (this.isTaskRepeat) {
       this.isLoading = true;
-      const taskID = this.router.url.split('/')[4];
+      const splitted = this.router.url.split('/');
+      const taskID = splitted[splitted.length - 1];
       await this.setupRepeatTask(taskID);
       this.isLoading = false;
     }
+    this.changeDetectorRef.detectChanges();
   }
 
   ngOnDestroy(): void {
@@ -150,7 +155,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   async setupRepeatTask(taskID: string): Promise<void> {
-    // TODO there are console errors when we use this routine - figure out why and resolve them
     this.repeatedTask = await this.taskService.getTask(Number(taskID));
     if (!this.repeatedTask) {
       return;
@@ -267,6 +271,13 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       method: this.function?.name || '',
       kwargs: kwargs
     };
+    // encrypt the input for each organization
+    const inputPerOrg: { [key: string]: string } = {};
+    const inputStringified = btoa(JSON.stringify(input)) || '';
+    for (const organizationID of selectedOrganizations) {
+      const org_input = await this.encryptionService.encryptData(inputStringified, organizationID);
+      inputPerOrg[organizationID] = org_input;
+    }
 
     const createTask: CreateTask = {
       name: this.packageForm.controls.name.value,
@@ -275,7 +286,10 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       collaboration_id: this.collaboration?.id || -1,
       databases: taskDatabases,
       organizations: selectedOrganizations.map((organizationID) => {
-        return { id: Number.parseInt(organizationID), input: btoa(JSON.stringify(input)) || '' };
+        return {
+          id: Number.parseInt(organizationID),
+          input: inputPerOrg[organizationID] || ''
+        };
       })
       //TODO: Add preprocessing and filtering when backend is ready
     };
@@ -295,7 +309,18 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!this.node) return;
 
     // collect data to collect columns from database
-    const taskDatabases: TaskDatabase[] = getTaskDatabaseFromForm(this.function, this.databaseForm);
+    const taskDatabases = getTaskDatabaseFromForm(this.function, this.databaseForm);
+    const databases = getDatabaseTypesFromForm(this.function, this.databaseForm);
+
+    // the other and omop database types do not make use of the wrapper to load their
+    // data, so we cannot process them in this way. This will be improved when sessions
+    // are implemented
+    const database = databases[0];
+    if (database.type == 'other' || database.type == 'omop') {
+      this.isLoadingColumns = false;
+      return;
+    }
+
     // TODO modify when choosing database for preprocessing is implemented
     const taskDatabase = taskDatabases[0];
 
@@ -327,14 +352,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     } else {
       // a task has been started to retrieve the columns
       const task = await this.taskService.waitForResults(columnsOrTask.id);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      try {
-        const decodedResult: any = JSON.parse(atob(task.results?.[0].result || ''));
-        this.columns = decodedResult;
-      } catch (e) {
-        // TODO handle errors (both for retrieving columns and for retrieving the task)
-        console.error('Error decoding result from task', e);
-      }
+      this.columns = task.results?.[0].decoded_result || JSON.parse('');
     }
     this.isLoadingColumns = false;
   }

@@ -316,7 +316,7 @@ class ServerApp:
             """Before every flask request method."""
             # Add log message before each request
             log.debug(
-                f"Received request: {request.method} " f"{_get_request_path(request)}"
+                f"Received request: {request.method} {_get_request_path(request)}"
             )
 
             # This will obtain a (scoped) db session from the session factory
@@ -344,10 +344,10 @@ class ServerApp:
             sessions.
             """
             if error.code == 404:
-                log.debug(f"404 error for route '{_get_request_path(request)}'")
+                log.debug("404 error for route '%s'", _get_request_path(request))
             else:
-                log.warn("HTTP Exception occured during request")
-                log.debug(traceback.format_exc())
+                log.warning("HTTP Exception occured during request")
+                log.debug("Details exception: %s", traceback.format_exc())
             DatabaseSessionManager.clear_session()
             return error.get_response()
 
@@ -612,7 +612,7 @@ class ServerApp:
                 identity_changed.send(
                     current_app._get_current_object(), identity=auth_identity
                 )
-                log.debug(identity)
+                log.debug("identity %s", identity)
                 return identity
 
     def load_resources(self) -> None:
@@ -671,7 +671,7 @@ class ServerApp:
         try:
             db.User.get_by_username(SUPER_USER_INFO["username"])
         except Exception:
-            log.warn("No root user found! Is this the first run?")
+            log.warning("No root user found! Is this the first run?")
 
             log.debug("Creating organization for root user")
             org = db.Organization(name="root")
@@ -679,10 +679,10 @@ class ServerApp:
             # TODO use constant instead of 'Root' literal
             root = db.Role.get_by_name("Root")
 
-            log.warn(
-                f"Creating root user: "
-                f"username={SUPER_USER_INFO['username']}, "
-                f"password={SUPER_USER_INFO['password']}"
+            log.warning(
+                "Creating root user: username=%s, password=%s",
+                SUPER_USER_INFO["username"],
+                SUPER_USER_INFO["password"],
             )
 
             user = db.User(
