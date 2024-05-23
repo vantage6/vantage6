@@ -3572,7 +3572,7 @@ class TestResources(unittest.TestCase):
             query_string={"collaboration_id": col.id},
         )
         self.assertEqual(results.status_code, HTTPStatus.OK)
-        self.assertEqual(len(results.json["data"]), 1)
+        self.assertEqual(len(results.json["data"]), num_stores_to_find)
         results = self.app.get(f"/api/algorithmstore/{algo_store.id}", headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
