@@ -239,7 +239,9 @@ class MockAlgorithmClient:
                 if getattr(method, "wrapped_in_algorithm_client_decorator", False):
                     mocked_kwargs["mock_client"] = client_copy
                 if getattr(method, "wrapped_in_data_decorator", False):
-                    mocked_kwargs["mock_data"] = data
+                    # make a copy of the data to avoid modifying the original data of
+                    # subsequent tasks
+                    mocked_kwargs["mock_data"] = [d.copy() for d in data]
 
                 result = method(*args, **kwargs, **mocked_kwargs)
 
