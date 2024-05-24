@@ -56,13 +56,29 @@ debug:
 
 # Settings for the algorithm store's policies
 policies:
-  # Set to `true` to allow anyone to view and run the algorithms in the store.
-  algorithms_open: true
-  # Set to `true` to allow any user from whitelisted vantage6 servers to view and run
-  # the algorithms in the store. Superfluous if `algorithms_open` is set to `true`.
-  # If this is set to `false`, only users with specific roles in the algorithm store
-  # can view the algorithms in the store.
-  algorithms_open_to_whitelisted: true
+  # Set who is allowed to view the algorithms in the store. Possible values are:
+  # - "public": everyone can view the algorithms
+  # - "whitelisted": only users from whitelisted servers can view the algorithms
+  # - "private": only users with explicit permission in the algorithm store can view the
+  #   algorithms
+  algorithm_view: "public"
+
+  # List of servers that are allowed to connect to the algorithms in the store. This
+  # setting can be used together with "whitelisted" algorithm_view policy: only these
+  # servers will ever be able to connect to the store
+  allowed_servers:
+    - "https://cotopaxi.vantage6.ai"
+    - "http://localhost:5000/api"
+
+  # List of servers of which users may be allowed to gain specific permissions in the
+  # algorithm store. Users of other servers may not be given any permissions.
+  allowed_servers_edit:
+    - "https://cotopaxi.vantage6.ai"
+
+  # Localhost servers are by default never allowed to connect to the algorithm store,
+  # even if no allowed servers lists are given. This setting can be used to allow
+  # localhost servers to connect.
+  allow_localhost: false
 
 # development mode settings. Only use when running both the algorithm store and
 # the server that it communicates with locally

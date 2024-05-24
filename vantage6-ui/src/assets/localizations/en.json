@@ -421,6 +421,23 @@
     "card-algorithms": {
       "title": "Algorithms",
       "description": "This algorithm store contains the following algorithms:"
+    },
+    "card-policies": {
+      "title": "Policies",
+      "description": "This algorithm store has the following policies:"
+    }
+  },
+  "store-policies": {
+    "type": "Type",
+    "policy": "Policy",
+    "algorithm_view": "Who can view algorithms?",
+    "allowed_servers": "Which servers are allowed to access the store's algorithms?",
+    "allowed_servers_edit": "From which servers are users allowed to make changes to the store?",
+    "allow_localhost": "Are localhost servers allowed to access the store?",
+    "algorithm_view-values": {
+      "public": "Everyone",
+      "whitelisted": "All users from whitelisted servers",
+      "private": "Only users with explicit permission"
     }
   },
   "role-create": {

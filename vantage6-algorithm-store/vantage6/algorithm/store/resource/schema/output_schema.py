@@ -12,6 +12,7 @@ from vantage6.algorithm.store.model.rule import Rule
 from vantage6.algorithm.store.model.ui_visualization import UIVisualization
 from vantage6.algorithm.store.model.user import User
 from vantage6.algorithm.store.model.review import Review
+from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 
 
@@ -164,3 +165,9 @@ class ReviewOutputSchema(HATEOASModelSchema):
     reviewers = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="user", link_from="review")
     )
+
+
+class PolicyOutputSchema(HATEOASModelSchema):
+    class Meta:
+        model = Policy
+        exclude = ("id",)

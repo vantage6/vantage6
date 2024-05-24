@@ -1,13 +1,19 @@
+"""
+Marshmallow schemas for validating input data for the API.
+"""
+
 from marshmallow import Schema, fields, ValidationError, validates, validates_schema
-from marshmallow.validate import Range
+import marshmallow.validate as validate
 from jsonschema import validate as json_validate
 
+from vantage6.common.enum import AlgorithmViewPolicies
 from vantage6.algorithm.store.model.common.enums import (
     Partitioning,
     FunctionType,
     ArgumentType,
     VisualizationType,
 )
+
 from vantage6.algorithm.store.model.common.ui_visualization_schemas import (
     get_schema_for_visualization,
 )
@@ -134,7 +140,7 @@ class UIVisualizationInputSchema(_NameDescriptionSchema):
 class UserInputSchema(Schema):
     """Schema for validating input for creating a user."""
 
-    roles = fields.List(fields.Integer(validate=Range(min=1)))
+    roles = fields.List(fields.Integer(validate=validate.Range(min=1)))
     username = fields.String()
 
 
@@ -145,3 +151,19 @@ class Vantage6ServerInputSchema(Schema):
 
     url = fields.String(required=True)
     force = fields.Boolean()
+
+
+class PolicyInputSchema(Schema):
+    """
+    Schema for the input of policies.
+
+    Note that the keys in this schema should match the values in the Policies enum.
+    The Policies enum is for convenience to check against the keys.
+    """
+
+    algorithm_view = fields.String(
+        validate=validate.OneOf([p.value for p in AlgorithmViewPolicies])
+    )
+    allowed_servers = fields.List(fields.String())
+    allowed_servers_edit = fields.List(fields.String())
+    allow_localhost = fields.Boolean()

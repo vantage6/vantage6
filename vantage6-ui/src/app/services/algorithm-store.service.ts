@@ -4,7 +4,8 @@ import {
   AlgorithmStore,
   AlgorithmStoreLazyProperties,
   BaseAlgorithmStore,
-  EditAlgorithmStore
+  EditAlgorithmStore,
+  StorePolicy
 } from '../models/api/algorithmStore.model';
 import { ApiService } from './api.service';
 import { environment } from 'src/environments/environment';
@@ -43,5 +44,10 @@ export class AlgorithmStoreService {
 
   async delete(id: string): Promise<void> {
     return await this.apiService.deleteForApi(`/algorithmstore/${id}`, { server_url: `${environment.server_url}${environment.api_path}` });
+  }
+
+  async getAlgorithmStorePolicies(store_url: string): Promise<StorePolicy[]> {
+    const result = await this.apiService.getForAlgorithmApi<Pagination<StorePolicy>>(store_url, '/api/policy');
+    return result.data;
   }
 }
