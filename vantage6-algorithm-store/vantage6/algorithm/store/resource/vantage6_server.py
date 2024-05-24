@@ -3,7 +3,9 @@ import logging
 from flask import g, request
 from flask_restful import Api
 from http import HTTPStatus
+
 from vantage6.common import logger_name
+from vantage6.common.enum import StorePolicies
 from vantage6.algorithm.store.resource.schema.input_schema import (
     Vantage6ServerInputSchema,
 )
@@ -13,6 +15,7 @@ from vantage6.algorithm.store.resource.schema.output_schema import (
 from vantage6.algorithm.store.model.vantage6_server import (
     Vantage6Server as db_Vantage6Server,
 )
+from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.resource import with_authentication
 
 # TODO move to common / refactor
@@ -131,6 +134,8 @@ class Vantage6Servers(AlgorithmStoreResources):
             description: Invalid input
           401:
             description: Unauthorized
+          403:
+            description: Forbidden by algorithm store policies
 
         security:
           - bearerAuth: []
@@ -158,6 +163,18 @@ class Vantage6Servers(AlgorithmStoreResources):
                 "whitelist localhost, please specify the 'force' parameter in"
                 " the request body."
             }, HTTPStatus.BAD_REQUEST
+
+        # Check with the policies if the server is allowed to be whitelisted
+        policies = Policy.get()
+        allowed_servers = []
+        for policy in policies:
+            if policy.key == StorePolicies.ALLOWED_SERVERS:
+                allowed_servers.append(policy.value)
+        if allowed_servers and data["url"] not in allowed_servers:
+            return {
+                "msg": "This server is not allowed to be whitelisted by the "
+                "administrator of this algorithm store instance."
+            }, HTTPStatus.FORBIDDEN
 
         # delete any existing record with the same url to prevent duplicates
         existing_server = db_Vantage6Server.get_by_url(data["url"])

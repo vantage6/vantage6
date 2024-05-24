@@ -3,7 +3,7 @@ from enum import Enum
 POLICY_ALLOW_ALL = "all"
 
 
-class StorePolicies(Enum):
+class StorePolicies(str, Enum):
     """
     Enum for the different types of policies of the algorithm store.
     """

@@ -14,6 +14,7 @@ from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 from vantage6.algorithm.store.model.user import User
 from vantage6.algorithm.store.permission import RuleNeed
 from vantage6.backend.common.services_resources import BaseServicesResources
+from vantage6.common.enum import AlgorithmViewPolicies, DefaultStorePolicies
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -267,8 +268,14 @@ def with_permission_to_view_algorithms(resource: str, operation: Operation) -> c
         def decorator(self, *args, **kwargs):
             # check if everyone has permission to view algorithms
             policies = self.config.get("policies", {})
+
+            algorithm_view_policy = policies.get(
+                "algorithm_view", DefaultStorePolicies.ALGORITHM_VIEW.value
+            )
+
+            # TODO v5+ remove this deprecated policy
             anyone_can_view = policies.get("algorithms_open", False)
-            if anyone_can_view:
+            if anyone_can_view or algorithm_view_policy == AlgorithmViewPolicies.PUBLIC:
                 return fn(self, *args, **kwargs)
 
             # not everyone has permission: authenticate with server
@@ -277,8 +284,12 @@ def with_permission_to_view_algorithms(resource: str, operation: Operation) -> c
                 return response, status
 
             # check if all authenticated users have permission to view algorithms
+            # TODO v5+ remove this deprecated policy
             any_user_can_view = policies.get("algorithms_open_to_whitelisted", False)
-            if any_user_can_view:
+            if (
+                any_user_can_view
+                or algorithm_view_policy == AlgorithmViewPolicies.WHITELISTED
+            ):
                 return fn(self, *args, **kwargs)
 
             # not all authenticated users have permission: authorize user

@@ -9,6 +9,7 @@ from flask_restful import Api
 
 from vantage6.algorithm.store.model import Vantage6Server
 from vantage6.algorithm.store.model.rule import Operation
+from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.resource import with_permission, AlgorithmStoreResources
 from vantage6.common import logger_name
 from vantage6.backend.common.resource.pagination import Pagination
@@ -18,6 +19,7 @@ from vantage6.algorithm.store.model.user import User as db_User
 
 from vantage6.algorithm.store.resource.schema.input_schema import UserInputSchema
 from vantage6.algorithm.store.resource.schema.output_schema import UserOutputSchema
+from vantage6.common.enum import StorePolicies
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -224,6 +226,18 @@ class Users(AlgorithmStoreResources):
         # check unique constraints
         if db.User.get_by_server(username=data["username"], v6_server_id=server.id):
             return {"msg": "User already registered."}, HTTPStatus.BAD_REQUEST
+
+        # check whether users of this server are allowed to get any permissions
+        policies = Policy.get()
+        allowed_servers_to_edit = []
+        for policy in policies:
+            if policy.name == StorePolicies.ALLOWED_SERVERS_EDIT:
+                allowed_servers_to_edit.append(policy.value)
+        if allowed_servers_to_edit and server.url not in allowed_servers_to_edit:
+            return {
+                "msg": f"Users from the server {server.url} are not allowed to be "
+                "registered in the algorithm store by its administrator."
+            }, HTTPStatus.FORBIDDEN
 
         # process the required roles. It is only possible to assign roles with
         # rules that you already have permission to. This way we ensure you can
