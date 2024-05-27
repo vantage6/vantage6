@@ -12,12 +12,12 @@ collaborations:
       - name: "Mars"
         # dev/test key
         api_key: "d83ef105-cafe-face-ba58-4ae79eab9b71"
-      - name: "Saturn"
-        # dev/test key
-        api_key: "b991d24f-beef-feed-baff-0bc78b70dbec"
       - name: "Jupiter"
         # dev/test key
         api_key: "afdf68da-dead-beef-9594-c68b0ed821ca"
+      - name: "Saturn"
+        # dev/test key
+        api_key: "b91d24f-beef-feed-baff-0b9c78b70dbec"
 
 organizations:
   - name: "Mars"

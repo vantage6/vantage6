@@ -1,0 +1,31 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Start debug server",
+            "command": "dev/scripts/start-debug-server.sh",
+            "type": "shell",
+            "args": [],
+            "problemMatcher": [
+                "$tsc"
+            ],
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "none"
+        },
+        {
+            "label": "Start debug node mars",
+            "command": "dev/scripts/start-debug-node-mars.sh",
+            "type": "shell",
+            "args": [],
+            "problemMatcher": [
+                "$tsc"
+            ],
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "none"
+        },
+    ]
+}

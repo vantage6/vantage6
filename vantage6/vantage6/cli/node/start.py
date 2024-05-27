@@ -235,7 +235,10 @@ def cli_node_start(
         label_capitals = label.upper()
 
         try:
-            file_based = Path(uri).exists()
+            file_based = Path(uri).exists() and Path(uri).is_file()
+            if file_based and not Path(uri).is_absolute():
+                # we convert to absolute path as it is required by docker when mounting
+                uri = Path(uri).absolute()
         except Exception:
             # If the database uri cannot be parsed, it is definitely not a
             # file. In case of http servers or sql servers, checking the path
@@ -252,11 +255,25 @@ def cli_node_start(
             env[f"{label_capitals}_DATABASE_URI"] = f"{label}{suffix}"
             mounts.append((f"/mnt/{label}{suffix}", str(uri)))
 
-    system_folders_option = "--system" if system_folders else "--user"
-    cmd = (
-        f"vnode-local start -c /mnt/config/{name}.yaml -n {name} "
-        f" --dockerized {system_folders_option}"
-    )
+    ports = {}
+    cmd = "/vantage6/vantage6-node/node.sh"
+
+    dev = ctx.config.get("dev", False)
+    if dev:
+        warning("Will run in development mode")
+        debugpy_path = dev.get("debugpy", {}).get("path", None)
+        if debugpy_path:
+            debugpy_port = dev.get("debugpy", {}).get("port", 5678)
+            debugpy_host = dev.get("debugpy", {}).get("host", "0.0.0.0")
+            env["VANTAGE6_DEV_DEBUGPY_PATH"] = debugpy_path
+            # This script (cli_server_start) will start the server in a container,
+            # hence binding do 127.0.0.0/8 would restrict it to within the container itself.
+            # So, for now, we switch internal binding address to 0.0.0.0
+            env["VANTAGE6_DEV_DEBUGPY_HOST"] = "0.0.0.0"
+            env["VANTAGE6_DEV_DEBUGPY_PORT"] = debugpy_port
+            ports[f"{debugpy_port}/tcp"] = (debugpy_host, debugpy_port)
+            cmd = "/vantage6/vantage6-node/node-debug.sh"
+            info("Debug mode enabled! Will run with debugpy")
 
     volumes = []
     for mount in mounts:
@@ -307,6 +324,8 @@ def cli_node_start(
         auto_remove=not keep,
         tty=True,
         extra_hosts=extra_hosts,
+        # 'ports' is only populated if in dev mode
+        ports=ports
     )
 
     info("Node container was successfully started!")

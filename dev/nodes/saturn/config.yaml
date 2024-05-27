@@ -1,0 +1,102 @@
+# API key used to authenticate at the server.
+# This is a test key previously set in dev fixtures
+api_key: b91d24f-beef-feed-baff-0b9c78b70dbec
+
+# URL of the vantage6 server
+server_url: http://host.docker.internal
+
+# port the server listens to
+port: 5000
+
+# API path prefix that the server uses. Usually '/api' or an empty string
+api_path: '/api'
+
+node_extra_hosts:
+  # In Linux (no Docker Desktop) you can use this (special) mapping to access
+  # the host from the node.
+  # See: https://docs.docker.com/reference/cli/docker/container/run/#add-host
+  host.docker.internal: host-gateway
+
+# path or endpoint to the local data source. The client can request a
+# certain database by using its label. The type is used by the
+# auto_wrapper method used by algorithms. This way the algorithm wrapper
+# knows how to read the data from the source. The auto_wrapper currently
+# supports: 'csv', 'parquet', 'sql', 'sparql', 'excel', 'omop'. If your
+# algorithm does not use the wrapper and you have a different type of
+# data source you can specify 'other'.
+databases:
+  - label: letters
+    # Careful! Relative path from root of repo (development)
+    uri: dev/nodes/saturn/letters.csv
+    type: csv
+
+# end-to-end encryption settings
+encryption:
+  # whenever encryption is enabled or not. This should be the same
+  # as the `encrypted` setting of the collaboration to which this
+  # node belongs.
+  enabled: false
+  # location to the private key file
+  #private_key: /path/to/private_key.pem
+
+# Define who is allowed to run which algorithms on this node.
+policies:
+  # Control which algorithm images are allowed to run on this node. This is
+  # expected to be a valid regular expression.
+  allowed_algorithms:
+    - ^harbor2\.vantage6\.ai/[a-zA-Z]+/[a-zA-Z]+
+
+# Settings for the logger
+logging:
+  # Controls the logging output level. Could be one of the following
+  # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+  level:        DEBUG
+  # whenever the output needs to be shown in the console
+  use_console:  true
+  # The number of log files that are kept, used by RotatingFileHandler
+  backup_count: 5
+  # Size kb of a single log file, used by RotatingFileHandler
+  max_size:     1024
+  # Format: input for logging.Formatter,
+  format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+  datefmt:      "%Y-%m-%d %H:%M:%S"
+
+  # (optional) set the individual log levels per logger name, for example
+  # mute some loggers that are too verbose.
+  loggers:
+    - name: urllib3
+      level: warning
+    - name: requests
+      level: warning
+    - name: engineio.client
+      level: warning
+    - name: docker.utils.config
+      level: warning
+    - name: docker.auth
+      level: warning
+
+# Additional debug flags
+debug:
+  # Set to `true` to enable the Flask/socketio into debug mode.
+  socketio: true
+  # Set to `true` to set the Flask app used for the LOCAL proxy service
+  # into debug mode
+  proxy_server: true
+
+# directory where local task files (input/output) are stored
+task_dir: /tmp/vantage6-node-saturn-dev/tasks
+
+# Whether or not your node shares some configuration (e.g. which images are
+# allowed to run on your node) with the central server. This can be useful
+# for other organizations in your collaboration to understand why a task
+# is not completed. Obviously, no sensitive data is shared. Default true
+share_config: true
+
+dev:
+  debugpy:
+    # Path within container to debugpy package
+    path: /vantage6/dev/debugpy
+    # Host which will be used to listen at the host level.
+    # Inside container is always 0.0.0.0 for now
+    host: 127.0.6.12
+    port: 5678

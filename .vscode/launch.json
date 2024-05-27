@@ -5,7 +5,46 @@
             "type": "debugpy",
             "request": "attach",
             "connect": {
+                // "127.0.6.1" and port 5678
                 "host": "127.0.6.1",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "/vantage6"
+                }
+            ],
+            // Starts debug server in a task and *waits for you* to control-C
+            // the task before debugger attaches.
+            "preLaunchTask": "Start debug server",
+        },
+        {
+            "name": "Debug: Node Mars",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                // "127.0.6.10" and port 5678
+                "host": "127.0.6.10",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "/vantage6"
+                }
+            ],
+            // Starts debug node in a task and *waits for you* to control-C
+            // the task before debugger attaches.
+            "preLaunchTask": "Start debug node mars",
+        },
+        {
+            "name": "Debug: Node Jupiter",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                // Or "127.0.6.11" and port 5678
+                "host": "127.0.6.11",
                 "port": 5678
             },
             "pathMappings": [
@@ -16,11 +55,12 @@
             ]
         },
         {
-            "name": "Debug: Node Mars",
+            "name": "Debug: Node Saturn",
             "type": "debugpy",
             "request": "attach",
             "connect": {
-                "host": "127.0.6.10",
+                // Or "127.0.6.12" and port 5678
+                "host": "127.0.6.12",
                 "port": 5678
             },
             "pathMappings": [

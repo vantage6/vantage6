@@ -148,28 +148,29 @@ def cli_server_start(
     ports={f"{internal_port}/tcp": (host_ip, host_port)}
     # init script server.sh will read these env vars
     environment_vars["VANTAGE6_SERVER_PORT"] = internal_port
-    # TODO: investigate & better way?
-    # NOTE: since it will listen within the container, something like 127.0.6.1 will not work
+    # This script (cli_server_start) will start the server in a container,
+    # hence binding do 127.0.0.0/8 would restrict it to within the container itself.
+    # So, for now, we switch internal binding address to 0.0.0.0
     environment_vars["VANTAGE6_SERVER_HOST"] = "0.0.0.0"
+
+    cmd = "/vantage6/vantage6-server/server.sh"
 
     dev = ctx.config.get("dev", False)
     if dev:
+        warning("Will run in development mode")
         debugpy_path = dev.get("debugpy", {}).get("path", None)
         if debugpy_path:
             debugpy_port = dev.get("debugpy", {}).get("port", 5678)
             debugpy_host = dev.get("debugpy", {}).get("host", host_ip)
-            environment_vars['VANTAGE6_DEV_DEBUGPY_RUN'] = "True"
-            environment_vars['VANTAGE6_DEV_DEBUGPY_PATH'] = debugpy_path
-            # TODO: investigate & better way?
-            # NOTE: since it will listen within the container, something like
-            #       127.0.6.1 will not work
-            environment_vars['VANTAGE6_DEV_DEBUGPY_HOST'] = "0.0.0.0"
-            environment_vars['VANTAGE6_DEV_DEBUGPY_PORT'] = debugpy_port
+            environment_vars["VANTAGE6_DEV_DEBUGPY_PATH"] = debugpy_path
+            # This script (cli_server_start) will start the server in a container,
+            # hence binding do 127.0.0.0/8 would restrict it to within the container itself.
+            # So, for now, we switch internal binding address to 0.0.0.0
+            environment_vars["VANTAGE6_DEV_DEBUGPY_HOST"] = "0.0.0.0"
+            environment_vars["VANTAGE6_DEV_DEBUGPY_PORT"] = debugpy_port
             ports[f"{debugpy_port}/tcp"] = (debugpy_host, debugpy_port)
+            cmd = "/vantage6/vantage6-server/server-debug.sh"
             info("Debug mode enabled! Will run with debugpy")
-        warning("Will run in development mode")
-
-    cmd = "/vantage6/vantage6-server/server.sh"
 
     info("Starting Docker container")
     container = docker_client.containers.run(
