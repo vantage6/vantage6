@@ -24,7 +24,9 @@ echo "Installing vantage6 packages"
 make install-dev
 
 echo "Installing debugpy for later use within containers via volume mount"
-docker run --user $(id -u):$(id -g) \
-           -v "$DEBUGPY_DIR:/tmp/debugpy" \
-           $V6_IMAGE_DEBUGPY \
-           pip install debugpy --target /tmp/debugpy
+pip install debugpy --target "${DEBUGPY_DIR}"
+# TODO: Something like the below might be needed if host arch is different from container arch?
+# docker run --user $(id -u):$(id -g) \
+#            -v "$DEBUGPY_DIR:/tmp/debugpy" \
+#            $V6_IMAGE_DEBUGPY \
+#            pip install debugpy --target /tmp/debugpy
