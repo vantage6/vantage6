@@ -1,21 +1,21 @@
-import enum
+from enum import Enum
 
 
-class Partitioning(str, enum.Enum):
+class Partitioning(str, Enum):
     """Enum for types of algorithm partitioning"""
 
     HORIZONTAL = "horizontal"
     VERTICAL = "vertical"
 
 
-class FunctionType(str, enum.Enum):
+class FunctionType(str, Enum):
     """Enum for types of partitioning"""
 
     CENTRAL = "central"
     FEDERATED = "federated"
 
 
-class ArgumentType(str, enum.Enum):
+class ArgumentType(str, Enum):
     """Enum for argument types"""
 
     COLUMN = "column"
@@ -32,15 +32,22 @@ class ArgumentType(str, enum.Enum):
     ORGANIZATIONS = "organization_list"
 
 
-class VisualizationType(str, enum.Enum):
+class VisualizationType(str, Enum):
     """Enum for visualization types"""
 
     TABLE = "table"
 
 
-class ReviewStatus(str, enum.Enum):
+class ReviewStatus(str, Enum):
     """Enum for review status"""
 
     DRAFT = "draft"
     UNDER_REVIEW = "under review"
     APPROVED = "approved"
+
+
+class PublicPolicies(str, Enum):
+    """Enum to contain all policies that are publically available"""
+
+    # whether algorithms are visible to all users
+    ALGORITHM_VIEW = "algorithm_view"

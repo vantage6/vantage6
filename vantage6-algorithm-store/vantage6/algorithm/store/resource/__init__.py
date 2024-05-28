@@ -14,6 +14,7 @@ from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 from vantage6.algorithm.store.model.user import User
 from vantage6.algorithm.store.permission import RuleNeed
 from vantage6.backend.common.services_resources import BaseServicesResources
+from vantage6.common.enum import AlgorithmViewPolicies, DefaultStorePolicies
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -105,6 +106,10 @@ def _authenticate_with_server(*args, **kwargs):
     if not request.headers.get("Server-Url"):
         log.warning(msg)
         return {"msg": msg}, HTTPStatus.BAD_REQUEST
+    msg = "Missing Authorization header"
+    if not request.headers.get("Authorization"):
+        log.warning(msg)
+        return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
     # check if server is whitelisted
     server_url = request.headers["Server-Url"]
@@ -125,9 +130,7 @@ def _authenticate_with_server(*args, **kwargs):
         response = None
 
     if response is None or response.status_code == HTTPStatus.NOT_FOUND:
-        msg = (
-            "Could not connect to the vantage6 server. Please check" " the server URL."
-        )
+        msg = "Could not connect to the vantage6 server. Please check the server URL."
         log.warning(msg)
         status_to_return = (
             HTTPStatus.INTERNAL_SERVER_ERROR
@@ -176,7 +179,7 @@ def _authorize_user(
     server = Vantage6Server.get_by_url(request.headers["Server-Url"])
     user = User.get_by_server(username=username, v6_server_id=server.id)
     if not user:
-        msg = "User not registered in the store"
+        msg = "You are not registered in this algorithm store"
         log.warning(msg)
         return {"msg": msg}, HTTPStatus.UNAUTHORIZED
 
@@ -297,8 +300,14 @@ def with_permission_to_view_algorithms(resource: str, operation: Operation) -> c
         def decorator(self, *args, **kwargs):
             # check if everyone has permission to view algorithms
             policies = self.config.get("policies", {})
+
+            algorithm_view_policy = policies.get(
+                "algorithm_view", DefaultStorePolicies.ALGORITHM_VIEW.value
+            )
+
+            # TODO v5+ remove this deprecated policy
             anyone_can_view = policies.get("algorithms_open", False)
-            if anyone_can_view:
+            if anyone_can_view or algorithm_view_policy == AlgorithmViewPolicies.PUBLIC:
                 return fn(self, *args, **kwargs)
 
             # not everyone has permission: authenticate with server
@@ -307,8 +316,12 @@ def with_permission_to_view_algorithms(resource: str, operation: Operation) -> c
                 return response, status
 
             # check if all authenticated users have permission to view algorithms
+            # TODO v5+ remove this deprecated policy
             any_user_can_view = policies.get("algorithms_open_to_whitelisted", False)
-            if any_user_can_view:
+            if (
+                any_user_can_view
+                or algorithm_view_policy == AlgorithmViewPolicies.WHITELISTED
+            ):
                 return fn(self, *args, **kwargs)
 
             # not all authenticated users have permission: authorize user

@@ -3,6 +3,7 @@ import logging
 from flask import g, request
 from flask_restful import Api
 from http import HTTPStatus
+
 from vantage6.common import logger_name
 from vantage6.algorithm.store.resource.schema.input_schema import (
     Vantage6ServerInputSchema,
@@ -13,6 +14,7 @@ from vantage6.algorithm.store.resource.schema.output_schema import (
 from vantage6.algorithm.store.model.vantage6_server import (
     Vantage6Server as db_Vantage6Server,
 )
+from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.resource import with_authentication
 
 # TODO move to common / refactor
@@ -131,6 +133,8 @@ class Vantage6Servers(AlgorithmStoreResources):
             description: Invalid input
           401:
             description: Unauthorized
+          403:
+            description: Forbidden by algorithm store policies
 
         security:
           - bearerAuth: []
@@ -150,14 +154,33 @@ class Vantage6Servers(AlgorithmStoreResources):
         # issue a warning if someone tries to whitelist localhost
         force = data.get("force", False)
         # TODO make function in common to test for localhost
-        if not force and ("localhost" in data["url"] or "127.0.0.1" in data["url"]):
+        if "localhost" in data["url"] or "127.0.0.1" in data["url"]:
+            if not Policy.is_localhost_allowed_to_be_whitelisted():
+                return {
+                    "msg": "Whitelisting localhost is not allowed by the "
+                    "administrator of this algorithm store instance."
+                }, HTTPStatus.FORBIDDEN
+            elif not force:
+                return {
+                    "msg": "You are trying to whitelist a localhost address for a "
+                    "vantage6 server. This is not secure and should only be "
+                    "done for development servers. If you are sure you want to "
+                    "whitelist localhost, please specify the 'force' parameter in"
+                    " the request body."
+                }, HTTPStatus.BAD_REQUEST
+            # else log warning
+            log.warning(
+                "Whitelisting localhost for vantage6 server. This is not "
+                "recommended for production environments."
+            )
+
+        # Check with the policies if the server is allowed to be whitelisted
+        allowed_servers = Policy.get_servers_allowed_to_be_whitelisted()
+        if allowed_servers and data["url"] not in allowed_servers:
             return {
-                "msg": "You are trying to whitelist a localhost address for a "
-                "vantage6 server. This is not secure and should only be "
-                "done for development servers. If you are sure you want to "
-                "whitelist localhost, please specify the 'force' parameter in"
-                " the request body."
-            }, HTTPStatus.BAD_REQUEST
+                "msg": "This server is not allowed to be whitelisted by the "
+                "administrator of this algorithm store instance."
+            }, HTTPStatus.FORBIDDEN
 
         # delete any existing record with the same url to prevent duplicates
         existing_server = db_Vantage6Server.get_by_url(data["url"])

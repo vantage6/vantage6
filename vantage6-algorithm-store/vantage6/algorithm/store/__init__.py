@@ -10,7 +10,6 @@ store to a vantage6 server.
 import os
 from gevent import monkey
 
-from vantage6.algorithm.store.default_roles import get_default_roles
 
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
@@ -35,8 +34,10 @@ from pathlib import Path
 
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
+from vantage6.common.enum import StorePolicies
 from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
 from vantage6.backend.common.globals import HOST_URI_ENV
+from vantage6.algorithm.store.default_roles import get_default_roles
 
 # TODO move this to common, then remove dependency on CLI in algorithm store
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
@@ -94,6 +95,9 @@ class AlgorithmStoreApp:
 
         # setup the permission manager for the API endpoints
         self.permissions = PermissionManager()
+
+        # sync policies with the database
+        self.setup_policies(self.ctx.config)
 
         # Api - REST JSON-rpc
         self.api = Api(self.app)
@@ -273,6 +277,33 @@ class AlgorithmStoreApp:
                     )
                     current_role.rules = role["rules"]
                     current_role.save()
+
+    def setup_policies(self, config: dict) -> None:
+        """
+        Setup the policies for the API endpoints.
+
+        Parameters
+        ----------
+        config: dict
+            Configuration object containing the policies
+        """
+        # delete old policies from the database
+        [p.delete() for p in db.Policy.get()]
+
+        policies: dict = config.get("policies", {})
+        for policy, policy_value in policies.items():
+            # TODO v5+ remove this deprecated policy in favour of 'algorithm_view'
+            if policy in ["algorithms_open", "algorithms_open_to_whitelisted"]:
+                continue
+            elif policy not in [p.value for p in StorePolicies]:
+                log.warning("Policy '%s' is not a valid policy, skipping", policy)
+                continue
+            # add other policies to the database
+            if isinstance(policy_value, list):
+                for value in policy_value:
+                    db.Policy(key=policy, value=value).save()
+            else:
+                db.Policy(key=policy, value=policy_value).save()
 
     def start(self) -> None:
         """
