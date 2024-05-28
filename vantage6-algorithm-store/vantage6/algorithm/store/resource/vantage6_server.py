@@ -5,7 +5,6 @@ from flask_restful import Api
 from http import HTTPStatus
 
 from vantage6.common import logger_name
-from vantage6.common.enum import StorePolicies
 from vantage6.algorithm.store.resource.schema.input_schema import (
     Vantage6ServerInputSchema,
 )
@@ -155,21 +154,28 @@ class Vantage6Servers(AlgorithmStoreResources):
         # issue a warning if someone tries to whitelist localhost
         force = data.get("force", False)
         # TODO make function in common to test for localhost
-        if not force and ("localhost" in data["url"] or "127.0.0.1" in data["url"]):
-            return {
-                "msg": "You are trying to whitelist a localhost address for a "
-                "vantage6 server. This is not secure and should only be "
-                "done for development servers. If you are sure you want to "
-                "whitelist localhost, please specify the 'force' parameter in"
-                " the request body."
-            }, HTTPStatus.BAD_REQUEST
+        if "localhost" in data["url"] or "127.0.0.1" in data["url"]:
+            if not Policy.is_localhost_allowed_to_be_whitelisted():
+                return {
+                    "msg": "Whitelisting localhost is not allowed by the "
+                    "administrator of this algorithm store instance."
+                }, HTTPStatus.FORBIDDEN
+            elif not force:
+                return {
+                    "msg": "You are trying to whitelist a localhost address for a "
+                    "vantage6 server. This is not secure and should only be "
+                    "done for development servers. If you are sure you want to "
+                    "whitelist localhost, please specify the 'force' parameter in"
+                    " the request body."
+                }, HTTPStatus.BAD_REQUEST
+            # else log warning
+            log.warning(
+                "Whitelisting localhost for vantage6 server. This is not "
+                "recommended for production environments."
+            )
 
         # Check with the policies if the server is allowed to be whitelisted
-        policies = Policy.get()
-        allowed_servers = []
-        for policy in policies:
-            if policy.key == StorePolicies.ALLOWED_SERVERS:
-                allowed_servers.append(policy.value)
+        allowed_servers = Policy.get_servers_allowed_to_be_whitelisted()
         if allowed_servers and data["url"] not in allowed_servers:
             return {
                 "msg": "This server is not allowed to be whitelisted by the "

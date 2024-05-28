@@ -58,6 +58,10 @@ def authenticate_with_server(*args, **kwargs):
     if not request.headers.get("Server-Url"):
         log.warning(msg)
         return {"msg": msg}, HTTPStatus.BAD_REQUEST
+    msg = "Missing Authorization header"
+    if not request.headers.get("Authorization"):
+        log.warning(msg)
+        return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
     # check if server is whitelisted
     server_url = request.headers["Server-Url"]
@@ -96,9 +100,7 @@ def authenticate_with_server(*args, **kwargs):
     response = __make_request(url)
 
     if response is None or response.status_code == HTTPStatus.NOT_FOUND:
-        msg = (
-            "Could not connect to the vantage6 server. Please check" " the server URL."
-        )
+        msg = "Could not connect to the vantage6 server. Please check the server URL."
         log.warning(msg)
         status_to_return = (
             HTTPStatus.INTERNAL_SERVER_ERROR
@@ -147,7 +149,7 @@ def _authorize_user(
     server = Vantage6Server.get_by_url(request.headers["Server-Url"])
     user = User.get_by_server(username=username, v6_server_id=server.id)
     if not user:
-        msg = "User not registered in the store"
+        msg = "You are not registered in this algorithm store"
         log.warning(msg)
         return {"msg": msg}, HTTPStatus.UNAUTHORIZED
 
