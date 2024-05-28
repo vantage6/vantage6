@@ -41,18 +41,66 @@ class AlgorithmStoreResources(BaseServicesResources):
         # store and server to backend-common
         self.permissions = permissions
 
-    # TODO implement this class when necessary
-    # TODO move this class elsewhere?
+
+def request_from_store_to_v6_server(
+    url: str,
+    method: str = "get",
+    params: dict = None,
+    headers: dict = None,
+    json: dict = None,
+) -> requests.Response:
+    """
+    Make a request from the algorithm store to the vantage6 server.
+
+    Parameters
+    ----------
+    url : str
+        URL of the vantage6 server endpoint to send the request to.
+    method : str
+        HTTP method to use for the request.
+    params : dict
+        Parameters to send with the request.
+    headers : dict
+        Headers to send with the request.
+    json : dict
+        JSON data to send with the request.
+
+    Returns
+    -------
+    requests.Response
+        Response object from the request.
+    """
+    # First, replace localhost addresses. If we are looking for a localhost server, we
+    # probably have to check host.docker.internal (Windows) or 172.17.0.1 (Linux)
+    # instead. The user can set the environment variable HOST_URI_ENV_VAR
+    # to the correct value by providing config file option config['dev']['host_uri']
+    if "localhost" in url or "127.0.0.1" in url:
+        host_uri = os.environ.get("HOST_URI_ENV_VAR", None)
+        if not host_uri:
+            msg = (
+                "You are trying to connect to a localhost server, but "
+                "this refers to the container itself. Please set the "
+                " configuration option 'host_uri' in the dev section "
+                " of the config file to the host's IP address."
+            )
+            log.warning(msg)
+            return {"msg": msg}, HTTPStatus.UNAUTHORIZED
+        # try replacing localhost with the host_uri from the config file
+        url = url.replace("localhost", host_uri).replace("127.0.0.1", host_uri)
+        # replace double http:// with single
+        url = url.replace("http://http://", "http://")
+
+    # send request
+    headers = headers or {}
+    headers["Authorization"] = request.headers["Authorization"]
+    response = requests.request(method, url, params=params, headers=headers, json=json)
+    return response
 
 
-def authenticate_with_server(*args, **kwargs):
-    def __make_request(url: str) -> requests.Response:
-        headers = {"Authorization": request.headers["Authorization"]}
-        try:
-            return requests.post(url, headers=headers)
-        except requests.exceptions.ConnectionError:
-            return None
-
+def _authenticate_with_server(*args, **kwargs):
+    """
+    Authenticate with a vantage6 server.
+    """
     msg = "Missing Server-Url header"
     if not request.headers.get("Server-Url"):
         log.warning(msg)
@@ -71,28 +119,10 @@ def authenticate_with_server(*args, **kwargs):
 
     # check if token is valid
     url = f"{request.headers['Server-Url']}/token/user/validate"
-    # if we are looking for a localhost server, we probably have to
-    # check host.docker.internal (Windows) or 172.17.0.1 (Linux)
-    # instead. The user can set the environment variable HOST_URI_ENV_VAR
-    # to the correct value by providing config file option
-    # config['dev']['host_uri']
-    if "localhost" in url or "127.0.0.1" in url:
-        host_uri = os.environ.get("HOST_URI_ENV_VAR", None)
-        if not host_uri:
-            msg = (
-                "You are trying to connect to a localhost server, but "
-                "this refers to the container itself. Please set the "
-                " configuration option 'host_uri' in the dev section "
-                " of the config file to the host's IP address."
-            )
-            log.warning(msg)
-            return {"msg": msg}, HTTPStatus.UNAUTHORIZED
-        # try replacing localhost with the host_uri from the config file
-        url = url.replace("localhost", host_uri).replace("127.0.0.1", host_uri)
-        # replace double http:// with single
-        url = url.replace("http://http://", "http://")
-
-    response = __make_request(url)
+    try:
+        response = request_from_store_to_v6_server(url, method="post")
+    except requests.exceptions.ConnectionError:
+        response = None
 
     if response is None or response.status_code == HTTPStatus.NOT_FOUND:
         msg = (
@@ -194,7 +224,7 @@ def with_authentication() -> callable:
     def protection_decorator(fn):
         @wraps(fn)
         def decorator(*args, **kwargs):
-            response, status = authenticate_with_server(request)
+            response, status = _authenticate_with_server(request)
 
             if status != HTTPStatus.OK:
                 return response, status
@@ -227,7 +257,7 @@ def with_permission(resource: str, operation: Operation) -> callable:
     def protection_decorator(fn):
         @wraps(fn)
         def decorator(*args, **kwargs):
-            response, status = authenticate_with_server(request)
+            response, status = _authenticate_with_server(request)
 
             if status != HTTPStatus.OK:
                 return response, status
@@ -272,7 +302,7 @@ def with_permission_to_view_algorithms(resource: str, operation: Operation) -> c
                 return fn(self, *args, **kwargs)
 
             # not everyone has permission: authenticate with server
-            response, status = authenticate_with_server(request)
+            response, status = _authenticate_with_server(request)
             if status != HTTPStatus.OK:
                 return response, status
 
