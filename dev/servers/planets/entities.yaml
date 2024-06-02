@@ -17,7 +17,7 @@ collaborations:
         api_key: "afdf68da-dead-beef-9594-c68b0ed821ca"
       - name: "Saturn"
         # dev/test key
-        api_key: "b91d24f-beef-feed-baff-0b9c78b70dbec"
+        api_key: "b91d24fe-beef-feed-baff-0b9c7b70dbec"
 
 organizations:
   - name: "Mars"
