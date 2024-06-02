@@ -98,5 +98,7 @@ dev:
     path: /vantage6/dev/debugpy
     # Host which will be used to listen at the host level.
     # Inside container is always 0.0.0.0 for now
+    # On Windows/Mac, you might want to use 0.0.0.0 and use different ports to
+    # target different server / nodes.
     host: 127.0.6.11
     port: 5678

@@ -6,6 +6,8 @@
             "request": "attach",
             "connect": {
                 // "127.0.6.1" and port 5678
+                // On Windows/Mac, you might want to use 0.0.0.0 and use different ports to
+                // target different server / nodes.
                 "host": "127.0.6.1",
                 "port": 5678
             },
@@ -25,6 +27,8 @@
             "request": "attach",
             "connect": {
                 // "127.0.6.10" and port 5678
+                // On Windows/Mac, you might want to use 0.0.0.0 and use different ports to
+                // target different server / nodes.
                 "host": "127.0.6.10",
                 "port": 5678
             },
@@ -44,6 +48,8 @@
             "request": "attach",
             "connect": {
                 // Or "127.0.6.11" and port 5678
+                // On Windows/Mac, you might want to use 0.0.0.0 and use different ports to
+                // target different server / nodes.
                 "host": "127.0.6.11",
                 "port": 5678
             },
@@ -60,6 +66,8 @@
             "request": "attach",
             "connect": {
                 // Or "127.0.6.12" and port 5678
+                // On Windows/Mac, you might want to use 0.0.0.0 and use different ports to
+                // target different server / nodes.
                 "host": "127.0.6.12",
                 "port": 5678
             },
