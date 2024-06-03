@@ -98,8 +98,11 @@ as follows:
 .. code:: python
 
    def my_function():
+       # environment variable that specifies the input file
        input_file = os.environ["INPUT_FILE"]
-       token_file = os.environ["DEFAULT_DATABASE_URI"]
+       # environment variable that specifies the database URI for the database with
+       # the 'default' label
+       default_database_uri = os.environ["DEFAULT_DATABASE_URI"]
 
        # do something with the input file and database URI
        pass
