@@ -11,7 +11,7 @@ your algorithm without having to set up whitelisting or SSH tunnels.
 You can define the container that you want to make available to the algorithm in
 the `docker_services` section of your node configuration file:
 
-.. code::yaml
+.. code:: yaml
 
     docker_services:
         container_label: container_name

@@ -36,7 +36,7 @@ setup(
         "click==8.1.3",
         "colorama==0.4.6",
         "copier==9.2.0",
-        "docker==6.1.2",
+        "docker==7.1.0",
         "ipython==8.10.0",
         "jinja2==3.1.4",
         "questionary==1.10.0",
