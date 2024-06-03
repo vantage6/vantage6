@@ -68,7 +68,7 @@ from vantage6.node.docker.ssh_tunnel import SSHTunnel
 from vantage6.node.docker.squid import Squid
 
 # make sure the version is available
-from vantage6.node._version import __version__
+from vantage6.node._version import __version__  # noqa: F401
 
 
 class VPNConnectMode(Enum):

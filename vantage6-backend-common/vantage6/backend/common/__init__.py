@@ -2,4 +2,4 @@
 """
 
 # make sure the version is available
-from vantage6.client._version import __version__
+from vantage6.client._version import __version__  # noqa: F401

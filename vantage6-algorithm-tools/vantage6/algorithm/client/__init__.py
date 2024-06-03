@@ -13,7 +13,7 @@ from vantage6.common.serialization import serialize
 from vantage6.algorithm.tools.util import info
 
 # make sure the version is available
-from vantage6.algorithm.client._version import __version__
+from vantage6.algorithm.client._version import __version__  # noqa: F401
 
 
 class AlgorithmClient(ClientBase):

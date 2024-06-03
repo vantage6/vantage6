@@ -75,7 +75,7 @@ from vantage6.server.algo_store_communication import (
 )
 
 # make sure the version is available
-from vantage6.server._version import __version__
+from vantage6.server._version import __version__  # noqa: F401
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)

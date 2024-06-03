@@ -51,7 +51,7 @@ from vantage6.algorithm.store import db
 from vantage6.algorithm.store.permission import PermissionManager
 
 # make sure the version is available
-from vantage6.algorithm.store._version import __version__
+from vantage6.algorithm.store._version import __version__  # noqa: F401
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
