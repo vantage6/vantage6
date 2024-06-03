@@ -66,7 +66,6 @@ from vantage6.server.globals import (
     SERVER_MODULE_NAME,
 )
 from vantage6.server.resource.common.swagger_templates import swagger_template
-from vantage6.server._version import __version__
 from vantage6.server.mail_service import MailService
 from vantage6.server.websockets import DefaultSocketNamespace
 from vantage6.server.default_roles import get_default_roles, DefaultRole
@@ -74,6 +73,9 @@ from vantage6.server.algo_store_communication import (
     post_algorithm_store,
     get_server_url,
 )
+
+# make sure the version is available
+from vantage6.server._version import __version__
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)

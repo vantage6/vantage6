@@ -12,6 +12,9 @@ from vantage6.common.task_status import has_task_finished
 from vantage6.common.serialization import serialize
 from vantage6.algorithm.tools.util import info
 
+# make sure the version is available
+from vantage6.algorithm.client._version import __version__
+
 
 class AlgorithmClient(ClientBase):
     """

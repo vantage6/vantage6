@@ -14,6 +14,9 @@ from colorama import init, Fore, Style
 
 from vantage6.common.globals import APPNAME, STRING_ENCODING
 
+# make sure the version is available
+from vantage6.common._version import __version__
+
 
 # init colorstuff
 init()

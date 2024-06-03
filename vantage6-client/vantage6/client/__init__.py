@@ -26,6 +26,9 @@ from vantage6.client.subclients.study import StudySubClient
 from vantage6.client.subclients.algorithm import AlgorithmSubClient
 from vantage6.client.subclients.algorithm_store import AlgorithmStoreSubClient
 
+# make sure the version is available
+from vantage6.client._version import __version__
+
 
 module_name = __name__.split(".")[1]
 
