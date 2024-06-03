@@ -32,11 +32,11 @@ setup(
     python_requires=">=3.10",
     install_requires=[
         "click==8.1.3",
-        "docker==6.1.2",
+        "docker==7.1.0",
         "gevent==23.9.1",
         "jinja2==3.1.4",
         "python-socketio==5.7.2",
-        "requests==2.32.2",
+        "requests==2.32.3",
         f'vantage6 == {version_ns["__version__"]}',
         f'vantage6-client == {version_ns["__version__"]}',
         f'vantage6-algorithm-tools == {version_ns["__version__"]}',
