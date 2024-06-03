@@ -290,6 +290,7 @@ class AlgorithmStoreApp:
             Configuration object containing the policies
         """
         # delete old policies from the database
+        # pylint: disable=expression-not-assigned
         [p.delete() for p in db.Policy.get()]
 
         policies: dict = config.get("policies", {})
