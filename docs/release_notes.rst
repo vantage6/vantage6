@@ -1,6 +1,23 @@
 Release notes
 =============
 
+4.5.1
+-----
+
+*3 June 2024*
+
+- **Change**
+
+ - Make ``__version__`` attribute available for each vantage6 package
+   (`PR#1303 <https://github.com/vantage6/vantage6/pull/1303>`_).
+ - Update ``requests`` dependency to 2.32.2 (`PR#1294 <https://github.com/vantage6/vantage6/pull/1294>`_).
+
+
+- **Bugfix**
+
+ - Added missing ``connectorx`` dependency (`PR#1301 <https://github.com/vantage6/vantage6/pull/1301>`_).
+ - Fix readthedocs build error (`PR#1295 <https://github.com/vantage6/vantage6/pull/1295>`_).
+
 4.5.0
 -----
 
