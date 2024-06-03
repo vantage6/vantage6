@@ -1,6 +1,18 @@
 Release notes
 =============
 
+4.5.2
+-----
+
+*3 June 2024*
+
+- **Bugfix**
+
+ - Updated PyPI Docker dependency to 7.1.0 and requests to 2.32.3 to fix issues with
+   ``docker.from_env()`` with old combination of docker/requests
+   (`PR#1306 <https://github.com/vantage6/vantage6/pull/1306>`_).
+
+
 4.5.1
 -----
 
