@@ -41,7 +41,6 @@ from vantage6.algorithm.store.default_roles import get_default_roles
 
 # TODO move this to common, then remove dependency on CLI in algorithm store
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
-from vantage6.algorithm.store._version import __version__
 from vantage6.algorithm.store.globals import API_PATH
 from vantage6.algorithm.store.globals import RESOURCES, SERVER_MODULE_NAME
 
@@ -51,6 +50,9 @@ from vantage6.algorithm.store import db
 
 # TODO move server imports to common / refactor
 from vantage6.algorithm.store.permission import PermissionManager
+
+# make sure the version is available
+from vantage6.algorithm.store._version import __version__  # noqa: F401
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)

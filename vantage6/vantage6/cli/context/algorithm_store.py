@@ -34,9 +34,7 @@ class AlgorithmStoreContext(BaseServerContext):
 
     def get_database_uri(self) -> str:
         """
-        Obtain the database uri from the environment or the configuration. The
-        `VANTAGE6_DB_URI` environment variable is used by the Docker container,
-        but can also be set by the user.
+        Obtain the database uri from the environment or the configuration.
 
         Returns
         -------
