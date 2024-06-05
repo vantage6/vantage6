@@ -54,3 +54,21 @@ class Vantage6Server(Base):
                 url = url[:-3]
                 server = _get_by_url(url)
         return server
+
+    @classmethod
+    def get_localhost_servers(cls) -> list[Vantage6Server]:
+        """
+        Get all algorithm store records with a localhost url
+
+        Returns
+        -------
+        list[Vantage6Server]
+            List of Vantage6Server objects
+        """
+        session = DatabaseSessionManager.get_session()
+        servers = (
+            session.query(Vantage6Server)
+            .filter(Vantage6Server.url.like("http://localhost%"))
+            .all()
+        )
+        return servers

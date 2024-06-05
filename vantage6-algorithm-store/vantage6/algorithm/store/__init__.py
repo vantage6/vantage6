@@ -289,9 +289,11 @@ class AlgorithmStoreApp:
         config: dict
             Configuration object containing the policies
         """
+        old_policies = db.Policy.get()
+
         # delete old policies from the database
         # pylint: disable=expression-not-assigned
-        [p.delete() for p in db.Policy.get()]
+        [p.delete() for p in old_policies]
 
         policies: dict = config.get("policies", {})
         for policy, policy_value in policies.items():
@@ -307,6 +309,13 @@ class AlgorithmStoreApp:
                     db.Policy(key=policy, value=value).save()
             else:
                 db.Policy(key=policy, value=policy_value).save()
+
+        # if the 'allow_localhost' policy is set to false, remove any whitelisted
+        # localhost servers
+        if not policies.get("allow_localhost", False):
+            localhost_servers = db.Vantage6Server.get_localhost_servers()
+            for server in localhost_servers:
+                server.delete()
 
     def start(self) -> None:
         """
