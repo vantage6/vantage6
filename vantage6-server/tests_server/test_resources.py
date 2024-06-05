@@ -726,6 +726,10 @@ class TestResources(unittest.TestCase):
         )
         self.assertEqual(len(result.json.get("data")), 2)
 
+        # cleanup
+        for resource in Role.get():
+            resource.delete()
+
     def test_create_role_as_root_for_different_organization(self):
         headers = self.login("root")
 
@@ -753,6 +757,10 @@ class TestResources(unittest.TestCase):
 
         # verify the organization
         self.assertEqual(org.id, result.json["organization"]["id"])
+
+        # cleanup
+        for resource in Role.get():
+            resource.delete()
 
     def test_create_role_permissions(self):
         all_rules = Rule.get()
@@ -826,6 +834,10 @@ class TestResources(unittest.TestCase):
         body["organization_id"] = org3.id
         result = self.app.post("/api/role", headers=headers, json=body)
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # cleanup
+        for resource in Role.get():
+            resource.delete()
 
     def test_edit_role(self):
         headers = self.login("root")
@@ -1816,6 +1828,10 @@ class TestResources(unittest.TestCase):
         self.assertEqual(result.status_code, HTTPStatus.CREATED)
         self.assertIsNotNone(Organization.get_by_name("this-is-gonna-happen"))
 
+        # cleanup
+        for resource in Organization.get():
+            resource.delete()
+
     def test_patch_organization_permissions(self):
         # unknown organization
         headers = self.create_user_and_login()
@@ -2786,6 +2802,8 @@ class TestResources(unittest.TestCase):
         org3.delete()
         org4.delete()
         col.delete()
+        for resource in Node.get():
+            resource.delete()
 
     def test_delete_node_permissions(self):
         org = Organization(name=str(uuid.uuid1()))
@@ -3192,6 +3210,8 @@ class TestResources(unittest.TestCase):
         col.delete()
         col2.delete()
         study.delete()
+        for resource in Task.get():
+            resource.delete()
 
     def test_create_task_permissions_as_container(self):
         org = Organization()
@@ -3275,7 +3295,12 @@ class TestResources(unittest.TestCase):
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # cleanup
+        org.delete()
+        col.delete()
         node2.delete()
+        col2.delete()
+        for resource in Task.get():
+            resource.delete()
 
     def test_delete_task_permissions(self):
         # test non-existing task
@@ -3532,6 +3557,8 @@ class TestResources(unittest.TestCase):
         # cleanup
         org.delete()
         col.delete()
+        for store in AlgorithmStore.get():
+            store.delete()
 
     def test_view_algorithm_store(self):
         """Test viewing algorithm store records"""
@@ -4010,6 +4037,8 @@ class TestResources(unittest.TestCase):
         org.delete()
         org2.delete()
         col.delete()
+        for resource in Study.get():
+            resource.delete()
 
     def test_view_study_organization_permissions_as_user(self):
         org = Organization()
