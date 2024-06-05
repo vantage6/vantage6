@@ -165,9 +165,3 @@ class ReviewOutputSchema(HATEOASModelSchema):
     reviewers = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="user", link_from="review")
     )
-
-
-class PolicyOutputSchema(HATEOASModelSchema):
-    class Meta:
-        model = Policy
-        exclude = ("id",)

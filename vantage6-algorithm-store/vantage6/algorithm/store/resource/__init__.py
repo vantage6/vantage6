@@ -14,7 +14,10 @@ from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 from vantage6.algorithm.store.model.user import User
 from vantage6.algorithm.store.permission import RuleNeed
 from vantage6.backend.common.services_resources import BaseServicesResources
-from vantage6.common.enum import AlgorithmViewPolicies, DefaultStorePolicies
+from vantage6.algorithm.store.model.common.enums import (
+    AlgorithmViewPolicies,
+    DefaultStorePolicies,
+)
 
 log = logging.getLogger(logger_name(__name__))
 

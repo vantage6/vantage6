@@ -2,7 +2,8 @@ import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core'
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
-import { AlgorithmStore, AvailableStorePolicies, DefaultStorePolicies } from 'src/app/models/api/algorithmStore.model';
+import { AlgorithmStore, AvailableStorePolicies, StorePolicies } from 'src/app/models/api/algorithmStore.model';
+// import { AlgorithmStore, AvailableStorePolicies, DefaultStorePolicies } from 'src/app/models/api/algorithmStore.model';
 import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
@@ -74,31 +75,12 @@ export class AlgorithmStoreReadComponent implements OnInit, OnDestroy {
   private async setPolicies(): Promise<void> {
     // collect store policies and convert from key|value to object with lists
     if (!this.algorithmStore) return;
-    const policiesDict = await this.algorithmStoreService.getAlgorithmStorePolicies(this.algorithmStore.url);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const policies: { [key: string]: string } = {};
-    for (const newPolicy of policiesDict) {
-      const policy_name = newPolicy.key;
-
-      if (policy_name in policies) {
-        policies[policy_name] = `${policies[policy_name]}, ${newPolicy.value}`;
-      } else {
-        policies[policy_name] = newPolicy.value;
-      }
-    }
-
-    // add default policies for any policies not present
-    for (const policy of Object.keys(AvailableStorePolicies)) {
-      if (!(policy.toLowerCase() in policies)) {
-        policies[policy.toLowerCase()] = DefaultStorePolicies[policy as keyof typeof DefaultStorePolicies];
-      }
-    }
+    const policies = await this.algorithmStoreService.getAlgorithmStorePolicies(this.algorithmStore.url);
 
     this.policyTable = this.translatePoliciesToTable(policies);
   }
 
-  private translatePoliciesToTable(policies: { [key: string]: string }): TableData {
+  private translatePoliciesToTable(policies: StorePolicies): TableData {
     return {
       columns: [
         { id: 'name', label: this.translateService.instant('store-policies.type') },
@@ -120,15 +102,15 @@ export class AlgorithmStoreReadComponent implements OnInit, OnDestroy {
     return this.translateService.instant(`store-policies.${key}`);
   }
 
-  private translatePolicyValue(key: string, value: string): string {
+  private translatePolicyValue(key: string, value: string | string[] | boolean): string {
     if (key === AvailableStorePolicies.ALGORITHM_VIEW) {
-      return this.translateService.instant(`store-policies.${AvailableStorePolicies.ALGORITHM_VIEW}-values.${value}`);
+      return this.translateService.instant(`store-policies.${key}-values.${value}`);
     } else if (key === AvailableStorePolicies.ALLOW_LOCALHOST) {
-      return value === '0' || value === 'false'
-        ? this.translateService.instant('general.no')
-        : this.translateService.instant('general.yes');
+      return value ? this.translateService.instant('general.yes') : this.translateService.instant('general.no');
+    } else if (Array.isArray(value)) {
+      return value.join(', ');
     } else {
-      return value;
+      return value.toString();
     }
   }
 }

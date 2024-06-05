@@ -1,5 +1,7 @@
 from enum import Enum
 
+POLICY_ALLOW_ALL = "all"
+
 
 class Partitioning(str, Enum):
     """Enum for types of algorithm partitioning"""
@@ -46,8 +48,45 @@ class ReviewStatus(str, Enum):
     APPROVED = "approved"
 
 
+class StorePolicies(str, Enum):
+    """
+    Enum for the different types of policies of the algorithm store.
+    """
+
+    ALGORITHM_VIEW = "algorithm_view"
+    ALLOWED_SERVERS = "allowed_servers"
+    ALLOWED_SERVERS_EDIT = "allowed_servers_edit"
+    ALLOW_LOCALHOST = "allow_localhost"
+
+
+class AlgorithmViewPolicies(str, Enum):
+    """Enum for available algorithm view policies"""
+
+    PUBLIC = "public"
+    WHITELISTED = "whitelisted"
+    ONLY_WITH_EXPLICIT_PERMISSION = "private"
+
+
 class PublicPolicies(str, Enum):
-    """Enum to contain all policies that are publically available"""
+    """Enum to contain all policies that are publicly available"""
 
     # whether algorithms are visible to all users
     ALGORITHM_VIEW = "algorithm_view"
+
+
+class BooleanPolicies(str, Enum):
+    """Enum to contain all policies that are boolean"""
+
+    # whether algorithms are visible to all users
+    ALLOW_LOCALHOST = "allow_localhost"
+
+
+class DefaultStorePolicies(Enum):
+    """
+    Enum for the default values of the policies of the algorithm store.
+    """
+
+    ALGORITHM_VIEW = AlgorithmViewPolicies.WHITELISTED.value
+    ALLOWED_SERVERS = POLICY_ALLOW_ALL
+    ALLOWED_SERVERS_EDIT = POLICY_ALLOW_ALL
+    ALLOW_LOCALHOST = False
