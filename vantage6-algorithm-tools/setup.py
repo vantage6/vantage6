@@ -48,7 +48,7 @@ setup(
     },
     tests_require=["pytest"],
     package_data={
-        "vantage6.algorithm.tools": [
+        "vantage6.algorithm.client": [
             "__build__",
         ],
     },
