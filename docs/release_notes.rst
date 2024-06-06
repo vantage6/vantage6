@@ -1,6 +1,16 @@
 Release notes
 =============
 
+4.5.3
+-----
+
+*6 June 2024*
+
+- **Bugfix**
+
+ - Included `__build__` file of algorithm tools in the PyPI package to prevent error
+   when using the package (`PR#1307 <https://github.com/vantage6/vantage6/pull/1307>`_).
+
 4.5.2
 -----
 
