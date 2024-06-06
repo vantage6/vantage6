@@ -123,7 +123,7 @@ def _authenticate_with_server(*args, **kwargs):
             "whitelisted"
         )
         log.warning(msg)
-        return {"msg": msg}, HTTPStatus.UNAUTHORIZED
+        return {"msg": msg}, HTTPStatus.FORBIDDEN
 
     # check if token is valid
     url = f"{request.headers['Server-Url']}/token/user/validate"

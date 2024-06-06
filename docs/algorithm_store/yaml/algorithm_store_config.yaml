@@ -63,17 +63,12 @@ policies:
   #   algorithms
   algorithm_view: "public"
 
-  # List of servers that are allowed to connect to the algorithms in the store. This
-  # setting can be used together with "whitelisted" algorithm_view policy: only these
-  # servers will ever be able to connect to the store
+  # List of servers for which users are allowed to modify algorithms or other resources
+  # in the algorithm store. If used together with "whitelisted" algorithm_view policy,
+  # any user from these servers will be able use the algorithms from the store.
   allowed_servers:
     - "https://cotopaxi.vantage6.ai"
     - "http://localhost:5000/api"
-
-  # List of servers of which users may be allowed to gain specific permissions in the
-  # algorithm store. Users of other servers may not be given any permissions.
-  allowed_servers_edit:
-    - "https://cotopaxi.vantage6.ai"
 
   # Localhost servers are by default never allowed to connect to the algorithm store,
   # even if no allowed servers lists are given. This setting can be used to allow

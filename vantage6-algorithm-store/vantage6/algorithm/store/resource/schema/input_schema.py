@@ -165,5 +165,4 @@ class PolicyInputSchema(Schema):
         validate=validate.OneOf([p.value for p in AlgorithmViewPolicies])
     )
     allowed_servers = fields.List(fields.String())
-    allowed_servers_edit = fields.List(fields.String())
     allow_localhost = fields.Boolean()

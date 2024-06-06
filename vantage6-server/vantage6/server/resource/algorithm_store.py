@@ -590,6 +590,7 @@ class AlgorithmStore(AlgorithmStoreBase):
             return {
                 "msg": "The 'server_url' query parameter is required"
             }, HTTPStatus.BAD_REQUEST
+
         # get the ID of the whitelisted server, then delete it
         response, status = request_algo_store(
             algorithm_store.url,
@@ -598,22 +599,31 @@ class AlgorithmStore(AlgorithmStoreBase):
             method="get",
             headers=self.get_authorization_headers_from_request(),
         )
-        if status != HTTPStatus.OK:
+        if status == HTTPStatus.FORBIDDEN:
+            log.info(
+                "Server with url=%s was not whitelisted at the algorithm store. "
+                "Proceeding to remove algorithm store store from server...",
+                server_url,
+            )
+            # initialize empty list of servers to delete at store
+            result = []
+        elif status != HTTPStatus.OK:
             return response, status
-        result = response.json()
-        if len(result) > 1:
-            msg = (
-                "More than one whitelisted server found with url "
-                f"{server_url}. This should not happen! All will be "
-                "removed."
-            )
-            log.warning(msg)
-        elif len(result) == 0:
-            msg = (
-                "No whitelisted server found with url "
-                f"{server_url}. This should not happen!"
-            )
-            log.warning(msg)
+        else:
+            result = response.json()
+            if len(result) > 1:
+                msg = (
+                    "More than one whitelisted server found with url "
+                    f"{server_url}. This should not happen! All will be "
+                    "removed."
+                )
+                log.warning(msg)
+            elif len(result) == 0:
+                msg = (
+                    "No whitelisted server found with url "
+                    f"{server_url}. This should not happen!"
+                )
+                log.warning(msg)
         # remove all linked servers with the given url
         for server in result:
             server_id = server["id"]
@@ -624,8 +634,8 @@ class AlgorithmStore(AlgorithmStoreBase):
                 method="delete",
                 headers=self.get_authorization_headers_from_request(),
             )
-        if status != HTTPStatus.OK:
-            return response, status
+            if status != HTTPStatus.OK:
+                return response, status
 
         # finally delete the algorithm store record itself
         # pylint: disable=expression-not-assigned

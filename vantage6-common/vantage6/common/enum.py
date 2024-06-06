@@ -8,7 +8,6 @@ class StorePolicies(str, Enum):
 
     ALGORITHM_VIEW = "algorithm_view"
     ALLOWED_SERVERS = "allowed_servers"
-    ALLOWED_SERVERS_EDIT = "allowed_servers_edit"
     ALLOW_LOCALHOST = "allow_localhost"
 
 

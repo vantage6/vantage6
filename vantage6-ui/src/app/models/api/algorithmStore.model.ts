@@ -41,12 +41,11 @@ export enum AlgorithmStoreLazyProperties {
 export enum AvailableStorePolicies {
   ALGORITHM_VIEW = 'algorithm_view',
   ALLOWED_SERVERS = 'allowed_servers',
-  ALLOWED_SERVERS_EDIT = 'allowed_servers_edit',
   ALLOW_LOCALHOST = 'allow_localhost'
 }
 export interface StorePolicies {
   // TODO it would be nice if we could have a more specific type here like
-  // { algorithm_view: string, allowed_servers: string[], allowed_servers_edit: string[], allow_localhost: boolean }
+  // { algorithm_view: string, allowed_servers: string[], allow_localhost: boolean }
   // but that doesn't work with conversion to table in the algorithmStoreReadComponent
   [key: string]: string | string[] | boolean;
 }

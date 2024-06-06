@@ -79,5 +79,4 @@ class DefaultStorePolicies(Enum):
 
     ALGORITHM_VIEW = AlgorithmViewPolicies.WHITELISTED.value
     ALLOWED_SERVERS = POLICY_ALLOW_ALL
-    ALLOWED_SERVERS_EDIT = POLICY_ALLOW_ALL
     ALLOW_LOCALHOST = False

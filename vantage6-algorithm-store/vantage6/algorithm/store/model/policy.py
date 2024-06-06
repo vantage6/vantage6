@@ -66,8 +66,6 @@ class Policy(Base):
             List of servers that have edit permission
         """
         session = DatabaseSessionManager.get_session()
-        result = (
-            session.query(cls).filter_by(key=StorePolicies.ALLOWED_SERVERS_EDIT).all()
-        )
+        result = session.query(cls).filter_by(key=StorePolicies.ALLOWED_SERVERS).all()
         session.commit()
         return [r.value for r in result]
