@@ -46,7 +46,8 @@ export class AlgorithmStoreService {
     return await this.apiService.deleteForApi(`/algorithmstore/${id}`, { server_url: `${environment.server_url}${environment.api_path}` });
   }
 
-  async getAlgorithmStorePolicies(store_url: string): Promise<StorePolicies> {
-    return await this.apiService.getForAlgorithmApi<StorePolicies>(store_url, '/api/policy');
+  async getAlgorithmStorePolicies(store_url: string, public_: boolean = false): Promise<StorePolicies> {
+    const endpoint = public_ ? '/api/policy/public' : '/api/policy';
+    return await this.apiService.getForAlgorithmApi<StorePolicies>(store_url, endpoint);
   }
 }

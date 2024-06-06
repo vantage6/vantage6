@@ -50,3 +50,9 @@ export interface StorePolicies {
   // but that doesn't work with conversion to table in the algorithmStoreReadComponent
   [key: string]: string | string[] | boolean;
 }
+
+export enum AlgorithmViewPolicies {
+  PUBLIC = 'public',
+  WHITELISTED = 'whitelisted',
+  PRIVATE = 'private'
+}

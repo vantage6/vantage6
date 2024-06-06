@@ -6,6 +6,7 @@ from flask import g
 from flask_restful import Api
 
 from vantage6.common import logger_name
+from vantage6.common.enum import StorePolicies
 from vantage6.algorithm.store import db
 from vantage6.algorithm.store.resource import (
     AlgorithmStoreResources,
@@ -14,8 +15,8 @@ from vantage6.algorithm.store.resource import (
 from vantage6.algorithm.store.model.common.enums import (
     BooleanPolicies,
     PublicPolicies,
-    StorePolicies,
     DefaultStorePolicies,
+    ListPolicies,
 )
 
 module_name = logger_name(__name__)
@@ -114,10 +115,15 @@ class PoliciesBase(AlgorithmStoreResources):
             else:
                 response_dict[policy_name] = policy.value
 
-        # convert booleans where necessary
+        # convert policies where necessary
         for boolean_policy in [p.value for p in BooleanPolicies]:
             if boolean_policy in response_dict:
                 response_dict[boolean_policy] = response_dict[boolean_policy] == "1"
+        for list_policy in [p.value for p in ListPolicies]:
+            if list_policy in response_dict and isinstance(
+                response_dict[list_policy], str
+            ):
+                response_dict[list_policy] = [response_dict[list_policy]]
 
         # add default values for policies that are not in the response
         if include_defaults:

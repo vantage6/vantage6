@@ -151,6 +151,14 @@ class Vantage6Servers(AlgorithmStoreResources):
                 "errors": errors,
             }, HTTPStatus.BAD_REQUEST
 
+        # Check with the policies if the server is allowed to be whitelisted
+        allowed_servers = Policy.get_servers_allowed_to_be_whitelisted()
+        if allowed_servers and data["url"] not in allowed_servers:
+            return {
+                "msg": "This server is not allowed to be whitelisted by the "
+                "administrator of this algorithm store instance."
+            }, HTTPStatus.FORBIDDEN
+
         # issue a warning if someone tries to whitelist localhost
         force = data.get("force", False)
         # TODO make function in common to test for localhost
@@ -173,14 +181,6 @@ class Vantage6Servers(AlgorithmStoreResources):
                 "Whitelisting localhost for vantage6 server. This is not "
                 "recommended for production environments."
             )
-
-        # Check with the policies if the server is allowed to be whitelisted
-        allowed_servers = Policy.get_servers_allowed_to_be_whitelisted()
-        if allowed_servers and data["url"] not in allowed_servers:
-            return {
-                "msg": "This server is not allowed to be whitelisted by the "
-                "administrator of this algorithm store instance."
-            }, HTTPStatus.FORBIDDEN
 
         # delete any existing record with the same url to prevent duplicates
         existing_server = db_Vantage6Server.get_by_url(data["url"])

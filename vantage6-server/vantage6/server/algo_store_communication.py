@@ -5,6 +5,7 @@ from flask import Response
 from http import HTTPStatus
 
 from vantage6.backend.common.globals import HOST_URI_ENV
+from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
 from vantage6.server import db
 
 
@@ -42,11 +43,11 @@ def post_algorithm_store(
         ]
         if None in collabs_with_algo_store:
             return {
-                "msg": "Algorithm store is already available for all " "collaborations"
+                "msg": "Algorithm store is already available for all collaborations"
             }, HTTPStatus.BAD_REQUEST
         if collaboration_id in collabs_with_algo_store:
             return {
-                "msg": "Algorithm store is already available for this " "collaboration"
+                "msg": "Algorithm store is already available for this collaboration"
             }, HTTPStatus.BAD_REQUEST
         if not collaboration_id:
             # algorithm store is currently available for some
@@ -55,8 +56,7 @@ def post_algorithm_store(
             # collaborations (this prevents duplicates)
             records_to_delete = existing_algorithm_stores
 
-    # raise a warning if the algorithm store url is insecure (i.e.
-    # localhost)
+    # raise a warning if the algorithm store url is insecure (i.e. localhost)
     force = data.get("force", False)
     if not force and (
         "localhost" in algorithm_store_url or "127.0.0.1" in algorithm_store_url
@@ -83,7 +83,26 @@ def post_algorithm_store(
         method="post",
         force=force,
     )
-    if status != HTTPStatus.CREATED:
+    if status == HTTPStatus.FORBIDDEN:
+        # if whitelisting of the server at the algorithm store fails with status
+        # forbidden, the store does not allow the server to be whitelisted. Check if
+        # the store has open algorithms. If it does, the server can still whitelist the
+        # store to get the open algorithms, but the users of this server will not be
+        # able to manage anything at the store.
+        if store_has_open_algorithms(algorithm_store_url, server_url):
+            log.warning(
+                "Could not whitelist the current server at algorithm store %s."
+                " This server will only have read-only access to algorithms "
+                "from the store",
+                algorithm_store_url,
+            )
+        else:
+            # if the store does not have open algorithms, the server should not
+            # whitelist it as it will not be able to do anything with the store - return
+            # the error message from the algorithm store
+            return response, status
+    elif status != HTTPStatus.CREATED:
+        # return error
         return response, status
 
     # delete and create records
@@ -97,6 +116,39 @@ def post_algorithm_store(
     algorithm_store.save()
 
     return algorithm_store, HTTPStatus.CREATED
+
+
+def store_has_open_algorithms(algorithm_store_url: str, server_url: str) -> bool:
+    """Check if the algorithm store has open algorithms
+
+    Parameters
+    ----------
+    algorithm_store_url : str
+        URL to the algorithm store
+    server_url: str
+        URL to the current vantage6 server
+
+    Returns
+    -------
+    bool
+        True if the store has open algorithms, False otherwise
+    """
+    # response = requests.get(f"{algorithm_store_url}/api/policy/public", timeout=300)
+    response, status_code = request_algo_store(
+        algo_store_url=algorithm_store_url,
+        server_url=server_url,
+        endpoint="/policy/public",
+        method="get",
+    )
+    if status_code != HTTPStatus.OK:
+        return False
+    try:
+        return (
+            response.json().get(StorePolicies.ALGORITHM_VIEW, None)
+            == AlgorithmViewPolicies.PUBLIC
+        )
+    except KeyError:
+        return False
 
 
 def request_algo_store(
@@ -132,7 +184,7 @@ def request_algo_store(
     -------
     tuple[dict | Response, HTTPStatus]
         The response of the algorithm store and the HTTP status. If the
-        algorithm store is not reachable, a dict with an error message is
+        request to the algorithm store is unsuccessful, a dict with an error message is
         returned instead of the response.
     """
     # TODO this is not pretty, but it works for now. This should change
@@ -179,7 +231,7 @@ def request_algo_store(
             "msg": "Algorithm store cannot be reached. Make sure that "
             "it is online and that you have not included /api at the "
             "end of the algorithm store URL"
-        }, HTTPStatus.BAD_REQUEST
+        }, HTTPStatus.NOT_FOUND
     elif response.status_code not in [HTTPStatus.CREATED, HTTPStatus.OK]:
         try:
             msg = (
@@ -191,7 +243,7 @@ def request_algo_store(
                 "Communication to algorithm store failed. HTTP status: "
                 f"{response.status_code}"
             )
-        return {"msg": msg}, HTTPStatus.BAD_REQUEST
+        return {"msg": msg}, response.status_code
     # else: server has been registered at algorithm store, proceed
     return response, response.status_code
 

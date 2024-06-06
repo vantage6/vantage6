@@ -15,7 +15,7 @@
           <span>{{ algorithmStore.name || "-" }}</span>
         </div>
         <div class="data-list__item">
-          <b>{{ "algorithm-store.url" | translate }}</b>
+          <b>{{ "collaboration.algorithm-store.url" | translate }}</b>
           <span>{{ algorithmStore.url || "-" }}</span>
         </div>
       </div>
@@ -42,13 +42,18 @@
       <app-table *ngIf="policyTable" [data]="policyTable" [isLoading]="isLoading"></app-table>
     </mat-card-content>
   </mat-card>
-  <mat-card *ngIf="algorithms">
+  <mat-card>
     <mat-card-header>
       <mat-card-title>{{ "algorithm-store-read.card-algorithms.title" | translate }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <p>{{ "algorithm-store-read.card-algorithms.description" | translate }}</p>
-      <app-display-algorithms [algorithms]="algorithms" [routeOnClick]="routePaths.algorithmManage"></app-display-algorithms>
+      <div *ngIf="algorithms">
+        <p>{{ "algorithm-store-read.card-algorithms.description" | translate }}</p>
+        <app-display-algorithms [algorithms]="algorithms" [routeOnClick]="routePaths.algorithmManage"></app-display-algorithms>
+      </div>
+      <div *ngIf="!algorithms">
+        <p>{{ getMessageNoAlgorithms() }}</p>
+      </div>
     </mat-card-content>
   </mat-card>
 </ng-container>

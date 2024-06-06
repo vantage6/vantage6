@@ -1,5 +1,7 @@
 from enum import Enum
 
+from vantage6.common.enum import AlgorithmViewPolicies
+
 POLICY_ALLOW_ALL = "all"
 
 
@@ -48,30 +50,12 @@ class ReviewStatus(str, Enum):
     APPROVED = "approved"
 
 
-class StorePolicies(str, Enum):
-    """
-    Enum for the different types of policies of the algorithm store.
-    """
-
-    ALGORITHM_VIEW = "algorithm_view"
-    ALLOWED_SERVERS = "allowed_servers"
-    ALLOWED_SERVERS_EDIT = "allowed_servers_edit"
-    ALLOW_LOCALHOST = "allow_localhost"
-
-
-class AlgorithmViewPolicies(str, Enum):
-    """Enum for available algorithm view policies"""
-
-    PUBLIC = "public"
-    WHITELISTED = "whitelisted"
-    ONLY_WITH_EXPLICIT_PERMISSION = "private"
-
-
 class PublicPolicies(str, Enum):
     """Enum to contain all policies that are publicly available"""
 
     # whether algorithms are visible to all users
     ALGORITHM_VIEW = "algorithm_view"
+    ALLOWED_SERVERS = "allowed_servers"
 
 
 class BooleanPolicies(str, Enum):
@@ -79,6 +63,13 @@ class BooleanPolicies(str, Enum):
 
     # whether algorithms are visible to all users
     ALLOW_LOCALHOST = "allow_localhost"
+
+
+class ListPolicies(str, Enum):
+    """Enum to contain all policies that are lists"""
+
+    # which servers are allowed to edit algorithms
+    ALLOWED_SERVERS = "allowed_servers"
 
 
 class DefaultStorePolicies(Enum):

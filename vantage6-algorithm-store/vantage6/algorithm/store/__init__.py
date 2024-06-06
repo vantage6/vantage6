@@ -34,10 +34,10 @@ from pathlib import Path
 
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
+from vantage6.common.enum import StorePolicies
 from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
 from vantage6.backend.common.globals import HOST_URI_ENV
 from vantage6.algorithm.store.default_roles import get_default_roles
-from vantage6.algorithm.store.model.common.enums import StorePolicies
 
 # TODO move this to common, then remove dependency on CLI in algorithm store
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
@@ -368,7 +368,7 @@ class AlgorithmStoreApp:
                 "No root user found in the configuration file. This means "
                 "no-one can alter resources on this server, unless one or "
                 "more users were already authorized to make changes to the "
-                "algorithm store prevoiusly."
+                "algorithm store previously."
             )
         return self
 

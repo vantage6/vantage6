@@ -420,7 +420,9 @@
     "for-all-collaborations": "This algorithm store is available to all collaborations.",
     "card-algorithms": {
       "title": "Algorithms",
-      "description": "This algorithm store contains the following algorithms:"
+      "description": "This algorithm store contains the following algorithms:",
+      "no-algorithms": "No algorithms are available in this store.",
+      "no-algorithm-view-permission": "You do not have permission to view the algorithms in this store."
     },
     "card-policies": {
       "title": "Policies",
@@ -431,12 +433,12 @@
     "type": "Type",
     "policy": "Policy",
     "algorithm_view": "Who can view algorithms?",
-    "allowed_servers": "Which servers are allowed to access the store's algorithms?",
+    "allowed_servers": "Which servers are responsible for managing this algorithm store?",
     "allowed_servers_edit": "From which servers are users allowed to make changes to the store?",
     "allow_localhost": "Are localhost servers allowed to access the store?",
     "algorithm_view-values": {
       "public": "Everyone",
-      "whitelisted": "All users from whitelisted servers",
+      "whitelisted": "Any user from whitelisted servers",
       "private": "Only users with explicit permission"
     }
   },

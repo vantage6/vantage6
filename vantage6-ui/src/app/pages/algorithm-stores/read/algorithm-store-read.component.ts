@@ -9,6 +9,7 @@ import { routePaths } from 'src/app/routes';
 import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
+import { StorePermissionService } from 'src/app/services/store-permission.service';
 
 @Component({
   selector: 'app-algorithm-store-read',
@@ -31,7 +32,8 @@ export class AlgorithmStoreReadComponent implements OnInit, OnDestroy {
     private algorithmService: AlgorithmService,
     private translateService: TranslateService,
     private chosenStoreService: ChosenStoreService,
-    private algorithmStoreService: AlgorithmStoreService
+    private algorithmStoreService: AlgorithmStoreService,
+    private storePermissionService: StorePermissionService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -40,11 +42,17 @@ export class AlgorithmStoreReadComponent implements OnInit, OnDestroy {
         this.initData();
       }
     });
-    await this.initData();
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
+  }
+
+  getMessageNoAlgorithms(): string {
+    if (!this.storePermissionService.canViewAlgorithms) {
+      return this.translateService.instant('algorithm-store-read.card-algorithms.no-algorithm-view-permission');
+    }
+    return this.translateService.instant('algorithm-store-read.card-algorithms.no-algorithms');
   }
 
   private async initData(): Promise<void> {
@@ -64,7 +72,9 @@ export class AlgorithmStoreReadComponent implements OnInit, OnDestroy {
     }
 
     // collect algorithms
-    this.algorithms = await this.algorithmService.getAlgorithmsForAlgorithmStore(this.algorithmStore);
+    if (this.storePermissionService.canViewAlgorithms) {
+      this.algorithms = await this.algorithmService.getAlgorithmsForAlgorithmStore(this.algorithmStore);
+    }
 
     // get store policies
     await this.setPolicies();
@@ -75,7 +85,10 @@ export class AlgorithmStoreReadComponent implements OnInit, OnDestroy {
   private async setPolicies(): Promise<void> {
     // collect store policies and convert from key|value to object with lists
     if (!this.algorithmStore) return;
-    const policies = await this.algorithmStoreService.getAlgorithmStorePolicies(this.algorithmStore.url);
+
+    const getPublicPolicies = !this.storePermissionService.isUserRegistered;
+
+    const policies = await this.algorithmStoreService.getAlgorithmStorePolicies(this.algorithmStore.url, getPublicPolicies);
 
     this.policyTable = this.translatePoliciesToTable(policies);
   }

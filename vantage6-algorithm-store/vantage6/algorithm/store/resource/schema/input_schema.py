@@ -6,12 +6,12 @@ from marshmallow import Schema, fields, ValidationError, validates, validates_sc
 import marshmallow.validate as validate
 from jsonschema import validate as json_validate
 
+from vantage6.common.enum import AlgorithmViewPolicies
 from vantage6.algorithm.store.model.common.enums import (
     Partitioning,
     FunctionType,
     ArgumentType,
     VisualizationType,
-    AlgorithmViewPolicies,
 )
 
 from vantage6.algorithm.store.model.common.ui_visualization_schemas import (
