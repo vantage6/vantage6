@@ -11,6 +11,7 @@ class DefaultRole(str, Enum):
     REVIEWER = "Reviewer"
     STORE_MANAGER = "Store Manager"
     VIEWER = "Viewer"
+    SERVER_MANAGER = "Server Manager"
 
 
 def get_default_roles() -> list[dict]:
@@ -70,7 +71,7 @@ def get_default_roles() -> list[dict]:
         "description": "Can manage algorithms, and create and edit users.",
         "rules": STORE_MANAGER,
     }
-    # 4. Developer role
+    # Developer role
     DEVELOPER_RULES = [
         Rule.get_by_("algorithm", Operation.VIEW),
         Rule.get_by_("algorithm", Operation.CREATE),
@@ -81,5 +82,21 @@ def get_default_roles() -> list[dict]:
         "description": "Can view and create algorithms.",
         "rules": DEVELOPER_RULES,
     }
+    # server manager role
+    SERVER_MANAGER_RULES = [
+        Rule.get_by_("vantage6_server", Operation.DELETE),
+    ]
+    SERVER_MANAGER_ROLE = {
+        "name": "Server Manager",
+        "description": "Can manage their own whitelisted vantage6 server",
+        "rules": SERVER_MANAGER_RULES,
+    }
     # Combine all in array
-    return [SUPER_ROLE, VIEWER_ROLE, REVIEWER_ROLE, STORE_MANAGER, DEVELOPER_ROLE]
+    return [
+        SUPER_ROLE,
+        VIEWER_ROLE,
+        REVIEWER_ROLE,
+        STORE_MANAGER,
+        DEVELOPER_ROLE,
+        SERVER_MANAGER_ROLE,
+    ]

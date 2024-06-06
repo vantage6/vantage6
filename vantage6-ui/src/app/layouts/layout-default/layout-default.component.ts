@@ -56,11 +56,12 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
 
       // ensure permissions are initialized before setting navigation links
       const serverPermissionInit = this.permissionService.isInitialized();
+      const chosenStore = this.chosenStoreService.getCurrentStore();
       const storePermissionInit = this.storePermissionService.isInitialized();
-      combineLatest([serverPermissionInit, storePermissionInit])
+      combineLatest([serverPermissionInit, chosenStore, storePermissionInit])
         .pipe(takeUntil(this.destroy$))
-        .subscribe(([serverPermInit, storePermInit]) => {
-          if (serverPermInit && storePermInit) {
+        .subscribe(([serverPermInit, chosenStore, storePermInit]) => {
+          if (serverPermInit && (chosenStore === null || storePermInit)) {
             this.setNavigationLinks();
           }
         });

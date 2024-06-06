@@ -3,7 +3,7 @@ import logging
 import requests
 from functools import wraps
 from http import HTTPStatus
-from flask import request, current_app, g
+from flask import Response, request, current_app, g
 from flask_principal import Identity, identity_changed
 from flask_restful import Api
 
@@ -101,6 +101,27 @@ def request_from_store_to_v6_server(
     return response
 
 
+def request_validate_server_token(server_url: str) -> Response:
+    """
+    Validate the token of the server.
+
+    Parameters
+    ----------
+    server_url : str
+        URL of the server to validate the token of.
+
+    Returns
+    -------
+    Response
+        Response object from the request.
+    """
+    url = f"{server_url}/token/user/validate"
+    try:
+        return request_from_store_to_v6_server(url, method="post")
+    except requests.exceptions.ConnectionError:
+        return None
+
+
 def _authenticate_with_server(*args, **kwargs):
     """
     Authenticate with a vantage6 server.
@@ -126,12 +147,7 @@ def _authenticate_with_server(*args, **kwargs):
         return {"msg": msg}, HTTPStatus.FORBIDDEN
 
     # check if token is valid
-    url = f"{request.headers['Server-Url']}/token/user/validate"
-    try:
-        response = request_from_store_to_v6_server(url, method="post")
-    except requests.exceptions.ConnectionError:
-        response = None
-
+    response = request_validate_server_token(server_url)
     if response is None or response.status_code == HTTPStatus.NOT_FOUND:
         msg = "Could not connect to the vantage6 server. Please check the server URL."
         log.warning(msg)

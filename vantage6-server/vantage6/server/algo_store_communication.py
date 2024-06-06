@@ -14,7 +14,7 @@ log = logging.getLogger(module_name)
 
 
 def post_algorithm_store(
-    data: dict, config: dict
+    data: dict, config: dict, headers: dict | None = None
 ) -> tuple[dict | db.AlgorithmStore, HTTPStatus]:
     """Add algorithm store to a collaboration
 
@@ -24,6 +24,9 @@ def post_algorithm_store(
         Request body as required for POST /algorithmstore request
     config : dict
         Server configuration
+    headers : dict | None
+        Headers to be included in the request. Usually, these will be Authorization
+        headers
 
     Returns
     -------
@@ -82,6 +85,7 @@ def post_algorithm_store(
         endpoint="vantage6-server",
         method="post",
         force=force,
+        headers=headers,
     )
     if status == HTTPStatus.FORBIDDEN:
         # if whitelisting of the server at the algorithm store fails with status

@@ -313,6 +313,7 @@ class AlgorithmStores(AlgorithmStoreBase):
         response, status = post_algorithm_store(
             request.get_json(),
             self.config,
+            headers=self.get_authorization_headers_from_request(),
         )
         if status != HTTPStatus.CREATED:
             return response, status
