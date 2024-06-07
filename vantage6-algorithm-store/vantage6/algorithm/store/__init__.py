@@ -340,7 +340,10 @@ class AlgorithmStoreApp:
                 if not db.User.get_by_server(
                     username=root_username, v6_server_id=v6_server.id
                 ):
-                    log.warning("Creating root user")
+                    log.warning(
+                        "Creating root user. Please note that it cannot be verified at "
+                        "this point that the user exists at the given vantage6 server."
+                    )
 
                     root = db.Role.get_by_name("Root")
 
@@ -357,18 +360,23 @@ class AlgorithmStoreApp:
                     )
 
             else:
-                log.warning(
-                    "No v6_server_uri and/or username found in the configuration file "
-                    "in the root_user section. This means no-one can alter resources on"
-                    " this server, unless one or more users were already authorized to "
-                    "make changes to the algorithm store previously."
+                default_msg = (
+                    "The 'root_user' section of the configuration file is "
+                    "incomplete! Please include a 'v6_server_uri' and 'username' "
+                    "to add this root user."
                 )
-        else:
+                if len(db.User.get()) == 0:
+                    log.warning(
+                        "%s No users are defined in the database either."
+                        "This means no-one can alter resources on this server.",
+                        default_msg,
+                    )
+                else:
+                    log.warning(default_msg)
+        elif len(db.User.get()) == 0:
             log.warning(
-                "No root user found in the configuration file. This means "
-                "no-one can alter resources on this server, unless one or "
-                "more users were already authorized to make changes to the "
-                "algorithm store previously."
+                "No root user found in the configuration file, nor are users defined in"
+                " the database. This means no-one can alter resources on this server."
             )
         return self
 

@@ -218,14 +218,14 @@ class Vantage6Servers(AlgorithmStoreResources):
             }, HTTPStatus.FORBIDDEN
         username = response.json()["username"]
 
-        # delete any existing record with the same url to prevent duplicates
+        # only create a new server if previous didn't exist yet
         existing_server = db_Vantage6Server.get_by_url(data["url"])
-        if existing_server:
-            existing_server.delete()
-
-        # create the whitelisted server record
-        server = db_Vantage6Server(url=data["url"])
-        server.save()
+        if not existing_server:
+            # create the whitelisted server record
+            server = db_Vantage6Server(url=data["url"])
+            server.save()
+        else:
+            server = existing_server
 
         # the user that is whitelisting the server should be able to delete it
         # in the future. Assign the server manager role to the user executing this
@@ -257,9 +257,13 @@ class Vantage6Servers(AlgorithmStoreResources):
             )
             user.save()
         else:
-            # update existing user registration
-            user.roles.append(server_manager_role)
-            user.save()
+            # check if the user already has the server manager role or all of its rules
+            server_manager_rules = server_manager_role.rules
+            user_rules = [rule for role in user.roles for rule in role.rules]
+            if not all(rule in user_rules for rule in server_manager_rules):
+                # update existing user registration
+                user.roles.append(server_manager_role)
+                user.save()
 
 
 class Vantage6Server(AlgorithmStoreResources):
@@ -331,12 +335,15 @@ class Vantage6Server(AlgorithmStoreResources):
         # @with_permission decorator already checks that the user sending the request
         # is indeed authenticated at this server URL.
         own_server_url = request.headers["Server-Url"]
-        if server.url != own_server_url:
+        url = server.url
+        if url != own_server_url:
             return {
                 "msg": "You can only delete your own whitelisted vantage6 server"
             }, HTTPStatus.FORBIDDEN
 
-        url = server.url
+        # delete server and its linked users
+        # pylint: disable=expression-not-assigned
+        [user.delete() for user in server.users]
         server.delete()
 
         return {"msg": f"Server '{url}' was successfully deleted"}, HTTPStatus.OK
