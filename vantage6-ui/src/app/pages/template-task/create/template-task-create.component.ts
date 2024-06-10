@@ -190,6 +190,7 @@ export class TemplateTaskCreateComponent implements OnInit {
         : this.packageForm.get('description')?.value || '',
       image: this.algorithm?.image || '',
       collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
+      store_id: this.algorithm?.algorith_store_id || -1,
       databases: taskDatabases,
       organizations: selectedOrganizations.map((organizationID) => {
         return { id: Number.parseInt(organizationID), input: btoa(JSON.stringify(input)) || '' };

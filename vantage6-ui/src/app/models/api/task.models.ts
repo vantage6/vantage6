@@ -52,6 +52,7 @@ export interface BaseTask {
   image: string;
   init_org: BaseLink;
   init_user: BaseLink;
+  algorithm_store?: BaseLink;
   runs: TaskRun[];
   created_at: string;
   databases: TaskDBOutput[];
@@ -76,6 +77,7 @@ export interface Task {
   parent?: BaseLink;
   study?: BaseLink;
   collaboration?: BaseLink;
+  algorithm_store?: BaseLink;
 }
 
 export interface TaskDBOutput {
@@ -132,6 +134,7 @@ export interface CreateTask {
   image: string;
   collaboration_id: number;
   study_id?: number;
+  store_id: number;
   databases: TaskDatabase[];
   organizations: Organization[];
 }

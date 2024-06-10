@@ -231,6 +231,11 @@ class Tasks(TaskBase):
               type: int
             description: The run id that belongs to the task
           - in: query
+            name: store_id
+            schema:
+              type: int
+            description: The algorithm store ID from which the algorithm was retrieved
+          - in: query
             name: name
             schema:
               type: str
@@ -451,6 +456,15 @@ class Tasks(TaskBase):
                 }, HTTPStatus.UNAUTHORIZED
             q = q.join(db.Run).filter(db.Run.id == run_id)
 
+        if "store_id" in args:
+            store_id = int(args["store_id"])
+            store = db.AlgorithmStore.get(store_id)
+            if not store:
+                return {
+                    "msg": f"Algorithm store id={store_id} does not exist!"
+                }, HTTPStatus.BAD_REQUEST
+            q = q.filter(db.Task.algorithmstore_id == store_id)
+
         if "database" in args:
             q = q.join(db.TaskDatabase).filter(
                 db.TaskDatabase.database == args["database"]
@@ -526,8 +540,7 @@ class Tasks(TaskBase):
           200:
             description: Ok
           400:
-            description: Supplied organizations are not in the supplied
-              collaboration, or not all required nodes are registered, or you
+            description: Wrong input, or not all required nodes are registered, or you
               are not in the collaboration yourself
           401:
             description: Unauthorized
@@ -676,6 +689,16 @@ class Tasks(TaskBase):
             ):
                 return {"msg": "Container-token is not valid"}, HTTPStatus.UNAUTHORIZED
 
+        # get the algorithm store
+        store_id = data.get("store_id")
+        store = None
+        if store_id:
+            store = db.AlgorithmStore.get(store_id)
+            if not store:
+                return {
+                    "msg": f"Algorithm store id={store_id} not found!"
+                }, HTTPStatus.BAD_REQUEST
+
         # check that the input is valid. If the collaboration is encrypted, it
         # should not be possible to read the input, and we should not save it
         # to the database as it may be sensitive information. Vice versa, if
@@ -695,6 +718,7 @@ class Tasks(TaskBase):
             description=data.get("description", ""),
             image=image,
             init_org=init_org,
+            algorithm_store=store,
         )
 
         # create job_id. Users can only create top-level -tasks (they will not

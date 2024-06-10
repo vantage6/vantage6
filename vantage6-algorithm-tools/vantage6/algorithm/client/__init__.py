@@ -52,6 +52,7 @@ class AlgorithmClient(ClientBase):
         self.node_id = container_identity.get("node_id")
         self.collaboration_id = container_identity.get("collaboration_id")
         self.study_id = container_identity.get("study_id")
+        self.store_id = container_identity.get("store_id")
         self.organization_id = container_identity.get("organization_id")
         self.log.info(
             f"Container in collaboration_id={self.collaboration_id} \n"
@@ -391,6 +392,8 @@ class AlgorithmClient(ClientBase):
             }
             if self.parent.study_id:
                 json_body["study_id"] = self.parent.study_id
+            if self.parent.store_id:
+                json_body["store_id"] = self.parent.store_id
 
             return self.parent.request(
                 "task",

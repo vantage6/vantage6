@@ -638,6 +638,11 @@ class AlgorithmStore(AlgorithmStoreBase):
             if status != HTTPStatus.OK:
                 return response, status
 
+        # remove the store link from all tasks linked to this store
+        for task in algorithm_store.tasks:
+            task.store = None
+            task.save()
+
         # finally delete the algorithm store record itself
         # pylint: disable=expression-not-assigned
         [store.delete() for store in all_stores_with_url]

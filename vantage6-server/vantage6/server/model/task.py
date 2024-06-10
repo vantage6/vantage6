@@ -50,6 +50,8 @@ class Task(Base):
         Organization that created this task
     init_user : :class:`~.model.user.User`
         User that created this task
+    databases : list[:class:`~.model.task_database.TaskDatabase`]
+        List of databases that are part of this task
 
     """
 
@@ -64,6 +66,7 @@ class Task(Base):
     init_org_id = Column(Integer, ForeignKey("organization.id"))
     init_user_id = Column(Integer, ForeignKey("user.id"))
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    algorithm_store_id = Column(Integer, ForeignKey("algorithmstore.id"))
 
     # relationships
     collaboration = relationship("Collaboration", back_populates="tasks")
@@ -77,6 +80,7 @@ class Task(Base):
     init_user = relationship("User", back_populates="created_tasks")
     databases = relationship("TaskDatabase", back_populates="task")
     study = relationship("Study", back_populates="tasks")
+    algorithm_store = relationship("AlgorithmStore", back_populates="tasks")
 
     # TODO update in v4+, with renaming to 'run'
     @hybrid_property
