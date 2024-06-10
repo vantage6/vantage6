@@ -61,7 +61,8 @@ export class CollaborationFormComponent implements OnInit {
       .pipe(takeUntil(this.destroy$))
       .subscribe((initialized) => {
         if (initialized) {
-          this.canEditOrganizations = this.permissionService.isAllowed(ScopeType.GLOBAL, ResourceType.COLLABORATION, OperationType.EDIT);
+          this.canEditOrganizations =
+            !this.isEdit || this.permissionService.isAllowed(ScopeType.GLOBAL, ResourceType.COLLABORATION, OperationType.EDIT);
         }
       });
   }
