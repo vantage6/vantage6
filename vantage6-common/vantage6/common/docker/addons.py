@@ -302,3 +302,61 @@ def delete_volume_if_exists(client: docker.DockerClient, volume_name: Volume) ->
             volume.remove()
     except (docker.errors.NotFound, docker.errors.APIError):
         log.warning("Could not delete volume %s", volume_name)
+
+
+def split_tag_from_image(image: str) -> tuple:
+    """
+    Split the tag from the image name
+
+    Parameters
+    ----------
+    image: str
+        The image name
+
+    Returns
+    -------
+    tuple
+        The image name and the tag
+
+    Raises
+    ------
+    ValueError
+        If a sha256 hash is given but it is not a valid hash
+    """
+    # if there is a "@sha256" part in the image name, that is the tag.
+    if "@sha256" in image:
+        image_split_sha256 = image.split("@sha256")
+        image_wo_tag = image_split_sha256[0]
+        tag = image_split_sha256[1]
+        if is_hex_digest(tag):
+            return image_wo_tag, tag
+        else:
+            raise ValueError(f"Invalid sha256 tag: {tag}")
+
+    # Note that an image can contain multiple colons, e.g. myreg.com:5000/myimage:tag.
+    # The tag colon always comes after the first slash, and is always the last colon.
+    # So first split on slashes, then split on colons. Then, join the image parts back
+    # together.
+    image_split_slash = image.split("/")
+    image_split_colon = image_split_slash[-1].split(":")
+    image_wo_tag = "/".join(image_split_slash[:-1] + [image_split_colon[0]])
+    tag = image_split_colon[-1] if len(image_split_colon) > 1 else "latest"
+
+    return image_wo_tag, tag
+
+
+def is_hex_digest(tag: str) -> bool:
+    """
+    Check if a tag is a hex digest
+
+    Parameters
+    ----------
+    tag: str
+        The tag to check
+
+    Returns
+    -------
+    bool
+        True if the tag is a hex digest, False otherwise
+    """
+    return re.match(r"^[0-9a-f]{64}$", tag)

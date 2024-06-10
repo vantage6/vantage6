@@ -50,6 +50,14 @@ class AlgorithmInputSchema(_NameDescriptionSchema):
             )
 
 
+class AlgorithmPatchInputSchema(AlgorithmInputSchema):
+    """
+    Schema for the input of an algorithm.
+    """
+
+    refresh_digest = fields.Boolean(required=False)
+
+
 class FunctionInputSchema(_NameDescriptionSchema):
     """
     Schema for the input of a function.

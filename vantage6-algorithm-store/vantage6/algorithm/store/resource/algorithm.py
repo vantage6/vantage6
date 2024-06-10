@@ -1,5 +1,8 @@
 import logging
+import sys
+from threading import Thread
 
+import docker
 from flask import g, request
 from flask_restful import Api
 from http import HTTPStatus
@@ -8,7 +11,10 @@ from vantage6.algorithm.store import db
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.common import logger_name
 from vantage6.algorithm.store.model.ui_visualization import UIVisualization
-from vantage6.algorithm.store.resource.schema.input_schema import AlgorithmInputSchema
+from vantage6.algorithm.store.resource.schema.input_schema import (
+    AlgorithmInputSchema,
+    AlgorithmPatchInputSchema,
+)
 from vantage6.algorithm.store.resource.schema.output_schema import AlgorithmOutputSchema
 from vantage6.algorithm.store.model.algorithm import Algorithm as db_Algorithm
 from vantage6.algorithm.store.model.argument import Argument
@@ -26,6 +32,7 @@ from vantage6.algorithm.store.permission import (
     Operation as P,
 )
 from vantage6.backend.common.resource.pagination import Pagination
+from vantage6.common.docker.addons import is_hex_digest, split_tag_from_image
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -64,14 +71,15 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     )
 
 
-algorithm_input_schema = AlgorithmInputSchema()
+algorithm_input_post_schema = AlgorithmInputSchema()
+algorithm_input_patch_schema = AlgorithmPatchInputSchema()
 algorithm_output_schema = AlgorithmOutputSchema()
 
 
 # ------------------------------------------------------------------------------
 # Permissions
 # ------------------------------------------------------------------------------
-def permissions(permissions: PermissionManager) -> None:
+def permissions(permission_mgr: PermissionManager) -> None:
     """
     Define the permissions for this resource.
 
@@ -80,7 +88,7 @@ def permissions(permissions: PermissionManager) -> None:
     permissions : PermissionManager
         Permission manager instance to which permissions are added
     """
-    add = permissions.appender(module_name)
+    add = permission_mgr.appender(module_name)
     add(P.VIEW, description="View any algorithm")
     add(P.CREATE, description="Create a new algorithm")
     add(P.EDIT, description="Edit any algorithm")
@@ -93,7 +101,70 @@ def permissions(permissions: PermissionManager) -> None:
 # ------------------------------------------------------------------------------
 
 
-class Algorithms(AlgorithmStoreResources):
+class AlgorithmBaseResource(AlgorithmStoreResources):
+    """Base class for the algorithm resource"""
+
+    def _save_image_digest(self, algorithm_id: int, image_name: str) -> None:
+        """
+        Get the sha256 of the image and store it in the database.
+
+        This method is run in a separate thread to prevent the request from taking too
+        long. Do NOT call this method from the main thread!
+
+        Parameters
+        ----------
+        algorithm : int
+            ID of the algorithm in the database
+        image : str
+            Image url
+        """
+        # split image and tag
+        try:
+            image_wo_tag, tag = split_tag_from_image(image_name)
+        except ValueError as e:
+            log.exception(
+                "Could not determine digest for algorithm %s: %s", algorithm_id, e
+            )
+            sys.exit()
+
+        if is_hex_digest(tag):
+            self._store_digest(image_wo_tag, tag, algorithm_id)
+
+        # if digest is not part of the tag, pull the image and retrieve the digest from
+        # there
+        client = docker.from_env()
+        try:
+            image = client.images.get(image_name)
+        except docker.errors.ImageNotFound:
+            log.exception("Image %s not found! Cannot store digest.", image_name)
+            sys.exit()
+
+        # get the digest and store it
+        digest = image.attrs["RepoDigests"][0].split("@")[1]
+        self._store_digest(image_wo_tag, digest, algorithm_id)
+        sys.exit()
+
+    def _store_digest(self, image_wo_tag: str, digest: str, algorithm_id: int) -> None:
+        """
+        Store the digest in the database.
+
+        Parameters
+        ----------
+        image_wo_tag : str
+            Image url without the tag
+        digest : str
+            Digest of the image
+        algorithm_id : int
+            ID of the algorithm in the database
+        """
+        algorithm = db_Algorithm.get(algorithm_id)
+        log.info("Storing digest %s for algorithm %s", digest, algorithm.id)
+        algorithm.image = image_wo_tag
+        algorithm.digest = digest
+        algorithm.save()
+
+
+class Algorithms(AlgorithmBaseResource):
     """Resource for /algorithm"""
 
     @with_permission_to_view_algorithms(module_name, Operation.VIEW)
@@ -280,7 +351,7 @@ class Algorithms(AlgorithmStoreResources):
         data = request.get_json()
 
         # validate the request body
-        errors = algorithm_input_schema.validate(data)
+        errors = algorithm_input_post_schema.validate(data)
         if errors:
             return {
                 "msg": "Request body is incorrect",
@@ -318,12 +389,12 @@ class Algorithms(AlgorithmStoreResources):
                 arg.save()
             # create the databases
             for database in function.get("databases", []):
-                db = Database(
+                db_ = Database(
                     name=database["name"],
                     description=database.get("description", ""),
                     function_id=func.id,
                 )
-                db.save()
+                db_.save()
             # create the visualizations
             for visualization in function.get("ui_visualizations", []):
                 vis = UIVisualization(
@@ -335,10 +406,18 @@ class Algorithms(AlgorithmStoreResources):
                 )
                 vis.save()
 
+        # start a parallel process to retrieve and store the digest of the image. This
+        # is done in a separate process to prevent the request from taking too long.
+        thread = Thread(
+            target=self._save_image_digest,
+            args=(algorithm.id, data["image"]),
+        )
+        thread.start()
+
         return algorithm_output_schema.dump(algorithm, many=False), HTTPStatus.CREATED
 
 
-class Algorithm(AlgorithmStoreResources):
+class Algorithm(AlgorithmBaseResource):
     """Resource for /algorithm/<id>"""
 
     @with_permission_to_view_algorithms(module_name, Operation.VIEW)
@@ -518,7 +597,11 @@ class Algorithm(AlgorithmStoreResources):
                               schema:
                                 type: object
                                 description: Schema that describes the visualization.
-
+                  refresh_digest:
+                    type: boolean
+                    description: If true, the digest of the image will be refreshed
+                      and stored in the database. Note that this is also done whenever
+                      the image is changed.
 
         responses:
           201:
@@ -540,24 +623,38 @@ class Algorithm(AlgorithmStoreResources):
         data = request.get_json()
 
         # validate the request body
-        errors = algorithm_input_schema.validate(data, partial=True)
+        errors = algorithm_input_patch_schema.validate(data, partial=True)
         if errors:
             return {
                 "msg": "Request body is incorrect",
                 "errors": errors,
             }, HTTPStatus.BAD_REQUEST
 
-        fields = ["name", "description", "image", "partitioning", "vantage6_version"]
+        fields = ["name", "description", "partitioning", "vantage6_version"]
         for field in fields:
             if field in data and data.get(field) is not None:
                 setattr(algorithm, field, data.get(field))
+
+        image = data.get("image")
+        # If image is updated or refresh_digest is set to True, update the digest of the
+        # image in a separate thread. Doing this in the same thread would take too long
+        # because docker image needs to be pulled
+        if image != algorithm.image or data.get("refresh_digest", False):
+            thread = Thread(
+                target=self._save_image_digest,
+                args=(algorithm.id, image if image is not None else algorithm.image),
+            )
+            thread.start()
+        # don't forget to also update the image itself
+        if image is not None:
+            algorithm.image = image
 
         if (functions := data.get("functions")) is not None:
             for function in algorithm.functions:
                 for argument in function.arguments:
                     argument.delete()
-                for db in function.databases:
-                    db.delete()
+                for db_ in function.databases:
+                    db_.delete()
                 for visualization in function.ui_visualizations:
                     visualization.delete()
                 function.delete()
