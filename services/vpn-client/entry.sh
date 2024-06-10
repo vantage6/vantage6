@@ -34,7 +34,7 @@ openvpn --config "$VPN_CONFIG" \
     --pull-filter ignore "ifconfig-ipv6" \
     --script-security 2 \
     --up-restart \
-    --ping-exit 10 \
+    --ping-exit 30 \
     --cd /mnt/vpn &
 openvpn_child=$!
 
