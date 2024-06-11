@@ -296,7 +296,7 @@ def with_permission(resource: str, operation: Operation) -> callable:
     return protection_decorator
 
 
-def with_permission_to_view_algorithms(resource: str, operation: Operation) -> callable:
+def with_permission_to_view_algorithms() -> callable:
     """
     Decorator to verify that the user has as a permission on a resource.
 
@@ -344,7 +344,7 @@ def with_permission_to_view_algorithms(resource: str, operation: Operation) -> c
                 return fn(self, *args, **kwargs)
 
             # not all authenticated users have permission: authorize user
-            response, status = _authorize_user(response, resource, operation)
+            response, status = _authorize_user(response, "algorithm", Operation.VIEW)
             if response is not None:
                 return response, status
 

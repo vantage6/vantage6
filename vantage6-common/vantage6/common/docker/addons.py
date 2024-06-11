@@ -1,23 +1,19 @@
-from datetime import datetime
+from http import HTTPStatus
 import logging
-import re
-import docker
-import requests
-import base64
-import json
 import signal
 import pathlib
+import requests
+from requests.auth import HTTPBasicAuth
 
-from dateutil.parser import parse
+import docker
 from docker.client import DockerClient
 from docker.models.containers import Container
 from docker.models.volumes import Volume
 from docker.models.networks import Network
-from docker.utils import parse_repository_tag as docker_parse_repository_tag
-from docker.auth import resolve_repository_name as docker_resolve_repository_name
+from docker.utils import parse_repository_tag
+from docker.auth import resolve_repository_name
 
 from vantage6.common import logger_name
-from vantage6.common import ClickLogger
 from vantage6.common.globals import APPNAME
 
 log = logging.getLogger(logger_name(__name__))
@@ -306,67 +302,7 @@ def delete_volume_if_exists(client: docker.DockerClient, volume_name: Volume) ->
         log.warning("Could not delete volume %s", volume_name)
 
 
-def split_tag_from_image(image: str) -> tuple:
-    """
-    Split the tag from the image name
-        log.warning("Could not delete volume %s", volume.name)
-
-
-    Parameters
-    ----------
-    image: str
-        The image name
-
-    Returns
-    -------
-    tuple
-        The image name and the tag
-
-    Raises
-    ------
-    ValueError
-        If a sha256 hash is given but it is not a valid hash
-    """
-    # if there is a "@sha256" part in the image name, that is the tag.
-    if "@sha256" in image:
-        image_split_sha256 = image.split("@sha256")
-        image_wo_tag = image_split_sha256[0]
-        tag = image_split_sha256[1]
-        if is_hex_digest(tag):
-            return image_wo_tag, tag
-        else:
-            raise ValueError(f"Invalid sha256 tag: {tag}")
-
-    # Note that an image can contain multiple colons, e.g. myreg.com:5000/myimage:tag.
-    # The tag colon always comes after the first slash, and is always the last colon.
-    # So first split on slashes, then split on colons. Then, join the image parts back
-    # together.
-    image_split_slash = image.split("/")
-    image_split_colon = image_split_slash[-1].split(":")
-    image_wo_tag = "/".join(image_split_slash[:-1] + [image_split_colon[0]])
-    tag = image_split_colon[-1] if len(image_split_colon) > 1 else "latest"
-
-    return image_wo_tag, tag
-
-
-def is_hex_digest(tag: str) -> bool:
-    """
-    Check if a tag is a hex digest
-
-    Parameters
-    ----------
-    tag: str
-        The tag to check
-
-    Returns
-    -------
-    bool
-        True if the tag is a hex digest, False otherwise
-    """
-    return re.match(r"^[0-9a-f]{64}$", tag)
-
-
-def parse_image_name(image: str):
+def parse_image_name(image: str) -> tuple[str, str, str]:
     """
     Parse image name into registry, repository, tag
 
@@ -379,15 +315,74 @@ def parse_image_name(image: str):
     Returns
     -------
     tuple[str, str, str]
-        Registry, repository, tag
-        tag is "latest" if not specified in 'image'
+        Registry, repository, and tag. Tag is "latest" if not specified in 'image'
     """
-
-    # Caution! We are using internal docker-py functions here, which may change
-    # without notice in future versions. Tests are in place to help catch these
-    # potential future changes.
-    registry_repository, tag = docker_parse_repository_tag(image)
+    registry_repository, tag = parse_repository_tag(image)
     tag = tag or "latest"
-    registry, repository = docker_resolve_repository_name(registry_repository)
-
+    registry, repository = resolve_repository_name(registry_repository)
     return registry, repository, tag
+
+
+def get_manifest(
+    full_image_url: str,
+    registry: str,
+    image: str,
+    tag: str,
+    registry_user: str = None,
+    registry_password: str = None,
+) -> dict:
+    """
+    Get the manifest of an image
+
+    This uses the OCI distribution specification which is supported by all major
+    container registries.
+
+    Parameters
+    ----------
+    full_image_url: str
+        The full image url
+    registry: str
+        The registry of the image
+    image: str
+        The image name without the registry
+    tag: str
+        The tag of the image
+    registry_user: str (optional)
+        The username for the registry. Required if the registry is private
+    registry_password: str (optional)
+        The password for the registry. Required if the registry is private
+
+    Returns
+    -------
+    requests.Response
+        Response containing the manifest of the image
+
+    Raises
+    ------
+    ValueError
+        If the image name is invalid
+    """
+    # request manifest. First try without authentication, as that is the most common
+    # case. If that fails, try with authentication
+    manifest_endpoint = f"https://{registry}/v2/{image}/manifests/{tag}"
+    response = requests.get(manifest_endpoint, timeout=60)
+    if (
+        response.status_code == HTTPStatus.UNAUTHORIZED
+        and registry_user
+        and registry_password
+    ):
+        response = requests.get(
+            manifest_endpoint,
+            auth=HTTPBasicAuth(registry_user, registry_password),
+            timeout=60,
+        )
+
+    # handle errors or return manifest
+    if response.status_code == HTTPStatus.NOT_FOUND:
+        raise ValueError(f"Image {full_image_url} not found!")
+    elif response.status_code != HTTPStatus.OK:
+        raise ValueError(
+            f"Failed to retrieve metadata for '{full_image_url}. Could not retrieve "
+            f"manifest from https://{registry}/v2/{image}/manifests/{tag}"
+        )
+    return response

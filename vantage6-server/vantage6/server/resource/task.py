@@ -5,6 +5,7 @@ from flask import g, request, url_for
 from flask_restful import Api
 from flask_socketio import SocketIO
 from http import HTTPStatus
+import requests
 from sqlalchemy import desc
 from sqlalchemy.sql import visitors
 
@@ -12,6 +13,7 @@ from vantage6.common.globals import STRING_ENCODING
 from vantage6.common.task_status import TaskStatus, has_task_finished
 from vantage6.common.encryption import DummyCryptor
 from vantage6.server import db
+from vantage6.server.algo_store_communication import get_server_url, request_algo_store
 from vantage6.server.permission import (
     RuleCollection,
     Scope as S,
@@ -552,11 +554,11 @@ class Tasks(TaskBase):
 
         tags: ["Task"]
         """
-        return self.post_task(request.get_json(), self.socketio, self.r)
+        return self.post_task(request.get_json(), self.socketio, self.r, self.config)
 
     # TODO this function should be refactored to make it more readable
     @staticmethod
-    def post_task(data: dict, socketio: SocketIO, rules: RuleCollection):
+    def post_task(data: dict, socketio: SocketIO, rules: RuleCollection, config: dict):
         """
         Create new task and algorithm runs. Send the task to the nodes.
 
@@ -568,6 +570,8 @@ class Tasks(TaskBase):
             SocketIO server instance
         rules : RuleCollection
             Rule collection instance
+        config : dict
+            Configuration dictionary
         """
         # validate request body
         errors = task_input_schema.validate(data)
@@ -698,6 +702,28 @@ class Tasks(TaskBase):
                 return {
                     "msg": f"Algorithm store id={store_id} not found!"
                 }, HTTPStatus.BAD_REQUEST
+            # check if the store is part of the collaboration
+            if (
+                not store.is_for_all_collaborations()
+                and store.collaboration_id != collaboration_id
+            ):
+                return {
+                    "msg": (
+                        "The algorithm store is not part of the collaboration "
+                        "to which the task is posted."
+                    )
+                }, HTTPStatus.BAD_REQUEST
+            # get the algorithm from the algorithm store
+            try:
+                image_with_hash = Tasks._get_image_with_hash_from_store(
+                    store, image, config
+                )
+            except Exception as e:
+                log.exception("Error while getting image from store: %s", e)
+                return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+        else:
+            # no need to determine hash if we don't look it up in a store
+            image_with_hash = image
 
         # check that the input is valid. If the collaboration is encrypted, it
         # should not be possible to read the input, and we should not save it
@@ -716,7 +742,7 @@ class Tasks(TaskBase):
             study=study,
             name=data.get("name", ""),
             description=data.get("description", ""),
-            image=image,
+            image=image_with_hash,
             init_org=init_org,
             algorithm_store=store,
         )
@@ -948,6 +974,60 @@ class Tasks(TaskBase):
                     "as your collaboration is set to not use encryption."
                 )
         return True, ""
+
+    @staticmethod
+    def _get_image_with_hash_from_store(
+        store: db.AlgorithmStore, image: str, config: dict
+    ) -> str:
+        """
+        Determine the image and hash from the algorithm store.
+
+        Parameters
+        ----------
+        store : db.AlgorithmStore
+            Algorithm store.
+        image : str
+            URL of the docker image to be used.
+        config : dict
+            Configuration dictionary.
+
+        Returns
+        -------
+        str
+            Image name including the hash.
+
+        Raises
+        ------
+        Exception
+            If the algorithm cannot be retrieved from the store.
+        """
+        # get the algorithm from the store
+        response, status_code = request_algo_store(
+            algo_store_url=store.url,
+            server_url=get_server_url(config, request.args.get("server_url")),
+            endpoint="algorithm",
+            method="GET",
+            params={"image": image},
+        )
+        if status_code != HTTPStatus.OK:
+            raise Exception(
+                f"Could not retrieve algorithm from store! {response.get('msg')}"
+            )
+        try:
+            algorithm = response.json()["data"][0]
+        except (KeyError, IndexError) as e:
+            raise Exception("Algorithm not found in store!") from e
+
+        image = algorithm["image"]
+        digest = algorithm["digest"]
+        if image and not digest:
+            log.warning(
+                "Algorithm image %s does not have a digest in the algorithm store. Will"
+                " use it without digest.",
+                image,
+            )
+            return image
+        return f"{image}@{digest}"
 
 
 class Task(TaskBase):

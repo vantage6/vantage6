@@ -1,8 +1,5 @@
 import logging
-import sys
-from threading import Thread
 
-import docker
 from flask import g, request
 from flask_restful import Api
 from http import HTTPStatus
@@ -32,7 +29,7 @@ from vantage6.algorithm.store.permission import (
     Operation as P,
 )
 from vantage6.backend.common.resource.pagination import Pagination
-from vantage6.common.docker.addons import is_hex_digest, split_tag_from_image
+from vantage6.common.docker.addons import get_manifest, parse_image_name
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -104,70 +101,53 @@ def permissions(permission_mgr: PermissionManager) -> None:
 class AlgorithmBaseResource(AlgorithmStoreResources):
     """Base class for the algorithm resource"""
 
-    def _save_image_digest(self, algorithm_id: int, image_name: str) -> None:
+    def _get_image_digest(self, image_name: str) -> tuple[str, str]:
         """
-        Get the sha256 of the image and store it in the database.
+        Get the sha256 of the image.
 
         This method is run in a separate thread to prevent the request from taking too
         long. Do NOT call this method from the main thread!
 
         Parameters
         ----------
-        algorithm : int
-            ID of the algorithm in the database
         image : str
             Image url
+        config : dict
+            Configuration dict
+
+        Returns
+        -------
+        tuple[str, str]
+            Tuple with the docker image without tag, and the digest of the image
         """
         # split image and tag
         try:
-            image_wo_tag, tag = split_tag_from_image(image_name)
-        except ValueError as e:
-            log.exception(
-                "Could not determine digest for algorithm %s: %s", algorithm_id, e
-            )
-            sys.exit()
+            registry, image, tag = parse_image_name(image_name)
+        except Exception as e:
+            raise ValueError(f"Invalid image name: {image_name}") from e
+        image_wo_tag = "/".join([registry, image])
 
-        if is_hex_digest(tag):
-            self._store_digest(image_wo_tag, tag, algorithm_id)
+        # get the manifest of the image. Use authentication if provided
+        docker_registry = self.config.get("docker_registries", [])
+        registry_user = None
+        registry_password = None
+        for reg in docker_registry:
+            if reg["registry"] == registry:
+                registry_user = reg.get("username")
+                registry_password = reg.get("password")
+                break
+        response = get_manifest(
+            image_name, registry, image, tag, registry_user, registry_password
+        )
 
-        # if digest is not part of the tag, pull the image and retrieve the digest from
-        # there
-        client = docker.from_env()
-        try:
-            image = client.images.get(image_name)
-        except docker.errors.ImageNotFound:
-            log.exception("Image %s not found! Cannot store digest.", image_name)
-            sys.exit()
-
-        # get the digest and store it
-        digest = image.attrs["RepoDigests"][0].split("@")[1]
-        self._store_digest(image_wo_tag, digest, algorithm_id)
-        sys.exit()
-
-    def _store_digest(self, image_wo_tag: str, digest: str, algorithm_id: int) -> None:
-        """
-        Store the digest in the database.
-
-        Parameters
-        ----------
-        image_wo_tag : str
-            Image url without the tag
-        digest : str
-            Digest of the image
-        algorithm_id : int
-            ID of the algorithm in the database
-        """
-        algorithm = db_Algorithm.get(algorithm_id)
-        log.info("Storing digest %s for algorithm %s", digest, algorithm.id)
-        algorithm.image = image_wo_tag
-        algorithm.digest = digest
-        algorithm.save()
+        # get the digest from the response headers
+        return image_wo_tag, response.headers["Docker-Content-Digest"]
 
 
 class Algorithms(AlgorithmBaseResource):
     """Resource for /algorithm"""
 
-    @with_permission_to_view_algorithms(module_name, Operation.VIEW)
+    @with_permission_to_view_algorithms()
     def get(self):
         """List algorithms
         ---
@@ -189,7 +169,8 @@ class Algorithms(AlgorithmBaseResource):
             name: image
             schema:
               type: string
-            description: Filter on algorithm image using the SQL operator LIKE.
+            description: Filter on algorithm image. If no tag is provided, the
+              latest tag is assumed.
           - in: query
             name: partitioning
             schema:
@@ -222,12 +203,21 @@ class Algorithms(AlgorithmBaseResource):
         for field in [
             "name",
             "description",
-            "image",
             "partitioning",
             "vantage6_version",
         ]:
             if (value := request.args.get(field)) is not None:
                 q = q.filter(getattr(db_Algorithm, field).like(value))
+
+        if (image := request.args.get("image")) is not None:
+            # determine the sha256 of the image, and filter on that. Sort descending
+            # to get the latest addition to the store first
+            # TODO at some point there may only be one registration of each algorithm,
+            # so this sorting may not be necessary anymore
+            image_wo_tag, digest = self._get_image_digest(image)
+            q = q.filter(
+                db_Algorithm.image == image_wo_tag, db_Algorithm.digest == digest
+            ).order_by(db_Algorithm.id.desc())
 
         # paginate results
         try:
@@ -358,13 +348,20 @@ class Algorithms(AlgorithmBaseResource):
                 "errors": errors,
             }, HTTPStatus.BAD_REQUEST
 
+        # validate that the algorithm image exists and retrieve the digest
+        try:
+            image_wo_tag, digest = self._get_image_digest(data["image"])
+        except Exception as e:
+            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+
         # create the algorithm
         algorithm = db_Algorithm(
             name=data["name"],
             description=data.get("description", ""),
-            image=data["image"],
+            image=image_wo_tag,
             partitioning=data["partitioning"],
             vantage6_version=data["vantage6_version"],
+            digest=digest,
         )
         algorithm.save()
 
@@ -406,21 +403,13 @@ class Algorithms(AlgorithmBaseResource):
                 )
                 vis.save()
 
-        # start a parallel process to retrieve and store the digest of the image. This
-        # is done in a separate process to prevent the request from taking too long.
-        thread = Thread(
-            target=self._save_image_digest,
-            args=(algorithm.id, data["image"]),
-        )
-        thread.start()
-
         return algorithm_output_schema.dump(algorithm, many=False), HTTPStatus.CREATED
 
 
 class Algorithm(AlgorithmBaseResource):
     """Resource for /algorithm/<id>"""
 
-    @with_permission_to_view_algorithms(module_name, Operation.VIEW)
+    @with_permission_to_view_algorithms()
     def get(self, id):
         """Get algorithm
         ---
@@ -637,14 +626,11 @@ class Algorithm(AlgorithmBaseResource):
 
         image = data.get("image")
         # If image is updated or refresh_digest is set to True, update the digest of the
-        # image in a separate thread. Doing this in the same thread would take too long
-        # because docker image needs to be pulled
+        # image.
         if image != algorithm.image or data.get("refresh_digest", False):
-            thread = Thread(
-                target=self._save_image_digest,
-                args=(algorithm.id, image if image is not None else algorithm.image),
-            )
-            thread.start()
+            image_wo_tag, digest = self._get_image_digest(image)
+            algorithm.image = image_wo_tag
+            algorithm.digest = digest
         # don't forget to also update the image itself
         if image is not None:
             algorithm.image = image
