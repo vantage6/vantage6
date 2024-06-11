@@ -307,6 +307,9 @@ class Users(UserBase):
                 )
             elif self.r.v_org.can():
                 q = q.filter(db.User.organization_id == g.user.organization_id)
+            elif "username" in args and args["username"] == g.user.username:
+                # users can always see their own user
+                pass
             else:
                 return {
                     "msg": "You lack the permission to do that!"

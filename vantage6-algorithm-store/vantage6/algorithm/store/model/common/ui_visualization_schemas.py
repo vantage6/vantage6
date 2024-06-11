@@ -33,6 +33,7 @@ table_schema = {
             },
         },
     },
+    # TOOD is this used? If not, remove it.
     "additionalProperties": False,
 }
 

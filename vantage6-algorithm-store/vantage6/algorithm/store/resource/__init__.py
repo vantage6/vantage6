@@ -3,17 +3,21 @@ import logging
 import requests
 from functools import wraps
 from http import HTTPStatus
-from flask import request, current_app, g
+from flask import Response, request, current_app, g
 from flask_principal import Identity, identity_changed
 from flask_restful import Api
 
 from vantage6.algorithm.store import PermissionManager
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.common import logger_name
+from vantage6.common.enum import AlgorithmViewPolicies
 from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 from vantage6.algorithm.store.model.user import User
 from vantage6.algorithm.store.permission import RuleNeed
 from vantage6.backend.common.services_resources import BaseServicesResources
+from vantage6.algorithm.store.model.common.enums import (
+    DefaultStorePolicies,
+)
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -41,41 +45,39 @@ class AlgorithmStoreResources(BaseServicesResources):
         # store and server to backend-common
         self.permissions = permissions
 
-    # TODO implement this class when necessary
-    # TODO move this class elsewhere?
 
+def request_from_store_to_v6_server(
+    url: str,
+    method: str = "get",
+    params: dict = None,
+    headers: dict = None,
+    json: dict = None,
+) -> requests.Response:
+    """
+    Make a request from the algorithm store to the vantage6 server.
 
-def authenticate_with_server(*args, **kwargs):
-    def __make_request(url: str) -> requests.Response:
-        headers = {"Authorization": request.headers["Authorization"]}
-        try:
-            return requests.post(url, headers=headers)
-        except requests.exceptions.ConnectionError:
-            return None
+    Parameters
+    ----------
+    url : str
+        URL of the vantage6 server endpoint to send the request to.
+    method : str
+        HTTP method to use for the request.
+    params : dict
+        Parameters to send with the request.
+    headers : dict
+        Headers to send with the request.
+    json : dict
+        JSON data to send with the request.
 
-    msg = "Missing Server-Url header"
-    if not request.headers.get("Server-Url"):
-        log.warning(msg)
-        return {"msg": msg}, HTTPStatus.BAD_REQUEST
-
-    # check if server is whitelisted
-    server_url = request.headers["Server-Url"]
-    server = Vantage6Server.get_by_url(server_url)
-    if not server:
-        msg = (
-            f"Server '{server_url}' you are trying to authenticate with is not "
-            "whitelisted"
-        )
-        log.warning(msg)
-        return {"msg": msg}, HTTPStatus.UNAUTHORIZED
-
-    # check if token is valid
-    url = f"{request.headers['Server-Url']}/token/user/validate"
-    # if we are looking for a localhost server, we probably have to
-    # check host.docker.internal (Windows) or 172.17.0.1 (Linux)
+    Returns
+    -------
+    requests.Response
+        Response object from the request.
+    """
+    # First, replace localhost addresses. If we are looking for a localhost server, we
+    # probably have to check host.docker.internal (Windows) or 172.17.0.1 (Linux)
     # instead. The user can set the environment variable HOST_URI_ENV_VAR
-    # to the correct value by providing config file option
-    # config['dev']['host_uri']
+    # to the correct value by providing config file option config['dev']['host_uri']
     if "localhost" in url or "127.0.0.1" in url:
         host_uri = os.environ.get("HOST_URI_ENV_VAR", None)
         if not host_uri:
@@ -92,12 +94,62 @@ def authenticate_with_server(*args, **kwargs):
         # replace double http:// with single
         url = url.replace("http://http://", "http://")
 
-    response = __make_request(url)
+    # send request
+    headers = headers or {}
+    headers["Authorization"] = request.headers["Authorization"]
+    response = requests.request(method, url, params=params, headers=headers, json=json)
+    return response
 
-    if response is None or response.status_code == HTTPStatus.NOT_FOUND:
+
+def request_validate_server_token(server_url: str) -> Response:
+    """
+    Validate the token of the server.
+
+    Parameters
+    ----------
+    server_url : str
+        URL of the server to validate the token of.
+
+    Returns
+    -------
+    Response
+        Response object from the request.
+    """
+    url = f"{server_url}/token/user/validate"
+    try:
+        return request_from_store_to_v6_server(url, method="post")
+    except requests.exceptions.ConnectionError:
+        return None
+
+
+def _authenticate_with_server(*args, **kwargs):
+    """
+    Authenticate with a vantage6 server.
+    """
+    msg = "Missing Server-Url header"
+    if not request.headers.get("Server-Url"):
+        log.warning(msg)
+        return {"msg": msg}, HTTPStatus.BAD_REQUEST
+    msg = "Missing Authorization header"
+    if not request.headers.get("Authorization"):
+        log.warning(msg)
+        return {"msg": msg}, HTTPStatus.BAD_REQUEST
+
+    # check if server is whitelisted
+    server_url = request.headers["Server-Url"]
+    server = Vantage6Server.get_by_url(server_url)
+    if not server:
         msg = (
-            "Could not connect to the vantage6 server. Please check" " the server URL."
+            f"Server '{server_url}' you are trying to authenticate with is not "
+            "whitelisted"
         )
+        log.warning(msg)
+        return {"msg": msg}, HTTPStatus.FORBIDDEN
+
+    # check if token is valid
+    response = request_validate_server_token(server_url)
+    if response is None or response.status_code == HTTPStatus.NOT_FOUND:
+        msg = "Could not connect to the vantage6 server. Please check the server URL."
         log.warning(msg)
         status_to_return = (
             HTTPStatus.INTERNAL_SERVER_ERROR
@@ -146,7 +198,7 @@ def _authorize_user(
     server = Vantage6Server.get_by_url(request.headers["Server-Url"])
     user = User.get_by_server(username=username, v6_server_id=server.id)
     if not user:
-        msg = "User not registered in the store"
+        msg = "You are not registered in this algorithm store"
         log.warning(msg)
         return {"msg": msg}, HTTPStatus.UNAUTHORIZED
 
@@ -194,7 +246,7 @@ def with_authentication() -> callable:
     def protection_decorator(fn):
         @wraps(fn)
         def decorator(*args, **kwargs):
-            response, status = authenticate_with_server(request)
+            response, status = _authenticate_with_server(request)
 
             if status != HTTPStatus.OK:
                 return response, status
@@ -227,7 +279,7 @@ def with_permission(resource: str, operation: Operation) -> callable:
     def protection_decorator(fn):
         @wraps(fn)
         def decorator(*args, **kwargs):
-            response, status = authenticate_with_server(request)
+            response, status = _authenticate_with_server(request)
 
             if status != HTTPStatus.OK:
                 return response, status
@@ -267,18 +319,28 @@ def with_permission_to_view_algorithms(resource: str, operation: Operation) -> c
         def decorator(self, *args, **kwargs):
             # check if everyone has permission to view algorithms
             policies = self.config.get("policies", {})
+
+            algorithm_view_policy = policies.get(
+                "algorithm_view", DefaultStorePolicies.ALGORITHM_VIEW.value
+            )
+
+            # TODO v5+ remove this deprecated policy
             anyone_can_view = policies.get("algorithms_open", False)
-            if anyone_can_view:
+            if anyone_can_view or algorithm_view_policy == AlgorithmViewPolicies.PUBLIC:
                 return fn(self, *args, **kwargs)
 
             # not everyone has permission: authenticate with server
-            response, status = authenticate_with_server(request)
+            response, status = _authenticate_with_server(request)
             if status != HTTPStatus.OK:
                 return response, status
 
             # check if all authenticated users have permission to view algorithms
+            # TODO v5+ remove this deprecated policy
             any_user_can_view = policies.get("algorithms_open_to_whitelisted", False)
-            if any_user_can_view:
+            if (
+                any_user_can_view
+                or algorithm_view_policy == AlgorithmViewPolicies.WHITELISTED
+            ):
                 return fn(self, *args, **kwargs)
 
             # not all authenticated users have permission: authorize user

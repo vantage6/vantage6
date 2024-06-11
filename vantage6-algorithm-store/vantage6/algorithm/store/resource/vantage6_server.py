@@ -3,7 +3,9 @@ import logging
 from flask import g, request
 from flask_restful import Api
 from http import HTTPStatus
+
 from vantage6.common import logger_name
+from vantage6.algorithm.store.permission import PermissionManager, Operation as P
 from vantage6.algorithm.store.resource.schema.input_schema import (
     Vantage6ServerInputSchema,
 )
@@ -13,14 +15,22 @@ from vantage6.algorithm.store.resource.schema.output_schema import (
 from vantage6.algorithm.store.model.vantage6_server import (
     Vantage6Server as db_Vantage6Server,
 )
-from vantage6.algorithm.store.resource import with_authentication
+from vantage6.algorithm.store.model.role import Role
+from vantage6.algorithm.store.model.user import User
+from vantage6.algorithm.store.model.policy import Policy
+from vantage6.algorithm.store.resource import (
+    request_validate_server_token,
+    with_authentication,
+    with_permission,
+)
 
 # TODO move to common / refactor
 from vantage6.algorithm.store.resource import AlgorithmStoreResources
+from vantage6.algorithm.store.default_roles import DefaultRole
 
 
-module_name = logger_name(__name__)
-log = logging.getLogger(module_name)
+module_name = __name__.split(".")[-1]
+log = logging.getLogger(logger_name(__name__))
 
 
 def setup(api: Api, api_base: str, services: dict) -> None:
@@ -54,6 +64,26 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         methods=("GET", "DELETE"),
         resource_class_kwargs=services,
     )
+
+
+# ------------------------------------------------------------------------------
+# Permissions
+# ------------------------------------------------------------------------------
+
+
+def permissions(permissions: PermissionManager) -> None:
+    """
+    Define the permissions for this resource.
+
+    Parameters
+    ----------
+    permissions : PermissionManager
+        Permission manager instance to which permissions are added
+    """
+
+    log.debug("Loading module vantage6_server permission")
+    add = permissions.appender(module_name)
+    add(P.DELETE, description="Delete your own whitelisted vantage6 server")
 
 
 v6_server_input_schema = Vantage6ServerInputSchema()
@@ -105,7 +135,8 @@ class Vantage6Servers(AlgorithmStoreResources):
         return v6_server_output_schema.dump(servers, many=True), HTTPStatus.OK
 
     # Note: this endpoint is not authenticated, because it is used by the
-    # vantage6 server to whitelist itself.
+    # vantage6 server to whitelist itself. It is protected by policies of the store
+    # itself, which can define if a server is allowed to be whitelisted.
     def post(self):
         """Create new whitelisted vantage6 server
         ---
@@ -129,8 +160,8 @@ class Vantage6Servers(AlgorithmStoreResources):
             description: Algorithm created successfully
           400:
             description: Invalid input
-          401:
-            description: Unauthorized
+          403:
+            description: Forbidden by algorithm store policies
 
         security:
           - bearerAuth: []
@@ -147,28 +178,92 @@ class Vantage6Servers(AlgorithmStoreResources):
                 "errors": errors,
             }, HTTPStatus.BAD_REQUEST
 
+        # Check with the policies if the server is allowed to be whitelisted
+        allowed_servers = Policy.get_servers_allowed_to_be_whitelisted()
+        if allowed_servers and data["url"] not in allowed_servers:
+            return {
+                "msg": "This server is not allowed to be whitelisted by the "
+                "administrator of this algorithm store instance."
+            }, HTTPStatus.FORBIDDEN
+
         # issue a warning if someone tries to whitelist localhost
         force = data.get("force", False)
         # TODO make function in common to test for localhost
-        if not force and ("localhost" in data["url"] or "127.0.0.1" in data["url"]):
+        if "localhost" in data["url"] or "127.0.0.1" in data["url"]:
+            if not Policy.is_localhost_allowed_to_be_whitelisted():
+                return {
+                    "msg": "Whitelisting localhost is not allowed by the "
+                    "administrator of this algorithm store instance."
+                }, HTTPStatus.FORBIDDEN
+            elif not force:
+                return {
+                    "msg": "You are trying to whitelist a localhost address for a "
+                    "vantage6 server. This is not secure and should only be "
+                    "done for development servers. If you are sure you want to "
+                    "whitelist localhost, please specify the 'force' parameter in"
+                    " the request body."
+                }, HTTPStatus.BAD_REQUEST
+            # else log warning
+            log.warning(
+                "Whitelisting localhost for vantage6 server. This is not "
+                "recommended for production environments."
+            )
+
+        # users can only whitelist their own server. Check if this is the case
+        response = request_validate_server_token(data["url"])
+        if response is None or response.status_code != HTTPStatus.OK:
             return {
-                "msg": "You are trying to whitelist a localhost address for a "
-                "vantage6 server. This is not secure and should only be "
-                "done for development servers. If you are sure you want to "
-                "whitelist localhost, please specify the 'force' parameter in"
-                " the request body."
-            }, HTTPStatus.BAD_REQUEST
+                "msg": "You can only whitelist your own vantage6 server! It could not "
+                "be verified that you are from the server you are trying to whitelist."
+            }, HTTPStatus.FORBIDDEN
+        username = response.json()["username"]
 
-        # delete any existing record with the same url to prevent duplicates
+        # only create a new server if previous didn't exist yet
         existing_server = db_Vantage6Server.get_by_url(data["url"])
-        if existing_server:
-            existing_server.delete()
+        if not existing_server:
+            # create the whitelisted server record
+            server = db_Vantage6Server(url=data["url"])
+            server.save()
+        else:
+            server = existing_server
 
-        # create the whitelisted server record
-        server = db_Vantage6Server(url=data["url"])
-        server.save()
+        # the user that is whitelisting the server should be able to delete it
+        # in the future. Assign the server manager role to the user executing this
+        # request.
+        self._assign_server_manager_role_to_auth_user(server, username)
 
         return v6_server_output_schema.dump(server, many=False), HTTPStatus.CREATED
+
+    def _assign_server_manager_role_to_auth_user(
+        self, server: db_Vantage6Server, username: str
+    ) -> None:
+        """
+        Assign the server manager role to the user that is currently authenticated.
+
+        Parameters
+        ----------
+        server : db.Vantage6Server
+            The server that is being whitelisted
+        username : str
+            The username of the user that is whitelisting the server
+        """
+        # then find if the user already exists
+        user = User.get_by_server(username, server.id)
+        server_manager_role = Role.get_by_name(DefaultRole.SERVER_MANAGER)
+        if not user:
+            # create new user registration
+            user = User(
+                username=username, v6_server_id=server.id, roles=[server_manager_role]
+            )
+            user.save()
+        else:
+            # check if the user already has the server manager role or all of its rules
+            server_manager_rules = server_manager_role.rules
+            user_rules = [rule for role in user.roles for rule in role.rules]
+            if not all(rule in user_rules for rule in server_manager_rules):
+                # update existing user registration
+                user.roles.append(server_manager_role)
+                user.save()
 
 
 class Vantage6Server(AlgorithmStoreResources):
@@ -206,7 +301,7 @@ class Vantage6Server(AlgorithmStoreResources):
 
         return v6_server_output_schema.dump(server, many=False), HTTPStatus.OK
 
-    @with_authentication()
+    @with_permission(module_name, P.DELETE)
     def delete(self, id):
         """Delete whitelist vantage6 server
         ---
@@ -236,7 +331,19 @@ class Vantage6Server(AlgorithmStoreResources):
         if not server:
             return {"msg": "Vantage6 server not found"}, HTTPStatus.NOT_FOUND
 
+        # verify that the server they are trying to delete is their own. Note that the
+        # @with_permission decorator already checks that the user sending the request
+        # is indeed authenticated at this server URL.
+        own_server_url = request.headers["Server-Url"]
         url = server.url
+        if url != own_server_url:
+            return {
+                "msg": "You can only delete your own whitelisted vantage6 server"
+            }, HTTPStatus.FORBIDDEN
+
+        # delete server and its linked users
+        # pylint: disable=expression-not-assigned
+        [user.delete() for user in server.users]
         server.delete()
 
         return {"msg": f"Server '{url}' was successfully deleted"}, HTTPStatus.OK
