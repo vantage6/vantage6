@@ -715,12 +715,20 @@ class Tasks(TaskBase):
                 }, HTTPStatus.BAD_REQUEST
             # get the algorithm from the algorithm store
             try:
-                image_with_hash = Tasks._get_image_with_hash_from_store(
+                image, digest = Tasks._get_image_and_hash_from_store(
                     store, image, config
                 )
             except Exception as e:
                 log.exception("Error while getting image from store: %s", e)
                 return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+
+            if digest:
+                image_with_hash = f"{image}@{digest}"
+            else:
+                # hash lookup in store was unsuccessful, use image without hash, but
+                # also set store to None as it was not successfully looked up
+                image_with_hash = image
+                store = None
         else:
             # no need to determine hash if we don't look it up in a store
             image_with_hash = image
@@ -802,6 +810,7 @@ class Tasks(TaskBase):
                 "job_id": task.job_id,
                 "collaboration_id": collaboration_id,
                 "init_org_id": init_org.id,
+                "algorithm_store_url": store.url if store else None,
             },
             room=f"collaboration_{collaboration_id}",
             namespace="/tasks",
@@ -976,9 +985,9 @@ class Tasks(TaskBase):
         return True, ""
 
     @staticmethod
-    def _get_image_with_hash_from_store(
+    def _get_image_and_hash_from_store(
         store: db.AlgorithmStore, image: str, config: dict
-    ) -> str:
+    ) -> tuple[str, str]:
         """
         Determine the image and hash from the algorithm store.
 
@@ -993,8 +1002,8 @@ class Tasks(TaskBase):
 
         Returns
         -------
-        str
-            Image name including the hash.
+        tuple[str, str]
+            Image url and image hash digest.
 
         Raises
         ------
@@ -1026,8 +1035,8 @@ class Tasks(TaskBase):
                 " use it without digest.",
                 image,
             )
-            return image
-        return f"{image}@{digest}"
+            return image, None
+        return image, digest
 
 
 class Task(TaskBase):
