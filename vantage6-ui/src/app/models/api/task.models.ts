@@ -22,6 +22,7 @@ export enum TaskStatus {
   Failed = 'failed',
   StartFailed = 'start failed',
   NoDockerImage = 'non-existing Docker image',
+  NotAllowed = 'not allowed',
   Crashed = 'crashed',
   Killed = 'killed by user'
 }

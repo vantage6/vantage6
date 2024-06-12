@@ -300,6 +300,10 @@ class DockerManager(DockerBaseManager):
         # check if algorithm matches any of the regex cases
         allow_basics = self._policies.get("allow_basics_algorithm", True)
         allowed_algorithms = self._policies.get("allowed_algorithms")
+        allowed_stores = self._policies.get("allowed_algorithm_stores")
+        allow_either_whitelist_or_store = self._policies.get(
+            "allow_either_whitelist_or_store", False
+        )
         if docker_image_name.startswith(BASIC_PROCESSING_IMAGE):
             if not allow_basics:
                 self.log.warn(
@@ -308,26 +312,6 @@ class DockerManager(DockerBaseManager):
                 )
                 return False
             # else: basics are allowed, so we don't need to check the regex
-        elif allowed_algorithms:
-            if isinstance(allowed_algorithms, str):
-                allowed_algorithms = [allowed_algorithms]
-            found = False
-            for algorithm in allowed_algorithms:
-                if not self._is_regex_pattern(algorithm):
-                    # check if string matches exactly
-                    if algorithm == docker_image_name:
-                        found = True
-                else:
-                    expr_ = re.compile(algorithm)
-                    if expr_.match(docker_image_name):
-                        found = True
-
-            if not found:
-                self.log.warn(
-                    "A task was sent with a docker image that this"
-                    " node does not allow to run."
-                )
-                return False
 
         # check if user or their organization is allowed
         allowed_users = self._policies.get("allowed_users", [])
@@ -346,7 +330,65 @@ class DockerManager(DockerBaseManager):
                 )
                 return False
 
-        return True
+        algorithm_whitelisted = False
+        if allowed_algorithms:
+            if isinstance(allowed_algorithms, str):
+                allowed_algorithms = [allowed_algorithms]
+            for algorithm in allowed_algorithms:
+                if not self._is_regex_pattern(algorithm):
+                    # check if string matches exactly
+                    if algorithm == docker_image_name:
+                        algorithm_whitelisted = True
+                    # if allowed algorithm is "some/image", but the docker image
+                    # includes the hash (e.g. "some/image@sha256:..."), we also
+                    # want to allow it
+                    elif docker_image_name.startswith(f"{algorithm}@sha256:"):
+                        algorithm_whitelisted = True
+                else:
+                    expr_ = re.compile(algorithm)
+                    if expr_.match(docker_image_name):
+                        algorithm_whitelisted = True
+
+        store_whitelisted = False
+        if allowed_stores:
+            # get the store from the task_info
+            try:
+                store_id = task_info["algorithm_store"]["id"]
+            except:
+                store_id = None
+            if store_id:
+                store = self.client.algorithm_store.get(store_id)
+                store_from_task = store["url"]
+                # check if the store matches any of the regex cases
+                if isinstance(allowed_stores, str):
+                    allowed_stores = [allowed_stores]
+                for store in allowed_stores:
+                    if not self._is_regex_pattern(store):
+                        # check if string matches exactly
+                        if store == store_from_task:
+                            store_whitelisted = True
+                    else:
+                        expr_ = re.compile(store)
+                        if expr_.match(store_from_task):
+                            store_whitelisted = True
+
+        allowed_from_whitelist = not allowed_algorithms or algorithm_whitelisted
+        allowed_from_store = not allowed_stores or store_whitelisted
+        if allow_either_whitelist_or_store:
+            # if we allow an algorithm if it is defined in the whitelist or the store,
+            # we return True if either the algorithm or the store is whitelisted
+            allowed = allowed_from_whitelist or allowed_from_store
+        else:
+            # only allow algorithm if it is allowed for both the allowed_algorithms and
+            # the allowed_algorithm_stores
+            allowed = allowed_from_whitelist and allowed_from_store
+
+        if not allowed:
+            self.log.warning(
+                "This node does not allow the algorithm %s to run!", docker_image_name
+            )
+
+        return allowed
 
     @staticmethod
     def _is_regex_pattern(pattern: str) -> bool:

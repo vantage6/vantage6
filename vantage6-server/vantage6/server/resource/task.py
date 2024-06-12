@@ -802,20 +802,6 @@ class Tasks(TaskBase):
         task.save()
         [db_record.save() for db_record in db_records]  # pylint: disable=W0106
 
-        # send socket event that task has been created
-        socketio.emit(
-            "task_created",
-            {
-                "task_id": task.id,
-                "job_id": task.job_id,
-                "collaboration_id": collaboration_id,
-                "init_org_id": init_org.id,
-                "algorithm_store_url": store.url if store else None,
-            },
-            room=f"collaboration_{collaboration_id}",
-            namespace="/tasks",
-        )
-
         # now we need to create results for the nodes to fill. Each node
         # receives their instructions from a result, not from the task itself
         log.debug(f"Assigning task to {len(organizations_json_list)} nodes.")
