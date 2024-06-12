@@ -5,7 +5,6 @@ from flask import g, request, url_for
 from flask_restful import Api
 from flask_socketio import SocketIO
 from http import HTTPStatus
-import requests
 from sqlalchemy import desc
 from sqlalchemy.sql import visitors
 

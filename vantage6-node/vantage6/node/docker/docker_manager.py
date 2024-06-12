@@ -354,7 +354,7 @@ class DockerManager(DockerBaseManager):
             # get the store from the task_info
             try:
                 store_id = task_info["algorithm_store"]["id"]
-            except:
+            except Exception:
                 store_id = None
             if store_id:
                 store = self.client.algorithm_store.get(store_id)

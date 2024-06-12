@@ -39,8 +39,14 @@ class WizardTest(unittest.TestCase):
                 False,  # don't enable two-factor authentication
                 True,  # add VPN server
                 True,  # add algorithm policies
+                True,  # add single algorithms to allowed_algorithms
                 "some-image",  # algorithm image to whitelist
                 False,  # don't add another algorithm image
+                True,  # add algorithm stores to allowed_algorithm_stores
+                "some-store",  # algorithm store to whitelist
+                False,  # don't add another algorithm store
+                False,  # answer question on combining policies on store level and
+                # single algorithm level
                 False,  # don't abort if no server connection is made to pull
                 # collaboration settings
                 True,  # Enable encryption
@@ -61,7 +67,10 @@ class WizardTest(unittest.TestCase):
         ]
         for key in keys:
             self.assertIn(key, config)
-        nested_keys = [["policies", "allowed_algorithms"]]
+        nested_keys = [
+            ["policies", "allowed_algorithms"],
+            ["policies", "allowed_algorithm_stores"],
+        ]
         for nesting in nested_keys:
             current_config = config
             for key in nesting:
