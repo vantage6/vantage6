@@ -156,7 +156,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
   async setupRepeatTask(taskID: string): Promise<void> {
     this.repeatedTask = await this.taskService.getTask(Number(taskID));
-    console.log(this.repeatedTask);
     if (!this.repeatedTask) {
       return;
     }
