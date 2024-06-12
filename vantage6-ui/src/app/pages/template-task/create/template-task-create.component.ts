@@ -103,7 +103,11 @@ export class TemplateTaskCreateComponent implements OnInit {
 
     const algorithms = await this.algorithmService.getAlgorithms();
     // TODO handle multiple matches from different algorithm stores
-    const baseAlgorithm = algorithms.find((_) => _.image === this.templateTask?.image);
+    let baseAlgorithm = algorithms.find((_) => _.image === this.templateTask?.image);
+    if (!baseAlgorithm && this.templateTask?.image.includes('@sha256:')) {
+      // get algorithm including digest
+      baseAlgorithm = algorithms.find((_) => `${_.image}@${_.digest}` === this.templateTask?.image);
+    }
     if (baseAlgorithm) {
       this.algorithm = await this.algorithmService.getAlgorithm(
         baseAlgorithm.algorithm_store_url || '',

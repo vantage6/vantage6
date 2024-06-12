@@ -156,6 +156,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
   async setupRepeatTask(taskID: string): Promise<void> {
     this.repeatedTask = await this.taskService.getTask(Number(taskID));
+    console.log(this.repeatedTask);
     if (!this.repeatedTask) {
       return;
     }
@@ -172,7 +173,11 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     // set algorithm step
     this.packageForm.controls.name.setValue(this.repeatedTask.name);
     this.packageForm.controls.description.setValue(this.repeatedTask.description);
-    const algorithm = this.algorithms.find((_) => _.image === this.repeatedTask?.image);
+    let algorithm = this.algorithms.find((_) => _.image === this.repeatedTask?.image);
+    if (!algorithm && this.repeatedTask?.image.includes('@sha256:')) {
+      // get algorithm including digest
+      algorithm = this.algorithms.find((_) => `${_.image}@${_.digest}` === this.repeatedTask?.image);
+    }
     if (!algorithm) return;
     this.packageForm.controls.algorithmID.setValue(algorithm.id.toString());
     await this.handleAlgorithmChange(algorithm.id);
