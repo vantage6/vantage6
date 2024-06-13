@@ -1,6 +1,16 @@
 Release notes
 =============
 
+4.5.5
+-----
+
+*13 June 2024*
+
+- **Bugfix**
+
+ - Fix faulty environment variable check in the OHDSI database connector
+   (`PR#1326 <https://github.com/vantage6/vantage6/pull/1326>`_)
+
 4.5.4
 -----
 
