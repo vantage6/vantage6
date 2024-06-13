@@ -10,7 +10,6 @@ store to a vantage6 server.
 import os
 from gevent import monkey
 
-from vantage6.algorithm.store.default_roles import get_default_roles
 
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
@@ -40,6 +39,7 @@ from vantage6.backend.common.globals import HOST_URI_ENV
 
 # TODO move this to common, then remove dependency on CLI in algorithm store
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
+from vantage6.algorithm.store.default_roles import get_default_roles
 from vantage6.algorithm.store.globals import API_PATH
 from vantage6.algorithm.store.globals import RESOURCES, SERVER_MODULE_NAME
 
