@@ -26,6 +26,7 @@ import { OrganizationService } from 'src/app/services/organization.service';
 import { MAX_ATTEMPTS_RENEW_NODE, SECONDS_BETWEEN_ATTEMPTS_RENEW_NODE } from 'src/app/models/constants/wait';
 import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 import { EncryptionService } from 'src/app/services/encryption.service';
+import { isNested } from 'src/app/helpers/utils.helper';
 
 @Component({
   selector: 'app-task-create',
@@ -191,7 +192,28 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // set parameter step
     for (const parameter of this.repeatedTask.input?.parameters || []) {
-      this.parameterForm.get(parameter.label)?.setValue(parameter.value);
+      const argument: Argument | undefined = this.function?.arguments.find((_) => _.name === parameter.label);
+      // check if value is an object
+      if (!argument) {
+        // this should never happen, but fallback is simply try to fill value in
+        this.parameterForm.get(parameter.label)?.setValue(parameter.value);
+      } else if (argument.type === ArgumentType.Json) {
+        this.parameterForm.get(parameter.label)?.setValue(JSON.stringify(parameter.value));
+      } else if (
+        argument.type === ArgumentType.FloatList ||
+        argument.type === ArgumentType.IntegerList ||
+        argument.type == ArgumentType.StringList
+      ) {
+        const controls = this.getFormArrayControls(argument);
+        let isFirst = true;
+        for (const value of parameter.value) {
+          if (!isFirst) controls.push(this.getNewControlForInputList(argument));
+          controls[controls.length - 1].setValue(value);
+          isFirst = false;
+        }
+      } else {
+        this.parameterForm.get(parameter.label)?.setValue(parameter.value);
+      }
     }
 
     // go to last step
