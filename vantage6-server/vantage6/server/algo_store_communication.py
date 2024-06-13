@@ -251,7 +251,7 @@ def _execute_algo_store_request(
     # set headers
     if not headers:
         headers = {}
-    headers = {"server_url": server_url}
+    headers["server_url"] = server_url
 
     params = None
     json = None
