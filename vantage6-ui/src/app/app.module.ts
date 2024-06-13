@@ -108,6 +108,7 @@ import { AlgorithmCreateComponent } from './pages/algorithm/admin/create/algorit
 import { AlgorithmFormComponent } from './components/forms/algorithm-form/algorithm-form.component';
 import { AlgorithmEditComponent } from './pages/algorithm/admin/edit/algorithm-edit.component';
 import { UploadPrivateKeyComponent } from './pages/choose-collaboration/upload-private-key/upload-private-key.component';
+import { VisualizeLineComponent } from './components/visualization/visualize-line/visualize-line.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -189,7 +190,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     AlgorithmCreateComponent,
     AlgorithmFormComponent,
     AlgorithmEditComponent,
-    UploadPrivateKeyComponent
+    UploadPrivateKeyComponent,
+    VisualizeLineComponent
   ],
   imports: [
     BrowserModule,

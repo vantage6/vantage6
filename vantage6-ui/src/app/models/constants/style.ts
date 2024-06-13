@@ -1,0 +1,1 @@
+export const COLOR_VANTAGE6_PRIMARY = '#21447d';

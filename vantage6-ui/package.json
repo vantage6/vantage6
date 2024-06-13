@@ -27,6 +27,7 @@
     "@ngx-translate/http-loader": "^8.0.0",
     "@observablehq/plot": "^0.6.11",
     "angularx-qrcode": "^17.0.0",
+    "chart.js": "^4.4.3",
     "crypto-js": "^4.2.0",
     "file-saver": "^2.0.5",
     "rxjs": "~7.8.0",
