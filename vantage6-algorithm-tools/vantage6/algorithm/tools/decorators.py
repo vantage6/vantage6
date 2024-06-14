@@ -430,8 +430,9 @@ def _create_omop_database_connection(label: str) -> callable:
     label_ = label.upper()
 
     # check that the required environment variables are set
-    for var in ("DBMS", "USER", "PASSWORD", "URI"):
+    for var in ("DBMS", "USER", "PASSWORD"):
         _check_environment_var_exists_or_exit(f"{label_}_DB_PARAM_{var}")
+    _check_environment_var_exists_or_exit(f"{label_}_DATABASE_URI")
 
     info("Reading OHDSI environment variables")
     dbms = os.environ[f"{label_}_DB_PARAM_DBMS"]

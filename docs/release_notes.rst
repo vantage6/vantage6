@@ -1,6 +1,36 @@
 Release notes
 =============
 
+4.5.5
+-----
+
+*13 June 2024*
+
+- **Bugfix**
+
+ - Fix faulty environment variable check in the OHDSI database connector
+   (`PR#1326 <https://github.com/vantage6/vantage6/pull/1326>`_)
+
+4.5.4
+-----
+
+*13 June 2024*
+
+- **Change**
+
+ - Changed default role 'Collaboration admin' so that they can no longer create new
+   collaborations: this was deemed too powerful for this role
+   (`PR#1313 <https://github.com/vantage6/vantage6/pull/1313>`_).
+
+- **Bugfix**
+
+ - Prevent SSL errors in communication between server and algorithm store due to wrong
+   order imports with monkey patch (`Issue#1311 <https://github.com/vantage6/vantage6/issues/1311>`_,
+   `PR#1320 <https://github.com/vantage6/vantage6/pull/1320>`_).
+ - Fix forwarding of custom headers to algorithm store when communicating from the
+   vantage6 server (`PR#1298 <https://github.com/vantage6/vantage6/pull/1298>`_).
+
+
 4.5.3
 -----
 
