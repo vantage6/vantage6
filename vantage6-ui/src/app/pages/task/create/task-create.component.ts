@@ -26,7 +26,6 @@ import { OrganizationService } from 'src/app/services/organization.service';
 import { MAX_ATTEMPTS_RENEW_NODE, SECONDS_BETWEEN_ATTEMPTS_RENEW_NODE } from 'src/app/models/constants/wait';
 import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 import { EncryptionService } from 'src/app/services/encryption.service';
-import { isNested } from 'src/app/helpers/utils.helper';
 
 @Component({
   selector: 'app-task-create',
