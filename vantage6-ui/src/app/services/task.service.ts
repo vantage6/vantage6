@@ -13,7 +13,7 @@ import {
 } from '../models/api/task.models';
 import { Pagination } from '../models/api/pagination.model';
 import { getLazyProperties } from '../helpers/api.helper';
-import { mockDataCrossTabTemplateTask, mockDataQualityTemplateTask } from '../pages/template-task/create/mock';
+import { mockDataCrossTabTemplateTask, mockDataQualityTemplateTask } from '../pages/analyze/template-task/create/mock';
 import { TemplateTask } from '../models/api/templateTask.models';
 import { isTaskFinished } from '../helpers/task.helper';
 import { SnackbarService } from './snackbar.service';

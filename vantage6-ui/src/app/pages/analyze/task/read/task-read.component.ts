@@ -16,7 +16,7 @@ import {
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { TaskService } from 'src/app/services/task.service';
-import { LogDialogComponent } from '../../../components/dialogs/log/log-dialog.component';
+import { LogDialogComponent } from '../../../../components/dialogs/log/log-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
 import { ActivatedRoute, Router } from '@angular/router';

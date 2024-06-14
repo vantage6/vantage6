@@ -1,5 +1,5 @@
 import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
-import { BaseNode, Node, NodeEdit, NodeLazyProperties, NodeSortProperties, NodeStatus } from '../../../models/api/node.model';
+import { BaseNode, Node, NodeEdit, NodeLazyProperties, NodeSortProperties, NodeStatus } from 'src/app/models/api/node.model';
 import { NodeService } from 'src/app/services/node.service';
 import { BaseOrganization, OrganizationSortProperties } from 'src/app/models/api/organization.model';
 import { OrganizationService } from 'src/app/services/organization.service';
