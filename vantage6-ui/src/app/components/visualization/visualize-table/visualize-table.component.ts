@@ -16,6 +16,7 @@ export class VisualizeTableComponent implements OnChanges {
   @Input() result_id: string = '';
 
   columns: string[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rows: any[] = [];
   name?: string;
   description?: string;
@@ -27,6 +28,7 @@ export class VisualizeTableComponent implements OnChanges {
     // location should be ['data'] to get the array
     let tableData = this.result;
     if (this.visualization?.schema?.location) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.visualization.schema.location.forEach((key: any) => {
         tableData = tableData[key];
       });
@@ -46,7 +48,7 @@ export class VisualizeTableComponent implements OnChanges {
     }
   }
 
-  // TODO the following functions should be generalized in a base component
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private parseDefaultPandasFormat(tableData: any): void {
     let columns = null;
     if (this.schemaDefinesColumns()) {
@@ -57,6 +59,7 @@ export class VisualizeTableComponent implements OnChanges {
     this.rows = parsedData.rows;
   }
 
+  //eslint-disable-next-line @typescript-eslint/no-explicit-any
   private parseRecordsFormat(tableData: any): void {
     // if the result is a single table row, convert it to an array of rows
     if (!Array.isArray(tableData)) {

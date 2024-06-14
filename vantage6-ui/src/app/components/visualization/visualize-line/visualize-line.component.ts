@@ -21,11 +21,15 @@ export class VisualizeLineComponent implements OnChanges {
 
   x: string = '';
   y: string = '';
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data_x: any = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data_y: any = [];
   name?: string;
   description?: string;
-  public chart: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  chart: any;
 
   constructor(private fileService: FileService) {}
 
@@ -34,6 +38,7 @@ export class VisualizeLineComponent implements OnChanges {
     // location should be set at ['data'] in the visualization schema to get the array
     let lineData = this.result;
     if (this.visualization?.schema?.location) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.visualization.schema.location.forEach((key: any) => {
         lineData = lineData[key];
       });
@@ -49,6 +54,7 @@ export class VisualizeLineComponent implements OnChanges {
     this.createChart();
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private parseDefaultPandasFormat(lineData: any): void {
     // if columns are defined, use them. Otherwise use the keys of the first result
     if (this.visualization?.schema?.x && this.visualization?.schema?.y) {
