@@ -2,7 +2,7 @@ import { NameDescription } from './base.model';
 
 export enum VisualizationType {
   Table = 'table',
-  Histogram = 'histogram',
+  // Histogram = 'histogram',
   Line = 'line'
 }
 
@@ -36,12 +36,14 @@ export const LINE_VISUALIZATION_SCHEMA = Object.assign({}, VISUALIZATION_SCHEMA_
   x: {
     type: 'string',
     description: 'Column to be displayed on the x-axis',
-    example: 'Enter "A" if you want to display column A on the x-axis'
+    example: 'Enter "A" if you want to display column A on the x-axis',
+    required: true
   },
   y: {
     type: 'string',
     description: 'Column to be displayed on the y-axis',
-    example: 'Enter "B" if you want to display column B on the y-axis'
+    example: 'Enter "B" if you want to display column B on the y-axis',
+    required: true
   },
   y_axis_min: {
     type: 'number',
@@ -93,8 +95,8 @@ export function getVisualizationSchema(visType: VisualizationType): any {
   switch (visType) {
     case VisualizationType.Table:
       return TABLE_VISUALIZATION_SCHEMA;
-    case VisualizationType.Histogram:
-      return HISTOGRAM_VISUALIZATION_SCHEMA;
+    // case VisualizationType.Histogram:
+    //   return HISTOGRAM_VISUALIZATION_SCHEMA;
     case VisualizationType.Line:
       return LINE_VISUALIZATION_SCHEMA;
   }
