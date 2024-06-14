@@ -1,9 +1,18 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { getChipTypeForStatus, getStatusType, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
-import { Algorithm, AlgorithmFunction, FunctionType } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmFunction, Argument, ArgumentType, FunctionType } from 'src/app/models/api/algorithm.model';
 import { Visualization } from 'src/app/models/api/visualization.model';
-import { Task, TaskLazyProperties, TaskRun, TaskStatus, TaskResult, BaseTask, TaskStatusGroup } from 'src/app/models/api/task.models';
+import {
+  Task,
+  TaskLazyProperties,
+  TaskRun,
+  TaskStatus,
+  TaskResult,
+  BaseTask,
+  TaskStatusGroup,
+  TaskParameter
+} from 'src/app/models/api/task.models';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { TaskService } from 'src/app/services/task.service';
@@ -235,6 +244,16 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       return textResult.substring(0, 100) + '...';
     }
     return textResult;
+  }
+
+  getParameterValueAsString(parameter: TaskParameter): string {
+    const argument: Argument | undefined = this.function?.arguments.find((_) => _.name === parameter.label);
+    // check if value is an object
+    if (argument?.type === ArgumentType.Json) {
+      return JSON.stringify(parameter.value);
+    } else {
+      return parameter.value;
+    }
   }
 
   downloadResult(result: TaskResult): void {

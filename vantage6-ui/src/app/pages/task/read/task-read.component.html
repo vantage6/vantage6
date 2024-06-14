@@ -168,7 +168,7 @@
         <div class="data-list">
           <div class="data-list__item" *ngFor="let parameter of task?.input?.parameters">
             <b>{{ parameter.label }}</b>
-            <span>{{ parameter.value }}</span>
+            <span>{{ getParameterValueAsString(parameter) }}</span>
           </div>
         </div>
       </ng-container>
