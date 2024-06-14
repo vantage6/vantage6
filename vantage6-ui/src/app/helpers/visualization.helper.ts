@@ -5,6 +5,7 @@ export function parseDefaultPandasFormat(df: { [key: string]: any[] }, columns: 
   }
   const rows = [];
   for (let i = 0; i < Object.keys(Object.values(df)[0]).length; i++) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const row: any = {};
     for (const column of columns) {
       row[column] = df[column][i] as string;
