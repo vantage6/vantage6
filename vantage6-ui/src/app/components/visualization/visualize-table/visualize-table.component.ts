@@ -1,4 +1,6 @@
 import { Component, Input, OnChanges } from '@angular/core';
+import { isNested } from 'src/app/helpers/utils.helper';
+import { parseDefaultPandasFormat } from 'src/app/helpers/visualization.helper';
 import { Visualization } from 'src/app/models/api/visualization.model';
 import { FileService } from 'src/app/services/file.service';
 
@@ -37,7 +39,7 @@ export class VisualizeTableComponent implements OnChanges {
 
     // check if data is formatted as {'A': {0: 1, 1: 2}, 'B': {0: 3, 1: 4}} (default for pandas DataFrame export
     // to json) or if it is formatted as [{'A': 1, 'B': 3}, {'A': 2, 'B': 4}] (orient='records' for pandas DataFrame)
-    if (!Array.isArray(tableData) && this.isNested(tableData)) {
+    if (!Array.isArray(tableData) && isNested(tableData)) {
       this.parseDefaultPandasFormat(tableData);
     } else {
       this.parseRecordsFormat(tableData);
@@ -46,21 +48,13 @@ export class VisualizeTableComponent implements OnChanges {
 
   // TODO the following functions should be generalized in a base component
   private parseDefaultPandasFormat(tableData: any): void {
-    const data = tableData as { [key: string]: any[] };
+    let columns = null;
     if (this.schemaDefinesColumns()) {
-      this.columns = this.visualization?.schema.columns as string[];
-    } else {
-      this.columns = Object.keys(data);
+      columns = this.visualization?.schema.columns as string[];
     }
-
-    this.rows = [];
-    for (let i = 0; i < Object.keys(Object.values(data)[0]).length; i++) {
-      const row: any = {};
-      for (const column of this.columns) {
-        row[column] = data[column][i] as string;
-      }
-      this.rows.push(row);
-    }
+    const parsedData = parseDefaultPandasFormat(tableData, columns);
+    this.columns = parsedData.columns;
+    this.rows = parsedData.rows;
   }
 
   private parseRecordsFormat(tableData: any): void {
@@ -98,9 +92,5 @@ export class VisualizeTableComponent implements OnChanges {
     });
 
     this.fileService.downloadCsvFile(csvData, `vantage6_results_${this.result_id}.csv`);
-  }
-
-  private isNested(data: any): boolean {
-    return Object.values(data).some((value) => typeof value === 'object');
   }
 }
