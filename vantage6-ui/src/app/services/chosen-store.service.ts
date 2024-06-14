@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, takeUntil } from 'rxjs';
-import { AlgorithmStore, AlgorithmStoreLazyProperties } from '../models/api/algorithmStore.model';
+import { AlgorithmStore, AlgorithmStoreLazyProperties } from 'src/app/models/api/algorithmStore.model';
 import { AlgorithmStoreService } from './algorithm-store.service';
 import { PermissionService } from './permission.service';
-import { CHOSEN_ALGORITHM_STORE } from '../models/constants/sessionStorage';
+import { CHOSEN_ALGORITHM_STORE } from 'src/app/models/constants/sessionStorage';
 import { StorePermissionService } from './store-permission.service';
 
 @Injectable({

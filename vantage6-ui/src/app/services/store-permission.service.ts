@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { OperationType, StoreResourceType, StoreRule } from '../models/api/rule.model';
+import { OperationType, StoreResourceType, StoreRule } from 'src/app/models/api/rule.model';
 import { StoreRuleService } from './store-rule.service';
-import { AlgorithmStore } from '../models/api/algorithmStore.model';
+import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { PermissionService } from './permission.service';
 import { environment } from 'src/environments/environment';
 

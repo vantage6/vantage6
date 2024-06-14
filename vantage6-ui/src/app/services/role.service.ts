@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 
-import { BaseRole, GetRoleParameters, Role, RoleCreate, RoleForm, RoleLazyProperties, RolePatch } from '../models/api/role.model';
-import { Pagination } from '../models/api/pagination.model';
-import { getLazyProperties } from '../helpers/api.helper';
+import { BaseRole, GetRoleParameters, Role, RoleCreate, RoleForm, RoleLazyProperties, RolePatch } from 'src/app/models/api/role.model';
+import { Pagination } from 'src/app/models/api/pagination.model';
+import { getLazyProperties } from 'src/app/helpers/api.helper';
 
 @Injectable({
   providedIn: 'root'

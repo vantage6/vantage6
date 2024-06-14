@@ -10,7 +10,11 @@ import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
 import { Router } from '@angular/router';
 import { PreprocessingStepComponent } from './steps/preprocessing-step/preprocessing-step.component';
-import { addParameterFormControlsForFunction, getTaskDatabaseFromForm, getDatabaseTypesFromForm } from '../task.helper';
+import {
+  addParameterFormControlsForFunction,
+  getTaskDatabaseFromForm,
+  getDatabaseTypesFromForm
+} from 'src/app/pages/analyze/task/task.helper';
 import { DatabaseStepComponent } from './steps/database-step/database-step.component';
 import { FilterStepComponent } from './steps/filter-step/filter-step.component';
 import { NodeService } from 'src/app/services/node.service';

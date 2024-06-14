@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { BaseUser, GetUserParameters, User, UserCreate, UserEdit, UserLazyProperties } from '../models/api/user.model';
-import { Pagination } from '../models/api/pagination.model';
-import { getLazyProperties } from '../helpers/api.helper';
+import { BaseUser, GetUserParameters, User, UserCreate, UserEdit, UserLazyProperties } from 'src/app/models/api/user.model';
+import { Pagination } from 'src/app/models/api/pagination.model';
+import { getLazyProperties } from 'src/app/helpers/api.helper';
 
 @Injectable({
   providedIn: 'root'
