@@ -7,6 +7,7 @@ import { Pagination } from '../models/api/pagination.model';
 import { SnackbarService } from './snackbar.service';
 import { Router } from '@angular/router';
 import { LoginErrorService } from './login-error.service';
+import { isNested } from '../helpers/utils.helper';
 
 @Injectable({
   providedIn: 'root'
@@ -184,7 +185,11 @@ export class ApiService {
         ': ' +
         Object.keys(error.error?.errors)
           .map((key) => {
-            return key + ': ' + error.error?.errors[key];
+            if (isNested(error.error?.errors[key])) {
+              return key + ': ' + JSON.stringify(error.error?.errors[key]);
+            } else {
+              return key + ': ' + error.error?.errors[key];
+            }
           })
           .join(', ');
     }
