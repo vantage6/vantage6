@@ -20,7 +20,14 @@ where `container_name` is the name of your Docker container. This container will
 be made available in the Docker network where the algorithm containers are
 running, so your algorithm will be able to access it via `http://localhost`.
 The `container_label` will be used as alias for the container in the isolated
-Docker network.
+Docker network. You can then reach the container from within the algorithm container at
+the following address:
+
+.. code:: python
+
+    http://container_label:port
+
+where `port` is the port on which the service is running in the container.
 
 Note that this option only works if your container with `container_name` is
 already running when you start the node. If it is not, the node will not be able

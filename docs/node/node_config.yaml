@@ -194,7 +194,9 @@ whitelist:
 # Containers that are defined here are linked to the algorithm containers and
 # can therefore be accessed when by the algorithm when it is running. Note that
 # for using this option, the container with 'container_name' should already be
-# started before the node is started.
+# started before the node is started. Also, if you are using this option together with
+# the `whitelist` option, make sure to whitelist the `container_label` under `ips`,
+# as well as the port(s) that you want to reach on the container.
 docker_services:
     container_label: container_name
 
