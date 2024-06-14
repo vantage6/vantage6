@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { Visualization, VisualizationType } from 'src/app/models/api/visualization.model';
+import { Visualization } from 'src/app/models/api/visualization.model';
 import { FileService } from 'src/app/services/file.service';
 // import { Chart } from 'chart.js';
 import { Chart, LineController, LineElement, PointElement, LinearScale, CategoryScale } from 'chart.js';
@@ -20,11 +20,15 @@ export class VisualizeLineComponent implements OnChanges {
 
   x: string = '';
   y: string = '';
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data_x: any = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data_y: any = [];
   name?: string;
   description?: string;
-  public chart: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  chart: any;
 
   constructor(private fileService: FileService) {}
 
@@ -33,6 +37,7 @@ export class VisualizeLineComponent implements OnChanges {
     // location should be set at ['data'] in the visualization schema to get the array
     let lineData = this.result;
     if (this.visualization?.schema?.location) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.visualization.schema.location.forEach((key: any) => {
         lineData = lineData[key];
       });
@@ -50,7 +55,9 @@ export class VisualizeLineComponent implements OnChanges {
     }
 
     // set the data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.data_x = lineData.map((row: any) => row[this.x]).map((row: any) => Object.values(row))[0];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.data_y = lineData.map((row: any) => row[this.y]).map((row: any) => Object.values(row))[0];
 
     // set table name and description
