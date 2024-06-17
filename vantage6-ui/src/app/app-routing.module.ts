@@ -49,10 +49,12 @@ import { AlgorithmListComponent } from './pages/algorithm/admin/list/algorithm-l
 import { AlgorithmCreateComponent } from './pages/algorithm/admin/create/algorithm-create.component';
 import { AlgorithmEditComponent } from './pages/algorithm/admin/edit/algorithm-edit.component';
 import { UploadPrivateKeyComponent } from './pages/choose-collaboration/upload-private-key/upload-private-key.component';
-
+import { StoreUserListComponent } from './pages/store/user/list/store-user-list.component';
+import { StoreUserReadComponent } from './pages/store/user/read/store-user-read.component';
+import { StoreUserCreateComponent } from './pages/store/user/create/store-user-create.component';
+import { StoreUserEditComponent } from './pages/store/user/edit/store-user-edit.component';
 const routes: Routes = [
   {
-    path: 'auth',
     component: LayoutLoginComponent,
     children: [
       {
@@ -410,6 +412,38 @@ const routes: Routes = [
         canActivate: [authenticationGuard(), chosenStoreGuard()],
         data: {
           crumbs: [['algorithm-list.title', routePaths.algorithmsManage], ['resources.algorithm']]
+        }
+      },
+      {
+        path: routerConfig.storeUsers,
+        component: StoreUserListComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['user-list.title']]
+        }
+      },
+      {
+        path: routerConfig.storeUser,
+        component: StoreUserReadComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['user-list.title', routePaths.storeUsers], ['user-read.title']]
+        }
+      },
+      {
+        path: routerConfig.storeUserCreate,
+        component: StoreUserCreateComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['user-list.title', routePaths.storeUsers], ['user-create.title']]
+        }
+      },
+      {
+        path: routerConfig.storeUserEdit,
+        component: StoreUserEditComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['user-list.title', routePaths.storeUsers], ['user-read.title']]
         }
       }
     ]

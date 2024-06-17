@@ -4,7 +4,7 @@ import { MatSidenav } from '@angular/material/sidenav';
 import { Subject, combineLatest, delay, filter, takeUntil } from 'rxjs';
 import { routePaths } from 'src/app/routes';
 import { NavigationLink, NavigationLinkType } from 'src/app/models/application/navigation-link.model';
-import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
+import { OperationType, ResourceType, ScopeType, StoreResourceType } from 'src/app/models/api/rule.model';
 import { AuthService } from 'src/app/services/auth.service';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
@@ -43,6 +43,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
     public chosenCollaborationService: ChosenCollaborationService,
     public chosenStoreService: ChosenStoreService,
     private permissionService: PermissionService,
+    private storePermissionService: StorePermissionService,
     private tokenStorageService: TokenStorageService,
     private translateService: TranslateService,
     private storePermissionService: StorePermissionService
