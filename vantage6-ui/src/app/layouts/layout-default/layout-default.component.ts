@@ -208,6 +208,14 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
           linkType: NavigationLinkType.Store
         });
       }
+      if (this.storePermissionService.isAllowed(StoreResourceType.USER, OperationType.VIEW)) {
+        storeSubmenus.push({
+          route: routePaths.storeUsers,
+          label: this.translateService.instant('resources.users'),
+          icon: 'people',
+          linkType: NavigationLinkType.Store
+        });
+      }
     }
     if (storeSubmenus.length > 0) {
       storeLink.submenus = storeSubmenus;

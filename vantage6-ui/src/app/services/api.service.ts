@@ -96,6 +96,26 @@ export class ApiService {
     }
   }
 
+  async getForAlgorithmApiWithPagination<T>(
+    algo_store_url: string,
+    path: string,
+    currentPage: number,
+    parameters: object | null = null
+  ): Promise<Pagination<T>> {
+    algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
+    return await this.handleResultForPagination(
+      this.http.get<Pagination<T>>(algo_store_url + path, {
+        headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() },
+        observe: 'response',
+        params: {
+          ...parameters,
+          page: currentPage,
+          per_page: '10'
+        }
+      })
+    );
+  }
+
   async postForAlgorithmApi<T>(algo_store_url: string, path: string, body: object): Promise<T> {
     algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
     return await this.handleResult(

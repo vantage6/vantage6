@@ -109,6 +109,10 @@ import { AlgorithmFormComponent } from './components/forms/algorithm-form/algori
 import { AlgorithmEditComponent } from './pages/store/algorithm/edit/algorithm-edit.component';
 import { UploadPrivateKeyComponent } from './pages/analyze/choose-collaboration/upload-private-key/upload-private-key.component';
 import { VisualizeLineComponent } from './components/visualization/visualize-line/visualize-line.component';
+import { StoreUserListComponent } from './pages/store/user/list/store-user-list.component';
+import { StoreUserReadComponent } from './pages/store/user/read/store-user-read.component';
+import { StoreUserCreateComponent } from './pages/store/user/create/store-user-create.component';
+import { StoreUserEditComponent } from './pages/store/user/edit/store-user-edit.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -191,7 +195,11 @@ export function HttpLoaderFactory(http: HttpClient) {
     AlgorithmFormComponent,
     AlgorithmEditComponent,
     UploadPrivateKeyComponent,
-    VisualizeLineComponent
+    VisualizeLineComponent,
+    StoreUserListComponent,
+    StoreUserReadComponent,
+    StoreUserCreateComponent,
+    StoreUserEditComponent
   ],
   imports: [
     BrowserModule,

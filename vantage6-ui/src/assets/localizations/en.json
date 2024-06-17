@@ -560,6 +560,9 @@
     "Pending": "Pending",
     "StartFailed": "Start failed"
   },
+  "store": {
+    "server": "Server URL"
+  },
   "log-dialog": {
     "title": "Log"
   },

@@ -56,6 +56,7 @@ import { StoreUserEditComponent } from './pages/store/user/edit/store-user-edit.
 
 const routes: Routes = [
   {
+    path: 'auth',
     component: LayoutLoginComponent,
     children: [
       {

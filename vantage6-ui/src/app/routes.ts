@@ -47,9 +47,9 @@ export const routePaths = {
   algorithm: '/analyze/algorithms',
   templateTaskCreate: '/analyze/template-tasks/create',
   storeUsers: '/store/users',
-  storeUser: '/store/user',
-  storeUserCreate: '/store/user/create',
-  storeUserEdit: '/store/user/edit'
+  storeUser: '/store/users',
+  storeUserCreate: '/store/users/create',
+  storeUserEdit: '/store/users/edit'
 };
 
 export const routerConfig = {
@@ -105,6 +105,6 @@ export const routerConfig = {
   templateTaskCreate: 'template-tasks/create',
   storeUsers: 'users',
   storeUser: 'users/:id',
-  storeUserCreate: 'user/create',
-  storeUserEdit: 'user/edit/:id'
+  storeUserCreate: 'users/create',
+  storeUserEdit: 'users/edit/:id'
 };
