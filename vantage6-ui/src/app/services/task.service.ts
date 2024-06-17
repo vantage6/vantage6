@@ -10,12 +10,12 @@ import {
   Task,
   TaskLazyProperties,
   TaskResult
-} from '../models/api/task.models';
-import { Pagination } from '../models/api/pagination.model';
-import { getLazyProperties } from '../helpers/api.helper';
-import { mockDataCrossTabTemplateTask, mockDataQualityTemplateTask } from '../pages/template-task/create/mock';
-import { TemplateTask } from '../models/api/templateTask.models';
-import { isTaskFinished } from '../helpers/task.helper';
+} from 'src/app/models/api/task.models';
+import { Pagination } from 'src/app/models/api/pagination.model';
+import { getLazyProperties } from 'src/app/helpers/api.helper';
+import { mockDataCrossTabTemplateTask, mockDataQualityTemplateTask } from '../pages/analyze/template-task/create/mock';
+import { TemplateTask } from 'src/app/models/api/templateTask.models';
+import { isTaskFinished } from 'src/app/helpers/task.helper';
 import { SnackbarService } from './snackbar.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ChosenCollaborationService } from './chosen-collaboration.service';

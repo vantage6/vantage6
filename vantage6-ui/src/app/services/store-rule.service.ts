@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { GetStoreRuleParameters, StoreRule } from '../models/api/rule.model';
-import { Pagination } from '../models/api/pagination.model';
+import { GetStoreRuleParameters, StoreRule } from 'src/app/models/api/rule.model';
+import { Pagination } from 'src/app/models/api/pagination.model';
 import { ApiService } from './api.service';
 
 @Injectable({

@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { getLazyProperties } from '../helpers/api.helper';
-import { BaseStudy, Study, StudyLazyProperties, StudyCreate, StudyEdit, GetStudyParameters } from '../models/api/study.model';
-import { Pagination } from '../models/api/pagination.model';
+import { getLazyProperties } from 'src/app/helpers/api.helper';
+import { BaseStudy, Study, StudyLazyProperties, StudyCreate, StudyEdit, GetStudyParameters } from 'src/app/models/api/study.model';
+import { Pagination } from 'src/app/models/api/pagination.model';
 
 @Injectable({
   providedIn: 'root'

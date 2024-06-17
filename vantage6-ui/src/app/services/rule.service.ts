@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { GetRuleParameters, Rule } from '../models/api/rule.model';
-import { Pagination } from '../models/api/pagination.model';
+import { GetRuleParameters, Rule } from 'src/app/models/api/rule.model';
+import { Pagination } from 'src/app/models/api/pagination.model';
 
 @Injectable({
   providedIn: 'root'

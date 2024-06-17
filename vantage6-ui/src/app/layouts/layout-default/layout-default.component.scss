@@ -1,4 +1,4 @@
-@import "../../styles/config.scss";
+@import "/src/app/styles/config.scss";
 
 .layout-container {
   margin: $spacing-px-4;
@@ -62,7 +62,6 @@ mat-toolbar {
 }
 
 .choice-alert {
-
   background-color: map-get($vantage-primary, 900);
   margin-bottom: $spacing-px-2;
 
@@ -75,7 +74,7 @@ mat-toolbar {
       justify-content: center;
       align-items: center;
 
-      >*:not(:last-child) {
+      > *:not(:last-child) {
         margin-bottom: $spacing-px-2;
       }
     }

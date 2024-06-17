@@ -109,7 +109,7 @@ interface TaskInput {
   parameters: TaskParameter[];
 }
 
-interface TaskParameter {
+export interface TaskParameter {
   label: string;
   value: string;
 }

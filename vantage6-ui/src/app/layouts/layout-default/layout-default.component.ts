@@ -43,7 +43,6 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
     public chosenCollaborationService: ChosenCollaborationService,
     public chosenStoreService: ChosenStoreService,
     private permissionService: PermissionService,
-    private storePermissionService: StorePermissionService,
     private tokenStorageService: TokenStorageService,
     private translateService: TranslateService,
     private storePermissionService: StorePermissionService

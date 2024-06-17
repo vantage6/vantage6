@@ -4,7 +4,7 @@ import { MatExpansionPanel } from '@angular/material/expansion';
 import { readFile } from 'src/app/helpers/file.helper';
 import { AlgorithmForm, ArgumentType, FunctionForm, FunctionType, PartitioningType } from 'src/app/models/api/algorithm.model';
 import { VisualizationType, getVisualizationSchema } from 'src/app/models/api/visualization.model';
-import { MessageDialogComponent } from '../../dialogs/message-dialog/message-dialog.component';
+import { MessageDialogComponent } from 'src/app/components/dialogs/message-dialog/message-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -239,10 +239,11 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     const schema = getVisualizationSchema(visType);
     Object.keys(schema).forEach((key) => {
       const details = schema[key];
+      const validators = details.required ? [Validators.required] : [];
       if (details.type === 'array') {
-        visSchemaForm.addControl(key, this.fb.control([]));
+        visSchemaForm.addControl(key, this.fb.control([], validators));
       } else {
-        visSchemaForm.addControl(key, this.fb.control(''));
+        visSchemaForm.addControl(key, this.fb.control('', validators));
       }
     });
     // save which schema is used for this visualization index
@@ -259,7 +260,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     this.form.controls.functions.controls[0].controls.ui_visualizations.clear();
   }
 
-  // visualization schemas should contain arrays, while input may be comma-separated strings. Convert those
+  // visualization schemas should sometimes contain arrays, while input may be comma-separated strings. Convert those
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private visualizationSchemasToArrays(formValue: any): any {
     // TODO it would be better to already have arrays in the input -- JSON validation there? Or multiple fields (as in task parameters)?
@@ -267,13 +268,18 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       func.ui_visualizations.forEach((vis: any) => {
         const schema = vis.schema;
-        Object.keys(schema).forEach((key) => {
-          if (typeof schema[key] === 'string') {
+        const schemaRequirements = getVisualizationSchema(vis.type);
+        Object.keys(schema).forEach((parameter) => {
+          const parameterRequirements = schemaRequirements[parameter];
+          if (typeof schema[parameter] === 'string' && parameterRequirements.type === 'array') {
             // convert comma separated strings to arrays and remove empty strings
-            schema[key] = schema[key]
+            schema[parameter] = schema[parameter]
               .split(',')
               .map((s: string) => s.trim())
               .filter((s: string) => s !== '');
+          } else if (parameterRequirements.type === 'number') {
+            if (schema[parameter] !== '') schema[parameter] = Number(schema[parameter]);
+            else delete schema[parameter];
           }
         });
       });

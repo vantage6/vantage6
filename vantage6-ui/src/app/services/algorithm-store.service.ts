@@ -9,8 +9,8 @@ import {
 } from '../models/api/algorithmStore.model';
 import { ApiService } from './api.service';
 import { environment } from 'src/environments/environment';
-import { Pagination } from '../models/api/pagination.model';
-import { getLazyProperties } from '../helpers/api.helper';
+import { Pagination } from 'src/app/models/api/pagination.model';
+import { getLazyProperties } from 'src/app/helpers/api.helper';
 
 @Injectable({
   providedIn: 'root'
