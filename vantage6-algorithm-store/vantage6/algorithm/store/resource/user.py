@@ -113,7 +113,6 @@ class Users(AlgorithmStoreResources):
               * The percent sign (%) represents zero, one, or multiple
               characters\n
               * underscore sign (_) represents one, single character
-
           - in: query
             name: role_id
             schema:

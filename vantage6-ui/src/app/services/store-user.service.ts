@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { StoreUser, getStoreUserParameters } from '../models/api/store-user.model';
+import { StoreUser, StoreUserLazyProperties, getStoreUserParameters } from '../models/api/store-user.model';
 import { Pagination } from '../models/api/pagination.model';
 import { ApiService } from './api.service';
+import { getLazyProperties } from '../helpers/api.helper';
 
 @Injectable({
   providedIn: 'root'
@@ -14,5 +15,14 @@ export class StoreUserService {
       ...parameters
     });
     return result;
+  }
+
+  async getUser(store_url: string, id: string, lazyProperties: StoreUserLazyProperties[] = []): Promise<StoreUser> {
+    const result = await this.apiService.getForAlgorithmApi<StoreUser>(store_url, `/api/user/${id}`);
+
+    const user = { ...result, roles: [] };
+    await getLazyProperties(result, user, lazyProperties, this.apiService, store_url);
+
+    return user;
   }
 }

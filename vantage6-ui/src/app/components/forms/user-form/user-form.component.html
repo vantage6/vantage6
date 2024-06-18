@@ -49,12 +49,12 @@
         {{ "user.permissions" | translate }}
       </div>
     </div>
-    <app-permissions-matrix
+    <app-permissions-matrix-server
       [fixedSelectedPrimary]="roleRules"
       [selectable]="selectableRules"
       [preselected]="editSessionUserRules"
       (changed)="handleChangedRules($event)"
-    ></app-permissions-matrix>
+    ></app-permissions-matrix-server>
     <div class="button-container user-form__button-container">
       <button mat-flat-button type="submit" color="primary">{{ "general.submit" | translate }}</button>
       <button mat-flat-button (click)="handleCancel()">{{ "general.cancel" | translate }}</button>

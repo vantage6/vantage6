@@ -485,7 +485,8 @@
       "run": "Run",
       "event": "Event",
       "port": "Port",
-      "study": "Study"
+      "study": "Study",
+      "algorithm": "Algorithm"
     },
     "scope": {
       "label": "Scope",
@@ -562,6 +563,10 @@
   },
   "store": {
     "server": "Server URL"
+  },
+  "store-user": {
+    "server": "Server at which user is registered",
+    "roles": "Roles in store"
   },
   "log-dialog": {
     "title": "Log"

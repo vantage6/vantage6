@@ -7,7 +7,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { Organization } from 'src/app/models/api/organization.model';
 import { Role, RoleLazyProperties } from 'src/app/models/api/role.model';
-import { OperationType, ResourceType, Rule, ScopeType } from 'src/app/models/api/rule.model';
+import { OperationType, ResourceType, Rule, Rule_, ScopeType } from 'src/app/models/api/rule.model';
 import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
 import { OrganizationService } from 'src/app/services/organization.service';
@@ -52,7 +52,7 @@ export class RoleReadComponent implements OnInit, OnDestroy {
     private organizationService: OrganizationService,
     private translateService: TranslateService,
     private permissionService: PermissionService
-  ) { }
+  ) {}
 
   async ngOnInit(): Promise<void> {
     this.allRules = await this.ruleService.getRules();
@@ -117,7 +117,7 @@ export class RoleReadComponent implements OnInit, OnDestroy {
         title: this.translateService.instant('role-read.delete-dialog.title', { name: this.role.name }),
         content: this.translateService.instant('role-read.delete-dialog.content'),
         confirmButtonText: this.translateService.instant('general.delete'),
-        confirmButtonType: 'warn',
+        confirmButtonType: 'warn'
       }
     });
 
@@ -150,8 +150,8 @@ export class RoleReadComponent implements OnInit, OnDestroy {
     return this.userTable != undefined && this.userTable.rows.length > 0;
   }
 
-  public handleChangedSelection(rules: Rule[]): void {
-    this.changedRules = rules;
+  public handleChangedSelection(rules: Rule_[]): void {
+    this.changedRules = rules as Rule[];
   }
 
   // TODO: handle error
@@ -189,7 +189,11 @@ export class RoleReadComponent implements OnInit, OnDestroy {
       .subscribe((initialized) => {
         if (initialized && this.role) {
           this.canEdit = this.permissionService.isAllowedForOrg(ResourceType.ROLE, OperationType.EDIT, this.role.organization?.id || null);
-          this.canDelete = this.permissionService.isAllowedForOrg(ResourceType.ROLE, OperationType.DELETE, this.role.organization?.id || null);
+          this.canDelete = this.permissionService.isAllowedForOrg(
+            ResourceType.ROLE,
+            OperationType.DELETE,
+            this.role.organization?.id || null
+          );
         }
       });
   }

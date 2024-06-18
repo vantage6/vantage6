@@ -79,7 +79,6 @@ import { DatabaseStepComponent } from './pages/analyze/task/create/steps/databas
 import { RoleListComponent } from './pages/admin/role/list/role-list.component';
 import { RoleReadComponent } from './pages/admin/role/read/role-read.component';
 import { RoleCreateComponent } from './pages/admin/role/create/role-create.component';
-import { PermissionsMatrixComponent } from './components/permissions-matrix/permissions-matrix.component';
 import { RoleFormComponent } from './components/forms/role-form/role-form.component';
 import { OrderByPipe } from './pipes/order-by.pipe';
 import { SetupMfaComponent } from './pages/auth/setup-mfa/setup-mfa.component';
@@ -113,6 +112,8 @@ import { StoreUserListComponent } from './pages/store/user/list/store-user-list.
 import { StoreUserReadComponent } from './pages/store/user/read/store-user-read.component';
 import { StoreUserCreateComponent } from './pages/store/user/create/store-user-create.component';
 import { StoreUserEditComponent } from './pages/store/user/edit/store-user-edit.component';
+import { PermissionsMatrixServerComponent } from './components/permissions-matrix/server/permissions-matrix-server.component';
+import { PermissionsMatrixStoreComponent } from './components/permissions-matrix/store/permissions-matrix-store.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -165,7 +166,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     DatabaseStepComponent,
     RoleListComponent,
     RoleReadComponent,
-    PermissionsMatrixComponent,
     RoleCreateComponent,
     RoleFormComponent,
     OrderByPipe,
@@ -199,7 +199,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     StoreUserListComponent,
     StoreUserReadComponent,
     StoreUserCreateComponent,
-    StoreUserEditComponent
+    StoreUserEditComponent,
+    PermissionsMatrixServerComponent,
+    PermissionsMatrixStoreComponent
   ],
   imports: [
     BrowserModule,

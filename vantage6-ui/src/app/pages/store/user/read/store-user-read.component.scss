@@ -1,0 +1,9 @@
+.user-read {
+  &__permissions {
+    margin-top: 16px;
+    & b {
+      margin-bottom: 16px;
+      display: block;
+    }
+  }
+}

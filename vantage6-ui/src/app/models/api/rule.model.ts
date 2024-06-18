@@ -54,6 +54,8 @@ export interface StoreRule extends BaseRule {
   name: StoreResourceType;
 }
 
+export type Rule_ = Rule | StoreRule;
+
 interface BaseGetRuleParameters {
   no_pagination?: 0 | 1;
   role_id?: string;

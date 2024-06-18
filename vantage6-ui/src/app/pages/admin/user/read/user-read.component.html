@@ -57,7 +57,8 @@
       </div>
       <div class="user-read__permissions">
         <b>{{ "user.permissions" | translate }}</b>
-        <app-permissions-matrix [fixedSelectedPrimary]="rolesRules" [fixedSelectedSecondary]="userSpecificRules"> </app-permissions-matrix>
+        <app-permissions-matrix-server [fixedSelectedPrimary]="rolesRules" [fixedSelectedSecondary]="userSpecificRules">
+        </app-permissions-matrix-server>
       </div>
     </mat-card-content>
   </mat-card>

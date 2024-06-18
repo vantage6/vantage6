@@ -8,7 +8,7 @@ import { PASSWORD_VALIDATORS } from 'src/app/validators/passwordValidators';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { createCompareValidator } from 'src/app/validators/compare.validator';
 import { RuleService } from 'src/app/services/rule.service';
-import { Rule } from 'src/app/models/api/rule.model';
+import { Rule, Rule_ } from 'src/app/models/api/rule.model';
 import { RoleService } from 'src/app/services/role.service';
 
 @Component({
@@ -141,8 +141,8 @@ export class UserFormComponent implements OnInit, OnDestroy {
     this.form.controls.roles.enable();
   }
 
-  public handleChangedRules(rules: Rule[]): void {
-    this.editSessionUserRules = rules;
+  public handleChangedRules(rules: Rule_[]): void {
+    this.editSessionUserRules = rules as Rule[];
     this.form.controls.rules.setValue(rules.map((rule) => rule.id));
   }
 
