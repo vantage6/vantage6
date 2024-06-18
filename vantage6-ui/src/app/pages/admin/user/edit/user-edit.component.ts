@@ -1,5 +1,7 @@
-import { Component, HostBinding, Input, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { BaseEditComponent } from 'src/app/components/admin-base/base-edit/base-edit.component';
+import { ResourceForm } from 'src/app/models/api/resource.model';
 import { User, UserEdit, UserForm, UserLazyProperties } from 'src/app/models/api/user.model';
 import { routePaths } from 'src/app/routes';
 import { UserService } from 'src/app/services/user.service';
@@ -8,30 +10,23 @@ import { UserService } from 'src/app/services/user.service';
   selector: 'app-user-edit',
   templateUrl: './user-edit.component.html'
 })
-export class UserEditComponent implements OnInit {
-  @HostBinding('class') class = 'card-container';
-  @Input() id: string = '';
-
-  isLoading: boolean = true;
-  isSubmitting: boolean = false;
+export class UserEditComponent extends BaseEditComponent implements OnInit {
   user?: User;
 
   constructor(
     private router: Router,
     private userService: UserService
-  ) {}
-
-  async ngOnInit(): Promise<void> {
-    await this.initData();
-    this.isLoading = false;
+  ) {
+    super();
   }
 
-  async handleSubmit(userForm: UserForm) {
+  protected async handleSubmit(userForm: ResourceForm): Promise<void> {
+    const form = userForm as UserForm;
     if (!this.user) return;
 
     this.isSubmitting = true;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const userEdit: UserEdit = (({ password, passwordRepeat, organization_id, ...data }) => data)(userForm);
+    const userEdit: UserEdit = (({ password, passwordRepeat, organization_id, ...data }) => data)(form);
     const user = await this.userService.editUser(this.user?.id.toString(), userEdit);
     if (user.id) {
       this.router.navigate([routePaths.user, user.id]);
@@ -44,11 +39,12 @@ export class UserEditComponent implements OnInit {
     this.router.navigate([routePaths.user, this.id]);
   }
 
-  private async initData(): Promise<void> {
+  protected async initData(): Promise<void> {
     this.user = await this.userService.getUser(this.id, [
       UserLazyProperties.Organization,
       UserLazyProperties.Roles,
       UserLazyProperties.Rules
     ]);
+    this.isLoading = false;
   }
 }

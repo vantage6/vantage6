@@ -114,6 +114,7 @@ import { StoreUserCreateComponent } from './pages/store/user/create/store-user-c
 import { StoreUserEditComponent } from './pages/store/user/edit/store-user-edit.component';
 import { PermissionsMatrixServerComponent } from './components/permissions-matrix/server/permissions-matrix-server.component';
 import { PermissionsMatrixStoreComponent } from './components/permissions-matrix/store/permissions-matrix-store.component';
+import { StoreUserFormComponent } from './components/forms/store-user-form/store-user-form.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -201,7 +202,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     StoreUserCreateComponent,
     StoreUserEditComponent,
     PermissionsMatrixServerComponent,
-    PermissionsMatrixStoreComponent
+    PermissionsMatrixStoreComponent,
+    StoreUserFormComponent
   ],
   imports: [
     BrowserModule,

@@ -10,18 +10,16 @@ import { createCompareValidator } from 'src/app/validators/compare.validator';
 import { RuleService } from 'src/app/services/rule.service';
 import { Rule, Rule_ } from 'src/app/models/api/rule.model';
 import { RoleService } from 'src/app/services/role.service';
+import { BaseFormComponent } from '../../admin-base/base-form/base-form.component';
 
 @Component({
   selector: 'app-user-form',
   templateUrl: './user-form.component.html',
   styleUrls: ['./user-form.component.scss']
 })
-export class UserFormComponent implements OnInit, OnDestroy {
+export class UserFormComponent extends BaseFormComponent implements OnInit, OnDestroy {
   @Input() user?: User;
-  @Output() cancelled: EventEmitter<void> = new EventEmitter();
-  @Output() submitted: EventEmitter<UserForm> = new EventEmitter();
 
-  destroy$ = new Subject();
   form = this.fb.nonNullable.group(
     {
       username: ['', [Validators.required]],
@@ -36,8 +34,7 @@ export class UserFormComponent implements OnInit, OnDestroy {
     },
     { validators: [createCompareValidator('password', 'passwordRepeat')] }
   );
-  isEdit: boolean = false;
-  isLoading: boolean = true;
+
   organizations: BaseOrganization[] = [];
   organizationRoles: Role[] = [];
   /* Roles assigned to the user, prior to editing. */
@@ -56,7 +53,9 @@ export class UserFormComponent implements OnInit, OnDestroy {
     private organizationService: OrganizationService,
     private ruleService: RuleService,
     private roleService: RoleService
-  ) {}
+  ) {
+    super();
+  }
 
   async ngOnInit(): Promise<void> {
     this.isLoading = true;
@@ -77,20 +76,6 @@ export class UserFormComponent implements OnInit, OnDestroy {
     }
 
     this.isLoading = false;
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next(true);
-  }
-
-  handleSubmit() {
-    if (this.form.valid) {
-      this.submitted.emit(this.form.getRawValue());
-    }
-  }
-
-  handleCancel() {
-    this.cancelled.emit();
   }
 
   private setupForm(): void {

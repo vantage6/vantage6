@@ -60,8 +60,9 @@ export class StoreUserReadComponent extends BaseReadComponent implements OnInit,
     this.canEdit = this.storePermissionService.isAllowed(StoreResourceType.USER, OperationType.EDIT);
   }
 
-  // async handleDelete(): Promise<void> {
-  //   this.handleDeleteBase(
-  //   )
-  // }
+  async handleDelete(): Promise<void> {
+    // TODO implement
+    // this.handleDeleteBase(
+    // )
+  }
 }

@@ -1,13 +1,14 @@
-import { AlgorithmStore } from './algorithmStore.model';
-import { Collaboration } from './collaboration.model';
+import { AlgorithmForm } from './algorithm.model';
+import { AlgorithmStore, AlgorithmStoreForm } from './algorithmStore.model';
+import { Collaboration, CollaborationForm } from './collaboration.model';
 import { Node } from './node.model';
-import { Organization } from './organization.model';
-import { Role } from './role.model';
+import { Organization, OrganizationCreate } from './organization.model';
+import { Role, RoleForm } from './role.model';
 import { StoreRule } from './rule.model';
-import { StoreUser } from './store-user.model';
+import { StoreUser, StoreUserForm } from './store-user.model';
 import { Study } from './study.model';
 import { Task, TaskResult, TaskRun } from './task.models';
-import { User } from './user.model';
+import { User, UserForm } from './user.model';
 
 export type Resource =
   | User
@@ -23,3 +24,5 @@ export type Resource =
   | AlgorithmStore
   | StoreUser
   | StoreRule;
+
+export type ResourceForm = UserForm | CollaborationForm | RoleForm | AlgorithmForm | AlgorithmStoreForm | StoreUserForm;

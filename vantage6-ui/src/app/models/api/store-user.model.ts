@@ -1,4 +1,4 @@
-import { BaseStoreRole } from './store-role.model';
+import { StoreRole } from './store-role.model';
 import { StoreServerRegistration } from './store-server';
 
 export enum StoreUserLazyProperties {
@@ -18,5 +18,13 @@ export interface StoreUser {
   id: number;
   username: string;
   server: StoreServerRegistration;
-  roles: BaseStoreRole[];
+  roles: StoreRole[];
+}
+
+export interface StoreUserForm {
+  roles: StoreRole[];
+}
+
+export interface StoreUserFormSubmit {
+  roles: number[];
 }

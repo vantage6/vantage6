@@ -21,4 +21,14 @@ export class StoreRuleService {
     );
     return result.data;
   }
+
+  async getRulesForRoles(store_url: string, roleIds: number[]): Promise<StoreRule[]> {
+    let roleRules: StoreRule[] = [];
+    const promises = roleIds.map(async (id) => {
+      const rules = await this.getRules(store_url, { role_id: id.toString(), no_pagination: 1 });
+      roleRules = roleRules.concat(rules);
+    });
+    await Promise.all(promises);
+    return roleRules;
+  }
 }

@@ -1,5 +1,6 @@
 import { Component, HostBinding } from '@angular/core';
 import { Router } from '@angular/router';
+import { ResourceForm } from 'src/app/models/api/resource.model';
 import { UserCreate, UserForm } from 'src/app/models/api/user.model';
 import { routePaths } from 'src/app/routes';
 import { UserService } from 'src/app/services/user.service';
@@ -19,10 +20,10 @@ export class UserCreateComponent {
     private userService: UserService
   ) {}
 
-  async handleSubmit(userForm: UserForm): Promise<void> {
+  async handleSubmit(userForm: ResourceForm): Promise<void> {
     this.isSubmitting = true;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const userCreate: UserCreate = (({ passwordRepeat, ...data }) => data)(userForm);
+    const userCreate: UserCreate = (({ passwordRepeat, ...data }) => data)(userForm as UserForm);
     const user = await this.userService.createUser(userCreate);
     if (user.id) {
       this.router.navigate([routePaths.users]);

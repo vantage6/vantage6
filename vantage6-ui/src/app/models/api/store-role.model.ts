@@ -1,4 +1,4 @@
-export interface BaseStoreRole {
+export interface StoreRole {
   id: number;
   description: string;
   name: string;
