@@ -1,5 +1,11 @@
 import { Injectable } from '@angular/core';
-import { StoreUser, StoreUserFormSubmit, StoreUserLazyProperties, getStoreUserParameters } from '../models/api/store-user.model';
+import {
+  StoreUser,
+  StoreUserCreate,
+  StoreUserFormSubmit,
+  StoreUserLazyProperties,
+  getStoreUserParameters
+} from '../models/api/store-user.model';
 import { Pagination } from '../models/api/pagination.model';
 import { ApiService } from './api.service';
 import { getLazyProperties } from '../helpers/api.helper';
@@ -26,8 +32,11 @@ export class StoreUserService {
     return user;
   }
 
+  async createUser(store_url: string, user: StoreUserCreate): Promise<StoreUser> {
+    return await this.apiService.postForAlgorithmApi<StoreUser>(store_url, `/api/user`, user);
+  }
+
   async editUser(store_url: string, id: number, user: StoreUserFormSubmit): Promise<StoreUser> {
-    const result = await this.apiService.patchForAlgorithmApi<StoreUser>(store_url, `/api/user/${id}`, user);
-    return result;
+    return await this.apiService.patchForAlgorithmApi<StoreUser>(store_url, `/api/user/${id}`, user);
   }
 }

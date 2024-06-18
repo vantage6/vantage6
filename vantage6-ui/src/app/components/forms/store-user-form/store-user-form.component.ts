@@ -10,6 +10,9 @@ import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { compareObjIDs } from 'src/app/helpers/general.helper';
 import { StoreRule } from 'src/app/models/api/rule.model';
 import { StoreRuleService } from 'src/app/services/store-rule.service';
+import { UserService } from 'src/app/services/user.service';
+import { BaseUser } from 'src/app/models/api/user.model';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-store-user-form',
@@ -21,10 +24,12 @@ export class StoreUserFormComponent extends BaseFormComponent implements OnInit 
   userRoles: StoreRole[] = [];
   userRules: StoreRule[] = [];
   availableRoles: StoreRole[] = [];
+  serverUsers: BaseUser[] = [];
   store: AlgorithmStore | null = null;
   compareRolesForSelection = compareObjIDs;
 
   form = this.fb.nonNullable.group({
+    username: ['', [Validators.required]],
     roles: [[] as StoreRole[], [Validators.required]]
   });
 
@@ -32,7 +37,9 @@ export class StoreUserFormComponent extends BaseFormComponent implements OnInit 
     private fb: FormBuilder,
     private storeRoleService: StoreRoleService,
     private chosenStoreService: ChosenStoreService,
-    private storeRuleService: StoreRuleService
+    private storeRuleService: StoreRuleService,
+    private userService: UserService,
+    private permissionService: PermissionService
   ) {
     super();
   }
@@ -49,6 +56,9 @@ export class StoreUserFormComponent extends BaseFormComponent implements OnInit 
   }
 
   private setupForm(): void {
+    if (this.isEdit) {
+      this.form.controls.username.disable();
+    }
     this.form.controls.roles.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (roles) => {
       this.processRules(roles);
     });
@@ -67,15 +77,16 @@ export class StoreUserFormComponent extends BaseFormComponent implements OnInit 
     this.availableRoles = await this.storeRoleService.getRoles(this.store.url);
     this.setupForm();
 
-    // if the user is being created, initialization is done
     if (!this.user) {
-      this.isLoading = false;
-      return;
+      // if the user is being created, get the users from the server
+      this.serverUsers = await this.userService.getUsers();
+      // remove the current user from the list
+      this.serverUsers = this.serverUsers.filter((serverUser) => serverUser.id !== this.permissionService.activeUser?.id);
+    } else {
+      // if the user is being edited, set the form values
+      this.userRoles = this.user.roles;
+      this.form.controls.roles.setValue(this.userRoles);
     }
-
-    // if the user is being edited, set the form values
-    this.userRoles = this.user.roles;
-    this.form.controls.roles.setValue(this.userRoles);
     this.isLoading = false;
   }
 }

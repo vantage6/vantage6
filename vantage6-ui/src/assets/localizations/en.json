@@ -566,7 +566,10 @@
   },
   "store-user": {
     "server": "Server at which user is registered",
-    "roles": "Roles in store"
+    "roles": "Roles in store",
+    "create": {
+      "title": "Register user at store"
+    }
   },
   "log-dialog": {
     "title": "Log"

@@ -22,9 +22,14 @@ export interface StoreUser {
 }
 
 export interface StoreUserForm {
+  username: string;
   roles: StoreRole[];
 }
 
 export interface StoreUserFormSubmit {
   roles: number[];
+}
+
+export interface StoreUserCreate extends StoreUserFormSubmit {
+  username: string;
 }

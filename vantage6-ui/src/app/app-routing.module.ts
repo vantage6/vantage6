@@ -425,14 +425,6 @@ const routes: Routes = [
         }
       },
       {
-        path: routerConfig.storeUser,
-        component: StoreUserReadComponent,
-        canActivate: [authenticationGuard(), chosenStoreGuard()],
-        data: {
-          crumbs: [['user-list.title', routePaths.storeUsers], ['user-read.title']]
-        }
-      },
-      {
         path: routerConfig.storeUserCreate,
         component: StoreUserCreateComponent,
         canActivate: [authenticationGuard(), chosenStoreGuard()],
@@ -443,6 +435,14 @@ const routes: Routes = [
       {
         path: routerConfig.storeUserEdit,
         component: StoreUserEditComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['user-list.title', routePaths.storeUsers], ['user-read.title']]
+        }
+      },
+      {
+        path: routerConfig.storeUser,
+        component: StoreUserReadComponent,
         canActivate: [authenticationGuard(), chosenStoreGuard()],
         data: {
           crumbs: [['user-list.title', routePaths.storeUsers], ['user-read.title']]

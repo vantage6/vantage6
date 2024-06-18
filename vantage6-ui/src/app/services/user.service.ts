@@ -15,6 +15,11 @@ export class UserService {
     return result;
   }
 
+  async getUsers(parameters?: GetUserParameters): Promise<BaseUser[]> {
+    const result = await this.apiService.getForApi<Pagination<BaseUser>>(`/user`, { ...parameters, per_page: 9999 });
+    return result.data;
+  }
+
   async getUser(id: string, lazyProperties: UserLazyProperties[] = []): Promise<User> {
     const result = await this.apiService.getForApi<BaseUser>(`/user/${id}`);
 

@@ -1,5 +1,6 @@
-import { Component, HostBinding } from '@angular/core';
+import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { BaseCreateComponent } from 'src/app/components/admin-base/base-create/base-create.component';
 import { ResourceForm } from 'src/app/models/api/resource.model';
 import { UserCreate, UserForm } from 'src/app/models/api/user.model';
 import { routePaths } from 'src/app/routes';
@@ -9,16 +10,13 @@ import { UserService } from 'src/app/services/user.service';
   selector: 'app-user-create',
   templateUrl: './user-create.component.html'
 })
-export class UserCreateComponent {
-  @HostBinding('class') class = 'card-container';
-  routes = routePaths;
-
-  isSubmitting: boolean = false;
-
+export class UserCreateComponent extends BaseCreateComponent {
   constructor(
     private router: Router,
     private userService: UserService
-  ) {}
+  ) {
+    super();
+  }
 
   async handleSubmit(userForm: ResourceForm): Promise<void> {
     this.isSubmitting = true;
