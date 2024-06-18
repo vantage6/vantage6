@@ -569,6 +569,10 @@
     "roles": "Roles in store",
     "create": {
       "title": "Register user at store"
+    },
+    "delete-dialog": {
+      "title": "Are you sure you want remove user '{{name}}' from algorithm store '{{store_name}}'?",
+      "content": "They will no longer have their current access to manage algorithm store resources."
     }
   },
   "log-dialog": {

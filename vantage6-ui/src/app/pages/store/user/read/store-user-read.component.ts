@@ -61,8 +61,20 @@ export class StoreUserReadComponent extends BaseReadComponent implements OnInit,
   }
 
   async handleDelete(): Promise<void> {
-    // TODO implement
-    // this.handleDeleteBase(
-    // )
+    this.handleDeleteBase(
+      this.user,
+      this.translateService.instant('store-user.delete-dialog.title', {
+        name: this.user?.username,
+        store_name: this.chosenStoreService.store$.value?.name || ''
+      }),
+      this.translateService.instant('store-user.delete-dialog.content', { username: this.user?.username }),
+      async () => {
+        const store = this.chosenStoreService.store$.value;
+        if (!store || !this.user) return;
+        this.isLoading = true;
+        await this.storeUserService.deleteUser(store.url, this.user.id);
+        this.router.navigate([this.routes.storeUsers]);
+      }
+    );
   }
 }

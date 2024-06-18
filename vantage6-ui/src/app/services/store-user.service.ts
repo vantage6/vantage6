@@ -39,4 +39,8 @@ export class StoreUserService {
   async editUser(store_url: string, id: number, user: StoreUserFormSubmit): Promise<StoreUser> {
     return await this.apiService.patchForAlgorithmApi<StoreUser>(store_url, `/api/user/${id}`, user);
   }
+
+  async deleteUser(store_url: string, id: number): Promise<void> {
+    return await this.apiService.deleteForAlgorithmApi(store_url, `/api/user/${id}`);
+  }
 }
