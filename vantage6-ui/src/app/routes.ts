@@ -49,7 +49,11 @@ export const routePaths = {
   storeUsers: '/store/users',
   storeUser: '/store/users',
   storeUserCreate: '/store/users/create',
-  storeUserEdit: '/store/users/edit'
+  storeUserEdit: '/store/users/edit',
+  storeRoles: '/store/roles',
+  storeRole: '/store/roles',
+  storeRoleCreate: '/store/roles/create',
+  storeRoleEdit: '/store/roles/edit'
 };
 
 export const routerConfig = {
@@ -106,5 +110,9 @@ export const routerConfig = {
   storeUsers: 'users',
   storeUser: 'users/:id',
   storeUserCreate: 'users/create',
-  storeUserEdit: 'users/edit/:id'
+  storeUserEdit: 'users/edit/:id',
+  storeRoles: 'roles',
+  storeRole: 'roles/:id',
+  storeRoleCreate: 'roles/create',
+  storeRoleEdit: 'roles/edit/:id'
 };

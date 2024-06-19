@@ -116,6 +116,10 @@ import { PermissionsMatrixServerComponent } from './components/permissions-matri
 import { PermissionsMatrixStoreComponent } from './components/permissions-matrix/store/permissions-matrix-store.component';
 import { StoreUserFormComponent } from './components/forms/store-user-form/store-user-form.component';
 import { BaseCreateComponent } from './components/admin-base/base-create/base-create.component';
+import { StoreRoleListComponent } from './pages/store/role/list/store-role-list.component';
+import { StoreRoleReadComponent } from './pages/store/role/read/store-role-read.component';
+import { StoreRoleEditComponent } from './pages/store/role/edit/store-role-edit.component';
+import { StoreRoleCreateComponent } from './pages/store/role/create/store-role-create.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -205,7 +209,11 @@ export function HttpLoaderFactory(http: HttpClient) {
     PermissionsMatrixServerComponent,
     PermissionsMatrixStoreComponent,
     StoreUserFormComponent,
-    BaseCreateComponent
+    BaseCreateComponent,
+    StoreRoleListComponent,
+    StoreRoleReadComponent,
+    StoreRoleEditComponent,
+    StoreRoleCreateComponent
   ],
   imports: [
     BrowserModule,

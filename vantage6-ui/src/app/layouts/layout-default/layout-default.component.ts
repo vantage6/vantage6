@@ -208,11 +208,21 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
           linkType: NavigationLinkType.Store
         });
       }
+      // store users
       if (this.storePermissionService.isAllowed(StoreResourceType.USER, OperationType.VIEW)) {
         storeSubmenus.push({
           route: routePaths.storeUsers,
           label: this.translateService.instant('resources.users'),
           icon: 'people',
+          linkType: NavigationLinkType.Store
+        });
+      }
+      // store roles
+      if (this.storePermissionService.isAllowed(StoreResourceType.ROLE, OperationType.VIEW)) {
+        storeSubmenus.push({
+          route: routePaths.storeRoles,
+          label: this.translateService.instant('resources.roles'),
+          icon: 'groups',
           linkType: NavigationLinkType.Store
         });
       }
@@ -257,21 +267,21 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
         linkType: NavigationLinkType.Admin
       });
     }
-    //Roles
-    if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.VIEW)) {
-      adminSubmenus.push({
-        route: routePaths.roles,
-        label: this.translateService.instant('resources.roles'),
-        icon: 'groups',
-        linkType: NavigationLinkType.Admin
-      });
-    }
     //Users
     if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.USER, OperationType.VIEW)) {
       adminSubmenus.push({
         route: routePaths.users,
         label: this.translateService.instant('resources.users'),
         icon: 'people',
+        linkType: NavigationLinkType.Admin
+      });
+    }
+    //Roles
+    if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.VIEW)) {
+      adminSubmenus.push({
+        route: routePaths.roles,
+        label: this.translateService.instant('resources.roles'),
+        icon: 'groups',
         linkType: NavigationLinkType.Admin
       });
     }
