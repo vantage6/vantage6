@@ -300,13 +300,6 @@ def with_permission_to_view_algorithms() -> callable:
     """
     Decorator to verify that the user has as a permission on a resource.
 
-    Parameters
-    ----------
-    resource : str
-        Name of the resource to check the view permission of.
-    operation: Operation
-        Operation to check the permission for.
-
     Returns
     -------
     callable

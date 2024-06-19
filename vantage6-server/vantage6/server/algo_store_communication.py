@@ -193,7 +193,6 @@ def request_algo_store(
         returned instead of the response.
     """
     is_localhost_algo_store = _contains_localhost(algo_store_url)
-    print("params in request_algo_store", params)
     try:
         response = _execute_algo_store_request(
             algo_store_url, server_url, endpoint, method, force, headers, params
