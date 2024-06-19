@@ -2,13 +2,14 @@ import { AlgorithmForm } from './algorithm.model';
 import { AlgorithmStore, AlgorithmStoreForm } from './algorithmStore.model';
 import { Collaboration, CollaborationForm } from './collaboration.model';
 import { Node } from './node.model';
-import { Organization, OrganizationCreate } from './organization.model';
-import { Role, RoleForm } from './role.model';
+import { Organization } from './organization.model';
+import { GetRoleParameters, Role, RoleForm } from './role.model';
 import { StoreRule } from './rule.model';
-import { StoreUser, StoreUserForm } from './store-user.model';
+import { GetStoreRoleParameters } from './store-role.model';
+import { StoreUser, StoreUserForm, GetStoreUserParameters } from './store-user.model';
 import { Study } from './study.model';
 import { Task, TaskResult, TaskRun } from './task.models';
-import { User, UserForm } from './user.model';
+import { GetUserParameters, User, UserForm } from './user.model';
 
 export type Resource =
   | User
@@ -26,3 +27,5 @@ export type Resource =
   | StoreRule;
 
 export type ResourceForm = UserForm | CollaborationForm | RoleForm | AlgorithmForm | AlgorithmStoreForm | StoreUserForm;
+
+export type ResourceGetParameters = GetRoleParameters | GetUserParameters | GetStoreUserParameters | GetStoreRoleParameters;

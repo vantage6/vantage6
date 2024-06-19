@@ -3,7 +3,7 @@ import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs';
-import { BaseUserListComponent } from 'src/app/components/admin-base/base-user-list/base-user-list.component';
+import { BaseListComponent } from 'src/app/components/admin-base/base-list/base-list.component';
 import { unlikeApiParameter } from 'src/app/helpers/general.helper';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { GetUserParameters, UserSortProperties } from 'src/app/models/api/user.model';
@@ -14,7 +14,7 @@ import { UserService } from 'src/app/services/user.service';
   selector: 'app-user-list',
   templateUrl: './user-list.component.html'
 })
-export class UserListComponent extends BaseUserListComponent implements OnInit, OnDestroy {
+export class UserListComponent extends BaseListComponent implements OnInit, OnDestroy {
   getUserParameters: GetUserParameters = {};
 
   constructor(

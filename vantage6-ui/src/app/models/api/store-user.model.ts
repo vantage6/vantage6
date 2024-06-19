@@ -5,7 +5,7 @@ export enum StoreUserLazyProperties {
   Roles = 'roles'
 }
 
-export interface getStoreUserParameters {
+export interface GetStoreUserParameters {
   username?: string;
 }
 

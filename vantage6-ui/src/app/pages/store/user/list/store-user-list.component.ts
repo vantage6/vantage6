@@ -3,10 +3,10 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs';
 import { PageEvent } from '@angular/material/paginator';
-import { BaseUserListComponent } from 'src/app/components/admin-base/base-user-list/base-user-list.component';
+import { BaseListComponent } from 'src/app/components/admin-base/base-list/base-list.component';
 import { unlikeApiParameter } from 'src/app/helpers/general.helper';
 import { OperationType, StoreResourceType } from 'src/app/models/api/rule.model';
-import { StoreUser, getStoreUserParameters } from 'src/app/models/api/store-user.model';
+import { StoreUser, GetStoreUserParameters } from 'src/app/models/api/store-user.model';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 import { StoreUserService } from 'src/app/services/store-user.service';
@@ -16,8 +16,8 @@ import { StoreUserService } from 'src/app/services/store-user.service';
   templateUrl: './store-user-list.component.html',
   styleUrl: './store-user-list.component.scss'
 })
-export class StoreUserListComponent extends BaseUserListComponent implements OnInit, OnDestroy {
-  getUserParameters: getStoreUserParameters = {};
+export class StoreUserListComponent extends BaseListComponent implements OnInit, OnDestroy {
+  getUserParameters: GetStoreUserParameters = {};
 
   constructor(
     private router: Router,
@@ -48,7 +48,7 @@ export class StoreUserListComponent extends BaseUserListComponent implements OnI
       });
   }
 
-  protected async initData(page: number, parameters: getStoreUserParameters) {
+  protected async initData(page: number, parameters: GetStoreUserParameters) {
     this.isLoading = true;
     this.currentPage = page;
     this.getUserParameters = parameters;
@@ -56,7 +56,7 @@ export class StoreUserListComponent extends BaseUserListComponent implements OnI
     this.isLoading = false;
   }
 
-  private async getUsers(page: number, getUserParameters: getStoreUserParameters) {
+  private async getUsers(page: number, getUserParameters: GetStoreUserParameters) {
     const store = this.chosenStoreService.store$.value;
     if (!store) return;
     const result = await this.storeUserService.getPaginatedUsers(store.url, page, getUserParameters);
