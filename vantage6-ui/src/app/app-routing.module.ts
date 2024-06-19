@@ -55,8 +55,6 @@ import { StoreUserCreateComponent } from './pages/store/user/create/store-user-c
 import { StoreUserEditComponent } from './pages/store/user/edit/store-user-edit.component';
 import { StoreRoleListComponent } from './pages/store/role/list/store-role-list.component';
 import { StoreRoleReadComponent } from './pages/store/role/read/store-role-read.component';
-import { StoreRoleCreateComponent } from './pages/store/role/create/store-role-create.component';
-import { StoreRoleEditComponent } from './pages/store/role/edit/store-role-edit.component';
 
 const routes: Routes = [
   {
@@ -458,22 +456,6 @@ const routes: Routes = [
         canActivate: [authenticationGuard(), chosenStoreGuard()],
         data: {
           crumbs: [['role-list.title']]
-        }
-      },
-      {
-        path: routerConfig.storeRoleCreate,
-        component: StoreRoleCreateComponent,
-        canActivate: [authenticationGuard(), chosenStoreGuard()],
-        data: {
-          crumbs: [['role-list.title', routePaths.storeRoles], ['role-create.title']]
-        }
-      },
-      {
-        path: routerConfig.storeRoleEdit,
-        component: StoreRoleEditComponent,
-        canActivate: [authenticationGuard(), chosenStoreGuard()],
-        data: {
-          crumbs: [['role-list.title', routePaths.storeRoles], ['role-read.title']]
         }
       },
       {
