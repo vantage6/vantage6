@@ -72,7 +72,7 @@ export class VisualizeLineComponent implements OnChanges {
     this.name = this.visualization?.name;
     this.description = this.visualization?.description;
 
-    this.chart = new Chart('MyChart', {
+    this.chart = new Chart('LineChart', {
       type: 'line',
       data: {
         labels: this.data_x,
@@ -93,7 +93,8 @@ export class VisualizeLineComponent implements OnChanges {
             title: {
               display: true,
               text: this.x
-            }
+            },
+            type: 'linear'
           },
           y: {
             title: {
