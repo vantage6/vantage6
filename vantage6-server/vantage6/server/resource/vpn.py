@@ -232,9 +232,6 @@ class EduVPNConnector:
         log.debug("Obtaining OpenVPN configuration template")
         ovpn_config = self.connect(profile_id)
 
-        # # add the keypair
-        # return self._add_key_pair(ovpn_config=ovpn_config)
-
         return ovpn_config
 
     def set_access_token(self) -> None:
@@ -377,17 +374,4 @@ class EduVPNConnector:
         response = self.session.post(self.api_url + "/connect", data=params)
         return response.content.decode("utf-8")
 
-    def get_key_pair(self) -> tuple[str, str]:
-        """
-        Call the create_keypair route of EduVPN API
 
-        Returns
-        -------
-        Tuple(str, str):
-            The certificate and the private key that together form the key pair
-        """
-        response_keypair = self.session.post(f"{self.api_url}/create_keypair")
-        ovpn_keypair = json.loads(response_keypair.content.decode("utf-8"))
-        cert = ovpn_keypair["create_keypair"]["data"]["certificate"]
-        key = ovpn_keypair["create_keypair"]["data"]["private_key"]
-        return cert, key
