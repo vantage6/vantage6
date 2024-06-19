@@ -126,99 +126,10 @@ class VPNConfig(ServicesResources):
             log.exception(e)
             return {
                 "msg": "VPN server unreachable. Please contact your server"
-                       " administrator"
+                " administrator"
             }, HTTPStatus.SERVICE_UNAVAILABLE
 
         return {"ovpn_config": ovpn_config}, HTTPStatus.OK
-
-    @with_node
-    # def post(self):
-    #     """Update an OVPN configuration file
-    #     ---
-    #     description: >-
-    #       Returns an OVPN configuration file with renewed keypair. This
-    #       allows the node to connect to the VPN server again if the keypair was
-    #       invalidated.\n
-    #
-    #       This endpoint is not accessible for users, but only for
-    #       authenticated nodes.
-    #
-    #     requestBody:
-    #       content:
-    #         application/json:
-    #           schema:
-    #             properties:
-    #               vpn_config:
-    #                 type: string
-    #                 description: Current VPN config file contents with expired
-    #                   keypair
-    #
-    #     responses:
-    #       200:
-    #         description: Ok
-    #       400:
-    #         description: No VPN configuration found in request body
-    #       500:
-    #         description: Error in server VPN configuration, or in authorizing
-    #           to VPN portal to obtain VPN configuration file
-    #       501:
-    #         description: This server has no VPN service
-    #       503:
-    #         description: The VPN server cannot be reached
-    #
-    #     security:
-    #         - bearerAuth: []
-    #
-    #     tags: ["VPN"]
-    #
-    #     """
-    #     body = request.get_json()
-    #
-    #     # validate request body
-    #     errors = vpn_config_schema.validate(body)
-    #     if errors:
-    #         return {
-    #             "msg": "Request body is incorrect",
-    #             "errors": errors,
-    #         }, HTTPStatus.BAD_REQUEST
-    #
-    #     # check if the VPN server is configured
-    #     if not self._is_server_configured():
-    #         return {
-    #             "msg": "This server does not support VPN"
-    #         }, HTTPStatus.NOT_IMPLEMENTED
-    #
-    #     # refresh keypair by calling EduVPN API
-    #     vpn_config = body.get("vpn_config")
-    #     try:
-    #         vpn_connector = EduVPNConnector(self.config["vpn_server"])
-    #         ovpn_config = vpn_connector.refresh_keypair(vpn_config)
-    #     except VPNPortalAuthException as e:
-    #         log.error("Could not obtain VPN configuration file")
-    #         log.error(e)
-    #         return {
-    #             "msg": "Could not obtain VPN configuration because the "
-    #                    + "vantage6 server could not authorize to the VPN portal."
-    #         }, HTTPStatus.INTERNAL_SERVER_ERROR
-    #     except VPNConfigException as e:
-    #         log.error("Could not obtain VPN configuration file")
-    #         log.error(e)
-    #         return {
-    #             "msg": (
-    #                 "Could not obtain VPN configuration because the "
-    #                 "vantage6 server is not properly configured for VPN. "
-    #                 "Please contact your server administrator."
-    #             )
-    #         }, HTTPStatus.INTERNAL_SERVER_ERROR
-    #     except requests.ConnectionError as e:
-    #         log.critical(
-    #             f"Node <{g.node.id}> tries to obtain a VPN config. "
-    #             "However the VPN server is unreachable!"
-    #         )
-    #         log.exception(e)
-    #         return {"msg": "VPN server unreachable"}, HTTPStatus.SERVICE_UNAVAILABLE
-    #
-    #     return {"ovpn_config": ovpn_config}, HTTPStatus.OK
 
     def _is_server_configured(self) -> bool:
         """Check if vpn server is available in configuration"""
@@ -250,26 +161,24 @@ class EduVPNConnector:
         self.token_url = endpoints["token_endpoint"]
 
         # Base portal url is api url minus /api/v3
-        self.portal_url = self.api_url[: - len("/api/v3")]
+        self.portal_url = self.api_url[: -len("/api/v3")]
         self.authorization_response = None
-        log.debug(f"Found eduvpn endpoints:\n"
-                  f"api: {self.api_url}\n"
-                  f"authorization: {self.authorization_url}\n"
-                  f"token: {self.token_url}\n")
+        log.debug(
+            f"Found eduvpn endpoints:\n"
+            f"api: {self.api_url}\n"
+            f"authorization: {self.authorization_url}\n"
+            f"token: {self.token_url}\n"
+        )
 
         log.debug(f"Portal url: {self.portal_url}")
 
         # The redirect url is never called, but needs to be the same as the url
         # set in the eduvpn server for this particular client.
-        self.session = OAuth2Session(vpn_config["client_id"],
-                                     scope="config",
-                                     redirect_uri=vpn_config["redirect_url"])
-
-        # self.PORTAL_URL = (
-        #     self.config["url"][:-1]
-        #     if self.config["url"].endswith("/")
-        #     else self.config["url"]
-        # )
+        self.session = OAuth2Session(
+            vpn_config["client_id"],
+            scope="config",
+            redirect_uri=vpn_config["redirect_url"],
+        )
 
     def find_endpoints(self, url: str) -> dict[str, str]:
         well_known_url = url + "/.well-known/vpn-user-portal"
@@ -328,56 +237,6 @@ class EduVPNConnector:
 
         return ovpn_config
 
-
-    # def refresh_keypair(self, ovpn_config: str) -> str:
-    #     """
-    #     Obtain a new keypair from the VPN server and refreshes the keypair so
-    #     that the configuration file can be used to connect the VPN server
-    #     again.
-    #
-    #     Parameters
-    #     ----------
-    #     ovpn_config: str
-    #         Current OpenVPN configuration from which the keypair will be
-    #         refreshed
-    #
-    #     Returns
-    #     -------
-    #     str (ovpn format)
-    #         Open-vpn configuration file
-    #     """
-    #     # obtain access token if not set
-    #     self.set_access_token()
-    #
-    #     # remove current keypair from the file
-    #     ovpn_config = self._remove_keypair(ovpn_config)
-    #
-    #     # add the keypair
-    #     return self._add_key_pair(ovpn_config=ovpn_config)
-
-    # def _add_key_pair(self, ovpn_config: str) -> str:
-    #     """
-    #     Obtain a keypair from the VPN server and add it to the configuration
-    #
-    #     Parameters
-    #     ----------
-    #     ovpn_config: str
-    #         OpenVPN configuration without a keypair
-    #
-    #     Returns
-    #     -------
-    #     str (ovpn format)
-    #         Open-vpn configuration file content
-    #     """
-    #     # get a key and certificate for the client
-    #     log.debug("Obtaining OpenVPN key-pair")
-    #     cert, key = self.get_key_pair()
-    #
-    #     # add the client credentials to the ovpn file
-    #     log.debug("Parsing VPN configuration file")
-    #     ovpn_config = self._insert_keypair_into_config(ovpn_config, cert, key)
-    #     return ovpn_config
-
     def set_access_token(self) -> None:
         """Obtain an access token to enable access to EduVPN API"""
         if self.session.token:
@@ -408,25 +267,6 @@ class EduVPNConnector:
         )
         self.code_challenge = self.code_challenge.replace("=", "")
 
-    # def _login(self) -> None:
-    #     """Login to the EduVPN user portal in the requests session"""
-    #     post_data = {
-    #         "userName": self.config["portal_username"],
-    #         "userPass": self.config["portal_userpass"],
-    #         "_form_auth_redirect_to": self.config["url"],
-    #     }
-    #     response = self.session.post(
-    #         f"{self.PORTAL_URL}/_form/auth/verify", data=post_data
-    #     )
-    #     # Note: if we give the wrong vpn portal password/username, this request
-    #     # succeeds but authorization fails at next step. Only passing the wrong
-    #     # portal url leads to an erroneous status immediately
-    #     if not (200 <= response.status_code < 300):
-    #         raise VPNPortalAuthException(
-    #             "Authenticating to EduVPN failed. Please check the 'url' of "
-    #             "your VPN server in the server your configuration file."
-    #         )
-
     def _authorize(self) -> None:
         """Call authorization route of EduVPN to get authorization code"""
         params = {
@@ -439,9 +279,11 @@ class EduVPNConnector:
             "code_challenge": self.code_challenge,
         }
 
-        authorize_url, state = self.session.authorization_url(self.authorization_url,
-                                                              code_challenge_method="S256",
-                                                              code_challenge=self.code_challenge)
+        authorize_url, state = self.session.authorization_url(
+            self.authorization_url,
+            code_challenge_method="S256",
+            code_challenge=self.code_challenge,
+        )
         log.debug(f"authorize_url: {authorize_url}")
 
         # Log in to eduvpn, receiving the authorization endpoint as redirect
@@ -454,12 +296,14 @@ class EduVPNConnector:
 
         # Referer doesn't matter so much but is a required header
         headers = {
-            'Referer': self.portal_url + "/home",
+            "Referer": self.portal_url + "/home",
         }
 
         response = self.session.post(
-            f"{self.portal_url}/_user_pass_auth/verify", data=post_data, headers=headers,
-            allow_redirects=False
+            f"{self.portal_url}/_user_pass_auth/verify",
+            data=post_data,
+            headers=headers,
+            allow_redirects=False,
         )
         redirected_uri = response.headers["Location"]
 
@@ -495,66 +339,14 @@ class EduVPNConnector:
         Dict:
             EduVPN portal token
         """
-        token = self.session.fetch_token(self.token_url,
-                                         authorization_response=self.authorization_response,
-                                         client_secret=self.config["client_secret"],
-                                         code_verifier=self.code_verifier)
+        token = self.session.fetch_token(
+            self.token_url,
+            authorization_response=self.authorization_response,
+            client_secret=self.config["client_secret"],
+            code_verifier=self.code_verifier,
+        )
 
         return token
-
-    # def _insert_keypair_into_config(self, ovpn_config: str, cert: str, key: str) -> str:
-    #     """
-    #     Insert the client's key pair into the correct place into the OVPN file
-    #     (i.e. before the <tls-crypt> field)
-    #
-    #     Parameters
-    #     ----------
-    #     ovpn_config : str
-    #         The OVPN configuration information without client keys
-    #     cert : str
-    #         The client's certificate
-    #     key: str
-    #         The client's private key
-    #
-    #     Returns
-    #     -------
-    #     str
-    #         A complete OVPN config file contents, including client's key-pair
-    #     """
-    #     insert_loc = ovpn_config.find("<tls-crypt>")
-    #     return (
-    #             ovpn_config[:insert_loc]
-    #             + "<cert>\n"
-    #             + cert
-    #             + "\n</cert>\n"
-    #             + "<key>\n"
-    #             + key
-    #             + "\n</key>\n"
-    #             + ovpn_config[insert_loc:]
-    #     )
-
-    # def _remove_keypair(self, ovpn_config: str) -> str:
-    #     """
-    #     Remove the keypair from the configuration
-    #
-    #     Parameters
-    #     ----------
-    #     ovpn_config : str
-    #         The OVPN configuration information with the key pair
-    #
-    #     Returns
-    #     -------
-    #     str (ovpn format)
-    #         Open-vpn configuration file without key pair
-    #     """
-    #     # keypair starts at '<cert>' and ends at '</key>\n'
-    #     start_remove_pos = ovpn_config.find("<cert>")
-    #     end_key = "</key>\n"
-    #     end_remove_pos = ovpn_config.find(end_key)
-    #     return (
-    #             ovpn_config[0:start_remove_pos]
-    #             + ovpn_config[end_remove_pos + len(end_key):]
-    #     )
 
     def get_profile(self) -> dict:
         """
