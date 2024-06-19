@@ -288,7 +288,6 @@ class VPNManager(DockerBaseManager):
             # JSONDecodeError if VPN is not setup yet, APIError if VPN
             # container is restarting (e.g. due to connection errors)
             raise ConnectionError("Could not get VPN IP: VPN is not connected!")
-        
 
     def send_vpn_ip_to_server(self) -> None:
         """
