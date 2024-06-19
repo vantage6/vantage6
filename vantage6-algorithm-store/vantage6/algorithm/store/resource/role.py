@@ -44,13 +44,14 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         # methods=("GET", "POST"),
         resource_class_kwargs=services,
     )
-    # api.add_resource(
-    #     Role,
-    #     path + '/<int:id>',
-    #     endpoint="role_with_id",
-    #     methods=('GET', 'PATCH', 'DELETE'),
-    #     resource_class_kwargs=services
-    # )
+    api.add_resource(
+        Role,
+        path + "/<int:id>",
+        endpoint="role_with_id",
+        methods=("GET",),
+        # methods=('GET', 'PATCH', 'DELETE'),
+        resource_class_kwargs=services,
+    )
     # api.add_resource(
     #     RoleRules,
     #     path + '/<int:id>/rule/<int:rule_id>',
@@ -82,7 +83,7 @@ def permissions(permissions: PermissionManager) -> None:
 # -----------------------------------------------------------------------------
 # Resources / API's
 # -----------------------------------------------------------------------------
-role_schema = RoleOutputSchema()
+role_output_schema = RoleOutputSchema()
 # rule_schema = RuleSchema()
 # role_input_schema = RoleInputSchema()
 
@@ -173,4 +174,43 @@ class Roles(AlgorithmStoreResources):
         except (ValueError, AttributeError) as e:
             return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
 
-        return self.response(page, role_schema)
+        return self.response(page, role_output_schema)
+
+
+class Role(AlgorithmStoreResources):
+    """Role/:id resource"""
+
+    @with_permission(module_name, Operation.VIEW)
+    def get(self, id: int):
+        """Returns a role
+        ---
+
+        description: >-
+            Returns a role.
+
+        parameters:
+            - in: path
+              name: id
+              schema:
+                type: integer
+              required: true
+              description: Role id
+
+        responses:
+          200:
+            description: Ok
+          401:
+            description: Unauthorized
+          404:
+            description: Role not found
+
+        security:
+            - bearerAuth: []
+
+        tags: ["Role"]
+        """
+        role = db.Role.get(id)
+        if not role:
+            return {"msg": f"Role id={id} not found"}, HTTPStatus.NOT_FOUND
+
+        return role_output_schema.dump(role, many=False), HTTPStatus.OK
