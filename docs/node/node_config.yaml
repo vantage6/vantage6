@@ -178,8 +178,9 @@ ssh-tunnels:
         ip: 127.0.0.1
         port: 8000
 
-# Whitelist URLs and/or IP addresses that the algorithm containers are
-# allowed to reach using the http protocol.
+# Whitelist URLs and/or IP addresses that the algorithm containers are allowed to reach
+# using the http protocol. Note that the addresses given below are examples and should
+# be replaced with the actual addresses that you want to whitelist.
 whitelist:
   domains:
     - google.com
