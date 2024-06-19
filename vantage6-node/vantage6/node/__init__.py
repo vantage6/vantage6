@@ -842,10 +842,6 @@ class Node:
         if connect_mode == VPNConnectMode.FIRST_TRY:
             self.log.debug("Using existing config file to connect to VPN")
             next_mode = VPNConnectMode.REFRESH_COMPLETE
-        # elif connect_mode == VPNConnectMode.REFRESH_KEYPAIR:
-        #     self.log.debug("Refreshing VPN keypair...")
-        #     do_try = self.client.refresh_vpn_keypair(ovpn_file=ovpn_file)
-        #     next_mode = VPNConnectMode.REFRESH_COMPLETE
         elif connect_mode == VPNConnectMode.REFRESH_COMPLETE:
             self.log.debug("Requesting new VPN configuration file...")
             do_try = self._get_vpn_config_file(ovpn_file)
