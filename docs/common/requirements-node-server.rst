@@ -13,7 +13,7 @@ as much).
 
 **Software**
 
--  Operating system: Ubuntu 18.04+ |requirement-OS|
+-  Operating system: Ubuntu 20.04+ |requirement-OS|
 -  Python
 -  Docker
 
