@@ -154,7 +154,7 @@ class EduVPNConnector:
         """
         self.config = vpn_config
         self.check_config()
-        endpoints = self.find_endpoints(self.config["url"])
+        endpoints = self._find_endpoints(self.config["url"])
 
         self.api_url = endpoints["api_endpoint"]
         self.authorization_url = endpoints["authorization_endpoint"]
@@ -180,7 +180,7 @@ class EduVPNConnector:
             redirect_uri=vpn_config["redirect_url"],
         )
 
-    def find_endpoints(self, url: str) -> dict[str, str]:
+    def _find_endpoints(self, url: str) -> dict[str, str]:
         well_known_url = url + "/.well-known/vpn-user-portal"
         response = requests.get(well_known_url)
 
@@ -221,7 +221,7 @@ class EduVPNConnector:
         """
 
         # obtain access token if not set
-        self.set_access_token()
+        self._set_access_token()
 
         # get the user's profile id
         log.debug("Getting EduVPN profile information")
@@ -234,7 +234,7 @@ class EduVPNConnector:
 
         return ovpn_config
 
-    def set_access_token(self) -> None:
+    def _set_access_token(self) -> None:
         """Obtain an access token to enable access to EduVPN API"""
         if self.session.token:
             log.debug("EduVPN access token already acquired")
