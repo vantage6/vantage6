@@ -373,5 +373,3 @@ class EduVPNConnector:
         params = {"profile_id": profile_id}
         response = self.session.post(self.api_url + "/connect", data=params)
         return response.content.decode("utf-8")
-
-
