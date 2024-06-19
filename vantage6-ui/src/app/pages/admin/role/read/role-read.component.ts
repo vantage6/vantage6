@@ -1,13 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject, takeUntil } from 'rxjs';
-import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
+import { takeUntil } from 'rxjs';
+import { BaseReadComponent } from 'src/app/components/admin-base/base-read/base-read.component';
 import { Organization } from 'src/app/models/api/organization.model';
 import { Role, RoleLazyProperties } from 'src/app/models/api/role.model';
-import { OperationType, ResourceType, Rule, Rule_, ScopeType } from 'src/app/models/api/rule.model';
+import { OperationType, ResourceType, Rule, Rule_ } from 'src/app/models/api/rule.model';
 import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
 import { OrganizationService } from 'src/app/services/organization.service';
@@ -20,17 +20,10 @@ import { RuleService } from 'src/app/services/rule.service';
   templateUrl: './role-read.component.html',
   styleUrls: ['./role-read.component.scss']
 })
-export class RoleReadComponent implements OnInit, OnDestroy {
-  @HostBinding('class') class = 'card-container';
-  @Input() id = '';
-  destroy$ = new Subject();
-
-  canEdit = false;
-  canDelete = false;
-  isLoading = true;
+export class RoleReadComponent extends BaseReadComponent implements OnInit, OnDestroy {
   isEditing: boolean = false;
 
-  role?: Role;
+  role: Role | null = null;
   roleRules: Rule[] = [];
   roleOrganization?: Organization;
   allRules: Rule[] = [];
@@ -45,16 +38,18 @@ export class RoleReadComponent implements OnInit, OnDestroy {
   errorMessage?: string;
 
   constructor(
-    private dialog: MatDialog,
+    protected override dialog: MatDialog,
     private router: Router,
     private roleService: RoleService,
     private ruleService: RuleService,
     private organizationService: OrganizationService,
-    private translateService: TranslateService,
+    protected override translateService: TranslateService,
     private permissionService: PermissionService
-  ) {}
+  ) {
+    super(dialog, translateService);
+  }
 
-  async ngOnInit(): Promise<void> {
+  override async ngOnInit(): Promise<void> {
     this.allRules = await this.ruleService.getRules();
     try {
       await this.initData();
@@ -64,15 +59,11 @@ export class RoleReadComponent implements OnInit, OnDestroy {
     }
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next(true);
-  }
-
   private handleHttpError(error: HttpErrorResponse): void {
     this.errorMessage = error.error['msg'] ?? error.message;
   }
 
-  private async initData(): Promise<void> {
+  protected async initData(): Promise<void> {
     this.role = await this.roleService.getRole(this.id, [RoleLazyProperties.Users]);
     this.setPermissions();
     const organizationId = this.role.organization?.id.toString();
@@ -110,28 +101,17 @@ export class RoleReadComponent implements OnInit, OnDestroy {
   }
 
   public handleDeleteRole(): void {
-    if (!this.role) return;
-
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: {
-        title: this.translateService.instant('role-read.delete-dialog.title', { name: this.role.name }),
-        content: this.translateService.instant('role-read.delete-dialog.content'),
-        confirmButtonText: this.translateService.instant('general.delete'),
-        confirmButtonType: 'warn'
+    this.handleDeleteBase(
+      this.role,
+      this.translateService.instant('role-read.delete-dialog.title', { name: this.role?.name }),
+      this.translateService.instant('role-read.delete-dialog.content'),
+      async () => {
+        if (!this.role) return;
+        this.isLoading = true;
+        await this.roleService.deleteRole(this.role.id);
+        this.router.navigate([routePaths.roles]);
       }
-    });
-
-    dialogRef
-      .afterClosed()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(async (result) => {
-        if (result === true) {
-          if (!this.role) return;
-          this.isLoading = true;
-          await this.roleService.deleteRole(this.role.id);
-          this.router.navigate([routePaths.roles]);
-        }
-      });
+    );
   }
 
   public handleEnterEditMode(): void {

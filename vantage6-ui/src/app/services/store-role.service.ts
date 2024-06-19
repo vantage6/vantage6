@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { GetStoreRoleParameters, StoreRole } from '../models/api/store-role.model';
+import { GetStoreRoleParameters, StoreRole, StoreRoleLazyProperties } from '../models/api/store-role.model';
 import { Pagination } from '../models/api/pagination.model';
+import { getLazyProperties } from '../helpers/api.helper';
 
 @Injectable({
   providedIn: 'root'
@@ -19,5 +20,14 @@ export class StoreRoleService {
       ...parameters
     });
     return result;
+  }
+
+  async getRole(store_url: string, id: string, lazyProperties: StoreRoleLazyProperties[]): Promise<StoreRole> {
+    const result = await this.apiService.getForAlgorithmApi<StoreRole>(store_url, `/api/role/${id}`);
+
+    const role = { ...result, users: [] };
+    await getLazyProperties(result, role, lazyProperties, this.apiService, store_url);
+
+    return role;
   }
 }

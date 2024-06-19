@@ -1,1 +1,38 @@
-<p>store-role-read works!</p>
+<ng-container *ngIf="showData">
+  <app-page-header [title]="role ? role.name : ''"> </app-page-header>
+  <mat-card>
+    <mat-card-content>
+      <div class="data-list">
+        <div class="data-list__item data-list__item--big">
+          <b>{{ "general.description" | translate }}</b>
+          <span>{{ role?.description }}</span>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  <mat-card>
+    <mat-card-content>
+      <mat-tab-group dynamicHeight mat-stretch-tabs="false" mat-align-tabs="start">
+        <mat-tab label="{{ 'role-read.tab.permissions' | translate }}">
+          <div class="role-read__tab-content">
+            <div class="role-read__buttons"></div>
+            <app-permissions-matrix-store [fixedSelectedPrimary]="roleRules"> </app-permissions-matrix-store>
+          </div>
+        </mat-tab>
+        <mat-tab label="{{ 'role-read.tab.users' | translate }}">
+          <div class="role-read__tab-content">
+            <app-table *ngIf="showUserTable" [data]="userTable"></app-table>
+            <p *ngIf="!showUserTable">{{ "role-read.no-users" | translate }}</p>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
+<ng-container *ngIf="isLoading">
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
