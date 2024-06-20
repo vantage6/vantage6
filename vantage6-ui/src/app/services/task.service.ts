@@ -13,7 +13,7 @@ import {
 } from 'src/app/models/api/task.models';
 import { Pagination } from 'src/app/models/api/pagination.model';
 import { getLazyProperties } from 'src/app/helpers/api.helper';
-// import { mockDataCrossTabTemplateTask, mockDataQualityTemplateTask } from '../pages/analyze/template-task/create/mock';
+// import { mockDataCrossTabTemplateTask, mockDataQualityTemplateTask } from 'src/app/pages/analyze/template-task/create/mock';
 // import { TemplateTask } from 'src/app/models/api/templateTask.models';
 import { isTaskFinished } from 'src/app/helpers/task.helper';
 import { SnackbarService } from './snackbar.service';

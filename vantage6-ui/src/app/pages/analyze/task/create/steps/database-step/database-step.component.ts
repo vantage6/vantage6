@@ -67,7 +67,7 @@ export class DatabaseStepComponent implements OnDestroy, OnChanges {
   }
 
   nodeConfigContainsDatabases(): boolean {
-    return this.node?.config.find((_) => _.key === 'database_labels') !== undefined
+    return this.node?.config.find((_) => _.key === 'database_labels') !== undefined;
   }
 
   private getAvailableDatabases(): void {

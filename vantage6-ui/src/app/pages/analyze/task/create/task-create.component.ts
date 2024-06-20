@@ -335,7 +335,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // collect data to collect columns from database
     const taskDatabases = getTaskDatabaseFromForm(this.function, this.databaseForm);
-    const databases = getDatabaseTypesFromForm(this.function, this.databaseForm);
+    const databases = getDatabaseTypesFromForm(this.function, this.databaseForm, this.databaseStepComponent?.availableDatabases || []);
 
     // the other and omop database types do not make use of the wrapper to load their
     // data, so we cannot process them in this way. This will be improved when sessions

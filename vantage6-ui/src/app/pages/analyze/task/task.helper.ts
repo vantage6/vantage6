@@ -78,15 +78,14 @@ export const getTaskDatabaseFromForm = (func: AlgorithmFunction | null, form: Fo
   return taskDatabases;
 };
 
-export const getDatabaseTypesFromForm = (func: AlgorithmFunction | null, form: FormGroup): Database[] => {
+export const getDatabaseTypesFromForm = (func: AlgorithmFunction | null, form: FormGroup, availableDatabases: Database[]): Database[] => {
   const databases: Database[] = [];
   func?.databases.forEach((functionDatabase) => {
     const selected_database = form.get(`${functionDatabase.name}_name`)?.value || '';
-    const database: Database = {
-      name: selected_database.name,
-      type: selected_database.type
-    };
-    databases.push(database);
+    const database = availableDatabases.find((_) => _.name === selected_database);
+    if (database) {
+      databases.push(database);
+    }
   });
   return databases;
 };
