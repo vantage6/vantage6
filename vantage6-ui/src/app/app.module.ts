@@ -79,7 +79,6 @@ import { DatabaseStepComponent } from './pages/analyze/task/create/steps/databas
 import { RoleListComponent } from './pages/admin/role/list/role-list.component';
 import { RoleReadComponent } from './pages/admin/role/read/role-read.component';
 import { RoleCreateComponent } from './pages/admin/role/create/role-create.component';
-import { PermissionsMatrixComponent } from './components/permissions-matrix/permissions-matrix.component';
 import { RoleFormComponent } from './components/forms/role-form/role-form.component';
 import { OrderByPipe } from './pipes/order-by.pipe';
 import { SetupMfaComponent } from './pages/auth/setup-mfa/setup-mfa.component';
@@ -109,6 +108,16 @@ import { AlgorithmFormComponent } from './components/forms/algorithm-form/algori
 import { AlgorithmEditComponent } from './pages/store/algorithm/edit/algorithm-edit.component';
 import { UploadPrivateKeyComponent } from './pages/analyze/choose-collaboration/upload-private-key/upload-private-key.component';
 import { VisualizeLineComponent } from './components/visualization/visualize-line/visualize-line.component';
+import { StoreUserListComponent } from './pages/store/user/list/store-user-list.component';
+import { StoreUserReadComponent } from './pages/store/user/read/store-user-read.component';
+import { StoreUserCreateComponent } from './pages/store/user/create/store-user-create.component';
+import { StoreUserEditComponent } from './pages/store/user/edit/store-user-edit.component';
+import { PermissionsMatrixServerComponent } from './components/permissions-matrix/server/permissions-matrix-server.component';
+import { PermissionsMatrixStoreComponent } from './components/permissions-matrix/store/permissions-matrix-store.component';
+import { StoreUserFormComponent } from './components/forms/store-user-form/store-user-form.component';
+import { BaseCreateComponent } from './components/admin-base/base-create/base-create.component';
+import { StoreRoleListComponent } from './pages/store/role/list/store-role-list.component';
+import { StoreRoleReadComponent } from './pages/store/role/read/store-role-read.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -161,7 +170,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     DatabaseStepComponent,
     RoleListComponent,
     RoleReadComponent,
-    PermissionsMatrixComponent,
     RoleCreateComponent,
     RoleFormComponent,
     OrderByPipe,
@@ -191,7 +199,17 @@ export function HttpLoaderFactory(http: HttpClient) {
     AlgorithmFormComponent,
     AlgorithmEditComponent,
     UploadPrivateKeyComponent,
-    VisualizeLineComponent
+    VisualizeLineComponent,
+    StoreUserListComponent,
+    StoreUserReadComponent,
+    StoreUserCreateComponent,
+    StoreUserEditComponent,
+    PermissionsMatrixServerComponent,
+    PermissionsMatrixStoreComponent,
+    StoreUserFormComponent,
+    BaseCreateComponent,
+    StoreRoleListComponent,
+    StoreRoleReadComponent
   ],
   imports: [
     BrowserModule,

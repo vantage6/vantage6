@@ -1,16 +1,12 @@
-import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject, takeUntil } from 'rxjs';
-import { SearchRequest } from 'src/app/components/table/table.component';
-import { getApiSearchParameters } from 'src/app/helpers/api.helper';
+import { takeUntil } from 'rxjs';
+import { BaseListComponent } from 'src/app/components/admin-base/base-list/base-list.component';
 import { unlikeApiParameter } from 'src/app/helpers/general.helper';
-import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { GetUserParameters, UserSortProperties } from 'src/app/models/api/user.model';
-import { TableData } from 'src/app/models/application/table.model';
-import { routePaths } from 'src/app/routes';
 import { PermissionService } from 'src/app/services/permission.service';
 import { UserService } from 'src/app/services/user.service';
 
@@ -18,18 +14,7 @@ import { UserService } from 'src/app/services/user.service';
   selector: 'app-user-list',
   templateUrl: './user-list.component.html'
 })
-export class UserListComponent implements OnInit, OnDestroy {
-  @HostBinding('class') class = 'card-container';
-
-  destroy$ = new Subject();
-  routes = routePaths;
-
-  isLoading: boolean = true;
-  canCreate: boolean = false;
-  table?: TableData;
-  pagination: PaginationLinks | null = null;
-  currentPage: number = 1;
-
+export class UserListComponent extends BaseListComponent implements OnInit, OnDestroy {
   getUserParameters: GetUserParameters = {};
 
   constructor(
@@ -37,15 +22,13 @@ export class UserListComponent implements OnInit, OnDestroy {
     private translateService: TranslateService,
     private userService: UserService,
     private permissionService: PermissionService
-  ) {}
+  ) {
+    super();
+  }
 
   async ngOnInit(): Promise<void> {
     this.setPermissions();
     await this.initData(this.currentPage, this.getUserParameters);
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next(true);
   }
 
   async handlePageEvent(e: PageEvent) {
@@ -53,10 +36,10 @@ export class UserListComponent implements OnInit, OnDestroy {
   }
 
   handleTableClick(id: string) {
-    this.router.navigate([routePaths.user, id]);
+    this.router.navigate([this.routes.user, id]);
   }
 
-  private async initData(page: number, parameters: GetUserParameters) {
+  protected async initData(page: number, parameters: GetUserParameters) {
     this.isLoading = true;
     this.currentPage = page;
     this.getUserParameters = parameters;
@@ -106,11 +89,6 @@ export class UserListComponent implements OnInit, OnDestroy {
       }))
     };
     this.pagination = result.links;
-  }
-
-  handleSearchChanged(searchRequests: SearchRequest[]): void {
-    const parameters = getApiSearchParameters<GetUserParameters>(searchRequests);
-    this.initData(1, parameters);
   }
 
   private setPermissions() {

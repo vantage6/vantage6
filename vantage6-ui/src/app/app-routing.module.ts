@@ -49,6 +49,12 @@ import { AlgorithmListComponent } from './pages/store/algorithm/list/algorithm-l
 import { AlgorithmCreateComponent } from './pages/store/algorithm/create/algorithm-create.component';
 import { AlgorithmEditComponent } from './pages/store/algorithm/edit/algorithm-edit.component';
 import { UploadPrivateKeyComponent } from './pages/analyze/choose-collaboration/upload-private-key/upload-private-key.component';
+import { StoreUserListComponent } from './pages/store/user/list/store-user-list.component';
+import { StoreUserReadComponent } from './pages/store/user/read/store-user-read.component';
+import { StoreUserCreateComponent } from './pages/store/user/create/store-user-create.component';
+import { StoreUserEditComponent } from './pages/store/user/edit/store-user-edit.component';
+import { StoreRoleListComponent } from './pages/store/role/list/store-role-list.component';
+import { StoreRoleReadComponent } from './pages/store/role/read/store-role-read.component';
 
 const routes: Routes = [
   {
@@ -410,6 +416,54 @@ const routes: Routes = [
         canActivate: [authenticationGuard(), chosenStoreGuard()],
         data: {
           crumbs: [['algorithm-list.title', routePaths.algorithmsManage], ['resources.algorithm']]
+        }
+      },
+      {
+        path: routerConfig.storeUsers,
+        component: StoreUserListComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['user-list.title']]
+        }
+      },
+      {
+        path: routerConfig.storeUserCreate,
+        component: StoreUserCreateComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['user-list.title', routePaths.storeUsers], ['user-create.title']]
+        }
+      },
+      {
+        path: routerConfig.storeUserEdit,
+        component: StoreUserEditComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['user-list.title', routePaths.storeUsers], ['user-read.title']]
+        }
+      },
+      {
+        path: routerConfig.storeUser,
+        component: StoreUserReadComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['user-list.title', routePaths.storeUsers], ['user-read.title']]
+        }
+      },
+      {
+        path: routerConfig.storeRoles,
+        component: StoreRoleListComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['role-list.title']]
+        }
+      },
+      {
+        path: routerConfig.storeRole,
+        component: StoreRoleReadComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['role-list.title', routePaths.storeRoles], ['role-read.title']]
         }
       }
     ]

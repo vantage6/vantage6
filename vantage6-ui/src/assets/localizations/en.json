@@ -485,7 +485,9 @@
       "run": "Run",
       "event": "Event",
       "port": "Port",
-      "study": "Study"
+      "study": "Study",
+      "algorithm": "Algorithm",
+      "vantage6_server": "Whitelisted server"
     },
     "scope": {
       "label": "Scope",
@@ -500,7 +502,8 @@
       "delete": "Delete",
       "view": "View",
       "send": "Send",
-      "receive": "Receive"
+      "receive": "Receive",
+      "review": "Review"
     }
   },
   "user": {
@@ -559,6 +562,20 @@
     "NoDockerImage": "Non-existing Docker image",
     "Pending": "Pending",
     "StartFailed": "Start failed"
+  },
+  "store": {
+    "server": "Server URL"
+  },
+  "store-user": {
+    "server": "Server at which user is registered",
+    "roles": "Roles in store",
+    "create": {
+      "title": "Register user at store"
+    },
+    "delete-dialog": {
+      "title": "Are you sure you want remove user '{{name}}' from algorithm store '{{store_name}}'?",
+      "content": "They will no longer have their current access to manage algorithm store resources."
+    }
   },
   "log-dialog": {
     "title": "Log"

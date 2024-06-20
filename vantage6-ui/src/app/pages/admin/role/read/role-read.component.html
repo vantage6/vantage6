@@ -7,6 +7,10 @@
           <b>{{ "role-read.organization" | translate }}</b>
           <span>{{ roleOrganization?.name || "role-read.all-organizations" | translate }}</span>
         </div>
+        <div class="data-list__item data-list__item--big">
+          <b>{{ "general.description" | translate }}</b>
+          <span>{{ role?.description }}</span>
+        </div>
         <div class="data-list__item">
           <b>{{ "role-read.default-role" | translate }}</b>
           <span>{{ getDefaultRoleLabel() }}</span>
@@ -30,13 +34,13 @@
               </button>
             </div>
 
-            <app-permissions-matrix
+            <app-permissions-matrix-server
               [fixedSelectedPrimary]="fixedSelectedRules"
               [preselected]="preselectedRules"
               [selectable]="selectableRules"
               (changed)="handleChangedSelection($event)"
             >
-            </app-permissions-matrix>
+            </app-permissions-matrix-server>
 
             <app-role-submit-buttons
               *ngIf="isEditing"

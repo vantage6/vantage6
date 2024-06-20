@@ -1,9 +1,10 @@
-import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject, takeUntil } from 'rxjs';
+import { takeUntil } from 'rxjs';
+import { BaseReadComponent } from 'src/app/components/admin-base/base-read/base-read.component';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { OperationType, ResourceType, Rule } from 'src/app/models/api/rule.model';
 import { User, UserLazyProperties } from 'src/app/models/api/user.model';
@@ -17,16 +18,7 @@ import { UserService } from 'src/app/services/user.service';
   styleUrls: ['./user-read.component.scss'],
   templateUrl: './user-read.component.html'
 })
-export class UserReadComponent implements OnInit, OnDestroy {
-  @HostBinding('class') class = 'card-container';
-  @Input() id = '';
-
-  destroy$ = new Subject();
-  routes = routePaths;
-
-  isLoading: boolean = true;
-  canDelete: boolean = false;
-  canEdit: boolean = false;
+export class UserReadComponent extends BaseReadComponent implements OnInit, OnDestroy {
   showUserSpecificRulesOnly: boolean = false;
   user: User | null = null;
 
@@ -36,24 +28,22 @@ export class UserReadComponent implements OnInit, OnDestroy {
   rulesForDisplay: Rule[] = [];
 
   constructor(
-    private dialog: MatDialog,
+    protected override dialog: MatDialog,
     private router: Router,
     private userService: UserService,
-    private translateService: TranslateService,
+    protected override translateService: TranslateService,
     private permissionService: PermissionService,
     private ruleService: RuleService
-  ) {}
+  ) {
+    super(dialog, translateService);
+  }
 
-  async ngOnInit(): Promise<void> {
-    await this.initData();
+  override async ngOnInit(): Promise<void> {
+    super.ngOnInit();
     this.processRulesForDisplay();
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next(true);
-  }
-
-  private async initData(): Promise<void> {
+  protected async initData(): Promise<void> {
     this.user = await this.userService.getUser(this.id, [UserLazyProperties.Organization, UserLazyProperties.Roles]);
     this.setPermissions();
 
@@ -80,28 +70,19 @@ export class UserReadComponent implements OnInit, OnDestroy {
   }
 
   async handleDelete(): Promise<void> {
+    this.handleDeleteBase(
+      this.user,
+      this.translateService.instant('user-read.delete-dialog.title', { name: this.user?.username }),
+      this.translateService.instant('user-read.delete-dialog.content'),
+      this.executeDeleteUser.bind(this)
+    );
+  }
+
+  protected async executeDeleteUser(): Promise<void> {
     if (!this.user) return;
-
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: {
-        title: this.translateService.instant('user-read.delete-dialog.title', { name: this.user.username }),
-        content: this.translateService.instant('user-read.delete-dialog.content'),
-        confirmButtonText: this.translateService.instant('general.delete'),
-        confirmButtonType: 'warn'
-      }
-    });
-
-    dialogRef
-      .afterClosed()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(async (result) => {
-        if (result === true) {
-          if (!this.user) return;
-          this.isLoading = true;
-          await this.userService.deleteUser(this.user.id);
-          this.router.navigate([routePaths.users]);
-        }
-      });
+    this.isLoading = true;
+    await this.userService.deleteUser(this.user.id);
+    this.router.navigate([routePaths.users]);
   }
 
   private setPermissions() {

@@ -45,7 +45,13 @@ export const routePaths = {
   task: '/analyze/tasks',
   algorithms: '/analyze/algorithms',
   algorithm: '/analyze/algorithms',
-  templateTaskCreate: '/analyze/template-tasks/create'
+  templateTaskCreate: '/analyze/template-tasks/create',
+  storeUsers: '/store/users',
+  storeUser: '/store/users',
+  storeUserCreate: '/store/users/create',
+  storeUserEdit: '/store/users/edit',
+  storeRoles: '/store/roles',
+  storeRole: '/store/roles'
 };
 
 export const routerConfig = {
@@ -98,5 +104,11 @@ export const routerConfig = {
   task: 'tasks/:id',
   algorithms: 'algorithms',
   algorithm: 'algorithms/:id/:algo_store_id',
-  templateTaskCreate: 'template-tasks/create'
+  templateTaskCreate: 'template-tasks/create',
+  storeUsers: 'users',
+  storeUser: 'users/:id',
+  storeUserCreate: 'users/create',
+  storeUserEdit: 'users/edit/:id',
+  storeRoles: 'roles',
+  storeRole: 'roles/:id'
 };

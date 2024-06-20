@@ -42,6 +42,8 @@ def get_default_roles() -> list[dict]:
     # 2. Role for viewing algorithms
     VIEWER_RULES = [
         Rule.get_by_("algorithm", Operation.VIEW),
+        Rule.get_by_("user", Operation.VIEW),
+        Rule.get_by_("role", Operation.VIEW),
     ]
     VIEWER_ROLE = {
         "name": DefaultRole.VIEWER,
@@ -49,8 +51,7 @@ def get_default_roles() -> list[dict]:
         "rules": VIEWER_RULES,
     }
     # 3. Reviewer role
-    REVIEWER_RULES = [
-        Rule.get_by_("algorithm", Operation.VIEW),
+    REVIEWER_RULES = VIEWER_RULES + [
         Rule.get_by_("algorithm", Operation.REVIEW),
     ]
     REVIEWER_ROLE = {
@@ -59,12 +60,15 @@ def get_default_roles() -> list[dict]:
         "rules": REVIEWER_RULES,
     }
     # 4. Store manager role
-    STORE_MANAGER = [
-        Rule.get_by_("algorithm", Operation.VIEW),
+    STORE_MANAGER = REVIEWER_RULES + [
         Rule.get_by_("algorithm", Operation.CREATE),
         Rule.get_by_("algorithm", Operation.DELETE),
         Rule.get_by_("user", Operation.CREATE),
         Rule.get_by_("user", Operation.EDIT),
+        Rule.get_by_("user", Operation.DELETE),
+        Rule.get_by_("role", Operation.CREATE),
+        Rule.get_by_("role", Operation.EDIT),
+        Rule.get_by_("role", Operation.DELETE),
     ]
     STORE_MANAGER = {
         "name": DefaultRole.STORE_MANAGER,
@@ -72,8 +76,7 @@ def get_default_roles() -> list[dict]:
         "rules": STORE_MANAGER,
     }
     # Developer role
-    DEVELOPER_RULES = [
-        Rule.get_by_("algorithm", Operation.VIEW),
+    DEVELOPER_RULES = VIEWER_RULES + [
         Rule.get_by_("algorithm", Operation.CREATE),
         Rule.get_by_("algorithm", Operation.EDIT),
     ]

@@ -3,6 +3,7 @@ import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
+import { BaseListComponent } from 'src/app/components/admin-base/base-list/base-list.component';
 import { SearchRequest } from 'src/app/components/table/table.component';
 import { getApiSearchParameters } from 'src/app/helpers/api.helper';
 import { unlikeApiParameter } from 'src/app/helpers/general.helper';
@@ -19,35 +20,24 @@ import { RoleService } from 'src/app/services/role.service';
   templateUrl: './role-list.component.html',
   styleUrls: ['./role-list.component.scss']
 })
-export class RoleListComponent implements OnInit, OnDestroy {
-  @HostBinding('class') class = 'card-container';
-  destroy$ = new Subject();
-
-  isLoading: boolean = false;
-  canCreate: boolean = false;
-  table?: TableData;
-  pagination: PaginationLinks | null = null;
-  routes = routePaths;
+export class RoleListComponent extends BaseListComponent implements OnInit, OnDestroy {
   getRoleParameters: GetRoleParameters = {};
-  currentPage: number = 0;
 
   constructor(
     private router: Router,
     private translateService: TranslateService,
     private roleService: RoleService,
     private permissionService: PermissionService
-  ) {}
+  ) {
+    super();
+  }
 
   async ngOnInit(): Promise<void> {
     this.setPermissions();
     await this.initData(1, {});
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next(true);
-  }
-
-  private async initData(page: number, parameters: GetRoleParameters) {
+  protected async initData(page: number, parameters: GetRoleParameters) {
     this.isLoading = true;
     this.currentPage = page;
     this.getRoleParameters = parameters;
@@ -82,11 +72,6 @@ export class RoleListComponent implements OnInit, OnDestroy {
 
   handleTableClick(id: string): void {
     this.router.navigate([routePaths.role, id]);
-  }
-
-  handleSearchChanged(searchRequests: SearchRequest[]): void {
-    const parameters = getApiSearchParameters<GetRoleParameters>(searchRequests);
-    this.initData(1, parameters);
   }
 
   async handlePageEvent(e: PageEvent) {
