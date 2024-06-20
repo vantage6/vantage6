@@ -123,6 +123,12 @@ policies:
   # facilitate task creation. Set to false to disable this.
   allow_basics_algorithm: true
 
+  # Set to true to always require that the algorithm image is successfully pulled. This
+  # ensures that no potentially outdated local images are used if internet connection
+  # is not available. This option should be set to false if you are testing with local
+  # algorithm images. Default value is false.
+  require_algorithm_pull: false
+
 # credentials used to login to private Docker registries
 docker_registries:
   - registry: docker-registry.org

@@ -526,6 +526,7 @@ class DockerManager(DockerBaseManager):
             alpine_image=self.alpine_image,
             proxy=self.proxy,
             device_requests=self.algorithm_device_requests,
+            requires_pull=self._policies.get("require_algorithm_pull", False),
         )
 
         # attempt to kick of the task. If it fails do to unknown reasons we try
