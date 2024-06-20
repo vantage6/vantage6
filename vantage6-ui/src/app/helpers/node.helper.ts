@@ -1,4 +1,4 @@
-import { BaseNode, Database, DatabaseType } from '../models/api/node.model';
+import { BaseNode, Database, DatabaseType } from 'src/app/models/api/node.model';
 
 export const getDatabasesFromNode = (node: BaseNode | null): Database[] => {
   if (!node) {

@@ -1,11 +1,20 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { APIKey, ApiKeyExport, BaseNode, GetNodeParameters, Node, NodeCreate, NodeEdit, NodeLazyProperties } from '../models/api/node.model';
-import { BaseCollaboration, Collaboration } from '../models/api/collaboration.model';
+import {
+  APIKey,
+  ApiKeyExport,
+  BaseNode,
+  GetNodeParameters,
+  Node,
+  NodeCreate,
+  NodeEdit,
+  NodeLazyProperties
+} from 'src/app/models/api/node.model';
+import { BaseCollaboration, Collaboration } from 'src/app/models/api/collaboration.model';
 import { OrganizationService } from './organization.service';
-import { Pagination } from '../models/api/pagination.model';
-import { getLazyProperties } from '../helpers/api.helper';
-import { BaseOrganization } from '../models/api/organization.model';
+import { Pagination } from 'src/app/models/api/pagination.model';
+import { getLazyProperties } from 'src/app/helpers/api.helper';
+import { BaseOrganization } from 'src/app/models/api/organization.model';
 import { FileService } from './file.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
@@ -105,5 +114,4 @@ export class NodeService {
       }
     });
   }
-
 }

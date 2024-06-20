@@ -4,7 +4,7 @@ import { MatExpansionPanel } from '@angular/material/expansion';
 import { readFile } from 'src/app/helpers/file.helper';
 import { AlgorithmForm, ArgumentType, FunctionForm, FunctionType, PartitioningType } from 'src/app/models/api/algorithm.model';
 import { VisualizationType, getVisualizationSchema } from 'src/app/models/api/visualization.model';
-import { MessageDialogComponent } from '../../dialogs/message-dialog/message-dialog.component';
+import { MessageDialogComponent } from 'src/app/components/dialogs/message-dialog/message-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 

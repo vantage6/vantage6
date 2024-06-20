@@ -1,7 +1,15 @@
 import { Injectable } from '@angular/core';
-import { LoginForm, LostPasswordForm, MFAResetTokenForm, PasswordResetTokenForm } from '../models/forms/login-form.model';
+import { LoginForm, LostPasswordForm, MFAResetTokenForm, PasswordResetTokenForm } from 'src/app/models/forms/login-form.model';
 import { ApiService } from './api.service';
-import { AuthResult, ChangePassword, Login, LoginSubmit, LoginRecoverLost, SetupMFA, LoginRecoverSubmit } from '../models/api/auth.model';
+import {
+  AuthResult,
+  ChangePassword,
+  Login,
+  LoginSubmit,
+  LoginRecoverLost,
+  SetupMFA,
+  LoginRecoverSubmit
+} from 'src/app/models/api/auth.model';
 import { PermissionService } from './permission.service';
 import { TokenStorageService } from './token-storage.service';
 import { SocketioConnectService } from './socketio-connect.service';
@@ -79,7 +87,7 @@ export class AuthService {
 
   async passwordLost(forgotPasswordForm: LostPasswordForm): Promise<string> {
     const data: LoginRecoverSubmit = {
-        email: forgotPasswordForm.email
+      email: forgotPasswordForm.email
     };
     const result = await this.apiService.postForApi<LoginRecoverLost>('/recover/lost', data);
     if (result.msg) {

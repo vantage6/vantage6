@@ -1,17 +1,17 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { Pagination } from '../models/api/pagination.model';
+import { Pagination } from 'src/app/models/api/pagination.model';
 import {
   BaseOrganization,
   GetOrganizationParameters,
   Organization,
   OrganizationCreate,
   OrganizationLazyProperties
-} from '../models/api/organization.model';
-import { Role } from '../models/api/role.model';
-import { getLazyProperties } from '../helpers/api.helper';
+} from 'src/app/models/api/organization.model';
+import { Role } from 'src/app/models/api/role.model';
+import { getLazyProperties } from 'src/app/helpers/api.helper';
 import { PermissionService } from './permission.service';
-import { OperationType, ResourceType } from '../models/api/rule.model';
+import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
 
 @Injectable({
   providedIn: 'root'

@@ -4,6 +4,7 @@ import { FileService } from 'src/app/services/file.service';
 // import { Chart } from 'chart.js';
 import { Chart, LineController, LineElement, PointElement, LinearScale, CategoryScale } from 'chart.js';
 import { COLOR_VANTAGE6_PRIMARY } from 'src/app/models/constants/style';
+import { isNested } from 'src/app/helpers/utils.helper';
 
 Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale);
 
@@ -44,10 +45,17 @@ export class VisualizeLineComponent implements OnChanges {
     }
 
     // if the result is a single table row, convert it to an array of rows
-    if (!Array.isArray(lineData)) {
-      lineData = [lineData];
+    if (!Array.isArray(lineData) && isNested(lineData)) {
+      this.parseDefaultPandasFormat(lineData);
+    } else {
+      // TODO implement parseRecordsFormat (if algorithm is excluded with pd.to_json(orient='records'))
+      console.error('Data format not recognized');
     }
+    this.createChart();
+  }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private parseDefaultPandasFormat(lineData: any): void {
     // if columns are defined, use them. Otherwise use the keys of the first result
     if (this.visualization?.schema?.x && this.visualization?.schema?.y) {
       this.x = this.visualization.schema.x as string;
@@ -55,11 +63,11 @@ export class VisualizeLineComponent implements OnChanges {
     }
 
     // set the data
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    this.data_x = lineData.map((row: any) => row[this.x]).map((row: any) => Object.values(row))[0];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    this.data_y = lineData.map((row: any) => row[this.y]).map((row: any) => Object.values(row))[0];
+    this.data_x = Object.values(lineData[this.x]);
+    this.data_y = Object.values(lineData[this.y]);
+  }
 
+  private createChart(): void {
     // set table name and description
     this.name = this.visualization?.name;
     this.description = this.visualization?.description;
