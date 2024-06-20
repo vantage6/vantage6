@@ -13,8 +13,8 @@ import {
 } from '../models/api/task.models';
 import { Pagination } from '../models/api/pagination.model';
 import { getLazyProperties } from '../helpers/api.helper';
-import { mockDataCrossTabTemplateTask, mockDataQualityTemplateTask } from '../pages/template-task/create/mock';
-import { TemplateTask } from '../models/api/templateTask.models';
+// import { mockDataCrossTabTemplateTask, mockDataQualityTemplateTask } from '../pages/template-task/create/mock';
+// import { TemplateTask } from '../models/api/templateTask.models';
 import { isTaskFinished } from '../helpers/task.helper';
 import { SnackbarService } from './snackbar.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -102,10 +102,10 @@ export class TaskService {
     await this.apiService.postForApi('/kill/task', killTaskParams);
   }
 
-  async getTemplateTasks(): Promise<TemplateTask[]> {
-    //TODO: Remove mock data when template tasks are implemented in backend
-    return [mockDataQualityTemplateTask, mockDataCrossTabTemplateTask];
-  }
+  // async getTemplateTasks(): Promise<TemplateTask[]> {
+  //   //TODO: Remove mock data when template tasks are implemented in backend
+  //   return [mockDataQualityTemplateTask, mockDataCrossTabTemplateTask];
+  // }
 
   async getColumnNames(columnRetrieve: ColumnRetrievalInput): Promise<ColumnRetrievalResult> {
     return await this.apiService.postForApi<ColumnRetrievalResult>(`/column`, columnRetrieve);
