@@ -3,7 +3,6 @@ import logging
 
 from http import HTTPStatus
 
-import sqlalchemy
 from flask import request, g
 from flask_restful import Api
 
@@ -101,7 +100,7 @@ class Users(AlgorithmStoreResources):
         """List users
         ---
         description: >-
-            Returns a list of users that you are allowed to see.
+            Returns a list of users registered in the algorithm store.
 
         parameters:
           - in: query

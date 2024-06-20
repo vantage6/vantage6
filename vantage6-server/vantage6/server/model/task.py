@@ -63,7 +63,7 @@ class Task(Base):
     parent_id = Column(Integer, ForeignKey("task.id"))
     init_org_id = Column(Integer, ForeignKey("organization.id"))
     init_user_id = Column(Integer, ForeignKey("user.id"))
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.datetime.now(datetime.timezone.utc))
 
     # relationships
     collaboration = relationship("Collaboration", back_populates="tasks")

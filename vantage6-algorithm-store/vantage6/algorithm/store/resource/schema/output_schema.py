@@ -167,3 +167,8 @@ class ReviewOutputSchema(HATEOASModelSchema):
     reviewers = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="user", link_from="review_id")
     )
+    algorithms = fields.Function(
+        lambda obj: create_one_to_many_link(
+            obj, link_to="algorithm", link_from="review_id"
+        )
+    )

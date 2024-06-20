@@ -295,6 +295,7 @@ class Algorithms(AlgorithmStoreResources):
             image=data["image"],
             partitioning=data["partitioning"],
             vantage6_version=data["vantage6_version"],
+            developer=g.user,
         )
         algorithm.save()
 

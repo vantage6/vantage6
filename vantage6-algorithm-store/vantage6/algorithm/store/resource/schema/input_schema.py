@@ -11,6 +11,7 @@ from vantage6.algorithm.store.model.common.enums import (
     Partitioning,
     FunctionType,
     ArgumentType,
+    ReviewStatus,
     VisualizationType,
 )
 
@@ -46,7 +47,7 @@ class AlgorithmInputSchema(_NameDescriptionSchema):
         types = [p.value for p in Partitioning]
         if value not in types:
             raise ValidationError(
-                f"Partitioning '{value}' is not one of the allowed values " f"{types}"
+                f"Partitioning '{value}' is not one of the allowed values {types}"
             )
 
 
@@ -68,7 +69,7 @@ class FunctionInputSchema(_NameDescriptionSchema):
         types = [f.value for f in FunctionType]
         if value not in types:
             raise ValidationError(
-                f"Function type '{value}' is not one of the allowed values " f"{types}"
+                f"Function type '{value}' is not one of the allowed values {types}"
             )
 
 
@@ -166,3 +167,25 @@ class PolicyInputSchema(Schema):
     )
     allowed_servers = fields.List(fields.String())
     allow_localhost = fields.Boolean()
+
+
+class ReviewCreateInputSchema(Schema):
+    """
+    Schema for creating a new review
+    """
+
+    reviewer_id = fields.Integer(required=True, validate=validate.Range(min=1))
+    algorithm_id = fields.Integer(required=True, validate=validate.Range(min=1))
+
+
+class ReviewUpdateInputSchema(Schema):
+    """
+    Schema for updating a review by a reviewer
+    """
+
+    status = fields.String(
+        validate=validate.OneOf(
+            [ReviewStatus.APPROVED.value, ReviewStatus.REJECTED.value]
+        )
+    )
+    comment = fields.String()
