@@ -5,7 +5,6 @@ import { BaseEditComponent } from 'src/app/components/admin-base/base-edit/base-
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { ResourceForm } from 'src/app/models/api/resource.model';
 import { StoreUser, StoreUserForm, StoreUserFormSubmit, StoreUserLazyProperties } from 'src/app/models/api/store-user.model';
-import { UserForm } from 'src/app/models/api/user.model';
 import { routePaths } from 'src/app/routes';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { StoreUserService } from 'src/app/services/store-user.service';
