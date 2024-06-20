@@ -276,7 +276,7 @@ class EduVPNConnector:
             "code_challenge": self.code_challenge,
         }
 
-        authorize_url, state = self.session.authorization_url(
+        authorize_url, _ = self.session.authorization_url(
             self.authorization_url,
             code_challenge_method="S256",
             code_challenge=self.code_challenge,
@@ -302,7 +302,6 @@ class EduVPNConnector:
             headers=headers,
             allow_redirects=False,
         )
-        redirected_uri = response.headers["Location"]
 
         # Now follow redirect to call authorization route, but prevent redirect. By preventing the
         # redirect, the authorization code can be used in the current session
