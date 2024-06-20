@@ -215,6 +215,7 @@ class ServerApp:
                 cors_allowed_origins=cors_settings,
                 logger=debug_mode,
                 engineio_logger=debug_mode,
+                always_connect=True,
             )
         except Exception as e:
             log.warning(
@@ -231,6 +232,7 @@ class ServerApp:
                 cors_allowed_origins=cors_settings,
                 logger=debug_mode,
                 engineio_logger=debug_mode,
+                always_connect=True,
             )
 
         # FIXME: temporary fix to get socket object into the namespace class
