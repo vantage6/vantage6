@@ -5,7 +5,6 @@ import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, S
 import { Subscription } from 'rxjs';
 import { isEqualString } from 'src/app/helpers/general.helper';
 import { OperationType, ResourceType, Rule, Rule_, ScopeType, StoreResourceType, StoreRule } from 'src/app/models/api/rule.model';
-import { PermissionService } from 'src/app/services/permission.service';
 
 type ResourceType_ = ResourceType | StoreResourceType;
 

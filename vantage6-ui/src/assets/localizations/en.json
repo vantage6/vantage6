@@ -486,7 +486,8 @@
       "event": "Event",
       "port": "Port",
       "study": "Study",
-      "algorithm": "Algorithm"
+      "algorithm": "Algorithm",
+      "vantage6_server": "Whitelisted server"
     },
     "scope": {
       "label": "Scope",
@@ -501,7 +502,8 @@
       "delete": "Delete",
       "view": "View",
       "send": "Send",
-      "receive": "Receive"
+      "receive": "Receive",
+      "review": "Review"
     }
   },
   "user": {

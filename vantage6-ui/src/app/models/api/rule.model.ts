@@ -18,6 +18,7 @@ export enum StoreResourceType {
   ALGORITHM = 'algorithm',
   USER = 'user',
   ROLE = 'role',
+  VANTAGE6_SERVER = 'vantage6_server',
   ANY = '*'
 }
 
@@ -36,6 +37,7 @@ export enum OperationType {
   DELETE = 'delete',
   SEND = 'send',
   RECEIVE = 'receive',
+  REVIEW = 'review',
   ANY = '*'
 }
 
