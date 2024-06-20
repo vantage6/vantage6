@@ -23,8 +23,8 @@ from vantage6.client.utils import LogLevel
 from vantage6.common.task_status import has_task_finished
 from vantage6.common.client.client_base import ClientBase
 from vantage6.client.subclients.study import StudySubClient
-from vantage6.client.subclients.algorithm import AlgorithmSubClient
-from vantage6.client.subclients.algorithm_store import AlgorithmStoreSubClient
+from vantage6.client.subclients.store.algorithm import AlgorithmSubClient
+from vantage6.client.subclients.store.algorithm_store import AlgorithmStoreSubClient
 
 # make sure the version is available
 from vantage6.client._version import __version__  # noqa: F401

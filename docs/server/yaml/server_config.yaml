@@ -188,16 +188,6 @@ cors_allowed_origins:
   - https://portal.cotopaxi.vantage6.ai
   - http://localhost:3456
 
-# set up which algorithm stores are available for all collaborations in the server.
-# In the example below, the vantage6 community algorithm store is made available to
-# this server. Note that the 'server_url' *has* to be set in the configuration file
-# for this to work (it is required to communicate with the algorithm store what the
-# server's address is).
-algorithm_stores:
-  # Each store should have a name and a URL.
-  - name: Community store
-    url: https://store.cotopaxi.vantage6.ai
-
 # development mode settings. Only use when running both the server and the algorithm
 # store that it communicates with locally
 dev:

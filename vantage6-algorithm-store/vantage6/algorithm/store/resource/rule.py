@@ -4,7 +4,6 @@ from http import HTTPStatus
 from flask.globals import request
 from flask import g
 from flask_restful import Api
-from sqlalchemy import or_
 
 from vantage6.common import logger_name
 from vantage6.algorithm.store import db

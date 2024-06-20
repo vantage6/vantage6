@@ -33,6 +33,7 @@ TABLE_SCHEMA = {
         # the columns in the table. Example value: ["column1", "column2"]
         "columns": STRING_ARRAY_DECLARATION,
     },
+    # TOOD is this used? If not, remove it.
     "additionalProperties": False,
 }
 

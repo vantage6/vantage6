@@ -93,7 +93,7 @@ const routes: Routes = [
       {
         path: routerConfig.home,
         component: HomeComponent,
-        canActivate: [authenticationGuard(), chosenCollaborationGuard()]
+        canActivate: [authenticationGuard()]
       },
       {
         path: routerConfig.passwordChange,

@@ -23,6 +23,7 @@ from vantage6.algorithm.store.model import (
     Review,
     Vantage6Server,
     role_rule_association,
+    Policy,
 )
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING

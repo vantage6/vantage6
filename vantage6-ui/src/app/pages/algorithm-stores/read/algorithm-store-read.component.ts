@@ -2,11 +2,14 @@ import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core'
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
-import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
+import { AlgorithmStore, AvailableStorePolicies, StorePolicies } from 'src/app/models/api/algorithmStore.model';
+// import { AlgorithmStore, AvailableStorePolicies, DefaultStorePolicies } from 'src/app/models/api/algorithmStore.model';
 import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
+import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
+import { StorePermissionService } from 'src/app/services/store-permission.service';
 
 @Component({
   selector: 'app-algorithm-store-read',
@@ -21,13 +24,16 @@ export class AlgorithmStoreReadComponent implements OnInit, OnDestroy {
 
   algorithmStore?: AlgorithmStore | null;
   algorithms?: Algorithm[];
+  policyTable?: TableData;
   isLoading = true;
   collaborationTable?: TableData;
 
   constructor(
     private algorithmService: AlgorithmService,
     private translateService: TranslateService,
-    private chosenStoreService: ChosenStoreService
+    private chosenStoreService: ChosenStoreService,
+    private algorithmStoreService: AlgorithmStoreService,
+    private storePermissionService: StorePermissionService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -36,11 +42,17 @@ export class AlgorithmStoreReadComponent implements OnInit, OnDestroy {
         this.initData();
       }
     });
-    await this.initData();
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
+  }
+
+  getMessageNoAlgorithms(): string {
+    if (!this.storePermissionService.canViewAlgorithms) {
+      return this.translateService.instant('algorithm-store-read.card-algorithms.no-algorithm-view-permission');
+    }
+    return this.translateService.instant('algorithm-store-read.card-algorithms.no-algorithms');
   }
 
   private async initData(): Promise<void> {
@@ -60,7 +72,58 @@ export class AlgorithmStoreReadComponent implements OnInit, OnDestroy {
     }
 
     // collect algorithms
-    this.algorithms = await this.algorithmService.getAlgorithmsForAlgorithmStore(this.algorithmStore);
+    if (this.storePermissionService.canViewAlgorithms) {
+      this.algorithms = await this.algorithmService.getAlgorithmsForAlgorithmStore(this.algorithmStore);
+    }
+
+    // get store policies
+    await this.setPolicies();
+
     this.isLoading = false;
+  }
+
+  private async setPolicies(): Promise<void> {
+    // collect store policies and convert from key|value to object with lists
+    if (!this.algorithmStore) return;
+
+    const getPublicPolicies = !this.storePermissionService.isUserRegistered;
+
+    const policies = await this.algorithmStoreService.getAlgorithmStorePolicies(this.algorithmStore.url, getPublicPolicies);
+
+    this.policyTable = this.translatePoliciesToTable(policies);
+  }
+
+  private translatePoliciesToTable(policies: StorePolicies): TableData {
+    return {
+      columns: [
+        { id: 'name', label: this.translateService.instant('store-policies.type') },
+        { id: 'value', label: this.translateService.instant('store-policies.policy') }
+      ],
+      rows: Object.keys(policies).map((key) => {
+        return {
+          id: key,
+          columnData: {
+            name: this.translatePolicyKey(key),
+            value: this.translatePolicyValue(key, policies[key])
+          }
+        };
+      })
+    };
+  }
+
+  private translatePolicyKey(key: string): string {
+    return this.translateService.instant(`store-policies.${key}`);
+  }
+
+  private translatePolicyValue(key: string, value: string | string[] | boolean): string {
+    if (key === AvailableStorePolicies.ALGORITHM_VIEW) {
+      return this.translateService.instant(`store-policies.${key}-values.${value}`);
+    } else if (key === AvailableStorePolicies.ALLOW_LOCALHOST) {
+      return value ? this.translateService.instant('general.yes') : this.translateService.instant('general.no');
+    } else if (Array.isArray(value)) {
+      return value.join(', ');
+    } else {
+      return value.toString();
+    }
   }
 }
