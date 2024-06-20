@@ -38,6 +38,7 @@ class VisualizationType(str, Enum):
     """Enum for visualization types"""
 
     TABLE = "table"
+    LINE = "line"
 
 
 class ReviewStatus(str, Enum):

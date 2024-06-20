@@ -37,7 +37,7 @@ export class VisualizeTableComponent implements OnChanges {
 
     // if columns are defined, use them. Otherwise use the keys of the first result
     if (this.visualization?.schema?.columns) {
-      this.columns = this.visualization.schema.columns;
+      this.columns = this.visualization.schema.columns as string[];
     } else {
       this.columns = Object.keys(tableData[0]);
     }
