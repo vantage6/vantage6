@@ -40,6 +40,10 @@ export class ChosenStoreService {
     return this.isInitialized$.asObservable();
   }
 
+  getCurrentStore(): Observable<AlgorithmStore | null> {
+    return this.store$.asObservable();
+  }
+
   private async initData() {
     const storeIDFromSession = sessionStorage.getItem(CHOSEN_ALGORITHM_STORE);
     if (storeIDFromSession) {

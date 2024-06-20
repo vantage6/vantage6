@@ -435,13 +435,14 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
     }
 
     # ask about openness of the algorithm store
+    config["policies"] = {"allow_localhost": False}
     is_open = q.confirm(
         "Do you want to open the algorithm store to the public? This will allow anyone "
         "to view the algorithms, but they cannot modify them.",
         default=False,
     ).ask()
     if is_open:
-        config["policies"] = {"algorithms_open": True}
+        open_algos_policy = "public"
     else:
         is_open_to_whitelist = q.confirm(
             "Do you want to allow all users of whitelisted vantage6 servers to access "
@@ -449,10 +450,8 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
             " the appropriate permissions to each user individually.",
             default=True,
         ).ask()
-        config["policies"] = {
-            "algorithms_open": False,
-            "algorithms_open_to_whitelisted": is_open_to_whitelist,
-        }
+        open_algos_policy = "whitelisted" if is_open_to_whitelist else "private"
+    config["policies"]["algorithm_view"] = open_algos_policy
 
     return config
 

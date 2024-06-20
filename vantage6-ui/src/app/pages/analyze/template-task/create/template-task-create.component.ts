@@ -204,7 +204,7 @@ export class TemplateTaskCreateComponent implements OnInit {
   }
 
   private async initData(): Promise<void> {
-    this.templateTasks = await this.taskService.getTemplateTasks();
+    this.templateTasks = []; // await this.taskService.getTemplateTasks();
   }
 
   private async handleOrganizationChange(organizationID: string | string[]): Promise<void> {
