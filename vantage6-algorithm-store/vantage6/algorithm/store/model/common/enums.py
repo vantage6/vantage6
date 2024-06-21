@@ -48,6 +48,7 @@ class ReviewStatus(str, Enum):
     UNDER_REVIEW = "under review"
     APPROVED = "approved"
     REJECTED = "rejected"
+    REPLACED = "replaced"  # replaced by newer version
 
 
 class PublicPolicies(str, Enum):

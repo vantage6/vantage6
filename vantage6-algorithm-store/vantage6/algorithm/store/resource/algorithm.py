@@ -405,12 +405,6 @@ class Algorithms(AlgorithmBaseResource):
                 )
                 vis.save()
 
-        # if an algorithm registration with the same image already existed, invalidate
-        # the old one
-        for old_algorithm in db_Algorithm.get_by_image(image_wo_tag):
-            old_algorithm.invalidated_at = algorithm.submitted_at
-            old_algorithm.save()
-
         return algorithm_output_schema.dump(algorithm, many=False), HTTPStatus.CREATED
 
 

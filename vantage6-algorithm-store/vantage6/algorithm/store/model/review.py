@@ -34,7 +34,7 @@ class Review(Base):
 
     # relationships
     reviewers = relationship("User", back_populates="reviews")
-    algorithm = relationship("Algorithm", back_populates="review")
+    algorithm = relationship("Algorithm", back_populates="reviews")
 
     def __repr__(self) -> str:
         """

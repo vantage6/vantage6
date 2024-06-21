@@ -440,11 +440,20 @@ class ReviewApprove(AlgorithmStoreResources):
 
         # also update the algorithm status to 'approved' if this was the last review
         # that needed to be approved
-        algorithm = review.algorithm
+        algorithm: db.Algorithm = review.algorithm
         if algorithm.are_all_reviews_approved():
             algorithm.status = ReviewStatus.APPROVED
             algorithm.approved_at = datetime.datetime.now(datetime.timezone.utc)
             algorithm.save()
+
+            # if the algorithm is approved, update the previous versions to
+            # 'invalidated'
+            for old_algorithm in db.Algorithm.get_by_image(algorithm.image):
+                if old_algorithm.id == algorithm.id:
+                    continue  # skip the current version
+                old_algorithm.invalidated_at = algorithm.approved_at
+                old_algorithm.status = ReviewStatus.REPLACED
+                old_algorithm.save()
 
         log.info("Review with id=%s has been approved", id)
         return {"msg": f"Review id={id} has been approved"}, HTTPStatus.OK

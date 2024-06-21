@@ -1,8 +1,6 @@
 import datetime
 from sqlalchemy import Column, String, DateTime, Integer, ForeignKey
 from sqlalchemy.orm import relationship
-from sqlalchemy.orm.exc import NoResultFound
-
 
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
 from vantage6.algorithm.store.model.common.enums import ReviewStatus
