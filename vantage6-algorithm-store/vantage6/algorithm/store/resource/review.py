@@ -446,8 +446,7 @@ class ReviewApprove(AlgorithmStoreResources):
             algorithm.approved_at = datetime.datetime.now(datetime.timezone.utc)
             algorithm.save()
 
-            # if the algorithm is approved, update the previous versions to
-            # 'invalidated'
+            # if the algorithm is approved, invalidate the previous versions
             for old_algorithm in db.Algorithm.get_by_image(algorithm.image):
                 if old_algorithm.id == algorithm.id:
                     continue  # skip the current version
