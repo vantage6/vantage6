@@ -8,7 +8,10 @@ from vantage6.algorithm.store import db
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.common import logger_name
 from vantage6.algorithm.store.model.ui_visualization import UIVisualization
-from vantage6.algorithm.store.resource.schema.input_schema import AlgorithmInputSchema
+from vantage6.algorithm.store.resource.schema.input_schema import (
+    AlgorithmInputSchema,
+    AlgorithmPatchInputSchema,
+)
 from vantage6.algorithm.store.resource.schema.output_schema import AlgorithmOutputSchema
 from vantage6.algorithm.store.model.algorithm import Algorithm as db_Algorithm
 from vantage6.algorithm.store.model.argument import Argument
@@ -26,6 +29,7 @@ from vantage6.algorithm.store.permission import (
     Operation as P,
 )
 from vantage6.backend.common.resource.pagination import Pagination
+from vantage6.common.docker.addons import get_manifest, parse_image_name
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -64,14 +68,15 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     )
 
 
-algorithm_input_schema = AlgorithmInputSchema()
+algorithm_input_post_schema = AlgorithmInputSchema()
+algorithm_input_patch_schema = AlgorithmPatchInputSchema()
 algorithm_output_schema = AlgorithmOutputSchema()
 
 
 # ------------------------------------------------------------------------------
 # Permissions
 # ------------------------------------------------------------------------------
-def permissions(permissions: PermissionManager) -> None:
+def permissions(permission_mgr: PermissionManager) -> None:
     """
     Define the permissions for this resource.
 
@@ -80,7 +85,7 @@ def permissions(permissions: PermissionManager) -> None:
     permissions : PermissionManager
         Permission manager instance to which permissions are added
     """
-    add = permissions.appender(module_name)
+    add = permission_mgr.appender(module_name)
     add(P.VIEW, description="View any algorithm")
     add(P.CREATE, description="Create a new algorithm")
     add(P.EDIT, description="Edit any algorithm")
@@ -93,10 +98,56 @@ def permissions(permissions: PermissionManager) -> None:
 # ------------------------------------------------------------------------------
 
 
-class Algorithms(AlgorithmStoreResources):
+class AlgorithmBaseResource(AlgorithmStoreResources):
+    """Base class for the algorithm resource"""
+
+    def _get_image_digest(self, image_name: str) -> tuple[str, str]:
+        """
+        Get the sha256 of the image.
+
+        This method is run in a separate thread to prevent the request from taking too
+        long. Do NOT call this method from the main thread!
+
+        Parameters
+        ----------
+        image : str
+            Image url
+        config : dict
+            Configuration dict
+
+        Returns
+        -------
+        tuple[str, str]
+            Tuple with the docker image without tag, and the digest of the image
+        """
+        # split image and tag
+        try:
+            registry, image, tag = parse_image_name(image_name)
+        except Exception as e:
+            raise ValueError(f"Invalid image name: {image_name}") from e
+        image_wo_tag = "/".join([registry, image])
+
+        # get the manifest of the image. Use authentication if provided
+        docker_registry = self.config.get("docker_registries", [])
+        registry_user = None
+        registry_password = None
+        for reg in docker_registry:
+            if reg["registry"] == registry:
+                registry_user = reg.get("username")
+                registry_password = reg.get("password")
+                break
+        response = get_manifest(
+            image_name, registry, image, tag, registry_user, registry_password
+        )
+
+        # get the digest from the response headers
+        return image_wo_tag, response.headers["Docker-Content-Digest"]
+
+
+class Algorithms(AlgorithmBaseResource):
     """Resource for /algorithm"""
 
-    @with_permission_to_view_algorithms(module_name, Operation.VIEW)
+    @with_permission_to_view_algorithms()
     def get(self):
         """List algorithms
         ---
@@ -118,7 +169,8 @@ class Algorithms(AlgorithmStoreResources):
             name: image
             schema:
               type: string
-            description: Filter on algorithm image using the SQL operator LIKE.
+            description: Filter on algorithm image. If no tag is provided, the
+              latest tag is assumed.
           - in: query
             name: partitioning
             schema:
@@ -151,12 +203,21 @@ class Algorithms(AlgorithmStoreResources):
         for field in [
             "name",
             "description",
-            "image",
             "partitioning",
             "vantage6_version",
         ]:
             if (value := request.args.get(field)) is not None:
                 q = q.filter(getattr(db_Algorithm, field).like(value))
+
+        if (image := request.args.get("image")) is not None:
+            # determine the sha256 of the image, and filter on that. Sort descending
+            # to get the latest addition to the store first
+            # TODO at some point there may only be one registration of each algorithm,
+            # so this sorting may not be necessary anymore
+            image_wo_tag, digest = self._get_image_digest(image)
+            q = q.filter(
+                db_Algorithm.image == image_wo_tag, db_Algorithm.digest == digest
+            ).order_by(db_Algorithm.id.desc())
 
         # paginate results
         try:
@@ -281,20 +342,27 @@ class Algorithms(AlgorithmStoreResources):
         data = request.get_json()
 
         # validate the request body
-        errors = algorithm_input_schema.validate(data)
+        errors = algorithm_input_post_schema.validate(data)
         if errors:
             return {
                 "msg": "Request body is incorrect",
                 "errors": errors,
             }, HTTPStatus.BAD_REQUEST
 
+        # validate that the algorithm image exists and retrieve the digest
+        try:
+            image_wo_tag, digest = self._get_image_digest(data["image"])
+        except Exception as e:
+            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+
         # create the algorithm
         algorithm = db_Algorithm(
             name=data["name"],
             description=data.get("description", ""),
-            image=data["image"],
+            image=image_wo_tag,
             partitioning=data["partitioning"],
             vantage6_version=data["vantage6_version"],
+            digest=digest,
             developer=g.user,
         )
         algorithm.save()
@@ -320,12 +388,12 @@ class Algorithms(AlgorithmStoreResources):
                 arg.save()
             # create the databases
             for database in function.get("databases", []):
-                db = Database(
+                db_ = Database(
                     name=database["name"],
                     description=database.get("description", ""),
                     function_id=func.id,
                 )
-                db.save()
+                db_.save()
             # create the visualizations
             for visualization in function.get("ui_visualizations", []):
                 vis = UIVisualization(
@@ -339,17 +407,17 @@ class Algorithms(AlgorithmStoreResources):
 
         # if an algorithm registration with the same image already existed, invalidate
         # the old one
-        for old_algorithm in db_Algorithm.get_by_image(data["image"]):
+        for old_algorithm in db_Algorithm.get_by_image(image_wo_tag):
             old_algorithm.invalidated_at = algorithm.submitted_at
             old_algorithm.save()
 
         return algorithm_output_schema.dump(algorithm, many=False), HTTPStatus.CREATED
 
 
-class Algorithm(AlgorithmStoreResources):
+class Algorithm(AlgorithmBaseResource):
     """Resource for /algorithm/<id>"""
 
-    @with_permission_to_view_algorithms(module_name, Operation.VIEW)
+    @with_permission_to_view_algorithms()
     def get(self, id):
         """Get algorithm
         ---
@@ -526,7 +594,11 @@ class Algorithm(AlgorithmStoreResources):
                               schema:
                                 type: object
                                 description: Schema that describes the visualization.
-
+                  refresh_digest:
+                    type: boolean
+                    description: If true, the digest of the image will be refreshed
+                      and stored in the database. Note that this is also done whenever
+                      the image is changed.
 
         responses:
           201:
@@ -550,7 +622,7 @@ class Algorithm(AlgorithmStoreResources):
         data = request.get_json()
 
         # validate the request body
-        errors = algorithm_input_schema.validate(data, partial=True)
+        errors = algorithm_input_patch_schema.validate(data, partial=True)
         if errors:
             return {
                 "msg": "Request body is incorrect",
@@ -576,17 +648,28 @@ class Algorithm(AlgorithmStoreResources):
                 "to update it."
             }, HTTPStatus.FORBIDDEN
 
-        fields = ["name", "description", "image", "partitioning", "vantage6_version"]
+        fields = ["name", "description", "partitioning", "vantage6_version"]
         for field in fields:
             if field in data and data.get(field) is not None:
                 setattr(algorithm, field, data.get(field))
+
+        image = data.get("image")
+        # If image is updated or refresh_digest is set to True, update the digest of the
+        # image.
+        if image != algorithm.image or data.get("refresh_digest", False):
+            image_wo_tag, digest = self._get_image_digest(image)
+            algorithm.image = image_wo_tag
+            algorithm.digest = digest
+        # don't forget to also update the image itself
+        if image is not None:
+            algorithm.image = image
 
         if (functions := data.get("functions")) is not None:
             for function in algorithm.functions:
                 for argument in function.arguments:
                     argument.delete()
-                for db in function.databases:
-                    db.delete()
+                for db_ in function.databases:
+                    db_.delete()
                 for visualization in function.ui_visualizations:
                     visualization.delete()
                 function.delete()

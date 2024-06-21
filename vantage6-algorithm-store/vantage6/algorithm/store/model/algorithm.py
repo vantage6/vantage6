@@ -26,6 +26,8 @@ class Algorithm(Base):
         Version of vantage6 that the algorithm is built with
     status: str
         Review status of the algorithm
+    digest : str
+        Hash digest of the algorithm
     submitted_at: datetime
         Date at which the algorithm was submitted
     approved_at: datetime
@@ -50,6 +52,7 @@ class Algorithm(Base):
     # documentation_url = Column(String)
     partitioning = Column(String)
     vantage6_version = Column(String)
+    digest = Column(String)
     submitted_at = Column(
         DateTime, default=datetime.datetime.now(datetime.timezone.utc)
     )

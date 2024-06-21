@@ -54,6 +54,7 @@ export interface Algorithm {
   id: number;
   name: string;
   image: string;
+  digest: string | null;
   vantage6_version: string;
   description: string;
   partitioning: PartitioningType;

@@ -561,7 +561,8 @@
     "Killed": "Killed by user",
     "NoDockerImage": "Non-existing Docker image",
     "Pending": "Pending",
-    "StartFailed": "Start failed"
+    "StartFailed": "Start failed",
+    "NotAllowed": "Algorithm not allowed by node"
   },
   "store": {
     "server": "Server URL"

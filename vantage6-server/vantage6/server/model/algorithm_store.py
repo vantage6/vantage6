@@ -29,6 +29,7 @@ class AlgorithmStore(Base):
     collaboration_id = Column(Integer, ForeignKey("collaboration.id"))
 
     collaboration = relationship("Collaboration", back_populates="algorithm_stores")
+    tasks = relationship("Task", back_populates="algorithm_store")
 
     @classmethod
     def get_by_url(cls, url: str) -> list[AlgorithmStore]:
@@ -47,3 +48,15 @@ class AlgorithmStore(Base):
         """
         session = DatabaseSessionManager.get_session()
         return session.query(AlgorithmStore).filter_by(url=url).all()
+
+    def is_for_all_collaborations(self) -> bool:
+        """
+        Check if the algorithm store is available for all collaborations
+
+        Returns
+        -------
+        bool
+            True if the algorithm store is available for all collaborations,
+            False otherwise
+        """
+        return self.collaboration_id is None

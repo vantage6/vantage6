@@ -1,21 +1,19 @@
-from datetime import datetime
+from http import HTTPStatus
 import logging
-import re
-import docker
-import requests
-import base64
-import json
 import signal
 import pathlib
+import requests
+from requests.auth import HTTPBasicAuth
 
-from dateutil.parser import parse
+import docker
 from docker.client import DockerClient
 from docker.models.containers import Container
 from docker.models.volumes import Volume
 from docker.models.networks import Network
+from docker.utils import parse_repository_tag
+from docker.auth import resolve_repository_name
 
 from vantage6.common import logger_name
-from vantage6.common import ClickLogger
 from vantage6.common.globals import APPNAME
 
 log = logging.getLogger(logger_name(__name__))
@@ -302,3 +300,89 @@ def delete_volume_if_exists(client: docker.DockerClient, volume_name: Volume) ->
             volume.remove()
     except (docker.errors.NotFound, docker.errors.APIError):
         log.warning("Could not delete volume %s", volume_name)
+
+
+def parse_image_name(image: str) -> tuple[str, str, str]:
+    """
+    Parse image name into registry, repository, tag
+
+    Parameters
+    ----------
+    image: str
+        Image name. E.g. "harbor2.vantage6.ai/algorithms/average:latest" or
+        "library/hello-world"
+
+    Returns
+    -------
+    tuple[str, str, str]
+        Registry, repository, and tag. Tag is "latest" if not specified in 'image'
+    """
+    registry_repository, tag = parse_repository_tag(image)
+    tag = tag or "latest"
+    registry, repository = resolve_repository_name(registry_repository)
+    return registry, repository, tag
+
+
+def get_manifest(
+    full_image_url: str,
+    registry: str,
+    image: str,
+    tag: str,
+    registry_user: str = None,
+    registry_password: str = None,
+) -> dict:
+    """
+    Get the manifest of an image
+
+    This uses the OCI distribution specification which is supported by all major
+    container registries.
+
+    Parameters
+    ----------
+    full_image_url: str
+        The full image url
+    registry: str
+        The registry of the image
+    image: str
+        The image name without the registry
+    tag: str
+        The tag of the image
+    registry_user: str (optional)
+        The username for the registry. Required if the registry is private
+    registry_password: str (optional)
+        The password for the registry. Required if the registry is private
+
+    Returns
+    -------
+    requests.Response
+        Response containing the manifest of the image
+
+    Raises
+    ------
+    ValueError
+        If the image name is invalid
+    """
+    # request manifest. First try without authentication, as that is the most common
+    # case. If that fails, try with authentication
+    manifest_endpoint = f"https://{registry}/v2/{image}/manifests/{tag}"
+    response = requests.get(manifest_endpoint, timeout=60)
+    if (
+        response.status_code == HTTPStatus.UNAUTHORIZED
+        and registry_user
+        and registry_password
+    ):
+        response = requests.get(
+            manifest_endpoint,
+            auth=HTTPBasicAuth(registry_user, registry_password),
+            timeout=60,
+        )
+
+    # handle errors or return manifest
+    if response.status_code == HTTPStatus.NOT_FOUND:
+        raise ValueError(f"Image {full_image_url} not found!")
+    elif response.status_code != HTTPStatus.OK:
+        raise ValueError(
+            f"Failed to retrieve metadata for '{full_image_url}. Could not retrieve "
+            f"manifest from https://{registry}/v2/{image}/manifests/{tag}"
+        )
+    return response

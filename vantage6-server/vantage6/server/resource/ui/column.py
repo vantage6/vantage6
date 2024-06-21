@@ -168,4 +168,5 @@ class ColumnNames(ServicesResources):
             },
             socketio=self.socketio,
             rules=self.r_task,
+            config=self.config,
         )
