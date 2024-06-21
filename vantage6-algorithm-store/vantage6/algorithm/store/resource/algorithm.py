@@ -337,6 +337,12 @@ class Algorithms(AlgorithmStoreResources):
                 )
                 vis.save()
 
+        # if an algorithm registration with the same image already existed, invalidate
+        # the old one
+        for old_algorithm in db_Algorithm.get_by_image(data["image"]):
+            old_algorithm.invalidated_at = algorithm.submitted_at
+            old_algorithm.save()
+
         return algorithm_output_schema.dump(algorithm, many=False), HTTPStatus.CREATED
 
 
@@ -529,6 +535,8 @@ class Algorithm(AlgorithmStoreResources):
             description: Invalid input
           401:
             description: Unauthorized
+          403:
+            description: Forbidden action
 
         security:
           - bearerAuth: []
@@ -548,6 +556,25 @@ class Algorithm(AlgorithmStoreResources):
                 "msg": "Request body is incorrect",
                 "errors": errors,
             }, HTTPStatus.BAD_REQUEST
+
+        # algorithms can no longer be edited if they are in the review process or have
+        # already been through it.
+        if algorithm.approved_at is not None:
+            return {
+                "msg": "Approved algorithms cannot be edited. Please submit a new "
+                "algorithm and go through the review process if you want to update it."
+            }, HTTPStatus.FORBIDDEN
+        elif algorithm.invalidated_at is not None:
+            return {
+                "msg": "Invalidated algorithms cannot be edited. Please submit a new "
+                "algorithm and go through the review process if you want to update it."
+            }, HTTPStatus.FORBIDDEN
+        elif algorithm.reviews:
+            return {
+                "msg": "Algorithms that are under review cannot be edited. Please "
+                "submit a new algorithm and go through the review process if you want "
+                "to update it."
+            }, HTTPStatus.FORBIDDEN
 
         fields = ["name", "description", "image", "partitioning", "vantage6_version"]
         for field in fields:

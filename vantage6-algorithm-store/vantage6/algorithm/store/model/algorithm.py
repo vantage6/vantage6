@@ -1,8 +1,10 @@
+import datetime
 from sqlalchemy import Column, String, DateTime, Integer, ForeignKey
 from sqlalchemy.orm import relationship
-import datetime
+from sqlalchemy.orm.exc import NoResultFound
 
-from vantage6.algorithm.store.model.base import Base
+
+from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
 from vantage6.algorithm.store.model.common.enums import ReviewStatus
 
 
@@ -58,7 +60,7 @@ class Algorithm(Base):
     # relationships
     functions = relationship("Function", back_populates="algorithm")
     developer = relationship("User", back_populates="algorithms")
-    review = relationship("Review", back_populates="algorithm")
+    reviews = relationship("Review", back_populates="algorithm")
 
     def is_review_finished(self) -> bool:
         """
@@ -68,3 +70,34 @@ class Algorithm(Base):
             ReviewStatus.APPROVED,
             ReviewStatus.REJECTED,
         ]
+
+    def are_all_reviews_approved(self) -> bool:
+        """
+        Check if all reviews are approved.
+
+        Returns
+        -------
+        bool
+            True if all reviews are approved, False otherwise
+        """
+        return all([review.status == ReviewStatus.APPROVED for review in self.reviews])
+
+    @classmethod
+    def get_by_image(cls, image: str) -> "Algorithm":
+        """
+        Get an algorithm by image.
+
+        Parameters
+        ----------
+        image : str
+            Docker image URL
+
+        Returns
+        -------
+        list[Algorithm]
+            Algorithms with the given image that are not invalidated
+        """
+        session = DatabaseSessionManager.get_session()
+        result = session.query(cls).filter_by(image=image, invalidated_at=None).all()
+        session.commit()
+        return result
