@@ -101,7 +101,6 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
     delete cleanedAlgorithmRepresentation.id;
     for (const func of cleanedAlgorithmRepresentation.functions) {
       delete func.id;
-      console.log(func);
       for (const param of func.arguments) {
         delete param.id;
       }
@@ -112,6 +111,14 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
         delete ui_vis.id;
       }
     }
+
+    // also remove other algorithm store properties that should not be included in the
+    // download
+    delete cleanedAlgorithmRepresentation.digest;
+    delete cleanedAlgorithmRepresentation.status;
+    delete cleanedAlgorithmRepresentation.submitted_at;
+    delete cleanedAlgorithmRepresentation.approved_at;
+    delete cleanedAlgorithmRepresentation.invalidated_at;
 
     const text = JSON.stringify(cleanedAlgorithmRepresentation, null, 2);
     this.fileService.downloadTxtFile(text, filename);
