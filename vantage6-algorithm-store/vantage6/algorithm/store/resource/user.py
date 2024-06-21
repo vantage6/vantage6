@@ -425,6 +425,7 @@ class User(AlgorithmStoreResources):
     @with_permission(module_name, Operation.DELETE)
     def delete(self, id):
         """Remove user.
+
         ---
         description: >-
           Unregister the vantage6 user account from the algorithm store.\n
@@ -455,5 +456,5 @@ class User(AlgorithmStoreResources):
             return {"msg": f"user id={id} not found"}, HTTPStatus.NOT_FOUND
 
         user.delete()
-        log.info(f"user id={id} is removed from the database")
+        log.info("user id=%s is removed from the database", id)
         return {"msg": f"user id={id} is removed from the database"}, HTTPStatus.OK

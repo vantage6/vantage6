@@ -44,19 +44,18 @@ def get_default_roles() -> list[dict]:
         Rule.get_by_("algorithm", Operation.VIEW),
         Rule.get_by_("user", Operation.VIEW),
         Rule.get_by_("role", Operation.VIEW),
+        Rule.get_by_("review", Operation.VIEW),
     ]
     VIEWER_ROLE = {
         "name": DefaultRole.VIEWER,
-        "description": "Can view accounts and algorithms",
+        "description": "Can view algorithm store resources",
         "rules": VIEWER_RULES,
     }
     # 3. Reviewer role
-    REVIEWER_RULES = VIEWER_RULES + [
-        Rule.get_by_("algorithm", Operation.REVIEW),
-    ]
+    REVIEWER_RULES = VIEWER_RULES + [Rule.get_by_("algorithm", Operation.REVIEW)]
     REVIEWER_ROLE = {
         "name": DefaultRole.REVIEWER,
-        "description": "Can view, edit and delete algorithms",
+        "description": "Can view resources and review algorithms",
         "rules": REVIEWER_RULES,
     }
     # 4. Store manager role
@@ -69,10 +68,12 @@ def get_default_roles() -> list[dict]:
         Rule.get_by_("role", Operation.CREATE),
         Rule.get_by_("role", Operation.EDIT),
         Rule.get_by_("role", Operation.DELETE),
+        Rule.get_by_("review", Operation.CREATE),
+        Rule.get_by_("review", Operation.DELETE),
     ]
     STORE_MANAGER = {
         "name": DefaultRole.STORE_MANAGER,
-        "description": "Can manage algorithms, and create and edit users.",
+        "description": "Can manage algorithms and other store resources.",
         "rules": STORE_MANAGER,
     }
     # Developer role
@@ -82,7 +83,7 @@ def get_default_roles() -> list[dict]:
     ]
     DEVELOPER_ROLE = {
         "name": DefaultRole.DEVELOPER,
-        "description": "Can view and create algorithms.",
+        "description": "Can view store resources and create new algorithms.",
         "rules": DEVELOPER_RULES,
     }
     # server manager role
@@ -91,7 +92,10 @@ def get_default_roles() -> list[dict]:
     ]
     SERVER_MANAGER_ROLE = {
         "name": "Server Manager",
-        "description": "Can manage their own whitelisted vantage6 server",
+        "description": (
+            "Can delete their own whitelisted vantage6 server. This rule is"
+            " assigned automatically upon whitelisting a server"
+        ),
         "rules": SERVER_MANAGER_RULES,
     }
     # Combine all in array

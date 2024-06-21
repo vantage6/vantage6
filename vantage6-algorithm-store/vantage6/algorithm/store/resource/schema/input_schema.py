@@ -183,9 +183,4 @@ class ReviewUpdateInputSchema(Schema):
     Schema for updating a review by a reviewer
     """
 
-    status = fields.String(
-        validate=validate.OneOf(
-            [ReviewStatus.APPROVED.value, ReviewStatus.REJECTED.value]
-        )
-    )
     comment = fields.String()

@@ -3,7 +3,7 @@ import logging
 from http import HTTPStatus
 from flask import request, g
 from flask_restful import Api
-
+import datetime
 
 from vantage6.common import logger_name
 from vantage6.backend.common.resource.pagination import Pagination
@@ -28,7 +28,7 @@ log = logging.getLogger(module_name)
 
 def setup(api: Api, api_base: str, services: dict) -> None:
     """
-    Setup the user resource.
+    Setup the review resource.
 
     Parameters
     ----------
@@ -54,7 +54,21 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         Review,
         path + "/<int:id>",
         endpoint="review_with_id",
-        methods=("GET", "PATCH", "DELETE"),
+        methods=("GET", "DELETE"),
+        resource_class_kwargs=services,
+    )
+    api.add_resource(
+        ReviewApprove,
+        path + "/<int:id>/approve",
+        endpoint="review_approve",
+        methods=("POST",),
+        resource_class_kwargs=services,
+    )
+    api.add_resource(
+        ReviewReject,
+        path + "/<int:id>/reject",
+        endpoint="review_reject",
+        methods=("POST",),
         resource_class_kwargs=services,
     )
 
@@ -74,12 +88,11 @@ def permissions(permissions: PermissionManager) -> None:
         Permission manager instance to which permissions are added
     """
 
-    log.debug("Loading module users permission")
+    log.debug("Loading module reviews permission")
     add = permissions.appender(module_name)
-    add(P.VIEW, description="View any user")
-    add(P.CREATE, description="Create a new user")
-    add(P.EDIT, description="Edit any user")
-    add(P.DELETE, description="Delete any user")
+    add(P.VIEW, description="View reviews")
+    add(P.CREATE, description="Create new reviews")
+    add(P.DELETE, description="Delete reviews")
 
 
 # ------------------------------------------------------------------------------
@@ -338,10 +351,161 @@ class Review(AlgorithmStoreResources):
 
         return review_output_schema.dump(review), HTTPStatus.OK
 
-    @with_permission(module_name, P.EDIT)
-    def patch(self, id):
-        pass
-
     @with_permission(module_name, P.DELETE)
     def delete(self, id):
-        pass
+        """Remove a review
+
+        ---
+        description: Remove a review
+
+        parameters:
+          - name: id
+            in: path
+            type: integer
+            required: true
+            description: ID of the review to remove
+
+        responses:
+          200:
+            description: Ok
+          401:
+            description: Unauthorized
+          404:
+            description: Review not found
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Review"]
+        """
+        review = db.Review.get(id)
+        if not review:
+            return {"msg": "Review not found"}, HTTPStatus.NOT_FOUND
+
+        review.delete()
+        log.info("Review with id=%s deleted", id)
+        return {"msg": f"Review id={id} has been deleted"}, HTTPStatus.OK
+
+
+class ReviewApprove(AlgorithmStoreResources):
+    """Resource for the /review/<id>/approve endpoint"""
+
+    @with_permission("algorithm", P.REVIEW)
+    def post(self, id):
+        """Approve an algorithm in the current review
+
+        ---
+        description: Approve a algorithm in the current review
+
+        parameters:
+          - name: id
+            in: path
+            type: integer
+            required: true
+            description: ID of the review to approve
+          - comment: str
+            in: query
+            required: false
+            description: Comment to add to the review
+
+        responses:
+          200:
+            description: Ok
+          401:
+            description: Unauthorized
+          404:
+            description: Review not found
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Review"]
+        """
+        data = request.get_json()
+
+        # validate input
+        errors = review_update_schema.validate(request.get_json())
+        if errors:
+            return {"msg": "Invalid input", "errors": errors}, HTTPStatus.BAD_REQUEST
+
+        review = db.Review.get(data["id"])
+        if not review:
+            return {"msg": "Review not found"}, HTTPStatus.NOT_FOUND
+
+        # update the review status to 'approved'
+        review.status = ReviewStatus.APPROVED
+        if comment := data.get("comment"):
+            review.comment = comment
+        review.save()
+
+        # also update the algorithm status to 'approved' if this was the last review
+        # that needed to be approved
+        algorithm = review.algorithm
+        if algorithm.are_all_reviews_approved():
+            algorithm.status = ReviewStatus.APPROVED
+            algorithm.approved_at = datetime.datetime.now(datetime.timezone.utc)
+            algorithm.save()
+
+        log.info("Review with id=%s has been approved", id)
+        return {"msg": f"Review id={id} has been approved"}, HTTPStatus.OK
+
+
+class ReviewReject(AlgorithmStoreResources):
+    """Resource for the /review/<id>/reject endpoint"""
+
+    @with_permission("algorithm", P.REVIEW)
+    def post(self, id):
+        """Reject an algorithm in the current review
+
+        ---
+        description: Reject a algorithm in the current review
+
+        parameters:
+          - name: id
+            in: path
+            type: integer
+            required: true
+            description: ID of the review to reject
+          - comment: str
+            in: query
+            required: false
+            description: Comment to add to the review
+
+        responses:
+          200:
+            description: Ok
+          401:
+            description: Unauthorized
+          404:
+            description: Review not found
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Review"]
+        """
+        data = request.get_json()
+
+        # validate input
+        errors = review_update_schema.validate(request.get_json())
+        if errors:
+            return {"msg": "Invalid input", "errors": errors}, HTTPStatus.BAD_REQUEST
+
+        review: db.Review = db.Review.get(data["id"])
+        if not review:
+            return {"msg": "Review not found"}, HTTPStatus.NOT_FOUND
+
+        # update the review status to 'rejected'
+        review.status = ReviewStatus.REJECTED
+        if comment := data.get("comment"):
+            review.comment = comment
+        review.save()
+
+        # also update the algorithm status to 'rejected'
+        algorithm: db.Algorithm = review.algorithm
+        algorithm.status = ReviewStatus.REJECTED
+        algorithm.invalidated_at = datetime.datetime.now(datetime.timezone.utc)
+        algorithm.save()
+
+        log.info("Review with id=%s has been rejected", id)
+        return {"msg": f"Review id={id} has been rejected"}, HTTPStatus.OK
