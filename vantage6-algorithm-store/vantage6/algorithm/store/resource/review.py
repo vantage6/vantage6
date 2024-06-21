@@ -307,7 +307,36 @@ class Review(AlgorithmStoreResources):
 
     @with_permission(module_name, P.VIEW)
     def get(self, id):
-        pass
+        """Get a review by id
+
+        ---
+        description: Get a review by id
+
+        parameters:
+          - name: id
+            in: path
+            type: integer
+            required: true
+            description: ID of the review to get
+
+        responses:
+          200:
+            description: Ok
+          401:
+            description: Unauthorized
+          404:
+            description: Review not found
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Review"]
+        """
+        review = db.Review.get(id)
+        if not review:
+            return {"msg": "Review not found"}, HTTPStatus.NOT_FOUND
+
+        return review_output_schema.dump(review), HTTPStatus.OK
 
     @with_permission(module_name, P.EDIT)
     def patch(self, id):
