@@ -412,7 +412,7 @@ class ReviewApprove(AlgorithmStoreResources):
           200:
             description: Ok
           401:
-            description: Unauthorized
+            description: Unauthorized, or not assigned to this review
           404:
             description: Review not found
 
@@ -431,6 +431,12 @@ class ReviewApprove(AlgorithmStoreResources):
         review = db.Review.get(data["id"])
         if not review:
             return {"msg": "Review not found"}, HTTPStatus.NOT_FOUND
+
+        # check that the reviewer is assigned to this review
+        if review.reviewer_id != g.user.id:
+            return {
+                "msg": "You are not assigned to this review!"
+            }, HTTPStatus.UNAUTHORIZED
 
         # update the review status to 'approved'
         review.status = ReviewStatus.APPROVED
@@ -483,7 +489,7 @@ class ReviewReject(AlgorithmStoreResources):
           200:
             description: Ok
           401:
-            description: Unauthorized
+            description: Unauthorized, or not assigned to this review
           404:
             description: Review not found
 
@@ -502,6 +508,12 @@ class ReviewReject(AlgorithmStoreResources):
         review: db.Review = db.Review.get(data["id"])
         if not review:
             return {"msg": "Review not found"}, HTTPStatus.NOT_FOUND
+
+        # check that the reviewer is assigned to this review
+        if review.reviewer_id != g.user.id:
+            return {
+                "msg": "You are not assigned to this review!"
+            }, HTTPStatus.UNAUTHORIZED
 
         # update the review status to 'rejected'
         review.status = ReviewStatus.REJECTED
