@@ -1,10 +1,7 @@
 import { NameDescription } from './base.model';
+import { ReviewStatus } from './review.model';
 import { StoreUser } from './store-user.model';
 import { Visualization, VisualizationForm } from './visualization.model';
-
-export enum AlgorithmLazyProperties {
-  Review = 'review'
-}
 
 export enum ArgumentType {
   String = 'string',
@@ -52,14 +49,6 @@ export enum PartitioningType {
 export enum FunctionType {
   Central = 'central',
   Federated = 'federated'
-}
-
-export enum ReviewStatus {
-  AwaitingReviewerAssignment = 'awaiting reviewer assignment',
-  UnderReview = 'under review',
-  Approved = 'approved',
-  Rejected = 'rejected',
-  Replaced = 'replaced'
 }
 
 // TODO this interface must be updated to match the API

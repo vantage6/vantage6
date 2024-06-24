@@ -1,13 +1,14 @@
 import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
+import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
-import { capitalize } from 'src/app/helpers/general.helper';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { StoreUser } from 'src/app/models/api/store-user.model';
 import { Column, TableData } from 'src/app/models/application/table.model';
+import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
@@ -43,6 +44,7 @@ export class AlgorithmInReviewListComponent implements OnInit, OnDestroy {
   currentPageToBeReviewed: number = 1;
 
   constructor(
+    private router: Router,
     private algorithmService: AlgorithmService,
     private storeUserService: StoreUserService,
     private chosenStoreService: ChosenStoreService,
@@ -127,6 +129,14 @@ export class AlgorithmInReviewListComponent implements OnInit, OnDestroy {
   handlePageEventToBeReviewed(e: PageEvent) {
     this.currentPageToBeReviewed = e.pageIndex + 1;
     this.initData(this.currentPageInReview, this.currentPageToBeReviewed);
+  }
+
+  handleTableAwaitingReviewClick(algorithmID: string) {
+    this.router.navigate([routePaths.algorithmReviewAssign, algorithmID]);
+  }
+
+  handleTableInReviewClick(algorithmID: string) {
+    this.router.navigate([routePaths.algorithmReview, algorithmID]);
   }
 
   private getSharedColumns(): Column[] {

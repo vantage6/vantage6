@@ -308,6 +308,12 @@
     "developer": "Algorithm developer",
     "reviewer": "Reviewer"
   },
+  "algorithm-assign-review": {
+    "title": "Assign review"
+  },
+  "algorithm-review": {
+    "title": "Review"
+  },
   "organization": {
     "name": "Name",
     "address1": "Address 1",

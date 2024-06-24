@@ -119,6 +119,8 @@ import { BaseCreateComponent } from './components/admin-base/base-create/base-cr
 import { StoreRoleListComponent } from './pages/store/role/list/store-role-list.component';
 import { StoreRoleReadComponent } from './pages/store/role/read/store-role-read.component';
 import { AlgorithmInReviewListComponent } from './pages/store/algorithms-in-review/algorithm-in-review-list/algorithm-in-review-list.component';
+import { AlgorithmAssignReviewComponent } from './pages/store/algorithms-in-review/algorithm-assign-review/algorithm-assign-review.component';
+import { ReviewReadComponent } from './pages/store/algorithms-in-review/review-read/review-read.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -211,7 +213,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     BaseCreateComponent,
     StoreRoleListComponent,
     StoreRoleReadComponent,
-    AlgorithmInReviewListComponent
+    AlgorithmInReviewListComponent,
+    AlgorithmAssignReviewComponent,
+    ReviewReadComponent
   ],
   imports: [
     BrowserModule,
