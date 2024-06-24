@@ -1,0 +1,147 @@
+import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
+import { PageEvent } from '@angular/material/paginator';
+import { TranslateService } from '@ngx-translate/core';
+import { Subject, takeUntil } from 'rxjs';
+import { capitalize } from 'src/app/helpers/general.helper';
+import { Algorithm } from 'src/app/models/api/algorithm.model';
+import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
+import { PaginationLinks } from 'src/app/models/api/pagination.model';
+import { StoreUser } from 'src/app/models/api/store-user.model';
+import { Column, TableData } from 'src/app/models/application/table.model';
+import { AlgorithmService } from 'src/app/services/algorithm.service';
+import { ChosenStoreService } from 'src/app/services/chosen-store.service';
+import { StorePermissionService } from 'src/app/services/store-permission.service';
+import { StoreUserService } from 'src/app/services/store-user.service';
+
+enum TableRows {
+  ID = 'id',
+  Name = 'name',
+  Developer = 'developer'
+}
+
+@Component({
+  selector: 'app-algorithm-in-review-list',
+  templateUrl: './algorithm-in-review-list.component.html',
+  styleUrl: './algorithm-in-review-list.component.scss'
+})
+export class AlgorithmInReviewListComponent implements OnInit, OnDestroy {
+  @HostBinding('class') class = 'card-container';
+  destroy$ = new Subject<void>();
+  isLoading: boolean = true;
+
+  storeUsers: StoreUser[] = [];
+  store: AlgorithmStore | null = null;
+
+  algorithmsInReview: Algorithm[] = [];
+  algorithmInReviewTable?: TableData;
+  paginationInReview: PaginationLinks | null = null;
+  currentPageInReview: number = 1;
+
+  algorithmsAwaitingReview: Algorithm[] = [];
+  algorithmAwaitingReviewTable?: TableData;
+  paginationToBeReviewed: PaginationLinks | null = null;
+  currentPageToBeReviewed: number = 1;
+
+  constructor(
+    private algorithmService: AlgorithmService,
+    private storeUserService: StoreUserService,
+    private chosenStoreService: ChosenStoreService,
+    private storePermissionService: StorePermissionService,
+    private translateService: TranslateService
+  ) {}
+
+  async ngOnInit() {
+    this.storePermissionService.initialized$.pipe(takeUntil(this.destroy$)).subscribe((initialized) => {
+      if (initialized) {
+        this.initData(this.currentPageInReview, this.currentPageToBeReviewed);
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+  }
+
+  private async setStoreUsers(): Promise<void> {
+    if (!this.store) return;
+    this.storeUsers = await this.storeUserService.getUsers(this.store.url);
+  }
+
+  private async initData(pageInReview: number, pageToBeReviewed: number): Promise<void> {
+    this.store = this.chosenStoreService.store$.value;
+    if (!this.store) return;
+    await this.setStoreUsers();
+
+    await this.initializeTable(pageInReview, pageToBeReviewed);
+  }
+
+  private async initializeTable(pageInReview: number, pageToBeReviewed: number): Promise<void> {
+    if (!this.store) return;
+    this.isLoading = true;
+    // get algorithms awaiting review
+    const algorithmsAwaitingReview = await this.algorithmService.getPaginatedAlgorithms(this.store, pageToBeReviewed, {
+      awaiting_reviewer_assignment: true
+    });
+    this.algorithmsAwaitingReview = algorithmsAwaitingReview.data;
+    this.algorithmsAwaitingReview.forEach((algorithm) => {
+      const user = this.storeUsers.find((storeUser) => storeUser.id === algorithm.developer_id);
+      algorithm.developer = user ? user : undefined;
+    });
+    this.paginationToBeReviewed = algorithmsAwaitingReview.links;
+    this.algorithmAwaitingReviewTable = {
+      columns: [...this.getSharedColumns()],
+      rows: this.algorithmsAwaitingReview.map((algorithm) => ({
+        id: algorithm.id.toString(),
+        columnData: {
+          ...this.getRowData(algorithm)
+        }
+      }))
+    };
+
+    // get algorithms in review
+    const algorithmsInReview = await this.algorithmService.getPaginatedAlgorithms(this.store, pageInReview, { under_review: true });
+    this.algorithmsInReview = algorithmsInReview.data;
+    this.paginationInReview = algorithmsInReview.links;
+    this.algorithmsInReview.forEach((algorithm) => {
+      const user = this.storeUsers.find((storeUser) => storeUser.id === algorithm.developer_id);
+      algorithm.developer = user ? user : undefined;
+    });
+    this.algorithmInReviewTable = {
+      columns: [...this.getSharedColumns()],
+      rows: this.algorithmsInReview.map((algorithm) => ({
+        id: algorithm.id.toString(),
+        columnData: {
+          ...this.getRowData(algorithm)
+        }
+      }))
+    };
+
+    this.isLoading = false;
+  }
+
+  handlePageEventInReview(e: PageEvent) {
+    this.currentPageInReview = e.pageIndex + 1;
+    this.initData(this.currentPageInReview, this.currentPageToBeReviewed);
+  }
+
+  handlePageEventToBeReviewed(e: PageEvent) {
+    this.currentPageToBeReviewed = e.pageIndex + 1;
+    this.initData(this.currentPageInReview, this.currentPageToBeReviewed);
+  }
+
+  private getSharedColumns(): Column[] {
+    return [
+      { id: TableRows.ID, label: this.translateService.instant('general.id') },
+      { id: TableRows.Name, label: this.translateService.instant('general.name') },
+      { id: TableRows.Developer, label: this.translateService.instant('algorithm-in-review.developer') }
+    ];
+  }
+
+  private getRowData(algorithm: Algorithm): object {
+    return {
+      id: algorithm.id.toString(),
+      name: algorithm.name,
+      developer: algorithm.developer ? algorithm.developer.username : this.translateService.instant('general.unknown')
+    };
+  }
+}

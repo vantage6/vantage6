@@ -39,7 +39,7 @@ class User(Base):
     #                      secondary="UserPermission")
 
     algorithms = relationship("Algorithm", back_populates="developer")
-    reviews = relationship("Review", back_populates="reviewers")
+    reviews = relationship("Review", back_populates="reviewer")
 
     def __repr__(self) -> str:
         """

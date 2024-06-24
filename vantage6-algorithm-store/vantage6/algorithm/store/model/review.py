@@ -33,7 +33,7 @@ class Review(Base):
     comment = Column(Text)
 
     # relationships
-    reviewers = relationship("User", back_populates="reviews")
+    reviewer = relationship("User", back_populates="reviews")
     algorithm = relationship("Algorithm", back_populates="reviews")
 
     def __repr__(self) -> str:

@@ -208,6 +208,18 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
           linkType: NavigationLinkType.Store
         });
       }
+      // algorithms in review - note that explicit permission is required to view this
+      // page, whereas the page with approved algorithms may be open to the public,
+      // depending on the policies
+      if (this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.VIEW)) {
+        storeSubmenus.push({
+          route: routePaths.algorithmsInReview,
+          label: this.translateService.instant('links.algorithm-in-review'),
+          icon: 'hourglass_top',
+          linkType: NavigationLinkType.Store
+        });
+      }
+
       // store users
       if (this.storePermissionService.isAllowed(StoreResourceType.USER, OperationType.VIEW)) {
         storeSubmenus.push({

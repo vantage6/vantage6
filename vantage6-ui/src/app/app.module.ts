@@ -118,6 +118,7 @@ import { StoreUserFormComponent } from './components/forms/store-user-form/store
 import { BaseCreateComponent } from './components/admin-base/base-create/base-create.component';
 import { StoreRoleListComponent } from './pages/store/role/list/store-role-list.component';
 import { StoreRoleReadComponent } from './pages/store/role/read/store-role-read.component';
+import { AlgorithmInReviewListComponent } from './pages/store/algorithms-in-review/algorithm-in-review-list/algorithm-in-review-list.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -209,7 +210,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     StoreUserFormComponent,
     BaseCreateComponent,
     StoreRoleListComponent,
-    StoreRoleReadComponent
+    StoreRoleReadComponent,
+    AlgorithmInReviewListComponent
   ],
   imports: [
     BrowserModule,

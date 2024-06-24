@@ -18,7 +18,8 @@
     "visualization": "Visualization",
     "description": "Description",
     "overview": "Overview",
-    "file-select": "Select file"
+    "file-select": "Select file",
+    "unknown": "Unknown"
   },
   "resources": {
     "collaboration": "Collaboration",
@@ -37,7 +38,8 @@
     "admin": "Administration",
     "home": "Home",
     "analyze": "Analyze",
-    "stores": "Algorithm store"
+    "stores": "Algorithm store",
+    "algorithm-in-review": "Pending algorithms"
   },
   "home": {
     "title": "Home"
@@ -291,6 +293,20 @@
       "title": "Error updating algorithm",
       "message": "An error occurred while updating the algorithm: {{error}}"
     }
+  },
+  "algorithm-in-review": {
+    "title": "Pending algorithms",
+    "in-review": {
+      "title": "Algorithms currently in review",
+      "no-algorithms": "No algorithms are currently in review."
+    },
+    "to-assign-review": {
+      "title": "Algorithms that are not assigned to reviewers yet",
+      "no-algorithms": "All pending algorithms have been assigned reviewers."
+    },
+    "status": "Review status",
+    "developer": "Algorithm developer",
+    "reviewer": "Reviewer"
   },
   "organization": {
     "name": "Name",

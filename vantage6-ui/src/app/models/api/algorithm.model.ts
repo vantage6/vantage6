@@ -1,5 +1,10 @@
 import { NameDescription } from './base.model';
+import { StoreUser } from './store-user.model';
 import { Visualization, VisualizationForm } from './visualization.model';
+
+export enum AlgorithmLazyProperties {
+  Review = 'review'
+}
 
 export enum ArgumentType {
   String = 'string',
@@ -49,6 +54,14 @@ export enum FunctionType {
   Federated = 'federated'
 }
 
+export enum ReviewStatus {
+  AwaitingReviewerAssignment = 'awaiting reviewer assignment',
+  UnderReview = 'under review',
+  Approved = 'approved',
+  Rejected = 'rejected',
+  Replaced = 'replaced'
+}
+
 // TODO this interface must be updated to match the API
 export interface Algorithm {
   id: number;
@@ -63,6 +76,10 @@ export interface Algorithm {
   filter?: Filter[];
   algorithm_store_url?: string;
   algorith_store_id?: number;
+  status?: ReviewStatus;
+  developer_id?: number;
+  developer?: StoreUser;
+  reviewer?: StoreUser;
 }
 
 export interface AlgorithmFunction {

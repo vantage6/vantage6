@@ -51,7 +51,8 @@ export const routePaths = {
   storeUserCreate: '/store/users/create',
   storeUserEdit: '/store/users/edit',
   storeRoles: '/store/roles',
-  storeRole: '/store/roles'
+  storeRole: '/store/roles',
+  algorithmsInReview: '/store/review'
 };
 
 export const routerConfig = {
@@ -110,5 +111,6 @@ export const routerConfig = {
   storeUserCreate: 'users/create',
   storeUserEdit: 'users/edit/:id',
   storeRoles: 'roles',
-  storeRole: 'roles/:id'
+  storeRole: 'roles/:id',
+  algorithmsInReview: 'review'
 };

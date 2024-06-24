@@ -32,6 +32,8 @@ class Algorithm(Base):
         Date at which the algorithm was approved
     invalidated_at: datetime
         Date at which the algorithm was rejected or replaced by a newer version
+    developer_id : int
+        ID of the user that developed the algorithm
 
     functions : list[:class:`~.model.function.function`]
         List of functions that are available in the algorithm

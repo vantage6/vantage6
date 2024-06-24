@@ -41,6 +41,15 @@ export class AlgorithmService {
     return algorithms;
   }
 
+  async getPaginatedAlgorithms(store: AlgorithmStore, currentPage: number, params: object = {}): Promise<Pagination<Algorithm>> {
+    const result = await this.apiService.getForAlgorithmApiWithPagination<Algorithm>(store.url, '/api/algorithm', currentPage, params);
+    result.data.forEach((algorithm) => {
+      algorithm.algorithm_store_url = store.url;
+      algorithm.algorith_store_id = store.id;
+    });
+    return result;
+  }
+
   async getAlgorithm(algorithm_store_url: string, id: string): Promise<Algorithm> {
     const result = await this.apiService.getForAlgorithmApi<Algorithm>(algorithm_store_url, `/api/algorithm/${id}`);
     return result;

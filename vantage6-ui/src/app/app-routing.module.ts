@@ -55,6 +55,7 @@ import { StoreUserCreateComponent } from './pages/store/user/create/store-user-c
 import { StoreUserEditComponent } from './pages/store/user/edit/store-user-edit.component';
 import { StoreRoleListComponent } from './pages/store/role/list/store-role-list.component';
 import { StoreRoleReadComponent } from './pages/store/role/read/store-role-read.component';
+import { AlgorithmInReviewListComponent } from './pages/store/algorithms-in-review/algorithm-in-review-list/algorithm-in-review-list.component';
 
 const routes: Routes = [
   {
@@ -464,6 +465,14 @@ const routes: Routes = [
         canActivate: [authenticationGuard(), chosenStoreGuard()],
         data: {
           crumbs: [['role-list.title', routePaths.storeRoles], ['role-read.title']]
+        }
+      },
+      {
+        path: routerConfig.algorithmsInReview,
+        component: AlgorithmInReviewListComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['algorithm-in-review-list.title']]
         }
       }
     ]

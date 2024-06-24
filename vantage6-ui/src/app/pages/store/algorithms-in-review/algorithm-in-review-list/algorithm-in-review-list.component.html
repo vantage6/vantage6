@@ -1,0 +1,41 @@
+<app-page-header title="{{ 'algorithm-in-review.title' | translate }}"> </app-page-header>
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>{{ "algorithm-in-review.to-assign-review.title" | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div *ngIf="isLoading || algorithmsAwaitingReview.length > 0; else noAlgorithmsAwaitingReview">
+      <app-table [data]="algorithmAwaitingReviewTable" [isLoading]="isLoading"></app-table>
+      <!-- (rowClick)="handleTableClick($event)" -->
+      <mat-paginator
+        (page)="handlePageEventToBeReviewed($event)"
+        [length]="paginationToBeReviewed?.total"
+        pageSize="10"
+        [hidePageSize]="true"
+      ></mat-paginator>
+    </div>
+  </mat-card-content>
+</mat-card>
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>{{ "algorithm-in-review.in-review.title" | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div *ngIf="isLoading || algorithmsInReview.length > 0; else noAlgorithmsInReview">
+      <app-table [data]="algorithmInReviewTable" [isLoading]="isLoading"></app-table>
+      <!-- (rowClick)="handleTableClick($event)" -->
+      <mat-paginator
+        (page)="handlePageEventInReview($event)"
+        [length]="paginationInReview?.total"
+        pageSize="10"
+        [hidePageSize]="true"
+      ></mat-paginator>
+    </div>
+  </mat-card-content>
+</mat-card>
+<ng-template #noAlgorithmsAwaitingReview>
+  <p>{{ "algorithm-in-review.to-assign-review.no-algorithms" | translate }}</p>
+</ng-template>
+<ng-template #noAlgorithmsInReview>
+  <p>{{ "algorithm-in-review.in-review.no-algorithms" | translate }}</p>
+</ng-template>

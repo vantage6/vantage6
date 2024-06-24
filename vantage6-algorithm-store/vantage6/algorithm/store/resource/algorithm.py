@@ -3,8 +3,10 @@ import logging
 from flask import g, request
 from flask_restful import Api
 from http import HTTPStatus
+from sqlalchemy import or_
 
 from vantage6.algorithm.store import db
+from vantage6.algorithm.store.model.common.enums import ReviewStatus
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.common import logger_name
 from vantage6.algorithm.store.model.ui_visualization import UIVisualization
@@ -151,7 +153,12 @@ class Algorithms(AlgorithmBaseResource):
     def get(self):
         """List algorithms
         ---
-        description: Return a list of algorithms
+        description: >-
+          Return a list of algorithms
+
+          By default, only approved algorithms are returned. To get non-approved
+          algorithms, set the 'awaiting_reviewer_assignment', 'under_review' or
+          'invalidated' parameter to True.
 
         parameters:
           - in: query
@@ -171,6 +178,24 @@ class Algorithms(AlgorithmBaseResource):
               type: string
             description: Filter on algorithm image. If no tag is provided, the
               latest tag is assumed.
+          - in: query
+            name: awaiting_reviewer_assignment
+            schema:
+              type: boolean
+            description: Filter on algorithms that have not been assigned a reviewer
+              yet.
+          - in: query
+            name: under_review
+            schema:
+              type: boolean
+            description: Filter on algorithms that are currently under review.
+          - in: query
+            name: invalidated
+            schema:
+              type: boolean
+            description: Filter on algorithms that have been invalidated. These may be
+              algorithms that have been replaced by a newer version or that have been
+              rejected in review.
           - in: query
             name: partitioning
             schema:
@@ -218,6 +243,33 @@ class Algorithms(AlgorithmBaseResource):
             q = q.filter(
                 db_Algorithm.image == image_wo_tag, db_Algorithm.digest == digest
             ).order_by(db_Algorithm.id.desc())
+
+        awaiting_reviewer_assignment = bool(
+            request.args.get("awaiting_reviewer_assignment", False)
+        )
+        under_review = bool(request.args.get("under_review", False))
+        invalidated = bool(request.args.get("invalidated", False))
+        if sum([awaiting_reviewer_assignment, under_review, invalidated]) > 1:
+            return {
+                "msg": "Only one of 'awaiting_reviewer_assignment', 'under_review' or "
+                "'invalidated' may be set to True at a time."
+            }, HTTPStatus.BAD_REQUEST
+        if awaiting_reviewer_assignment:
+            q = q.filter(
+                db_Algorithm.status == ReviewStatus.AWAITING_REVIEWER_ASSIGNMENT.value
+            )
+        elif under_review:
+            q = q.filter(db_Algorithm.status == ReviewStatus.UNDER_REVIEW.value)
+        elif invalidated:
+            q = q.filter(
+                or_(
+                    db_Algorithm.status == ReviewStatus.REJECTED.value,
+                    db_Algorithm.status == ReviewStatus.REPLACED.value,
+                )
+            )
+        else:
+            # by default, only approved algorithms are returned
+            q = q.filter(db_Algorithm.status == ReviewStatus.APPROVED.value)
 
         # paginate results
         try:
