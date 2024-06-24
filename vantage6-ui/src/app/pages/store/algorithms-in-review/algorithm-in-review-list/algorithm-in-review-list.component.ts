@@ -6,6 +6,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
+import { OperationType, StoreResourceType } from 'src/app/models/api/rule.model';
 import { StoreUser } from 'src/app/models/api/store-user.model';
 import { Column, TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
@@ -132,10 +133,16 @@ export class AlgorithmInReviewListComponent implements OnInit, OnDestroy {
   }
 
   handleTableAwaitingReviewClick(algorithmID: string) {
+    if (!this.storePermissionService.isAllowed(StoreResourceType.REVIEW, OperationType.CREATE)) {
+      return;
+    }
     this.router.navigate([routePaths.algorithmReviewAssign, algorithmID]);
   }
 
   handleTableInReviewClick(algorithmID: string) {
+    if (!this.storePermissionService.isAllowed(StoreResourceType.REVIEW, OperationType.VIEW)) {
+      return;
+    }
     this.router.navigate([routePaths.algorithmReview, algorithmID]);
   }
 

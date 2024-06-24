@@ -5,3 +5,15 @@ export enum ReviewStatus {
   Rejected = 'rejected',
   Replaced = 'replaced'
 }
+
+export interface ReviewCreate {
+  algorithm_id: number;
+  reviewer_id: number;
+}
+
+export interface StoreReview {
+  id: number;
+  status: ReviewStatus;
+  algorithm_id: number;
+  reviewer_id: number;
+}

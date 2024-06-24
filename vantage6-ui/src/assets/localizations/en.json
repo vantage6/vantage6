@@ -64,7 +64,7 @@
     "info": "The content displayed is specific to this collaboration"
   },
   "chosen-store-alert": {
-    "content": "Selected store",
+    "content": "Selected store:",
     "change": "Change store",
     "info": "The content displayed is specific to this algorithm store"
   },
@@ -309,7 +309,9 @@
     "reviewer": "Reviewer"
   },
   "algorithm-assign-review": {
-    "title": "Assign review"
+    "title": "Assign reviewers",
+    "description": "Assign reviewers to the algorithm '{{name}}'.",
+    "reviewers": "Reviewers"
   },
   "algorithm-review": {
     "title": "Review"

@@ -19,6 +19,7 @@ export enum StoreResourceType {
   USER = 'user',
   ROLE = 'role',
   VANTAGE6_SERVER = 'vantage6_server',
+  REVIEW = 'review',
   ANY = '*'
 }
 
