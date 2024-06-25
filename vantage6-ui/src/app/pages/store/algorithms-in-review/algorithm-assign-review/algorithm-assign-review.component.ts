@@ -89,10 +89,10 @@ export class AlgorithmAssignReviewComponent extends BaseCreateComponent implemen
     });
     await Promise.all(promises);
     this.isLoading = false;
-    this.router.navigate([routePaths.algorithmsInReview]);
+    this.router.navigate([routePaths.algorithmReviews]);
   }
 
   handleCancel() {
-    this.router.navigate([routePaths.algorithmsInReview]);
+    this.router.navigate([routePaths.algorithmReviews]);
   }
 }

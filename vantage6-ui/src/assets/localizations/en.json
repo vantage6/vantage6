@@ -314,7 +314,13 @@
     "reviewers": "Reviewers"
   },
   "algorithm-review": {
-    "title": "Review"
+    "title": "Reviews of algorithm '{{name}}'",
+    "card-per-review": {
+      "title": "Review by {{reviewer}}",
+      "reviewer": "Reviewer",
+      "reviewer-server": "Server that reviewer belongs to",
+      "comment": "Reviewer comments"
+    }
   },
   "organization": {
     "name": "Name",

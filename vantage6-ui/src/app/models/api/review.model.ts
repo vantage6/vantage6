@@ -1,3 +1,5 @@
+import { StoreUser } from './store-user.model';
+
 export enum ReviewStatus {
   AwaitingReviewerAssignment = 'awaiting reviewer assignment',
   UnderReview = 'under review',
@@ -16,4 +18,6 @@ export interface StoreReview {
   status: ReviewStatus;
   algorithm_id: number;
   reviewer_id: number;
+  reviewer?: StoreUser;
+  comment?: string;
 }

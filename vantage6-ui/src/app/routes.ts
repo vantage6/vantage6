@@ -52,7 +52,7 @@ export const routePaths = {
   storeUserEdit: '/store/users/edit',
   storeRoles: '/store/roles',
   storeRole: '/store/roles',
-  algorithmsInReview: '/store/review',
+  algorithmReviews: '/store/review',
   algorithmReviewAssign: '/store/review/assign',
   algorithmReview: '/store/review'
 };
@@ -114,7 +114,7 @@ export const routerConfig = {
   storeUserEdit: 'users/edit/:id',
   storeRoles: 'roles',
   storeRole: 'roles/:id',
-  algorithmsInReview: 'review',
+  algorithmReviews: 'review',
   algorithmReviewAssign: 'review/assign/:algoID',
   algorithmReview: 'review/:algoID'
 };
