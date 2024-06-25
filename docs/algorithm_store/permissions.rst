@@ -5,6 +5,12 @@ The permission system of the Algorithm Store is based on a combination of polici
 Policies are used to define general access rules from external entities (i.e. users, vantage6 servers),
 while rules are used to determine the actions that a user is allowed to take in the algorithm store.
 
+In order to perform operations in the algorithm store, a user must be registered in the
+algorithm store and must be authenticated.
+A user account is linked to a whitelisted vantage6 server, and the authentication is performed
+by logging in though the vantage6 server and using the obtained token to run a request on
+a resource's endpoint.
+
 Permission rules
 ~~~~~~~~~~~~~~~~
 
@@ -24,7 +30,7 @@ These operations can be performed on the available resources according to the fo
 .. figure:: /images/rules-algo-store-overview.png
    :alt: Rule overview
    :align: center
-
+|
 Rules can be assigned to a user by another user who has at least the same permission level
 as the rules assigned. Single rules can be assigned, but default combinations of rules are available,
 as roles. There are 5 roles available in the algorithms store:
