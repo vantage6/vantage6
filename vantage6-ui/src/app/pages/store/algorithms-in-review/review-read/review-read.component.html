@@ -3,7 +3,7 @@
   <mat-card *ngFor="let review of reviews">
     <mat-card-header>
       <mat-card-title>{{
-        "algorithm-review.card-per-review.title" | translate: { reviewer: review.reviewer?.username || "" }
+        "algorithm-review.card-per-review.title" | translate: { reviewer: review.reviewer.username || "" }
       }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
@@ -14,11 +14,11 @@
         </div>
         <div class="data-list__item">
           <b>{{ "algorithm-review.card-per-review.reviewer" | translate }}</b>
-          <span>{{ review.reviewer?.username || "-" }}</span>
+          <span>{{ review.reviewer.username }}</span>
         </div>
         <div class="data-list__item">
           <b>{{ "algorithm-review.card-per-review.reviewer-server" | translate }}</b>
-          <span>{{ review.reviewer?.server?.url || "-" }}</span>
+          <span>{{ review.reviewer.server.url }}</span>
         </div>
         <div class="data-list__item">
           <b>{{ "algorithm-in-review.status" | translate }}</b>
@@ -28,6 +28,20 @@
           <b>{{ "algorithm-review.card-per-review.comment" | translate }}</b>
           <span>{{ review.comment || "-" }}</span>
         </div>
+      </div>
+      <div class="button-group-bottom button-container">
+        <button mat-flat-button *ngIf="isAllowedToApprove(review)" color="primary" (click)="handleApprove(review)">
+          <mat-icon>check</mat-icon>
+          <span>{{ "review.approve" | translate }}</span>
+        </button>
+        <button mat-flat-button *ngIf="isAllowedToApprove(review)" color="accent" (click)="handleReject(review)">
+          <mat-icon>close</mat-icon>
+          <span>{{ "review.reject" | translate }}</span>
+        </button>
+        <button mat-flat-button *ngIf="canDelete" color="warn" (click)="handleDelete(review)">
+          <mat-icon>delete</mat-icon>
+          <span>{{ "general.delete" | translate }}</span>
+        </button>
       </div>
     </mat-card-content>
   </mat-card>

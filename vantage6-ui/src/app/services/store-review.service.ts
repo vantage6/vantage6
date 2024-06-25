@@ -20,4 +20,8 @@ export class StoreReviewService {
   async createReview(store_url: string, review: ReviewCreate): Promise<StoreReview> {
     return await this.apiService.postForAlgorithmApi<StoreReview>(store_url, `/api/review`, review);
   }
+
+  async deleteReview(store_url: string, review_id: number): Promise<void> {
+    await this.apiService.deleteForAlgorithmApi(store_url, `/api/review/${review_id}`);
+  }
 }

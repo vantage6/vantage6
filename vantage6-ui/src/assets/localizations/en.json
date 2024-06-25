@@ -294,6 +294,10 @@
       "message": "An error occurred while updating the algorithm: {{error}}"
     }
   },
+  "review": {
+    "approve": "Approve",
+    "reject": "Reject"
+  },
   "algorithm-in-review": {
     "title": "Pending algorithms",
     "in-review": {
@@ -320,6 +324,10 @@
       "reviewer": "Reviewer",
       "reviewer-server": "Server that reviewer belongs to",
       "comment": "Reviewer comments"
+    },
+    "delete-dialog": {
+      "title": "Are you sure you want to delete the review by '{{reviewer}}'?",
+      "content": "If other reviews are present and have been approved, the algorithm will be approved. If no other reviews are present, the algorithm will have to be assigned reviewers again."
     }
   },
   "organization": {

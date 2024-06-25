@@ -17,7 +17,6 @@ export interface StoreReview {
   id: number;
   status: ReviewStatus;
   algorithm_id: number;
-  reviewer_id: number;
-  reviewer?: StoreUser;
+  reviewer: StoreUser;
   comment?: string;
 }
