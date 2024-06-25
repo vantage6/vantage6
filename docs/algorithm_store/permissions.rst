@@ -27,4 +27,29 @@ These operations can be performed on the available resources according to the fo
 
 Rules can be assigned to a user by another user who has at least the same permission level
 as the rules assigned. Single rules can be assigned, but default combinations of rules are available,
-and these are the roles.
+as roles. There are 5 roles available in the algorithms store:
+
+#. Developer
+#. Reviewer
+#. Root
+#. Store Manager
+#. Viewer
+
+Root user has all the permissions.
+The default set of rules assigned to the other roles are showed here below:
+
+.. figure:: /images/rules-algo-store-developer.png
+   :alt: Rule overview
+   :align: center
+|
+.. figure:: /images/rules-algo-store-reviewer.png
+   :alt: Rule overview
+   :align: center
+|
+.. figure:: /images/rules-algo-store-manager.png
+   :alt: Rule overview
+   :align: center
+|
+.. figure:: /images/rules-algo-store-viewer.png
+   :alt: Rule overview
+   :align: center
