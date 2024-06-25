@@ -368,6 +368,8 @@ class Review(AlgorithmStoreResources):
         responses:
           200:
             description: Ok
+          400:
+            description: Reviews of approved algorithms may not be deleted
           401:
             description: Unauthorized
           404:
@@ -378,9 +380,28 @@ class Review(AlgorithmStoreResources):
 
         tags: ["Review"]
         """
-        review = db.Review.get(id)
+        review: db.Review = db.Review.get(id)
         if not review:
             return {"msg": "Review not found"}, HTTPStatus.NOT_FOUND
+
+        # update the algorithm status if the algorithm is still under review
+        # 1. set to approved if there is at least one other review and all other
+        #    reviews are approved
+        # 2. set to awaiting reviewer assignment if there are no other reviews
+        algorithm: db.Algorithm = review.algorithm
+        if not algorithm.is_review_finished():
+            other_reviews = [r for r in algorithm.reviews if not r.id == review.id]
+            if not other_reviews:
+                algorithm.status = ReviewStatus.AWAITING_REVIEWER_ASSIGNMENT
+            elif all([r.status == ReviewStatus.APPROVED for r in other_reviews]):
+                algorithm.status = ReviewStatus.APPROVED
+            algorithm.save()
+        elif algorithm.status == ReviewStatus.APPROVED:
+            # for algorithms that are currently approved, the reviews may not be
+            # deleted.
+            return {
+                "msg": "Reviews of approved algorithms may not be deleted!"
+            }, HTTPStatus.BAD_REQUEST
 
         review.delete()
         log.info("Review with id=%s deleted", id)
