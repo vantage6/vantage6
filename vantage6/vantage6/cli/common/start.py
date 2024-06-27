@@ -100,7 +100,8 @@ def pull_infra_image(
     client: DockerClient, image: str, instance_type: InstanceType
 ) -> None:
     """
-    Pull the infrastructure image if it is not already present.
+    Try to pull an infrastructure image. Exit if the image cannot be pulled and it is
+    also not available locally. If a local image is available, a warning is printed.
 
     Parameters
     ----------
@@ -116,7 +117,7 @@ def pull_infra_image(
     except docker.errors.APIError:
         if not is_default_infra_image(image, instance_type):
             if image_exists_locally(client, image):
-                warning("Failed to pull UI image! Will use local image...")
+                warning("Failed to pull infrastructure image! Will use local image...")
             else:
                 error("Failed to pull infrastructure image!")
                 error("Image also not found locally. Exiting...")
@@ -143,13 +144,13 @@ def is_default_infra_image(image: str, instance_type: InstanceType) -> bool:
         True if the image is the default image, False otherwise
     """
     if instance_type == InstanceType.SERVER:
-        return image == DEFAULT_SERVER_IMAGE
+        return image == f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_SERVER_IMAGE}"
     elif instance_type == InstanceType.ALGORITHM_STORE:
-        return image == DEFAULT_ALGO_STORE_IMAGE
+        return image == f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_ALGO_STORE_IMAGE}"
     elif instance_type == InstanceType.UI:
-        return image == DEFAULT_UI_IMAGE
+        return image == f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_UI_IMAGE}"
     elif instance_type == InstanceType.NODE:
-        return image == DEFAULT_NODE_IMAGE
+        return image == f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_NODE_IMAGE}"
 
 
 def image_exists_locally(client: DockerClient, image: str) -> bool:
