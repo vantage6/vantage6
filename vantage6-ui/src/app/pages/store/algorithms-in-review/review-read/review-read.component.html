@@ -30,19 +30,26 @@
         </div>
       </div>
       <div class="button-group-bottom button-container">
-        <button mat-flat-button *ngIf="isAllowedToApprove(review)" color="primary" (click)="handleApprove(review)">
-          <mat-icon>check</mat-icon>
-          <span>{{ "review.approve" | translate }}</span>
-        </button>
-        <button mat-flat-button *ngIf="isAllowedToApprove(review)" color="accent" (click)="handleReject(review)">
-          <mat-icon>close</mat-icon>
-          <span>{{ "review.reject" | translate }}</span>
+        <button mat-flat-button *ngIf="isAllowedToApprove(review)" color="primary" [routerLink]="[routes.algorithmReviewSubmit, review.id]">
+          <span>{{ "review.submit" | translate }}</span>
+          <mat-icon>arrow_forward</mat-icon>
         </button>
         <button mat-flat-button *ngIf="canDelete" color="warn" (click)="handleDelete(review)">
           <mat-icon>delete</mat-icon>
           <span>{{ "general.delete" | translate }}</span>
         </button>
       </div>
+    </mat-card-content>
+  </mat-card>
+  <mat-card *ngIf="canCreate">
+    <mat-card-header>
+      <mat-card-title>{{ "algorithm-assign-review.title" | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <button mat-flat-button color="primary" [routerLink]="[routes.algorithmReviewAssign, algoID]">
+        <mat-icon>add</mat-icon>
+        <span>{{ "algorithm-review.add-new-review" | translate }}</span>
+      </button>
     </mat-card-content>
   </mat-card>
 </ng-container>

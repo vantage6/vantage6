@@ -17,8 +17,20 @@ export class StoreReviewService {
     return result.data;
   }
 
+  async getReview(store_url: string, review_id: string): Promise<StoreReview> {
+    return await this.apiService.getForAlgorithmApi<StoreReview>(store_url, `/api/review/${review_id}`);
+  }
+
   async createReview(store_url: string, review: ReviewCreate): Promise<StoreReview> {
     return await this.apiService.postForAlgorithmApi<StoreReview>(store_url, `/api/review`, review);
+  }
+
+  async approveReview(store_url: string, review_id: number, comment: string): Promise<StoreReview> {
+    return await this.apiService.postForAlgorithmApi<StoreReview>(store_url, `/api/review/${review_id}/approve`, { comment: comment });
+  }
+
+  async rejectReview(store_url: string, review_id: number, comment: string): Promise<StoreReview> {
+    return await this.apiService.postForAlgorithmApi<StoreReview>(store_url, `/api/review/${review_id}/reject`, { comment: comment });
   }
 
   async deleteReview(store_url: string, review_id: number): Promise<void> {

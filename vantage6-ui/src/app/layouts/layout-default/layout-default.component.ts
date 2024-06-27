@@ -203,7 +203,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
       if (this.storePermissionService.canViewAlgorithms) {
         storeSubmenus.push({
           route: routePaths.algorithmManage,
-          label: this.translateService.instant('resources.algorithms'),
+          label: this.translateService.instant('links.algorithms-approved'),
           icon: 'memory',
           linkType: NavigationLinkType.Store
         });

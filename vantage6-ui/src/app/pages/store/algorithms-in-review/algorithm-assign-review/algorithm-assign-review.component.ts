@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { BaseCreateComponent } from 'src/app/components/admin-base/base-create/base-create.component';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
+import { StoreReview } from 'src/app/models/api/review.model';
 import { StoreUser } from 'src/app/models/api/store-user.model';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
@@ -25,6 +26,7 @@ export class AlgorithmAssignReviewComponent extends BaseCreateComponent implemen
 
   algorithm: Algorithm | null = null;
   reviewers: StoreUser[] = [];
+  existing_reviews: StoreReview[] = [];
 
   form = this.fb.nonNullable.group({
     reviewers: [[] as StoreUser[], [Validators.required]]
@@ -67,6 +69,11 @@ export class AlgorithmAssignReviewComponent extends BaseCreateComponent implemen
     if (loggedInUser) {
       reviewers = reviewers.filter((reviewer) => reviewer.username !== loggedInUser.username);
     }
+    // also get existing reviews for this algorithm and remove those reviewers from the list as well
+    this.existing_reviews = await this.reviewService.getReviews(store.url, { algorithm_id: this.algoID });
+    reviewers = reviewers.filter((reviewer) => !this.existing_reviews.some((review) => review.reviewer.id === reviewer.id));
+
+    // the remaining users are still assignable as reviewer
     this.reviewers = reviewers;
     this.isLoading = false;
   }

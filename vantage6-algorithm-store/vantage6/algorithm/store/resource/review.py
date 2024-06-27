@@ -449,7 +449,7 @@ class ReviewApprove(AlgorithmStoreResources):
         if errors:
             return {"msg": "Invalid input", "errors": errors}, HTTPStatus.BAD_REQUEST
 
-        review = db.Review.get(data["id"])
+        review = db.Review.get(id)
         if not review:
             return {"msg": "Review not found"}, HTTPStatus.NOT_FOUND
 
@@ -473,9 +473,11 @@ class ReviewApprove(AlgorithmStoreResources):
             algorithm.approved_at = datetime.datetime.now(datetime.timezone.utc)
             algorithm.save()
 
-            # if the algorithm is approved, invalidate the previous versions
+            # if the algorithm is approved, invalidate the previously approved versions
             for old_algorithm in db.Algorithm.get_by_image(algorithm.image):
-                if old_algorithm.id == algorithm.id:
+                if old_algorithm.status != ReviewStatus.APPROVED:
+                    continue
+                elif old_algorithm.id == algorithm.id:
                     continue  # skip the current version
                 old_algorithm.invalidated_at = algorithm.approved_at
                 old_algorithm.status = ReviewStatus.REPLACED
@@ -526,7 +528,7 @@ class ReviewReject(AlgorithmStoreResources):
         if errors:
             return {"msg": "Invalid input", "errors": errors}, HTTPStatus.BAD_REQUEST
 
-        review: db.Review = db.Review.get(data["id"])
+        review: db.Review = db.Review.get(id)
         if not review:
             return {"msg": "Review not found"}, HTTPStatus.NOT_FOUND
 
@@ -547,6 +549,9 @@ class ReviewReject(AlgorithmStoreResources):
         algorithm.status = ReviewStatus.REJECTED
         algorithm.invalidated_at = datetime.datetime.now(datetime.timezone.utc)
         algorithm.save()
+
+        # note that we do not invalidate the previously approved versions here, as the
+        # algorithm is rejected and not replaced by a new version
 
         log.info("Review with id=%s has been rejected", id)
         return {"msg": f"Review id={id} has been rejected"}, HTTPStatus.OK

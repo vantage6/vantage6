@@ -27,6 +27,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatDateFnsModule } from '@angular/material-date-fns-adapter';
+import { MatRadioModule } from '@angular/material/radio';
 import { enCA } from 'date-fns/locale';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -121,6 +122,7 @@ import { StoreRoleReadComponent } from './pages/store/role/read/store-role-read.
 import { AlgorithmInReviewListComponent } from './pages/store/algorithms-in-review/algorithm-in-review-list/algorithm-in-review-list.component';
 import { AlgorithmAssignReviewComponent } from './pages/store/algorithms-in-review/algorithm-assign-review/algorithm-assign-review.component';
 import { ReviewReadComponent } from './pages/store/algorithms-in-review/review-read/review-read.component';
+import { ReviewSubmitComponent } from './pages/store/algorithms-in-review/review-submit/review-submit.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -215,7 +217,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     StoreRoleReadComponent,
     AlgorithmInReviewListComponent,
     AlgorithmAssignReviewComponent,
-    ReviewReadComponent
+    ReviewReadComponent,
+    ReviewSubmitComponent
   ],
   imports: [
     BrowserModule,
@@ -253,6 +256,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     MatTabsModule,
     MatTableModule,
     MatToolbarModule,
+    MatRadioModule,
     QRCodeModule
   ],
   providers: [

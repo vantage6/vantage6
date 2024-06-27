@@ -39,6 +39,7 @@
     "home": "Home",
     "analyze": "Analyze",
     "stores": "Algorithm store",
+    "algorithms-approved": "Approved algorithms",
     "algorithm-in-review": "Pending algorithms"
   },
   "home": {
@@ -295,6 +296,7 @@
     }
   },
   "review": {
+    "submit": "Submit my review",
     "approve": "Approve",
     "reject": "Reject"
   },
@@ -315,7 +317,8 @@
   "algorithm-assign-review": {
     "title": "Assign reviewers",
     "description": "Assign reviewers to the algorithm '{{name}}'.",
-    "reviewers": "Reviewers"
+    "reviewers": "Reviewers",
+    "no-reviewers": "No reviewers are available to assign to this algorithm. Please contact your store manager."
   },
   "algorithm-review": {
     "title": "Reviews of algorithm '{{name}}'",
@@ -328,6 +331,22 @@
     "delete-dialog": {
       "title": "Are you sure you want to delete the review by '{{reviewer}}'?",
       "content": "If other reviews are present and have been approved, the algorithm will be approved. If no other reviews are present, the algorithm will have to be assigned reviewers again."
+    },
+    "add-new-review": "Add another review"
+  },
+  "review-submit": {
+    "title": "Submit review for algorithm '{{name}}'",
+    "approve": "Approve",
+    "reject": "Reject",
+    "comment-title": "Review comments",
+    "comment-placeholder": "Provide your review comments here",
+    "approve-dialog": {
+      "title": "Approve algorithm",
+      "content": "Are you sure you want to approve this algorithm?"
+    },
+    "reject-dialog": {
+      "title": "Reject algorithm",
+      "content": "Are you sure you want to reject this algorithm? The developer will need to resubmit the algorithm for review."
     }
   },
   "organization": {

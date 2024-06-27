@@ -39,6 +39,7 @@ export class ReviewReadComponent implements OnInit, OnDestroy {
 
   canApprove: boolean = false;
   canDelete: boolean = false;
+  canCreate: boolean = false;
 
   constructor(
     private chosenStoreService: ChosenStoreService,
@@ -75,6 +76,7 @@ export class ReviewReadComponent implements OnInit, OnDestroy {
 
     this.canDelete = this.storePermissionService.isAllowed(StoreResourceType.REVIEW, OperationType.DELETE);
     this.canApprove = this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.REVIEW);
+    this.canCreate = this.storePermissionService.isAllowed(StoreResourceType.REVIEW, OperationType.CREATE);
 
     this.loggedInUser = this.permissionService.activeUser;
 
@@ -93,12 +95,8 @@ export class ReviewReadComponent implements OnInit, OnDestroy {
     if (!this.loggedInUser) {
       return false;
     }
-    return this.loggedInUser.id === review.reviewer.id;
+    return this.loggedInUser.username === review.reviewer.username;
   }
-
-  handleApprove(review: StoreReview) {}
-
-  handleReject(review: StoreReview) {}
 
   async handleDelete(review: StoreReview) {
     if (!this.canDelete || !this.store) {

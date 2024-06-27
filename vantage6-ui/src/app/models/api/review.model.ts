@@ -20,3 +20,8 @@ export interface StoreReview {
   reviewer: StoreUser;
   comment?: string;
 }
+
+export interface ReviewForm {
+  approve: boolean;
+  comment?: string;
+}

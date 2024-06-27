@@ -5,7 +5,7 @@
       <mat-card-title>{{ "algorithm-assign-review.description" | translate: { name: algorithm?.name || "" } }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <form class="form" [formGroup]="form" (ngSubmit)="handleSubmit()">
+      <form *ngIf="reviewers.length > 0; else noReviewers" class="form" [formGroup]="form" (ngSubmit)="handleSubmit()">
         <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ "algorithm-assign-review.reviewers" | translate }}</mat-label>
           <mat-select multiple formControlName="reviewers">
@@ -24,4 +24,7 @@
 </ng-container>
 <ng-template #loading>
   <mat-spinner diameter="48"></mat-spinner>
+</ng-template>
+<ng-template #noReviewers>
+  <p>{{ "algorithm-assign-review.no-reviewers" | translate }}</p>
 </ng-template>

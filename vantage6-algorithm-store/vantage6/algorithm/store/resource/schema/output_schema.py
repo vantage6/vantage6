@@ -171,8 +171,4 @@ class ReviewOutputSchema(HATEOASModelSchema):
         model = Review
 
     reviewer = fields.Nested("UserOutputSchema")
-    algorithms = fields.Function(
-        lambda obj: create_one_to_many_link(
-            obj, link_to="algorithm", link_from="review_id"
-        )
-    )
+    algorithm_id = fields.Integer(data_key="algorithm_id")

@@ -1,5 +1,4 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs';
@@ -7,6 +6,7 @@ import { BaseReadComponent } from 'src/app/components/admin-base/base-read/base-
 import { OperationType, StoreResourceType, StoreRule } from 'src/app/models/api/rule.model';
 import { StoreUser, StoreUserLazyProperties } from 'src/app/models/api/store-user.model';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
+import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dialog.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 import { StoreRuleService } from 'src/app/services/store-rule.service';
 import { StoreUserService } from 'src/app/services/store-user.service';
@@ -22,7 +22,7 @@ export class StoreUserReadComponent extends BaseReadComponent implements OnInit,
   StoreResourceType = StoreResourceType;
 
   constructor(
-    protected override dialog: MatDialog,
+    protected override handleConfirmDialogService: HandleConfirmDialogService,
     protected override translateService: TranslateService,
     private router: Router,
     private storeUserService: StoreUserService,
@@ -30,7 +30,7 @@ export class StoreUserReadComponent extends BaseReadComponent implements OnInit,
     private storePermissionService: StorePermissionService,
     private storeRuleService: StoreRuleService
   ) {
-    super(dialog, translateService);
+    super(handleConfirmDialogService, translateService);
   }
 
   override async ngOnInit(): Promise<void> {
