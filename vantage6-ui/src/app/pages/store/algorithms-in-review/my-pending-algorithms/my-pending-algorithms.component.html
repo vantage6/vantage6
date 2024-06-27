@@ -1,0 +1,66 @@
+<app-page-header title="{{ 'my-pending-algorithms.title' | translate }}"> </app-page-header>
+<mat-card>
+  <mat-card-content>
+    <p>
+      {{ "my-pending-algorithms.card-all-pending.content" | translate }}
+    </p>
+    <button mat-flat-button color="primary" [routerLink]="[routes.algorithmReviews]">
+      <span>{{ "my-pending-algorithms.card-all-pending.button" | translate }}</span>
+    </button>
+  </mat-card-content>
+</mat-card>
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>{{ "my-pending-algorithms.card-developed-algorithms.title" | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div *ngIf="isLoading || myPendingAlgorithms.length > 0; else noOwnAlgorithms">
+      <app-table [data]="myAlgorithmsTable" [isLoading]="isLoading" (rowClick)="handleAlgorithmDevTableClick($event)"></app-table>
+    </div>
+  </mat-card-content>
+</mat-card>
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>{{ "my-pending-algorithms.card-reviews.title" | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div *ngIf="isLoading || myReviews.length > 0; else noAlgorithmsInReview">
+      <app-table [data]="reviewTable" [isLoading]="isLoading" (rowClick)="handleTableInReviewClick($event)"></app-table>
+      <mat-paginator
+        (page)="handlePageEventInReview($event)"
+        [length]="paginationReview?.total"
+        pageSize="10"
+        [hidePageSize]="true"
+      ></mat-paginator>
+    </div>
+  </mat-card-content>
+</mat-card>
+<mat-card *ngIf="canAssignReviewers">
+  <mat-card-header>
+    <mat-card-title>{{ "my-pending-algorithms.card-to-review.title" | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div *ngIf="isLoading || algorithmsAwaitingReview.length > 0; else noAlgorithmsAwaitingReview">
+      <app-table
+        [data]="algorithmAwaitingReviewTable"
+        [isLoading]="isLoading"
+        (rowClick)="handleTableAwaitingReviewClick($event)"
+      ></app-table>
+      <mat-paginator
+        (page)="handlePageEventToBeReviewed($event)"
+        [length]="paginationToBeReviewed?.total"
+        pageSize="10"
+        [hidePageSize]="true"
+      ></mat-paginator>
+    </div>
+  </mat-card-content>
+</mat-card>
+<ng-template #noOwnAlgorithms>
+  <p>{{ "my-pending-algorithms.card-developed-algorithms.no-algorithms" | translate }}</p>
+</ng-template>
+<ng-template #noAlgorithmsInReview>
+  <p>{{ "my-pending-algorithms.card-reviews.no-reviews" | translate }}</p>
+</ng-template>
+<ng-template #noAlgorithmsAwaitingReview>
+  <p>{{ "my-pending-algorithms.card-to-review.no-algorithms" | translate }}</p>
+</ng-template>

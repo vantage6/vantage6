@@ -190,6 +190,12 @@ class Algorithms(AlgorithmBaseResource):
               type: boolean
             description: Filter on algorithms that are currently under review.
           - in: query
+            name: in_review_process
+            schema:
+              type: boolean
+            description: Filter on algorithms that are in the review process. This
+              includes algorithms that are awaiting reviewer assignment or under review
+          - in: query
             name: invalidated
             schema:
               type: boolean
@@ -249,10 +255,16 @@ class Algorithms(AlgorithmBaseResource):
         )
         under_review = bool(request.args.get("under_review", False))
         invalidated = bool(request.args.get("invalidated", False))
+        in_review_process = bool(request.args.get("in_review_process", False))
         if sum([awaiting_reviewer_assignment, under_review, invalidated]) > 1:
             return {
                 "msg": "Only one of 'awaiting_reviewer_assignment', 'under_review' or "
                 "'invalidated' may be set to True at a time."
+            }, HTTPStatus.BAD_REQUEST
+        elif in_review_process and invalidated:
+            return {
+                "msg": "Only one of 'in_review_process' or 'invalidated' may be set to "
+                "True at a time."
             }, HTTPStatus.BAD_REQUEST
         if awaiting_reviewer_assignment:
             q = q.filter(
@@ -265,6 +277,14 @@ class Algorithms(AlgorithmBaseResource):
                 or_(
                     db_Algorithm.status == ReviewStatus.REJECTED.value,
                     db_Algorithm.status == ReviewStatus.REPLACED.value,
+                )
+            )
+        elif in_review_process:
+            q = q.filter(
+                or_(
+                    db_Algorithm.status
+                    == ReviewStatus.AWAITING_REVIEWER_ASSIGNMENT.value,
+                    db_Algorithm.status == ReviewStatus.UNDER_REVIEW.value,
                 )
             )
         else:

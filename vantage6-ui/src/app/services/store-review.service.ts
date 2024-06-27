@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ReviewCreate, StoreReview } from '../models/api/review.model';
+import { GetStoreReviewParameters, ReviewCreate, StoreReview } from '../models/api/review.model';
 import { ApiService } from './api.service';
 import { Pagination } from '../models/api/pagination.model';
 
@@ -15,6 +15,16 @@ export class StoreReviewService {
       per_page: 9999
     });
     return result.data;
+  }
+
+  async getPaginatedReviews(
+    store_url: string,
+    currentPage: number,
+    parameters?: GetStoreReviewParameters
+  ): Promise<Pagination<StoreReview>> {
+    return await this.apiService.getForAlgorithmApiWithPagination<StoreReview>(store_url, `/api/review`, currentPage, {
+      ...parameters
+    });
   }
 
   async getReview(store_url: string, review_id: string): Promise<StoreReview> {

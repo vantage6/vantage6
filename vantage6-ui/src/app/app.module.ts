@@ -123,6 +123,7 @@ import { AlgorithmInReviewListComponent } from './pages/store/algorithms-in-revi
 import { AlgorithmAssignReviewComponent } from './pages/store/algorithms-in-review/algorithm-assign-review/algorithm-assign-review.component';
 import { ReviewReadComponent } from './pages/store/algorithms-in-review/review-read/review-read.component';
 import { ReviewSubmitComponent } from './pages/store/algorithms-in-review/review-submit/review-submit.component';
+import { MyPendingAlgorithmsComponent } from './pages/store/algorithms-in-review/my-pending-algorithms/my-pending-algorithms.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -218,7 +219,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     AlgorithmInReviewListComponent,
     AlgorithmAssignReviewComponent,
     ReviewReadComponent,
-    ReviewSubmitComponent
+    ReviewSubmitComponent,
+    MyPendingAlgorithmsComponent
   ],
   imports: [
     BrowserModule,

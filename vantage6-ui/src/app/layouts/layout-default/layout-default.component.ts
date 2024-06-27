@@ -213,8 +213,8 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
       // depending on the policies
       if (this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.VIEW)) {
         storeSubmenus.push({
-          route: routePaths.algorithmReviews,
-          label: this.translateService.instant('links.algorithm-in-review'),
+          route: routePaths.myPendingAlgorithms,
+          label: this.translateService.instant('links.pending-algorithms'),
           icon: 'hourglass_top',
           linkType: NavigationLinkType.Store
         });

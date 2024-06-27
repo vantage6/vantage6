@@ -1,4 +1,9 @@
+import { Algorithm } from './algorithm.model';
 import { StoreUser } from './store-user.model';
+
+export enum ReviewLazyProperties {
+  Algorithm = 'algorithm'
+}
 
 export enum ReviewStatus {
   AwaitingReviewerAssignment = 'awaiting reviewer assignment',
@@ -19,9 +24,20 @@ export interface StoreReview {
   algorithm_id: number;
   reviewer: StoreUser;
   comment?: string;
+  algorithm?: Algorithm;
 }
 
 export interface ReviewForm {
   approve: boolean;
   comment?: string;
+}
+
+export interface GetStoreReviewParameters {
+  reviewer_id?: number;
+  algorithm_id?: number;
+  under_review?: boolean;
+  approved?: boolean;
+  rejected?: boolean;
+  reviewed?: boolean;
+  awaiting_reviewer_assignment?: boolean;
 }

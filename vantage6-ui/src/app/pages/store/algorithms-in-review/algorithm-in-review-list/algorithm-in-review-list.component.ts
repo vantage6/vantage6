@@ -14,6 +14,7 @@ import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 import { StoreUserService } from 'src/app/services/store-user.service';
+import { assignDevelopersToAlgorithms } from '../review.helper';
 
 enum TableRows {
   ID = 'id',
@@ -86,10 +87,7 @@ export class AlgorithmInReviewListComponent implements OnInit, OnDestroy {
       awaiting_reviewer_assignment: true
     });
     this.algorithmsAwaitingReview = algorithmsAwaitingReview.data;
-    this.algorithmsAwaitingReview.forEach((algorithm) => {
-      const user = this.storeUsers.find((storeUser) => storeUser.id === algorithm.developer_id);
-      algorithm.developer = user ? user : undefined;
-    });
+    this.algorithmsAwaitingReview = assignDevelopersToAlgorithms(this.algorithmsAwaitingReview, this.storeUsers);
     this.paginationToBeReviewed = algorithmsAwaitingReview.links;
     this.algorithmAwaitingReviewTable = {
       columns: [...this.getSharedColumns()],
@@ -105,10 +103,7 @@ export class AlgorithmInReviewListComponent implements OnInit, OnDestroy {
     const algorithmsInReview = await this.algorithmService.getPaginatedAlgorithms(this.store, pageInReview, { under_review: true });
     this.algorithmsInReview = algorithmsInReview.data;
     this.paginationInReview = algorithmsInReview.links;
-    this.algorithmsInReview.forEach((algorithm) => {
-      const user = this.storeUsers.find((storeUser) => storeUser.id === algorithm.developer_id);
-      algorithm.developer = user ? user : undefined;
-    });
+    this.algorithmsInReview = assignDevelopersToAlgorithms(this.algorithmsInReview, this.storeUsers);
     this.algorithmInReviewTable = {
       columns: [...this.getSharedColumns()],
       rows: this.algorithmsInReview.map((algorithm) => ({

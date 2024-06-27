@@ -59,6 +59,7 @@ import { AlgorithmInReviewListComponent } from './pages/store/algorithms-in-revi
 import { AlgorithmAssignReviewComponent } from './pages/store/algorithms-in-review/algorithm-assign-review/algorithm-assign-review.component';
 import { ReviewReadComponent } from './pages/store/algorithms-in-review/review-read/review-read.component';
 import { ReviewSubmitComponent } from './pages/store/algorithms-in-review/review-submit/review-submit.component';
+import { MyPendingAlgorithmsComponent } from './pages/store/algorithms-in-review/my-pending-algorithms/my-pending-algorithms.component';
 
 const routes: Routes = [
   {
@@ -500,6 +501,14 @@ const routes: Routes = [
         canActivate: [authenticationGuard(), chosenStoreGuard()],
         data: {
           crumbs: [['algorithm-in-review.title'], routePaths.algorithmReviews, ['algorithm-review.title']]
+        }
+      },
+      {
+        path: routerConfig.myPendingAlgorithms,
+        component: MyPendingAlgorithmsComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['algorithm-in-review.title']]
         }
       }
     ]

@@ -55,7 +55,8 @@ export const routePaths = {
   algorithmReviews: '/store/review',
   algorithmReviewAssign: '/store/review/assign',
   algorithmReview: '/store/review',
-  algorithmReviewSubmit: '/store/review/submit'
+  algorithmReviewSubmit: '/store/review/submit',
+  myPendingAlgorithms: '/store/pending/algorithms'
 };
 
 export const routerConfig = {
@@ -118,5 +119,6 @@ export const routerConfig = {
   algorithmReviews: 'review',
   algorithmReviewAssign: 'review/assign/:algoID',
   algorithmReview: 'review/:algoID',
-  algorithmReviewSubmit: 'review/submit/:id'
+  algorithmReviewSubmit: 'review/submit/:id',
+  myPendingAlgorithms: 'pending/algorithms'
 };

@@ -40,7 +40,7 @@
     "analyze": "Analyze",
     "stores": "Algorithm store",
     "algorithms-approved": "Approved algorithms",
-    "algorithm-in-review": "Pending algorithms"
+    "pending-algorithms": "Pending algorithms"
   },
   "home": {
     "title": "Home"
@@ -301,7 +301,7 @@
     "reject": "Reject"
   },
   "algorithm-in-review": {
-    "title": "Pending algorithms",
+    "title": "Algorithms in review",
     "in-review": {
       "title": "Algorithms currently in review",
       "no-algorithms": "No algorithms are currently in review."
@@ -313,6 +313,26 @@
     "status": "Review status",
     "developer": "Algorithm developer",
     "reviewer": "Reviewer"
+  },
+  "my-pending-algorithms": {
+    "title": "My pending algorithms",
+    "card-all-pending": {
+      "content": "This page shows only pending algorithms that you are involved in - not those of other users.",
+      "button": "Go to all pending algorithms"
+    },
+    "card-reviews": {
+      "title": "Algorithm reviews assigned to me",
+      "no-reviews": "No reviews are assigned to you."
+    },
+    "card-to-review": {
+      "title": "Algorithms where I can assign reviewers",
+      "no-algorithms": "No algorithms are available to assign reviewers to."
+    },
+    "card-developed-algorithms": {
+      "title": "Pending algorithms developed by me",
+      "no-algorithms": "No algorithms that you have developed are pending review."
+    },
+    "algorithm-name": "Algorithm name"
   },
   "algorithm-assign-review": {
     "title": "Assign reviewers",
@@ -544,7 +564,8 @@
       "port": "Port",
       "study": "Study",
       "algorithm": "Algorithm",
-      "vantage6_server": "Whitelisted server"
+      "vantage6_server": "Whitelisted server",
+      "review": "Review"
     },
     "scope": {
       "label": "Scope",
