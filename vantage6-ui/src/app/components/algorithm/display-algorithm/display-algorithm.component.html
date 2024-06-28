@@ -20,13 +20,31 @@
         <b>{{ "algorithm.description" | translate }}</b>
         <span>{{ algorithm?.description || "-" }}</span>
       </div>
+      <div class="data-list__item">
+        <b>{{ "algorithm.v6version" | translate }}</b>
+        <span>{{ algorithm?.vantage6_version }}</span>
+      </div>
       <div class="data-list__item data-list__item--big">
         <b>{{ "algorithm.image" | translate }}</b>
         <span>{{ algorithm?.image || "-" }}</span>
       </div>
-      <div class="data-list__item">
-        <b>{{ "algorithm.v6version" | translate }}</b>
-        <span>{{ algorithm?.vantage6_version }}</span>
+      <div class="data-list__item data-list__item--big">
+        <b>{{ "algorithm.code-url" | translate }}</b>
+        <div *ngIf="algorithm && algorithm.code_url">
+          <a [href]="algorithm.code_url">{{ algorithm.code_url }}</a>
+        </div>
+        <div *ngIf="!algorithm || !algorithm.code_url">
+          <span>-</span>
+        </div>
+      </div>
+      <div class="data-list__item data-list__item--big">
+        <b>{{ "algorithm.documentation-url" | translate }}</b>
+        <div *ngIf="algorithm && algorithm.documentation_url">
+          <a [href]="algorithm.documentation_url">{{ algorithm.documentation_url }}</a>
+        </div>
+        <div *ngIf="!algorithm || !algorithm.documentation_url">
+          <span>-</span>
+        </div>
       </div>
     </div>
   </mat-card-content>

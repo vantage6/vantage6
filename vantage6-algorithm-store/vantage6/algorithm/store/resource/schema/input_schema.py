@@ -37,6 +37,8 @@ class AlgorithmInputSchema(_NameDescriptionSchema):
     image = fields.String(required=True)
     partitioning = fields.String(required=True)
     vantage6_version = fields.String(required=True)
+    code_url = fields.String(required=True)
+    documentation_url = fields.String()
     functions = fields.Nested("FunctionInputSchema", many=True, required=True)
 
     @validates("partitioning")

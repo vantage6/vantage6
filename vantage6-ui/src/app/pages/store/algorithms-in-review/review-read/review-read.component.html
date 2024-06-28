@@ -24,6 +24,24 @@
           <b>{{ "algorithm-in-review.status" | translate }}</b>
           <span>{{ review.status || "-" }}</span>
         </div>
+        <div class="data-list__item data-list__item--big">
+          <b>{{ "algorithm.code-url" | translate }}</b>
+          <div *ngIf="algorithm && algorithm.code_url">
+            <a [href]="algorithm.code_url">{{ algorithm.code_url }}</a>
+          </div>
+          <div *ngIf="!algorithm || !algorithm.code_url">
+            <span>-</span>
+          </div>
+        </div>
+        <div class="data-list__item data-list__item--big">
+          <b>{{ "algorithm.documentation-url" | translate }}</b>
+          <div *ngIf="algorithm && algorithm.documentation_url">
+            <a [href]="algorithm.documentation_url">{{ algorithm.documentation_url }}</a>
+          </div>
+          <div *ngIf="!algorithm || !algorithm.documentation_url">
+            <span>-</span>
+          </div>
+        </div>
         <div *ngIf="isReviewFinished(review)" class="data-list__item data-list__item--full">
           <b>{{ "algorithm-review.card-per-review.comment" | translate }}</b>
           <span>{{ review.comment || "-" }}</span>
@@ -37,6 +55,9 @@
         <button mat-flat-button *ngIf="canDelete" color="warn" (click)="handleDelete(review)">
           <mat-icon>delete</mat-icon>
           <span>{{ "general.delete" | translate }}</span>
+        </button>
+        <button mat-flat-button color="primary" [routerLink]="[routes.algorithmManage, algorithm?.id]">
+          <span>{{ "algorithm-review.button-details" | translate }}</span>
         </button>
       </div>
     </mat-card-content>

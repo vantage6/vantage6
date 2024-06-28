@@ -59,6 +59,8 @@ export interface Algorithm {
   digest: string | null;
   vantage6_version: string;
   description: string;
+  code_url: string;
+  documentation_url?: string;
   partitioning: PartitioningType;
   functions: AlgorithmFunction[];
   select?: Select[];

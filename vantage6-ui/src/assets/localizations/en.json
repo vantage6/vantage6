@@ -211,6 +211,8 @@
     "partitioning": "Data partioning type",
     "description": "Description",
     "v6version": "Written for vantage6 version",
+    "code-url": "Link to code",
+    "documentation-url": "Link to documentation",
     "function": {
       "type": "Type of function",
       "argument": {
@@ -352,7 +354,8 @@
       "title": "Are you sure you want to delete the review by '{{reviewer}}'?",
       "content": "If other reviews are present and have been approved, the algorithm will be approved. If no other reviews are present, the algorithm will have to be assigned reviewers again."
     },
-    "add-new-review": "Add another review"
+    "add-new-review": "Add another review",
+    "button-details": "View algorithm details"
   },
   "review-submit": {
     "title": "Submit review for algorithm '{{name}}'",

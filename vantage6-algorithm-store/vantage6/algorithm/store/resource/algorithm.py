@@ -331,6 +331,12 @@ class Algorithms(AlgorithmBaseResource):
                     type: string
                     description: Version of vantage6 that the algorithm is
                       built with / for
+                  code_url:
+                    type: string
+                    description: URL to the algorithm code repository
+                  documentation_url:
+                    type: string
+                    description: URL to the algorithm documentation
                   functions:
                     type: array
                     description: List of functions that are available in the
@@ -434,6 +440,8 @@ class Algorithms(AlgorithmBaseResource):
             image=image_wo_tag,
             partitioning=data["partitioning"],
             vantage6_version=data["vantage6_version"],
+            code_url=data["code_url"],
+            documentation_url=data.get("documentation_url", None),
             digest=digest,
             developer=g.user,
         )
@@ -595,6 +603,12 @@ class Algorithm(AlgorithmBaseResource):
                     type: string
                     description: Version of vantage6 that the algorithm is
                       built with / for
+                  code_url:
+                    type: string
+                    description: URL to the algorithm code repository
+                  documentation_url:
+                    type: string
+                    description: URL to the algorithm documentation
                   functions:
                     type: array
                     description: List of functions that are available in the
@@ -707,14 +721,23 @@ class Algorithm(AlgorithmBaseResource):
                 "msg": "Invalidated algorithms cannot be edited. Please submit a new "
                 "algorithm and go through the review process if you want to update it."
             }, HTTPStatus.FORBIDDEN
-        elif algorithm.reviews:
+        elif algorithm.reviews and any(
+            [r.is_review_finished() for r in algorithm.reviews]
+        ):
             return {
-                "msg": "Algorithms that are under review cannot be edited. Please "
-                "submit a new algorithm and go through the review process if you want "
-                "to update it."
+                "msg": "This algorithm has at least one submitted review, and can "
+                "therefore no longer be edited. Please submit a new algorithm and go "
+                "through the review process if you want to update this algorithm."
             }, HTTPStatus.FORBIDDEN
 
-        fields = ["name", "description", "partitioning", "vantage6_version"]
+        fields = [
+            "name",
+            "description",
+            "partitioning",
+            "vantage6_version",
+            "code_url",
+            "documentation_url",
+        ]
         for field in fields:
             if field in data and data.get(field) is not None:
                 setattr(algorithm, field, data.get(field))

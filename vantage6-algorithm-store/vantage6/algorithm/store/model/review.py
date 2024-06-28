@@ -36,6 +36,21 @@ class Review(Base):
     reviewer = relationship("User", back_populates="reviews")
     algorithm = relationship("Algorithm", back_populates="reviews")
 
+    def is_review_finished(self) -> bool:
+        """
+        Check if the review is finished.
+
+        Returns
+        -------
+        bool
+            True if the review is finished, False otherwise
+        """
+        return self.status in [
+            ReviewStatus.APPROVED.value,
+            ReviewStatus.REJECTED.value,
+            ReviewStatus.REPLACED.value,
+        ]
+
     def __repr__(self) -> str:
         """
         String representation of the review.
