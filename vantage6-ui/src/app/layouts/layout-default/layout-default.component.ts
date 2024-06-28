@@ -219,6 +219,15 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
           linkType: NavigationLinkType.Store
         });
       }
+      // same goes for list of old algorithms
+      if (this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.VIEW)) {
+        storeSubmenus.push({
+          route: routePaths.algorithmsOld,
+          label: this.translateService.instant('links.old-algorithms'),
+          icon: 'history',
+          linkType: NavigationLinkType.Store
+        });
+      }
 
       // store users
       if (this.storePermissionService.isAllowed(StoreResourceType.USER, OperationType.VIEW)) {

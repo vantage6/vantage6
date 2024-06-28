@@ -273,12 +273,7 @@ class Algorithms(AlgorithmBaseResource):
         elif under_review:
             q = q.filter(db_Algorithm.status == ReviewStatus.UNDER_REVIEW.value)
         elif invalidated:
-            q = q.filter(
-                or_(
-                    db_Algorithm.status == ReviewStatus.REJECTED.value,
-                    db_Algorithm.status == ReviewStatus.REPLACED.value,
-                )
-            )
+            q = q.filter(db_Algorithm.invalidated_at.is_not(None))
         elif in_review_process:
             q = q.filter(
                 or_(

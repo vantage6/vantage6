@@ -40,7 +40,8 @@
     "analyze": "Analyze",
     "stores": "Algorithm store",
     "algorithms-approved": "Approved algorithms",
-    "pending-algorithms": "Pending algorithms"
+    "pending-algorithms": "Pending algorithms",
+    "old-algorithms": "Old algorithms"
   },
   "home": {
     "title": "Home"
@@ -231,6 +232,11 @@
     "title": "Algorithms",
     "no-algorithms": "No algorithms are available for your collaboration!",
     "manage": "Manage algorithms"
+  },
+  "algorithm-old-list": {
+    "title": "Invalidated algorithms",
+    "alert": "The following algorithms are not available for use in tasks. They have been replaced by newer versions or have been rejected by reviewers.",
+    "no-algorithms": "No old algorithms are available for your collaboration!"
   },
   "algorithm-read": {
     "card-details": {
