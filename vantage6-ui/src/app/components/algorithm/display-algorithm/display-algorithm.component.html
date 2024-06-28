@@ -1,3 +1,8 @@
+<app-alert
+  class="non-approved-alert"
+  *ngIf="!algorithmApproved"
+  label="{{ 'algorithm-read.alert-non-approved' | translate: { status: algorithm?.status } }}"
+></app-alert>
 <mat-card>
   <mat-card-header>
     <mat-card-title>{{ "algorithm-read.card-details.title" | translate }}</mat-card-title>
