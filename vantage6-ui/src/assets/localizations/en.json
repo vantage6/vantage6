@@ -251,16 +251,21 @@
       "no-visualizations": "There are no preprogrammed visualizations available for this user interface."
     },
     "manage": "Manage algorithm",
+    "invalidate-dialog": {
+      "title": "Are you sure you want to invalidate the algorithm '{{name}}'? It will no longer be available for use in tasks.",
+      "content": "This operation cannot be undone."
+    },
     "delete-dialog": {
       "title": "Are you sure you want to delete the algorithm '{{name}}' from the store '{{store}}'?",
-      "content": "This operation cannot be undone."
+      "content": "Note that this is *NOT* recommended: invalidating the algorithm is preferred as the algorithm signature will still be available while the algorithm store retracts approval of it. This operation cannot be undone."
     },
     "card-download-json": {
       "title": "Download algorithm description",
       "description": "You can use the algorithm JSON representation to upload this algorithm into another algorithm store. Also, it is recommended to store it in your algorithm's git repository so that you and others can easily upload it into algorithm stores in the future.",
       "download-button": "Download JSON"
     },
-    "alert-non-approved": "This algorithm is {{ status }}. It is not available for use in tasks."
+    "alert-non-approved": "This algorithm is {{ status }}. It is not available for use in tasks.",
+    "invalidate": "Invalidate"
   },
   "algorithm-create": {
     "title": "Add a new algorithm to the algorithm store",

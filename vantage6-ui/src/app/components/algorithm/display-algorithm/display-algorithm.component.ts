@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
-import { Algorithm, AlgorithmFunction } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmFunction, AlgorithmStatus } from 'src/app/models/api/algorithm.model';
 import { Visualization } from 'src/app/models/api/visualization.model';
 
 @Component({
@@ -14,7 +14,7 @@ export class DisplayAlgorithmComponent implements OnInit {
   algorithmApproved: boolean = false;
 
   ngOnInit(): void {
-    this.algorithmApproved = this.algorithm?.status === 'approved';
+    this.algorithmApproved = this.algorithm?.status === AlgorithmStatus.Approved;
   }
 
   selectFunction(functionId: number): void {

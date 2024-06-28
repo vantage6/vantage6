@@ -11,7 +11,6 @@ from vantage6.algorithm.store.model.common.enums import (
     Partitioning,
     FunctionType,
     ArgumentType,
-    ReviewStatus,
     VisualizationType,
 )
 

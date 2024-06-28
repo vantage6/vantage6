@@ -83,6 +83,12 @@ export class AlgorithmService {
     return await this.apiService.deleteForAlgorithmApi(algorithmStore.url, `/api/algorithm/${algorithmId}`);
   }
 
+  async invalidateAlgorithm(algorithmId: string): Promise<void> {
+    const algorithmStore = this.chosenStoreService.store$.value;
+    if (!algorithmStore) return;
+    return await this.apiService.postForAlgorithmApi(algorithmStore.url, `/api/algorithm/${algorithmId}/invalidate`, {});
+  }
+
   private getAlgorithmStoresForCollaboration(): AlgorithmStore[] {
     const collaboration = this.chosenCollaborationService.collaboration$.getValue();
     if (!collaboration) {

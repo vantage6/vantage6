@@ -1,12 +1,12 @@
 import logging
-
+from http import HTTPStatus
+import datetime
 from flask import g, request
 from flask_restful import Api
-from http import HTTPStatus
 from sqlalchemy import or_
 
 from vantage6.algorithm.store import db
-from vantage6.algorithm.store.model.common.enums import ReviewStatus
+from vantage6.algorithm.store.model.common.enums import AlgorithmStatus
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.common import logger_name
 from vantage6.algorithm.store.model.ui_visualization import UIVisualization
@@ -66,6 +66,14 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         path + "/<int:id>",
         endpoint="algorithm_with_id",
         methods=("GET", "DELETE", "PATCH"),
+        resource_class_kwargs=services,
+    )
+
+    api.add_resource(
+        AlgorithmInvalidate,
+        path + "/<int:id>/invalidate",
+        endpoint="algorithm_invalidate",
+        methods=("POST",),
         resource_class_kwargs=services,
     )
 
@@ -268,23 +276,24 @@ class Algorithms(AlgorithmBaseResource):
             }, HTTPStatus.BAD_REQUEST
         if awaiting_reviewer_assignment:
             q = q.filter(
-                db_Algorithm.status == ReviewStatus.AWAITING_REVIEWER_ASSIGNMENT.value
+                db_Algorithm.status
+                == AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
             )
         elif under_review:
-            q = q.filter(db_Algorithm.status == ReviewStatus.UNDER_REVIEW.value)
+            q = q.filter(db_Algorithm.status == AlgorithmStatus.UNDER_REVIEW.value)
         elif invalidated:
             q = q.filter(db_Algorithm.invalidated_at.is_not(None))
         elif in_review_process:
             q = q.filter(
                 or_(
                     db_Algorithm.status
-                    == ReviewStatus.AWAITING_REVIEWER_ASSIGNMENT.value,
-                    db_Algorithm.status == ReviewStatus.UNDER_REVIEW.value,
+                    == AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value,
+                    db_Algorithm.status == AlgorithmStatus.UNDER_REVIEW.value,
                 )
             )
         else:
             # by default, only approved algorithms are returned
-            q = q.filter(db_Algorithm.status == ReviewStatus.APPROVED.value)
+            q = q.filter(db_Algorithm.status == AlgorithmStatus.APPROVED.value)
 
         # paginate results
         try:
@@ -795,3 +804,52 @@ class Algorithm(AlgorithmBaseResource):
         algorithm.save()
 
         return algorithm_output_schema.dump(algorithm, many=False), HTTPStatus.OK
+
+
+class AlgorithmInvalidate(AlgorithmStoreResources):
+    """Resource for /algorithm/<id>/invalidate"""
+
+    @with_permission(module_name, Operation.DELETE)
+    def post(self, id):
+        """Invalidate algorithm
+
+        ---
+        description: >-
+          Invalidate an algorithm specified by ID. This is an alternative to completely
+          removing an algorithm from the store - the advantage of invalidating is that
+          the algorithm metadata is still available. This endpoint should be used when
+          an algorithm is removed from a project. If on the other hand a newer version
+          of the algorithm is uploaded, the old version will be invalidated
+          automatically.
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: ID of the algorithm
+
+        responses:
+          200:
+            description: OK
+          401:
+            description: Unauthorized
+          404:
+            description: Algorithm not found
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Algorithm"]
+        """
+
+        algorithm: db.Algorithm = db_Algorithm.get(id)
+        if not algorithm:
+            return {"msg": "Algorithm not found"}, HTTPStatus.NOT_FOUND
+
+        # invalidate the algorithm
+        algorithm.invalidated_at = datetime.datetime.now(datetime.timezone.utc)
+        algorithm.status = AlgorithmStatus.REMOVED.value
+        algorithm.save()
+
+        return {"msg": f"Algorithm id={id} was successfully invalidated"}, HTTPStatus.OK

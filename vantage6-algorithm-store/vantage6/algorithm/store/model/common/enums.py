@@ -48,7 +48,24 @@ class ReviewStatus(str, Enum):
     UNDER_REVIEW = "under review"
     APPROVED = "approved"
     REJECTED = "rejected"
-    REPLACED = "replaced"  # replaced by newer version
+
+
+class AlgorithmStatus(str, Enum):
+    """Enum for algorithm status
+
+    Note that this contains all values from ReviewStatus but it also contains additional
+    statuses.
+    """
+
+    AWAITING_REVIEWER_ASSIGNMENT = "awaiting reviewer assignment"
+    UNDER_REVIEW = "under review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+    # replaced by newer version
+    REPLACED = "replaced"
+    # removed from store without being replaced by newer version of the same algorithm
+    REMOVED = "removed"
 
 
 class PublicPolicies(str, Enum):

@@ -11,6 +11,7 @@ import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { FileService } from 'src/app/services/file.service';
+import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dialog.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 
 @Component({
@@ -39,7 +40,8 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
     private algorithmService: AlgorithmService,
     private chosenStoreService: ChosenStoreService,
     private storePermissionService: StorePermissionService,
-    private fileService: FileService
+    private fileService: FileService,
+    private handleConfirmDialogService: HandleConfirmDialogService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -90,6 +92,21 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
           this.router.navigate([routePaths.algorithmsManage]);
         }
       });
+  }
+
+  handleInvalidate(): void {
+    this.handleConfirmDialogService.handleConfirmDialog(
+      this.translateService.instant('algorithm-read.invalidate-dialog.title', { name: this.algorithm?.name }),
+      this.translateService.instant('algorithm-read.invalidate-dialog.content'),
+      this.translateService.instant('algorithm-read.invalidate'),
+      'warn',
+      async () => {
+        if (!this.algorithm) return;
+        this.isLoading = true;
+        await this.algorithmService.invalidateAlgorithm(this.algorithm.id.toString());
+        this.initData();
+      }
+    );
   }
 
   downloadAlgorithmJson(): void {

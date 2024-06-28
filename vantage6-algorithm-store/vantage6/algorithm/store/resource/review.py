@@ -8,7 +8,7 @@ import datetime
 from vantage6.common import logger_name
 from vantage6.backend.common.resource.pagination import Pagination
 
-from vantage6.algorithm.store.model.common.enums import ReviewStatus
+from vantage6.algorithm.store.model.common.enums import ReviewStatus, AlgorithmStatus
 from vantage6.algorithm.store.permission import PermissionManager, Operation as P
 from vantage6.algorithm.store.resource import (
     with_permission,
@@ -309,7 +309,7 @@ class Reviews(AlgorithmStoreResources):
         review.save()
 
         # also update the algorithm status to 'under review'
-        algorithm.status = ReviewStatus.UNDER_REVIEW
+        algorithm.status = AlgorithmStatus.UNDER_REVIEW
         algorithm.save()
 
         return review_output_schema.dump(review), HTTPStatus.CREATED
@@ -392,11 +392,11 @@ class Review(AlgorithmStoreResources):
         if not algorithm.is_review_finished():
             other_reviews = [r for r in algorithm.reviews if not r.id == review.id]
             if not other_reviews:
-                algorithm.status = ReviewStatus.AWAITING_REVIEWER_ASSIGNMENT
+                algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
             elif all([r.status == ReviewStatus.APPROVED for r in other_reviews]):
-                algorithm.status = ReviewStatus.APPROVED
+                algorithm.status = AlgorithmStatus.APPROVED
             algorithm.save()
-        elif algorithm.status == ReviewStatus.APPROVED:
+        elif algorithm.status == AlgorithmStatus.APPROVED:
             # for algorithms that are currently approved, the reviews may not be
             # deleted.
             return {
@@ -469,18 +469,18 @@ class ReviewApprove(AlgorithmStoreResources):
         # that needed to be approved
         algorithm: db.Algorithm = review.algorithm
         if algorithm.are_all_reviews_approved():
-            algorithm.status = ReviewStatus.APPROVED
+            algorithm.status = AlgorithmStatus.APPROVED
             algorithm.approved_at = datetime.datetime.now(datetime.timezone.utc)
             algorithm.save()
 
             # if the algorithm is approved, invalidate the previously approved versions
             for old_algorithm in db.Algorithm.get_by_image(algorithm.image):
-                if old_algorithm.status != ReviewStatus.APPROVED:
+                if old_algorithm.status != AlgorithmStatus.APPROVED:
                     continue
                 elif old_algorithm.id == algorithm.id:
                     continue  # skip the current version
                 old_algorithm.invalidated_at = algorithm.approved_at
-                old_algorithm.status = ReviewStatus.REPLACED
+                old_algorithm.status = AlgorithmStatus.REPLACED
                 old_algorithm.save()
 
         log.info("Review with id=%s has been approved", id)
@@ -546,7 +546,7 @@ class ReviewReject(AlgorithmStoreResources):
 
         # also update the algorithm status to 'rejected'
         algorithm: db.Algorithm = review.algorithm
-        algorithm.status = ReviewStatus.REJECTED
+        algorithm.status = AlgorithmStatus.REJECTED
         algorithm.invalidated_at = datetime.datetime.now(datetime.timezone.utc)
         algorithm.save()
 
