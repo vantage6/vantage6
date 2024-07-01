@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
-import { Algorithm, AlgorithmFunction } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmFunction, AlgorithmStatus } from 'src/app/models/api/algorithm.model';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { OperationType, StoreResourceType } from 'src/app/models/api/rule.model';
 import { routePaths } from 'src/app/routes';
@@ -28,10 +28,13 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
   algorithm?: Algorithm;
   algorithm_store?: AlgorithmStore;
   selectedFunction?: AlgorithmFunction;
+  algorithmStatus = AlgorithmStatus;
   isLoading = true;
 
   canEdit = false;
   canDelete = false;
+  canAssignReviewers: boolean = false;
+  canViewReviews: boolean = false;
 
   constructor(
     private router: Router,
@@ -64,6 +67,8 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
 
     this.canEdit = this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.EDIT);
     this.canDelete = this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.DELETE);
+    this.canAssignReviewers = this.storePermissionService.isAllowed(StoreResourceType.REVIEW, OperationType.CREATE);
+    this.canViewReviews = this.storePermissionService.isAllowed(StoreResourceType.REVIEW, OperationType.VIEW);
 
     this.isLoading = false;
   }
@@ -139,5 +144,16 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
 
     const text = JSON.stringify(cleanedAlgorithmRepresentation, null, 2);
     this.fileService.downloadTxtFile(text, filename);
+  }
+
+  getButtonLink(route: string, id: number | undefined): string {
+    return `${route}/${id}`;
+  }
+
+  showInvalidatedAlert(): boolean {
+    if (!this.algorithm) return false;
+    return ![AlgorithmStatus.Approved, AlgorithmStatus.AwaitingReviewerAssignment, AlgorithmStatus.UnderReview].includes(
+      this.algorithm.status
+    );
   }
 }
