@@ -10,7 +10,6 @@ import { OperationType, StoreResourceType } from 'src/app/models/api/rule.model'
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
-import { FileService } from 'src/app/services/file.service';
 import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dialog.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 
@@ -43,7 +42,6 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
     private algorithmService: AlgorithmService,
     private chosenStoreService: ChosenStoreService,
     private storePermissionService: StorePermissionService,
-    private fileService: FileService,
     private handleConfirmDialogService: HandleConfirmDialogService
   ) {}
 
@@ -112,38 +110,6 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
         this.initData();
       }
     );
-  }
-
-  downloadAlgorithmJson(): void {
-    if (!this.algorithm) return;
-    const filename = `${this.algorithm.name}.json`;
-
-    // remove all nested ID fields as they should not be included in the download
-    const cleanedAlgorithmRepresentation: any = { ...this.algorithm };
-    delete cleanedAlgorithmRepresentation.id;
-    for (const func of cleanedAlgorithmRepresentation.functions) {
-      delete func.id;
-      for (const param of func.arguments) {
-        delete param.id;
-      }
-      for (const db of func.databases) {
-        delete db.id;
-      }
-      for (const ui_vis of func.ui_visualizations) {
-        delete ui_vis.id;
-      }
-    }
-
-    // also remove other algorithm store properties that should not be included in the
-    // download
-    delete cleanedAlgorithmRepresentation.digest;
-    delete cleanedAlgorithmRepresentation.status;
-    delete cleanedAlgorithmRepresentation.submitted_at;
-    delete cleanedAlgorithmRepresentation.approved_at;
-    delete cleanedAlgorithmRepresentation.invalidated_at;
-
-    const text = JSON.stringify(cleanedAlgorithmRepresentation, null, 2);
-    this.fileService.downloadTxtFile(text, filename);
   }
 
   getButtonLink(route: string, id: number | undefined): string {

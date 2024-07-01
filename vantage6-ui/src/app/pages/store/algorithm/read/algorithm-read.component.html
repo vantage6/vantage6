@@ -47,18 +47,6 @@
   <app-alert *ngIf="showInvalidatedAlert()" label="{{ 'algorithm-read.alert.invalidated' | translate: { status: algorithm?.status } }}">
   </app-alert>
   <app-display-algorithm [algorithm]="algorithm"></app-display-algorithm>
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>{{ "algorithm-read.card-download-json.title" | translate }}</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <p>{{ "algorithm-read.card-download-json.description" | translate }}</p>
-      <button mat-raised-button color="primary" (click)="downloadAlgorithmJson()">
-        <mat-icon>file_download</mat-icon>
-        <span>{{ "algorithm-read.card-download-json.download-button" | translate }}</span>
-      </button>
-    </mat-card-content>
-  </mat-card>
 </ng-container>
 <mat-card *ngIf="isLoading">
   <mat-card-content>
