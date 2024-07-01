@@ -267,7 +267,17 @@
       "description": "You can use the algorithm JSON representation to upload this algorithm into another algorithm store. Also, it is recommended to store it in your algorithm's git repository so that you and others can easily upload it into algorithm stores in the future.",
       "download-button": "Download JSON"
     },
-    "alert-non-approved": "This algorithm is {{ status }}. It is not available for use in tasks.",
+    "alert": {
+      "assign-review": {
+        "content": "This algorithm is awaiting review assignment. It is not available for use in tasks.",
+        "assign": "Assign reviewers"
+      },
+      "under-review": {
+        "content": "This algorithm is under review. It is not available for use in tasks.",
+        "view": "View reviews"
+      },
+      "invalidated": "This algorithm is {{ status }}. It is not available for use in tasks."
+    },
     "invalidate": "Invalidate"
   },
   "algorithm-create": {

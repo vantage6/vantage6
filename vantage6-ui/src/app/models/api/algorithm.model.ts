@@ -79,7 +79,7 @@ export interface Algorithm {
   filter?: Filter[];
   algorithm_store_url?: string;
   algorith_store_id?: number;
-  status?: AlgorithmStatus;
+  status: AlgorithmStatus;
   developer_id?: number;
   developer?: StoreUser;
   reviewer?: StoreUser;
