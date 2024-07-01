@@ -152,5 +152,7 @@ export interface AlgorithmForm {
   image: string;
   partitioning: string;
   vantage6_version: string;
+  code_url: string;
+  documentation_url?: string;
   functions: FunctionForm[];
 }
