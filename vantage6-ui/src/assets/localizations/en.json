@@ -278,7 +278,11 @@
       },
       "invalidated": "This algorithm is {{ status }}. It is not available for use in tasks."
     },
-    "invalidate": "Invalidate"
+    "invalidate": "Invalidate",
+    "card-reviews": {
+      "title": "Reviews",
+      "button": "View reviews"
+    }
   },
   "algorithm-create": {
     "title": "Add a new algorithm to the algorithm store",

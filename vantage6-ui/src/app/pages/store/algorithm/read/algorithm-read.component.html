@@ -22,7 +22,7 @@
     <app-alert-with-button
       *ngIf="canAssignReviewers"
       label="{{ 'algorithm-read.alert.assign-review.content' | translate }}"
-      buttonLink="{{ getButtonLink(routes.algorithmReviewAssign, algorithm?.id) }}"
+      buttonLink="{{ getButtonLink(routes.algorithmReviewAssign, algorithm.id) }}"
       buttonText="{{ 'algorithm-read.alert.assign-review.assign' | translate }}"
       [isSuccessAlert]="false"
     ></app-alert-with-button>
@@ -35,7 +35,7 @@
     <app-alert-with-button
       *ngIf="canViewReviews"
       label="{{ 'algorithm-read.alert.under-review.content' | translate }}"
-      buttonLink="{{ getButtonLink(routes.algorithmReview, algorithm?.id) }}"
+      buttonLink="{{ getButtonLink(routes.algorithmReview, algorithm.id) }}"
       buttonText="{{ 'algorithm-read.alert.under-review.view' | translate }}"
       [isSuccessAlert]="false"
     ></app-alert-with-button>
@@ -44,9 +44,19 @@
       label="{{ 'algorithm-read.alert.under-review.content' | translate }}"
     ></app-alert-with-button>
   </div>
-  <app-alert *ngIf="showInvalidatedAlert()" label="{{ 'algorithm-read.alert.invalidated' | translate: { status: algorithm?.status } }}">
+  <app-alert *ngIf="showInvalidatedAlert()" label="{{ 'algorithm-read.alert.invalidated' | translate: { status: algorithm.status } }}">
   </app-alert>
   <app-display-algorithm [algorithm]="algorithm"></app-display-algorithm>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ "algorithm-read.card-reviews.title" | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <button mat-flat-button color="primary" [routerLink]="[routes.algorithmReview, algorithm.id]">
+        {{ "algorithm-read.card-reviews.button" | translate }}
+      </button>
+    </mat-card-content>
+  </mat-card>
 </ng-container>
 <mat-card *ngIf="isLoading">
   <mat-card-content>
