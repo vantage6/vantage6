@@ -16,14 +16,13 @@
     color: $warning-500;
   }
 }
-.alert-danger {
-  background-color: #f44336; /* Red */
-}
+
 .alert-success {
   background-color: #d4edda;
   color: #155724;
   border-color: #c3e6cb;
 }
+
 .alert-button {
   margin-right: $spacing-px-2;
   margin-left: auto;

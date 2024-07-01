@@ -34,6 +34,7 @@ export class DisplayAlgorithmComponent {
     const filename = `${this.algorithm.name}.json`;
 
     // remove all nested ID fields as they should not be included in the download
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const cleanedAlgorithmRepresentation: any = { ...this.algorithm };
     delete cleanedAlgorithmRepresentation.id;
     for (const func of cleanedAlgorithmRepresentation.functions) {

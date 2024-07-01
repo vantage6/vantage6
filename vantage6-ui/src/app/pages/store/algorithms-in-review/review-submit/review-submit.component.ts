@@ -65,11 +65,11 @@ export class ReviewSubmitComponent extends BaseEditComponent implements OnInit, 
     this.isLoading = false;
   }
 
-  protected async handleSubmit(form: ReviewForm): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected async handleSubmit(_: ReviewForm): Promise<void> {
     if (!this.store || !this.review) return;
 
     const formValues = this.form.getRawValue();
-    console.log(formValues);
     const isApprove = formValues.approve;
     if (isApprove) {
       this.handleApprove(formValues.comment);

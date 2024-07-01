@@ -149,26 +149,6 @@ class User(Base):
         """
         return cls.exists(field="username", value=username)
 
-    def can(self, resource: str, operation: Operation) -> bool:
-        """
-        Check if user is allowed to execute a certain action
-
-        Parameters
-        ---------
-        resource: str
-            The resource type on which the action is to be performed
-        operation: Operation
-            The operation a user wants to execute
-
-        Returns
-        -------
-        bool
-            Whether or not user is allowed to execute the requested operation
-            on the resource
-        """
-        rule = Rule.get_by_(resource, operation)
-        return any(rule in role.rules for role in self.roles)
-
     def is_reviewer(self) -> bool:
         """
         Check if user is allowed to review algorithms
