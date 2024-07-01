@@ -63,6 +63,7 @@ class ReviewSubClient(ClientBase.SubClient):
             "review",
             is_for_algorithm_store=True,
             headers=self.parent.util._get_server_url_header(),
+            params=params,
         )
 
     @post_filtering(iterable=False)
