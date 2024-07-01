@@ -70,6 +70,9 @@ export interface Algorithm {
   description: string;
   code_url: string;
   documentation_url?: string;
+  submitted_at: string;
+  approved_at?: string;
+  invalidated_at?: string;
   partitioning: PartitioningType;
   functions: AlgorithmFunction[];
   select?: Select[];

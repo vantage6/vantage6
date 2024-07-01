@@ -51,6 +51,18 @@
           <span>-</span>
         </div>
       </div>
+      <div class="data-list__item">
+        <b>{{ "algorithm.submitted-at" | translate }}</b>
+        <span>{{ algorithm?.submitted_at | date: "MMMM d, y, HH:mm:ss" }}</span>
+      </div>
+      <div *ngIf="algorithm?.approved_at" class="data-list__item">
+        <b>{{ "algorithm.approved-at" | translate }}</b>
+        <span>{{ algorithm?.approved_at | date: "MMMM d, y, HH:mm:ss" }}</span>
+      </div>
+      <div *ngIf="algorithm?.invalidated_at" class="data-list__item">
+        <b>{{ "algorithm.invalidated-at" | translate }}</b>
+        <span>{{ algorithm?.invalidated_at | date: "MMMM d, y, HH:mm:ss" }}</span>
+      </div>
     </div>
   </mat-card-content>
 </mat-card>

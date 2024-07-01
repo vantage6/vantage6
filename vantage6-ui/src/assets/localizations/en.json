@@ -214,6 +214,9 @@
     "v6version": "Written for vantage6 version",
     "code-url": "Link to code",
     "documentation-url": "Link to documentation",
+    "submitted-at": "Submitted at",
+    "approved-at": "Approved at",
+    "invalidated-at": "Invalidated at",
     "function": {
       "type": "Type of function",
       "argument": {
