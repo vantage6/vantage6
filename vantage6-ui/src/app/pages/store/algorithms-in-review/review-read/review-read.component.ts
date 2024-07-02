@@ -84,7 +84,7 @@ export class ReviewReadComponent implements OnInit, OnDestroy {
   }
 
   isReviewFinished(review: StoreReview): boolean {
-    return review.status === ReviewStatus.Approved || review.status === ReviewStatus.Rejected;
+    return review.status !== ReviewStatus.AwaitingReviewerAssignment && review.status !== ReviewStatus.UnderReview;
   }
 
   isAllowedToApprove(review: StoreReview) {

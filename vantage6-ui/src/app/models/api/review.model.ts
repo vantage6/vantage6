@@ -9,7 +9,8 @@ export enum ReviewStatus {
   AwaitingReviewerAssignment = 'awaiting reviewer assignment',
   UnderReview = 'under review',
   Approved = 'approved',
-  Rejected = 'rejected'
+  Rejected = 'rejected',
+  Dropped = 'dropped'
 }
 
 export interface ReviewCreate {

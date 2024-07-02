@@ -45,10 +45,9 @@ class Review(Base):
         bool
             True if the review is finished, False otherwise
         """
-        return self.status in [
-            ReviewStatus.APPROVED.value,
-            ReviewStatus.REJECTED.value,
-            ReviewStatus.REPLACED.value,
+        return self.status not in [
+            ReviewStatus.AWAITING_REVIEWER_ASSIGNMENT,
+            ReviewStatus.UNDER_REVIEW,
         ]
 
     def __repr__(self) -> str:

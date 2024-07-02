@@ -3,7 +3,7 @@ from sqlalchemy import Column, String, DateTime, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
-from vantage6.algorithm.store.model.common.enums import ReviewStatus
+from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
 
 
 class Algorithm(Base):
@@ -47,7 +47,7 @@ class Algorithm(Base):
     name = Column(String)
     description = Column(String)
     image = Column(String)
-    status = Column(String, default=ReviewStatus.AWAITING_REVIEWER_ASSIGNMENT.value)
+    status = Column(String, default=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value)
     code_url = Column(String)
     documentation_url = Column(String)
     partitioning = Column(String)
@@ -69,9 +69,9 @@ class Algorithm(Base):
         """
         Check if an algorithm is being reviewed.
         """
-        return self.status in [
-            ReviewStatus.APPROVED,
-            ReviewStatus.REJECTED,
+        return self.status not in [
+            AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT,
+            AlgorithmStatus.UNDER_REVIEW,
         ]
 
     def are_all_reviews_approved(self) -> bool:

@@ -48,6 +48,8 @@ class ReviewStatus(str, Enum):
     UNDER_REVIEW = "under review"
     APPROVED = "approved"
     REJECTED = "rejected"
+    # reviews are dropped if the algorithm is invalidated while reviews were still open
+    DROPPED = "dropped"
 
 
 class AlgorithmStatus(str, Enum):

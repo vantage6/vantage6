@@ -550,6 +550,13 @@ class ReviewReject(AlgorithmStoreResources):
         algorithm.invalidated_at = datetime.datetime.now(datetime.timezone.utc)
         algorithm.save()
 
+        # the other reviews of this algorithm are dropped as they are no longer required
+        for other_review in algorithm.reviews:
+            if other_review.id == review.id:
+                continue
+            other_review.status = ReviewStatus.DROPPED
+            other_review.save()
+
         # note that we do not invalidate the previously approved versions here, as the
         # algorithm is rejected and not replaced by a new version
 

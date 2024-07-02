@@ -6,7 +6,7 @@ from flask_restful import Api
 from sqlalchemy import or_
 
 from vantage6.algorithm.store import db
-from vantage6.algorithm.store.model.common.enums import AlgorithmStatus
+from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.common import logger_name
 from vantage6.algorithm.store.model.ui_visualization import UIVisualization
@@ -276,24 +276,22 @@ class Algorithms(AlgorithmBaseResource):
             }, HTTPStatus.BAD_REQUEST
         if awaiting_reviewer_assignment:
             q = q.filter(
-                db_Algorithm.status
-                == AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
+                db_Algorithm.status == AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
             )
         elif under_review:
-            q = q.filter(db_Algorithm.status == AlgorithmStatus.UNDER_REVIEW.value)
+            q = q.filter(db_Algorithm.status == AlgorithmStatus.UNDER_REVIEW)
         elif invalidated:
             q = q.filter(db_Algorithm.invalidated_at.is_not(None))
         elif in_review_process:
             q = q.filter(
                 or_(
-                    db_Algorithm.status
-                    == AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value,
-                    db_Algorithm.status == AlgorithmStatus.UNDER_REVIEW.value,
+                    db_Algorithm.status == AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT,
+                    db_Algorithm.status == AlgorithmStatus.UNDER_REVIEW,
                 )
             )
         else:
             # by default, only approved algorithms are returned
-            q = q.filter(db_Algorithm.status == AlgorithmStatus.APPROVED.value)
+            q = q.filter(db_Algorithm.status == AlgorithmStatus.APPROVED)
 
         # paginate results
         try:
@@ -851,5 +849,11 @@ class AlgorithmInvalidate(AlgorithmStoreResources):
         algorithm.invalidated_at = datetime.datetime.now(datetime.timezone.utc)
         algorithm.status = AlgorithmStatus.REMOVED.value
         algorithm.save()
+
+        # Also invalidate any reviews that were still active
+        for review in algorithm.reviews:
+            if not review.is_review_finished():
+                review.status = ReviewStatus.DROPPED.value
+                review.save()
 
         return {"msg": f"Algorithm id={id} was successfully invalidated"}, HTTPStatus.OK
