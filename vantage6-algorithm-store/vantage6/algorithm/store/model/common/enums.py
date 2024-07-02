@@ -44,7 +44,6 @@ class VisualizationType(str, Enum):
 class ReviewStatus(str, Enum):
     """Enum for review status"""
 
-    AWAITING_REVIEWER_ASSIGNMENT = "awaiting reviewer assignment"
     UNDER_REVIEW = "under review"
     APPROVED = "approved"
     REJECTED = "rejected"
