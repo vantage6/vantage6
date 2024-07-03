@@ -1,20 +1,23 @@
 Permission management
 ---------------------
 
-The permission system of the Algorithm Store is based on a combination of policies and rules.
+The permission system of the algorithm store is based on a combination of policies and rules.
 Policies are used to define general access rules from external entities (i.e. users, vantage6 servers),
 while rules are used to determine the actions that a user is allowed to take in the algorithm store.
+An example of a policy is a setting that anyone has read-only access to the algorithm store
+even if they are not authenticated. An example of a rule is that a certain user is given permission
+to submit new algorithms to the store.
 
 In order to perform operations in the algorithm store, a user must be registered in the
 algorithm store and must be authenticated.
 A user account is linked to a whitelisted vantage6 server, and the authentication is performed
 by logging in though the vantage6 server and using the obtained token to run a request on
-a resource's endpoint.
+an algorithm store resource endpoint.
 
 Permission rules
 ~~~~~~~~~~~~~~~~
 
-Just like in the vantage6 server, in the algorithm store rules are use to allow
+Just like in the vantage6 server, in the algorithm store rules are used to allow
 or prevent a user from performing an operation.
 An operation is an action that can be performed on a resource of the algorithm store.
 There are 5 operations defined:
