@@ -16,8 +16,8 @@ vantage6 server itself.
 
 :ref:`eduvpn-install`
   If you want to enable algorithm containers that are running on different
-  nodes, to directly communicate with one another, you require a VPN
-  server.
+  nodes, to directly communicate with one another, you require an eduVPN server
+  version 3.
 
 :ref:`rabbitmq-install`
   If you have a server with a high workload whose performance you want to
@@ -126,9 +126,10 @@ nodes. Like vantage6, it is an open source platform.
 
 The following documentation shows you how to install EduVPN:
 
--  `Debian <https://github.com/eduvpn/documentation/blob/v2/DEPLOY_DEBIAN.md>`__
--  `Centos <https://github.com/eduvpn/documentation/blob/v2/DEPLOY_CENTOS.md>`__
--  `Fedora <https://github.com/eduvpn/documentation/blob/v2/DEPLOY_FEDORA.md>`__
+- `Debian 11, 12 <https://docs.eduvpn.org/server/v3/deploy-debian.html>`_
+- `Ubuntu 22.04 LTS, 24.04 LTS  <https://docs.eduvpn.org/server/v3/deploy-debian.html>`_
+- `Fedora 39, 40 <https://docs.eduvpn.org/server/v3/deploy-fedora.html>`_
+- `Enterprise Linux <https://docs.eduvpn.org/server/v3/deploy-el.html>`_
 
 After the installation is done, you need to configure the server to:
 
