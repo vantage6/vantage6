@@ -283,11 +283,11 @@ class VPNManager(DockerBaseManager):
                     "ip --json addr show dev tun0"
                 )
                 vpn_interface = json.loads(vpn_interface)
+                return vpn_interface[0]["addr_info"][0]["local"]
         except (JSONDecodeError, docker.errors.APIError):
             # JSONDecodeError if VPN is not setup yet, APIError if VPN
             # container is restarting (e.g. due to connection errors)
             raise ConnectionError("Could not get VPN IP: VPN is not connected!")
-        return vpn_interface[0]["addr_info"][0]["local"]
 
     def send_vpn_ip_to_server(self) -> None:
         """
