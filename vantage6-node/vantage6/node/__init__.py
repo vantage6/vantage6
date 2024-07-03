@@ -797,6 +797,11 @@ class Node:
             else None
         )
 
+        extra_hosts = ctx.config.get("node_extra_hosts", {})
+
+        if extra_hosts:
+            self.log.info(f"Applying extra host mappings to VPN client: {extra_hosts}")
+
         vpn_manager = VPNManager(
             isolated_network_mgr=isolated_network_mgr,
             node_name=self.ctx.name,
@@ -806,6 +811,7 @@ class Node:
             alpine_image=custom_alpine,
             vpn_client_image=custom_vpn_client,
             network_config_image=custom_network,
+            extra_hosts=extra_hosts,
         )
 
         if not self.config.get("vpn_subnet"):
