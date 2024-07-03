@@ -800,7 +800,7 @@ class Node:
         extra_hosts = ctx.config.get("node_extra_hosts", {})
 
         if extra_hosts:
-            self.log.info(f"Found extra host mappings: {extra_hosts}")
+            self.log.info(f"Applying extra host mappings to VPN client: {extra_hosts}")
 
         vpn_manager = VPNManager(
             isolated_network_mgr=isolated_network_mgr,
