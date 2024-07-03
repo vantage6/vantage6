@@ -13,3 +13,8 @@ export const compareObjIDs = (obj1: any, obj2: any): boolean => {
 };
 
 export const capitalize = (s: string): string => s && s[0].toUpperCase() + s.slice(1);
+
+export const printDate = (date: string | undefined): string => {
+  // note appending the 'Z' which indicates that the string is in UTC time
+  return date ? new Date(date + 'Z').toLocaleString() : '-';
+};

@@ -1,5 +1,6 @@
 import { Component, HostBinding, Input } from '@angular/core';
 import { Subject } from 'rxjs';
+import { printDate } from 'src/app/helpers/general.helper';
 import { Algorithm, AlgorithmFunction } from 'src/app/models/api/algorithm.model';
 import { Visualization } from 'src/app/models/api/visualization.model';
 import { routePaths } from 'src/app/routes';
@@ -14,6 +15,7 @@ export class DisplayAlgorithmComponent {
   @HostBinding('class') class = 'card-container';
   @Input() algorithm: Algorithm | undefined;
   destroy$ = new Subject<void>();
+  printDate = printDate;
 
   constructor(private fileService: FileService) {}
 

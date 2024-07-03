@@ -18,6 +18,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { MessageDialogComponent } from 'src/app/components/dialogs/message-dialog/message-dialog.component';
 import { FileService } from 'src/app/services/file.service';
+import { printDate } from 'src/app/helpers/general.helper';
 
 @Component({
   selector: 'app-node-read',
@@ -27,6 +28,7 @@ import { FileService } from 'src/app/services/file.service';
 export class NodeReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   nodeStatus = NodeStatus;
+  printDate = printDate;
 
   name = new FormControl<string>('', [Validators.required]);
   isLoading: boolean = true;
