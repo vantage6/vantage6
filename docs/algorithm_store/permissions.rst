@@ -27,10 +27,53 @@ There are 5 operations defined:
 
 These operations can be performed on the available resources according to the following schema:
 
-.. figure:: /images/rules-algo-store-overview.png
-   :alt: Rule overview
-   :align: center
-|
+.. .. figure:: /images/rules-algo-store-overview.png
+..    :alt: Rule overview
+..    :align: center
+.. |
+
+
+.. list-table::
+   :name: rules-algo-store
+   :widths: 20 16 16 16 16 16
+
+   * - Resource
+     - View
+     - Create
+     - Edit
+     - Delete
+     - Review
+   * - Algorithm
+     - ✅
+     - ✅
+     - ✅
+     - ✅
+     - ✅
+   * - User
+     - ✅
+     - ✅
+     - ✅
+     - ✅
+     -
+   * - Role
+     - ✅
+     - ✅
+     - ✅
+     - ✅
+     -
+   * - Review
+     - ✅
+     - ✅
+     - ✅
+     - ✅
+     -
+   * - Whitelisted server
+     -
+     -
+     -
+     - ✅
+     -
+
 Rules can be assigned to a user by another user who has at least the same permission level
 as the rules assigned. Single rules can be assigned, but default combinations of rules are available,
 as roles. There are 5 roles available in the algorithms store:
@@ -41,21 +84,49 @@ as roles. There are 5 roles available in the algorithms store:
 #. Store Manager
 #. Viewer
 
-Root user has all the permissions.
-The default set of rules assigned to the other roles are showed here below:
+Root user has all the permissions. Other roles have a subset of the permissions - you
+can view the permissions of other roles via UI or one of the other clients. To give an
+example, the permissions of a reviewer are shown below. Note that they can view all
+resources, and otherwise are only allowed to review algorithms. Other roles, such as
+the developer, have permissions to create and edit algorithms but cannot review them.
 
-.. figure:: /images/rules-algo-store-developer.png
-   :alt: Rule overview
-   :align: center
-|
-.. figure:: /images/rules-algo-store-reviewer.png
-   :alt: Rule overview
-   :align: center
-|
-.. figure:: /images/rules-algo-store-manager.png
-   :alt: Rule overview
-   :align: center
-|
-.. figure:: /images/rules-algo-store-viewer.png
-   :alt: Rule overview
-   :align: center
+.. list-table::
+   :name: rules-algo-store-reviewer
+   :widths: 20 16 16 16 16 16
+
+   * - Resource
+     - View
+     - Create
+     - Edit
+     - Delete
+     - Review
+   * - Algorithm
+     - ✅
+     - ❌
+     - ❌
+     - ❌
+     - ✅
+   * - User
+     - ✅
+     - ❌
+     - ❌
+     - ❌
+     -
+   * - Role
+     - ✅
+     - ❌
+     - ❌
+     - ❌
+     -
+   * - Review
+     - ❌
+     - ❌
+     - ❌
+     - ❌
+     -
+   * - Whitelisted server
+     -
+     -
+     -
+     - ❌
+     -
