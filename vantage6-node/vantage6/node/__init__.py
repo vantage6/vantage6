@@ -811,7 +811,7 @@ class Node:
             alpine_image=custom_alpine,
             vpn_client_image=custom_vpn_client,
             network_config_image=custom_network,
-            extra_hosts=extra_hosts
+            extra_hosts=extra_hosts,
         )
 
         if not self.config.get("vpn_subnet"):
