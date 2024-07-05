@@ -4,7 +4,7 @@ import { MatSidenav } from '@angular/material/sidenav';
 import { Subject, combineLatest, delay, filter, takeUntil } from 'rxjs';
 import { routePaths } from 'src/app/routes';
 import { NavigationLink, NavigationLinkType } from 'src/app/models/application/navigation-link.model';
-import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
+import { OperationType, ResourceType, ScopeType, StoreResourceType } from 'src/app/models/api/rule.model';
 import { AuthService } from 'src/app/services/auth.service';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
@@ -208,6 +208,24 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
           linkType: NavigationLinkType.Store
         });
       }
+      // store users
+      if (this.storePermissionService.isAllowed(StoreResourceType.USER, OperationType.VIEW)) {
+        storeSubmenus.push({
+          route: routePaths.storeUsers,
+          label: this.translateService.instant('resources.users'),
+          icon: 'people',
+          linkType: NavigationLinkType.Store
+        });
+      }
+      // store roles
+      if (this.storePermissionService.isAllowed(StoreResourceType.ROLE, OperationType.VIEW)) {
+        storeSubmenus.push({
+          route: routePaths.storeRoles,
+          label: this.translateService.instant('resources.roles'),
+          icon: 'groups',
+          linkType: NavigationLinkType.Store
+        });
+      }
     }
     if (storeSubmenus.length > 0) {
       storeLink.submenus = storeSubmenus;
@@ -249,21 +267,21 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
         linkType: NavigationLinkType.Admin
       });
     }
-    //Roles
-    if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.VIEW)) {
-      adminSubmenus.push({
-        route: routePaths.roles,
-        label: this.translateService.instant('resources.roles'),
-        icon: 'groups',
-        linkType: NavigationLinkType.Admin
-      });
-    }
     //Users
     if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.USER, OperationType.VIEW)) {
       adminSubmenus.push({
         route: routePaths.users,
         label: this.translateService.instant('resources.users'),
         icon: 'people',
+        linkType: NavigationLinkType.Admin
+      });
+    }
+    //Roles
+    if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.VIEW)) {
+      adminSubmenus.push({
+        route: routePaths.roles,
+        label: this.translateService.instant('resources.roles'),
+        icon: 'groups',
         linkType: NavigationLinkType.Admin
       });
     }

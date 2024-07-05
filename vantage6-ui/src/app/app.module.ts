@@ -38,11 +38,11 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { LayoutLoginComponent } from './layouts/layout-login/layout-login.component';
 import { HomeComponent } from './pages/home/home.component';
 import { LayoutDefaultComponent } from './layouts/layout-default/layout-default.component';
-import { OrganizationReadComponent } from './pages/organization/read/organization-read.component';
-import { TaskCreateComponent } from './pages/task/create/task-create.component';
-import { ChooseCollaborationComponent } from './pages/choose-collaboration/choose-collaboration';
-import { TaskListComponent } from './pages/task/list/task-list.component';
-import { TaskReadComponent } from './pages/task/read/task-read.component';
+import { OrganizationReadComponent } from './pages/admin/organization/read/organization-read.component';
+import { TaskCreateComponent } from './pages/analyze/task/create/task-create.component';
+import { ChooseCollaborationComponent } from './pages/analyze/choose-collaboration/choose-collaboration';
+import { TaskListComponent } from './pages/analyze/task/list/task-list.component';
+import { TaskReadComponent } from './pages/analyze/task/read/task-read.component';
 import { PageHeaderComponent } from './components/page-header/page-header.component';
 import { ChipComponent } from './components/helpers/chip/chip.component';
 import { AlertComponent } from './components/alerts/alert/alert.component';
@@ -52,34 +52,33 @@ import { ConfirmDialogComponent } from './components/dialogs/confirm/confirm-dia
 import { VisualizeResultComponent } from './components/visualization/visualize-result/visualize-result.component';
 import { VisualizeTableComponent } from './components/visualization/visualize-table/visualize-table.component';
 import { TableComponent } from './components/table/table.component';
-import { CollaborationReadComponent } from './pages/collaboration/read/collaboration-read.component';
-import { CollaborationListComponent } from './pages/collaboration/list/collaboration-list.component';
-import { UserListComponent } from './pages/user/list/user-list.component';
-import { UserReadComponent } from './pages/user/read/user-read.component';
-import { OrganizationCreateComponent } from './pages/organization/create/organization-create.component';
-import { CollaborationCreateComponent } from './pages/collaboration/create/collaboration-create.component';
-import { UserCreateComponent } from './pages/user/create/user-create.component';
-import { OrganizationListComponent } from './pages/organization/list/organization-list.component';
-import { NodeReadComponent } from './pages/node/read/node-read.component';
-import { OrganizationEditComponent } from './pages/organization/edit/organization-edit.component';
+import { CollaborationReadComponent } from './pages/admin/collaboration/read/collaboration-read.component';
+import { CollaborationListComponent } from './pages/admin/collaboration/list/collaboration-list.component';
+import { UserListComponent } from './pages/admin/user/list/user-list.component';
+import { UserReadComponent } from './pages/admin/user/read/user-read.component';
+import { OrganizationCreateComponent } from './pages/admin/organization/create/organization-create.component';
+import { CollaborationCreateComponent } from './pages/admin/collaboration/create/collaboration-create.component';
+import { UserCreateComponent } from './pages/admin/user/create/user-create.component';
+import { OrganizationListComponent } from './pages/admin/organization/list/organization-list.component';
+import { NodeReadComponent } from './pages/admin/node/read/node-read.component';
+import { OrganizationEditComponent } from './pages/admin/organization/edit/organization-edit.component';
 import { OrganizationFormComponent } from './components/forms/organization-form/organization-form.component';
 import { CollaborationFormComponent } from './components/forms/collaboration-form/collaboration-form.component';
-import { CollaborationEditComponent } from './pages/collaboration/edit/collaboration-edit.component';
+import { CollaborationEditComponent } from './pages/admin/collaboration/edit/collaboration-edit.component';
 import { UserFormComponent } from './components/forms/user-form/user-form.component';
-import { UserEditComponent } from './pages/user/edit/user-edit.component';
+import { UserEditComponent } from './pages/admin/user/edit/user-edit.component';
 import { VisualizeHistogramComponent } from './components/visualization/visualize-histogram/visualize-histogram.component';
-import { PreprocessingStepComponent } from './pages/task/create/steps/preprocessing-step/preprocessing-step.component';
+import { PreprocessingStepComponent } from './pages/analyze/task/create/steps/preprocessing-step/preprocessing-step.component';
 import { ChangePasswordComponent } from './pages/auth/change-password/change-password.component';
 import { MessageDialogComponent } from './components/dialogs/message-dialog/message-dialog.component';
-import { FilterStepComponent } from './pages/task/create/steps/filter-step/filter-step.component';
+import { FilterStepComponent } from './pages/analyze/task/create/steps/filter-step/filter-step.component';
 import { NumberOnlyDirective } from './directives/numberOnly.directive';
 import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
-import { TemplateTaskCreateComponent } from './pages/template-task/create/template-task-create.component';
-import { DatabaseStepComponent } from './pages/task/create/steps/database-step/database-step.component';
-import { RoleListComponent } from './pages/role/list/role-list.component';
-import { RoleReadComponent } from './pages/role/read/role-read.component';
-import { RoleCreateComponent } from './pages/role/create/role-create.component';
-import { PermissionsMatrixComponent } from './components/permissions-matrix/permissions-matrix.component';
+import { TemplateTaskCreateComponent } from './pages/analyze/template-task/create/template-task-create.component';
+import { DatabaseStepComponent } from './pages/analyze/task/create/steps/database-step/database-step.component';
+import { RoleListComponent } from './pages/admin/role/list/role-list.component';
+import { RoleReadComponent } from './pages/admin/role/read/role-read.component';
+import { RoleCreateComponent } from './pages/admin/role/create/role-create.component';
 import { RoleFormComponent } from './components/forms/role-form/role-form.component';
 import { OrderByPipe } from './pipes/order-by.pipe';
 import { SetupMfaComponent } from './pages/auth/setup-mfa/setup-mfa.component';
@@ -90,24 +89,35 @@ import { AlertWithButtonComponent } from './components/alerts/alert-with-button/
 import { PasswordLostComponent } from './pages/auth/password-lost/password-lost.component';
 import { PasswordRecoverComponent } from './pages/auth/password-recover/password-recover.component';
 import { RoleSubmitButtonsComponent } from './components/helpers/role-submit-buttons/role-submit-buttons.component';
-import { AddAlgoStoreComponent } from './pages/collaboration/add-algo-store/add-algo-store.component';
+import { AddAlgoStoreComponent } from './pages/admin/collaboration/add-algo-store/add-algo-store.component';
 import { AlgorithmStoreFormComponent } from './components/forms/algorithm-store-form/algorithm-store-form.component';
-import { StudyReadComponent } from './pages/collaboration/study/read/study-read.component';
-import { StudyCreateComponent } from './pages/collaboration/study/create/study-create.component';
+import { StudyReadComponent } from './pages/admin/collaboration/study/read/study-read.component';
+import { StudyCreateComponent } from './pages/admin/collaboration/study/create/study-create.component';
 import { StudyFormComponent } from './components/forms/study-form/study-form.component';
-import { StudyEditComponent } from './pages/collaboration/study/edit/study-edit.component';
-import { AlgorithmListReadOnlyComponent } from './pages/algorithm/researcher/list/algorithm-list-read-only.component';
-import { AlgorithmReadOnlyComponent } from './pages/algorithm/researcher/read-only/algorithm-read-only.component';
+import { StudyEditComponent } from './pages/admin/collaboration/study/edit/study-edit.component';
+import { AlgorithmListReadOnlyComponent } from './pages/analyze/algorithm/list/algorithm-list-read-only.component';
+import { AlgorithmReadOnlyComponent } from './pages/analyze/algorithm/read-only/algorithm-read-only.component';
 import { DisplayAlgorithmsComponent } from './components/algorithm/display-algorithms/display-algorithms.component';
-import { AlgorithmStoreListComponent } from './pages/algorithm-stores/list/algorithm-store-list.component';
-import { AlgorithmStoreReadComponent } from './pages/algorithm-stores/read/algorithm-store-read.component';
-import { AlgorithmReadComponent } from './pages/algorithm/admin/read/algorithm-read.component';
+import { AlgorithmStoreListComponent } from './pages/store/algorithm-stores/list/algorithm-store-list.component';
+import { AlgorithmStoreReadComponent } from './pages/store/algorithm-stores/read/algorithm-store-read.component';
+import { AlgorithmReadComponent } from './pages/store/algorithm/read/algorithm-read.component';
 import { DisplayAlgorithmComponent } from './components/algorithm/display-algorithm/display-algorithm.component';
-import { AlgorithmListComponent } from './pages/algorithm/admin/list/algorithm-list.component';
-import { AlgorithmCreateComponent } from './pages/algorithm/admin/create/algorithm-create.component';
+import { AlgorithmListComponent } from './pages/store/algorithm/list/algorithm-list.component';
+import { AlgorithmCreateComponent } from './pages/store/algorithm/create/algorithm-create.component';
 import { AlgorithmFormComponent } from './components/forms/algorithm-form/algorithm-form.component';
-import { AlgorithmEditComponent } from './pages/algorithm/admin/edit/algorithm-edit.component';
-import { UploadPrivateKeyComponent } from './pages/choose-collaboration/upload-private-key/upload-private-key.component';
+import { AlgorithmEditComponent } from './pages/store/algorithm/edit/algorithm-edit.component';
+import { UploadPrivateKeyComponent } from './pages/analyze/choose-collaboration/upload-private-key/upload-private-key.component';
+import { VisualizeLineComponent } from './components/visualization/visualize-line/visualize-line.component';
+import { StoreUserListComponent } from './pages/store/user/list/store-user-list.component';
+import { StoreUserReadComponent } from './pages/store/user/read/store-user-read.component';
+import { StoreUserCreateComponent } from './pages/store/user/create/store-user-create.component';
+import { StoreUserEditComponent } from './pages/store/user/edit/store-user-edit.component';
+import { PermissionsMatrixServerComponent } from './components/permissions-matrix/server/permissions-matrix-server.component';
+import { PermissionsMatrixStoreComponent } from './components/permissions-matrix/store/permissions-matrix-store.component';
+import { StoreUserFormComponent } from './components/forms/store-user-form/store-user-form.component';
+import { BaseCreateComponent } from './components/admin-base/base-create/base-create.component';
+import { StoreRoleListComponent } from './pages/store/role/list/store-role-list.component';
+import { StoreRoleReadComponent } from './pages/store/role/read/store-role-read.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -160,7 +170,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     DatabaseStepComponent,
     RoleListComponent,
     RoleReadComponent,
-    PermissionsMatrixComponent,
     RoleCreateComponent,
     RoleFormComponent,
     OrderByPipe,
@@ -189,7 +198,18 @@ export function HttpLoaderFactory(http: HttpClient) {
     AlgorithmCreateComponent,
     AlgorithmFormComponent,
     AlgorithmEditComponent,
-    UploadPrivateKeyComponent
+    UploadPrivateKeyComponent,
+    VisualizeLineComponent,
+    StoreUserListComponent,
+    StoreUserReadComponent,
+    StoreUserCreateComponent,
+    StoreUserEditComponent,
+    PermissionsMatrixServerComponent,
+    PermissionsMatrixStoreComponent,
+    StoreUserFormComponent,
+    BaseCreateComponent,
+    StoreRoleListComponent,
+    StoreRoleReadComponent
   ],
   imports: [
     BrowserModule,

@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { Algorithm, AlgorithmForm } from '../models/api/algorithm.model';
+import { Algorithm, AlgorithmForm } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from './chosen-collaboration.service';
-import { AlgorithmStore } from '../models/api/algorithmStore.model';
-import { Pagination } from '../models/api/pagination.model';
+import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
+import { Pagination } from 'src/app/models/api/pagination.model';
 import { ChosenStoreService } from './chosen-store.service';
 
 @Injectable({

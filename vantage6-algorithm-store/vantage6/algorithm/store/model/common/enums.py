@@ -2,8 +2,6 @@ from enum import Enum
 
 from vantage6.common.enum import AlgorithmViewPolicies
 
-POLICY_ALLOW_ALL = "all"
-
 
 class Partitioning(str, Enum):
     """Enum for types of algorithm partitioning"""
@@ -13,7 +11,7 @@ class Partitioning(str, Enum):
 
 
 class FunctionType(str, Enum):
-    """Enum for types of partitioning"""
+    """Enum for function roles within the algorithm"""
 
     CENTRAL = "central"
     FEDERATED = "federated"
@@ -40,6 +38,7 @@ class VisualizationType(str, Enum):
     """Enum for visualization types"""
 
     TABLE = "table"
+    LINE = "line"
 
 
 class ReviewStatus(str, Enum):
@@ -55,13 +54,16 @@ class PublicPolicies(str, Enum):
 
     # whether algorithms are visible to all users
     ALGORITHM_VIEW = "algorithm_view"
+    # which servers are allowed to register users and therefore have access to modify
+    # the resources in the algorithm store
     ALLOWED_SERVERS = "allowed_servers"
 
 
 class BooleanPolicies(str, Enum):
     """Enum to contain all policies that are boolean"""
 
-    # whether algorithms are visible to all users
+    # whether localhost servers are allowed to be registered. This should only be
+    # allowed for local development servers and should be disabled in production
     ALLOW_LOCALHOST = "allow_localhost"
 
 
@@ -78,5 +80,5 @@ class DefaultStorePolicies(Enum):
     """
 
     ALGORITHM_VIEW = AlgorithmViewPolicies.WHITELISTED.value
-    ALLOWED_SERVERS = POLICY_ALLOW_ALL
+    ALLOWED_SERVERS = "all"
     ALLOW_LOCALHOST = False

@@ -1,12 +1,13 @@
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, first } from 'rxjs';
-import { ACCESS_TOKEN_KEY } from '../models/constants/sessionStorage';
+import { ACCESS_TOKEN_KEY } from 'src/app/models/constants/sessionStorage';
 import { environment } from 'src/environments/environment';
-import { Pagination } from '../models/api/pagination.model';
+import { Pagination } from 'src/app/models/api/pagination.model';
 import { SnackbarService } from './snackbar.service';
 import { Router } from '@angular/router';
 import { LoginErrorService } from './login-error.service';
+import { isNested } from 'src/app/helpers/utils.helper';
 
 @Injectable({
   providedIn: 'root'
@@ -93,6 +94,26 @@ export class ApiService {
     } else {
       return await this.handleResultWithoutAuthError(request);
     }
+  }
+
+  async getForAlgorithmApiWithPagination<T>(
+    algo_store_url: string,
+    path: string,
+    currentPage: number,
+    parameters: object | null = null
+  ): Promise<Pagination<T>> {
+    algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
+    return await this.handleResultForPagination(
+      this.http.get<Pagination<T>>(algo_store_url + path, {
+        headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() },
+        observe: 'response',
+        params: {
+          ...parameters,
+          page: currentPage,
+          per_page: '10'
+        }
+      })
+    );
   }
 
   async postForAlgorithmApi<T>(algo_store_url: string, path: string, body: object): Promise<T> {
@@ -211,7 +232,11 @@ export class ApiService {
         ': ' +
         Object.keys(error.error?.errors)
           .map((key) => {
-            return key + ': ' + error.error?.errors[key];
+            if (isNested(error.error?.errors[key])) {
+              return key + ': ' + JSON.stringify(error.error?.errors[key]);
+            } else {
+              return key + ': ' + error.error?.errors[key];
+            }
           })
           .join(', ');
     }

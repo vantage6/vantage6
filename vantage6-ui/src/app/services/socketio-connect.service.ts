@@ -4,7 +4,7 @@ import { io, Socket } from 'socket.io-client';
 
 import { environment } from 'src/environments/environment';
 import { TokenStorageService } from './token-storage.service';
-import { AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from '../models/socket-messages.model';
+import { AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
 
 @Injectable({
   providedIn: 'root'

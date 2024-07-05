@@ -302,8 +302,9 @@ class Algorithms(AlgorithmBaseResource):
                               type:
                                 type: string
                                 description: Type of argument. Can be 'string',
-                                  'integer', 'float', 'boolean', 'json',
-                                  'column', 'organizations' or 'organization'
+                                  'string_list', 'integer', 'integer_list', 'float',
+                                  'float_list', 'boolean', 'json', 'column',
+                                  'column_list', 'organization' or 'organization_list'
                         ui_visualizations:
                           type: array
                           description: List of visualizations that are available in

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, or_
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
@@ -68,7 +68,12 @@ class Vantage6Server(Base):
         session = DatabaseSessionManager.get_session()
         servers = (
             session.query(Vantage6Server)
-            .filter(Vantage6Server.url.like("http://localhost%"))
+            .filter(
+                or_(
+                    Vantage6Server.url.like("http://localhost%"),
+                    Vantage6Server.url.like("http://127.0.0.1%"),
+                )
+            )
             .all()
         )
         return servers

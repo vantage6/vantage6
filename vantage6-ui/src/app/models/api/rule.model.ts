@@ -18,6 +18,7 @@ export enum StoreResourceType {
   ALGORITHM = 'algorithm',
   USER = 'user',
   ROLE = 'role',
+  VANTAGE6_SERVER = 'vantage6_server',
   ANY = '*'
 }
 
@@ -36,6 +37,7 @@ export enum OperationType {
   DELETE = 'delete',
   SEND = 'send',
   RECEIVE = 'receive',
+  REVIEW = 'review',
   ANY = '*'
 }
 
@@ -53,6 +55,8 @@ export interface Rule extends BaseRule {
 export interface StoreRule extends BaseRule {
   name: StoreResourceType;
 }
+
+export type Rule_ = Rule | StoreRule;
 
 interface BaseGetRuleParameters {
   no_pagination?: 0 | 1;

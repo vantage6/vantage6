@@ -129,7 +129,10 @@ class Vantage6ServerOutputSchema(HATEOASModelSchema):
 
 class RoleOutputSchema(HATEOASModelSchema):
     rules = fields.Function(
-        lambda obj: create_one_to_many_link(obj, link_to="rule", link_from="role")
+        lambda obj: create_one_to_many_link(obj, link_to="rule", link_from="role_id")
+    )
+    users = fields.Function(
+        lambda obj: create_one_to_many_link(obj, link_to="user", link_from="role_id")
     )
 
     class Meta:
@@ -162,5 +165,5 @@ class ReviewOutputSchema(HATEOASModelSchema):
         model = Review
 
     reviewers = fields.Function(
-        lambda obj: create_one_to_many_link(obj, link_to="user", link_from="review")
+        lambda obj: create_one_to_many_link(obj, link_to="user", link_from="review_id")
     )

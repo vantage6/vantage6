@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { routePaths } from '../routes';
-import { CHOSEN_ALGORITHM_STORE } from '../models/constants/sessionStorage';
+import { routePaths } from 'src/app/routes';
+import { CHOSEN_ALGORITHM_STORE } from 'src/app/models/constants/sessionStorage';
 
 export function chosenStoreGuard(): CanActivateFn {
   return async () => {

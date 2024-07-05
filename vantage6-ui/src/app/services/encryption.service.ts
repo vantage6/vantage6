@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { CHOSEN_COLLAB_PRIVATE_KEY } from '../models/constants/sessionStorage';
+import { CHOSEN_COLLAB_PRIVATE_KEY } from 'src/app/models/constants/sessionStorage';
 import { Buffer } from 'buffer';
 import * as CryptoJS from 'crypto-js';
 import forge from 'node-forge';
 import { OrganizationService } from './organization.service';
-import { ENCRYPTION_SEPARATOR } from '../models/constants/encryption';
+import { ENCRYPTION_SEPARATOR } from 'src/app/models/constants/encryption';
 import { ChosenCollaborationService } from './chosen-collaboration.service';
 
 @Injectable({

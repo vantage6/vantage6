@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USERNAME, USER_ID } from '../models/constants/sessionStorage';
-import { Login, AuthResult } from '../models/api/auth.model';
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USERNAME, USER_ID } from 'src/app/models/constants/sessionStorage';
+import { Login, AuthResult } from 'src/app/models/api/auth.model';
 import { BehaviorSubject, Observable } from 'rxjs';
 
 @Injectable({
