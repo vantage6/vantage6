@@ -1,6 +1,5 @@
-import unittest
-from unittest.mock import patch
 import json
+import unittest
 
 from vantage6.algorithm.store import __version__
 
