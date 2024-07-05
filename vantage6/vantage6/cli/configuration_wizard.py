@@ -231,8 +231,8 @@ def _get_allowed_algorithm_stores() -> list[str]:
     """
     info("Below you can add algorithm stores that are allowed to run on your node.")
     info(
-        "You can use regular expressions to match multiple algorithms, or you can "
-        "use strings to provide one algorithm at a time."
+        "You can use regular expressions to match multiple algorithm stores, or you can"
+        " use strings to provide one algorithm store at a time."
     )
     info("Examples:")
     info(

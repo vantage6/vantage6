@@ -545,6 +545,8 @@ class Tasks(TaskBase):
               are not in the collaboration yourself
           401:
             description: Unauthorized
+          403:
+            description: Algorithm store is not part of the collaboration
           404:
             description: Collaboration with `collaboration_id` not found
 
@@ -553,6 +555,10 @@ class Tasks(TaskBase):
 
         tags: ["Task"]
         """
+        try:
+            request.get_json()
+        except Exception:
+            return {"msg": "Request body is incorrect"}, HTTPStatus.BAD_REQUEST
         return self.post_task(request.get_json(), self.socketio, self.r, self.config)
 
     # TODO this function should be refactored to make it more readable
@@ -711,7 +717,7 @@ class Tasks(TaskBase):
                         "The algorithm store is not part of the collaboration "
                         "to which the task is posted."
                     )
-                }, HTTPStatus.BAD_REQUEST
+                }, HTTPStatus.FORBIDDEN
             # get the algorithm from the algorithm store
             try:
                 image, digest = Tasks._get_image_and_hash_from_store(
@@ -995,10 +1001,16 @@ class Tasks(TaskBase):
         Exception
             If the algorithm cannot be retrieved from the store.
         """
+        server_url = get_server_url(config, request.args.get("server_url"))
+        if not server_url:
+            raise ValueError(
+                "Server URL is not set in the configuration nor in the request "
+                "arguments. Please provide it as 'server_url' in the request."
+            )
         # get the algorithm from the store
         response, status_code = request_algo_store(
             algo_store_url=store.url,
-            server_url=get_server_url(config, request.args.get("server_url")),
+            server_url=,
             endpoint="algorithm",
             method="GET",
             params={"image": image},
@@ -1009,11 +1021,13 @@ class Tasks(TaskBase):
             )
         try:
             algorithm = response.json()["data"][0]
-        except (KeyError, IndexError) as e:
+        except Exception as e:
             raise Exception("Algorithm not found in store!") from e
 
         image = algorithm["image"]
         digest = algorithm["digest"]
+        # TODO v5+ remove this check? The digest should always be present for an
+        # algorithm from stores started in v4.6 and higher
         if image and not digest:
             log.warning(
                 "Algorithm image %s does not have a digest in the algorithm store. Will"

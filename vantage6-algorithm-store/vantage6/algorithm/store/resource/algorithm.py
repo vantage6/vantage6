@@ -112,8 +112,6 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
         ----------
         image : str
             Image url
-        config : dict
-            Configuration dict
 
         Returns
         -------

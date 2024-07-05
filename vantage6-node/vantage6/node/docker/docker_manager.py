@@ -342,6 +342,10 @@ class DockerManager(DockerBaseManager):
                     # if allowed algorithm is "some/image", but the docker image
                     # includes the hash (e.g. "some/image@sha256:..."), we also
                     # want to allow it
+                    # TODO also allow for "some/image:tag"? In that case, be sure to
+                    # prevent that if the allowed algorithm expression is "some_image",
+                    # that "some_image:443.com/whatever" is NOT allowed, i.e. the check
+                    # 'docker_image_name.startswith(f"{algorithm}:")' is not enough
                     elif docker_image_name.startswith(f"{algorithm}@sha256:"):
                         algorithm_whitelisted = True
                 else:
