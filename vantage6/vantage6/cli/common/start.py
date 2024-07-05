@@ -100,8 +100,10 @@ def pull_infra_image(
     client: DockerClient, image: str, instance_type: InstanceType
 ) -> None:
     """
-    Try to pull an infrastructure image. Exit if the image cannot be pulled and it is
-    also not available locally. If a local image is available, a warning is printed.
+    Try to pull an infrastructure image. If the image is a default infrastructure image,
+    exit if in cannot be pulled. If it is not a default image, exit if it cannot be
+    pulled and it is also not available locally. If a local image is available, a
+    warning is printed.
 
     Parameters
     ----------
