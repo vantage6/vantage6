@@ -369,8 +369,9 @@ def get_manifest(
     """
     # request manifest. First try without authentication, as that is the most common
     # case. If that fails, try with authentication
+    headers = {"Accept": "application/vnd.docker.distribution.manifest.v2+json"}
     manifest_endpoint = f"https://{registry}/v2/{image}/manifests/{tag}"
-    response = requests.get(manifest_endpoint, timeout=60)
+    response = requests.get(manifest_endpoint, headers=headers, timeout=60)
     if (
         response.status_code == HTTPStatus.UNAUTHORIZED
         and registry_user

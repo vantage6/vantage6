@@ -1,5 +1,6 @@
 import logging
-
+import json
+import hashlib
 from flask import g, request
 from flask_restful import Api
 from http import HTTPStatus
@@ -101,6 +102,30 @@ def permissions(permission_mgr: PermissionManager) -> None:
 class AlgorithmBaseResource(AlgorithmStoreResources):
     """Base class for the algorithm resource"""
 
+    @staticmethod
+    def __calculate_digest(manifest: str) -> str:
+        """
+        Calculate the SHA256 digest from a Docker image manifest.
+
+        Parameters
+        ----------
+        manifest : str
+            Docker image manifest
+
+        Returns
+        -------
+        str
+            SHA256 digest of the manifest
+        """
+        # Serialize the manifest using canonical JSON
+        serialized_manifest = json.dumps(
+            manifest,
+            indent=3,  # Believe it or not, this spacing is required to get the right SHA
+        ).encode("utf-8")
+        # Calculate the SHA256 digest
+        digest = hashlib.sha256(serialized_manifest).hexdigest()
+        return f"sha256:{digest}"
+
     def _get_image_digest(self, image_name: str) -> tuple[str, str]:
         """
         Get the sha256 of the image.
@@ -138,8 +163,12 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
             image_name, registry, image, tag, registry_user, registry_password
         )
 
-        # get the digest from the response headers
-        return image_wo_tag, response.headers["Docker-Content-Digest"]
+        # get the digest from the response headers. Note that this is an optional
+        # header, so if it is not present, calculate the digest from the manifest itself
+        if "Docker-Content-Digest" in response.headers:
+            return image_wo_tag, response.headers["Docker-Content-Digest"]
+        else:
+            return image_wo_tag, self.__calculate_digest(response.json())
 
 
 class Algorithms(AlgorithmBaseResource):
