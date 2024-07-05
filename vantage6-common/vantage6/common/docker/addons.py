@@ -61,7 +61,9 @@ def running_in_docker() -> bool:
     return pathlib.Path("/.dockerenv").exists()
 
 
-def pull_image(docker_client: DockerClient, image: str) -> None:
+def pull_image(
+    docker_client: DockerClient, image: str, suppress_error: bool = False
+) -> None:
     """
     Pull a docker image
 
@@ -71,6 +73,8 @@ def pull_image(docker_client: DockerClient, image: str) -> None:
         A Docker client
     image: str
         Name of the image to pull
+    suppress_error: bool
+        Whether to suppress the error if the image could not be pulled
 
     Raises
     ------
@@ -81,8 +85,9 @@ def pull_image(docker_client: DockerClient, image: str) -> None:
         docker_client.images.pull(image)
         log.debug("Succeeded to pull image %s", image)
     except docker.errors.APIError as exc:
-        log.error("Failed to pull image! %s", image)
-        log.exception(exc)
+        if not suppress_error:
+            log.error("Failed to pull image! %s", image)
+            log.exception(exc)
         raise docker.errors.APIError("Failed to pull image") from exc
 
 

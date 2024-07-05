@@ -339,35 +339,33 @@ name is used for the database you are interested in. For more details, see
 **Determining which collaboration / organizations to create a task for**
 
 First, you'll want to determine which collaboration to submit this task
-to, and which organizations from this collaboration you want to be
-involved in the analysis
+to. To list all collaborations (that you have access to), run:
 
 .. code:: python
 
-   >>> client.collaboration.list(fields=['id', 'name', 'organizations'])
+   >>> client.collaboration.list(fields=['id', 'name'])
    [
-    {'id': 1, 'name': 'example_collab1',
-    'organizations': [
-        {'id': 2, 'link': '/api/organization/2', 'methods': ['GET', 'PATCH']},
-        {'id': 3, 'link': '/api/organization/3', 'methods': ['GET', 'PATCH']},
-        {'id': 4, 'link': '/api/organization/4', 'methods': ['GET', 'PATCH']}
-    ]}
+    {
+      'id': 1,
+      'name': 'example_collab1',
+    }
    ]
 
-In this example, we see that the collaboration called ``example_collab1``
-has three organizations associated with it, of which the organization
-id's are ``2``, ``3`` and ``4``. To figure out the names of these
-organizations, we run:
+In this example, we see that there is only one collaboration called ``example_collab1``,
+which has the id ``1``. To find out which organizations are associated with
+collaboration ``1``, run:
 
 .. code:: python
 
-   >>> client.organization.list(fields=['id', 'name'])
-   [{'id': 1, 'name': 'root'}, {'id': 2, 'name': 'example_org1'},
-    {'id': 3, 'name': 'example_org2'}, {'id': 4, 'name': 'example_org3'}]
+   >>> client.organization.list(collaboration=1, fields=['id', 'name'])
+   [
+      {'id': 2, 'name': 'example_org1'},
+      {'id': 3, 'name': 'example_org2'},
+      {'id': 4, 'name': 'example_org3'}
+   ]
 
-i.e. this collaboration consists of the organizations ``example_org1``
-(with id ``2``), ``example_org2`` (with id ``3``) and ``example_org3``
-(with id ``4``).
+Now we see that this collaboration has three organizations associated with it, of which
+the organization id's are ``2``, ``3`` and ``4``.
 
 .. _pyclient-create-task:
 
@@ -392,7 +390,7 @@ us create a task that runs the central part of the
 
    average_task = client.task.create(
       collaboration=1,
-      organizations=[2,3],
+      organizations=[2],
       name="an-awesome-task",
       image="harbor2.vantage6.ai/demo/average",
       description='',
@@ -406,10 +404,11 @@ Note that the ``kwargs`` we specified in the ``input_`` are specific to
 this algorithm: this algorithm expects an argument ``column_name`` to be
 defined, and will compute the average over the column with that name.
 Furthermore, note that here we created a task for collaboration with id
-``1`` (i.e. our ``example_collab1``) and the organizations with id ``2``
-and ``3`` (i.e. ``example_org1`` and ``example_org2``). I.e. the
-algorithm need not necessarily be run on *all* the organizations
-involved in the collaboration.
+``1`` (i.e. our ``example_collab1``) and the organization with id ``2``
+(i.e. ``example_org1``). I.e. the algorithm need not necessarily be run on *all* the
+organizations involved in the collaboration. if you run the central task as in the
+example above, it is even very common to only run it on one organization: the central
+part usually creates subtasks that may run on multiple organizations.
 
 Finally, note that you should provide any
 databases that you want to use via the ``databases`` argument. In the example
@@ -448,6 +447,10 @@ central part of the algorithm will normally do:
                                      image="harbor2.vantage6.ai/demo/average",
                                      description='',
                                      input_=input_)
+
+Note that when running the partial algorithm, you should run it on all organizations
+that you want to get the results from. In this example, we run the partial algorithm
+on both organizations ``2`` and ``3``.
 
 **Inspecting the results**
 

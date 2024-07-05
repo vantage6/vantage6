@@ -18,4 +18,5 @@ start your algorithm store.
     install
     deploy
     use
+    permissions
     configure

@@ -8,7 +8,7 @@ import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confi
 import { AlgorithmStore, EditAlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { Collaboration, CollaborationLazyProperties } from 'src/app/models/api/collaboration.model';
 import { Study } from 'src/app/models/api/study.model';
-import { NodeStatus } from 'src/app/models/api/node.model';
+import { BaseNode, NodeStatus } from 'src/app/models/api/node.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { TableData } from 'src/app/models/application/table.model';
 import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
@@ -77,7 +77,7 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
   }
 
   public isMissingNodes(): boolean {
-    return this.collaboration !== undefined && this.collaboration.nodes.length < this.collaboration.organizations.length
+    return this.collaboration !== undefined && this.collaboration.nodes.length < this.collaboration.organizations.length;
   }
 
   private async initData(): Promise<void> {
@@ -230,5 +230,30 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
           this.chosenCollaborationService.refresh();
         }
       });
+  }
+
+  getNodeLabelText(node: BaseNode): string {
+    return node.status === NodeStatus.Online ? node.name : node.name + this.nodeOfflineText(node);
+  }
+
+  private nodeOfflineText(node: BaseNode): string {
+    if (!node.last_seen){
+      return ` (${this.translateService.instant('general.offline')} - never been online)`;
+    } else {
+      return ` (${this.translateService.instant('general.offline')} since ${this.formatDateWithoutSeconds(node.last_seen)})`;
+    }
+  }
+
+  private formatDateWithoutSeconds(dateString: string): string {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false // Use 24-hour format. Set to true for 12-hour format.
+    };
+    return new Intl.DateTimeFormat('default', options).format(date);
   }
 }

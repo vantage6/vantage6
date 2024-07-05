@@ -8,8 +8,8 @@ import docker
 
 from colorama import Fore, Style
 
+from vantage6.cli.common.start import pull_infra_image
 from vantage6.common import warning, error, info, debug, get_database_config
-from vantage6.common.docker.addons import pull_image
 from vantage6.common.globals import (
     APPNAME,
     DEFAULT_DOCKER_REGISTRY,
@@ -135,7 +135,7 @@ def cli_node_start(
             image = f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_NODE_IMAGE}"
 
     info(f"Pulling latest node image '{image}'")
-    pull_image(docker_client, image)
+    pull_infra_image(docker_client, image, InstanceType.NODE)
 
     data_volume = docker_client.volumes.create(ctx.docker_volume_name)
     vpn_volume = docker_client.volumes.create(ctx.docker_vpn_volume_name)

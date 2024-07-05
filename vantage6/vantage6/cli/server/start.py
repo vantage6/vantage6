@@ -4,7 +4,6 @@ from docker.client import DockerClient
 
 from vantage6.common import info, warning, error
 from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.common.docker.addons import pull_image
 from vantage6.common.globals import (
     APPNAME,
     DEFAULT_SERVER_IMAGE,
@@ -23,6 +22,7 @@ from vantage6.cli.common.start import (
     get_image,
     mount_database,
     mount_source,
+    pull_infra_image,
 )
 
 
@@ -91,7 +91,7 @@ def cli_server_start(
     ctx.log_dir.mkdir(parents=True, exist_ok=True)
 
     info("Pulling server image...")
-    pull_image(docker_client, image)
+    pull_infra_image(docker_client, image, InstanceType.SERVER)
 
     info("Creating mounts")
     config_file = "/mnt/config.yaml"
@@ -229,7 +229,7 @@ def _start_ui(client: DockerClient, ctx: ServerContext, ui_port: int) -> None:
     # find image to use
     image = get_image(None, ctx, "ui", DEFAULT_UI_IMAGE)
 
-    pull_image(client, image)
+    pull_infra_image(client, image, InstanceType.UI)
 
     # set environment variables
     env_vars = {
