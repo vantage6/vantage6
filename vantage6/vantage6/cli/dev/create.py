@@ -1,5 +1,6 @@
 from pathlib import Path
 import csv
+from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 import yaml
 import click
 from jinja2 import Environment, FileSystemLoader
@@ -257,7 +258,9 @@ def create_vserver_import_config(node_configs: list[dict], server_name: str) -> 
     return full_path
 
 
-def create_vserver_config(server_name: str, port: int, extra_config_file: Path) -> Path:
+def create_vserver_config(
+    server_name: str, port: int, extra_config_file: Path, ui_port: int, store_port: int
+) -> Path:
     """Creates server configuration file (YAML).
 
     Parameters
@@ -268,6 +271,10 @@ def create_vserver_config(server_name: str, port: int, extra_config_file: Path) 
         Server port.
     extra_config_file : Path
         Path to file with additional server configuration.
+    ui_port : int
+        Port to run the UI on.
+    store_port : int
+        Port to run the algorithm store on.
 
     Returns
     -------
@@ -285,10 +292,16 @@ def create_vserver_config(server_name: str, port: int, extra_config_file: Path) 
 
     template = environment.get_template("server_config.j2")
     server_config = template.render(
-        port=port, jwt_secret_key=generate_apikey(), user_provided_config=extra_config
+        port=port,
+        jwt_secret_key=generate_apikey(),
+        user_provided_config=extra_config,
+        ui_port=ui_port,
+        store_port=store_port,
     )
     folders = ServerContext.instance_folders(
-        instance_type="server", instance_name=server_name, system_folders=True
+        instance_type=InstanceType.SERVER,
+        instance_name=server_name,
+        system_folders=True,
     )
 
     config_dir = Path(folders["config"] / server_name)
@@ -312,6 +325,71 @@ def create_vserver_config(server_name: str, port: int, extra_config_file: Path) 
     return full_path
 
 
+def create_algo_store_config(
+    server_name: str,
+    server_url: str,
+    server_port: int,
+    store_port: int,
+    extra_config_file: Path,
+) -> Path:
+    """Create algorithm store configuration file (YAML).
+
+    Parameters
+    ----------
+    server_name : str
+        Server name.
+    server_url : str
+        Url of the server this store connects to.
+    server_port : int
+        Port of the server this store connects to.
+    port : int
+        Port of the algorithm store.
+    extra_config_file : Path
+        Path to file with additional algorithm store configuration.
+    """
+    environment = Environment(
+        loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
+        trim_blocks=True,
+        lstrip_blocks=True,
+        autoescape=True,
+    )
+
+    extra_config = _read_extra_config_file(extra_config_file)
+
+    template = environment.get_template("algo_store_config.j2")
+    store_config = template.render(
+        port=store_port,
+        server_port=server_port,
+        host_uri=server_url,
+        user_provided_config=extra_config,
+    )
+    folders = AlgorithmStoreContext.instance_folders(
+        instance_type=InstanceType.ALGORITHM_STORE,
+        instance_name="{server_name}_store",
+        system_folders=True,
+    )
+
+    config_dir = Path(folders["config"] / f"{server_name}_store")
+    config_dir.mkdir(parents=True, exist_ok=True)
+    full_path = folders["config"] / f"{server_name}_store.yaml"
+    if full_path.exists():
+        error(f"Algorithm store configuration file already exists: {full_path}")
+        exit(1)
+
+    try:
+        with open(full_path, "x") as f:
+            f.write(store_config)
+            info(
+                "Algorithm store configuration ready, writing to "
+                f"{Fore.GREEN}{full_path}{Style.RESET_ALL}"
+            )
+    except Exception as e:
+        error(f"Could not write algorithm store configuration file: {e}")
+        exit(1)
+
+    return full_path
+
+
 def demo_network(
     num_nodes: int,
     server_url: str,
@@ -319,6 +397,9 @@ def demo_network(
     server_name: str,
     extra_server_config: Path,
     extra_node_config: Path,
+    extra_store_config: Path,
+    ui_port: int,
+    algorithm_store_port: int,
 ) -> tuple[list[dict], Path, Path]:
     """Generates the demo network.
 
@@ -336,6 +417,12 @@ def demo_network(
         Path to file with additional server configuration.
     extra_node_config : Path
         Path to file with additional node configuration.
+    extra_store_config : Path
+        Path to file with additional algorithm store configuration.
+    ui_port : int
+        Port to run the UI on.
+    algorithm_store_port : int
+        Port to run the algorithm store on.
 
     Returns
     -------
@@ -346,8 +433,13 @@ def demo_network(
         num_nodes, server_url, server_port, server_name, extra_node_config
     )
     server_import_config = create_vserver_import_config(node_configs, server_name)
-    server_config = create_vserver_config(server_name, server_port, extra_server_config)
-    return (node_configs, server_import_config, server_config)
+    server_config = create_vserver_config(
+        server_name, server_port, extra_server_config, ui_port, algorithm_store_port
+    )
+    store_config = create_algo_store_config(
+        server_name, server_url, server_port, algorithm_store_port, extra_store_config
+    )
+    return (node_configs, server_import_config, server_config, store_config)
 
 
 @click.command()
@@ -375,6 +467,18 @@ def demo_network(
     help="Port to run the server on. Default is 5000.",
 )
 @click.option(
+    "--ui-port",
+    type=int,
+    default=5001,
+    help="Port to run the UI on. Default is 5001.",
+)
+@click.option(
+    "--algorithm-store-port",
+    type=int,
+    default=5002,
+    help="Port to run the algorithm store on. Default is 5002.",
+)
+@click.option(
     "-i",
     "--image",
     type=str,
@@ -397,6 +501,13 @@ def demo_network(
     help="YAML File with additional node configuration. This will be"
     " appended to each of the node configuration files",
 )
+@click.option(
+    "--extra-store-config",
+    type=click.Path("rb"),
+    default=None,
+    help="YAML File with additional algorithm store configuration. This will be"
+    " appended to the algorithm store configuration file",
+)
 @click.pass_context
 def create_demo_network(
     click_ctx: click.Context,
@@ -404,9 +515,12 @@ def create_demo_network(
     num_nodes: int,
     server_url: str,
     server_port: int,
+    ui_port: int,
+    algorithm_store_port: int,
     image: str = None,
     extra_server_config: Path = None,
     extra_node_config: Path = None,
+    extra_store_config: Path = None,
 ) -> dict:
     """Creates a demo network.
 
@@ -424,6 +538,9 @@ def create_demo_network(
             server_name,
             extra_server_config,
             extra_node_config,
+            extra_store_config,
+            ui_port,
+            algorithm_store_port,
         )
         info(
             f"Created {Fore.GREEN}{len(demo[0])}{Style.RESET_ALL} node "
@@ -433,7 +550,7 @@ def create_demo_network(
     else:
         error(f"Configuration {Fore.RED}{server_name}{Style.RESET_ALL} already exists!")
         exit(1)
-    (node_config, server_import_config, server_config) = demo
+    (node_config, server_import_config, server_config, store_config) = demo
     ctx = get_server_context(server_name, True, ServerContext)
     click_ctx.invoke(
         cli_server_import,
@@ -471,4 +588,5 @@ def create_demo_network(
         "node_configs": node_config,
         "server_import_config": server_import_config,
         "server_config": server_config,
+        "store_config": store_config,
     }

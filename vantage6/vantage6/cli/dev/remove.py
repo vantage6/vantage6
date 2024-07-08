@@ -5,6 +5,7 @@ from pathlib import Path
 
 import click
 
+from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.common import info
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.context.node import NodeContext
@@ -44,6 +45,17 @@ def remove_demo_network(click_ctx: click.Context, ctx: ServerContext) -> None:
     server_folder = server_configs["data"]
     if server_folder.is_dir():
         rmtree(server_folder)
+
+    # remove the store folder
+    store_configs = AlgorithmStoreContext.instance_folders(
+        InstanceType.ALGORITHM_STORE, f"{ctx.name}_store", system_folders=True
+    )
+    store_folder = store_configs["data"]
+    if store_folder.is_dir():
+        rmtree(store_folder)
+
+    # remove the store config file
+    # TODO implement v6 algorithm-store remove and use it here
 
     # remove the nodes
     configs, _ = NodeContext.available_configurations(system_folders=False)

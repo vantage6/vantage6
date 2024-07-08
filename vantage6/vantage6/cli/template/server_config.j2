@@ -15,4 +15,10 @@ uri: sqlite:///default.sqlite
 jwt_secret_key: {{ jwt_secret_key }}
 ui:
   enable: true
+  port: {{ ui_port }}
+algorithm_stores:
+  - name: Community store
+    url: https://store.cotopaxi.vantage6.ai
+  - name: Local store
+    url: http://localhost:{{ store_port }}/api
 {{ user_provided_config }}
