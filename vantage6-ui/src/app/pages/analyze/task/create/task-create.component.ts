@@ -308,10 +308,15 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       inputPerOrg[organizationID] = org_input;
     }
 
+    let image = this.algorithm?.image || '';
+    if (this.algorithm?.digest) {
+      image = `${image}@${this.algorithm?.digest}`;
+    }
+
     const createTask: CreateTask = {
       name: this.packageForm.controls.name.value,
       description: this.packageForm.controls.description.value,
-      image: this.algorithm?.image || '',
+      image: image,
       collaboration_id: this.collaboration?.id || -1,
       databases: taskDatabases,
       store_id: this.algorithm?.algorith_store_id || -1,
