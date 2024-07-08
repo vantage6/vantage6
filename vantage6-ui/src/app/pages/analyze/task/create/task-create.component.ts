@@ -159,6 +159,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   async setupRepeatTask(taskID: string): Promise<void> {
+    this.isLoadingColumns = true;
     this.repeatedTask = await this.taskService.getTask(Number(taskID));
     if (!this.repeatedTask) {
       return;
@@ -196,6 +197,12 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     // component may not yet be initialized when we get here. Instead, we
     // setup the database step in the database child component when it is
     // initialized in the function handleDatabaseStepInitialized().
+    // However, we need to be sure that the database child component is initialized
+    // because we need the columns to be loaded before we set up the parameters, so we
+    // wait for that to happen
+    while (!this.isLoadingColumns) {
+      await new Promise((f) => setTimeout(f, 200));
+    }
 
     // set parameter step
     for (const parameter of this.repeatedTask.input?.parameters || []) {
