@@ -248,16 +248,6 @@ class Algorithms(AlgorithmBaseResource):
             if (value := request.args.get(field)) is not None:
                 q = q.filter(getattr(db_Algorithm, field).like(value))
 
-        if (image := request.args.get("image")) is not None:
-            # determine the sha256 of the image, and filter on that. Sort descending
-            # to get the latest addition to the store first
-            # TODO at some point there may only be one registration of each algorithm,
-            # so this sorting may not be necessary anymore
-            image_wo_tag, digest = self._get_image_digest(image)
-            q = q.filter(
-                db_Algorithm.image == image_wo_tag, db_Algorithm.digest == digest
-            ).order_by(db_Algorithm.id.desc())
-
         awaiting_reviewer_assignment = bool(
             request.args.get("awaiting_reviewer_assignment", False)
         )
@@ -292,6 +282,31 @@ class Algorithms(AlgorithmBaseResource):
         else:
             # by default, only approved algorithms are returned
             q = q.filter(db_Algorithm.status == AlgorithmStatus.APPROVED)
+
+        if (image := request.args.get("image")) is not None:
+            # determine the sha256 of the image, and filter on that. Sort descending
+            # to get the latest addition to the store first
+            # TODO at some point there may only be one registration of each algorithm,
+            # so this sorting may not be necessary anymore
+            image_wo_tag, digest = self._get_image_digest(image)
+            q = q.filter(db_Algorithm.image == image_wo_tag)
+            q_with_digest = q.filter(db_Algorithm.digest == digest).order_by(
+                db_Algorithm.id.desc()
+            )
+
+            # if image with that digest does not exist, check if another image with
+            # different digest but same name exists. If it does, throw
+            # more specific error
+            if q_with_digest.first():
+                q = q_with_digest
+            elif q.first():
+                return {
+                    "msg": f"The image '{image}' that you provided has digest "
+                    f"'{digest}'. This algorithm version is not approved by the "
+                    "store. The currently approved version of this algorithm has"
+                    f"digest '{q.first().digest}'. Please include this digest if you"
+                    f"want to use that image."
+                }, HTTPStatus.BAD_REQUEST
 
         # paginate results
         try:
