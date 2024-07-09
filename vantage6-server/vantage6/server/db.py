@@ -1,5 +1,3 @@
-import logging
-
 # TODO this file is awkward...
 from vantage6.server.model import (
     Base,
@@ -23,9 +21,4 @@ from vantage6.server.model import (
     User,
     UserPermission,
 )
-from vantage6.common import logger_name
-
-
-module_name = logger_name(__name__)
-log = logging.getLogger(module_name)
 

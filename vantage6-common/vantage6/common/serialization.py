@@ -2,11 +2,17 @@ import datetime
 import enum
 import json
 
+import logging
+
 import sqlalchemy as sql
 
-from vantage6.algorithm.store.db import log
 from vantage6.backend.common.base import Base
 from vantage6.common.globals import STRING_ENCODING
+from vantage6.common import logger_name
+
+
+module_name = logger_name(__name__)
+log = logging.getLogger(module_name)
 
 
 # TODO BvB 2023-02-03: I feel this function could be given a better name. And
