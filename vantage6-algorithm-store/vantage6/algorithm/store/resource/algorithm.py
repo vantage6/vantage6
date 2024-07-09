@@ -160,7 +160,7 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
                 registry_password = reg.get("password")
                 break
         response = get_manifest(
-            image_name, registry, image, tag, registry_user, registry_password
+            registry, image, tag, registry_user, registry_password
         )
 
         # get the digest from the response headers. Note that this is an optional

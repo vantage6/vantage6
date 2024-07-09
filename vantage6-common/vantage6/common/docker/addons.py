@@ -344,14 +344,15 @@ def get_manifest(
 
     Parameters
     ----------
-    full_image_url: str
-        The full image url
     registry: str
-        The registry of the image
+        The registry of the image, e.g. "harbor2.vantage6.ai" for image
+        "harbor2.vantage6.ai/demo/average:latest"
     image: str
-        The image name without the registry
+        The image name without the registry, e.g. "demo/average" for image
+        "harbor2.vantage6.ai/demo/average:latest"
     tag: str
-        The tag of the image
+        The tag of the image, e.g. "latest" for image
+        "harbor2.vantage6.ai/demo/average:latest"
     registry_user: str (optional)
         The username for the registry. Required if the registry is private
     registry_password: str (optional)
@@ -385,10 +386,10 @@ def get_manifest(
 
     # handle errors or return manifest
     if response.status_code == HTTPStatus.NOT_FOUND:
-        raise ValueError(f"Image {full_image_url} not found!")
+        raise ValueError(f"Image {image}:{tag} from registry {registry} not found!")
     elif response.status_code != HTTPStatus.OK:
         raise ValueError(
-            f"Failed to retrieve metadata for '{full_image_url}. Could not retrieve "
-            f"manifest from https://{registry}/v2/{image}/manifests/{tag}"
+            "Could not retrieve image manifest from "
+            f"https://{registry}/v2/{image}/manifests/{tag}"
         )
     return response

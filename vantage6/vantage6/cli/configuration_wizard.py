@@ -240,7 +240,7 @@ def _get_allowed_algorithm_stores() -> list[str]:
         "community store"
     )
     info(
-        "^https://*.vantage6.ai$               Allow all algorithms from any "
+        "^https://*\.vantage6\.ai$               Allow all algorithms from any "
         "store hosted on vantage6.ai"
     )
     allowed_algorithm_stores = []

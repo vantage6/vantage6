@@ -4,7 +4,7 @@ from vantage6.common.docker.addons import parse_image_name
 from docker.errors import InvalidRepository
 
 
-# These tests are adapted from [1]. We do this because parse_image_name use
+# These tests are adapted from [1]. We do this because parse_image_name uses
 # internal docker-py functions, which may change without notice in future
 # versions.
 # [1]: https://github.com/docker/docker-py/blob/9ad4bddc9ee23f3646f256280a21ef86274e39bc/tests/unit/auth_test.py#L27s
