@@ -11,7 +11,7 @@ from vantage6.common import (
     info,
     error,
 )
-from vantage6.server.model.base import Database
+from vantage6.common.base import Database
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
 from vantage6.server.controller import fixture
 from vantage6.cli.configuration_wizard import select_configuration_questionaire
@@ -164,8 +164,6 @@ def cli_server_shell(ctx: ServerContext) -> None:
     )
     logging.warning("Please use the User interface, Python client, or API.")
     del logging
-
-    import vantage6.server.db as db
 
     IPython.embed(config=c)
 

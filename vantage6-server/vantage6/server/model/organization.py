@@ -7,7 +7,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common.globals import STRING_ENCODING
-from vantage6.server.model.base import Base, DatabaseSessionManager
+from vantage6.common.base import Base, DatabaseSessionManager
 
 
 class Organization(Base):

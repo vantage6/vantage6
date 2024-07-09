@@ -3,7 +3,7 @@ from sqlalchemy import Column, String, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
-from vantage6.server.model.base import Base, DatabaseSessionManager
+from vantage6.common.base import Base, DatabaseSessionManager
 from vantage6.server.model.node import Node
 from vantage6.server.model.organization import Organization
 

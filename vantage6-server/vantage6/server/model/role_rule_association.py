@@ -6,7 +6,7 @@ role will usually have multiple rules assigned to it.
 
 from sqlalchemy import Column, Integer, ForeignKey, Table
 
-from .base import Base
+from vantage6.common.base import Base
 
 
 role_rule_association = Table(

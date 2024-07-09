@@ -2,7 +2,7 @@ from __future__ import annotations
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 
-from vantage6.server.model.base import Base
+from vantage6.common.base import Base
 
 
 class Study(Base):
