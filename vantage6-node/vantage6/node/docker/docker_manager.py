@@ -13,6 +13,7 @@ import logging
 import docker
 import re
 import shutil
+from docker.utils import parse_repository_tag
 
 from typing import NamedTuple
 from pathlib import Path
@@ -21,6 +22,7 @@ from vantage6.common import logger_name
 from vantage6.common import get_database_config
 from vantage6.common.docker.addons import (
     get_container,
+    get_digest,
     running_in_docker,
 )
 from vantage6.common.globals import APPNAME, BASIC_PROCESSING_IMAGE
@@ -278,7 +280,7 @@ class DockerManager(DockerBaseManager):
             self.log.debug("Creating volume %s", volume_name)
             self.docker.volumes.create(volume_name)
 
-    def is_docker_image_allowed(self, docker_image_name: str, task_info: dict) -> bool:
+    def is_docker_image_allowed(self, evaluated_img: str, task_info: dict) -> bool:
         """
         Checks the docker image name.
 
@@ -287,8 +289,8 @@ class DockerManager(DockerBaseManager):
 
         Parameters
         ----------
-        docker_image_name: str
-            uri to the docker image
+        assessed_img: str
+            URI of the docker image of which we are checking if it is allowed
         task_info: dict
             Dictionary with information about the task
 
@@ -304,7 +306,7 @@ class DockerManager(DockerBaseManager):
         allow_either_whitelist_or_store = self._policies.get(
             "allow_either_whitelist_or_store", False
         )
-        if docker_image_name.startswith(BASIC_PROCESSING_IMAGE):
+        if evaluated_img.startswith(BASIC_PROCESSING_IMAGE):
             if not allow_basics:
                 self.log.warn(
                     "A task was sent with a basics algorithm that "
@@ -324,9 +326,9 @@ class DockerManager(DockerBaseManager):
                 task_info["init_user"]["id"],
             )
             if not is_allowed:
-                self.log.warn(
-                    "A task was sent by a user or organization that "
-                    "this node does not allow to start tasks."
+                self.log.warning(
+                    "A task was sent by a user or organization that this node does not "
+                    "allow to start tasks."
                 )
                 return False
 
@@ -334,23 +336,47 @@ class DockerManager(DockerBaseManager):
         if allowed_algorithms:
             if isinstance(allowed_algorithms, str):
                 allowed_algorithms = [allowed_algorithms]
-            for algorithm in allowed_algorithms:
-                if not self._is_regex_pattern(algorithm):
-                    # check if string matches exactly
-                    if algorithm == docker_image_name:
+            for allowed_algo in allowed_algorithms:
+                if not self._is_regex_pattern(allowed_algo):
+                    evaluated_img_wo_tag, _ = parse_repository_tag(evaluated_img)
+                    allowed_wo_tag, _ = parse_repository_tag(allowed_algo)
+                    if allowed_algo == evaluated_img:
+                        # OK if allowed algorithm and provided algorithm match exactly
                         algorithm_whitelisted = True
-                    # if allowed algorithm is "some/image", but the docker image
-                    # includes the hash (e.g. "some/image@sha256:..."), we also
-                    # want to allow it
-                    # TODO also allow for "some/image:tag"? In that case, be sure to
-                    # prevent that if the allowed algorithm expression is "some_image",
-                    # that "some_image:443.com/whatever" is NOT allowed, i.e. the check
-                    # 'docker_image_name.startswith(f"{algorithm}:")' is not enough
-                    elif docker_image_name.startswith(f"{algorithm}@sha256:"):
+                    elif allowed_algo == evaluated_img_wo_tag:
+                        # OK if allowed algorithm is an image name without a tag, and
+                        # the provided image is the same but includes extra tag
                         algorithm_whitelisted = True
+                    elif allowed_wo_tag == evaluated_img_wo_tag:
+                        # The allowed image and the evaluated image are indeed the same
+                        # image but the allowed image only allows certain tags or sha's.
+                        # Gather the digests of the images and compare them - if they
+                        # are the same, the image is allowed.
+                        # Note that by comparing the digests, we also take into account
+                        # the situation where e.g. the allowed image has a tag, but the
+                        # evaluated image has a sha256.
+                        try:
+                            digest_evaluated_image = get_digest(evaluated_img)
+                        except:
+                            self.log.warning(
+                                "Could not obtain digest for image %s",
+                                evaluated_img,
+                            )
+                        try:
+                            digest_policy_image = get_digest(allowed_algo)
+                        except:
+                            self.log.warning(
+                                "Could not obtain digest for image %s", allowed_algo
+                            )
+                        if (
+                            digest_evaluated_image
+                            and digest_policy_image
+                            and (digest_evaluated_image == digest_policy_image)
+                        ):
+                            algorithm_whitelisted = True
                 else:
-                    expr_ = re.compile(algorithm)
-                    if expr_.match(docker_image_name):
+                    expr_ = re.compile(allowed_algo)
+                    if expr_.match(evaluated_img):
                         algorithm_whitelisted = True
 
         store_whitelisted = False
@@ -389,7 +415,7 @@ class DockerManager(DockerBaseManager):
 
         if not allowed:
             self.log.warning(
-                "This node does not allow the algorithm %s to run!", docker_image_name
+                "This node does not allow the algorithm %s to run!", evaluated_img
             )
 
         return allowed

@@ -1,4 +1,6 @@
 import re
+import json
+import hashlib
 from http import HTTPStatus
 import logging
 import signal
@@ -332,8 +334,6 @@ def get_manifest(
     registry: str,
     image: str,
     tag: str,
-    registry_user: str = None,
-    registry_password: str = None,
 ) -> dict:
     """
     Get the manifest of an image
@@ -352,10 +352,6 @@ def get_manifest(
     tag: str
         The tag of the image, e.g. "latest" for image
         "harbor2.vantage6.ai/demo/average:latest"
-    registry_user: str (optional)
-        The username for the registry. Required if the registry is private
-    registry_password: str (optional)
-        The password for the registry. Required if the registry is private
 
     Returns
     -------
@@ -426,3 +422,49 @@ def get_manifest(
             f"https://{registry}/v2/{image}/manifests/{tag}"
         )
     return response
+
+
+def get_digest(full_image: str) -> str:
+    """
+    Get digest of an image
+
+    Parameters
+    ----------
+    full_image: str
+        Image name. E.g. "harbor2.vantage6.ai/algorithms/average:latest"
+
+    Returns
+    -------
+    str
+        Digest of the image
+    """
+    registry, img, tag = parse_image_name(full_image)
+    manifest_response = get_manifest(registry, img, tag)
+    if "Docker-Content-Digest" in manifest_response.headers:
+        return manifest_response.headers["Docker-Content-Digest"]
+    else:
+        return __calculate_digest(manifest_response.json())
+
+
+def __calculate_digest(manifest: str) -> str:
+    """
+    Calculate the SHA256 digest from a Docker image manifest.
+
+    Parameters
+    ----------
+    manifest : str
+        Docker image manifest
+
+    Returns
+    -------
+    str
+        SHA256 digest of the manifest
+    """
+    # Serialize the manifest using canonical JSON
+    serialized_manifest = json.dumps(
+        manifest,
+        indent=3,  # Believe it or not, this spacing is required to get the right SHA
+    ).encode("utf-8")
+    # Calculate the SHA256 digest
+    digest = hashlib.sha256(serialized_manifest).hexdigest()
+    return f"sha256:{digest}"
