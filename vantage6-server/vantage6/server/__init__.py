@@ -73,6 +73,7 @@ from vantage6.server.algo_store_communication import (
     post_algorithm_store,
     get_server_url,
 )
+from vantage6.server.hashedpassword import HashedPassword
 
 # make sure the version is available
 from vantage6.server._version import __version__  # noqa: F401
@@ -674,30 +675,82 @@ class ServerApp:
             db.User.get_by_username(SUPER_USER_INFO["username"])
         except Exception:
             log.warning("No root user found! Is this the first run?")
+            self._create_super_user()
 
-            log.debug("Creating organization for root user")
-            org = db.Organization(name="root")
-
-            # TODO use constant instead of 'Root' literal
-            root = db.Role.get_by_name("Root")
-
-            log.warning(
-                "Creating root user: username=%s, password=%s",
-                SUPER_USER_INFO["username"],
-                SUPER_USER_INFO["password"],
-            )
-
-            user = db.User(
-                username=SUPER_USER_INFO["username"],
-                roles=[root],
-                organization=org,
-                email="root@domain.ext",
-                password=SUPER_USER_INFO["password"],
-                failed_login_attempts=0,
-                last_login_attempt=None,
-            )
-            user.save()
         return self
+
+    def _create_super_user(self) -> None:
+        """
+        Create the super user.
+
+        This method is used when the server is started for the first time.
+        """
+        log.debug("Creating organization for root user")
+        org = db.Organization(name="root")
+
+        # TODO use constant instead of 'Root' literal
+        root = db.Role.get_by_name("Root")
+
+        super_user_password = None
+
+        # Note: these env variables will become more useful when server is
+        #       started via docker-compose
+        if "V6_INIT_SUPER_PASS_HASHED_FILE" in os.environ:
+            log.info("Using initial hashed super user password from file")
+
+            with open(os.environ["V6_INIT_SUPER_PASS_HASHED_FILE"], "r") as f:
+                super_user_password = HashedPassword(f.read().strip())
+
+            if "V6_INIT_SUPER_PASS_HASHED" in os.environ:
+                log.warn(
+                    "Both V6_INIT_SUPER_PASS_HASHED_FILE and"
+                    " V6_INIT_SUPER_PASS_HASHED are set. Using the value from"
+                    " V6_INIT_SUPER_PASS_HASHED_FILE"
+                )
+        elif "V6_INIT_SUPER_PASS_HASHED" in os.environ:
+            log.info(
+                "Using initial hashed super user password provided via"
+                " environemnt variable"
+            )
+            super_user_password = HashedPassword(
+                os.environ["V6_INIT_SUPER_PASS_HASHED"]
+            )
+        else:
+            # TODO/FIXME: for backwards compatibility we still set this as
+            #             default but we might want to remove this soon!
+            super_user_password = SUPER_USER_INFO["password"]
+            log.warn(
+                f"Creating super user ({SUPER_USER_INFO['username']})"
+                " with default password!"
+            )
+            log.warn(
+                "Please change it or set an initial password using the"
+                " V6_INIT_SUPER_PASS_HASHED/_FILE environment variable"
+            )
+
+        # sanity check
+        if not super_user_password:
+            raise ValueError("No initial password assigned to root user!")
+
+        if (
+            len(super_user_password) < 8
+            and super_user_password != SUPER_USER_INFO["password"]
+        ):
+            raise ValueError(
+                "Initial password is too short! At least 8 characters are required."
+            )
+
+        user = db.User(
+            username=SUPER_USER_INFO["username"],
+            roles=[root],
+            organization=org,
+            # TODO: should we use RFC6761's "invalid." here?
+            email="root@domain.ext",
+            password=super_user_password,
+            failed_login_attempts=0,
+            last_login_attempt=None,
+        )
+        user.save()
 
     def __node_status_worker(self) -> None:
         """
