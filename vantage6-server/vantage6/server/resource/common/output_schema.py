@@ -7,38 +7,13 @@ from flask import url_for
 from vantage6.server import db
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING
-from vantage6.server.model import Base, User
-from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
+from vantage6.server.model import User
+from vantage6.backend.common.resource.output_schema import (
+    BaseHATEOASModelSchema,
+    create_one_to_many_link
+)
 
 log = logging.getLogger(logger_name(__name__))
-
-
-def create_one_to_many_link(obj: Base, link_to: str, link_from: str) -> str:
-    """
-    Create an API link to get objects related to a given object.
-
-    Parameters
-    ----------
-    obj : Base
-        Object to which the link is created
-    link_to : str
-        Name of the resource to which the link is created
-    link_from : str
-        Name of the resource from which the link is created
-
-    Returns
-    -------
-    str
-        API link
-
-    Examples
-    --------
-    >>> create_one_to_many_link(obj, "node", "organization_id")
-    "/api/node?organization_id=<obj.id>"
-    """
-    endpoint = link_to + "_without_id"
-    values = {link_from: obj.id}
-    return url_for(endpoint, **values)
 
 
 class HATEOASModelSchema(BaseHATEOASModelSchema):
