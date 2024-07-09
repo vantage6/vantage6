@@ -50,3 +50,13 @@ class InstanceType(str, Enum):
     NODE = "node"
     SERVER = "server"
     ALGORITHM_STORE = "algorithm-store"
+
+
+class NodePolicy(str, Enum):
+    """Enum containing the names of the names of the node policies"""
+
+    ALLOWED_ALGORITHMS = "allowed_algorithms"
+    ALLOWED_ORGANIZATIONS = "allowed_organizations"
+    ALLOWED_USERS = "allowed_users"
+    ALLOW_BASICS_ALGORITHM = "allow_basics_algorithm"
+    REQUIRE_ALGORITHM_PULL = "require_algorithm_pull"
