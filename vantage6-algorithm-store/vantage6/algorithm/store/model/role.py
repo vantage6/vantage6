@@ -3,7 +3,7 @@ from sqlalchemy import Column, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
-from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
+from vantage6.common.base import Base, DatabaseSessionManager
 from vantage6.common import logger_name
 
 import logging

@@ -1,3 +1,4 @@
+# TODO this is almost a copy of the same file in the server package. Refactor
 import logging
 import os
 import inspect as class_inspect
@@ -106,6 +107,8 @@ class Database(metaclass=Singleton):
         self.session_a = scoped_session(sessionmaker(autocommit=False, autoflush=False))
         self.session_a.configure(bind=self.engine)
 
+        # TODO BvB 7/2/2024 I think this session is not necessary as algorithm
+        # store does not use iPython shell
         # because the Session factory returns the same session (if one exists
         # already) we need a second factory to create an alternative session.
         # this is required if we use both the flask session and the iPython.

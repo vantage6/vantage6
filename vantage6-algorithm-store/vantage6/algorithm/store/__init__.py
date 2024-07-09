@@ -37,7 +37,6 @@ from vantage6.common.globals import APPNAME
 from vantage6.common.enum import StorePolicies
 from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
 from vantage6.backend.common.globals import HOST_URI_ENV
-from vantage6.algorithm.store.default_roles import get_default_roles
 
 # TODO move this to common, then remove dependency on CLI in algorithm store
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
@@ -46,7 +45,7 @@ from vantage6.algorithm.store.globals import API_PATH
 from vantage6.algorithm.store.globals import RESOURCES, SERVER_MODULE_NAME
 
 # TODO the following are simply copies of the same files in the server - refactor
-from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager, Database
+from vantage6.common.base import Base, DatabaseSessionManager, Database
 from vantage6.algorithm.store import db
 
 # TODO move server imports to common / refactor

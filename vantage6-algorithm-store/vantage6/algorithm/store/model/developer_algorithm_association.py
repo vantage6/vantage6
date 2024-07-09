@@ -4,7 +4,7 @@ The developer_algorithm_association table defines which user has created which a
 
 from sqlalchemy import Column, Integer, ForeignKey, Table
 
-from .base import Base
+from vantage6.common.base import Base
 
 
 developer_algorithm_association = Table(
