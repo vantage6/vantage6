@@ -131,7 +131,7 @@ may want to use a different image tag, or you may want to use a different port.
       vantage6-server:
         image: harbor2.vantage6.ai/infrastructure/server:cotopaxi
         ports:
-        - "8000:5000"
+        - "8000:80"
         volumes:
         - /path/to/my/server.yaml:/mnt/config.yaml
         command: ["/bin/bash", "-c", "/vantage6/vantage6-server/server.sh"]
