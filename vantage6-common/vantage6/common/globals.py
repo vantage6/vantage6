@@ -50,6 +50,7 @@ class InstanceType(str, Enum):
     NODE = "node"
     SERVER = "server"
     ALGORITHM_STORE = "algorithm-store"
+    UI = "ui"
 
 
 class NodePolicy(str, Enum):

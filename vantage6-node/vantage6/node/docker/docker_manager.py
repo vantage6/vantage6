@@ -796,7 +796,7 @@ class DockerManager(DockerBaseManager):
             return []
         if db["type"] == "excel":
             self.log.error(
-                "Cannot determine columns for excel database " " without a worksheet"
+                "Cannot determine columns for excel database without a worksheet"
             )
             return []
         if type_ not in ("csv", "sparql"):
