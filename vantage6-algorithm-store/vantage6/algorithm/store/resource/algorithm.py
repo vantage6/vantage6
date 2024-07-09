@@ -159,9 +159,7 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
                 registry_user = reg.get("username")
                 registry_password = reg.get("password")
                 break
-        response = get_manifest(
-            registry, image, tag, registry_user, registry_password
-        )
+        response = get_manifest(registry, image, tag, registry_user, registry_password)
 
         # get the digest from the response headers. Note that this is an optional
         # header, so if it is not present, calculate the digest from the manifest itself

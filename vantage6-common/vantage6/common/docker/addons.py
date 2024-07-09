@@ -1,9 +1,9 @@
+import re
 from http import HTTPStatus
 import logging
 import signal
 import pathlib
 import requests
-from requests.auth import HTTPBasicAuth
 
 import docker
 from docker.client import DockerClient
@@ -329,7 +329,6 @@ def parse_image_name(image: str) -> tuple[str, str, str]:
 
 
 def get_manifest(
-    full_image_url: str,
     registry: str,
     image: str,
     tag: str,
@@ -368,21 +367,55 @@ def get_manifest(
     ValueError
         If the image name is invalid
     """
+    # if requesting from docker hub, manifests are at 'registry-1.docker.io'
+    if registry == "docker.io":
+        registry = "registry-1.docker.io"
+
     # request manifest. First try without authentication, as that is the most common
     # case. If that fails, try with authentication
     headers = {"Accept": "application/vnd.docker.distribution.manifest.v2+json"}
     manifest_endpoint = f"https://{registry}/v2/{image}/manifests/{tag}"
     response = requests.get(manifest_endpoint, headers=headers, timeout=60)
+
+    # try requesting manifest using authentication from 'www-authenticate' header if
+    # anonymous request failed. This has been tested with DockerHub and Github container
+    # registry
     if (
         response.status_code == HTTPStatus.UNAUTHORIZED
-        and registry_user
-        and registry_password
+        and "www-authenticate" in response.headers
     ):
-        response = requests.get(
-            manifest_endpoint,
-            auth=HTTPBasicAuth(registry_user, registry_password),
-            timeout=60,
-        )
+        realm_pattern = r'Bearer realm="(?P<realm>[^"]+)"'
+        scope_pattern = r'scope="(?P<scope>[^"]+)"'
+        service_pattern = r'service="(?P<service>[^"]+)"'
+        realm_match = re.match(realm_pattern, response.headers["www-authenticate"])
+        scope_match = re.search(scope_pattern, response.headers["www-authenticate"])
+        service_match = re.search(service_pattern, response.headers["www-authenticate"])
+        if realm_match and scope_match and service_match:
+            token_response = requests.get(
+                realm_match.group("realm"),
+                params={
+                    "scope": scope_match.group("scope"),
+                    "service": service_match.group("service"),
+                },
+                timeout=60,
+            )
+            if token_response.status_code == HTTPStatus.OK:
+                token = token_response.json()["token"]
+                response = requests.get(
+                    manifest_endpoint,
+                    headers={"Authorization": f"Bearer {token}", **headers},
+                    timeout=60,
+                )
+
+    # TODO add support for private images (where we need to really login with a user
+    # and password). The following code works on private harbor images, but may not
+    # work elsewhere. It is commented out for now as it is not
+    # properly tested and never used anyway.
+    # response = requests.get(
+    #     manifest_endpoint,
+    #     auth=HTTPBasicAuth(registry_user, registry_password),
+    #     timeout=60,
+    # )
 
     # handle errors or return manifest
     if response.status_code == HTTPStatus.NOT_FOUND:
