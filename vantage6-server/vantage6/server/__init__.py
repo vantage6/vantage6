@@ -47,6 +47,7 @@ from threading import Thread
 from pathlib import Path
 
 from vantage6.common import logger_name
+from vantage6.common.serialization import jsonable
 from vantage6.common.globals import PING_INTERVAL_SECONDS
 from vantage6.backend.common.globals import HOST_URI_ENV
 from vantage6.server import db
@@ -458,9 +459,9 @@ class ServerApp:
             """
 
             if isinstance(data, db.Base):
-                data = db.jsonable(data)
+                data = jsonable(data)
             elif isinstance(data, list) and len(data) and isinstance(data[0], db.Base):
-                data = db.jsonable(data)
+                data = jsonable(data)
 
             resp = make_response(json.dumps(data), code)
             resp.headers.extend(headers or {})

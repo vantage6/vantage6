@@ -10,7 +10,6 @@ store to a vantage6 server.
 import os
 from gevent import monkey
 
-
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
     # flake8: noqa: E402 (ignore import error)
@@ -37,6 +36,7 @@ from vantage6.common.globals import APPNAME
 from vantage6.common.enum import StorePolicies
 from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
 from vantage6.backend.common.globals import HOST_URI_ENV
+from vantage6.common.serialization import jsonable
 
 # TODO move this to common, then remove dependency on CLI in algorithm store
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
@@ -236,9 +236,9 @@ class AlgorithmStoreApp:
             """
 
             if isinstance(data, Base):
-                data = db.jsonable(data)
+                data = jsonable(data)
             elif isinstance(data, list) and len(data) and isinstance(data[0], Base):
-                data = db.jsonable(data)
+                data = jsonable(data)
 
             resp = make_response(json.dumps(data), code)
             resp.headers.extend(headers or {})
