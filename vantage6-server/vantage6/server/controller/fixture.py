@@ -2,7 +2,7 @@ import uuid
 import logging
 
 import vantage6.server.model as db
-from vantage6.common.base import Database
+from vantage6.backend.common.base import Database
 from vantage6.server.permission import PermissionManager
 from vantage6.common.task_status import TaskStatus
 from vantage6.common.serialization import serialize

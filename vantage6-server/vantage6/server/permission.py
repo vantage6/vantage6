@@ -6,10 +6,10 @@ from flask_principal import Permission
 
 from vantage6.server.globals import RESOURCES
 from vantage6.server.default_roles import DefaultRole
-from vantage6.common.base import Base
+from vantage6.backend.common.base import Base
 from vantage6.server.model.role import Role
 from vantage6.server.model.rule import Rule, Operation, Scope
-from vantage6.common.base import DatabaseSessionManager
+from vantage6.backend.common.base import DatabaseSessionManager
 from vantage6.server.utils import obtain_auth_collaborations, obtain_auth_organization
 from vantage6.common import logger_name
 

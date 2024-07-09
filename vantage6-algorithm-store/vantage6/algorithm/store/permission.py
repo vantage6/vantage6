@@ -8,7 +8,7 @@ from vantage6.algorithm.store.globals import RESOURCES
 from vantage6.algorithm.store.default_roles import DefaultRole
 from vantage6.algorithm.store.model.role import Role
 from vantage6.algorithm.store.model.rule import Rule, Operation
-from vantage6.common.base import DatabaseSessionManager
+from vantage6.backend.common.base import DatabaseSessionManager
 from vantage6.common import logger_name
 
 module_name = logger_name(__name__)

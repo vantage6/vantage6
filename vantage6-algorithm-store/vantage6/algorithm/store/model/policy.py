@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String
 
-from vantage6.common.base import Base, DatabaseSessionManager
+from vantage6.backend.common.base import Base, DatabaseSessionManager
 from vantage6.common.enum import StorePolicies
 
 

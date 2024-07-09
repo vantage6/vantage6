@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from vantage6.common.task_status import TaskStatus, has_task_failed
-from vantage6.common.base import Base, DatabaseSessionManager
+from vantage6.backend.common.base import Base, DatabaseSessionManager
 
 
 class Task(Base):

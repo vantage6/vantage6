@@ -37,7 +37,7 @@ from vantage6.server.model import (
 from vantage6.server.model.rule import Scope, Operation
 from vantage6.server import context
 from vantage6.server._version import __version__
-from vantage6.common.base import Database, DatabaseSessionManager
+from vantage6.backend.common.base import Database, DatabaseSessionManager
 from vantage6.server.controller.fixture import load
 
 

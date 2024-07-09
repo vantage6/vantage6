@@ -5,7 +5,7 @@ import datetime as dt
 from sqlalchemy import Column, String, Integer, ForeignKey, DateTime
 from sqlalchemy.orm import relationship, validates
 
-from vantage6.common.base import DatabaseSessionManager
+from vantage6.backend.common.base import DatabaseSessionManager
 from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.model.rule import Operation, Rule, Scope
 from vantage6.server.model.common.utils import validate_password

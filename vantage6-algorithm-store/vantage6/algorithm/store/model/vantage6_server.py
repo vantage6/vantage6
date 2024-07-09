@@ -2,7 +2,7 @@ from __future__ import annotations
 from sqlalchemy import Column, String, or_
 from sqlalchemy.orm import relationship
 
-from vantage6.common.base import Base, DatabaseSessionManager
+from vantage6.backend.common.base import Base, DatabaseSessionManager
 
 
 class Vantage6Server(Base):
