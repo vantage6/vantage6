@@ -23,8 +23,11 @@ a significant contribution to the design and implementation of vantage6.
         :alt: eScience center logo
         :align: center
 
+* Cunliang Geng
 * Djura Smits
+* Hector Cadavid
 * Lourens Veen
+* Walter Baccinelli
 
 .. container:: block-image
 
@@ -33,6 +36,7 @@ a significant contribution to the design and implementation of vantage6.
         :align: center
 
 * Johan van Soest
+* Luis Sanchez Gomez
 
 **Would you like to contribute?** Check out
 :ref:`how to contribute! <Contribute>` Find and chat with us via the
