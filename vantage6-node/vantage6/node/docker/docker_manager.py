@@ -355,16 +355,14 @@ class DockerManager(DockerBaseManager):
                         # Note that by comparing the digests, we also take into account
                         # the situation where e.g. the allowed image has a tag, but the
                         # evaluated image has a sha256.
-                        try:
-                            digest_evaluated_image = get_digest(evaluated_img)
-                        except:
+                        digest_evaluated_image = get_digest(evaluated_img)
+                        if not digest_evaluated_image:
                             self.log.warning(
                                 "Could not obtain digest for image %s",
                                 evaluated_img,
                             )
-                        try:
-                            digest_policy_image = get_digest(allowed_algo)
-                        except:
+                        digest_policy_image = get_digest(allowed_algo)
+                        if not digest_policy_image:
                             self.log.warning(
                                 "Could not obtain digest for image %s", allowed_algo
                             )

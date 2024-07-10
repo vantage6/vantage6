@@ -134,3 +134,17 @@ class TestParseImageName(TestCase):
             parse_image_name("harbor2.vantage6.ai/demo/average@sha256:1234"),
             ("harbor2.vantage6.ai", "demo/average", "sha256:1234"),
         )
+
+    def test_parse_image_name_with_sha_and_tag(self):
+        self.assertEqual(
+            parse_image_name(
+                "harbor2.vantage6.ai/infrastructure/node:4.5@sha256:1234567890abcdef"
+                "1234567890abcdef1234567890abcdef1234567890abcdef"
+            ),
+            (
+                "harbor2.vantage6.ai",
+                "infrastructure/node",
+                "sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+                "abcdef",
+            ),
+        )

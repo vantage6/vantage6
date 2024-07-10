@@ -75,12 +75,6 @@ policies:
   # localhost servers to connect.
   allow_localhost: false
 
-# Credentials used to login to private Docker registries. These credentials are used
-# to e.g. find the hashes of the algorithm.
-docker_registries:
-  - registry: docker-registry.org
-    username: docker-registry-user
-    password: docker-registry-password
 
 # development mode settings. Only use when running both the algorithm store and
 # the server that it communicates with locally

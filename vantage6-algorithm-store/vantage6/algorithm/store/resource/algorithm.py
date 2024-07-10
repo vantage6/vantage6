@@ -114,8 +114,9 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
 
         Returns
         -------
-        tuple[str, str]
-            Tuple with the docker image without tag, and the digest of the image
+        tuple[str, str | None]
+            Tuple with the docker image without tag, and the digest of the image if
+            found. If the digest could not be determined, `None` is returned.
         """
         # split image and tag
         try:
@@ -201,6 +202,10 @@ class Algorithms(AlgorithmBaseResource):
             # TODO at some point there may only be one registration of each algorithm,
             # so this sorting may not be necessary anymore
             image_wo_tag, digest = self._get_image_digest(image)
+            if not digest:
+                return {
+                    "msg": "Image digest could not be determined"
+                }, HTTPStatus.BAD_REQUEST
             q = q.filter(
                 db_Algorithm.image == image_wo_tag, db_Algorithm.digest == digest
             ).order_by(db_Algorithm.id.desc())
@@ -336,10 +341,11 @@ class Algorithms(AlgorithmBaseResource):
             }, HTTPStatus.BAD_REQUEST
 
         # validate that the algorithm image exists and retrieve the digest
-        try:
-            image_wo_tag, digest = self._get_image_digest(data["image"])
-        except Exception as e:
-            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+        image_wo_tag, digest = self._get_image_digest(data["image"])
+        if digest is None:
+            return {
+                "msg": "Image digest could not be determined"
+            }, HTTPStatus.BAD_REQUEST
 
         # create the algorithm
         algorithm = db_Algorithm(
@@ -616,6 +622,10 @@ class Algorithm(AlgorithmBaseResource):
         # image.
         if image != algorithm.image or data.get("refresh_digest", False):
             image_wo_tag, digest = self._get_image_digest(image)
+            if digest is None:
+                return {
+                    "msg": "Image digest could not be determined"
+                }, HTTPStatus.BAD_REQUEST
             algorithm.image = image_wo_tag
             algorithm.digest = digest
         # don't forget to also update the image itself

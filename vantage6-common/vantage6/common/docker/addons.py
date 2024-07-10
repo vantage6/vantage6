@@ -14,6 +14,7 @@ from docker.models.volumes import Volume
 from docker.models.networks import Network
 from docker.utils import parse_repository_tag
 from docker.auth import resolve_repository_name
+from docker.errors import APIError, ImageNotFound
 
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
@@ -30,6 +31,7 @@ class ContainerKillListener:
         signal.signal(signal.SIGINT, self.exit_gracefully)
         signal.signal(signal.SIGTERM, self.exit_gracefully)
 
+    # pylint: disable=unused-argument
     def exit_gracefully(self, *args) -> None:
         """Set kill_now to True. This will trigger the container to stop"""
         self.kill_now = True
@@ -43,9 +45,7 @@ def check_docker_running() -> None:
         docker_client = docker.from_env()
         docker_client.ping()
     except Exception as exc:
-        log.error(
-            "Cannot reach the Docker engine! Please make sure Docker " "is running."
-        )
+        log.error("Cannot reach the Docker engine! Please make sure Docker is running.")
         log.exception(exc)
         log.warning("Exiting...")
         exit(1)
@@ -130,7 +130,7 @@ def remove_container_if_exists(docker_client: DockerClient, **filters) -> None:
     """
     container = get_container(docker_client, **filters)
     if container:
-        log.warn("Removing container that was already running: " f"{container.name}")
+        log.warning("Removing container that was already running: %s", container.name)
         remove_container(container, kill=True)
 
 
@@ -148,7 +148,7 @@ def remove_container(container: Container, kill: bool = False) -> None:
     try:
         container.remove(force=kill)
     except Exception as e:
-        log.exception(f"Failed to remove container {container.name}")
+        log.exception("Failed to remove container %s", container.name)
         log.exception(e)
 
 
@@ -190,33 +190,33 @@ def get_network(docker_client: DockerClient, **filters) -> Network:
     return networks[0] if networks else None
 
 
-def delete_network(network: Network, kill_containers: bool = True) -> None:
+def delete_network(network: Network | None, kill_containers: bool = True) -> None:
     """Delete network and optionally its containers
 
     Parameters
     ----------
-    network: Network
+    network: Network | None
         Network to delete
     kill_containers: bool
         Whether to kill the containers in the network (otherwise they are
         merely disconnected)
     """
     if not network:
-        log.warn("Network not defined! Not removing anything, continuing...")
+        log.warning("Network not defined! Not removing anything, continuing...")
         return
     network.reload()
     for container in network.containers:
-        log.info(f"Removing container {container.name} in old network")
+        log.info("Removing container %s in old network", container.name)
         if kill_containers:
-            log.warn(f"Killing container {container.name}")
+            log.warning("Killing container %s", container.name)
             remove_container(container, kill=True)
         else:
             network.disconnect(container)
     # remove the network
     try:
         network.remove()
-    except Exception:
-        log.warn(f"Could not delete existing network {network.name}")
+    except docker.errors.APIError:
+        log.warning("Could not delete existing network %s", network.name)
 
 
 def get_networks_of_container(container: Container) -> dict:
@@ -330,100 +330,6 @@ def parse_image_name(image: str) -> tuple[str, str, str]:
     return registry, repository, tag
 
 
-def get_manifest(
-    registry: str,
-    image: str,
-    tag: str,
-) -> dict:
-    """
-    Get the manifest of an image
-
-    This uses the OCI distribution specification which is supported by all major
-    container registries.
-
-    Parameters
-    ----------
-    registry: str
-        The registry of the image, e.g. "harbor2.vantage6.ai" for image
-        "harbor2.vantage6.ai/demo/average:latest"
-    image: str
-        The image name without the registry, e.g. "demo/average" for image
-        "harbor2.vantage6.ai/demo/average:latest"
-    tag: str
-        The tag of the image, e.g. "latest" for image
-        "harbor2.vantage6.ai/demo/average:latest"
-
-    Returns
-    -------
-    requests.Response
-        Response containing the manifest of the image
-
-    Raises
-    ------
-    ValueError
-        If the image name is invalid
-    """
-    # if requesting from docker hub, manifests are at 'registry-1.docker.io'
-    if registry == "docker.io":
-        registry = "registry-1.docker.io"
-
-    # request manifest. First try without authentication, as that is the most common
-    # case. If that fails, try with authentication
-    headers = {"Accept": "application/vnd.docker.distribution.manifest.v2+json"}
-    manifest_endpoint = f"https://{registry}/v2/{image}/manifests/{tag}"
-    response = requests.get(manifest_endpoint, headers=headers, timeout=60)
-
-    # try requesting manifest using authentication from 'www-authenticate' header if
-    # anonymous request failed. This has been tested with DockerHub and Github container
-    # registry
-    if (
-        response.status_code == HTTPStatus.UNAUTHORIZED
-        and "www-authenticate" in response.headers
-    ):
-        realm_pattern = r'Bearer realm="(?P<realm>[^"]+)"'
-        scope_pattern = r'scope="(?P<scope>[^"]+)"'
-        service_pattern = r'service="(?P<service>[^"]+)"'
-        realm_match = re.match(realm_pattern, response.headers["www-authenticate"])
-        scope_match = re.search(scope_pattern, response.headers["www-authenticate"])
-        service_match = re.search(service_pattern, response.headers["www-authenticate"])
-        if realm_match and scope_match and service_match:
-            token_response = requests.get(
-                realm_match.group("realm"),
-                params={
-                    "scope": scope_match.group("scope"),
-                    "service": service_match.group("service"),
-                },
-                timeout=60,
-            )
-            if token_response.status_code == HTTPStatus.OK:
-                token = token_response.json()["token"]
-                response = requests.get(
-                    manifest_endpoint,
-                    headers={"Authorization": f"Bearer {token}", **headers},
-                    timeout=60,
-                )
-
-    # TODO add support for private images (where we need to really login with a user
-    # and password). The following code works on private harbor images, but may not
-    # work elsewhere. It is commented out for now as it is not
-    # properly tested and never used anyway.
-    # response = requests.get(
-    #     manifest_endpoint,
-    #     auth=HTTPBasicAuth(registry_user, registry_password),
-    #     timeout=60,
-    # )
-
-    # handle errors or return manifest
-    if response.status_code == HTTPStatus.NOT_FOUND:
-        raise ValueError(f"Image {image}:{tag} from registry {registry} not found!")
-    elif response.status_code != HTTPStatus.OK:
-        raise ValueError(
-            "Could not retrieve image manifest from "
-            f"https://{registry}/v2/{image}/manifests/{tag}"
-        )
-    return response
-
-
 def get_digest(full_image: str) -> str:
     """
     Get digest of an image
@@ -435,36 +341,20 @@ def get_digest(full_image: str) -> str:
 
     Returns
     -------
-    str
-        Digest of the image
+    str | None
+        Digest of the image or `None` if the digest could not be found
     """
-    registry, img, tag = parse_image_name(full_image)
-    manifest_response = get_manifest(registry, img, tag)
-    if "Docker-Content-Digest" in manifest_response.headers:
-        return manifest_response.headers["Docker-Content-Digest"]
-    else:
-        return __calculate_digest(manifest_response.json())
+    client = docker.from_env()
+    try:
+        distribution = client.api.inspect_distribution(full_image)
+    except docker.errors.APIError:
+        log.warning("Could not find distribution specs of image %s", full_image)
+        return None
 
-
-def __calculate_digest(manifest: str) -> str:
-    """
-    Calculate the SHA256 digest from a Docker image manifest.
-
-    Parameters
-    ----------
-    manifest : str
-        Docker image manifest
-
-    Returns
-    -------
-    str
-        SHA256 digest of the manifest
-    """
-    # Serialize the manifest using canonical JSON
-    serialized_manifest = json.dumps(
-        manifest,
-        indent=3,  # Believe it or not, this spacing is required to get the right SHA
-    ).encode("utf-8")
-    # Calculate the SHA256 digest
-    digest = hashlib.sha256(serialized_manifest).hexdigest()
-    return f"sha256:{digest}"
+    try:
+        return distribution["Descriptor"]["digest"]
+    except KeyError:
+        log.warning(
+            "Distribution spec of image '%s' did not include image digest", full_image
+        )
+        return None

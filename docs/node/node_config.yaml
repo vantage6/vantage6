@@ -118,7 +118,7 @@ policies:
     # allow all algorithms from the vantage6 community store
     - https://store.cotopaxi.vantage6.ai
     # allow any store that is a subdomain of vantage6.ai
-    - ^https://*\.vantage6\.ai$
+    - ^https://[a-z]+\.vantage6\.ai$
 
   # If you define both `allowed_algorithm_stores` and `allowed_algorithms`, you can
   # choose to only allow algorithms that both policies allow, or you can allow

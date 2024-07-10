@@ -206,7 +206,7 @@ def _get_allowed_algorithms() -> list[str]:
         "harbor2.vantage6.ai/algorithms"
     )
     info(
-        "^harbor2\.vantage6\.ai/demo/average:@sha256:82becede...$    Allow a "
+        "^harbor2\.vantage6\.ai/demo/average@sha256:82becede...$    Allow a "
         "specific hash of average algorithm"
     )
     allowed_algorithms = []
