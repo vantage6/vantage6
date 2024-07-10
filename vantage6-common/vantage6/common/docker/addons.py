@@ -311,7 +311,10 @@ def delete_volume_if_exists(client: docker.DockerClient, volume_name: Volume) ->
 
 def parse_image_name(image: str) -> tuple[str, str, str]:
     """
-    Parse image name into registry, repository, tag
+    Parse image name into registry, repository, tag.
+
+    The returned tag may also be a digest. If image contains both a tag and a digest,
+    the digest will be returned rather than the tag.
 
     Parameters
     ----------
@@ -326,6 +329,11 @@ def parse_image_name(image: str) -> tuple[str, str, str]:
     """
     registry_repository, tag = parse_repository_tag(image)
     tag = tag or "latest"
+    if tag.startswith("sha256:"):
+        # If the tag is a digest, the repository may include another tag, e.g. if
+        # the image is "some-image:test@sha256:1234", the registry_repository would
+        # still include the tag "test". Remove that.
+        registry_repository, _ = parse_repository_tag(registry_repository)
     registry, repository = resolve_repository_name(registry_repository)
     return registry, repository, tag
 
