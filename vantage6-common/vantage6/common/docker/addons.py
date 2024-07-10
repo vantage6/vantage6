@@ -330,7 +330,12 @@ def parse_image_name(image: str) -> tuple[str, str, str]:
     return registry, repository, tag
 
 
-def get_digest(full_image: str) -> str:
+def get_digest(
+    full_image: str,
+    client: DockerClient | None = None,
+    docker_username: str | None = None,
+    docker_password: str | None = None,
+) -> str:
     """
     Get digest of an image
 
@@ -338,15 +343,32 @@ def get_digest(full_image: str) -> str:
     ----------
     full_image: str
         Image name. E.g. "harbor2.vantage6.ai/algorithms/average:latest"
+    client: DockerClient | None
+        Docker client to use. If not provided, a new client will be created. An existing
+        client could be useful to provide if it has already been authenticated with one
+        or more registries
+    docker_username: str | None
+        Docker username to authenticate with at the registry. Required if the image is
+        private
+    docker_password: str | None
+        Docker password to authenticate with at the registry. Required if the image is
+        private
 
     Returns
     -------
     str | None
         Digest of the image or `None` if the digest could not be found
     """
-    client = docker.from_env()
+    if not client:
+        client = docker.from_env()
     try:
-        distribution = client.api.inspect_distribution(full_image)
+        if docker_username and docker_password:
+            distribution = client.api.inspect_distribution(
+                full_image,
+                auth_config={"username": docker_username, "password": docker_password},
+            )
+        else:
+            distribution = client.api.inspect_distribution(full_image)
     except docker.errors.APIError:
         log.warning("Could not find distribution specs of image %s", full_image)
         return None

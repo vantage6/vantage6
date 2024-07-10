@@ -126,7 +126,21 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
             raise ValueError(f"Invalid image name: {image_name}") from e
         image_wo_tag = "/".join([registry, image])
 
+        # get the digest of the image.
         digest = get_digest(image_name)
+
+        # If getting digest failed, try to use authentication
+        if not digest:
+            docker_registry = self.config.get("docker_registries", [])
+            registry_user = None
+            registry_password = None
+            for reg in docker_registry:
+                if reg["registry"] == registry:
+                    registry_user = reg.get("username")
+                    registry_password = reg.get("password")
+                    break
+            if registry_user and registry_password:
+                digest = get_digest(image_name, registry_user, registry_password)
 
         return image_wo_tag, digest
 

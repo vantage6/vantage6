@@ -336,17 +336,19 @@ class DockerManager(DockerBaseManager):
         if allowed_algorithms:
             if isinstance(allowed_algorithms, str):
                 allowed_algorithms = [allowed_algorithms]
+            evaluated_img_wo_tag, _ = parse_repository_tag(evaluated_img)
             for allowed_algo in allowed_algorithms:
                 if not self._is_regex_pattern(allowed_algo):
-                    evaluated_img_wo_tag, _ = parse_repository_tag(evaluated_img)
                     allowed_wo_tag, _ = parse_repository_tag(allowed_algo)
                     if allowed_algo == evaluated_img:
                         # OK if allowed algorithm and provided algorithm match exactly
                         algorithm_whitelisted = True
+                        break
                     elif allowed_algo == evaluated_img_wo_tag:
                         # OK if allowed algorithm is an image name without a tag, and
                         # the provided image is the same but includes extra tag
                         algorithm_whitelisted = True
+                        break
                     elif allowed_wo_tag == evaluated_img_wo_tag:
                         # The allowed image and the evaluated image are indeed the same
                         # image but the allowed image only allows certain tags or sha's.
@@ -355,13 +357,17 @@ class DockerManager(DockerBaseManager):
                         # Note that by comparing the digests, we also take into account
                         # the situation where e.g. the allowed image has a tag, but the
                         # evaluated image has a sha256.
-                        digest_evaluated_image = get_digest(evaluated_img)
+                        digest_evaluated_image = get_digest(
+                            evaluated_img, client=self.docker
+                        )
                         if not digest_evaluated_image:
                             self.log.warning(
                                 "Could not obtain digest for image %s",
                                 evaluated_img,
                             )
-                        digest_policy_image = get_digest(allowed_algo)
+                        digest_policy_image = get_digest(
+                            allowed_algo, client=self.docker
+                        )
                         if not digest_policy_image:
                             self.log.warning(
                                 "Could not obtain digest for image %s", allowed_algo
@@ -372,6 +378,7 @@ class DockerManager(DockerBaseManager):
                             and (digest_evaluated_image == digest_policy_image)
                         ):
                             algorithm_whitelisted = True
+                            break
                 else:
                     expr_ = re.compile(allowed_algo)
                     if expr_.match(evaluated_img):
