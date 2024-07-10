@@ -39,6 +39,7 @@ from vantage6.node.docker.exceptions import (
     PermanentAlgorithmStartFail,
     AlgorithmContainerNotFound,
 )
+from vantage6.node.globals import DEFAULT_REQUIRE_ALGO_IMAGE_PULL
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -526,7 +527,9 @@ class DockerManager(DockerBaseManager):
             alpine_image=self.alpine_image,
             proxy=self.proxy,
             device_requests=self.algorithm_device_requests,
-            requires_pull=self._policies.get(NodePolicy.REQUIRE_ALGORITHM_PULL, False),
+            requires_pull=self._policies.get(
+                NodePolicy.REQUIRE_ALGORITHM_PULL, DEFAULT_REQUIRE_ALGO_IMAGE_PULL
+            ),
         )
 
         # attempt to kick of the task. If it fails do to unknown reasons we try
