@@ -23,7 +23,7 @@ from vantage6.common.docker.addons import (
     get_container,
     running_in_docker,
 )
-from vantage6.common.globals import APPNAME, BASIC_PROCESSING_IMAGE
+from vantage6.common.globals import APPNAME, BASIC_PROCESSING_IMAGE, NodePolicy
 from vantage6.common.task_status import TaskStatus, has_task_failed
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.algorithm.tools.wrappers import get_column_names
@@ -39,6 +39,7 @@ from vantage6.node.docker.exceptions import (
     PermanentAlgorithmStartFail,
     AlgorithmContainerNotFound,
 )
+from vantage6.node.globals import DEFAULT_REQUIRE_ALGO_IMAGE_PULL
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -248,7 +249,7 @@ class DockerManager(DockerBaseManager):
             Dictionary with the policies
         """
         policies = config.get("policies", {})
-        if not policies or not policies.get("allowed_algorithms"):
+        if not policies or not policies.get(NodePolicy.ALLOWED_ALGORITHMS):
             self.log.warning(
                 "No policies on allowed algorithms have been set for this node!"
             )
@@ -298,8 +299,8 @@ class DockerManager(DockerBaseManager):
             Whether docker image is allowed or not
         """
         # check if algorithm matches any of the regex cases
-        allow_basics = self._policies.get("allow_basics_algorithm", True)
-        allowed_algorithms = self._policies.get("allowed_algorithms")
+        allow_basics = self._policies.get(NodePolicy.ALLOW_BASICS_ALGORITHM, True)
+        allowed_algorithms = self._policies.get(NodePolicy.ALLOWED_ALGORITHMS)
         if docker_image_name.startswith(BASIC_PROCESSING_IMAGE):
             if not allow_basics:
                 self.log.warn(
@@ -330,8 +331,8 @@ class DockerManager(DockerBaseManager):
                 return False
 
         # check if user or their organization is allowed
-        allowed_users = self._policies.get("allowed_users", [])
-        allowed_orgs = self._policies.get("allowed_organizations", [])
+        allowed_users = self._policies.get(NodePolicy.ALLOWED_USERS, [])
+        allowed_orgs = self._policies.get(NodePolicy.ALLOWED_ORGANIZATIONS, [])
         if allowed_users or allowed_orgs:
             is_allowed = self.client.check_user_allowed_to_send_task(
                 allowed_users,
@@ -526,6 +527,9 @@ class DockerManager(DockerBaseManager):
             alpine_image=self.alpine_image,
             proxy=self.proxy,
             device_requests=self.algorithm_device_requests,
+            requires_pull=self._policies.get(
+                NodePolicy.REQUIRE_ALGORITHM_PULL, DEFAULT_REQUIRE_ALGO_IMAGE_PULL
+            ),
         )
 
         # attempt to kick of the task. If it fails do to unknown reasons we try

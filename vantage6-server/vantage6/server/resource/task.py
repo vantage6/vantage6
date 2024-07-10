@@ -8,7 +8,7 @@ from http import HTTPStatus
 from sqlalchemy import desc
 from sqlalchemy.sql import visitors
 
-from vantage6.common.globals import STRING_ENCODING
+from vantage6.common.globals import STRING_ENCODING, NodePolicy
 from vantage6.common.task_status import TaskStatus, has_task_finished
 from vantage6.common.encryption import DummyCryptor
 from vantage6.server import db
@@ -857,7 +857,7 @@ class Tasks(TaskBase):
         """
         has_limitations = False
         for config_option in node_configs:
-            if config_option.key == "allowed_users":
+            if config_option.key == NodePolicy.ALLOWED_USERS:
                 has_limitations = True
                 # TODO expand when we allow also usernames, like orgs below
                 if g.user.id == int(config_option.value):

@@ -3,7 +3,7 @@ import questionary as q
 from pathlib import Path
 
 from vantage6.common import generate_apikey
-from vantage6.common.globals import DATABASE_TYPES, InstanceType
+from vantage6.common.globals import DATABASE_TYPES, InstanceType, NodePolicy
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.context import AppContext
 from vantage6.common import error, warning, info
@@ -127,7 +127,7 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
                 "Do you want to add another algorithm expression?", default=True
             ).ask():
                 break
-        config["policies"] = {"allowed_algorithms": allowed_algorithms}
+        config["policies"] = {NodePolicy.ALLOWED_ALGORITHMS: allowed_algorithms}
 
     config["logging"] = {
         "level": res,
