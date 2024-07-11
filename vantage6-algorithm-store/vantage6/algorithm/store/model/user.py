@@ -158,4 +158,4 @@ class User(Base):
         bool
             Whether or not user is a reviewer
         """
-        return self.can("algorithm", Operation.REVIEW)
+        return self.can("review", Operation.EDIT)

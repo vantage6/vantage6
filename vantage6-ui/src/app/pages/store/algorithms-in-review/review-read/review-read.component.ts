@@ -75,7 +75,7 @@ export class ReviewReadComponent implements OnInit, OnDestroy {
     this.reviews = await this.reviewService.getReviews(this.store.url, { algorithm_id: this.algoID });
 
     this.canDelete = this.storePermissionService.isAllowed(StoreResourceType.REVIEW, OperationType.DELETE);
-    this.canApprove = this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.REVIEW);
+    this.canApprove = this.storePermissionService.isAllowed(StoreResourceType.REVIEW, OperationType.EDIT);
     this.canCreate = this.storePermissionService.isAllowed(StoreResourceType.REVIEW, OperationType.CREATE);
 
     this.loggedInUser = this.permissionService.activeUser;

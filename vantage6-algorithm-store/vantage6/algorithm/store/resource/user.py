@@ -185,9 +185,7 @@ class Users(AlgorithmStoreResources):
             # TODO this approach may not be the most efficient if there are many users.
             # Consider improving.
             reviewers = [
-                user.id
-                for user in db.User.get()
-                if user.can("algorithm", Operation.REVIEW)
+                user.id for user in db.User.get() if user.can("review", Operation.EDIT)
             ]
             if can_review:
                 q = q.filter(db.User.id.in_(reviewers))

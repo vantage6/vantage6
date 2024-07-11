@@ -24,6 +24,10 @@ class Algorithm(Base):
         Version of vantage6 that the algorithm is built with
     status: str
         Review status of the algorithm
+    code_url : str
+        URL to the repository containing the code of this algorithm
+    documentation_url : str
+        URL to the documentation of this algorithm
     digest : str
         Hash digest of the algorithm
     submitted_at: datetime
