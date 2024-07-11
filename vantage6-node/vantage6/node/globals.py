@@ -1,4 +1,5 @@
 from pathlib import Path
+from enum import Enum
 from vantage6.common.globals import APPNAME
 
 #
@@ -50,3 +51,6 @@ SQUID_IMAGE = "harbor2.vantage6.ai/infrastructure/squid"
 # Environment variables that should be set in the Dockerfile and that may not
 # be overwritten by the user.
 ENV_VARS_NOT_SETTABLE_BY_NODE = ["PKG_NAME"]
+
+# default policies
+DEFAULT_REQUIRE_ALGO_IMAGE_PULL = False

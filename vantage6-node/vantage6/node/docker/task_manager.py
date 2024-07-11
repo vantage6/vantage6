@@ -54,6 +54,7 @@ class DockerTaskManager(DockerBaseManager):
         alpine_image: str | None = None,
         proxy: Squid | None = None,
         device_requests: list | None = None,
+        requires_pull: bool = False,
     ):
         """
         Initialization creates DockerTaskManager instance
@@ -85,6 +86,9 @@ class DockerTaskManager(DockerBaseManager):
         device_requests: list | None
             List of DeviceRequest objects to be passed to the algorithm
             container
+        requires_pull: bool
+            If true, and the Docker image cannot be pulled, don't start the algorithm
+            event if a local image is available
         """
         self.task_id = task_info["id"]
         self.log = logging.getLogger(f"task ({self.task_id})")
@@ -101,6 +105,7 @@ class DockerTaskManager(DockerBaseManager):
         self.node_name = node_name
         self.alpine_image = ALPINE_IMAGE if alpine_image is None else alpine_image
         self.proxy = proxy
+        self.requires_pull = requires_pull
 
         self.container = None
         self.status_code = None
@@ -198,22 +203,23 @@ class DockerTaskManager(DockerBaseManager):
             If the image could not be pulled and does not exist locally
         """
         try:
-            self.log.info(f"Retrieving latest image: '{self.image}'")
+            self.log.info("Retrieving latest image: '%s'", self.image)
             self.docker.images.pull(self.image)
-        except docker.errors.APIError as e:
-            self.log.warning("Failed to pull image: could not find image")
-            if not local_exists:
-                self.log.exception(e)
-                self.status = TaskStatus.NO_DOCKER_IMAGE
-                raise PermanentAlgorithmStartFail
+        except Exception as exc:
+            if isinstance(exc, docker.errors.APIError):
+                self.log.warning("Failed to pull image! Image does not exist")
             else:
-                self.log.info("Using local image")
-        except Exception as e:
-            self.log.warning("Failed to pull image")
+                self.log.warning("Failed to pull image!")
             if not local_exists:
-                self.log.exception(e)
-                self.status = TaskStatus.FAILED
-                raise PermanentAlgorithmStartFail
+                self.log.exception(exc)
+                self.status = TaskStatus.NO_DOCKER_IMAGE
+                raise PermanentAlgorithmStartFail from exc
+            elif self.requires_pull:
+                self.log.warning(
+                    "Node policy prevents local image to be used to start algorithm"
+                )
+                self.status = TaskStatus.NO_DOCKER_IMAGE
+                raise PermanentAlgorithmStartFail from exc
             else:
                 self.log.info("Using local image")
 

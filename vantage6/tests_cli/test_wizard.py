@@ -9,7 +9,7 @@ from vantage6.cli.configuration_wizard import (
     configuration_wizard,
     select_configuration_questionaire,
 )
-from vantage6.common.globals import InstanceType
+from vantage6.common.globals import InstanceType, NodePolicy
 
 module_path = "vantage6.cli.configuration_wizard"
 
@@ -68,8 +68,8 @@ class WizardTest(unittest.TestCase):
         for key in keys:
             self.assertIn(key, config)
         nested_keys = [
-            ["policies", "allowed_algorithms"],
-            ["policies", "allowed_algorithm_stores"],
+            ["policies", NodePolicy.ALLOWED_ALGORITHMS],
+            ["policies", NodePolicy.ALLOWED_ALGORITHM_STORES],
         ]
         for nesting in nested_keys:
             current_config = config

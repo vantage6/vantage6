@@ -1,9 +1,6 @@
-from http import HTTPStatus
 import logging
 import signal
 import pathlib
-import requests
-from requests.auth import HTTPBasicAuth
 
 import docker
 from docker.client import DockerClient
@@ -28,6 +25,7 @@ class ContainerKillListener:
         signal.signal(signal.SIGINT, self.exit_gracefully)
         signal.signal(signal.SIGTERM, self.exit_gracefully)
 
+    # pylint: disable=unused-argument
     def exit_gracefully(self, *args) -> None:
         """Set kill_now to True. This will trigger the container to stop"""
         self.kill_now = True
@@ -41,9 +39,7 @@ def check_docker_running() -> None:
         docker_client = docker.from_env()
         docker_client.ping()
     except Exception as exc:
-        log.error(
-            "Cannot reach the Docker engine! Please make sure Docker " "is running."
-        )
+        log.error("Cannot reach the Docker engine! Please make sure Docker is running.")
         log.exception(exc)
         log.warning("Exiting...")
         exit(1)
@@ -61,7 +57,9 @@ def running_in_docker() -> bool:
     return pathlib.Path("/.dockerenv").exists()
 
 
-def pull_image(docker_client: DockerClient, image: str) -> None:
+def pull_image(
+    docker_client: DockerClient, image: str, suppress_error: bool = False
+) -> None:
     """
     Pull a docker image
 
@@ -71,6 +69,8 @@ def pull_image(docker_client: DockerClient, image: str) -> None:
         A Docker client
     image: str
         Name of the image to pull
+    suppress_error: bool
+        Whether to suppress the error if the image could not be pulled
 
     Raises
     ------
@@ -81,8 +81,9 @@ def pull_image(docker_client: DockerClient, image: str) -> None:
         docker_client.images.pull(image)
         log.debug("Succeeded to pull image %s", image)
     except docker.errors.APIError as exc:
-        log.error("Failed to pull image! %s", image)
-        log.exception(exc)
+        if not suppress_error:
+            log.error("Failed to pull image! %s", image)
+            log.exception(exc)
         raise docker.errors.APIError("Failed to pull image") from exc
 
 
@@ -123,7 +124,7 @@ def remove_container_if_exists(docker_client: DockerClient, **filters) -> None:
     """
     container = get_container(docker_client, **filters)
     if container:
-        log.warn("Removing container that was already running: " f"{container.name}")
+        log.warning("Removing container that was already running: %s", container.name)
         remove_container(container, kill=True)
 
 
@@ -141,7 +142,7 @@ def remove_container(container: Container, kill: bool = False) -> None:
     try:
         container.remove(force=kill)
     except Exception as e:
-        log.exception(f"Failed to remove container {container.name}")
+        log.exception("Failed to remove container %s", container.name)
         log.exception(e)
 
 
@@ -183,33 +184,33 @@ def get_network(docker_client: DockerClient, **filters) -> Network:
     return networks[0] if networks else None
 
 
-def delete_network(network: Network, kill_containers: bool = True) -> None:
+def delete_network(network: Network | None, kill_containers: bool = True) -> None:
     """Delete network and optionally its containers
 
     Parameters
     ----------
-    network: Network
+    network: Network | None
         Network to delete
     kill_containers: bool
         Whether to kill the containers in the network (otherwise they are
         merely disconnected)
     """
     if not network:
-        log.warn("Network not defined! Not removing anything, continuing...")
+        log.warning("Network not defined! Not removing anything, continuing...")
         return
     network.reload()
     for container in network.containers:
-        log.info(f"Removing container {container.name} in old network")
+        log.info("Removing container %s in old network", container.name)
         if kill_containers:
-            log.warn(f"Killing container {container.name}")
+            log.warning("Killing container %s", container.name)
             remove_container(container, kill=True)
         else:
             network.disconnect(container)
     # remove the network
     try:
         network.remove()
-    except Exception:
-        log.warn(f"Could not delete existing network {network.name}")
+    except docker.errors.APIError:
+        log.warning("Could not delete existing network %s", network.name)
 
 
 def get_networks_of_container(container: Container) -> dict:
@@ -304,7 +305,10 @@ def delete_volume_if_exists(client: docker.DockerClient, volume_name: Volume) ->
 
 def parse_image_name(image: str) -> tuple[str, str, str]:
     """
-    Parse image name into registry, repository, tag
+    Parse image name into registry, repository, tag.
+
+    The returned tag may also be a digest. If image contains both a tag and a digest,
+    the digest will be returned rather than the tag.
 
     Parameters
     ----------
@@ -319,70 +323,62 @@ def parse_image_name(image: str) -> tuple[str, str, str]:
     """
     registry_repository, tag = parse_repository_tag(image)
     tag = tag or "latest"
+    if tag.startswith("sha256:"):
+        # If the tag is a digest, the repository may include another tag, e.g. if
+        # the image is "some-image:test@sha256:1234", the registry_repository would
+        # still include the tag "test". Remove that.
+        registry_repository, _ = parse_repository_tag(registry_repository)
     registry, repository = resolve_repository_name(registry_repository)
     return registry, repository, tag
 
 
-def get_manifest(
-    full_image_url: str,
-    registry: str,
-    image: str,
-    tag: str,
-    registry_user: str = None,
-    registry_password: str = None,
-) -> dict:
+def get_digest(
+    full_image: str,
+    client: DockerClient | None = None,
+    docker_username: str | None = None,
+    docker_password: str | None = None,
+) -> str:
     """
-    Get the manifest of an image
-
-    This uses the OCI distribution specification which is supported by all major
-    container registries.
+    Get digest of an image
 
     Parameters
     ----------
-    full_image_url: str
-        The full image url
-    registry: str
-        The registry of the image
-    image: str
-        The image name without the registry
-    tag: str
-        The tag of the image
-    registry_user: str (optional)
-        The username for the registry. Required if the registry is private
-    registry_password: str (optional)
-        The password for the registry. Required if the registry is private
+    full_image: str
+        Image name. E.g. "harbor2.vantage6.ai/algorithms/average:latest"
+    client: DockerClient | None
+        Docker client to use. If not provided, a new client will be created. An existing
+        client could be useful to provide if it has already been authenticated with one
+        or more registries
+    docker_username: str | None
+        Docker username to authenticate with at the registry. Required if the image is
+        private
+    docker_password: str | None
+        Docker password to authenticate with at the registry. Required if the image is
+        private
 
     Returns
     -------
-    requests.Response
-        Response containing the manifest of the image
-
-    Raises
-    ------
-    ValueError
-        If the image name is invalid
+    str | None
+        Digest of the image or `None` if the digest could not be found
     """
-    # request manifest. First try without authentication, as that is the most common
-    # case. If that fails, try with authentication
-    manifest_endpoint = f"https://{registry}/v2/{image}/manifests/{tag}"
-    response = requests.get(manifest_endpoint, timeout=60)
-    if (
-        response.status_code == HTTPStatus.UNAUTHORIZED
-        and registry_user
-        and registry_password
-    ):
-        response = requests.get(
-            manifest_endpoint,
-            auth=HTTPBasicAuth(registry_user, registry_password),
-            timeout=60,
-        )
+    if not client:
+        client = docker.from_env()
+    try:
+        if docker_username and docker_password:
+            distribution = client.api.inspect_distribution(
+                full_image,
+                auth_config={"username": docker_username, "password": docker_password},
+            )
+        else:
+            distribution = client.api.inspect_distribution(full_image)
+    except docker.errors.APIError:
+        log.warning("Could not find distribution specs of image %s", full_image)
+        return None
 
-    # handle errors or return manifest
-    if response.status_code == HTTPStatus.NOT_FOUND:
-        raise ValueError(f"Image {full_image_url} not found!")
-    elif response.status_code != HTTPStatus.OK:
-        raise ValueError(
-            f"Failed to retrieve metadata for '{full_image_url}. Could not retrieve "
-            f"manifest from https://{registry}/v2/{image}/manifests/{tag}"
+    try:
+        return distribution["Descriptor"]["digest"]
+    except KeyError:
+        log.warning(
+            "Distribution spec of image '%s' did not include image digest", full_image
         )
-    return response
+        return None

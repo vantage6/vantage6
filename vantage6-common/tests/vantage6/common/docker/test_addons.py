@@ -4,7 +4,7 @@ from vantage6.common.docker.addons import parse_image_name
 from docker.errors import InvalidRepository
 
 
-# These tests are adapted from [1]. We do this because parse_image_name use
+# These tests are adapted from [1]. We do this because parse_image_name uses
 # internal docker-py functions, which may change without notice in future
 # versions.
 # [1]: https://github.com/docker/docker-py/blob/9ad4bddc9ee23f3646f256280a21ef86274e39bc/tests/unit/auth_test.py#L27s
@@ -133,4 +133,18 @@ class TestParseImageName(TestCase):
         self.assertEqual(
             parse_image_name("harbor2.vantage6.ai/demo/average@sha256:1234"),
             ("harbor2.vantage6.ai", "demo/average", "sha256:1234"),
+        )
+
+    def test_parse_image_name_with_sha_and_tag(self):
+        self.assertEqual(
+            parse_image_name(
+                "harbor2.vantage6.ai/infrastructure/node:4.5@sha256:1234567890abcdef"
+                "1234567890abcdef1234567890abcdef1234567890abcdef"
+            ),
+            (
+                "harbor2.vantage6.ai",
+                "infrastructure/node",
+                "sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+                "abcdef",
+            ),
         )

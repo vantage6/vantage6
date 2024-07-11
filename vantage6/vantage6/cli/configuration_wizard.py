@@ -3,7 +3,7 @@ import questionary as q
 from pathlib import Path
 
 from vantage6.common import generate_apikey
-from vantage6.common.globals import DATABASE_TYPES, InstanceType
+from vantage6.common.globals import DATABASE_TYPES, InstanceType, NodePolicy
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.context import AppContext
 from vantage6.common import error, warning, info
@@ -107,12 +107,14 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
             "Do you want to enter a list of allowed algorithms?"
         ).ask()
         if ask_single_algorithms:
-            policies["allowed_algorithms"] = _get_allowed_algorithms()
+            policies[NodePolicy.ALLOWED_ALGORITHMS] = _get_allowed_algorithms()
         ask_algorithm_stores = q.confirm(
             "Do you want to allow algorithms from specific algorithm stores?"
         ).ask()
         if ask_algorithm_stores:
-            policies["allowed_algorithm_stores"] = _get_allowed_algorithm_stores()
+            policies[NodePolicy.ALLOWED_ALGORITHM_STORES] = (
+                _get_allowed_algorithm_stores()
+            )
         if ask_single_algorithms and ask_algorithm_stores:
             require_both_whitelists = q.confirm(
                 "Do you want to allow only algorithms that are both in the list of "
@@ -206,7 +208,7 @@ def _get_allowed_algorithms() -> list[str]:
         "harbor2.vantage6.ai/algorithms"
     )
     info(
-        "^harbor2\.vantage6\.ai/demo/average:@sha256:82becede...$    Allow a "
+        "^harbor2\.vantage6\.ai/demo/average@sha256:82becede...$    Allow a "
         "specific hash of average algorithm"
     )
     allowed_algorithms = []
@@ -231,8 +233,8 @@ def _get_allowed_algorithm_stores() -> list[str]:
     """
     info("Below you can add algorithm stores that are allowed to run on your node.")
     info(
-        "You can use regular expressions to match multiple algorithms, or you can "
-        "use strings to provide one algorithm at a time."
+        "You can use regular expressions to match multiple algorithm stores, or you can"
+        " use strings to provide one algorithm store at a time."
     )
     info("Examples:")
     info(
@@ -240,7 +242,7 @@ def _get_allowed_algorithm_stores() -> list[str]:
         "community store"
     )
     info(
-        "^https://*.vantage6.ai$               Allow all algorithms from any "
+        "^https://*\.vantage6\.ai$               Allow all algorithms from any "
         "store hosted on vantage6.ai"
     )
     allowed_algorithm_stores = []

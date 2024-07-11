@@ -32,7 +32,7 @@ setup(
     packages=find_namespace_packages(),
     python_requires=">=3.6",
     install_requires=[
-        "connectorx==0.2.3",
+        "connectorx==0.3.3",
         "openpyxl>=3.0.0",
         "pandas>=1.5.3",
         "PyJWT==2.6.0",

@@ -18,7 +18,7 @@ class ServerCLITest(unittest.TestCase):
     @patch("vantage6.cli.server.start.NetworkManager")
     @patch("vantage6.cli.server.start.docker.types.Mount")
     @patch("os.makedirs")
-    @patch("vantage6.cli.server.start.pull_image")
+    @patch("vantage6.cli.server.start.pull_infra_image")
     @patch("vantage6.cli.common.decorator.get_context")
     @patch("vantage6.cli.server.start.docker.from_env")
     @patch("vantage6.cli.common.start.check_docker_running", return_value=True)

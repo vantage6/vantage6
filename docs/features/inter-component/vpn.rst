@@ -105,10 +105,17 @@ to the VPN network on startup.
 How to test the VPN connection
 ++++++++++++++++++++++++++++++
 
-`This algorithm <https://github.com/vantage6/v6-node-to-node-diagnostics>`_ can
-be used to test the VPN connection. The script `test_on_v6.py` in this
-repository can be used to send a test task which will print whether echoes over
-the VPN network are working.
+vantage6 has built-in diagnostic tools to test the vpn functionality. If vpn is 
+enabled, this feature will be tested as well. To run the feature tester, run:
+
+.. code:: bash
+
+    # Run feature test with default arguments:
+    v6 test feature-test 
+
+    # Find more info on the feature-test command:
+    v6 test feature-test --help
+
 
 Use VPN in your algorithm
 +++++++++++++++++++++++++
