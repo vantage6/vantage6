@@ -1,11 +1,6 @@
-import re
-import json
-import hashlib
-from http import HTTPStatus
 import logging
 import signal
 import pathlib
-import requests
 
 import docker
 from docker.client import DockerClient
@@ -14,7 +9,6 @@ from docker.models.volumes import Volume
 from docker.models.networks import Network
 from docker.utils import parse_repository_tag
 from docker.auth import resolve_repository_name
-from docker.errors import APIError, ImageNotFound
 
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
