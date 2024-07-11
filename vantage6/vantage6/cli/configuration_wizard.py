@@ -82,11 +82,6 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
             {"label": db_label.get("label"), "uri": db_path.get("uri"), "type": db_type}
         )
 
-    res = q.select(
-        "Which level of logging would you like?",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", "NOTSET"],
-    ).ask()
-
     is_add_vpn = q.confirm(
         "Do you want to connect to a VPN server?", default=False
     ).ask()
@@ -101,33 +96,41 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
         "should always be done for production scenarios.",
         default=True,
     ).ask()
+    policies = {}
     if is_policies:
-        allowed_algorithms = []
-        info("Below you can add algorithms that are allowed to run on your node.")
         info(
-            "You can use regular expressions to match multiple algorithms, or you can "
-            "use strings to provide one algorithm at a time."
+            "You can limit the algorithms that can run on your node in two ways: by "
+            "allowing specific algorithms or by allowing all algorithms in a given "
+            "algorithm store."
         )
-        info("Examples:")
-        # pylint: disable=W1401
-        # flake8: noqa: W605
-        info("^harbor2\.vantage6\.ai/demo/average$    Allow the demo average algorithm")
-        info(
-            "^harbor2\.vantage6\.ai/algorithms/.*   Allow all algorithms from "
-            "harbor2.vantage6.ai/algorithms"
-        )
-        info(
-            "^harbor2\.vantage6\.ai/demo/average:@sha256:82becede...$    Allow a "
-            "specific hash of average algorithm"
-        )
-        while True:
-            algo = q.text(message="Enter your algorithm expression:").ask()
-            allowed_algorithms.append(algo)
-            if not q.confirm(
-                "Do you want to add another algorithm expression?", default=True
-            ).ask():
-                break
-        config["policies"] = {NodePolicy.ALLOWED_ALGORITHMS: allowed_algorithms}
+        ask_single_algorithms = q.confirm(
+            "Do you want to enter a list of allowed algorithms?"
+        ).ask()
+        if ask_single_algorithms:
+            policies[NodePolicy.ALLOWED_ALGORITHMS] = _get_allowed_algorithms()
+        ask_algorithm_stores = q.confirm(
+            "Do you want to allow algorithms from specific algorithm stores?"
+        ).ask()
+        if ask_algorithm_stores:
+            policies[NodePolicy.ALLOWED_ALGORITHM_STORES] = (
+                _get_allowed_algorithm_stores()
+            )
+        if ask_single_algorithms and ask_algorithm_stores:
+            require_both_whitelists = q.confirm(
+                "Do you want to allow only algorithms that are both in the list of "
+                "allowed algorithms *AND* are part of one of the allowed algorithm "
+                "stores? If not, algorithms will be allowed if they are in either the "
+                "list of allowed algorithms or one of the allowed algorithm stores.",
+                default=True,
+            ).ask()
+            policies["allow_either_whitelist_or_store"] = not require_both_whitelists
+    if policies:
+        config["policies"] = policies
+
+    res = q.select(
+        "Which level of logging would you like?",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", "NOTSET"],
+    ).ask()
 
     config["logging"] = {
         "level": res,
@@ -180,6 +183,77 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
     }
 
     return config
+
+
+def _get_allowed_algorithms() -> list[str]:
+    """
+    Prompt the user for the allowed algorithms on their node
+
+    Returns
+    -------
+    list[str]
+        List of allowed algorithms or regular expressions to match them
+    """
+    info("Below you can add algorithms that are allowed to run on your node.")
+    info(
+        "You can use regular expressions to match multiple algorithms, or you can "
+        "use strings to provide one algorithm at a time."
+    )
+    info("Examples:")
+    # pylint: disable=W1401
+    # flake8: noqa: W605
+    info("^harbor2\.vantage6\.ai/demo/average$    Allow the demo average algorithm")
+    info(
+        "^harbor2\.vantage6\.ai/algorithms/.*   Allow all algorithms from "
+        "harbor2.vantage6.ai/algorithms"
+    )
+    info(
+        "^harbor2\.vantage6\.ai/demo/average@sha256:82becede...$    Allow a "
+        "specific hash of average algorithm"
+    )
+    allowed_algorithms = []
+    while True:
+        algo = q.text(message="Enter your algorithm expression:").ask()
+        allowed_algorithms.append(algo)
+        if not q.confirm(
+            "Do you want to add another algorithm expression?", default=True
+        ).ask():
+            break
+    return allowed_algorithms
+
+
+def _get_allowed_algorithm_stores() -> list[str]:
+    """
+    Prompt the user for the allowed algorithm stores on their node
+
+    Returns
+    -------
+    list[str]
+        List of allowed algorithm stores
+    """
+    info("Below you can add algorithm stores that are allowed to run on your node.")
+    info(
+        "You can use regular expressions to match multiple algorithm stores, or you can"
+        " use strings to provide one algorithm store at a time."
+    )
+    info("Examples:")
+    info(
+        "https://store.cotopaxi.vantage6.ai    Allow all algorithms from the "
+        "community store"
+    )
+    info(
+        "^https://*\.vantage6\.ai$               Allow all algorithms from any "
+        "store hosted on vantage6.ai"
+    )
+    allowed_algorithm_stores = []
+    while True:
+        store = q.text(message="Enter the URL of the algorithm store:").ask()
+        allowed_algorithm_stores.append(store)
+        if not q.confirm(
+            "Do you want to add another algorithm store?", default=True
+        ).ask():
+            break
+    return allowed_algorithm_stores
 
 
 def _get_common_server_config(

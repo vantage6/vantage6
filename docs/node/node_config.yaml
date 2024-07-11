@@ -105,10 +105,28 @@ encryption:
 # Define who is allowed to run which algorithms on this node.
 policies:
   # Control which algorithm images are allowed to run on this node. This is
-  # expected to be a valid regular expression.
+  # expected to be a valid regular expression. If you don't specify this, all algorithm
+  # images are allowed to run on this node (unless other policies restrict this).
   allowed_algorithms:
     - ^harbor2\.vantage6\.ai/[a-zA-Z]+/[a-zA-Z]+
     - ^myalgorithm\.ai/some-algorithm
+
+  # It is also possible to allow all algorithms from particular algorithm stores. Set
+  # these stores here. They may be strings or regular expressions. If you don't specify
+  # this, algorithms from any store are allowed (unless other policies prevent this).
+  allowed_algorithm_stores:
+    # allow all algorithms from the vantage6 community store
+    - https://store.cotopaxi.vantage6.ai
+    # allow any store that is a subdomain of vantage6.ai
+    - ^https://[a-z]+\.vantage6\.ai$
+
+  # If you define both `allowed_algorithm_stores` and `allowed_algorithms`, you can
+  # choose to only allow algorithms that both policies allow, or you can allow
+  # algorithms that either of them allows. By default, only algorithms that are given
+  # in *both* the `allowed_algorithms` and `allowed_algorithm_stores` are allowed by
+  # setting this to the default value `false`.
+  allow_either_whitelist_or_store: false
+
   # Define which users are allowed to run algorithms on your node by their ID
   allowed_users:
     - 2

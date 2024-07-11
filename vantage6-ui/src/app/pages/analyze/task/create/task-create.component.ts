@@ -176,7 +176,11 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     // set algorithm step
     this.packageForm.controls.name.setValue(this.repeatedTask.name);
     this.packageForm.controls.description.setValue(this.repeatedTask.description);
-    const algorithm = this.algorithms.find((_) => _.image === this.repeatedTask?.image);
+    let algorithm = this.algorithms.find((_) => _.image === this.repeatedTask?.image);
+    if (!algorithm && this.repeatedTask?.image.includes('@sha256:')) {
+      // get algorithm including digest
+      algorithm = this.algorithms.find((_) => `${_.image}@${_.digest}` === this.repeatedTask?.image);
+    }
     if (!algorithm) return;
     this.packageForm.controls.algorithmID.setValue(algorithm.id.toString());
     await this.handleAlgorithmChange(algorithm.id);
@@ -310,6 +314,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       image: this.algorithm?.image || '',
       collaboration_id: this.collaboration?.id || -1,
       databases: taskDatabases,
+      store_id: this.algorithm?.algorith_store_id || -1,
       organizations: selectedOrganizations.map((organizationID) => {
         return {
           id: Number.parseInt(organizationID),

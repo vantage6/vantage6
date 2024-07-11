@@ -103,7 +103,11 @@ export class TemplateTaskCreateComponent implements OnInit {
 
     const algorithms = await this.algorithmService.getAlgorithms();
     // TODO handle multiple matches from different algorithm stores
-    const baseAlgorithm = algorithms.find((_) => _.image === this.templateTask?.image);
+    let baseAlgorithm = algorithms.find((_) => _.image === this.templateTask?.image);
+    if (!baseAlgorithm && this.templateTask?.image.includes('@sha256:')) {
+      // get algorithm including digest
+      baseAlgorithm = algorithms.find((_) => `${_.image}@${_.digest}` === this.templateTask?.image);
+    }
     if (baseAlgorithm) {
       this.algorithm = await this.algorithmService.getAlgorithm(
         baseAlgorithm.algorithm_store_url || '',
@@ -190,6 +194,7 @@ export class TemplateTaskCreateComponent implements OnInit {
         : this.packageForm.get('description')?.value || '',
       image: this.algorithm?.image || '',
       collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
+      store_id: this.algorithm?.algorith_store_id || -1,
       databases: taskDatabases,
       organizations: selectedOrganizations.map((organizationID) => {
         return { id: Number.parseInt(organizationID), input: btoa(JSON.stringify(input)) || '' };

@@ -12,6 +12,7 @@ from vantage6.common.globals import STRING_ENCODING, NodePolicy
 from vantage6.common.task_status import TaskStatus, has_task_finished
 from vantage6.common.encryption import DummyCryptor
 from vantage6.server import db
+from vantage6.server.algo_store_communication import get_server_url, request_algo_store
 from vantage6.server.permission import (
     RuleCollection,
     Scope as S,
@@ -230,6 +231,11 @@ class Tasks(TaskBase):
             schema:
               type: int
             description: The run id that belongs to the task
+          - in: query
+            name: store_id
+            schema:
+              type: int
+            description: The algorithm store ID from which the algorithm was retrieved
           - in: query
             name: name
             schema:
@@ -451,6 +457,15 @@ class Tasks(TaskBase):
                 }, HTTPStatus.UNAUTHORIZED
             q = q.join(db.Run).filter(db.Run.id == run_id)
 
+        if "store_id" in args:
+            store_id = int(args["store_id"])
+            store = db.AlgorithmStore.get(store_id)
+            if not store:
+                return {
+                    "msg": f"Algorithm store id={store_id} does not exist!"
+                }, HTTPStatus.BAD_REQUEST
+            q = q.filter(db.Task.algorithmstore_id == store_id)
+
         if "database" in args:
             q = q.join(db.TaskDatabase).filter(
                 db.TaskDatabase.database == args["database"]
@@ -526,11 +541,12 @@ class Tasks(TaskBase):
           200:
             description: Ok
           400:
-            description: Supplied organizations are not in the supplied
-              collaboration, or not all required nodes are registered, or you
+            description: Wrong input, or not all required nodes are registered, or you
               are not in the collaboration yourself
           401:
             description: Unauthorized
+          403:
+            description: Algorithm store is not part of the collaboration
           404:
             description: Collaboration with `collaboration_id` not found
 
@@ -539,11 +555,15 @@ class Tasks(TaskBase):
 
         tags: ["Task"]
         """
-        return self.post_task(request.get_json(), self.socketio, self.r)
+        try:
+            request.get_json()
+        except Exception:
+            return {"msg": "Request body is incorrect"}, HTTPStatus.BAD_REQUEST
+        return self.post_task(request.get_json(), self.socketio, self.r, self.config)
 
     # TODO this function should be refactored to make it more readable
     @staticmethod
-    def post_task(data: dict, socketio: SocketIO, rules: RuleCollection):
+    def post_task(data: dict, socketio: SocketIO, rules: RuleCollection, config: dict):
         """
         Create new task and algorithm runs. Send the task to the nodes.
 
@@ -555,6 +575,8 @@ class Tasks(TaskBase):
             SocketIO server instance
         rules : RuleCollection
             Rule collection instance
+        config : dict
+            Configuration dictionary
         """
         # validate request body
         errors = task_input_schema.validate(data)
@@ -676,6 +698,46 @@ class Tasks(TaskBase):
             ):
                 return {"msg": "Container-token is not valid"}, HTTPStatus.UNAUTHORIZED
 
+        # get the algorithm store
+        store_id = data.get("store_id")
+        store = None
+        if store_id:
+            store = db.AlgorithmStore.get(store_id)
+            if not store:
+                return {
+                    "msg": f"Algorithm store id={store_id} not found!"
+                }, HTTPStatus.BAD_REQUEST
+            # check if the store is part of the collaboration
+            if (
+                not store.is_for_all_collaborations()
+                and store.collaboration_id != collaboration_id
+            ):
+                return {
+                    "msg": (
+                        "The algorithm store is not part of the collaboration "
+                        "to which the task is posted."
+                    )
+                }, HTTPStatus.FORBIDDEN
+            # get the algorithm from the algorithm store
+            try:
+                image, digest = Tasks._get_image_and_hash_from_store(
+                    store, image, config
+                )
+            except Exception as e:
+                log.exception("Error while getting image from store: %s", e)
+                return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+
+            if digest:
+                image_with_hash = f"{image}@{digest}"
+            else:
+                # hash lookup in store was unsuccessful, use image without hash, but
+                # also set store to None as it was not successfully looked up
+                image_with_hash = image
+                store = None
+        else:
+            # no need to determine hash if we don't look it up in a store
+            image_with_hash = image
+
         # check that the input is valid. If the collaboration is encrypted, it
         # should not be possible to read the input, and we should not save it
         # to the database as it may be sensitive information. Vice versa, if
@@ -693,8 +755,9 @@ class Tasks(TaskBase):
             study=study,
             name=data.get("name", ""),
             description=data.get("description", ""),
-            image=image,
+            image=image_with_hash,
             init_org=init_org,
+            algorithm_store=store,
         )
 
         # create job_id. Users can only create top-level -tasks (they will not
@@ -743,19 +806,6 @@ class Tasks(TaskBase):
         # All checks completed, save task to database
         task.save()
         [db_record.save() for db_record in db_records]  # pylint: disable=W0106
-
-        # send socket event that task has been created
-        socketio.emit(
-            "task_created",
-            {
-                "task_id": task.id,
-                "job_id": task.job_id,
-                "collaboration_id": collaboration_id,
-                "init_org_id": init_org.id,
-            },
-            room=f"collaboration_{collaboration_id}",
-            namespace="/tasks",
-        )
 
         # now we need to create results for the nodes to fill. Each node
         # receives their instructions from a result, not from the task itself
@@ -924,6 +974,68 @@ class Tasks(TaskBase):
                     "as your collaboration is set to not use encryption."
                 )
         return True, ""
+
+    @staticmethod
+    def _get_image_and_hash_from_store(
+        store: db.AlgorithmStore, image: str, config: dict
+    ) -> tuple[str, str]:
+        """
+        Determine the image and hash from the algorithm store.
+
+        Parameters
+        ----------
+        store : db.AlgorithmStore
+            Algorithm store.
+        image : str
+            URL of the docker image to be used.
+        config : dict
+            Configuration dictionary.
+
+        Returns
+        -------
+        tuple[str, str]
+            Image url and image hash digest.
+
+        Raises
+        ------
+        Exception
+            If the algorithm cannot be retrieved from the store.
+        """
+        server_url = get_server_url(config, request.args.get("server_url"))
+        if not server_url:
+            raise ValueError(
+                "Server URL is not set in the configuration nor in the request "
+                "arguments. Please provide it as 'server_url' in the request."
+            )
+        # get the algorithm from the store
+        response, status_code = request_algo_store(
+            algo_store_url=store.url,
+            server_url=server_url,
+            endpoint="algorithm",
+            method="GET",
+            params={"image": image},
+        )
+        if status_code != HTTPStatus.OK:
+            raise Exception(
+                f"Could not retrieve algorithm from store! {response.get('msg')}"
+            )
+        try:
+            algorithm = response.json()["data"][0]
+        except Exception as e:
+            raise Exception("Algorithm not found in store!") from e
+
+        image = algorithm["image"]
+        digest = algorithm["digest"]
+        # TODO v5+ remove this check? The digest should always be present for an
+        # algorithm from stores started in v4.6 and higher
+        if image and not digest:
+            log.warning(
+                "Algorithm image %s does not have a digest in the algorithm store. Will"
+                " use it without digest.",
+                image,
+            )
+            return image, None
+        return image, digest
 
 
 class Task(TaskBase):

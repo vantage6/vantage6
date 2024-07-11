@@ -13,6 +13,7 @@ import logging
 import docker
 import re
 import shutil
+from docker.utils import parse_repository_tag
 
 from typing import NamedTuple
 from pathlib import Path
@@ -21,6 +22,7 @@ from vantage6.common import logger_name
 from vantage6.common import get_database_config
 from vantage6.common.docker.addons import (
     get_container,
+    get_digest,
     running_in_docker,
 )
 from vantage6.common.globals import APPNAME, BASIC_PROCESSING_IMAGE, NodePolicy
@@ -279,7 +281,7 @@ class DockerManager(DockerBaseManager):
             self.log.debug("Creating volume %s", volume_name)
             self.docker.volumes.create(volume_name)
 
-    def is_docker_image_allowed(self, docker_image_name: str, task_info: dict) -> bool:
+    def is_docker_image_allowed(self, evaluated_img: str, task_info: dict) -> bool:
         """
         Checks the docker image name.
 
@@ -288,8 +290,8 @@ class DockerManager(DockerBaseManager):
 
         Parameters
         ----------
-        docker_image_name: str
-            uri to the docker image
+        assessed_img: str
+            URI of the docker image of which we are checking if it is allowed
         task_info: dict
             Dictionary with information about the task
 
@@ -301,7 +303,11 @@ class DockerManager(DockerBaseManager):
         # check if algorithm matches any of the regex cases
         allow_basics = self._policies.get(NodePolicy.ALLOW_BASICS_ALGORITHM, True)
         allowed_algorithms = self._policies.get(NodePolicy.ALLOWED_ALGORITHMS)
-        if docker_image_name.startswith(BASIC_PROCESSING_IMAGE):
+        allowed_stores = self._policies.get(NodePolicy.ALLOWED_ALGORITHM_STORES)
+        allow_either_whitelist_or_store = self._policies.get(
+            "allow_either_whitelist_or_store", False
+        )
+        if evaluated_img.startswith(BASIC_PROCESSING_IMAGE):
             if not allow_basics:
                 self.log.warn(
                     "A task was sent with a basics algorithm that "
@@ -309,26 +315,6 @@ class DockerManager(DockerBaseManager):
                 )
                 return False
             # else: basics are allowed, so we don't need to check the regex
-        elif allowed_algorithms:
-            if isinstance(allowed_algorithms, str):
-                allowed_algorithms = [allowed_algorithms]
-            found = False
-            for algorithm in allowed_algorithms:
-                if not self._is_regex_pattern(algorithm):
-                    # check if string matches exactly
-                    if algorithm == docker_image_name:
-                        found = True
-                else:
-                    expr_ = re.compile(algorithm)
-                    if expr_.match(docker_image_name):
-                        found = True
-
-            if not found:
-                self.log.warn(
-                    "A task was sent with a docker image that this"
-                    " node does not allow to run."
-                )
-                return False
 
         # check if user or their organization is allowed
         allowed_users = self._policies.get(NodePolicy.ALLOWED_USERS, [])
@@ -341,13 +327,104 @@ class DockerManager(DockerBaseManager):
                 task_info["init_user"]["id"],
             )
             if not is_allowed:
-                self.log.warn(
-                    "A task was sent by a user or organization that "
-                    "this node does not allow to start tasks."
+                self.log.warning(
+                    "A task was sent by a user or organization that this node does not "
+                    "allow to start tasks."
                 )
                 return False
 
-        return True
+        algorithm_whitelisted = False
+        if allowed_algorithms:
+            if isinstance(allowed_algorithms, str):
+                allowed_algorithms = [allowed_algorithms]
+            evaluated_img_wo_tag, _ = parse_repository_tag(evaluated_img)
+            for allowed_algo in allowed_algorithms:
+                if not self._is_regex_pattern(allowed_algo):
+                    allowed_wo_tag, _ = parse_repository_tag(allowed_algo)
+                    if allowed_algo == evaluated_img:
+                        # OK if allowed algorithm and provided algorithm match exactly
+                        algorithm_whitelisted = True
+                        break
+                    elif allowed_algo == evaluated_img_wo_tag:
+                        # OK if allowed algorithm is an image name without a tag, and
+                        # the provided image is the same but includes extra tag
+                        algorithm_whitelisted = True
+                        break
+                    elif allowed_wo_tag == evaluated_img_wo_tag:
+                        # The allowed image and the evaluated image are indeed the same
+                        # image but the allowed image only allows certain tags or sha's.
+                        # Gather the digests of the images and compare them - if they
+                        # are the same, the image is allowed.
+                        # Note that by comparing the digests, we also take into account
+                        # the situation where e.g. the allowed image has a tag, but the
+                        # evaluated image has a sha256.
+                        digest_evaluated_image = get_digest(
+                            evaluated_img, client=self.docker
+                        )
+                        if not digest_evaluated_image:
+                            self.log.warning(
+                                "Could not obtain digest for image %s",
+                                evaluated_img,
+                            )
+                        digest_policy_image = get_digest(
+                            allowed_algo, client=self.docker
+                        )
+                        if not digest_policy_image:
+                            self.log.warning(
+                                "Could not obtain digest for image %s", allowed_algo
+                            )
+                        if (
+                            digest_evaluated_image
+                            and digest_policy_image
+                            and (digest_evaluated_image == digest_policy_image)
+                        ):
+                            algorithm_whitelisted = True
+                            break
+                else:
+                    expr_ = re.compile(allowed_algo)
+                    if expr_.match(evaluated_img):
+                        algorithm_whitelisted = True
+
+        store_whitelisted = False
+        if allowed_stores:
+            # get the store from the task_info
+            try:
+                store_id = task_info["algorithm_store"]["id"]
+            except Exception:
+                store_id = None
+            if store_id:
+                store = self.client.algorithm_store.get(store_id)
+                store_from_task = store["url"]
+                # check if the store matches any of the regex cases
+                if isinstance(allowed_stores, str):
+                    allowed_stores = [allowed_stores]
+                for store in allowed_stores:
+                    if not self._is_regex_pattern(store):
+                        # check if string matches exactly
+                        if store == store_from_task:
+                            store_whitelisted = True
+                    else:
+                        expr_ = re.compile(store)
+                        if expr_.match(store_from_task):
+                            store_whitelisted = True
+
+        allowed_from_whitelist = not allowed_algorithms or algorithm_whitelisted
+        allowed_from_store = not allowed_stores or store_whitelisted
+        if allow_either_whitelist_or_store:
+            # if we allow an algorithm if it is defined in the whitelist or the store,
+            # we return True if either the algorithm or the store is whitelisted
+            allowed = allowed_from_whitelist or allowed_from_store
+        else:
+            # only allow algorithm if it is allowed for both the allowed_algorithms and
+            # the allowed_algorithm_stores
+            allowed = allowed_from_whitelist and allowed_from_store
+
+        if not allowed:
+            self.log.warning(
+                "This node does not allow the algorithm %s to run!", evaluated_img
+            )
+
+        return allowed
 
     @staticmethod
     def _is_regex_pattern(pattern: str) -> bool:

@@ -86,6 +86,7 @@ def post_algorithm_store(
         method="post",
         force=force,
         headers=headers,
+        params={"server_url": server_url},
     )
     if status == HTTPStatus.FORBIDDEN:
         # if whitelisting of the server at the algorithm store fails with status
@@ -137,7 +138,6 @@ def store_has_open_algorithms(algorithm_store_url: str, server_url: str) -> bool
     bool
         True if the store has open algorithms, False otherwise
     """
-    # response = requests.get(f"{algorithm_store_url}/api/policy/public", timeout=300)
     response, status_code = request_algo_store(
         algo_store_url=algorithm_store_url,
         server_url=server_url,
@@ -162,6 +162,7 @@ def request_algo_store(
     method: str,
     force: bool = False,
     headers: dict = None,
+    params: dict = None,
 ) -> tuple[dict | Response, HTTPStatus]:
     """
     Whitelist this vantage6 server url for the algorithm store.
@@ -191,12 +192,10 @@ def request_algo_store(
         request to the algorithm store is unsuccessful, a dict with an error message is
         returned instead of the response.
     """
-    # TODO this is not pretty, but it works for now. This should change
-    # when we have a separate auth service
     is_localhost_algo_store = _contains_localhost(algo_store_url)
     try:
         response = _execute_algo_store_request(
-            algo_store_url, server_url, endpoint, method, force, headers
+            algo_store_url, server_url, endpoint, method, force, headers, params
         )
     except requests.exceptions.ConnectionError as exc:
         if not is_localhost_algo_store:
@@ -223,7 +222,7 @@ def request_algo_store(
         algo_store_url = algo_store_url.replace("http://http://", "http://")
         try:
             response = _execute_algo_store_request(
-                algo_store_url, server_url, endpoint, method, force, headers
+                algo_store_url, server_url, endpoint, method, force, headers, params
             )
         except requests.exceptions.ConnectionError as exc:
             log.warning("Request to algorithm store failed")
@@ -265,6 +264,7 @@ def _execute_algo_store_request(
     method: str,
     force: bool,
     headers: dict = None,
+    param_dict: dict = None,
 ) -> requests.Response:
     """
     Send a request to the algorithm store to whitelist this vantage6 server
@@ -288,6 +288,8 @@ def _execute_algo_store_request(
     headers : dict
         Headers to be included in the request. Usually, these will be Authorization
         headers
+    params : dict
+        Parameters to be included in the request
 
     Returns
     -------
@@ -300,7 +302,7 @@ def _execute_algo_store_request(
     if algo_store_url.endswith("/"):
         algo_store_url = algo_store_url[:-1]
 
-    param_dict = {"url": server_url}
+    param_dict = param_dict if param_dict is not None else {}
     if force:
         param_dict["force"] = True
 
@@ -311,6 +313,7 @@ def _execute_algo_store_request(
 
     params = None
     json = None
+    method = method.lower()
     if method == "get":
         request_function = requests.get
         params = param_dict

@@ -20,6 +20,8 @@ class Algorithm(Base):
         Type of partitioning
     vantage6_version : str
         Version of vantage6 that the algorithm is built with
+    digest : str
+        Hash digest of the algorithm
 
     functions : list[:class:`~.model.function.function`]
         List of functions that are available in the algorithm
@@ -38,6 +40,7 @@ class Algorithm(Base):
     # documentation_url = Column(String)
     partitioning = Column(String)
     vantage6_version = Column(String)
+    digest = Column(String)
 
     # relationships
     functions = relationship("Function", back_populates="algorithm")
