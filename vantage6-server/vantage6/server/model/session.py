@@ -30,8 +30,8 @@ class Session(Base):
 
     Attributes
     ----------
-    label : str
-        Label of the session
+    name : str
+        Name of the session
     user_id : int
         ID of the user that owns the session
     collaboration_id : int
@@ -65,7 +65,7 @@ class Session(Base):
     """
 
     # fields
-    label = Column(String)
+    name = Column(String)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     collaboration_id = Column(Integer, ForeignKey("collaboration.id"), nullable=False)
     study_id = Column(Integer, ForeignKey("study.id"))
@@ -73,7 +73,7 @@ class Session(Base):
     last_used_at = Column(DateTime, default=datetime.now(timezone.utc))
     scope = Column(String, default=Scope.OWN.value)
 
-    __table_args__ = (UniqueConstraint("label", "collaboration_id"),)
+    __table_args__ = (UniqueConstraint("name", "collaboration_id"),)
 
     # relationships
     owner = relationship("User", back_populates="sessions")
@@ -81,6 +81,7 @@ class Session(Base):
     study = relationship("Study", back_populates="sessions")
     tasks = relationship("Task", back_populates="session")
     node_sessions = relationship("NodeSession", back_populates="session")
+    config = relationship("SessionConfig", back_populates="session")
 
     @property
     def is_ready(self):
@@ -97,21 +98,21 @@ class Session(Base):
         )
 
     @staticmethod
-    def label_exists(session_label: str, collaboration: "Collaboration"):
+    def name_exists(name: str, collaboration: "Collaboration"):
         """
-        Check if a session with the given label already exists in the collaboration.
+        Check if a session with the given name already exists in the collaboration.
 
         Parameters
         ----------
-        session_label : str
-            Label of the session to check
+        name : str
+            Name of the session to check
 
         Returns
         -------
         bool
-            True if the session label already exists, False otherwise
+            True if the session name already exists, False otherwise
         """
-        return any(session.label == session_label for session in collaboration.sessions)
+        return any(session.name == name for session in collaboration.sessions)
 
     def organizations(self):
         """
@@ -154,7 +155,7 @@ class Session(Base):
         number_of_tasks = len(self.tasks)
         return (
             "<Session "
-            f"{self.id}: '{self.label}', "
+            f"{self.id}: '{self.name}', "
             f"owner_id={self.owner.username}, "
             f"collaboration={self.collaboration.name}, "
             f"{number_of_tasks} task(s)"

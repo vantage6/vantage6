@@ -25,7 +25,7 @@ class TaskDatabase(Base):
         ID of the task that uses the database
     database : str
         Label or handle of the database
-    type : str
+    type_ : str
         Type of the database (e.g. source or handle)
 
     Relationships

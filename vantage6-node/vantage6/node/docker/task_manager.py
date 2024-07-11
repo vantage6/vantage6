@@ -5,7 +5,11 @@ import os
 import docker.errors
 import json
 import base64
+import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 
+from datetime import datetime
 from pathlib import Path
 from docker import DockerClient
 
@@ -52,6 +56,7 @@ class DockerTaskManager(DockerBaseManager):
         isolated_network_mgr: NetworkManager,
         databases: dict,
         docker_volume_name: str,
+        session_id: int,
         alpine_image: str | None = None,
         proxy: Squid | None = None,
         device_requests: list | None = None,
@@ -84,6 +89,10 @@ class DockerTaskManager(DockerBaseManager):
             List of databases
         docker_volume_name: str
             Name of the docker volume
+        session_vol_name: str
+            Name of the session docker volume
+        session_id: int
+            Session ID
         alpine_image: str | None
             Name of alternative Alpine image to be used
         device_requests: list | None
@@ -94,12 +103,13 @@ class DockerTaskManager(DockerBaseManager):
             event if a local image is available
         """
         self.task_id = task_info["id"]
-        self.log = logging.getLogger(f"task ({self.task_id})")
+        self.log = logging.getLogger(f"task_manager {self.task_id}|{session_id}")
 
         super().__init__(isolated_network_mgr, docker_client=docker_client)
         self.image = image
         self.__vpn_manager = vpn_manager
         self.run_id = run_id
+        self.session_id = session_id
         self.task_id = task_info["id"]
         self.action = action
         self.parent_id = get_parent_id(task_info)
@@ -111,6 +121,7 @@ class DockerTaskManager(DockerBaseManager):
         self.proxy = proxy
         self.requires_pull = requires_pull
 
+        print(session_id)
         self.container = None
         self.status_code = None
         self.docker_input = None
@@ -127,6 +138,7 @@ class DockerTaskManager(DockerBaseManager):
         #   in some way.
         self.data_folder = "/mnt/data"
         self.session_folder = "/mnt/session"
+        self.session_state_file_name = "state.parquet"
         # FIXME: this `tmp_folder` might be used by some algorithms.In v5+ the
         # `TEMPORARY_FOLDER` environment variable should be removed and all these
         # algorithms should be updated to use the `SESSION_FOLDER` environment variable.
@@ -135,7 +147,7 @@ class DockerTaskManager(DockerBaseManager):
         # keep track of the task status
         self.status: TaskStatus = TaskStatus.INITIALIZING
 
-        # set device requests
+        # Set device requests
         self.device_requests = []
         if device_requests:
             self.device_requests = device_requests
@@ -193,13 +205,114 @@ class DockerTaskManager(DockerBaseManager):
         bytes:
             Results of the algorithm container
         """
-        if self.action == LocalAction.COMPUTE:
-            with open(self.output_file, "rb") as fp:
-                results = fp.read()
-        else:
-            results = b""
+        with open(self.output_file, "rb") as fp:
+            result = fp.read()
 
-        return results
+        result = result.decode(STRING_ENCODING)
+        result = json.loads(result)
+
+        match self.action:
+            case LocalAction.DATA_EXTRACTION:
+                return self._data_extraction_session_update(result)
+            case LocalAction.PREPROCESSING:
+                return self._preprocessing_session_update(result)
+            case LocalAction.COMPUTE:
+                self._update_session_state(
+                    LocalAction.COMPUTE.value,
+                    "no file",
+                    "Algorithm completed successfully.",
+                )
+                return result
+            case _:
+                self.log.error("Unknown action: %s", self.action)
+
+        return result
+
+    def _data_extraction_session_update(self, results) -> None:
+
+        self.log.debug("Writing extracted data to parquet file.")
+        try:
+            # TODO FM 07-10-2024: This will break for other languages. Maybe we
+            # should handle the conversion to parquet in the algorithm itself. (wrapper)
+            pq.write_table(
+                pa.Table.from_pandas(pd.DataFrame.from_dict(results)),
+                os.path.join(
+                    self.session_folder_path, "data_extraction_result.parquet"
+                ),
+            )
+        except Exception:
+            self.log.exception(f"Error writing data to parquet file")
+            self.status = TaskStatus.UNEXPECTED_OUTPUT
+
+        msg = self._update_session_state(
+            LocalAction.DATA_EXTRACTION.value,
+            "data_extraction_result.parquet",
+            "Data extraction complete.",
+        )
+
+        # TODO: report column names
+        return msg
+
+    def _preprocessing_session_update(self, results) -> None:
+
+        self.log.debug("Writing preprocessing results to parquet file.")
+        try:
+            # TODO FM 07-10-2024: This will break for other languages. Maybe we
+            # should handle the conversion to parquet in the algorithm itself.
+            pq.write_table(
+                pa.Table.from_pandas(pd.DataFrame.from_dict(results)),
+                os.path.join(self.session_folder_path, "preprocessing_result.parquet"),
+            )
+        except Exception:
+            self.log.exception(f"Error writing data to parquet file")
+            self.status = TaskStatus.UNEXPECTED_OUTPUT
+
+        self.log.debug("Update session state file")
+        msg = self._update_session_state(
+            LocalAction.PREPROCESSING.value,
+            "preprocessing_result.parquet",
+            "Preprocessing complete.",
+        )
+
+        # TODO: report column names
+        return msg
+
+    def _update_session_state(self, action: str, filename: str, message: str) -> None:
+        """
+        Update the session state file with the current action, file and message
+
+        Parameters
+        ----------
+        action: str
+            Action that was performed
+        filename: str
+            File resulting from the action
+        message: str
+            Message to be added to the state file
+        """
+        self.log.debug("Update session state file for action '%s'", action)
+        state = pq.read_table(self.session_state_file).to_pandas()
+        new_row = pd.DataFrame(
+            [
+                {
+                    "action": action,
+                    "file": filename,
+                    "timestamp": datetime.now(),
+                    "message": message,
+                }
+            ]
+        )
+
+        state = pd.concat([state, new_row], ignore_index=True)
+
+        try:
+            session_table = pa.Table.from_pandas(state)
+            pq.write_table(session_table, self.session_state_file)
+        except Exception:
+            self.log.exception("Error writing session data to parquet file")
+            self.status = TaskStatus.FAILED
+
+        return f"{message}".encode("utf-8")
 
     def pull(self, local_exists: bool) -> None:
         """
@@ -239,7 +352,6 @@ class DockerTaskManager(DockerBaseManager):
     def run(
         self,
         docker_input: bytes,
-        session_vol_name: str,
         token: str | None,
         algorithm_env: dict,
         databases_to_use: list[str],
@@ -254,8 +366,6 @@ class DockerTaskManager(DockerBaseManager):
         ----------
         docker_input: bytes
             Input that can be read by docker container
-        session_vol_name: str
-            Name of session docker volume assigned to the algorithm
         token: str | None
             Bearer token that the container can use to authenticate with the server
         algorithm_env: dict
@@ -274,7 +384,7 @@ class DockerTaskManager(DockerBaseManager):
 
         # prepare volumes
         self.docker_input = docker_input
-        self.volumes = self._prepare_volumes(session_vol_name, token)
+        self.volumes = self._prepare_volumes(token)
         self.log.debug("volumes: %s", self.volumes)
 
         # setup environment variables
@@ -419,14 +529,26 @@ class DockerTaskManager(DockerBaseManager):
         os.makedirs(self.task_folder_path, exist_ok=True)
         self.output_file = os.path.join(self.task_folder_path, "output")
 
-    def _prepare_volumes(self, session_vol_name: str, token: str) -> dict:
+        self.session_folder_name = f"session-{self.session_id:09d}"
+        self.session_folder_path = os.path.join(
+            self.__tasks_dir, self.session_folder_name
+        )
+        os.makedirs(self.session_folder_path, exist_ok=True)
+        self.session_state_file = os.path.join(
+            self.session_folder_path, self.session_state_file_name
+        )
+
+    def _prepare_volumes(self, token: str) -> dict:
         """
-        Generate docker volumes required to run the algorithm
+        The algorithm is provisioned with a session and data volume. The data
+        folder is used for the IO interface with the node instance (e.g. to read the
+        output from the algorithm). The session folder is used to intermediate data
+        between subsequent steps in the algorithm (e.g. one container extracts the
+        data and the next one actually computes statistics on this container).
+
 
         Parameters
         ----------
-        session_vol_name: str
-            Name of session docker volume assigned to the algorithm
         token: str | None
             Bearer token that the container can use to authenticate with the server
 
@@ -454,10 +576,21 @@ class DockerTaskManager(DockerBaseManager):
             with open(filepath, "wb") as fp:
                 fp.write(data)
 
-        volumes = {
-            session_vol_name: {"bind": self.session_folder, "mode": "rw"},
-        }
+        # Create session state file
+        session_state = pa.table(
+            {
+                "action": ["no action"],
+                "file": [self.session_state_file_name],
+                "timestamp": [datetime.now()],
+                "message": ["Created this session file."],
+            }
+        )
+        pq.write_table(
+            session_state,
+            os.path.join(self.session_folder_path, self.session_state_file),
+        )
 
+        volumes = {}
         if running_in_docker():
             volumes[self.data_volume_name] = {"bind": self.data_folder, "mode": "rw"}
         else:
@@ -498,7 +631,11 @@ class DockerTaskManager(DockerBaseManager):
         environment_variables = {
             "INPUT_FILE": f"{self.data_folder}/{self.task_folder_name}/input",
             "OUTPUT_FILE": f"{self.data_folder}/{self.task_folder_name}/output",
-            "SESSION_FOLDER": self.session_folder,
+            "SESSION_FOLDER": f"{self.data_folder}/{self.session_folder_name}",
+            "SESSION_FILE": (
+                f"{self.data_folder}/{self.session_folder_name}"
+                f"/{self.session_state_file_name}"
+            ),
             "HOST": f"http://{proxy_host}",
             "PORT": os.environ.get("PROXY_SERVER_PORT", 8080),
             "API_PATH": "",
