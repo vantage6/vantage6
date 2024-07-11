@@ -6,8 +6,8 @@ from vantage6.cli.context.server import ServerContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.server.start import cli_server_start
-from vantage6.cli.algostore.start import cli_algo_store_start
 from vantage6.common.globals import InstanceType
+from vantage6.client import Client
 
 
 @click.command()
@@ -59,10 +59,36 @@ def start_demo_network(
     # run all nodes that belong to this server
     configs, _ = NodeContext.available_configurations(system_folders=False)
     node_names = [
-        config.name for config in configs if f"{ctx.name}_node_" in config.name
+        config.name for config in configs if config.name.startswith(f"{ctx.name}_node_")
     ]
     for name in node_names:
         cmd = ["v6", "node", "start", "--name", name]
         if node_image:
             cmd.extend(["--image", node_image])
         subprocess.run(cmd)
+
+    # now that both server and store have been started, couple them
+    store_ctxs, _ = AlgorithmStoreContext.available_configurations(system_folders=True)
+    store_ctx = [c for c in store_ctxs if c.name == f"{ctx.name}_store"][0]
+    client = Client(
+        "http://localhost",
+        ctx.config["port"],
+        ctx.config["api_path"],
+        log_level="warn",
+    )
+    # TODO these credentials are hardcoded and may change if changed elsewhere. Link
+    # them together so that they are guaranteed to be the same.
+    USERNAME = "org_1-admin"
+    client.authenticate(USERNAME, "password")
+    existing_stores = client.store.list().get("data", [])
+    if not existing_stores:
+        store = client.store.create(
+            # TODO get store port
+            algorithm_store_url=f"http://localhost:{store_ctx.config['port']}",
+            name="local store",
+            all_collaborations=True,
+            force=True,  # required to link localhost store
+        )
+        client.store.set(store["id"])
+        # register user as store admin
+        client.store.user.register(USERNAME, [1])

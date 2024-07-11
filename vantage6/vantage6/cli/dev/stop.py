@@ -28,7 +28,7 @@ def stop_demo_network(click_ctx: click.Context, ctx: ServerContext) -> None:
     # stop the nodes
     configs, _ = NodeContext.available_configurations(False)
     node_names = [
-        config.name for config in configs if f"{ctx.name}_node_" in config.name
+        config.name for config in configs if config.name.startswith(f"{ctx.name}_node_")
     ]
     for name in node_names:
         click_ctx.invoke(

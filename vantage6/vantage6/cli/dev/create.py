@@ -259,7 +259,12 @@ def create_vserver_import_config(node_configs: list[dict], server_name: str) -> 
 
 
 def create_vserver_config(
-    server_name: str, port: int, extra_config_file: Path, ui_port: int, store_port: int
+    server_name: str,
+    port: int,
+    server_url: str,
+    extra_config_file: Path,
+    ui_port: int,
+    store_port: int,
 ) -> Path:
     """Creates server configuration file (YAML).
 
@@ -269,6 +274,8 @@ def create_vserver_config(
         Server name.
     port : int
         Server port.
+    server_url : str
+        Url of the server this
     extra_config_file : Path
         Path to file with additional server configuration.
     ui_port : int
@@ -293,6 +300,7 @@ def create_vserver_config(
     template = environment.get_template("server_config.j2")
     server_config = template.render(
         port=port,
+        host_uri=server_url,
         jwt_secret_key=generate_apikey(),
         user_provided_config=extra_config,
         ui_port=ui_port,
@@ -434,7 +442,12 @@ def demo_network(
     )
     server_import_config = create_vserver_import_config(node_configs, server_name)
     server_config = create_vserver_config(
-        server_name, server_port, extra_server_config, ui_port, algorithm_store_port
+        server_name,
+        server_port,
+        server_url,
+        extra_server_config,
+        ui_port,
+        algorithm_store_port,
     )
     store_config = create_algo_store_config(
         server_name, server_url, server_port, algorithm_store_port, extra_store_config
