@@ -128,16 +128,16 @@ swagger_template = {
             },
             "Session": {
                 "properties": {
-                    "label": {"type": "string"},
+                    "name": {"type": "string"},
                     "collaboration_id": {"type": "integer"},
                     "study_id": {"type": "integer"},
                     "scope": {"type": "string"},
                     "databases": {"type": "array", "items": {"type": "dict"}},
                 },
                 "example": {
-                    "label": "session-label",
+                    "name": "unique-session-label",
                     "collaboration_id": 1,
-                    "scope": "OWN",
+                    "scope": "own",
                     "pipelines": [
                         {
                             "label": "my-database-label",

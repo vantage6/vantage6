@@ -7,7 +7,6 @@ from functools import wraps
 
 from vantage6.common import error, debug
 from vantage6.common.enums import LocalAction
-from vantage6.algorithm.decorators import
 from vantage6.algorithm.tools.exceptions import DataTypeError, SessionError
 
 
@@ -18,7 +17,6 @@ def data_extraction(func: callable) -> callable:
     # v Update session log
     # - report column names and types to the server
     @wraps(func)
-
     def wrapper(*args, **kwargs) -> None:
         exit_if_action_mismatch(LocalAction.DATA_EXTRACTION)
 

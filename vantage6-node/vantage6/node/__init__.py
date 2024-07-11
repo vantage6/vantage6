@@ -330,20 +330,32 @@ class Node:
         self.log.info("Starting task {id} - {name}".format(**task))
 
         # notify that we are processing this task
-        self.client.set_task_start_time(task_incl_run["id"])
+        task_id = task_incl_run["id"]
+        self.client.set_task_start_time(task_id)
 
+        # each algorithm container has its own purpose annotated by the action
+        try:
+            container_action = LocalAction(task_incl_run["action"])
+        except ValueError:
+            self.log.error(
+                f"Unrecognized action {task_incl_run['action']}. " "Cancelling task."
+            )
+            self.client.run.patch(
+                id_=task_id,
+                data={
+                    "status": TaskStatus.FAILED,
+                    "finished_at": datetime.datetime.now().isoformat(),
+                },
+            )
+            self.__emit_algorithm_status_change(task, TaskStatus.FAILED)
 
         # Only compute containers need a token as they are the only ones that should
         # create subtasks
-        if task_incl_run["action"] == LocalAction.COMPUTE:
+        if container_action == LocalAction.COMPUTE:
             token = self.client.request_token_for_container(task["id"], task["image"])
             token = token["container_token"]
         else:
             token = None
-
-        # each session has their own session storage
-        session_vol_name = self.ctx.docker_session_volume_name(task["session_id"])
-        self.__docker.create_volume_if_not_exists(session_vol_name)
 
         # For some reason, if the key 'input' consists of JSON, it is
         # automatically marshalled? This causes trouble, so we'll serialize it
@@ -355,12 +367,12 @@ class Node:
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
         task_status, vpn_ports = self.__docker.run(
-            action=task_incl_run["action"],
-            run_id=task_incl_run["id"],
+            action=container_action,
+            run_id=task_id,
             task_info=task,
             image=task["image"],
             docker_input=task_incl_run["input"],
-            session_vol_name=session_vol_name,
+            session_id=task["session"]["id"],
             token=token,
             databases_to_use=task.get("databases", []),
         )
@@ -372,8 +384,33 @@ class Node:
             # (as the task is not started at all, unlike other crashes, it will
             # never finish and hence not be set to finished)
             update["finished_at"] = datetime.datetime.now().isoformat()
-        self.client.run.patch(id_=task_incl_run["id"], data=update)
+        self.client.run.patch(id_=task_id, data=update)
 
+        # send socket event to alert everyone of task status change. In case the
+        # namespace is not connected, the socket notification will not be sent to other
+        # nodes, but the task will still be processed
+        self.__emit_algorithm_status_change(task, task_status)
+
+        if vpn_ports:
+            # Save port of VPN client container at which it redirects traffic
+            # to the algorithm container. First delete any existing port
+            # assignments in case algorithm has crashed
+            self.client.request("port", params={"run_id": task_id}, method="DELETE")
+            for port in vpn_ports:
+                port["run_id"] = task_id
+                self.client.request("port", method="POST", json=port)
+
+    def __emit_algorithm_status_change(self, task: dict, status: TaskStatus) -> None:
+        """
+        Emit a socket event to alert everyone of task status change.
+
+        Parameters
+        ----------
+        task_id : int
+            Task identifier
+        status : TaskStatus
+            Task status
+        """
         # ensure that the /tasks namespace is connected. This may take a while
         # (usually < 5s) when the socket just (re)connected
         MAX_ATTEMPTS = 30
@@ -383,16 +420,13 @@ class Node:
             self.log.debug("Waiting for /tasks namespace to connect...")
             time.sleep(1)
         self.log.debug("Connected to /tasks namespace")
-        # in case the namespace is still not connected, the socket notification
-        # will not be sent to other nodes, but the task will still be processed
 
-        # send socket event to alert everyone of task status change
         self.socketIO.emit(
             "algorithm_status_change",
             data={
                 "node_id": self.client.whoami.id_,
-                "status": task_status,
-                "run_id": task_incl_run["id"],
+                "status": status,
+                "run_id": task["id"],
                 "task_id": task["id"],
                 "collaboration_id": self.client.collaboration_id,
                 "organization_id": self.client.whoami.organization_id,
@@ -400,17 +434,6 @@ class Node:
             },
             namespace="/tasks",
         )
-
-        if vpn_ports:
-            # Save port of VPN client container at which it redirects traffic
-            # to the algorithm container. First delete any existing port
-            # assignments in case algorithm has crashed
-            self.client.request(
-                "port", params={"run_id": task_incl_run["id"]}, method="DELETE"
-            )
-            for port in vpn_ports:
-                port["run_id"] = task_incl_run["id"]
-                self.client.request("port", method="POST", json=port)
 
     def __listening_worker(self) -> None:
         """

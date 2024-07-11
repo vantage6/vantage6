@@ -27,7 +27,7 @@ from vantage6.common.docker.addons import (
     running_in_docker,
 )
 from vantage6.common.globals import APPNAME, BASIC_PROCESSING_IMAGE, NodePolicy
-from vantage6.common.enums import TaskStatus
+from vantage6.common.enums import TaskStatus, LocalAction
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.algorithm.tools.wrappers import get_column_names
 from vantage6.cli.context.node import NodeContext
@@ -566,9 +566,10 @@ class DockerManager(DockerBaseManager):
         task_info: dict,
         image: str,
         docker_input: bytes,
-        tmp_vol_name: str,
+        session_id: int,
         token: str | None,
         databases_to_use: list[str],
+        action: LocalAction,
     ) -> tuple[TaskStatus, list[dict] | None]:
         """
         Checks if docker task is running. If not, creates DockerTaskManager to
@@ -584,8 +585,8 @@ class DockerManager(DockerBaseManager):
             Docker image name
         docker_input: bytes
             Input that can be read by docker container
-        tmp_vol_name: str
-            Name of temporary docker volume assigned to the algorithm
+        session_id: int
+            ID of the session
         token: str | None
             Bearer token that the container can use to authenticate with the server
         databases_to_use: list[str]
@@ -628,6 +629,8 @@ class DockerManager(DockerBaseManager):
             requires_pull=self._policies.get(
                 NodePolicy.REQUIRE_ALGORITHM_PULL, DEFAULT_REQUIRE_ALGO_IMAGE_PULL
             ),
+            session_id=session_id,
+            action=action,
         )
 
         # attempt to kick of the task. If it fails do to unknown reasons we try
@@ -638,7 +641,6 @@ class DockerManager(DockerBaseManager):
             try:
                 vpn_ports = task.run(
                     docker_input=docker_input,
-                    tmp_vol_name=tmp_vol_name,
                     token=token,
                     algorithm_env=self.algorithm_env,
                     databases_to_use=databases_to_use,

@@ -230,23 +230,6 @@ class NodeContext(AppContext):
     def proxy_log_file(self):
         return self.log_file_name(type_="proxy_server")
 
-    def docker_session_volume_name(self, session_id: int) -> str:
-        """
-        Docker volume in which session data is stored. Session data is shared between
-        algorithm containers in the same session.
-
-        Parameters
-        ----------
-        session_id : int
-            session id
-
-        Returns
-        -------
-        str
-            Docker volume name
-        """
-        return f"{APPNAME}-{self.name}-{self.scope}-{session_id}-session"
-
     def get_database_uri(self, label: str = "default") -> str:
         """
         Obtain the database URI for a specific database.

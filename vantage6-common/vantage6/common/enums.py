@@ -66,6 +66,9 @@ class TaskStatus(EnumBase):
     # Task failed without exit code
     UNKNOWN_ERROR = "unknown error"
 
+    # Unexpected output type from container
+    UNEXPECTED_OUTPUT = "unexpected output"
+
     @classmethod
     def has_task_failed(cls, status) -> bool:
         """

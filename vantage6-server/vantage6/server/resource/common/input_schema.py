@@ -408,7 +408,7 @@ class TaskInputSchema(_NameValidationSchema):
     depends_on_id = fields.Integer(validate=Range(min=1))
     organizations = fields.List(fields.Dict(), required=True)
     databases = fields.List(fields.Dict(), allow_none=True)
-    session_id = fields.Integer(validate=Range(min=1))
+    session_id = fields.Integer(validate=Range(min=1), required=True)
 
     @validates_schema
     def validate_collaboration_or_study(self, data: dict, **kwargs) -> None:
@@ -657,6 +657,9 @@ class SessionTaskInputSchema(Schema):
     """Schema for validating input for creating a session task."""
 
     image = fields.String(required=True)
+
+    # This is a list of dictionaries, where each dictionary contains the
+    # organization id and the organization's data extraction input (optional).
     organizations = fields.List(fields.Dict(), required=True)
 
     @validates("organizations")
@@ -684,23 +687,42 @@ class SessionTaskInputSchema(Schema):
                 )
 
 
-class SessionDatabaseInputSchema(Schema):
-    """Schema for validating input for creating a session database."""
+class SessionPipelineInputSchema(Schema):
+    """Schema for validating input for creating a session data frame."""
 
+    # Label that can be used in within the session
+    label = fields.String()
+
+    # Task metadata that is executed on the node for session initialization
+    task = fields.Nested(SessionTaskInputSchema, required=True)
+
+
+class SessionPipelineInitInputSchema(SessionPipelineInputSchema):
+
+    # Handle that is specified in the node configuration file
     handle = fields.String(required=True)
-    label = fields.String(required=True)
-    data_extraction = fields.Nested(SessionTaskInputSchema, required=True)
-    preprocessing = fields.List(fields.Nested(SessionTaskInputSchema), required=False)
 
 
 class SessionInputSchema(Schema):
     """Schema for validating input for creating a session."""
 
-    label = fields.String(required=True)
+    # Used to identify the session
+    name = fields.String()
+
     collaboration_id = fields.Integer(required=True, validate=Range(min=1))
     study_id = fields.Integer(validate=Range(min=1))
     scope = fields.String(validate=OneOf(Scope.list()), default=Scope.OWN.value)
-    pipelines = fields.List(fields.Nested(SessionDatabaseInputSchema), required=True)
+
+    # List of pipeline slots that are created on the nodes
+    pipelines = fields.List(
+        fields.Nested(SessionPipelineInitInputSchema), required=True
+    )
+
+
+class PipelineInputSchema(Schema):
+
+    session_id = fields.Integer(required=True)
+    pipelines = fields.List(fields.Nested(SessionPipelineInputSchema), required=True)
 
 
 class NodeSessionConfigInputSchema(Schema):

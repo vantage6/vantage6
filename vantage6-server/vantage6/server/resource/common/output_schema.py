@@ -456,6 +456,8 @@ class SessionSchema(HATEOASModelSchema):
             obj, link_to="node_session", link_from="session_id"
         )
     )
+    # TODO FM 2021-09-07: extend the output to include the config options
+    # config = fields.Nested("SessionConfigSchema", many=True, exclude=["id"])
     ready = fields.Function(lambda obj: obj.is_ready)
 
 

@@ -679,7 +679,7 @@ class Run(SingleRunBase):
 
         tags: ["Algorithm"]
         """
-        run = db_Run.get(id)
+        run: db_Run = db_Run.get(id)
         if not run:
             return {"msg": f"Run id={id} not found!"}, HTTPStatus.NOT_FOUND
 
@@ -706,6 +706,23 @@ class Run(SingleRunBase):
                 "msg": "Cannot update an already finished algorithm run!"
             }, HTTPStatus.BAD_REQUEST
 
+        run.started_at = parse_datetime(data.get("started_at"), run.started_at)
+        run.finished_at = parse_datetime(data.get("finished_at"))
+        run.result = data.get("result")
+        run.log = data.get("log")
+        run.status = data.get("status", run.status)
+        run.save()
+
+        # In case there are dependent tasks and the current task has failed,
+        # we should mark the dependent tasks as failed as well.
+        if TaskStatus.has_task_failed(run.status):
+            for task in run.task.required_by:
+                log.debug(f"Marking dependent task {task.id} runs as failed.")
+                for dependent_run in task.runs:
+                    dependent_run.status = TaskStatus.FAILED
+                    dependent_run.finished_at = run.finished_at
+                    dependent_run.save()
+
         # notify collaboration nodes/users that the task has an update
         self.socketio.emit(
             "status_update",
@@ -713,13 +730,6 @@ class Run(SingleRunBase):
             namespace="/tasks",
             room=f"collaboration_{run.task.collaboration.id}",
         )
-
-        run.started_at = parse_datetime(data.get("started_at"), run.started_at)
-        run.finished_at = parse_datetime(data.get("finished_at"))
-        run.result = data.get("result")
-        run.log = data.get("log")
-        run.status = data.get("status", run.status)
-        run.save()
 
         return run_schema.dump(run, many=False), HTTPStatus.OK
 
