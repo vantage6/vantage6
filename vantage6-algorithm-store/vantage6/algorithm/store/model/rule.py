@@ -45,8 +45,7 @@ class Rule(Base):
     roles = relationship(
         "Role", back_populates="rules", secondary="role_rule_association"
     )
-    # users = relationship("User", back_populates="rules",
-    #                      secondary="UserPermission")
+    users = relationship("User", back_populates="rules", secondary="UserPermission")
 
     @classmethod
     def get_by_(cls, name: str, operation: str) -> Rule | None:

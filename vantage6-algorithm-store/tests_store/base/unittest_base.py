@@ -71,16 +71,31 @@ class TestResources(unittest.TestCase):
         server.save()
         return server
 
-    def register_user(self, server_id: int, username: str = "test_user") -> User:
+    def register_user(
+        self,
+        server_id: int,
+        username: str = "test_user",
+        user_roles: list[Role] = [],
+        user_rules: list[Rule] = [],
+    ) -> User:
         user = User(username=username, v6_server_id=server_id)
+        if len(user_roles) > 0:
+            user.roles = user_roles
+        if len(user_rules) > 0:
+            user.rules = user_rules
         user.save()
         return user
 
     def register_user_and_server(
-        self, username: str = "test_user", server_url: str = "http://localhost:5000"
+        self,
+        username: str = "test_user",
+        server_url: str = "http://localhost:5000",
+        user_roles: list[Role] = [],
+        user_rules: list[Rule] = [],
     ) -> tuple[User, Vantage6Server]:
         server = self.register_server(server_url)
-        user = self.register_user(server.id, username)
+        user = self.register_user(server.id, username, user_roles, user_rules)
+
         return user, server
 
     def create_role(self, rules: list[Rule], name: str = "test_role") -> Role:

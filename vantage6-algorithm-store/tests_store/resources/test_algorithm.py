@@ -1,15 +1,25 @@
 from http import HTTPStatus
+import datetime
 import unittest
 from unittest.mock import patch
 
-from vantage6.algorithm.store.default_roles import DefaultRole
-from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, Partitioning
-
-from ..base.unittest_base import MockResponse, TestResources
+from vantage6.algorithm.store.model.argument import Argument
+from vantage6.algorithm.store.model.common.enums import (
+    AlgorithmStatus,
+    Partitioning,
+    ReviewStatus,
+)
+from vantage6.algorithm.store.model.database import Database
+from vantage6.algorithm.store.model.function import Function
+from vantage6.algorithm.store.model.review import Review
+from vantage6.algorithm.store.model.ui_visualization import UIVisualization
+from vantage6.algorithm.store.resource.algorithm import AlgorithmBaseResource
 from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.model.algorithm import Algorithm
 from vantage6.algorithm.store.model.rule import Rule
 from vantage6.common.enum import StorePolicies, AlgorithmViewPolicies
+
+from ..base.unittest_base import MockResponse, TestResources
 
 SERVER_URL = "http://localhost:5000"
 HEADERS = {"server_url": SERVER_URL, "Authorization": "Mock"}
@@ -135,8 +145,8 @@ class TestAlgorithmResources(TestResources):
 
         # test if the endpoint is accessible if user is whitelisted and has explicit
         # permission to view algorithms
-        role = self.create_role([Rule.get_by_("algorithm", "view")])
-        self.assign_role_to_user(user, role)
+        user.rules = [Rule.get_by_("algorithm", "view")]
+        user.save()
         rv = self.app.get("/api/algorithm", headers=HEADERS)
         self.assertEqual(rv.status_code, HTTPStatus.OK)
 
@@ -144,10 +154,10 @@ class TestAlgorithmResources(TestResources):
         policy.delete()
         whitelisted_server.delete()
         user.delete()
-        role.delete()
 
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
-    def test_algorithm_view(self, validate_token_mock):
+    def test_algorithm_view_multi(self, validate_token_mock):
+        """Test GET /api/algorithm"""
         validate_token_mock.return_value = (
             MockResponse({"username": USERNAME}),
             HTTPStatus.OK,
@@ -195,9 +205,9 @@ class TestAlgorithmResources(TestResources):
         # algorithms
         algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
         algorithm.save()
-        user, server = self.register_user_and_server(username=USERNAME)
-        role = self.create_role([Rule.get_by_("algorithm", "view")])
-        self.assign_role_to_user(user, role)
+        user, server = self.register_user_and_server(
+            username=USERNAME, user_rules=[Rule.get_by_("algorithm", "view")]
+        )
         result = self.app.get(
             "/api/algorithm?awaiting_reviewer_assignment=1", headers=HEADERS
         )
@@ -210,11 +220,53 @@ class TestAlgorithmResources(TestResources):
         server.delete()
         user.delete()
 
+    def test_algorithm_view_single(self):
+        """Test /api/algorithm/<id>"""
+
+        # Create a policy that allows viewing algorithms for everyone
+        policy = Policy(
+            key=StorePolicies.ALGORITHM_VIEW, value=AlgorithmViewPolicies.PUBLIC
+        )
+        policy.save()
+
+        # Test when algorithm is not found
+        response = self.app.get("/api/algorithm/9999", headers=HEADERS)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+
+        # Create a mock algorithm
+        algorithm = Algorithm(
+            name="test_algorithm",
+            description="Test algorithm",
+            image="test_image",
+            partitioning="horizontal",
+            vantage6_version="1.0",
+            code_url="https://github.com/test_algorithm",
+            documentation_url="https://docs.test_algorithm.com",
+        )
+        algorithm.save()
+
+        # Test when algorithm is found
+        response = self.app.get(f"/api/algorithm/{algorithm.id}", headers=HEADERS)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(response.json["name"], "test_algorithm")
+        self.assertEqual(response.json["description"], "Test algorithm")
+        self.assertEqual(response.json["image"], "test_image")
+        self.assertEqual(response.json["partitioning"], "horizontal")
+        self.assertEqual(response.json["vantage6_version"], "1.0")
+        self.assertEqual(response.json["code_url"], "https://github.com/test_algorithm")
+        self.assertEqual(
+            response.json["documentation_url"], "https://docs.test_algorithm.com"
+        )
+
+        # Cleanup
+        algorithm.delete()
+
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     @patch(
         "vantage6.algorithm.store.resource.algorithm.AlgorithmBaseResource._get_image_digest"
     )
     def test_algorithm_create(self, get_image_digest_mock, validate_token_mock):
+        """Test POST /api/algorithm"""
         validate_token_mock.return_value = (
             MockResponse({"username": USERNAME}),
             HTTPStatus.OK,
@@ -230,9 +282,9 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(rv.status_code, 403)
 
         # create user allowed to create algorithms
-        user, server = self.register_user_and_server(username=USERNAME)
-        role = self.create_role([Rule.get_by_("algorithm", "create")])
-        self.assign_role_to_user(user, role)
+        user, _ = self.register_user_and_server(
+            username=USERNAME, user_rules=[Rule.get_by_("algorithm", "create")]
+        )
 
         # check that incomplete input data returns 400
         rv = self.app.post("/api/algorithm", json={}, headers=HEADERS)
@@ -253,6 +305,176 @@ class TestAlgorithmResources(TestResources):
             headers=HEADERS,
         )
         self.assertEqual(rv.status_code, 201)
+        self.assertEqual(rv.json["name"], "test_algorithm")
+        self.assertEqual(rv.json["description"], "test_description")
+        self.assertEqual(rv.json["partitioning"], Partitioning.HORIZONTAL)
+        self.assertEqual(rv.json["code_url"], "https://my-url.com")
+        self.assertEqual(rv.json["vantage6_version"], "6.6.6")
+        self.assertEqual(rv.json["image"], "some-image")
+        self.assertEqual(rv.json["functions"], [])
+        self.assertEqual(rv.json["digest"], "some-digest")
+        self.assertEqual(
+            rv.json["status"], AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
+        )
+        self.assertEqual(rv.json["approved_at"], None)
+        self.assertEqual(rv.json["invalidated_at"], None)
+        self.assertNotEqual(rv.json["submitted_at"], None)
+        self.assertEqual(rv.json["developer_id"], user.id)
+
+    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
+    @patch(
+        "vantage6.algorithm.store.resource.algorithm.AlgorithmBaseResource._get_image_digest"
+    )
+    def test_algorithm_update(self, get_image_digest_mock, validate_token_mock):
+        """Test PATCH /api/algorithm/<id>"""
+        validate_token_mock.return_value = (
+            MockResponse({"username": USERNAME}),
+            HTTPStatus.OK,
+        )
+        get_image_digest_mock.return_value = "some-image", "some-digest"
+
+        # check that not allowed to patch if server is not whitelisted
+        response = self.app.patch("/api/algorithm/9999", headers=HEADERS)
+        self.assertEqual(response.status_code, 403)
+
+        # register server so that we don't get forbidden
+        server = self.register_server()
+
+        # test unauthorized without user with permission to update algorithms
+        response = self.app.patch("/api/algorithm/9999", headers=HEADERS)
+        self.assertEqual(response.status_code, 401)
+
+        # get user with permission to update algorithms
+        user = self.register_user(
+            server.id, username=USERNAME, user_rules=[Rule.get_by_("algorithm", "edit")]
+        )
+
+        # create an algorithm
+        algorithm = Algorithm(
+            name="test_algorithm",
+            description="test_description",
+            partitioning=Partitioning.HORIZONTAL,
+            code_url="https://my-url.com",
+            vantage6_version="6.6.6",
+            image="some-image",
+            developer_id=user.id,
+        )
+        algorithm.save()
+
+        # check that wrong input data returns 400
+        response = self.app.patch(
+            f"/api/algorithm/{algorithm.id}",
+            json={"non-existing": True},
+            headers=HEADERS,
+        )
+        self.assertEqual(response.status_code, 400)
+
+        # check that the algorithm is updated if providing correct data
+        response = self.app.patch(
+            f"/api/algorithm/{algorithm.id}",
+            json={"description": "new_description"},
+            headers=HEADERS,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json["description"], "new_description")
+
+        # check that algorithm cannot be updated if it is approved
+        algorithm.status = AlgorithmStatus.APPROVED
+        algorithm.approved_at = datetime.datetime.now()
+        algorithm.save()
+        response = self.app.patch(
+            f"/api/algorithm/{algorithm.id}",
+            json={"description": "new_description"},
+            headers=HEADERS,
+        )
+        self.assertEqual(response.status_code, 403)
+
+        # check that algorithm cannot be updated if it is invalidated
+        algorithm.invalidated_at = datetime.datetime.now()
+        algorithm.save()
+        response = self.app.patch(
+            f"/api/algorithm/{algorithm.id}",
+            json={"description": "new_description"},
+            headers=HEADERS,
+        )
+        self.assertEqual(response.status_code, 403)
+
+        # check that algorithm cannot be updated if at least one review has been
+        # completed
+        algorithm.status = AlgorithmStatus.UNDER_REVIEW
+        algorithm.invalidated_at = None
+        algorithm.save()
+        review = Review(
+            algorithm_id=algorithm.id, reviewer_id=user.id, status=ReviewStatus.APPROVED
+        )
+        review.save()
+        response = self.app.patch(
+            f"/api/algorithm/{algorithm.id}",
+            json={"description": "new_description"},
+            headers=HEADERS,
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_algorithm_delete(self):
+        """Test DELETE /api/algorithm/<id>"""
+        pass
+
+    def test_algorithm_invalidate(self):
+        """Test PATCH /api/algorithm/<id>/invalidate"""
+        pass
+
+    @patch("vantage6.algorithm.store.resource.algorithm.get_digest")
+    def test_get_image_digest(self, get_digest_mock):
+        """Test AlgorithmBaseResource._get_image_digest"""
+        # test that invalid image raises an error
+        resource = AlgorithmBaseResource(None, None, None)
+
+        # Test case 1: Image with digest found
+        image_name = "example/image:latest"
+        expected_image_wo_tag = "example/image"
+        expected_digest = "some-digest"
+        get_digest_mock.return_value = expected_digest
+
+        # pylint: disable=protected-access
+        image_wo_tag, digest = resource._get_image_digest(image_name)
+
+        self.assertEqual(image_wo_tag, expected_image_wo_tag)
+        self.assertEqual(digest, expected_digest)
+        get_digest_mock.assert_called_once_with(image_name)
+
+        # Test case 2: Image with digest not found on first call, with authentication
+        # returned successfully
+        registry = "docker.io"
+        username = "user"
+        password = "pass"
+        docker_registry = [
+            {"registry": registry, "username": username, "password": password}
+        ]
+        resource.config = {"docker_registries": docker_registry}
+
+        get_digest_mock.reset_mock()
+        get_digest_mock.side_effect = [None, expected_digest]
+
+        image_wo_tag, digest = resource._get_image_digest(image_name)
+
+        self.assertEqual(image_wo_tag, expected_image_wo_tag)
+        self.assertEqual(digest, expected_digest)
+        get_digest_mock.assert_any_call(image_name)
+        get_digest_mock.assert_any_call(image_name, username, password)
+
+        # Test case 3: Image with digest not found, and no proper authentication details
+        # provided
+        docker_registry = [{"registry": "other-registry"}]
+        resource.config = {"docker_registries": docker_registry}
+
+        get_digest_mock.reset_mock()
+        get_digest_mock.side_effect = [None]
+
+        image_wo_tag, digest = resource._get_image_digest(image_name)
+
+        self.assertEqual(image_wo_tag, expected_image_wo_tag)
+        self.assertEqual(digest, None)
+        get_digest_mock.assert_called_once_with(image_name)
 
 
 if __name__ == "__main__":
