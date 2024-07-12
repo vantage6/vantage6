@@ -45,7 +45,7 @@ from vantage6.common.docker.addons import (
     check_docker_running,
     running_in_docker,
 )
-from vantage6.common.globals import VPN_CONFIG_FILE, PING_INTERVAL_SECONDS
+from vantage6.common.globals import VPN_CONFIG_FILE, PING_INTERVAL_SECONDS, NodePolicy
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.task_status import TaskStatus
@@ -797,6 +797,11 @@ class Node:
             else None
         )
 
+        extra_hosts = ctx.config.get("node_extra_hosts", {})
+
+        if extra_hosts:
+            self.log.info(f"Applying extra host mappings to VPN client: {extra_hosts}")
+
         vpn_manager = VPNManager(
             isolated_network_mgr=isolated_network_mgr,
             node_name=self.ctx.name,
@@ -806,6 +811,7 @@ class Node:
             alpine_image=custom_alpine,
             vpn_client_image=custom_vpn_client,
             network_config_image=custom_network,
+            extra_hosts=extra_hosts,
         )
 
         if not self.config.get("vpn_subnet"):
@@ -841,10 +847,6 @@ class Node:
         do_try = True
         if connect_mode == VPNConnectMode.FIRST_TRY:
             self.log.debug("Using existing config file to connect to VPN")
-            next_mode = VPNConnectMode.REFRESH_KEYPAIR
-        elif connect_mode == VPNConnectMode.REFRESH_KEYPAIR:
-            self.log.debug("Refreshing VPN keypair...")
-            do_try = self.client.refresh_vpn_keypair(ovpn_file=ovpn_file)
             next_mode = VPNConnectMode.REFRESH_COMPLETE
         elif connect_mode == VPNConnectMode.REFRESH_COMPLETE:
             self.log.debug("Requesting new VPN configuration file...")
@@ -1066,12 +1068,14 @@ class Node:
         # share node policies (e.g. who can run which algorithms)
         policies = self.config.get("policies", {})
         config_to_share["allowed_algorithms"] = policies.get(
-            "allowed_algorithms", "all"
+            NodePolicy.ALLOWED_ALGORITHMS, "all"
         )
-        if policies.get("allowed_users") is not None:
-            config_to_share["allowed_users"] = policies.get("allowed_users")
-        if policies.get("allowed_organizations") is not None:
-            config_to_share["allowed_orgs"] = policies.get("allowed_organizations")
+        if policies.get(NodePolicy.ALLOWED_USERS) is not None:
+            config_to_share["allowed_users"] = policies.get(NodePolicy.ALLOWED_USERS)
+        if policies.get(NodePolicy.ALLOWED_ORGANIZATIONS) is not None:
+            config_to_share["allowed_orgs"] = policies.get(
+                NodePolicy.ALLOWED_ORGANIZATIONS
+            )
 
         # share node database labels, types, and column names (if they are
         # fixed as e.g. for csv file)

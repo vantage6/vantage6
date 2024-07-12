@@ -61,7 +61,7 @@ class Task(Base):
     study : :class:`~.model.study.Study`
         Study that this task belongs to
     algorithm_store : :class:`~.model.algorithm_store.AlgorithmStore`
-        Algorithm store that this task belongs to
+        Algorithm store that this task uses
     """
 
     # fields

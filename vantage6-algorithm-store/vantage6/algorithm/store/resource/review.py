@@ -93,6 +93,7 @@ def permissions(permissions: PermissionManager) -> None:
     add(P.VIEW, description="View reviews")
     add(P.CREATE, description="Create new reviews")
     add(P.DELETE, description="Delete reviews")
+    add(P.EDIT, description="Approve or reject reviews")
 
 
 # ------------------------------------------------------------------------------
@@ -390,10 +391,13 @@ class Review(AlgorithmStoreResources):
         # 2. set to awaiting reviewer assignment if there are no other reviews
         algorithm: db.Algorithm = review.algorithm
         if not algorithm.is_review_finished():
+            # if the only review is deleted, new reviewers should be assigned
             other_reviews = [r for r in algorithm.reviews if not r.id == review.id]
             if not other_reviews:
                 algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
             elif all([r.status == ReviewStatus.APPROVED for r in other_reviews]):
+                # if this was the last remaining review that needed to be approved, but
+                # it is now deleted, the algorithm should be approved
                 algorithm.status = AlgorithmStatus.APPROVED
             algorithm.save()
         elif algorithm.status == AlgorithmStatus.APPROVED:
@@ -411,7 +415,7 @@ class Review(AlgorithmStoreResources):
 class ReviewApprove(AlgorithmStoreResources):
     """Resource for the /review/<id>/approve endpoint"""
 
-    @with_permission("algorithm", P.REVIEW)
+    @with_permission("review", P.EDIT)
     def post(self, id):
         """Approve an algorithm in the current review
 
@@ -459,6 +463,13 @@ class ReviewApprove(AlgorithmStoreResources):
                 "msg": "You are not assigned to this review!"
             }, HTTPStatus.UNAUTHORIZED
 
+        # check if review can still be approved
+        if review.status != ReviewStatus.UNDER_REVIEW:
+            return {
+                "msg": f"This review has status {review.status} so it can no longer be "
+                "approved!"
+            }, HTTPStatus.BAD_REQUEST
+
         # update the review status to 'approved'
         review.status = ReviewStatus.APPROVED
         if comment := data.get("comment"):
@@ -474,14 +485,17 @@ class ReviewApprove(AlgorithmStoreResources):
             algorithm.save()
 
             # if the algorithm is approved, invalidate the previously approved versions
-            for old_algorithm in db.Algorithm.get_by_image(algorithm.image):
-                if old_algorithm.status != AlgorithmStatus.APPROVED:
+            for other_version in db.Algorithm.get_by_image(algorithm.image):
+                if (
+                    not other_version.is_review_finished()
+                    and other_version.submitted_at > algorithm.submitted_at
+                ):
                     continue
-                elif old_algorithm.id == algorithm.id:
+                elif other_version.id == algorithm.id:
                     continue  # skip the current version
-                old_algorithm.invalidated_at = algorithm.approved_at
-                old_algorithm.status = AlgorithmStatus.REPLACED
-                old_algorithm.save()
+                other_version.invalidated_at = algorithm.approved_at
+                other_version.status = AlgorithmStatus.REPLACED
+                other_version.save()
 
         log.info("Review with id=%s has been approved", id)
         return {"msg": f"Review id={id} has been approved"}, HTTPStatus.OK
@@ -490,7 +504,7 @@ class ReviewApprove(AlgorithmStoreResources):
 class ReviewReject(AlgorithmStoreResources):
     """Resource for the /review/<id>/reject endpoint"""
 
-    @with_permission("algorithm", P.REVIEW)
+    @with_permission("review", P.EDIT)
     def post(self, id):
         """Reject an algorithm in the current review
 
@@ -537,6 +551,13 @@ class ReviewReject(AlgorithmStoreResources):
             return {
                 "msg": "You are not assigned to this review!"
             }, HTTPStatus.UNAUTHORIZED
+
+        # check if review can still be rejected
+        if review.status != ReviewStatus.UNDER_REVIEW:
+            return {
+                "msg": f"This review has status {review.status} so it can no longer be "
+                "approved!"
+            }, HTTPStatus.BAD_REQUEST
 
         # update the review status to 'rejected'
         review.status = ReviewStatus.REJECTED

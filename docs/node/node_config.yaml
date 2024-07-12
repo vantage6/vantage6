@@ -118,7 +118,7 @@ policies:
     # allow all algorithms from the vantage6 community store
     - https://store.cotopaxi.vantage6.ai
     # allow any store that is a subdomain of vantage6.ai
-    - ^https://*.vantage6.ai
+    - ^https://[a-z]+\.vantage6\.ai$
 
   # If you define both `allowed_algorithm_stores` and `allowed_algorithms`, you can
   # choose to only allow algorithms that both policies allow, or you can allow
@@ -140,6 +140,12 @@ policies:
   # by default. It is used to collect column names in the User Interface to
   # facilitate task creation. Set to false to disable this.
   allow_basics_algorithm: true
+
+  # Set to true to always require that the algorithm image is successfully pulled. This
+  # ensures that no potentially outdated local images are used if internet connection
+  # is not available. This option should be set to false if you are testing with local
+  # algorithm images. Default value is false.
+  require_algorithm_pull: false
 
 # credentials used to login to private Docker registries
 docker_registries:

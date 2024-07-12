@@ -31,7 +31,7 @@ from vantage6.algorithm.store.permission import (
     Operation as P,
 )
 from vantage6.backend.common.resource.pagination import Pagination
-from vantage6.common.docker.addons import get_manifest, parse_image_name
+from vantage6.common.docker.addons import get_digest, parse_image_name
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -100,7 +100,6 @@ def permissions(permission_mgr: PermissionManager) -> None:
     add(P.CREATE, description="Create a new algorithm")
     add(P.EDIT, description="Edit any algorithm")
     add(P.DELETE, description="Delete any algorithm")
-    add(P.REVIEW, description="Edit some fields of the algorithm")
 
 
 # ------------------------------------------------------------------------------
@@ -122,36 +121,38 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
         ----------
         image : str
             Image url
-        config : dict
-            Configuration dict
 
         Returns
         -------
-        tuple[str, str]
-            Tuple with the docker image without tag, and the digest of the image
+        tuple[str, str | None]
+            Tuple with the docker image without tag, and the digest of the image if
+            found. If the digest could not be determined, `None` is returned.
         """
         # split image and tag
         try:
+            # pylint: disable=unused-variable
             registry, image, tag = parse_image_name(image_name)
         except Exception as e:
             raise ValueError(f"Invalid image name: {image_name}") from e
         image_wo_tag = "/".join([registry, image])
 
-        # get the manifest of the image. Use authentication if provided
-        docker_registry = self.config.get("docker_registries", [])
-        registry_user = None
-        registry_password = None
-        for reg in docker_registry:
-            if reg["registry"] == registry:
-                registry_user = reg.get("username")
-                registry_password = reg.get("password")
-                break
-        response = get_manifest(
-            image_name, registry, image, tag, registry_user, registry_password
-        )
+        # get the digest of the image.
+        digest = get_digest(image_name)
 
-        # get the digest from the response headers
-        return image_wo_tag, response.headers["Docker-Content-Digest"]
+        # If getting digest failed, try to use authentication
+        if not digest:
+            docker_registry = self.config.get("docker_registries", [])
+            registry_user = None
+            registry_password = None
+            for reg in docker_registry:
+                if reg["registry"] == registry:
+                    registry_user = reg.get("username")
+                    registry_password = reg.get("password")
+                    break
+            if registry_user and registry_password:
+                digest = get_digest(image_name, registry_user, registry_password)
+
+        return image_wo_tag, digest
 
 
 class Algorithms(AlgorithmBaseResource):
@@ -248,16 +249,6 @@ class Algorithms(AlgorithmBaseResource):
             if (value := request.args.get(field)) is not None:
                 q = q.filter(getattr(db_Algorithm, field).like(value))
 
-        if (image := request.args.get("image")) is not None:
-            # determine the sha256 of the image, and filter on that. Sort descending
-            # to get the latest addition to the store first
-            # TODO at some point there may only be one registration of each algorithm,
-            # so this sorting may not be necessary anymore
-            image_wo_tag, digest = self._get_image_digest(image)
-            q = q.filter(
-                db_Algorithm.image == image_wo_tag, db_Algorithm.digest == digest
-            ).order_by(db_Algorithm.id.desc())
-
         awaiting_reviewer_assignment = bool(
             request.args.get("awaiting_reviewer_assignment", False)
         )
@@ -292,6 +283,35 @@ class Algorithms(AlgorithmBaseResource):
         else:
             # by default, only approved algorithms are returned
             q = q.filter(db_Algorithm.status == AlgorithmStatus.APPROVED)
+
+        if (image := request.args.get("image")) is not None:
+            # determine the sha256 of the image, and filter on that. Sort descending
+            # to get the latest addition to the store first
+            image_wo_tag, digest = self._get_image_digest(image)
+            if not digest:
+                return {
+                    "msg": "Image digest could not be determined"
+                }, HTTPStatus.BAD_REQUEST
+            q = q.filter(db_Algorithm.image == image_wo_tag)
+            # TODO at some point there may only be one registration of each algorithm,
+            # so this sorting may not be necessary anymore
+            q_with_digest = q.filter(db_Algorithm.digest == digest).order_by(
+                db_Algorithm.id.desc()
+            )
+
+            # if image with that digest does not exist, check if another image with
+            # different digest but same name exists. If it does, throw
+            # more specific error
+            if q_with_digest.first():
+                q = q_with_digest
+            elif q.first():
+                return {
+                    "msg": f"The image '{image}' that you provided has digest "
+                    f"'{digest}'. This algorithm version is not approved by the "
+                    "store. The currently approved version of this algorithm has"
+                    f"digest '{q.first().digest}'. Please include this digest if you"
+                    f"want to use that image."
+                }, HTTPStatus.BAD_REQUEST
 
         # paginate results
         try:
@@ -430,10 +450,11 @@ class Algorithms(AlgorithmBaseResource):
             }, HTTPStatus.BAD_REQUEST
 
         # validate that the algorithm image exists and retrieve the digest
-        try:
-            image_wo_tag, digest = self._get_image_digest(data["image"])
-        except Exception as e:
-            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+        image_wo_tag, digest = self._get_image_digest(data["image"])
+        if digest is None:
+            return {
+                "msg": "Image digest could not be determined"
+            }, HTTPStatus.BAD_REQUEST
 
         # create the algorithm
         algorithm = db_Algorithm(
@@ -749,6 +770,10 @@ class Algorithm(AlgorithmBaseResource):
         # image.
         if image != algorithm.image or data.get("refresh_digest", False):
             image_wo_tag, digest = self._get_image_digest(image)
+            if digest is None:
+                return {
+                    "msg": "Image digest could not be determined"
+                }, HTTPStatus.BAD_REQUEST
             algorithm.image = image_wo_tag
             algorithm.digest = digest
         # don't forget to also update the image itself

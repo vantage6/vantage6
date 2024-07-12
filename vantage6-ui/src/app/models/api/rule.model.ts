@@ -38,7 +38,6 @@ export enum OperationType {
   DELETE = 'delete',
   SEND = 'send',
   RECEIVE = 'receive',
-  REVIEW = 'review',
   ANY = '*'
 }
 

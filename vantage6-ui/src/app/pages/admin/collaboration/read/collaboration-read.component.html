@@ -62,7 +62,7 @@
       <div class="chip-container">
         <app-chip
           *ngFor="let node of collaboration.nodes"
-          label="{{ node.status === nodeStatus.Online ? node.name : node.name + ' (' + ('general.offline' | translate) + ')' }}"
+          label="{{ getNodeLabelText(node) }}"
           [type]="node.status === nodeStatus.Online ? 'success' : 'error'"
         ></app-chip>
       </div>

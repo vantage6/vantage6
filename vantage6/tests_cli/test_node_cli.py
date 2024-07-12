@@ -207,7 +207,7 @@ class NodeCLITest(unittest.TestCase):
         self.assertNotEqual(result.exit_code, 0)
 
     @patch("docker.DockerClient.volumes")
-    @patch("vantage6.cli.node.start.pull_image")
+    @patch("vantage6.cli.node.start.pull_infra_image")
     @patch("vantage6.cli.common.decorator.get_context")
     @patch("docker.DockerClient.containers")
     @patch("vantage6.cli.node.start.check_docker_running", return_value=True)

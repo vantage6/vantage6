@@ -52,7 +52,7 @@ def get_default_roles() -> list[dict]:
         "rules": VIEWER_RULES,
     }
     # 3. Reviewer role
-    REVIEWER_RULES = VIEWER_RULES + [Rule.get_by_("algorithm", Operation.REVIEW)]
+    REVIEWER_RULES = VIEWER_RULES + [Rule.get_by_("review", Operation.EDIT)]
     REVIEWER_ROLE = {
         "name": DefaultRole.REVIEWER,
         "description": "Can view resources and review algorithms",
