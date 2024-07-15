@@ -19,12 +19,14 @@ from vantage6.server.permission import (
 from vantage6.server.resource import only_for, with_user, ServicesResources
 from vantage6.server.resource.common.input_schema import (
     SessionInputSchema,
+    PipelineInitInputSchema,
+    PipelineStepInputSchema,
     NodeSessionInputSchema,
-    PipelineInputSchema,
 )
 from vantage6.server.resource.common.output_schema import (
     SessionSchema,
     NodeSessionSchema,
+    PipelineSchema,
 )
 from vantage6.server.resource.task import Tasks
 
@@ -70,13 +72,13 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         methods=("GET", "POST"),
         resource_class_kwargs=services,
     )
-    # api.add_resource(
-    #     SessionPipeline,
-    #     path + "/<int:session_id>/pipeline/<string:pipeline_handle>",
-    #     endpoint="session_pipeline_with_id",
-    #     methods=("GET", "PATCH", "DELETE"),
-    #     resource_class_kwargs=services,
-    # )
+    api.add_resource(
+        SessionPipeline,
+        path + "/<int:session_id>/pipeline/<string:pipeline_handle>",
+        endpoint="session_pipeline_with_id",
+        methods=("GET", "PATCH", "DELETE"),
+        resource_class_kwargs=services,
+    )
     api.add_resource(
         NodeSessions,
         path + "/<int:session_id>/node",
@@ -161,10 +163,13 @@ def permissions(permissions: PermissionManager) -> None:
 # Resources / API's
 # ------------------------------------------------------------------------------
 session_schema = SessionSchema()
-session_input_schema = SessionInputSchema()
-pipeline_input_schema = PipelineInputSchema()
 node_session_schema = NodeSessionSchema()
+pipeline_schema = PipelineSchema()
+
 node_session_input_schema = NodeSessionInputSchema()
+session_input_schema = SessionInputSchema()
+pipeline_init_input_schema = PipelineInitInputSchema()
+pipeline_step_input_schema = PipelineStepInputSchema()
 
 
 class SessionBase(ServicesResources):
@@ -234,8 +239,8 @@ class SessionBase(ServicesResources):
         """
         log.debug(f"Deleting session id={session.id}")
 
-        for config in session.config:
-            config.delete()
+        for pipeline in session.pipelines:
+            pipeline.delete()
 
         for node_session in session.node_sessions:
             for config in node_session.config:
@@ -257,7 +262,7 @@ class Sessions(SessionBase):
         """Returns a list of sessions
         ---
         description: >-
-          Get a list of sessions based on filters and user permissions\n
+          Get a list of sessions based on filters and user permissions\n\n
 
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
@@ -407,9 +412,14 @@ class Sessions(SessionBase):
         """Initiate new session
         ---
         description: >-
-          Initialize a new session in a collaboration or study. \n\n
-
-          This will trigger the data-extraction process at the participating nodes.\n
+          Initialize a new session in a collaboration or study. A session always starts
+          with a data-extraction step. In this extraction step, the data is extracted
+          from the source database. Then a handle is returned to the user. This handle
+          is a reference to the session data set. This handle can be used to add
+          additional steps to the pipeline or to execute compute tasks on. A session
+          can be scoped to the entire collaboration, the organization or only to the
+          owner of the session. This way sessions can be shared with other users within
+          the collaboration or organization.
 
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
@@ -506,118 +516,9 @@ class Sessions(SessionBase):
                 node=node,
             ).save()
 
-        # A pipeline is a list of tasks that need to be executed in order to initialize
-        # the session. A single session can have multiple pipelines, each with a
-        # different database or different user inputs. Each pipeline can be identified
-        # using a unique handle.
-        for pipeline in data["pipelines"]:
-
-            # This label is used to identify the database, this label should match the
-            # label in the node configuration file. Each node can have multiple
-            # databases.
-            source_db_label = pipeline["handle"]
-
-            # Multiple datasets can be created in a single session. This handle can be
-            # used by the `preprocessing` and `compute` to identify the different
-            # datasets that are send after the data extraction task. The handle can be
-            # provided by the user, if not a unique handle is generated.
-            if "handle" not in pipeline:
-                existing_handles = db.SessionConfig.get_values_from_key(
-                    session.id, "df_handle"
-                )
-                while (handle := generate_name()) in existing_handles:
-                    pass
-            else:
-                handle = pipeline["handle"]
-
-            # Store the handle in the session configuration
-            db.SessionConfig(session=session, key="df_handle", value=handle).save()
-
-            # When a session is initialized, a mandatory data extraction step is
-            # required. This step is the first step in the pipeline and is used to
-            # extract the data from the source database.
-            extraction_details = pipeline["task"]
-            response, status_code = self.create_session_task(
-                session=session,
-                image=extraction_details["image"],
-                organizations=extraction_details["organizations"],
-                # TODO FM 10-7-2024: we should make a custom type for this
-                database=[{"label": source_db_label, "type": "source"}],
-                description=f"Data extraction step for session {session.name}",
-                action=LocalAction.DATA_EXTRACTION,
-            )
-
-            if status_code != HTTPStatus.CREATED:
-                self.delete_session(session)
-                return response, status_code
-
-            db.SessionConfig(
-                session=session,
-                key=f"{handle}_last_task_id_pointer",
-                value=response["id"],
-            ).save()
+        log.info(f"Session {session.id} created")
 
         return session_schema.dump(session, many=False), HTTPStatus.CREATED
-
-
-class SessionPipelines(SessionBase):
-
-    @only_for(("user", "node"))
-    def get(self, session_id):
-        """view pipelines of a session"""
-        return HTTPStatus.NOT_IMPLEMENTED
-
-    @only_for(("user",))
-    def post(self, session_id):
-        """Add a preprocessing step to one or more pipeline"""
-
-        data = request.get_json()
-        errors = session_input_schema.validate(data, many=True)
-
-        if errors:
-            return {
-                "msg": "Request body is incorrect",
-                "errors": errors,
-            }, HTTPStatus.BAD_REQUEST
-
-        session: db.Session = db.Session.get(session_id)
-
-        for pipeline in data["pipelines"]:
-
-            # Get the handle for the data frame in this session
-            label = pipeline["label"]
-
-            # Obtain the latest task id pointer
-            last_task_id_pointer = db.SessionConfig.get_values_from_key(
-                session_id, f"{label}_last_task_id_pointer"
-            )
-            # TODO FM 10-7-2024: this is a temporary solution, I should consider making
-            # these properties into the db model
-            if len(last_task_id_pointer) > 0 or not last_task_id_pointer:
-                return {
-                    "msg": "Session last task pointer is broken"
-                }, HTTPStatus.BAD_REQUEST
-
-            task = db.Task.get(last_task_id_pointer[0])
-            if not task:
-                return {"msg": "Previous session is not found!"}, HTTPStatus.NOT_FOUND
-
-            preprocessing_task = pipeline["task"]
-            response, status_code = self.create_session_task(
-                session=session,
-                database=[{"label": label, "type": "handle"}],
-                description=f"Preprocessing step for session {session.name}",
-                depends_on_id=task.id,
-                action=LocalAction.PREPROCESSING,
-                image=preprocessing_task["image"],
-                organizations=preprocessing_task["organizations"],
-            )
-            if status_code != HTTPStatus.CREATED:
-                Session.delete_session(session)
-                return response, status_code
-
-            # TODO FM 10-7-2024: We should make a specific response for this
-            return response, status_code
 
 
 class Session(SessionBase):
@@ -648,7 +549,7 @@ class Session(SessionBase):
           name: id
           schema:
             type: integer
-          description: Session id
+          description: Session ID
           required: true
 
         responses:
@@ -701,7 +602,7 @@ class Session(SessionBase):
           name: id
           schema:
             type: integer
-          description: Session id
+          description: Session ID
           required: true
 
         requestBody:
@@ -803,10 +704,10 @@ class Session(SessionBase):
 
         parameters:
         - in: path
-          name: id
+          name: session_id
           schema:
             type: integer
-          description: Session id
+          description: Session ID
           required: true
 
         responses:
@@ -856,6 +757,189 @@ class Session(SessionBase):
         # data too.
 
         return {"msg": f"Successfully deleted session id={id}"}, HTTPStatus.OK
+
+
+class SessionPipelines(SessionBase):
+    "/<int:session_id>/pipeline"
+
+    @only_for(("user", "node"))
+    def get(self, session_id):
+        """view all pipelines of a session"""
+        session: db.Session = db.Session.get(session_id)
+        if not session:
+            return {
+                "msg": f"Session with id={session_id} not found"
+            }, HTTPStatus.NOT_FOUND
+
+        if not self.can_view_session(session):
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
+
+        q = g.session.query(db.Pipeline).filter_by(session_id=session_id)
+
+        # check if pagination is disabled
+        paginate = True
+        if "no_pagination" in request.args and request.args["no_pagination"] == "1":
+            paginate = False
+
+        # paginate results
+        try:
+            page = Pagination.from_query(q, request, db.Pipeline, paginate=paginate)
+        except (ValueError, AttributeError) as e:
+            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+
+        return self.response(page, pipeline_schema)
+
+    @only_for(("user",))
+    def post(self, session_id):
+        """Initiate a new pipeline for a session"""
+
+        session: db.Session = db.Session.get(session_id)
+        if not session:
+            return {
+                "msg": f"Session with id={session_id} not found"
+            }, HTTPStatus.NOT_FOUND
+
+        # A pipeline is a list of tasks that need to be executed in order to initialize
+        # the session. A single session can have multiple pipelines, each with a
+        # different database or different user inputs. Each pipeline can be identified
+        # using a unique handle.
+        pipeline = request.get_json()
+        errors = pipeline_init_input_schema.validate(pipeline)
+        if errors:
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
+
+        collaboration = session.collaboration
+
+        # This label is used to identify the database, this label should match the
+        # label in the node configuration file. Each node can have multiple
+        # databases.
+        source_db_label = pipeline["label"]
+
+        # Multiple datasets can be created in a single session. This handle can be
+        # used by the `preprocessing` and `compute` to identify the different
+        # datasets that are send after the data extraction task. The handle can be
+        # provided by the user, if not a unique handle is generated.
+        if "handle" not in pipeline:
+            while (handle := generate_name()) and db.Pipeline.select(session, handle):
+                pass
+        else:
+            handle = pipeline["handle"]
+
+        # When a session is initialized, a mandatory data extraction step is
+        # required. This step is the first step in the pipeline and is used to
+        # extract the data from the source database.
+        extraction_details = pipeline["task"]
+        response, status_code = self.create_session_task(
+            session=session,
+            image=extraction_details["image"],
+            organizations=extraction_details["organizations"],
+            # TODO FM 10-7-2024: we should make a custom type for this
+            database=[{"label": source_db_label, "type": "source"}],
+            description=(
+                f"Data extraction step for session {session.name} ({session.id})."
+                f"This session is in the {collaboration.name} collaboration. This "
+                f"data extraction step uses the {source_db_label} database. And "
+                f"will initialize the pipeline with the handle {handle}."
+            ),
+            action=LocalAction.DATA_EXTRACTION,
+        )
+
+        if status_code != HTTPStatus.CREATED:
+            self.delete_session(session)
+            return response, status_code
+
+        pipeline = db.Pipeline(
+            session=session,
+            handle=handle,
+            last_session_task_id=response["id"],
+        ).save()
+        return pipeline_schema.dump(pipeline), HTTPStatus.CREATED
+
+
+class SessionPipeline(SessionBase):
+    "/<int:session_id>/pipeline/<string:pipeline_handle>"
+
+    @only_for(("user", "node"))
+    def get(self, session_id, pipeline_handle):
+        """View specific pipeline"""
+
+        session = db.Session.get(session_id)
+        if not session:
+            return {
+                "msg": f"Session with id={session_id} not found"
+            }, HTTPStatus.NOT_FOUND
+
+        if not self.can_view_session(session):
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
+
+        pipeline = db.Pipeline.select(session, pipeline_handle)
+        if not pipeline:
+            return {
+                "msg": f"Pipeline with handle={pipeline_handle} not found"
+            }, HTTPStatus.NOT_FOUND
+
+        return pipeline_schema.dump(pipeline, many=False), HTTPStatus.OK
+
+    @only_for(("user",))
+    def post(self, session_id, pipeline_handle):
+        """Add a preprocessing step to a pipeline"""
+
+        session: db.Session = db.Session.get(session_id)
+        if not session:
+            return {
+                "msg": f"Session with id={session_id} not found"
+            }, HTTPStatus.NOT_FOUND
+
+        pipeline_step = request.get_json()
+        errors = pipeline_step_input_schema.validate(pipeline_step)
+        if errors:
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
+
+        pipe: db.Pipeline = db.Pipeline.select(session, pipeline_handle)
+        if not pipe:
+            return {
+                "msg": (
+                    f"Pipeline with handle={pipeline_handle} in session={session.name} "
+                    "not found!"
+                )
+            }, HTTPStatus.NOT_FOUND
+
+        if not pipe.last_session_task:
+            return {
+                "msg": (
+                    f"Pipeline with handle={pipeline_handle} in session={session.name} "
+                    "has no last task! Session is not properly initialized!"
+                )
+            }, HTTPStatus.INTERNAL_SERVER_ERROR
+
+        preprocessing_task = pipeline_step["task"]
+        response, status_code = self.create_session_task(
+            session=session,
+            database=[{"label": pipeline_handle, "type": "handle"}],
+            description=f"Preprocessing step for session {session.name}",
+            depends_on_id=pipe.last_session_task.id,
+            action=LocalAction.PREPROCESSING,
+            image=preprocessing_task["image"],
+            organizations=preprocessing_task["organizations"],
+        )
+        if status_code != HTTPStatus.CREATED:
+            Session.delete_session(session)
+            return response, status_code
+
+        pipe.last_session_task_id = response["id"]
+
+        # TODO FM 10-7-2024: We should make a specific response for this
+        return response, status_code
 
 
 class NodeSessions(SessionBase):

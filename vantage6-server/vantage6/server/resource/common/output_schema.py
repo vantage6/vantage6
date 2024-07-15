@@ -456,9 +456,26 @@ class SessionSchema(HATEOASModelSchema):
             obj, link_to="node_session", link_from="session_id"
         )
     )
-    # TODO FM 2021-09-07: extend the output to include the config options
-    # config = fields.Nested("SessionConfigSchema", many=True, exclude=["id"])
+    pipelines = fields.Function(
+        lambda obj: create_one_to_many_link(
+            obj, link_to="session_pipeline", link_from="session_id"
+        )
+    )
     ready = fields.Function(lambda obj: obj.is_ready)
+
+
+class PipelineSchema(HATEOASModelSchema):
+    class Meta:
+        model = db.Pipeline
+
+    session = fields.Method("get_session")
+    tasks = fields.Function(
+        lambda obj: create_one_to_many_link(
+            obj, link_to="task", link_from="pipeline_id"
+        )
+    )
+
+    last_session_task = fields.Nested("TaskSchema", many=False)
 
 
 class NodeSessionSchema(HATEOASModelSchema):
