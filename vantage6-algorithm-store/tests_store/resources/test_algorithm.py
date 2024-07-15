@@ -8,9 +8,7 @@ from vantage6.algorithm.store.model.common.enums import (
     AlgorithmStatus,
     Partitioning,
     ReviewStatus,
-    FunctionType,
     ArgumentType,
-    VisualizationType,
 )
 from vantage6.algorithm.store.model.database import Database
 from vantage6.algorithm.store.model.function import Function
