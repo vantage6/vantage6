@@ -18,8 +18,10 @@ USERNAME = "test_user"
 
 
 class TestPolicyResources(TestResources):
+    """Test the policy resources"""
 
-    def createPolicies(cls):
+    def create_policies(self):
+        """Create policies for testing"""
         # Create policies
         policies = [
             Policy(
@@ -36,7 +38,7 @@ class TestPolicyResources(TestResources):
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     def test_private_policies_view(self, mock_validate):
         """Test /api/policy"""
-        self.createPolicies()
+        self.create_policies()
 
         # check that getting policies without authentication fails with forbidden if
         # server is not whitelisted
@@ -71,7 +73,7 @@ class TestPolicyResources(TestResources):
 
     def test_public_policies_view(self):
         """Test /api/policy/public"""
-        self.createPolicies()
+        self.create_policies()
         # Get the policies
         response = self.app.get("/api/policy/public")
         self.assertEqual(response.status_code, 200)

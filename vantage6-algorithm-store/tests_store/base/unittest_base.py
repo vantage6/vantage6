@@ -1,4 +1,5 @@
 import unittest
+from vantage6.algorithm.store.model.review import Review
 import yaml
 
 from vantage6.common.globals import APPNAME, InstanceType
@@ -60,6 +61,7 @@ class TestResources(unittest.TestCase):
         [s.delete() for s in Vantage6Server.get()]
         [u.delete() for u in User.get()]
         [r.delete() for r in Role.get()]
+        [r.delete() for r in Review.get()]
 
         # unset session.session
         DatabaseSessionManager.clear_session()
