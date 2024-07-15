@@ -8,6 +8,9 @@ from vantage6.algorithm.store.model.common.enums import (
     AlgorithmStatus,
     Partitioning,
     ReviewStatus,
+    FunctionType,
+    ArgumentType,
+    VisualizationType,
 )
 from vantage6.algorithm.store.model.database import Database
 from vantage6.algorithm.store.model.function import Function
@@ -415,13 +418,124 @@ class TestAlgorithmResources(TestResources):
         )
         self.assertEqual(response.status_code, 403)
 
-    def test_algorithm_delete(self):
+    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
+    def test_algorithm_delete(self, validate_token_mock):
         """Test DELETE /api/algorithm/<id>"""
-        pass
+        validate_token_mock.return_value = (
+            MockResponse({"username": USERNAME}),
+            HTTPStatus.OK,
+        )
 
-    def test_algorithm_invalidate(self):
+        # Test if endpoint is accessible without user
+        response = self.app.delete("/api/algorithm/9999", headers=HEADERS)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+
+        # Create a mock algorithm
+        algorithm = Algorithm(
+            name="test_algorithm",
+            functions=[
+                Function(
+                    name="test_function",
+                    databases=[
+                        Database(name="test_database", description="test_description"),
+                    ],
+                    arguments=[
+                        Argument(name="test_argument", type_=ArgumentType.STRING)
+                    ],
+                    ui_visualizations=[
+                        UIVisualization(
+                            name="test_visualization",
+                        )
+                    ],
+                )
+            ],
+        )
+        algorithm.save()
+        func_id = algorithm.functions[0].id
+        db_id = algorithm.functions[0].databases[0].id
+        arg_id = algorithm.functions[0].arguments[0].id
+        vis_id = algorithm.functions[0].ui_visualizations[0].id
+
+        # register server so that we don't get forbidden, but not the user wo that
+        # we get unauthorized
+        server = self.register_server()
+
+        # Test when user is not found
+        response = self.app.delete(f"/api/algorithm/{algorithm.id}", headers=HEADERS)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # Register user in the store with permission to delete algorithms
+        self.register_user(
+            server.id,
+            username=USERNAME,
+            user_rules=[Rule.get_by_("algorithm", "delete")],
+        )
+
+        # Test when algorithm is not found
+        response = self.app.delete("/api/algorithm/9999", headers=HEADERS)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+
+        # Test when algorithm is found
+        response = self.app.delete(f"/api/algorithm/{algorithm.id}", headers=HEADERS)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        # check that resources inside the algorithm are also deleted
+        self.assertEqual(Algorithm.get(algorithm.id), None)
+        self.assertEqual(Function.get(func_id), None)
+        self.assertEqual(Database.get(db_id), None)
+        self.assertEqual(Argument.get(arg_id), None)
+        self.assertEqual(UIVisualization.get(vis_id), None)
+
+    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
+    def test_algorithm_invalidate(self, validate_token_mock):
         """Test PATCH /api/algorithm/<id>/invalidate"""
-        pass
+        validate_token_mock.return_value = (
+            MockResponse({"username": USERNAME}),
+            HTTPStatus.OK,
+        )
+
+        # Test if endpoint is accessible without user
+        response = self.app.post("/api/algorithm/9999/invalidate", headers=HEADERS)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+
+        # Create a mock algorithm
+        algorithm = Algorithm(
+            name="test_algorithm", reviews=[Review(status=ReviewStatus.UNDER_REVIEW)]
+        )
+        algorithm.save()
+        review_id = algorithm.reviews[0].id
+
+        # register server so that we don't get forbidden, but not the user wo that
+        # we get unauthorized
+        server = self.register_server()
+
+        # Test when user is not found
+        response = self.app.post(
+            f"/api/algorithm/{algorithm.id}/invalidate", headers=HEADERS
+        )
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # Register user in the store with permission to invalidate algorithms
+        self.register_user(
+            server.id,
+            username=USERNAME,
+            user_rules=[Rule.get_by_("algorithm", "delete")],
+        )
+
+        # Test when algorithm is not found
+        response = self.app.post("/api/algorithm/9999/invalidate", headers=HEADERS)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+
+        # Test when algorithm is found
+        response = self.app.post(
+            f"/api/algorithm/{algorithm.id}/invalidate", headers=HEADERS
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        updated_algo = Algorithm.get(algorithm.id)
+        self.assertEqual(updated_algo.status, AlgorithmStatus.REMOVED)
+        self.assertNotEqual(updated_algo.invalidated_at, None)
+
+        # check that the review is also dropped
+        self.assertEqual(Review.get(review_id).status, ReviewStatus.DROPPED)
 
     @patch("vantage6.algorithm.store.resource.algorithm.get_digest")
     def test_get_image_digest(self, get_digest_mock):
