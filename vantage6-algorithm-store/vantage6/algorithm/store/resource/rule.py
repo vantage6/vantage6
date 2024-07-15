@@ -4,6 +4,7 @@ from http import HTTPStatus
 from flask.globals import request
 from flask import g
 from flask_restful import Api
+from sqlalchemy import or_, and_
 
 from vantage6.common import logger_name
 from vantage6.algorithm.store import db
@@ -180,8 +181,11 @@ class Rules(AlgorithmStoreResources):
                 # .outerjoin(db.UserPermission, db.Rule.id == db.UserPermission.c.rule_id)
                 .filter(
                     # or_(
-                    db.User.username == username,
-                    # db.UserPermission.c.user_id == args["user_id"],
+                    and_(
+                        db.User.username == username,
+                        db.User.v6_server_id == server.id,
+                    ),
+                    # db.UserPermission.c.user_id == user.id,
                     # )
                 )
             )

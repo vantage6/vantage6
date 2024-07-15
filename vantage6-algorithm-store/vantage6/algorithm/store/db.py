@@ -24,6 +24,7 @@ from vantage6.algorithm.store.model import (
     Vantage6Server,
     role_rule_association,
     Policy,
+    UserPermission,
 )
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING
