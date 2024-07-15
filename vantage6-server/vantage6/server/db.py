@@ -27,7 +27,7 @@ from vantage6.server.model import (
     User,
     UserPermission,
     Session,
-    SessionConfig,
+    Pipeline,
     NodeSession,
     NodeSessionConfig,
 )

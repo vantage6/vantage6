@@ -687,22 +687,6 @@ class SessionTaskInputSchema(Schema):
                 )
 
 
-class SessionPipelineInputSchema(Schema):
-    """Schema for validating input for creating a session data frame."""
-
-    # Label that can be used in within the session
-    label = fields.String()
-
-    # Task metadata that is executed on the node for session initialization
-    task = fields.Nested(SessionTaskInputSchema, required=True)
-
-
-class SessionPipelineInitInputSchema(SessionPipelineInputSchema):
-
-    # Handle that is specified in the node configuration file
-    handle = fields.String(required=True)
-
-
 class SessionInputSchema(Schema):
     """Schema for validating input for creating a session."""
 
@@ -711,18 +695,31 @@ class SessionInputSchema(Schema):
 
     collaboration_id = fields.Integer(required=True, validate=Range(min=1))
     study_id = fields.Integer(validate=Range(min=1))
-    scope = fields.String(validate=OneOf(Scope.list()), default=Scope.OWN.value)
-
-    # List of pipeline slots that are created on the nodes
-    pipelines = fields.List(
-        fields.Nested(SessionPipelineInitInputSchema), required=True
+    scope = fields.String(
+        required=True, validate=OneOf(Scope.list()), default=Scope.OWN.value
     )
 
 
-class PipelineInputSchema(Schema):
+class PipelineInitInputSchema(Schema):
+    """Schema for validating input for creating a new pipeline in a session."""
 
-    session_id = fields.Integer(required=True)
-    pipelines = fields.List(fields.Nested(SessionPipelineInputSchema), required=True)
+    # Databse label that is specified in the node configuration file
+    label = fields.String(required=True)
+
+    # handle that can be used in within the session
+    handle = fields.String()
+
+    # Task metadata that is executed on the node for session initialization, which is
+    # the data extraction task
+    task = fields.Nested(SessionTaskInputSchema, required=True)
+
+
+class PipelineStepInputSchema(Schema):
+    """Schema for validating input for creating a new pipeline step in a session."""
+
+    # Task metadata that is executed on the node for session extension, which is a
+    # pre-processing task
+    task = fields.Nested(SessionTaskInputSchema, required=True)
 
 
 class NodeSessionConfigInputSchema(Schema):

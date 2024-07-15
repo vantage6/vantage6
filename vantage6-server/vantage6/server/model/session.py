@@ -81,7 +81,7 @@ class Session(Base):
     study = relationship("Study", back_populates="sessions")
     tasks = relationship("Task", back_populates="session")
     node_sessions = relationship("NodeSession", back_populates="session")
-    config = relationship("SessionConfig", back_populates="session")
+    pipelines = relationship("Pipeline", back_populates="session")
 
     @property
     def is_ready(self):
@@ -93,6 +93,8 @@ class Session(Base):
         bool
             True if the session is ready, False otherwise
         """
+        # TODO FM 15-07-2024: we should check all the states of the tasks in the session
+        # (not compute) tasks
         return all(
             n_session.state == SessionStatus.READY for n_session in self.node_sessions
         )

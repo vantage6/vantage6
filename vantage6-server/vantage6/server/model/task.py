@@ -97,6 +97,7 @@ class Task(Base):
     collaboration_id = Column(Integer, ForeignKey("collaboration.id"))
     study_id = Column(Integer, ForeignKey("study.id"))
     session_id = Column(Integer, ForeignKey("session.id"))
+    pipeline_id = Column(Integer, ForeignKey("pipeline.id"))
     job_id = Column(Integer)
     parent_id = Column(Integer, ForeignKey("task.id"))
     depends_on_id = Column(Integer, ForeignKey("task.id"))
@@ -130,6 +131,9 @@ class Task(Base):
     study = relationship("Study", back_populates="tasks")
     algorithm_store = relationship("AlgorithmStore", back_populates="tasks")
     session = relationship("Session", back_populates="tasks")
+    pipeline = relationship(
+        "Pipeline", back_populates="tasks", foreign_keys=[pipeline_id]
+    )
 
     # TODO update in v4+, with renaming to 'run'
     @hybrid_property
