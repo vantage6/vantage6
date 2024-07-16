@@ -72,6 +72,11 @@ class Algorithm(Base):
     def is_review_finished(self) -> bool:
         """
         Check if an algorithm is being reviewed.
+
+        Returns
+        -------
+        bool
+            True if the algorithm is being reviewed, False otherwise
         """
         return self.status not in [
             AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT,
@@ -90,7 +95,7 @@ class Algorithm(Base):
         return all([review.status == ReviewStatus.APPROVED for review in self.reviews])
 
     @classmethod
-    def get_by_image(cls, image: str) -> "Algorithm":
+    def get_by_image(cls, image: str) -> list["Algorithm"]:
         """
         Get an algorithm by image.
 

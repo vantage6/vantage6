@@ -89,7 +89,7 @@ class ReviewSubClient(ClientBase.SubClient):
 
     def create(self, algorithm: int, reviewer: int) -> dict:
         """
-        Create a review.
+        Assign an algorithm to be reviewed by a particular user.
 
         Parameters
         ----------
