@@ -404,7 +404,6 @@ class User(AlgorithmStoreResources):
                 roles.append(role)
 
             # validate that user is not changing their own roles
-
             if user == g.user:
                 return {
                     "msg": "You can't changes your own roles!"
