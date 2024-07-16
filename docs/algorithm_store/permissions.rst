@@ -20,34 +20,25 @@ Permission rules
 Just like in the vantage6 server, in the algorithm store rules are used to allow
 or prevent a user from performing an operation.
 An operation is an action that can be performed on a resource of the algorithm store.
-There are 5 operations defined:
+The following operations are defined:
 
 #. Create
 #. Delete
 #. Edit
-#. Review
 #. View
 
 These operations can be performed on the available resources according to the following schema:
 
-.. .. figure:: /images/rules-algo-store-overview.png
-..    :alt: Rule overview
-..    :align: center
-.. |
-
-
 .. list-table::
    :name: rules-algo-store
-   :widths: 20 16 16 16 16 16
+   :widths: 20 20 20 20 20
 
    * - Resource
      - View
      - Create
      - Edit
      - Delete
-     - Review
    * - Algorithm
-     - ✅
      - ✅
      - ✅
      - ✅
@@ -57,25 +48,23 @@ These operations can be performed on the available resources according to the fo
      - ✅
      - ✅
      - ✅
-     -
    * - Role
      - ✅
      - ✅
      - ✅
      - ✅
-     -
    * - Review
      - ✅
      - ✅
      - ✅
      - ✅
-     -
    * - Whitelisted server
-     -
-     -
-     -
+     - N/A
+     - N/A
+     - N/A
      - ✅
-     -
+
+Note that not some permissions are not defined, e.g.
 
 Rules can be assigned to a user by another user who has at least the same permission level
 as the rules assigned. Single rules can be assigned, but default combinations of rules are available,
@@ -95,41 +84,35 @@ the developer, have permissions to create and edit algorithms but cannot review 
 
 .. list-table::
    :name: rules-algo-store-reviewer
-   :widths: 20 16 16 16 16 16
+   :widths: 20 20 20 20 20
 
    * - Resource
      - View
      - Create
      - Edit
      - Delete
-     - Review
    * - Algorithm
      - ✅
      - ❌
      - ❌
      - ❌
-     - ✅
    * - User
      - ✅
      - ❌
      - ❌
      - ❌
-     -
    * - Role
      - ✅
      - ❌
      - ❌
      - ❌
-     -
    * - Review
+     - ✅
      - ❌
+     - ✅
      - ❌
-     - ❌
-     - ❌
-     -
    * - Whitelisted server
      -
      -
      -
      - ❌
-     -

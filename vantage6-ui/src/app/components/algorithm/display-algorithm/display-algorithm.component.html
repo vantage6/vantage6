@@ -20,13 +20,43 @@
         <b>{{ "algorithm.description" | translate }}</b>
         <span>{{ algorithm?.description || "-" }}</span>
       </div>
+      <div class="data-list__item">
+        <b>{{ "algorithm.v6version" | translate }}</b>
+        <span>{{ algorithm?.vantage6_version }}</span>
+      </div>
       <div class="data-list__item data-list__item--big">
         <b>{{ "algorithm.image" | translate }}</b>
         <span>{{ algorithm?.image || "-" }}</span>
       </div>
+      <div class="data-list__item data-list__item--big">
+        <b>{{ "algorithm.code-url" | translate }}</b>
+        <div *ngIf="algorithm && algorithm.code_url">
+          <a [href]="algorithm.code_url">{{ algorithm.code_url }}</a>
+        </div>
+        <div *ngIf="!algorithm || !algorithm.code_url">
+          <span>-</span>
+        </div>
+      </div>
+      <div class="data-list__item data-list__item--big">
+        <b>{{ "algorithm.documentation-url" | translate }}</b>
+        <div *ngIf="algorithm && algorithm.documentation_url">
+          <a [href]="algorithm.documentation_url">{{ algorithm.documentation_url }}</a>
+        </div>
+        <div *ngIf="!algorithm || !algorithm.documentation_url">
+          <span>-</span>
+        </div>
+      </div>
       <div class="data-list__item">
-        <b>{{ "algorithm.v6version" | translate }}</b>
-        <span>{{ algorithm?.vantage6_version }}</span>
+        <b>{{ "algorithm.submitted-at" | translate }}</b>
+        <span>{{ printDate(algorithm?.submitted_at) }}</span>
+      </div>
+      <div *ngIf="algorithm?.approved_at" class="data-list__item">
+        <b>{{ "algorithm.approved-at" | translate }}</b>
+        <span>{{ printDate(algorithm?.approved_at) }}</span>
+      </div>
+      <div *ngIf="algorithm?.invalidated_at" class="data-list__item">
+        <b>{{ "algorithm.invalidated-at" | translate }}</b>
+        <span>{{ printDate(algorithm?.invalidated_at) }}</span>
       </div>
     </div>
   </mat-card-content>
@@ -148,6 +178,18 @@
         </ng-template>
       </mat-expansion-panel>
     </mat-accordion>
+  </mat-card-content>
+</mat-card>
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>{{ "algorithm-read.card-download-json.title" | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <p>{{ "algorithm-read.card-download-json.description" | translate }}</p>
+    <button mat-raised-button color="primary" (click)="downloadAlgorithmJson()">
+      <mat-icon>file_download</mat-icon>
+      <span>{{ "algorithm-read.card-download-json.download-button" | translate }}</span>
+    </button>
   </mat-card-content>
 </mat-card>
 <ng-template #noFunctions>

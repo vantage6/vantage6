@@ -29,6 +29,7 @@ import { FileService } from 'src/app/services/file.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
 import { NodeStatus } from 'src/app/models/api/node.model';
+import { printDate } from 'src/app/helpers/general.helper';
 
 @Component({
   selector: 'app-task-read',
@@ -39,6 +40,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   @Input() id = '';
   functionType = FunctionType;
+  printDate = printDate;
 
   destroy$ = new Subject();
   waitTaskComplete$ = new Subject();

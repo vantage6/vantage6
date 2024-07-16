@@ -1,14 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
 import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs';
 import { BaseReadComponent } from 'src/app/components/admin-base/base-read/base-read.component';
-import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { OperationType, ResourceType, Rule } from 'src/app/models/api/rule.model';
 import { User, UserLazyProperties } from 'src/app/models/api/user.model';
 import { routePaths } from 'src/app/routes';
+import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dialog.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { RuleService } from 'src/app/services/rule.service';
 import { UserService } from 'src/app/services/user.service';
@@ -28,14 +27,14 @@ export class UserReadComponent extends BaseReadComponent implements OnInit, OnDe
   rulesForDisplay: Rule[] = [];
 
   constructor(
-    protected override dialog: MatDialog,
+    protected override handleConfirmDialogService: HandleConfirmDialogService,
     private router: Router,
     private userService: UserService,
     protected override translateService: TranslateService,
     private permissionService: PermissionService,
     private ruleService: RuleService
   ) {
-    super(dialog, translateService);
+    super(handleConfirmDialogService, translateService);
   }
 
   override async ngOnInit(): Promise<void> {

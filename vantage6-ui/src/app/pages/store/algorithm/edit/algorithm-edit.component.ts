@@ -60,6 +60,8 @@ export class AlgorithmEditComponent implements OnInit, OnDestroy {
       partitioning: this.algorithm.partitioning,
       image: this.algorithm.image,
       vantage6_version: this.algorithm.vantage6_version,
+      code_url: this.algorithm.code_url,
+      documentation_url: this.algorithm.documentation_url,
       functions: this.algorithm.functions.map((func) => {
         return {
           name: func.name,

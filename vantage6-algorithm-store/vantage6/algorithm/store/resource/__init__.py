@@ -317,9 +317,22 @@ def with_permission_to_view_algorithms() -> callable:
                 "algorithm_view", DefaultStorePolicies.ALGORITHM_VIEW.value
             )
 
-            # TODO v5+ remove this deprecated policy
+            # check if user is trying to view algorithms that are not approved by review
+            # or have been invalidated - these algorithms always require authentication
+            # even when algorithms are open to all
+            request_args = request.args or {}
+            request_approved = not (
+                request_args.get("awaiting_reviewer_assignment")
+                or request_args.get("under_review")
+                or request_args.get("in_review_process")
+                or request_args.get("invalidated")
+            )
+
+            # TODO v5+ remove this deprecated policy "algorithms_open"
             anyone_can_view = policies.get("algorithms_open", False)
-            if anyone_can_view or algorithm_view_policy == AlgorithmViewPolicies.PUBLIC:
+            if (
+                anyone_can_view or algorithm_view_policy == AlgorithmViewPolicies.PUBLIC
+            ) and request_approved:
                 return fn(self, *args, **kwargs)
 
             # not everyone has permission: authenticate with server

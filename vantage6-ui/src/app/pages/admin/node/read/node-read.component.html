@@ -63,7 +63,7 @@
                 </div>
                 <div class="data-list__item">
                   <b>{{ "node.last-seen" | translate }}</b>
-                  <span>{{ selectedNode.last_seen ? (selectedNode.last_seen | date: "MMMM d, y, HH:mm:ss") : "Never" }}</span>
+                  <span>{{ selectedNode.last_seen ? printDate(selectedNode.last_seen) : "Never" }}</span>
                 </div>
               </div>
               <ng-container *ngIf="canEdit(node.organization.id)">

@@ -541,7 +541,7 @@ class DockerTaskManager(DockerBaseManager):
                         else json.dumps(extra_params[optional_key])
                     )
                     environment_variables[
-                        f"{database['label'].upper()}_" f"{optional_key.upper()}"
+                        f"{database['label'].upper()}_{optional_key.upper()}"
                     ] = env_var_value
 
         environment_variables["USER_REQUESTED_DATABASE_LABELS"] = ",".join(

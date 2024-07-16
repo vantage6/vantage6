@@ -9,4 +9,9 @@ export class AlertWithButtonComponent {
   @Input() label: string = '';
   @Input() buttonText: string = '';
   @Input() buttonLink: string = '';
+  @Input() isSuccessAlert: boolean = true;
+
+  getAlertClasses(): string {
+    return this.isSuccessAlert ? `alert alert-success` : `alert`;
+  }
 }

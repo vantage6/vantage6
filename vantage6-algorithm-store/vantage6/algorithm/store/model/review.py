@@ -3,6 +3,7 @@ from sqlalchemy import Column, Text, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base
+from vantage6.algorithm.store.model.common.enums import ReviewStatus
 
 
 class Review(Base):
@@ -16,6 +17,9 @@ class Review(Base):
         Id of the user appointed as reviewer
     status : str
         Review status
+    comment : str
+        Reviewer's comment
+
     reviewers : list[:class:`~.model.user.User`]
         List of users that have written reviews
     algorithm : :class:`~.model.algorithm.Algorithm`
@@ -25,11 +29,23 @@ class Review(Base):
     # fields
     algorithm_id = Column(Integer, ForeignKey("algorithm.id"))
     reviewer_id = Column(Integer, ForeignKey("user.id"))
-    status = Column(Text)
+    status = Column(Text, default=ReviewStatus.UNDER_REVIEW.value)
+    comment = Column(Text)
 
     # relationships
-    reviewers = relationship("User", back_populates="reviews")
-    algorithm = relationship("Algorithm", back_populates="review")
+    reviewer = relationship("User", back_populates="reviews")
+    algorithm = relationship("Algorithm", back_populates="reviews")
+
+    def is_review_finished(self) -> bool:
+        """
+        Check if the review is finished.
+
+        Returns
+        -------
+        bool
+            True if the review is finished, False otherwise
+        """
+        return self.status != ReviewStatus.UNDER_REVIEW
 
     def __repr__(self) -> str:
         """

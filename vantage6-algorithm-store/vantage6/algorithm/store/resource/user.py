@@ -101,7 +101,7 @@ class Users(AlgorithmStoreResources):
         """List users
         ---
         description: >-
-            Returns a list of users that you are allowed to see.
+            Returns a list of users registered in the algorithm store.
 
         parameters:
           - in: query
@@ -118,7 +118,14 @@ class Users(AlgorithmStoreResources):
             schema:
               type: integer
             description: Role that is assigned to user
-            description: Number of items per page (default=10)
+          - in: query
+            name: can_review
+            schema:
+              type: boolean
+            description: >-
+              Filter users that can review algorithms. If true, only users that are
+              allowed to review algorithms are returned. If false, only users that are
+              not allowed to review algorithms are returned.
           - in: query
             name: page
             schema:
@@ -171,6 +178,19 @@ class Users(AlgorithmStoreResources):
                 .join(db.Role)
                 .filter(db.Role.id == args["role_id"])
             )
+
+        # find users that can review algorithms
+        if "can_review" in args:
+            can_review = bool(args["can_review"])
+            # TODO this approach may not be the most efficient if there are many users.
+            # Consider improving.
+            reviewers = [
+                user.id for user in db.User.get() if user.can("review", Operation.EDIT)
+            ]
+            if can_review:
+                q = q.filter(db.User.id.in_(reviewers))
+            else:
+                q = q.filter(db.User.id.notin_(reviewers))
 
         # paginate results
         try:
@@ -426,6 +446,7 @@ class User(AlgorithmStoreResources):
     @with_permission(module_name, Operation.DELETE)
     def delete(self, id):
         """Remove user.
+
         ---
         description: >-
           Unregister the vantage6 user account from the algorithm store.\n
@@ -456,5 +477,5 @@ class User(AlgorithmStoreResources):
             return {"msg": f"user id={id} not found"}, HTTPStatus.NOT_FOUND
 
         user.delete()
-        log.info(f"user id={id} is removed from the database")
+        log.info("user id=%s is removed from the database", id)
         return {"msg": f"user id={id} is removed from the database"}, HTTPStatus.OK

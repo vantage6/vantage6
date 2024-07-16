@@ -1,6 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs';
@@ -10,6 +9,7 @@ import { Role, RoleLazyProperties } from 'src/app/models/api/role.model';
 import { OperationType, ResourceType, Rule, Rule_ } from 'src/app/models/api/rule.model';
 import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
+import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dialog.service';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { RoleService } from 'src/app/services/role.service';
@@ -38,7 +38,7 @@ export class RoleReadComponent extends BaseReadComponent implements OnInit, OnDe
   errorMessage?: string;
 
   constructor(
-    protected override dialog: MatDialog,
+    protected override handleConfirmDialogService: HandleConfirmDialogService,
     private router: Router,
     private roleService: RoleService,
     private ruleService: RuleService,
@@ -46,7 +46,7 @@ export class RoleReadComponent extends BaseReadComponent implements OnInit, OnDe
     protected override translateService: TranslateService,
     private permissionService: PermissionService
   ) {
-    super(dialog, translateService);
+    super(handleConfirmDialogService, translateService);
   }
 
   override async ngOnInit(): Promise<void> {

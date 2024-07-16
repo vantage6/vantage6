@@ -40,6 +40,14 @@
           <input matInput type="text" formControlName="vantage6_version" />
         </mat-form-field>
         <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ "algorithm.code-url" | translate }}</mat-label>
+          <input matInput type="text" formControlName="code_url" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ "algorithm.documentation-url" | translate }}</mat-label>
+          <input matInput type="text" formControlName="documentation_url" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ "algorithm.partitioning" | translate }}</mat-label>
           <mat-select formControlName="partitioning">
             <mat-option *ngFor="let partitionType of partitionTypes" [value]="partitionType">

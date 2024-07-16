@@ -27,6 +27,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatDateFnsModule } from '@angular/material-date-fns-adapter';
+import { MatRadioModule } from '@angular/material/radio';
 import { enCA } from 'date-fns/locale';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -118,6 +119,12 @@ import { StoreUserFormComponent } from './components/forms/store-user-form/store
 import { BaseCreateComponent } from './components/admin-base/base-create/base-create.component';
 import { StoreRoleListComponent } from './pages/store/role/list/store-role-list.component';
 import { StoreRoleReadComponent } from './pages/store/role/read/store-role-read.component';
+import { AlgorithmInReviewListComponent } from './pages/store/algorithms-in-review/algorithm-in-review-list/algorithm-in-review-list.component';
+import { AlgorithmAssignReviewComponent } from './pages/store/algorithms-in-review/algorithm-assign-review/algorithm-assign-review.component';
+import { ReviewReadComponent } from './pages/store/algorithms-in-review/review-read/review-read.component';
+import { ReviewSubmitComponent } from './pages/store/algorithms-in-review/review-submit/review-submit.component';
+import { MyPendingAlgorithmsComponent } from './pages/store/algorithms-in-review/my-pending-algorithms/my-pending-algorithms.component';
+import { OldAlgorithmListComponent } from './pages/store/algorithm/old-list/old-algorithm-list.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -209,7 +216,13 @@ export function HttpLoaderFactory(http: HttpClient) {
     StoreUserFormComponent,
     BaseCreateComponent,
     StoreRoleListComponent,
-    StoreRoleReadComponent
+    StoreRoleReadComponent,
+    AlgorithmInReviewListComponent,
+    AlgorithmAssignReviewComponent,
+    ReviewReadComponent,
+    ReviewSubmitComponent,
+    MyPendingAlgorithmsComponent,
+    OldAlgorithmListComponent
   ],
   imports: [
     BrowserModule,
@@ -247,6 +260,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     MatTabsModule,
     MatTableModule,
     MatToolbarModule,
+    MatRadioModule,
     QRCodeModule
   ],
   providers: [

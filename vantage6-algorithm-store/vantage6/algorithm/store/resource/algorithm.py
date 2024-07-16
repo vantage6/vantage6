@@ -1,9 +1,12 @@
 import logging
+from http import HTTPStatus
+import datetime
 from flask import g, request
 from flask_restful import Api
-from http import HTTPStatus
+from sqlalchemy import or_
 
 from vantage6.algorithm.store import db
+from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.common import logger_name
 from vantage6.algorithm.store.model.ui_visualization import UIVisualization
@@ -66,6 +69,14 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         resource_class_kwargs=services,
     )
 
+    api.add_resource(
+        AlgorithmInvalidate,
+        path + "/<int:id>/invalidate",
+        endpoint="algorithm_invalidate",
+        methods=("POST",),
+        resource_class_kwargs=services,
+    )
+
 
 algorithm_input_post_schema = AlgorithmInputSchema()
 algorithm_input_patch_schema = AlgorithmPatchInputSchema()
@@ -89,7 +100,6 @@ def permissions(permission_mgr: PermissionManager) -> None:
     add(P.CREATE, description="Create a new algorithm")
     add(P.EDIT, description="Edit any algorithm")
     add(P.DELETE, description="Delete any algorithm")
-    add(P.REVIEW, description="Edit some fields of the algorithm")
 
 
 # ------------------------------------------------------------------------------
@@ -152,7 +162,12 @@ class Algorithms(AlgorithmBaseResource):
     def get(self):
         """List algorithms
         ---
-        description: Return a list of algorithms
+        description: >-
+          Return a list of algorithms
+
+          By default, only approved algorithms are returned. To get non-approved
+          algorithms, set the 'awaiting_reviewer_assignment', 'under_review' or
+          'invalidated' parameter to True.
 
         parameters:
           - in: query
@@ -172,6 +187,30 @@ class Algorithms(AlgorithmBaseResource):
               type: string
             description: Filter on algorithm image. If no tag is provided, the
               latest tag is assumed.
+          - in: query
+            name: awaiting_reviewer_assignment
+            schema:
+              type: boolean
+            description: Filter on algorithms that have not been assigned a reviewer
+              yet.
+          - in: query
+            name: under_review
+            schema:
+              type: boolean
+            description: Filter on algorithms that are currently under review.
+          - in: query
+            name: in_review_process
+            schema:
+              type: boolean
+            description: Filter on algorithms that are in the review process. This
+              includes algorithms that are awaiting reviewer assignment or under review
+          - in: query
+            name: invalidated
+            schema:
+              type: boolean
+            description: Filter on algorithms that have been invalidated. These may be
+              algorithms that have been replaced by a newer version or that have been
+              rejected in review.
           - in: query
             name: partitioning
             schema:
@@ -210,19 +249,69 @@ class Algorithms(AlgorithmBaseResource):
             if (value := request.args.get(field)) is not None:
                 q = q.filter(getattr(db_Algorithm, field).like(value))
 
+        awaiting_reviewer_assignment = bool(
+            request.args.get("awaiting_reviewer_assignment", False)
+        )
+        under_review = bool(request.args.get("under_review", False))
+        invalidated = bool(request.args.get("invalidated", False))
+        in_review_process = bool(request.args.get("in_review_process", False))
+        if sum([awaiting_reviewer_assignment, under_review, invalidated]) > 1:
+            return {
+                "msg": "Only one of 'awaiting_reviewer_assignment', 'under_review' or "
+                "'invalidated' may be set to True at a time."
+            }, HTTPStatus.BAD_REQUEST
+        elif in_review_process and invalidated:
+            return {
+                "msg": "Only one of 'in_review_process' or 'invalidated' may be set to "
+                "True at a time."
+            }, HTTPStatus.BAD_REQUEST
+        if awaiting_reviewer_assignment:
+            q = q.filter(
+                db_Algorithm.status == AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
+            )
+        elif under_review:
+            q = q.filter(db_Algorithm.status == AlgorithmStatus.UNDER_REVIEW)
+        elif invalidated:
+            q = q.filter(db_Algorithm.invalidated_at.is_not(None))
+        elif in_review_process:
+            q = q.filter(
+                or_(
+                    db_Algorithm.status == AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT,
+                    db_Algorithm.status == AlgorithmStatus.UNDER_REVIEW,
+                )
+            )
+        else:
+            # by default, only approved algorithms are returned
+            q = q.filter(db_Algorithm.status == AlgorithmStatus.APPROVED)
+
         if (image := request.args.get("image")) is not None:
             # determine the sha256 of the image, and filter on that. Sort descending
             # to get the latest addition to the store first
-            # TODO at some point there may only be one registration of each algorithm,
-            # so this sorting may not be necessary anymore
             image_wo_tag, digest = self._get_image_digest(image)
             if not digest:
                 return {
                     "msg": "Image digest could not be determined"
                 }, HTTPStatus.BAD_REQUEST
-            q = q.filter(
-                db_Algorithm.image == image_wo_tag, db_Algorithm.digest == digest
-            ).order_by(db_Algorithm.id.desc())
+            q = q.filter(db_Algorithm.image == image_wo_tag)
+            # TODO at some point there may only be one registration of each algorithm,
+            # so this sorting may not be necessary anymore
+            q_with_digest = q.filter(db_Algorithm.digest == digest).order_by(
+                db_Algorithm.id.desc()
+            )
+
+            # if image with that digest does not exist, check if another image with
+            # different digest but same name exists. If it does, throw
+            # more specific error
+            if q_with_digest.first():
+                q = q_with_digest
+            elif q.first():
+                return {
+                    "msg": f"The image '{image}' that you provided has digest "
+                    f"'{digest}'. This algorithm version is not approved by the "
+                    "store. The currently approved version of this algorithm has"
+                    f"digest '{q.first().digest}'. Please include this digest if you"
+                    f"want to use that image."
+                }, HTTPStatus.BAD_REQUEST
 
         # paginate results
         try:
@@ -264,6 +353,12 @@ class Algorithms(AlgorithmBaseResource):
                     type: string
                     description: Version of vantage6 that the algorithm is
                       built with / for
+                  code_url:
+                    type: string
+                    description: URL to the algorithm code repository
+                  documentation_url:
+                    type: string
+                    description: URL to the algorithm documentation
                   functions:
                     type: array
                     description: List of functions that are available in the
@@ -368,7 +463,10 @@ class Algorithms(AlgorithmBaseResource):
             image=image_wo_tag,
             partitioning=data["partitioning"],
             vantage6_version=data["vantage6_version"],
+            code_url=data["code_url"],
+            documentation_url=data.get("documentation_url", None),
             digest=digest,
+            developer=g.user,
         )
         algorithm.save()
 
@@ -528,6 +626,12 @@ class Algorithm(AlgorithmBaseResource):
                     type: string
                     description: Version of vantage6 that the algorithm is
                       built with / for
+                  code_url:
+                    type: string
+                    description: URL to the algorithm code repository
+                  documentation_url:
+                    type: string
+                    description: URL to the algorithm documentation
                   functions:
                     type: array
                     description: List of functions that are available in the
@@ -606,6 +710,8 @@ class Algorithm(AlgorithmBaseResource):
             description: Invalid input
           401:
             description: Unauthorized
+          403:
+            description: Forbidden action
 
         security:
           - bearerAuth: []
@@ -626,7 +732,35 @@ class Algorithm(AlgorithmBaseResource):
                 "errors": errors,
             }, HTTPStatus.BAD_REQUEST
 
-        fields = ["name", "description", "partitioning", "vantage6_version"]
+        # algorithms can no longer be edited if they are in the review process or have
+        # already been through it.
+        if algorithm.approved_at is not None:
+            return {
+                "msg": "Approved algorithms cannot be edited. Please submit a new "
+                "algorithm and go through the review process if you want to update it."
+            }, HTTPStatus.FORBIDDEN
+        elif algorithm.invalidated_at is not None:
+            return {
+                "msg": "Invalidated algorithms cannot be edited. Please submit a new "
+                "algorithm and go through the review process if you want to update it."
+            }, HTTPStatus.FORBIDDEN
+        elif algorithm.reviews and any(
+            [r.is_review_finished() for r in algorithm.reviews]
+        ):
+            return {
+                "msg": "This algorithm has at least one submitted review, and can "
+                "therefore no longer be edited. Please submit a new algorithm and go "
+                "through the review process if you want to update this algorithm."
+            }, HTTPStatus.FORBIDDEN
+
+        fields = [
+            "name",
+            "description",
+            "partitioning",
+            "vantage6_version",
+            "code_url",
+            "documentation_url",
+        ]
         for field in fields:
             if field in data and data.get(field) is not None:
                 setattr(algorithm, field, data.get(field))
@@ -693,3 +827,58 @@ class Algorithm(AlgorithmBaseResource):
         algorithm.save()
 
         return algorithm_output_schema.dump(algorithm, many=False), HTTPStatus.OK
+
+
+class AlgorithmInvalidate(AlgorithmStoreResources):
+    """Resource for /algorithm/<id>/invalidate"""
+
+    @with_permission(module_name, Operation.DELETE)
+    def post(self, id):
+        """Invalidate algorithm
+
+        ---
+        description: >-
+          Invalidate an algorithm specified by ID. This is an alternative to completely
+          removing an algorithm from the store - the advantage of invalidating is that
+          the algorithm metadata is still available. This endpoint should be used when
+          an algorithm is removed from a project. If on the other hand a newer version
+          of the algorithm is uploaded, the old version will be invalidated
+          automatically.
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: ID of the algorithm
+
+        responses:
+          200:
+            description: OK
+          401:
+            description: Unauthorized
+          404:
+            description: Algorithm not found
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Algorithm"]
+        """
+
+        algorithm: db.Algorithm = db_Algorithm.get(id)
+        if not algorithm:
+            return {"msg": "Algorithm not found"}, HTTPStatus.NOT_FOUND
+
+        # invalidate the algorithm
+        algorithm.invalidated_at = datetime.datetime.now(datetime.timezone.utc)
+        algorithm.status = AlgorithmStatus.REMOVED.value
+        algorithm.save()
+
+        # Also invalidate any reviews that were still active
+        for review in algorithm.reviews:
+            if not review.is_review_finished():
+                review.status = ReviewStatus.DROPPED.value
+                review.save()
+
+        return {"msg": f"Algorithm id={id} was successfully invalidated"}, HTTPStatus.OK
