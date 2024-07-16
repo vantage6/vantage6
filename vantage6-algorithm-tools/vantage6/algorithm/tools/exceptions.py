@@ -170,6 +170,6 @@ class SessionError(AlgorithmError):
     Generic error raised when some step of the session fails.
 
     Example usage:
-    - The order of the requested actions is incorrect. For example a preprocessing
-      action is requested before a data-extraction action.
+    - The function requested to be executed to build the session is not started using
+      the correction action (data extraction, preprocessing, etc.)
     """

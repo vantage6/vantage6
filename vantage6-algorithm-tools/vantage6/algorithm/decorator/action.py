@@ -2,122 +2,129 @@ import os
 import pyarrow as pa
 import pandas as pd
 
+from typing import Any
 from datetime import datetime
 from functools import wraps
 
-from vantage6.common import error, debug
+from vantage6.common import error, debug, info
 from vantage6.common.enums import LocalAction
-from vantage6.algorithm.tools.exceptions import DataTypeError, SessionError
+from vantage6.algorithm.tools.exceptions import (
+    DataTypeError,
+    SessionError,
+    EnvironmentVariableNotFoundError,
+)
+from vantage6.algorithm.tools.util import get_action
+
+
+def _exit_if_action_mismatch(function_action: LocalAction):
+    """
+    Check if the requested action matches the container action.
+
+    Parameters
+    ----------
+    function_action : LocalAction
+        The action requested by the user.
+
+    Raises
+    ------
+    EnvironmentVariableNotFoundError
+        If the environment variable FUNCTION_ACTION is not found.
+    SessionError
+        If the container action does not match the requested action.
+
+    """
+    info(f"Validating function action: {function_action}")
+    requested_action = get_action()
+
+    if requested_action != function_action:
+        raise SessionError(
+            f"Container started as {requested_action}, but user requested "
+            f"{function_action}. "
+        )
+
+
+def _convert_to_parquet(data: Any) -> pa.Table:
+    """
+    Convert the algorithm output to a Parquet Table.
+
+    Parameters
+    ----------
+    data : Any
+        The algorithm output data.
+
+    Returns
+    -------
+    pa.Table
+        The converted Parquet Table.
+
+    Raises
+    ------
+    SessionError
+        If the DataFrame cannot be converted to a Parquet Table.
+    DataTypeError
+        If the data extraction function returns an unsupported data frame type.
+    """
+    info("Converting algorithm output to a Parquet Table.")
+    match type(result):
+        case pd.DataFrame:
+
+            try:
+                result = pa.Table.from_pandas(result)
+            except Exception as e:
+                raise SessionError(
+                    f"Could not convert DataFrame to Parquet Table"
+                ) from e
+            return result
+
+        case pa.Table:
+            return result
+        case _:
+            raise DataTypeError(
+                "Data extraction function did not return a supported data "
+                f"frame type. Got {type(result)} instead. Supported types are: "
+                "pandas.DataFrame, pyarrow.Table."
+            )
 
 
 def data_extraction(func: callable) -> callable:
-    # v Verify that the container has been started as data_extraction
-    # v Store return DataFrame in a parquet file
-    # v Write some other status statement in the output
-    # v Update session log
-    # - report column names and types to the server
+
     @wraps(func)
     def wrapper(*args, **kwargs) -> None:
-        exit_if_action_mismatch(LocalAction.DATA_EXTRACTION)
 
+        # Validate that the correct action is invoked in combination with the function
+        # that is wrapped by this decorator.
+        _exit_if_action_mismatch(LocalAction.DATA_EXTRACTION)
+
+        # TODO: should we add the data in here??
         result = func(*args, **kwargs)
 
-        debug("Verifying returned data type from the data extraction step.")
-        if not isinstance(result, pd.DataFrame):
-            raise DataTypeError(
-                "Data extraction function did not return a Pandas DataFrame."
-            )
-
-        # TODO give a sensible name to the parquet file
-        debug("Writing data to parquet file.")
-        try:
-            pa.Table.from_pandas(result).write_table("data_extraction_result.parquet")
-        except Exception as e:
-            error(f"Error writing data to parquet file: {e}")
-            raise
-
-        _raise_if_session_already_exists()
-        _create_session_state_file()
-
-        _set_state(
-            "data-extraction",
-            "data_extraction_result.parquet",
-            "Data extraction complete.",
-        )
-
-        # TODO report column names
-        # TODO report the column types
-        # obtain token
-        # create algorithm client
-        # post to the session endpoint
-
-        # Nothing is returned from the data-extraction container to the vantage6 server
-        return
+        return _convert_to_parquet(result)
 
     return wrapper
 
 
-def _set_state(action: str, file: str, message: str):
-    debug("Updating session state.")
-    try:
-        state = pa.parquet.read_table("session_state.parquet").to_pandas()
-        state = state.append(
-            {
-                "step": "data-extraction",
-                "action": action,
-                "file": file,
-                "timestamp": datetime.now(),
-                "message": message,
-            },
-            ignore_index=True,
-        )
-        pa.Table.from_pandas(state).write_table("session_state.parquet")
-    except Exception as e:
-        error(f"Error when updating session state: {e}")
-        raise SessionError("Error when updating session state.")
-
-
-def _create_session_state_file():
-    debug("Creating local session file.")
-    try:
-        pa.Table.from_pandas(
-            pd.DataFrame(columns=["step", "action", "file", "timestamp", "message"])
-        ).write_table("session_state.parquet")
-    except Exception as e:
-        error(f"Error when creating local session file.")
-        raise SessionError("Error when creating local session file.")
-
-
-def _raise_if_session_already_exists():
-    if os.path.exists("session_state.parquet"):
-        debug(
-            "Session state file already exists. Which should not be the case as the "
-            "data extraction step is the first step in the workflow. Exiting."
-        )
-        raise SessionError("Session state file already exists.")
-
-
 def pre_processing(func: callable):
-    # v Verify that the container has been started as pre_processing
-    # - To store return dataframe in a parquet file
-    # - Write some other status statement in the output
-    # - Update the session log
+
     @wraps(func)
     def wrapper(*args, **kwargs) -> callable:
-        exit_if_action_mismatch(LocalAction.PREPROCESSING)
+
+        # Validate that the correct action is invoked in combination with the function
+        # that is wrapped by this decorator.
+        _exit_if_action_mismatch(LocalAction.PREPROCESSING)
+
+        # TODO should we add the data in here??
         result = func(*args, **kwargs)
-        return result
+
+        return _convert_to_parquet(result)
 
     return wrapper
 
 
 def federated(func: callable):
-    # v Verify that the container has been started as federated
-    # - Obtain the data from the session or from file based DB (wrapper)
-    # - Update the session log
+
     @wraps(func)
     def wrapper(*args, **kwargs) -> callable:
-        exit_if_action_mismatch(LocalAction.COMPUTE)
+        _exit_if_action_mismatch(LocalAction.COMPUTE)
         result = func(*args, **kwargs)
         return result
 
@@ -125,27 +132,11 @@ def federated(func: callable):
 
 
 def central(func: callable):
-    # v Verify that the container has been started as central
-    # - update the session log
+
     @wraps(func)
     def wrapper(*args, **kwargs) -> callable:
-        exit_if_action_mismatch(LocalAction.COMPUTE)
+        _exit_if_action_mismatch(LocalAction.COMPUTE)
         result = func(*args, **kwargs)
         return result
 
     return wrapper
-
-
-def exit_if_action_mismatch(requested_action: LocalAction):
-    debug("Verifying container action.")
-    if "CONTAINER_ACTION" not in os.environ:
-        error("Container action not set. Exiting.")
-        exit(1)
-
-    action = os.environ["CONTAINER_ACTION"]
-    if action != requested_action:
-        error(
-            f"Container started as {action}, but user requested {requested_action}. "
-            "Exiting."
-        )
-        exit(1)

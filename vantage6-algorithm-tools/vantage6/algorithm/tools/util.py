@@ -4,6 +4,7 @@ import base64
 import binascii
 
 from vantage6.common.globals import STRING_ENCODING, ENV_VAR_EQUALS_REPLACEMENT
+from vantage6.common.enums import LocalAction
 from vantage6.algorithm.tools.exceptions import EnvironmentVariableError
 
 
@@ -175,3 +176,29 @@ def check_envvar_value_positive(envvar_name: str, envvar_value: int | float) -> 
             f"Environment variable '{envvar_name}' has value '{envvar_value}' while a "
             "positive value is required."
         )
+
+
+def get_action() -> LocalAction:
+    """
+    Get the action of the container.
+
+    Returns
+    -------
+    str
+        The action of the container.
+    """
+    if "FUNCTION_ACTION" not in os.environ:
+        raise EnvironmentVariableError(
+            "Environment variable FUNCTION_ACTION not found."
+        )
+
+    requested_action = os.environ["FUNCTION_ACTION"]
+    try:
+        action = LocalAction(requested_action)
+    except ValueError as exc:
+        raise EnvironmentVariableError(
+            f"Environment variable FUNCTION_ACTION has value '{requested_action}' "
+            "which is not a valid action."
+        ) from exc
+
+    return action
