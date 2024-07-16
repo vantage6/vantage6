@@ -237,7 +237,7 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
   }
 
   private nodeOfflineText(node: BaseNode): string {
-    if (!node.last_seen){
+    if (!node.last_seen) {
       return ` (${this.translateService.instant('general.offline')} - never been online)`;
     } else {
       return ` (${this.translateService.instant('general.offline')} since ${this.formatDateWithoutSeconds(node.last_seen)})`;
@@ -245,7 +245,7 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
   }
 
   private formatDateWithoutSeconds(dateString: string): string {
-    const date = new Date(dateString);
+    const date = new Date(dateString + 'Z');
     const options: Intl.DateTimeFormatOptions = {
       year: 'numeric',
       month: '2-digit',
