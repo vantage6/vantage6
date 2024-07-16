@@ -19,6 +19,7 @@ import { PermissionService } from 'src/app/services/permission.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { NodeService } from 'src/app/services/node.service';
+import { printDate } from 'src/app/helpers/general.helper';
 
 @Component({
   selector: 'app-collaboration-read',
@@ -240,20 +241,7 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
     if (!node.last_seen) {
       return ` (${this.translateService.instant('general.offline')} - never been online)`;
     } else {
-      return ` (${this.translateService.instant('general.offline')} since ${this.formatDateWithoutSeconds(node.last_seen)})`;
+      return ` (${this.translateService.instant('general.offline')} since ${printDate(node.last_seen)})`;
     }
-  }
-
-  private formatDateWithoutSeconds(dateString: string): string {
-    const date = new Date(dateString + 'Z');
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false // Use 24-hour format. Set to true for 12-hour format.
-    };
-    return new Intl.DateTimeFormat('default', options).format(date);
   }
 }
