@@ -19,7 +19,6 @@ from __future__ import annotations
 import io
 import os
 import pandas as pd
-import connectorx as cx
 
 from enum import Enum
 
@@ -305,5 +304,5 @@ def load_sql_data(database_uri: str, query: str) -> pd.DataFrame:
     """
 
     db_connection = _sqldb_uri_preprocess(database_uri)
-    df = cx.read_sql(db_connection, query)
+    df = pd.read_sql(query, db_connection)
     return df
