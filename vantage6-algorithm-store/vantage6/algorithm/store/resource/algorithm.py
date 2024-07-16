@@ -134,7 +134,11 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
             registry, image, tag = parse_image_name(image_name)
         except Exception as e:
             raise ValueError(f"Invalid image name: {image_name}") from e
-        image_wo_tag = "/".join([registry, image])
+
+        if registry == "docker.io":
+            image_wo_tag = image
+        else:
+            image_wo_tag = "/".join([registry, image])
 
         # get the digest of the image.
         digest = get_digest(image_name)
