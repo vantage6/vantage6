@@ -62,7 +62,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         Session,
         path + "/<int:id>",
         endpoint="session_with_id",
-        methods=("GET", "POST", "DELETE"),
+        methods=("GET", "PATCH", "DELETE"),
         resource_class_kwargs=services,
     )
     api.add_resource(
@@ -76,7 +76,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         SessionPipeline,
         path + "/<int:session_id>/pipeline/<string:pipeline_handle>",
         endpoint="session_pipeline_with_id",
-        methods=("GET", "PATCH", "DELETE"),
+        methods=("GET", "POST"),
         resource_class_kwargs=services,
     )
     api.add_resource(
@@ -206,6 +206,7 @@ class SessionBase(ServicesResources):
         organizations: dict,
         database: dict,
         action: LocalAction,
+        pipeline: db.Pipeline,
         description="",
         depends_on_id=None,
     ) -> int:
@@ -220,6 +221,7 @@ class SessionBase(ServicesResources):
             "organizations": organizations,
             "databases": database,
             "depends_on_id": depends_on_id,
+            "pipeline_id": pipeline.id,
         }
         # remove empty values
         input_ = {k: v for k, v in input_.items() if v is not None}
@@ -791,6 +793,7 @@ class SessionPipelines(SessionBase):
 
         return self.response(page, pipeline_schema)
 
+    # TODO FM 16-7-2024: Permissions need to be added
     @only_for(("user",))
     def post(self, session_id):
         """Initiate a new pipeline for a session"""
@@ -830,6 +833,12 @@ class SessionPipelines(SessionBase):
         else:
             handle = pipeline["handle"]
 
+        pipe = db.Pipeline(
+            session=session,
+            handle=handle,
+        )
+        pipe.save()
+
         # When a session is initialized, a mandatory data extraction step is
         # required. This step is the first step in the pipeline and is used to
         # extract the data from the source database.
@@ -847,18 +856,17 @@ class SessionPipelines(SessionBase):
                 f"will initialize the pipeline with the handle {handle}."
             ),
             action=LocalAction.DATA_EXTRACTION,
+            pipeline=pipe,
         )
 
         if status_code != HTTPStatus.CREATED:
             self.delete_session(session)
             return response, status_code
 
-        pipeline = db.Pipeline(
-            session=session,
-            handle=handle,
-            last_session_task_id=response["id"],
-        ).save()
-        return pipeline_schema.dump(pipeline), HTTPStatus.CREATED
+        pipe.last_session_task_id = response["id"]
+        pipe.save()
+
+        return pipeline_schema.dump(pipe), HTTPStatus.CREATED
 
 
 class SessionPipeline(SessionBase):
@@ -887,6 +895,7 @@ class SessionPipeline(SessionBase):
 
         return pipeline_schema.dump(pipeline, many=False), HTTPStatus.OK
 
+    # TODO FM 16-7-2024: Permissions need to be added
     @only_for(("user",))
     def post(self, session_id, pipeline_handle):
         """Add a preprocessing step to a pipeline"""
@@ -931,15 +940,16 @@ class SessionPipeline(SessionBase):
             action=LocalAction.PREPROCESSING,
             image=preprocessing_task["image"],
             organizations=preprocessing_task["organizations"],
+            pipeline=pipe,
         )
         if status_code != HTTPStatus.CREATED:
             Session.delete_session(session)
             return response, status_code
 
         pipe.last_session_task_id = response["id"]
+        pipe.save()
 
-        # TODO FM 10-7-2024: We should make a specific response for this
-        return response, status_code
+        return pipeline_schema.dump(pipe, many=False), HTTPStatus.CREATED
 
 
 class NodeSessions(SessionBase):
