@@ -126,6 +126,7 @@ class TaskSchema(HATEOASModelSchema):
     study = fields.Method("study")
     algorithm_store = fields.Method("algorithm_store")
     session = fields.Method("get_session")
+    pipeline = fields.Nested("SimplePipelineSchema", many=False)
 
     @staticmethod
     def databases_(obj):
@@ -487,6 +488,11 @@ class SessionSchema(HATEOASModelSchema):
         )
     )
     ready = fields.Function(lambda obj: obj.is_ready)
+
+
+class SimplePipelineSchema(HATEOASModelSchema):
+    class Meta:
+        model = db.Pipeline
 
 
 class PipelineSchema(HATEOASModelSchema):

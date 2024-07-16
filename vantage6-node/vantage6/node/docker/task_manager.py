@@ -120,6 +120,7 @@ class DockerTaskManager(DockerBaseManager):
         self.alpine_image = ALPINE_IMAGE if alpine_image is None else alpine_image
         self.proxy = proxy
         self.requires_pull = requires_pull
+        self.pipeline_handle = task_info.get("pipeline", {}).get("handle", None)
 
         print(session_id)
         self.container = None
@@ -195,89 +196,83 @@ class DockerTaskManager(DockerBaseManager):
             self.status = TaskStatus.COMPLETED
         return logs
 
-    def get_results(self) -> bytes:
+    def get_results(self) -> dict:
         """
         If the action is to compute, read results output file of the algorithm
         container. Otherwise, return an empty byte string.
 
         Returns
         -------
-        bytes:
+        dict:
             Results of the algorithm container
         """
-        with open(self.output_file, "rb") as fp:
-            result = fp.read()
-
-        result = result.decode(STRING_ENCODING)
-        result = json.loads(result)
 
         match self.action:
-            case LocalAction.DATA_EXTRACTION:
-                return self._data_extraction_session_update(result)
-            case LocalAction.PREPROCESSING:
-                return self._preprocessing_session_update(result)
+
+            case LocalAction.DATA_EXTRACTION | LocalAction.PREPROCESSING:
+
+                result = pq.read_table(self.output_file)
+                return self._update_session(result)
+
             case LocalAction.COMPUTE:
+
+                with open(self.output_file, "rb") as fp:
+                    result = fp.read()
+                result = result.decode(STRING_ENCODING)
+                result = json.loads(result)
                 self._update_session_state(
                     LocalAction.COMPUTE.value,
                     "no file",
-                    "Algorithm completed successfully.",
+                    f"Algorithm from '{self.image}' completed successfully.",
                 )
                 return result
+
             case _:
+
                 self.log.error("Unknown action: %s", self.action)
 
-        return result
+    def _update_session(self, results) -> None:
 
-    def _data_extraction_session_update(self, results) -> None:
+        self.log.debug(
+            f"Updating session {self.session_id} for handle {self.pipeline_handle}."
+        )
 
-        self.log.debug("Writing extracted data to parquet file.")
+        if not self.pipeline_handle:
+            self.log.error("No pipeline handle found.")
+            self.log.debug(
+                "A session task is started but had no pipeline handle. The session ID "
+                f"is {self.session_id} and the task ID is {self.task_id}.",
+            )
+            self.status = TaskStatus.FAILED
+            return {"msg": "Failed, no pipeline handle found."}
+
         try:
-            # TODO FM 07-10-2024: This will break for other languages. Maybe we
-            # should handle the conversion to parquet in the algorithm itself. (wrapper)
+            # Overwrite the session table
             pq.write_table(
-                pa.Table.from_pandas(pd.DataFrame.from_dict(results)),
+                results,
                 os.path.join(
-                    self.session_folder_path, "data_extraction_result.parquet"
+                    self.session_folder_path, f"{self.pipeline_handle}.parquet"
                 ),
             )
         except Exception:
             self.log.exception(f"Error writing data to parquet file")
             self.status = TaskStatus.UNEXPECTED_OUTPUT
+            return {"msg": "Error writing data to parquet file"}
 
-        msg = self._update_session_state(
+        self._update_session_state(
             LocalAction.DATA_EXTRACTION.value,
-            "data_extraction_result.parquet",
-            "Data extraction complete.",
+            f"{self.pipeline_handle}.parquet",
+            "Session updated.",
+            self.pipeline_handle,
         )
 
-        # TODO: report column names
-        return msg
+        # TODO: report column names to the node sessions
 
-    def _preprocessing_session_update(self, results) -> None:
+        return {"msg": "Session updated"}
 
-        self.log.debug("Writing preprocessing results to parquet file.")
-        try:
-            # TODO FM 07-10-2024: This will break for other languages. Maybe we
-            # should handle the conversion to parquet in the algorithm itself.
-            pq.write_table(
-                pa.Table.from_pandas(pd.DataFrame.from_dict(results)),
-                os.path.join(self.session_folder_path, "preprocessing_result.parquet"),
-            )
-        except Exception:
-            self.log.exception(f"Error writing data to parquet file")
-            self.status = TaskStatus.UNEXPECTED_OUTPUT
-
-        self.log.debug("Update session state file")
-        msg = self._update_session_state(
-            LocalAction.PREPROCESSING.value,
-            "preprocessing_result.parquet",
-            "Preprocessing complete.",
-        )
-
-        # TODO: report column names
-        return msg
-
-    def _update_session_state(self, action: str, filename: str, message: str) -> None:
+    def _update_session_state(
+        self, action: str, filename: str, message: str, pipeline: str = ""
+    ) -> None:
         """
         Update the session state file with the current action, file and message
 
@@ -299,6 +294,7 @@ class DockerTaskManager(DockerBaseManager):
                     "file": filename,
                     "timestamp": datetime.now(),
                     "message": message,
+                    "pipeline": pipeline,
                 }
             ]
         )
@@ -312,7 +308,7 @@ class DockerTaskManager(DockerBaseManager):
             self.log.exception("Error writing session data to parquet file")
             self.status = TaskStatus.FAILED
 
-        return f"{message}".encode("utf-8")
+        return
 
     def pull(self, local_exists: bool) -> None:
         """
@@ -639,7 +635,7 @@ class DockerTaskManager(DockerBaseManager):
             "HOST": f"http://{proxy_host}",
             "PORT": os.environ.get("PROXY_SERVER_PORT", 8080),
             "API_PATH": "",
-            "CONTAINER_ACTION": self.action.value,
+            "FUNCTION_ACTION": self.action.value,
         }
 
         if self.action == LocalAction.COMPUTE:
