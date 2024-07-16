@@ -210,8 +210,8 @@ class Vantage6Servers(AlgorithmStoreResources):
             )
 
         # users can only whitelist their own server. Check if this is the case
-        response = request_validate_server_token(data["url"])
-        if response is None or response.status_code != HTTPStatus.OK:
+        response, status_code = request_validate_server_token(data["url"])
+        if response is None or status_code != HTTPStatus.OK:
             return {
                 "msg": "You can only whitelist your own vantage6 server! It could not "
                 "be verified that you are from the server you are trying to whitelist."
