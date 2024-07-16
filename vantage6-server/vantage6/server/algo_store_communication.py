@@ -86,7 +86,7 @@ def post_algorithm_store(
         method="post",
         force=force,
         headers=headers,
-        params={"server_url": server_url},
+        params={"url": server_url},
     )
     if status == HTTPStatus.FORBIDDEN:
         # if whitelisting of the server at the algorithm store fails with status
