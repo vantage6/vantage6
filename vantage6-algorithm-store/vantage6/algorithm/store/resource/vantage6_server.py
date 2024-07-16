@@ -153,7 +153,9 @@ class Vantage6Servers(AlgorithmStoreResources):
                     description: URL of the vantage6 server
                   force:
                     type: boolean
-                    description: Force creation of the vantage6 server. If a
+                    description: Force creation of the vantage6 server. This argument is
+                      required to whitelist localhost addresses.
+
 
         responses:
           201:
