@@ -399,7 +399,7 @@ class TaskInputSchema(_NameValidationSchema):
     """Schema for validating input for creating a task."""
 
     # overwrite name attr as it is not required for a task
-    name = fields.String(required=False)
+    name = fields.String()
     description = fields.String(validate=Length(max=_MAX_LEN_STR_LONG))
     image = fields.String(required=True, validate=Length(min=1))
     collaboration_id = fields.Integer(validate=Range(min=1))
@@ -409,6 +409,7 @@ class TaskInputSchema(_NameValidationSchema):
     organizations = fields.List(fields.Dict(), required=True)
     databases = fields.List(fields.Dict(), allow_none=True)
     session_id = fields.Integer(validate=Range(min=1), required=True)
+    pipeline_id = fields.Integer(validate=Range(min=1))
 
     @validates_schema
     def validate_collaboration_or_study(self, data: dict, **kwargs) -> None:
