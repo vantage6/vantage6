@@ -23,6 +23,8 @@ RUN pip install psycopg2-binary
 # copy source
 COPY . /vantage6
 
+RUN pip install --upgrade pip
+
 # Install requirements. We cannot rely on setup.py because of the way
 # python resolves package versions. To control all dependencies we install
 # them from the requirements.txt
