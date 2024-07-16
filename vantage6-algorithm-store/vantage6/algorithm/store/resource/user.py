@@ -262,12 +262,12 @@ class Users(AlgorithmStoreResources):
         # works if:
         # 1. the user executing this request is in the same v6 server
         # 2. They are allowed to see the user in the v6 server
-        server_response = request_from_store_to_v6_server(
+        server_response, status_code = request_from_store_to_v6_server(
             url=f"{server.url}/user",
             params={"username": data["username"]},
         )
         if (
-            server_response.status_code != HTTPStatus.OK
+            status_code != HTTPStatus.OK
             or len(server_response.json().get("data", [])) != 1
         ):
             return {

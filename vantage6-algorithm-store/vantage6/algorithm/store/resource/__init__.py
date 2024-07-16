@@ -53,7 +53,7 @@ def request_from_store_to_v6_server(
     params: dict = None,
     headers: dict = None,
     json: dict = None,
-) -> requests.Response:
+) -> tuple[requests.Response, int]:
     """
     Make a request from the algorithm store to the vantage6 server.
 
@@ -72,8 +72,8 @@ def request_from_store_to_v6_server(
 
     Returns
     -------
-    requests.Response
-        Response object from the request.
+    tuple[requests.Response, int]
+        Response object from the request, and the status code of the response.
     """
     # First, replace localhost addresses. If we are looking for a localhost server, we
     # probably have to check host.docker.internal (Windows) or 172.17.0.1 (Linux)
@@ -192,7 +192,7 @@ def _authorize_user(
     try:
         username = auth_response.json()["username"]
     except Exception:
-        msg = "Key Error: key username not found"
+        msg = "Key Error: username not found"
         log.warning(msg)
         return {"msg": msg}, HTTPStatus.INTERNAL_SERVER_ERROR
 

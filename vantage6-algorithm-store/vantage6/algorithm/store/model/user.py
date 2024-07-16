@@ -73,9 +73,7 @@ class User(Base):
             on the resource
         """
         rule = Rule.get_by_(resource, operation)
-        return any(rule in role.rules for role in self.roles) or any(
-            rule for rule in self.rules
-        )
+        return any(rule in role.rules for role in self.roles) or rule in self.rules
 
     @classmethod
     def get_by_server(cls, username: str, v6_server_id: int) -> User:

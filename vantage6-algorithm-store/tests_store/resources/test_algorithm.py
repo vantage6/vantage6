@@ -17,7 +17,7 @@ from vantage6.algorithm.store.model.ui_visualization import UIVisualization
 from vantage6.algorithm.store.resource.algorithm import AlgorithmBaseResource
 from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.model.algorithm import Algorithm
-from vantage6.algorithm.store.model.rule import Rule
+from vantage6.algorithm.store.model.rule import Rule, Operation
 from vantage6.common.enum import StorePolicies, AlgorithmViewPolicies
 
 from ..base.unittest_base import MockResponse, TestResources
@@ -146,7 +146,7 @@ class TestAlgorithmResources(TestResources):
 
         # test if the endpoint is accessible if user is whitelisted and has explicit
         # permission to view algorithms
-        user.rules = [Rule.get_by_("algorithm", "view")]
+        user.rules = [Rule.get_by_("algorithm", Operation.VIEW)]
         user.save()
         rv = self.app.get("/api/algorithm", headers=HEADERS)
         self.assertEqual(rv.status_code, HTTPStatus.OK)
@@ -207,7 +207,7 @@ class TestAlgorithmResources(TestResources):
         algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
         algorithm.save()
         user, server = self.register_user_and_server(
-            username=USERNAME, user_rules=[Rule.get_by_("algorithm", "view")]
+            username=USERNAME, user_rules=[Rule.get_by_("algorithm", Operation.VIEW)]
         )
         result = self.app.get(
             "/api/algorithm?awaiting_reviewer_assignment=1", headers=HEADERS
@@ -284,7 +284,7 @@ class TestAlgorithmResources(TestResources):
 
         # create user allowed to create algorithms
         user, _ = self.register_user_and_server(
-            username=USERNAME, user_rules=[Rule.get_by_("algorithm", "create")]
+            username=USERNAME, user_rules=[Rule.get_by_("algorithm", Operation.CREATE)]
         )
 
         # check that incomplete input data returns 400
@@ -347,7 +347,9 @@ class TestAlgorithmResources(TestResources):
 
         # get user with permission to update algorithms
         user = self.register_user(
-            server.id, username=USERNAME, user_rules=[Rule.get_by_("algorithm", "edit")]
+            server.id,
+            username=USERNAME,
+            user_rules=[Rule.get_by_("algorithm", Operation.EDIT)],
         )
 
         # create an algorithm
@@ -466,7 +468,7 @@ class TestAlgorithmResources(TestResources):
         self.register_user(
             server.id,
             username=USERNAME,
-            user_rules=[Rule.get_by_("algorithm", "delete")],
+            user_rules=[Rule.get_by_("algorithm", Operation.DELETE)],
         )
 
         # Test when algorithm is not found
@@ -516,7 +518,7 @@ class TestAlgorithmResources(TestResources):
         self.register_user(
             server.id,
             username=USERNAME,
-            user_rules=[Rule.get_by_("algorithm", "delete")],
+            user_rules=[Rule.get_by_("algorithm", Operation.DELETE)],
         )
 
         # Test when algorithm is not found

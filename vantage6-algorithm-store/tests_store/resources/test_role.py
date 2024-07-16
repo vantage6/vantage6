@@ -3,7 +3,7 @@ from http import HTTPStatus
 from unittest.mock import patch
 
 from tests_store.base.unittest_base import TestResources, MockResponse
-from vantage6.algorithm.store.model.rule import Rule
+from vantage6.algorithm.store.model.rule import Rule, Operation
 from vantage6.algorithm.store.model.role import Role
 
 SERVER_URL = "http://localhost:5000"
@@ -30,7 +30,7 @@ class TestRoleResource(TestResources):
 
         # register user with appropriate permission
         self.register_user(
-            server.id, USERNAME, user_rules=[Rule.get_by_("role", "view")]
+            server.id, USERNAME, user_rules=[Rule.get_by_("role", Operation.VIEW)]
         )
 
         # check that getting roles with authentication works
@@ -56,7 +56,7 @@ class TestRoleResource(TestResources):
 
         # register user with appropriate permission
         self.register_user(
-            server.id, USERNAME, user_rules=[Rule.get_by_("role", "view")]
+            server.id, USERNAME, user_rules=[Rule.get_by_("role", Operation.VIEW)]
         )
 
         # check that getting roles with authentication works

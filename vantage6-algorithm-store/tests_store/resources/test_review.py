@@ -6,7 +6,7 @@ from tests_store.base.unittest_base import MockResponse, TestResources
 from vantage6.algorithm.store.model.algorithm import Algorithm
 from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
 from vantage6.algorithm.store.model.review import Review
-from vantage6.algorithm.store.model.rule import Rule
+from vantage6.algorithm.store.model.rule import Rule, Operation
 
 SERVER_URL = "http://localhost:5000"
 HEADERS = {"server_url": SERVER_URL, "Authorization": "Mock"}
@@ -42,7 +42,9 @@ class TestReviewResources(TestResources):
 
         # register user allowed to view reviews
         self.register_user(
-            server.id, username=USERNAME, user_rules=[Rule.get_by_("review", "view")]
+            server.id,
+            username=USERNAME,
+            user_rules=[Rule.get_by_("review", Operation.VIEW)],
         )
 
         # check that getting reviews with authentication succeeds
@@ -104,7 +106,9 @@ class TestReviewResources(TestResources):
 
         # register user allowed to view reviews
         self.register_user(
-            server.id, username=USERNAME, user_rules=[Rule.get_by_("review", "view")]
+            server.id,
+            username=USERNAME,
+            user_rules=[Rule.get_by_("review", Operation.VIEW)],
         )
 
         # check that getting reviews with authentication succeeds
@@ -136,18 +140,18 @@ class TestReviewResources(TestResources):
 
         # register user allowed to create reviews
         developer = self.register_user(
-            server.id, username=USERNAME, user_rules=[Rule.get_by_("review", "create")]
+            server.id, username=USERNAME, user_rules=[Rule.get_by_("review", Operation.CREATE)]
         )
         # register users allowed to do reviews
         reviewer = self.register_user(
             server.id,
             username=REVIEWER_USERNAME,
-            user_rules=[Rule.get_by_("review", "edit")],
+            user_rules=[Rule.get_by_("review", Operation.EDIT)],
         )
         another_reviewer = self.register_user(
             server.id,
             username="another_reviewer",
-            user_rules=[Rule.get_by_("review", "edit")],
+            user_rules=[Rule.get_by_("review", Operation.EDIT)],
         )
         # register another user not allowed to do reviews
         user_wo_permission = self.register_user(server.id, username="not_reviewer")
@@ -236,7 +240,7 @@ class TestReviewResources(TestResources):
 
         # register user allowed to delete reviews
         self.register_user(
-            server.id, username=USERNAME, user_rules=[Rule.get_by_("review", "delete")]
+            server.id, username=USERNAME, user_rules=[Rule.get_by_("review", Operation.DELETE)]
         )
 
         # check that deleting a review with authentication succeeds
@@ -301,12 +305,14 @@ class TestReviewResources(TestResources):
 
         # register user allowed to approve reviews
         reviewer = self.register_user(
-            server.id, username=USERNAME, user_rules=[Rule.get_by_("review", "edit")]
+            server.id,
+            username=USERNAME,
+            user_rules=[Rule.get_by_("review", Operation.EDIT)],
         )
         another_reviewer = self.register_user(
             server.id,
             username=REVIEWER_USERNAME,
-            user_rules=[Rule.get_by_("review", "edit")],
+            user_rules=[Rule.get_by_("review", Operation.EDIT)],
         )
 
         # create reviews
@@ -391,12 +397,14 @@ class TestReviewResources(TestResources):
 
         # register user allowed to reject reviews
         reviewer = self.register_user(
-            server.id, username=USERNAME, user_rules=[Rule.get_by_("review", "edit")]
+            server.id,
+            username=USERNAME,
+            user_rules=[Rule.get_by_("review", Operation.EDIT)],
         )
         another_reviewer = self.register_user(
             server.id,
             username=REVIEWER_USERNAME,
-            user_rules=[Rule.get_by_("review", "edit")],
+            user_rules=[Rule.get_by_("review", Operation.EDIT)],
         )
 
         # create reviews
