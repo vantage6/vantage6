@@ -45,6 +45,7 @@ from flask_principal import Principal, Identity, identity_changed
 from flask_socketio import SocketIO
 from threading import Thread
 from pathlib import Path
+from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common import logger_name
 from vantage6.common.globals import PING_INTERVAL_SECONDS
@@ -685,6 +686,14 @@ class ServerApp:
 
         This method is used when the server is started for the first time.
         """
+        # sanity check, this function should never be called in any other
+        # context than the first run of the server
+        try:
+            db.User.get_by_username(SUPER_USER_INFO["username"])
+            raise Exception("Attempted to create super user when it already existed!")
+        except NoResultFound:
+            pass
+
         log.debug("Creating organization for root user")
         org = db.Organization(name="root")
 
@@ -693,8 +702,8 @@ class ServerApp:
 
         super_user_password = None
 
-        # Note: these env variables will become more useful when server is
-        #       started via docker-compose
+        # Note: server admin is supposed to set these env vars via docker
+        # compose for instance
         if "V6_INIT_SUPER_PASS_HASHED_FILE" in os.environ:
             log.info("Using initial hashed super user password from file")
 
@@ -731,14 +740,6 @@ class ServerApp:
         # sanity check
         if not super_user_password:
             raise ValueError("No initial password assigned to root user!")
-
-        if (
-            len(super_user_password) < 8
-            and super_user_password != SUPER_USER_INFO["password"]
-        ):
-            raise ValueError(
-                "Initial password is too short! At least 8 characters are required."
-            )
 
         user = db.User(
             username=SUPER_USER_INFO["username"],

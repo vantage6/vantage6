@@ -34,11 +34,20 @@ class HashedPassword(str):
             True if the value looks like a valid bcrypt hash. False otherwise,
             or if the empty string hashes to the given value.
         """
+        if len(value) < 60:
+            return False
+
+        # we enforce $2b$ version
+        if not value.startswith("$2b$"):
+            return False
+
         try:
-            # TODO: room for improvment on this minimal check, we're assuming
-            # server admin knows to do this right
             empty_check = bcrypt.checkpw(b"", value.encode("utf8"))
+            # the empty string hashes to the given 'hashed password' we
+            # consider this invalid out of caution
+            if empty_check:
+                return False
         except ValueError:
             return False
 
-        return not empty_check
+        return True
