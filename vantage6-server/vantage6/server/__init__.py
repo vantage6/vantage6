@@ -725,8 +725,8 @@ class ServerApp:
                 os.environ["V6_INIT_SUPER_PASS_HASHED"]
             )
         else:
-            # TODO/FIXME: for backwards compatibility we still set this as
-            #             default but we might want to remove this soon!
+            # FIXME / TODO v5+: for backwards compatibility we still set this
+            # as default but we might want to remove this soon!
             super_user_password = SUPER_USER_INFO["password"]
             log.warn(
                 f"Creating super user ({SUPER_USER_INFO['username']})"
