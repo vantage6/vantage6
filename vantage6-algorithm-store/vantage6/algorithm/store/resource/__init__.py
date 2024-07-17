@@ -101,7 +101,7 @@ def request_from_store_to_v6_server(
     return response
 
 
-def request_validate_server_token(server_url: str) -> Response:
+def request_validate_server_token(server_url: str) -> Response | None:
     """
     Validate the token of the server.
 
@@ -112,8 +112,8 @@ def request_validate_server_token(server_url: str) -> Response:
 
     Returns
     -------
-    Response
-        Response object from the request.
+    Response | None
+        Response object from the request, or None if the server could not be reached
     """
     url = f"{server_url}/token/user/validate"
     try:

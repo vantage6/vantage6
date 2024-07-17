@@ -1,7 +1,7 @@
 import os
 import logging
 import requests
-from flask import Response
+from flask import Response, request
 from http import HTTPStatus
 
 from vantage6.backend.common.globals import HOST_URI_ENV
@@ -310,6 +310,8 @@ def _execute_algo_store_request(
     if not headers:
         headers = {}
     headers["server_url"] = server_url
+    if "Authorization" in request.headers and not headers.get("Authorization"):
+        headers["Authorization"] = request.headers["Authorization"]
 
     params = None
     json = None

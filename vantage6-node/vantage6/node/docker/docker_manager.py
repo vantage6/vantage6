@@ -251,7 +251,10 @@ class DockerManager(DockerBaseManager):
             Dictionary with the policies
         """
         policies = config.get("policies", {})
-        if not policies or not policies.get(NodePolicy.ALLOWED_ALGORITHMS):
+        if not policies or (
+            not policies.get(NodePolicy.ALLOWED_ALGORITHMS)
+            and not policies.get(NodePolicy.ALLOWED_ALGORITHM_STORES)
+        ):
             self.log.warning(
                 "No policies on allowed algorithms have been set for this node!"
             )
