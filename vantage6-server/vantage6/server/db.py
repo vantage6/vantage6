@@ -27,9 +27,8 @@ from vantage6.server.model import (
     User,
     UserPermission,
     Session,
-    Pipeline,
-    NodeSession,
-    NodeSessionConfig,
+    Dataframe,
+    Column,
 )
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING

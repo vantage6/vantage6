@@ -21,6 +21,7 @@ from vantage6.common.docker.addons import (
 )
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.enums import TaskStatus, LocalAction
+from vantage6.node import NodeClient
 from vantage6.node.util import get_parent_id
 from vantage6.node.globals import ALPINE_IMAGE, ENV_VARS_NOT_SETTABLE_BY_NODE
 from vantage6.node.docker.vpn_manager import VPNManager
@@ -47,6 +48,7 @@ class DockerTaskManager(DockerBaseManager):
         self,
         image: str,
         docker_client: DockerClient,
+        client: NodeClient,
         vpn_manager: VPNManager,
         node_name: str,
         run_id: int,
@@ -71,6 +73,8 @@ class DockerTaskManager(DockerBaseManager):
             Name of docker image to be run
         docker_client: DockerClient
             Docker client instance to use
+        client: NodeClient
+            Node client in order to communicate with the vantage6 server
         vpn_manager: VPNManager
             VPN manager required to set up traffic forwarding via VPN
         node_name: str
@@ -106,6 +110,7 @@ class DockerTaskManager(DockerBaseManager):
         self.log = logging.getLogger(f"task_manager {self.task_id}|{session_id}")
 
         super().__init__(isolated_network_mgr, docker_client=docker_client)
+        self.client = client
         self.image = image
         self.__vpn_manager = vpn_manager
         self.run_id = run_id
@@ -120,7 +125,7 @@ class DockerTaskManager(DockerBaseManager):
         self.alpine_image = ALPINE_IMAGE if alpine_image is None else alpine_image
         self.proxy = proxy
         self.requires_pull = requires_pull
-        self.pipeline_handle = task_info.get("pipeline", {}).get("handle", None)
+        self.dataframe_handle = task_info.get("dataframe", {}).get("handle", None)
 
         print(session_id)
         self.container = None
@@ -231,27 +236,27 @@ class DockerTaskManager(DockerBaseManager):
 
                 self.log.error("Unknown action: %s", self.action)
 
-    def _update_session(self, results) -> None:
+    def _update_session(self, table: pa.Table) -> dict:
 
         self.log.debug(
-            f"Updating session {self.session_id} for handle {self.pipeline_handle}."
+            f"Updating session {self.session_id} for handle {self.dataframe_handle}."
         )
 
-        if not self.pipeline_handle:
-            self.log.error("No pipeline handle found.")
+        if not self.dataframe_handle:
+            self.log.error("No dataframe handle found.")
             self.log.debug(
-                "A session task is started but had no pipeline handle. The session ID "
+                "A session task is started but had no dataframe handle. The session ID "
                 f"is {self.session_id} and the task ID is {self.task_id}.",
             )
             self.status = TaskStatus.FAILED
-            return {"msg": "Failed, no pipeline handle found."}
+            return {"msg": "Failed, no dataframe handle found."}
 
         try:
             # Overwrite the session table
             pq.write_table(
-                results,
+                table,
                 os.path.join(
-                    self.session_folder_path, f"{self.pipeline_handle}.parquet"
+                    self.session_folder_path, f"{self.dataframe_handle}.parquet"
                 ),
             )
         except Exception:
@@ -261,17 +266,25 @@ class DockerTaskManager(DockerBaseManager):
 
         self._update_session_state(
             LocalAction.DATA_EXTRACTION.value,
-            f"{self.pipeline_handle}.parquet",
+            f"{self.dataframe_handle}.parquet",
             "Session updated.",
-            self.pipeline_handle,
+            self.dataframe_handle,
         )
 
-        # TODO: report column names to the node sessions
+        # Each node reports the column names for this dataframe in the session. In the
+        # horizontal case all the nodes should report the same column names.
+        columns_info = [[field.name, str(field.type)] for field in table.schema]
+        self.client.request(
+            f"/{self.session_id}/dataframe/{self.dataframe_handle}",
+            method="patch",
+            json=columns_info,
+        )
+        self.log.debug(f"Columns info sent to server: {columns_info}")
 
         return {"msg": "Session updated"}
 
     def _update_session_state(
-        self, action: str, filename: str, message: str, pipeline: str = ""
+        self, action: str, filename: str, message: str, dataframe: str = ""
     ) -> None:
         """
         Update the session state file with the current action, file and message
@@ -294,7 +307,7 @@ class DockerTaskManager(DockerBaseManager):
                     "file": filename,
                     "timestamp": datetime.now(),
                     "message": message,
-                    "pipeline": pipeline,
+                    "dataframe": dataframe,
                 }
             ]
         )
@@ -572,7 +585,8 @@ class DockerTaskManager(DockerBaseManager):
             with open(filepath, "wb") as fp:
                 fp.write(data)
 
-        # Create session state file
+        # TODO: we should move this to a different location as the session file
+        # is no longer touched by the algorithm
         session_state = pa.table(
             {
                 "action": ["no action"],

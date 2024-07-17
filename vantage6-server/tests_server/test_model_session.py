@@ -3,7 +3,7 @@ import datetime
 from sqlalchemy.exc import IntegrityError
 
 from vantage6.common.enums import SessionStatus
-from vantage6.server.model import Session, NodeSession, NodeSessionConfig
+from vantage6.server.model import Session, NodeSession
 from vantage6.server.model.rule import Scope
 
 from .test_model_base import TestModelBase

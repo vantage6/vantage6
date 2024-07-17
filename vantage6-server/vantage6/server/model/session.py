@@ -81,7 +81,7 @@ class Session(Base):
     study = relationship("Study", back_populates="sessions")
     tasks = relationship("Task", back_populates="session")
     node_sessions = relationship("NodeSession", back_populates="session")
-    pipelines = relationship("Pipeline", back_populates="session")
+    dataframes = relationship("Dataframe", back_populates="session")
 
     @property
     def is_ready(self):

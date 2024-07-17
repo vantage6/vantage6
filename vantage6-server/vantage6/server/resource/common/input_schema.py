@@ -409,7 +409,7 @@ class TaskInputSchema(_NameValidationSchema):
     organizations = fields.List(fields.Dict(), required=True)
     databases = fields.List(fields.Dict(), allow_none=True)
     session_id = fields.Integer(validate=Range(min=1), required=True)
-    pipeline_id = fields.Integer(validate=Range(min=1))
+    dataframe_id = fields.Integer(validate=Range(min=1))
 
     @validates_schema
     def validate_collaboration_or_study(self, data: dict, **kwargs) -> None:
@@ -701,8 +701,8 @@ class SessionInputSchema(Schema):
     )
 
 
-class PipelineInitInputSchema(Schema):
-    """Schema for validating input for creating a new pipeline in a session."""
+class DataframeInitInputSchema(Schema):
+    """Schema for validating input for creating a new dataframe in a session."""
 
     # Databse label that is specified in the node configuration file
     label = fields.String(required=True)
@@ -715,25 +715,16 @@ class PipelineInitInputSchema(Schema):
     task = fields.Nested(SessionTaskInputSchema, required=True)
 
 
-class PipelineStepInputSchema(Schema):
-    """Schema for validating input for creating a new pipeline step in a session."""
+class DataframeStepInputSchema(Schema):
+    """Schema for validating input for creating a new dataframe step in a session."""
 
     # Task metadata that is executed on the node for session extension, which is a
     # pre-processing task
     task = fields.Nested(SessionTaskInputSchema, required=True)
 
 
-class NodeSessionConfigInputSchema(Schema):
-    """Schema for validating input for creating a node session config."""
+class DataframeNodeUpdateSchema(Schema):
+    """Schema for validating input for updating the column names"""
 
-    key = fields.String(required=True)
-    value = fields.String(required=True)
-
-
-class NodeSessionInputSchema(Schema):
-    """Schema for validating input for creating a node session."""
-
-    state = fields.String(
-        validate=OneOf(SessionStatus.list()), default=SessionStatus.PENDING.value
-    )
-    config = fields.List(fields.Nested(NodeSessionConfigInputSchema), required=False)
+    name = fields.String(required=True)
+    type_ = fields.String(required=True)

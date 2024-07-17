@@ -289,10 +289,10 @@ class Tasks(TaskBase):
               type: int
             description: A session id that belongs to the task
           - in: query
-            name: pipeline_id
+            name: dataframe_id
             schema:
                 type: int
-            description: Pipeline ID
+            description: Dataframe ID
           - in: query
             name: page
             schema:
@@ -480,9 +480,9 @@ class Tasks(TaskBase):
             session_id = int(args["session_id"])
             q = q.filter(db.Task.session_id == session_id)
 
-        if "pipeline_id" in args:
-            pipeline_id = args["pipeline_id"]
-            q = q.filter(db.Task.pipeline_id == pipeline_id)
+        if "dataframe_id" in args:
+            dataframe_id = args["dataframe_id"]
+            q = q.filter(db.Task.dataframe_id == dataframe_id)
 
         if "database" in args:
             q = q.join(db.TaskDatabase).filter(
@@ -822,7 +822,7 @@ class Tasks(TaskBase):
             algorithm_store=store,
             session=session,
             depends_on=dependant_task,
-            pipeline_id=data.get("pipeline_id"),
+            dataframe_id=data.get("dataframe_id"),
         )
 
         # create job_id. Users can only create top-level -tasks (they will not
