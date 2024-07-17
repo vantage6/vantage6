@@ -33,10 +33,10 @@ class TestHashedPassword(unittest.TestCase):
             )
 
     def test_not_bcrypt_hash(self):
-        # not a bcrypt hash
+        # not a bcrypt hash of 'vantage6test' (openssl passwd -6)
         with self.assertRaises(ValueError):
             HashedPassword(
-                "$6$yWchObbpqtS2nXY6$DRBLkAeuUqkHlRurtHtqQ1OK73/jdxhsSomHK1pnXuiKFvJ.mKDQIMU99hS/kHmi3rgeLAd7X0PlWCkRjnFDj/"
+                "$6$8HxGnDKoIDorOIyk$Fj.lInEmIW.XTMYBmWKB7w.s7ZwKDpy3wHCJCTPv7O0tA00jGlYXlLVB/61FgnToyFp5IdJOq1ze3QJU5g1zz."
             )
 
     def test_older_version(self):
