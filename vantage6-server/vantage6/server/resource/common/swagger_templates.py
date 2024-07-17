@@ -138,7 +138,7 @@ swagger_template = {
                     "name": "unique-session-label",
                     "collaboration_id": 1,
                     "scope": "own",
-                    "pipelines": [
+                    "dataframes": [
                         {
                             "label": "my-database-label",
                             "handle": "my-database-handle",

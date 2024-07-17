@@ -1,6 +1,6 @@
 from uuid import uuid1
 
-from vantage6.server.model import Session, NodeSession, NodeSessionConfig, User, Node
+from vantage6.server.model import Session, User, Node
 
 from .test_resource_base import TestResourceBase
 
@@ -142,12 +142,6 @@ class TestSessionResource(TestResourceBase):
             self.addCleanup(n_session.delete)
         self.addCleanup(session.delete)
 
-        node_session = session.node_sessions[0]
-        node_session_config = NodeSessionConfig(
-            node_session=node_session, key="test", value="test"
-        )
-        node_session_config.save()
-
         headers = self.login_node(api_key="123e4567-e89b-12d3-a456-426614174000")
         response = self.app.patch(
             f"/api/session/{session.id}/node",
@@ -161,5 +155,3 @@ class TestSessionResource(TestResourceBase):
 
         data = response.json
         conf = data["config"][0]
-        self.assertEqual(conf["key"], node_session_config.key)
-        self.assertEqual(conf["value"], node_session_config.value)

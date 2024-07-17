@@ -351,11 +351,13 @@ class Node:
 
         # Only compute containers need a token as they are the only ones that should
         # create subtasks
+        token = None
         if container_action == LocalAction.COMPUTE:
             token = self.client.request_token_for_container(task["id"], task["image"])
             token = token["container_token"]
-        else:
-            token = None
+
+        # TODO we should attach the label here somehow?
+        # if container_action in [LocalAction.DATA_EXTRACTION, LocalAction.PREPROCESSING]:
 
         # For some reason, if the key 'input' consists of JSON, it is
         # automatically marshalled? This causes trouble, so we'll serialize it
@@ -1112,22 +1114,23 @@ class Node:
 
         # share node database labels, types, and column names (if they are
         # fixed as e.g. for csv file)
-        labels = []
-        types = {}
-        col_names = {}
-        for db in self.config.get("databases", []):
-            label = db.get("label")
-            type_ = db.get("type")
-            labels.append(label)
-            types[f"db_type_{label}"] = type_
-            if type_ in ("csv", "parquet"):
-                col_names[f"columns_{label}"] = self.__docker.get_column_names(
-                    label, type_
-                )
-        config_to_share["database_labels"] = labels
-        config_to_share["database_types"] = types
-        if col_names:
-            config_to_share["database_columns"] = col_names
+        # TODO FM 17-07-2024 this can be removed
+        # labels = []
+        # types = {}
+        # col_names = {}
+        # for db in self.config.get("databases", []):
+        #     label = db.get("label")
+        #     type_ = db.get("type")
+        #     labels.append(label)
+        #     types[f"db_type_{label}"] = type_
+        #     if type_ in ("csv", "parquet"):
+        #         col_names[f"columns_{label}"] = self.__docker.get_column_names(
+        #             label, type_
+        #         )
+        # config_to_share["database_labels"] = labels
+        # config_to_share["database_types"] = types
+        # if col_names:
+        #     config_to_share["database_columns"] = col_names
 
         self.log.debug("Sharing node configuration: %s", config_to_share)
         self.socketIO.emit("node_info_update", config_to_share, namespace="/tasks")

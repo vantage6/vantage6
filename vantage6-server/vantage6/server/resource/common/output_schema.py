@@ -101,7 +101,7 @@ class TaskSchema(HATEOASModelSchema):
     study = fields.Method("study")
     algorithm_store = fields.Method("algorithm_store")
     session = fields.Method("get_session")
-    pipeline = fields.Nested("SimplePipelineSchema", many=False)
+    dataframe = fields.Nested("SimpleDataframeSchema", many=False)
 
     @staticmethod
     def databases_(obj):
@@ -457,43 +457,34 @@ class SessionSchema(HATEOASModelSchema):
             obj, link_to="node_session", link_from="session_id"
         )
     )
-    pipelines = fields.Function(
+    dataframes = fields.Function(
         lambda obj: create_one_to_many_link(
-            obj, link_to="session_pipeline", link_from="session_id"
+            obj, link_to="session_dataframe", link_from="session_id"
         )
     )
     ready = fields.Function(lambda obj: obj.is_ready)
 
 
-class SimplePipelineSchema(HATEOASModelSchema):
+class SimpleDataframeSchema(HATEOASModelSchema):
     class Meta:
-        model = db.Pipeline
+        model = db.Dataframe
 
 
-class PipelineSchema(HATEOASModelSchema):
+class ColumnSchema(HATEOASModelSchema):
     class Meta:
-        model = db.Pipeline
+        model = db.Column
+        only = ("name", "dtype")
+
+
+class DataframeSchema(HATEOASModelSchema):
+    class Meta:
+        model = db.Dataframe
 
     session = fields.Method("get_session")
     tasks = fields.Function(
         lambda obj: create_one_to_many_link(
-            obj, link_to="task", link_from="pipeline_id"
+            obj, link_to="task", link_from="dataframe_id"
         )
     )
-
     last_session_task = fields.Nested("TaskSchema", many=False)
-
-
-class NodeSessionSchema(HATEOASModelSchema):
-    class Meta:
-        model = db.NodeSession
-
-    node = fields.Method("node")
-    session = fields.Method("get_session")
-
-    config = fields.Nested("NodeSessionConfigSchema", many=True, exclude=["id"])
-
-
-class NodeSessionConfigSchema(HATEOASModelSchema):
-    class Meta:
-        model = db.NodeSessionConfig
+    columns = fields.Nested("ColumnSchema", many=True)

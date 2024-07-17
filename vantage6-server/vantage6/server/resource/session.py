@@ -16,17 +16,17 @@ from vantage6.server.permission import (
     PermissionManager,
     RuleCollection,
 )
+from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.resource import only_for, with_user, ServicesResources
 from vantage6.server.resource.common.input_schema import (
     SessionInputSchema,
-    PipelineInitInputSchema,
-    PipelineStepInputSchema,
-    NodeSessionInputSchema,
+    DataframeInitInputSchema,
+    DataframeStepInputSchema,
+    DataframeNodeUpdateSchema,
 )
 from vantage6.server.resource.common.output_schema import (
     SessionSchema,
-    NodeSessionSchema,
-    PipelineSchema,
+    DataframeSchema,
 )
 from vantage6.server.resource.task import Tasks
 
@@ -66,24 +66,17 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         resource_class_kwargs=services,
     )
     api.add_resource(
-        SessionPipelines,
-        path + "/<int:session_id>/pipeline",
-        endpoint="session_pipeline_without_id",
+        SessionDataframes,
+        path + "/<int:session_id>/dataframe",
+        endpoint="session_dataframe_without_id",
         methods=("GET", "POST"),
         resource_class_kwargs=services,
     )
     api.add_resource(
-        SessionPipeline,
-        path + "/<int:session_id>/pipeline/<string:pipeline_handle>",
-        endpoint="session_pipeline_with_id",
-        methods=("GET", "POST"),
-        resource_class_kwargs=services,
-    )
-    api.add_resource(
-        NodeSessions,
-        path + "/<int:session_id>/node",
-        endpoint="node_session_without_id",
-        methods=("GET", "PATCH"),
+        SessionDataframe,
+        path + "/<int:session_id>/dataframe/<string:dataframe_handle>",
+        endpoint="session_dataframe_with_id",
+        methods=("GET", "POST", "PATCH"),
         resource_class_kwargs=services,
     )
 
@@ -163,13 +156,13 @@ def permissions(permissions: PermissionManager) -> None:
 # Resources / API's
 # ------------------------------------------------------------------------------
 session_schema = SessionSchema()
-node_session_schema = NodeSessionSchema()
-pipeline_schema = PipelineSchema()
+dataframe_schema = DataframeSchema()
 
-node_session_input_schema = NodeSessionInputSchema()
 session_input_schema = SessionInputSchema()
-pipeline_init_input_schema = PipelineInitInputSchema()
-pipeline_step_input_schema = PipelineStepInputSchema()
+dataframe_init_input_schema = DataframeInitInputSchema()
+dataframe_step_input_schema = DataframeStepInputSchema()
+
+dataframe_node_update_schema = DataframeNodeUpdateSchema()
 
 
 class SessionBase(ServicesResources):
@@ -206,7 +199,7 @@ class SessionBase(ServicesResources):
         organizations: dict,
         database: dict,
         action: LocalAction,
-        pipeline: db.Pipeline,
+        dataframe: db.Dataframe,
         description="",
         depends_on_id=None,
     ) -> int:
@@ -221,7 +214,7 @@ class SessionBase(ServicesResources):
             "organizations": organizations,
             "databases": database,
             "depends_on_id": depends_on_id,
-            "pipeline_id": pipeline.id,
+            "dataframe_id": dataframe.id,
         }
         # remove empty values
         input_ = {k: v for k, v in input_.items() if v is not None}
@@ -241,8 +234,8 @@ class SessionBase(ServicesResources):
         """
         log.debug(f"Deleting session id={session.id}")
 
-        for pipeline in session.pipelines:
-            pipeline.delete()
+        for dataframe in session.dataframes:
+            dataframe.delete()
 
         for node_session in session.node_sessions:
             for config in node_session.config:
@@ -418,7 +411,7 @@ class Sessions(SessionBase):
           with a data-extraction step. In this extraction step, the data is extracted
           from the source database. Then a handle is returned to the user. This handle
           is a reference to the session data set. This handle can be used to add
-          additional steps to the pipeline or to execute compute tasks on. A session
+          additional steps to the dataframe or to execute compute tasks on. A session
           can be scoped to the entire collaboration, the organization or only to the
           owner of the session. This way sessions can be shared with other users within
           the collaboration or organization.
@@ -756,17 +749,18 @@ class Session(SessionBase):
 
         self.delete_session(session)
         # TODO create socket event so the node knows that it should clear the session
-        # data too.
+        # data too. We also need to check on startup at the nodes if sessions need to be
+        # deleted.
 
         return {"msg": f"Successfully deleted session id={id}"}, HTTPStatus.OK
 
 
-class SessionPipelines(SessionBase):
-    "/<int:session_id>/pipeline"
+class SessionDataframes(SessionBase):
+    "/<int:session_id>/dataframe"
 
     @only_for(("user", "node"))
     def get(self, session_id):
-        """view all pipelines of a session"""
+        """view all dataframes of a session"""
         session: db.Session = db.Session.get(session_id)
         if not session:
             return {
@@ -778,7 +772,7 @@ class SessionPipelines(SessionBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        q = g.session.query(db.Pipeline).filter_by(session_id=session_id)
+        q = g.session.query(db.Dataframe).filter_by(session_id=session_id)
 
         # check if pagination is disabled
         paginate = True
@@ -787,16 +781,16 @@ class SessionPipelines(SessionBase):
 
         # paginate results
         try:
-            page = Pagination.from_query(q, request, db.Pipeline, paginate=paginate)
+            page = Pagination.from_query(q, request, db.Dataframe, paginate=paginate)
         except (ValueError, AttributeError) as e:
             return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
 
-        return self.response(page, pipeline_schema)
+        return self.response(page, dataframe_schema)
 
     # TODO FM 16-7-2024: Permissions need to be added
     @only_for(("user",))
     def post(self, session_id):
-        """Initiate a new pipeline for a session"""
+        """Initiate a new dataframe for a session"""
 
         session: db.Session = db.Session.get(session_id)
         if not session:
@@ -804,12 +798,12 @@ class SessionPipelines(SessionBase):
                 "msg": f"Session with id={session_id} not found"
             }, HTTPStatus.NOT_FOUND
 
-        # A pipeline is a list of tasks that need to be executed in order to initialize
-        # the session. A single session can have multiple pipelines, each with a
-        # different database or different user inputs. Each pipeline can be identified
+        # A dataframe is a list of tasks that need to be executed in order to initialize
+        # the session. A single session can have multiple dataframes, each with a
+        # different database or different user inputs. Each dataframe can be identified
         # using a unique handle.
-        pipeline = request.get_json()
-        errors = pipeline_init_input_schema.validate(pipeline)
+        dataframe = request.get_json()
+        errors = dataframe_init_input_schema.validate(dataframe)
         if errors:
             return {
                 "msg": "Request body is incorrect",
@@ -821,28 +815,28 @@ class SessionPipelines(SessionBase):
         # This label is used to identify the database, this label should match the
         # label in the node configuration file. Each node can have multiple
         # databases.
-        source_db_label = pipeline["label"]
+        source_db_label = dataframe["label"]
 
         # Multiple datasets can be created in a single session. This handle can be
         # used by the `preprocessing` and `compute` to identify the different
         # datasets that are send after the data extraction task. The handle can be
         # provided by the user, if not a unique handle is generated.
-        if "handle" not in pipeline:
-            while (handle := generate_name()) and db.Pipeline.select(session, handle):
+        if "handle" not in dataframe:
+            while (handle := generate_name()) and db.Dataframe.select(session, handle):
                 pass
         else:
-            handle = pipeline["handle"]
+            handle = dataframe["handle"]
 
-        pipe = db.Pipeline(
+        pipe = db.Dataframe(
             session=session,
             handle=handle,
         )
         pipe.save()
 
         # When a session is initialized, a mandatory data extraction step is
-        # required. This step is the first step in the pipeline and is used to
+        # required. This step is the first step in the dataframe and is used to
         # extract the data from the source database.
-        extraction_details = pipeline["task"]
+        extraction_details = dataframe["task"]
         response, status_code = self.create_session_task(
             session=session,
             image=extraction_details["image"],
@@ -853,10 +847,10 @@ class SessionPipelines(SessionBase):
                 f"Data extraction step for session {session.name} ({session.id})."
                 f"This session is in the {collaboration.name} collaboration. This "
                 f"data extraction step uses the {source_db_label} database. And "
-                f"will initialize the pipeline with the handle {handle}."
+                f"will initialize the dataframe with the handle {handle}."
             ),
             action=LocalAction.DATA_EXTRACTION,
-            pipeline=pipe,
+            dataframe=pipe,
         )
 
         if status_code != HTTPStatus.CREATED:
@@ -866,15 +860,15 @@ class SessionPipelines(SessionBase):
         pipe.last_session_task_id = response["id"]
         pipe.save()
 
-        return pipeline_schema.dump(pipe), HTTPStatus.CREATED
+        return dataframe_schema.dump(pipe), HTTPStatus.CREATED
 
 
-class SessionPipeline(SessionBase):
-    "/<int:session_id>/pipeline/<string:pipeline_handle>"
+class SessionDataframe(SessionBase):
+    "/<int:session_id>/dataframe/<string:dataframe_handle>"
 
-    @only_for(("user", "node"))
-    def get(self, session_id, pipeline_handle):
-        """View specific pipeline"""
+    @only_for(("user",))
+    def get(self, session_id, dataframe_handle):
+        """View specific dataframe"""
 
         session = db.Session.get(session_id)
         if not session:
@@ -887,18 +881,18 @@ class SessionPipeline(SessionBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        pipeline = db.Pipeline.select(session, pipeline_handle)
-        if not pipeline:
+        dataframe = db.Dataframe.select(session, dataframe_handle)
+        if not dataframe:
             return {
-                "msg": f"Pipeline with handle={pipeline_handle} not found"
+                "msg": f"Dataframe with handle={dataframe_handle} not found"
             }, HTTPStatus.NOT_FOUND
 
-        return pipeline_schema.dump(pipeline, many=False), HTTPStatus.OK
+        return dataframe_schema.dump(dataframe, many=False), HTTPStatus.OK
 
     # TODO FM 16-7-2024: Permissions need to be added
     @only_for(("user",))
-    def post(self, session_id, pipeline_handle):
-        """Add a preprocessing step to a pipeline"""
+    def post(self, session_id, dataframe_handle):
+        """Add a preprocessing step to a dataframe"""
 
         session: db.Session = db.Session.get(session_id)
         if not session:
@@ -906,19 +900,19 @@ class SessionPipeline(SessionBase):
                 "msg": f"Session with id={session_id} not found"
             }, HTTPStatus.NOT_FOUND
 
-        pipeline_step = request.get_json()
-        errors = pipeline_step_input_schema.validate(pipeline_step)
+        dataframe_step = request.get_json()
+        errors = dataframe_step_input_schema.validate(dataframe_step)
         if errors:
             return {
                 "msg": "Request body is incorrect",
                 "errors": errors,
             }, HTTPStatus.BAD_REQUEST
 
-        pipe: db.Pipeline = db.Pipeline.select(session, pipeline_handle)
+        pipe: db.Dataframe = db.Dataframe.select(session, dataframe_handle)
         if not pipe:
             return {
                 "msg": (
-                    f"Pipeline with handle={pipeline_handle} in session={session.name} "
+                    f"Dataframe with handle={dataframe_handle} in session={session.name} "
                     "not found!"
                 )
             }, HTTPStatus.NOT_FOUND
@@ -926,21 +920,21 @@ class SessionPipeline(SessionBase):
         if not pipe.last_session_task:
             return {
                 "msg": (
-                    f"Pipeline with handle={pipeline_handle} in session={session.name} "
+                    f"Dataframe with handle={dataframe_handle} in session={session.name} "
                     "has no last task! Session is not properly initialized!"
                 )
             }, HTTPStatus.INTERNAL_SERVER_ERROR
 
-        preprocessing_task = pipeline_step["task"]
+        preprocessing_task = dataframe_step["task"]
         response, status_code = self.create_session_task(
             session=session,
-            database=[{"label": pipeline_handle, "type": "handle"}],
+            database=[{"label": dataframe_handle, "type": "handle"}],
             description=f"Preprocessing step for session {session.name}",
             depends_on_id=pipe.last_session_task.id,
             action=LocalAction.PREPROCESSING,
             image=preprocessing_task["image"],
             organizations=preprocessing_task["organizations"],
-            pipeline=pipe,
+            dataframe=pipe,
         )
         if status_code != HTTPStatus.CREATED:
             Session.delete_session(session)
@@ -949,119 +943,14 @@ class SessionPipeline(SessionBase):
         pipe.last_session_task_id = response["id"]
         pipe.save()
 
-        return pipeline_schema.dump(pipe, many=False), HTTPStatus.CREATED
-
-
-class NodeSessions(SessionBase):
-
-    @only_for(("user", "node"))
-    def get(self, session_id):
-        """Get node session
-        ---
-        description: >-
-          Returns the 'node sessions' for the specified session\n
-
-          ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-          Description|\n
-          |--|--|--|--|--|--|\n
-          |Session|Global|View|❌|❌|View any session|\n
-          |Session|Collaboration|View|✅|❌|View any session within your
-          collaborations|\n
-          |Session|Organization|View|❌|❌|View any session that has been
-          initiated from your organization or shared with your organization|\n
-          |Session|Own|View|❌|❌|View any session you created or that is shared
-          with you|\n
-
-          Accessible to users.
-
-        parameters:
-        - in: path
-          name: session_id
-          schema:
-          type: integer
-          description: Session id
-          required: true
-
-        responses:
-          200:
-            description: Ok
-          404:
-            description: Session not found
-          401:
-            description: Unauthorized
-
-        security:
-        - bearerAuth: []
-
-        tags: ["Session"]
-        """
-        session: db.Session = db.Session.get(session_id)
-        if not session:
-            return {
-                "msg": f"Session with id={session_id} not found"
-            }, HTTPStatus.NOT_FOUND
-
-        if not self.can_view_session(session):
-            return {
-                "msg": "You lack the permission to do that!"
-            }, HTTPStatus.UNAUTHORIZED
-
-        return node_session_schema.dump(session.node_sessions, many=True), HTTPStatus.OK
+        return dataframe_schema.dump(pipe, many=False), HTTPStatus.CREATED
 
     @only_for(("node",))
-    def patch(self, session_id):
-        """Update node session
-        ---
-        description: >-
-          Update the state of the node session\n
+    def patch(self, session_id, dataframe_handle):
+        """Nodes report their column names"""
 
-          ### Permissions\n
-          Only accessible by nodes.
-
-          Note that this endpoint deletes all config options when new configuration
-          settings are provided.
-
-        parameters:
-        - in: path
-          name: session_id
-          schema:
-          type: integer
-          description: Session id
-          required: true
-
-        requestBody:
-          content:
-            application/json:
-              schema:
-                properties:
-                  state:
-                    type: string
-                    description: State of the node session
-                  config:
-                    type: array
-                    items:
-                      properties:
-                        key:
-                          type: string
-                          description: Configuration key
-                        value:
-                          type: string
-                          description: Configuration value
-
-        responses:
-          200:
-            description: Ok
-          404:
-            description: Session or node session not found
-
-        security:
-        - bearerAuth: []
-
-        tags: ["Session"]
-        """
         data = request.get_json()
-        errors = node_session_input_schema.validate(data)
+        errors = dataframe_node_update_schema.validate(data, many=True)
         if errors:
             return {
                 "msg": "Request body is incorrect",
@@ -1069,32 +958,35 @@ class NodeSessions(SessionBase):
             }, HTTPStatus.BAD_REQUEST
 
         session: db.Session = db.Session.get(session_id)
+
         if not session:
             return {
                 "msg": f"Session with id={session_id} not found"
             }, HTTPStatus.NOT_FOUND
 
-        node_session: db.NodeSession = db.NodeSession.get_by_node_and_session(
-            g.node.id, session.id
-        )
-        if not node_session:
+        dataframe = db.Dataframe.select(session, dataframe_handle)
+        if not dataframe:
             return {
-                "msg": f"Node session with node id={g.node.id} and session "
-                f"id={session.id} not found"
+                "msg": f"Dataframe with handle={dataframe_handle} not found"
             }, HTTPStatus.NOT_FOUND
 
-        if "config" in data:
-            # Delete old configuration
-            for item in node_session.config:
-                item.delete()
-            # add new
-            for config in data["config"]:
-                db.NodeSessionConfig(
-                    node_session=node_session, key=config["key"], value=config["value"]
-                ).save()
+        # Validate that this node is part of the session
+        if not session.collaboration_id == g.node.collaboration_id:
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
-        if "state" in data:
-            node_session.state = data["state"]
-            node_session.save()
+        # first we clear out all previous reported columns
+        db_session = DatabaseSessionManager.get_session()
+        db_session.query(db.Column).filter_by(dataframe_id=dataframe.id).delete()
+        db_session.commit()
 
-        return node_session_schema.dump(node_session, many=False), HTTPStatus.OK
+        for column in data:
+            db.Column(
+                dataframe=dataframe,
+                name=column["name"],
+                dtype=column["dtype"],
+                node=g.node,
+            ).save()
+
+        return {"msg": "Columns updated"}, HTTPStatus.OK

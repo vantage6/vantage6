@@ -615,6 +615,7 @@ class DockerManager(DockerBaseManager):
         task = DockerTaskManager(
             image=image,
             docker_client=self.docker,
+            client=self.client,
             run_id=run_id,
             task_info=task_info,
             vpn_manager=self.vpn_manager,

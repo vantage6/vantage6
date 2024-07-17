@@ -107,3 +107,26 @@ class TaskStatus(EnumBase):
             True if task has finished or failed, False otherwise
         """
         return cls.has_task_failed(status) or status == TaskStatus.COMPLETED
+
+    @classmethod
+    def dead_statuses(cls) -> list[str]:
+        """Return a list of all the status values that are considered finished"""
+
+        return [
+            cls.COMPLETED.value,
+            cls.FAILED.value,
+            cls.CRASHED.value,
+            cls.KILLED.value,
+            cls.NOT_ALLOWED.value,
+            cls.UNKNOWN_ERROR.value,
+        ]
+
+    @classmethod
+    def alive_statuses(cls) -> list[str]:
+        """Return a list of all the status values that are considered running"""
+
+        return [
+            cls.PENDING,
+            cls.INITIALIZING.value,
+            cls.ACTIVE.value,
+        ]
