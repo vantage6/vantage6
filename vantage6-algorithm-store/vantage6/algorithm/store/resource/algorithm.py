@@ -154,7 +154,11 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
                     registry_password = reg.get("password")
                     break
             if registry_user and registry_password:
-                digest = get_digest(image_name, registry_user, registry_password)
+                digest = get_digest(
+                    full_image=image_name,
+                    docker_username=registry_user,
+                    docker_password=registry_password,
+                )
 
         return image_wo_tag, digest
 
