@@ -227,7 +227,10 @@ class Vantage6Servers(AlgorithmStoreResources):
             server = db_Vantage6Server(url=data["url"])
             server.save()
         else:
-            server = existing_server
+            return {
+                "msg": "This server is already whitelisted in this algorithm store "
+                "instance."
+            }, HTTPStatus.FORBIDDEN
 
         # the user that is whitelisting the server should be able to delete it
         # in the future. Assign the server manager role to the user executing this
