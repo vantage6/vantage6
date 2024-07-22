@@ -1,9 +1,9 @@
 import logging
+import datetime
 
 from http import HTTPStatus
 from flask import request, g
 from flask_restful import Api
-import datetime
 
 from vantage6.common import logger_name
 from vantage6.backend.common.resource.pagination import Pagination
@@ -451,7 +451,7 @@ class ReviewApprove(AlgorithmStoreResources):
         data = request.get_json()
 
         # validate input
-        errors = review_update_schema.validate(request.get_json())
+        errors = review_update_schema.validate(data)
         if errors:
             return {"msg": "Invalid input", "errors": errors}, HTTPStatus.BAD_REQUEST
 
@@ -486,13 +486,13 @@ class ReviewApprove(AlgorithmStoreResources):
 
             # if the algorithm is approved, invalidate the previously approved versions
             for other_version in db.Algorithm.get_by_image(algorithm.image):
+                # skip the current version and versions that are not yet reviewed and
+                # are newer (as in submitted later) than the current version
                 if (
                     not other_version.is_review_finished()
                     and other_version.submitted_at > algorithm.submitted_at
-                ):
+                ) or other_version.id == algorithm.id:
                     continue
-                elif other_version.id == algorithm.id:
-                    continue  # skip the current version
                 other_version.invalidated_at = algorithm.approved_at
                 other_version.status = AlgorithmStatus.REPLACED
                 other_version.save()

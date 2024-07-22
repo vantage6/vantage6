@@ -326,10 +326,35 @@ def parse_image_name(image: str) -> tuple[str, str, str]:
     if tag.startswith("sha256:"):
         # If the tag is a digest, the repository may include another tag, e.g. if
         # the image is "some-image:test@sha256:1234", the registry_repository would
-        # still include the tag "test". Remove that.
-        registry_repository, _ = parse_repository_tag(registry_repository)
+        # still include the tag "test". If this is the case, set that as the tag,
+        # because the tag is more reliable for policies than the digest (see
+        # e.g. https://github.com/vantage6/vantage6/pull/1318#discussion_r1685560071)
+        registry_repository, tag_ = parse_repository_tag(registry_repository)
+        if tag_:
+            tag = tag_
     registry, repository = resolve_repository_name(registry_repository)
     return registry, repository, tag
+
+
+def get_image_name_wo_tag(image: str) -> str:
+    """
+    Get image name without tag
+
+    Parameters
+    ----------
+    image: str
+        Image name. E.g. "harbor2.vantage6.ai/algorithms/average:latest"
+
+    Returns
+    -------
+    str
+        Image name without tag. E.g. "harbor2.vantage6.ai/algorithms/average"
+    """
+    registry, repository, _ = parse_image_name(image)
+    if registry == "docker.io":
+        return repository
+    else:
+        return f"{registry}/{repository}"
 
 
 def get_digest(

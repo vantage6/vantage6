@@ -113,15 +113,14 @@ def request_validate_server_token(server_url: str) -> Response | None:
 
     Returns
     -------
-    tuple[Response | None, int]
-        Tuple containing response object from the request, or None if the request
-        could not be made, and the status code of the response.
+    Response | None
+        Response object from the request, or None if the server could not be reached
     """
     url = f"{server_url}/token/user/validate"
     try:
         return request_from_store_to_v6_server(url, method="post")
     except requests.exceptions.ConnectionError:
-        return None, HTTPStatus.NOT_FOUND
+        return None
 
 
 def _authenticate_with_server(*args, **kwargs):

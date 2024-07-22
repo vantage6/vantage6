@@ -23,6 +23,7 @@ from vantage6.common import get_database_config
 from vantage6.common.docker.addons import (
     get_container,
     get_digest,
+    get_image_name_wo_tag,
     running_in_docker,
 )
 from vantage6.common.globals import APPNAME, BASIC_PROCESSING_IMAGE, NodePolicy
@@ -251,7 +252,10 @@ class DockerManager(DockerBaseManager):
             Dictionary with the policies
         """
         policies = config.get("policies", {})
-        if not policies or not policies.get(NodePolicy.ALLOWED_ALGORITHMS):
+        if not policies or (
+            not policies.get(NodePolicy.ALLOWED_ALGORITHMS)
+            and not policies.get(NodePolicy.ALLOWED_ALGORITHM_STORES)
+        ):
             self.log.warning(
                 "No policies on allowed algorithms have been set for this node!"
             )
@@ -337,10 +341,27 @@ class DockerManager(DockerBaseManager):
         if allowed_algorithms:
             if isinstance(allowed_algorithms, str):
                 allowed_algorithms = [allowed_algorithms]
-            evaluated_img_wo_tag, _ = parse_repository_tag(evaluated_img)
+            try:
+                evaluated_img_wo_tag = get_image_name_wo_tag(evaluated_img)
+            except Exception as exc:
+                self.log.warning(
+                    "Could not parse image with name %s: %s",
+                    evaluated_img,
+                    exc,
+                )
+                evaluated_img_wo_tag = None
             for allowed_algo in allowed_algorithms:
                 if not self._is_regex_pattern(allowed_algo):
-                    allowed_wo_tag, _ = parse_repository_tag(allowed_algo)
+                    try:
+                        allowed_wo_tag = get_image_name_wo_tag(allowed_algo)
+                    except Exception as exc:
+                        self.log.warning(
+                            "Could not parse allowed_algorithm policy with name %s: %s",
+                            allowed_algo,
+                            exc,
+                        )
+                        self.log.warning("Skipping policy as it cannot be parsed")
+                        continue  # skip policy as it cannot be parsed
                     if allowed_algo == evaluated_img:
                         # OK if allowed algorithm and provided algorithm match exactly
                         algorithm_whitelisted = True
