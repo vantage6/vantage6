@@ -699,44 +699,49 @@ class Tasks(TaskBase):
                 return {"msg": "Container-token is not valid"}, HTTPStatus.UNAUTHORIZED
 
         # get the algorithm store
-        store_id = data.get("store_id")
-        store = None
-        if store_id:
-            store = db.AlgorithmStore.get(store_id)
-            if not store:
-                return {
-                    "msg": f"Algorithm store id={store_id} not found!"
-                }, HTTPStatus.BAD_REQUEST
-            # check if the store is part of the collaboration
-            if (
-                not store.is_for_all_collaborations()
-                and store.collaboration_id != collaboration_id
-            ):
-                return {
-                    "msg": (
-                        "The algorithm store is not part of the collaboration "
-                        "to which the task is posted."
+        if g.user:
+            store_id = data.get("store_id")
+            store = None
+            if store_id:
+                store = db.AlgorithmStore.get(store_id)
+                if not store:
+                    return {
+                        "msg": f"Algorithm store id={store_id} not found!"
+                    }, HTTPStatus.BAD_REQUEST
+                # check if the store is part of the collaboration
+                if (
+                    not store.is_for_all_collaborations()
+                    and store.collaboration_id != collaboration_id
+                ):
+                    return {
+                        "msg": (
+                            "The algorithm store is not part of the collaboration "
+                            "to which the task is posted."
+                        )
+                    }, HTTPStatus.FORBIDDEN
+                # get the algorithm from the algorithm store
+                try:
+                    image, digest = Tasks._get_image_and_hash_from_store(
+                        store, image, config
                     )
-                }, HTTPStatus.FORBIDDEN
-            # get the algorithm from the algorithm store
-            try:
-                image, digest = Tasks._get_image_and_hash_from_store(
-                    store, image, config
-                )
-            except Exception as e:
-                log.exception("Error while getting image from store: %s", e)
-                return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+                except Exception as e:
+                    log.exception("Error while getting image from store: %s", e)
+                    return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
 
-            if digest:
-                image_with_hash = f"{image}@{digest}"
+                if digest:
+                    image_with_hash = f"{image}@{digest}"
+                else:
+                    # hash lookup in store was unsuccessful, use image without hash, but
+                    # also set store to None as it was not successfully looked up
+                    image_with_hash = image
+                    store = None
             else:
-                # hash lookup in store was unsuccessful, use image without hash, but
-                # also set store to None as it was not successfully looked up
+                # no need to determine hash if we don't look it up in a store
                 image_with_hash = image
-                store = None
-        else:
-            # no need to determine hash if we don't look it up in a store
-            image_with_hash = image
+        elif g.container:
+            parent = db.Task.get(g.container["task_id"])
+            store = parent.algorithm_store
+            image_with_hash = parent.image
 
         # check that the input is valid. If the collaboration is encrypted, it
         # should not be possible to read the input, and we should not save it
