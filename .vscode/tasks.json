@@ -16,9 +16,35 @@
         },
         {
             "label": "Start debug node mars",
-            "command": "dev/scripts/start-debug-node-mars.sh",
+            "command": "dev/scripts/start-debug-node.sh",
             "type": "shell",
-            "args": [],
+            "args": ["mars"],
+            "problemMatcher": [
+                "$tsc"
+            ],
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "none"
+        },
+        {
+            "label": "Start debug node jupiter",
+            "command": "dev/scripts/start-debug-node.sh",
+            "type": "shell",
+            "args": ["jupiter"],
+            "problemMatcher": [
+                "$tsc"
+            ],
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "none"
+        },
+        {
+            "label": "Start debug node saturn",
+            "command": "dev/scripts/start-debug-node.sh",
+            "type": "shell",
+            "args": ["saturn"],
             "problemMatcher": [
                 "$tsc"
             ],

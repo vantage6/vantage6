@@ -153,7 +153,10 @@ class NodeContext(AppContext):
         str
             Node's Docker container name
         """
-        return f"{APPNAME}-{self.name}-{self.scope}"
+        if self.config["container_name"]:
+            return self.config["container_name"]
+        else:
+            return f"{APPNAME}-{self.name}-{self.scope}"
 
     @property
     def docker_network_name(self) -> str:

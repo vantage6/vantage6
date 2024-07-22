@@ -58,7 +58,10 @@
                     "localRoot": "${workspaceFolder}",
                     "remoteRoot": "/vantage6"
                 }
-            ]
+            ],
+            // Starts debug node in a task and *waits for you* to control-C
+            // the task before debugger attaches.
+            "preLaunchTask": "Start debug node jupiter",
         },
         {
             "name": "Debug: Node Saturn",
@@ -76,7 +79,10 @@
                     "localRoot": "${workspaceFolder}",
                     "remoteRoot": "/vantage6"
                 }
-            ]
+            ],
+            // Starts debug node in a task and *waits for you* to control-C
+            // the task before debugger attaches.
+            "preLaunchTask": "Start debug node saturn",
         },
     ]
 }

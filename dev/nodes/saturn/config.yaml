@@ -2,6 +2,8 @@
 # This is a test key previously set in dev fixtures
 api_key: b91d24fe-beef-feed-baff-0b9c7b70dbec
 
+container_name: v6-node-saturn
+
 # URL of the vantage6 server
 server_url: http://host.docker.internal
 

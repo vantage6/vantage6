@@ -9,9 +9,11 @@ config = {
     'server_port': 5000,
     'server_api': "/api",
     # Your user name goes here
-    'username': "phobos",
+    # 'username': "phobos",
+    'username': "titan",
     # This is just a test password for quick local development server
-    'password': "test-password-two-orbit",
+    # 'password': "test-password-two-orbit",
+    'password': "test-password-cloudy-orbit",
     'organization_key': None,
 }
 
@@ -22,7 +24,8 @@ client.setup_encryption(config['organization_key'])
 
 # Define some input for the averaging algorithm
 input_ = {
-    'method': 'partial_average',
+    #'method': 'partial_average',
+    'method': 'central_average',
     'kwargs': {
         'column_name': 'value'
     },
