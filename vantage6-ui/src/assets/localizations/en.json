@@ -199,7 +199,8 @@
       "title": "Are you sure you want to kill the task '{{name}}'?",
       "content": "Note, this will also kill all subtasks.\nThis operation cannot be undone."
     },
-    "repeat": "Repeat task"
+    "repeat": "Repeat task",
+    "alert-algorithm-not-found": "The algorithm used in this task could not be retrieved from the algorithm store. This limits the displayed information. This may happen if a task is created in the Python client or if the algorithm is no longer approved."
   },
   "template-task-create": {
     "title": "Quick task",
