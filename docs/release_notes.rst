@@ -48,8 +48,9 @@ Release notes
    (`Issue#1177 <https://github.com/vantage6/vantage6/issues/1177>`_,
    `Issue#1178 <https://github.com/vantage6/vantage6/issues/1178>`_,
    `PR#1299 <https://github.com/vantage6/vantage6/pull/1299>`_).
- - Updated `connectorx` dependency back to 0.3.3 to prevent issues with old libraries
-   (`PR#1359 <https://github.com/vantage6/vantage6/pull/1359>`_).
+ - Removed `connectorx` dependency due to issues with installing it. Instead, using
+   SQLAlchemy to read SQL queries in the SQL wrapper
+   (`PR#1385 <https://github.com/vantage6/vantage6/pull/1385>`_).
  - Make it possible to run infrastructure components with local images
    (`Issue#1250 <https://github.com/vantage6/vantage6/issues/1250>`_,
    `PR#1332 <https://github.com/vantage6/vantage6/pull/1332>`_).
