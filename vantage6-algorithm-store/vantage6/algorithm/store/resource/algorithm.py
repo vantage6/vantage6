@@ -31,7 +31,11 @@ from vantage6.algorithm.store.permission import (
     Operation as P,
 )
 from vantage6.backend.common.resource.pagination import Pagination
-from vantage6.common.docker.addons import get_digest, parse_image_name
+from vantage6.common.docker.addons import (
+    get_digest,
+    get_image_name_wo_tag,
+    parse_image_name,
+)
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -131,14 +135,10 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
         # split image and tag
         try:
             # pylint: disable=unused-variable
-            registry, image, tag = parse_image_name(image_name)
+            registry, _, _ = parse_image_name(image_name)
+            image_wo_tag = get_image_name_wo_tag(image_name)
         except Exception as e:
             raise ValueError(f"Invalid image name: {image_name}") from e
-
-        if registry == "docker.io":
-            image_wo_tag = image
-        else:
-            image_wo_tag = "/".join([registry, image])
 
         # get the digest of the image.
         digest = get_digest(image_name)

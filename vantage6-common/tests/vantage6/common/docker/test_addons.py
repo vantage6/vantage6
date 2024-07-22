@@ -144,7 +144,6 @@ class TestParseImageName(TestCase):
             (
                 "harbor2.vantage6.ai",
                 "infrastructure/node",
-                "sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
-                "abcdef",
+                "4.5",
             ),
         )
