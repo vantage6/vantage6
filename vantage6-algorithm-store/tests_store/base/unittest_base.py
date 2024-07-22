@@ -1,4 +1,5 @@
 import unittest
+from vantage6.algorithm.store.default_roles import get_default_roles
 from vantage6.algorithm.store.model.review import Review
 import yaml
 
@@ -108,6 +109,15 @@ class TestResources(unittest.TestCase):
     def assign_role_to_user(self, user: User, role: Role):
         user.roles.append(role)
         user.save()
+
+    def create_default_roles(self) -> list[Role]:
+        for role in get_default_roles():
+            new_role = Role(
+                name=role["name"],
+                description=role["description"],
+                rules=role["rules"],
+            )
+            new_role.save()
 
 
 class MockResponse:

@@ -5,7 +5,9 @@ from http import HTTPStatus
 from unittest.mock import patch
 
 from tests_store.base.unittest_base import TestResources, MockResponse
+from vantage6.algorithm.store.default_roles import DefaultRole
 from vantage6.algorithm.store.model.policy import Policy
+from vantage6.algorithm.store.model.user import User
 from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 from vantage6.common.enum import StorePolicies
 
@@ -82,23 +84,57 @@ class TestVantage6ServerResource(TestResources):
         response = self.app.get("/api/vantage6-server/99999", headers=HEADERS)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
-    # def test_server_create(self):
-    #     """Test POST /vantage6-server"""
-    #     # Note that this endpoint needs no authentication, but should comply with the
-    #     # policies set in the database
+    @patch(
+        "vantage6.algorithm.store.resource.vantage6_server"
+        ".request_validate_server_token"
+    )
+    def test_server_create(self, validate_token_mock):
+        """Test POST /vantage6-server"""
+        # Note that this endpoint needs no authentication, but should comply with the
+        # policies set in the database
 
-    #     # create policy that only allows one server
-    #     policy = Policy(key=StorePolicies.ALLOWED_SERVERS, value="https://server.com")
+        # create policy that only allows one server
+        policy = Policy(key=StorePolicies.ALLOWED_SERVERS, value="https://server.com")
+        policy.save()
 
-    #     # check that creating a different server fails
-    #     body_ = {"url": "http://my-server.com"}
-    #     response = self.app.post("/api/vantage6-server", headers=HEADERS)
-    #     self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+        user, _ = self.register_user_and_server()
 
-    #     # check that creating a server with authentication works
-    #     response = self.app.post("/api/vantage6-server", headers=HEADERS)
-    #     self.assertEqual(response.status_code, HTTPStatus.CREATED)
-    #     self.assertIsNotNone(response.json["id"])
+        # ensure default roles are created - a role is assigned to the user when they
+        # whitelist the server
+        self.create_default_roles()
+
+        # check that creating a different server fails
+        body_ = {"url": "http://another-server.com"}
+        response = self.app.post("/api/vantage6-server", headers=HEADERS, json=body_)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+
+        # check that creating whitelisted server doesn't work if the server does not
+        # successfully verify the user
+        body_ = {"url": "https://server.com"}
+        validate_token_mock.return_value = MockResponse(
+            {}, status_code=HTTPStatus.NOT_FOUND
+        )
+        response = self.app.post("/api/vantage6-server", headers=HEADERS, json=body_)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+
+        # check that creating this server works
+        validate_token_mock.return_value = MockResponse(
+            {"username": USERNAME}, status_code=HTTPStatus.OK
+        )
+        response = self.app.post("/api/vantage6-server", headers=HEADERS, json=body_)
+        self.assertEqual(response.status_code, HTTPStatus.CREATED)
+        self.assertIsNotNone(response.json["id"])
+        # check that a user exists for this server with the current username and the
+        # server manager role
+        server_manager = User.get_by_server(USERNAME, response.json["id"])
+        self.assertIsNotNone(server_manager)
+        self.assertEqual(server_manager.roles[0].name, DefaultRole.SERVER_MANAGER)
+
+        # if we try this again it should fail
+        response = self.app.post("/api/vantage6-server", headers=HEADERS, json=body_)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+
+        # TODO check that localhost works with --force parameter and not without
 
 
 if __name__ == "__main__":
