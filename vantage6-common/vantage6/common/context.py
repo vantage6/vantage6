@@ -370,6 +370,7 @@ class AppContext(metaclass=Singleton):
         """
         return self.__config_file
 
+    # FIXME: this actually reads in config? Perhaps document or refactor?
     @config_file.setter
     def config_file(self, path: str) -> None:
         """

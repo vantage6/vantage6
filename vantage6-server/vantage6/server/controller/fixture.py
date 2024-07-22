@@ -1,8 +1,10 @@
 import uuid
 import logging
 
+from sqlalchemy.exc import IntegrityError
+
 import vantage6.server.model as db
-from vantage6.server.model.base import Database
+from vantage6.server.model.base import Database, DatabaseSessionManager
 from vantage6.server.permission import PermissionManager
 from vantage6.common.task_status import TaskStatus
 from vantage6.common.serialization import serialize
@@ -52,6 +54,7 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
     # If the server has never been started yet, no rules have been created yet.
     # In that case, create them here so that the created users have
     # permissions.
+    # FIXME: If db was dropped, db.Rule.get() will raise an exception
     if not db.Rule.get():
         permissions = PermissionManager()
         permissions.load_rules_from_resources()
@@ -61,21 +64,36 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
         # print(org)
 
         # create organization
-        organization = db.Organization(
-            **{
-                k: org[k]
-                for k in [
-                    "name",
-                    "domain",
-                    "address1",
-                    "address2",
-                    "zipcode",
-                    "country",
-                    "public_key",
-                ]
-            }
-        )
-        organization.save()
+        try:
+            organization = db.Organization(
+                **{
+                    k: org[k]
+                    for k in [
+                        "name",
+                        "domain",
+                        "address1",
+                        "address2",
+                        "zipcode",
+                        "country",
+                        "public_key",
+                    ]
+                }
+            )
+            organization.save()
+        except IntegrityError as e:
+            log.warning(
+                f"Organization with name '{org['name']}' already exists. "
+                "We will asume all fixtures were already loaded"
+            )
+            log.warning(
+                "If you want to recreate fixtures, please drop the database first, "
+                "assuming you are only on a development server"
+            )
+            # we've dirtied the session, so we need to rollback
+            # TODO: are we handling sessions properly?
+            DatabaseSessionManager.get_session().rollback()
+            return
+
         log.debug(f"processed organization={organization.name}")
         superuserrole = db.Role(
             name="super",

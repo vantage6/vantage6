@@ -1,0 +1,6 @@
+# virtual environments
+venv/
+.venv/
+
+# debugpy package for use within container
+debugpy/

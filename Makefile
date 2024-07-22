@@ -265,3 +265,7 @@ test:
 devdocs: export READTHEDOCS = Yes
 devdocs:
 	sphinx-autobuild docs docs/_build/html --watch .
+
+devenv:
+	@echo "Creating local dev environment"
+	./dev/scripts/create-dev-env.sh
