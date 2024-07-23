@@ -98,7 +98,7 @@ class TestVantage6ServerResource(TestResources):
         policy = Policy(key=StorePolicies.ALLOWED_SERVERS, value="https://server.com")
         policy.save()
 
-        user, _ = self.register_user_and_server()
+        self.register_user_and_server()
 
         # ensure default roles are created - a role is assigned to the user when they
         # whitelist the server
