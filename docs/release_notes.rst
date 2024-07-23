@@ -1,6 +1,77 @@
 Release notes
 =============
 
+4.6.0
+-----
+
+*17 July 2024*
+
+- **Feature**
+
+ - Added option ``allowed_algorithm_stores`` to node configuration. This option allows
+   node administrators to allow all approved algorithms from a specific algorithm store
+   to be run on their node ((`Issue#1293 <https://github.com/vantage6/vantage6/issues/1293>`_,
+   `PR#1318 <https://github.com/vantage6/vantage6/pull/1318>`_).
+ - Added policy management system to the algorithm store, and implemented a first few
+   policies, e.g. to control who can view and run algorithms
+   (`Issue#1026 <https://github.com/vantage6/vantage6/issues/1026>`_,
+   `PR#1299 <https://github.com/vantage6/vantage6/pull/1299>`_).
+ - Implemented review process in the algorithm store. Algorithms now need to be reviewed
+   by at least one other user before they are published in the store
+   (`Issue#981 <https://github.com/vantage6/vantage6/issues/981>`_,
+   `PR#1358 <https://github.com/vantage6/vantage6/pull/1358>`_).
+ - Option to visualize line charts in the UI
+   (`Issue#1324 <https://github.com/vantage6/vantage6/issues/1324>`_,
+   `PR#1330 <https://github.com/vantage6/vantage6/pull/1330>`_).
+ - Users and permissions of the algorithm store can now be managed in the UI
+   (`Issue#1123 <https://github.com/vantage6/vantage6/issues/1123>`_,
+   `PR#1340 <https://github.com/vantage6/vantage6/pull/1340>`_).
+ - Support default pandas ``DataFrame.to_json()`` output to visualize table in UI
+   (`PR#1331 <https://github.com/vantage6/vantage6/pull/1331>`_).
+ - Create option for node administrator to enforce that new algorithm image is
+   successfully pulled before running a task with it
+   (`Issue#1200 <https://github.com/vantage6/vantage6/issues/1200>`_,
+   `PR#1344 <https://github.com/vantage6/vantage6/pull/1344>`_).
+ - Show more clearly in the UI when node has last been seen online
+   (`Issue#1308 <https://github.com/vantage6/vantage6/issues/1308>`_,
+   `PR#1343 <https://github.com/vantage6/vantage6/pull/1343>`_).
+ - Option in creating tasks to indicate which algorithm store the algorithm should be
+   obtained from (`Issue#1198 <https://github.com/vantage6/vantage6/issues/1198>`_,
+   `PR#1318 <https://github.com/vantage6/vantage6/pull/1318>`_).
+
+- **Change**
+
+ - As EduVPN v2 is no longer supported on modern systems, vantage6 now supports EduVPN
+   v3 instead of v2 (`Issue#1180 <https://github.com/vantage6/vantage6/issues/1180>`_,
+   `PR#1345 <https://github.com/vantage6/vantage6/pull/1345>`_).
+ - Improved the server - algorithm store whitelisting process
+   (`Issue#1177 <https://github.com/vantage6/vantage6/issues/1177>`_,
+   `Issue#1178 <https://github.com/vantage6/vantage6/issues/1178>`_,
+   `PR#1299 <https://github.com/vantage6/vantage6/pull/1299>`_).
+ - Removed `connectorx` dependency due to issues with installing it. Instead, using
+   SQLAlchemy to read SQL queries in the SQL wrapper
+   (`PR#1385 <https://github.com/vantage6/vantage6/pull/1385>`_).
+ - Make it possible to run infrastructure components with local images
+   (`Issue#1250 <https://github.com/vantage6/vantage6/issues/1250>`_,
+   `PR#1332 <https://github.com/vantage6/vantage6/pull/1332>`_).
+ - Make `node_extra_hosts` also available to VPN client container
+   (`Issue#1355 <https://github.com/vantage6/vantage6/issues/1355>`_,
+   `PR#1360 <https://github.com/vantage6/vantage6/pull/1360>`_).
+ - Documented algorithm store permission system
+   (`Issue#1086 <https://github.com/vantage6/vantage6/issues/1086>`_,
+   `PR#1354 <https://github.com/vantage6/vantage6/pull/1354>`_).
+
+- **Bugfix**
+
+ - Fix filling in JSON and list parameters when repeating task in the UI
+   (`PR#1328 <https://github.com/vantage6/vantage6/pull/1328>`_).
+ - Added `always_connect` option to socketIO connection to prevent random `BadNameSpace`
+   errors (`Issue#1333 <https://github.com/vantage6/vantage6/issues/1333>`_,
+   `PR#1334 <https://github.com/vantage6/vantage6/pull/1334>`_).
+ - Verify that user exists before assigning it permission in the algorithm store
+   (`Issue#1092 <https://github.com/vantage6/vantage6/issues/1092>`_,
+   `PR#1299 <https://github.com/vantage6/vantage6/pull/1299>`_).
+
 4.5.5
 -----
 
