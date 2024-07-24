@@ -285,7 +285,7 @@ class ClientBase(object):
 
         return response.json()
 
-    def setup_encryption(self, private_key_file: str) -> None:
+    def setup_encryption(self, private_key_file: str | None) -> None:
         """Enable the encryption module fot the communication
 
         This will attach a Crypter object to the client. It will also
@@ -295,8 +295,8 @@ class ClientBase(object):
 
         Parameters
         ----------
-        private_key_file : str
-            File path of the private key file
+        private_key_file : str | None
+            File path of the private key file, or None if encryption is not enabled
 
         Raises
         ------
