@@ -13,6 +13,7 @@
     </button>
   </mat-menu>
 </app-page-header>
+<app-alert *ngIf="algorithmNotFoundInStore" label="{{ 'task-read.alert-algorithm-not-found' | translate }}"></app-alert>
 <ng-container *ngIf="!isLoading && task; else loading">
   <mat-card *ngIf="isTaskNotComplete()">
     <mat-card-header>
@@ -79,7 +80,11 @@
       <div *ngFor="let result of task.results">
         <ng-container *ngIf="result.decoded_result">
           <b *ngIf="function?.type === functionType.Federated">{{ getRunForResult(result.id)?.node?.name }}</b>
-          <app-visualize-result [result]="result.decoded_result" [visualization]="selectedVisualization" [result_id]="result.id.toString()"></app-visualize-result>
+          <app-visualize-result
+            [result]="result.decoded_result"
+            [visualization]="selectedVisualization"
+            [result_id]="result.id.toString()"
+          ></app-visualize-result>
           <!-- TODO only display text result if there are no visualizations -->
           <!-- <p>{{ displayTextResult(result.decoded_result) }}</p> -->
           <br />
@@ -122,7 +127,7 @@
         </div>
         <div class="data-list__item">
           <b>{{ "task.created-at" | translate }}</b>
-          <span>{{ (task.created_at | date: "MMMM d, y, HH:mm:ss") || "-" }}</span>
+          <span>{{ printDate(task.created_at) }}</span>
         </div>
         <div class="data-list__item" *ngIf="task.parent">
           <b>{{ "task.parent" | translate }}</b>
@@ -194,15 +199,15 @@
           <div class="data-list">
             <div class="data-list__item">
               <b>{{ "task-run.assigned-at" | translate }}</b>
-              <span>{{ (run.assigned_at | date: "MMMM d, y, HH:mm:ss") || "-" }}</span>
+              <span>{{ printDate(run.assigned_at) }}</span>
             </div>
             <div class="data-list__item">
               <b>{{ "task-run.started-at" | translate }}</b>
-              <span>{{ (run.started_at | date: "MMMM d, y, HH:mm:ss") || "-" }}</span>
+              <span>{{ printDate(run.started_at) }}</span>
             </div>
             <div class="data-list__item">
               <b>{{ "task-run.finished-at" | translate }}</b>
-              <span>{{ (run.finished_at | date: "MMMM d, y, HH:mm:ss") || "-" }}</span>
+              <span>{{ printDate(run.finished_at) }}</span>
             </div>
             <div class="data-list__item">
               <b>{{ "task-run.node" | translate }}</b>

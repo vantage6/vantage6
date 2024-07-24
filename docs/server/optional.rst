@@ -81,6 +81,13 @@ for example, you can scan your images for vulnerabilities and you can limit
 the range of IP addresses that the node may access to its server and the
 private registry.
 
+.. note::
+
+  If you use your own registry, make sure that it conforms to the
+  `OCI distribution specification <https://distribution.github.io/distribution/spec/api/`_.
+  This specification is supported by all major container registry providers, such
+  as Docker Hub, Harbor, Azure Container Registry and Github container registry.
+
 Harbor
 ~~~~~~
 

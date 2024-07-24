@@ -28,6 +28,7 @@ class NodeClient(ClientBase):
         self.whoami = None
 
         self.run = self.Run(self)
+        self.algorithm_store = self.AlgorithmStore(self)
 
     def authenticate(self, api_key: str) -> None:
         """
@@ -217,6 +218,25 @@ class NodeClient(ClientBase):
 
             self.parent.log.debug("Sending algorithm run update to server")
             return self.parent.request(f"run/{id_}", json=data, method="patch")
+
+    class AlgorithmStore(ClientBase.SubClient):
+        """Subclient for the algorithm store endpoint."""
+
+        def get(self, id_) -> dict:
+            """
+            Obtain algorithm store from the central server.
+
+            Parameters
+            ----------
+            id_ : int
+                ID of the algorithm.
+
+            Returns
+            -------
+            dict
+                The algorithms as json.
+            """
+            return self.parent.request(f"algorithmstore/{id_}")
 
     def is_encrypted_collaboration(self) -> bool:
         """

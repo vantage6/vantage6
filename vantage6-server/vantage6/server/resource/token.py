@@ -340,6 +340,7 @@ class ContainerToken(ServicesResources):
             "organization_id": g.node.organization_id,
             "collaboration_id": g.node.collaboration_id,
             "study_id": db_task.study_id,
+            "store_id": db_task.algorithm_store_id,
             "task_id": task_id,
             "image": claim_image,
             "databases": [

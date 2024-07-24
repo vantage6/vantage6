@@ -101,7 +101,7 @@ def request_from_store_to_v6_server(
     return response
 
 
-def request_validate_server_token(server_url: str) -> Response:
+def request_validate_server_token(server_url: str) -> Response | None:
     """
     Validate the token of the server.
 
@@ -112,8 +112,8 @@ def request_validate_server_token(server_url: str) -> Response:
 
     Returns
     -------
-    Response
-        Response object from the request.
+    Response | None
+        Response object from the request, or None if the server could not be reached
     """
     url = f"{server_url}/token/user/validate"
     try:
@@ -296,16 +296,9 @@ def with_permission(resource: str, operation: Operation) -> callable:
     return protection_decorator
 
 
-def with_permission_to_view_algorithms(resource: str, operation: Operation) -> callable:
+def with_permission_to_view_algorithms() -> callable:
     """
     Decorator to verify that the user has as a permission on a resource.
-
-    Parameters
-    ----------
-    resource : str
-        Name of the resource to check the view permission of.
-    operation: Operation
-        Operation to check the permission for.
 
     Returns
     -------
@@ -324,9 +317,22 @@ def with_permission_to_view_algorithms(resource: str, operation: Operation) -> c
                 "algorithm_view", DefaultStorePolicies.ALGORITHM_VIEW.value
             )
 
-            # TODO v5+ remove this deprecated policy
+            # check if user is trying to view algorithms that are not approved by review
+            # or have been invalidated - these algorithms always require authentication
+            # even when algorithms are open to all
+            request_args = request.args or {}
+            request_approved = not (
+                request_args.get("awaiting_reviewer_assignment")
+                or request_args.get("under_review")
+                or request_args.get("in_review_process")
+                or request_args.get("invalidated")
+            )
+
+            # TODO v5+ remove this deprecated policy "algorithms_open"
             anyone_can_view = policies.get("algorithms_open", False)
-            if anyone_can_view or algorithm_view_policy == AlgorithmViewPolicies.PUBLIC:
+            if (
+                anyone_can_view or algorithm_view_policy == AlgorithmViewPolicies.PUBLIC
+            ) and request_approved:
                 return fn(self, *args, **kwargs)
 
             # not everyone has permission: authenticate with server
@@ -344,7 +350,7 @@ def with_permission_to_view_algorithms(resource: str, operation: Operation) -> c
                 return fn(self, *args, **kwargs)
 
             # not all authenticated users have permission: authorize user
-            response, status = _authorize_user(response, resource, operation)
+            response, status = _authorize_user(response, "algorithm", Operation.VIEW)
             if response is not None:
                 return response, status
 

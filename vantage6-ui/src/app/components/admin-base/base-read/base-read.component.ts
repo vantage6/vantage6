@@ -1,11 +1,10 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
-import { Subject, takeUntil } from 'rxjs';
 import { routePaths } from 'src/app/routes';
-import { ConfirmDialogComponent } from '../../dialogs/confirm/confirm-dialog.component';
-import { MatDialog } from '@angular/material/dialog';
 import { Resource } from 'src/app/models/api/resource.model';
 import { TranslateService } from '@ngx-translate/core';
 import { CallbackFunction } from 'src/app/models/general.model';
+import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dialog.service';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-base-read',
@@ -15,8 +14,8 @@ import { CallbackFunction } from 'src/app/models/general.model';
 export abstract class BaseReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   @Input() id = '';
+  destroy$ = new Subject<void>();
 
-  destroy$ = new Subject();
   routes = routePaths;
 
   isLoading: boolean = true;
@@ -24,7 +23,7 @@ export abstract class BaseReadComponent implements OnInit, OnDestroy {
   canEdit: boolean = false;
 
   constructor(
-    protected dialog: MatDialog,
+    protected handleConfirmDialogService: HandleConfirmDialogService,
     protected translateService: TranslateService
   ) {}
 
@@ -32,8 +31,8 @@ export abstract class BaseReadComponent implements OnInit, OnDestroy {
     await this.initData();
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next(true);
+  ngOnDestroy() {
+    this.destroy$.next();
   }
 
   protected abstract initData(): Promise<void>;
@@ -46,22 +45,12 @@ export abstract class BaseReadComponent implements OnInit, OnDestroy {
   ): Promise<void> {
     if (!resourceToDelete) return;
 
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: {
-        title: deleteTitle,
-        content: deleteContent,
-        confirmButtonText: this.translateService.instant('general.delete'),
-        confirmButtonType: 'warn'
-      }
-    });
-
-    dialogRef
-      .afterClosed()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(async (result) => {
-        if (result === true) {
-          onSuccessfullDeleteFunc();
-        }
-      });
+    this.handleConfirmDialogService.handleConfirmDialog(
+      deleteTitle,
+      deleteContent,
+      this.translateService.instant('general.delete'),
+      'warn',
+      onSuccessfullDeleteFunc
+    );
   }
 }

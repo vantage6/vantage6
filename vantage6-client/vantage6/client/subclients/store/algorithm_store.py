@@ -1,4 +1,5 @@
 from vantage6.client.filter import post_filtering
+from vantage6.client.subclients.store.review import ReviewSubClient
 from vantage6.client.subclients.store.role import StoreRoleSubClient
 from vantage6.client.subclients.store.rule import StoreRuleSubClient
 from vantage6.client.subclients.store.user import StoreUserSubClient
@@ -20,6 +21,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         self.rule = StoreRuleSubClient(self)
         self.user = StoreUserSubClient(self)
         self.policy = PolicySubClient(self)
+        self.review = ReviewSubClient(self)
 
     def set(self, id_: int) -> dict:
         """ "

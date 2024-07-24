@@ -1,0 +1,79 @@
+<app-page-header title="{{ 'algorithm-review.title' | translate: { name: algorithm?.name || '' } }}"> </app-page-header>
+<ng-container *ngIf="!isLoading; else loading">
+  <mat-card *ngFor="let review of reviews">
+    <mat-card-header>
+      <mat-card-title>{{
+        "algorithm-review.card-per-review.title" | translate: { reviewer: review.reviewer.username || "" }
+      }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="data-list">
+        <div class="data-list__item">
+          <b>{{ "general.id" | translate }}</b>
+          <span>{{ review.id || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "algorithm-review.card-per-review.reviewer" | translate }}</b>
+          <span>{{ review.reviewer.username }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "algorithm-review.card-per-review.reviewer-server" | translate }}</b>
+          <span>{{ review.reviewer.server.url }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "algorithm-in-review.status" | translate }}</b>
+          <span>{{ review.status || "-" }}</span>
+        </div>
+        <div class="data-list__item data-list__item--big">
+          <b>{{ "algorithm.code-url" | translate }}</b>
+          <div *ngIf="algorithm && algorithm.code_url">
+            <a [href]="algorithm.code_url">{{ algorithm.code_url }}</a>
+          </div>
+          <div *ngIf="!algorithm || !algorithm.code_url">
+            <span>-</span>
+          </div>
+        </div>
+        <div class="data-list__item data-list__item--big">
+          <b>{{ "algorithm.documentation-url" | translate }}</b>
+          <div *ngIf="algorithm && algorithm.documentation_url">
+            <a [href]="algorithm.documentation_url">{{ algorithm.documentation_url }}</a>
+          </div>
+          <div *ngIf="!algorithm || !algorithm.documentation_url">
+            <span>-</span>
+          </div>
+        </div>
+        <div *ngIf="isReviewFinished(review)" class="data-list__item data-list__item--full">
+          <b>{{ "algorithm-review.card-per-review.comment" | translate }}</b>
+          <span>{{ review.comment || "-" }}</span>
+        </div>
+      </div>
+      <div class="button-group-bottom button-container">
+        <button mat-flat-button *ngIf="isAllowedToApprove(review)" color="primary" [routerLink]="[routes.algorithmReviewSubmit, review.id]">
+          <span>{{ "review.submit" | translate }}</span>
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+        <button mat-flat-button *ngIf="canDelete" color="warn" (click)="handleDelete(review)">
+          <mat-icon>delete</mat-icon>
+          <span>{{ "general.delete" | translate }}</span>
+        </button>
+        <button mat-flat-button color="primary" [routerLink]="[routes.algorithmManage, algorithm?.id]">
+          <span>{{ "algorithm-review.button-details" | translate }}</span>
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  <mat-card *ngIf="canCreate">
+    <mat-card-header>
+      <mat-card-title>{{ "algorithm-assign-review.title" | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <button mat-flat-button color="primary" [routerLink]="[routes.algorithmReviewAssign, algoID]">
+        <mat-icon>add</mat-icon>
+        <span>{{ "algorithm-review.add-new-review" | translate }}</span>
+      </button>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
+<ng-template #loading>
+  <mat-spinner diameter="48"></mat-spinner>
+</ng-template>

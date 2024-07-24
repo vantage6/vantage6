@@ -16,6 +16,14 @@ import { getLazyProperties } from '../helpers/api.helper';
 export class StoreUserService {
   constructor(private apiService: ApiService) {}
 
+  async getUsers(store_url: string, parameters?: GetStoreUserParameters): Promise<StoreUser[]> {
+    const result = await this.apiService.getForAlgorithmApi<Pagination<StoreUser>>(store_url, `/api/user`, {
+      per_page: 9999,
+      ...parameters
+    });
+    return result.data;
+  }
+
   async getPaginatedUsers(store_url: string, currentPage: number, parameters?: GetStoreUserParameters): Promise<Pagination<StoreUser>> {
     const result = await this.apiService.getForAlgorithmApiWithPagination<StoreUser>(store_url, `/api/user`, currentPage, {
       ...parameters

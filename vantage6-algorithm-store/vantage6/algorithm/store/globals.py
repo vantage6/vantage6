@@ -24,4 +24,5 @@ RESOURCES = [
     "rule",
     "user",
     "policy",
+    "review",
 ]

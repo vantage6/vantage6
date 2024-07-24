@@ -55,6 +55,12 @@ import { StoreUserCreateComponent } from './pages/store/user/create/store-user-c
 import { StoreUserEditComponent } from './pages/store/user/edit/store-user-edit.component';
 import { StoreRoleListComponent } from './pages/store/role/list/store-role-list.component';
 import { StoreRoleReadComponent } from './pages/store/role/read/store-role-read.component';
+import { AlgorithmInReviewListComponent } from './pages/store/algorithms-in-review/algorithm-in-review-list/algorithm-in-review-list.component';
+import { AlgorithmAssignReviewComponent } from './pages/store/algorithms-in-review/algorithm-assign-review/algorithm-assign-review.component';
+import { ReviewReadComponent } from './pages/store/algorithms-in-review/review-read/review-read.component';
+import { ReviewSubmitComponent } from './pages/store/algorithms-in-review/review-submit/review-submit.component';
+import { MyPendingAlgorithmsComponent } from './pages/store/algorithms-in-review/my-pending-algorithms/my-pending-algorithms.component';
+import { OldAlgorithmListComponent } from './pages/store/algorithm/old-list/old-algorithm-list.component';
 
 const routes: Routes = [
   {
@@ -395,6 +401,14 @@ const routes: Routes = [
         }
       },
       {
+        path: routerConfig.algorithmsOld,
+        component: OldAlgorithmListComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['algorithm-list.title']]
+        }
+      },
+      {
         path: routerConfig.algorithmCreate,
         component: AlgorithmCreateComponent,
         canActivate: [authenticationGuard(), chosenStoreGuard()],
@@ -464,6 +478,46 @@ const routes: Routes = [
         canActivate: [authenticationGuard(), chosenStoreGuard()],
         data: {
           crumbs: [['role-list.title', routePaths.storeRoles], ['role-read.title']]
+        }
+      },
+      {
+        path: routerConfig.algorithmReviews,
+        component: AlgorithmInReviewListComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['algorithm-in-review.title']]
+        }
+      },
+      {
+        path: routerConfig.algorithmReviewAssign,
+        component: AlgorithmAssignReviewComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['algorithm-in-review.title', routePaths.algorithmReviews], ['algorithm-assign-review.title']]
+        }
+      },
+      {
+        path: routerConfig.algorithmReview,
+        component: ReviewReadComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['algorithm-in-review.title'], routePaths.algorithmReviews, ['algorithm-review.title']]
+        }
+      },
+      {
+        path: routerConfig.algorithmReviewSubmit,
+        component: ReviewSubmitComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['algorithm-in-review.title'], routePaths.algorithmReviews, ['algorithm-review.title']]
+        }
+      },
+      {
+        path: routerConfig.myPendingAlgorithms,
+        component: MyPendingAlgorithmsComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['algorithm-in-review.title']]
         }
       }
     ]

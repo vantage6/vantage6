@@ -11,3 +11,10 @@ export const compareObjIDs = (obj1: any, obj2: any): boolean => {
   // Compare that with the ID of the objects are the same
   return obj1 && obj2 && obj1.id && obj2.id && obj1.id === obj2.id;
 };
+
+export const capitalize = (s: string): string => s && s[0].toUpperCase() + s.slice(1);
+
+export const printDate = (date: string | undefined): string => {
+  // note appending the 'Z' which indicates that the string is in UTC time
+  return date ? new Date(date + 'Z').toLocaleString() : '-';
+};

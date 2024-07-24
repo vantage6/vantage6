@@ -29,6 +29,7 @@ import { FileService } from 'src/app/services/file.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
 import { NodeStatus } from 'src/app/models/api/node.model';
+import { printDate } from 'src/app/helpers/general.helper';
 
 @Component({
   selector: 'app-task-read',
@@ -39,6 +40,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   @Input() id = '';
   functionType = FunctionType;
+  printDate = printDate;
 
   destroy$ = new Subject();
   waitTaskComplete$ = new Subject();
@@ -55,6 +57,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   canDelete = false;
   canCreate = false;
   canKill = false;
+  algorithmNotFoundInStore = false;
 
   private nodeStatusUpdateSubscription?: Subscription;
   private taskStatusUpdateSubscription?: Subscription;
@@ -118,9 +121,15 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       this.task = await this.getMainTask();
       this.childTasks = await this.getChildTasks();
     }
-    this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image);
-    this.function = this.algorithm?.functions.find((_) => _.name === this.task?.input?.method) || null;
-    this.selectedVisualization = this.function?.ui_visualizations?.[0] || null;
+    try {
+      this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image);
+      this.function = this.algorithm?.functions.find((_) => _.name === this.task?.input?.method) || null;
+      this.selectedVisualization = this.function?.ui_visualizations?.[0] || null;
+    } catch (error) {
+      // error message is already displayed - we only catch failure to get the algorithm
+      // here.
+      this.algorithmNotFoundInStore = true;
+    }
     this.isLoading = false;
   }
 

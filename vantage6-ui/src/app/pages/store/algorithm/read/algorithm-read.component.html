@@ -8,22 +8,52 @@
         <mat-icon>edit</mat-icon>
         <span>{{ "general.edit" | translate }}</span>
       </button>
+      <button mat-menu-item *ngIf="canDelete" (click)="handleInvalidate()">
+        <mat-icon>block</mat-icon>
+        <span>{{ "algorithm-read.invalidate" | translate }}</span>
+      </button>
       <button mat-menu-item *ngIf="canDelete" (click)="handleDelete()">
         <mat-icon>delete</mat-icon>
         <span>{{ "general.delete" | translate }}</span>
       </button>
     </mat-menu>
   </app-page-header>
+  <div *ngIf="algorithm?.status === algorithmStatus.AwaitingReviewerAssignment">
+    <app-alert-with-button
+      *ngIf="canAssignReviewers"
+      label="{{ 'algorithm-read.alert.assign-review.content' | translate }}"
+      buttonLink="{{ getButtonLink(routes.algorithmReviewAssign, algorithm.id) }}"
+      buttonText="{{ 'algorithm-read.alert.assign-review.assign' | translate }}"
+      [isSuccessAlert]="false"
+    ></app-alert-with-button>
+    <app-alert-with-button
+      *ngIf="!canAssignReviewers"
+      label="{{ 'algorithm-read.alert.assign-review.content' | translate }}"
+    ></app-alert-with-button>
+  </div>
+  <div *ngIf="algorithm?.status === algorithmStatus.UnderReview">
+    <app-alert-with-button
+      *ngIf="canViewReviews"
+      label="{{ 'algorithm-read.alert.under-review.content' | translate }}"
+      buttonLink="{{ getButtonLink(routes.algorithmReview, algorithm.id) }}"
+      buttonText="{{ 'algorithm-read.alert.under-review.view' | translate }}"
+      [isSuccessAlert]="false"
+    ></app-alert-with-button>
+    <app-alert-with-button
+      *ngIf="!canViewReviews"
+      label="{{ 'algorithm-read.alert.under-review.content' | translate }}"
+    ></app-alert-with-button>
+  </div>
+  <app-alert *ngIf="showInvalidatedAlert()" label="{{ 'algorithm-read.alert.invalidated' | translate: { status: algorithm.status } }}">
+  </app-alert>
   <app-display-algorithm [algorithm]="algorithm"></app-display-algorithm>
   <mat-card>
     <mat-card-header>
-      <mat-card-title>{{ "algorithm-read.card-download-json.title" | translate }}</mat-card-title>
+      <mat-card-title>{{ "algorithm-read.card-reviews.title" | translate }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <p>{{ "algorithm-read.card-download-json.description" | translate }}</p>
-      <button mat-raised-button color="primary" (click)="downloadAlgorithmJson()">
-        <mat-icon>file_download</mat-icon>
-        <span>{{ "algorithm-read.card-download-json.download-button" | translate }}</span>
+      <button mat-flat-button color="primary" [routerLink]="[routes.algorithmReview, algorithm.id]">
+        {{ "algorithm-read.card-reviews.button" | translate }}
       </button>
     </mat-card-content>
   </mat-card>

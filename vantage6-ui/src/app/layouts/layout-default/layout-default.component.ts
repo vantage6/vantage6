@@ -203,11 +203,32 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
       if (this.storePermissionService.canViewAlgorithms) {
         storeSubmenus.push({
           route: routePaths.algorithmManage,
-          label: this.translateService.instant('resources.algorithms'),
+          label: this.translateService.instant('links.algorithms-approved'),
           icon: 'memory',
           linkType: NavigationLinkType.Store
         });
       }
+      // algorithms in review - note that explicit permission is required to view this
+      // page, whereas the page with approved algorithms may be open to the public,
+      // depending on the policies
+      if (this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.VIEW)) {
+        storeSubmenus.push({
+          route: routePaths.myPendingAlgorithms,
+          label: this.translateService.instant('links.pending-algorithms'),
+          icon: 'hourglass_top',
+          linkType: NavigationLinkType.Store
+        });
+      }
+      // same goes for list of old algorithms
+      if (this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.VIEW)) {
+        storeSubmenus.push({
+          route: routePaths.algorithmsOld,
+          label: this.translateService.instant('links.old-algorithms'),
+          icon: 'history',
+          linkType: NavigationLinkType.Store
+        });
+      }
+
       // store users
       if (this.storePermissionService.isAllowed(StoreResourceType.USER, OperationType.VIEW)) {
         storeSubmenus.push({

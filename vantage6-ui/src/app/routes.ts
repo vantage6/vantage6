@@ -33,6 +33,7 @@ export const routePaths = {
   stores: '/store/choose',
   store: '/store/store',
   algorithmsManage: '/store/algorithms',
+  algorithmsOld: '/store/old/algorithms',
   algorithmCreate: '/store/algorithms/create',
   algorithmEdit: '/store/algorithms/edit',
   algorithmManage: '/store/algorithms',
@@ -51,7 +52,12 @@ export const routePaths = {
   storeUserCreate: '/store/users/create',
   storeUserEdit: '/store/users/edit',
   storeRoles: '/store/roles',
-  storeRole: '/store/roles'
+  storeRole: '/store/roles',
+  algorithmReviews: '/store/review',
+  algorithmReviewAssign: '/store/review/assign',
+  algorithmReview: '/store/review',
+  algorithmReviewSubmit: '/store/review/submit',
+  myPendingAlgorithms: '/store/pending/algorithms'
 };
 
 export const routerConfig = {
@@ -93,6 +99,7 @@ export const routerConfig = {
   stores: 'choose',
   store: 'store',
   algorithmsManage: 'algorithms',
+  algorithmsOld: 'old/algorithms',
   algorithmCreate: 'algorithms/create',
   algorithmEdit: 'algorithms/edit/:id',
   algorithmManage: 'algorithms/:id',
@@ -110,5 +117,10 @@ export const routerConfig = {
   storeUserCreate: 'users/create',
   storeUserEdit: 'users/edit/:id',
   storeRoles: 'roles',
-  storeRole: 'roles/:id'
+  storeRole: 'roles/:id',
+  algorithmReviews: 'review',
+  algorithmReviewAssign: 'review/assign/:algoID',
+  algorithmReview: 'review/:algoID',
+  algorithmReviewSubmit: 'review/submit/:id',
+  myPendingAlgorithms: 'pending/algorithms'
 };

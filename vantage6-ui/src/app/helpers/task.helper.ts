@@ -40,6 +40,7 @@ export const getStatusType = (status: TaskStatus): TaskStatusGroup => {
     case TaskStatus.StartFailed:
     case TaskStatus.NoDockerImage:
     case TaskStatus.Crashed:
+    case TaskStatus.NotAllowed:
     case TaskStatus.Killed:
       return TaskStatusGroup.Error;
     default:

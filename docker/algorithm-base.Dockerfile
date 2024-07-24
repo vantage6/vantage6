@@ -9,5 +9,6 @@ COPY ./README.md /README.md
 COPY ./vantage6-common /vantage6-common
 COPY ./vantage6-algorithm-tools /vantage6-algorithm-tools
 
+RUN pip install --upgrade pip
 RUN pip install /vantage6-common
 RUN pip install /vantage6-algorithm-tools
