@@ -68,6 +68,9 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
             "algorithm_store",
             lambda obj: self.create_hateoas("algorithm_store", obj),
         )
+        # setattr(
+        #     self, "node_session", lambda obj: self.create_hateoas("node_session", obj)
+        # )
 
         # call super class. Do this after setting the attributes above, because
         # the super class initializer will call the attributes.
@@ -79,6 +82,7 @@ class TaskSchema(HATEOASModelSchema):
     class Meta:
         model = db.Task
 
+    complete = fields.Boolean()
     status = fields.String()
     finished_at = fields.DateTime()
     collaboration = fields.Method("collaboration")
@@ -452,11 +456,11 @@ class SessionSchema(HATEOASModelSchema):
     tasks = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="task", link_from="session_id")
     )
-    node_sessions = fields.Function(
-        lambda obj: create_one_to_many_link(
-            obj, link_to="node_session", link_from="session_id"
-        )
-    )
+    # node_sessions = fields.Function(
+    #     lambda obj: create_one_to_many_link(
+    #         obj, link_to="node_session", link_from="session_id"
+    #     )
+    # )
     dataframes = fields.Function(
         lambda obj: create_one_to_many_link(
             obj, link_to="session_dataframe", link_from="session_id"
@@ -488,3 +492,4 @@ class DataframeSchema(HATEOASModelSchema):
     )
     last_session_task = fields.Nested("TaskSchema", many=False)
     columns = fields.Nested("ColumnSchema", many=True)
+    ready = fields.Function(lambda obj: obj.ready())

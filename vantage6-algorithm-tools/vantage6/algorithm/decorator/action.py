@@ -65,23 +65,24 @@ def _convert_to_parquet(data: Any) -> pa.Table:
         If the data extraction function returns an unsupported data frame type.
     """
     info("Converting algorithm output to a Parquet Table.")
-    match type(result):
-        case pd.DataFrame:
+    print(data)
+    match data:
 
+        case pd.DataFrame():
             try:
-                result = pa.Table.from_pandas(result)
+                data = pa.Table.from_pandas(data)
             except Exception as e:
                 raise SessionError(
                     f"Could not convert DataFrame to Parquet Table"
                 ) from e
-            return result
+            return data
 
         case pa.Table:
-            return result
+            return data
         case _:
             raise DataTypeError(
                 "Data extraction function did not return a supported data "
-                f"frame type. Got {type(result)} instead. Supported types are: "
+                f"frame type. Got {type(data)} instead. Supported types are: "
                 "pandas.DataFrame, pyarrow.Table."
             )
 

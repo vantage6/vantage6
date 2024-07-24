@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Column, Integer, ForeignKey, String
 from sqlalchemy.orm import relationship
 
-from vantage6.common.enums import TaskStatus
+from vantage6.common.enums import RunStatus
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
 if TYPE_CHECKING:
@@ -31,7 +31,7 @@ class Column(Base):
 
     # fields
     name = Column(String)
-    type_ = Column("type", String)
+    dtype = Column(String)
     node_id = Column(Integer, ForeignKey("node.id"))
     dataframe_id = Column(Integer, ForeignKey("dataframe.id"))
 

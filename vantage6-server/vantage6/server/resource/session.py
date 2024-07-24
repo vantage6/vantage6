@@ -237,11 +237,6 @@ class SessionBase(ServicesResources):
         for dataframe in session.dataframes:
             dataframe.delete()
 
-        for node_session in session.node_sessions:
-            for config in node_session.config:
-                config.delete()
-            node_session.delete()
-
         for task in session.tasks:
             for result in task.results:
                 result.delete()
@@ -505,11 +500,11 @@ class Sessions(SessionBase):
 
         # Each node gets assigned a NodeSession to keep track of each individual node's
         # state.
-        for node in collaboration.nodes:
-            db.NodeSession(
-                session=session,
-                node=node,
-            ).save()
+        # for node in collaboration.nodes:
+        #     db.NodeSession(
+        #         session=session,
+        #         node=node,
+        #     ).save()
 
         log.info(f"Session {session.id} created")
 

@@ -37,6 +37,7 @@ setup(
         "jinja2==3.1.4",
         "python-socketio==5.7.2",
         "requests==2.32.3",
+        "parquet-tools==0.2.16",
         f'vantage6 == {version_ns["__version__"]}',
         f'vantage6-client == {version_ns["__version__"]}',
         f'vantage6-algorithm-tools == {version_ns["__version__"]}',

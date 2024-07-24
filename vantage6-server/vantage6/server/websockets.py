@@ -7,7 +7,7 @@ from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from flask_socketio import Namespace, emit, join_room, leave_room
 
 from vantage6.common import logger_name
-from vantage6.common.enums import TaskStatus
+from vantage6.common.enums import RunStatus
 from vantage6.server import db
 from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.model.rule import Operation, Scope
@@ -258,7 +258,7 @@ class DefaultSocketNamespace(Namespace):
             f"A container for job_id={job_id} and run_id={run_id} "
             f"in collaboration_id={collaboration_id} on node_id={node_id}"
         )
-        if TaskStatus.has_task_failed(status):
+        if RunStatus.has_task_failed(status):
             self.log.critical(f"{msg} exited with status={status}.")
         else:
             self.log.info(f"{msg} has a new status={status}.")
@@ -268,8 +268,8 @@ class DefaultSocketNamespace(Namespace):
         depentand_tasks = run.task.required_by
         if (
             depentand_tasks
-            and status == TaskStatus.COMPLETED
-            and not TaskStatus.has_task_failed(status)
+            and status != RunStatus.COMPLETED
+            and not RunStatus.has_task_failed(status)
         ):
             for task in depentand_tasks:
                 emit(

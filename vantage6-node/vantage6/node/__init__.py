@@ -48,7 +48,7 @@ from vantage6.common.docker.addons import (
 from vantage6.common.globals import VPN_CONFIG_FILE, PING_INTERVAL_SECONDS, NodePolicy
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.common.enums import TaskStatus, LocalAction
+from vantage6.common.enums import RunStatus, LocalAction
 from vantage6.common.log import get_file_logger
 from vantage6.cli.context.node import NodeContext
 from vantage6.node.context import DockerNodeContext
@@ -343,11 +343,11 @@ class Node:
             self.client.run.patch(
                 id_=task_id,
                 data={
-                    "status": TaskStatus.FAILED,
+                    "status": RunStatus.FAILED,
                     "finished_at": datetime.datetime.now().isoformat(),
                 },
             )
-            self.__emit_algorithm_status_change(task, TaskStatus.FAILED)
+            self.__emit_algorithm_status_change(task, task_incl_run, RunStatus.FAILED)
 
         # Only compute containers need a token as they are the only ones that should
         # create subtasks
@@ -381,7 +381,7 @@ class Node:
 
         # save task status to the server
         update = {"status": task_status}
-        if task_status == TaskStatus.NOT_ALLOWED:
+        if task_status == RunStatus.NOT_ALLOWED:
             # set finished_at to now, so that the task is not picked up again
             # (as the task is not started at all, unlike other crashes, it will
             # never finish and hence not be set to finished)
@@ -391,7 +391,7 @@ class Node:
         # send socket event to alert everyone of task status change. In case the
         # namespace is not connected, the socket notification will not be sent to other
         # nodes, but the task will still be processed
-        self.__emit_algorithm_status_change(task, task_status)
+        self.__emit_algorithm_status_change(task, task_incl_run, task_status)
 
         if vpn_ports:
             # Save port of VPN client container at which it redirects traffic
@@ -402,15 +402,17 @@ class Node:
                 port["run_id"] = task_id
                 self.client.request("port", method="POST", json=port)
 
-    def __emit_algorithm_status_change(self, task: dict, status: TaskStatus) -> None:
+    def __emit_algorithm_status_change(
+        self, task: dict, run: dict, status: RunStatus
+    ) -> None:
         """
         Emit a socket event to alert everyone of task status change.
 
         Parameters
         ----------
-        task_id : int
-            Task identifier
-        status : TaskStatus
+        task_id : dict
+            Task metadata
+        status : RunStatus
             Task status
         """
         # ensure that the /tasks namespace is connected. This may take a while
@@ -428,7 +430,7 @@ class Node:
             data={
                 "node_id": self.client.whoami.id_,
                 "status": status,
-                "run_id": task["id"],
+                "run_id": run["id"],
                 "task_id": task["id"],
                 "collaboration_id": self.client.collaboration_id,
                 "organization_id": self.client.whoami.organization_id,
@@ -1074,7 +1076,7 @@ class Node:
         # update status of killed tasks
         for killed_algo in killed_algos:
             self.client.run.patch(
-                id_=killed_algo.run_id, data={"status": TaskStatus.KILLED}
+                id_=killed_algo.run_id, data={"status": RunStatus.KILLED}
             )
         return killed_algos
 

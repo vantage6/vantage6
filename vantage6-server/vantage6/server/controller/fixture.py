@@ -5,7 +5,7 @@ import vantage6.server.model as db
 from vantage6.server.model.base import Database
 from vantage6.server import RESOURCES, RESOURCES_PATH, DefaultRole
 from vantage6.server.permission import PermissionManager
-from vantage6.common.enums import TaskStatus
+from vantage6.common.enums import RunStatus
 from vantage6.common.serialization import serialize
 from vantage6.common import bytes_to_base64s
 
@@ -158,7 +158,7 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
                     task=task,
                     input=bytes_to_base64s(serialize({"a": "b"})),
                     organization=organization,
-                    status=TaskStatus.PENDING,
+                    status=RunStatus.PENDING,
                 )
                 run.save()
 

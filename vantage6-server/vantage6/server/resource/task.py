@@ -10,7 +10,7 @@ from sqlalchemy import desc
 from sqlalchemy.sql import visitors
 
 from vantage6.common.globals import STRING_ENCODING, NodePolicy
-from vantage6.common.enums import TaskStatus
+from vantage6.common.enums import RunStatus, LocalAction
 from vantage6.common.encryption import DummyCryptor
 from vantage6.server import db
 from vantage6.server.algo_store_communication import get_server_url, request_algo_store
@@ -614,7 +614,7 @@ class Tasks(TaskBase):
 
         # A task always belongs to a session
         session_id = data["session_id"]
-        session = db.Session.get(session_id)
+        session: db.Session = db.Session.get(session_id)
         if not session:
             return {"msg": f"Session id={session_id} not found!"}, HTTPStatus.NOT_FOUND
 
@@ -781,7 +781,8 @@ class Tasks(TaskBase):
             store = parent.algorithm_store
             image_with_hash = parent.image
 
-        # A task can be dependent on another task
+        # A task can be dependent on another task. This is used for building sequences
+        # of tasks in order to create session dataframes.
         dependant_task_id = data.get("depends_on_id")
         if dependant_task_id:
             dependant_task = db.Task.get(dependant_task_id)
@@ -848,11 +849,29 @@ class Tasks(TaskBase):
         db_records = []
         for database in databases:
 
-            for key in ["label", "type"]:
-                if key not in database:
+            # TODO these checks porbably should be done in the schema input validation
+            missing_keys = set(["label", "type"]) - database.keys()
+            if missing_keys:
+                missing_keys_str = ", ".join(f"'{key}'" for key in missing_keys)
+                return {
+                    "msg": f"Database missing required keys! The dictionary {database} "
+                    f"should contain {missing_keys_str} key(s)"
+                }, HTTPStatus.BAD_REQUEST
+
+            database_type = database["type"].lower()
+            if database_type not in ["handle", "source"]:
+                return {
+                    "msg": f"Database type should be either 'input' or 'output', not '{database_type}'"
+                }, HTTPStatus.BAD_REQUEST
+
+            # In case we are dealing with a handle, we can verify that this handle
+            # exists in the session.
+            if database_type == "handle":
+                dataframe_handle_in_session = [df.handle for df in session.dataframes]
+                if database["label"] not in dataframe_handle_in_session:
                     return {
-                        "msg": f"Database {key} missing! The dictionary "
-                        f"{database} should contain a '{key}' key"
+                        "msg": f"Dataframe with handle '{database['label']}' not found "
+                        " in session!"
                     }, HTTPStatus.BAD_REQUEST
 
             # TODO task.id is only set here because in between creating the
@@ -903,7 +922,7 @@ class Tasks(TaskBase):
                 task=task,
                 organization=organization,
                 input=input_,
-                status=TaskStatus.PENDING,
+                status=RunStatus.PENDING,
                 action=action,
             )
             run.save()
@@ -964,7 +983,7 @@ class Tasks(TaskBase):
                 return False
 
         # check that parent task is not completed yet
-        if TaskStatus.has_task_finished(db.Task.get(container["task_id"]).status):
+        if RunStatus.has_task_finished(db.Task.get(container["task_id"]).status):
             log.warning(
                 f"Container from node={container['node_id']} "
                 f"attempts to start sub-task for a completed "
@@ -1253,7 +1272,7 @@ class Task(TaskBase):
             }, HTTPStatus.UNAUTHORIZED
 
         # kill the task if it is still running
-        if not TaskStatus.has_task_finished(task.status):
+        if not RunStatus.has_task_finished(task.status):
             kill_task(task, self.socketio)
 
         # retrieve runs that belong to this task

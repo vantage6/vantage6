@@ -55,8 +55,6 @@ class Session(Base):
         Study that this session is part of
     tasks : list[:class:`~vantage6.server.model.task.Task`]
         List of tasks that are part of this study
-    node_sessions : list[:class:`~vantage6.server.model.node_session.NodeSession`]
-        List of nodes and their state that are part of this session
 
     Raises
     ------
@@ -80,7 +78,7 @@ class Session(Base):
     collaboration = relationship("Collaboration", back_populates="sessions")
     study = relationship("Study", back_populates="sessions")
     tasks = relationship("Task", back_populates="session")
-    node_sessions = relationship("NodeSession", back_populates="session")
+    # node_sessions = relationship("NodeSession", back_populates="session")
     dataframes = relationship("Dataframe", back_populates="session")
 
     @property
@@ -95,9 +93,7 @@ class Session(Base):
         """
         # TODO FM 15-07-2024: we should check all the states of the tasks in the session
         # (not compute) tasks
-        return all(
-            n_session.state == SessionStatus.READY for n_session in self.node_sessions
-        )
+        return True
 
     @staticmethod
     def name_exists(name: str, collaboration: "Collaboration"):

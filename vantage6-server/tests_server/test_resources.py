@@ -6,7 +6,7 @@ from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 
 from vantage6.common import logger_name
-from vantage6.common.enums import TaskStatus
+from vantage6.common.enums import RunStatus
 from vantage6.common.serialization import serialize
 from vantage6.common import bytes_to_base64s
 from vantage6.backend.common import session
@@ -2897,7 +2897,7 @@ class TestResources(TestResourceBase):
         col.save()
         task = Task(collaboration=col, image="some-image", init_org=org)
         task.save()
-        res = Run(task=task, status=TaskStatus.PENDING)
+        res = Run(task=task, status=RunStatus.PENDING)
         res.save()
 
         headers = self.create_node_and_login(organization=org)
@@ -3005,7 +3005,7 @@ class TestResources(TestResourceBase):
         col = Collaboration(organizations=[org], encrypted=False)
         parent_task = Task(collaboration=col, image="some-image")
         parent_task.save()
-        parent_res = Run(organization=org, task=parent_task, status=TaskStatus.PENDING)
+        parent_res = Run(organization=org, task=parent_task, status=RunStatus.PENDING)
         parent_res.save()
 
         # test wrong image name
@@ -3054,7 +3054,7 @@ class TestResources(TestResourceBase):
         self.assertEqual(results.status_code, HTTPStatus.CREATED)
 
         # test already completed task
-        parent_res.status = TaskStatus.COMPLETED
+        parent_res.status = RunStatus.COMPLETED
         parent_res.save()
         results = self.app.post(
             "/api/task",
@@ -3068,7 +3068,7 @@ class TestResources(TestResourceBase):
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test a failed task
-        parent_res.status = TaskStatus.FAILED
+        parent_res.status = RunStatus.FAILED
         parent_res.save()
         results = self.app.post(
             "/api/task",
@@ -3266,7 +3266,7 @@ class TestResources(TestResourceBase):
         col = Collaboration(organizations=[org])
         task = Task(collaboration=col, image="some-image", init_org=org)
         task.save()
-        res = Run(task=task, organization=org, status=TaskStatus.PENDING)
+        res = Run(task=task, organization=org, status=RunStatus.PENDING)
         res.save()
 
         headers = self.login_container(collaboration=col, organization=org, task=task)

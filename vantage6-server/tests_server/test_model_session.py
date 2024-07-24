@@ -3,7 +3,7 @@ import datetime
 from sqlalchemy.exc import IntegrityError
 
 from vantage6.common.enums import SessionStatus
-from vantage6.server.model import Session, NodeSession
+from vantage6.server.model import Session
 from vantage6.server.model.rule import Scope
 
 from .test_model_base import TestModelBase
@@ -44,13 +44,13 @@ class TestModelSession(TestModelBase):
         self.addCleanup(session.delete)
 
         # add some dummy node sessions
-        n_ses = NodeSession(node_id=1, session=session, state=SessionStatus.PENDING)
-        n_ses.save()
-        self.addCleanup(n_ses.delete)
+        # n_ses = NodeSession(node_id=1, session=session, state=SessionStatus.PENDING)
+        # n_ses.save()
+        # self.addCleanup(n_ses.delete)
 
-        self.assertFalse(session.is_ready)
+        # self.assertFalse(session.is_ready)
 
-        n_ses.state = SessionStatus.READY
-        n_ses.save()
+        # n_ses.state = SessionStatus.READY
+        # n_ses.save()
 
-        self.assertTrue(session.is_ready)
+        # self.assertTrue(session.is_ready)

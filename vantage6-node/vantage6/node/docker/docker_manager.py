@@ -27,7 +27,7 @@ from vantage6.common.docker.addons import (
     running_in_docker,
 )
 from vantage6.common.globals import APPNAME, BASIC_PROCESSING_IMAGE, NodePolicy
-from vantage6.common.enums import TaskStatus, LocalAction
+from vantage6.common.enums import RunStatus, LocalAction
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.algorithm.tools.wrappers import get_column_names
 from vantage6.cli.context.node import NodeContext
@@ -57,7 +57,7 @@ class Result(NamedTuple):
         ID of the current algorithm run
     logs: str
         Logs attached to current algorithm run
-    data: str
+    data: bytes
         Output data of the algorithm
     status_code: int
         Status code of the algorithm run
@@ -66,7 +66,7 @@ class Result(NamedTuple):
     run_id: int
     task_id: int
     logs: str
-    data: str
+    data: bytes
     status: str
     parent_id: int | None
 
@@ -570,7 +570,7 @@ class DockerManager(DockerBaseManager):
         token: str | None,
         databases_to_use: list[str],
         action: LocalAction,
-    ) -> tuple[TaskStatus, list[dict] | None]:
+    ) -> tuple[RunStatus, list[dict] | None]:
         """
         Checks if docker task is running. If not, creates DockerTaskManager to
         run the task
@@ -594,7 +594,7 @@ class DockerManager(DockerBaseManager):
 
         Returns
         -------
-        TaskStatus, list[dict] | None
+        RunStatus, list[dict] | None
             Returns a tuple with the status of the task and a description of
             each port on the VPN client that forwards traffic to the algorithm
             container (``None`` if VPN is not set up).
@@ -603,13 +603,13 @@ class DockerManager(DockerBaseManager):
         if not self.is_docker_image_allowed(image, task_info):
             msg = f"Docker image {image} is not allowed on this Node!"
             self.log.critical(msg)
-            return TaskStatus.NOT_ALLOWED, None
+            return RunStatus.NOT_ALLOWED, None
 
         # Check that this task is not already running
         if self.is_running(run_id):
             self.log.info("Task is already being executed, discarding task")
             self.log.debug("run_id=%s is discarded", run_id)
-            return TaskStatus.ACTIVE, None
+            return RunStatus.ACTIVE, None
 
         # we pass self.docker instance, in which we may have logged in to registries
         task = DockerTaskManager(
@@ -638,7 +638,7 @@ class DockerManager(DockerBaseManager):
         # again. If it fails permanently we add it to the failed tasks to be
         # handled by the speaking worker of the node
         attempts = 1
-        while not (task.status == TaskStatus.ACTIVE) and attempts < 3:
+        while not (task.status == RunStatus.ACTIVE) and attempts < 3:
             try:
                 vpn_ports = task.run(
                     docker_input=docker_input,
@@ -660,7 +660,7 @@ class DockerManager(DockerBaseManager):
             attempts += 1
 
         # keep track of the active container
-        if TaskStatus.has_task_failed(task.status):
+        if RunStatus.has_task_failed(task.status):
             self.failed_tasks.append(task)
             return task.status, None
         else:
@@ -871,6 +871,8 @@ class DockerManager(DockerBaseManager):
                 self.log.warn("Instructed to kill tasks but none were running")
         return killed_runs
 
+    # TODO FM 24-07-2024: I think we can remove this as this has been replaced by
+    # dataframes
     def get_column_names(self, label: str, type_: str) -> list[str]:
         """
         Get column names from a node database

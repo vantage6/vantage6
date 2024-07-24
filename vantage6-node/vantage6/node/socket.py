@@ -3,7 +3,7 @@ import logging
 from socketio import ClientNamespace
 
 from vantage6.common import logger_name
-from vantage6.common.enums import TaskStatus
+from vantage6.common.enums import RunStatus
 
 
 class NodeTaskNamespace(ClientNamespace):
@@ -89,10 +89,10 @@ class NodeTaskNamespace(ClientNamespace):
         """
         status = data.get("status")
         job_id = data.get("job_id")
-        if TaskStatus.has_task_failed(status):
+        if RunStatus.has_task_failed(status):
             # TODO handle run sequence at this node. Maybe terminate all
             #     containers with the same job_id?
-            if status == TaskStatus.NOT_ALLOWED:
+            if status == RunStatus.NOT_ALLOWED:
                 self.log.critical(
                     "A node within your collaboration part did not allow a "
                     "container of job_id=%s to start",
@@ -159,7 +159,7 @@ class NodeTaskNamespace(ClientNamespace):
                     "task_id": killed.task_id,
                     "collaboration_id": self.node_worker_ref.client.collaboration_id,
                     "node_id": self.node_worker_ref.client.whoami.id_,
-                    "status": TaskStatus.KILLED,
+                    "status": RunStatus.KILLED,
                     "organization_id": self.node_worker_ref.client.whoami.organization_id,
                     "parent_id": killed.parent_id,
                 },

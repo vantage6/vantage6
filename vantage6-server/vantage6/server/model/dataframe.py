@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Column, Integer, ForeignKey, String
 from sqlalchemy.orm import relationship
 
-from vantage6.common.enums import TaskStatus
+from vantage6.common.enums import RunStatus
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
 if TYPE_CHECKING:
@@ -30,8 +30,8 @@ class Dataframe(Base):
     session : :class:`~.model.Session.Session`
         Session that this configuration belongs to
     tasks : list of :class:`~.model.Task.Task`
-        Tasks that build the session data frame. In other words ``compute`` tasks that
-        are executed in the session are not included.
+        Tasks that build the session data frame. This implies that ``compute`` tasks
+        executed in the session are not included.
     columns : list of :class:`~.model.Column.Column`
         Columns that are part of this dataframe
     last_session_task : :class:`~.model.Task.Task`
@@ -53,45 +53,53 @@ class Dataframe(Base):
 
     def ready(self) -> bool:
         """
-        Check if the dataframe is ready to receive computation tasks. The dataframe is
-        considered to be ready if there are no session tasks running.
+        Check if the dataframe is ready to receive *compute* tasks. The dataframe is
+        considered to be ready if there are no session tasks running that are linked
+        to this dataframe.
 
         Returns
         -------
         dict
             State of the dataframe
         """
-        return self.last_session_task.status == TaskStatus.COMPLETED
-
-    def locked(self) -> bool:
-        """
-        Check if the dataframe can be modified. The dataframe can only be modified if
-        there are no session tasks running that can modify the dataframe data frame.
-
-        Returns
-        -------
-        bool
-            True if the dataframe is locked, False otherwise
-        """
-
-        db_session = DatabaseSessionManager.get_session()
-        # TODO FM 17-07-2024: we cannot do this here, I dont want to have this import
-        # here
-        from vantage6.server.model import Task
-
-        are_tasks_still_running = (
-            db_session.query(Task)
-            .filter(
-                Task.dataframe_id == self.id,
-                Task.status.in_(TaskStatus.alive_statuses()),
-            )
-            .limit(1)
-            .scalar()
-            is not None
+        # Since all session tasks are ran sequentially, we can check if the last task
+        # is completed to determine if the dataframe is ready.
+        return all(
+            [run.status == RunStatus.COMPLETED for run in self.last_session_task.runs]
         )
 
-        db_session.commit()
-        return are_tasks_still_running
+    # # def failed(self) -> bool:
+    # #     pass
+
+    # def locked(self) -> bool:
+    #     """
+    #     Check if the dataframe can be modified. The dataframe can only be modified if
+    #     there are no *compute* tasks running that potentially could use this dataframe.
+
+    #     Returns
+    #     -------
+    #     bool
+    #         True if the dataframe is locked, False otherwise
+    #     """
+
+    #     db_session = DatabaseSessionManager.get_session()
+    #     # TODO FM 17-07-2024: we cannot do this here, I dont want to have this import
+    #     # here
+    #     from vantage6.server.model import Task
+
+    #     are_tasks_still_running = (
+    #         db_session.query(Task)
+    #         .filter(
+    #             Task.dataframe_id == self.id,
+    #             Task.status.in_(RunStatus.alive_statuses()),
+    #         )
+    #         .limit(1)
+    #         .scalar()
+    #         is not None
+    #     )
+
+    #     db_session.commit()
+    #     return are_tasks_still_running
 
     @classmethod
     def select(cls, session: "Session", handle: str):

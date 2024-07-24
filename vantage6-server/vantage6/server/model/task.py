@@ -1,11 +1,22 @@
 import datetime
-import os
 
-from sqlalchemy import Column, String, ForeignKey, Integer, sql, DateTime
+import vantage6.server.model as models
+
+from sqlalchemy import (
+    Column,
+    String,
+    ForeignKey,
+    Integer,
+    sql,
+    DateTime,
+    select,
+    func,
+    case,
+)
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from vantage6.common.enums import TaskStatus
+from vantage6.common.enums import TaskStatus, RunStatus
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
@@ -45,6 +56,8 @@ class Task(Base):
         Id of the study that this task belongs to
     session_id : int
         Id of the session that this task belongs to
+    dataframe_id : int
+        Id of the dataframe that this task manipulates
     job_id : int
         Id of the job that this task belongs to
     parent_id : int
@@ -88,6 +101,9 @@ class Task(Base):
         Algorithm store that this task uses
     session : :class:`~.model.session.Session`
         Session that this task belongs to
+    dataframe : :class:`~.model.dataframe.Dataframe`
+        Dataframe that is manipulated by this task, only tasks that have build the
+        session dataframe will have this field filled in
     """
 
     # fields
@@ -164,23 +180,61 @@ class Task(Base):
         str
             Status of task
         """
-        # The following is necessary because if readthedocs executes this code to
-        # generate function docs, it will fail with a sqlalchemy error (because there
-        # are no runs?).
-        if os.environ.get("READTHEDOCS"):
-            return ""
-        # TODO what if there are no result ids? -> currently returns unknown
         run_statuses = [r.status for r in self.runs]
-        if any([TaskStatus.has_task_failed(status) for status in run_statuses]):
-            return TaskStatus.FAILED.value
-        elif TaskStatus.ACTIVE in run_statuses:
-            return TaskStatus.ACTIVE.value
-        elif TaskStatus.INITIALIZING in run_statuses:
-            return TaskStatus.INITIALIZING.value
-        elif TaskStatus.PENDING in run_statuses:
-            return TaskStatus.PENDING.value
-        else:
+        if all([RunStatus.has_task_finished(status) for status in run_statuses]):
             return TaskStatus.COMPLETED.value
+        elif any([RunStatus.has_task_failed(status) for status in run_statuses]):
+            return TaskStatus.FAILED.value
+        else:
+            return TaskStatus.AWAITING.value
+
+    @status.expression
+    def status(cls):
+        return (
+            select(
+                [
+                    case(
+                        [
+                            (
+                                func.sum(
+                                    case(
+                                        [
+                                            (
+                                                models.Run.status
+                                                == RunStatus.FAILED.value,
+                                                1,
+                                            )
+                                        ],
+                                        else_=0,
+                                    )
+                                )
+                                > 0,
+                                TaskStatus.FAILED.value,
+                            ),
+                            (
+                                func.sum(
+                                    case(
+                                        [
+                                            (
+                                                models.Run.status
+                                                == RunStatus.ACTIVE.value,
+                                                1,
+                                            )
+                                        ],
+                                        else_=0,
+                                    )
+                                )
+                                > 0,
+                                TaskStatus.ACTIVE.value,
+                            ),
+                        ],
+                        else_=TaskStatus.COMPLETED.value,
+                    )
+                ]
+            )
+            .where(models.Run.task_id == cls.id)
+            .label("status")
+        )
 
     @classmethod
     def next_job_id(cls) -> int:

@@ -8,7 +8,7 @@ from http import HTTPStatus
 from sqlalchemy import desc, or_, and_
 
 from vantage6.common import logger_name
-from vantage6.common.enums import TaskStatus
+from vantage6.common.enums import RunStatus
 from vantage6.server import db
 from vantage6.server.permission import (
     RuleCollection,
@@ -715,11 +715,18 @@ class Run(SingleRunBase):
 
         # In case there are dependent tasks and the current task has failed,
         # we should mark the dependent tasks as failed as well.
-        if TaskStatus.has_task_failed(run.status):
-            for task in run.task.required_by:
-                log.debug(f"Marking dependent task {task.id} runs as failed.")
-                for dependent_run in task.runs:
-                    dependent_run.status = TaskStatus.FAILED
+        if RunStatus.has_task_failed(run.status):
+            dependant_tasks = run.task.required_by
+            while dependant_tasks:
+                dependant_task = dependant_tasks.pop()
+                log.debug(f"Marking dependent task {dependant_task.id} runs as failed.")
+
+                # Also mark all decentant runs as failed
+                if dependant_task.required_by:
+                    dependant_tasks.extend(dependant_task.required_by)
+
+                for dependent_run in dependant_task.runs:
+                    dependent_run.status = RunStatus.FAILED
                     dependent_run.finished_at = run.finished_at
                     dependent_run.save()
 
