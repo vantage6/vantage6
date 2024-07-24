@@ -140,7 +140,9 @@ class TestReviewResources(TestResources):
 
         # register user allowed to create reviews
         developer = self.register_user(
-            server.id, username=USERNAME, user_rules=[Rule.get_by_("review", Operation.CREATE)]
+            server.id,
+            username=USERNAME,
+            user_rules=[Rule.get_by_("review", Operation.CREATE)],
         )
         # register users allowed to do reviews
         reviewer = self.register_user(
@@ -240,7 +242,9 @@ class TestReviewResources(TestResources):
 
         # register user allowed to delete reviews
         self.register_user(
-            server.id, username=USERNAME, user_rules=[Rule.get_by_("review", Operation.DELETE)]
+            server.id,
+            username=USERNAME,
+            user_rules=[Rule.get_by_("review", Operation.DELETE)],
         )
 
         # check that deleting a review with authentication succeeds
