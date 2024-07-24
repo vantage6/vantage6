@@ -11,7 +11,6 @@ from vantage6.cli.context.server import ServerContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.server.remove import cli_server_remove
-from vantage6.cli.algostore.remove import cli_algo_store_remove
 from vantage6.cli.utils import remove_file
 from vantage6.common.globals import InstanceType
 
