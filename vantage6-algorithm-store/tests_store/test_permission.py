@@ -1,18 +1,19 @@
 import unittest
-from flask_principal import Principal, Identity, identity_loaded
 
-from vantage6.algorithm.store.model.rule import Operation
-from vantage6.algorithm.store.permission import RuleCollection
-from vantage6.common.globals import InstanceType
-from vantage6.backend.common import test_context
-from vantage6.algorithm.store.model.base import Database, DatabaseSessionManager
-from vantage6.algorithm.store import AlgorithmStoreApp
-from vantage6.algorithm.store.globals import PACKAGE_FOLDER
-from vantage6.algorithm.store.model.policy import Policy
-from vantage6.algorithm.store.model.role import Role
-from vantage6.algorithm.store.model.rule import Rule
-from vantage6.algorithm.store.model.user import User
-from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
+# from flask_principal import Principal, Identity, identity_loaded
+
+# from vantage6.algorithm.store.model.rule import Operation
+# from vantage6.algorithm.store.permission import RuleCollection
+# from vantage6.common.globals import InstanceType
+# from vantage6.backend.common import test_context
+# from vantage6.algorithm.store.model.base import Database, DatabaseSessionManager
+# from vantage6.algorithm.store import AlgorithmStoreApp
+# from vantage6.algorithm.store.globals import PACKAGE_FOLDER
+# from vantage6.algorithm.store.model.policy import Policy
+# from vantage6.algorithm.store.model.role import Role
+# from vantage6.algorithm.store.model.rule import Rule
+# from vantage6.algorithm.store.model.user import User
+# from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 from .base.unittest_base import TestResources
 
 
@@ -20,6 +21,8 @@ from .base.unittest_base import TestResources
 # refactoring work that will put a similar class in vantage6.backend.common
 class TestPermission(TestResources):
     """Test the vantage6.algorithm.store.permission module"""
+
+    pass
 
     # @classmethod
     # def setUp(cls):

@@ -61,13 +61,13 @@ class TestResources(unittest.TestCase):
         self,
         server_id: int,
         username: str = "test_user",
-        user_roles: list[Role] = [],
-        user_rules: list[Rule] = [],
+        user_roles: list[Role] = None,
+        user_rules: list[Rule] = None,
     ) -> User:
         user = User(username=username, v6_server_id=server_id)
-        if len(user_roles) > 0:
+        if user_roles and len(user_roles) > 0:
             user.roles = user_roles
-        if len(user_rules) > 0:
+        if user_rules and len(user_rules) > 0:
             user.rules = user_rules
         user.save()
         return user
@@ -104,7 +104,9 @@ class TestResources(unittest.TestCase):
 
 
 class MockResponse:
-    def __init__(self, json_data={}, status_code=200):
+    def __init__(self, json_data=None, status_code=200):
+        if json_data is None:
+            json_data = {}
         self.json_data = json_data
         self.status_code = status_code
 
