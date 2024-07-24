@@ -74,6 +74,12 @@ class AlgorithmOutputSchema(HATEOASModelSchema):
         model = Algorithm
 
     functions = fields.Nested("FunctionOutputSchema", many=True)
+    developer_id = fields.Integer(data_key="developer_id")
+    reviews = fields.Function(
+        lambda obj: create_one_to_many_link(
+            obj, link_to="review", link_from="algorithm_id"
+        )
+    )
 
 
 class FunctionOutputSchema(HATEOASModelSchema):
@@ -129,7 +135,10 @@ class Vantage6ServerOutputSchema(HATEOASModelSchema):
 
 class RoleOutputSchema(HATEOASModelSchema):
     rules = fields.Function(
-        lambda obj: create_one_to_many_link(obj, link_to="rule", link_from="role")
+        lambda obj: create_one_to_many_link(obj, link_to="rule", link_from="role_id")
+    )
+    users = fields.Function(
+        lambda obj: create_one_to_many_link(obj, link_to="user", link_from="role_id")
     )
 
     class Meta:
@@ -161,6 +170,5 @@ class ReviewOutputSchema(HATEOASModelSchema):
     class Meta:
         model = Review
 
-    reviewers = fields.Function(
-        lambda obj: create_one_to_many_link(obj, link_to="user", link_from="review")
-    )
+    reviewer = fields.Nested("UserOutputSchema")
+    algorithm_id = fields.Integer(data_key="algorithm_id")

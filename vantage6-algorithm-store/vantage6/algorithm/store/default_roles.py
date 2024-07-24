@@ -11,6 +11,7 @@ class DefaultRole(str, Enum):
     REVIEWER = "Reviewer"
     STORE_MANAGER = "Store Manager"
     VIEWER = "Viewer"
+    SERVER_MANAGER = "Server Manager"
 
 
 def get_default_roles() -> list[dict]:
@@ -41,45 +42,68 @@ def get_default_roles() -> list[dict]:
     # 2. Role for viewing algorithms
     VIEWER_RULES = [
         Rule.get_by_("algorithm", Operation.VIEW),
+        Rule.get_by_("user", Operation.VIEW),
+        Rule.get_by_("role", Operation.VIEW),
+        Rule.get_by_("review", Operation.VIEW),
     ]
     VIEWER_ROLE = {
         "name": DefaultRole.VIEWER,
-        "description": "Can view accounts and algorithms",
+        "description": "Can view algorithm store resources",
         "rules": VIEWER_RULES,
     }
     # 3. Reviewer role
-    REVIEWER_RULES = [
-        Rule.get_by_("algorithm", Operation.VIEW),
-        Rule.get_by_("algorithm", Operation.REVIEW),
-    ]
+    REVIEWER_RULES = VIEWER_RULES + [Rule.get_by_("review", Operation.EDIT)]
     REVIEWER_ROLE = {
         "name": DefaultRole.REVIEWER,
-        "description": "Can view, edit and delete algorithms",
+        "description": "Can view resources and review algorithms",
         "rules": REVIEWER_RULES,
     }
     # 4. Store manager role
-    STORE_MANAGER = [
-        Rule.get_by_("algorithm", Operation.VIEW),
+    STORE_MANAGER = REVIEWER_RULES + [
         Rule.get_by_("algorithm", Operation.CREATE),
         Rule.get_by_("algorithm", Operation.DELETE),
         Rule.get_by_("user", Operation.CREATE),
         Rule.get_by_("user", Operation.EDIT),
+        Rule.get_by_("user", Operation.DELETE),
+        Rule.get_by_("role", Operation.CREATE),
+        Rule.get_by_("role", Operation.EDIT),
+        Rule.get_by_("role", Operation.DELETE),
+        Rule.get_by_("review", Operation.CREATE),
+        Rule.get_by_("review", Operation.DELETE),
     ]
     STORE_MANAGER = {
         "name": DefaultRole.STORE_MANAGER,
-        "description": "Can manage algorithms, and create and edit users.",
+        "description": "Can manage algorithms and other store resources.",
         "rules": STORE_MANAGER,
     }
-    # 4. Developer role
-    DEVELOPER_RULES = [
-        Rule.get_by_("algorithm", Operation.VIEW),
+    # Developer role
+    DEVELOPER_RULES = VIEWER_RULES + [
         Rule.get_by_("algorithm", Operation.CREATE),
         Rule.get_by_("algorithm", Operation.EDIT),
     ]
     DEVELOPER_ROLE = {
         "name": DefaultRole.DEVELOPER,
-        "description": "Can view and create algorithms.",
+        "description": "Can view store resources and create new algorithms.",
         "rules": DEVELOPER_RULES,
     }
+    # server manager role
+    SERVER_MANAGER_RULES = [
+        Rule.get_by_("vantage6_server", Operation.DELETE),
+    ]
+    SERVER_MANAGER_ROLE = {
+        "name": "Server Manager",
+        "description": (
+            "Can delete their own whitelisted vantage6 server. This rule is"
+            " assigned automatically upon whitelisting a server"
+        ),
+        "rules": SERVER_MANAGER_RULES,
+    }
     # Combine all in array
-    return [SUPER_ROLE, VIEWER_ROLE, REVIEWER_ROLE, STORE_MANAGER, DEVELOPER_ROLE]
+    return [
+        SUPER_ROLE,
+        VIEWER_ROLE,
+        REVIEWER_ROLE,
+        STORE_MANAGER,
+        DEVELOPER_ROLE,
+        SERVER_MANAGER_ROLE,
+    ]

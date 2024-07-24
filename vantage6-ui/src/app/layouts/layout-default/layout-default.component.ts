@@ -1,10 +1,10 @@
 import { AfterViewInit, Component, OnDestroy, ViewChild } from '@angular/core';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { MatSidenav } from '@angular/material/sidenav';
-import { Subject, delay, filter, takeUntil } from 'rxjs';
+import { Subject, combineLatest, delay, filter, takeUntil } from 'rxjs';
 import { routePaths } from 'src/app/routes';
 import { NavigationLink, NavigationLinkType } from 'src/app/models/application/navigation-link.model';
-import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
+import { OperationType, ResourceType, ScopeType, StoreResourceType } from 'src/app/models/api/rule.model';
 import { AuthService } from 'src/app/services/auth.service';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
@@ -12,6 +12,7 @@ import { PermissionService } from 'src/app/services/permission.service';
 import { TokenStorageService } from 'src/app/services/token-storage.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
+import { StorePermissionService } from 'src/app/services/store-permission.service';
 
 @Component({
   selector: 'app-layout-default',
@@ -43,7 +44,8 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
     public chosenStoreService: ChosenStoreService,
     private permissionService: PermissionService,
     private tokenStorageService: TokenStorageService,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    private storePermissionService: StorePermissionService
   ) {
     router.events.pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd)).subscribe((event) => {
       this.isAdministration = event.url.startsWith('/admin');
@@ -53,11 +55,13 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
       this.hideMenu = route.snapshot.data?.['hideMenu'] || false;
 
       // ensure permissions are initialized before setting navigation links
-      this.permissionService
-        .isInitialized()
+      const serverPermissionInit = this.permissionService.isInitialized();
+      const chosenStore = this.chosenStoreService.getCurrentStore();
+      const storePermissionInit = this.storePermissionService.isInitialized();
+      combineLatest([serverPermissionInit, chosenStore, storePermissionInit])
         .pipe(takeUntil(this.destroy$))
-        .subscribe((initialized) => {
-          if (initialized) {
+        .subscribe(([serverPermInit, chosenStore, storePermInit]) => {
+          if (serverPermInit && (chosenStore === null || storePermInit)) {
             this.setNavigationLinks();
           }
         });
@@ -196,12 +200,53 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
         linkType: NavigationLinkType.Store
       });
       // algorithms
-      storeSubmenus.push({
-        route: routePaths.algorithmManage,
-        label: this.translateService.instant('resources.algorithms'),
-        icon: 'memory',
-        linkType: NavigationLinkType.Store
-      });
+      if (this.storePermissionService.canViewAlgorithms) {
+        storeSubmenus.push({
+          route: routePaths.algorithmManage,
+          label: this.translateService.instant('links.algorithms-approved'),
+          icon: 'memory',
+          linkType: NavigationLinkType.Store
+        });
+      }
+      // algorithms in review - note that explicit permission is required to view this
+      // page, whereas the page with approved algorithms may be open to the public,
+      // depending on the policies
+      if (this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.VIEW)) {
+        storeSubmenus.push({
+          route: routePaths.myPendingAlgorithms,
+          label: this.translateService.instant('links.pending-algorithms'),
+          icon: 'hourglass_top',
+          linkType: NavigationLinkType.Store
+        });
+      }
+      // same goes for list of old algorithms
+      if (this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.VIEW)) {
+        storeSubmenus.push({
+          route: routePaths.algorithmsOld,
+          label: this.translateService.instant('links.old-algorithms'),
+          icon: 'history',
+          linkType: NavigationLinkType.Store
+        });
+      }
+
+      // store users
+      if (this.storePermissionService.isAllowed(StoreResourceType.USER, OperationType.VIEW)) {
+        storeSubmenus.push({
+          route: routePaths.storeUsers,
+          label: this.translateService.instant('resources.users'),
+          icon: 'people',
+          linkType: NavigationLinkType.Store
+        });
+      }
+      // store roles
+      if (this.storePermissionService.isAllowed(StoreResourceType.ROLE, OperationType.VIEW)) {
+        storeSubmenus.push({
+          route: routePaths.storeRoles,
+          label: this.translateService.instant('resources.roles'),
+          icon: 'groups',
+          linkType: NavigationLinkType.Store
+        });
+      }
     }
     if (storeSubmenus.length > 0) {
       storeLink.submenus = storeSubmenus;
@@ -243,21 +288,21 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
         linkType: NavigationLinkType.Admin
       });
     }
-    //Roles
-    if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.VIEW)) {
-      adminSubmenus.push({
-        route: routePaths.roles,
-        label: this.translateService.instant('resources.roles'),
-        icon: 'groups',
-        linkType: NavigationLinkType.Admin
-      });
-    }
     //Users
     if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.USER, OperationType.VIEW)) {
       adminSubmenus.push({
         route: routePaths.users,
         label: this.translateService.instant('resources.users'),
         icon: 'people',
+        linkType: NavigationLinkType.Admin
+      });
+    }
+    //Roles
+    if (this.permissionService.isAllowedWithMinScope(ScopeType.ORGANIZATION, ResourceType.COLLABORATION, OperationType.VIEW)) {
+      adminSubmenus.push({
+        route: routePaths.roles,
+        label: this.translateService.instant('resources.roles'),
+        icon: 'groups',
         linkType: NavigationLinkType.Admin
       });
     }

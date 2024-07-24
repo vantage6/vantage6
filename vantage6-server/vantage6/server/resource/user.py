@@ -270,7 +270,7 @@ class Users(UserBase):
             )
 
         if "rule_id" in args:
-            rule = db.Rule.query.get(args["rule_id"])
+            rule = db.Rule.get(args["rule_id"])
             if not rule:
                 return {
                     "msg": f'Rule with id={args["rule_id"]} does not exist!'
@@ -307,6 +307,9 @@ class Users(UserBase):
                 )
             elif self.r.v_org.can():
                 q = q.filter(db.User.organization_id == g.user.organization_id)
+            elif "username" in args and args["username"] == g.user.username:
+                # users can always see their own user
+                pass
             else:
                 return {
                     "msg": "You lack the permission to do that!"

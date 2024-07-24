@@ -50,6 +50,11 @@ swagger_template = {
                         "items": {"type": "dict"},
                         "description": "Databases to use for this task",
                     },
+                    "store_id": {
+                        "type": "integer",
+                        "description": "ID of the algorithm store from which the "
+                        "algorithm is to be fetched",
+                    },
                 },
                 "example": {
                     "name": "human-readable-name",
@@ -82,6 +87,7 @@ swagger_template = {
                             ],
                         }
                     ],
+                    "store_id": 1,
                 },
                 "required": ["image", "collaboration_id"],
             },

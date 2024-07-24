@@ -1,4 +1,5 @@
 import { NameDescription } from './base.model';
+import { StoreUser } from './store-user.model';
 import { Visualization, VisualizationForm } from './visualization.model';
 
 export enum ArgumentType {
@@ -49,19 +50,39 @@ export enum FunctionType {
   Federated = 'federated'
 }
 
+export enum AlgorithmStatus {
+  // note that this is very similar to ReviewStatus but algorithms contain a few extra statuses
+  AwaitingReviewerAssignment = 'awaiting reviewer assignment',
+  UnderReview = 'under review',
+  Approved = 'approved',
+  Rejected = 'rejected',
+  Replaced = 'replaced',
+  Removed = 'removed'
+}
+
 // TODO this interface must be updated to match the API
 export interface Algorithm {
   id: number;
   name: string;
   image: string;
+  digest: string | null;
   vantage6_version: string;
   description: string;
+  code_url: string;
+  documentation_url?: string;
+  submitted_at: string;
+  approved_at?: string;
+  invalidated_at?: string;
   partitioning: PartitioningType;
   functions: AlgorithmFunction[];
   select?: Select[];
   filter?: Filter[];
   algorithm_store_url?: string;
   algorith_store_id?: number;
+  status: AlgorithmStatus;
+  developer_id?: number;
+  developer?: StoreUser;
+  reviewer?: StoreUser;
 }
 
 export interface AlgorithmFunction {
@@ -131,5 +152,7 @@ export interface AlgorithmForm {
   image: string;
   partitioning: string;
   vantage6_version: string;
+  code_url: string;
+  documentation_url?: string;
   functions: FunctionForm[];
 }

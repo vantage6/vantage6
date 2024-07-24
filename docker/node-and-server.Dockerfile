@@ -6,7 +6,7 @@
 # * harbor2.vantage6.ai/infrastructure/server:x.x.x
 #
 ARG TAG=latest
-ARG BASE=4.5
+ARG BASE=4.6
 FROM harbor2.vantage6.ai/infrastructure/infrastructure-base:${BASE}
 
 LABEL version=${TAG}
@@ -22,6 +22,8 @@ RUN pip install psycopg2-binary
 
 # copy source
 COPY . /vantage6
+
+RUN pip install --upgrade pip
 
 # Install requirements. We cannot rely on setup.py because of the way
 # python resolves package versions. To control all dependencies we install

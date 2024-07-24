@@ -4,12 +4,13 @@ import {
   AlgorithmStore,
   AlgorithmStoreLazyProperties,
   BaseAlgorithmStore,
-  EditAlgorithmStore
-} from '../models/api/algorithmStore.model';
+  EditAlgorithmStore,
+  StorePolicies
+} from 'src/app/models/api/algorithmStore.model';
 import { ApiService } from './api.service';
 import { environment } from 'src/environments/environment';
-import { Pagination } from '../models/api/pagination.model';
-import { getLazyProperties } from '../helpers/api.helper';
+import { Pagination } from 'src/app/models/api/pagination.model';
+import { getLazyProperties } from 'src/app/helpers/api.helper';
 
 @Injectable({
   providedIn: 'root'
@@ -43,5 +44,10 @@ export class AlgorithmStoreService {
 
   async delete(id: string): Promise<void> {
     return await this.apiService.deleteForApi(`/algorithmstore/${id}`, { server_url: `${environment.server_url}${environment.api_path}` });
+  }
+
+  async getAlgorithmStorePolicies(store_url: string, public_: boolean = false): Promise<StorePolicies> {
+    const endpoint = public_ ? '/api/policy/public' : '/api/policy';
+    return await this.apiService.getForAlgorithmApi<StorePolicies>(store_url, endpoint);
   }
 }

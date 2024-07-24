@@ -1,0 +1,13 @@
+<app-page-header title="{{ 'algorithm-old-list.title' | translate }}"> </app-page-header>
+<ng-container *ngIf="!isLoading; else loading">
+  <app-alert label="{{ 'algorithm-old-list.alert' | translate }}"></app-alert>
+  <app-display-algorithms [algorithms]="oldAlgorithms" [routeOnClick]="routes.algorithmManage"></app-display-algorithms>
+  <mat-card *ngIf="oldAlgorithms.length === 0">
+    <mat-card-content>
+      <p>{{ "algorithm-old-list.no-algorithms" | translate }}</p>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
+<ng-template #loading>
+  <mat-spinner diameter="48"></mat-spinner>
+</ng-template>

@@ -32,12 +32,12 @@ setup(
     packages=find_namespace_packages(),
     python_requires=">=3.6",
     install_requires=[
-        "connectorx==0.2.3",
         "openpyxl>=3.0.0",
         "pandas>=1.5.3",
         "PyJWT==2.6.0",
         "pyfiglet==0.8.post1",
         "SPARQLWrapper>=2.0.0",
+        "sqlalchemy==1.4.46",
         f'vantage6-common=={version_ns["__version__"]}',
     ],
     extras_require={

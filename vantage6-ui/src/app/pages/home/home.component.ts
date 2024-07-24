@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { environment } from 'src/environments/environment';
-import { ApiService } from '../../services/api.service';
-import { Version } from '../../models/api/version.model';
-import packageJson from '../../../../package.json';
+import { ApiService } from 'src/app/services/api.service';
+import { Version } from 'src/app/models/api/version.model';
+import packageJson from 'package.json';
 
 @Component({
   selector: 'app-home',

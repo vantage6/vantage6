@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Organization } from 'src/app/models/api/organization.model';
 import { RoleForm } from 'src/app/models/api/role.model';
-import { Rule } from 'src/app/models/api/rule.model';
+import { Rule, Rule_ } from 'src/app/models/api/rule.model';
 
 @Component({
   selector: 'app-role-form',
@@ -35,7 +35,9 @@ export class RoleFormComponent {
     this.cancelled.emit();
   }
 
-  handleChangedSelection(rules: Rule[]): void {
+  handleChangedSelection(rules: Rule_[]): void {
+    // we know that these are vantage6 server rules, not store rules here
+    rules = rules as Rule[];
     this.selectedRules = rules ? rules.map((rule) => rule.id) : [];
   }
 

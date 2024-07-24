@@ -1,0 +1,33 @@
+<ng-container *ngIf="!isLoading; else loading">
+  <form class="form" [formGroup]="form" (ngSubmit)="handleSubmit()">
+    <mat-form-field *ngIf="!isEdit" subscriptSizing="dynamic">
+      <mat-label>{{ "user.username" | translate }}</mat-label>
+      <mat-select formControlName="username">
+        <mat-option *ngFor="let user of serverUsers" [value]="user.username">
+          {{ user.username }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>{{ "user.roles" | translate }}</mat-label>
+      <mat-select formControlName="roles" multiple [compareWith]="compareRolesForSelection">
+        <mat-option *ngFor="let role of availableRoles" [value]="role">
+          {{ role.name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <div class="user-form__header">
+      <div class="user-form__label">
+        {{ "user.permissions" | translate }}
+      </div>
+    </div>
+    <app-permissions-matrix-store [fixedSelectedPrimary]="userRules" [selectable]="[]" [preselected]="[]"></app-permissions-matrix-store>
+    <div class="button-container user-form__button-container">
+      <button mat-flat-button type="submit" color="primary">{{ "general.submit" | translate }}</button>
+      <button mat-flat-button (click)="handleCancel()">{{ "general.cancel" | translate }}</button>
+    </div>
+  </form>
+</ng-container>
+<ng-template #loading>
+  <mat-spinner diameter="48"></mat-spinner>
+</ng-template>
