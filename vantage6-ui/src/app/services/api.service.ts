@@ -1,12 +1,13 @@
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, first } from 'rxjs';
-import { ACCESS_TOKEN_KEY } from '../models/constants/sessionStorage';
+import { ACCESS_TOKEN_KEY } from 'src/app/models/constants/sessionStorage';
 import { environment } from 'src/environments/environment';
-import { Pagination } from '../models/api/pagination.model';
+import { Pagination } from 'src/app/models/api/pagination.model';
 import { SnackbarService } from './snackbar.service';
 import { Router } from '@angular/router';
 import { LoginErrorService } from './login-error.service';
+import { isNested } from 'src/app/helpers/utils.helper';
 
 @Injectable({
   providedIn: 'root'
@@ -70,22 +71,53 @@ export class ApiService {
     );
   }
 
-  async getForAlgorithmApi<T = null>(algo_store_url: string, path: string, parameters: object | null = null): Promise<T> {
-    if (algo_store_url.endsWith('/')) {
-      algo_store_url = algo_store_url.slice(0, -1);
+  fixAlgorithmStoreUrl(url: string): string {
+    if (url.endsWith('/')) {
+      return url.slice(0, -1);
     }
-    return await this.handleResult(
-      this.http.get<T>(algo_store_url + path, {
+    return url;
+  }
+
+  async getForAlgorithmApi<T = null>(
+    algo_store_url: string,
+    path: string,
+    parameters: object | null = null,
+    showAuthError: boolean = true
+  ): Promise<T> {
+    algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
+    const request = this.http.get<T>(algo_store_url + path, {
+      headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() },
+      params: { ...parameters }
+    });
+    if (showAuthError) {
+      return await this.handleResult(request);
+    } else {
+      return await this.handleResultWithoutAuthError(request);
+    }
+  }
+
+  async getForAlgorithmApiWithPagination<T>(
+    algo_store_url: string,
+    path: string,
+    currentPage: number,
+    parameters: object | null = null
+  ): Promise<Pagination<T>> {
+    algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
+    return await this.handleResultForPagination(
+      this.http.get<Pagination<T>>(algo_store_url + path, {
         headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() },
-        params: { ...parameters }
+        observe: 'response',
+        params: {
+          ...parameters,
+          page: currentPage,
+          per_page: '10'
+        }
       })
     );
   }
 
   async postForAlgorithmApi<T>(algo_store_url: string, path: string, body: object): Promise<T> {
-    if (algo_store_url.endsWith('/')) {
-      algo_store_url = algo_store_url.slice(0, -1);
-    }
+    algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
     return await this.handleResult(
       this.http.post<T>(algo_store_url + path, body, {
         headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() }
@@ -94,9 +126,7 @@ export class ApiService {
   }
 
   async patchForAlgorithmApi<T>(algo_store_url: string, path: string, body: object): Promise<T> {
-    if (algo_store_url.endsWith('/')) {
-      algo_store_url = algo_store_url.slice(0, -1);
-    }
+    algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
     return await this.handleResult(
       this.http.patch<T>(algo_store_url + path, body, {
         headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() }
@@ -106,9 +136,7 @@ export class ApiService {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async deleteForAlgorithmApi(algo_store_url: string, path: string): Promise<any> {
-    if (algo_store_url.endsWith('/')) {
-      algo_store_url = algo_store_url.slice(0, -1);
-    }
+    algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
     return await this.handleResult(
       this.http.delete(algo_store_url + path, {
         headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() }
@@ -140,6 +168,26 @@ export class ApiService {
             this.loginErrorService.setError(errorMsg);
           } else {
             // when logged in, show messages in snackbar
+            this.snackBarService.showMessage(errorMsg);
+          }
+          reject(error);
+        }
+      );
+    });
+  }
+
+  // Note: this could be reimplemented together with the handleResult function, but has
+  // been explicitly separated to avoid having to complicate the handleResult function
+  // with an additional parameter as that is used for almost all requests
+  private async handleResultWithoutAuthError<T = null>(request: Observable<T>): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      request.pipe(first()).subscribe(
+        (response) => {
+          resolve(response as T);
+        },
+        (error) => {
+          if (error.status !== 401) {
+            const errorMsg = this.getErrorMsg(error);
             this.snackBarService.showMessage(errorMsg);
           }
           reject(error);
@@ -184,7 +232,11 @@ export class ApiService {
         ': ' +
         Object.keys(error.error?.errors)
           .map((key) => {
-            return key + ': ' + error.error?.errors[key];
+            if (isNested(error.error?.errors[key])) {
+              return key + ': ' + JSON.stringify(error.error?.errors[key]);
+            } else {
+              return key + ': ' + error.error?.errors[key];
+            }
           })
           .join(', ');
     }

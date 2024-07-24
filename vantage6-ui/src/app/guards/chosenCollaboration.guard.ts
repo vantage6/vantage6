@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { routePaths } from '../routes';
-import { CHOSEN_COLLABORATION, IS_CHOSEN_COLLAB_ENCRYPTED, CHOSEN_COLLAB_PRIVATE_KEY } from '../models/constants/sessionStorage';
+import { routePaths } from 'src/app/routes';
+import { CHOSEN_COLLABORATION, IS_CHOSEN_COLLAB_ENCRYPTED, CHOSEN_COLLAB_PRIVATE_KEY } from 'src/app/models/constants/sessionStorage';
 
 export function chosenCollaborationGuard(): CanActivateFn {
   return async () => {

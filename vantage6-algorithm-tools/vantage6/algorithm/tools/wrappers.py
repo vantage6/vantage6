@@ -19,7 +19,8 @@ from __future__ import annotations
 import io
 import os
 import pandas as pd
-import connectorx as cx
+
+from sqlalchemy import create_engine
 
 from enum import Enum
 
@@ -303,7 +304,15 @@ def load_sql_data(database_uri: str, query: str) -> pd.DataFrame:
     pd.DataFrame
         The data from the database
     """
+    engine = create_engine(_sqldb_uri_preprocess(database_uri))
 
-    db_connection = _sqldb_uri_preprocess(database_uri)
-    df = cx.read_sql(db_connection, query)
+    dbapi_conn = engine.raw_connection()
+
+    try:
+        # Execute the query and store the results in a DataFrame
+        df = pd.read_sql_query(query, con=dbapi_conn)
+
+    finally:
+        dbapi_conn.close()  # Ensure the connection is closed
+
     return df

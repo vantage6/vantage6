@@ -1,0 +1,26 @@
+<ng-container *ngIf="!isLoading && !isSubmitting; else loading">
+  <app-page-header title="{{ 'review-submit.title' | translate: { name: algorithm?.name || '' } }}"></app-page-header>
+  <mat-card>
+    <mat-card-content>
+      <form class="form" [formGroup]="form" (ngSubmit)="handleSubmit($event)">
+        <mat-radio-group formControlName="approve">
+          <mat-radio-button [value]="true" color="primary">{{ "review-submit.approve" | translate }}</mat-radio-button>
+          <mat-radio-button [value]="false" color="primary">{{ "review-submit.reject" | translate }}</mat-radio-button>
+        </mat-radio-group>
+        <h4>{{ "review-submit.comment-title" | translate }}</h4>
+        <textarea placeholder="{{ 'review-submit.comment-placeholder' | translate }}" formControlName="comment" required></textarea>
+        <div class="button-container">
+          <button mat-flat-button type="submit" color="primary">{{ "general.submit" | translate }}</button>
+          <button mat-flat-button (click)="handleCancel()">{{ "general.cancel" | translate }}</button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
+<ng-template #loading>
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-template>

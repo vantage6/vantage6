@@ -10,7 +10,7 @@ from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource.common.input_schema import AlgorithmStoreInputSchema
 from vantage6.server.permission import RuleCollection, Operation as P
 from vantage6.server.resource.common.output_schema import AlgorithmStoreSchema
-from vantage6.server.resource import with_user, ServicesResources
+from vantage6.server.resource import with_user, with_user_or_node, ServicesResources
 from vantage6.server.algo_store_communication import (
     post_algorithm_store,
     get_server_url,
@@ -313,6 +313,7 @@ class AlgorithmStores(AlgorithmStoreBase):
         response, status = post_algorithm_store(
             request.get_json(),
             self.config,
+            headers=self.get_authorization_headers_from_request(),
         )
         if status != HTTPStatus.CREATED:
             return response, status
@@ -323,7 +324,7 @@ class AlgorithmStores(AlgorithmStoreBase):
 class AlgorithmStore(AlgorithmStoreBase):
     """Resource for /algorithm/<id>"""
 
-    @with_user
+    @with_user_or_node
     def get(self, id):
         """Get algorithm store record
         ---
@@ -566,27 +567,50 @@ class AlgorithmStore(AlgorithmStoreBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        # Delete the whitelisting of this server at the algorithm store.
-        # First check if algostore is not used by other collaborations
-        other_algorithm_stores = db.AlgorithmStore.get_by_url(algorithm_store.url)
-        if len(other_algorithm_stores) == 1:
-            # only this algorithm store uses this url, so delete the
-            # whitelisting
-            server_url = get_server_url(self.config, request.args.get("server_url"))
-            if not server_url:
+        # Check if algostore is used by other collaborations. If it is, user needs
+        # to have global permissions to delete all those links.
+        # TODO require extra --force parameter to do this?
+        all_stores_with_url = db.AlgorithmStore.get_by_url(algorithm_store.url)
+        if len(all_stores_with_url) > 1:
+            if self.r_col.e_glo.can():
+                log.warning(
+                    "Deleting algorithm store with id=%s, which is also used by"
+                    " other collaborations",
+                    id,
+                )
+            else:
                 return {
-                    "msg": "The 'server_url' query parameter is required"
-                }, HTTPStatus.BAD_REQUEST
-            # get the ID of the whitelisted server, then delete it
-            response, status = request_algo_store(
-                algorithm_store.url,
+                    "msg": "This algorithm store is used by other collaborations. "
+                    "You lack the permission to delete it!"
+                }, HTTPStatus.UNAUTHORIZED
+
+        # only this algorithm store uses this url, so delete the
+        # whitelisting
+        server_url = get_server_url(self.config, request.args.get("server_url"))
+        if not server_url:
+            return {
+                "msg": "The 'server_url' query parameter is required"
+            }, HTTPStatus.BAD_REQUEST
+
+        # get the ID of the whitelisted server, then delete it
+        response, status = request_algo_store(
+            algorithm_store.url,
+            server_url,
+            endpoint="vantage6-server",
+            method="get",
+            headers=self.get_authorization_headers_from_request(),
+        )
+        if status == HTTPStatus.FORBIDDEN:
+            log.info(
+                "Server with url=%s was not whitelisted at the algorithm store. "
+                "Proceeding to remove algorithm store store from server...",
                 server_url,
-                endpoint="vantage6-server",
-                method="get",
-                headers=self.get_authorization_headers_from_request(),
             )
-            if status != HTTPStatus.OK:
-                return response, status
+            # initialize empty list of servers to delete at store
+            result = []
+        elif status != HTTPStatus.OK:
+            return response, status
+        else:
             result = response.json()
             if len(result) > 1:
                 msg = (
@@ -601,19 +625,25 @@ class AlgorithmStore(AlgorithmStoreBase):
                     f"{server_url}. This should not happen!"
                 )
                 log.warning(msg)
-            # remove all linked servers with the given url
-            for server in result:
-                server_id = server["id"]
-                response, status = request_algo_store(
-                    algorithm_store.url,
-                    server_url,
-                    endpoint=f"vantage6-server/{server_id}",
-                    method="delete",
-                    headers=self.get_authorization_headers_from_request(),
-                )
+        # remove all linked servers with the given url
+        for server in result:
+            server_id = server["id"]
+            response, status = request_algo_store(
+                algorithm_store.url,
+                server_url,
+                endpoint=f"vantage6-server/{server_id}",
+                method="delete",
+                headers=self.get_authorization_headers_from_request(),
+            )
             if status != HTTPStatus.OK:
                 return response, status
 
+        # remove the store link from all tasks linked to this store
+        for task in algorithm_store.tasks:
+            task.store = None
+            task.save()
+
         # finally delete the algorithm store record itself
-        algorithm_store.delete()
+        # pylint: disable=expression-not-assigned
+        [store.delete() for store in all_stores_with_url]
         return {"msg": f"Algorithm store id={id} successfully deleted"}, HTTPStatus.OK

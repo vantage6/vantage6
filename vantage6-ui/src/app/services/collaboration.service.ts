@@ -1,22 +1,20 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { Pagination } from '../models/api/pagination.model';
+import { Pagination } from 'src/app/models/api/pagination.model';
 import {
   BaseCollaboration,
   Collaboration,
   CollaborationCreate,
   CollaborationLazyProperties,
   GetCollaborationParameters
-} from '../models/api/collaboration.model';
-import { getLazyProperties } from '../helpers/api.helper';
+} from 'src/app/models/api/collaboration.model';
+import { getLazyProperties } from 'src/app/helpers/api.helper';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CollaborationService {
-  constructor(
-    private apiService: ApiService,
-  ) {}
+  constructor(private apiService: ApiService) {}
 
   async getCollaborations(parameters?: GetCollaborationParameters): Promise<BaseCollaboration[]> {
     //TODO: Add backend no pagination instead of page size 9999

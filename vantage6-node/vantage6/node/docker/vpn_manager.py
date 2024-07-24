@@ -46,6 +46,7 @@ class VPNManager(DockerBaseManager):
         alpine_image: str | None = None,
         vpn_client_image: str | None = None,
         network_config_image: str | None = None,
+        extra_hosts: dict[str, str] | None = None,
     ) -> None:
         """
         Initializes a VPN manager instance
@@ -73,6 +74,7 @@ class VPNManager(DockerBaseManager):
         self.vpn_volume_name = vpn_volume_name
         self.client = node_client
         self.subnet = vpn_subnet
+        self.extra_hosts = extra_hosts
 
         # get the proper versions of the VPN images
         self.alpine_image = (
@@ -154,6 +156,7 @@ class VPNManager(DockerBaseManager):
             name=self.vpn_client_container_name,
             cap_add=["NET_ADMIN", "SYSLOG"],
             devices=["/dev/net/tun"],
+            extra_hosts=self.extra_hosts,
         )
 
         # attach vpnclient to isolated network
@@ -283,11 +286,11 @@ class VPNManager(DockerBaseManager):
                     "ip --json addr show dev tun0"
                 )
                 vpn_interface = json.loads(vpn_interface)
+                return vpn_interface[0]["addr_info"][0]["local"]
         except (JSONDecodeError, docker.errors.APIError):
             # JSONDecodeError if VPN is not setup yet, APIError if VPN
             # container is restarting (e.g. due to connection errors)
             raise ConnectionError("Could not get VPN IP: VPN is not connected!")
-        return vpn_interface[0]["addr_info"][0]["local"]
 
     def send_vpn_ip_to_server(self) -> None:
         """

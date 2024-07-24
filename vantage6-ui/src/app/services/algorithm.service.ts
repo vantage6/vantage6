@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { Algorithm, AlgorithmForm } from '../models/api/algorithm.model';
+import { Algorithm, AlgorithmForm } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from './chosen-collaboration.service';
-import { AlgorithmStore } from '../models/api/algorithmStore.model';
-import { Pagination } from '../models/api/pagination.model';
+import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
+import { Pagination } from 'src/app/models/api/pagination.model';
 import { ChosenStoreService } from './chosen-store.service';
 
 @Injectable({
@@ -41,6 +41,15 @@ export class AlgorithmService {
     return algorithms;
   }
 
+  async getPaginatedAlgorithms(store: AlgorithmStore, currentPage: number, params: object = {}): Promise<Pagination<Algorithm>> {
+    const result = await this.apiService.getForAlgorithmApiWithPagination<Algorithm>(store.url, '/api/algorithm', currentPage, params);
+    result.data.forEach((algorithm) => {
+      algorithm.algorithm_store_url = store.url;
+      algorithm.algorith_store_id = store.id;
+    });
+    return result;
+  }
+
   async getAlgorithm(algorithm_store_url: string, id: string): Promise<Algorithm> {
     const result = await this.apiService.getForAlgorithmApi<Algorithm>(algorithm_store_url, `/api/algorithm/${id}`);
     return result;
@@ -72,6 +81,12 @@ export class AlgorithmService {
     const algorithmStore = this.chosenStoreService.store$.value;
     if (!algorithmStore) return;
     return await this.apiService.deleteForAlgorithmApi(algorithmStore.url, `/api/algorithm/${algorithmId}`);
+  }
+
+  async invalidateAlgorithm(algorithmId: string): Promise<void> {
+    const algorithmStore = this.chosenStoreService.store$.value;
+    if (!algorithmStore) return;
+    return await this.apiService.postForAlgorithmApi(algorithmStore.url, `/api/algorithm/${algorithmId}/invalidate`, {});
   }
 
   private getAlgorithmStoresForCollaboration(): AlgorithmStore[] {

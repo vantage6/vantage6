@@ -10,8 +10,16 @@ from sqlalchemy.engine.url import make_url
 
 from vantage6.common import error, info, warning
 from vantage6.common.context import AppContext
-from vantage6.common.globals import InstanceType, APPNAME, DEFAULT_DOCKER_REGISTRY
-from vantage6.common.docker.addons import check_docker_running
+from vantage6.common.globals import (
+    DEFAULT_ALGO_STORE_IMAGE,
+    DEFAULT_NODE_IMAGE,
+    DEFAULT_SERVER_IMAGE,
+    DEFAULT_UI_IMAGE,
+    InstanceType,
+    APPNAME,
+    DEFAULT_DOCKER_REGISTRY,
+)
+from vantage6.common.docker.addons import check_docker_running, pull_image
 from vantage6.cli.context import AlgorithmStoreContext, ServerContext
 from vantage6.cli.common.utils import print_log_worker
 from vantage6.cli.utils import check_config_name_allowed
@@ -86,6 +94,88 @@ def get_image(
         if not image:
             image = f"{DEFAULT_DOCKER_REGISTRY}/{default_image}"
     return image
+
+
+def pull_infra_image(
+    client: DockerClient, image: str, instance_type: InstanceType
+) -> None:
+    """
+    Try to pull an infrastructure image. If the image is a default infrastructure image,
+    exit if in cannot be pulled. If it is not a default image, exit if it cannot be
+    pulled and it is also not available locally. If a local image is available, a
+    warning is printed.
+
+    Parameters
+    ----------
+    client : DockerClient
+        The Docker client
+    image : str
+        The image name to pull
+    instance_type : InstanceType
+        The type of instance to pull the image for
+    """
+    try:
+        pull_image(client, image, suppress_error=True)
+    except docker.errors.APIError:
+        if not is_default_infra_image(image, instance_type):
+            if image_exists_locally(client, image):
+                warning("Failed to pull infrastructure image! Will use local image...")
+            else:
+                error("Failed to pull infrastructure image!")
+                error("Image also not found locally. Exiting...")
+                exit(1)
+        else:
+            error("Failed to pull infrastructure image! Exiting...")
+            exit(1)
+
+
+def is_default_infra_image(image: str, instance_type: InstanceType) -> bool:
+    """
+    Check if an infrastructure image is the default image.
+
+    Parameters
+    ----------
+    image : str
+        The image name to check
+    instance_type : InstanceType
+        The type of instance to check the image for
+
+    Returns
+    -------
+    bool
+        True if the image is the default image, False otherwise
+    """
+    if instance_type == InstanceType.SERVER:
+        return image == f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_SERVER_IMAGE}"
+    elif instance_type == InstanceType.ALGORITHM_STORE:
+        return image == f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_ALGO_STORE_IMAGE}"
+    elif instance_type == InstanceType.UI:
+        return image == f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_UI_IMAGE}"
+    elif instance_type == InstanceType.NODE:
+        return image == f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_NODE_IMAGE}"
+
+
+def image_exists_locally(client: DockerClient, image: str) -> bool:
+    """
+    Check if the image exists locally.
+
+    Parameters
+    ----------
+    client : DockerClient
+        The Docker client
+    image : str
+        The image name to check
+
+    Returns
+    -------
+    bool
+        True if the image exists locally, False otherwise
+    """
+    try:
+        client.images.get(image)
+    except docker.errors.ImageNotFound:
+        return False
+    return True
 
 
 def mount_config_file(ctx: AppContext, config_file: str) -> list[docker.types.Mount]:

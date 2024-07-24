@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { CHOSEN_COLLABORATION, IS_CHOSEN_COLLAB_ENCRYPTED } from '../models/constants/sessionStorage';
+import { CHOSEN_COLLABORATION, IS_CHOSEN_COLLAB_ENCRYPTED } from 'src/app/models/constants/sessionStorage';
 import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import { CollaborationService } from './collaboration.service';
-import { Collaboration, CollaborationLazyProperties } from '../models/api/collaboration.model';
-import { getLazyProperties } from '../helpers/api.helper';
-import { StudyLazyProperties } from '../models/api/study.model';
+import { Collaboration, CollaborationLazyProperties } from 'src/app/models/api/collaboration.model';
+import { getLazyProperties } from 'src/app/helpers/api.helper';
+import { StudyLazyProperties } from 'src/app/models/api/study.model';
 import { ApiService } from './api.service';
 import { PermissionService } from './permission.service';
 

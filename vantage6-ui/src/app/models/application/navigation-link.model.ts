@@ -1,4 +1,4 @@
-import { ResourceType, ScopeType } from '../api/rule.model';
+import { ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 
 export enum NavigationLinkType {
   Home = 'home',

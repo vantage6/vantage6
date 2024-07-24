@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { OperationType, ResourceType, Rule, ScopeType } from '../models/api/rule.model';
-import { Pagination } from '../models/api/pagination.model';
-import { Collaboration } from '../models/api/collaboration.model';
-import { BaseUser } from '../models/api/user.model';
+import { OperationType, ResourceType, Rule, ScopeType } from 'src/app/models/api/rule.model';
+import { Pagination } from 'src/app/models/api/pagination.model';
+import { Collaboration } from 'src/app/models/api/collaboration.model';
+import { BaseUser } from 'src/app/models/api/user.model';
 import { ApiService } from './api.service';
-import { USER_ID } from '../models/constants/sessionStorage';
+import { USER_ID } from 'src/app/models/constants/sessionStorage';
 import { TokenStorageService } from './token-storage.service';
 import { BehaviorSubject, Observable } from 'rxjs';
 

@@ -7,14 +7,20 @@ import sqlalchemy
 from flask import request, g
 from flask_restful import Api
 
-from vantage6.algorithm.store.model import Vantage6Server
-from vantage6.algorithm.store.model.rule import Operation
-from vantage6.algorithm.store.resource import with_permission, AlgorithmStoreResources
+
 from vantage6.common import logger_name
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.algorithm.store import db
 from vantage6.algorithm.store.permission import Operation as P, PermissionManager
 from vantage6.algorithm.store.model.user import User as db_User
+from vantage6.algorithm.store.model import Vantage6Server
+from vantage6.algorithm.store.model.rule import Operation
+from vantage6.algorithm.store.model.policy import Policy
+from vantage6.algorithm.store.resource import (
+    request_from_store_to_v6_server,
+    with_permission,
+    AlgorithmStoreResources,
+)
 
 from vantage6.algorithm.store.resource.schema.input_schema import UserInputSchema
 from vantage6.algorithm.store.resource.schema.output_schema import UserOutputSchema
@@ -95,7 +101,7 @@ class Users(AlgorithmStoreResources):
         """List users
         ---
         description: >-
-            Returns a list of users that you are allowed to see.
+            Returns a list of users registered in the algorithm store.
 
         parameters:
           - in: query
@@ -107,13 +113,19 @@ class Users(AlgorithmStoreResources):
               * The percent sign (%) represents zero, one, or multiple
               characters\n
               * underscore sign (_) represents one, single character
-
           - in: query
             name: role_id
             schema:
               type: integer
             description: Role that is assigned to user
-            description: Number of items per page (default=10)
+          - in: query
+            name: can_review
+            schema:
+              type: boolean
+            description: >-
+              Filter users that can review algorithms. If true, only users that are
+              allowed to review algorithms are returned. If false, only users that are
+              not allowed to review algorithms are returned.
           - in: query
             name: page
             schema:
@@ -166,6 +178,19 @@ class Users(AlgorithmStoreResources):
                 .join(db.Role)
                 .filter(db.Role.id == args["role_id"])
             )
+
+        # find users that can review algorithms
+        if "can_review" in args:
+            can_review = bool(args["can_review"])
+            # TODO this approach may not be the most efficient if there are many users.
+            # Consider improving.
+            reviewers = [
+                user.id for user in db.User.get() if user.can("review", Operation.EDIT)
+            ]
+            if can_review:
+                q = q.filter(db.User.id.in_(reviewers))
+            else:
+                q = q.filter(db.User.id.notin_(reviewers))
 
         # paginate results
         try:
@@ -224,6 +249,30 @@ class Users(AlgorithmStoreResources):
         # check unique constraints
         if db.User.get_by_server(username=data["username"], v6_server_id=server.id):
             return {"msg": "User already registered."}, HTTPStatus.BAD_REQUEST
+
+        # check whether users of this server are allowed to get any permissions
+        allowed_servers_to_edit = Policy.get_servers_with_edit_permission()
+        if allowed_servers_to_edit and server.url not in allowed_servers_to_edit:
+            return {
+                "msg": f"Users from the server {server.url} are not allowed to be "
+                "registered in this algorithm store by the store administrator."
+            }, HTTPStatus.FORBIDDEN
+
+        # Check if the user exists in the relevant vantage6 server. Note that this only
+        # works if:
+        # 1. the user executing this request is in the same v6 server
+        # 2. They are allowed to see the user in the v6 server
+        server_response = request_from_store_to_v6_server(
+            url=f"{server.url}/user",
+            params={"username": data["username"]},
+        )
+        if (
+            server_response.status_code != HTTPStatus.OK
+            or len(server_response.json().get("data", [])) != 1
+        ):
+            return {
+                "msg": f"User '{data['username']}' not found in the Vantage6 server."
+            }, HTTPStatus.BAD_REQUEST
 
         # process the required roles. It is only possible to assign roles with
         # rules that you already have permission to. This way we ensure you can
@@ -397,6 +446,7 @@ class User(AlgorithmStoreResources):
     @with_permission(module_name, Operation.DELETE)
     def delete(self, id):
         """Remove user.
+
         ---
         description: >-
           Unregister the vantage6 user account from the algorithm store.\n
@@ -427,5 +477,5 @@ class User(AlgorithmStoreResources):
             return {"msg": f"user id={id} not found"}, HTTPStatus.NOT_FOUND
 
         user.delete()
-        log.info(f"user id={id} is removed from the database")
+        log.info("user id=%s is removed from the database", id)
         return {"msg": f"user id={id} is removed from the database"}, HTTPStatus.OK

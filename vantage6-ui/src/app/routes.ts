@@ -33,6 +33,7 @@ export const routePaths = {
   stores: '/store/choose',
   store: '/store/store',
   algorithmsManage: '/store/algorithms',
+  algorithmsOld: '/store/old/algorithms',
   algorithmCreate: '/store/algorithms/create',
   algorithmEdit: '/store/algorithms/edit',
   algorithmManage: '/store/algorithms',
@@ -45,7 +46,18 @@ export const routePaths = {
   task: '/analyze/tasks',
   algorithms: '/analyze/algorithms',
   algorithm: '/analyze/algorithms',
-  templateTaskCreate: '/analyze/template-tasks/create'
+  templateTaskCreate: '/analyze/template-tasks/create',
+  storeUsers: '/store/users',
+  storeUser: '/store/users',
+  storeUserCreate: '/store/users/create',
+  storeUserEdit: '/store/users/edit',
+  storeRoles: '/store/roles',
+  storeRole: '/store/roles',
+  algorithmReviews: '/store/review',
+  algorithmReviewAssign: '/store/review/assign',
+  algorithmReview: '/store/review',
+  algorithmReviewSubmit: '/store/review/submit',
+  myPendingAlgorithms: '/store/pending/algorithms'
 };
 
 export const routerConfig = {
@@ -87,6 +99,7 @@ export const routerConfig = {
   stores: 'choose',
   store: 'store',
   algorithmsManage: 'algorithms',
+  algorithmsOld: 'old/algorithms',
   algorithmCreate: 'algorithms/create',
   algorithmEdit: 'algorithms/edit/:id',
   algorithmManage: 'algorithms/:id',
@@ -98,5 +111,16 @@ export const routerConfig = {
   task: 'tasks/:id',
   algorithms: 'algorithms',
   algorithm: 'algorithms/:id/:algo_store_id',
-  templateTaskCreate: 'template-tasks/create'
+  templateTaskCreate: 'template-tasks/create',
+  storeUsers: 'users',
+  storeUser: 'users/:id',
+  storeUserCreate: 'users/create',
+  storeUserEdit: 'users/edit/:id',
+  storeRoles: 'roles',
+  storeRole: 'roles/:id',
+  algorithmReviews: 'review',
+  algorithmReviewAssign: 'review/assign/:algoID',
+  algorithmReview: 'review/:algoID',
+  algorithmReviewSubmit: 'review/submit/:id',
+  myPendingAlgorithms: 'pending/algorithms'
 };

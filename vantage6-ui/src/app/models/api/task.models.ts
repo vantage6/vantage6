@@ -22,6 +22,7 @@ export enum TaskStatus {
   Failed = 'failed',
   StartFailed = 'start failed',
   NoDockerImage = 'non-existing Docker image',
+  NotAllowed = 'not allowed',
   Crashed = 'crashed',
   Killed = 'killed by user'
 }
@@ -52,6 +53,7 @@ export interface BaseTask {
   image: string;
   init_org: BaseLink;
   init_user: BaseLink;
+  algorithm_store?: BaseLink;
   runs: TaskRun[];
   created_at: string;
   databases: TaskDBOutput[];
@@ -76,6 +78,7 @@ export interface Task {
   parent?: BaseLink;
   study?: BaseLink;
   collaboration?: BaseLink;
+  algorithm_store?: BaseLink;
 }
 
 export interface TaskDBOutput {
@@ -109,7 +112,7 @@ interface TaskInput {
   parameters: TaskParameter[];
 }
 
-interface TaskParameter {
+export interface TaskParameter {
   label: string;
   value: string;
 }
@@ -132,6 +135,7 @@ export interface CreateTask {
   image: string;
   collaboration_id: number;
   study_id?: number;
+  store_id: number;
   databases: TaskDatabase[];
   organizations: Organization[];
 }

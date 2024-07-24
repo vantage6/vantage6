@@ -15,10 +15,10 @@
       </mat-option>
     </mat-select>
   </mat-form-field>
-  <app-permissions-matrix
+  <app-permissions-matrix-server
     class="role-form__permissions-matrix"
     [selectable]="selectableRules"
     (changed)="handleChangedSelection($event)"
-  ></app-permissions-matrix>
+  ></app-permissions-matrix-server>
   <app-role-submit-buttons [submitDisabled]="submitDisabled" (cancelled)="handleCancel()"></app-role-submit-buttons>
 </form>

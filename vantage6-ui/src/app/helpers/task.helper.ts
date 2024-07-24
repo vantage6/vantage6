@@ -1,5 +1,5 @@
 import { TranslateService } from '@ngx-translate/core';
-import { Task, TaskStatus, TaskStatusGroup } from '../models/api/task.models';
+import { Task, TaskStatus, TaskStatusGroup } from 'src/app/models/api/task.models';
 
 export const getChipTypeForStatus = (status: TaskStatus): 'default' | 'active' | 'success' | 'error' => {
   switch (status) {
@@ -40,6 +40,7 @@ export const getStatusType = (status: TaskStatus): TaskStatusGroup => {
     case TaskStatus.StartFailed:
     case TaskStatus.NoDockerImage:
     case TaskStatus.Crashed:
+    case TaskStatus.NotAllowed:
     case TaskStatus.Killed:
       return TaskStatusGroup.Error;
     default:

@@ -10,7 +10,6 @@ store to a vantage6 server.
 import os
 from gevent import monkey
 
-
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
     # flake8: noqa: E402 (ignore import error)
@@ -21,6 +20,7 @@ import importlib
 import logging
 import json
 import traceback
+import datetime
 
 from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
@@ -34,17 +34,19 @@ from pathlib import Path
 
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
+from vantage6.common.enum import StorePolicies
 from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
 from vantage6.backend.common.globals import HOST_URI_ENV
+from vantage6.algorithm.store.default_roles import get_default_roles
 
 # TODO move this to common, then remove dependency on CLI in algorithm store
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
-from vantage6.algorithm.store.default_roles import get_default_roles
 from vantage6.algorithm.store.globals import API_PATH
 from vantage6.algorithm.store.globals import RESOURCES, SERVER_MODULE_NAME
 
 # TODO the following are simply copies of the same files in the server - refactor
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager, Database
+from vantage6.algorithm.store.model.common.enums import ReviewStatus
 from vantage6.algorithm.store import db
 
 # TODO move server imports to common / refactor
@@ -97,6 +99,9 @@ class AlgorithmStoreApp:
         # setup the permission manager for the API endpoints
         self.permissions = PermissionManager()
 
+        # sync policies with the database
+        self.setup_policies(self.ctx.config)
+
         # Api - REST JSON-rpc
         self.api = Api(self.app)
         self.configure_api()
@@ -109,6 +114,16 @@ class AlgorithmStoreApp:
         host_uri = self.ctx.config.get("dev", {}).get("host_uri")
         if host_uri:
             os.environ[HOST_URI_ENV] = host_uri
+
+        # TODO v5+ remove this - for backwards compatibility of v4.6 with v4.3-4.5 we
+        # are setting algorithms with empty values for the `submitted` field (new in
+        # v4.6) to approved
+        for algorithm in db.Algorithm.get():
+            if not algorithm.submitted_at:
+                algorithm.status = ReviewStatus.APPROVED.value
+                algorithm.submitted_at = datetime.datetime.now(datetime.timezone.utc)
+                algorithm.approved_at = datetime.datetime.now(datetime.timezone.utc)
+                algorithm.save()
 
         log.info("Initialization done")
 
@@ -259,7 +274,7 @@ class AlgorithmStoreApp:
     def _add_default_roles() -> None:
         for role in get_default_roles():
             if not db.Role.get_by_name(role["name"]):
-                log.warning("Creating new default role %s", role["name"].value)
+                log.warning("Creating new default role %s", role["name"])
                 new_role = db.Role(
                     name=role["name"],
                     description=role["description"],
@@ -275,6 +290,43 @@ class AlgorithmStoreApp:
                     )
                     current_role.rules = role["rules"]
                     current_role.save()
+
+    def setup_policies(self, config: dict) -> None:
+        """
+        Setup the policies for the API endpoints.
+
+        Parameters
+        ----------
+        config: dict
+            Configuration object containing the policies
+        """
+        old_policies = db.Policy.get()
+
+        # delete old policies from the database
+        # pylint: disable=expression-not-assigned
+        [p.delete() for p in old_policies]
+
+        policies: dict = config.get("policies", {})
+        for policy, policy_value in policies.items():
+            # TODO v5+ remove this deprecated policy in favour of 'algorithm_view'
+            if policy in ["algorithms_open", "algorithms_open_to_whitelisted"]:
+                continue
+            elif policy not in [p.value for p in StorePolicies]:
+                log.warning("Policy '%s' is not a valid policy, skipping", policy)
+                continue
+            # add other policies to the database
+            if isinstance(policy_value, list):
+                for value in policy_value:
+                    db.Policy(key=policy, value=value).save()
+            else:
+                db.Policy(key=policy, value=policy_value).save()
+
+        # if the 'allow_localhost' policy is set to false, remove any whitelisted
+        # localhost servers
+        if not policies.get("allow_localhost", False):
+            localhost_servers = db.Vantage6Server.get_localhost_servers()
+            for server in localhost_servers:
+                server.delete()
 
     def start(self) -> None:
         """
@@ -299,7 +351,10 @@ class AlgorithmStoreApp:
                 if not db.User.get_by_server(
                     username=root_username, v6_server_id=v6_server.id
                 ):
-                    log.warning("Creating root user")
+                    log.warning(
+                        "Creating root user. Please note that it cannot be verified at "
+                        "this point that the user exists at the given vantage6 server."
+                    )
 
                     root = db.Role.get_by_name("Root")
 
@@ -316,18 +371,23 @@ class AlgorithmStoreApp:
                     )
 
             else:
-                log.warning(
-                    "No v6_server_uri and/or username found in the configuration file "
-                    "in the root_user section. This means no-one can alter resources on"
-                    " this server, unless one or more users were already authorized to "
-                    "make changes to the algorithm store previously."
+                default_msg = (
+                    "The 'root_user' section of the configuration file is "
+                    "incomplete! Please include a 'v6_server_uri' and 'username' "
+                    "to add this root user."
                 )
-        else:
+                if len(db.User.get()) == 0:
+                    log.warning(
+                        "%s No users are defined in the database either."
+                        "This means no-one can alter resources on this server.",
+                        default_msg,
+                    )
+                else:
+                    log.warning(default_msg)
+        elif len(db.User.get()) == 0:
             log.warning(
-                "No root user found in the configuration file. This means "
-                "no-one can alter resources on this server, unless one or "
-                "more users were already authorized to make changes to the "
-                "algorithm store prevoiusly."
+                "No root user found in the configuration file, nor are users defined in"
+                " the database. This means no-one can alter resources on this server."
             )
         return self
 

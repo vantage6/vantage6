@@ -1,27 +1,25 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
+import { takeUntil } from 'rxjs';
 import { BaseOrganization, OrganizationSortProperties } from 'src/app/models/api/organization.model';
 import { Role } from 'src/app/models/api/role.model';
-import { User, UserForm } from 'src/app/models/api/user.model';
+import { User } from 'src/app/models/api/user.model';
 import { PASSWORD_VALIDATORS } from 'src/app/validators/passwordValidators';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { createCompareValidator } from 'src/app/validators/compare.validator';
 import { RuleService } from 'src/app/services/rule.service';
-import { Rule } from 'src/app/models/api/rule.model';
+import { Rule, Rule_ } from 'src/app/models/api/rule.model';
 import { RoleService } from 'src/app/services/role.service';
+import { BaseFormComponent } from '../../admin-base/base-form/base-form.component';
 
 @Component({
   selector: 'app-user-form',
   templateUrl: './user-form.component.html',
   styleUrls: ['./user-form.component.scss']
 })
-export class UserFormComponent implements OnInit, OnDestroy {
+export class UserFormComponent extends BaseFormComponent implements OnInit, OnDestroy {
   @Input() user?: User;
-  @Output() cancelled: EventEmitter<void> = new EventEmitter();
-  @Output() submitted: EventEmitter<UserForm> = new EventEmitter();
 
-  destroy$ = new Subject();
   form = this.fb.nonNullable.group(
     {
       username: ['', [Validators.required]],
@@ -36,8 +34,7 @@ export class UserFormComponent implements OnInit, OnDestroy {
     },
     { validators: [createCompareValidator('password', 'passwordRepeat')] }
   );
-  isEdit: boolean = false;
-  isLoading: boolean = true;
+
   organizations: BaseOrganization[] = [];
   organizationRoles: Role[] = [];
   /* Roles assigned to the user, prior to editing. */
@@ -56,7 +53,9 @@ export class UserFormComponent implements OnInit, OnDestroy {
     private organizationService: OrganizationService,
     private ruleService: RuleService,
     private roleService: RoleService
-  ) {}
+  ) {
+    super();
+  }
 
   async ngOnInit(): Promise<void> {
     this.isLoading = true;
@@ -77,20 +76,6 @@ export class UserFormComponent implements OnInit, OnDestroy {
     }
 
     this.isLoading = false;
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next(true);
-  }
-
-  handleSubmit() {
-    if (this.form.valid) {
-      this.submitted.emit(this.form.getRawValue());
-    }
-  }
-
-  handleCancel() {
-    this.cancelled.emit();
   }
 
   private setupForm(): void {
@@ -141,8 +126,8 @@ export class UserFormComponent implements OnInit, OnDestroy {
     this.form.controls.roles.enable();
   }
 
-  public handleChangedRules(rules: Rule[]): void {
-    this.editSessionUserRules = rules;
+  public handleChangedRules(rules: Rule_[]): void {
+    this.editSessionUserRules = rules as Rule[];
     this.form.controls.rules.setValue(rules.map((rule) => rule.id));
   }
 
