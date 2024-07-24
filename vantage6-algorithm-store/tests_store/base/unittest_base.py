@@ -1,9 +1,8 @@
 import unittest
 from vantage6.algorithm.store.default_roles import get_default_roles
 from vantage6.algorithm.store.model.review import Review
-import yaml
 
-from vantage6.common.globals import APPNAME, InstanceType
+from vantage6.common.globals import InstanceType
 from vantage6.backend.common import test_context
 from vantage6.algorithm.store.model.base import Database, DatabaseSessionManager
 from vantage6.algorithm.store import AlgorithmStoreApp
@@ -25,25 +24,9 @@ class TestResources(unittest.TestCase):
             PACKAGE_FOLDER, InstanceType.ALGORITHM_STORE
         )
 
-        # create server instance. Patch the start_background_task method
-        # to prevent the server from starting a ping/pong thread that will
-        # prevent the tests from starting
-        store_app = AlgorithmStoreApp(ctx)
-        cls.server = store_app
-
-        # file_ = str(
-        #     PACKAGE_FOLDER / APPNAME / "server" / "_data" / "unittest_fixtures.yaml"
-        # )
-        # with open(file_) as f:
-        #     cls.entities = yaml.safe_load(f.read())
-        # load(cls.entities)
-
-        store_app.app.testing = True
-        cls.app = store_app.app.test_client()
-
-        cls.credentials = {
-            "root": {"username": "root", "password": "root"},
-        }
+        cls.server = AlgorithmStoreApp(ctx)
+        cls.server.app.testing = True
+        cls.app = cls.server.app.test_client()
 
     @classmethod
     def tearDownClass(cls):
