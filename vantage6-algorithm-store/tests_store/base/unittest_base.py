@@ -76,8 +76,8 @@ class TestResources(unittest.TestCase):
         self,
         username: str = "test_user",
         server_url: str = "http://localhost:5000",
-        user_roles: list[Role] = [],
-        user_rules: list[Rule] = [],
+        user_roles: list[Role] = None,
+        user_rules: list[Rule] = None,
     ) -> tuple[User, Vantage6Server]:
         server = self.register_server(server_url)
         user = self.register_user(server.id, username, user_roles, user_rules)
