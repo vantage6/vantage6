@@ -1,12 +1,13 @@
 import subprocess
 import click
 
+from vantage6.common import info
+from vantage6.common.globals import InstanceType
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.server.start import cli_server_start
-from vantage6.common.globals import InstanceType
 from vantage6.client import Client
 
 
@@ -68,6 +69,7 @@ def start_demo_network(
         subprocess.run(cmd)
 
     # now that both server and store have been started, couple them
+    info("Linking local algorithm store to server...")
     store_ctxs, _ = AlgorithmStoreContext.available_configurations(system_folders=True)
     store_ctx = [c for c in store_ctxs if c.name == f"{ctx.name}_store"][0]
     client = Client(
@@ -79,16 +81,31 @@ def start_demo_network(
     # TODO these credentials are hardcoded and may change if changed elsewhere. Link
     # them together so that they are guaranteed to be the same.
     USERNAME = "org_1-admin"
-    client.authenticate(USERNAME, "password")
+    PASSWORD = "password"
+    client.authenticate(USERNAME, PASSWORD)
     existing_stores = client.store.list().get("data", [])
-    if not existing_stores:
-        store = client.store.create(
-            # TODO get store port
-            algorithm_store_url=f"http://localhost:{store_ctx.config['port']}",
+    existing_urls = [store["url"] for store in existing_stores]
+    local_store_url = f"http://localhost:{store_ctx.config['port']}"
+    if not local_store_url in existing_urls:
+        client.store.create(
+            algorithm_store_url=local_store_url,
             name="local store",
             all_collaborations=True,
             force=True,  # required to link localhost store
         )
-        client.store.set(store["id"])
-        # register user as store admin
-        client.store.user.register(USERNAME, [1])
+        # note that we do not need to register the user as root of the store: this is
+        # already handled in the store config file and is executed on store startup (and
+        # successful because server is already started up at that point)
+    info("Done!")
+
+    # link the community store also to the server
+    info("Linking community algorithm store to local server...")
+    COMMUNITY_STORE = "https://store.cotopaxi.vantage6.ai"
+    if not COMMUNITY_STORE in existing_urls:
+        client.store.create(
+            algorithm_store_url=COMMUNITY_STORE,
+            name="Community store (read-only)",
+            all_collaborations=True,
+            force=True,  # required to continue when linking localhost server
+        )
+    info("Done!")
