@@ -97,8 +97,10 @@ def _algorithm_client() -> callable:
             # read token from the environment
             token_file = os.environ.get("TOKEN_FILE")
             if not token_file:
-                error("Token file not found. Are you running a `compute` container? "
-                      "Exiting...")
+                error(
+                    "Token file not found. Are you running a `compute` container? "
+                    "Exiting..."
+                )
                 exit(1)
 
             info("Reading token")
@@ -109,7 +111,6 @@ def _algorithm_client() -> callable:
             host = os.environ["HOST"]
             port = os.environ["PORT"]
             api_path = os.environ["API_PATH"]
-
 
             client = AlgorithmClient(token=token, host=host, port=port, path=api_path)
             return func(client, *args, **kwargs)
@@ -124,6 +125,27 @@ def _algorithm_client() -> callable:
 # alias for algorithm_client so that algorithm developers can do
 # @algorithm_client instead of @algorithm_client()
 algorithm_client = _algorithm_client()
+
+
+def source_database(func) -> callable:
+    @wraps(func)
+    def decorator(*args, **kwargs) -> callable:
+        """
+        Wrap the function with the database URI
+
+        Parameters
+        ----------
+        mock_uri : str
+            Mock URI to use instead of the regular URI
+        """
+        uri = os.environ.get("DATABASE_URI")
+        if uri is None:
+            error("No database URI provided. Exiting...")
+            exit(1)
+
+        return func(uri, *args, **kwargs)
+
+    return decorator
 
 
 def data(number_of_databases: int = 1) -> callable:
@@ -174,8 +196,9 @@ def data(number_of_databases: int = 1) -> callable:
             mock_data : list[pd.DataFrame]
                 Mock data to use instead of the regular data
             """
-            if mock_data is not None:
-                return func(*mock_data, *args, **kwargs)
+            # TODO FM 24-07-2024 uncomment this
+            # if mock_data is not None:
+            #     return func(*mock_data, *args, **kwargs)
 
             # read the labels that the user requested
             labels = _get_user_database_labels()
@@ -196,17 +219,11 @@ def data(number_of_databases: int = 1) -> callable:
                 )
 
             for i in range(number_of_databases):
+
                 label = labels[i]
                 # read the data from the database
-                info("Reading data from database")
+                info("Reading Dataframe")
                 data_ = _get_data_from_label(label)
-
-                # do any data preprocessing here
-                info(f"Applying preprocessing for database '{label}'")
-                env_prepro = os.environ.get(f"{label.upper()}_PREPROCESSING")
-                if env_prepro is not None:
-                    preprocess = json.loads(env_prepro)
-                    data_ = preprocess_data(data_, preprocess)
 
                 # add the data to the arguments
                 args = (data_, *args)
@@ -218,86 +235,6 @@ def data(number_of_databases: int = 1) -> callable:
         return decorator
 
     return protection_decorator
-
-def database_connection(types: list[str], include_metadata: bool = True) -> callable:
-    """
-    Decorator that adds a database connection to a function
-
-    By adding @database_connection to a function, a database connection will
-    be added to the front of the argument list. This connection can be used to
-    communicate with the database.
-
-    Parameters
-    ----------
-    types : list[str]
-        List of types of databases to connect to. Currently only "OMOP" is
-        supported.
-    include_metadata : bool
-        Whether to include metadata in the function arguments. This metadata
-        contains the database name, CDM schema, and results schema. Default is
-        True.
-
-    Example
-    -------
-    For a single OMOP data source:
-    >>> @database_connection(types=["OMOP"])
-    >>> def my_algorithm(connection: Connection, meta: OHDSIMetaData,
-    >>>                  <other arguments>):
-    >>>     pass
-
-    In case you have multiple OMOP data sources:
-    >>> @database_connection(types=["OMOP", "OMOP"])
-    >>> def my_algorithm(connection1: Connection, meta1: OHDSIMetaData,
-    >>>                  connection2: Connection, meta2: OHDSIMetaData,
-    >>>                  <other arguments>):
-    >>>     pass
-
-    In the case you do not want to include the metadata:
-    >>> @database_connection(types=["OMOP"], include_metadata=False)
-    >>> def my_algorithm(connection: Connection, <other arguments>):
-    >>>     pass
-    """
-
-    def connection_decorator(func: callable, *args, **kwargs) -> callable:
-        @wraps(func)
-        def decorator(*args, **kwargs) -> callable:
-            """
-            Wrap the function with the database connection
-            """
-            labels = _get_user_database_labels()
-            if len(labels) < len(types):
-                error(
-                    f"User provided {len(labels)} databases, but algorithm "
-                    f"requires {len(types)} database connections. Exiting."
-                )
-                exit(1)
-            if len(labels) > len(types):
-                warn(
-                    f"User provided {len(labels)} databases, but algorithm "
-                    f"requires {len(types)} database connections. Using the "
-                    f"first {len(types)} databases."
-                )
-
-            db_args = []
-            # Note: zip will stop at the shortest iterable, so this is exactly
-            # what we want in the len(labels) > len(types) case.
-            for type_, label in zip(types, labels):
-                match type_.upper():
-                    case "OMOP":
-                        info("Creating OMOP database connection")
-                        connection = _create_omop_database_connection(label)
-                        db_args.append(connection)
-                        if include_metadata:
-                            meta = get_ohdsi_metadata(label)
-                            db_args.append(meta)
-                    # case "FHIR":
-                    #     pass
-
-            return func(*db_args, *args, **kwargs)
-
-        return decorator
-
-    return connection_decorator
 
 
 def metadata(func: callable) -> callable:
@@ -339,122 +276,6 @@ def metadata(func: callable) -> callable:
     return decorator
 
 
-def get_ohdsi_metadata(label: str) -> OHDSIMetaData:
-    """
-    Retrieve the OHDSI metadata from the environment variables.
-
-    The following environment variables are expected to be set in the
-    node configuration in the `env` key of the `database` section:
-
-    ```yaml
-    ...
-    databases:
-      - label: my_database
-        type: OMOP
-        uri: jdbc:postgresql://host.docker.internal:5454/postgres
-        env:
-            CDM_DATABASE: "my_user"
-            CDM_SCHEMA: "my_password"
-            RESULTS_SCHEMA: "my_password"
-            DBMS: "postgresql"
-    ...
-    ```
-
-    In case these are not set, the algorithm execution is terminated.
-
-    Parameters
-    ----------
-    label : str
-        Label of the database to connect to
-
-    Example
-    -------
-    >>> get_ohdsi_metadata("my_database")
-    """
-    # check that all node environment variables are set
-    expected_env_vars = ("CDM_DATABASE", "CDM_SCHEMA", "RESULTS_SCHEMA", "DBMS")
-    label_ = label.upper()
-    for var in expected_env_vars:
-        _check_environment_var_exists_or_exit(f"{label_}_DB_PARAM_{var}")
-
-    tmp = Path(os.environ["SESSION_FOLDER"])
-    metadata = OHDSIMetaData(
-        database=os.environ[f"{label_}_DB_PARAM_CDM_DATABASE"],
-        cdm_schema=os.environ[f"{label_}_DB_PARAM_CDM_SCHEMA"],
-        results_schema=os.environ[f"{label_}_DB_PARAM_RESULTS_SCHEMA"],
-        incremental_folder=tmp / "incremental",
-        cohort_statistics_folder=tmp / "cohort_statistics",
-        export_folder=tmp / "export",
-        dbms=os.environ[f"{label_}_DB_PARAM_DBMS"],
-    )
-    return metadata
-
-
-def _create_omop_database_connection(label: str) -> callable:
-    """
-    Create a connection to an OMOP database.
-
-    It expects that the following environment variables are set:
-    - DB_PARAM_DBMS: type of database to connect to
-    - DB_PARAM_USER: username to connect to the database
-    - DB_PARAM_PASSWORD: password to connect to the database
-
-    These should be provided in the vantage6 node configuration file in the
-    `database` section without the `DB_PARAM_` prefix. For example:
-
-    ```yaml
-    ...
-    databases:
-      - label: my_database
-        type: OMOP
-        uri: jdbc:postgresql://host.docker.internal:5454/postgres
-        env:
-            DBMS: "postgresql"
-            USER: "my_user"
-            PASSWORD: "my_password"
-    ...
-    ```
-
-    Parameters
-    ----------
-    label : str
-        Label of the database to connect to
-
-    Returns
-    -------
-    callable
-        OHDSI Database Connection object
-    """
-
-    # check that the OHDSI package is available in this container
-    if not OHDSI_AVAILABLE:
-        error("OHDSI/DatabaseConnector is not available.")
-        error("Did you use 'algorithm-ohdsi-base' image to build this " "algorithm?")
-        exit(1)
-
-    # environment vars are always uppercase
-    label_ = label.upper()
-
-    # check that the required environment variables are set
-    for var in ("DBMS", "USER", "PASSWORD"):
-        _check_environment_var_exists_or_exit(f"{label_}_DB_PARAM_{var}")
-    _check_environment_var_exists_or_exit(f"{label_}_DATABASE_URI")
-
-    info("Reading OHDSI environment variables")
-    dbms = os.environ[f"{label_}_DB_PARAM_DBMS"]
-    uri = os.environ[f"{label_}_DATABASE_URI"]
-    user = os.environ[f"{label_}_DB_PARAM_USER"]
-    password = os.environ[f"{label_}_DB_PARAM_PASSWORD"]
-    info(f" - dbms: {dbms}")
-    info(f" - uri: {uri}")
-    info(f" - user: {user}")
-
-    info("Creating OHDSI database connection")
-    return connect_to_omop(
-        dbms=dbms, connection_string=uri, password=password, user=user
-    )
-
-
 def _check_environment_var_exists_or_exit(var: str):
     """
     Check if the environment variable 'var' exists or print and exit.
@@ -483,22 +304,14 @@ def _get_data_from_label(label: str) -> pd.DataFrame:
     pd.DataFrame
         Data from the database
     """
-    # Load the input data from the input file - this may e.g. include the
-    database_uri = os.environ[f"{label.upper()}_DATABASE_URI"]
-    info(f"Using '{database_uri}' with label '{label}' as database")
+    # Load the dataframe by the user specified handle. The dataframes are always stored
+    # in the session folder, which is set by the vantage6 node. The label is the name of
+    # the dataframe file, which is set by the user when creating the task.
+    dataframe_file = os.environ["SESSION_FOLDER"]
+    dataframe_uri = os.path.join(dataframe_file, f"{label}.parquet")
+    info(f"Using '{dataframe_uri}' with label '{label}' as database")
 
-    # Get the database type from the environment variable, this variable is
-    # set by the vantage6 node based on its configuration file.
-    database_type = os.environ.get(f"{label.upper()}_DATABASE_TYPE", "csv").lower()
-
-    # Load the data based on the database type. Try to provide environment
-    # variables that should be available for some data types.
-    return load_data(
-        database_uri,
-        database_type,
-        query=os.environ.get(f"{label.upper()}_QUERY"),
-        sheet_name=os.environ.get(f"{label.upper()}_SHEET_NAME"),
-    )
+    return pd.read_parquet(dataframe_uri)
 
 
 def _get_user_database_labels() -> list[str]:
@@ -512,7 +325,7 @@ def _get_user_database_labels() -> list[str]:
     """
     # read the labels that the user requested, which is a comma
     # separated list of labels.
-    labels = os.environ["USER_REQUESTED_DATABASE_LABELS"]
+    labels = os.environ["USER_REQUESTED_DATAFRAME_HANDLES"]
     return labels.split(",")
 
 

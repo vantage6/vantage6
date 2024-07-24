@@ -33,8 +33,9 @@ class Node(Authenticatable):
         Organization that the node belongs to
     config : :class:`~.model.node_config.NodeConfig`
         Configuration of the node
-    session_states : list[:class:`~.model.session_state.SessionState`]
-        List of session states that the node has
+    columns : list[:class:`~.model.column.Column`]
+        List of columns that are part of this node. Note that these columns can belong
+        to different dataframes.
     """
 
     _hidden_attributes = ["api_key"]
@@ -51,7 +52,7 @@ class Node(Authenticatable):
     collaboration = relationship("Collaboration", back_populates="nodes")
     organization = relationship("Organization", back_populates="nodes")
     config = relationship("NodeConfig", back_populates="node")
-    sessions = relationship("NodeSession", back_populates="node")
+    columns = relationship("Column", back_populates="node")
 
     # the type specification in Authenticatable
     __mapper_args__ = {

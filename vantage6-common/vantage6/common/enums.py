@@ -42,6 +42,17 @@ class SessionStatus(EnumBase):
 class TaskStatus(EnumBase):
     """Enum to represent the status of a task"""
 
+    # All runs have been completed
+    COMPLETED = "completed"
+    # At least one run has failed
+    FAILED = "failed"
+    # At least one run is not completed and no runs have failed
+    AWAITING = "awaiting"
+
+
+class RunStatus(EnumBase):
+    """Enum to represent the status of a run"""
+
     # Task has not yet been started (usually, node is offline)
     PENDING = "pending"
     # Task is being started
@@ -76,7 +87,7 @@ class TaskStatus(EnumBase):
 
         Parameters
         ----------
-        status: TaskStatus | str
+        status: RunStatus | str
             The status of the task
 
         Returns
@@ -85,10 +96,10 @@ class TaskStatus(EnumBase):
             True if task has failed, False otherwise
         """
         return status not in [
-            TaskStatus.INITIALIZING,
-            TaskStatus.ACTIVE,
-            TaskStatus.COMPLETED,
-            TaskStatus.PENDING,
+            RunStatus.INITIALIZING,
+            RunStatus.ACTIVE,
+            RunStatus.COMPLETED,
+            RunStatus.PENDING,
         ]
 
     @classmethod
@@ -98,7 +109,7 @@ class TaskStatus(EnumBase):
 
         Parameters
         ----------
-        status: TaskStatus | str
+        status: RunStatus | str
             The status of the task
 
         Returns
@@ -106,7 +117,7 @@ class TaskStatus(EnumBase):
         bool
             True if task has finished or failed, False otherwise
         """
-        return cls.has_task_failed(status) or status == TaskStatus.COMPLETED
+        return cls.has_task_failed(status) or status == RunStatus.COMPLETED
 
     @classmethod
     def dead_statuses(cls) -> list[str]:

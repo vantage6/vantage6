@@ -5,7 +5,7 @@ import re
 from marshmallow import Schema, fields, ValidationError, validates, validates_schema
 from marshmallow.validate import Length, Range, OneOf
 
-from vantage6.common.enums import TaskStatus
+from vantage6.common.enums import RunStatus
 from vantage6.common.enums import SessionStatus
 from vantage6.server.model.rule import Scope
 from vantage6.server.default_roles import DefaultRole
@@ -392,7 +392,7 @@ class RunInputSchema(Schema):
     finished_at = fields.DateTime()
     log = fields.String()
     result = fields.String()
-    status = fields.String(validate=OneOf([s.value for s in TaskStatus]))
+    status = fields.String(validate=OneOf([s.value for s in RunStatus]))
 
 
 class TaskInputSchema(_NameValidationSchema):
@@ -727,4 +727,4 @@ class DataframeNodeUpdateSchema(Schema):
     """Schema for validating input for updating the column names"""
 
     name = fields.String(required=True)
-    type_ = fields.String(required=True)
+    dtype = fields.String(required=True)

@@ -17,7 +17,7 @@ from flask_restful import Api
 from http import HTTPStatus
 
 from vantage6 import server
-from vantage6.common.enums import TaskStatus
+from vantage6.common.enums import RunStatus
 from vantage6.common.globals import MAIN_VERSION_NAME
 from vantage6.server import db
 from vantage6.server.model.user import User
@@ -328,7 +328,7 @@ class ContainerToken(ServicesResources):
                 return {"msg": "Image and task do no match"}, HTTPStatus.UNAUTHORIZED
 
         # validate that the task not has been finished yet
-        if TaskStatus.has_task_finished(db_task.status):
+        if RunStatus.has_task_finished(db_task.status):
             log.warning(
                 f"Node {g.node.id} attempts to generate a key for "
                 f"completed task {task_id}"
