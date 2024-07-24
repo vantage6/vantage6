@@ -118,9 +118,6 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
         """
         Get the sha256 of the image.
 
-        This method is run in a separate thread to prevent the request from taking too
-        long. Do NOT call this method from the main thread!
-
         Parameters
         ----------
         image : str
@@ -129,16 +126,25 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
         Returns
         -------
         tuple[str, str | None]
-            Tuple with the docker image without tag, and the digest of the image if
+            Tuple with the docker image including tag, and the digest of the image if
             found. If the digest could not be determined, `None` is returned.
         """
         # split image and tag
         try:
             # pylint: disable=unused-variable
-            registry, _, _ = parse_image_name(image_name)
+            registry, _, tag = parse_image_name(image_name)
             image_wo_tag = get_image_name_wo_tag(image_name)
         except Exception as e:
             raise ValueError(f"Invalid image name: {image_name}") from e
+
+        # if tag is not a digest, set it in the image name
+        # TODO v5+ consider including "latest" also in the image name in the database
+        # for consistency. This is not possible in v4 due to backwards compatibility
+        # with <4.5 where tags were not included unless explicitly provided.
+        if not tag.startswith("sha256:") and not tag == "latest":
+            image_and_tag = f"{image_wo_tag}:{tag}"
+        else:
+            image_and_tag = image_wo_tag
 
         # get the digest of the image.
         digest = get_digest(image_name)
@@ -154,9 +160,13 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
                     registry_password = reg.get("password")
                     break
             if registry_user and registry_password:
-                digest = get_digest(image_name, registry_user, registry_password)
+                digest = get_digest(
+                    full_image=image_name,
+                    docker_username=registry_user,
+                    docker_password=registry_password,
+                )
 
-        return image_wo_tag, digest
+        return image_and_tag, digest
 
 
 class Algorithms(AlgorithmBaseResource):
@@ -288,15 +298,15 @@ class Algorithms(AlgorithmBaseResource):
             # by default, only approved algorithms are returned
             q = q.filter(db_Algorithm.status == AlgorithmStatus.APPROVED)
 
-        if (image := request.args.get("image")) is not None:
+        if (full_image := request.args.get("image")) is not None:
             # determine the sha256 of the image, and filter on that. Sort descending
             # to get the latest addition to the store first
-            image_wo_tag, digest = self._get_image_digest(image)
+            image, digest = self._get_image_digest(full_image)
             if not digest:
                 return {
                     "msg": "Image digest could not be determined"
                 }, HTTPStatus.BAD_REQUEST
-            q = q.filter(db_Algorithm.image == image_wo_tag)
+            q = q.filter(db_Algorithm.image == image)
             # TODO at some point there may only be one registration of each algorithm,
             # so this sorting may not be necessary anymore
             q_with_digest = q.filter(db_Algorithm.digest == digest).order_by(
@@ -312,7 +322,7 @@ class Algorithms(AlgorithmBaseResource):
                 return {
                     "msg": f"The image '{image}' that you provided has digest "
                     f"'{digest}'. This algorithm version is not approved by the "
-                    "store. The currently approved version of this algorithm has"
+                    "store. The currently approved version of this algorithm has "
                     f"digest '{q.first().digest}'. Please include this digest if you"
                     f"want to use that image."
                 }, HTTPStatus.BAD_REQUEST
@@ -454,7 +464,7 @@ class Algorithms(AlgorithmBaseResource):
             }, HTTPStatus.BAD_REQUEST
 
         # validate that the algorithm image exists and retrieve the digest
-        image_wo_tag, digest = self._get_image_digest(data["image"])
+        image, digest = self._get_image_digest(data["image"])
         if digest is None:
             return {
                 "msg": "Image digest could not be determined"
@@ -464,7 +474,7 @@ class Algorithms(AlgorithmBaseResource):
         algorithm = db_Algorithm(
             name=data["name"],
             description=data.get("description", ""),
-            image=image_wo_tag,
+            image=image,
             partitioning=data["partitioning"],
             vantage6_version=data["vantage6_version"],
             code_url=data["code_url"],
@@ -773,16 +783,13 @@ class Algorithm(AlgorithmBaseResource):
         # If image is updated or refresh_digest is set to True, update the digest of the
         # image.
         if image != algorithm.image or data.get("refresh_digest", False):
-            image_wo_tag, digest = self._get_image_digest(image)
+            image, digest = self._get_image_digest(image)
             if digest is None:
                 return {
                     "msg": "Image digest could not be determined"
                 }, HTTPStatus.BAD_REQUEST
-            algorithm.image = image_wo_tag
-            algorithm.digest = digest
-        # don't forget to also update the image itself
-        if image is not None:
             algorithm.image = image
+            algorithm.digest = digest
 
         if (functions := data.get("functions")) is not None:
             for function in algorithm.functions:

@@ -37,6 +37,7 @@ setup(
         "PyJWT==2.6.0",
         "pyfiglet==0.8.post1",
         "SPARQLWrapper>=2.0.0",
+        "sqlalchemy==1.4.46",
         f'vantage6-common=={version_ns["__version__"]}',
     ],
     extras_require={

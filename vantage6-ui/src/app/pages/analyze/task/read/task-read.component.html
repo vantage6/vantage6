@@ -13,6 +13,7 @@
     </button>
   </mat-menu>
 </app-page-header>
+<app-alert *ngIf="algorithmNotFoundInStore" label="{{ 'task-read.alert-algorithm-not-found' | translate }}"></app-alert>
 <ng-container *ngIf="!isLoading && task; else loading">
   <mat-card *ngIf="isTaskNotComplete()">
     <mat-card-header>
