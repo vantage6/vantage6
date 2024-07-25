@@ -286,12 +286,16 @@ class ClientBase(object):
         return response.json()
 
     def setup_encryption(self, private_key_file: str | None) -> None:
-        """Enable the encryption module fot the communication
+        """Use private key file to setup encryption of sensitive data.
 
-        This will attach a Crypter object to the client. It will also
-        verify that the public key at the server matches the local
-        private key. In case they differ, the local public key is uploaded
-        to the server.
+        This function will use the private key file to setup encryption and decryption
+        of task input and results. It needs to be called once per client in encrypted
+        collaborations to ensure that the client can read and write encrypted data.
+
+        A Cryptor object that handles encryption and decryption will be attached to the
+        client, after verifying that the public key at the server matches the provided
+        private key. In case the server's public key does not match with the local
+        public key, the local one is uploaded to the server.
 
         Parameters
         ----------
