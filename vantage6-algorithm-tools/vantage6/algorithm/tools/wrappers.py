@@ -21,9 +21,7 @@ import os
 import pandas as pd
 
 from sqlalchemy import create_engine
-
 from enum import Enum
-
 from SPARQLWrapper import SPARQLWrapper, CSV
 
 from vantage6.algorithm.tools.util import info, error

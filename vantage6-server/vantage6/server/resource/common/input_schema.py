@@ -405,7 +405,9 @@ class TaskInputSchema(_NameValidationSchema):
     collaboration_id = fields.Integer(validate=Range(min=1))
     study_id = fields.Integer(validate=Range(min=1))
     store_id = fields.Integer(validate=Range(min=1))
-    depends_on_id = fields.Integer(validate=Range(min=1))
+    depends_on_ids = fields.List(
+        fields.Integer(validate=Range(min=1), required=False), missing=[]
+    )
     organizations = fields.List(fields.Dict(), required=True)
     databases = fields.List(fields.Dict(), allow_none=True)
     session_id = fields.Integer(validate=Range(min=1), required=True)

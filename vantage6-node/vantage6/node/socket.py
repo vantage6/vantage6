@@ -86,6 +86,18 @@ class NodeTaskNamespace(ClientNamespace):
                 job_id of the algorithm container that changed status
             status: str
                 New status of the algorithm container
+            run_id: int
+                run_id of the algorithm container that changed status
+            task_id: int
+                task_id of the algorithm container that changed status
+            collaboration_id: int
+                collaboration_id of the algorithm container that changed status
+            node_id: int
+                node_id of the algorithm container that changed status
+            organization_id: int
+                organization_id of the algorithm container that changed status
+            parent_id: int
+                parent_id of the algorithm container that changed status
         """
         status = data.get("status")
         job_id = data.get("job_id")
@@ -105,6 +117,17 @@ class NodeTaskNamespace(ClientNamespace):
                     job_id,
                     status,
                 )
+
+        # In case a container in the network completed successfully it could be that a
+        # dependant task for this node has been completed. In case this node fails to
+        # receive this event it should pick it up when the queue is synced on reconnect
+        # elif status == RunStatus.COMPLETED:
+        #     self.log.debug(
+        #         "Another node in the collaboration completed a task. This "
+        #         "node will check if any dependant tasks are ready to start."
+        #     )
+        #     self.node_worker_ref.sync_task_queue_with_server()
+
         # else: no need to do anything when a task has started/finished/... on
         # another node
 

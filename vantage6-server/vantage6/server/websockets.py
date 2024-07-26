@@ -265,17 +265,15 @@ class DefaultSocketNamespace(Namespace):
 
         # notify nodes that there is a new task available if there are tasks dependent
         # on this one
-        depentand_tasks = run.task.required_by
-        if (
-            depentand_tasks
-            and status != RunStatus.COMPLETED
-            and not RunStatus.has_task_failed(status)
-        ):
-            for task in depentand_tasks:
+        dependent_tasks = run.task.required_by
+        if status == RunStatus.COMPLETED and dependent_tasks:
+            self.log.debug(
+                f"{len(dependent_tasks)} dependant tasks ready to be executed"
+            )
+            for task in dependent_tasks:
                 emit(
                     "new_task",
                     {"id": task.id, "parent_id": task.parent_id},
-                    namespace="/tasks",
                     room=f"collaboration_{task.collaboration_id}",
                 )
 

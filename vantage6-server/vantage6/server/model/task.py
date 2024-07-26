@@ -62,8 +62,6 @@ class Task(Base):
         Id of the job that this task belongs to
     parent_id : int
         Id of the parent task (if any)
-    depends_on_id : int
-        Id of the task that this task depends on
     init_org_id : int
         Id of the organization that created this task
     init_user_id : int
@@ -81,8 +79,8 @@ class Task(Base):
         Parent task (if any)
     children : list[:class:`~.model.task.Task`]
         List of child tasks
-    depends_on : :class:`~.model.task.Task`
-        Task that this task depends on
+    depends_on : list[:class:`~.model.task.Task`]
+        List of tasks that this task depends on
     required_by : list[:class:`~.model.task.Task`]
         List of tasks that depend on this task
     runs : list[:class:`~.model.run.Run`]
@@ -102,7 +100,7 @@ class Task(Base):
     session : :class:`~.model.session.Session`
         Session that this task belongs to
     dataframe : :class:`~.model.dataframe.Dataframe`
-        Dataframe that is manipulated by this task, only tasks that have build the
+        Dataframe that is manipulated by this task, only tasks that modify the
         session dataframe will have this field filled in
     """
 
@@ -116,7 +114,6 @@ class Task(Base):
     dataframe_id = Column(Integer, ForeignKey("dataframe.id"))
     job_id = Column(Integer)
     parent_id = Column(Integer, ForeignKey("task.id"))
-    depends_on_id = Column(Integer, ForeignKey("task.id"))
     init_org_id = Column(Integer, ForeignKey("organization.id"))
     init_user_id = Column(Integer, ForeignKey("user.id"))
     created_at = Column(DateTime, default=datetime.datetime.now(datetime.timezone.utc))
@@ -132,9 +129,10 @@ class Task(Base):
     )
     depends_on = relationship(
         "Task",
-        remote_side="Task.id",
-        foreign_keys=[depends_on_id],
-        backref=backref("required_by"),
+        backref="required_by",
+        secondary="task_depends_on",
+        primaryjoin="Task.id==task_depends_on.c.task_id",
+        secondaryjoin="Task.id==task_depends_on.c.depends_on_id",
     )
     runs = relationship("Run", back_populates="task")
     # This second `Run` relationship is needed when constructing output JSON (
@@ -150,6 +148,27 @@ class Task(Base):
     dataframe = relationship(
         "Dataframe", back_populates="tasks", foreign_keys=[dataframe_id]
     )
+
+    # TODO FM 26-07-2024: Clean up these action methods. Use the same LocalAction enums
+    @hybrid_property
+    def action(self) -> str:
+        """
+        Determine the action that needs to be taken by the algorithm container
+        for this task.
+
+        Returns
+        -------
+        str
+            Action that needs to be taken by the algorithm container
+        """
+        return "compute" if not self.dataframe_id else "preprocess"
+
+    @action.expression
+    def action(cls):
+        """
+        SQL expression for the action hybrid property.
+        """
+        return case([(cls.dataframe_id.is_(None), "compute")], else_="preprocess")
 
     # TODO update in v4+, with renaming to 'run'
     @hybrid_property
@@ -200,8 +219,9 @@ class Task(Base):
                                     case(
                                         [
                                             (
-                                                models.Run.status
-                                                == RunStatus.FAILED.value,
+                                                models.Run.status.in_(
+                                                    RunStatus.failed_statuses()
+                                                ),
                                                 1,
                                             )
                                         ],
@@ -216,8 +236,9 @@ class Task(Base):
                                     case(
                                         [
                                             (
-                                                models.Run.status
-                                                == RunStatus.ACTIVE.value,
+                                                models.Run.status.in_(
+                                                    RunStatus.alive_statuses()
+                                                ),
                                                 1,
                                             )
                                         ],
@@ -225,7 +246,7 @@ class Task(Base):
                                     )
                                 )
                                 > 0,
-                                TaskStatus.ACTIVE.value,
+                                TaskStatus.AWAITING.value,
                             ),
                         ],
                         else_=TaskStatus.COMPLETED.value,
@@ -266,6 +287,8 @@ class Task(Base):
         return (
             f"<Task "
             f"{self.id}: '{self.name}', "
-            f"collaboration:{self.collaboration.name}"
+            f"status: {self.status}, "
+            f"collaboration:{self.collaboration.name}, "
+            f"action:{self.action}, "
             ">"
         )

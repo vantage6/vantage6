@@ -201,9 +201,13 @@ class SessionBase(ServicesResources):
         action: LocalAction,
         dataframe: db.Dataframe,
         description="",
-        depends_on_id=None,
+        depends_on_ids=None,
     ) -> int:
         """Create a task to initialize a session"""
+
+        if not depends_on_ids:
+            depends_on_ids = []
+
         input_ = {
             "collaboration_id": session.collaboration_id,
             "study_id": session.study_id,
@@ -213,7 +217,7 @@ class SessionBase(ServicesResources):
             "image": image,
             "organizations": organizations,
             "databases": database,
-            "depends_on_id": depends_on_id,
+            "depends_on_ids": depends_on_ids,
             "dataframe_id": dataframe.id,
         }
         # remove empty values
@@ -448,7 +452,7 @@ class Sessions(SessionBase):
         # TODO if any of the steps fails... we need to rollback the entire session
         if not self.r.has_at_least_scope(S.OWN, P.CREATE):
             return {
-                "msg": "You lack the permission to do that!"
+                "msg": "You lack the permission to do that! 1"
             }, HTTPStatus.UNAUTHORIZED
 
         data = request.get_json()
@@ -497,15 +501,6 @@ class Sessions(SessionBase):
             study_id=data.get("study_id"),
         )
         session.save()
-
-        # Each node gets assigned a NodeSession to keep track of each individual node's
-        # state.
-        # for node in collaboration.nodes:
-        #     db.NodeSession(
-        #         session=session,
-        #         node=node,
-        #     ).save()
-
         log.info(f"Session {session.id} created")
 
         return session_schema.dump(session, many=False), HTTPStatus.CREATED
@@ -797,8 +792,8 @@ class SessionDataframes(SessionBase):
         # the session. A single session can have multiple dataframes, each with a
         # different database or different user inputs. Each dataframe can be identified
         # using a unique handle.
-        dataframe = request.get_json()
-        errors = dataframe_init_input_schema.validate(dataframe)
+        data = request.get_json()
+        errors = dataframe_init_input_schema.validate(data)
         if errors:
             return {
                 "msg": "Request body is incorrect",
@@ -810,28 +805,28 @@ class SessionDataframes(SessionBase):
         # This label is used to identify the database, this label should match the
         # label in the node configuration file. Each node can have multiple
         # databases.
-        source_db_label = dataframe["label"]
+        source_db_label = data["label"]
 
         # Multiple datasets can be created in a single session. This handle can be
         # used by the `preprocessing` and `compute` to identify the different
         # datasets that are send after the data extraction task. The handle can be
         # provided by the user, if not a unique handle is generated.
-        if "handle" not in dataframe:
+        if "handle" not in data:
             while (handle := generate_name()) and db.Dataframe.select(session, handle):
                 pass
         else:
-            handle = dataframe["handle"]
+            handle = data["handle"]
 
-        pipe = db.Dataframe(
+        dataframe = db.Dataframe(
             session=session,
             handle=handle,
         )
-        pipe.save()
+        dataframe.save()
 
         # When a session is initialized, a mandatory data extraction step is
         # required. This step is the first step in the dataframe and is used to
         # extract the data from the source database.
-        extraction_details = dataframe["task"]
+        extraction_details = data["task"]
         response, status_code = self.create_session_task(
             session=session,
             image=extraction_details["image"],
@@ -845,17 +840,16 @@ class SessionDataframes(SessionBase):
                 f"will initialize the dataframe with the handle {handle}."
             ),
             action=LocalAction.DATA_EXTRACTION,
-            dataframe=pipe,
+            dataframe=dataframe,
         )
 
         if status_code != HTTPStatus.CREATED:
-            self.delete_session(session)
             return response, status_code
 
-        pipe.last_session_task_id = response["id"]
-        pipe.save()
+        dataframe.last_session_task_id = response["id"]
+        dataframe.save()
 
-        return dataframe_schema.dump(pipe), HTTPStatus.CREATED
+        return dataframe_schema.dump(dataframe), HTTPStatus.CREATED
 
 
 class SessionDataframe(SessionBase):
@@ -903,8 +897,8 @@ class SessionDataframe(SessionBase):
                 "errors": errors,
             }, HTTPStatus.BAD_REQUEST
 
-        pipe: db.Dataframe = db.Dataframe.select(session, dataframe_handle)
-        if not pipe:
+        dataframe = db.Dataframe.select(session, dataframe_handle)
+        if not dataframe:
             return {
                 "msg": (
                     f"Dataframe with handle={dataframe_handle} in session={session.name} "
@@ -912,7 +906,7 @@ class SessionDataframe(SessionBase):
                 )
             }, HTTPStatus.NOT_FOUND
 
-        if not pipe.last_session_task:
+        if not dataframe.last_session_task:
             return {
                 "msg": (
                     f"Dataframe with handle={dataframe_handle} in session={session.name} "
@@ -920,25 +914,41 @@ class SessionDataframe(SessionBase):
                 )
             }, HTTPStatus.INTERNAL_SERVER_ERROR
 
+        # Before modifying the session dataframe:
+        #
+        # 1. all computation tasks need to be finished. This is to prevent that the data
+        #    is modified while it is being processed. Note that these run in parallel,
+        #    so we need to check if all tasks are finished.
+        # 2. all previous preprocessing steps need to be finished. These run in
+        #    sequence, so we only need to check the latest modifying task.
+        requires_tasks = dataframe.active_compute_tasks
+        requires_tasks.append(dataframe.last_session_task)
+        log.debug(f"Active tasks: {requires_tasks}")
+        log.debug(f"Last task: {dataframe.last_session_task}")
+        log.debug(f"compute tasks: {dataframe.active_compute_tasks}")
+
+        # Meta data about the modifying task
         preprocessing_task = dataframe_step["task"]
+
         response, status_code = self.create_session_task(
             session=session,
             database=[{"label": dataframe_handle, "type": "handle"}],
             description=f"Preprocessing step for session {session.name}",
-            depends_on_id=pipe.last_session_task.id,
+            depends_on_ids=[rt.id for rt in requires_tasks],
             action=LocalAction.PREPROCESSING,
             image=preprocessing_task["image"],
             organizations=preprocessing_task["organizations"],
-            dataframe=pipe,
+            dataframe=dataframe,
         )
+        # In case the task is not created we do not want to modify the chain of tasks.
+        # The user can try again.
         if status_code != HTTPStatus.CREATED:
-            Session.delete_session(session)
             return response, status_code
 
-        pipe.last_session_task_id = response["id"]
-        pipe.save()
+        dataframe.last_session_task_id = response["id"]
+        dataframe.save()
 
-        return dataframe_schema.dump(pipe, many=False), HTTPStatus.CREATED
+        return dataframe_schema.dump(dataframe, many=False), HTTPStatus.CREATED
 
     @only_for(("node",))
     def patch(self, session_id, dataframe_handle):

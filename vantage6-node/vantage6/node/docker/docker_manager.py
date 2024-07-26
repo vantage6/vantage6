@@ -41,6 +41,8 @@ from vantage6.node.docker.exceptions import (
     UnknownAlgorithmStartFail,
     PermanentAlgorithmStartFail,
     AlgorithmContainerNotFound,
+    TemporaryAlgorithmFail,
+    PermanentAlgorithmFail,
 )
 from vantage6.node.globals import DEFAULT_REQUIRE_ALGO_IMAGE_PULL
 
@@ -647,14 +649,11 @@ class DockerManager(DockerBaseManager):
                     databases_to_use=databases_to_use,
                 )
 
-            except UnknownAlgorithmStartFail:
-                self.log.exception(
-                    f"Failed to start run {run_id} for an "
-                    "unknown reason. Retrying..."
-                )
+            except TemporaryAlgorithmFail:
+                self.log.exception(f"Failed to start run {run_id}")
                 time.sleep(1)  # add some time before retrying the next attempt
 
-            except PermanentAlgorithmStartFail:
+            except PermanentAlgorithmFail:
                 break
 
             attempts += 1

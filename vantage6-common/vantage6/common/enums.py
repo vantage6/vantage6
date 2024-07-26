@@ -49,6 +49,23 @@ class TaskStatus(EnumBase):
     # At least one run is not completed and no runs have failed
     AWAITING = "awaiting"
 
+    @classmethod
+    def has_task_finished(cls, status) -> bool:
+        """
+        Check if task has finished
+
+        Parameters
+        ----------
+        status: TaskStatus | str
+            The status of the task
+
+        Returns
+        -------
+        bool
+            True if task has finished, False otherwise
+        """
+        return status in [cls.COMPLETED.value, cls.FAILED.value]
+
 
 class RunStatus(EnumBase):
     """Enum to represent the status of a run"""
@@ -76,6 +93,8 @@ class RunStatus(EnumBase):
     NOT_ALLOWED = "not allowed"
     # Task failed without exit code
     UNKNOWN_ERROR = "unknown error"
+    # Datafrome was not found
+    DATAFRAME_NOT_FOUND = "dataframe not found"
 
     # Unexpected output type from container
     UNEXPECTED_OUTPUT = "unexpected output"
@@ -95,12 +114,7 @@ class RunStatus(EnumBase):
         bool
             True if task has failed, False otherwise
         """
-        return status not in [
-            RunStatus.INITIALIZING,
-            RunStatus.ACTIVE,
-            RunStatus.COMPLETED,
-            RunStatus.PENDING,
-        ]
+        return status in cls.failed_statuses()
 
     @classmethod
     def has_task_finished(cls, status) -> bool:
@@ -117,20 +131,26 @@ class RunStatus(EnumBase):
         bool
             True if task has finished or failed, False otherwise
         """
-        return cls.has_task_failed(status) or status == RunStatus.COMPLETED
+        return status in cls.dead_statuses()
 
     @classmethod
-    def dead_statuses(cls) -> list[str]:
+    def failed_statuses(cls) -> list[str]:
         """Return a list of all the status values that are considered finished"""
 
         return [
-            cls.COMPLETED.value,
             cls.FAILED.value,
             cls.CRASHED.value,
             cls.KILLED.value,
             cls.NOT_ALLOWED.value,
             cls.UNKNOWN_ERROR.value,
         ]
+
+    # TODO FM 26-07-2024: rename to finished_statuses
+    @classmethod
+    def dead_statuses(cls) -> list[str]:
+        """Return a list of all the status values that are considered finished"""
+
+        return cls.failed_statuses() + [cls.COMPLETED.value]
 
     @classmethod
     def alive_statuses(cls) -> list[str]:

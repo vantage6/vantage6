@@ -17,7 +17,7 @@ from flask_restful import Api
 from http import HTTPStatus
 
 from vantage6 import server
-from vantage6.common.enums import RunStatus
+from vantage6.common.enums import TaskStatus
 from vantage6.common.globals import MAIN_VERSION_NAME
 from vantage6.server import db
 from vantage6.server.model.user import User
@@ -328,15 +328,15 @@ class ContainerToken(ServicesResources):
                 return {"msg": "Image and task do no match"}, HTTPStatus.UNAUTHORIZED
 
         # validate that the task not has been finished yet
-        if RunStatus.has_task_finished(db_task.status):
+        if TaskStatus.has_task_finished(db_task.status):
             log.warning(
                 f"Node {g.node.id} attempts to generate a key for "
                 f"completed task {task_id}"
             )
             return {"msg": "Task is already finished!"}, HTTPStatus.BAD_REQUEST
 
-        # container identity consists of its node_id,
-        # task_id, collaboration_id and image_id
+        # We store the task metadata in the token, so the server can verify later on
+        # that the container is allowed to access certain server resources.
         container = {
             "client_type": "container",
             "node_id": g.node.id,
@@ -347,7 +347,7 @@ class ContainerToken(ServicesResources):
             "task_id": task_id,
             "image": claim_image,
             "databases": [
-                json.loads(db_entry.parameters) | {"label": db_entry.database}
+                {"label": db_entry.database, "type": db_entry.type_}
                 for db_entry in db_task.databases
             ],
         }
