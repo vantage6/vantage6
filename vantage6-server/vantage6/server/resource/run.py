@@ -204,43 +204,49 @@ class MultiRunBase(RunBase):
             if f"{param}_from" in args:
                 q = q.filter(db_Run.assigned_at >= args[f"{param}_from"])
 
+        q = q.join(Organization).join(Node).join(Task, db_Run.task).join(Collaboration)
+
         # The state can be one of the following:
         #   open:
-        #       Runs that are not finished and depending runs are completed or do not
-        #       exist
+        #       Runs that are not finished and all depending runs from all tasks are
+        #       completed or do not exist
         #   waiting:
         #       Runs that are not finished and depending runs are not completed
         #   finished:
         #       Runs that are finished
         #
+        # TODO FM 26-07-2024: We need to use a enum for the different states.
         if args.get("state") == "open":
-            q = q.join(db_Run.task).filter(
+            q = q.filter(
                 and_(
                     or_(
-                        ~db.Task.depends_on.has(None),
-                        db.Task.depends_on.has(
-                            ~db.Task.runs.any(db.Run.finished_at.is_(None))
+                        db.Task.depends_on == None,
+                        and_(
+                            db.Task.depends_on != None,
+                            ~db.Task.depends_on.any(
+                                db.Task.runs.any(db.Run.finished_at.is_(None))
+                            ),
                         ),
                     ),
                     db_Run.finished_at.is_(None),
                 )
             )
+
         elif args.get("state") == "waiting":
-            q = q.join(db_Run.task).filter(
+            q = q.filter(
                 and_(
                     or_(
-                        db.Task.depends_on.has(None),
-                        db.Task.depends_on.has(
+                        db.Task.depends_on == None,
+                        db.Task.depends_on.any(
                             db.Task.runs.any(db.Run.finished_at.is_(None))
                         ),
                     ),
                     db_Run.finished_at.is_(None),
                 )
             )
+
         elif args.get("state") == "finished":
             q = q.filter(db_Run.finished_at.isnot(None))
-
-        q = q.join(Organization).join(Node).join(Task, db_Run.task).join(Collaboration)
 
         if "collaboration_id" in args:
             if not self.r.can_for_col(P.VIEW, args["collaboration_id"]):
@@ -734,6 +740,13 @@ class Run(SingleRunBase):
         self.socketio.emit(
             "status_update",
             {"run_id": id},
+            namespace="/tasks",
+            room=f"collaboration_{run.task.collaboration.id}",
+        )
+
+        self.socketio.emit(
+            "algorithm_status_change",
+            {"job_id": run.id, "status": run.status},
             namespace="/tasks",
             room=f"collaboration_{run.task.collaboration.id}",
         )

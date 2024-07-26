@@ -11,6 +11,7 @@ import pyarrow.parquet as pq
 
 from datetime import datetime
 from pathlib import Path
+
 from docker import DockerClient
 
 from vantage6.common.globals import APPNAME, ENV_VAR_EQUALS_REPLACEMENT, STRING_ENCODING
@@ -31,6 +32,7 @@ from vantage6.node.docker.exceptions import (
     UnknownAlgorithmStartFail,
     PermanentAlgorithmStartFail,
     AlgorithmContainerNotFound,
+    DataFrameNotFound,
 )
 
 
@@ -125,7 +127,9 @@ class DockerTaskManager(DockerBaseManager):
         self.alpine_image = ALPINE_IMAGE if alpine_image is None else alpine_image
         self.proxy = proxy
         self.requires_pull = requires_pull
-        self.dataframe_handle = task_info.get("dataframe", {}).get("handle", None)
+
+        if task_info.get("dataframe"):
+            self.dataframe_handle = task_info["dataframe"].get("handle", None)
 
         print(session_id)
         self.container = None
@@ -174,7 +178,7 @@ class DockerTaskManager(DockerBaseManager):
             self.log.error("- task id: %s", self.task_id)
             self.log.error("- result id: %s", self.task_id)
             self.status = RunStatus.UNKNOWN_ERROR
-            raise AlgorithmContainerNotFound
+            raise AlgorithmContainerNotFound()
 
         return self.container.status == "exited"
 
@@ -222,8 +226,8 @@ class DockerTaskManager(DockerBaseManager):
                     self.log.exception("Error reading output file")
                     self.status = RunStatus.UNEXPECTED_OUTPUT
                     return b""
-                self._update_session(result)
 
+                self._update_session(result)
                 return b""
 
             case LocalAction.COMPUTE:
@@ -236,12 +240,12 @@ class DockerTaskManager(DockerBaseManager):
                     "no file",
                     f"Algorithm from '{self.image}' completed successfully.",
                 )
-                return b""
+                return result
 
             case _:
 
                 self.log.error("Unknown action: %s", self.action)
-                self.status = RunStatus.FAILED
+                self.status = RunStatus.UNKNOWN_ERROR
                 return b""
 
     def _update_session(self, table: pa.Table) -> None:
@@ -257,6 +261,7 @@ class DockerTaskManager(DockerBaseManager):
                 f"is {self.session_id} and the task ID is {self.task_id}.",
             )
             self.status = RunStatus.FAILED
+            # TODO FM 25-07-2024: shouldnt we raise here and catch in the Dockermaneger?
 
         try:
             # Overwrite the session table
@@ -271,7 +276,7 @@ class DockerTaskManager(DockerBaseManager):
             self.status = RunStatus.FAILED
 
         self._update_session_state(
-            LocalAction.DATA_EXTRACTION.value,
+            self.action,
             f"{self.dataframe_handle}.parquet",
             "Session updated.",
             self.dataframe_handle,
@@ -318,7 +323,6 @@ class DockerTaskManager(DockerBaseManager):
                 }
             ]
         )
-
         state = pd.concat([state, new_row], ignore_index=True)
 
         try:
@@ -326,7 +330,6 @@ class DockerTaskManager(DockerBaseManager):
             pq.write_table(session_table, self.session_state_file)
         except Exception:
             self.log.exception("Error writing session data to parquet file")
-            self.status = RunStatus.FAILED
 
         return
 
@@ -347,21 +350,21 @@ class DockerTaskManager(DockerBaseManager):
         try:
             self.log.info("Retrieving latest image: '%s'", self.image)
             self.docker.images.pull(self.image)
-        except Exception as exc:
-            if isinstance(exc, docker.errors.APIError):
-                self.log.warning("Failed to pull image! Image does not exist")
+        except docker.errors.APIError as e:
+            self.log.warning("Failed to pull image: could not find image")
+            if not local_exists:
+                self.log.exception(e)
+                self.status = RunStatus.NO_DOCKER_IMAGE
+                raise PermanentAlgorithmStartFail()
             else:
                 self.log.warning("Failed to pull image!")
+
+            # TODO FM 30-07-2024: This might be wrong due to a rebase. Check this.. or
+            # fix it.
             if not local_exists:
-                self.log.exception(exc)
-                self.status = TaskStatus.NO_DOCKER_IMAGE
-                raise PermanentAlgorithmStartFail from exc
-            elif self.requires_pull:
-                self.log.warning(
-                    "Node policy prevents local image to be used to start algorithm"
-                )
-                self.status = TaskStatus.NO_DOCKER_IMAGE
-                raise PermanentAlgorithmStartFail from exc
+                self.log.exception(e)
+                self.status = RunStatus.FAILED
+                raise PermanentAlgorithmStartFail()
             else:
                 self.log.info("Using local image")
 
@@ -592,20 +595,18 @@ class DockerTaskManager(DockerBaseManager):
             with open(filepath, "wb") as fp:
                 fp.write(data)
 
-        # TODO: we should move this to a different location as the session file
-        # is no longer touched by the algorithm
-        session_state = pa.table(
-            {
-                "action": ["no action"],
-                "file": [self.session_state_file_name],
-                "timestamp": [datetime.now()],
-                "message": ["Created this session file."],
-            }
-        )
-        pq.write_table(
-            session_state,
-            os.path.join(self.session_folder_path, self.session_state_file),
-        )
+        if not os.path.exists(self.session_state_file):
+            self.log.info("Create session state file")
+            session_state = pa.table(
+                {
+                    "action": ["no action"],
+                    "file": [self.session_state_file_name],
+                    "timestamp": [datetime.now()],
+                    "message": ["Created this session file."],
+                    "dataframe": [""],
+                }
+            )
+            pq.write_table(session_state, self.session_state_file)
 
         volumes = {}
         if running_in_docker():
@@ -718,10 +719,8 @@ class DockerTaskManager(DockerBaseManager):
                 failed = True
 
             if failed:
-                # TODO FM 24-07-2024: is this catched? Should we raise an exception
-                # here?
                 self.status = RunStatus.FAILED
-                return {}
+                raise PermanentAlgorithmStartFail()
 
             db = self.databases[source_database["label"]]
 
@@ -746,10 +745,8 @@ class DockerTaskManager(DockerBaseManager):
                 self.log.error(
                     "All databases used in the algorithm must be of type 'handle'."
                 )
-                # TODO FM 24-07-2024: is this catched? Should we raise an exception
-                # here?
                 self.status = RunStatus.FAILED
-                return {}
+                raise PermanentAlgorithmStartFail()
 
             # Validate that the requested handles exists. At this point they need to as
             # we are about to start the task.
@@ -757,48 +754,19 @@ class DockerTaskManager(DockerBaseManager):
             available_handles = {
                 file_.stem for file_ in Path(self.session_folder_path).glob("*.parquet")
             }
-            # check taht requested handles is a subset of available handles
+            # check that requested handles is a subset of available handles
             if not requested_handles.issubset(available_handles):
                 self.log.error(
                     "Requested dataframe handle(s) not found in session folder."
                 )
-                # TODO FM 24-07-2024: is this catched? Should we raise an exception
-                # here?
-                self.status = RunStatus.FAILED
-                return {}
+                self.log.debug(f"Requested dataframe handles: {requested_handles}")
+                self.log.debug(f"Available dataframe handles: {available_handles}")
+                self.status = RunStatus.DATAFRAME_NOT_FOUND
+                raise DataFrameNotFound(f"user requested {requested_handles}")
 
             environment_variables["USER_REQUESTED_DATAFRAME_HANDLES"] = ",".join(
                 [db["label"] for db in databases_to_use]
             )
-
-        # Only prepend the data_folder is it is a file-based database
-        # This allows algorithms to access multiple data sources at the
-        # same time
-        # db_labels = []
-        # for label in self.databases:
-        # db = self.databases[label]
-
-        # uri_var_name = f"{label.upper()}_DATABASE_URI"
-        # environment_variables[uri_var_name] = (
-        #     f"{self.data_folder}/{os.path.basename(db['uri'])}"
-        #     if db["is_file"]
-        #     else db["uri"]
-        # )
-
-        # type_var_name = f"{label.upper()}_DATABASE_TYPE"
-        # environment_variables[type_var_name] = db["type"]
-
-        # Add optional database parameter settings, these can be used by
-        # the algorithm (wrapper). Note that all env keys are prefixed
-        # with DB_PARAM_ to avoid collisions with other environment
-        # variables.
-        #     if "env" in db:
-        #         for key in db["env"]:
-        #             env_key = f"{label.upper()}_DB_PARAM_{key.upper()}"
-        #             environment_variables[env_key] = db["env"][key]
-
-        #     db_labels.append(label)
-        # environment_variables["DB_LABELS"] = ",".join(db_labels)
 
         # Load additional environment variables
         if algorithm_env:

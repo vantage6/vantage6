@@ -9,8 +9,11 @@ from sqlalchemy import (
     ForeignKey,
     DateTime,
     UniqueConstraint,
+    and_,
+    case,
 )
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from vantage6.common.enums import SessionStatus
 from vantage6.server.model.rule import Scope
@@ -81,19 +84,34 @@ class Session(Base):
     # node_sessions = relationship("NodeSession", back_populates="session")
     dataframes = relationship("Dataframe", back_populates="session")
 
-    @property
+    @hybrid_property
     def is_ready(self):
         """
-        Check if the session is ready to be used.
+        Are all dataframes ready to be used by compute tasks?
 
         Returns
         -------
         bool
             True if the session is ready, False otherwise
         """
-        # TODO FM 15-07-2024: we should check all the states of the tasks in the session
-        # (not compute) tasks
+        for dataframe in self.dataframes:
+            if not dataframe.ready:
+                return False
+
         return True
+
+    @is_ready.expression
+    def is_ready(cls):
+        """
+        Are all dataframes ready to be used by compute tasks?
+
+        Returns
+        -------
+        bool
+            True if the session is ready, False otherwise
+        """
+        return case([(True, True)], else_=True)
+        # return and_(*[dataframe.ready for dataframe in cls.dataframes])
 
     @staticmethod
     def name_exists(name: str, collaboration: "Collaboration"):

@@ -49,11 +49,6 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
         )
         setattr(
             self,
-            "depends_on",
-            lambda obj: self.create_hateoas("depends_on", obj, endpoint="task"),
-        )
-        setattr(
-            self,
             "init_org_",
             lambda obj: self.create_hateoas("init_org", obj, endpoint="organization"),
         )
@@ -94,7 +89,18 @@ class TaskSchema(HATEOASModelSchema):
     )
 
     parent = fields.Method("parent_")
-    depends_on = fields.Method("depends_on")
+
+    # depends_on = fields.Function(
+    #     lambda obj: create_one_to_many_link(obj, link_to="task", link_from="depends_on")
+    # )
+    depends_on = fields.Function(lambda obj: [dep.id for dep in obj.depends_on])
+
+    # required_by = fields.Function(
+    #     lambda obj: create_one_to_many_link(
+    #         obj, link_to="task", link_from="required_by"
+    #     )
+    # )
+    required_by = fields.Function(lambda obj: [req.id for req in obj.required_by])
 
     children = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="task", link_from="parent_id")
@@ -492,4 +498,4 @@ class DataframeSchema(HATEOASModelSchema):
     )
     last_session_task = fields.Nested("TaskSchema", many=False)
     columns = fields.Nested("ColumnSchema", many=True)
-    ready = fields.Function(lambda obj: obj.ready())
+    ready = fields.Boolean()

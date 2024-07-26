@@ -603,6 +603,8 @@ class Tasks(TaskBase):
             Rule collection instance
         config : dict
             Configuration dictionary
+        action : LocalAction
+            Action to performed by the task
         """
         # validate request body
         errors = task_input_schema.validate(data)
@@ -781,15 +783,59 @@ class Tasks(TaskBase):
             store = parent.algorithm_store
             image_with_hash = parent.image
 
-        # A task can be dependent on another task. This is used for building sequences
-        # of tasks in order to create session dataframes.
-        dependant_task_id = data.get("depends_on_id")
-        if dependant_task_id:
+        # Obtain the user requested database or dataframes
+        databases = data.get("databases")
+        if databases is None:
+            databases = []
+
+        # A task can be dependent on one or more other task(s). There are three cases:
+        #
+        # 1. When a dataframe modification task is created (data extraction or
+        #    preprocessing) the next modification task should be dependent on the
+        #    previous modification task. This is to prevent that the dataframe is
+        #    modified by two tasks at the same time.
+        # 2. When a dataframe modification task is created, the task should be dependent
+        #    on the compute task(s) that are currently computing the dataframe. This is
+        #    to prevent that the dataframe is modified during the computation.
+        # 3. When a compute task is created, the task should be dependent on the
+        #    modification task(s) that are currently modifying the dataframe. This is
+        #    to prevent that the dataframe is modified during the computation.
+        #
+        # Thus when a modification task is running all new compute tasks will be
+        # depending on it. A modification task will always be dependent on the last
+        # modification task. And finally a compute task will always be dependent on
+        # any running modification tasks (could also be none).
+        dependant_tasks = []
+        for database in databases:
+            for key in ["label", "type"]:
+                if key not in database:
+                    return {
+                        "msg": f"Database {key} missing! The dictionary "
+                        f"{database} should contain a '{key}' key"
+                    }, HTTPStatus.BAD_REQUEST
+
+            if database["type"] == "handle":
+                df = db.Dataframe.select(session, database["label"])
+                if not df:
+                    return {
+                        "msg": f"Dataframe '{database['label']}' not found!"
+                    }, HTTPStatus.NOT_FOUND
+
+                if not df.ready:
+                    dependant_tasks.append(df.last_session_task)
+
+        # These `depends_on_ids` are the task ids supplied by the session endpoints.
+        # However they can also be user defined, although this has no use case yet.
+        dependant_task_ids = data.get("depends_on_ids", [])
+        for dependant_task_id in dependant_task_ids:
+
             dependant_task = db.Task.get(dependant_task_id)
+
             if not dependant_task:
                 return {
                     "msg": f"Task with id={dependant_task_id} not found!"
                 }, HTTPStatus.NOT_FOUND
+
             if dependant_task.session_id != session_id:
                 log.debug(dependant_task)
                 log.debug(f"{dependant_task.session_id} {session_id}")
@@ -799,8 +845,11 @@ class Tasks(TaskBase):
                         "same session."
                     )
                 }, HTTPStatus.BAD_REQUEST
-        else:
-            dependant_task = None
+
+            dependant_tasks.append(dependant_task)
+
+        # Filter that we did not end up with duplicates because of various conditions
+        dependant_tasks = list(set(dependant_tasks))
 
         # check that the input is valid. If the collaboration is encrypted, it
         # should not be possible to read the input, and we should not save it
@@ -824,7 +873,7 @@ class Tasks(TaskBase):
             algorithm_store=store,
             created_at=datetime.datetime.now(datetime.timezone.utc),
             session=session,
-            depends_on=dependant_task,
+            depends_on=dependant_tasks,
             dataframe_id=data.get("dataframe_id"),
         )
 
@@ -843,36 +892,8 @@ class Tasks(TaskBase):
             log.debug(f"Sub task from parent_id={task.parent_id}")
 
         # save the databases that the task uses
-        databases = data.get("databases")
-        if databases is None:
-            databases = []
         db_records = []
         for database in databases:
-
-            # TODO these checks porbably should be done in the schema input validation
-            missing_keys = set(["label", "type"]) - database.keys()
-            if missing_keys:
-                missing_keys_str = ", ".join(f"'{key}'" for key in missing_keys)
-                return {
-                    "msg": f"Database missing required keys! The dictionary {database} "
-                    f"should contain {missing_keys_str} key(s)"
-                }, HTTPStatus.BAD_REQUEST
-
-            database_type = database["type"].lower()
-            if database_type not in ["handle", "source"]:
-                return {
-                    "msg": f"Database type should be either 'input' or 'output', not '{database_type}'"
-                }, HTTPStatus.BAD_REQUEST
-
-            # In case we are dealing with a handle, we can verify that this handle
-            # exists in the session.
-            if database_type == "handle":
-                dataframe_handle_in_session = [df.handle for df in session.dataframes]
-                if database["label"] not in dataframe_handle_in_session:
-                    return {
-                        "msg": f"Dataframe with handle '{database['label']}' not found "
-                        " in session!"
-                    }, HTTPStatus.BAD_REQUEST
 
             # TODO task.id is only set here because in between creating the
             # task and using the ID here, there are other database operations

@@ -348,6 +348,7 @@ class Node:
                 },
             )
             self.__emit_algorithm_status_change(task, task_incl_run, RunStatus.FAILED)
+            return
 
         # Only compute containers need a token as they are the only ones that should
         # create subtasks

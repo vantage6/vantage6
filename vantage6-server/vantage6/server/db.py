@@ -23,4 +23,5 @@ from vantage6.server.model import (
     Session,
     Dataframe,
     Column,
+    task_depends_on,
 )
