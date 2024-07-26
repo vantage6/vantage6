@@ -110,8 +110,7 @@ class Session(Base):
         bool
             True if the session is ready, False otherwise
         """
-        return case([(True, True)], else_=True)
-        # return and_(*[dataframe.ready for dataframe in cls.dataframes])
+        return and_(*[dataframe.ready for dataframe in cls.dataframes])
 
     @staticmethod
     def name_exists(name: str, collaboration: "Collaboration"):
