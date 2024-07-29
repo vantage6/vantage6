@@ -1,6 +1,10 @@
 from schema import And, Or, Use, Optional
 
-from vantage6.common.configuration_manager import Configuration, ConfigurationManager
+from vantage6.common.configuration_manager import (
+    Configuration,
+    ConfigurationManager,
+    validate_ids_and_names,
+)
 
 LOGGING_VALIDATORS = {
     "level": And(
@@ -51,6 +55,16 @@ class NodeConfiguration(Configuration):
         Optional("node_extra_env"): dict,
         Optional("node_extra_mounts"): [str],
         Optional("node_extra_hosts"): dict,
+        Optional("policies"): {
+            Optional("allowed_organizations"): validate_ids_and_names,
+            Optional("allowed_users"): And(
+                validate_ids_and_names,
+                Use(
+                    lambda x: "names" not in x,
+                    error="`allowed_users` does not support `names` key at the moment.",
+                ),
+            ),
+        },
     }
 
 

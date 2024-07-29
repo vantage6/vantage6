@@ -2,7 +2,7 @@ from __future__ import annotations
 import yaml
 import collections
 
-from typing import Any, Type
+from typing import Any, Type, TypedDict
 from pathlib import Path
 from schema import Schema, SchemaError
 
@@ -203,3 +203,50 @@ class ConfigurationManager(object):
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         with open(path, "w") as f:
             yaml.dump(self.config, f, default_flow_style=False)
+
+
+class DictNamesIds(TypedDict, total=False):
+    ids: list[int]
+    names: list[str]
+
+
+def validate_ids_and_names(data: DictNamesIds):
+    """
+    Validate a dict that contains 'ids' and/or 'names' keys. Where 'ids' is a
+    list of integers and 'names' is a list of strings.
+    E.g.
+    {
+        "ids": [1, 2, 3],
+        "names": ["foo", "bar"]
+    }
+
+    Parameters
+    ----------
+    data : dict
+        The data to validate.
+
+    Returns
+    -------
+    dict
+
+    Raises
+    ------
+    SchemaError
+    """
+    if not isinstance(data, dict):
+        raise SchemaError("Expected a dictionary")
+    keys = set(data.keys())
+    if not keys or not keys.issubset({'ids', 'names'}):
+        raise SchemaError("Expected only 'ids' and/or 'names' keys")
+    if 'ids' in data:
+        if not isinstance(data['ids'], list):
+            raise SchemaError("Expected 'ids' to be a list")
+        if not all(isinstance(i, int) for i in data['ids']):
+            raise SchemaError("Expected 'ids' to be a list of integers")
+    if 'names' in data:
+        if not isinstance(data['names'], list):
+            raise SchemaError("Expected 'names' to be a list")
+        if not all(isinstance(i, str) for i in data['names']):
+            raise SchemaError("Expected 'names' to be a list of strings")
+
+    return data
