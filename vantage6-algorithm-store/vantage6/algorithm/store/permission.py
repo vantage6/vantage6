@@ -6,9 +6,9 @@ from flask_principal import Permission
 
 from vantage6.algorithm.store.globals import RESOURCES
 from vantage6.algorithm.store.default_roles import DefaultRole
-from vantage6.algorithm.store.model.role import Role
 from vantage6.algorithm.store.model.rule import Rule, Operation
 from vantage6.backend.common.base import DatabaseSessionManager
+from vantage6.backend.common.permission_interfaces import RoleInterface
 from vantage6.common import logger_name
 
 module_name = logger_name(__name__)
@@ -70,7 +70,8 @@ class PermissionManager:
     the code
     """
 
-    def __init__(self) -> None:
+    def __init__(self, role: RoleInterface) -> None:
+        self.role = role
         self.collections: dict[str, RuleCollection] = {}
         log.info("Loading permission system...")
         self.load_rules_from_resources()
@@ -100,8 +101,7 @@ class PermissionManager:
         """
         self.assign_rule_to_fixed_role(DefaultRole.ROOT, name, operation)
 
-    @staticmethod
-    def assign_rule_to_fixed_role(
+    def assign_rule_to_fixed_role(self,
         fixedrole: str, resource: str, operation: Operation
     ) -> None:
         """
@@ -116,10 +116,10 @@ class PermissionManager:
         operation: Operation
             Operation that the rule applies to
         """
-        role = Role.get_by_name(fixedrole)
+        role = self.role.get_by_name(fixedrole)
         if not role:
             log.warning(f"{fixedrole} role not found, creating it now!")
-            role = Role(name=fixedrole, description=f"{fixedrole} role")
+            role = self.role(name=fixedrole, description=f"{fixedrole} role")
 
         rule = Rule.get_by_(resource, operation)
         if not rule:

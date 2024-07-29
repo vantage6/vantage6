@@ -27,7 +27,7 @@ class RuleInterface:
 
     @classmethod
     def get_by_(cls, *args, **kwargs):
-        pass
+        raise NotImplemented("get_by_ method must be implemented for Rule class")
 
     def __repr__(self) -> str:
         """
@@ -42,6 +42,10 @@ class RuleInterface:
 
 
 class RoleInterface:
+    name: Any
+    description: Any
+    rules: Any
+    users: Any
 
     @classmethod
     def get_by_name(cls, name: str):
