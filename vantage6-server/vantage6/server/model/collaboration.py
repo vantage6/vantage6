@@ -42,6 +42,8 @@ class Collaboration(Base):
         List of studies that are part of this collaboration
     sessions : list[:class:`~vantage6.server.model.session.Session`]
         List of sessions that are part of this collaboration
+    algorithm_stores : list[:class:`~vantage6.server.model.algorithm_store.AlgorithmStore`]
+        List of algorithm stores that are part of this collaboration
 
     """
 
@@ -131,7 +133,7 @@ class Collaboration(Base):
 
         Returns
         -------
-        Union[Collaboration, None]
+        Collaboration | None
             Collaboration with the given name, or None if no collaboration
             with the given name exists.
         """
@@ -143,7 +145,7 @@ class Collaboration(Base):
         except NoResultFound:
             return None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Returns a string representation of the collaboration.
 

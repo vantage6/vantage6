@@ -39,8 +39,8 @@ class Organization(Base):
     collaborations :
             list[:class:`~vantage6.server.model.collaboration.Collaboration`]
         List of collaborations that this organization is part of
-    results : list[:class:`~vantage6.server.model.run.Run`]
-        List of results that are part of this organization
+    runs : list[:class:`~vantage6.server.model.run.Run`]
+        List of runs that are part of this organization
     nodes : list[:class:`~vantage6.server.model.node.Node`]
         List of nodes that are part of this organization
     users : list[:class:`~vantage6.server.model.user.User`]
@@ -49,6 +49,8 @@ class Organization(Base):
         List of tasks that are created by this organization
     roles : list[:class:`~vantage6.server.model.role.Role`]
         List of roles that are available to this organization
+    studies : list[:class:`~vantage6.server.model.study.Study`]
+        List of studies that are part of this organization
     """
 
     # fields

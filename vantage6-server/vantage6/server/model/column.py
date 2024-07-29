@@ -12,14 +12,18 @@ if TYPE_CHECKING:
 
 class Column(Base):
     """
-    Table to store column metadata in for a dataframe.
+    Table to store column metadata in for a dataframe. Each dataframe has a list of
+    columns that are used to store the data. Each column has a name and a data type.
+    Each node has its own dataframe, which is a collection of columns.
 
     Attributes
     ----------
     name : str
         column name
-    type_ : int
+    dtype : int
         data type of the column
+    node_id : int
+        ID of the node that this column belongs to
     dataframe_id : int
         ID of the last task that alters this session.
 
@@ -27,6 +31,8 @@ class Column(Base):
     -------------
     dataframe : :class:`~.model.Dataframe.Dataframe`
         Dataframe this column belongs to
+    node : :class:`~.model.Node.Node`
+        Node this column belongs to
     """
 
     # fields
@@ -42,6 +48,7 @@ class Column(Base):
     def __repr__(self):
         return (
             f"<Column {self.name}, "
-            f"type: {self.type_}, "
-            f"dataframe: {self.dataframe.handle}>"
+            f"dtype: {self.dtype}, "
+            f"dataframe: {self.dataframe.handle}, "
+            f"node: {self.node.name}>"
         )
