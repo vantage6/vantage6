@@ -57,17 +57,16 @@ class Dataframe(Base):
     @hybrid_property
     def ready(self) -> bool:
         """
-        Check if the dataframe is ready to receive *compute* tasks. The dataframe is
-        considered to be ready if there are no session tasks running that are linked
-        to this dataframe.
+        Check if the dataframe is not being modified. The dataframe is considered to be
+        ready if there are no session tasks running that can modify this dataframe.
 
         Returns
         -------
-        dict
-            State of the dataframe
+        bool
+            True if the dataframe has no alive modifying tasks, False otherwise
         """
         # Since all session tasks are ran sequentially, we can check if the last task
-        # is finished to determine if the dataframe is ready. Not that we do not care
+        # is finished to determine if the dataframe is ready. Note that we do not care
         # wether the task completed successfully or not as we are only interested to
         # know wether a dataframe modification is in progress.
         return all(
@@ -89,13 +88,14 @@ class Dataframe(Base):
     @hybrid_property
     def active_compute_tasks(self) -> list[models.Task]:
         """
-        Get all compute tasks that are not finished on this dataframe.
+        Get all *compute* tasks that are not finished on this dataframe.
 
         Returns
         -------
         list[:class:`~.model.Task.Task`]
             List of compute tasks that are currently active on this dataframe
         """
+        # TODO FM 26-07-2024: The compute should be coming from an enum
         db_session = DatabaseSessionManager.get_session()
         active_compute_tasks = (
             db_session.query(models.Task)
@@ -136,4 +136,4 @@ class Dataframe(Base):
         return dataframe
 
     def __repr__(self):
-        return f"<Dataframe {self.handle}>"
+        return f"<Dataframe {self.handle}, " f"session: {self.session.name}>"
