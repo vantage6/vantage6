@@ -2,6 +2,7 @@ import logging
 
 from vantage6.backend.common.permission import RuleCollection, PermissionManager
 from vantage6.backend.common.base import Base
+from vantage6.server.model.role import Role
 from vantage6.server.model.rule import Rule, Operation, Scope
 from vantage6.server.utils import obtain_auth_collaborations, obtain_auth_organization
 from vantage6.common import logger_name
@@ -253,14 +254,14 @@ class ServerPermissionManager(PermissionManager):
         operation: OperationInterface
             Operation that the rule applies to
         """
-        role = self.role.get_by_name(fixedrole)
+        role = Role.get_by_name(fixedrole)
         if not role:
             log.warning(f"{fixedrole} role not found, creating it now!")
-            role = self.role(
+            role = Rule(
                 name=fixedrole, description=f"{fixedrole} role", is_default_role=True
             )
 
-        rule = self.rule.get_by_(name=resource, scope=scope, operation=operation)
+        rule = Rule.get_by_(name=resource, scope=scope, operation=operation)
         rule_params = f"{resource},{scope},{operation}"
 
         if not rule:
@@ -311,14 +312,9 @@ class ServerPermissionManager(PermissionManager):
 
         """
 
-        # verify that the rule is in the DB, so that these can be assigned to
-        # roles and users
-
-        # print(f"REGISTERING RULE {resource} {scope} {operation}")
-        rule = self.rule.get_by_(name=resource, scope=scope, operation=operation)
-        print(f"RULE {rule}")
+        rule = Rule.get_by_(name=resource, scope=scope, operation=operation)
         if not rule:
-            rule = self.rule(
+            rule = Rule(
                 name=resource, operation=operation, scope=scope, description=description
             )
             rule.save()
@@ -384,7 +380,7 @@ class ServerPermissionManager(PermissionManager):
     #     """
     #     session = DatabaseSessionManager.get_session()
     #     result = (
-    #         session.query(self.rule)
+    #         session.query(Rule)
     #         .filter_by(name=name, operation=operation, scope=scope)
     #         .scalar()
     #     )

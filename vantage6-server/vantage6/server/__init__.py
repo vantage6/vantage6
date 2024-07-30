@@ -137,8 +137,7 @@ class ServerApp:
 
         # setup the permission manager for the API endpoints
         self.permissions = ServerPermissionManager(
-            "vantage6.server.resource", RESOURCES, DefaultRole,
-            Role, Rule, Operation, Scope
+            "vantage6.server.resource", RESOURCES, DefaultRole
         )
         # self.permissions = PermissionManager()
 

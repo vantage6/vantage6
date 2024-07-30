@@ -3,6 +3,7 @@ import logging
 from vantage6.algorithm.store.model.rule import Rule, Operation
 from vantage6.backend.common.permission import RuleCollection, PermissionManager
 from vantage6.common import logger_name
+from vantage6.algorithm.store.model.role import Role
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -54,12 +55,12 @@ class StorePermissionManager(PermissionManager):
         operation: OperationInterface
             Operation that the rule applies to
         """
-        role = self.role.get_by_name(fixedrole)
+        role = Role.get_by_name(fixedrole)
         if not role:
             log.warning(f"{fixedrole} role not found, creating it now!")
-            role = self.role(name=fixedrole, description=f"{fixedrole} role")
+            role = Role(name=fixedrole, description=f"{fixedrole} role")
 
-        rule = self.rule.get_by_(name=resource, operation=operation)
+        rule = Rule.get_by_(name=resource, operation=operation)
         rule_params = f"{resource},{operation}"
 
         if not rule:
@@ -94,9 +95,9 @@ class StorePermissionManager(PermissionManager):
         """
         # verify that the rule is in the DB, so that these can be assigned to
         # roles and users
-        rule = self.rule.get_by_(name=resource, operation=operation)
+        rule = Rule.get_by_(name=resource, operation=operation)
         if not rule:
-            rule = self.rule(name=resource, operation=operation, description=description)
+            rule = Rule(name=resource, operation=operation, description=description)
             rule.save()
             log.debug(
                 f"New auth rule '{resource}' with"

@@ -99,7 +99,7 @@ class AlgorithmStoreApp:
 
         # setup the permission manager for the API endpoints
         self.permissions = StorePermissionManager(
-             "vantage6.algorithm.store.resource", RESOURCES, DefaultRole, Role, Rule, Operation)
+             "vantage6.algorithm.store.resource", RESOURCES, DefaultRole)
 
         # sync policies with the database
         self.setup_policies(self.ctx.config)

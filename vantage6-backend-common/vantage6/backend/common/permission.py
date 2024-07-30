@@ -58,15 +58,10 @@ class PermissionManager(ABC):
     """
 
     def __init__(
-            self, resources_location: str, resources: list[str], default_roles: EnumMeta, role: RoleInterface, rule: RuleInterface,
-            operation: OperationInterface, scope: ScopeInterface = None
+            self, resources_location: str, resources: list[str], default_roles: EnumMeta
     ) -> None:
         self.collections: dict[str, RuleCollection] = {}
-        self.role = role
-        self.rule = rule
-        self.operation = operation
         self.default_roles = default_roles
-        self.scope = scope
         log.info("Loading permission system...")
         self.load_rules_from_resources(resources_location, resources)
 
