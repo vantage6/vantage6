@@ -126,14 +126,61 @@ Obviously, you may want to change this to your own situation. For example, you
 may want to use a different image tag, or you may want to use a different port.
 
 .. code:: yaml
-
     services:
       vantage6-server:
         image: harbor2.vantage6.ai/infrastructure/server:cotopaxi
         ports:
-        - "8000:5000"
+        - "8000:80"
         volumes:
         - /path/to/my/server.yaml:/mnt/config.yaml
         command: ["/bin/bash", "-c", "/vantage6/vantage6-server/server.sh"]
+
+If you wanted to set up a strong initial super user password, you can make use
+of ``V6_INIT_SUPER_PASS_HASHED_FILE``. For this, your docker-compose file could
+look something like this if you want to use `secrets in docker compose
+<https://docs.docker.com/compose/use-secrets/>`_:
+
+.. code:: yaml
+    services:
+      vantage6-server:
+        image: harbor2.vantage6.ai/infrastructure/server:cotopaxi
+        ports:
+        - "8000:80"
+        environment:
+          # Set the path to the file containing the hashed password
+          V6_INIT_SUPER_PASS_HASHED_FILE: /run/secrets/super-pass-hashed
+          # Alternatively, you can also set the hashed password directly
+          #V6_INIT_SUPER_PASS_HASHED: $2b$12$...
+        volumes:
+        - /path/to/my/server.yaml:/mnt/config.yaml
+        command: ["/bin/bash", "-c", "/vantage6/vantage6-server/server.sh"]
+        secrets:
+        - super-pass-hashed
+
+    secrets:
+        super-pass-hashed:
+            file: /path/to/my/super-pass-hashed-root-only
+
+To generate the hashed password, you can use the following script:
+
+.. code:: python
+    import getpass
+    import bcrypt
+
+    # read from stdin, to avoid having the password in the command history
+    password = getpass.getpass().encode('utf-8')
+    print(bcrypt.hashpw(password, bcrypt.gensalt()).decode('utf-8'))
+
+Or, if you prefer it in a one-liner:
+
+.. code:: bash
+    python3 -c "import getpass; import bcrypt; print(bcrypt.hashpw(getpass.getpass().encode('utf-8'), bcrypt.gensalt()).decode('utf-8'))" > /path/to/my/super-pass-hashed-root-only
+
+.. note::
+    Note that there might be better ways of passing a secret to your container.
+    Especially if you are using some container orchestration tool like
+    Kubernetes or Docker Swarm.
+    If you use above method, do make sure root has exclusive read access to the
+    file containing the hashed password.
 
 .. TODO How to deploy on Azure app service
