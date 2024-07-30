@@ -9,6 +9,10 @@ authenticated nodes and users via the socketIO server that is run here.
 import os
 from gevent import monkey
 
+from vantage6.server.model import Role, Rule
+from vantage6.server.model.rule import Operation, Scope
+from vantage6.server.permission import ServerPermissionManager
+
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
     # flake8: noqa: E402 (ignore import error)
@@ -53,8 +57,8 @@ from vantage6.backend.common.globals import HOST_URI_ENV
 from vantage6.server import db
 from vantage6.cli.context.server import ServerContext
 from vantage6.backend.common.base import DatabaseSessionManager, Database
+from vantage6.backend.common.permission import RuleNeed
 from vantage6.server.resource.common.output_schema import HATEOASModelSchema
-from vantage6.server.permission import RuleNeed, PermissionManager
 from vantage6.server.globals import (
     APPNAME,
     ACCESS_TOKEN_EXPIRES_HOURS,
@@ -132,7 +136,11 @@ class ServerApp:
         self.socketio = self.setup_socket_connection()
 
         # setup the permission manager for the API endpoints
-        self.permissions = PermissionManager()
+        self.permissions = ServerPermissionManager(
+            "vantage6.server.resource", RESOURCES, DefaultRole,
+            Role, Rule, Operation, Scope
+        )
+        # self.permissions = PermissionManager()
 
         # Api - REST JSON-rpc
         self.api = Api(self.app)

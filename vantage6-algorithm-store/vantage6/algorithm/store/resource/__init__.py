@@ -7,13 +7,13 @@ from flask import Response, request, current_app, g
 from flask_principal import Identity, identity_changed
 from flask_restful import Api
 
-from vantage6.algorithm.store import PermissionManager
+from vantage6.algorithm.store import StorePermissionManager
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmViewPolicies
 from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 from vantage6.algorithm.store.model.user import User
-from vantage6.algorithm.store.permission import RuleNeed
+from vantage6.backend.common.permission import RuleNeed
 from vantage6.backend.common.services_resources import BaseServicesResources
 from vantage6.algorithm.store.model.common.enums import (
     DefaultStorePolicies,
@@ -38,7 +38,7 @@ class AlgorithmStoreResources(BaseServicesResources):
         self,
         api: Api,
         config: dict,
-        permissions: PermissionManager,
+        permissions: StorePermissionManager,
     ):
         super().__init__(api, config)
         # TODO move this to BaseServicesResources when merging PermissionManager from
@@ -211,6 +211,7 @@ def _authorize_user(
                 RuleNeed(
                     name=rule.name,
                     operation=rule.operation,
+                    scope=None
                 )
             )
 

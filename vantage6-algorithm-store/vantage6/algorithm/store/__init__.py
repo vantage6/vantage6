@@ -10,6 +10,9 @@ store to a vantage6 server.
 import os
 from gevent import monkey
 
+from vantage6.algorithm.store.model import Role, Rule
+from vantage6.algorithm.store.model.rule import Operation
+
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
     # flake8: noqa: E402 (ignore import error)
@@ -40,16 +43,15 @@ from vantage6.common.serialization import jsonable
 
 # TODO move this to common, then remove dependency on CLI in algorithm store
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
-from vantage6.algorithm.store.default_roles import get_default_roles
+from vantage6.algorithm.store.default_roles import get_default_roles, DefaultRole
 from vantage6.algorithm.store.globals import API_PATH
 from vantage6.algorithm.store.globals import RESOURCES, SERVER_MODULE_NAME
 
-# TODO the following are simply copies of the same files in the server - refactor
 from vantage6.backend.common.base import Base, DatabaseSessionManager, Database
+# TODO the following are simply copies of the same files in the server - refactor
 from vantage6.algorithm.store import db
 
-# TODO move server imports to common / refactor
-from vantage6.algorithm.store.permission import PermissionManager
+from vantage6.algorithm.store.permission import StorePermissionManager
 
 # make sure the version is available
 from vantage6.algorithm.store._version import __version__  # noqa: F401
@@ -96,7 +98,8 @@ class AlgorithmStoreApp:
         self.swagger = Swagger(self.app, template={})
 
         # setup the permission manager for the API endpoints
-        self.permissions = PermissionManager()
+        self.permissions = StorePermissionManager(
+             "vantage6.algorithm.store.resource", RESOURCES, DefaultRole, Role, Rule, Operation)
 
         # sync policies with the database
         self.setup_policies(self.ctx.config)
@@ -275,7 +278,7 @@ class AlgorithmStoreApp:
                 # check that the rules are the same. Use set() to compare without order
                 if set(current_role.rules) != set(role["rules"]):
                     log.warning(
-                        "Updating default role %s with new rules", role["name"].value
+                        "Updating default role %s with new rules", role["name"]
                     )
                     current_role.rules = role["rules"]
                     current_role.save()

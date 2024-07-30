@@ -1,13 +1,13 @@
 from __future__ import annotations
-from enum import Enum as Enumerate
 
 from sqlalchemy import Column, Text, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 from vantage6.backend.common.base import Base, DatabaseSessionManager
+from vantage6.backend.common.permission_interfaces import RuleInterface, OperationInterface
 
 
-class Operation(str, Enumerate):
+class Operation(OperationInterface):
     """Enumerator of all available operations"""
 
     VIEW = "view"
@@ -17,7 +17,7 @@ class Operation(str, Enumerate):
     REVIEW = "review"
 
 
-class Rule(Base):
+class Rule(Base, RuleInterface):
     """Rules to determine permissions in an API endpoint.
 
     A rule gives access to a single type of action with a given operation
@@ -29,7 +29,7 @@ class Rule(Base):
     ----------
     name : str
         Name of the rule
-    operation : Operation
+    operation : OperationInterface
         Operation of the rule
     description : str
         Description of the rule
