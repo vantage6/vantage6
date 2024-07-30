@@ -31,6 +31,7 @@ setup(
     packages=find_namespace_packages(),
     python_requires=">=3.10",
     install_requires=[
+        "docker==7.1.0",
         "flasgger==0.9.5",
         "flask==2.2.5",
         "Flask-Cors==4.0.1",
