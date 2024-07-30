@@ -94,6 +94,26 @@ class Algorithm(Base):
         """
         return all([review.status == ReviewStatus.APPROVED for review in self.reviews])
 
+    def approve(self) -> None:
+        """
+        Approve the algorithm, and invalidate all other algorithms with the same image.
+        """
+        self.status = AlgorithmStatus.APPROVED
+        self.approved_at = datetime.datetime.now(datetime.timezone.utc)
+        self.save()
+
+        for other_version in self.get_by_image(self.image):
+            # skip the current version and versions that are not yet reviewed and
+            # are newer (as in submitted later) than the current version
+            if (
+                not other_version.is_review_finished()
+                and other_version.submitted_at > self.submitted_at
+            ) or other_version.id == self.id:
+                continue
+            other_version.invalidated_at = self.approved_at
+            other_version.status = AlgorithmStatus.REPLACED
+            other_version.save()
+
     @classmethod
     def get_by_image(cls, image: str) -> list["Algorithm"]:
         """

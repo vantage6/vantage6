@@ -91,6 +91,11 @@ dev:
   # should normally use http://172.17.0.1.
   host_uri: http://host.docker.internal
 
+  # disable review process - all submitted algorithms are automatically accepted, which
+  # can be useful while developing algorithms locally. By default, the review process
+  # is enabled.
+  disable_review: false
+
 # Provide an initial root user for the algorithm store. This user will be created
 # when the store is started for the first time. The root user has full access to
 # the store and can create other users. The root user should be a reference to an

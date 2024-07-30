@@ -46,7 +46,7 @@ from vantage6.algorithm.store.globals import RESOURCES, SERVER_MODULE_NAME
 
 # TODO the following are simply copies of the same files in the server - refactor
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager, Database
-from vantage6.algorithm.store.model.common.enums import ReviewStatus
+from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
 from vantage6.algorithm.store import db
 
 # TODO move server imports to common / refactor
@@ -124,6 +124,9 @@ class AlgorithmStoreApp:
                 algorithm.submitted_at = datetime.datetime.now(datetime.timezone.utc)
                 algorithm.approved_at = datetime.datetime.now(datetime.timezone.utc)
                 algorithm.save()
+
+        if self.ctx.config.get("dev", {}).get("disable_review", False):
+            self.setup_disable_review()
 
         log.info("Initialization done")
 
@@ -327,6 +330,30 @@ class AlgorithmStoreApp:
             localhost_servers = db.Vantage6Server.get_localhost_servers()
             for server in localhost_servers:
                 server.delete()
+
+    def setup_disable_review(self) -> None:
+        """
+        Change algorithm statuses on startup to disable the review process.
+
+        This sets all algorithms that were in review to approved, effectively disabling
+        the review process. For newly submitted algorithms, the review process will
+        be disabled when they are submitted.
+
+        Note that algorithms that have already been invalidated are not affected by this
+        change.
+        """
+        # check if the review process should be disabled
+        if not self.ctx.config.get("dev", {}).get("disable_review", False):
+            return
+        # set all algorithms that are under review or awaiting review to approved
+        for algorithm in db.Algorithm.get():
+            if (
+                algorithm.status == AlgorithmStatus.UNDER_REVIEW.value
+                or algorithm.status
+                == AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
+            ):
+                algorithm.status = AlgorithmStatus.APPROVED.value
+                algorithm.save()
 
     def start(self) -> None:
         """
