@@ -5,10 +5,10 @@ import importlib
 from abc import ABC, abstractmethod
 
 from collections import namedtuple
+from enum import EnumMeta
+
 from flask_principal import Permission
 
-from vantage6.server.globals import RESOURCES
-from vantage6.server.default_roles import DefaultRole
 from vantage6.backend.common.base import Base
 from vantage6.server.utils import obtain_auth_collaborations, obtain_auth_organization
 from vantage6.common import logger_name
@@ -32,13 +32,8 @@ class RuleCollection(ABC, dict):
         Name of the resource endpoint (e.g. node, organization, user)
     """
 
-    def __new__(
-            cls, name: str, scope: ScopeInterface = None
-    ) -> ScopedRuleCollection | UnscopedRuleCollection:
-        if scope:
-            return ScopedRuleCollection(name, scope)
-        else:
-            return UnscopedRuleCollection(name)
+    def __init__(self, name):
+        self.name = name
 
     @abstractmethod
     def add(self, *args, **kwargs) -> None:
@@ -58,8 +53,6 @@ class UnscopedRuleCollection(RuleCollection):
     name: str
         Name of the resource endpoint (e.g. node, organization, user)
     """
-    def __init__(self, name):
-        self.name = name
 
     def add(self, operation: str) -> None:
         """
@@ -107,10 +100,6 @@ class ScopedRuleCollection(RuleCollection):
         Name of the resource endpoint (e.g. node, organization, user)
     """
 
-    def __init__(self, name: str, scope: ScopeInterface) -> None:
-        self.name = name
-        self.scope = scope
-
     def add(self, scope: ScopeInterface, operation: OperationInterface) -> None:
         """
         Add a rule to the rule collection
@@ -122,6 +111,7 @@ class ScopedRuleCollection(RuleCollection):
         operation: Operation
             What operation the rule applies to
         """
+        print(f"ADDING RULE {self.name} {scope} {operation}")
         permission = Permission(RuleNeed(self.name, scope, operation))
         self.__setattr__(f"{operation}_{scope}", permission)
 
@@ -300,7 +290,8 @@ class ScopedRuleCollection(RuleCollection):
         elif minimal_scope == self.scope.GLOBAL:
             return [self.scope.GLOBAL]
         elif minimal_scope == self.scope.OWN:
-            return [self.scope.OWN, self.scope.ORGANIZATION, self.scope.COLLABORATION, self.scope.GLOBAL]
+            return [self.scope.OWN, self.scope.ORGANIZATION, self.scope.COLLABORATION,
+                    self.scope.GLOBAL]
         else:
             raise ValueError(f"Unknown scope '{minimal_scope}'")
 
@@ -311,18 +302,18 @@ class PermissionManager(ABC):
     the code
     """
 
-    def __init__(self,
-                 resources_location: str,
-                 role: RoleInterface,
-                 rule: RuleInterface,
-                 operation: OperationInterface,
-                 ) -> None:
-
+    def __init__(
+            self, resources_location: str, resources: list[str], default_roles: EnumMeta, role: RoleInterface, rule: RuleInterface,
+            operation: OperationInterface, scope: ScopeInterface = None
+    ) -> None:
+        self.collections: dict[str, RuleCollection] = {}
         self.role = role
         self.rule = rule
         self.operation = operation
+        self.default_roles = default_roles
+        self.scope = scope
         log.info("Loading permission system...")
-        self.load_rules_from_resources(resources_location)
+        self.load_rules_from_resources(resources_location, resources)
 
     @abstractmethod
     def assign_rule_to_fixed_role(
@@ -361,7 +352,7 @@ class PermissionManager(ABC):
 
         Parameters
         ----------
-        rules: list[:class:`~vantage6.server.model.rule.Rule`]
+        rules: list[RuleInterface]
             List of rules that user is checked to have
 
         Returns
@@ -371,11 +362,19 @@ class PermissionManager(ABC):
         """
         pass
 
-    def load_rules_from_resources(self, resources_location: str) -> None:
+    def load_rules_from_resources(self, resources_location: str, resources: list[str]) -> None:
         """
-        Collect all permission rules from all registered API resources
+        Collect all permission rules from all registered API resources.
+
+        Parameters
+        ----------
+        resources_location: str
+            Name of the module where to load the resources from (e.g. vantage6.server.resource).
+
+        resources: list[str]
+            List of the resources to load.
         """
-        for res in RESOURCES:
+        for res in resources:
             module = importlib.import_module(f"{resources_location}.{res}")
             try:
                 module.permissions(self)
@@ -399,7 +398,7 @@ class PermissionManager(ABC):
             Scope that the rule applies to
         """
 
-        self.assign_rule_to_fixed_role(DefaultRole.ROOT, *args, **kwargs)
+        self.assign_rule_to_fixed_role(self.default_roles.ROOT, *args, **kwargs)
 
     def appender(self, name: str) -> callable:
         """
@@ -438,8 +437,9 @@ class PermissionManager(ABC):
         if self._collection_exists(name):
             return self.collections[name]
         else:
-            self.collections[name] = RuleCollection(name, self.scope) if hasattr(self, "scope") \
-                else RuleCollection(name)
+            self.collections[name] = ScopedRuleCollection(name) if self.scope \
+                else UnscopedRuleCollection(name)
+
             return self.collections[name]
 
     def _collection_exists(self, name: str) -> bool:
@@ -458,14 +458,19 @@ class PermissionManager(ABC):
         """
         return name in self.collections
 
+    def __getattr__(self, name: str) -> RuleCollection:
+        # TODO BvB 2023-01-18 I think this function might not be used. It would
+        # be triggered when we do something like
+        # `permissionManager.resource_name` but we don't ever do that (?!)
+        try:
+            collection = self.collections[name]
+            return collection
+        except Exception as e:
+            log.critical(f"Missing permission collection! {name}")
+            raise e
+
 
 class ScopedPermissionManager(PermissionManager):
-
-    def __init__(self, resources_location: str, role: RoleInterface, rule: RuleInterface,
-                 operation: OperationInterface, scope: ScopeInterface):
-        super().__init__(resources_location, role, rule, operation)
-        self.scope = scope
-        self.collections: dict[str, ScopedRuleCollection] = {}
 
     def assign_rule_to_node(
             self, resource: str, scope: ScopeInterface, operation: OperationInterface
@@ -482,7 +487,7 @@ class ScopedPermissionManager(PermissionManager):
         operation: OperationInterface
             Operation that the rule applies to
         """
-        self.assign_rule_to_fixed_role(DefaultRole.NODE, resource, operation, scope)
+        self.assign_rule_to_fixed_role(self.default_roles.NODE, resource, operation, scope)
 
     def assign_rule_to_container(
             self, resource: str, scope: ScopeInterface, operation: OperationInterface
@@ -500,7 +505,7 @@ class ScopedPermissionManager(PermissionManager):
             Operation that the rule applies to
         """
         self.assign_rule_to_fixed_role(
-            DefaultRole.CONTAINER, resource, operation, scope
+            self.default_roles.CONTAINER, resource, operation, scope
         )
 
     def assign_rule_to_fixed_role(
@@ -516,19 +521,19 @@ class ScopedPermissionManager(PermissionManager):
             Name of the fixed role that the rule should be added to
         resource: str
             Resource that the rule applies to
-        scope: Scope
+        scope: ScopeInterface
             Scope that the rule applies to
-        operation: Operation
+        operation: OperationInterface
             Operation that the rule applies to
         """
         role = self.role.get_by_name(fixedrole)
         if not role:
             log.warning(f"{fixedrole} role not found, creating it now!")
             role = self.role(
-                    name=fixedrole, description=f"{fixedrole} role", is_default_role=True
-                )
+                name=fixedrole, description=f"{fixedrole} role", is_default_role=True
+            )
 
-        rule = self.rule.get_by_(resource, scope, operation)
+        rule = self.rule.get_by_(name=resource, scope=scope, operation=operation)
         rule_params = f"{resource},{scope},{operation}"
 
         if not rule:
@@ -543,8 +548,8 @@ class ScopedPermissionManager(PermissionManager):
     def register_rule(
             self,
             resource: str,
-            operation: OperationInterface,
             scope: ScopeInterface,
+            operation: OperationInterface,
             description=None,
             assign_to_node=False,
             assign_to_container=False,
@@ -578,7 +583,10 @@ class ScopedPermissionManager(PermissionManager):
 
         # verify that the rule is in the DB, so that these can be assigned to
         # roles and users
-        rule = self.rule.get_by_(resource, scope, operation)
+
+        # print(f"REGISTERING RULE {resource} {scope} {operation}")
+        rule = self.rule.get_by_(name=resource, scope=scope, operation=operation)
+        print(f"RULE {rule}")
         if not rule:
             rule = self.rule(
                 name=resource, operation=operation, scope=scope, description=description
@@ -627,13 +635,34 @@ class ScopedPermissionManager(PermissionManager):
                 }
         return None
 
+    # def rule_exists_in_db(self, name: str, scope: ScopeInterface, operation: OperationInterface) -> bool:
+    #     """Check if the rule exists in the DB.
+    #
+    #     Parameters
+    #     ----------
+    #     name: str
+    #         Name of the rule
+    #     scope: Scope
+    #         Scope of the rule
+    #     operation: Operation
+    #         Operation of the rule
+    #
+    #     Returns
+    #     -------
+    #     bool
+    #         Whenever this rule exists in the database or not
+    #     """
+    #     session = DatabaseSessionManager.get_session()
+    #     result = (
+    #         session.query(self.rule)
+    #         .filter_by(name=name, operation=operation, scope=scope)
+    #         .scalar()
+    #     )
+    #     session.commit()
+    #     return result
+
 
 class UnscopedPermissionManager(PermissionManager):
-
-    def __init__(self, resources_location: str, role: RoleInterface, rule: RuleInterface,
-                 operation: OperationInterface):
-        super().__init__(resources_location, role, rule, operation)
-        self.collections: dict[str, UnscopedRuleCollection] = {}
 
     def assign_rule_to_fixed_role(
             self, fixedrole: str, resource: str, operation: OperationInterface
@@ -656,7 +685,7 @@ class UnscopedPermissionManager(PermissionManager):
             log.warning(f"{fixedrole} role not found, creating it now!")
             role = self.role(name=fixedrole, description=f"{fixedrole} role")
 
-        rule = self.rule.get_by_(resource, operation)
+        rule = self.rule.get_by_(name=resource, operation=operation)
         rule_params = f"{resource},{operation}"
 
         if not rule:
@@ -691,7 +720,7 @@ class UnscopedPermissionManager(PermissionManager):
         """
         # verify that the rule is in the DB, so that these can be assigned to
         # roles and users
-        rule = self.rule.get_by_(resource, operation)
+        rule = self.rule.get_by_(name=resource, operation=operation)
         if not rule:
             rule = self.rule(name=resource, operation=operation, description=description)
             rule.save()
@@ -705,7 +734,6 @@ class UnscopedPermissionManager(PermissionManager):
 
         self.collection(resource).add(rule.operation)
 
-    @abstractmethod
     def check_user_rules(self, rules: list[RuleInterface]) -> dict | None:
         """
         Check if a user, node or container has all the `rules` in a list
