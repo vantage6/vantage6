@@ -1,6 +1,27 @@
 Release notes
 =============
 
+4.6.1
+-----
+
+*30 July 2024*
+
+- **Bugfix**
+
+ - Ensure logs will be shown for failed algorithm runs in the UI without the need to
+   refresh the page (`PR#1403 <https://github.com/vantage6/vantage6/pull/1403>`_).
+ - When creating a task in the UI, dropdown option to select multiple was not properly
+   reset when changing selected function from central to partial
+   (`PR#1402 <https://github.com/vantage6/vantage6/pull/1402>`_).
+ - Fix permission check in UI to show button to register missing nodes
+   (`Issue#1230 <https://github.com/vantage6/vantage6/issues/1230>`_,
+   `PR#1404 <https://github.com/vantage6/vantage6/pull/1404>`_).
+ - Pass on ``print_log_header`` argument when running ``v6 node stop`` to prevent entire
+   log header to be printed (`Issue#1398 <https://github.com/vantage6/vantage6/issues/1398>`_,
+   `PR#1400 <https://github.com/vantage6/vantage6/pull/1400>`_).
+ - Add missing docker dependency to algorithm store
+   (`PR#1409 <https://github.com/vantage6/vantage6/pull/1409>`_).
+
 4.6.0
 -----
 
