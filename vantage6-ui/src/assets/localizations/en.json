@@ -469,7 +469,8 @@
     },
     "card-nodes": {
       "title": "Nodes",
-      "add": "Register missing nodes"
+      "add": "Register missing nodes",
+      "add-own-org": "Register missing node for your organization"
     },
     "card-algorithm-stores": {
       "title": "Algorithm stores available to this collaboration",
