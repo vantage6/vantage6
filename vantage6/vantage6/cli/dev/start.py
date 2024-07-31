@@ -80,7 +80,7 @@ def start_demo_network(
     )
     # TODO these credentials are hardcoded and may change if changed elsewhere. Link
     # them together so that they are guaranteed to be the same.
-    USERNAME = "org_1-admin"
+    USERNAME = "dev_admin"
     PASSWORD = "password"
     client.authenticate(USERNAME, PASSWORD)
     existing_stores = client.store.list().get("data", [])
