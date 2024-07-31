@@ -99,7 +99,8 @@ class AlgorithmStoreApp:
 
         # setup the permission manager for the API endpoints
         self.permissions = StorePermissionManager(
-             "vantage6.algorithm.store.resource", RESOURCES, DefaultRole)
+            "vantage6.algorithm.store.resource", RESOURCES, DefaultRole
+        )
 
         # sync policies with the database
         self.setup_policies(self.ctx.config)
@@ -287,9 +288,7 @@ class AlgorithmStoreApp:
                 current_role = db.Role.get_by_name(role["name"])
                 # check that the rules are the same. Use set() to compare without order
                 if set(current_role.rules) != set(role["rules"]):
-                    log.warning(
-                        "Updating default role %s with new rules", role["name"]
-                    )
+                    log.warning("Updating default role %s with new rules", role["name"])
                     current_role.rules = role["rules"]
                     current_role.save()
 

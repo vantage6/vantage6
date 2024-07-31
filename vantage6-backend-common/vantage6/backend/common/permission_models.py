@@ -62,4 +62,3 @@ class RoleInterface:
             String representation of the role
         """
         raise NotImplemented("__repr__ method must be implemented for Role class")
-

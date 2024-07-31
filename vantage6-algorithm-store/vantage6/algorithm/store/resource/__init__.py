@@ -205,11 +205,7 @@ def _authorize_user(
     for role in user.roles:
         for rule in role.rules:
             auth_identity.provides.add(
-                RuleNeed(
-                    name=rule.name,
-                    operation=rule.operation,
-                    scope=None
-                )
+                RuleNeed(name=rule.name, operation=rule.operation, scope=None)
             )
 
     identity_changed.send(current_app._get_current_object(), identity=auth_identity)

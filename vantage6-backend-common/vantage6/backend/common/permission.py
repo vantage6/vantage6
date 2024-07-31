@@ -57,7 +57,7 @@ class PermissionManager(ABC):
     """
 
     def __init__(
-            self, resources_location: str, resources: list[str], default_roles: EnumMeta
+        self, resources_location: str, resources: list[str], default_roles: EnumMeta
     ) -> None:
         self.collections: dict[str, RuleCollection] = {}
         self.default_roles = default_roles
@@ -65,9 +65,7 @@ class PermissionManager(ABC):
         self.load_rules_from_resources(resources_location, resources)
 
     @abstractmethod
-    def assign_rule_to_fixed_role(
-            self, *args, **kwargs
-    ) -> None:
+    def assign_rule_to_fixed_role(self, *args, **kwargs) -> None:
         """
         Attach a rule to a fixed role (not adjustable by users).
 
@@ -85,12 +83,9 @@ class PermissionManager(ABC):
         pass
 
     @abstractmethod
-    def register_rule(
-            self,
-            *args, **kwargs
-    ) -> None:
+    def register_rule(self, *args, **kwargs) -> None:
         """
-            Register a permission rule in the database.
+        Register a permission rule in the database.
         """
         pass
 
@@ -127,7 +122,9 @@ class PermissionManager(ABC):
         """
         pass
 
-    def load_rules_from_resources(self, resources_location: str, resources: list[str]) -> None:
+    def load_rules_from_resources(
+        self, resources_location: str, resources: list[str]
+    ) -> None:
         """
         Collect all permission rules from all registered API resources.
 
@@ -149,9 +146,7 @@ class PermissionManager(ABC):
                     "Resource '%s' contains no or invalid permissions", module_name
                 )
 
-    def assign_rule_to_root(
-            self, *args, **kwargs
-    ) -> None:
+    def assign_rule_to_root(self, *args, **kwargs) -> None:
         """
         Assign a rule to the root role.
 

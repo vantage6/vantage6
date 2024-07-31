@@ -89,9 +89,9 @@ class ServerRuleCollection(RuleCollection):
         # collaboration is in the collaborations of the user/node
         col_perm = getattr(self, f"{operation}_{Scope.COLLABORATION}")
         if (
-                col_perm
-                and col_perm.can()
-                and self._id_in_list(collaboration_id, auth_collabs)
+            col_perm
+            and col_perm.can()
+            and self._id_in_list(collaboration_id, auth_collabs)
         ):
             return True
 
@@ -192,8 +192,7 @@ class ServerRuleCollection(RuleCollection):
         elif minimal_scope == Scope.GLOBAL:
             return [Scope.GLOBAL]
         elif minimal_scope == Scope.OWN:
-            return [Scope.OWN, Scope.ORGANIZATION, Scope.COLLABORATION,
-                    Scope.GLOBAL]
+            return [Scope.OWN, Scope.ORGANIZATION, Scope.COLLABORATION, Scope.GLOBAL]
         else:
             raise ValueError(f"Unknown scope '{minimal_scope}'")
 
@@ -201,7 +200,7 @@ class ServerRuleCollection(RuleCollection):
 class ServerPermissionManager(PermissionManager):
 
     def assign_rule_to_node(
-            self, resource: str, scope: Scope, operation: Operation
+        self, resource: str, scope: Scope, operation: Operation
     ) -> None:
         """
         Assign a rule to the Node role.
@@ -215,10 +214,12 @@ class ServerPermissionManager(PermissionManager):
         operation: OperationInterface
             Operation that the rule applies to
         """
-        self.assign_rule_to_fixed_role(self.default_roles.NODE, resource, operation, scope)
+        self.assign_rule_to_fixed_role(
+            self.default_roles.NODE, resource, operation, scope
+        )
 
     def assign_rule_to_container(
-            self, resource: str, scope: Scope, operation: Operation
+        self, resource: str, scope: Scope, operation: Operation
     ) -> None:
         """
         Assign a rule to the container role.
@@ -237,8 +238,7 @@ class ServerPermissionManager(PermissionManager):
         )
 
     def assign_rule_to_fixed_role(
-            self, fixedrole: str, resource: str, operation: Operation,
-            scope: Scope
+        self, fixedrole: str, resource: str, operation: Operation, scope: Scope
     ) -> None:
         """
         Attach a rule to a fixed role (not adjustable by users).
@@ -269,9 +269,7 @@ class ServerPermissionManager(PermissionManager):
 
         if rule not in role.rules:
             role.rules.append(rule)
-            log.info(
-                f"Rule ({rule_params}) added to " f"{fixedrole} role!"
-            )
+            log.info(f"Rule ({rule_params}) added to " f"{fixedrole} role!")
 
     def get_new_collection(self, name: str) -> ServerRuleCollection:
         """
@@ -289,38 +287,38 @@ class ServerPermissionManager(PermissionManager):
         return ServerRuleCollection(name)
 
     def register_rule(
-            self,
-            resource: str,
-            scope: Scope,
-            operation: Operation,
-            description=None,
-            assign_to_node=False,
-            assign_to_container=False,
+        self,
+        resource: str,
+        scope: Scope,
+        operation: Operation,
+        description=None,
+        assign_to_node=False,
+        assign_to_container=False,
     ) -> None:
         """
-            Register a permission rule in the database with the scope.
+        Register a permission rule in the database with the scope.
 
-            If a rule already exists, nothing is done. This rule can be used in API
-            endpoints to determine if a user, node or container can do a certain
-            operation in a certain scope.
+        If a rule already exists, nothing is done. This rule can be used in API
+        endpoints to determine if a user, node or container can do a certain
+        operation in a certain scope.
 
-            Parameters
-            ----------
-            resource : str
-                API resource that the rule applies to
-            operation : OperationInterface
-                Operation of the rule
-            scope : ScopeInterface
-                Scope of the rule
-            description : String, optional
-                Human readable description where the rule is used for, by default
-                None
-            assign_to_node: bool, optional
-                Whether rule should be assigned to the node role or not. Default
-                False
-            assign_to_container: bool, optional
-                Whether rule should be assigned to the container role or not.
-                Default False
+        Parameters
+        ----------
+        resource : str
+            API resource that the rule applies to
+        operation : OperationInterface
+            Operation of the rule
+        scope : ScopeInterface
+            Scope of the rule
+        description : String, optional
+            Human readable description where the rule is used for, by default
+            None
+        assign_to_node: bool, optional
+            Whether rule should be assigned to the node role or not. Default
+            False
+        assign_to_container: bool, optional
+            Whether rule should be assigned to the container role or not.
+            Default False
 
         """
 
@@ -364,11 +362,11 @@ class ServerPermissionManager(PermissionManager):
         """
         for rule in rules:
             if not self.collections[rule.name].has_at_least_scope(
-                    rule.scope, rule.operation
+                rule.scope, rule.operation
             ):
                 return {
                     "msg": f"You don't have the rule ({rule.name}, "
-                           f"{rule.scope.name.lower()}, "
-                           f"{rule.operation.name.lower()})"
+                    f"{rule.scope.name.lower()}, "
+                    f"{rule.operation.name.lower()})"
                 }
         return None

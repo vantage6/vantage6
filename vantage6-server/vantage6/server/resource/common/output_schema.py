@@ -10,7 +10,7 @@ from vantage6.common.globals import STRING_ENCODING
 from vantage6.server.model import User
 from vantage6.backend.common.resource.output_schema import (
     BaseHATEOASModelSchema,
-    create_one_to_many_link
+    create_one_to_many_link,
 )
 
 log = logging.getLogger(logger_name(__name__))

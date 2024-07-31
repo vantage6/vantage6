@@ -2,7 +2,7 @@ from marshmallow import fields
 
 from vantage6.backend.common.resource.output_schema import (
     BaseHATEOASModelSchema,
-    create_one_to_many_link
+    create_one_to_many_link,
 )
 from vantage6.algorithm.store.model.algorithm import Algorithm
 from vantage6.algorithm.store.model.argument import Argument

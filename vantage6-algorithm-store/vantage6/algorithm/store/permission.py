@@ -40,8 +40,7 @@ class StoreRuleCollection(RuleCollection):
 class StorePermissionManager(PermissionManager):
 
     def assign_rule_to_fixed_role(
-            self, fixedrole: str, resource: str, operation: Operation
-
+        self, fixedrole: str, resource: str, operation: Operation
     ) -> None:
         """
         Attach a rule to a fixed role (not adjustable by users).
@@ -68,29 +67,27 @@ class StorePermissionManager(PermissionManager):
 
         if rule not in role.rules:
             role.rules.append(rule)
-            log.info(
-                f"Rule ({rule_params}) added to " f"{fixedrole} role!"
-            )
+            log.info(f"Rule ({rule_params}) added to " f"{fixedrole} role!")
 
     def register_rule(
-            self, resource: str, operation: Operation, description=None
+        self, resource: str, operation: Operation, description=None
     ) -> None:
         """
-            Register a permission rule in the database without the scope.
+        Register a permission rule in the database without the scope.
 
-            If a rule already exists, nothing is done. This rule can be used in API
-            endpoints to determine if a user, node or container can do a certain
-            operation in a certain scope.
+        If a rule already exists, nothing is done. This rule can be used in API
+        endpoints to determine if a user, node or container can do a certain
+        operation in a certain scope.
 
-            Parameters
-            ----------
-            resource : str
-                API resource that the rule applies to
-            operation : OperationInterface
-                Operation of the rule
-            description : String, optional
-                Human readable description where the rule is used for, by default
-                None
+        Parameters
+        ----------
+        resource : str
+            API resource that the rule applies to
+        operation : OperationInterface
+            Operation of the rule
+        description : String, optional
+            Human readable description where the rule is used for, by default
+            None
 
         """
         # verify that the rule is in the DB, so that these can be assigned to
@@ -127,7 +124,7 @@ class StorePermissionManager(PermissionManager):
             if not self.collections[rule.name].has_permission(rule.operation):
                 return {
                     "msg": f"You don't have the rule ({rule.name}, "
-                           f"{rule.operation})"
+                    f"{rule.operation})"
                 }
         return None
 

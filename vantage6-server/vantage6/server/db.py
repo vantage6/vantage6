@@ -22,4 +22,3 @@ from vantage6.server.model import (
 )
 
 from vantage6.backend.common.permission_models import role_rule_association
-
