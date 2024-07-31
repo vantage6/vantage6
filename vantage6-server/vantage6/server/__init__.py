@@ -11,7 +11,7 @@ from gevent import monkey
 
 from vantage6.server.model import Role, Rule
 from vantage6.server.model.rule import Operation, Scope
-from vantage6.server.permission import ServerPermissionManager
+from vantage6.server.permission import PermissionManager
 
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
@@ -138,7 +138,7 @@ class ServerApp:
         self.socketio = self.setup_socket_connection()
 
         # setup the permission manager for the API endpoints
-        self.permissions = ServerPermissionManager(
+        self.permissions = PermissionManager(
             "vantage6.server.resource", RESOURCES, DefaultRole
         )
         # self.permissions = PermissionManager()

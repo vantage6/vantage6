@@ -1,6 +1,6 @@
 import logging
 
-from vantage6.backend.common.permission import RuleCollectionBase, PermissionManager
+from vantage6.backend.common.permission import RuleCollectionBase, PermissionManagerBase
 from vantage6.backend.common.base import Base
 from vantage6.server.model.role import Role
 from vantage6.server.model.rule import Rule, Operation, Scope
@@ -197,7 +197,7 @@ class RuleCollection(RuleCollectionBase):
             raise ValueError(f"Unknown scope '{minimal_scope}'")
 
 
-class ServerPermissionManager(PermissionManager):
+class PermissionManager(PermissionManagerBase):
 
     def assign_rule_to_node(
         self, resource: str, scope: Scope, operation: Operation

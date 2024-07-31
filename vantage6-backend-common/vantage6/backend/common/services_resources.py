@@ -2,7 +2,7 @@ from http import HTTPStatus
 from flask import request
 from flask_restful import Resource, Api
 
-from vantage6.backend.common.permission import PermissionManager
+from vantage6.backend.common.permission import PermissionManagerBase
 from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
 from vantage6.backend.common.resource.pagination import Page
 
@@ -19,7 +19,7 @@ class BaseServicesResources(Resource):
         Configuration dictionary
     """
 
-    def __init__(self, api: Api, config: dict, permissions: PermissionManager):
+    def __init__(self, api: Api, config: dict, permissions: PermissionManagerBase):
         self.api = api
         self.config = config
         self.permissions = permissions

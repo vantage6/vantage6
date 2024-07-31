@@ -1,7 +1,7 @@
 import logging
 
 from vantage6.algorithm.store.model.rule import Rule, Operation
-from vantage6.backend.common.permission import RuleCollectionBase, PermissionManager
+from vantage6.backend.common.permission import RuleCollectionBase, PermissionManagerBase
 from vantage6.common import logger_name
 from vantage6.algorithm.store.model.role import Role
 
@@ -37,7 +37,7 @@ class RuleCollection(RuleCollectionBase):
         return False
 
 
-class StorePermissionManager(PermissionManager):
+class PermissionManager(PermissionManagerBase):
 
     def assign_rule_to_fixed_role(
         self, fixedrole: str, resource: str, operation: Operation

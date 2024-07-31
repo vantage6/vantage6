@@ -50,7 +50,7 @@ class RuleCollectionBase(ABC, dict):
         self.__setattr__(f"{attribute_name}", permission)
 
 
-class PermissionManager(ABC):
+class PermissionManagerBase(ABC):
     """
     Loads the permissions and syncs rules in database with rules defined in
     the code
@@ -217,9 +217,6 @@ class PermissionManager(ABC):
         return name in self.collections
 
     def __getattr__(self, name: str) -> RuleCollectionBase:
-        # TODO BvB 2023-01-18 I think this function might not be used. It would
-        # be triggered when we do something like
-        # `permissionManager.resource_name` but we don't ever do that (?!)
         try:
             collection = self.collections[name]
             return collection

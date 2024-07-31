@@ -51,7 +51,7 @@ from vantage6.backend.common.base import Base, DatabaseSessionManager, Database
 from vantage6.algorithm.store.model.common.enums import ReviewStatus
 from vantage6.algorithm.store import db
 
-from vantage6.algorithm.store.permission import StorePermissionManager
+from vantage6.algorithm.store.permission import PermissionManager
 
 # make sure the version is available
 from vantage6.algorithm.store._version import __version__  # noqa: F401
@@ -98,7 +98,7 @@ class AlgorithmStoreApp:
         self.swagger = Swagger(self.app, template={})
 
         # setup the permission manager for the API endpoints
-        self.permissions = StorePermissionManager(
+        self.permissions = PermissionManager(
             "vantage6.algorithm.store.resource", RESOURCES, DefaultRole
         )
 

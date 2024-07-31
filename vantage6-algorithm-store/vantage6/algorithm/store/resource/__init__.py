@@ -7,7 +7,7 @@ from flask import Response, request, current_app, g
 from flask_principal import Identity, identity_changed
 from flask_restful import Api
 
-from vantage6.algorithm.store import StorePermissionManager
+from vantage6.algorithm.store import PermissionManager
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmViewPolicies
@@ -38,7 +38,7 @@ class AlgorithmStoreResources(BaseServicesResources):
         self,
         api: Api,
         config: dict,
-        permissions: StorePermissionManager,
+        permissions: PermissionManager,
     ):
         super().__init__(api, config, permissions)
 
