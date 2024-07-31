@@ -273,7 +273,7 @@ class Sessions(SessionBase):
 
         parameters:
         - in: query
-          name: label
+          name: name
           schema:
             type: string
           description: >-
@@ -282,17 +282,12 @@ class Sessions(SessionBase):
             characters\n
             * underscore sign (_) represents one, single character
         - in: query
-          name: user
+          name: user_id
           schema:
             type: integer
           description: User id
         - in: query
-          name: user
-          schema:
-            type: integer
-          description: User id
-        - in: query
-          name: collaboration
+          name: collaboration_id
           schema:
             type: integer
           description: Collaboration id
@@ -344,12 +339,12 @@ class Sessions(SessionBase):
         g.session.commit()
 
         # filter by a field of this endpoint
-        if "label" in args:
-            q = q.filter(db.Session.label.like(args["label"]))
-        if "user" in args:
-            q = q.filter(db.Session.user_id == args["user"])
-        if "collaboration" in args:
-            q = q.filter(db.Session.collaboration_id == args["collaboration"])
+        if "name" in args:
+            q = q.filter(db.Session.name.like(args["name"]))
+        if "user_id" in args:
+            q = q.filter(db.Session.user_id == args["user_id"])
+        if "collaboration_id" in args:
+            q = q.filter(db.Session.collaboration_id == args["collaboration_id"])
         if "scope" in args:
             q = q.filter(db.Session.scope == args["scope"])
 
@@ -452,7 +447,7 @@ class Sessions(SessionBase):
         # TODO if any of the steps fails... we need to rollback the entire session
         if not self.r.has_at_least_scope(S.OWN, P.CREATE):
             return {
-                "msg": "You lack the permission to do that! 1"
+                "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
         data = request.get_json()
@@ -492,13 +487,29 @@ class Sessions(SessionBase):
                 "msg": "Session with that name already exists within the collaboration!"
             }, HTTPStatus.BAD_REQUEST
 
+        # In case a study is provided we also need to check that this is within the
+        # collaboration.
+        if "study_id" in data:
+            study = db.Study.get(data["study_id"])
+            if not study:
+                return {"msg": "Study not found"}, HTTPStatus.NOT_FOUND
+
+            if study.collaboration_id != collaboration.id:
+                return {
+                    "msg": "Study is not part of the collaboration!"
+                }, HTTPStatus.BAD_REQUEST
+
+            study_id = study.id
+        else:
+            study_id = None
+
         # Create the Session object
         session = db.Session(
             name=data["name"],
             user_id=g.user.id,
             collaboration=collaboration,
             scope=scope,
-            study_id=data.get("study_id"),
+            study_id=study_id,
         )
         session.save()
         log.info(f"Session {session.id} created")
@@ -652,7 +663,11 @@ class Session(SessionBase):
             session.name = data["name"]
 
         if "scope" in data:
-            scope = getattr(S, data["scope"].upper())
+            scope = getattr(S, data["scope"].upper(), None)
+            if not scope:
+                return {
+                    "msg": f"Scope must be one of the following: {S.list()}"
+                }, HTTPStatus.BAD_REQUEST
             if not self.r.has_at_least_scope(scope, P.EDIT):
                 return {
                     "msg": (
@@ -694,6 +709,13 @@ class Session(SessionBase):
             type: integer
           description: Session ID
           required: true
+        - in: query
+          name: delete_dependents
+          schema:
+              type: boolean
+          description: >-
+              Delete all dependents of the session. This includes dataframes and tasks
+              that are part of the
 
         responses:
           204:
@@ -737,10 +759,17 @@ class Session(SessionBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
+        delete_dependents = request.args.get("delete_dependents", False)
+        if (session.dataframes or session.tasks) and not delete_dependents:
+            return {
+                "msg": "This session has dependents, please delete them first."
+            }, HTTPStatus.BAD_REQUEST
+
         self.delete_session(session)
-        # TODO create socket event so the node knows that it should clear the session
-        # data too. We also need to check on startup at the nodes if sessions need to be
-        # deleted.
+        # TODO FM 31-07-2023: create socket event so the node knows that it should clear
+        # the session data too?? Or do we need to keep the session data in the node for
+        # accountability? We also need to check on startup at the nodes if sessions
+        # need to be deleted?
 
         return {"msg": f"Successfully deleted session id={id}"}, HTTPStatus.OK
 
