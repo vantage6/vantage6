@@ -6,6 +6,7 @@ from flask import request
 
 from vantage6.common import logger_name
 from vantage6.common.globals import BASIC_PROCESSING_IMAGE
+from vantage6.common.enums import LocalAction
 from vantage6.server import db
 from vantage6.server.permission import RuleCollection, Operation as P
 from vantage6.server.resource import ServicesResources, with_user
@@ -169,4 +170,5 @@ class ColumnNames(ServicesResources):
             socketio=self.socketio,
             rules=self.r_task,
             config=self.config,
+            action=LocalAction.COMPUTE,
         )
