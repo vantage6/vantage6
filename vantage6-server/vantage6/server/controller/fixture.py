@@ -3,6 +3,7 @@ import logging
 
 import vantage6.server.model as db
 from vantage6.backend.common.base import Database
+from vantage6.server import RESOURCES, DefaultRole
 from vantage6.server.permission import PermissionManager
 from vantage6.common.task_status import TaskStatus
 from vantage6.common.serialization import serialize
@@ -53,8 +54,10 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
     # In that case, create them here so that the created users have
     # permissions.
     if not db.Rule.get():
-        permissions = PermissionManager()
-        permissions.load_rules_from_resources()
+        permissions = PermissionManager(
+            "vantage6.server.resource", RESOURCES, DefaultRole
+        )
+        permissions.load_rules_from_resources("vantage6.server.resource", RESOURCES)
 
     log.info("Create Organizations and Users")
     for org in fixtures.get("organizations", {}):

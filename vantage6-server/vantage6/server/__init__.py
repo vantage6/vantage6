@@ -141,7 +141,6 @@ class ServerApp:
         self.permissions = PermissionManager(
             "vantage6.server.resource", RESOURCES, DefaultRole
         )
-        # self.permissions = PermissionManager()
 
         # Api - REST JSON-rpc
         self.api = Api(self.app)
