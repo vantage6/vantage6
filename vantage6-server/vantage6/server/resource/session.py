@@ -223,7 +223,7 @@ class SessionBase(ServicesResources):
         # remove empty values
         input_ = {k: v for k, v in input_.items() if v is not None}
         return Tasks.post_task(
-            input_, self.socketio, getattr(self.permissions, "task"), action
+            input_, self.socketio, getattr(self.permissions, "task"), {}, action
         )
 
     @staticmethod
@@ -725,7 +725,7 @@ class Session(SessionBase):
 
         elif (
             self.r.d_org.can()
-            and session.organization_id == self.obtain_organization_id()
+            and session.owner.organization_id == self.obtain_organization_id()
         ):
             accepted = True
 

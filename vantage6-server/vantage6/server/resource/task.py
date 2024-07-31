@@ -579,7 +579,9 @@ class Tasks(TaskBase):
             request.get_json()
         except Exception:
             return {"msg": "Request body is incorrect"}, HTTPStatus.BAD_REQUEST
-        return self.post_task(request.get_json(), self.socketio, self.r, self.config)
+        return self.post_task(
+            request.get_json(), self.socketio, self.r, self.config, LocalAction.COMPUTE
+        )
 
     # TODO this function should be refactored to make it more readable
     @staticmethod
