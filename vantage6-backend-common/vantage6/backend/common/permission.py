@@ -202,7 +202,8 @@ class PermissionManager(ABC):
         if self._collection_exists(name):
             return self.collections[name]
         else:
-            return self.get_new_collection(name)
+            self.collections[name] = self.get_new_collection(name)
+            return self.collections[name]
 
     def _collection_exists(self, name: str) -> bool:
         """
