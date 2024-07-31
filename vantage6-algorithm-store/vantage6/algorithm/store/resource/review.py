@@ -284,7 +284,11 @@ class Reviews(AlgorithmStoreResources):
             return {
                 "msg": f"User id='{reviewer.id}' is not allowed to review algorithms!"
             }, HTTPStatus.BAD_REQUEST
-        if reviewer == algorithm.developer:
+        # the developer of the algorithm may not review their own algorithm, unless
+        # a different dev policy is set
+        if reviewer == algorithm.developer and not self.config.get("dev", {}).get(
+            "review_own_algorithm", False
+        ):
             return {
                 "msg": (
                     "You cannot assign the developer of the algorithm to review "

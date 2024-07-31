@@ -346,14 +346,10 @@ class AlgorithmStoreApp:
         if not self.ctx.config.get("dev", {}).get("disable_review", False):
             return
         # set all algorithms that are under review or awaiting review to approved
-        for algorithm in db.Algorithm.get():
-            if (
-                algorithm.status == AlgorithmStatus.UNDER_REVIEW.value
-                or algorithm.status
-                == AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
-            ):
-                algorithm.status = AlgorithmStatus.APPROVED.value
-                algorithm.save()
+        for algorithm in db.Algorithm.get_by_algorithm_status(
+            [AlgorithmStatus.UNDER_REVIEW, AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT]
+        ):
+            algorithm.approve()
 
     def start(self) -> None:
         """

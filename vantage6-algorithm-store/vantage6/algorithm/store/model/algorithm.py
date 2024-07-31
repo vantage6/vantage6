@@ -133,3 +133,34 @@ class Algorithm(Base):
         result = session.query(cls).filter_by(image=image, invalidated_at=None).all()
         session.commit()
         return result
+
+    @classmethod
+    def get_by_algorithm_status(
+        cls, state: AlgorithmStatus | list[AlgorithmStatus]
+    ) -> list["Algorithm"]:
+        """
+        Get algorithms by one or more algorithm statuses.
+
+        Parameters
+        ----------
+        state : AlgorithmStatus | list[AlgorithmStatus]
+            One or more algorithm statuses
+
+        Returns
+        -------
+        list[Algorithm]
+            Algorithms with one of the given statuses
+        """
+        session = DatabaseSessionManager.get_session()
+        result = (
+            session.query(cls)
+            .filter(
+                cls.status.in_(state)
+                if isinstance(state, list)
+                else cls.status == state
+            )
+            .order_by(cls.id)
+            .all()
+        )
+        session.commit()
+        return result
