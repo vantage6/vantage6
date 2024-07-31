@@ -11,8 +11,7 @@ from flask_principal import Permission
 
 from vantage6.common import logger_name
 
-from vantage6.backend.common.permission_interfaces import (RoleInterface, RuleInterface,
-                                                           OperationInterface, ScopeInterface)
+from vantage6.backend.common.permission_interfaces import RuleInterface
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -33,13 +32,13 @@ class RuleCollection(ABC, dict):
     def __init__(self, name):
         self.name = name
 
-    def add(self, operation: OperationInterface, scope: ScopeInterface = None) -> None:
+    def add(self, operation: str, scope: str = None) -> None:
         """
         Add a rule to the rule collection
 
         Parameters
         ----------
-        scope: ScopeInterface
+        scope: Scope
             Scope within which to apply the rule
         operation: Operation
             What operation the rule applies to
@@ -158,9 +157,9 @@ class PermissionManager(ABC):
 
         resource: str
             Resource that the rule applies to
-        operation: OperationInterface
+        operation: Operation
             Operation that the rule applies to
-        scope: ScopeInterface
+        scope: Scope
             Scope that the rule applies to
         """
 

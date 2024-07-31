@@ -257,7 +257,7 @@ class ServerPermissionManager(PermissionManager):
         role = Role.get_by_name(fixedrole)
         if not role:
             log.warning(f"{fixedrole} role not found, creating it now!")
-            role = Rule(
+            role = Role(
                 name=fixedrole, description=f"{fixedrole} role", is_default_role=True
             )
 
@@ -274,6 +274,18 @@ class ServerPermissionManager(PermissionManager):
             )
 
     def get_new_collection(self, name: str) -> ServerRuleCollection:
+        """
+        Initialize and return a new ServerRuleCollection.
+        Parameters
+        ----------
+        name: str
+            Name of the collection
+
+        Returns
+        -------
+        RuleCollection
+            New ServerRuleCollection
+        """
         return ServerRuleCollection(name)
 
     def register_rule(
@@ -360,29 +372,3 @@ class ServerPermissionManager(PermissionManager):
                            f"{rule.operation.name.lower()})"
                 }
         return None
-
-    # def rule_exists_in_db(self, name: str, scope: ScopeInterface, operation: OperationInterface) -> bool:
-    #     """Check if the rule exists in the DB.
-    #
-    #     Parameters
-    #     ----------
-    #     name: str
-    #         Name of the rule
-    #     scope: Scope
-    #         Scope of the rule
-    #     operation: Operation
-    #         Operation of the rule
-    #
-    #     Returns
-    #     -------
-    #     bool
-    #         Whenever this rule exists in the database or not
-    #     """
-    #     session = DatabaseSessionManager.get_session()
-    #     result = (
-    #         session.query(Rule)
-    #         .filter_by(name=name, operation=operation, scope=scope)
-    #         .scalar()
-    #     )
-    #     session.commit()
-    #     return result

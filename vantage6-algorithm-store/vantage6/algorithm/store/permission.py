@@ -132,4 +132,16 @@ class StorePermissionManager(PermissionManager):
         return None
 
     def get_new_collection(self, name: str) -> StoreRuleCollection:
+        """
+        Initialize and return a new StoreRuleCollection.
+        Parameters
+        ----------
+        name: str
+            Name of the collection
+
+        Returns
+        -------
+        RuleCollection
+            New StoreRuleCollection
+        """
         return StoreRuleCollection(name)

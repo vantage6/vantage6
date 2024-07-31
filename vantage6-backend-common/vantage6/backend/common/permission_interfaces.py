@@ -1,23 +1,10 @@
 from __future__ import annotations
 
-from enum import Enum as Enumerate
 from typing import Any
 
 from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.backend.common.base import DatabaseSessionManager
-
-
-class OperationInterface(str, Enumerate):
-    """Enumerator of all available operations"""
-
-    pass
-
-
-class ScopeInterface(str, Enumerate):
-    """Enumerator of all available scopes"""
-
-    pass
 
 
 class RuleInterface:
@@ -38,7 +25,7 @@ class RuleInterface:
         str
             String representation of the rule
         """
-        pass
+        raise NotImplemented("__repr__ method must be implemented for Rule class")
 
 
 class RoleInterface:
@@ -58,4 +45,12 @@ class RoleInterface:
             return None
 
     def __repr__(self) -> str:
-        pass
+        """
+        String representation of the role.
+
+        Returns
+        -------
+        str
+            String representation of the role
+        """
+        raise NotImplemented("__repr__ method must be implemented for Role class")

@@ -40,10 +40,7 @@ class AlgorithmStoreResources(BaseServicesResources):
         config: dict,
         permissions: StorePermissionManager,
     ):
-        super().__init__(api, config)
-        # TODO move this to BaseServicesResources when merging PermissionManager from
-        # store and server to backend-common
-        self.permissions = permissions
+        super().__init__(api, config, permissions)
 
 
 def request_from_store_to_v6_server(

@@ -15,7 +15,7 @@ from vantage6.backend.common.services_resources import BaseServicesResources
 from vantage6.server import db
 from vantage6.server.utils import obtain_auth_collaborations, obtain_auth_organization
 from vantage6.server.model.authenticatable import Authenticatable
-from vantage6.server.permission import PermissionManager
+from vantage6.server.permission import ServerPermissionManager
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -46,13 +46,12 @@ class ServicesResources(BaseServicesResources):
         socketio: SocketIO,
         mail: Mail,
         api: Api,
-        permissions: PermissionManager,
+        permissions: ServerPermissionManager,
         config: dict,
     ):
-        super().__init__(api, config)
+        super().__init__(api, config, permissions)
         self.socketio = socketio
         self.mail = mail
-        self.permissions = permissions
 
     @staticmethod
     def obtain_auth() -> db.Authenticatable | dict:
