@@ -1,7 +1,7 @@
 import logging
 
 from vantage6.algorithm.store.model.rule import Rule, Operation
-from vantage6.backend.common.permission import RuleCollection, PermissionManager
+from vantage6.backend.common.permission import RuleCollectionBase, PermissionManager
 from vantage6.common import logger_name
 from vantage6.algorithm.store.model.role import Role
 
@@ -9,7 +9,7 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-class StoreRuleCollection(RuleCollection):
+class RuleCollection(RuleCollectionBase):
     """
     Class that tracks a set of all rules for a certain resource name for
     permissions of the algorithm store
@@ -128,7 +128,7 @@ class StorePermissionManager(PermissionManager):
                 }
         return None
 
-    def get_new_collection(self, name: str) -> StoreRuleCollection:
+    def get_new_collection(self, name: str) -> RuleCollection:
         """
         Initialize and return a new StoreRuleCollection.
         Parameters
@@ -138,7 +138,7 @@ class StorePermissionManager(PermissionManager):
 
         Returns
         -------
-        RuleCollection
+        RuleCollectionBase
             New StoreRuleCollection
         """
-        return StoreRuleCollection(name)
+        return RuleCollection(name)

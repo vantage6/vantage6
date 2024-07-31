@@ -19,7 +19,7 @@ log = logging.getLogger(module_name)
 RuleNeed = namedtuple("RuleNeed", ["name", "scope", "operation"])
 
 
-class RuleCollection(ABC, dict):
+class RuleCollectionBase(ABC, dict):
     """
     Class that tracks a set of all rules for a certain resource name
 
@@ -59,7 +59,7 @@ class PermissionManager(ABC):
     def __init__(
         self, resources_location: str, resources: list[str], default_roles: EnumMeta
     ) -> None:
-        self.collections: dict[str, RuleCollection] = {}
+        self.collections: dict[str, RuleCollectionBase] = {}
         self.default_roles = default_roles
         log.info("Loading permission system...")
         self.load_rules_from_resources(resources_location, resources)
@@ -107,7 +107,7 @@ class PermissionManager(ABC):
         pass
 
     @abstractmethod
-    def get_new_collection(self, name: str) -> RuleCollection:
+    def get_new_collection(self, name: str) -> RuleCollectionBase:
         """
         Initialize and return a new RuleCollection.
         Parameters
@@ -117,7 +117,7 @@ class PermissionManager(ABC):
 
         Returns
         -------
-        RuleCollection
+        RuleCollectionBase
             New RuleCollection
         """
         pass
@@ -178,7 +178,7 @@ class PermissionManager(ABC):
         self.collection(name)
         return lambda *args, **kwargs: self.register_rule(name, *args, **kwargs)
 
-    def collection(self, name: str) -> RuleCollection:
+    def collection(self, name: str) -> RuleCollectionBase:
         """
         Get a RuleCollection object. If it doesn't exist yet, it will be
         created.
@@ -191,7 +191,7 @@ class PermissionManager(ABC):
 
         Returns
         -------
-        RuleCollection
+        RuleCollectionBase
             The collection of rules belonging to the module name
         """
         if self._collection_exists(name):
@@ -216,7 +216,7 @@ class PermissionManager(ABC):
         """
         return name in self.collections
 
-    def __getattr__(self, name: str) -> RuleCollection:
+    def __getattr__(self, name: str) -> RuleCollectionBase:
         # TODO BvB 2023-01-18 I think this function might not be used. It would
         # be triggered when we do something like
         # `permissionManager.resource_name` but we don't ever do that (?!)

@@ -1,6 +1,6 @@
 import logging
 
-from vantage6.backend.common.permission import RuleCollection, PermissionManager
+from vantage6.backend.common.permission import RuleCollectionBase, PermissionManager
 from vantage6.backend.common.base import Base
 from vantage6.server.model.role import Role
 from vantage6.server.model.rule import Rule, Operation, Scope
@@ -11,7 +11,7 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-class ServerRuleCollection(RuleCollection):
+class RuleCollection(RuleCollectionBase):
     """
     Class that tracks a set of all rules for a certain resource name for
     permissions of the vantage6 server.
@@ -271,7 +271,7 @@ class ServerPermissionManager(PermissionManager):
             role.rules.append(rule)
             log.info(f"Rule ({rule_params}) added to " f"{fixedrole} role!")
 
-    def get_new_collection(self, name: str) -> ServerRuleCollection:
+    def get_new_collection(self, name: str) -> RuleCollection:
         """
         Initialize and return a new ServerRuleCollection.
         Parameters
@@ -281,10 +281,10 @@ class ServerPermissionManager(PermissionManager):
 
         Returns
         -------
-        RuleCollection
+        RuleCollectionBase
             New ServerRuleCollection
         """
-        return ServerRuleCollection(name)
+        return RuleCollection(name)
 
     def register_rule(
         self,
