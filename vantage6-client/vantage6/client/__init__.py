@@ -66,8 +66,8 @@ class UserClient(ClientBase):
         self.store = AlgorithmStoreSubClient(self)
         self.algorithm = AlgorithmSubClient(self)
 
-        # set collaboration id to None
         self.collaboration_id = None
+        self.session_id = None
 
         # Display welcome message
         self.log.info(" Welcome to")

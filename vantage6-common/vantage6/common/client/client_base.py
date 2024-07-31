@@ -596,6 +596,6 @@ class ClientBase(object):
             # grandparents and so on.
             # TODO maybe this should ideally get a name of 'main_client' or something
             if hasattr(parent, "parent"):
-                self.parent = parent.parent
+                self.parent: ClientBase = parent.parent
             else:
-                self.parent = parent
+                self.parent: ClientBase = parent
