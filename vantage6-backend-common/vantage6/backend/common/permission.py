@@ -11,7 +11,7 @@ from flask_principal import Permission
 
 from vantage6.common import logger_name
 
-from vantage6.backend.common.permission_interfaces import RuleInterface
+from vantage6.backend.common.permission_models import RuleInterface
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)

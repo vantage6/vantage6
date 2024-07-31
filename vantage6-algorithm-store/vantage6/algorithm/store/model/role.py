@@ -2,7 +2,7 @@ from __future__ import annotations
 from sqlalchemy import Column, Text
 from sqlalchemy.orm import relationship
 from vantage6.backend.common.base import Base
-from vantage6.backend.common.permission_interfaces import RoleInterface
+from vantage6.backend.common.permission_models import RoleInterface
 from vantage6.common import logger_name
 
 import logging

@@ -10,7 +10,7 @@ from vantage6.server import db
 from vantage6.server.permission import (
     Scope as S,
     Operation as P,
-    PermissionManager,
+    ServerPermissionManager,
     RuleCollection,
 )
 from vantage6.server.resource import (
@@ -65,7 +65,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
 # ------------------------------------------------------------------------------
 # Permissions
 # ------------------------------------------------------------------------------
-def permissions(permissions: PermissionManager) -> None:
+def permissions(permissions: ServerPermissionManager) -> None:
     """
     Define the permissions for this resource.
 

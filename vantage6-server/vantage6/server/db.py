@@ -11,7 +11,6 @@ from vantage6.server.model import (
     Organization,
     Permission,
     Role,
-    role_rule_association,
     Rule,
     Run,
     Study,
@@ -21,4 +20,6 @@ from vantage6.server.model import (
     User,
     UserPermission,
 )
+
+from vantage6.backend.common.permission_models import role_rule_association
 
