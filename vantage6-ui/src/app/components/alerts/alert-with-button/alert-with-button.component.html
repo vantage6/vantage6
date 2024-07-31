@@ -1,5 +1,5 @@
-<div class="alert alert-success">
+<div class="{{ getAlertClasses() }}">
   <span>{{ label }}</span>
   <br />
-  <button mat-flat-button [routerLink]="[buttonLink]">{{ buttonText }}</button>
+  <button class="alert-button" mat-flat-button [routerLink]="[buttonLink]">{{ buttonText }}</button>
 </div>

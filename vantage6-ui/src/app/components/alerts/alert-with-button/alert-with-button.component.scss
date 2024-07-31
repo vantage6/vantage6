@@ -1,15 +1,29 @@
-.alert-danger {
-  background-color: #f44336; /* Red */
+@import "src/app/styles/config.scss";
+
+.alert {
+  display: flex;
+  align-items: center;
+  padding: $spacing-px-2;
+  border: 1px solid $warning-500;
+  border-radius: $spacing-px-1;
+  background-color: $warning-50;
+  color: $warning-900;
+  font-size: 0.875rem;
+
+  &__icon {
+    flex-shrink: 0;
+    margin-right: $spacing-px-2;
+    color: $warning-500;
+  }
 }
+
 .alert-success {
   background-color: #d4edda;
   color: #155724;
   border-color: #c3e6cb;
 }
 
-.alert {
-  padding: 10px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  text-align: center;
+.alert-button {
+  margin-right: $spacing-px-2;
+  margin-left: auto;
 }

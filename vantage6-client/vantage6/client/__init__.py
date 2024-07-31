@@ -1434,6 +1434,7 @@ class UserClient(ClientBase):
             initiating_user: int = None,
             collaboration: int = None,
             study: int = None,
+            store: int = None,
             image: str = None,
             parent: int = None,
             job: int = None,
@@ -1465,6 +1466,8 @@ class UserClient(ClientBase):
                 collaboration
             study: int, optional
                 Filter by study
+            store: int, optional
+                Filter by algorithm store from which the algorithm was retrieved
             image: str, optional
                 Filter by Docker image name (with LIKE operator)
             parent: int, optional
@@ -1517,6 +1520,7 @@ class UserClient(ClientBase):
                 "database": database,
                 "run_id": run,
                 "status": status,
+                "store_id": store,
             }
             includes = []
             if include_results:
@@ -1537,6 +1541,7 @@ class UserClient(ClientBase):
             input_: dict,
             collaboration: int = None,
             study: int = None,
+            store: int = None,
             databases: list[dict] = None,
         ) -> dict:
             """Create a new task
@@ -1555,11 +1560,13 @@ class UserClient(ClientBase):
             input_ : dict
                 Algorithm input
             collaboration : int, optional
-                Id of the collaboration to which this task belongs. Should be set if
+                ID of the collaboration to which this task belongs. Should be set if
                 the study is not set
             study : int, optional
-                Id of the study to which this task belongs. Should be set if the
+                ID of the study to which this task belongs. Should be set if the
                 collaboration is not set
+            store : int, optional
+                ID of the algorithm store to retrieve the algorithm from
             databases: list[dict], optional
                 Databases to be used at the node. Each dict should contain
                 at least a 'label' key. Additional keys are 'query' (if using
@@ -1586,6 +1593,14 @@ class UserClient(ClientBase):
                     "No organizations specified! Cannot create task without "
                     "assigning it to at least one organization."
                 )
+
+            if store is None:
+                store = self.parent.store.store_id
+                if store is not None:
+                    self.parent.log.info(
+                        "Using algorithm store with id='%s' to retrieve the algorithm.",
+                        self.parent.store.store_id,
+                    )
 
             if databases is None:
                 databases = []
@@ -1622,6 +1637,8 @@ class UserClient(ClientBase):
                 params["collaboration_id"] = collaboration
             if study:
                 params["study_id"] = study
+            if store:
+                params["store_id"] = store
 
             return self.parent.request(
                 "task",

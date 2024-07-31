@@ -9,6 +9,7 @@ from vantage6.backend.common.base import DatabaseSessionManager
 from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.model.rule import Operation, Rule, Scope
 from vantage6.server.model.common.utils import validate_password
+from vantage6.server.hashedpassword import HashedPassword
 
 
 class User(Authenticatable):
@@ -93,16 +94,17 @@ class User(Authenticatable):
         )
 
     @validates("password")
-    def _validate_password(self, key: str, password: str) -> str:
+    def _validate_password(self, key: str, password: str | HashedPassword) -> str:
         """
         Validate the password of the user by hashing it, as it is also hashed
-        in the database.
+        in the database. If the password is already hashed (i.e. is an instance
+        of HashedPassword), it is returned as is.
 
         Parameters
         ----------
         key: str
             Name of the attribute (in this case 'password')
-        password: str
+        password: str | HashedPassword
             Password of the user
 
         Returns
@@ -110,7 +112,10 @@ class User(Authenticatable):
         str
             Hashed password
         """
-        return self.hash(password)
+        if isinstance(password, HashedPassword):
+            return password
+        else:
+            return self.hash(password)
 
     def set_password(self, pw: str) -> str | None:
         """

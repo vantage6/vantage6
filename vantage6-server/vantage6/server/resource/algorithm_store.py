@@ -10,7 +10,7 @@ from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource.common.input_schema import AlgorithmStoreInputSchema
 from vantage6.server.permission import RuleCollection, Operation as P
 from vantage6.server.resource.common.output_schema import AlgorithmStoreSchema
-from vantage6.server.resource import with_user, ServicesResources
+from vantage6.server.resource import with_user, with_user_or_node, ServicesResources
 from vantage6.server.algo_store_communication import (
     post_algorithm_store,
     get_server_url,
@@ -324,7 +324,7 @@ class AlgorithmStores(AlgorithmStoreBase):
 class AlgorithmStore(AlgorithmStoreBase):
     """Resource for /algorithm/<id>"""
 
-    @with_user
+    @with_user_or_node
     def get(self, id):
         """Get algorithm store record
         ---
@@ -637,6 +637,11 @@ class AlgorithmStore(AlgorithmStoreBase):
             )
             if status != HTTPStatus.OK:
                 return response, status
+
+        # remove the store link from all tasks linked to this store
+        for task in algorithm_store.tasks:
+            task.store = None
+            task.save()
 
         # finally delete the algorithm store record itself
         # pylint: disable=expression-not-assigned

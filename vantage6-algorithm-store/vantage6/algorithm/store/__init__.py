@@ -23,6 +23,7 @@ import importlib
 import logging
 import json
 import traceback
+import datetime
 
 from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
@@ -47,7 +48,7 @@ from vantage6.algorithm.store.default_roles import get_default_roles, DefaultRol
 from vantage6.algorithm.store.globals import API_PATH, RESOURCES, SERVER_MODULE_NAME
 
 from vantage6.backend.common.base import Base, DatabaseSessionManager, Database
-# TODO the following are simply copies of the same files in the server - refactor
+from vantage6.algorithm.store.model.common.enums import ReviewStatus
 from vantage6.algorithm.store import db
 
 from vantage6.algorithm.store.permission import StorePermissionManager
@@ -115,6 +116,16 @@ class AlgorithmStoreApp:
         host_uri = self.ctx.config.get("dev", {}).get("host_uri")
         if host_uri:
             os.environ[HOST_URI_ENV] = host_uri
+
+        # TODO v5+ remove this - for backwards compatibility of v4.6 with v4.3-4.5 we
+        # are setting algorithms with empty values for the `submitted` field (new in
+        # v4.6) to approved
+        for algorithm in db.Algorithm.get():
+            if not algorithm.submitted_at:
+                algorithm.status = ReviewStatus.APPROVED.value
+                algorithm.submitted_at = datetime.datetime.now(datetime.timezone.utc)
+                algorithm.approved_at = datetime.datetime.now(datetime.timezone.utc)
+                algorithm.save()
 
         log.info("Initialization done")
 

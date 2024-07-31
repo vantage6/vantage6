@@ -44,9 +44,29 @@ class VisualizationType(str, Enum):
 class ReviewStatus(str, Enum):
     """Enum for review status"""
 
-    DRAFT = "draft"
     UNDER_REVIEW = "under review"
     APPROVED = "approved"
+    REJECTED = "rejected"
+    # reviews are dropped if the algorithm is invalidated while reviews were still open
+    DROPPED = "dropped"
+
+
+class AlgorithmStatus(str, Enum):
+    """Enum for algorithm status
+
+    Note that this contains all values from ReviewStatus but it also contains additional
+    statuses.
+    """
+
+    AWAITING_REVIEWER_ASSIGNMENT = "awaiting reviewer assignment"
+    UNDER_REVIEW = "under review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+    # replaced by newer version
+    REPLACED = "replaced"
+    # removed from store without being replaced by newer version of the same algorithm
+    REMOVED = "removed"
 
 
 class PublicPolicies(str, Enum):

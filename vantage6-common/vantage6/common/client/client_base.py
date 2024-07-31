@@ -255,9 +255,12 @@ class ClientBase(object):
         if response.status_code > 210:
             self.log.error(f"Server responded with error code: {response.status_code}")
             try:
-                self.log.error(
-                    "msg: %s. Endpoint: %s", response.json().get("msg", ""), endpoint
-                )
+                msg = response.json().get("msg", "")
+                # remove dot at the end of the message if it is there to prevent double
+                # dots in the log message
+                if msg.endswith("."):
+                    msg = msg[:-1]
+                self.log.error("msg: %s. Endpoint: %s", msg, endpoint)
                 if response.json().get("errors"):
                     self.log.error("errors:" + str(response.json().get("errors")))
             except json_lib.JSONDecodeError:

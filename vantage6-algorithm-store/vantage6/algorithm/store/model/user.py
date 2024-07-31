@@ -38,12 +38,8 @@ class User(Base):
     # rules = relationship("Rule", back_populates="users",
     #                      secondary="UserPermission")
 
-    algorithms = relationship(
-        "Algorithm",
-        back_populates="developer",
-        secondary="developer_algorithm_association",
-    )
-    reviews = relationship("Review", back_populates="reviewers")
+    algorithms = relationship("Algorithm", back_populates="developer")
+    reviews = relationship("Review", back_populates="reviewer")
 
     def __repr__(self) -> str:
         """
@@ -152,3 +148,14 @@ class User(Base):
             Whether or not a user with the given username exists
         """
         return cls.exists(field="username", value=username)
+
+    def is_reviewer(self) -> bool:
+        """
+        Check if user is allowed to review algorithms
+
+        Returns
+        -------
+        bool
+            Whether or not user is a reviewer
+        """
+        return self.can("review", Operation.EDIT)

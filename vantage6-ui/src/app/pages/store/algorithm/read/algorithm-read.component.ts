@@ -4,13 +4,13 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
-import { Algorithm, AlgorithmFunction } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmFunction, AlgorithmStatus } from 'src/app/models/api/algorithm.model';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { OperationType, StoreResourceType } from 'src/app/models/api/rule.model';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
-import { FileService } from 'src/app/services/file.service';
+import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dialog.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 
 @Component({
@@ -27,10 +27,13 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
   algorithm?: Algorithm;
   algorithm_store?: AlgorithmStore;
   selectedFunction?: AlgorithmFunction;
+  algorithmStatus = AlgorithmStatus;
   isLoading = true;
 
   canEdit = false;
   canDelete = false;
+  canAssignReviewers: boolean = false;
+  canViewReviews: boolean = false;
 
   constructor(
     private router: Router,
@@ -39,7 +42,7 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
     private algorithmService: AlgorithmService,
     private chosenStoreService: ChosenStoreService,
     private storePermissionService: StorePermissionService,
-    private fileService: FileService
+    private handleConfirmDialogService: HandleConfirmDialogService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -62,6 +65,8 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
 
     this.canEdit = this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.EDIT);
     this.canDelete = this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.DELETE);
+    this.canAssignReviewers = this.storePermissionService.isAllowed(StoreResourceType.REVIEW, OperationType.CREATE);
+    this.canViewReviews = this.storePermissionService.isAllowed(StoreResourceType.REVIEW, OperationType.VIEW);
 
     this.isLoading = false;
   }
@@ -92,28 +97,29 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
       });
   }
 
-  downloadAlgorithmJson(): void {
-    if (!this.algorithm) return;
-    const filename = `${this.algorithm.name}.json`;
+  handleInvalidate(): void {
+    this.handleConfirmDialogService.handleConfirmDialog(
+      this.translateService.instant('algorithm-read.invalidate-dialog.title', { name: this.algorithm?.name }),
+      this.translateService.instant('algorithm-read.invalidate-dialog.content'),
+      this.translateService.instant('algorithm-read.invalidate'),
+      'warn',
+      async () => {
+        if (!this.algorithm) return;
+        this.isLoading = true;
+        await this.algorithmService.invalidateAlgorithm(this.algorithm.id.toString());
+        this.initData();
+      }
+    );
+  }
 
-    // remove all nested ID fields as they should not be included in the download
-    const cleanedAlgorithmRepresentation: any = { ...this.algorithm };
-    delete cleanedAlgorithmRepresentation.id;
-    for (const func of cleanedAlgorithmRepresentation.functions) {
-      delete func.id;
-      console.log(func);
-      for (const param of func.arguments) {
-        delete param.id;
-      }
-      for (const db of func.databases) {
-        delete db.id;
-      }
-      for (const ui_vis of func.ui_visualizations) {
-        delete ui_vis.id;
-      }
-    }
+  getButtonLink(route: string, id: number | undefined): string {
+    return `${route}/${id}`;
+  }
 
-    const text = JSON.stringify(cleanedAlgorithmRepresentation, null, 2);
-    this.fileService.downloadTxtFile(text, filename);
+  showInvalidatedAlert(): boolean {
+    if (!this.algorithm) return false;
+    return ![AlgorithmStatus.Approved, AlgorithmStatus.AwaitingReviewerAssignment, AlgorithmStatus.UnderReview].includes(
+      this.algorithm.status
+    );
   }
 }

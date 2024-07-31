@@ -15,7 +15,6 @@ class Operation(str, Enumerate):
     EDIT = "edit"
     CREATE = "create"
     DELETE = "delete"
-    REVIEW = "review"
 
 
 class Rule(Base, RuleInterface):

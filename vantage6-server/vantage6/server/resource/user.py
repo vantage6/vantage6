@@ -270,7 +270,7 @@ class Users(UserBase):
             )
 
         if "rule_id" in args:
-            rule = db.Rule.query.get(args["rule_id"])
+            rule = db.Rule.get(args["rule_id"])
             if not rule:
                 return {
                     "msg": f'Rule with id={args["rule_id"]} does not exist!'

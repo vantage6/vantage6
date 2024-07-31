@@ -3,6 +3,7 @@ import { AlgorithmStore, AlgorithmStoreForm } from './algorithmStore.model';
 import { Collaboration, CollaborationForm } from './collaboration.model';
 import { Node } from './node.model';
 import { Organization } from './organization.model';
+import { ReviewForm } from './review.model';
 import { GetRoleParameters, Role, RoleForm } from './role.model';
 import { StoreRule } from './rule.model';
 import { GetStoreRoleParameters } from './store-role.model';
@@ -26,6 +27,6 @@ export type Resource =
   | StoreUser
   | StoreRule;
 
-export type ResourceForm = UserForm | CollaborationForm | RoleForm | AlgorithmForm | AlgorithmStoreForm | StoreUserForm;
+export type ResourceForm = UserForm | CollaborationForm | RoleForm | AlgorithmForm | AlgorithmStoreForm | StoreUserForm | ReviewForm;
 
 export type ResourceGetParameters = GetRoleParameters | GetUserParameters | GetStoreUserParameters | GetStoreRoleParameters;

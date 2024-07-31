@@ -50,6 +50,11 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
             lambda obj: self.create_hateoas("init_user", obj, endpoint="user"),
         )
         setattr(self, "study", lambda obj: self.create_hateoas("study", obj))
+        setattr(
+            self,
+            "algorithm_store",
+            lambda obj: self.create_hateoas("algorithm_store", obj),
+        )
 
         # call super class. Do this after setting the attributes above, because
         # the super class initializer will call the attributes.
@@ -78,6 +83,7 @@ class TaskSchema(HATEOASModelSchema):
     init_user = fields.Method("init_user_")
     databases = fields.Method("databases_")
     study = fields.Method("study")
+    algorithm_store = fields.Method("algorithm_store")
 
     @staticmethod
     def databases_(obj):

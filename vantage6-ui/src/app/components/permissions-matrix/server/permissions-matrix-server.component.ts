@@ -19,7 +19,7 @@ export class PermissionsMatrixServerComponent extends BasePermissionsMatrixCompo
     (resource) => ![ResourceType.ANY, ResourceType.RESULT, ResourceType.RULE].includes(resource)
   );
   allScopes = Object.values(ScopeType).filter((scope) => scope !== ScopeType.ANY);
-  allOperations = Object.values(OperationType).filter((operation) => ![OperationType.ANY, OperationType.REVIEW].includes(operation));
+  allOperations = Object.values(OperationType).filter((operation) => ![OperationType.ANY].includes(operation));
 
   public resourcePermissions: ServerResourcePermission[] = [];
 

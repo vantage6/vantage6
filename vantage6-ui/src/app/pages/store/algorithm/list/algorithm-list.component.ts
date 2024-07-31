@@ -1,7 +1,6 @@
 import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
-import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { OperationType, StoreResourceType } from 'src/app/models/api/rule.model';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
@@ -21,7 +20,6 @@ export class AlgorithmListComponent implements OnInit, OnDestroy {
   routes = routePaths;
 
   algorithms: Algorithm[] = [];
-  stores: AlgorithmStore[] = [];
 
   canAddAlgorithm = false;
 

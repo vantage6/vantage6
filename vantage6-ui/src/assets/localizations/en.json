@@ -18,7 +18,8 @@
     "visualization": "Visualization",
     "description": "Description",
     "overview": "Overview",
-    "file-select": "Select file"
+    "file-select": "Select file",
+    "unknown": "Unknown"
   },
   "resources": {
     "collaboration": "Collaboration",
@@ -37,7 +38,10 @@
     "admin": "Administration",
     "home": "Home",
     "analyze": "Analyze",
-    "stores": "Algorithm store"
+    "stores": "Algorithm store",
+    "algorithms-approved": "Approved algorithms",
+    "pending-algorithms": "Pending algorithms",
+    "old-algorithms": "Old algorithms"
   },
   "home": {
     "title": "Home"
@@ -62,7 +66,7 @@
     "info": "The content displayed is specific to this collaboration"
   },
   "chosen-store-alert": {
-    "content": "Selected store",
+    "content": "Selected store:",
     "change": "Change store",
     "info": "The content displayed is specific to this algorithm store"
   },
@@ -195,7 +199,8 @@
       "title": "Are you sure you want to kill the task '{{name}}'?",
       "content": "Note, this will also kill all subtasks.\nThis operation cannot be undone."
     },
-    "repeat": "Repeat task"
+    "repeat": "Repeat task",
+    "alert-algorithm-not-found": "The algorithm used in this task could not be retrieved from the algorithm store. This limits the displayed information. This may happen if a task is created in the Python client or if the algorithm is no longer approved."
   },
   "template-task-create": {
     "title": "Quick task",
@@ -208,6 +213,11 @@
     "partitioning": "Data partioning type",
     "description": "Description",
     "v6version": "Written for vantage6 version",
+    "code-url": "Link to code",
+    "documentation-url": "Link to documentation",
+    "submitted-at": "Submitted at",
+    "approved-at": "Approved at",
+    "invalidated-at": "Invalidated at",
     "function": {
       "type": "Type of function",
       "argument": {
@@ -227,6 +237,11 @@
     "no-algorithms": "No algorithms are available for your collaboration!",
     "manage": "Manage algorithms"
   },
+  "algorithm-old-list": {
+    "title": "Invalidated algorithms",
+    "alert": "The following algorithms are not available for use in tasks. They have been replaced by newer versions or have been rejected by reviewers.",
+    "no-algorithms": "No old algorithms are available for your collaboration!"
+  },
   "algorithm-read": {
     "card-details": {
       "title": "Details"
@@ -240,14 +255,34 @@
       "no-visualizations": "There are no preprogrammed visualizations available for this user interface."
     },
     "manage": "Manage algorithm",
+    "invalidate-dialog": {
+      "title": "Are you sure you want to invalidate the algorithm '{{name}}'? It will no longer be available for use in tasks.",
+      "content": "This operation cannot be undone."
+    },
     "delete-dialog": {
       "title": "Are you sure you want to delete the algorithm '{{name}}' from the store '{{store}}'?",
-      "content": "This operation cannot be undone."
+      "content": "Note that this is *NOT* recommended: invalidating the algorithm is preferred as the algorithm signature will still be available while the algorithm store retracts approval of it. This operation cannot be undone."
     },
     "card-download-json": {
       "title": "Download algorithm description",
       "description": "You can use the algorithm JSON representation to upload this algorithm into another algorithm store. Also, it is recommended to store it in your algorithm's git repository so that you and others can easily upload it into algorithm stores in the future.",
       "download-button": "Download JSON"
+    },
+    "alert": {
+      "assign-review": {
+        "content": "This algorithm is awaiting review assignment. It is not available for use in tasks.",
+        "assign": "Assign reviewers"
+      },
+      "under-review": {
+        "content": "This algorithm is under review. It is not available for use in tasks.",
+        "view": "View reviews"
+      },
+      "invalidated": "This algorithm is {{ status }}. It is not available for use in tasks."
+    },
+    "invalidate": "Invalidate",
+    "card-reviews": {
+      "title": "Reviews",
+      "button": "View reviews"
     }
   },
   "algorithm-create": {
@@ -290,6 +325,81 @@
     "error-dialog": {
       "title": "Error updating algorithm",
       "message": "An error occurred while updating the algorithm: {{error}}"
+    }
+  },
+  "review": {
+    "submit": "Submit my review",
+    "approve": "Approve",
+    "reject": "Reject"
+  },
+  "algorithm-in-review": {
+    "title": "Algorithms in review",
+    "in-review": {
+      "title": "Algorithms currently in review",
+      "no-algorithms": "No algorithms are currently in review."
+    },
+    "to-assign-review": {
+      "title": "Algorithms that are not assigned to reviewers yet",
+      "no-algorithms": "All pending algorithms have been assigned reviewers."
+    },
+    "status": "Review status",
+    "developer": "Algorithm developer",
+    "reviewer": "Reviewer"
+  },
+  "my-pending-algorithms": {
+    "title": "My pending algorithms",
+    "card-all-pending": {
+      "content": "This page shows only pending algorithms that you are involved in - not those of other users.",
+      "button": "Go to all pending algorithms"
+    },
+    "card-reviews": {
+      "title": "Algorithm reviews assigned to me",
+      "no-reviews": "No reviews are assigned to you."
+    },
+    "card-to-review": {
+      "title": "Algorithms where I can assign reviewers",
+      "no-algorithms": "No algorithms are available to assign reviewers to."
+    },
+    "card-developed-algorithms": {
+      "title": "Pending algorithms developed by me",
+      "no-algorithms": "No algorithms that you have developed are pending review."
+    },
+    "algorithm-name": "Algorithm name"
+  },
+  "algorithm-assign-review": {
+    "title": "Assign reviewers",
+    "description": "Assign reviewers to the algorithm '{{name}}'.",
+    "reviewers": "Reviewers",
+    "no-reviewers": "No reviewers are available to assign to this algorithm. Please contact your store manager."
+  },
+  "algorithm-review": {
+    "title": "Reviews of algorithm '{{name}}'",
+    "card-per-review": {
+      "title": "Review by {{reviewer}}",
+      "reviewer": "Reviewer",
+      "reviewer-server": "Server that reviewer belongs to",
+      "comment": "Reviewer comments"
+    },
+    "delete-dialog": {
+      "title": "Are you sure you want to delete the review by '{{reviewer}}'?",
+      "content": "If other reviews are present and have been approved, the algorithm will be approved. If no other reviews are present, the algorithm will have to be assigned reviewers again."
+    },
+    "add-new-review": "Add another review",
+    "button-details": "View algorithm details"
+  },
+  "review-submit": {
+    "title": "Submit review for algorithm '{{name}}'",
+    "approve": "Approve",
+    "reject": "Reject",
+    "comment-title": "Review comments",
+    "comment-placeholder": "Provide your review comments here",
+    "approve-dialog": {
+      "title": "Approve algorithm",
+      "content": "Are you sure you want to approve this algorithm?"
+    },
+    "reject-dialog": {
+      "title": "Reject algorithm",
+      "content": "Are you sure you want to reject this algorithm? The developer will need to resubmit the algorithm for review."
     }
   },
   "organization": {
@@ -359,7 +469,8 @@
     },
     "card-nodes": {
       "title": "Nodes",
-      "add": "Register missing nodes"
+      "add": "Register missing nodes",
+      "add-own-org": "Register missing node for your organization"
     },
     "card-algorithm-stores": {
       "title": "Algorithm stores available to this collaboration",
@@ -487,7 +598,8 @@
       "port": "Port",
       "study": "Study",
       "algorithm": "Algorithm",
-      "vantage6_server": "Whitelisted server"
+      "vantage6_server": "Whitelisted server",
+      "review": "Review"
     },
     "scope": {
       "label": "Scope",
@@ -561,7 +673,8 @@
     "Killed": "Killed by user",
     "NoDockerImage": "Non-existing Docker image",
     "Pending": "Pending",
-    "StartFailed": "Start failed"
+    "StartFailed": "Start failed",
+    "NotAllowed": "Algorithm not allowed by node"
   },
   "store": {
     "server": "Server URL"

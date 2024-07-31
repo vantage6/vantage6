@@ -29,28 +29,39 @@ class Task(Base):
         Name of the docker image that needs to be executed
     collaboration_id : int
         Id of the collaboration that this task belongs to
-    run_id : int
-        Run id of the task
+    study_id : int
+        Id of the study that this task belongs to
+    job_id : int
+        Id of the job that this task belongs to
     parent_id : int
         Id of the parent task (if any)
-    database : str
-        Name of the database that needs to be used for this task
     init_org_id : int
         Id of the organization that created this task
     init_user_id : int
         Id of the user that created this task
+    created_at : datetime.datetime
+        Time at which this task was created
+    algorithm_store_id : int
+        Id of the algorithm store that this task belongs to
 
     collaboration : :class:`~.model.collaboration.Collaboration`
         Collaboration that this task belongs to
     parent : :class:`~.model.task.Task`
         Parent task (if any)
+    runs : list[:class:`~.model.run.Run`]
+        List of runs that are part of this task
     results : list[:class:`~.model.result.Result`]
         List of results that are part of this task
     init_org : :class:`~.model.organization.Organization`
         Organization that created this task
     init_user : :class:`~.model.user.User`
         User that created this task
-
+    databases : list[:class:`~.model.task_database.TaskDatabase`]
+        List of databases that are part of this task
+    study : :class:`~.model.study.Study`
+        Study that this task belongs to
+    algorithm_store : :class:`~.model.algorithm_store.AlgorithmStore`
+        Algorithm store that this task uses
     """
 
     # fields
@@ -63,7 +74,8 @@ class Task(Base):
     parent_id = Column(Integer, ForeignKey("task.id"))
     init_org_id = Column(Integer, ForeignKey("organization.id"))
     init_user_id = Column(Integer, ForeignKey("user.id"))
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.datetime.now(datetime.timezone.utc))
+    algorithm_store_id = Column(Integer, ForeignKey("algorithmstore.id"))
 
     # relationships
     collaboration = relationship("Collaboration", back_populates="tasks")
@@ -77,6 +89,7 @@ class Task(Base):
     init_user = relationship("User", back_populates="created_tasks")
     databases = relationship("TaskDatabase", back_populates="task")
     study = relationship("Study", back_populates="tasks")
+    algorithm_store = relationship("AlgorithmStore", back_populates="tasks")
 
     # TODO update in v4+, with renaming to 'run'
     @hybrid_property

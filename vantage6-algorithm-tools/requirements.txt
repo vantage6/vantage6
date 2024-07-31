@@ -3,4 +3,4 @@ pandas>=1.5.3
 PyJWT==2.6.0
 pyfiglet==0.8.post1
 SPARQLWrapper>=2.0.0
-connectorx==0.3.3
+sqlalchemy==1.4.46
