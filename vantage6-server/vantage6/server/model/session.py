@@ -58,11 +58,13 @@ class Session(Base):
         Study that this session is part of
     tasks : list[:class:`~vantage6.server.model.task.Task`]
         List of tasks that are part of this study
+    dataframes : list[:class:`~vantage6.server.model.dataframe.Dataframe`]
+        List of dataframes that are part of this session
 
     Raises
     ------
     IntegrityError
-        If the label already exists within the collaboration
+        If the name already exists within the collaboration
     """
 
     # fields
@@ -81,7 +83,6 @@ class Session(Base):
     collaboration = relationship("Collaboration", back_populates="sessions")
     study = relationship("Study", back_populates="sessions")
     tasks = relationship("Task", back_populates="session")
-    # node_sessions = relationship("NodeSession", back_populates="session")
     dataframes = relationship("Dataframe", back_populates="session")
 
     @hybrid_property

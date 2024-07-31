@@ -28,7 +28,6 @@ class Role(Base):
         Organization this role belongs to
     users : list[:class:`.~vantage6.server.model.user.User`]
         List of users that belong to this role
-
     """
 
     # fields

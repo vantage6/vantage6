@@ -25,6 +25,8 @@ class AlgorithmStore(Base):
     collaboration: :class:`~vantage6.server.model.collaboration.Collaboration`
         The collaboration that this algorithm store belongs to or ``None`` if
         it is available for all collaborations.
+    tasks: list[:class:`~vantage6.server.model.task.Task`]
+        List of tasks that use this algorithm store
     """
 
     # fields

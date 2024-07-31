@@ -39,6 +39,10 @@ class User(Authenticatable):
         Date and time of the last login attempt
     otp_secret : str
         Secret key for one time passwords
+    last_email_failed_login_sent : datetime.datetime
+        Date and time of the last email sent for failed login
+    last_email_recover_password_sent : datetime.datetime
+        Date and time of the last email sent for password recovery
 
     Relationships
     -------------
@@ -52,7 +56,6 @@ class User(Authenticatable):
         Tasks that the user has created
     sessions : list[:class:`~.model.session.Session`]
         Sessions that the user has created
-
     """
 
     _hidden_attributes = ["password"]
