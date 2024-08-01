@@ -14,31 +14,31 @@ from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 
 @click.command()
 @click_insert_context(InstanceType.ALGORITHM_STORE)
-@click.option("--all", "all_servers", flag_value=True, help="Stop all servers")
-def cli_algo_store_stop(ctx: AlgorithmStoreContext, all_servers: bool):
+@click.option("--all", "all_stores", flag_value=True, help="Stop all algorithm stores")
+def cli_algo_store_stop(ctx: AlgorithmStoreContext, all_stores: bool):
     """
     Stop one or all running server(s).
     """
     check_docker_running()
     client = docker.from_env()
 
-    running_servers = client.containers.list(
+    running_stores = client.containers.list(
         filters={"label": f"{APPNAME}-type={InstanceType.ALGORITHM_STORE}"}
     )
 
-    if not running_servers:
+    if not running_stores:
         warning("No algorithm stores are currently running.")
         return
 
-    running_server_names = [server.name for server in running_servers]
+    running_store_names = [server.name for server in running_stores]
 
-    if all_servers:
-        for container_name in running_server_names:
+    if all_stores:
+        for container_name in running_store_names:
             _stop_algorithm_store(client, container_name)
         return
 
     container_name = ctx.docker_container_name
-    if container_name not in running_server_names:
+    if container_name not in running_store_names:
         error(f"{Fore.RED}{ctx.name}{Style.RESET_ALL} is not running!")
         return
 
