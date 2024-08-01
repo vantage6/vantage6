@@ -4,16 +4,16 @@
 // ANGULAR MATERIAL SETUP
 @include mat.core();
 
-$primary-pallette: mat.define-palette($vantage-primary, 900);
-$accent-pallette: mat.define-palette($vantage-accent, 800);
+$primary-pallette: mat.m2-define-palette($vantage-primary, 900);
+$accent-pallette: mat.m2-define-palette($vantage-accent, 800);
 
-$vantage-theme: mat.define-light-theme(
+$vantage-theme: mat.m2-define-light-theme(
   (
     color: (
       primary: $primary-pallette,
       accent: $accent-pallette
     ),
-    typography: mat.define-typography-config(),
+    typography: mat.m2-define-typography-config(),
     density: 0
   )
 );
