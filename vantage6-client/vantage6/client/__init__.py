@@ -559,7 +559,7 @@ class UserClient(ClientBase):
             )
 
         @post_filtering(iterable=False)
-        def delete(self, id_: int = None, delete_dependents: bool = None) -> dict:
+        def delete(self, id_: int = None, delete_dependents: bool = False) -> dict:
             """Deletes a collaboration
 
             Parameters
@@ -577,11 +577,10 @@ class UserClient(ClientBase):
                 Message from the server
             """
             id_ = self.__get_id_or_use_provided_id(id_)
-            params = {}
-            if delete_dependents:
-                params["delete_dependents"] = delete_dependents
             return self.parent.request(
-                f"collaboration/{id_}", method="delete", params=params
+                f"collaboration/{id_}",
+                method="delete",
+                params={"delete_dependents": delete_dependents},
             )
 
         @post_filtering(iterable=False)
@@ -778,7 +777,10 @@ class UserClient(ClientBase):
 
         @post_filtering(iterable=False)
         def create(
-            self, collaboration: int = None, organization: int = None, name: str = None
+            self,
+            collaboration: int | None = None,
+            organization: int = None,
+            name: str = None,
         ) -> dict:
             """Register new node
 
@@ -810,15 +812,13 @@ class UserClient(ClientBase):
             if not organization:
                 organization = self.parent.whoami.organization_id
 
-            return self.parent.request(
-                "node",
-                method="post",
-                json={
-                    "organization_id": organization,
-                    "collaboration_id": collaboration,
-                    "name": name,
-                },
-            )
+            body = {
+                "organization_id": organization,
+                "collaboration_id": collaboration,
+            }
+            if name:
+                body["name"] = name
+            return self.parent.request("node", method="post", json=body)
 
         @post_filtering(iterable=False)
         def update(self, id_: int, name: str = None, clear_ip: bool = None) -> dict:
@@ -1054,6 +1054,29 @@ class UserClient(ClientBase):
                 json_data["public_key"] = public_key
 
             return self.parent.request("organization", method="post", json=json_data)
+
+        def delete(self, id_: int, delete_dependents: bool = False) -> dict:
+            """Deletes an organization
+
+            Parameters
+            ----------
+            id_ : int
+                Id of the organization you want to delete.
+            delete_dependents : bool, optional
+                Delete the nodes, users, runs, tasks and roles that are part of
+                the organization as well. If this is False, and dependents exist, the
+                server will refuse to delete the organization. Default is False.
+
+            Returns
+            -------
+            dict
+                Message from the server
+            """
+            return self.parent.request(
+                f"organization/{id_}",
+                method="delete",
+                params={"delete_dependents": delete_dependents},
+            )
 
     class User(ClientBase.SubClient):
         @post_filtering()

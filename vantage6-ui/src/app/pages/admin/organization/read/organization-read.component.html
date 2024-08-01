@@ -8,6 +8,10 @@
         <mat-icon>edit</mat-icon>
         <span>{{ "general.edit" | translate }}</span>
       </button>
+      <button mat-menu-item *ngIf="canDelete" (click)="handleDelete()">
+        <mat-icon>delete</mat-icon>
+        <span>{{ "general.delete" | translate }}</span>
+      </button>
     </mat-menu>
   </app-page-header>
   <mat-card>
