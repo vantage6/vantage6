@@ -49,7 +49,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         Organization,
         path + "/<int:id>",
         endpoint="organization_with_id",
-        methods=("GET", "PATCH"),
+        methods=("GET", "PATCH", "DELETE"),
         resource_class_kwargs=services,
     )
 
@@ -96,6 +96,7 @@ def permissions(permissions: PermissionManager) -> None:
         description="edit collaborating organizations",
     )
     add(scope=S.GLOBAL, operation=P.CREATE, description="create a new organization")
+    add(scope=S.GLOBAL, operation=P.DELETE, description="delete any organization")
 
 
 # ------------------------------------------------------------------------------
@@ -156,6 +157,14 @@ class Organizations(OrganizationBase):
             schema:
               type: integer
             description: Study id
+          - in: query
+            name: ids
+            schema:
+              type: array
+              items:
+                type: integer
+            description: List of organization ids. Only these organizations will be
+              returned
           - in: query
             name: page
             schema:
@@ -224,6 +233,10 @@ class Organizations(OrganizationBase):
                 .join(db.Study)
                 .filter(db.Study.id == args["study_id"])
             )
+        # filter by a list of organization ids. This option is mostly used in the UI,
+        # where it is convenient to get details on a list of organizations at once.
+        if "ids" in args:
+            q = q.filter(db.Organization.id.in_(args.getlist("ids")))
 
         # filter the list of organizations based on the scope
         if self.r.v_glo.can():
@@ -468,3 +481,134 @@ class Organization(OrganizationBase):
 
         organization.save()
         return org_schema.dump(organization, many=False), HTTPStatus.OK
+
+    @with_user
+    def delete(self, id):
+        """Delete organization
+        ---
+        description: >-
+          Deletes the organization with the specified id\n
+
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Organization|Global|Delete|❌|❌|Delete an organization with
+          specified id|\n
+
+          Accessible to users.
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: Organization id
+            required: true
+          - in: query
+            name: delete_dependents
+            schema:
+              type: boolean
+            description: >-
+              If true, also delete all dependents (i.e. users, roles, tasks, runs,
+              nodes). Collaborations and studies are not deleted, but the organization
+              is removed from them.
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: Organization with specified id is not found
+          401:
+            description: Unauthorized
+          400:
+            description: Organization has dependents or user tries to delete own
+              organization
+
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Organization"]
+        """
+        if not self.r.c_glo.can():
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
+
+        organization = db.Organization.get(id)
+        if not organization:
+            return {"msg": f"Organization with id={id} not found"}, HTTPStatus.NOT_FOUND
+
+        if g.user.organization_id == id:
+            return {
+                "msg": "You cannot delete your own organization!"
+            }, HTTPStatus.BAD_REQUEST
+
+        if (
+            organization.runs
+            or organization.tasks
+            or organization.nodes
+            or organization.users
+            or organization.roles
+        ):
+            delete_dependents = request.args.get("delete_dependents", False)
+            if delete_dependents:
+                if organization.runs:
+                    log.warning(
+                        "Deleting %s runs of organization %s",
+                        len(organization.runs),
+                        organization.name,
+                    )
+                    for run in organization.runs:
+                        run.delete()
+                if organization.tasks:
+                    log.warning(
+                        "Deleting %s tasks of organization %s",
+                        len(organization.tasks),
+                        organization.name,
+                    )
+                    for task in organization.tasks:
+                        task.delete()
+                if organization.nodes:
+                    log.warning(
+                        "Deleting %s nodes of organization %s",
+                        len(organization.nodes),
+                        organization.name,
+                    )
+                    for node in organization.nodes:
+                        node.delete()
+                if organization.users:
+                    log.warning(
+                        "Deleting %s users of organization %s",
+                        len(organization.users),
+                        organization.name,
+                    )
+                    for user in organization.users:
+                        user.delete()
+                if organization.roles:
+                    log.warning(
+                        "Deleting %s roles of organization %s",
+                        len(organization.roles),
+                        organization.name,
+                    )
+                    for role in organization.roles:
+                        role.delete()
+
+            else:
+                return {
+                    "msg": (
+                        f"Organization has dependents: {len(organization.runs)} runs, "
+                        f"{len(organization.tasks)} tasks, {len(organization.nodes)} "
+                        f"nodes, {len(organization.users)} users, and "
+                        f"{len(organization.roles)} roles. Please specify "
+                        "'delete_dependents=true' to delete them."
+                    )
+                }, HTTPStatus.BAD_REQUEST
+
+        # remove organization from collaborations and studies
+        for study in organization.studies:
+            study.organizations.remove(organization)
+        for collaboration in organization.collaborations:
+            collaboration.organizations.remove(organization)
+        organization.delete()
