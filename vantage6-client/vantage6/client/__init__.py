@@ -777,7 +777,10 @@ class UserClient(ClientBase):
 
         @post_filtering(iterable=False)
         def create(
-            self, collaboration: int = None, organization: int = None, name: str = None
+            self,
+            collaboration: int | None = None,
+            organization: int = None,
+            name: str = None,
         ) -> dict:
             """Register new node
 
@@ -809,15 +812,13 @@ class UserClient(ClientBase):
             if not organization:
                 organization = self.parent.whoami.organization_id
 
-            return self.parent.request(
-                "node",
-                method="post",
-                json={
-                    "organization_id": organization,
-                    "collaboration_id": collaboration,
-                    "name": name,
-                },
-            )
+            body = {
+                "organization_id": organization,
+                "collaboration_id": collaboration,
+            }
+            if name:
+                body["name"] = name
+            return self.parent.request("node", method="post", json=body)
 
         @post_filtering(iterable=False)
         def update(self, id_: int, name: str = None, clear_ip: bool = None) -> dict:
