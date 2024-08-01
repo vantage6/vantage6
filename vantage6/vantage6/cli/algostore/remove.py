@@ -1,4 +1,6 @@
 import itertools
+from pathlib import Path
+from shutil import rmtree
 import click
 import questionary as q
 
@@ -38,6 +40,10 @@ def cli_algo_store_remove(ctx: AlgorithmStoreContext, force: bool) -> None:
     # now remove the folders...
     remove_file(ctx.config_file, "configuration")
 
+    # ensure log files are closed before removing
+    log_dir = Path(ctx.log_file.parent)
+    info(f"Removing log directory: {log_dir}")
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
         handler.close()
-    remove_file(ctx.log_file, "log")
+    # remove the whole folder with all the log files.
+    rmtree(log_dir)

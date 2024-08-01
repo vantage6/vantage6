@@ -3,6 +3,7 @@ import click
 
 from vantage6.common import info
 from vantage6.common.globals import InstanceType
+from vantage6.cli.globals import COMMUNITY_STORE
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.context.node import NodeContext
@@ -100,7 +101,6 @@ def start_demo_network(
 
     # link the community store also to the server
     info("Linking community algorithm store to local server...")
-    COMMUNITY_STORE = "https://store.cotopaxi.vantage6.ai"
     if not COMMUNITY_STORE in existing_urls:
         client.store.create(
             algorithm_store_url=COMMUNITY_STORE,
