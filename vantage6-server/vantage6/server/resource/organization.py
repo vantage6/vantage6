@@ -531,7 +531,7 @@ class Organization(OrganizationBase):
 
         tags: ["Organization"]
         """
-        if not self.r.c_glo.can():
+        if not self.r.d_glo.can():
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
@@ -553,49 +553,7 @@ class Organization(OrganizationBase):
             or organization.roles
         ):
             delete_dependents = request.args.get("delete_dependents", False)
-            if delete_dependents:
-                if organization.runs:
-                    log.warning(
-                        "Deleting %s runs of organization %s",
-                        len(organization.runs),
-                        organization.name,
-                    )
-                    for run in organization.runs:
-                        run.delete()
-                if organization.tasks:
-                    log.warning(
-                        "Deleting %s tasks of organization %s",
-                        len(organization.tasks),
-                        organization.name,
-                    )
-                    for task in organization.tasks:
-                        task.delete()
-                if organization.nodes:
-                    log.warning(
-                        "Deleting %s nodes of organization %s",
-                        len(organization.nodes),
-                        organization.name,
-                    )
-                    for node in organization.nodes:
-                        node.delete()
-                if organization.users:
-                    log.warning(
-                        "Deleting %s users of organization %s",
-                        len(organization.users),
-                        organization.name,
-                    )
-                    for user in organization.users:
-                        user.delete()
-                if organization.roles:
-                    log.warning(
-                        "Deleting %s roles of organization %s",
-                        len(organization.roles),
-                        organization.name,
-                    )
-                    for role in organization.roles:
-                        role.delete()
-
-            else:
+            if not delete_dependents:
                 return {
                     "msg": (
                         f"Organization has dependents: {len(organization.runs)} runs, "
@@ -605,6 +563,48 @@ class Organization(OrganizationBase):
                         "'delete_dependents=true' to delete them."
                     )
                 }, HTTPStatus.BAD_REQUEST
+
+            # delete dependents
+            if organization.runs:
+                log.warning(
+                    "Deleting %s runs of organization %s",
+                    len(organization.runs),
+                    organization.name,
+                )
+                for run in organization.runs:
+                    run.delete()
+            if organization.tasks:
+                log.warning(
+                    "Deleting %s tasks of organization %s",
+                    len(organization.tasks),
+                    organization.name,
+                )
+                for task in organization.tasks:
+                    task.delete()
+            if organization.nodes:
+                log.warning(
+                    "Deleting %s nodes of organization %s",
+                    len(organization.nodes),
+                    organization.name,
+                )
+                for node in organization.nodes:
+                    node.delete()
+            if organization.users:
+                log.warning(
+                    "Deleting %s users of organization %s",
+                    len(organization.users),
+                    organization.name,
+                )
+                for user in organization.users:
+                    user.delete()
+            if organization.roles:
+                log.warning(
+                    "Deleting %s roles of organization %s",
+                    len(organization.roles),
+                    organization.name,
+                )
+                for role in organization.roles:
+                    role.delete()
 
         # remove organization from collaborations and studies
         for study in organization.studies:
