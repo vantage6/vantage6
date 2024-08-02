@@ -42,7 +42,12 @@ from vantage6.backend.common.jsonable import jsonable
 # TODO move this to common, then remove dependency on CLI in algorithm store
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.algorithm.store.default_roles import get_default_roles, DefaultRole
-from vantage6.algorithm.store.globals import API_PATH, RESOURCES, RESOURCES_PATH, SERVER_MODULE_NAME
+from vantage6.algorithm.store.globals import (
+    API_PATH,
+    RESOURCES,
+    RESOURCES_PATH,
+    SERVER_MODULE_NAME,
+)
 
 from vantage6.backend.common.base import Base, DatabaseSessionManager, Database
 from vantage6.algorithm.store.model.common.enums import ReviewStatus
@@ -98,9 +103,7 @@ class AlgorithmStoreApp:
         self.swagger = Swagger(self.app, template={})
 
         # setup the permission manager for the API endpoints
-        self.permissions = PermissionManager(
-            RESOURCES_PATH, RESOURCES, DefaultRole
-        )
+        self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
 
         # sync policies with the database
         self.setup_policies(self.ctx.config)

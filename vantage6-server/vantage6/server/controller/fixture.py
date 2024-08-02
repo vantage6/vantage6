@@ -54,9 +54,7 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
     # In that case, create them here so that the created users have
     # permissions.
     if not db.Rule.get():
-        permissions = PermissionManager(
-            RESOURCES_PATH, RESOURCES, DefaultRole
-        )
+        permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
         permissions.load_rules_from_resources(RESOURCES_PATH, RESOURCES)
 
     log.info("Create Organizations and Users")

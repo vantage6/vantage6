@@ -238,7 +238,7 @@ class PermissionManager(PermissionManagerBase):
         )
 
     def assign_rule_to_fixed_role(
-            fixedrole: str, resource: str, operation: Operation, scope: Scope
+        fixedrole: str, resource: str, operation: Operation, scope: Scope
     ) -> None:
         """
         Attach a rule to a fixed role (not adjustable by users).
