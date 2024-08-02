@@ -198,7 +198,6 @@ class RuleCollection(RuleCollectionBase):
 
 
 class PermissionManager(PermissionManagerBase):
-
     def assign_rule_to_node(
         self, resource: str, scope: Scope, operation: Operation
     ) -> None:
@@ -238,7 +237,7 @@ class PermissionManager(PermissionManagerBase):
         )
 
     def assign_rule_to_fixed_role(
-        fixedrole: str, resource: str, operation: Operation, scope: Scope
+        self, fixedrole: str, resource: str, operation: Operation, scope: Scope
     ) -> None:
         """
         Attach a rule to a fixed role (not adjustable by users).
