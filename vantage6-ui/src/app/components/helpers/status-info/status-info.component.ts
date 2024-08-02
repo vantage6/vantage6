@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-status-info',
@@ -6,9 +7,12 @@ import { Component, Input } from '@angular/core';
   styleUrls: ['./status-info.component.scss']
 })
 export class StatusInfoComponent {
-  @Input() title: string = '';
-  @Input() subTitle: string = '';
+  @Input() taskName: string = '';
+  @Input() nodeName: string = '';
+  @Input() status: string = '';
   @Input() type: 'pending' | 'active' | 'success' | 'error' = 'pending';
+
+  constructor(public translateService: TranslateService) {}
 
   getClasses(): string {
     return `status-info--${this.type}`;
