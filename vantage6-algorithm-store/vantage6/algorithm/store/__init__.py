@@ -10,9 +10,6 @@ store to a vantage6 server.
 import os
 from gevent import monkey
 
-from vantage6.algorithm.store.model import Role, Rule
-from vantage6.algorithm.store.model.rule import Operation
-
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
     # flake8: noqa: E402 (ignore import error)
@@ -40,16 +37,19 @@ from vantage6.common.globals import APPNAME
 from vantage6.common.enum import StorePolicies
 from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
 from vantage6.backend.common.globals import HOST_URI_ENV
-from vantage6.common.serialization import jsonable
+from vantage6.backend.common.jsonable import jsonable
 
 # TODO move this to common, then remove dependency on CLI in algorithm store
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.algorithm.store.default_roles import get_default_roles, DefaultRole
-from vantage6.algorithm.store.globals import API_PATH, RESOURCES, SERVER_MODULE_NAME
+from vantage6.algorithm.store.globals import API_PATH, RESOURCES, RESOURCES_PATH, SERVER_MODULE_NAME
 
 from vantage6.backend.common.base import Base, DatabaseSessionManager, Database
 from vantage6.algorithm.store.model.common.enums import ReviewStatus
 from vantage6.algorithm.store import db
+
+from vantage6.algorithm.store.model import Role, Rule
+from vantage6.algorithm.store.model.rule import Operation
 
 from vantage6.algorithm.store.permission import PermissionManager
 
@@ -99,7 +99,7 @@ class AlgorithmStoreApp:
 
         # setup the permission manager for the API endpoints
         self.permissions = PermissionManager(
-            "vantage6.algorithm.store.resource", RESOURCES, DefaultRole
+            RESOURCES_PATH, RESOURCES, DefaultRole
         )
 
         # sync policies with the database

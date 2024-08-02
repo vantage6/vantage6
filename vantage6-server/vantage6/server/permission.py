@@ -23,7 +23,7 @@ class RuleCollection(RuleCollectionBase):
 
         Parameters
         ----------
-        operation: OperationInterface
+        operation: Operation
             Operation to check if allowed
         subject_org_id: int | str
             Organization id on which the operation should be allowed. If a
@@ -209,9 +209,9 @@ class PermissionManager(PermissionManagerBase):
         ----------
         resource: str
             Resource that the rule applies to
-        scope: ScopeInterface
+        scope: Scope
             Scope that the rule applies to
-        operation: OperationInterface
+        operation: Operation
             Operation that the rule applies to
         """
         self.assign_rule_to_fixed_role(
@@ -238,7 +238,7 @@ class PermissionManager(PermissionManagerBase):
         )
 
     def assign_rule_to_fixed_role(
-        self, fixedrole: str, resource: str, operation: Operation, scope: Scope
+            fixedrole: str, resource: str, operation: Operation, scope: Scope
     ) -> None:
         """
         Attach a rule to a fixed role (not adjustable by users).
@@ -249,9 +249,9 @@ class PermissionManager(PermissionManagerBase):
             Name of the fixed role that the rule should be added to
         resource: str
             Resource that the rule applies to
-        scope: ScopeInterface
+        scope: Scope
             Scope that the rule applies to
-        operation: OperationInterface
+        operation: Operation
             Operation that the rule applies to
         """
         role = Role.get_by_name(fixedrole)
@@ -306,9 +306,9 @@ class PermissionManager(PermissionManagerBase):
         ----------
         resource : str
             API resource that the rule applies to
-        operation : OperationInterface
+        operation : Operation
             Operation of the rule
-        scope : ScopeInterface
+        scope : Scope
             Scope of the rule
         description : String, optional
             Human readable description where the rule is used for, by default

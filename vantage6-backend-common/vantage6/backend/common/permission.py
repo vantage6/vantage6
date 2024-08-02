@@ -75,8 +75,6 @@ class PermissionManagerBase(ABC):
             Name of the fixed role that the rule should be added to
         resource: str
             Resource that the rule applies to
-        scope: Scope
-            Scope that the rule applies to
         operation: Operation
             Operation that the rule applies to
         """
@@ -150,6 +148,8 @@ class PermissionManagerBase(ABC):
         """
         Assign a rule to the root role.
 
+        Parameters
+        ----------
         resource: str
             Resource that the rule applies to
         operation: Operation

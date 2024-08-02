@@ -165,6 +165,8 @@ def cli_server_shell(ctx: ServerContext) -> None:
     logging.warning("Please use the User interface, Python client, or API.")
     del logging
 
+    import vantage6.server.db as db
+
     IPython.embed(config=c)
 
 

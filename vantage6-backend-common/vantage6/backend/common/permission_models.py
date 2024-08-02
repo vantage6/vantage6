@@ -22,7 +22,7 @@ class RuleInterface:
 
     @classmethod
     def get_by_(cls, *args, **kwargs):
-        raise NotImplemented("get_by_ method must be implemented for Rule class")
+        raise NotImplementedError("get_by_ method must be implemented for Rule class")
 
     def __repr__(self) -> str:
         """
@@ -33,7 +33,7 @@ class RuleInterface:
         str
             String representation of the rule
         """
-        raise NotImplemented("__repr__ method must be implemented for Rule class")
+        raise NotImplementedError("__repr__ method must be implemented for Rule class")
 
 
 class RoleInterface:
@@ -61,4 +61,4 @@ class RoleInterface:
         str
             String representation of the role
         """
-        raise NotImplemented("__repr__ method must be implemented for Role class")
+        raise NotImplementedError("__repr__ method must be implemented for Role class")

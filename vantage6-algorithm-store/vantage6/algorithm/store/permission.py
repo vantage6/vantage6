@@ -21,7 +21,7 @@ class RuleCollection(RuleCollectionBase):
 
         Parameters
         ----------
-        operation: OperationInterface
+        operation: Operation
             Operation to check
 
         Returns
@@ -38,7 +38,6 @@ class RuleCollection(RuleCollectionBase):
 
 
 class PermissionManager(PermissionManagerBase):
-
     def assign_rule_to_fixed_role(
         self, fixedrole: str, resource: str, operation: Operation
     ) -> None:
@@ -51,7 +50,7 @@ class PermissionManager(PermissionManagerBase):
             Name of the fixed role that the rule should be added to
         resource: str
             Resource that the rule applies to
-        operation: OperationInterface
+        operation: Operation
             Operation that the rule applies to
         """
         role = Role.get_by_name(fixedrole)
@@ -83,7 +82,7 @@ class PermissionManager(PermissionManagerBase):
         ----------
         resource : str
             API resource that the rule applies to
-        operation : OperationInterface
+        operation : Operation
             Operation of the rule
         description : String, optional
             Human readable description where the rule is used for, by default
@@ -112,7 +111,7 @@ class PermissionManager(PermissionManagerBase):
 
         Parameters
         ----------
-        rules: list[:class:`~vantage6.server.model.rule.Rule`]
+        rules: list[:class:`~vantage6.algorithm.store.model.rule.Rule`]
             List of rules that user is checked to have
 
         Returns
