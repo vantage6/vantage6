@@ -694,10 +694,10 @@ class SessionInputSchema(Schema):
     """Schema for validating input for creating a session."""
 
     # Used to identify the session
-    name = fields.String()
+    name = fields.String(allow_none=True)
 
     collaboration_id = fields.Integer(required=True, validate=Range(min=1))
-    study_id = fields.Integer(validate=Range(min=1))
+    study_id = fields.Integer(validate=Range(min=1), allow_none=True)
     scope = fields.String(
         required=True, validate=OneOf(Scope.list()), default=Scope.OWN.value
     )

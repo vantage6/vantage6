@@ -27,9 +27,9 @@ class ClientBase(object):
         Parameters
         ----------
         host : str
-            Adress (including protocol, e.g. `https://`) of the vantage6 server
+            Address (including protocol, e.g. `https://`) of the vantage6 server
         port : int
-            port numer to which the server listens
+            port number to which the server listens
         path : str, optional
             path of the api, by default '/api'
         """

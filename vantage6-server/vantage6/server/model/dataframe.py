@@ -65,6 +65,11 @@ class Dataframe(Base):
         bool
             True if the dataframe has no alive modifying tasks, False otherwise
         """
+        # In case there are no tasks, the dataframe is not ready as there is no
+        # dataframe constructed yet.
+        if not self.last_session_task:
+            return False
+
         # Since all session tasks are ran sequentially, we can check if the last task
         # is finished to determine if the dataframe is ready. Note that we do not care
         # wether the task completed successfully or not as we are only interested to
@@ -79,10 +84,11 @@ class Dataframe(Base):
     @ready.expression
     def ready(cls):
         return and_(
+            cls.last_session_task != None,
             *[
                 run.status.in_(RunStatus.dead_statuses())
                 for run in cls.last_session_task.runs
-            ]
+            ],
         )
 
     @hybrid_property

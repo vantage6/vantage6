@@ -29,7 +29,7 @@ class Task(Base):
     A task always belongs to a session and collaboration. Optionally it can be assigned
     to a study. A task can have a parent task or can depend on other tasks. A task can
     have multiple runs and results. A single task can require multiple datasets to be
-    profided.
+    provided.
 
     Each Task is associated with a specific session and collaboration. It can optionally
     be assigned to a study.
