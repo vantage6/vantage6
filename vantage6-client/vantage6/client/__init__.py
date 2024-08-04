@@ -25,6 +25,8 @@ from vantage6.common.client.client_base import ClientBase
 from vantage6.client.subclients.study import StudySubClient
 from vantage6.client.subclients.store.algorithm import AlgorithmSubClient
 from vantage6.client.subclients.store.algorithm_store import AlgorithmStoreSubClient
+from vantage6.client.subclients.session import SessionSubClient
+from vantage6.client.subclients.dataframe import DataFrameSubClient
 
 # make sure the version is available
 from vantage6.client._version import __version__  # noqa: F401
@@ -65,6 +67,8 @@ class UserClient(ClientBase):
         self.study = StudySubClient(self)
         self.store = AlgorithmStoreSubClient(self)
         self.algorithm = AlgorithmSubClient(self)
+        self.session = SessionSubClient(self)
+        self.dataframe = DataFrameSubClient(self)
 
         self.collaboration_id = None
         self.session_id = None
@@ -1666,6 +1670,8 @@ class UserClient(ClientBase):
             run: int = None,
             status: str = None,
             user_created: bool = None,
+            session: int = None,
+            dataframe: int = None,
             page: int = 1,
             per_page: int = 20,
         ) -> dict:
@@ -1757,6 +1763,8 @@ class UserClient(ClientBase):
                 "run_id": run,
                 "status": status,
                 "store_id": store,
+                "session_id": session,
+                "dataframe_id": dataframe,
             }
             includes = []
             if include_results:

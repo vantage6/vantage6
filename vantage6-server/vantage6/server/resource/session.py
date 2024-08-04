@@ -357,13 +357,19 @@ class Sessions(SessionBase):
         # can see the sessions in the collaboration that have a scope collaboration.
         if not self.r.v_glo.can():
             if self.r.v_col.can():
-                q = q.filter(db.Session.collaboration_id.in_(auth_org.collaborations))
+                q = q.filter(
+                    db.Session.collaboration_id.in_(
+                        self.obtain_auth_collaboration_ids()
+                    )
+                )
             elif self.r.v_org.can():
                 q = q.filter(
                     or_(
                         db.Session.organization_id == auth_org.id,
                         and_(
-                            db.Session.collaboration_id.in_(auth_org.collaborations),
+                            db.Session.collaboration_id.in_(
+                                self.obtain_auth_collaboration_ids()
+                            ),
                             db.Session.scope == S.COLLABORATION,
                         ),
                     )
@@ -474,7 +480,7 @@ class Sessions(SessionBase):
             return {"msg": "Collaboration not found"}, HTTPStatus.NOT_FOUND
 
         # When no label is provided, we generate a unique label.
-        if "name" not in data:
+        if data.get("name") is None:
             while db.Session.name_exists(
                 propose_name := generate_name(), collaboration
             ):
@@ -489,7 +495,7 @@ class Sessions(SessionBase):
 
         # In case a study is provided we also need to check that this is within the
         # collaboration.
-        if "study_id" in data:
+        if data.get("study_id"):
             study = db.Study.get(data["study_id"])
             if not study:
                 return {"msg": "Study not found"}, HTTPStatus.NOT_FOUND
@@ -760,6 +766,9 @@ class Session(SessionBase):
             }, HTTPStatus.UNAUTHORIZED
 
         delete_dependents = request.args.get("delete_dependents", False)
+        log.debug(f"Delete dependents: {delete_dependents}")
+        log.debug(f"Session dataframes: {session.dataframes}")
+        log.debug(f"Session tasks: {session.tasks}")
         if (session.dataframes or session.tasks) and not delete_dependents:
             return {
                 "msg": "This session has dependents, please delete them first."

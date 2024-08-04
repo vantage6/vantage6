@@ -483,7 +483,7 @@ class SimpleDataframeSchema(HATEOASModelSchema):
 class ColumnSchema(HATEOASModelSchema):
     class Meta:
         model = db.Column
-        only = ("name", "dtype")
+        only = ("name", "dtype", "node_id")
 
 
 class DataframeSchema(HATEOASModelSchema):
