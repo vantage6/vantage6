@@ -43,6 +43,7 @@ setup(
         "qrcode==7.3.1",
         "requests==2.32.3",
         "schema==0.7.5",
+        "setuptools>=67.8.0",
     ],
     extras_require={
         "dev": [
