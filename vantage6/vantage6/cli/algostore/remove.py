@@ -45,5 +45,8 @@ def cli_algo_store_remove(ctx: AlgorithmStoreContext, force: bool) -> None:
     info(f"Removing log directory: {log_dir}")
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
         handler.close()
-    # remove the whole folder with all the log files.
-    rmtree(log_dir)
+    # remove the whole folder with all the log files (if it exists)
+    try:
+        rmtree(log_dir)
+    except FileNotFoundError:
+        pass
