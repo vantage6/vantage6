@@ -21,9 +21,7 @@ import os
 import pandas as pd
 
 from sqlalchemy import create_engine
-
 from enum import Enum
-
 from SPARQLWrapper import SPARQLWrapper, CSV
 
 from vantage6.algorithm.tools.util import info, error
@@ -33,7 +31,7 @@ _SPARQL_RETURN_FORMAT = CSV
 
 class DatabaseType(str, Enum):
     """
-    Enum for the different database types.
+    Enum for the different file based database types.
 
     Attributes
     ----------

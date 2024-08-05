@@ -49,6 +49,9 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
     def __init__(self, *args, **kwargs) -> None:
         # set lambda functions to create links for one to one relationship
         setattr(self, "node", lambda obj: self.create_hateoas("node", obj))
+
+        setattr(self, "get_session", lambda obj: self.create_hateoas("session", obj))
+
         setattr(
             self, "organization", lambda obj: self.create_hateoas("organization", obj)
         )
@@ -56,6 +59,11 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
             self, "collaboration", lambda obj: self.create_hateoas("collaboration", obj)
         )
         setattr(self, "user", lambda obj: self.create_hateoas("user", obj))
+        setattr(
+            self,
+            "owner",
+            lambda obj: self.create_hateoas("owner", obj, endpoint="user"),
+        )
         setattr(self, "run", lambda obj: self.create_hateoas("run", obj))
         setattr(self, "task", lambda obj: self.create_hateoas("task", obj))
         setattr(self, "port", lambda obj: self.create_hateoas("port", obj))
@@ -80,6 +88,9 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
             "algorithm_store",
             lambda obj: self.create_hateoas("algorithm_store", obj),
         )
+        # setattr(
+        #     self, "node_session", lambda obj: self.create_hateoas("node_session", obj)
+        # )
 
         # call super class. Do this after setting the attributes above, because
         # the super class initializer will call the attributes.
@@ -91,6 +102,7 @@ class TaskSchema(HATEOASModelSchema):
     class Meta:
         model = db.Task
 
+    complete = fields.Boolean()
     status = fields.String()
     finished_at = fields.DateTime()
     collaboration = fields.Method("collaboration")
@@ -100,7 +112,21 @@ class TaskSchema(HATEOASModelSchema):
     results = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="result", link_from="task_id")
     )
+
     parent = fields.Method("parent_")
+
+    # depends_on = fields.Function(
+    #     lambda obj: create_one_to_many_link(obj, link_to="task", link_from="depends_on")
+    # )
+    depends_on = fields.Function(lambda obj: [dep.id for dep in obj.depends_on])
+
+    # required_by = fields.Function(
+    #     lambda obj: create_one_to_many_link(
+    #         obj, link_to="task", link_from="required_by"
+    #     )
+    # )
+    required_by = fields.Function(lambda obj: [req.id for req in obj.required_by])
+
     children = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="task", link_from="parent_id")
     )
@@ -109,12 +135,12 @@ class TaskSchema(HATEOASModelSchema):
     databases = fields.Method("databases_")
     study = fields.Method("study")
     algorithm_store = fields.Method("algorithm_store")
+    session = fields.Method("get_session")
+    dataframe = fields.Nested("SimpleDataframeSchema", many=False)
 
     @staticmethod
     def databases_(obj):
-        return [
-            {"label": db.database, "parameters": db.parameters} for db in obj.databases
-        ]
+        return [{"label": db.database, "type": db.type_} for db in obj.databases]
 
 
 class ResultSchema(HATEOASModelSchema):
@@ -179,6 +205,7 @@ class RunSchema(HATEOASModelSchema):
     ports = fields.Function(
         serialize=lambda obj: RunPortSchema().dump(obj.ports, many=True)
     )
+    action = fields.String()
 
     @staticmethod
     def result_link(obj):
@@ -449,3 +476,50 @@ class RuleSchema(HATEOASModelSchema):
     class Meta:
         model = db.Rule
         exclude = ("roles",)
+
+
+class SessionSchema(HATEOASModelSchema):
+    class Meta:
+        model = db.Session
+
+    owner = fields.Method("owner")
+    collaboration = fields.Method("collaboration")
+    tasks = fields.Function(
+        lambda obj: create_one_to_many_link(obj, link_to="task", link_from="session_id")
+    )
+    study = fields.Method("study")
+
+    dataframes = fields.Function(
+        lambda obj: create_one_to_many_link(
+            obj, link_to="session_dataframe", link_from="session_id"
+        )
+    )
+    ready = fields.Function(lambda obj: obj.is_ready)
+
+
+class SimpleDataframeSchema(HATEOASModelSchema):
+    class Meta:
+        model = db.Dataframe
+
+
+class ColumnSchema(HATEOASModelSchema):
+    class Meta:
+        model = db.Column
+        exclude = ("id",)
+
+    node_id = fields.Function(lambda obj: obj.node.id)
+
+
+class DataframeSchema(HATEOASModelSchema):
+    class Meta:
+        model = db.Dataframe
+
+    session = fields.Method("get_session")
+    tasks = fields.Function(
+        lambda obj: create_one_to_many_link(
+            obj, link_to="task", link_from="dataframe_id"
+        )
+    )
+    last_session_task = fields.Nested("TaskSchema", many=False)
+    columns = fields.Nested("ColumnSchema", many=True)
+    ready = fields.Boolean()

@@ -7,7 +7,7 @@ from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from flask_socketio import Namespace, emit, join_room, leave_room
 
 from vantage6.common import logger_name
-from vantage6.common.task_status import has_task_failed
+from vantage6.common.enums import RunStatus
 from vantage6.server import db
 from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.model.rule import Operation, Scope
@@ -250,17 +250,32 @@ class DefaultSocketNamespace(Namespace):
         organization_id = data.get("organization_id")
         parent_id = data.get("parent_id")
 
-        job_id = db.Run.get(run_id).task.job_id
+        run: db.Run = db.Run.get(run_id)
+        job_id = run.task.job_id
 
         # log event in server logs
         msg = (
             f"A container for job_id={job_id} and run_id={run_id} "
             f"in collaboration_id={collaboration_id} on node_id={node_id}"
         )
-        if has_task_failed(status):
+        if RunStatus.has_task_failed(status):
             self.log.critical(f"{msg} exited with status={status}.")
         else:
             self.log.info(f"{msg} has a new status={status}.")
+
+        # notify nodes that there is a new task available if there are tasks dependent
+        # on this one
+        dependent_tasks = run.task.required_by
+        if status == RunStatus.COMPLETED and dependent_tasks:
+            self.log.debug(
+                f"{len(dependent_tasks)} dependant tasks ready to be executed"
+            )
+            for task in dependent_tasks:
+                emit(
+                    "new_task",
+                    {"id": task.id, "parent_id": task.parent_id},
+                    room=f"collaboration_{task.collaboration_id}",
+                )
 
         # emit task status change to other nodes/users in the collaboration
         emit(

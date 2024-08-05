@@ -19,6 +19,10 @@ swagger_template = {
                         "type": "string",
                         "description": "Human-readable task name",
                     },
+                    "session_id": {
+                        "type": "integer",
+                        "description": "Session id to which this task belongs",
+                    },
                     "collaboration_id": {
                         "type": "integer",
                         "description": (
@@ -121,6 +125,40 @@ swagger_template = {
             "Collaboration": {
                 "properties": {"collaboration_id": {"type": "integer"}},
                 "example": {"collaboration_id": 1},
+            },
+            "Session": {
+                "properties": {
+                    "name": {"type": "string"},
+                    "collaboration_id": {"type": "integer"},
+                    "study_id": {"type": "integer"},
+                    "scope": {"type": "string"},
+                    "databases": {"type": "array", "items": {"type": "dict"}},
+                },
+                "example": {
+                    "name": "unique-session-label",
+                    "collaboration_id": 1,
+                    "scope": "own",
+                    "dataframes": [
+                        {
+                            "label": "my-database-label",
+                            "handle": "my-database-handle",
+                            "data_extraction": {
+                                "image": "my-data-extaction-image",
+                                "organizations": [
+                                    {"id": 1, "input": "encrypted-method-and-input"}
+                                ],
+                            },
+                            "preprocessing": [
+                                {
+                                    "image": "my-preprocessing-image",
+                                    "organizations": [
+                                        {"id": 1, "input": "encrypted-method-and-input"}
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
             },
             "Node": {
                 "example": {"api_key": "unique-uuid-string"},
