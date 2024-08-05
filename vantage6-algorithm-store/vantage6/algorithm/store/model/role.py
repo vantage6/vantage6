@@ -1,9 +1,8 @@
 from __future__ import annotations
 from sqlalchemy import Column, Text
 from sqlalchemy.orm import relationship
-from sqlalchemy.orm.exc import NoResultFound
-
-from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
+from vantage6.backend.common.base import Base
+from vantage6.backend.common.permission_models import RoleInterface
 from vantage6.common import logger_name
 
 import logging
@@ -12,7 +11,7 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-class Role(Base):
+class Role(Base, RoleInterface):
     """Collection of :class:`.~vantage6.algorithm.store.model.rule.Role` permissions
 
     Attributes
@@ -37,30 +36,6 @@ class Role(Base):
     )
 
     users = relationship("User", back_populates="roles", secondary="Permission")
-
-    @classmethod
-    def get_by_name(cls, name: str) -> Role | None:
-        """
-        Get a role by its name.
-
-        Parameters
-        ----------
-        name : str
-            Name of the role
-
-        Returns
-        -------
-        :class:`.~vantage6.algorithm.store.model.role.Role` | None
-            Role with the given name or None if no role with the given name
-            exists
-        """
-        session = DatabaseSessionManager.get_session()
-        try:
-            result = session.query(cls).filter_by(name=name).first()
-            session.commit()
-            return result
-        except NoResultFound:
-            return None
 
     def __repr__(self) -> str:
         """
