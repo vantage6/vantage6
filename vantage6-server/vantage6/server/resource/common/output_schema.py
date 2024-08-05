@@ -462,11 +462,8 @@ class SessionSchema(HATEOASModelSchema):
     tasks = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="task", link_from="session_id")
     )
-    # node_sessions = fields.Function(
-    #     lambda obj: create_one_to_many_link(
-    #         obj, link_to="node_session", link_from="session_id"
-    #     )
-    # )
+    study = fields.Method("study")
+
     dataframes = fields.Function(
         lambda obj: create_one_to_many_link(
             obj, link_to="session_dataframe", link_from="session_id"
@@ -483,7 +480,9 @@ class SimpleDataframeSchema(HATEOASModelSchema):
 class ColumnSchema(HATEOASModelSchema):
     class Meta:
         model = db.Column
-        only = ("name", "dtype", "node_id")
+        exclude = ("id",)
+
+    node_id = fields.Function(lambda obj: obj.node.id)
 
 
 class DataframeSchema(HATEOASModelSchema):
