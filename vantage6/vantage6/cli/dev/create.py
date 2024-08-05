@@ -1,14 +1,16 @@
 from pathlib import Path
 import csv
-from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 import yaml
 import click
+import pandas as pd
+
 from jinja2 import Environment, FileSystemLoader
 from colorama import Fore, Style
 
 from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.common import info, error, generate_apikey
 
+from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.globals import PACKAGE_FOLDER
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.context.node import NodeContext
@@ -17,49 +19,45 @@ from vantage6.cli.server.import_ import cli_server_import
 from vantage6.cli.utils import prompt_config_name
 
 
-def create_dummy_data(node_name: str, dev_folder: Path) -> Path:
-    """Synthesize csv dataset.
+def create_node_data_files(num_nodes: int, server_name: str) -> list[Path]:
+    """Create data files for nodes.
 
     Parameters
     ----------
-    node_name : str
-        Name of node to be used as part of dataset.
-    dev_folder : Path
-        Path to the dev folder.
+    num_nodes : int
+        Number of nodes to create data files for.
+    server_name : str
+        Name of the server.
 
     Returns
     -------
-    Path
-        Directory the data is saved in.
+    list[Path]
+        List of paths to the created data files.
     """
-    header = ["name", "mask", "weapon", "age"]
-    data = [
-        ["Raphael", "red", "sai", 44],
-        ["Donatello", "purple", "bo staff", 60],
-    ]
+    data_files = []
+    current_dir = Path(__file__).parent
+    full_df = pd.read_csv(current_dir / "data" / "olympic_athletes_2016.csv")
+    length_df = len(full_df)
+    for i in range(num_nodes):
+        node_name = f"{server_name}_node_{i + 1}"
+        dev_folder = NodeContext.instance_folders("node", node_name, False)["dev"]
+        data_folder = Path(dev_folder / server_name)
+        data_folder.mkdir(parents=True, exist_ok=True)
 
-    data_file = dev_folder / f"df_{node_name}.csv"
-    with open(data_file, "w", encoding="UTF8", newline="") as f:
-        writer = csv.writer(f)
+        # Split the data over the nodes
+        start = i * length_df // num_nodes
+        end = (i + 1) * length_df // num_nodes
+        data = full_df[start:end]
+        data_file = data_folder / f"df_{node_name}.csv"
 
-        # write the header
-        writer.writerow(header)
-
-        # write the data
-        for row in data:
-            writer.writerow(row)
-
-        f.close()
-
-    info(
-        f"Spawned dataset for {Fore.GREEN}{node_name}{Style.RESET_ALL}, "
-        f"writing to {Fore.GREEN}{data_file}{Style.RESET_ALL}"
-    )
-    return data_file
+        # write data to file
+        data.to_csv(data_file, index=False)
+        data_files.append(data_file)
+    return data_files
 
 
 def create_node_config_file(
-    server_url: str, port: int, config: dict, server_name: str
+    server_url: str, port: int, config: dict, server_name: str, datafile: Path
 ) -> None:
     """Create a node configuration file (YAML).
 
@@ -78,6 +76,8 @@ def create_node_config_file(
         additional user_defined_config.
     server_name : str
         Configuration name of the dummy server.
+    datafile : Path
+        Path to the data file for the node to use.
     """
     environment = Environment(
         loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
@@ -92,7 +92,6 @@ def create_node_config_file(
     folders = NodeContext.instance_folders("node", node_name, False)
     path_to_dev_dir = Path(folders["dev"] / server_name)
     path_to_dev_dir.mkdir(parents=True, exist_ok=True)
-    dummy_datafile = create_dummy_data(node_name, path_to_dev_dir)
 
     path_to_data_dir = Path(folders["data"])
     path_to_data_dir.mkdir(parents=True, exist_ok=True)
@@ -105,7 +104,7 @@ def create_node_config_file(
     node_config = template.render(
         {
             "api_key": config["api_key"],
-            "databases": {"default": dummy_datafile},
+            "databases": {"default": datafile},
             "logging": {"file": f"{node_name}.log"},
             "port": port,
             "server_url": server_url,
@@ -177,6 +176,7 @@ def generate_node_configs(
     """
     configs = []
     extra_config = _read_extra_config_file(extra_node_config)
+    node_data_files = create_node_data_files(num_nodes, server_name)
     for i in range(num_nodes):
         config = {
             "org_id": i + 1,
@@ -184,7 +184,9 @@ def generate_node_configs(
             "node_name": f"{server_name}_node_{i + 1}",
             "user_defined_config": extra_config,
         }
-        create_node_config_file(server_url, port, config, server_name)
+        create_node_config_file(
+            server_url, port, config, server_name, node_data_files[i]
+        )
         configs.append(config)
 
     return configs
