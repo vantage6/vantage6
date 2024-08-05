@@ -6,110 +6,7 @@ from rich.columns import Columns
 
 from vantage6.client import ClientBase
 from vantage6.client.filter import post_filtering
-
-
-# TODO FM 02-08-2024: Functions need docstrings, and typing
-def rich_session_table(session_metadata):
-
-    console = Console()
-
-    table = Table(title="Sessions")
-    table.add_column("ID", style="cyan")
-    table.add_column("Name", style="magenta")
-    table.add_column("scope", style="green")
-    table.add_column("created_at", style="green")
-    table.add_column("last_used_at", style="green")
-    table.add_column("ready", style="green")
-
-    if isinstance(session_metadata, dict):
-        session_metadata = [session_metadata]
-
-    for session in session_metadata:
-        try:
-            table.add_row(
-                str(session["id"]),
-                session["name"],
-                session["scope"],
-                session["created_at"],
-                session["last_used_at"],
-                str(session["ready"]),
-            )
-        except Exception as e:
-            console.print("An error occurred while parsing a row in the session table:")
-
-    # count number of rows
-    print(f"Number of rows: {table.row_count}")
-    if table.row_count == 0:
-        table.add_row(Panel("No sessions found"))
-
-    console.print(table)
-
-
-def rich_dataframe_table(dataframes, print_table=True):
-
-    console = Console()
-
-    table = Table()
-    table.add_column("ID", style="cyan")
-    table.add_column("Handle", style="magenta")
-    table.add_column("Session ID", style="green")
-    table.add_column("Last Session Task ID", style="green")
-    table.add_column("Ready", style="green")
-
-    if isinstance(dataframes, dict):
-        dataframes = [dataframes]
-
-    for dataframe in dataframes:
-        try:
-            table.add_row(
-                str(dataframe["id"]),
-                dataframe["handle"],
-                str(dataframe["session"]["id"]),
-                str(dataframe["last_session_task"]["id"]),
-                str(dataframe["ready"]),
-            )
-        except Exception as e:
-            table.add_row("Error", str(e))
-
-    # count number of rows
-    if table.row_count == 0:
-        return "No dataframes found"
-    elif print_table:
-        console.print(table)
-    else:
-        return table
-
-
-def rich_task_table(tasks, print_table=True):
-
-    def color(status):
-        color = "green" if status == "completed" else "yellow"
-        return f"[{color}]{status}[/{color}]"
-
-    console = Console()
-
-    table = Table(border_style="gray35", header_style="gray35")
-    table.add_column("ID", style="cyan")
-    table.add_column("Name", style="cyan")
-    table.add_column("Status", style="cyan")
-    table.add_column("Type", style="cyan")
-    table.add_column("Dataframe", style="cyan")
-
-    for task in tasks:
-        table.add_row(
-            str(task["id"]),
-            task["name"],
-            color(task["status"]),
-            "session-builder" if task["dataframe"] else "compute",
-            task["dataframe"]["handle"] if task["dataframe"] else "None",
-        )
-
-    if table.row_count == 0:
-        return "No dataframes found"
-    elif print_table:
-        console.print(table)
-    else:
-        return table
+from vantage6.client.rich.table import rich_dataframe_table
 
 
 class SessionSubClient(ClientBase.SubClient):
@@ -387,7 +284,7 @@ class SessionSubClient(ClientBase.SubClient):
             display=False,
         )
 
-        tree = Tree("[bold green]Available sessions[/bold green]")
+        tree = Tree(Panel("[bold green]Available sessions[/bold green]"))
 
         console = Console()
 
