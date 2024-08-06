@@ -35,8 +35,8 @@
             <div class="field-description">{{ "task-create.step-package.description.algorithm" | translate }}</div>
             <mat-form-field subscriptSizing="dynamic">
               <mat-label>{{ "task.algorithm" | translate }}</mat-label>
-              <mat-select formControlName="algorithmID" [compareWith]="compareIDsForSelection">
-                <mat-option *ngFor="let algorithm of algorithms" [value]="algorithm.id">
+              <mat-select formControlName="algorithmSpec">
+                <mat-option *ngFor="let algorithm of algorithms" [value]="getAlgoSpec(algorithm)">
                   {{ algorithm.name }}
                   <div class="detail-txt">{{ getAlgorithmStoreName(algorithm) }}</div>
                 </mat-option>
