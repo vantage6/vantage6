@@ -342,9 +342,6 @@ class AlgorithmStoreApp:
         Note that algorithms that have already been invalidated are not affected by this
         change.
         """
-        # check if the review process should be disabled
-        if not self.ctx.config.get("dev", {}).get("disable_review", False):
-            return
         # set all algorithms that are under review or awaiting review to approved
         for algorithm in db.Algorithm.get_by_algorithm_status(
             [AlgorithmStatus.UNDER_REVIEW, AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT]
