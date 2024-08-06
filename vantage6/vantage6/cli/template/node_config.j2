@@ -17,6 +17,17 @@ logging:
   level: DEBUG
   max_size: 1024
   use_console: true
+  loggers:
+  - level: warning
+    name: urllib3
+  - level: warning
+    name: requests
+  - level: warning
+    name: engineio.client
+  - level: warning
+    name: docker.utils.config
+  - level: warning
+    name: docker.auth
 port: {{ port }}
 server_url: {{ server_url }}
 task_dir: {{ task_dir}}

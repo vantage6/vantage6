@@ -50,15 +50,20 @@ from sqlalchemy.orm.exc import NoResultFound
 from vantage6.common import logger_name
 from vantage6.common.globals import PING_INTERVAL_SECONDS
 from vantage6.backend.common.globals import HOST_URI_ENV
+from vantage6.backend.common.jsonable import jsonable
+from vantage6.backend.common.base import DatabaseSessionManager, Database
+from vantage6.backend.common.permission import RuleNeed
+from vantage6.server.model import Role, Rule
+from vantage6.server.model.rule import Operation, Scope
+from vantage6.server.permission import PermissionManager
 from vantage6.server import db
 from vantage6.cli.context.server import ServerContext
-from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.server.resource.common.output_schema import HATEOASModelSchema
-from vantage6.server.permission import RuleNeed, PermissionManager
 from vantage6.server.globals import (
     APPNAME,
     ACCESS_TOKEN_EXPIRES_HOURS,
     RESOURCES,
+    RESOURCES_PATH,
     SUPER_USER_INFO,
     REFRESH_TOKENS_EXPIRE_HOURS,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
@@ -133,7 +138,7 @@ class ServerApp:
         self.socketio = self.setup_socket_connection()
 
         # setup the permission manager for the API endpoints
-        self.permissions = PermissionManager()
+        self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
 
         # Api - REST JSON-rpc
         self.api = Api(self.app)
@@ -460,9 +465,9 @@ class ServerApp:
             """
 
             if isinstance(data, db.Base):
-                data = db.jsonable(data)
+                data = jsonable(data)
             elif isinstance(data, list) and len(data) and isinstance(data[0], db.Base):
-                data = db.jsonable(data)
+                data = jsonable(data)
 
             resp = make_response(json.dumps(data), code)
             resp.headers.extend(headers or {})

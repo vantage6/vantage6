@@ -1,6 +1,6 @@
 import { Component, HostBinding, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { Organization } from 'src/app/models/api/organization.model';
+import { BaseOrganization, Organization } from 'src/app/models/api/organization.model';
 import { RoleForm } from 'src/app/models/api/role.model';
 import { OperationType, ResourceType, Rule } from 'src/app/models/api/rule.model';
 import { routePaths } from 'src/app/routes';
@@ -18,7 +18,7 @@ export class RoleCreateComponent implements OnInit {
 
   isSubmitting = false;
   selectableRules: Rule[] = [];
-  selectableOrganizations: Organization[] = [];
+  selectableOrganizations: Organization[] | BaseOrganization[] = [];
 
   constructor(
     private router: Router,

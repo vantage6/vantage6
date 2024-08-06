@@ -35,6 +35,7 @@ from vantage6.cli.algostore.start import cli_algo_store_start
 from vantage6.cli.algostore.stop import cli_algo_store_stop
 from vantage6.cli.algostore.files import cli_algo_store_files
 from vantage6.cli.algostore.list import cli_algo_store_configuration_list
+from vantage6.cli.algostore.remove import cli_algo_store_remove
 
 
 # Define the server group
@@ -138,6 +139,7 @@ cli_algo_store.add_command(cli_algo_store_start, name="start")
 cli_algo_store.add_command(cli_algo_store_stop, name="stop")
 cli_algo_store.add_command(cli_algo_store_files, name="files")
 cli_algo_store.add_command(cli_algo_store_configuration_list, name="list")
+cli_algo_store.add_command(cli_algo_store_remove, name="remove")
 
 
 # Define the overall group

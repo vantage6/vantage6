@@ -11,7 +11,7 @@ from vantage6.common import (
     info,
     error,
 )
-from vantage6.server.model.base import Database
+from vantage6.backend.common.base import Database
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
 from vantage6.server.controller import fixture
 from vantage6.cli.configuration_wizard import select_configuration_questionaire

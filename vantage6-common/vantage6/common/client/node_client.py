@@ -176,7 +176,7 @@ class NodeClient(ClientBase):
 
             return run_data
 
-        def patch(self, id_: int, data: dict, init_org_id: int = None) -> None:
+        def patch(self, id_: int, data: dict, init_org_id: int = None) -> dict | None:
             """
             Update the algorithm run data at the central server.
 
@@ -192,6 +192,11 @@ class NodeClient(ClientBase):
                 Organization id of the origin of the task. This is required
                 when the run dict includes results, because then results have
                 to be encrypted specifically for them
+
+            Returns
+            -------
+            dict | None
+                The response from the server, or None if wrong data was provided
             """
             if "result" in data:
                 if not init_org_id:
@@ -199,8 +204,10 @@ class NodeClient(ClientBase):
                         "Organization id is not provided: cannot send results "
                         "to server as they cannot be encrypted"
                     )
-                msg = f"Retrieving public key from organization={init_org_id}"
-                self.parent.log.debug(msg)
+                    return
+                self.parent.log.debug(
+                    f"Retrieving public key from organization={init_org_id}"
+                )
 
                 org = self.parent.request(f"organization/{init_org_id}")
                 public_key = None

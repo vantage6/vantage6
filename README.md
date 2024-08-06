@@ -79,7 +79,7 @@ v6 server attach
 
 From here you can use the [vantage6-client](https://pypi.org/project/vantage6-client) to interact with the server. The demo network has a pre-configured organization with the following credentials:
 
-- Username: `org_1-admin`
+- Username: `dev_admin`
 - Password: `password`
 
 For example, you can create a new organization by running:
@@ -88,7 +88,7 @@ For example, you can create a new organization by running:
 from vantage6.client import Client
 
 client = Client('http://127.0.0.1', 5000, '/api', log_level='debug')
-client.authenticate('org_1-admin', 'password')
+client.authenticate('dev_admin', 'password')
 client.setup_encryption(None)
 
 client.organization.create(

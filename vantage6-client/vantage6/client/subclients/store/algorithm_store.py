@@ -108,7 +108,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         self,
         algorithm_store_url: str,
         name: str,
-        collaboration: int = None,
+        collaboration: int | None = None,
         all_collaborations: bool = False,
         force: bool = False,
     ) -> dict:
@@ -154,10 +154,11 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         data = {
             "algorithm_store_url": algorithm_store_url,
             "name": name,
-            "collaboration_id": collaboration,
             "force": force,
             "server_url": self.parent.base_path,
         }
+        if collaboration is not None:
+            data["collaboration_id"] = (collaboration,)
         return self.parent.request("algorithmstore", method="post", json=data)
 
     def update(
