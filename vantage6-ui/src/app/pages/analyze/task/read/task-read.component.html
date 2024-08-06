@@ -15,7 +15,7 @@
 </app-page-header>
 <app-alert *ngIf="algorithmNotFoundInStore" label="{{ 'task-read.alert-algorithm-not-found' | translate }}"></app-alert>
 <ng-container *ngIf="!isLoading && task; else loading">
-  <mat-card *ngIf="isTaskNotComplete()">
+  <mat-card *ngIf="!isTaskComplete()">
     <mat-card-header>
       <mat-card-title>{{ "task-read.card-status.title" | translate }}</mat-card-title>
     </mat-card-header>

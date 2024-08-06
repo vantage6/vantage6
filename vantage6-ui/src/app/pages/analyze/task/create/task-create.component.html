@@ -79,15 +79,26 @@
               </div>
               <mat-form-field subscriptSizing="dynamic">
                 <mat-label>{{ "task-create.step-function.organization" | translate }}</mat-label>
-                <mat-select
-                  formControlName="organizationIDs"
-                  [compareWith]="compareIDsForSelection"
-                  [multiple]="function.type !== functionType.Central"
-                >
-                  <mat-option *ngFor="let organization of organizations" [value]="organization.id">
-                    {{ organization.name }}
-                  </mat-option>
-                </mat-select>
+                <!--
+                This ugly if-else is required because the 'multiple' property of mat-select
+                cannot be changed after initialization (see e.g.
+                https://stackoverflow.com/questions/51204450/error-cannot-change-multiple-mode-of-select-after-initialization)
+                -->
+                <div *ngIf="function.type === functionType.Central; else partialOrgDropdown">
+                  <mat-select formControlName="organizationIDs" [compareWith]="compareIDsForSelection" [multiple]="false">
+                    <mat-option *ngFor="let organization of organizations" [value]="organization.id">
+                      {{ organization.name }}
+                    </mat-option>
+                  </mat-select>
+                </div>
+                <ng-template #partialOrgDropdown>
+                  <mat-select formControlName="organizationIDs" [compareWith]="compareIDsForSelection" [multiple]="true">
+                    <mat-option *ngFor="let organization of organizations" [value]="organization.id">
+                      {{ organization.name }}
+                    </mat-option>
+                  </mat-select>
+                </ng-template>
+                <!-- End ugly if-else -->
               </mat-form-field>
             </div>
             <app-alert

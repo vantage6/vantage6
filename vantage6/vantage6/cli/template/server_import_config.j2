@@ -3,12 +3,12 @@ organizations:
 - name: {{ org['name'] }}
   domain: iknl.nl
   address1: Godebaldkwartier 419
-  address2: 
+  address2:
   zipcode: 3511DT
   country: Netherlands
   {% if org['make_admin'] %}
   users:
-    - username: {{ org['name'] }}-admin
+    - username: dev_admin
       firstname: admin
       lastname: robot
       password: password
@@ -19,7 +19,7 @@ collaborations:
 - name: {{ collaboration['name'] }}
   domain: iknl.nl
   address1: Godebaldkwartier 419
-  address2: 
+  address2:
   zipcode: 3511DT
   country: Netherlands
   participants:
@@ -31,4 +31,3 @@ collaborations:
   {% endif %}
   tasks: ['hello-world']
   encrypted: false
-

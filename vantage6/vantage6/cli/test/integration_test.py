@@ -100,7 +100,7 @@ def cli_test_integration(
         host="http://localhost",
         port=5000,
         api_path="/api",
-        username="org_1-admin",
+        username="dev_admin",
         password="password",
         collaboration=1,
         organizations=None,

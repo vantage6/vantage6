@@ -51,10 +51,20 @@
         mat-flat-button
         class="right-aligned-button"
         color="primary"
-        *ngIf="canEdit && isMissingNodes()"
+        *ngIf="canCreateNodes && isMissingNodes()"
         (click)="onRegisterMissingNodes()"
       >
         <mat-icon>add</mat-icon>{{ "collaboration-read.card-nodes.add" | translate }}
+      </button>
+      <button
+        actions
+        mat-flat-button
+        class="right-aligned-button"
+        color="primary"
+        *ngIf="!canCreateNodes && canCreateNodesOwnOrg && isMissingOwnOrgNode()"
+        (click)="onRegisterMissingNodes(false)"
+      >
+        <mat-icon>add</mat-icon>{{ "collaboration-read.card-nodes.add-own-org" | translate }}
       </button>
     </mat-card-header>
     <mat-card-content>

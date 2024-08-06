@@ -145,23 +145,26 @@ Central function
 .. code:: python
 
   from vantage6.algorithm.tools.decorators import algorithm_client
-  from vantage6.client.algorithm_client import AlgorithmClient
+  from vantage6.algorithm.client import AlgorithmClient
+  # info and error can be used to log algorithm events
+  from vantage6.algorithm.tools.util import info, error
 
    @algorithm_client
    def main(client: AlgorithmClient, *args, **kwargs):
       # Run partial function.
       task = client.task.create(
          {
-            "method": "my_algorithm",
+            # Method name should match the name of the partial function used/created
+            "method": "my_partial_function",
             "args": args,
             "kwargs": kwargs
          },
-         organization_ids=[1, 2]
+         organizations=[1, 2]
       )
 
        # wait for the federated part to complete
        # and return
-       results = wait_and_collect(task)
+       results = client.wait_for_results(task_id=tesk.get("id"))
 
        return results
 

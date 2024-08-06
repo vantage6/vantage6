@@ -37,19 +37,25 @@ from vantage6.common.globals import APPNAME
 from vantage6.common.enum import StorePolicies
 from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
 from vantage6.backend.common.globals import HOST_URI_ENV
-from vantage6.algorithm.store.default_roles import get_default_roles
+from vantage6.backend.common.jsonable import jsonable
 
 # TODO move this to common, then remove dependency on CLI in algorithm store
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
-from vantage6.algorithm.store.globals import API_PATH
-from vantage6.algorithm.store.globals import RESOURCES, SERVER_MODULE_NAME
+from vantage6.algorithm.store.default_roles import get_default_roles, DefaultRole
+from vantage6.algorithm.store.globals import (
+    API_PATH,
+    RESOURCES,
+    RESOURCES_PATH,
+    SERVER_MODULE_NAME,
+)
 
-# TODO the following are simply copies of the same files in the server - refactor
-from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager, Database
+from vantage6.backend.common.base import Base, DatabaseSessionManager, Database
 from vantage6.algorithm.store.model.common.enums import ReviewStatus
 from vantage6.algorithm.store import db
 
-# TODO move server imports to common / refactor
+from vantage6.algorithm.store.model import Role, Rule
+from vantage6.algorithm.store.model.rule import Operation
+
 from vantage6.algorithm.store.permission import PermissionManager
 
 # make sure the version is available
@@ -97,7 +103,7 @@ class AlgorithmStoreApp:
         self.swagger = Swagger(self.app, template={})
 
         # setup the permission manager for the API endpoints
-        self.permissions = PermissionManager()
+        self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
 
         # sync policies with the database
         self.setup_policies(self.ctx.config)
@@ -247,9 +253,9 @@ class AlgorithmStoreApp:
             """
 
             if isinstance(data, Base):
-                data = db.jsonable(data)
+                data = jsonable(data)
             elif isinstance(data, list) and len(data) and isinstance(data[0], Base):
-                data = db.jsonable(data)
+                data = jsonable(data)
 
             resp = make_response(json.dumps(data), code)
             resp.headers.extend(headers or {})
@@ -285,9 +291,7 @@ class AlgorithmStoreApp:
                 current_role = db.Role.get_by_name(role["name"])
                 # check that the rules are the same. Use set() to compare without order
                 if set(current_role.rules) != set(role["rules"]):
-                    log.warning(
-                        "Updating default role %s with new rules", role["name"].value
-                    )
+                    log.warning("Updating default role %s with new rules", role["name"])
                     current_role.rules = role["rules"]
                     current_role.save()
 

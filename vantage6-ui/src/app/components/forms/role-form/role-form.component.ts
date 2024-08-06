@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { Organization } from 'src/app/models/api/organization.model';
+import { BaseOrganization, Organization } from 'src/app/models/api/organization.model';
 import { RoleForm } from 'src/app/models/api/role.model';
 import { Rule, Rule_ } from 'src/app/models/api/rule.model';
 
@@ -11,7 +11,7 @@ import { Rule, Rule_ } from 'src/app/models/api/rule.model';
 })
 export class RoleFormComponent {
   @Input() selectableRules: Rule[] = [];
-  @Input() organizations: Organization[] = [];
+  @Input() organizations: Organization[] | BaseOrganization[] = [];
   @Output() cancelled: EventEmitter<void> = new EventEmitter();
   @Output() submitted: EventEmitter<RoleForm> = new EventEmitter();
 

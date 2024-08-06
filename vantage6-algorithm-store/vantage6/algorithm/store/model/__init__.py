@@ -1,5 +1,6 @@
 # pylint: disable=unused-import
-from vantage6.algorithm.store.model.base import Base
+from vantage6.backend.common.base import Base
+from vantage6.backend.common.permission_models import role_rule_association
 from vantage6.algorithm.store.model.algorithm import Algorithm
 from vantage6.algorithm.store.model.argument import Argument
 from vantage6.algorithm.store.model.database import Database

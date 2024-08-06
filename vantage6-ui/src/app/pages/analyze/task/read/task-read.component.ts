@@ -153,12 +153,12 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     return await this.taskService.getTasks({ parent_id: this.task?.id, include: 'results,runs' });
   }
 
-  isTaskNotComplete(): boolean {
-    if (!this.task) return false;
-    if (this.task.runs.length <= 0) return false;
-    if (this.task.results?.some((result) => result.result === null)) return true;
-    if (this.task.runs.every((run) => run.status === TaskStatus.Completed)) return false;
-    return true;
+  isTaskComplete(): boolean {
+    if (!this.task) return true;
+    if (this.task.runs.length <= 0) return true;
+    if (this.task.results?.some((result) => result.result === null)) return false;
+    if (this.task.runs.every((run) => run.status === TaskStatus.Completed)) return true;
+    return false;
   }
 
   isFailedRun(status: TaskStatus): boolean {
@@ -323,7 +323,10 @@ export class TaskReadComponent implements OnInit, OnDestroy {
               }
             });
             this.task = renewed_task;
-            if (!this.isTaskNotComplete() || getStatusType(this.task.status) === TaskStatusGroup.Error) {
+            // stop polling if task is either completed, or if it has crashed and the
+            // logs are available (the latter may not be available immediately after the
+            // task has crashed so then we wait another second)
+            if (this.isTaskComplete() || this.taskHasErrorAndLogs()) {
               this.childTasks = await this.getChildTasks();
               this.initData(false);
               // stop polling
@@ -332,6 +335,11 @@ export class TaskReadComponent implements OnInit, OnDestroy {
           }
         });
     }
+  }
+
+  private taskHasErrorAndLogs(): boolean {
+    if (!this.task) return true;
+    return getStatusType(this.task.status) === TaskStatusGroup.Error && this.task.runs.every((run) => run.log != null);
   }
 
   private async onNewTask(newTaskMsg: NewTaskMsg): Promise<void> {

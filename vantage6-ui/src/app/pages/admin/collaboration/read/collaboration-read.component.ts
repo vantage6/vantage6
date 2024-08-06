@@ -39,6 +39,8 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
   canDelete = false;
   canEdit = false;
   canCreateStudy = false;
+  canCreateNodes = false;
+  canCreateNodesOwnOrg = false;
 
   isEditAlgorithmStore = false;
   selectedAlgoStore?: AlgorithmStore;
@@ -63,8 +65,8 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    this.setPermissions();
     await this.initData();
+    this.setPermissions();
     this.nodeStatusUpdateSubscription = this.socketioConnectService
       .getNodeStatusUpdates()
       .subscribe((nodeStatusUpdate: NodeOnlineStatusMsg | null) => {
@@ -79,6 +81,13 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
 
   public isMissingNodes(): boolean {
     return this.collaboration !== undefined && this.collaboration.nodes.length < this.collaboration.organizations.length;
+  }
+
+  public isMissingOwnOrgNode(): boolean {
+    return (
+      this.collaboration !== undefined &&
+      this.collaboration.nodes.filter((node) => node.organization.id === this.permissionService.activeUser?.organization.id).length === 0
+    );
   }
 
   private async initData(): Promise<void> {
@@ -121,17 +130,35 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
         if (initialized) {
           this.canDelete = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.COLLABORATION, OperationType.DELETE);
           this.canEdit = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.COLLABORATION, OperationType.EDIT);
-          this.canCreateStudy = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.STUDY, OperationType.CREATE);
+          this.canCreateStudy = this.permissionService.isAllowedForCollab(
+            ResourceType.STUDY,
+            OperationType.CREATE,
+            this.collaboration || null
+          );
+          this.canCreateNodes = this.permissionService.isAllowedForCollab(
+            ResourceType.NODE,
+            OperationType.CREATE,
+            this.collaboration || null
+          );
+          const activeUserOrgId = this.permissionService.activeUser?.organization.id;
+          this.canCreateNodesOwnOrg =
+            this.permissionService.isAllowedForOrg(ResourceType.NODE, OperationType.CREATE, activeUserOrgId || null) &&
+            (this.collaboration?.organizations || []).some((org) => org.id === activeUserOrgId);
         }
       });
   }
 
-  async onRegisterMissingNodes(): Promise<void> {
+  async onRegisterMissingNodes(allOrgs: boolean = true): Promise<void> {
     if (!this.collaboration) return;
     // find organizations that are not yet registered
-    const missingOrganizations = this.collaboration?.organizations.filter(
+    let missingOrganizations = this.collaboration?.organizations.filter(
       (organization) => !this.collaboration?.nodes.some((node) => node.organization.id === organization.id)
     );
+    if (!allOrgs) {
+      missingOrganizations = missingOrganizations.filter(
+        (organization) => organization.id === this.permissionService.activeUser?.organization.id
+      );
+    }
     await this.nodeService.registerNodes(this.collaboration, missingOrganizations);
     // refresh the collaboration
     this.initData();

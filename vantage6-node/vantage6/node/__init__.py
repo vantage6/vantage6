@@ -578,7 +578,11 @@ class Node:
         return fullpath
 
     def setup_encryption(self) -> None:
-        """Setup encryption if the node is part of encrypted collaboration"""
+        """
+        Setup encryption for the node if it is part of an encrypted collaboration.
+
+        This uses the private key file that is specified in the node configuration.
+        """
         encrypted_collaboration = self.client.is_encrypted_collaboration()
         encrypted_node = self.config["encryption"]["enabled"]
 

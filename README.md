@@ -14,6 +14,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/vantage6/vantage6/badge.svg?branch=main)](https://coveralls.io/github/vantage6/vantage6?branch=main)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/2e60ac3b3f284620805f7399cba317be)](https://app.codacy.com/gh/vantage6/vantage6/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![DOI](https://zenodo.org/badge/492818831.svg)](https://zenodo.org/badge/latestdoi/492818831)
+[![Discord](https://img.shields.io/discord/643526403207331841)](https://discord.gg/yAyFf6Y)
 
 </h3>
 
@@ -78,7 +79,7 @@ v6 server attach
 
 From here you can use the [vantage6-client](https://pypi.org/project/vantage6-client) to interact with the server. The demo network has a pre-configured organization with the following credentials:
 
-- Username: `org_1-admin`
+- Username: `dev_admin`
 - Password: `password`
 
 For example, you can create a new organization by running:
@@ -87,7 +88,7 @@ For example, you can create a new organization by running:
 from vantage6.client import Client
 
 client = Client('http://127.0.0.1', 5000, '/api', log_level='debug')
-client.authenticate('org_1-admin', 'password')
+client.authenticate('dev_admin', 'password')
 client.setup_encryption(None)
 
 client.organization.create(
