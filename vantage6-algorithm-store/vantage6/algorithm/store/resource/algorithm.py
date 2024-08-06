@@ -484,6 +484,10 @@ class Algorithms(AlgorithmBaseResource):
         )
         algorithm.save()
 
+        # If reviews are disabled, approve the algorithm immediately
+        if self.config.get("dev", {}).get("disable_review", False):
+            algorithm.approve()
+
         # create the algorithm's subresources
         for function in data["functions"]:
             # create the function
