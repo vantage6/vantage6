@@ -112,15 +112,17 @@ class TestVantage6ServerResource(TestResources):
         # check that creating whitelisted server doesn't work if the server does not
         # successfully verify the user
         body_ = {"url": "https://server.com"}
-        validate_token_mock.return_value = MockResponse(
-            {}, status_code=HTTPStatus.NOT_FOUND
+        validate_token_mock.return_value = (
+            MockResponse({}, status_code=HTTPStatus.NOT_FOUND),
+            HTTPStatus.NOT_FOUND,
         )
         response = self.app.post("/api/vantage6-server", headers=HEADERS, json=body_)
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         # check that creating this server works
-        validate_token_mock.return_value = MockResponse(
-            {"username": USERNAME}, status_code=HTTPStatus.OK
+        validate_token_mock.return_value = (
+            MockResponse({"username": USERNAME}, status_code=HTTPStatus.OK),
+            HTTPStatus.OK,
         )
         response = self.app.post("/api/vantage6-server", headers=HEADERS, json=body_)
         self.assertEqual(response.status_code, HTTPStatus.CREATED)
