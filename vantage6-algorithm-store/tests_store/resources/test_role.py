@@ -64,7 +64,7 @@ class TestRoleResource(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
         # check that getting non-existing role fails
-        response = self.app.get(f"/api/role/9999", headers=HEADERS)
+        response = self.app.get("/api/role/9999", headers=HEADERS)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
 
