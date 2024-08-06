@@ -1,5 +1,21 @@
+Permissions
+-----------
+
+Policies
+~~~~~~~~
+
+Algorithm store policies are defined by the algorithm store administrator and determine
+the general permission and access rules for the algorithm store. Arguably the most
+important policy is who is allowed to view the algorithms in the store. For the
+community store, this is set to public, meaning that anyone can view the algorithms. For
+a private store, this can be set to private, meaning that only authorized users can
+view the algorithms. Other policies can be set to define which vantage6 servers are
+allowed to access the store, or to shape the review process (e.g. how many reviewers
+are required, or if they should be from a different organization as the algorithm
+developer).
+
 Permission management
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 The permission system of the algorithm store is based on a combination of policies and rules.
 Policies are used to define general access rules from external entities (i.e. users, vantage6 servers),
@@ -15,7 +31,7 @@ by logging in though the vantage6 server and using the obtained token to run a r
 an algorithm store resource endpoint.
 
 Permission rules
-~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^
 
 Just like in the vantage6 server, in the algorithm store rules are used to allow
 or prevent a user from performing an operation.

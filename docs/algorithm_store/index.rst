@@ -14,6 +14,7 @@ start your algorithm store.
     :maxdepth: 3
 
     introduction
+    processes
     requirements
     install
     deploy

@@ -173,8 +173,8 @@ elements in the dataset. The server then computes the average by summing the sum
 dividing by the sum of the number of elements. This way, the individual numbers are
 never shared.
 
-How to run the algorithm in vantage6
-------------------------------------
+How algorithms work in vantage6
+-------------------------------
 
 The average algorithm explained above can be separated in a central part and a
 federated part. The federated part uses the data to compute the sum and the number
@@ -223,12 +223,19 @@ Note that is also possible for the user to create the subtasks directly, and to 
 the central part of the algorithm themselves. This is however not the most common
 approach as it is in general easier to let the central algorithm do the work.
 
-Running your own algorithms
----------------------------
+How to run algorithms in vantage6
+---------------------------------
 
-Of course, the average algorithm is just an example. In practice, you can run many other
-algorithms in vantage6. The only requirement is that you package the algorithm in a
-Docker image that vantage6 can run. The focus of vantage6 is on setting up an
+Once you have set up a vantage6 server and nodes, you are ready to run your algorithms.
+You can create tasks from the :ref:`web interface <ui>`, the
+:ref:`Python client <use-python-client>` or by interacting with the :ref:`API <server-api>`
+directly. There are a number of public algorithms available from the
+:ref:`community algorithm store <community-store>`. :ref:`Linking this store <algorithm-store-linking>`
+to your server will allow you to quickly get a set of algorithms that you can run on your nodes.
+
+You can also develop your own vantage6 algorithms.
+The only requirement is that you package the algorithm in a Docker image that vantage6
+can run. The focus of vantage6 is on setting up an
 infrastructure to run algorithms on sensitive data and ensuring that the data is kept
 private - the algorithm implementation is kept highly flexible.
 
