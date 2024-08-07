@@ -766,9 +766,6 @@ class Session(SessionBase):
             }, HTTPStatus.UNAUTHORIZED
 
         delete_dependents = request.args.get("delete_dependents", False)
-        log.debug(f"Delete dependents: {delete_dependents}")
-        log.debug(f"Session dataframes: {session.dataframes}")
-        log.debug(f"Session tasks: {session.tasks}")
         if (session.dataframes or session.tasks) and not delete_dependents:
             return {
                 "msg": "This session has dependents, please delete them first."
