@@ -309,20 +309,20 @@ class BaseModelBase:
         id_: int, optional
             The id of the object to get. If not specified, return all.
         """
-        session = db_session_mgr.get_session()
+        session_ = db_session_mgr.get_session()
 
         result = None
 
         if id_ is None:
-            result = session.query(cls).all()
+            result = session_.query(cls).all()
         else:
             try:
-                result = session.query(cls).filter_by(id=id_).one()
+                result = session_.query(cls).filter_by(id=id_).one()
             except NoResultFound:
                 result = None
 
         # Always commit to avoid that transaction is not ended in Postgres
-        session.commit()
+        session_.commit()
 
         return result
 
@@ -336,13 +336,13 @@ class BaseModelBase:
             The database session manager - a derived class type of
             BaseDatabaseSessionManager
         """
-        session = db_session_mgr.get_session()
+        session_ = db_session_mgr.get_session()
 
         # new objects do not have an `id`
         if not self.id:
-            session.add(self)
+            session_.add(self)
 
-        session.commit()
+        session_.commit()
 
     def _delete(self, db_session_mgr: type["BaseDatabaseSessionManager"]) -> None:
         """
@@ -354,10 +354,10 @@ class BaseModelBase:
             The database session manager - a derived class type of
             BaseDatabaseSession
         """
-        session = db_session_mgr.get_session()
+        session_ = db_session_mgr.get_session()
 
-        session.delete(self)
-        session.commit()
+        session_.delete(self)
+        session_.commit()
 
     @classmethod
     def _exists(
@@ -381,9 +381,9 @@ class BaseModelBase:
         bool
             True if the value exists, False otherwise
         """
-        session = db_session_mgr.get_session()
-        result = session.query(exists().where(getattr(cls, field) == value)).scalar()
-        session.commit()
+        session_ = db_session_mgr.get_session()
+        result = session_.query(exists().where(getattr(cls, field) == value)).scalar()
+        session_.commit()
         return result
 
     @classmethod
