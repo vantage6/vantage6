@@ -42,6 +42,9 @@ ALGORITHM_TEMPLATE_REPO = "gh:vantage6/v6-algorithm-template.git"
 # image to use for diagnostics in `v6 test` commands
 DIAGNOSTICS_IMAGE = "harbor2.vantage6.ai/algorithms/diagnostic"
 
+# Address of community algorithm store
+COMMUNITY_STORE = "https://store.cotopaxi.vantage6.ai"
+
 
 class ServerType(str, Enum):
     """Enum containing server types"""

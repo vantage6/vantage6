@@ -5,6 +5,7 @@ from pathlib import Path
 
 import click
 
+from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.common import info
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.context.node import NodeContext
@@ -15,7 +16,7 @@ from vantage6.common.globals import InstanceType
 
 
 @click.command()
-@click_insert_context(type_="server")
+@click_insert_context(type_=InstanceType.SERVER)
 @click.pass_context
 def remove_demo_network(click_ctx: click.Context, ctx: ServerContext) -> None:
     """Remove all related demo network files and folders.
@@ -23,7 +24,6 @@ def remove_demo_network(click_ctx: click.Context, ctx: ServerContext) -> None:
     Select a server configuration to remove that server and the nodes attached
     to it.
     """
-
     # remove the server
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
         handler.close()
@@ -45,10 +45,23 @@ def remove_demo_network(click_ctx: click.Context, ctx: ServerContext) -> None:
     if server_folder.is_dir():
         rmtree(server_folder)
 
+    # remove the store folder
+    store_configs = AlgorithmStoreContext.instance_folders(
+        InstanceType.ALGORITHM_STORE, f"{ctx.name}_store", system_folders=True
+    )
+    store_folder = store_configs["data"]
+    if store_folder.is_dir():
+        rmtree(store_folder)
+
+    # remove the store config file
+    subprocess.run(
+        ["v6", "algorithm-store", "remove", "-n", f"{ctx.name}_store", "--force"]
+    )
+
     # remove the nodes
     configs, _ = NodeContext.available_configurations(system_folders=False)
     node_names = [
-        config.name for config in configs if f"{ctx.name}_node_" in config.name
+        config.name for config in configs if config.name.startswith(f"{ctx.name}_node_")
     ]
     for name in node_names:
         node_ctx = NodeContext(name, False)

@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 
-from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
+from vantage6.backend.common.base import Base, DatabaseSessionManager
 from vantage6.algorithm.store.model.rule import Operation, Rule
 
 
