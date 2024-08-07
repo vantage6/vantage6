@@ -29,6 +29,9 @@ REFRESH_TOKENS_EXPIRE_HOURS = 48
 # refresh token.
 MIN_REFRESH_TOKEN_EXPIRY_DELTA = 1
 
+# Where the resources modules have to be loaded from
+RESOURCES_PATH = "vantage6.server.resource"
+
 # Which resources should be initialized. These names correspond to the
 # file-names in the resource directory
 RESOURCES = [

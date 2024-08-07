@@ -63,13 +63,8 @@ export class AlgorithmAssignReviewComponent extends BaseCreateComponent implemen
       return;
     }
     this.algorithm = await this.algorithmService.getAlgorithm(store.url, this.algoID);
-    let reviewers = await this.storeUserService.getUsers(store.url, { can_review: true });
-    // filter the logged in user as they cannot review their own algorithm
-    const loggedInUser = this.permissionService.activeUser;
-    if (loggedInUser) {
-      reviewers = reviewers.filter((reviewer) => reviewer.username !== loggedInUser.username);
-    }
-    // also get existing reviews for this algorithm and remove those reviewers from the list as well
+    let reviewers = await this.storeUserService.getUsers(store.url, { reviewers_for_algorithm_id: this.algorithm.id });
+    // get existing reviews for this algorithm and remove those reviewers from the list
     this.existing_reviews = await this.reviewService.getReviews(store.url, { algorithm_id: this.algoID });
     reviewers = reviewers.filter((reviewer) => !this.existing_reviews.some((review) => review.reviewer.id === reviewer.id));
 

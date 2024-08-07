@@ -13,7 +13,7 @@ from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmViewPolicies
 from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 from vantage6.algorithm.store.model.user import User
-from vantage6.algorithm.store.permission import RuleNeed
+from vantage6.backend.common.permission import RuleNeed
 from vantage6.backend.common.services_resources import BaseServicesResources
 from vantage6.algorithm.store.model.common.enums import (
     DefaultStorePolicies,
@@ -40,10 +40,7 @@ class AlgorithmStoreResources(BaseServicesResources):
         config: dict,
         permissions: PermissionManager,
     ):
-        super().__init__(api, config)
-        # TODO move this to BaseServicesResources when merging PermissionManager from
-        # store and server to backend-common
-        self.permissions = permissions
+        super().__init__(api, config, permissions)
 
 
 def request_from_store_to_v6_server(
@@ -208,10 +205,7 @@ def _authorize_user(
     for role in user.roles:
         for rule in role.rules:
             auth_identity.provides.add(
-                RuleNeed(
-                    name=rule.name,
-                    operation=rule.operation,
-                )
+                RuleNeed(name=rule.name, operation=rule.operation, scope=None)
             )
 
     identity_changed.send(current_app._get_current_object(), identity=auth_identity)

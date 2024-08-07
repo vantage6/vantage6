@@ -49,10 +49,9 @@ class ServicesResources(BaseServicesResources):
         permissions: PermissionManager,
         config: dict,
     ):
-        super().__init__(api, config)
+        super().__init__(api, config, permissions)
         self.socketio = socketio
         self.mail = mail
-        self.permissions = permissions
 
     @staticmethod
     def obtain_auth() -> db.Authenticatable | dict:

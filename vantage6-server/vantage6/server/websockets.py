@@ -11,7 +11,7 @@ from vantage6.common.task_status import has_task_failed
 from vantage6.server import db
 from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.model.rule import Operation, Scope
-from vantage6.server.model.base import DatabaseSessionManager
+from vantage6.backend.common.base import DatabaseSessionManager
 
 ALL_NODES_ROOM = "all_nodes"
 

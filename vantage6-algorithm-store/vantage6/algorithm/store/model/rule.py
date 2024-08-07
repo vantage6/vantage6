@@ -1,10 +1,11 @@
 from __future__ import annotations
-from enum import Enum as Enumerate
 
+from enum import Enum as Enumerate
 from sqlalchemy import Column, Text, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
-from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
+from vantage6.backend.common.base import Base, DatabaseSessionManager
+from vantage6.backend.common.permission_models import RuleInterface
 
 
 class Operation(str, Enumerate):
@@ -16,7 +17,7 @@ class Operation(str, Enumerate):
     DELETE = "delete"
 
 
-class Rule(Base):
+class Rule(Base, RuleInterface):
     """Rules to determine permissions in an API endpoint.
 
     A rule gives access to a single type of action with a given operation

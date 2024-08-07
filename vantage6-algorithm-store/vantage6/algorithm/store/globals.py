@@ -26,3 +26,6 @@ RESOURCES = [
     "policy",
     "review",
 ]
+
+# Where the resources modules have to be loaded from
+RESOURCES_PATH = "vantage6.algorithm.store.resource"

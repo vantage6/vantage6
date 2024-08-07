@@ -1,7 +1,7 @@
 from __future__ import annotations
 import bcrypt
 
-from vantage6.server.model.base import DatabaseSessionManager
+from vantage6.backend.common.base import DatabaseSessionManager
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy import Column, Integer, String, ForeignKey
 

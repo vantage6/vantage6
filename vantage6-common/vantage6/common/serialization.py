@@ -1,5 +1,13 @@
 import json
+
+import logging
+
 from vantage6.common.globals import STRING_ENCODING
+from vantage6.common import logger_name
+
+
+module_name = logger_name(__name__)
+log = logging.getLogger(module_name)
 
 
 # TODO BvB 2023-02-03: I feel this function could be given a better name. And
