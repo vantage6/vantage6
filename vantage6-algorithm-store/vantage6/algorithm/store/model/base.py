@@ -92,17 +92,7 @@ class DatabaseSessionManager(BaseDatabaseSessionManager):
         Session
             A database session
         """
-        if DatabaseSessionManager.in_flask_request():
-            # needed for SocketIO requests
-            if "session" not in g:
-                DatabaseSessionManager.new_session()
-
-            return g.session
-        else:
-            if not session.session:
-                DatabaseSessionManager.new_session()
-
-            return session.session
+        return BaseDatabaseSessionManager._get_session(DatabaseSessionManager)
 
     @staticmethod
     def new_session() -> None:
@@ -111,10 +101,7 @@ class DatabaseSessionManager(BaseDatabaseSessionManager):
         stored in the flask global `g`. Otherwise, the session is stored in
         the db module.
         """
-        if DatabaseSessionManager.in_flask_request():
-            g.session = Database().session_a
-        else:
-            session.session = Database().session_b
+        BaseDatabaseSessionManager._new_session(DatabaseSessionManager, Database)
 
 
 class ModelBase(BaseModelBase):

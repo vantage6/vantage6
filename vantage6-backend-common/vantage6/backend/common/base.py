@@ -263,6 +263,57 @@ class BaseDatabaseSessionManager:
         return True if g else False
 
     @staticmethod
+    def _get_session(db_session_mgr: type["BaseDatabaseSessionManager"]) -> Session:
+        """
+        Get a session. Creates a new session if none exists.
+
+        Parameters
+        ----------
+        db_session_mgr: type["BaseDatabaseSessionManager"]
+            The database session manager - a derived class type of
+            BaseDatabaseSessionManager
+
+        Returns
+        -------
+        Session
+            A database session
+        """
+        if db_session_mgr.in_flask_request():
+            # needed for SocketIO requests
+            if "session" not in g:
+                db_session_mgr.new_session()
+
+            return g.session
+        else:
+            if not session.session:
+                db_session_mgr.new_session()
+
+            return session.session
+
+    @staticmethod
+    def _new_session(
+        db_session_mgr: type["BaseDatabaseSessionManager"],
+        database: type["BaseDatabase"],
+    ) -> None:
+        """
+        Create a new session. If we are in a flask request, the session is
+        stored in the flask global `g`. Otherwise, the session is stored in
+        the db module.
+
+        Parameters
+        ----------
+        db_session_mgr: type["BaseDatabaseSessionManager"]
+            The database session manager - a derived class type of
+            BaseDatabaseSessionManager
+        database: type["BaseDatabase"]
+            The database class - a derived class type of BaseDatabase
+        """
+        if db_session_mgr.in_flask_request():
+            g.session = database().session_a
+        else:
+            session.session = database().session_b
+
+    @staticmethod
     def clear_session() -> None:
         """
         Clear the session. If we are in a flask request, the session is
