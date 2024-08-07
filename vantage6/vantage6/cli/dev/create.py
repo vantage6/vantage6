@@ -476,19 +476,19 @@ def demo_network(
     "-p",
     "--server-port",
     type=int,
-    default=5000,
+    default=7601,
     help="Port to run the server on. Default is 5000.",
 )
 @click.option(
     "--ui-port",
     type=int,
-    default=5001,
+    default=7600,
     help="Port to run the UI on. Default is 5001.",
 )
 @click.option(
     "--algorithm-store-port",
     type=int,
-    default=5002,
+    default=7602,
     help="Port to run the algorithm store on. Default is 5002.",
 )
 @click.option(
