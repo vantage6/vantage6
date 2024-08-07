@@ -9,21 +9,26 @@ from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.common import info
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.context.node import NodeContext
-from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.server.remove import cli_server_remove
 from vantage6.cli.utils import remove_file
 from vantage6.common.globals import InstanceType
+from vantage6.cli.configuration_wizard import select_configuration_questionaire
+from vantage6.cli.context import get_context
 
 
 @click.command()
-@click_insert_context(type_=InstanceType.SERVER)
 @click.pass_context
-def remove_demo_network(click_ctx: click.Context, ctx: ServerContext) -> None:
+def remove_demo_network(click_ctx: click.Context) -> None:
     """Remove all related demo network files and folders.
 
     Select a server configuration to remove that server and the nodes attached
     to it.
     """
+    server_name = select_configuration_questionaire(
+        InstanceType.SERVER, system_folders=False
+    )
+    ctx = get_context(InstanceType.SERVER, server_name, system_folders=False)
+
     # remove the server
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
         handler.close()
@@ -39,7 +44,7 @@ def remove_demo_network(click_ctx: click.Context, ctx: ServerContext) -> None:
 
     # also remove the server folder
     server_configs = ServerContext.instance_folders(
-        InstanceType.SERVER, ctx.name, system_folders=True
+        InstanceType.SERVER, ctx.name, system_folders=False
     )
     server_folder = server_configs["data"]
     if server_folder.is_dir():
@@ -47,7 +52,7 @@ def remove_demo_network(click_ctx: click.Context, ctx: ServerContext) -> None:
 
     # remove the store folder
     store_configs = AlgorithmStoreContext.instance_folders(
-        InstanceType.ALGORITHM_STORE, f"{ctx.name}_store", system_folders=True
+        InstanceType.ALGORITHM_STORE, f"{ctx.name}_store", system_folders=False
     )
     store_folder = store_configs["data"]
     if store_folder.is_dir():
