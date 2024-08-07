@@ -6,6 +6,7 @@ from vantage6.cli.node.stop import cli_node_stop
 from vantage6.cli.algostore.stop import cli_algo_store_stop
 from vantage6.common.globals import InstanceType
 from vantage6.cli.configuration_wizard import select_configuration_questionaire
+from vantage6.cli.context import get_context
 
 
 @click.command()
