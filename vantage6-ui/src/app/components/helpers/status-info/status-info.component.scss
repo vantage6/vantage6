@@ -21,7 +21,7 @@
     margin: 0 0 $spacing-px-1 0;
   }
 
-  &__sub-title {
+  &__status {
     margin-top: $spacing-px-1;
     font-weight: 500;
   }
@@ -53,4 +53,8 @@
     border-color: $error-200;
     color: $error-900;
   }
+}
+
+.inline {
+  display: inline;
 }
