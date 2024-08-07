@@ -127,6 +127,13 @@ class Users(AlgorithmStoreResources):
               allowed to review algorithms are returned. If false, only users that are
               not allowed to review algorithms are returned.
           - in: query
+            name: reviewers_for_algorithm_id
+            schema:
+              type: integer
+            description: >-
+              Find users that can review the algorithm with the specified id. If the
+              algorithm does not exist, an error is returned.
+          - in: query
             name: page
             schema:
               type: integer
@@ -180,6 +187,8 @@ class Users(AlgorithmStoreResources):
             )
 
         # find users that can review algorithms
+        # TODO v5+ this option is superseded by the reviewers_for_algorithm_id option.
+        # Remove it in 5.0.
         if "can_review" in args:
             can_review = bool(args["can_review"])
             # TODO this approach may not be the most efficient if there are many users.
@@ -191,6 +200,39 @@ class Users(AlgorithmStoreResources):
                 q = q.filter(db.User.id.in_(reviewers))
             else:
                 q = q.filter(db.User.id.notin_(reviewers))
+
+        if "reviewers_for_algorithm_id" in args:
+            try:
+                algorithm_id = int(args["reviewers_for_algorithm_id"])
+            except ValueError:
+                return {
+                    "msg": (
+                        f"reviewers_for_algorithm_id must be an integer, but got: "
+                        f"{args['reviewers_for_algorithm_id']}"
+                    )
+                }, HTTPStatus.BAD_REQUEST
+            algorithm = db.Algorithm.get(algorithm_id)
+            if not algorithm:
+                return {
+                    "msg": (
+                        f"Algorithm with id={args['reviewers_for_algorithm_id']} does "
+                        "not exist!"
+                    )
+                }, HTTPStatus.BAD_REQUEST
+
+            # TODO this approach may not be the most efficient if there are many users.
+            # Consider improving.
+            reviewers = [
+                user.id for user in db.User.get() if user.can("review", Operation.EDIT)
+            ]
+            # remove the user that is the developer of the algorithm, unless a dev
+            # policy is set that allows this.
+            can_review_self = self.config.get("dev", {}).get(
+                "review_own_algorithm", False
+            )
+            if not can_review_self:
+                reviewers = [r for r in reviewers if r != algorithm.developer]
+            q = q.filter(db.User.id.in_(reviewers))
 
         # paginate results
         try:
