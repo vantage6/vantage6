@@ -271,6 +271,15 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     this.fileService.downloadTxtFile(textResult, filename);
   }
 
+  getPrintableTaskName(task: Task): string {
+    // print only max 30 characters
+    if (task.name.length > 30) {
+      return task.name.substring(0, 30) + '...';
+    } else {
+      return task.name;
+    }
+  }
+
   private async onAlgorithmStatusUpdate(statusUpdate: AlgorithmStatusChangeMsg): Promise<void> {
     // Update status of child tasks
     this.childTasks.forEach((task: BaseTask) => {

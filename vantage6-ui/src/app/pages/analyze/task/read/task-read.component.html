@@ -24,7 +24,7 @@
         <app-status-info
           *ngFor="let run of task?.runs"
           [type]="getStatusType(run.status)"
-          taskName="{{ task.name }}"
+          taskName="{{ getPrintableTaskName(task) }}"
           nodeName="{{ run.node.name }}"
           [status]="getTaskStatusTranslation(run.status)"
         >
