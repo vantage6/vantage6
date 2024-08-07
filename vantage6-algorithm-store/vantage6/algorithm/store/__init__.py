@@ -43,13 +43,9 @@ from vantage6.algorithm.store.default_roles import get_default_roles
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.algorithm.store.globals import API_PATH
 from vantage6.algorithm.store.globals import RESOURCES, SERVER_MODULE_NAME
-
-# TODO the following are simply copies of the same files in the server - refactor
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager, Database
 from vantage6.algorithm.store.model.common.enums import ReviewStatus
 from vantage6.algorithm.store import db
-
-# TODO move server imports to common / refactor
 from vantage6.algorithm.store.permission import PermissionManager
 
 # make sure the version is available

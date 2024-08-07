@@ -34,6 +34,7 @@ def create_node_data_files(num_nodes: int, server_name: str) -> list[Path]:
     list[Path]
         List of paths to the created data files.
     """
+    info(f"Creating data files for {num_nodes} nodes.")
     data_files = []
     current_dir = Path(__file__).parent
     full_df = pd.read_csv(current_dir / "data" / "olympic_athletes_2016.csv")
