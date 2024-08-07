@@ -49,7 +49,7 @@ from vantage6.algorithm.store.globals import (
     SERVER_MODULE_NAME,
 )
 
-from vantage6.backend.common.base import Base, DatabaseSessionManager, Database
+from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager, Database
 from vantage6.algorithm.store.model.common.enums import ReviewStatus
 from vantage6.algorithm.store import db
 

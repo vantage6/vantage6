@@ -4,7 +4,7 @@ from enum import Enum as Enumerate
 from sqlalchemy import Column, Text, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
-from vantage6.backend.common.base import Base, DatabaseSessionManager
+from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
 from vantage6.backend.common.permission_models import RuleInterface
 
 

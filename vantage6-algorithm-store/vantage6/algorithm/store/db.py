@@ -17,6 +17,5 @@ from vantage6.algorithm.store.model import (
     Vantage6Server,
     Policy,
     UserPermission,
+    role_rule_association,
 )
-
-from vantage6.backend.common.permission_models import role_rule_association

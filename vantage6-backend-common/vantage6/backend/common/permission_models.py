@@ -2,18 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy import Column, Integer, ForeignKey, Table
-
-from vantage6.backend.common.base import Base, DatabaseSessionManager
-
-role_rule_association = Table(
-    "role_rule_association",
-    Base.metadata,
-    Column("role_id", Integer, ForeignKey("role.id")),
-    Column("rule_id", Integer, ForeignKey("rule.id")),
-)
-
 
 class RuleInterface:
     name: Any
@@ -41,16 +29,6 @@ class RoleInterface:
     description: Any
     rules: Any
     users: Any
-
-    @classmethod
-    def get_by_name(cls, name: str):
-        session = DatabaseSessionManager.get_session()
-        try:
-            result = session.query(cls).filter_by(name=name).first()
-            session.commit()
-            return result
-        except NoResultFound:
-            return None
 
     def __repr__(self) -> str:
         """

@@ -2,7 +2,7 @@ import datetime
 from sqlalchemy import Column, String, DateTime, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 
-from vantage6.backend.common.base import Base, DatabaseSessionManager
+from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
 from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
 
 

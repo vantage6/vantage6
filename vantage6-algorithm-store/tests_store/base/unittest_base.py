@@ -4,7 +4,7 @@ from vantage6.algorithm.store.model.review import Review
 
 from vantage6.common.globals import InstanceType
 from vantage6.backend.common import test_context
-from vantage6.backend.common.base import DatabaseSessionManager, Database
+from vantage6.algorithm.store.model.base import DatabaseSessionManager, Database
 from vantage6.algorithm.store import AlgorithmStoreApp
 from vantage6.algorithm.store.globals import PACKAGE_FOLDER
 from vantage6.algorithm.store.model.policy import Policy
