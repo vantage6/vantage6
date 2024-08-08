@@ -3,7 +3,7 @@ import logging
 from socketio import ClientNamespace
 
 from vantage6.common import logger_name
-from vantage6.common.enums import RunStatus
+from vantage6.common.enum import RunStatus
 
 
 class NodeTaskNamespace(ClientNamespace):

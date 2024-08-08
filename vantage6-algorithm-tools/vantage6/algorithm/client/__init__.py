@@ -8,7 +8,7 @@ from typing import Any
 
 from vantage6.common.client.client_base import ClientBase
 from vantage6.common import base64s_to_bytes, bytes_to_base64s
-from vantage6.common.enums import RunStatus
+from vantage6.common.enum import RunStatus
 from vantage6.common.serialization import serialize
 from vantage6.algorithm.tools.util import info
 

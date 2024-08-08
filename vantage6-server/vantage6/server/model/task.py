@@ -16,7 +16,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from vantage6.common.enums import TaskStatus, RunStatus
+from vantage6.common.enum import TaskStatus, RunStatus
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
 

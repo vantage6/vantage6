@@ -5,8 +5,7 @@ import re
 from marshmallow import Schema, fields, ValidationError, validates, validates_schema
 from marshmallow.validate import Length, Range, OneOf
 
-from vantage6.common.enums import RunStatus
-from vantage6.common.enums import SessionStatus
+from vantage6.common.enum import RunStatus, SessionStatus
 from vantage6.server.model.rule import Scope
 from vantage6.server.default_roles import DefaultRole
 from vantage6.server.model.common.utils import validate_password

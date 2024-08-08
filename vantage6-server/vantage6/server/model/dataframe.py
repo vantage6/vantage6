@@ -6,7 +6,7 @@ from sqlalchemy import Column, Integer, ForeignKey, String, and_, case
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
-from vantage6.common.enums import RunStatus, TaskStatus
+from vantage6.common.enum import RunStatus, TaskStatus
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
 if TYPE_CHECKING:

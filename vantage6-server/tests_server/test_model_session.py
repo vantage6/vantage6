@@ -2,7 +2,7 @@ import datetime
 
 from sqlalchemy.exc import IntegrityError
 
-from vantage6.common.enums import SessionStatus
+from vantage6.common.enum import SessionStatus
 from vantage6.server.model import Session
 from vantage6.server.model.rule import Scope
 

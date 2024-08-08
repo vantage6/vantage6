@@ -7,7 +7,7 @@ from flask import request, g
 from flask_restful import Api
 
 from vantage6.common import logger_name
-from vantage6.common.enums import RunStatus
+from vantage6.common.enum import RunStatus
 from vantage6.server.resource import ServicesResources, with_user
 from vantage6.server import db
 from vantage6.server.permission import Scope, Operation, PermissionManager

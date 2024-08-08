@@ -27,7 +27,7 @@ from vantage6.common.docker.addons import (
     running_in_docker,
 )
 from vantage6.common.globals import APPNAME, NodePolicy
-from vantage6.common.enums import RunStatus, LocalAction
+from vantage6.common.enum import RunStatus, LocalAction
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.cli.context.node import NodeContext
 from vantage6.node.context import DockerNodeContext
