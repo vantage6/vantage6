@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 
-from vantage6.backend.common.base import Base, DatabaseSessionManager
+from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
 from vantage6.algorithm.store.model.rule import Operation, Rule
 
 
@@ -35,8 +35,7 @@ class User(Base):
     # relationships
     server = relationship("Vantage6Server", back_populates="users")
     roles = relationship("Role", back_populates="users", secondary="Permission")
-    # rules = relationship("Rule", back_populates="users",
-    #                      secondary="UserPermission")
+    rules = relationship("Rule", back_populates="users", secondary="UserPermission")
 
     algorithms = relationship("Algorithm", back_populates="developer")
     reviews = relationship("Review", back_populates="reviewer")
@@ -74,7 +73,7 @@ class User(Base):
             on the resource
         """
         rule = Rule.get_by_(resource, operation)
-        return any(rule in role.rules for role in self.roles)
+        return any(rule in role.rules for role in self.roles) or rule in self.rules
 
     @classmethod
     def get_by_server(cls, username: str, v6_server_id: int) -> User:

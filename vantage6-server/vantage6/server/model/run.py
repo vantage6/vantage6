@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from vantage6.common import logger_name
-from vantage6.backend.common.base import Base, DatabaseSessionManager
+from vantage6.server.model.base import Base, DatabaseSessionManager
 from vantage6.server.model import Node, Collaboration, Organization
 from vantage6.server.model.task import Task
 

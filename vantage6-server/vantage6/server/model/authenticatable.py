@@ -2,7 +2,7 @@ import bcrypt
 
 from sqlalchemy import Column, String, DateTime
 
-from vantage6.backend.common.base import Base
+from vantage6.server.model.base import Base
 
 
 class Authenticatable(Base):

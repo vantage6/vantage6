@@ -1,8 +1,15 @@
 <div [ngClass]="['status-info', getClasses()]">
   <mat-spinner *ngIf="shouldShowLoader" class="status-info__loader" diameter="40"></mat-spinner>
   <mat-icon *ngIf="!shouldShowLoader" class="status-info__icon">{{ getIcon() }}</mat-icon>
-  <div>{{ title }}</div>
-  <div class="status-info__sub-title">{{ subTitle }}</div>
+  <div>
+    <div class="status-info__status inline">{{ "task-read.card-status.task-name" | translate }}</div>
+    {{ taskName }}
+  </div>
+  <div>
+    <div class="status-info__status inline">{{ "task-read.card-status.node-name" | translate }}</div>
+    {{ nodeName }}
+  </div>
+  <div class="status-info__status">{{ status }}</div>
   <div class="status-info__actions">
     <ng-content select="[actions]"></ng-content>
   </div>

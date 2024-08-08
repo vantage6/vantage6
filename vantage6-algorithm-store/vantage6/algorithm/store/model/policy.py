@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String
 
-from vantage6.backend.common.base import Base, DatabaseSessionManager
+from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
 from vantage6.common.enum import StorePolicies
 
 
@@ -18,6 +18,21 @@ class Policy(Base):
 
     key = Column(String)
     value = Column(String)
+
+    @classmethod
+    def get_as_dict(cls) -> dict[str, str]:
+        """
+        Get the policies as a dictionary.
+
+        Returns
+        -------
+        dict[str, str]
+            Dictionary of policies
+        """
+        session = DatabaseSessionManager.get_session()
+        result = session.query(cls).all()
+        session.commit()
+        return {r.key: r.value for r in result}
 
     @classmethod
     def get_servers_allowed_to_be_whitelisted(cls) -> list[str]:

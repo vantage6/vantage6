@@ -171,8 +171,10 @@
       "title": "General"
     },
     "card-status": {
-      "title": "Status",
-      "child-title": "Subtasks",
+      "title": "Main process",
+      "child-title": "Child processes",
+      "task-name": "Name:",
+      "node-name": "Node:",
       "actions": {
         "kill": "Kill task"
       }

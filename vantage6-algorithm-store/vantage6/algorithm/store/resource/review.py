@@ -409,7 +409,7 @@ class Review(AlgorithmStoreResources):
             # deleted.
             return {
                 "msg": "Reviews of approved algorithms may not be deleted!"
-            }, HTTPStatus.BAD_REQUEST
+            }, HTTPStatus.FORBIDDEN
 
         review.delete()
         log.info("Review with id=%s deleted", id)
@@ -442,6 +442,8 @@ class ReviewApprove(AlgorithmStoreResources):
             description: Ok
           401:
             description: Unauthorized, or not assigned to this review
+          403:
+            description: Reviewer is not assigned to this review
           404:
             description: Review not found
 
@@ -463,9 +465,7 @@ class ReviewApprove(AlgorithmStoreResources):
 
         # check that the reviewer is assigned to this review
         if review.reviewer_id != g.user.id:
-            return {
-                "msg": "You are not assigned to this review!"
-            }, HTTPStatus.UNAUTHORIZED
+            return {"msg": "You are not assigned to this review!"}, HTTPStatus.FORBIDDEN
 
         # check if review can still be approved
         if review.status != ReviewStatus.UNDER_REVIEW:
@@ -516,6 +516,8 @@ class ReviewReject(AlgorithmStoreResources):
             description: Ok
           401:
             description: Unauthorized, or not assigned to this review
+          403:
+            description: Reviewer is not assigned to this review
           404:
             description: Review not found
 
@@ -537,9 +539,7 @@ class ReviewReject(AlgorithmStoreResources):
 
         # check that the reviewer is assigned to this review
         if review.reviewer_id != g.user.id:
-            return {
-                "msg": "You are not assigned to this review!"
-            }, HTTPStatus.UNAUTHORIZED
+            return {"msg": "You are not assigned to this review!"}, HTTPStatus.FORBIDDEN
 
         # check if review can still be rejected
         if review.status != ReviewStatus.UNDER_REVIEW:

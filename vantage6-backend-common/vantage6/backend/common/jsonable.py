@@ -2,19 +2,20 @@ import datetime
 import enum
 
 import sqlalchemy as sql
+from sqlalchemy.ext.declarative import DeclarativeMeta
 
-from vantage6.backend.common.base import Base
+
 from vantage6.common import STRING_ENCODING
 from vantage6.common.serialization import log
 
 
-def jsonable(value: list[Base] | Base) -> list | dict:
+def jsonable(value: list[DeclarativeMeta] | DeclarativeMeta) -> list | dict:
     """
     Convert a (list of) SQLAlchemy instance(s) to native Python objects.
 
     Parameters
     ----------
-    value : list[Base] | Base
+    value : list[DeclarativeMeta] | DeclarativeMeta
         A single SQLAlchemy instance or a list of SQLAlchemy instances
 
     Returns
@@ -30,7 +31,7 @@ def jsonable(value: list[Base] | Base) -> list | dict:
     if isinstance(value, list):
         return [jsonable(i) for i in value]
 
-    elif isinstance(value, Base):
+    elif isinstance(value, DeclarativeMeta):
         log.debug(f"preparing={value}")
         retval = dict()
         mapper = sql.inspect(value.__class__)

@@ -151,10 +151,10 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
 
         # If getting digest failed, try to use authentication
         if not digest:
-            docker_registry = self.config.get("docker_registries", [])
+            docker_registries = self.config.get("docker_registries", [])
             registry_user = None
             registry_password = None
-            for reg in docker_registry:
+            for reg in docker_registries:
                 if reg["registry"] == registry:
                     registry_user = reg.get("username")
                     registry_password = reg.get("password")

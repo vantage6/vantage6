@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 
-from vantage6.backend.common.base import Base
+from vantage6.server.model.base import Base
 
 
 class AlgorithmPort(Base):

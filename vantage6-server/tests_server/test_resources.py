@@ -15,10 +15,11 @@ from flask_socketio import SocketIO
 from werkzeug.utils import cached_property
 
 from vantage6.common import logger_name
-from vantage6.common.globals import APPNAME
+from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.common.task_status import TaskStatus
 from vantage6.common.serialization import serialize
 from vantage6.common import bytes_to_base64s
+from vantage6.backend.common import test_context
 from vantage6.server.globals import PACKAGE_FOLDER
 from vantage6.server import ServerApp
 from vantage6.backend.common import session
@@ -35,9 +36,8 @@ from vantage6.server.model import (
     Study,
 )
 from vantage6.server.model.rule import Scope, Operation
-from vantage6.server import context
 from vantage6.server._version import __version__
-from vantage6.backend.common.base import Database, DatabaseSessionManager
+from vantage6.server.model.base import Database, DatabaseSessionManager
 from vantage6.server.controller.fixture import load
 
 
@@ -65,7 +65,9 @@ class TestResources(unittest.TestCase):
         """Called immediately before running a test method."""
         Database().connect("sqlite://", allow_drop_all=True)
 
-        ctx = context.TestContext.from_external_config_file()
+        ctx = test_context.TestContext.from_external_config_file(
+            PACKAGE_FOLDER, InstanceType.SERVER
+        )
 
         # create server instance. Patch the start_background_task method
         # to prevent the server from starting a ping/pong thread that will
