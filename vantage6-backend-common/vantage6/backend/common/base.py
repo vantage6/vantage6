@@ -7,7 +7,7 @@ from flask.globals import g
 
 from sqlalchemy import Column, Integer, inspect, Table, exists
 from sqlalchemy.orm.session import Session
-from sqlalchemy.ext.declarative import declarative_base, declared_attr, DeclarativeMeta
+from sqlalchemy.ext.declarative import declared_attr, DeclarativeMeta
 from sqlalchemy.orm.clsregistry import _ModuleMarker
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url

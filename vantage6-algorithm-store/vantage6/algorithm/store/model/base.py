@@ -8,13 +8,11 @@ two different classes for it.
 
 import logging
 from typing import Any
-from flask.globals import g
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.session import Session
 
 from vantage6.common import logger_name, Singleton
-from vantage6.backend.common import session
 from vantage6.backend.common.base import (
     BaseModelBase,
     BaseDatabaseSessionManager,
