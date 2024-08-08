@@ -3,17 +3,16 @@ import click
 
 from vantage6.common import info
 from vantage6.common.globals import InstanceType
+from vantage6.client import Client
 from vantage6.cli.globals import COMMUNITY_STORE
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
-from vantage6.cli.context.server import ServerContext
 from vantage6.cli.context.node import NodeContext
-from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.server.start import cli_server_start
-from vantage6.client import Client
+from vantage6.cli.configuration_wizard import select_configuration_questionaire
+from vantage6.cli.context import get_context
 
 
 @click.command()
-@click_insert_context(type_=InstanceType.SERVER)
 @click.option(
     "--server-image", type=str, default=None, help="Server Docker image to use"
 )
@@ -24,7 +23,6 @@ from vantage6.client import Client
 @click.pass_context
 def start_demo_network(
     click_ctx: click.Context,
-    ctx: ServerContext,
     server_image: str,
     node_image: str,
     store_image: str,
@@ -33,10 +31,16 @@ def start_demo_network(
 
     Select a server configuration to run its demo network. You should choose a
     server configuration that you created earlier for a demo network. If you
-    have not created a demo network, you can run `vdev create-demo-network` to
+    have not created a demo network, you can run `v6 dev create-demo-network` to
     create one.
     """
+    server_name = select_configuration_questionaire(
+        InstanceType.SERVER, system_folders=False
+    )
+    ctx = get_context(InstanceType.SERVER, server_name, system_folders=False)
+
     # run the server
+    info("Starting server...")
     click_ctx.invoke(
         cli_server_start,
         ctx=ctx,
@@ -50,10 +54,12 @@ def start_demo_network(
         keep=True,
         mount_src="",
         attach=False,
+        system_folders=False,
     )
 
     # run the store
-    cmd = ["v6", "algorithm-store", "start", "--name", f"{ctx.name}_store"]
+    info("Starting algorithm store...")
+    cmd = ["v6", "algorithm-store", "start", "--name", f"{ctx.name}_store", "--user"]
     if store_image:
         cmd.extend(["--image", store_image])
     subprocess.run(cmd)
@@ -71,7 +77,7 @@ def start_demo_network(
 
     # now that both server and store have been started, couple them
     info("Linking local algorithm store to server...")
-    store_ctxs, _ = AlgorithmStoreContext.available_configurations(system_folders=True)
+    store_ctxs, _ = AlgorithmStoreContext.available_configurations(system_folders=False)
     store_ctx = [c for c in store_ctxs if c.name == f"{ctx.name}_store"][0]
     client = Client(
         "http://localhost",
