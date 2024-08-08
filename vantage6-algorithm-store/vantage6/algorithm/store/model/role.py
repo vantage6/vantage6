@@ -1,7 +1,9 @@
 from __future__ import annotations
 from sqlalchemy import Column, Text
 from sqlalchemy.orm import relationship
-from vantage6.backend.common.base import Base
+from sqlalchemy.orm.exc import NoResultFound
+
+from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
 from vantage6.backend.common.permission_models import RoleInterface
 from vantage6.common import logger_name
 
@@ -36,6 +38,16 @@ class Role(Base, RoleInterface):
     )
 
     users = relationship("User", back_populates="roles", secondary="Permission")
+
+    @classmethod
+    def get_by_name(cls, name: str):
+        session = DatabaseSessionManager.get_session()
+        try:
+            result = session.query(cls).filter_by(name=name).first()
+            session.commit()
+            return result
+        except NoResultFound:
+            return None
 
     def __repr__(self) -> str:
         """

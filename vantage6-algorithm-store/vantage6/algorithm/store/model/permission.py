@@ -11,7 +11,7 @@ may contain multiple entries for the same user.
 
 from sqlalchemy import Column, Integer, ForeignKey, Table
 
-from vantage6.backend.common.base import Base
+from vantage6.algorithm.store.model.base import Base
 
 
 Permission = Table(
@@ -21,12 +21,9 @@ Permission = Table(
     Column("role_id", Integer, ForeignKey("role.id")),
 )
 
-# TODO when this is activated, also include the changes in the rule endpoints (e.g.
-# where there is a filter by user)
-# TODO: integrate this with the Permission model from the v6 server
-# UserPermission = Table(
-#     'UserPermission',
-#     Base.metadata,
-#     Column('rule_id', Integer, ForeignKey('rule.id')),
-#     Column('user_id', Integer, ForeignKey('user.id'))
-# )
+UserPermission = Table(
+    "UserPermission",
+    Base.metadata,
+    Column("rule_id", Integer, ForeignKey("rule.id")),
+    Column("user_id", Integer, ForeignKey("user.id")),
+)

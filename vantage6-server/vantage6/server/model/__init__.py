@@ -1,5 +1,5 @@
-from vantage6.backend.common.base import Base
-from vantage6.backend.common.permission_models import role_rule_association
+from vantage6.server.model.base import Base
+from vantage6.server.model.role_rule_association import role_rule_association
 from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.model.user import User
 from vantage6.server.model.organization import Organization

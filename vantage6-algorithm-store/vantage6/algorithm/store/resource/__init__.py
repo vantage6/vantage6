@@ -10,7 +10,7 @@ from flask_restful import Api
 from vantage6.algorithm.store import PermissionManager
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.common import logger_name
-from vantage6.common.enum import AlgorithmViewPolicies
+from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
 from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 from vantage6.algorithm.store.model.user import User
 from vantage6.backend.common.permission import RuleNeed
@@ -18,6 +18,7 @@ from vantage6.backend.common.services_resources import BaseServicesResources
 from vantage6.algorithm.store.model.common.enums import (
     DefaultStorePolicies,
 )
+from vantage6.algorithm.store.model.policy import Policy
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -49,7 +50,7 @@ def request_from_store_to_v6_server(
     params: dict = None,
     headers: dict = None,
     json: dict = None,
-) -> requests.Response:
+) -> tuple[requests.Response, int]:
     """
     Make a request from the algorithm store to the vantage6 server.
 
@@ -68,8 +69,8 @@ def request_from_store_to_v6_server(
 
     Returns
     -------
-    requests.Response
-        Response object from the request.
+    tuple[requests.Response, int]
+        Response object from the request, and the status code of the response.
     """
     # First, replace localhost addresses. If we are looking for a localhost server, we
     # probably have to check host.docker.internal (Windows) or 172.17.0.1 (Linux)
@@ -95,10 +96,12 @@ def request_from_store_to_v6_server(
     headers = headers or {}
     headers["Authorization"] = request.headers["Authorization"]
     response = requests.request(method, url, params=params, headers=headers, json=json)
-    return response
+    return response, response.status_code
 
 
-def request_validate_server_token(server_url: str) -> Response | None:
+def request_validate_server_token(
+    server_url: str,
+) -> tuple[Response, int] | tuple[None, None]:
     """
     Validate the token of the server.
 
@@ -109,14 +112,14 @@ def request_validate_server_token(server_url: str) -> Response | None:
 
     Returns
     -------
-    Response | None
+    tuple[Response, int] | tuple[None, None]
         Response object from the request, or None if the server could not be reached
     """
     url = f"{server_url}/token/user/validate"
     try:
         return request_from_store_to_v6_server(url, method="post")
     except requests.exceptions.ConnectionError:
-        return None
+        return None, None
 
 
 def _authenticate_with_server(*args, **kwargs):
@@ -130,7 +133,7 @@ def _authenticate_with_server(*args, **kwargs):
     msg = "Missing Authorization header"
     if not request.headers.get("Authorization"):
         log.warning(msg)
-        return {"msg": msg}, HTTPStatus.BAD_REQUEST
+        return {"msg": msg}, HTTPStatus.UNAUTHORIZED
 
     # check if server is whitelisted
     server_url = request.headers["Server-Url"]
@@ -144,8 +147,8 @@ def _authenticate_with_server(*args, **kwargs):
         return {"msg": msg}, HTTPStatus.FORBIDDEN
 
     # check if token is valid
-    response = request_validate_server_token(server_url)
-    if response is None or response.status_code == HTTPStatus.NOT_FOUND:
+    response, status_code = request_validate_server_token(server_url)
+    if response is None or status_code == HTTPStatus.NOT_FOUND:
         msg = "Could not connect to the vantage6 server. Please check the server URL."
         log.warning(msg)
         status_to_return = (
@@ -154,7 +157,7 @@ def _authenticate_with_server(*args, **kwargs):
             else HTTPStatus.BAD_REQUEST
         )
         return {"msg": msg}, status_to_return
-    elif response.status_code != HTTPStatus.OK:
+    elif status_code != HTTPStatus.OK:
         msg = "Token is not valid"
         log.warning(msg)
         return {"msg": msg}, HTTPStatus.UNAUTHORIZED
@@ -187,7 +190,7 @@ def _authorize_user(
     try:
         username = auth_response.json()["username"]
     except Exception:
-        msg = "Key Error: key username not found"
+        msg = "Key Error: username not found"
         log.warning(msg)
         return {"msg": msg}, HTTPStatus.INTERNAL_SERVER_ERROR
 
@@ -304,11 +307,10 @@ def with_permission_to_view_algorithms() -> callable:
     def protection_decorator(fn):
         @wraps(fn)
         def decorator(self, *args, **kwargs):
+            policies = Policy.get_as_dict()
             # check if everyone has permission to view algorithms
-            policies = self.config.get("policies", {})
-
             algorithm_view_policy = policies.get(
-                "algorithm_view", DefaultStorePolicies.ALGORITHM_VIEW.value
+                StorePolicies.ALGORITHM_VIEW, DefaultStorePolicies.ALGORITHM_VIEW.value
             )
 
             # check if user is trying to view algorithms that are not approved by review

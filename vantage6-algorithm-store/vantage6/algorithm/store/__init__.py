@@ -49,12 +49,9 @@ from vantage6.algorithm.store.globals import (
     SERVER_MODULE_NAME,
 )
 
-from vantage6.backend.common.base import Base, DatabaseSessionManager, Database
+from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager, Database
 from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
 from vantage6.algorithm.store import db
-
-from vantage6.algorithm.store.model import Role, Rule
-from vantage6.algorithm.store.model.rule import Operation
 
 from vantage6.algorithm.store.permission import PermissionManager
 

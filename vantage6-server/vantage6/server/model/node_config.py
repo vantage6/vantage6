@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, ForeignKey, String
 from sqlalchemy.orm import relationship
 
-from vantage6.backend.common.base import Base
+from vantage6.server.model.base import Base
 
 
 class NodeConfig(Base):

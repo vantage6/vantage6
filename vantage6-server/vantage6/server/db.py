@@ -19,6 +19,5 @@ from vantage6.server.model import (
     TaskDatabase,
     User,
     UserPermission,
+    role_rule_association,
 )
-
-from vantage6.backend.common.permission_models import role_rule_association

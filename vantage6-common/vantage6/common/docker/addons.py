@@ -308,7 +308,7 @@ def parse_image_name(image: str) -> tuple[str, str, str]:
     Parse image name into registry, repository, tag.
 
     The returned tag may also be a digest. If image contains both a tag and a digest,
-    the digest will be returned rather than the tag.
+    the tag will be returned rather than the digest.
 
     Parameters
     ----------

@@ -51,7 +51,7 @@ from vantage6.common import logger_name
 from vantage6.common.globals import PING_INTERVAL_SECONDS
 from vantage6.backend.common.globals import HOST_URI_ENV
 from vantage6.backend.common.jsonable import jsonable
-from vantage6.backend.common.base import DatabaseSessionManager, Database
+from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.backend.common.permission import RuleNeed
 from vantage6.server.model import Role, Rule
 from vantage6.server.model.rule import Operation, Scope

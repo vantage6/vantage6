@@ -4,7 +4,7 @@ from enum import Enum as Enumerate
 from sqlalchemy import Column, Text, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
-from vantage6.backend.common.base import Base, DatabaseSessionManager
+from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
 from vantage6.backend.common.permission_models import RuleInterface
 
 
@@ -46,8 +46,7 @@ class Rule(Base, RuleInterface):
     roles = relationship(
         "Role", back_populates="rules", secondary="role_rule_association"
     )
-    # users = relationship("User", back_populates="rules",
-    #                      secondary="UserPermission")
+    users = relationship("User", back_populates="rules", secondary="UserPermission")
 
     @classmethod
     def get_by_(cls, name: str, operation: str) -> Rule | None:

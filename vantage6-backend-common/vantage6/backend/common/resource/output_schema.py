@@ -1,9 +1,8 @@
 import logging
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
-from sqlalchemy.orm.decl_api import DeclarativeMeta
 from flask import url_for
+from sqlalchemy.ext.declarative import DeclarativeMeta
 
-from vantage6.backend.common.base import Base
 from vantage6.common import logger_name
 from vantage6.backend.common.resource.pagination import Pagination
 
@@ -11,13 +10,13 @@ from vantage6.backend.common.resource.pagination import Pagination
 log = logging.getLogger(logger_name(__name__))
 
 
-def create_one_to_many_link(obj: Base, link_to: str, link_from: str) -> str:
+def create_one_to_many_link(obj: DeclarativeMeta, link_to: str, link_from: str) -> str:
     """
     Create an API link to get objects related to a given object.
 
     Parameters
     ----------
-    obj : Base
+    obj : DeclarativeMeta
         Object to which the link is created
     link_to : str
         Name of the resource to which the link is created
