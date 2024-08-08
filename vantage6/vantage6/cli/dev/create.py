@@ -1,5 +1,5 @@
 from pathlib import Path
-import csv
+from importlib import resources as impresources
 import yaml
 import click
 import pandas as pd
@@ -10,6 +10,7 @@ from colorama import Fore, Style
 from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.common import info, error, generate_apikey
 
+import vantage6.cli.dev.data as data_dir
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.globals import PACKAGE_FOLDER
 from vantage6.cli.context.server import ServerContext
@@ -36,8 +37,7 @@ def create_node_data_files(num_nodes: int, server_name: str) -> list[Path]:
     """
     info(f"Creating data files for {num_nodes} nodes.")
     data_files = []
-    current_dir = Path(__file__).parent
-    full_df = pd.read_csv(current_dir / "data" / "olympic_athletes_2016.csv")
+    full_df = pd.read_csv(impresources.files(data_dir) / "olympic_athletes_2016.csv")
     length_df = len(full_df)
     for i in range(num_nodes):
         node_name = f"{server_name}_node_{i + 1}"
