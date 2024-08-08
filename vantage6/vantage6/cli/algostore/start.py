@@ -68,11 +68,6 @@ def cli_algo_store_start(
     if mount:
         mounts.append(mount)
 
-    volume_spec = [
-        ("/var/run/docker.sock", "/var/run/docker.sock"),
-    ]
-    volumes = [f"{v[1]}:{v[0]}" for v in volume_spec]
-
     # The `ip` and `port` refer here to the ip and port within the container.
     # So we do not really care that is it listening on all interfaces.
     internal_port = 5000
@@ -90,7 +85,6 @@ def cli_algo_store_start(
         image,
         command=cmd,
         mounts=mounts,
-        volumes=volumes,
         detach=True,
         labels={
             f"{APPNAME}-type": InstanceType.ALGORITHM_STORE,
