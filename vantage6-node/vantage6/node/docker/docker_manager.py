@@ -26,10 +26,9 @@ from vantage6.common.docker.addons import (
     get_image_name_wo_tag,
     running_in_docker,
 )
-from vantage6.common.globals import APPNAME, BASIC_PROCESSING_IMAGE, NodePolicy
+from vantage6.common.globals import APPNAME, NodePolicy
 from vantage6.common.enums import RunStatus, LocalAction
 from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.algorithm.tools.wrappers import get_column_names
 from vantage6.cli.context.node import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.docker.docker_base import DockerBaseManager
@@ -307,20 +306,11 @@ class DockerManager(DockerBaseManager):
             Whether docker image is allowed or not
         """
         # check if algorithm matches any of the regex cases
-        allow_basics = self._policies.get(NodePolicy.ALLOW_BASICS_ALGORITHM, True)
         allowed_algorithms = self._policies.get(NodePolicy.ALLOWED_ALGORITHMS)
         allowed_stores = self._policies.get(NodePolicy.ALLOWED_ALGORITHM_STORES)
         allow_either_whitelist_or_store = self._policies.get(
             "allow_either_whitelist_or_store", False
         )
-        if evaluated_img.startswith(BASIC_PROCESSING_IMAGE):
-            if not allow_basics:
-                self.log.warn(
-                    "A task was sent with a basics algorithm that "
-                    "this node does not allow to run."
-                )
-                return False
-            # else: basics are allowed, so we don't need to check the regex
 
         # check if user or their organization is allowed
         allowed_users = self._policies.get(NodePolicy.ALLOWED_USERS, [])
@@ -869,46 +859,3 @@ class DockerManager(DockerBaseManager):
             else:
                 self.log.warn("Instructed to kill tasks but none were running")
         return killed_runs
-
-    # TODO FM 24-07-2024: I think we can remove this as this has been replaced by
-    # dataframes
-    def get_column_names(self, label: str, type_: str) -> list[str]:
-        """
-        Get column names from a node database
-
-        Parameters
-        ----------
-        label: str
-            Label of the database
-        type_: str
-            Type of the database
-
-        Returns
-        -------
-        list[str]
-            List of column names
-        """
-        db = self.databases.get(label)
-        if not db:
-            self.log.error("Database with label %s not found", label)
-            return []
-        if not db["is_file"]:
-            self.log.error(
-                "Database with label %s is not a file. Cannot"
-                " determine columns without query",
-                label,
-            )
-            return []
-        if db["type"] == "excel":
-            self.log.error(
-                "Cannot determine columns for excel database without a worksheet"
-            )
-            return []
-        if type_ not in ("csv", "sparql"):
-            self.log.error(
-                "Cannot determine columns for database of type %s."
-                "Only csv and sparql are supported",
-                type_,
-            )
-            return []
-        return get_column_names(db["uri"], type_)
