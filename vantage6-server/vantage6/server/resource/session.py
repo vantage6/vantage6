@@ -7,7 +7,7 @@ from sqlalchemy import or_, and_
 from names_generator import generate_name
 
 from vantage6.common import logger_name
-from vantage6.common.enums import LocalAction
+from vantage6.common.enum import LocalAction
 from vantage6.server import db
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.permission import (

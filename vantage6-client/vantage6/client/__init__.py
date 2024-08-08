@@ -18,7 +18,7 @@ from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common import WhoAmI
 from vantage6.common.serialization import serialize
 from vantage6.common.client.utils import print_qr_code
-from vantage6.common.enums import RunStatus
+from vantage6.common.enum import RunStatus
 from vantage6.common.client.client_base import ClientBase
 from vantage6.client.filter import post_filtering
 from vantage6.client.utils import LogLevel

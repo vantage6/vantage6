@@ -7,7 +7,7 @@ from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from flask_socketio import Namespace, emit, join_room, leave_room
 
 from vantage6.common import logger_name
-from vantage6.common.enums import RunStatus
+from vantage6.common.enum import RunStatus
 from vantage6.server import db
 from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.model.rule import Operation, Scope

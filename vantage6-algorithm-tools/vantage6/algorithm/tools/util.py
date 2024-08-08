@@ -4,7 +4,7 @@ import base64
 import binascii
 
 from vantage6.common.globals import STRING_ENCODING, ENV_VAR_EQUALS_REPLACEMENT
-from vantage6.common.enums import LocalAction
+from vantage6.common.enum import LocalAction
 from vantage6.algorithm.tools.exceptions import EnvironmentVariableError
 
 

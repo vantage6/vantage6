@@ -7,7 +7,7 @@ from datetime import datetime
 from functools import wraps
 
 from vantage6.common import error, debug, info
-from vantage6.common.enums import LocalAction
+from vantage6.common.enum import LocalAction
 from vantage6.algorithm.tools.exceptions import (
     DataTypeError,
     SessionError,
@@ -65,7 +65,6 @@ def _convert_to_parquet(data: Any) -> pa.Table:
         If the data extraction function returns an unsupported data frame type.
     """
     info("Converting algorithm output to a Parquet Table.")
-    info(data)
     match type(data):
 
         case pd.DataFrame:

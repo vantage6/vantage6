@@ -17,7 +17,7 @@ from flask_restful import Api
 from http import HTTPStatus
 
 from vantage6 import server
-from vantage6.common.enums import TaskStatus
+from vantage6.common.enum import TaskStatus
 from vantage6.common.globals import MAIN_VERSION_NAME
 from vantage6.server import db
 from vantage6.server.model.user import User

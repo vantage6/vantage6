@@ -48,7 +48,7 @@ from vantage6.common.docker.addons import (
 from vantage6.common.globals import VPN_CONFIG_FILE, PING_INTERVAL_SECONDS, NodePolicy
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.common.enums import RunStatus, LocalAction
+from vantage6.common.enum import RunStatus, LocalAction
 from vantage6.common.log import get_file_logger
 from vantage6.cli.context.node import NodeContext
 from vantage6.node.context import DockerNodeContext
@@ -1114,26 +1114,6 @@ class Node:
             config_to_share["allowed_orgs"] = policies.get(
                 NodePolicy.ALLOWED_ORGANIZATIONS
             )
-
-        # share node database labels, types, and column names (if they are
-        # fixed as e.g. for csv file)
-        # TODO FM 17-07-2024 this can be removed
-        # labels = []
-        # types = {}
-        # col_names = {}
-        # for db in self.config.get("databases", []):
-        #     label = db.get("label")
-        #     type_ = db.get("type")
-        #     labels.append(label)
-        #     types[f"db_type_{label}"] = type_
-        #     if type_ in ("csv", "parquet"):
-        #         col_names[f"columns_{label}"] = self.__docker.get_column_names(
-        #             label, type_
-        #         )
-        # config_to_share["database_labels"] = labels
-        # config_to_share["database_types"] = types
-        # if col_names:
-        #     config_to_share["database_columns"] = col_names
 
         self.log.debug("Sharing node configuration: %s", config_to_share)
         self.socketIO.emit("node_info_update", config_to_share, namespace="/tasks")

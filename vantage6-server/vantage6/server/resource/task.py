@@ -10,7 +10,7 @@ from sqlalchemy import desc
 from sqlalchemy.sql import visitors
 
 from vantage6.common.globals import STRING_ENCODING, NodePolicy
-from vantage6.common.enums import RunStatus, LocalAction
+from vantage6.common.enum import RunStatus, LocalAction
 from vantage6.common.encryption import DummyCryptor
 from vantage6.server import db
 from vantage6.server.algo_store_communication import get_server_url, request_algo_store

@@ -10,7 +10,7 @@ from vantage6.common.client import deserialization
 from vantage6.common import serialization
 from vantage6.algorithm.tools.util import info, error, get_env_var, get_action
 from vantage6.algorithm.tools.exceptions import DeserializationError
-from vantage6.common.enums import LocalAction
+from vantage6.common.enum import LocalAction
 
 
 def wrap_algorithm(log_traceback: bool = True) -> None:

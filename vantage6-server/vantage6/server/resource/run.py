@@ -8,7 +8,7 @@ from http import HTTPStatus
 from sqlalchemy import desc, or_, and_
 
 from vantage6.common import logger_name
-from vantage6.common.enums import RunStatus
+from vantage6.common.enum import RunStatus
 from vantage6.server import db
 from vantage6.server.permission import (
     RuleCollection,
