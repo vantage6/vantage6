@@ -212,7 +212,7 @@ class DockerTaskManager(DockerBaseManager):
 
         Returns
         -------
-        dict:
+        bytes:
             Results of the algorithm container
         """
 
@@ -249,6 +249,14 @@ class DockerTaskManager(DockerBaseManager):
                 return b""
 
     def _update_session(self, table: pa.Table) -> None:
+        """
+        Update the session dataframe with the results of the algorithm
+
+        Parameters
+        ----------
+        table: pa.Table
+            Table with the results of the algorithm
+        """
 
         self.log.debug(
             f"Updating session {self.session_id} for handle {self.dataframe_handle}."
@@ -261,7 +269,7 @@ class DockerTaskManager(DockerBaseManager):
                 f"is {self.session_id} and the task ID is {self.task_id}.",
             )
             self.status = RunStatus.FAILED
-            # TODO FM 25-07-2024: shouldnt we raise here and catch in the Dockermaneger?
+            return
 
         try:
             # Overwrite the session table
@@ -274,6 +282,7 @@ class DockerTaskManager(DockerBaseManager):
         except Exception:
             self.log.exception(f"Error writing status to state parquet file")
             self.status = RunStatus.FAILED
+            return
 
         self._update_session_state(
             self.action,
@@ -287,7 +296,6 @@ class DockerTaskManager(DockerBaseManager):
         columns_info = [
             {"name": field.name, "dtype": str(field.type)} for field in table.schema
         ]
-        self.log.debug(f"Columns info: {columns_info}")
         self.client.request(
             f"/session/{self.session_id}/dataframe/{self.dataframe_handle}",
             method="patch",
@@ -309,8 +317,15 @@ class DockerTaskManager(DockerBaseManager):
             File resulting from the action
         message: str
             Message to be added to the state file
+        dataframe: str, optional
+            Dataframe handle that was updated. Some actions on the session are not
+            related to a specific dataframe, so this parameter is optional.
         """
-        self.log.debug("Update session state file for action '%s'", action)
+        self.log.debug(
+            "Update session state file for action '%s' on dataframe '%s' ",
+            action,
+            dataframe,
+        )
         state = pq.read_table(self.session_state_file).to_pandas()
         new_row = pd.DataFrame(
             [
@@ -350,21 +365,21 @@ class DockerTaskManager(DockerBaseManager):
         try:
             self.log.info("Retrieving latest image: '%s'", self.image)
             self.docker.images.pull(self.image)
-        except docker.errors.APIError as e:
-            self.log.warning("Failed to pull image: could not find image")
-            if not local_exists:
-                self.log.exception(e)
-                self.status = RunStatus.NO_DOCKER_IMAGE
-                raise PermanentAlgorithmStartFail()
+        except Exception as exc:
+            if isinstance(exc, docker.errors.APIError):
+                self.log.warning("Failed to pull image! Image does not exist")
             else:
                 self.log.warning("Failed to pull image!")
-
-            # TODO FM 30-07-2024: This might be wrong due to a rebase. Check this.. or
-            # fix it.
             if not local_exists:
-                self.log.exception(e)
-                self.status = RunStatus.FAILED
-                raise PermanentAlgorithmStartFail()
+                self.log.exception(exc)
+                self.status = RunStatus.NO_DOCKER_IMAGE
+                raise PermanentAlgorithmStartFail from exc
+            elif self.requires_pull:
+                self.log.warning(
+                    "Node policy prevents local image to be used to start algorithm"
+                )
+                self.status = RunStatus.NO_DOCKER_IMAGE
+                raise PermanentAlgorithmStartFail from exc
             else:
                 self.log.info("Using local image")
 

@@ -37,9 +37,6 @@ PING_INTERVAL_SECONDS = 60
 # expires.
 NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS = 600
 
-# The basics image can be used (mainly by the UI) to collect column names
-BASIC_PROCESSING_IMAGE = "harbor2.vantage6.ai/algorithms/basics"
-
 # Character to replace '=' with in encoded environment variables
 ENV_VAR_EQUALS_REPLACEMENT = "!"
 
@@ -60,7 +57,6 @@ class NodePolicy(str, Enum):
     ALLOWED_ALGORITHM_STORES = "allowed_algorithm_stores"
     ALLOWED_ORGANIZATIONS = "allowed_organizations"
     ALLOWED_USERS = "allowed_users"
-    ALLOW_BASICS_ALGORITHM = "allow_basics_algorithm"
     REQUIRE_ALGORITHM_PULL = "require_algorithm_pull"
 
 
