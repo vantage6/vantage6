@@ -171,23 +171,134 @@ class SessionBase(ServicesResources):
         self.r: RuleCollection = getattr(self.permissions, module_name)
 
     def can_view_session(self, session: db.Session) -> bool:
-        """Check if the user can view the session"""
+        """
+        Check if the user can view the session.
+
+        Depending on the scope of the session, the user needs to have the correct
+        permissions. The user can view the session if:
+
+        - The user has global view permissions
+        - The user has collaboration view permissions or the session is scoped to the
+          collaboration AND the user is part of the collaboration of the session
+        - The user has organization view permissions or the session is scoped to the
+          organization AND the user is part of the organization of the session
+        - The user has own view permissions AND the user is the owner of the session
+
+        Note that viewing includes viewing both the sessions and the dataframes.
+
+        Parameters
+        ----------
+        session : db.Session
+            Session to check whether the user can view it
+
+        Returns
+        -------
+        bool
+            True if the user can view the session, False otherwise
+        """
         if self.r.v_glo.can():
             return True
 
         if (
-            self.r.v_col.can()
+            self.r.v_col.can() or session.scope == S.COLLABORATION
+        ) and session.collaboration_id in self.obtain_auth_collaboration_ids():
+            return True
+
+        if (
+            self.r.v_org.can() or session.scope == S.ORGANIZATION
+        ) and session.organization_id == self.obtain_organization_id():
+            return True
+
+        if self.is_user() and self.r.v_own.can() and session.user_id == g.user.id:
+            return True
+
+        return False
+
+    def can_edit_session(self, session: db.Session) -> bool:
+        """
+        Check if the user can edit the session.
+
+        Depending on the scope of the session, the user needs to have the correct
+        permissions. The user can edit the session if:
+
+        - The user has collaboration edit permissions and the user is part of the
+          collaboration of the session
+        - The user has organization edit permissions and the user is part of the
+          organization of the session
+        - The user has own edit permissions AND the user is the owner of the session
+
+        Note that editing includes:
+        - Modifying the session properties
+        - Adding / Modifying and deleting a dataframe
+
+        Parameters
+        ----------
+        session : db.Session
+            Session to check whether the user can edit it
+        operation: P
+            Operation to check for permissions
+
+        Returns
+        -------
+        bool
+            True if the user can edit the session, False otherwise
+        """
+        return self._can_session(session, P.EDIT)
+
+    def can_delete_session(self, session: db.Session) -> bool:
+        """
+        Check if the user can delete the session.
+
+        Depending on the scope of the session, the user needs to have the correct
+        permissions. The user can delete the session if:
+
+        - The user has collaboration delete permissions and the user is part of the
+          collaboration of the session
+        - The user has organization delete permissions and the user is part of the
+          organization of the session
+        - The user has own delete permissions AND the user is the owner of the session
+
+        Note that deleting includes:
+        - Deleting the session
+        - Deleting all associated dataframes and tasks
+
+        Parameters
+        ----------
+        session : db.Session
+            Session to check whether the user can delete it
+
+        Returns
+        -------
+        bool
+            True if the user can delete the session, False otherwise
+        """
+        return self._can_session(session, P.DELETE)
+
+    def _can_session(self, session: db.Session, operation: P) -> bool:
+        """Helper for determining permissions for deleting and editing a session"""
+
+        if operation not in (P.EDIT, P.DELETE):
+            raise ValueError(f"Operation {operation} not supported!")
+
+        op = "e" if operation == P.EDIT else "d"
+
+        if (
+            self.r.getattr(f"{op}_col").can()
             and session.collaboration_id in self.obtain_auth_collaboration_ids()
         ):
             return True
 
         if (
-            self.r.v_org.can()
+            self.r.getattr(f"{op}_org").can()
             and session.organization_id == self.obtain_organization_id()
         ):
             return True
 
-        if self.is_user() and self.r.v_own.can() and session.user_id == g.user.id:
+        if (
+            self.is_user()
+            and self.r.getattr(f"{op}_own").can()
+            and session.user_id == g.user.id
+        ):
             return True
 
         return False
@@ -250,6 +361,7 @@ class SessionBase(ServicesResources):
 
 
 class Sessions(SessionBase):
+    "/session"
 
     @only_for(("user", "node"))
     def get(self):
@@ -334,7 +446,6 @@ class Sessions(SessionBase):
         auth_org = self.obtain_auth_organization()
         args = request.args
 
-        # query
         q = g.session.query(db.Session)
         g.session.commit()
 
@@ -348,7 +459,7 @@ class Sessions(SessionBase):
         if "scope" in args:
             q = q.filter(db.Session.scope == args["scope"])
 
-        # filter the list of organizations based on the scope. If you have collaboration
+        # Filter the list of organizations based on the scope. If you have collaboration
         # permissions you can see all sessions within the collaboration. If you have
         # organization permissions you can see all sessions withing your organization
         # and the sessions from other organization that have scope collaboration.
@@ -393,13 +504,12 @@ class Sessions(SessionBase):
                     "msg": "You lack the permission to do that!"
                 }, HTTPStatus.UNAUTHORIZED
 
-        # paginate the results
+        # Query and paginate the results
         try:
             page = Pagination.from_query(q, request, db.Session)
         except (ValueError, AttributeError) as e:
             return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
-        # serialization of DB model
         return self.response(page, session_schema)
 
     @with_user
@@ -407,14 +517,13 @@ class Sessions(SessionBase):
         """Initiate new session
         ---
         description: >-
-          Initialize a new session in a collaboration or study. A session always starts
-          with a data-extraction step. In this extraction step, the data is extracted
-          from the source database. Then a handle is returned to the user. This handle
-          is a reference to the session data set. This handle can be used to add
-          additional steps to the dataframe or to execute compute tasks on. A session
-          can be scoped to the entire collaboration, the organization or only to the
-          owner of the session. This way sessions can be shared with other users within
-          the collaboration or organization.
+          Create a new session in a collaboration or study. A session can be scoped
+          to the entire collaboration, the organization or only to the owner of the
+          session. This way sessions can be shared with other users within the
+          collaboration or organization.
+
+          A session is a container for dataframes and tasks. A session can have
+          multiple dataframes, each extracted from a different database.
 
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
@@ -435,12 +544,13 @@ class Sessions(SessionBase):
 
         responses:
           201:
-            description: Ok
+            description: Ok, created
           401:
             description: Unauthorized
           400:
-            description: Session with that label already exists within the collaboration
-                or Request body is incorrect
+            description: Session with that label already exists within the
+                collaboration, Request body is incorrect, or study is not within the
+                collaboration
           404:
             description: Collaboration or study not found
 
@@ -450,7 +560,6 @@ class Sessions(SessionBase):
 
         tags: ["Session"]
         """
-        # TODO if any of the steps fails... we need to rollback the entire session
         if not self.r.has_at_least_scope(S.OWN, P.CREATE):
             return {
                 "msg": "You lack the permission to do that!"
@@ -524,6 +633,7 @@ class Sessions(SessionBase):
 
 
 class Session(SessionBase):
+    "/session/<int:id>"
 
     @only_for(("user", "node"))
     def get(self, id):
@@ -537,14 +647,14 @@ class Session(SessionBase):
           Description|\n
           |--|--|--|--|--|--|\n
           |Session|Global|View|❌|❌|View any session|\n
-          |Session|Collaboration|View|❌|❌|View any session within your
+          |Session|Collaboration|View|✅|❌|View any session within your
           collaborations|\n
           |Session|Organization|View|❌|❌|View any session that has been
           initiated from your organization or shared with your organization|\n
           |Session|Own|View|❌|❌|View any session you created or that is shared
           with you|\n
 
-          Accessible to users.
+          Accessible to users and nodes.
 
         parameters:
         - in: path
@@ -567,8 +677,6 @@ class Session(SessionBase):
 
         tags: ["Session"]
         """
-
-        # retrieve requested organization
         session: db.Session = db.Session.get(id)
         if not session:
             return {"msg": f"Session id={id} not found!"}, HTTPStatus.NOT_FOUND
@@ -585,7 +693,7 @@ class Session(SessionBase):
         """Update session
         ---
         description: >-
-          Updates the scope or name of the session.\n
+          Update the scope or name of the session.\n
 
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
@@ -617,7 +725,8 @@ class Session(SessionBase):
                     description: Name of the session
                   scope:
                     type: string
-                    description: Scope of the session
+                    description: Scope of the session, possible values are: GLOBAL,
+                        COLLABORATION, ORGANIZATION, OWN
 
         responses:
           200:
@@ -634,7 +743,6 @@ class Session(SessionBase):
 
         tags: ["Session"]
         """
-        # validate request body
         data = request.get_json()
         errors = session_input_schema.validate(data, partial=True)
         if errors:
@@ -647,28 +755,25 @@ class Session(SessionBase):
         if not session:
             return {"msg": f"Session with id={id} not found"}, HTTPStatus.NOT_FOUND
 
-        # If you are the owner of the session you only require edit permissions at
-        # own level. In case you are not the owner, the session needs to be within
-        # you scope in order to edit it.
-        is_owner = session.owner.id == g.user.id
-        if not (is_owner and self.r.has_at_least_scope(S.OWN, P.EDIT)):
-            if not self.r.has_at_least_scope(session.scope, P.EDIT):
-                return {
-                    "msg": "You lack the permission to do that!"
-                }, HTTPStatus.UNAUTHORIZED
+        if not self.can_edit_session(session):
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
-        if "name" in data:
+        if data.get("name"):
             if data["name"] != session.name and db.Session.name_exists(
                 data["name"], session.collaboration
             ):
                 return {
-                    "msg": "Session with that name already exists within the "
-                    "collaboration!"
+                    "msg": (
+                        "Session with that name already exists within the "
+                        "collaboration!"
+                    )
                 }, HTTPStatus.BAD_REQUEST
 
             session.name = data["name"]
 
-        if "scope" in data:
+        if data.get("scope"):
             scope = getattr(S, data["scope"].upper(), None)
             if not scope:
                 return {
@@ -692,8 +797,8 @@ class Session(SessionBase):
         """Delete session
         ---
         description: >-
-          Deletes the session specified by the id. This also deletes all node sessions
-          and configurations that are part of the session.\n
+          Deletes the session specified by the ID. When the `delete_dependents` option
+          is set to `true` also all associated dataframes and tasks are deleted. \n
 
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
@@ -740,27 +845,7 @@ class Session(SessionBase):
         if not session:
             return {"msg": f"Session with id={id} not found"}, HTTPStatus.NOT_FOUND
 
-        accepted = False
-
-        if self.r.d_glo.can():
-            accepted = True
-
-        elif (
-            self.r.d_col.can()
-            and session.collaboration_id in self.obtain_auth_collaboration_ids()
-        ):
-            accepted = True
-
-        elif (
-            self.r.d_org.can()
-            and session.owner.organization_id == self.obtain_organization_id()
-        ):
-            accepted = True
-
-        elif self.r.d_own.can() and session.user_id == g.user.id:
-            accepted = True
-
-        if not accepted:
+        if not self.can_delete_session(session):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
@@ -771,21 +856,54 @@ class Session(SessionBase):
                 "msg": "This session has dependents, please delete them first."
             }, HTTPStatus.BAD_REQUEST
 
+        # This only deletes the session metadata from the server
         self.delete_session(session)
-        # TODO FM 31-07-2023: create socket event so the node knows that it should clear
-        # the session data too?? Or do we need to keep the session data in the node for
-        # accountability? We also need to check on startup at the nodes if sessions
-        # need to be deleted?
 
         return {"msg": f"Successfully deleted session id={id}"}, HTTPStatus.OK
 
 
 class SessionDataframes(SessionBase):
-    "/<int:session_id>/dataframe"
+    "/session/<int:session_id>/dataframe"
 
     @only_for(("user", "node"))
     def get(self, session_id):
-        """view all dataframes of a session"""
+        """view all dataframes in a session
+        ---
+        ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Session|Global|View|❌|❌|View any session|\n
+          |Session|Collaboration|View|✅|❌|View all dataframes within the session|\n
+          |Session|Organization|View|❌|❌|View any dataframe that has been
+          initiated from your organization or shared with your organization within the
+          session|\n
+          |Session|Own|View|❌|❌|View any dataframe you created or that is shared
+          with you within the session|\n
+
+          Accessible to users and nodes.
+
+        parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: Session ID
+          required: true
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: Session not found
+          401:
+            description: Unauthorized
+
+        security:
+        - bearerAuth: []
+
+        tags: ["Session"]
+        """
         session: db.Session = db.Session.get(session_id)
         if not session:
             return {
@@ -800,9 +918,9 @@ class SessionDataframes(SessionBase):
         q = g.session.query(db.Dataframe).filter_by(session_id=session_id)
 
         # check if pagination is disabled
-        paginate = True
-        if "no_pagination" in request.args and request.args["no_pagination"] == "1":
-            paginate = False
+        paginate = not (
+            "no_pagination" in request.args and request.args["no_pagination"] == "1"
+        )
 
         # paginate results
         try:
@@ -812,16 +930,64 @@ class SessionDataframes(SessionBase):
 
         return self.response(page, dataframe_schema)
 
-    # TODO FM 16-7-2024: Permissions need to be added
     @only_for(("user",))
     def post(self, session_id):
-        """Initiate a new dataframe for a session"""
+        """Create a new dataframe in a session
+        ---
+        description: >-
+          Create a new dataframe in a session. The first step in creating the dataframe
+          is to extract the data from the source database. This is done by creating a
+          task that extracts the data from the source database.
 
+          This endpoints returns a handle that can be used to identify the dataframe
+          in the future. This handle can be used to add preprocessing steps to the
+          dataframe. It can also be used to add compute steps to the dataframe.
+
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Session|Collaboration|Edit|❌|❌|Create dataframe in any session in your
+          collaboration|\n
+          |Session|Organization|Edit|❌|❌|Create dataframe in any session from your
+          organization|\n
+          |Session|Own|Edit|❌|❌|Create dataframe in a session owned by you|\n
+
+          Only accessible to users.
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataFrame'
+
+        responses:
+          201:
+            description: Ok, created
+          401:
+            description: Unauthorized
+          400:
+            description: The request body is incorrect, or an illigal combination of
+                parameters is provided
+          404:
+            description: Session not found
+
+
+        security:
+        - bearerAuth: []
+
+        tags: ["Session"]
+        """
         session: db.Session = db.Session.get(session_id)
         if not session:
             return {
                 "msg": f"Session with id={session_id} not found"
             }, HTTPStatus.NOT_FOUND
+
+        if not self.can_edit_session(session):
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         # A dataframe is a list of tasks that need to be executed in order to initialize
         # the session. A single session can have multiple dataframes, each with a
@@ -888,11 +1054,53 @@ class SessionDataframes(SessionBase):
 
 
 class SessionDataframe(SessionBase):
-    "/<int:session_id>/dataframe/<string:dataframe_handle>"
+    "/session/<int:session_id>/dataframe/<string:dataframe_handle>"
 
     @only_for(("user",))
     def get(self, session_id, dataframe_handle):
-        """View specific dataframe"""
+        """View specific dataframe
+        ---
+        ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Session|Global|View|❌|❌|View any session|\n
+          |Session|Collaboration|View|✅|❌|View any dataframe within the session|\n
+          |Session|Organization|View|❌|❌|View any dataframe that has been
+          initiated from your organization or shared with your organization within the
+          session|\n
+          |Session|Own|View|❌|❌|View any session you created or that is shared
+          with you within the session|\n
+
+          Accessible to users.
+
+        parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: Session ID
+          required: true
+        - in: path
+          name: dataframe_handle
+          schema:
+              type: string
+          description: Handle of the dataframe
+          required: true
+
+        responses:
+          200:
+            description: Ok
+          404:
+            description: Session or DataFrame not found
+          401:
+            description: Unauthorized
+
+        security:
+        - bearerAuth: []
+
+        tags: ["Session"]
+        """
 
         session = db.Session.get(session_id)
         if not session:
@@ -913,16 +1121,74 @@ class SessionDataframe(SessionBase):
 
         return dataframe_schema.dump(dataframe, many=False), HTTPStatus.OK
 
-    # TODO FM 16-7-2024: Permissions need to be added
     @only_for(("user",))
     def post(self, session_id, dataframe_handle):
-        """Add a preprocessing step to a dataframe"""
+        """Add a preprocessing step to a dataframe
+        ---
+        description: >-
+          Create a new dataframe in a session. The first step in creating the dataframe
+          is to extract the data from the source database. This is done by creating a
+          task that extracts the data from the source database.
+
+          This endpoints returns a handle that can be used to identify the dataframe
+          in the future. This handle can be used to add preprocessing steps to the
+          dataframe. It can also be used to add compute steps to the dataframe.
+
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Session|Collaboration|Edit|❌|❌|Create dataframe in any session in your
+          collaboration|\n
+          |Session|Organization|Edit|❌|❌|Create dataframe in any session from your
+          organization|\n
+          |Session|Own|Edit|❌|❌|Create dataframe in a session owned by you|\n
+
+          Only accessible to users.
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  task:
+                    type: object
+                    properties:
+                      image:
+                        type: string
+                        description: Name of the image to use for the task
+                      organizations:
+                        type: object
+                        description: Organizations that have access to the task
+
+        responses:
+          201:
+            description: Ok, created
+          401:
+            description: Unauthorized
+          400:
+            description: The request body is incorrect, or an illigal combination of
+                parameters is provided
+          404:
+            description: Session not found
+
+
+        security:
+        - bearerAuth: []
+
+        tags: ["Session"]
+        """
 
         session: db.Session = db.Session.get(session_id)
         if not session:
             return {
                 "msg": f"Session with id={session_id} not found"
             }, HTTPStatus.NOT_FOUND
+
+        if not self.can_edit_session(session):
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         dataframe_step = request.get_json()
         errors = dataframe_step_input_schema.validate(dataframe_step)
@@ -958,9 +1224,6 @@ class SessionDataframe(SessionBase):
         #    sequence, so we only need to check the latest modifying task.
         requires_tasks = dataframe.active_compute_tasks
         requires_tasks.append(dataframe.last_session_task)
-        log.debug(f"Active tasks: {requires_tasks}")
-        log.debug(f"Last task: {dataframe.last_session_task}")
-        log.debug(f"compute tasks: {dataframe.active_compute_tasks}")
 
         # Meta data about the modifying task
         preprocessing_task = dataframe_step["task"]
@@ -987,7 +1250,55 @@ class SessionDataframe(SessionBase):
 
     @only_for(("node",))
     def patch(self, session_id, dataframe_handle):
-        """Nodes report their column names"""
+        """Nodes report their column names
+         ---
+        description: >-
+          Endpoints used by nodes to report dataframe metadata.\n
+
+          Only accessible by nodes.
+
+        parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: Session ID
+          required: true
+        - in: path
+          name: dataframe_handle
+          schema:
+              type: string
+          description: Handle of the dataframe
+          required: true
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  name:
+                    type: string
+                    description: Name of the column
+                  dtype:
+                    type: string
+                    description: Data type of the column
+
+        responses:
+          200:
+            description: Ok
+          401:
+            description: Unauthorized, node trying to report columns is not part of the
+                collaboration
+          404:
+            description: Session or DataFrame not found
+          400:
+            decription: Incorrect request body, see message for details
+
+        security:
+        - bearerAuth: []
+
+        tags: ["Session"]
+        """
 
         data = request.get_json()
         errors = dataframe_node_update_schema.validate(data, many=True)
@@ -998,7 +1309,6 @@ class SessionDataframe(SessionBase):
             }, HTTPStatus.BAD_REQUEST
 
         session: db.Session = db.Session.get(session_id)
-
         if not session:
             return {
                 "msg": f"Session with id={session_id} not found"

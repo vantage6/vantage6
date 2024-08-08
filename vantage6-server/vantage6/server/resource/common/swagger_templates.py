@@ -109,7 +109,7 @@ swagger_template = {
                     },
                     "domain": {
                         "type": "string",
-                        "description": "Link to website of the organization.",
+                        "description": "Domain name of the organization",
                     },
                 },
                 "example": {
@@ -132,32 +132,40 @@ swagger_template = {
                     "collaboration_id": {"type": "integer"},
                     "study_id": {"type": "integer"},
                     "scope": {"type": "string"},
-                    "databases": {"type": "array", "items": {"type": "dict"}},
                 },
                 "example": {
                     "name": "unique-session-label",
                     "collaboration_id": 1,
                     "scope": "own",
-                    "dataframes": [
-                        {
-                            "label": "my-database-label",
-                            "handle": "my-database-handle",
-                            "data_extraction": {
-                                "image": "my-data-extaction-image",
-                                "organizations": [
-                                    {"id": 1, "input": "encrypted-method-and-input"}
-                                ],
-                            },
-                            "preprocessing": [
-                                {
-                                    "image": "my-preprocessing-image",
-                                    "organizations": [
-                                        {"id": 1, "input": "encrypted-method-and-input"}
-                                    ],
-                                },
-                            ],
-                        },
-                    ],
+                },
+            },
+            "DataFrame": {
+                "properties": {
+                    "label": {
+                        "type": "string",
+                        "description": "Label of the source database",
+                    },
+                    "handle": {
+                        "type": "integer",
+                        "description": "Handle of the DataFrame",
+                    },
+                    "task": {
+                        "type": "object",
+                        "description": "Data extraction task",
+                    },
+                },
+                "example": {
+                    "label": "database-label",
+                    "handle": "my-data-frame",
+                    "task": {
+                        "image": "hello-world",
+                        "organizations": [
+                            {
+                                "id": 1,
+                                "input": "encrypted-encoded-serialized-dict",
+                            }
+                        ],
+                    },
                 },
             },
             "Node": {
