@@ -12,22 +12,27 @@ from vantage6.cli.context.node import NodeContext
 from vantage6.cli.server.remove import cli_server_remove
 from vantage6.cli.utils import remove_file
 from vantage6.common.globals import InstanceType
-from vantage6.cli.configuration_wizard import select_configuration_questionaire
-from vantage6.cli.context import get_context
+from vantage6.cli.dev.utils import get_dev_server_context
 
 
 @click.command()
+@click.option("-n", "--name", default=None, help="Name of the configuration.")
+@click.option(
+    "-c",
+    "--config",
+    default=None,
+    help="Path to configuration-file; overrides --name",
+)
 @click.pass_context
-def remove_demo_network(click_ctx: click.Context) -> None:
+def remove_demo_network(
+    click_ctx: click.Context, name: str | None, config: str | None
+) -> None:
     """Remove all related demo network files and folders.
 
     Select a server configuration to remove that server and the nodes attached
     to it.
     """
-    server_name = select_configuration_questionaire(
-        InstanceType.SERVER, system_folders=False
-    )
-    ctx = get_context(InstanceType.SERVER, server_name, system_folders=False)
+    ctx = get_dev_server_context(config, name)
 
     # remove the server
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
