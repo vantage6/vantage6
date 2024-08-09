@@ -612,3 +612,7 @@ class Organization(OrganizationBase):
         for collaboration in organization.collaborations:
             collaboration.organizations.remove(organization)
         organization.delete()
+
+        return {
+            "msg": f"Organization id={id} was removed from the database"
+        }, HTTPStatus.OK

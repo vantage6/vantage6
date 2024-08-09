@@ -581,11 +581,12 @@ class UserClient(ClientBase):
                 Message from the server
             """
             id_ = self.__get_id_or_use_provided_id(id_)
-            return self.parent.request(
+            res = self.parent.request(
                 f"collaboration/{id_}",
                 method="delete",
                 params={"delete_dependents": delete_dependents},
             )
+            self.parent.log.info(f"--> {res.get('msg')}")
 
         @post_filtering(iterable=False)
         def update(
@@ -866,7 +867,8 @@ class UserClient(ClientBase):
             dict
                 Message from the server
             """
-            return self.parent.request(f"node/{id_}", method="delete")
+            res = self.parent.request(f"node/{id_}", method="delete")
+            self.parent.log.info(f"--> {res.get('msg')}")
 
         def kill_tasks(self, id_: int) -> dict:
             """
@@ -1076,11 +1078,12 @@ class UserClient(ClientBase):
             dict
                 Message from the server
             """
-            return self.parent.request(
+            res = self.parent.request(
                 f"organization/{id_}",
                 method="delete",
                 params={"delete_dependents": delete_dependents},
             )
+            self.parent.log.info(f"--> {res.get('msg')}")
 
     class User(ClientBase.SubClient):
         @post_filtering()
@@ -1277,6 +1280,23 @@ class UserClient(ClientBase):
             }
             return self.parent.request("user", json=user_data, method="post")
 
+        @post_filtering(iterable=False)
+        def delete(self, id_: int) -> None:
+            """Delete user
+
+            Parameters
+            ----------
+            id_ : int
+                Id of the user you want to delete
+
+            Returns
+            -------
+            dict
+                Message from the server
+            """
+            res = self.parent.request(f"user/{id_}", method="delete")
+            self.parent.log.info(f'--> {res.get("msg")}')
+
     class Role(ClientBase.SubClient):
         @post_filtering()
         def list(
@@ -1329,7 +1349,7 @@ class UserClient(ClientBase):
             }
             return self.parent.request("role", params=params)
 
-        @post_filtering(iterable=True)
+        @post_filtering(iterable=False)
         def get(self, id_: int) -> dict:
             """View specific role
 
@@ -1345,7 +1365,7 @@ class UserClient(ClientBase):
             """
             return self.parent.request(f"role/{id_}")
 
-        @post_filtering(iterable=True)
+        @post_filtering(iterable=False)
         def create(
             self, name: str, description: str, rules: list, organization: int = None
         ) -> dict:
@@ -1382,7 +1402,7 @@ class UserClient(ClientBase):
                 },
             )
 
-        @post_filtering(iterable=True)
+        @post_filtering(iterable=False)
         def update(
             self,
             role: int,
@@ -1416,7 +1436,7 @@ class UserClient(ClientBase):
                 json={"name": name, "description": description, "rules": rules},
             )
 
-        def delete(self, role: int) -> dict:
+        def delete(self, role: int) -> None:
             """Delete role
 
             Parameters
@@ -1727,7 +1747,7 @@ class UserClient(ClientBase):
                     )
             return databases
 
-        def delete(self, id_: int) -> dict:
+        def delete(self, id_: int) -> None:
             """Delete a task
 
             Also removes the related runs.
