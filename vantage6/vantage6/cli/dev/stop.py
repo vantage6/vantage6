@@ -4,23 +4,27 @@ from vantage6.cli.context.node import NodeContext
 from vantage6.cli.server.stop import cli_server_stop
 from vantage6.cli.node.stop import cli_node_stop
 from vantage6.cli.algostore.stop import cli_algo_store_stop
-from vantage6.common.globals import InstanceType
-from vantage6.cli.configuration_wizard import select_configuration_questionaire
-from vantage6.cli.context import get_context
+from vantage6.cli.dev.utils import get_dev_server_context
 
 
 @click.command()
+@click.option("-n", "--name", default=None, help="Name of the configuration.")
+@click.option(
+    "-c",
+    "--config",
+    default=None,
+    help="Path to configuration-file; overrides --name",
+)
 @click.pass_context
-def stop_demo_network(click_ctx: click.Context) -> None:
+def stop_demo_network(
+    click_ctx: click.Context, name: str | None, config: str | None
+) -> None:
     """Stops a demo network's server and nodes.
 
     Select a server configuration to stop that server and the nodes attached
     to it.
     """
-    server_name = select_configuration_questionaire(
-        InstanceType.SERVER, system_folders=False
-    )
-    ctx = get_context(InstanceType.SERVER, server_name, system_folders=False)
+    ctx = get_dev_server_context(config, name)
 
     # stop the server
     click_ctx.invoke(

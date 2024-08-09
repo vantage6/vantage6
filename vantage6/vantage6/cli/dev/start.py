@@ -2,17 +2,22 @@ import subprocess
 import click
 
 from vantage6.common import info
-from vantage6.common.globals import InstanceType
 from vantage6.client import Client
 from vantage6.cli.globals import COMMUNITY_STORE
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.server.start import cli_server_start
-from vantage6.cli.configuration_wizard import select_configuration_questionaire
-from vantage6.cli.context import get_context
+from vantage6.cli.dev.utils import get_dev_server_context
 
 
 @click.command()
+@click.option("-n", "--name", default=None, help="Name of the configuration.")
+@click.option(
+    "-c",
+    "--config",
+    default=None,
+    help="Path to configuration-file; overrides --name",
+)
 @click.option(
     "--server-image", type=str, default=None, help="Server Docker image to use"
 )
@@ -23,9 +28,11 @@ from vantage6.cli.context import get_context
 @click.pass_context
 def start_demo_network(
     click_ctx: click.Context,
-    server_image: str,
-    node_image: str,
-    store_image: str,
+    name: str | None,
+    config: str | None,
+    server_image: str | None,
+    node_image: str | None,
+    store_image: str | None,
 ) -> None:
     """Starts running a demo-network.
 
@@ -34,10 +41,7 @@ def start_demo_network(
     have not created a demo network, you can run `v6 dev create-demo-network` to
     create one.
     """
-    server_name = select_configuration_questionaire(
-        InstanceType.SERVER, system_folders=False
-    )
-    ctx = get_context(InstanceType.SERVER, server_name, system_folders=False)
+    ctx = get_dev_server_context(config, name)
 
     # run the server
     info("Starting server...")
