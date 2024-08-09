@@ -51,7 +51,7 @@ Data frames provide the following features:
 - Data frames can share standardized metadata. This makes it easier to provide
   information about the data to the users of the data.
 
-Function Actions
+Function actions
 ^^^^^^^^^^^^^^^^
 Every function that is being executed in a vantage6 network is linked to one of the
 following actions:
@@ -79,9 +79,9 @@ following actions:
     }
 
     package "compute" {
-        rectangle N as N
-        rectangle 2 as F
         rectangle 1 as E
+        rectangle 2 as F
+        rectangle N as N
     }
 
     rectangle server as server
@@ -106,7 +106,61 @@ In the Python client this is done by calling the ``client.task.create()`` method
 endpoints are used. In the Python client this is done by calling the
 ``client.dataframe.create()`` methods and ``client.dataframe.preprocess()`` methods.
 
-Session Storage
+Dependent tasks
+^^^^^^^^^^^^^^^
+There are basically two different types of tasks:
+
+- Tasks that modifying the data frame. These tasks are executing a ```data-extraction```
+  or a ```pre-processing``` action.
+- Task that are computing on the data frame. These tasks are executing a ```compute```
+  action.
+
+In order to ensure that the data frame is not modified while a task is computing on it,
+the infrastructure ensures that the tasks are executed in the correct order. This is
+done by making the tasks dependent on each other.
+
+There are three senarions:
+
+- A ``data-extraction`` task is not dependent on any other task.
+- A ``pre-processing`` task is *always* dependent on the previous ``pre-processing`` or
+  in case there is none the ``data-extraction`` task. But it is also dependant on all
+  ``compute`` task that have been requested prior to the new ``pre-processing`` task.
+- A ``compute`` task is *always* dependent on the last ``pre-processing`` task or in case
+  there is none the ``data-extraction`` task.
+
+.. uml::
+    :caption: Example dependency tasks tree in a single dataframe. Note that (7) is
+        not dependant on (4) as in this case (7) was requested after (4) was completed.
+
+    !theme superhero-outline
+    skinparam linetype polyline
+    left to right direction
+
+    rectangle "(1) Data Extraction" as data_extraction
+    rectangle "(2) Compute 1" as compute_1
+    rectangle "(3) Pre-processing 1" as pre_processing_1
+    rectangle "(4) Compute 2" as compute_2
+    rectangle "(5) Compute 3" as compute_3
+    rectangle "(6) Pre-processing 2" as pre_processing_2
+    rectangle "(7) Pre-processing 3" as pre_processing_3
+    rectangle "(8) Compute 4" as compute_4
+
+    data_extraction --> pre_processing_1
+    data_extraction --> compute_1
+    compute_1 --> pre_processing_2
+
+    pre_processing_1 --> compute_2
+    pre_processing_1 --> compute_3
+
+    compute_3 --> pre_processing_3
+
+    pre_processing_1 --> pre_processing_2
+    pre_processing_2 --> pre_processing_3
+    pre_processing_3 --> compute_4
+
+
+
+Session storage
 ^^^^^^^^^^^^^^^
 When a new session is created each node creates a new session folder. In this folder the
 data frames are stored and a session log. This log keeps track on which action was
@@ -117,8 +171,3 @@ The session folder can also be used to share data between different tasks that a
 related to sessions. For example, when you need to store a secret key that is used in a
 successor computation task. In the algorithms you can use the session folder by using
 the environment variable ``SESSION_FOLDER``.
-
-
-
-
-
