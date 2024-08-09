@@ -87,9 +87,10 @@ def _convert_to_parquet(data: Any) -> pa.Table:
 
 
 def data_extraction(func: callable) -> callable:
+    """Decorator for data extraction functions."""
 
     @wraps(func)
-    def wrapper(*args, **kwargs) -> None:
+    def wrapper(*args, **kwargs) -> callable:
 
         # Validate that the correct action is invoked in combination with the function
         # that is wrapped by this decorator.
@@ -103,7 +104,8 @@ def data_extraction(func: callable) -> callable:
     return wrapper
 
 
-def pre_processing(func: callable):
+def pre_processing(func: callable) -> callable:
+    """Decorator for pre-processing functions."""
 
     @wraps(func)
     def wrapper(*args, **kwargs) -> callable:
@@ -120,7 +122,8 @@ def pre_processing(func: callable):
     return wrapper
 
 
-def federated(func: callable):
+def federated(func: callable) -> callable:
+    """Decorator for federated functions."""
 
     @wraps(func)
     def wrapper(*args, **kwargs) -> callable:
@@ -131,7 +134,8 @@ def federated(func: callable):
     return wrapper
 
 
-def central(func: callable):
+def central(func: callable) -> callable:
+    """Decorator for central functions."""
 
     @wraps(func)
     def wrapper(*args, **kwargs) -> callable:

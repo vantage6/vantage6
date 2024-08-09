@@ -129,7 +129,7 @@ algorithm_client = _algorithm_client()
 
 def source_database(func) -> callable:
     @wraps(func)
-    def decorator(*args, **kwargs) -> callable:
+    def decorator(*args, mock_uri: str | None = None, **kwargs) -> callable:
         """
         Wrap the function with the database URI
 
@@ -138,7 +138,7 @@ def source_database(func) -> callable:
         mock_uri : str
             Mock URI to use instead of the regular URI
         """
-        uri = os.environ.get("DATABASE_URI")
+        uri = os.environ.get("DATABASE_URI", mock_uri)
         if uri is None:
             error("No database URI provided. Exiting...")
             exit(1)
