@@ -65,7 +65,15 @@ def remove_demo_network(
 
     # remove the store config file
     subprocess.run(
-        ["v6", "algorithm-store", "remove", "-n", f"{ctx.name}_store", "--force"]
+        [
+            "v6",
+            "algorithm-store",
+            "remove",
+            "-n",
+            f"{ctx.name}_store",
+            "--force",
+            "--user",
+        ]
     )
 
     # remove the nodes
