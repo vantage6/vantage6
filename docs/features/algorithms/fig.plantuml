@@ -1,0 +1,35 @@
+@startuml
+
+!theme superhero-outline
+skinparam linetype ortho
+left to right direction
+
+
+package "Modify Session" {
+    package "data-extraction" {
+        rectangle step as A
+    }
+    package "pre-processing" {
+        rectangle "step 1" as C
+        rectangle "step n" as D
+    }
+}
+
+package "compute" {
+    [N] as N
+    [2] as F
+    [1] as E
+}
+
+[server] as server
+
+A --> C
+C --> D
+D --> E
+D --> F
+D --> N
+E --> server
+F --> server
+N --> server
+
+@enduml

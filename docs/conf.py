@@ -51,7 +51,7 @@ extensions = [
     "sphinx_click.ext",
     "sphinxcontrib.plantuml",
 ]
-autosummary_generate = True  # Turn on sphinx.ext.autosummary
+autosummary_generate = False  # Turn on sphinx.ext.autosummary
 
 # napoleon_use_rtype = False
 napoleon_use_ivar = True
