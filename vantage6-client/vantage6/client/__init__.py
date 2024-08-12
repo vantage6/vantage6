@@ -563,7 +563,7 @@ class UserClient(ClientBase):
             )
 
         @post_filtering(iterable=False)
-        def delete(self, id_: int = None, delete_dependents: bool = False) -> dict:
+        def delete(self, id_: int = None, delete_dependents: bool = False) -> None:
             """Deletes a collaboration
 
             Parameters
@@ -574,11 +574,6 @@ class UserClient(ClientBase):
                 Delete the tasks, nodes and studies that are part of the collaboration
                 as well. If this is False, and dependents exist, the server will refuse
                 to delete the collaboration. Default is False.
-
-            Returns
-            -------
-            dict
-                Message from the server
             """
             id_ = self.__get_id_or_use_provided_id(id_)
             res = self.parent.request(
@@ -854,18 +849,13 @@ class UserClient(ClientBase):
                 json=data,
             )
 
-        def delete(self, id_: int) -> dict:
+        def delete(self, id_: int) -> None:
             """Deletes a node
 
             Parameters
             ----------
             id_ : int
                 Id of the node you want to delete
-
-            Returns
-            -------
-            dict
-                Message from the server
             """
             res = self.parent.request(f"node/{id_}", method="delete")
             self.parent.log.info(f"--> {res.get('msg')}")
@@ -1061,7 +1051,7 @@ class UserClient(ClientBase):
 
             return self.parent.request("organization", method="post", json=json_data)
 
-        def delete(self, id_: int, delete_dependents: bool = False) -> dict:
+        def delete(self, id_: int, delete_dependents: bool = False) -> None:
             """Deletes an organization
 
             Parameters
@@ -1072,11 +1062,6 @@ class UserClient(ClientBase):
                 Delete the nodes, users, runs, tasks and roles that are part of
                 the organization as well. If this is False, and dependents exist, the
                 server will refuse to delete the organization. Default is False.
-
-            Returns
-            -------
-            dict
-                Message from the server
             """
             res = self.parent.request(
                 f"organization/{id_}",
@@ -1288,11 +1273,6 @@ class UserClient(ClientBase):
             ----------
             id_ : int
                 Id of the user you want to delete
-
-            Returns
-            -------
-            dict
-                Message from the server
             """
             res = self.parent.request(f"user/{id_}", method="delete")
             self.parent.log.info(f'--> {res.get("msg")}')
@@ -1444,11 +1424,6 @@ class UserClient(ClientBase):
             role : int
                 CAUTION! Id of the role to be deleted. If you remove
                 roles that are attached to you, you might lose access!
-
-            Returns
-            -------
-            dict
-                Message from the server
             """
             res = self.parent.request(f"role/{role}", method="delete")
             self.parent.log.info(f'--> {res.get("msg")}')
@@ -1756,11 +1731,6 @@ class UserClient(ClientBase):
             ----------
             id_ : int
                 Id of the task to be removed
-
-            Returns
-            -------
-            dict
-                Message from the server
             """
             msg = self.parent.request(f"task/{id_}", method="delete")
             self.parent.log.info(f"--> {msg}")
