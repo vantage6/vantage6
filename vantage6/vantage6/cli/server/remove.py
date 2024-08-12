@@ -43,9 +43,10 @@ def cli_server_remove(ctx: ServerContext, force: bool) -> None:
 
     # ensure log files are closed before removing
     log_dir = Path(ctx.log_file.parent)
-    info(f"Removing log directory: {log_dir}")
-    for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
-        handler.close()
-    # remove the whole folder with all the log files. This may also still contain other
-    # files like RabbitMQ configuration etc
-    rmtree(log_dir)
+    if log_dir.exists():
+        info(f"Removing log directory: {log_dir}")
+        for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
+            handler.close()
+        # remove the whole folder with all the log files. This may also still contain other
+        # files like RabbitMQ configuration etc
+        rmtree(log_dir)
