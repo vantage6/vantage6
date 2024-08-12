@@ -16,7 +16,7 @@ from vantage6.common.docker.addons import (
     remove_container_if_exists,
 )
 from vantage6.common.globals import APPNAME, InstanceType
-from vantage6.cli.rabbitmq import split_rabbitmq_uri
+from vantage6.common import split_rabbitmq_uri
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 from vantage6.cli.server.common import get_server_context, stop_ui
