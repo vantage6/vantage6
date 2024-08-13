@@ -341,20 +341,20 @@ class EduVPNConnector:
         for include_client_id in [True, False]:
             try:
                 token = self.session.fetch_token(
-                self.token_url,
-                authorization_response= self.authorization_response,
-                client_id=self.config["client_id"],
-                client_secret=self.config["client_secret"],
-                code_verifier=self.code_verifier,
-                include_client_id=include_client_id,
+                    self.token_url,
+                    authorization_response=self.authorization_response,
+                    client_id=self.config["client_id"],
+                    client_secret=self.config["client_secret"],
+                    code_verifier=self.code_verifier,
+                    include_client_id=include_client_id,
                 )
                 break
             except Exception as e:
                 errors.append(e)
                 continue
-        
+
         if token is None:
-            raise Exception(f"Failed to fetch token. Errors: {errors}")    
+            raise Exception(f"Failed to fetch token. Errors: {errors}")
 
         return token
 
