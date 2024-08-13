@@ -330,7 +330,7 @@ class EduVPNConnector:
         """
         Use authorization code to obtain a token from the EduVPN portal. It seems that the
         vpn client can either be considered a confidential or a public client.
-        
+
         Returns
         -------
         Dict:
