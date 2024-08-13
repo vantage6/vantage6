@@ -7,7 +7,7 @@ Support questions
 -----------------
 If you have questions, you can find us on `Discord <https://discord.gg/yAyFf6Y>`_.
 
-We prefer that you ask questions via these routes rather than creating Github
+We prefer that you ask questions via Discord instead of creating Github
 issues. The issue tracker is intended to address bugs, feature requests, and
 code changes.
 
