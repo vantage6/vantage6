@@ -350,7 +350,6 @@ class EduVPNConnector:
                 )
                 break
             except Exception as e:
-                print(e)
                 errors.append(e)
                 continue
         
