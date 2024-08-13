@@ -328,19 +328,34 @@ class EduVPNConnector:
 
     def _get_token(self) -> dict:
         """
-        Use authorization code to obtain a token from the EduVPN portal
-
+        Use authorization code to obtain a token from the EduVPN portal. It seems that the
+        vpn client can either be considered a confidential or a public client.
         Returns
         -------
         Dict:
             EduVPN portal token
         """
-        token = self.session.fetch_token(
-            self.token_url,
-            authorization_response=self.authorization_response,
-            client_secret=self.config["client_secret"],
-            code_verifier=self.code_verifier,
-        )
+
+        errors = []
+        token = None
+        for include_client_id in [True, False]:
+            try:
+                token = self.session.fetch_token(
+                self.token_url,
+                authorization_response= self.authorization_response,
+                client_id=self.config["client_id"],
+                client_secret=self.config["client_secret"],
+                code_verifier=self.code_verifier,
+                include_client_id=include_client_id,
+                )
+                break
+            except Exception as e:
+                print(e)
+                errors.append(e)
+                continue
+        
+        if token is None:
+            raise Exception(f"Failed to fetch token. Errors: {errors}")    
 
         return token
 
