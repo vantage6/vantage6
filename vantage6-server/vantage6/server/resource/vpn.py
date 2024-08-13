@@ -289,6 +289,7 @@ class EduVPNConnector:
             "userName": self.config["portal_username"],
             "userPass": self.config["portal_userpass"],
             "_user_pass_auth_redirect_to": authorize_url,
+            "authRedirectTo": authorize_url,
         }
 
         # Referer doesn't matter so much but is a required header
