@@ -60,6 +60,7 @@ setup(
             "template/node_config.j2",
             "template/server_config.j2",
             "template/server_import_config.j2",
+            "template/algo_store_config.j2",
             "dev/data/olympic_athletes_2016.csv",
         ],
     },
