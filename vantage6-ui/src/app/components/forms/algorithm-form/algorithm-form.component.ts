@@ -181,7 +181,6 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
         this.closeFunctionExpansionPanels();
       }, 500);
     } catch (error) {
-      console.log(error);
       this.showJsonUploadError(error);
     }
   }
