@@ -47,7 +47,7 @@ from threading import Thread
 from pathlib import Path
 from sqlalchemy.orm.exc import NoResultFound
 
-from vantage6.common import logger_name
+from vantage6.common import logger_name, split_rabbitmq_uri
 from vantage6.common.globals import PING_INTERVAL_SECONDS
 from vantage6.backend.common.globals import HOST_URI_ENV
 from vantage6.backend.common.jsonable import jsonable
@@ -206,7 +206,19 @@ class ServerApp:
         """
         msg_queue = self.ctx.config.get("rabbitmq", {}).get("uri")
         if msg_queue:
-            log.debug(f"Connecting to msg queue: {msg_queue}")
+            try:
+                splitted_rabbit_uri = split_rabbitmq_uri(msg_queue)
+                log.debug(
+                    "Connecting to msg queue: amqp://<user>:<pass>@%s:%s/%s",
+                    splitted_rabbit_uri["host"],
+                    splitted_rabbit_uri["port"],
+                    splitted_rabbit_uri["vhost"],
+                )
+            except Exception:
+                log.warning(
+                    "Failed to parse RabbitMQ URI. Will try to use the provided"
+                    "URI to connect, but it may likely fail."
+                )
 
         debug_mode = self.debug.get("socketio", False)
         if debug_mode:
