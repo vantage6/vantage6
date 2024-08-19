@@ -87,7 +87,7 @@ export class OrganizationReadComponent implements OnInit, OnDestroy {
           if (!this.organization) return;
           this.isLoading = true;
           await this.organizationService.deleteOrganization(this.organization.id.toString());
-          this.router.navigate([routePaths.collaborations]);
+          this.router.navigate([routePaths.organizations]);
         }
       });
   }
