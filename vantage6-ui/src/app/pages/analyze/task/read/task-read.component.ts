@@ -30,6 +30,7 @@ import { SocketioConnectService } from 'src/app/services/socketio-connect.servic
 import { AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { printDate } from 'src/app/helpers/general.helper';
+import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
 
 @Component({
   selector: 'app-task-read',
@@ -70,6 +71,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     private translateService: TranslateService,
     private taskService: TaskService,
     private algorithmService: AlgorithmService,
+    private algorithmStoreService: AlgorithmStoreService,
     private chosenCollaborationService: ChosenCollaborationService,
     private permissionService: PermissionService,
     private fileService: FileService,
@@ -122,9 +124,14 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       this.childTasks = await this.getChildTasks();
     }
     try {
-      this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image);
-      this.function = this.algorithm?.functions.find((_) => _.name === this.task?.input?.method) || null;
-      this.selectedVisualization = this.function?.ui_visualizations?.[0] || null;
+      if (this.task.algorithm_store) {
+        const store = await this.algorithmStoreService.getAlgorithmStore(this.task.algorithm_store?.id.toString());
+        this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image, store);
+        this.function = this.algorithm?.functions.find((_) => _.name === this.task?.input?.method) || null;
+        this.selectedVisualization = this.function?.ui_visualizations?.[0] || null;
+      } else {
+        this.algorithmNotFoundInStore = true;
+      }
     } catch (error) {
       // error message is already displayed - we only catch failure to get the algorithm
       // here.

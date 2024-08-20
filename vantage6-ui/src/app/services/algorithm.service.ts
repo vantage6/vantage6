@@ -55,8 +55,9 @@ export class AlgorithmService {
     return result;
   }
 
-  async getAlgorithmByUrl(url: string): Promise<Algorithm | null> {
-    const result = await this.getAlgorithms({ image: url });
+  async getAlgorithmByUrl(imageUrl: string, store: AlgorithmStore): Promise<Algorithm | null> {
+    const result = await this.getAlgorithmsForAlgorithmStore(store, { image: imageUrl });
+    // const result = await this.getAlgorithmsForAlgorithmStore(store, { image: imageUrl });
     if (result.length === 0) {
       return null;
     }
