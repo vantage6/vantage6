@@ -126,6 +126,7 @@ Obviously, you may want to change this to your own situation. For example, you
 may want to use a different image tag, or you may want to use a different port.
 
 .. code:: yaml
+
     services:
       vantage6-server:
         image: harbor2.vantage6.ai/infrastructure/server:cotopaxi
@@ -141,6 +142,7 @@ look something like this if you want to use `secrets in docker compose
 <https://docs.docker.com/compose/use-secrets/>`_:
 
 .. code:: yaml
+
     services:
       vantage6-server:
         image: harbor2.vantage6.ai/infrastructure/server:cotopaxi
@@ -164,6 +166,7 @@ look something like this if you want to use `secrets in docker compose
 To generate the hashed password, you can use the following script:
 
 .. code:: python
+
     import getpass
     import bcrypt
 
@@ -174,9 +177,11 @@ To generate the hashed password, you can use the following script:
 Or, if you prefer it in a one-liner:
 
 .. code:: bash
+
     python3 -c "import getpass; import bcrypt; print(bcrypt.hashpw(getpass.getpass().encode('utf-8'), bcrypt.gensalt()).decode('utf-8'))" > /path/to/my/super-pass-hashed-root-only
 
 .. note::
+
     Note that there might be better ways of passing a secret to your container.
     Especially if you are using some container orchestration tool like
     Kubernetes or Docker Swarm.
