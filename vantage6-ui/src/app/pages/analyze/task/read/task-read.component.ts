@@ -129,6 +129,8 @@ export class TaskReadComponent implements OnInit, OnDestroy {
         this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image, store);
         this.function = this.algorithm?.functions.find((_) => _.name === this.task?.input?.method) || null;
         this.selectedVisualization = this.function?.ui_visualizations?.[0] || null;
+      } else {
+        this.algorithmNotFoundInStore = true;
       }
     } catch (error) {
       // error message is already displayed - we only catch failure to get the algorithm
