@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ReactiveFormsModule } from '@angular/forms';
 import { QRCodeModule } from 'angularx-qrcode';
 
@@ -224,11 +224,11 @@ export function HttpLoaderFactory(http: HttpClient) {
     MyPendingAlgorithmsComponent,
     OldAlgorithmListComponent
   ],
+  bootstrap: [AppComponent],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
     AppRoutingModule,
-    HttpClientModule,
     ReactiveFormsModule,
     TranslateModule.forRoot({
       loader: {
@@ -267,8 +267,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     {
       provide: MAT_DATE_LOCALE,
       useValue: enCA
-    }
-  ],
-  bootstrap: [AppComponent]
+    },
+    provideHttpClient(withInterceptorsFromDi())
+  ]
 })
 export class AppModule {}

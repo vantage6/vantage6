@@ -59,7 +59,7 @@ to your own environment.
           - API_PATH=/api
 
 Alternatively, you can also run the UI locally with Angular. In that case, follow the
-instructions on the `UI Github page <https://github.com/vantage6/vantage6/vantage6-ui>`__
+instructions on the `UI Github page <https://github.com/vantage6/vantage6/tree/main/vantage6-ui>`__
 
 The UI is not compatible with older versions (<3.3) of vantage6.
 

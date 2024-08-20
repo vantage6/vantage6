@@ -45,19 +45,25 @@ from flask_principal import Principal, Identity, identity_changed
 from flask_socketio import SocketIO
 from threading import Thread
 from pathlib import Path
+from sqlalchemy.orm.exc import NoResultFound
 
-from vantage6.common import logger_name
+from vantage6.common import logger_name, split_rabbitmq_uri
 from vantage6.common.globals import PING_INTERVAL_SECONDS
 from vantage6.backend.common.globals import HOST_URI_ENV
+from vantage6.backend.common.jsonable import jsonable
+from vantage6.server.model.base import DatabaseSessionManager, Database
+from vantage6.backend.common.permission import RuleNeed
+from vantage6.server.model import Role, Rule
+from vantage6.server.model.rule import Operation, Scope
+from vantage6.server.permission import PermissionManager
 from vantage6.server import db
 from vantage6.cli.context.server import ServerContext
-from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.server.resource.common.output_schema import HATEOASModelSchema
-from vantage6.server.permission import RuleNeed, PermissionManager
 from vantage6.server.globals import (
     APPNAME,
     ACCESS_TOKEN_EXPIRES_HOURS,
     RESOURCES,
+    RESOURCES_PATH,
     SUPER_USER_INFO,
     REFRESH_TOKENS_EXPIRE_HOURS,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
@@ -69,6 +75,7 @@ from vantage6.server.resource.common.swagger_templates import swagger_template
 from vantage6.server.mail_service import MailService
 from vantage6.server.websockets import DefaultSocketNamespace
 from vantage6.server.default_roles import get_default_roles, DefaultRole
+from vantage6.server.hashedpassword import HashedPassword
 
 # make sure the version is available
 from vantage6.server._version import __version__  # noqa: F401
@@ -131,7 +138,7 @@ class ServerApp:
         self.socketio = self.setup_socket_connection()
 
         # setup the permission manager for the API endpoints
-        self.permissions = PermissionManager()
+        self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
 
         # Api - REST JSON-rpc
         self.api = Api(self.app)
@@ -199,7 +206,19 @@ class ServerApp:
         """
         msg_queue = self.ctx.config.get("rabbitmq", {}).get("uri")
         if msg_queue:
-            log.debug(f"Connecting to msg queue: {msg_queue}")
+            try:
+                splitted_rabbit_uri = split_rabbitmq_uri(msg_queue)
+                log.debug(
+                    "Connecting to msg queue: amqp://<user>:<pass>@%s:%s/%s",
+                    splitted_rabbit_uri["host"],
+                    splitted_rabbit_uri["port"],
+                    splitted_rabbit_uri["vhost"],
+                )
+            except Exception:
+                log.warning(
+                    "Failed to parse RabbitMQ URI. Will try to use the provided"
+                    "URI to connect, but it may likely fail."
+                )
 
         debug_mode = self.debug.get("socketio", False)
         if debug_mode:
@@ -458,9 +477,9 @@ class ServerApp:
             """
 
             if isinstance(data, db.Base):
-                data = db.jsonable(data)
+                data = jsonable(data)
             elif isinstance(data, list) and len(data) and isinstance(data[0], db.Base):
-                data = db.jsonable(data)
+                data = jsonable(data)
 
             resp = make_response(json.dumps(data), code)
             resp.headers.extend(headers or {})
@@ -672,30 +691,82 @@ class ServerApp:
             db.User.get_by_username(SUPER_USER_INFO["username"])
         except Exception:
             log.warning("No root user found! Is this the first run?")
+            self._create_super_user()
 
-            log.debug("Creating organization for root user")
-            org = db.Organization(name="root")
-
-            # TODO use constant instead of 'Root' literal
-            root = db.Role.get_by_name("Root")
-
-            log.warning(
-                "Creating root user: username=%s, password=%s",
-                SUPER_USER_INFO["username"],
-                SUPER_USER_INFO["password"],
-            )
-
-            user = db.User(
-                username=SUPER_USER_INFO["username"],
-                roles=[root],
-                organization=org,
-                email="root@domain.ext",
-                password=SUPER_USER_INFO["password"],
-                failed_login_attempts=0,
-                last_login_attempt=None,
-            )
-            user.save()
         return self
+
+    def _create_super_user(self) -> None:
+        """
+        Create the super user.
+
+        This method is used when the server is started for the first time.
+        """
+        # sanity check, this function should never be called in any other
+        # context than the first run of the server
+        try:
+            db.User.get_by_username(SUPER_USER_INFO["username"])
+            raise Exception("Attempted to create super user when it already existed!")
+        except NoResultFound:
+            pass
+
+        log.debug("Creating organization for root user")
+        org = db.Organization(name="root")
+
+        # TODO use constant instead of 'Root' literal
+        root = db.Role.get_by_name("Root")
+
+        super_user_password = None
+
+        # Note: server admin is supposed to set these env vars via docker
+        # compose for instance
+        if "V6_INIT_SUPER_PASS_HASHED_FILE" in os.environ:
+            log.info("Using initial hashed super user password from file")
+
+            with open(os.environ["V6_INIT_SUPER_PASS_HASHED_FILE"], "r") as f:
+                super_user_password = HashedPassword(f.read().strip())
+
+            if "V6_INIT_SUPER_PASS_HASHED" in os.environ:
+                log.warn(
+                    "Both V6_INIT_SUPER_PASS_HASHED_FILE and"
+                    " V6_INIT_SUPER_PASS_HASHED are set. Using the value from"
+                    " V6_INIT_SUPER_PASS_HASHED_FILE"
+                )
+        elif "V6_INIT_SUPER_PASS_HASHED" in os.environ:
+            log.info(
+                "Using initial hashed super user password provided via"
+                " environemnt variable"
+            )
+            super_user_password = HashedPassword(
+                os.environ["V6_INIT_SUPER_PASS_HASHED"]
+            )
+        else:
+            # FIXME / TODO v5+: for backwards compatibility we still set this
+            # as default but we might want to remove this soon!
+            super_user_password = SUPER_USER_INFO["password"]
+            log.warn(
+                f"Creating super user ({SUPER_USER_INFO['username']})"
+                " with default password!"
+            )
+            log.warn(
+                "Please change it or set an initial password using the"
+                " V6_INIT_SUPER_PASS_HASHED/_FILE environment variable"
+            )
+
+        # sanity check
+        if not super_user_password:
+            raise ValueError("No initial password assigned to root user!")
+
+        user = db.User(
+            username=SUPER_USER_INFO["username"],
+            roles=[root],
+            organization=org,
+            # TODO: should we use RFC6761's "invalid." here?
+            email="root@domain.ext",
+            password=super_user_password,
+            failed_login_attempts=0,
+            last_login_attempt=None,
+        )
+        user.save()
 
     def __node_status_worker(self) -> None:
         """

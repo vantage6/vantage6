@@ -1,5 +1,6 @@
 import logging
 import json
+import datetime
 
 from flask import g, request, url_for
 from flask_restful import Api
@@ -763,6 +764,7 @@ class Tasks(TaskBase):
             image=image_with_hash,
             init_org=init_org,
             algorithm_store=store,
+            created_at=datetime.datetime.now(datetime.timezone.utc),
         )
 
         # create job_id. Users can only create top-level -tasks (they will not

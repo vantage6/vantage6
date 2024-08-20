@@ -201,35 +201,41 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       functionFormGroup.controls['name'].setValue(func.name);
       functionFormGroup.controls['description'].setValue(func.description);
       functionFormGroup.controls['type'].setValue(func.type);
-      func.arguments.forEach((arg) => {
-        const argumentFormGroup = this.getArgumentForm();
-        argumentFormGroup.controls['name'].setValue(arg.name);
-        argumentFormGroup.controls['description'].setValue(arg.description);
-        argumentFormGroup.controls['type'].setValue(arg.type);
-        (functionFormGroup.controls['arguments'] as FormArray).push(argumentFormGroup);
-      });
-      func.databases.forEach((db) => {
-        const databaseFormGroup = this.getDatabaseForm();
-        databaseFormGroup.controls['name'].setValue(db.name);
-        databaseFormGroup.controls['description'].setValue(db.description);
-        (functionFormGroup.controls['databases'] as FormArray).push(databaseFormGroup);
-      });
-      func.ui_visualizations.forEach((vis, visIdx) => {
-        const visualizationFormGroup = this.getVisualizationForm();
-        visualizationFormGroup.controls['name'].setValue(vis.name);
-        visualizationFormGroup.controls['description'].setValue(vis.description);
-        visualizationFormGroup.controls['type'].setValue(vis.type);
-        const visSchemaForm = <FormGroup>visualizationFormGroup.controls['schema'];
-        // add controls for all fields of the schema
-        this.setSchemaControls(visSchemaForm, vis.type, funcIdx, visIdx);
-        // set the values of the schema that were already defined before
-        if (vis.schema) {
-          Object.keys(vis.schema).forEach((key) => {
-            visSchemaForm.controls[key].setValue(vis.schema[key]);
-          });
-        }
-        (functionFormGroup.controls['ui_visualizations'] as FormArray).push(visualizationFormGroup);
-      });
+      if (func.arguments) {
+        func.arguments.forEach((arg) => {
+          const argumentFormGroup = this.getArgumentForm();
+          argumentFormGroup.controls['name'].setValue(arg.name);
+          argumentFormGroup.controls['description'].setValue(arg.description);
+          argumentFormGroup.controls['type'].setValue(arg.type);
+          (functionFormGroup.controls['arguments'] as FormArray).push(argumentFormGroup);
+        });
+      }
+      if (func.databases) {
+        func.databases.forEach((db) => {
+          const databaseFormGroup = this.getDatabaseForm();
+          databaseFormGroup.controls['name'].setValue(db.name);
+          databaseFormGroup.controls['description'].setValue(db.description);
+          (functionFormGroup.controls['databases'] as FormArray).push(databaseFormGroup);
+        });
+      }
+      if (func.ui_visualizations) {
+        func.ui_visualizations.forEach((vis, visIdx) => {
+          const visualizationFormGroup = this.getVisualizationForm();
+          visualizationFormGroup.controls['name'].setValue(vis.name);
+          visualizationFormGroup.controls['description'].setValue(vis.description);
+          visualizationFormGroup.controls['type'].setValue(vis.type);
+          const visSchemaForm = <FormGroup>visualizationFormGroup.controls['schema'];
+          // add controls for all fields of the schema
+          this.setSchemaControls(visSchemaForm, vis.type, funcIdx, visIdx);
+          // set the values of the schema that were already defined before
+          if (vis.schema) {
+            Object.keys(vis.schema).forEach((key) => {
+              visSchemaForm.controls[key].setValue(vis.schema[key]);
+            });
+          }
+          (functionFormGroup.controls['ui_visualizations'] as FormArray).push(visualizationFormGroup);
+        });
+      }
       (this.form.controls.functions as FormArray).push(functionFormGroup);
     });
   }

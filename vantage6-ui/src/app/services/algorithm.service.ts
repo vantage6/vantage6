@@ -36,7 +36,7 @@ export class AlgorithmService {
     // set algorithm store url for each algorithm
     algorithms.forEach((algorithm) => {
       algorithm.algorithm_store_url = algorithmStore.url;
-      algorithm.algorith_store_id = algorithmStore.id;
+      algorithm.algorithm_store_id = algorithmStore.id;
     });
     return algorithms;
   }
@@ -45,7 +45,7 @@ export class AlgorithmService {
     const result = await this.apiService.getForAlgorithmApiWithPagination<Algorithm>(store.url, '/api/algorithm', currentPage, params);
     result.data.forEach((algorithm) => {
       algorithm.algorithm_store_url = store.url;
-      algorithm.algorith_store_id = store.id;
+      algorithm.algorithm_store_id = store.id;
     });
     return result;
   }
@@ -55,8 +55,9 @@ export class AlgorithmService {
     return result;
   }
 
-  async getAlgorithmByUrl(url: string): Promise<Algorithm | null> {
-    const result = await this.getAlgorithms({ image: url });
+  async getAlgorithmByUrl(imageUrl: string, store: AlgorithmStore): Promise<Algorithm | null> {
+    const result = await this.getAlgorithmsForAlgorithmStore(store, { image: imageUrl });
+    // const result = await this.getAlgorithmsForAlgorithmStore(store, { image: imageUrl });
     if (result.length === 0) {
       return null;
     }

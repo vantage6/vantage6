@@ -6,12 +6,13 @@ import {
   GetOrganizationParameters,
   Organization,
   OrganizationCreate,
-  OrganizationLazyProperties
+  OrganizationLazyProperties,
+  OrganizationSortProperties
 } from 'src/app/models/api/organization.model';
 import { Role } from 'src/app/models/api/role.model';
 import { getLazyProperties } from 'src/app/helpers/api.helper';
 import { PermissionService } from './permission.service';
-import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
+import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 
 @Injectable({
   providedIn: 'root'
@@ -22,10 +23,21 @@ export class OrganizationService {
     private permissionService: PermissionService
   ) {}
 
-  async getAllowedOrganizations(resource: ResourceType, operation: OperationType): Promise<Organization[]> {
-    const ids = this.permissionService.getAllowedOrganizationsIds(resource, operation);
-    const promises = ids.map((id) => this.getOrganization(id.toString()));
-    return Promise.all(promises);
+  async getAllowedOrganizations(resource: ResourceType, operation: OperationType): Promise<BaseOrganization[] | Organization[]> {
+    if (this.permissionService.isAllowed(ScopeType.GLOBAL, resource, operation)) {
+      return await this.getOrganizations({ sort: OrganizationSortProperties.Name });
+    } else if (this.permissionService.isAllowed(ScopeType.COLLABORATION, resource, operation)) {
+      return await this.getOrganizations({
+        sort: OrganizationSortProperties.Name,
+        ids: this.permissionService.activeUser?.permissions?.orgs_in_collabs
+      });
+    } else if (this.permissionService.isAllowed(ScopeType.ORGANIZATION, resource, operation)) {
+      if (!this.permissionService.activeUser?.organization) return [];
+      return [await this.getOrganization(this.permissionService.activeUser?.organization.id.toString())];
+    } else {
+      // no permissions found
+      return [];
+    }
   }
 
   async getOrganizations(parameters?: GetOrganizationParameters): Promise<BaseOrganization[]> {
@@ -72,5 +84,9 @@ export class OrganizationService {
     } catch {
       return null;
     }
+  }
+
+  async deleteOrganization(organizationID: string): Promise<void> {
+    return await this.apiService.deleteForApi(`/organization/${organizationID}?delete_dependents=true`);
   }
 }

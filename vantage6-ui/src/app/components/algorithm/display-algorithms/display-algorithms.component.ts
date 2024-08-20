@@ -17,7 +17,7 @@ export class DisplayAlgorithmsComponent {
 
   handleAlgorithmClick(algorithm: Algorithm) {
     if (this.routeOnClick.startsWith('/analyze')) {
-      this.router.navigate([this.routeOnClick, algorithm.id, algorithm.algorith_store_id]);
+      this.router.navigate([this.routeOnClick, algorithm.id, algorithm.algorithm_store_id]);
     } else {
       this.router.navigate([this.routeOnClick, algorithm.id]);
     }

@@ -1,14 +1,14 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs';
-import { BaseOrganization, OrganizationSortProperties } from 'src/app/models/api/organization.model';
+import { BaseOrganization, Organization } from 'src/app/models/api/organization.model';
 import { Role } from 'src/app/models/api/role.model';
 import { User } from 'src/app/models/api/user.model';
 import { PASSWORD_VALIDATORS } from 'src/app/validators/passwordValidators';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { createCompareValidator } from 'src/app/validators/compare.validator';
 import { RuleService } from 'src/app/services/rule.service';
-import { Rule, Rule_ } from 'src/app/models/api/rule.model';
+import { OperationType, ResourceType, Rule, Rule_ } from 'src/app/models/api/rule.model';
 import { RoleService } from 'src/app/services/role.service';
 import { BaseFormComponent } from '../../admin-base/base-form/base-form.component';
 
@@ -19,6 +19,7 @@ import { BaseFormComponent } from '../../admin-base/base-form/base-form.componen
 })
 export class UserFormComponent extends BaseFormComponent implements OnInit, OnDestroy {
   @Input() user?: User;
+  organizations: (BaseOrganization | Organization)[] = [];
 
   form = this.fb.nonNullable.group(
     {
@@ -35,7 +36,6 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
     { validators: [createCompareValidator('password', 'passwordRepeat')] }
   );
 
-  organizations: BaseOrganization[] = [];
   organizationRoles: Role[] = [];
   /* Roles assigned to the user, prior to editing. */
   userRoles: Role[] = [];
@@ -106,8 +106,7 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
   private async initData(): Promise<void> {
     if (!this.isEdit) {
       // we only need to collect organizations when creating a new user
-      // TODO ensure that user doesn't get organizations that they can't create users for
-      this.organizations = await this.organizationService.getOrganizations({ sort: OrganizationSortProperties.Name });
+      this.organizations = await this.organizationService.getAllowedOrganizations(ResourceType.USER, OperationType.CREATE);
     }
     // TODO these should depend on the logged-in user's permissions
     this.selectableRules = await this.ruleService.getRules();

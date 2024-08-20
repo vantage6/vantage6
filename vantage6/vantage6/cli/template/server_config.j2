@@ -10,7 +10,26 @@ logging:
   level: DEBUG
   max_size: 1024
   use_console: true
+  loggers:
+  - level: warning
+    name: urllib3
+  - level: warning
+    name: socketIO-client
+  - level: warning
+    name: socketio.server
+  - level: warning
+    name: engineio.server
+  - level: warning
+    name: sqlalchemy.engine
+  - level: warning
+    name: requests_oauthlib.oauth2_session
 port: {{ port }}
 uri: sqlite:///default.sqlite
 jwt_secret_key: {{ jwt_secret_key }}
+dev:
+  host_uri: {{ host_uri }}
+server_url: http://localhost:{{ port }}/api
+ui:
+  enabled: true
+  port: {{ ui_port }}
 {{ user_provided_config }}

@@ -111,18 +111,6 @@ export class PermissionService {
     return this.activeUser?.organization.id;
   }
 
-  /**
-   * Get all organizations that the user is allowed to perform 'operation' on 'resource'. E.g. all organizations for
-   * which it is possible to create a role.
-   * @param resource
-   * @param operation
-   * @returns
-   */
-  public getAllowedOrganizationsIds(resource: ResourceType, operation: OperationType): number[] {
-    const ids = this.activeUser?.permissions?.orgs_in_collabs.filter((orgId) => this.isAllowedForOrg(resource, operation, orgId));
-    return ids ?? [];
-  }
-
   private async getUserRules() {
     const userId = sessionStorage.getItem(USER_ID);
     const result = await this.apiService.getForApi<Pagination<Rule>>('/rule', {

@@ -151,10 +151,10 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
 
         # If getting digest failed, try to use authentication
         if not digest:
-            docker_registry = self.config.get("docker_registries", [])
+            docker_registries = self.config.get("docker_registries", [])
             registry_user = None
             registry_password = None
-            for reg in docker_registry:
+            for reg in docker_registries:
                 if reg["registry"] == registry:
                     registry_user = reg.get("username")
                     registry_password = reg.get("password")
@@ -483,6 +483,10 @@ class Algorithms(AlgorithmBaseResource):
             developer=g.user,
         )
         algorithm.save()
+
+        # If reviews are disabled, approve the algorithm immediately
+        if self.config.get("dev", {}).get("disable_review", False):
+            algorithm.approve()
 
         # create the algorithm's subresources
         for function in data["functions"]:

@@ -171,8 +171,10 @@
       "title": "General"
     },
     "card-status": {
-      "title": "Status",
-      "child-title": "Subtasks",
+      "title": "Main process",
+      "child-title": "Child processes",
+      "task-name": "Name:",
+      "node-name": "Node:",
       "actions": {
         "kill": "Kill task"
       }
@@ -424,6 +426,10 @@
     },
     "card-nodes": {
       "title": "Nodes"
+    },
+    "delete-dialog": {
+      "title": "Are you sure you want to delete the organization '{{name}}'?",
+      "content": "Note, this will also delete all users, nodes, tasks, algorithm runs and nodes related to this organization.\nThis operation cannot be undone."
     },
     "no-collaborations": "No collaborations are available for this organization yet.",
     "no-nodes": "No nodes are available for this organization yet."

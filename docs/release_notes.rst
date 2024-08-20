@@ -1,6 +1,91 @@
 Release notes
 =============
 
+4.7.0
+-----
+
+*20 August 2024*
+
+- **Feature**
+
+ - Added option to delete organizations
+   (`Issue#241 <https://github.com/vantage6/vantage6/issues/241>`_,
+   `Issue#1120 <https://github.com/vantage6/vantage6/issues/1120>`_,
+   `PR#1417 <https://github.com/vantage6/vantage6/pull/1417>`_).
+ - Add algorithm store and UI to the ``v6 dev`` network
+   (`Issue#1078 <https://github.com/vantage6/vantage6/issues/1078>`_,
+   `PR#1399 <https://github.com/vantage6/vantage6/pull/1399>`_).
+ - Option to provide hashed password for root user on first server startup, to use
+   instead of the default password
+   (`Issue#1374 <https://github.com/vantage6/vantage6/issues/1374>`_,
+   `PR#1375 <https://github.com/vantage6/vantage6/pull/1375>`_).
+ - Improved data included in ``v6 dev`` network so that more tasks can be run on them
+   (`PR#1423 <https://github.com/vantage6/vantage6/pull/1423>`_).
+ - Added dev policies for algorithm store to enable an algorithm developer to review
+   their own algorithm and to disable the review process altogether
+   (`Issue#1413 <https://github.com/vantage6/vantage6/issues/1413>`_,
+   `PR#1414 <https://github.com/vantage6/vantage6/pull/1414>`_).
+ - Added option to delete user to client
+   (`PR#1433 <https://github.com/vantage6/vantage6/pull/1433>`_).
+ - Added unit tests for algorithm store
+   (`Issue#969 <https://github.com/vantage6/vantage6/issues/969>`_,
+   `PR#1393 <https://github.com/vantage6/vantage6/pull/1393>`_).
+ - Improved algorithm store documentation
+   (`Issue#1396 <https://github.com/vantage6/vantage6/issues/1396>`_,
+   `PR#1425 <https://github.com/vantage6/vantage6/pull/1425>`_).
+
+- **Change**
+
+ - Apply `node_extra_hosts` confgiruation also to VPN containers
+   (`Issue#1355 <https://github.com/vantage6/vantage6/issues/1355>`_,
+   `PR#1360 <https://github.com/vantage6/vantage6/pull/1360>`_).
+ - Change default port for server from 5000 to 7600 to prevent conflicts with other
+   services on Mac (`Issue#1428 <https://github.com/vantage6/vantage6/issues/1428>`_,
+   `PR#1429 <https://github.com/vantage6/vantage6/pull/1429>`_).
+ - No longer require user to run `client.setup_encryption(None)` if their collaboration
+   does not use encryption
+   (`Issue#1302 <https://github.com/vantage6/vantage6/issues/1302>`_,
+   `PR#1401 <https://github.com/vantage6/vantage6/pull/1401>`_).
+ - Improve text in UI task status page (`Issue#1221 <https://github.com/vantage6/vantage6/issues/1221>`_,
+   `Issue#1416 <https://github.com/vantage6/vantage6/issues/1416>`_,
+   `PR#1419 <https://github.com/vantage6/vantage6/pull/1419>`_).
+ - Improve log messages when node is started to let the user know how to view if their
+   node is successfully started
+   (`Issue#1173 <https://github.com/vantage6/vantage6/issues/1173>`_).
+ - Loosened required version of te ``requests`` library in the common package
+   (`Issue#1347 <https://github.com/vantage6/vantage6/issues/1353>`_,
+   `PR#1405 <https://github.com/vantage6/vantage6/pull/1405>`_).
+ - Refactor code that was duplicated between algorithm store and vantage6 server
+   (`Issue#1088 <https://github.com/vantage6/vantage6/issues/1088>`_,
+   `PR#1415 <https://github.com/vantage6/vantage6/pull/1415>`_).
+ - Upgrade UI from Angular 17 to Angular 18
+   (`Issue#1347 <https://github.com/vantage6/vantage6/issues/1347>`_,
+   `PR#1412 <https://github.com/vantage6/vantage6/pull/1412>`_).
+ - No longer print RabbitMQ username/password in server logs
+   (`PR#1434 <https://github.com/vantage6/vantage6/pull/1434>`_).
+
+- **Bugfix**
+
+ - No longer require mounting the Docker socket in the algorithm store - which is not
+   always possible. Instead, use the OCI spec to get the image digest
+   (`PR#1431 <https://github.com/vantage6/vantage6/pull/1431>`_).
+ - Fix for when `v6 server remove` crashed because no log file existed - for servers that
+   had never been started when they were removed
+   (`PR#1432 <https://github.com/vantage6/vantage6/pull/1432>`_).
+ - Fix getting the correct algorithm in the UI if multiple stores are linked to a
+   collaboration (`Issue#1420 <https://github.com/vantage6/vantage6/issues/1420>`_,
+   `PR#1422 <https://github.com/vantage6/vantage6/pull/1422>`_).
+ - Fix `v6 dev create` command on MacOS - servers and stores are now created in the
+   user folders (`Issue#1408 <https://github.com/vantage6/vantage6/issues/1408>`_,
+   `PR#1427 <https://github.com/vantage6/vantage6/pull/1427>`_).
+ - Added missing dependency ``pkg_resources``
+   (`Issue#1386 <https://github.com/vantage6/vantage6/issues/1386>`_,
+   `PR#1418 <https://github.com/vantage6/vantage6/pull/1418>`_).
+ - More robust implementation of getting the EduVPN v4 token
+   (`PR#1438 <https://github.com/vantage6/vantage6/pull/1438>`_).
+ - Upload of algorithm JSON representation in the UI is more resilient to errors
+   (`PR#1440 <https://github.com/vantage6/vantage6/pull/1440>`_).
+
 4.6.1
 -----
 
@@ -31,7 +116,7 @@ Release notes
 
  - Added option ``allowed_algorithm_stores`` to node configuration. This option allows
    node administrators to allow all approved algorithms from a specific algorithm store
-   to be run on their node ((`Issue#1293 <https://github.com/vantage6/vantage6/issues/1293>`_,
+   to be run on their node (`Issue#1293 <https://github.com/vantage6/vantage6/issues/1293>`_,
    `PR#1318 <https://github.com/vantage6/vantage6/pull/1318>`_).
  - Added policy management system to the algorithm store, and implemented a first few
    policies, e.g. to control who can view and run algorithms

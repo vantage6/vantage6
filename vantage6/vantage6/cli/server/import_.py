@@ -47,7 +47,7 @@ def cli_server_import(
     ctx: ServerContext,
     file: str,
     drop_all: bool,
-    image: str,
+    image: str | None,
     mount_src: str,
     keep: bool,
     wait: bool,
@@ -122,7 +122,7 @@ def cli_server_import(
         info("Consider using the docker-compose method to start a server")
 
     drop_all_ = "--drop-all" if drop_all else ""
-    cmd = f"vserver-local import -c /mnt/config.yaml {drop_all_} " "/mnt/import.yaml"
+    cmd = f"vserver-local import -c /mnt/config.yaml {drop_all_} /mnt/import.yaml"
 
     info(cmd)
 

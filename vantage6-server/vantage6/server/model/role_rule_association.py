@@ -8,7 +8,7 @@ from sqlalchemy import Column, Integer, ForeignKey, Table
 
 from .base import Base
 
-
+# TODO: refactor to use the server model
 role_rule_association = Table(
     "role_rule_association",
     Base.metadata,

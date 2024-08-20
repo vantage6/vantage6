@@ -24,8 +24,9 @@
         <app-status-info
           *ngFor="let run of task?.runs"
           [type]="getStatusType(run.status)"
-          title="{{ run.node.name }}"
-          [subTitle]="getTaskStatusTranslation(run.status)"
+          taskName="{{ getPrintableTaskName(task) }}"
+          nodeName="{{ run.node.name }}"
+          [status]="getTaskStatusTranslation(run.status)"
         >
           <button actions mat-raised-button *ngIf="run.log && isFailedRun(run.status)" (click)="openLog(run.log)">
             {{ "task-run.show-log" | translate }}
@@ -45,8 +46,9 @@
           <app-status-info
             *ngFor="let run of childTask?.runs"
             [type]="getStatusType(run.status)"
-            title="{{ run.node.name }}"
-            [subTitle]="getTaskStatusTranslation(run.status)"
+            taskName="{{ childTask.name }}"
+            nodeName="{{ run.node.name }}"
+            [status]="getTaskStatusTranslation(run.status)"
           >
             <button actions mat-raised-button *ngIf="run.log && isFailedRun(run.status)" (click)="openLog(run.log)">
               {{ "task-run.show-log" | translate }}

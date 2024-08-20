@@ -153,7 +153,9 @@ class Vantage6Servers(AlgorithmStoreResources):
                     description: URL of the vantage6 server
                   force:
                     type: boolean
-                    description: Force creation of the vantage6 server. If a
+                    description: Force creation of the vantage6 server. This argument is
+                      required to whitelist localhost addresses.
+
 
         responses:
           201:
@@ -210,8 +212,8 @@ class Vantage6Servers(AlgorithmStoreResources):
             )
 
         # users can only whitelist their own server. Check if this is the case
-        response = request_validate_server_token(data["url"])
-        if response is None or response.status_code != HTTPStatus.OK:
+        response, status_code = request_validate_server_token(data["url"])
+        if response is None or status_code != HTTPStatus.OK:
             return {
                 "msg": "You can only whitelist your own vantage6 server! It could not "
                 "be verified that you are from the server you are trying to whitelist."
@@ -225,7 +227,10 @@ class Vantage6Servers(AlgorithmStoreResources):
             server = db_Vantage6Server(url=data["url"])
             server.save()
         else:
-            server = existing_server
+            return {
+                "msg": "This server is already whitelisted in this algorithm store "
+                "instance."
+            }, HTTPStatus.FORBIDDEN
 
         # the user that is whitelisting the server should be able to delete it
         # in the future. Assign the server manager role to the user executing this
