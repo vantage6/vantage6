@@ -75,15 +75,15 @@ def _algorithm_client() -> callable:
     def protection_decorator(func: callable, *args, **kwargs) -> callable:
         @wraps(func)
         def decorator(
-            *args, mock_client: MockAlgorithmClient = None, **kwargs
+            *args, mock_client: MockAlgorithmClient | None = None, **kwargs
         ) -> callable:
             """
             Wrap the function with the client object
 
             Parameters
             ----------
-            mock_client : MockAlgorithmClient
-                Mock client to use instead of the regular client
+            mock_client : MockAlgorithmClient | None
+                Mock client. If not None, used instead of the regular client
             """
             if mock_client is not None:
                 return func(mock_client, *args, **kwargs)

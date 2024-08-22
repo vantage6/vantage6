@@ -27,7 +27,7 @@ class TestModelSession(TestModelBase):
         self.assertIsInstance(session.scope, Scope)
         self.assertEqual(session.scope, Scope.OWN)
 
-    def test_unique_constrain(self):
+    def test_unique_constraint(self):
 
         # each label should be unique within a collaboration
         session = Session(label="test_session", user_id=1, collaboration_id=1)

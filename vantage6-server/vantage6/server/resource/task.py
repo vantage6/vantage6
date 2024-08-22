@@ -807,7 +807,7 @@ class Tasks(TaskBase):
         # depending on it. A modification task will always be dependent on the last
         # modification task. And finally a compute task will always be dependent on
         # any running modification tasks (could also be none).
-        dependant_tasks = []
+        dependent_tasks = []
         for database in databases:
             for key in ["label", "type"]:
                 if key not in database:
@@ -824,18 +824,18 @@ class Tasks(TaskBase):
                     }, HTTPStatus.NOT_FOUND
 
                 if not df.ready:
-                    dependant_tasks.append(df.last_session_task)
+                    dependent_tasks.append(df.last_session_task)
 
         # These `depends_on_ids` are the task ids supplied by the session endpoints.
         # However they can also be user defined, although this has no use case yet.
-        dependant_task_ids = data.get("depends_on_ids", [])
-        for dependant_task_id in dependant_task_ids:
+        dependent_task_ids = data.get("depends_on_ids", [])
+        for dependent_task_id in dependent_task_ids:
 
-            dependant_task = db.Task.get(dependant_task_id)
+            dependant_task = db.Task.get(dependent_task_id)
 
             if not dependant_task:
                 return {
-                    "msg": f"Task with id={dependant_task_id} not found!"
+                    "msg": f"Task with id={dependent_task_id} not found!"
                 }, HTTPStatus.NOT_FOUND
 
             if dependant_task.session_id != session_id:
@@ -848,10 +848,10 @@ class Tasks(TaskBase):
                     )
                 }, HTTPStatus.BAD_REQUEST
 
-            dependant_tasks.append(dependant_task)
+            dependent_tasks.append(dependant_task)
 
         # Filter that we did not end up with duplicates because of various conditions
-        dependant_tasks = list(set(dependant_tasks))
+        dependent_tasks = list(set(dependent_tasks))
 
         # check that the input is valid. If the collaboration is encrypted, it
         # should not be possible to read the input, and we should not save it
@@ -875,7 +875,7 @@ class Tasks(TaskBase):
             algorithm_store=store,
             created_at=datetime.datetime.now(datetime.timezone.utc),
             session=session,
-            depends_on=dependant_tasks,
+            depends_on=dependent_tasks,
             dataframe_id=data.get("dataframe_id"),
         )
 

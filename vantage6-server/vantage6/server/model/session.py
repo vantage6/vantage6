@@ -132,7 +132,7 @@ class Session(Base):
 
     def organizations(self):
         """
-        Returns the organizations that are part of the session. In case a the session
+        Returns the organizations that are part of the session. In case the session
         is scoped to a study, the organizations of the study are returned. Otherwise,
         the organizations of the collaboration are returned.
 
