@@ -268,7 +268,7 @@ class DefaultSocketNamespace(Namespace):
         dependent_tasks = run.task.required_by
         if status == RunStatus.COMPLETED and dependent_tasks:
             self.log.debug(
-                f"{len(dependent_tasks)} dependant tasks ready to be executed"
+                f"{len(dependent_tasks)} dependent tasks ready to be executed"
             )
             for task in dependent_tasks:
                 emit(
