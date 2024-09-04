@@ -580,7 +580,7 @@ def create_demo_network(
     )
     info(
         "Development network was set up successfully! You can now start the "
-        f"server and nodes with {Fore.GREEN}v6 server start-demo-network"
+        f"server and nodes with {Fore.GREEN}v6 dev start-demo-network"
         f"{Style.RESET_ALL}"
     )
     # find user credentials to print. Read from server import file
