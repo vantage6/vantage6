@@ -107,12 +107,12 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
             "Do you want to enter a list of allowed algorithms?"
         ).ask()
         if ask_single_algorithms:
-            policies[NodePolicy.ALLOWED_ALGORITHMS] = _get_allowed_algorithms()
+            policies[NodePolicy.ALLOWED_ALGORITHMS.value] = _get_allowed_algorithms()
         ask_algorithm_stores = q.confirm(
             "Do you want to allow algorithms from specific algorithm stores?"
         ).ask()
         if ask_algorithm_stores:
-            policies[NodePolicy.ALLOWED_ALGORITHM_STORES] = (
+            policies[NodePolicy.ALLOWED_ALGORITHM_STORES.value] = (
                 _get_allowed_algorithm_stores()
             )
         if ask_single_algorithms and ask_algorithm_stores:
