@@ -40,11 +40,21 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
                 "message": "The base-URL of the server:",
                 "default": "http://localhost",
             },
+        ]
+    )
+    # remove trailing slash from server_url if entered by user
+    config["server_url"] = config["server_url"].rstrip("/")
+
+    # set default port to 443 if server_url is https
+    default_port = "443" if config["server_url"].startswith("https") else "5000"
+
+    config = config | q.prompt(
+        [
             {
                 "type": "text",
                 "name": "port",
                 "message": "Enter port to which the server listens:",
-                "default": "5000",
+                "default": default_port,
             },
             {
                 "type": "text",
