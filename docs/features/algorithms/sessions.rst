@@ -7,6 +7,7 @@ to a session.
 .. uml::
 
     !theme superhero-outline
+
     rectangle Session
     rectangle DataFrame
     rectangle Column
@@ -16,16 +17,15 @@ to a session.
     rectangle User
     rectangle Task
 
-    User "1" - "n" Session
+    User "1" - "n" Session: \t
     Session "n" -- "1" Collaboration
-    Collaboration "1" - "n" Study
+    Collaboration "1" - "n" Study: \t
     Study "0" - "n" Session
-    Session "1" - "n" DataFrame
-    DataFrame "1" - "n" Column
-    Column "1" - "n" Node
+    Session "1" - "n" DataFrame: \t
+    DataFrame "1" - "n" Column: \t
+    Column "1" - "n" Node: \t
     Task "n" -- "1" Session
     Task "0" - "1" DataFrame
-
 
 Sessions provide a way to store data between different tasks. A session can contain
 several data frames. A data frame is constructed from the source data. These data
@@ -42,12 +42,14 @@ Data frames provide the following features:
   it can be used in a computation task.
 - They can be shared with other users in their organization or with the entire
   collaboration.
-- The provide a standardized way to store data. This makes it easier to write
+- They provide a standardized way to store data. This makes it easier to write
   algorithms that can be used in multiple collaborations.
 - Data extraction, pre-processing and computation on the data are seperated processes.
+
   - This makes it easier to share algorithms with other projects.
   - The different steps can be written in different programming languages.
   - There is more security, as the compute tasks no longer have access to the source data.
+
 - Data frames can share standardized metadata. This makes it easier to provide
   information about the data to the users of the data.
 
@@ -96,7 +98,7 @@ following actions:
     N --> server
 
 
-These actions are managed by the infrastructure. For example the infrastructure ensures
+These actions are managed by the infrastructure. For example, the infrastructure ensures
 that the data-extraction function is the only function that has access to the source
 data.
 
@@ -110,9 +112,9 @@ Dependent tasks
 ^^^^^^^^^^^^^^^
 There are basically two different types of tasks:
 
-- Tasks that modifying the data frame. These tasks are executing a ```data-extraction```
-  or a ```pre-processing``` action.
-- Task that are computing on the data frame. These tasks are executing a ```compute```
+- Tasks that modify the data frame. These tasks are executing a ``data-extraction``
+  or a ``pre-processing`` action.
+- Tasks that are computing on the data frame. These tasks are executing a ```compute```
   action.
 
 In order to ensure that the data frame is not modified while a task is computing on it,
@@ -122,9 +124,9 @@ done by making the tasks dependent on each other.
 There are three senarions:
 
 - A ``data-extraction`` task is not dependent on any other task.
-- A ``pre-processing`` task is *always* dependent on the previous ``pre-processing`` or
-  in case there is none the ``data-extraction`` task. But it is also dependant on all
-  ``compute`` task that have been requested prior to the new ``pre-processing`` task.
+- A ``pre-processing`` task is *always* dependent on the previous ``pre-processing`` or,
+  in case there is none, the ``data-extraction`` task. But it is also dependent on all
+  ``compute`` tasks that have been requested prior to the new ``pre-processing`` task.
 - A ``compute`` task is *always* dependent on the last ``pre-processing`` task or in case
   there is none the ``data-extraction`` task.
 
@@ -162,8 +164,8 @@ There are three senarions:
 
 Session storage
 ^^^^^^^^^^^^^^^
-When a new session is created each node creates a new session folder. In this folder the
-data frames are stored and a session log. This log keeps track on which action was
+When a new session is created each node creates a new session folder. In this folder,
+the data frames and session log are stored. This log keeps track on which action was
 performed on the data frame. You can inspect the log on the node by using the command
 ``parquet-tools show state.parquet``.
 
