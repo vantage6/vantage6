@@ -69,7 +69,7 @@ can be provided to your algorithm function in the following way:
 .. code:: python
 
     import pandas as pd
-    from vantage6.algorithm.tools.decorators import data
+    from vantage6.algorithm.tools.decorator import data
 
     @data(2)
     def my_function(df1: pd.DataFrame, df2: pd.DataFrame, column_name: str):
