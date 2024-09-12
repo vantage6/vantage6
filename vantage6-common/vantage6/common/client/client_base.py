@@ -585,6 +585,10 @@ class ClientBase(object):
         """
         Create sub groups of commands using this SubClient
 
+        For example, the class `vantage6.client.subclients.study.Study` defines the
+        commands that can be run on studies. These are accessible for the user as
+        subclient: `client.study`.
+
         Parameters
         ----------
         parent : UserClient | AlgorithmClient
