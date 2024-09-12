@@ -174,7 +174,7 @@ Partial function
 .. code:: python
 
    import pandas as pd
-   from vantage6.algorithm.tools.decorators import data
+   from vantage6.algorithm.tools.decorator import data
 
    @data(1)
    def my_partial_function(data: pd.DataFrame, column_name: str):
