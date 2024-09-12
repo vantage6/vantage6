@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.abspath("../vantage6-backend-common"))
 
 project = "vantage6"
 
-copyright = "2022 vantage6"
+copyright = "2024 vantage6"
 author = (
     "A. van Gestel, "
     "B. van Beusekom, "
@@ -51,7 +51,7 @@ extensions = [
     "sphinx_click.ext",
     "sphinxcontrib.plantuml",
 ]
-autosummary_generate = False  # Turn on sphinx.ext.autosummary
+autosummary_generate = True  # Turn on sphinx.ext.autosummary
 
 # napoleon_use_rtype = False
 napoleon_use_ivar = True
