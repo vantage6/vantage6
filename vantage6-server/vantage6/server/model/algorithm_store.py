@@ -17,8 +17,8 @@ class AlgorithmStore(Base):
     url: str
         The url of the algorithm store
     collaboration_id: int
-        The collaboration ID of the that this algorithm store belongs to. If it is
-        ``None``, then it is available for all collaborations.
+        The collaboration ID of the collaboration that this algorithm store belongs to.
+        If it is ``None``, then it is available for all collaborations.
 
     Relationships
     -------------
