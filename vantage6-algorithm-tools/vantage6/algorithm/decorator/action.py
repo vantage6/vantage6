@@ -1,17 +1,14 @@
-import os
 import pyarrow as pa
 import pandas as pd
 
 from typing import Any
-from datetime import datetime
 from functools import wraps
 
-from vantage6.common import error, debug, info
+from vantage6.common import info
 from vantage6.common.enum import LocalAction
 from vantage6.algorithm.tools.exceptions import (
     DataTypeError,
     SessionError,
-    EnvironmentVariableNotFoundError,
 )
 from vantage6.algorithm.tools.util import get_action
 
@@ -123,7 +120,6 @@ def pre_processing(func: callable) -> callable:
         # that is wrapped by this decorator.
         _exit_if_action_mismatch(LocalAction.PREPROCESSING)
 
-        # TODO should we add the data in here??
         result = func(*args, **kwargs)
 
         return _convert_to_parquet(result)
