@@ -14,7 +14,12 @@ from pathlib import Path
 
 from docker import DockerClient
 
-from vantage6.common.globals import APPNAME, ENV_VAR_EQUALS_REPLACEMENT, STRING_ENCODING
+from vantage6.common.globals import (
+    APPNAME,
+    ENV_VAR_EQUALS_REPLACEMENT,
+    STRING_ENCODING,
+    ContainerEnvNames,
+)
 from vantage6.common.docker.addons import (
     remove_container_if_exists,
     remove_container,
@@ -662,21 +667,27 @@ class DockerTaskManager(DockerBaseManager):
         # FIXME: we should only prepend data_folder if database_uri is a
         #   filename
         environment_variables = {
-            "INPUT_FILE": f"{self.data_folder}/{self.task_folder_name}/input",
-            "OUTPUT_FILE": f"{self.data_folder}/{self.task_folder_name}/output",
-            "SESSION_FOLDER": f"{self.data_folder}/{self.session_folder_name}",
-            "SESSION_FILE": (
+            ContainerEnvNames.INPUT_FILE.value: (
+                f"{self.data_folder}/{self.task_folder_name}/input",
+            ),
+            ContainerEnvNames.OUTPUT_FILE.value: (
+                f"{self.data_folder}/{self.task_folder_name}/output",
+            ),
+            ContainerEnvNames.SESSION_FOLDER.value: (
+                f"{self.data_folder}/{self.session_folder_name}",
+            ),
+            ContainerEnvNames.SESSION_FILE.value: (
                 f"{self.data_folder}/{self.session_folder_name}"
                 f"/{self.session_state_file_name}"
             ),
-            "HOST": f"http://{proxy_host}",
-            "PORT": os.environ.get("PROXY_SERVER_PORT", 8080),
-            "API_PATH": "",
-            "FUNCTION_ACTION": self.action.value,
+            ContainerEnvNames.HOST.value: f"http://{proxy_host}",
+            ContainerEnvNames.PORT.value: os.environ.get("PROXY_SERVER_PORT", 8080),
+            ContainerEnvNames.API_PATH.value: "",
+            ContainerEnvNames.FUNCTION_ACTION.value: self.action.value,
         }
 
         if self.action == LocalAction.COMPUTE:
-            environment_variables["TOKEN_FILE"] = (
+            environment_variables[ContainerEnvNames.TOKEN_FILE.value] = (
                 f"{self.data_folder}/{self.task_folder_name}/token"
             )
 
@@ -739,18 +750,18 @@ class DockerTaskManager(DockerBaseManager):
 
             db = self.databases[source_database["label"]]
 
-            environment_variables["DATABASE_URI"] = (
+            environment_variables[ContainerEnvNames.DATABASE_URI.value] = (
                 f"{self.data_folder}/{os.path.basename(db['uri'])}"
                 if db["is_file"]
                 else db["uri"]
             )
 
-            environment_variables["DATABASE_TYPE"] = db["type"]
+            environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = db["type"]
 
             # variables.
             if "env" in db:
                 for key in db["env"]:
-                    env_key = f"DB_PARAM_{key.upper()}"
+                    env_key = f"{ContainerEnvNames.DB_PARAM_PREFIX}{key.upper()}"
                     environment_variables[env_key] = db["env"][key]
 
         # In the other case we are dealing with a dataframe in a session
@@ -779,9 +790,9 @@ class DockerTaskManager(DockerBaseManager):
                 self.status = RunStatus.DATAFRAME_NOT_FOUND
                 raise DataFrameNotFound(f"user requested {requested_handles}")
 
-            environment_variables["USER_REQUESTED_DATAFRAME_HANDLES"] = ",".join(
-                [db["label"] for db in databases_to_use]
-            )
+            environment_variables[
+                ContainerEnvNames.USER_REQUESTED_DATAFRAME_HANDLES.value
+            ] = ",".join([db["label"] for db in databases_to_use])
 
         # Load additional environment variables
         if algorithm_env:

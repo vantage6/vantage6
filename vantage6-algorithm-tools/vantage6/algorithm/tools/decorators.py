@@ -8,17 +8,11 @@ from dataclasses import dataclass
 
 import pandas as pd
 
+from vantage6.common.globals import ContainerEnvNames
+
 from vantage6.algorithm.client import AlgorithmClient
 from vantage6.algorithm.tools.mock_client import MockAlgorithmClient
 from vantage6.algorithm.tools.util import info, error, warn
-from vantage6.algorithm.tools.wrappers import load_data
-from vantage6.algorithm.tools.preprocessing import preprocess_data
-
-OHDSI_AVAILABLE = True
-try:
-    from ohdsi.database_connector import connect as connect_to_omop
-except ImportError:
-    OHDSI_AVAILABLE = False
 
 
 @dataclass
@@ -95,7 +89,7 @@ def _algorithm_client() -> callable:
                 return func(mock_client, *args, **kwargs)
 
             # read token from the environment
-            token_file = os.environ.get("TOKEN_FILE")
+            token_file = os.environ.get(ContainerEnvNames.TOKEN_FILE.value)
             if not token_file:
                 error(
                     "Token file not found. Are you running a `compute` container? "
@@ -108,9 +102,9 @@ def _algorithm_client() -> callable:
                 token = fp.read().strip()
 
             # read server address from the environment
-            host = os.environ["HOST"]
-            port = os.environ["PORT"]
-            api_path = os.environ["API_PATH"]
+            host = os.environ[ContainerEnvNames.HOST.value]
+            port = os.environ[ContainerEnvNames.PORT.value]
+            api_path = os.environ[ContainerEnvNames.API_PATH.value]
 
             client = AlgorithmClient(token=token, host=host, port=port, path=api_path)
             return func(client, *args, **kwargs)
@@ -131,14 +125,21 @@ def source_database(func) -> callable:
     @wraps(func)
     def decorator(*args, mock_uri: str | None = None, **kwargs) -> callable:
         """
-        Wrap the function with the database URI
+        This decorator provides a the source database URI to the function.
+
+        The user can request different databases that correspond to the different data
+        sources that are available at each node. This decorator can exclusively be used
+        in combination with the `data_extraction` decorator. This is Because this
+        decorator relies on certain environment variables, that are only present when
+        the method is executed in a container with data-extraction privileges.
+
 
         Parameters
         ----------
         mock_uri : str
             Mock URI to use instead of the regular URI
         """
-        uri = os.environ.get("DATABASE_URI", mock_uri)
+        uri = os.environ.get(ContainerEnvNames.DATABASE_URI.value, mock_uri)
         if uri is None:
             error("No database URI provided. Exiting...")
             exit(1)
@@ -196,9 +197,9 @@ def data(number_of_databases: int = 1) -> callable:
             mock_data : list[pd.DataFrame]
                 Mock data to use instead of the regular data
             """
-            # TODO FM 24-07-2024 uncomment this
-            # if mock_data is not None:
-            #     return func(*mock_data, *args, **kwargs)
+
+            if mock_data is not None:
+                return func(*mock_data, *args, **kwargs)
 
             # read the labels that the user requested
             labels = _get_user_database_labels()
@@ -253,7 +254,7 @@ def metadata(func: callable) -> callable:
         >>> def my_algorithm(metadata: RunMetaData, <other arguments>):
         >>>     pass
         """
-        token_file = os.environ["TOKEN_FILE"]
+        token_file = os.environ[ContainerEnvNames.TOKEN_FILE.value]
         info("Reading token")
         with open(token_file) as fp:
             token = fp.read().strip()
@@ -266,10 +267,12 @@ def metadata(func: callable) -> callable:
             node_id=payload["node_id"],
             collaboration_id=payload["collaboration_id"],
             organization_id=payload["organization_id"],
-            temporary_directory=Path(os.environ["SESSION_FOLDER"]),
-            output_file=Path(os.environ["OUTPUT_FILE"]),
-            input_file=Path(os.environ["INPUT_FILE"]),
-            token_file=Path(os.environ["TOKEN_FILE"]),
+            temporary_directory=Path(
+                os.environ[ContainerEnvNames.SESSION_FOLDER.value]
+            ),
+            output_file=Path(os.environ[ContainerEnvNames.OUTPUT_FILE.value]),
+            input_file=Path(os.environ[ContainerEnvNames.INPUT_FILE.value]),
+            token_file=Path(os.environ[ContainerEnvNames.TOKEN_FILE.value]),
         )
         return func(metadata, *args, **kwargs)
 
@@ -307,7 +310,7 @@ def _get_data_from_label(label: str) -> pd.DataFrame:
     # Load the dataframe by the user specified handle. The dataframes are always stored
     # in the session folder, which is set by the vantage6 node. The label is the name of
     # the dataframe file, which is set by the user when creating the task.
-    dataframe_file = os.environ["SESSION_FOLDER"]
+    dataframe_file = os.environ[ContainerEnvNames.SESSION_FOLDER.value]
     dataframe_uri = os.path.join(dataframe_file, f"{label}.parquet")
     info(f"Using '{dataframe_uri}' with label '{label}' as database")
 
@@ -325,7 +328,7 @@ def _get_user_database_labels() -> list[str]:
     """
     # read the labels that the user requested, which is a comma
     # separated list of labels.
-    labels = os.environ["USER_REQUESTED_DATAFRAME_HANDLES"]
+    labels = os.environ[ContainerEnvNames.USER_REQUESTED_DATAFRAME_HANDLES.value]
     return labels.split(",")
 
 
