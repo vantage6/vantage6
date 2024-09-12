@@ -14,7 +14,25 @@ class DataFrameSubClient(ClientBase.SubClient):
 
     @post_filtering(iterable=False)
     def get(self, handle: int, session: int = None, display=False) -> dict:
-        """Get a data frame by its id."""
+        """
+        Get a data frame by its id.
+
+        Parameters
+        ----------
+        handle : int
+            The name of the data frame
+        session : int, optional
+            The session ID in which the data frame is located. When not provided, the
+            session ID of the client is used when it is set. In case the session ID is
+            not set, an error is printed.
+        display : bool, optional
+            Whether to print the data frame details. By default False.
+
+        Returns
+        -------
+        dict
+            The data frame details.
+        """
 
         session_id = session or self.parent.session_id
         if not session_id:
@@ -31,8 +49,24 @@ class DataFrameSubClient(ClientBase.SubClient):
         return df
 
     @post_filtering()
-    def list(self, session: int = None, display=False):
-        """List all data frames."""
+    def list(self, session: int = None, display=False) -> dict:
+        """
+        List all data frames.
+
+        Parameters
+        ----------
+        session : int, optional
+            The session ID in which the data frame is located. When not provided, the
+            session ID of the client is used when it is set. In case the session ID is
+            not set, an error is printed.
+        display : bool, optional
+            Whether to print the list of data frame details. By default False.
+
+        Returns
+        -------
+        dict
+            List of data frame details.
+        """
         session_id = session or self.parent.session_id
 
         if not session_id:
@@ -48,8 +82,39 @@ class DataFrameSubClient(ClientBase.SubClient):
         return dfs
 
     @post_filtering(iterable=False)
-    def create(self, database, image, input_, session: int = None, display=False):
-        """Create a new data frame."""
+    def create(
+        self,
+        database: str,
+        image: str,
+        input_: dict,
+        session: int = None,
+        display=False,
+    ) -> dict:
+        """
+        Create a new data frame in a session.
+
+        Parameters
+        ----------
+        database : str
+            The name of the database. This is the label of the source database at the
+            node.
+        image : str
+            The name of the image that will be used to retrieve the data from the
+            source database.
+        input_: dict
+            The input for the data frame creation.
+        session : int, optional
+            The session ID in which the data frame is located. When not provided, the
+            session ID of the client is used when it is set. In case the session ID is
+            not set, an error is printed.
+        display : bool, optional
+            Whether to print the data frame details. By default False.
+
+        Returns
+        -------
+        dict
+            The data frame details.
+        """
 
         session_id = session or self.parent.session_id
         if not session_id:
@@ -104,8 +169,38 @@ class DataFrameSubClient(ClientBase.SubClient):
         return df
 
     @post_filtering(iterable=False)
-    def preprocess(self, handle, database, image, input_, session: int = None):
-        """Create a new data frame."""
+    def preprocess(
+        self, handle: str, image: str, input_: dict, session: int = None
+    ) -> dict:
+        """
+        Modify a data frame in a session.
+
+        Data frames can be modified by preprocessing them. Preprocessing is handles in
+        a sequential manner. In other words, you can add many preprocessing steps to a
+        data frame, they will be executed one after the other.
+
+        The modification will be done after all computation tasks have been executed.
+        This is to avoid that a data frame is modified while it is being used in a
+        computation task.
+
+        Parameters
+        ----------
+        handle : str
+            The name of the data frame.
+        image : str
+            The name of the image that will be used to preprocess the data frame.
+        input_: dict
+            The input for the data frame preprocessing.
+        session : int, optional
+            The session ID in which the data frame is located. When not provided, the
+            session ID of the client is used when it is set. In case the session ID is
+            not set, an error is printed.
+
+        Returns
+        -------
+        dict
+            The data frame details.
+        """
 
         session_id = session or self.parent.session_id
         if not session_id:
@@ -153,6 +248,7 @@ class DataFrameSubClient(ClientBase.SubClient):
         )
 
     @post_filtering(iterable=False)
-    def delete():
+    def delete(self):
         """Delete a data frame."""
-        pass
+        # TODO: https://github.com/vantage6/vantage6/issues/1476
+        self.parent.log.error("Not implemented yet.")
