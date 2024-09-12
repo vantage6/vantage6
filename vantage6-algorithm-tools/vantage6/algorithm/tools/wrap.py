@@ -6,8 +6,9 @@ import pyarrow.parquet as pq
 
 from typing import Any
 
-from vantage6.common.client import deserialization
 from vantage6.common import serialization
+from vantage6.common.client import deserialization
+from vantage6.common.globals import ContainerEnvNames
 from vantage6.algorithm.tools.util import info, error, get_env_var, get_action
 from vantage6.algorithm.tools.exceptions import DeserializationError
 from vantage6.common.enum import LocalAction
@@ -59,7 +60,7 @@ def wrap_algorithm(log_traceback: bool = True) -> None:
     _decode_env_vars()
 
     # read input from the mounted input file.
-    input_file = os.environ["INPUT_FILE"]
+    input_file = os.environ[ContainerEnvNames.INPUT_FILE.value]
     info(f"Reading input file {input_file}")
     input_data = load_input(input_file)
 
@@ -69,7 +70,7 @@ def wrap_algorithm(log_traceback: bool = True) -> None:
 
     # write output from the method to mounted output file. Which will be
     # transferred back to the server by the node-instance.
-    output_file = os.environ["OUTPUT_FILE"]
+    output_file = os.environ[ContainerEnvNames.OUTPUT_FILE.value]
     info(f"Writing output to {output_file}")
 
     _write_output(output, output_file)

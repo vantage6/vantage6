@@ -3,7 +3,11 @@ import os
 import base64
 import binascii
 
-from vantage6.common.globals import STRING_ENCODING, ENV_VAR_EQUALS_REPLACEMENT
+from vantage6.common.globals import (
+    STRING_ENCODING,
+    ENV_VAR_EQUALS_REPLACEMENT,
+    ContainerEnvNames,
+)
 from vantage6.common.enum import LocalAction
 from vantage6.algorithm.tools.exceptions import EnvironmentVariableError
 
@@ -187,18 +191,18 @@ def get_action() -> LocalAction:
     str
         The action of the container.
     """
-    if "FUNCTION_ACTION" not in os.environ:
+    if ContainerEnvNames.FUNCTION_ACTION.value not in os.environ:
         raise EnvironmentVariableError(
-            "Environment variable FUNCTION_ACTION not found."
+            f"Environment variable {ContainerEnvNames.FUNCTION_ACTION.value} not found."
         )
 
-    requested_action = os.environ["FUNCTION_ACTION"]
+    requested_action = os.environ[ContainerEnvNames.FUNCTION_ACTION.value]
     try:
         action = LocalAction(requested_action)
     except ValueError as exc:
         raise EnvironmentVariableError(
-            f"Environment variable FUNCTION_ACTION has value '{requested_action}' "
-            "which is not a valid action."
+            f"Environment variable {ContainerEnvNames.FUNCTION_ACTION.value} has value "
+            f"'{requested_action}' which is not a valid action."
         ) from exc
 
     return action

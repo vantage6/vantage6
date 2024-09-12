@@ -1,3 +1,4 @@
+from ctypes.wintypes import POINT
 from enum import Enum
 from pathlib import Path
 
@@ -61,9 +62,27 @@ class NodePolicy(str, Enum):
 
 
 class Ports(str, Enum):
-
+    """Enum containing the default ports used by the vantage6 components"""
     HTTP = 80
     HTTPS = 443
     DEV_SERVER = 7601
     DEV_UI = 7600
     DEV_ALGO_STORE = 7602
+
+
+class ContainerEnvNames(str, Enum):
+    """Enum containing the names of the container environment variables"""
+
+    FUNCTION_ACTION = "FUNCTION_ACTION"
+    INPUT_FILE = "INPUT_FILE"
+    OUTPUT_FILE = "OUTPUT_FILE"
+    SESSION_FOLDER = "SESSION_FOLDER"
+    SESSION_FILE = "SESSION_FILE"
+    HOST = "HOST"
+    PORT = "PORT"
+    API_PATH = "API_PATH"
+    TOKEN_FILE = "TOKEN_FILE"
+    DATABASE_URI = "DATABASE_URI"
+    DATABASE_TYPE = "DATABASE_TYPE"
+    DB_PARAM_PREFIX = "DB_PARAM_"
+    USER_REQUESTED_DATAFRAME_HANDLES = "USER_REQUESTED_DATAFRAME_HANDLES"
