@@ -170,6 +170,6 @@ performed on the data frame. You can inspect the log on the node by using the co
 ``parquet-tools show state.parquet``.
 
 The session folder can also be used to share data between different tasks that are not
-related to sessions. For example, when you need to store a secret key that is used in a
+related to sessions, for example, when you need to store a secret key that is used in a
 successor computation task. In the algorithms you can use the session folder by using
 the environment variable ``SESSION_FOLDER``.
