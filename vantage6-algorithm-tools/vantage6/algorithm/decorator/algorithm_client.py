@@ -58,7 +58,8 @@ def _algorithm_client() -> callable:
             token_file = os.environ.get(ContainerEnvNames.TOKEN_FILE.value)
             if not token_file:
                 error(
-                    "Token file not found. Are you running a `compute` container? "
+                    "Token file not found. Is the method you called started as a "
+                    "compute container?"
                     "Exiting..."
                 )
                 exit(1)
