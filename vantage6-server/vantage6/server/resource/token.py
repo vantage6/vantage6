@@ -328,7 +328,7 @@ class ContainerToken(ServicesResources):
                 return {"msg": "Image and task do no match"}, HTTPStatus.UNAUTHORIZED
 
         # validate that the task not has been finished yet
-        if TaskStatus.has_task_finished(db_task.status):
+        if TaskStatus.has_finished(db_task.status):
             log.warning(
                 f"Node {g.node.id} attempts to generate a key for "
                 f"completed task {task_id}"

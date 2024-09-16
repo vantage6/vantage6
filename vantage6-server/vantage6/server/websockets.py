@@ -258,7 +258,7 @@ class DefaultSocketNamespace(Namespace):
             f"A container for job_id={job_id} and run_id={run_id} "
             f"in collaboration_id={collaboration_id} on node_id={node_id}"
         )
-        if RunStatus.has_task_failed(status):
+        if RunStatus.has_failed(status):
             self.log.critical(f"{msg} exited with status={status}.")
         else:
             self.log.info(f"{msg} has a new status={status}.")

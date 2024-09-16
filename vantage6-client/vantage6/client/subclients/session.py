@@ -6,7 +6,7 @@ from rich.columns import Columns
 
 from vantage6.client import ClientBase
 from vantage6.client.filter import post_filtering
-from vantage6.client.rich.table import rich_dataframe_table
+from vantage6.client.rich.table import rich_dataframe_table, rich_session_table
 
 
 class SessionSubClient(ClientBase.SubClient):
@@ -22,7 +22,7 @@ class SessionSubClient(ClientBase.SubClient):
         id_ : int
             The ID of the session
         display : bool, optional
-            Print the result in a table
+            Print the result in a table. By default False.
 
         Returns
         -------
@@ -53,24 +53,24 @@ class SessionSubClient(ClientBase.SubClient):
         Parameters
         ----------
         name : str, optional
-            Filter sessions by name
+            Filter sessions by name. By default None.
         user : int, optional
-            Filter sessions by user ID
+            Filter sessions by user ID. By default None.
         collaboration : int, optional
             Filter sessions by collaboration ID, overrides the ``collaboration_id``
             of the client. In case both are not set, no filtering is applied.
         scope : str, optional
             Filter sessions by scope, possible values are ``global``, ``collaboration``,
-            ``organization`` and ``own``.
+            ``organization`` and ``own``. By default None.
         page : int, optional
-            Pagination page
+            Pagination page. By default 1.
         per_page : int, optional
-            Number of items on a single page
+            Number of items on a single page. By default 20.
         sort : str, optional
             Sort the result by this field. Adding a minus sign in front of the field
-            will sort in descending order.
+            will sort in descending order. By default None.
         display : bool, optional
-            Print the result in a table
+            Print the result in a table. By default False.
 
         Returns
         -------
@@ -112,12 +112,12 @@ class SessionSubClient(ClientBase.SubClient):
         id_ : int
             The ID of the session
         name : str, optional
-            The new name of the session
+            The new name of the session. By default None.
         scope : str, optional
             The new scope of the session. Possible values are ``global``,
-            ``collaboration``, ``organization`` and ``own``.
+            ``collaboration``, ``organization`` and ``own``. By default None.
         display : bool, optional
-            Print the result in a table
+            Print the result in a table. By default False.
 
         Returns
         -------
@@ -153,7 +153,7 @@ class SessionSubClient(ClientBase.SubClient):
         Parameters
         ----------
         name: str, optional
-            The name of the session
+            The name of the session. By default None.
         collaboration: int, optional
             The collaboration ID of the session. In case this is not set, the
             collaboration ID of the client is used. When neither is set, the study ID
@@ -163,9 +163,9 @@ class SessionSubClient(ClientBase.SubClient):
             session will be scoped to the study.
         scope: str
             The scope of the session. Possible values are ``global``, ``collaboration``,
-            ``organization`` and ``own``.
+            ``organization`` and ``own``. In case not set, the ``own`` scope is used.
         display: bool, optional
-            Print the result in a table
+            Print the result in a table. By default False.
 
         Returns
         -------
@@ -203,7 +203,7 @@ class SessionSubClient(ClientBase.SubClient):
             Id of the session you want to delete
         delete_dependents : bool, optional
             Delete all dependent tasks and dataframes of the session as well. This
-            includes tasks dataframes.
+            includes tasks dataframes. By default False.
         """
         return self.parent.request(
             f"session/{id_}",
@@ -219,9 +219,9 @@ class SessionSubClient(ClientBase.SubClient):
         Parameters
         ----------
         id_ : int
-            The ID of the session
+            The ID of the session.
         display : bool, optional
-            Print the result in a table
+            Print the result in a table. By default False.
 
         Returns
         -------
@@ -246,27 +246,27 @@ class SessionSubClient(ClientBase.SubClient):
         sort: str = None,
     ):
         """
-        List of sessions
+        Display a tree of sessions and their dataframes.
 
         Parameters
         ----------
         name : str, optional
-            Filter sessions by name
+            Filter sessions by name. By default None.
         user : int, optional
-            Filter sessions by user ID
+            Filter sessions by user ID. By default None.
         collaboration : int, optional
             Filter sessions by collaboration ID, overrides the ``collaboration_id``
             of the client. In case both are not set, no filtering is applied.
         scope : str, optional
             Filter sessions by scope, possible values are ``global``, ``collaboration``,
-            ``organization`` and ``own``.
+            ``organization`` and ``own``. By default None.
         page : int, optional
-            Pagination page
+            Pagination page. By default 1.
         per_page : int, optional
-            Number of items on a single page
+            Number of items on a single page. By default 20.
         sort : str, optional
             Sort the result by this field. Adding a minus sign in front of the field
-            will sort in descending order.
+            will sort in descending order. By default None.
 
         Returns
         -------

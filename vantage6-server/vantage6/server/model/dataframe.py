@@ -75,10 +75,7 @@ class Dataframe(Base):
         # wether the task completed successfully or not as we are only interested to
         # know wether a dataframe modification is in progress.
         return all(
-            [
-                RunStatus.has_task_finished(run.status)
-                for run in self.last_session_task.runs
-            ]
+            [RunStatus.has_finished(run.status) for run in self.last_session_task.runs]
         )
 
     @ready.expression

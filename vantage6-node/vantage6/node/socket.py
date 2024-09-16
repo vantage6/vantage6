@@ -101,7 +101,7 @@ class NodeTaskNamespace(ClientNamespace):
         """
         status = data.get("status")
         job_id = data.get("job_id")
-        if RunStatus.has_task_failed(status):
+        if RunStatus.has_failed(status):
             # TODO handle run sequence at this node. Maybe terminate all
             #     containers with the same job_id?
             if status == RunStatus.NOT_ALLOWED:

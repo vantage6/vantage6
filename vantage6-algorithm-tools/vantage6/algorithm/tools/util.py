@@ -186,9 +186,13 @@ def get_action() -> LocalAction:
     """
     Get the action of the container.
 
+    Check that the environment variable `FUNCTION_ACTION` is set and that the value
+    corresponds to a valid action. An action is a certain role for an algorithm
+    container, such as `data_extraction`, `data_preprocessing`, etc.
+
     Returns
     -------
-    str
+    LocalAction
         The action of the container.
     """
     if ContainerEnvNames.FUNCTION_ACTION.value not in os.environ:

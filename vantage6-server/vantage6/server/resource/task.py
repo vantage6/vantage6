@@ -1006,7 +1006,7 @@ class Tasks(TaskBase):
                 return False
 
         # check that parent task is not completed yet
-        if RunStatus.has_task_finished(db.Task.get(container["task_id"]).status):
+        if RunStatus.has_finished(db.Task.get(container["task_id"]).status):
             log.warning(
                 f"Container from node={container['node_id']} "
                 f"attempts to start sub-task for a completed "
@@ -1295,7 +1295,7 @@ class Task(TaskBase):
             }, HTTPStatus.UNAUTHORIZED
 
         # kill the task if it is still running
-        if not RunStatus.has_task_finished(task.status):
+        if not RunStatus.has_finished(task.status):
             kill_task(task, self.socketio)
 
         # retrieve runs that belong to this task

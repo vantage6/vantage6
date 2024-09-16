@@ -649,7 +649,7 @@ class DockerManager(DockerBaseManager):
             attempts += 1
 
         # keep track of the active container
-        if RunStatus.has_task_failed(task.status):
+        if RunStatus.has_failed(task.status):
             self.failed_tasks.append(task)
             return task.status, None
         else:

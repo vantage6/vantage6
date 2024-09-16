@@ -227,7 +227,7 @@ class UserClient(ClientBase):
         animation = itertools.cycle(["|", "/", "-", "\\"])
         t = time.time()
 
-        while not RunStatus.has_task_finished(self.task.get(task_id).get("status")):
+        while not RunStatus.has_finished(self.task.get(task_id).get("status")):
             frame = next(animation)
             sys.stdout.write(
                 f"\r{frame} Waiting for task {task_id} ({int(time.time()-t)}s)"

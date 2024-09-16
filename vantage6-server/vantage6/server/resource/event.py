@@ -166,7 +166,7 @@ class KillTask(ServicesResources):
         if not task:
             return {"msg": f"Task id={id_} not found"}, HTTPStatus.NOT_FOUND
 
-        if RunStatus.has_task_finished(task.status):
+        if RunStatus.has_finished(task.status):
             return {
                 "msg": f"Task {id_} already finished with status "
                 f"'{task.status}', so cannot kill it!"
@@ -319,7 +319,7 @@ def kill_task(task: db.Task, socket: SocketIO) -> None:
     # set tasks and subtasks status to killed
     def set_killed(task: db.Task):
         for run in task.runs:
-            if RunStatus.has_task_finished(run.status):
+            if RunStatus.has_finished(run.status):
                 continue  # don't overwrite status if run is already finished
             run.status = RunStatus.KILLED
             run.finished_at = dt.datetime.now()

@@ -167,7 +167,7 @@ class NodePermissionException(AlgorithmError):
 
 class SessionError(AlgorithmError):
     """
-    Generic error raised when some step of the session fails.
+    Generic error raised when a step of the session fails.
 
     Example usage:
     - The function requested to be executed to build the session is not started using
