@@ -22,6 +22,8 @@
   <a href="#books-quickstart">Quickstart</a> •
   <a href="#project-structure">Project structure</a> •
   <a href="#gift_heart-join-the-community">Join the community</a> •
+  <a href="#scroll-license">License</a> •
+  <a href="#black_nib-code-of-conduct">Code of conduct</a> •
   <a href="#black_nib-references">References</a>
 </p>
 
@@ -41,7 +43,7 @@ _A High level overview of the vantage6 infrastructure. Vantage6 has both a clien
 
 ### Requirements
 
-The **vantage6** infrastructure is delivered in Docker images. To run these images, you need to have [Docker](https://docs.docker.com/get-docker/) installed. To install the latest version of the vantage6 CLI, you need to have [Python](https://www.python.org/downloads/), we recommend using an environment manager like [mini-conda](https://docs.conda.io/en/latest/miniconda.html).
+The **vantage6** infrastructure is delivered in Docker images. To run these images, you need to have [Docker (docs.docker.com)](https://docs.docker.com/get-docker/) installed. To install the latest version of the vantage6 CLI, you need to have [Python (python.org)](https://www.python.org/downloads/), we recommend using an environment manager like [mini-conda (docs.conda.io)](https://docs.conda.io/en/latest/miniconda.html).
 
 Install the latest version of the vantage6 CLI by using:
 
@@ -77,7 +79,7 @@ v6 node attach
 v6 server attach
 ```
 
-From here you can use the [vantage6-client](https://pypi.org/project/vantage6-client) to interact with the server. The demo network has a pre-configured organization with the following credentials:
+From here you can use the [vantage6-client (pypi.org)](https://pypi.org/project/vantage6-client) to interact with the server. The demo network has a pre-configured organization with the following credentials:
 
 - Username: `dev_admin`
 - Password: `password`
@@ -126,7 +128,7 @@ easily.
 
 ### Docker images
 
-The vantage6 infrastructure is delivered in Docker images. All Docker images are stored in our private [Harbor](https://goharbor.io/) registry. The most important images are:
+The vantage6 infrastructure is delivered in Docker images. All Docker images are stored in our private [Harbor (goharbor.io)](https://goharbor.io/) registry. The most important images are:
 
 - `harbor2.vantage6.ai/infrastructure/node:VERSION` -> _Node application Docker image_
 - `harbor2.vantage6.ai/infrastructure/server:VERSION` -> _Server application Docker image_
@@ -151,11 +153,19 @@ And finally there are some images released for algorithm development:
 
 ## :gift_heart: Join the community!
 
-We hope to continue developing, improving, and supporting **vantage6** with the help of the federated learning community. If you are interested in contributing, first of all, thank you! Second, please take a look at our [contributing guidelines](https://docs.vantage6.ai/en/main/devops/contribute.html)
+We hope to continue developing, improving, and supporting **vantage6** with the help of the federated learning community. If you are interested in contributing, first of all, thank you! Second, please take a look at our [contributing guidelines (docs.vantage6.ai)](https://docs.vantage6.ai/en/main/devops/contribute.html) and our [code of conduct (github.com)](CODE_OF_CONDUCT.md).
 
 <a href="https://github.com/vantage6/vantage6/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=vantage6/vantage6" />
 </a>
+
+## :scroll: License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## :black_nib: Code of Conduct
+
+Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). **By participating in any way in this project you agree to abide by its terms.**
 
 ## :black_nib: References
 
@@ -171,5 +181,5 @@ If you are using **vantage6**, please cite this repository as well as the accomp
   <a href="https://vantage6.ai">vantage6.ai</a> •
   <a href="https://discord.gg/yAyFf6Y">Discord</a> •
   <a href="https://vantage6.discourse.group/">Discourse</a> •
-  <a href="https://docs.vantage6.ai">User documentation</a> •
+  <a href="https://docs.vantage6.ai">User documentation</a>
 </p>
