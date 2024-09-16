@@ -143,7 +143,7 @@ class AlgorithmClient(ClientBase):
             List of task results.
         """
         status = self.task.get(task_id).get("status")
-        while not RunStatus.has_task_finished(status):
+        while not RunStatus.has_finished(status):
             info(f"Waiting for results of task {task_id}...")
             time.sleep(interval)
             status = self.task.get(task_id).get("status")

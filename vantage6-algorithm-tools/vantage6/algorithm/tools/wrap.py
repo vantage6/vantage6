@@ -172,7 +172,7 @@ def _write_output(output: Any, output_file: str) -> None:
     """
     Write output to output file.
 
-    In case the result needs to be send to the server the output file should contain
+    In case the result needs to be sent to the server the output file should contain
     valid JSON data. This is because the node will read the output file and send the
     data to the server.
 

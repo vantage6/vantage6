@@ -31,7 +31,7 @@ _SPARQL_RETURN_FORMAT = CSV
 
 class DatabaseType(str, Enum):
     """
-    Enum for the different file based database types.
+    Enum for the different database types.
 
     Attributes
     ----------

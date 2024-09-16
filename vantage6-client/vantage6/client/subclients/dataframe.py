@@ -132,8 +132,8 @@ class DataFrameSubClient(ClientBase.SubClient):
             collaboration_id = session["collaboration"]["id"]
             params = {"collaboration": collaboration_id}
 
-        org = self.parent.organization.list(**params)
-        organizations = [(o["id"], o["public_key"]) for o in org["data"]]
+        orgs = self.parent.organization.list(**params)
+        organizations = [(o["id"], o["public_key"]) for o in orgs["data"]]
 
         # Data will be serialized in JSON.
         serialized_input = serialize(input_)

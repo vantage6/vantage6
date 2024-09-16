@@ -7,6 +7,31 @@ from rich.panel import Panel
 console = Console()
 
 
+def _add_columns(table: Table, columns: list[dict]) -> None:
+    """
+    Add multiple columns to a rich table.
+
+    Parameters
+    ----------
+    table : Table
+        Rich table object
+    columns : list[str]
+        List of columns names to add to the table.
+
+    Examples
+    --------
+    This will add columns to a rich table.
+
+    ```python
+    table = Table()
+    columns = ["column1", "column2"]
+    _add_columns(table, columns)
+    ```
+    """
+    for column in columns:
+        table.add_column(column["name"])
+
+
 def rich_dataframe_schema_table(
     dataframe_metadata: dict, print_table: bool = True
 ) -> None | Table:
@@ -17,8 +42,7 @@ def rich_dataframe_schema_table(
     Parameters
     ----------
     dataframe_metadata : dict
-        Metadata of the data frame. The metadata should contain a list of columns.
-        This is the output of the vantage6 server dataframe schema.
+        Metadata of the data frame. This is the output of `client.dataframe.get()`.
     print_table : bool, optional
         If True, the table will be printed. If False, the table object will be
         returned. Default is True.
@@ -82,8 +106,7 @@ def rich_session_table(
     Parameters
     ----------
     session_metadata : dict
-        Metadata of the session. The metadata should contain a list of sessions.
-        This is the output of the vantage6 server session schema.
+        Metadata of the session. This is the output of `client.session.get()`.
     print_table : bool, optional
         If True, the table will be printed. If False, the table object will be
         returned. Default is True.
@@ -154,8 +177,7 @@ def rich_dataframe_table(dataframes: dict, print_table: bool = True) -> None | T
     Parameters
     ----------
     dataframes : dict
-        Metadata of the dataframe. The metadata should contain a list of dataframes.
-        This is the output of the vantage6 server dataframe schema.
+        Metadata of the dataframe. This is the output of `client.dataframe.get()`.
     print_table : bool, optional
         If True, the table will be printed. If False, the table object will be
         returned. Default is True.
@@ -225,8 +247,7 @@ def rich_task_table(tasks, print_table=True):
     Parameters
     ----------
     tasks : dict
-        Metadata of the task. The metadata should contain a list of tasks.
-        This is the output of the vantage6 server task schema.
+        Metadata of the task. This is the output of `client.task.get()`.
     print_table : bool, optional
         If True, the table will be printed. If False, the table object will be
         returned. Default is True.

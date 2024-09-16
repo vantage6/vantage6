@@ -22,7 +22,7 @@ def _get_user_database_labels() -> list[str]:
     return labels.split(",")
 
 
-def _get_data_from_label(label: str) -> pd.DataFrame:
+def _get_data_from_handle(label: str) -> pd.DataFrame:
     """
     Load data from a database based on the label
 
@@ -39,8 +39,8 @@ def _get_data_from_label(label: str) -> pd.DataFrame:
     # Load the dataframe by the user specified handle. The dataframes are always stored
     # in the session folder, which is set by the vantage6 node. The label is the name of
     # the dataframe file, which is set by the user when creating the task.
-    dataframe_file = os.environ[ContainerEnvNames.SESSION_FOLDER.value]
-    dataframe_uri = os.path.join(dataframe_file, f"{label}.parquet")
+    dataframe_folder = os.environ[ContainerEnvNames.SESSION_FOLDER.value]
+    dataframe_uri = os.path.join(dataframe_folder, f"{label}.parquet")
     info(f"Using '{dataframe_uri}' with label '{label}' as database")
 
     return pd.read_parquet(dataframe_uri)
@@ -120,8 +120,8 @@ def data(number_of_databases: int = 1) -> callable:
 
                 label = labels[i]
                 # read the data from the database
-                info("Reading Dataframe")
-                data_ = _get_data_from_label(label)
+                info("Reading data frame")
+                data_ = _get_data_from_handle(label)
 
                 # add the data to the arguments
                 args = (data_, *args)

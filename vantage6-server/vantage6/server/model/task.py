@@ -200,9 +200,9 @@ class Task(Base):
             Status of task
         """
         run_statuses = [r.status for r in self.runs]
-        if all([RunStatus.has_task_finished(status) for status in run_statuses]):
+        if all([RunStatus.has_finished(status) for status in run_statuses]):
             return TaskStatus.COMPLETED.value
-        elif any([RunStatus.has_task_failed(status) for status in run_statuses]):
+        elif any([RunStatus.has_failed(status) for status in run_statuses]):
             return TaskStatus.FAILED.value
         else:
             return TaskStatus.AWAITING.value
