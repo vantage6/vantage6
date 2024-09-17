@@ -1327,9 +1327,7 @@ class SessionDataframe(SessionBase):
             }, HTTPStatus.UNAUTHORIZED
 
         # first we clear out all previous reported columns
-        db_session = DatabaseSessionManager.get_session()
-        db_session.query(db.Column).filter_by(dataframe_id=dataframe.id).delete()
-        db_session.commit()
+        db.Column.clear(dataframe.id)
 
         for column in data:
             db.Column(

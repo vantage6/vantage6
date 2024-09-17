@@ -100,8 +100,6 @@ class DockerTaskManager(DockerBaseManager):
             List of databases
         docker_volume_name: str
             Name of the docker volume
-        session_vol_name: str
-            Name of the session docker volume
         session_id: int
             Session ID
         alpine_image: str | None
@@ -270,14 +268,14 @@ class DockerTaskManager(DockerBaseManager):
         if not self.dataframe_handle:
             self.log.error("No dataframe handle found.")
             self.log.debug(
-                "A session task is started but had no dataframe handle. The session ID "
+                "A session task was started but had no dataframe handle. The session ID "
                 f"is {self.session_id} and the task ID is {self.task_id}.",
             )
             self.status = RunStatus.FAILED
             return
 
         try:
-            # Overwrite the session table
+            # Create or overwrite the parquet data frame that results from the algorithm
             pq.write_table(
                 table,
                 os.path.join(
@@ -285,7 +283,7 @@ class DockerTaskManager(DockerBaseManager):
                 ),
             )
         except Exception:
-            self.log.exception(f"Error writing status to state parquet file")
+            self.log.exception(f"Error writing data frame to parquet file")
             self.status = RunStatus.FAILED
             return
 
@@ -349,7 +347,7 @@ class DockerTaskManager(DockerBaseManager):
             session_table = pa.Table.from_pandas(state)
             pq.write_table(session_table, self.session_state_file)
         except Exception:
-            self.log.exception("Error writing session data to parquet file")
+            self.log.exception("Error writing session state to parquet file")
 
         return
 

@@ -45,6 +45,20 @@ class Column(Base):
     dataframe = relationship("Dataframe", back_populates="columns")
     node = relationship("Node", back_populates="columns")
 
+    @classmethod
+    def clear(dataframe_id: int) -> None:
+        """
+        Remove all columns from the dataframe.
+
+        Parameters
+        ----------
+        dataframe_id : int
+            ID of the dataframe to remove all columns from
+        """
+        session = DatabaseSessionManager.get_session()
+        session.query(Column).filter_by(dataframe_id == dataframe_id).delete()
+        session.commit()
+
     def __repr__(self):
         return (
             f"<Column {self.name}, "
