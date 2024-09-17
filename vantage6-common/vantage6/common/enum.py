@@ -19,9 +19,6 @@ class AlgorithmViewPolicies(str, Enum):
     ONLY_WITH_EXPLICIT_PERMISSION = "private"
 
 
-from enum import Enum
-
-
 class EnumBase(str, Enum):
     """Base class for all enums in this module"""
 
@@ -152,7 +149,7 @@ class RunStatus(EnumBase):
         bool
             True if task has finished or failed, False otherwise
         """
-        return status in cls.dead_statuses()
+        return status in cls.finished_statuses()
 
     @classmethod
     def failed_statuses(cls) -> list[str]:
@@ -166,9 +163,8 @@ class RunStatus(EnumBase):
             cls.UNKNOWN_ERROR.value,
         ]
 
-    # TODO FM 26-07-2024: rename to finished_statuses
     @classmethod
-    def dead_statuses(cls) -> list[str]:
+    def finished_statuses(cls) -> list[str]:
         """Return a list of all the status values that are considered finished"""
 
         return cls.failed_statuses() + [cls.COMPLETED.value]

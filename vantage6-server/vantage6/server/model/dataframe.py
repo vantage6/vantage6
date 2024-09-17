@@ -83,7 +83,7 @@ class Dataframe(Base):
         return and_(
             cls.last_session_task != None,
             *[
-                run.status.in_(RunStatus.dead_statuses())
+                run.status.in_(RunStatus.finished_statuses())
                 for run in cls.last_session_task.runs
             ],
         )
