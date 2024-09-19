@@ -63,6 +63,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   columns: string[] = [];
   isLoading: boolean = true;
   isLoadingColumns: boolean = false;
+  isSubmitting: boolean = false;
   isTaskRepeat: boolean = false;
   isDataInitialized: boolean = false;
   isNgInitDone: boolean = false;
@@ -267,6 +268,16 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   async handleSubmit(): Promise<void> {
+    if (this.isSubmitting) return;
+    this.isSubmitting = true;
+    try {
+      await this.submitTask();
+    } catch (error) {
+      this.isSubmitting = false;
+    }
+  }
+
+  async submitTask(): Promise<void> {
     if (
       this.studyForm.invalid ||
       this.packageForm.invalid ||
