@@ -227,6 +227,8 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
           controls[controls.length - 1].setValue(value);
           isFirst = false;
         }
+      } else if (argument.type === ArgumentType.Boolean) {
+        this.parameterForm.get(parameter.label)?.setValue(parameter.value ? true : false);
       } else {
         this.parameterForm.get(parameter.label)?.setValue(parameter.value);
       }
