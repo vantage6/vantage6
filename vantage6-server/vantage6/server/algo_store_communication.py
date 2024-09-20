@@ -106,7 +106,7 @@ def post_algorithm_store(
             # whitelist it as it will not be able to do anything with the store - return
             # the error message from the algorithm store
             return response, status
-    elif status != HTTPStatus.CREATED:
+    elif status not in [HTTPStatus.CREATED, HTTPStatus.ALREADY_REPORTED]:
         # return error
         return response, status
 
