@@ -31,6 +31,8 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
   hideMenu: boolean = false;
   username: string = '';
   showAdminSubmenu = false;
+  canEditOwnUser = false;
+  userId: number | undefined;
 
   @ViewChild(MatSidenav)
   sideNav!: MatSidenav;
@@ -63,6 +65,8 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
         .subscribe(([serverPermInit, chosenStore, storePermInit]) => {
           if (serverPermInit && (chosenStore === null || storePermInit)) {
             this.setNavigationLinks();
+            this.canEditOwnUser = this.permissionService.isAllowed(ScopeType.OWN, ResourceType.USER, OperationType.EDIT);
+            this.userId = this.permissionService.activeUser?.id;
           }
         });
     });

@@ -11,6 +11,7 @@ import { RuleService } from 'src/app/services/rule.service';
 import { OperationType, ResourceType, Rule, Rule_ } from 'src/app/models/api/rule.model';
 import { RoleService } from 'src/app/services/role.service';
 import { BaseFormComponent } from '../../admin-base/base-form/base-form.component';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-user-form',
@@ -37,6 +38,7 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
   );
 
   organizationRoles: Role[] = [];
+  isEditOwnUser: boolean = false;
   /* Roles assigned to the user, prior to editing. */
   userRoles: Role[] = [];
   /* The rules that belong to the selected roles */
@@ -52,7 +54,8 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
     private fb: FormBuilder,
     private organizationService: OrganizationService,
     private ruleService: RuleService,
-    private roleService: RoleService
+    private roleService: RoleService,
+    private permissionService: PermissionService
   ) {
     super();
   }
@@ -61,6 +64,8 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
     this.isLoading = true;
 
     this.isEdit = !!this.user;
+    this.setPermissions();
+
     await this.initData();
     if (this.isEdit && this.user) {
       this.form.controls.username.setValue(this.user.username);
@@ -130,9 +135,31 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
     this.form.controls.rules.setValue(rules.map((rule) => rule.id));
   }
 
+  override handleSubmit() {
+    if (!this.form.valid) return;
+    let formValue: any = this.form.getRawValue();
+    if (this.isEditOwnUser) {
+      // remove roles and rules to prevent error that you are not allowed to edit your own roles and rules
+      delete formValue.roles;
+      delete formValue.rules;
+    }
+    this.submitted.emit(formValue);
+  }
+
   /* Determine the set of selected rules that has no overlap with role rules. */
   private determineUserRules(roleRules: Rule[], userSelectedRules: Rule[]): Rule[] {
     if (!roleRules || !userSelectedRules) return [];
     return userSelectedRules.filter((userRule) => !roleRules.some((roleRule) => roleRule.id === userRule.id));
+  }
+
+  private setPermissions() {
+    this.permissionService
+      .isInitialized()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((initialized) => {
+        if (initialized) {
+          this.isEditOwnUser = this.isEdit && this.user?.id === this.permissionService.activeUser?.id;
+        }
+      });
   }
 }
