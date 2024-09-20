@@ -218,7 +218,8 @@ def filter_dicts_on_values(
         The filtered list of dicts.
     """
     filtered_dicts = []
-    for dict_ in dicts:
+    resource_list = dicts["data"] if "data" in dicts else dicts
+    for dict_ in resource_list:
         if all([dict_[filter_[0]] == filter_[1] for filter_ in filters]):
             filtered_dicts.append(dict_)
     return filtered_dicts
