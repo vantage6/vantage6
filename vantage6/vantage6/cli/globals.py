@@ -33,9 +33,6 @@ DATA_FOLDER = PACKAGE_FOLDER / APPNAME / "_data"
 # Maximum time to start up RabbitMQ in seconds
 RABBIT_TIMEOUT = 300
 
-# Default port to start the UI on
-DEFAULT_UI_PORT = 7600
-
 # Location of repository to create new algorithm templates from
 ALGORITHM_TEMPLATE_REPO = "gh:vantage6/v6-algorithm-template.git"
 
