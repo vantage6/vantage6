@@ -58,7 +58,6 @@ class ServerGlobals(str, Enum):
 
     DB_URI_ENV_VAR = "VANTAGE6_DB_URI"
     CONFIG_NAME_ENV_VAR = "VANTAGE6_CONFIG_NAME"
-    PORT = "7601"
 
 
 class AlgoStoreGlobals(str, Enum):

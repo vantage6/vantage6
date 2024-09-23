@@ -12,7 +12,7 @@ from vantage6.cli.configuration_manager import (
     NodeConfigurationManager,
     ServerConfigurationManager,
 )
-from vantage6.cli.globals import AlgoStoreGlobals, ServerGlobals
+from vantage6.cli.globals import AlgoStoreGlobals
 
 
 def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
@@ -305,7 +305,7 @@ def _get_common_server_config(
                 "message": "Enter port to which the server listens:",
                 "default": (
                     # Note that .value is required in YAML to get proper str value
-                    ServerGlobals.PORT.value
+                    str(Ports.DEV_SERVER.value)
                     if instance_type == InstanceType.SERVER
                     else AlgoStoreGlobals.PORT.value
                 ),
