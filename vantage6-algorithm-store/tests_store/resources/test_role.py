@@ -3,6 +3,7 @@ from http import HTTPStatus
 from unittest.mock import patch
 
 from tests_store.base.unittest_base import TestResources, MockResponse
+from vantage6.common.globals import Ports
 from vantage6.algorithm.store.model.rule import Rule, Operation
 from vantage6.algorithm.store.model.role import Role
 
