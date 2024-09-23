@@ -287,7 +287,14 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     }
   }
 
+  private async waitUntilInitialized(): Promise<void> {
+    while (this.isLoading) {
+      await new Promise((f) => setTimeout(f, 200));
+    }
+  }
+
   private async onAlgorithmStatusUpdate(statusUpdate: AlgorithmStatusChangeMsg): Promise<void> {
+    await this.waitUntilInitialized();
     // Update status of child tasks
     this.childTasks.forEach((task: BaseTask) => {
       if (task.id === statusUpdate.task_id) {
@@ -359,6 +366,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   }
 
   private async onNewTask(newTaskMsg: NewTaskMsg): Promise<void> {
+    await this.waitUntilInitialized();
     if (!this.task) return;
     if (newTaskMsg.parent_id !== this.task.id) return;
 
@@ -367,6 +375,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   }
 
   private async onNodeStatusUpdate(nodeStatus: NodeOnlineStatusMsg): Promise<void> {
+    await this.waitUntilInitialized();
     // first update the child tasks
     this.childTasks.forEach((task: BaseTask) => {
       task.runs.forEach((run: TaskRun) => {

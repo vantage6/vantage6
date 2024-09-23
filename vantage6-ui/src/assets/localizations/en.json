@@ -171,8 +171,9 @@
       "title": "General"
     },
     "card-status": {
-      "title": "Main process",
-      "child-title": "Child processes",
+      "title": "Status",
+      "main-process-title": "Main process",
+      "child-process-title": "Child processes",
       "task-name": "Name:",
       "node-name": "Node:",
       "actions": {
