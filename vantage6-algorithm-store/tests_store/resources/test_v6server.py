@@ -135,7 +135,7 @@ class TestVantage6ServerResource(TestResources):
 
         # if we try this again it should fail
         response = self.app.post("/api/vantage6-server", headers=HEADERS, json=body_)
-        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+        self.assertEqual(response.status_code, HTTPStatus.ALREADY_REPORTED)
 
         # check that whitelisting localhost servers cannot be done with default policy
         policy.delete()
