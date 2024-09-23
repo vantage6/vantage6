@@ -87,7 +87,7 @@ For example, you can create a new organization by running:
 ```python
 from vantage6.client import Client
 
-client = Client('http://127.0.0.1', 5000, '/api', log_level='debug')
+client = Client('http://127.0.0.1', 7601, '/api', log_level='debug')
 client.authenticate('dev_admin', 'password')
 client.setup_encryption(None)
 

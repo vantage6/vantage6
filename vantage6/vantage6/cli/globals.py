@@ -34,7 +34,7 @@ DATA_FOLDER = PACKAGE_FOLDER / APPNAME / "_data"
 RABBIT_TIMEOUT = 300
 
 # Default port to start the UI on
-DEFAULT_UI_PORT = 5001
+DEFAULT_UI_PORT = 7600
 
 # Location of repository to create new algorithm templates from
 ALGORITHM_TEMPLATE_REPO = "gh:vantage6/v6-algorithm-template.git"
@@ -58,7 +58,7 @@ class ServerGlobals(str, Enum):
 
     DB_URI_ENV_VAR = "VANTAGE6_DB_URI"
     CONFIG_NAME_ENV_VAR = "VANTAGE6_CONFIG_NAME"
-    PORT = "5000"
+    PORT = "7601"
 
 
 class AlgoStoreGlobals(str, Enum):
@@ -66,4 +66,4 @@ class AlgoStoreGlobals(str, Enum):
 
     DB_URI_ENV_VAR = "VANTAGE6_ALGO_STORE_DB_URI"
     CONFIG_NAME_ENV_VAR = "VANTAGE6_ALGO_STORE_CONFIG_NAME"
-    PORT = "5002"  # 5001 is the default UI port
+    PORT = "7602"  # 7600 is the default UI port

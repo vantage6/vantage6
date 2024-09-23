@@ -53,7 +53,7 @@ The most basic setup is to have a single backend server.
             include proxy_params;
 
             # internal ip and port
-            proxy_pass http://127.0.0.1:5000/subpath;
+            proxy_pass http://127.0.0.1:7601/subpath;
         }
 
         # Allow the websocket traffic
@@ -63,7 +63,7 @@ The most basic setup is to have a single backend server.
             proxy_buffering off;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "Upgrade";
-            proxy_pass http://127.0.0.1:5000/socket.io;
+            proxy_pass http://127.0.0.1:7601/socket.io;
         }
     }
 

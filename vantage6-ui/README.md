@@ -32,7 +32,7 @@ Petronas (v3). Note that in the latter case only an older UI is available.
 
 The easiest way to run the UI locally is using the ``--with-ui`` flag in the
 ``v6 server start`` command. That will automatically start a UI container, by default
-on port 5001.
+on port 7600.
 
 Alternatively, you can run the UI natively in [Angular](https://github.com/angular/angular-cli).
 For general information on how to work with Angular, we refer to
@@ -68,7 +68,7 @@ docker run --env SERVER_URL="<your_url>" --env API_PATH="<your_path>" -p 8080:80
 
 to run a UI on port 8080 that communicates with your own server. For instance,
 you can point to a local server with default settings if you set
-SERVER_URL=`http://localhost:5000` and API_PATH=`/api`.
+SERVER_URL=`http://localhost:7601` and API_PATH=`/api`.
 If you don't enter environment variables, the UI points to
 `https://cotopaxi.vantage6.ai` by default.
 

@@ -154,7 +154,7 @@ class AlgorithmStoreApp:
         def _get_request_path(request: Request) -> str:
             """
             Return request extension of request URL, e.g.
-            http://localhost:5000/api/task/1 -> api/task/1
+            http://localhost:7601/api/task/1 -> api/task/1
 
             Parameters
             ----------

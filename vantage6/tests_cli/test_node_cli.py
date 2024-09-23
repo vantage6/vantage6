@@ -9,6 +9,7 @@ from io import BytesIO, StringIO
 from click.testing import CliRunner
 from docker.errors import APIError
 
+from vantage6.common.globals import Ports
 from vantage6.cli.globals import APPNAME
 from vantage6.common import STRING_ENCODING
 from vantage6.cli.common.utils import print_log_worker
@@ -408,7 +409,11 @@ class NodeCLITest(unittest.TestCase):
     @patch("vantage6.cli.node.common.q")
     def test_client(self, q, client, error, debug, info):
         ctx = MagicMock(
-            config={"server_url": "localhost", "port": 5000, "api_path": ""}
+            config={
+                "server_url": "localhost",
+                "port": Ports.DEV_SERVER.value,
+                "api_path": "",
+            }
         )
 
         # should not trigger an exception

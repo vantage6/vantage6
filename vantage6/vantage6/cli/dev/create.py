@@ -7,7 +7,7 @@ import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 from colorama import Fore, Style
 
-from vantage6.common.globals import APPNAME, InstanceType
+from vantage6.common.globals import APPNAME, InstanceType, Ports
 from vantage6.common import info, error, generate_apikey
 
 import vantage6.cli.dev.data as data_dir
@@ -479,20 +479,22 @@ def demo_network(
     "-p",
     "--server-port",
     type=int,
-    default=7601,
-    help="Port to run the server on. Default is 7601.",
+    default=Ports.DEV_SERVER.value,
+    help=f"Port to run the server on. Default is {Ports.DEV_SERVER.value}.",
 )
 @click.option(
     "--ui-port",
     type=int,
-    default=7600,
-    help="Port to run the UI on. Default is 7600.",
+    default=Ports.DEV_UI.value,
+    help=f"Port to run the UI on. Default is {Ports.DEV_UI.value}.",
 )
 @click.option(
     "--algorithm-store-port",
     type=int,
-    default=7602,
-    help="Port to run the algorithm store on. Default is 7602.",
+    default=Ports.DEV_ALGO_STORE.value,
+    help=(
+        f"Port to run the algorithm store on. Default is {Ports.DEV_ALGO_STORE.value}."
+    ),
 )
 @click.option(
     "-i",

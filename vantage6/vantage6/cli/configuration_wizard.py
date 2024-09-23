@@ -3,7 +3,7 @@ import questionary as q
 from pathlib import Path
 
 from vantage6.common import generate_apikey
-from vantage6.common.globals import DATABASE_TYPES, InstanceType, NodePolicy
+from vantage6.common.globals import DATABASE_TYPES, InstanceType, NodePolicy, Ports
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.context import AppContext
 from vantage6.common import error, warning, info
@@ -45,8 +45,12 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
     # remove trailing slash from server_url if entered by user
     config["server_url"] = config["server_url"].rstrip("/")
 
-    # set default port to 443 if server_url is https
-    default_port = "443" if config["server_url"].startswith("https") else "5000"
+    # set default port to the https port if server_url is https
+    default_port = (
+        str(Ports.HTTPS.value)
+        if config["server_url"].startswith("https")
+        else str(Ports.DEV_SERVER.value)
+    )
 
     config = config | q.prompt(
         [
@@ -499,7 +503,7 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
         InstanceType.ALGORITHM_STORE, instance_name, include_api_path=False
     )
 
-    default_v6_server_uri = "http://localhost:5000/api"
+    default_v6_server_uri = f"http://localhost:{Ports.DEV_SERVER.value}/api"
     default_root_username = "root"
 
     v6_server_uri = q.text(
