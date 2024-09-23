@@ -85,7 +85,6 @@ def cli_test_integration(
     click_ctx.invoke(
         start_demo_network,
         name=name,
-        system_folders=True,
         server_image=image,
         node_image=image,
     )
@@ -111,12 +110,12 @@ def cli_test_integration(
     )
 
     # clean up the test resources
-    click_ctx.invoke(stop_demo_network, name=name, system_folders=True)
+    click_ctx.invoke(stop_demo_network, name=name)
     if not keep:
-        click_ctx.invoke(remove_demo_network, name=name, system_folders=True)
+        click_ctx.invoke(remove_demo_network, name=name)
     else:
         info(
-            "Keeping the demo network {name}. You can start it with `v6 dev "
+            f"Keeping the demo network {name}. You can start it with `v6 dev "
             "start-demo-network`"
         )
 
