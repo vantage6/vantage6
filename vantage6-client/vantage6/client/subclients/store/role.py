@@ -20,15 +20,30 @@ class StoreRoleSubClient(ClientBase.SubClient):
 
         Parameters
         ----------
-        name : str
+        name : str, optional
             Filter by name (with LIKE operator).
-        description : str
+        description : str, optional
             Filter by description (with LIKE operator).
-        user : int
+        user : int, optional
             Filter by user id.
-        page : int
+        field : str, optional
+            Which data field to keep in the result. For instance, "field='name'"
+            will only return the name of the roles. Default is None.
+        fields : list[str], optional
+            Which data fields to keep in the result. For instance,
+            "fields=['name', 'id']" will only return the name and id of the
+            roles. Default is None.
+        filter_ : tuple, optional
+            Filter the result on key-value pairs. For instance,
+            "filter_=('name', 'my_name')" will only return the roles with the
+            name 'my_name'. Default is None.
+        filters : list[tuple], optional
+            Filter the result on multiple key-value pairs. For instance,
+            "filters=[('name', 'my_name'), ('id', 1)]" will only return the
+            roles with the name 'my_name' and id 1. Default is None.
+        page : int, optional
             Page number for pagination (default=1)
-        per_page : int
+        per_page : int, optional
             Number of items per page (default=10)
 
         Returns
