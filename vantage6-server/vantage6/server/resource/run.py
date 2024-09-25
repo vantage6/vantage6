@@ -8,7 +8,7 @@ from http import HTTPStatus
 from sqlalchemy import desc, or_, and_
 
 from vantage6.common import logger_name
-from vantage6.common.enum import RunStatus
+from vantage6.common.enum import RunStatus, TaskStatusQueryOptions
 from vantage6.server import db
 from vantage6.server.permission import (
     RuleCollection,
@@ -215,8 +215,7 @@ class MultiRunBase(RunBase):
         #   finished:
         #       Runs that are finished
         #
-        # TODO FM 26-07-2024: We need to use a enum for the different states.
-        if args.get("state") == "open":
+        if args.get("state") == TaskStatusQueryOptions.OPEN.value:
             q = q.filter(
                 and_(
                     or_(
@@ -232,7 +231,7 @@ class MultiRunBase(RunBase):
                 )
             )
 
-        elif args.get("state") == "waiting":
+        elif args.get("state") == TaskStatusQueryOptions.WAITING.value:
             q = q.filter(
                 and_(
                     or_(
@@ -245,7 +244,7 @@ class MultiRunBase(RunBase):
                 )
             )
 
-        elif args.get("state") == "finished":
+        elif args.get("state") == TaskStatusQueryOptions.FINISHED.value:
             q = q.filter(db_Run.finished_at.isnot(None))
 
         if "collaboration_id" in args:

@@ -24,7 +24,7 @@ class EnumBase(str, Enum):
 
     @classmethod
     def list(cls) -> list[str]:
-        """Return a list of all the status values"""
+        """Return a list of all the enum values"""
         return [status.value.lower() for status in cls]
 
 
@@ -178,3 +178,10 @@ class RunStatus(EnumBase):
             cls.INITIALIZING.value,
             cls.ACTIVE.value,
         ]
+
+
+class TaskStatusQueryOptions(EnumBase):
+
+    OPEN = "open"
+    WAITING = "waiting"
+    FINISHED = "finished"
