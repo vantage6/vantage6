@@ -209,53 +209,26 @@ class Task(Base):
 
     @status.expression
     def status(cls):
-        return (
-            select(
-                [
-                    case(
-                        [
-                            (
-                                func.sum(
-                                    case(
-                                        [
-                                            (
-                                                models.Run.status.in_(
-                                                    RunStatus.failed_statuses()
-                                                ),
-                                                1,
-                                            )
-                                        ],
-                                        else_=0,
-                                    )
-                                )
-                                > 0,
-                                TaskStatus.FAILED.value,
-                            ),
-                            (
-                                func.sum(
-                                    case(
-                                        [
-                                            (
-                                                models.Run.status.in_(
-                                                    RunStatus.alive_statuses()
-                                                ),
-                                                1,
-                                            )
-                                        ],
-                                        else_=0,
-                                    )
-                                )
-                                > 0,
-                                TaskStatus.AWAITING.value,
-                            ),
-                        ],
-                        else_=TaskStatus.COMPLETED.value,
-                    )
-                ]
-            )
-            .where(models.Run.task_id == cls.id)
-            .label("status")
+
+        failed_case = case(
+            [(models.Run.status.in_(RunStatus.failed_statuses()), 1)],
+            else_=0,
         )
+
+        alive_case = case(
+            [(models.Run.status.in_(RunStatus.alive_statuses()), 1)],
+            else_=0,
+        )
+
+        status_case = case(
+            [
+                (func.sum(failed_case) > 0, TaskStatus.FAILED.value),
+                (func.sum(alive_case) > 0, TaskStatus.AWAITING.value),
+            ],
+            else_=TaskStatus.COMPLETED.value,
+        )
+
+        return select([status_case]).where(models.Run.task_id == cls.id).label("status")
 
     @classmethod
     def next_job_id(cls) -> int:
