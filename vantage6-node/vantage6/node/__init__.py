@@ -48,7 +48,7 @@ from vantage6.common.docker.addons import (
 from vantage6.common.globals import VPN_CONFIG_FILE, PING_INTERVAL_SECONDS, NodePolicy
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.common.enum import RunStatus, LocalAction
+from vantage6.common.enum import RunStatus, LocalAction, TaskStatusQueryOptions
 from vantage6.common.log import get_file_logger
 from vantage6.cli.context.node import NodeContext
 from vantage6.node.context import DockerNodeContext
@@ -268,7 +268,9 @@ class Node:
         assert self.client.cryptor, "Encrpytion has not been setup"
 
         # request open tasks from the server
-        task_results = self.client.run.list(state="open", include_task=True)
+        task_results = self.client.run.list(
+            state=TaskStatusQueryOptions.OPEN.value, include_task=True
+        )
         self.log.debug("task_results: %s", task_results)
 
         # add the tasks to the queue
@@ -287,7 +289,7 @@ class Node:
         """
         # fetch open algorithm runs for this node
         task_runs = self.client.run.list(
-            include_task=True, state="open", task_id=task_id
+            include_task=True, state=TaskStatusQueryOptions.OPEN.value, task_id=task_id
         )
 
         # add the tasks to the queue
