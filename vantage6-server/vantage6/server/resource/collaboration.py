@@ -646,6 +646,8 @@ class Collaboration(CollaborationBase):
                     task.delete()
                 for node in collaboration.nodes:
                     node.delete()
+                for study in collaboration.studies:
+                    study.delete()
 
         collaboration.delete()
         return {"msg": f"Collaboration id={id} successfully deleted"}, HTTPStatus.OK
