@@ -384,49 +384,49 @@ class Sessions(SessionBase):
           Accessible to users.
 
         parameters:
-        - in: query
-          name: name
-          schema:
-            type: string
-          description: >-
-            Name to match with a LIKE operator. \n
-            * The percent sign (%) represents zero, one, or multiple
-            characters\n
-            * underscore sign (_) represents one, single character
-        - in: query
-          name: user_id
-          schema:
-            type: integer
-          description: User id
-        - in: query
-          name: collaboration_id
-          schema:
-            type: integer
-          description: Collaboration id
-        - in: query
-          name: scope
-          schema:
-            type: string
-          description: >-
-            Scope of the session. Possible values are: GLOBAL, COLLABORATION,
-            ORGANIZATION, OWN
-        - in: query
-          name: page
-          schema:
-            type: integer
-          description: Page number for pagination (default=1)
-        - in: query
-          name: per_page
-          schema:
-            type: integer
-          description: Number of items per page (default=10)
-        - in: query
-          name: sort
-          schema:
-            type: string
-          description: >-
-            Sort by one or more fields, separated by a comma. Use a minus
-            sign (-) in front of the field to sort in descending order.
+          - in: query
+            name: name
+            schema:
+              type: string
+            description: >-
+              Name to match with a LIKE operator. \n
+              * The percent sign (%) represents zero, one, or multiple
+              characters\n
+              * underscore sign (_) represents one, single character
+          - in: query
+            name: user_id
+            schema:
+              type: integer
+            description: User id
+          - in: query
+            name: collaboration_id
+            schema:
+              type: integer
+            description: Collaboration id
+          - in: query
+            name: scope
+            schema:
+              type: string
+            description: >-
+              Scope of the session. Possible values are: GLOBAL, COLLABORATION,
+              ORGANIZATION, OWN
+          - in: query
+            name: page
+            schema:
+              type: integer
+            description: Page number for pagination (default=1)
+          - in: query
+            name: per_page
+            schema:
+              type: integer
+            description: Number of items per page (default=10)
+          - in: query
+            name: sort
+            schema:
+              type: string
+            description: >-
+              Sort by one or more fields, separated by a comma. Use a minus
+              sign (-) in front of the field to sort in descending order.
 
         responses:
           200:
@@ -657,12 +657,12 @@ class Session(SessionBase):
           Accessible to users and nodes.
 
         parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          description: Session ID
-          required: true
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: Session ID
+            required: true
 
         responses:
           200:
@@ -708,12 +708,12 @@ class Session(SessionBase):
           Accessible to users.
 
         parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          description: Session ID
-          required: true
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: Session ID
+            required: true
 
         requestBody:
           content:
@@ -725,7 +725,7 @@ class Session(SessionBase):
                     description: Name of the session
                   scope:
                     type: string
-                    description: Scope of the session, possible values are: GLOBAL,
+                    description: Scope of the session, possible values are GLOBAL,
                         COLLABORATION, ORGANIZATION, OWN
 
         responses:
@@ -814,19 +814,19 @@ class Session(SessionBase):
           Accessible to users.
 
         parameters:
-        - in: path
-          name: session_id
-          schema:
-            type: integer
-          description: Session ID
-          required: true
-        - in: query
-          name: delete_dependents
-          schema:
-              type: boolean
-          description: >-
-              Delete all dependents of the session. This includes dataframes and tasks
-              that are part of the
+          - in: path
+            name: session_id
+            schema:
+              type: integer
+            description: Session ID
+            required: true
+          - in: query
+            name: delete_dependents
+            schema:
+                type: boolean
+            description: >-
+                Delete all dependents of the session. This includes dataframes and tasks
+                that are part of the
 
         responses:
           204:
@@ -869,7 +869,8 @@ class SessionDataframes(SessionBase):
     def get(self, session_id):
         """view all dataframes in a session
         ---
-        ### Permission Table\n
+         description: >-
+          ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
@@ -884,12 +885,12 @@ class SessionDataframes(SessionBase):
           Accessible to users and nodes.
 
         parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          description: Session ID
-          required: true
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: Session ID
+            required: true
 
         responses:
           200:
@@ -1060,7 +1061,8 @@ class SessionDataframe(SessionBase):
     def get(self, session_id, dataframe_handle):
         """View specific dataframe
         ---
-        ### Permission Table\n
+        description: >-
+          ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
@@ -1075,18 +1077,18 @@ class SessionDataframe(SessionBase):
           Accessible to users.
 
         parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          description: Session ID
-          required: true
-        - in: path
-          name: dataframe_handle
-          schema:
-              type: string
-          description: Handle of the dataframe
-          required: true
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: Session ID
+            required: true
+          - in: path
+            name: dataframe_handle
+            schema:
+                type: string
+            description: Handle of the dataframe
+            required: true
 
         responses:
           200:
@@ -1258,18 +1260,18 @@ class SessionDataframe(SessionBase):
           Only accessible by nodes.
 
         parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          description: Session ID
-          required: true
-        - in: path
-          name: dataframe_handle
-          schema:
-              type: string
-          description: Handle of the dataframe
-          required: true
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: Session ID
+            required: true
+          - in: path
+            name: dataframe_handle
+            schema:
+                type: string
+            description: Handle of the dataframe
+            required: true
 
         requestBody:
           content:

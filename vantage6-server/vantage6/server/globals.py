@@ -50,7 +50,6 @@ RESOURCES = [
     "vpn",
     "port",
     "event",
-    "ui.column",
     "algorithm_store",
     "study",
     "session",
