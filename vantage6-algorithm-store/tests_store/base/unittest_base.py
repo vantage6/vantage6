@@ -2,7 +2,7 @@ import unittest
 from vantage6.algorithm.store.default_roles import get_default_roles
 from vantage6.algorithm.store.model.review import Review
 
-from vantage6.common.globals import InstanceType
+from vantage6.common.globals import InstanceType, Ports
 from vantage6.backend.common import test_context
 from vantage6.algorithm.store.model.base import DatabaseSessionManager, Database
 from vantage6.algorithm.store import AlgorithmStoreApp
@@ -51,7 +51,7 @@ class TestResources(unittest.TestCase):
         DatabaseSessionManager.clear_session()
 
     def register_server(
-        self, server_url: str = "http://localhost:5000"
+        self, server_url: str = f"http://localhost:{Ports.DEV_SERVER.value}"
     ) -> Vantage6Server:
         server = Vantage6Server(url=server_url)
         server.save()
@@ -75,7 +75,7 @@ class TestResources(unittest.TestCase):
     def register_user_and_server(
         self,
         username: str = "test_user",
-        server_url: str = "http://localhost:5000",
+        server_url: str = f"http://localhost:{Ports.DEV_SERVER.value}",
         user_roles: list[Role] = None,
         user_rules: list[Rule] = None,
     ) -> tuple[User, Vantage6Server]:

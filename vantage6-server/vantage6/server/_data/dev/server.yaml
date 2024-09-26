@@ -1,7 +1,7 @@
 description: Dev
 type: dev
 ip: '127.0.0.1'
-port: 5000
+port: 7601
 api_path: /api
 uri: sqlite:///develop.sqlite
 allow_drop_all: True
