@@ -652,6 +652,9 @@
       "content": "Note, this will also delete all tasks this user created.\nThis operation cannot be undone."
     }
   },
+  "user-edit": {
+    "own-user-no-roles": "Roles and rules not shown: you cannot change your own permissions."
+  },
   "node": {
     "name": "Name",
     "status": "Status",
@@ -702,10 +705,9 @@
   },
   "header": {
     "actions": {
-      "admin": "Administration",
-      "admin-leave": "Leave administration",
       "logout": "Logout",
-      "change_password": "Change password"
+      "change_password": "Change password",
+      "my-user": "View my user"
     }
   },
   "login": {
