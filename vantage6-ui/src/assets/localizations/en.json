@@ -706,7 +706,7 @@
     "actions": {
       "logout": "Logout",
       "change_password": "Change password",
-      "edit-user": "Edit user"
+      "my-user": "View my user"
     }
   },
   "login": {

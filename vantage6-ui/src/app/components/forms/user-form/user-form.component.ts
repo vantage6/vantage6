@@ -137,7 +137,8 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
 
   override handleSubmit() {
     if (!this.form.valid) return;
-    let formValue: any = this.form.getRawValue();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const formValue: any = this.form.getRawValue();
     if (this.isEditOwnUser) {
       // remove roles and rules to prevent error that you are not allowed to edit your own roles and rules
       delete formValue.roles;

@@ -11,9 +11,9 @@
         <mat-icon>key</mat-icon>
         <span>{{ "header.actions.change_password" | translate }}</span>
       </button>
-      <button mat-menu-item [routerLink]="[routes.userEdit, userId]">
-        <mat-icon>edit</mat-icon>
-        <span>{{ "header.actions.edit-user" | translate }}</span>
+      <button mat-menu-item [routerLink]="[routes.user, userId]">
+        <mat-icon>person</mat-icon>
+        <span>{{ "header.actions.my-user" | translate }}</span>
       </button>
       <button mat-menu-item (click)="handleLogout()">
         <mat-icon>logout</mat-icon>
