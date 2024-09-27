@@ -270,7 +270,9 @@ class Nodes(NodeBase):
                 q.join(db.Organization)
                 .join(db.StudyMember)
                 .join(db.Study)
+                .join(db.Collaboration)
                 .filter(db.Study.id == study_id)
+                .filter(db.Node.collaboration_id == study.collaboration_id)
             )
 
         for param in ["status", "ip"]:
