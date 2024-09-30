@@ -1,6 +1,49 @@
 Release notes
 =============
 
+4.7.1
+-----
+
+*1 October 2024*
+
+- **Change**
+
+ - Show nodes in UI on page that shows study
+  (`PR#1507 <https://github.com/vantage6/vantage6/pull/1507>`_).
+ - Improved viewing/editing your own user in the UI: extra link in top menu, hide
+   permissions on edit page because they can't be changed, permission check improvements
+  (`PR#1493 <https://github.com/vantage6/vantage6/pull/1493>`_).
+
+- **Bugfix**
+
+ - Improve refreshing task status in UI by fixing permission issue and awaiting task
+   collection from the API
+   (`Issue#1478 <https://github.com/vantage6/vantage6/issues/1478>`_,
+   `PR#1490 <https://github.com/vantage6/vantage6/pull/1490>`_).
+ - Prevent corrupt node configuration when specifying ``allowed_algorithms`` in
+   ``v6 node new`` (`Issue#1467 <https://github.com/vantage6/vantage6/issues/1467>`_,
+   `PR#1468 <https://github.com/vantage6/vantage6/pull/1468>`_).
+ - Prevent error in ``v6 node new`` when server URL contains trailing slashes
+   (`Issue#1457 <https://github.com/vantage6/vantage6/issues/1457>`_,
+   `PR#1468 <https://github.com/vantage6/vantage6/pull/1468>`_).
+ - Fix filtering node list when getting nodes for a particular study
+   (`Issue#1486 <https://github.com/vantage6/vantage6/issues/1486>`_,
+   `PR#1507 <https://github.com/vantage6/vantage6/pull/1507>`_).
+ - Only require username or email address in resetting password in Python client
+   (`Issue#1503 <https://github.com/vantage6/vantage6/issues/1503>`_,
+   `PR#1505 <https://github.com/vantage6/vantage6/pull/1505>`_).
+ - Delete study when collaboration is deleted
+   (`Issue#1465 <https://github.com/vantage6/vantage6/issues/1465>`_,
+   `PR#1487 <https://github.com/vantage6/vantage6/pull/1487>`_).
+ - Prevent double policies in the database when multiple algorithm store instances are
+   restarted simultaneously (`PR#1506 <https://github.com/vantage6/vantage6/pull/1506>`_).
+ - Minor fixes to running tasks in UI: fix repeat task with boolean values, prevent
+   submitting same task multiple times, improve showing log file, etc
+   (`PR#1490 <https://github.com/vantage6/vantage6/pull/1490>`_).
+ - Added missing field and filter options to docstrings in the Python client
+   (`PR#1492 <https://github.com/vantage6/vantage6/pull/1492>`_).
+
+
 4.7.0
 -----
 
