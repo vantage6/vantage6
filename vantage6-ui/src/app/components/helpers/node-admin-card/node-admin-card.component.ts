@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angu
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { printDate } from 'src/app/helpers/general.helper';
-import { BaseCollaboration, Collaboration } from 'src/app/models/api/collaboration.model';
+import { Collaboration } from 'src/app/models/api/collaboration.model';
 import { BaseNode, NodeStatus } from 'src/app/models/api/node.model';
 import { BaseOrganization } from 'src/app/models/api/organization.model';
 import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
