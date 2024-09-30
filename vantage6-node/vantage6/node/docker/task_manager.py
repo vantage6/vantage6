@@ -5,18 +5,29 @@ import os
 import docker.errors
 import json
 import base64
+import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 
+from datetime import datetime
 from pathlib import Path
+
 from docker import DockerClient
 
-from vantage6.common.globals import APPNAME, ENV_VAR_EQUALS_REPLACEMENT, STRING_ENCODING
+from vantage6.common.globals import (
+    APPNAME,
+    ENV_VAR_EQUALS_REPLACEMENT,
+    STRING_ENCODING,
+    ContainerEnvNames,
+)
 from vantage6.common.docker.addons import (
     remove_container_if_exists,
     remove_container,
     running_in_docker,
 )
 from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.common.task_status import TaskStatus
+from vantage6.common.enum import RunStatus, LocalAction
+from vantage6.node import NodeClient
 from vantage6.node.util import get_parent_id
 from vantage6.node.globals import ALPINE_IMAGE, ENV_VARS_NOT_SETTABLE_BY_NODE
 from vantage6.node.docker.vpn_manager import VPNManager
@@ -26,6 +37,7 @@ from vantage6.node.docker.exceptions import (
     UnknownAlgorithmStartFail,
     PermanentAlgorithmStartFail,
     AlgorithmContainerNotFound,
+    DataFrameNotFound,
 )
 
 
@@ -43,14 +55,17 @@ class DockerTaskManager(DockerBaseManager):
         self,
         image: str,
         docker_client: DockerClient,
+        client: NodeClient,
         vpn_manager: VPNManager,
         node_name: str,
         run_id: int,
         task_info: dict,
         tasks_dir: Path,
+        action: LocalAction,
         isolated_network_mgr: NetworkManager,
         databases: dict,
         docker_volume_name: str,
+        session_id: int,
         alpine_image: str | None = None,
         proxy: Squid | None = None,
         device_requests: list | None = None,
@@ -65,6 +80,8 @@ class DockerTaskManager(DockerBaseManager):
             Name of docker image to be run
         docker_client: DockerClient
             Docker client instance to use
+        client: NodeClient
+            Node client in order to communicate with the vantage6 server
         vpn_manager: VPNManager
             VPN manager required to set up traffic forwarding via VPN
         node_name: str
@@ -75,12 +92,16 @@ class DockerTaskManager(DockerBaseManager):
             Dictionary with info about the task
         tasks_dir: Path
             Directory in which this task's data are stored
+        action: LocalAction
+            Action to be performed by the container
         isolated_network_mgr: NetworkManager
             Manager of isolated network to which algorithm needs to connect
         databases: dict
             List of databases
         docker_volume_name: str
             Name of the docker volume
+        session_id: int
+            Session ID
         alpine_image: str | None
             Name of alternative Alpine image to be used
         device_requests: list | None
@@ -91,13 +112,16 @@ class DockerTaskManager(DockerBaseManager):
             event if a local image is available
         """
         self.task_id = task_info["id"]
-        self.log = logging.getLogger(f"task ({self.task_id})")
+        self.log = logging.getLogger(f"task_manager {self.task_id}|{session_id}")
 
         super().__init__(isolated_network_mgr, docker_client=docker_client)
+        self.client = client
         self.image = image
         self.__vpn_manager = vpn_manager
         self.run_id = run_id
+        self.session_id = session_id
         self.task_id = task_info["id"]
+        self.action = action
         self.parent_id = get_parent_id(task_info)
         self.__tasks_dir = tasks_dir
         self.databases = databases
@@ -107,6 +131,10 @@ class DockerTaskManager(DockerBaseManager):
         self.proxy = proxy
         self.requires_pull = requires_pull
 
+        if task_info.get("dataframe"):
+            self.dataframe_handle = task_info["dataframe"].get("handle", None)
+
+        print(session_id)
         self.container = None
         self.status_code = None
         self.docker_input = None
@@ -121,13 +149,18 @@ class DockerTaskManager(DockerBaseManager):
 
         # FIXME: these values should be retrieved from DockerNodeContext
         #   in some way.
-        self.tmp_folder = "/mnt/tmp"
         self.data_folder = "/mnt/data"
+        self.session_folder = "/mnt/session"
+        self.session_state_file_name = "state.parquet"
+        # FIXME: this `tmp_folder` might be used by some algorithms.In v5+ the
+        # `TEMPORARY_FOLDER` environment variable should be removed and all these
+        # algorithms should be updated to use the `SESSION_FOLDER` environment variable.
+        self.tmp_folder = "/mnt/tmp"
 
         # keep track of the task status
-        self.status: TaskStatus = TaskStatus.INITIALIZING
+        self.status: RunStatus = RunStatus.INITIALIZING
 
-        # set device requests
+        # Set device requests
         self.device_requests = []
         if device_requests:
             self.device_requests = device_requests
@@ -147,8 +180,8 @@ class DockerTaskManager(DockerBaseManager):
             self.log.error("Container not found")
             self.log.error("- task id: %s", self.task_id)
             self.log.error("- result id: %s", self.task_id)
-            self.status = TaskStatus.UNKNOWN_ERROR
-            raise AlgorithmContainerNotFound
+            self.status = RunStatus.UNKNOWN_ERROR
+            raise AlgorithmContainerNotFound()
 
         return self.container.status == "exited"
 
@@ -170,23 +203,153 @@ class DockerTaskManager(DockerBaseManager):
             self.log.error(f"Received non-zero exitcode: {self.status_code}")
             self.log.error(f"  Container id: {self.container.id}")
             self.log.info(logs)
-            self.status = TaskStatus.CRASHED
+            self.status = RunStatus.CRASHED
         else:
-            self.status = TaskStatus.COMPLETED
+            self.status = RunStatus.COMPLETED
         return logs
 
     def get_results(self) -> bytes:
         """
-        Read results output file of the algorithm container
+        If the action is to compute, read results output file of the algorithm
+        container. Otherwise, return an empty byte string.
 
         Returns
         -------
         bytes:
             Results of the algorithm container
         """
-        with open(self.output_file, "rb") as fp:
-            results = fp.read()
-        return results
+
+        match self.action:
+
+            case LocalAction.DATA_EXTRACTION | LocalAction.PREPROCESSING:
+
+                try:
+                    result = pq.read_table(self.output_file)
+                except Exception:
+                    self.log.exception("Error reading output file")
+                    self.status = RunStatus.UNEXPECTED_OUTPUT
+                    return b""
+
+                self._update_session(result)
+                return b""
+
+            case LocalAction.COMPUTE:
+
+                with open(self.output_file, "rb") as fp:
+                    result = fp.read()
+
+                self._update_session_state(
+                    LocalAction.COMPUTE.value,
+                    "no file",
+                    f"Algorithm from '{self.image}' completed successfully.",
+                )
+                return result
+
+            case _:
+
+                self.log.error("Unknown action: %s", self.action)
+                self.status = RunStatus.UNKNOWN_ERROR
+                return b""
+
+    def _update_session(self, table: pa.Table) -> None:
+        """
+        Update the session dataframe with the results of the algorithm
+
+        Parameters
+        ----------
+        table: pa.Table
+            Table with the results of the algorithm
+        """
+
+        self.log.debug(
+            f"Updating session {self.session_id} for handle {self.dataframe_handle}."
+        )
+
+        if not self.dataframe_handle:
+            self.log.error("No dataframe handle found.")
+            self.log.debug(
+                "A session task was started but had no dataframe handle. The session ID "
+                f"is {self.session_id} and the task ID is {self.task_id}.",
+            )
+            self.status = RunStatus.FAILED
+            return
+
+        try:
+            # Create or overwrite the parquet data frame that results from the algorithm
+            pq.write_table(
+                table,
+                os.path.join(
+                    self.session_folder_path, f"{self.dataframe_handle}.parquet"
+                ),
+            )
+        except Exception:
+            self.log.exception(f"Error writing data frame to parquet file")
+            self.status = RunStatus.FAILED
+            return
+
+        self._update_session_state(
+            self.action,
+            f"{self.dataframe_handle}.parquet",
+            "Session updated.",
+            self.dataframe_handle,
+        )
+
+        # Each node reports the column names for this dataframe in the session. In the
+        # horizontal case all the nodes should report the same column names.
+        columns_info = [
+            {"name": field.name, "dtype": str(field.type)} for field in table.schema
+        ]
+        self.client.request(
+            f"/session/{self.session_id}/dataframe/{self.dataframe_handle}",
+            method="patch",
+            json=columns_info,
+        )
+        self.log.debug(f"Columns info sent to server: {columns_info}")
+
+    def _update_session_state(
+        self, action: str, filename: str, message: str, dataframe: str = ""
+    ) -> None:
+        """
+        Update the session state file with the current action, file and message
+
+        Parameters
+        ----------
+        action: str
+            Action that was performed
+        filename: str
+            File resulting from the action
+        message: str
+            Message to be added to the state file
+        dataframe: str, optional
+            Dataframe handle that was updated. Some actions on the session are not
+            related to a specific dataframe, so this parameter is optional.
+        """
+        self.log.debug(
+            "Update session state file for action '%s' on dataframe '%s' ",
+            action,
+            dataframe,
+        )
+        state = pq.read_table(self.session_state_file).to_pandas()
+        new_row = pd.DataFrame(
+            [
+                {
+                    "action": action,
+                    "file": filename,
+                    "timestamp": datetime.now(),
+                    "message": message,
+                    "dataframe": dataframe,
+                }
+            ]
+        )
+        state = pd.concat([state, new_row], ignore_index=True)
+
+        try:
+            session_table = pa.Table.from_pandas(state)
+            pq.write_table(session_table, self.session_state_file)
+        except Exception:
+            self.log.exception("Error writing session state to parquet file")
+
+        return
 
     def pull(self, local_exists: bool) -> None:
         """
@@ -212,13 +375,13 @@ class DockerTaskManager(DockerBaseManager):
                 self.log.warning("Failed to pull image!")
             if not local_exists:
                 self.log.exception(exc)
-                self.status = TaskStatus.NO_DOCKER_IMAGE
+                self.status = RunStatus.NO_DOCKER_IMAGE
                 raise PermanentAlgorithmStartFail from exc
             elif self.requires_pull:
                 self.log.warning(
                     "Node policy prevents local image to be used to start algorithm"
                 )
-                self.status = TaskStatus.NO_DOCKER_IMAGE
+                self.status = RunStatus.NO_DOCKER_IMAGE
                 raise PermanentAlgorithmStartFail from exc
             else:
                 self.log.info("Using local image")
@@ -226,8 +389,7 @@ class DockerTaskManager(DockerBaseManager):
     def run(
         self,
         docker_input: bytes,
-        tmp_vol_name: str,
-        token: str,
+        token: str | None,
         algorithm_env: dict,
         databases_to_use: list[str],
     ) -> list[dict] | None:
@@ -241,10 +403,8 @@ class DockerTaskManager(DockerBaseManager):
         ----------
         docker_input: bytes
             Input that can be read by docker container
-        tmp_vol_name: str
-            Name of temporary docker volume assigned to the algorithm
-        token: str
-            Bearer token that the container can use
+        token: str | None
+            Bearer token that the container can use to authenticate with the server
         algorithm_env: dict
             Dictionary with additional environment variables to set
         databases_to_use: list[str]
@@ -261,7 +421,7 @@ class DockerTaskManager(DockerBaseManager):
 
         # prepare volumes
         self.docker_input = docker_input
-        self.volumes = self._prepare_volumes(tmp_vol_name, token)
+        self.volumes = self._prepare_volumes(token)
         self.log.debug("volumes: %s", self.volumes)
 
         # setup environment variables
@@ -359,10 +519,10 @@ class DockerTaskManager(DockerBaseManager):
             )
 
         except Exception as e:
-            self.status = TaskStatus.START_FAILED
+            self.status = RunStatus.START_FAILED
             raise UnknownAlgorithmStartFail(e)
 
-        self.status = TaskStatus.ACTIVE
+        self.status = RunStatus.ACTIVE
         return vpn_ports
 
     @staticmethod
@@ -406,16 +566,28 @@ class DockerTaskManager(DockerBaseManager):
         os.makedirs(self.task_folder_path, exist_ok=True)
         self.output_file = os.path.join(self.task_folder_path, "output")
 
-    def _prepare_volumes(self, tmp_vol_name: str, token: str) -> dict:
+        self.session_folder_name = f"session-{self.session_id:09d}"
+        self.session_folder_path = os.path.join(
+            self.__tasks_dir, self.session_folder_name
+        )
+        os.makedirs(self.session_folder_path, exist_ok=True)
+        self.session_state_file = os.path.join(
+            self.session_folder_path, self.session_state_file_name
+        )
+
+    def _prepare_volumes(self, token: str) -> dict:
         """
-        Generate docker volumes required to run the algorithm
+        The algorithm is provisioned with a session and data volume. The data
+        folder is used for the IO interface with the node instance (e.g. to read the
+        output from the algorithm). The session folder is used to intermediate data
+        between subsequent steps in the algorithm (e.g. one container extracts the
+        data and the next one actually computes statistics on this container).
+
 
         Parameters
         ----------
-        tmp_vol_name: str
-            Name of temporary docker volume assigned to the algorithm
-        token: str
-            Bearer token that the container can use
+        token: str | None
+            Bearer token that the container can use to authenticate with the server
 
         Returns
         -------
@@ -430,8 +602,10 @@ class DockerTaskManager(DockerBaseManager):
         io_files = [
             ("input", self.docker_input),
             ("output", b""),
-            ("token", token.encode("ascii")),
         ]
+
+        if token:
+            io_files.append(("token", token.encode("ascii")))
 
         for filename, data in io_files:
             filepath = os.path.join(self.task_folder_path, filename)
@@ -439,10 +613,20 @@ class DockerTaskManager(DockerBaseManager):
             with open(filepath, "wb") as fp:
                 fp.write(data)
 
-        volumes = {
-            tmp_vol_name: {"bind": self.tmp_folder, "mode": "rw"},
-        }
+        if not os.path.exists(self.session_state_file):
+            self.log.info("Create session state file")
+            session_state = pa.table(
+                {
+                    "action": ["no action"],
+                    "file": [self.session_state_file_name],
+                    "timestamp": [datetime.now()],
+                    "message": ["Created this session file."],
+                    "dataframe": [""],
+                }
+            )
+            pq.write_table(session_state, self.session_state_file)
 
+        volumes = {}
         if running_in_docker():
             volumes[self.data_volume_name] = {"bind": self.data_folder, "mode": "rw"}
         else:
@@ -481,14 +665,29 @@ class DockerTaskManager(DockerBaseManager):
         # FIXME: we should only prepend data_folder if database_uri is a
         #   filename
         environment_variables = {
-            "INPUT_FILE": f"{self.data_folder}/{self.task_folder_name}/input",
-            "OUTPUT_FILE": f"{self.data_folder}/{self.task_folder_name}/output",
-            "TOKEN_FILE": f"{self.data_folder}/{self.task_folder_name}/token",
-            "TEMPORARY_FOLDER": self.tmp_folder,
-            "HOST": f"http://{proxy_host}",
-            "PORT": os.environ.get("PROXY_SERVER_PORT", 8080),
-            "API_PATH": "",
+            ContainerEnvNames.INPUT_FILE.value: (
+                f"{self.data_folder}/{self.task_folder_name}/input",
+            ),
+            ContainerEnvNames.OUTPUT_FILE.value: (
+                f"{self.data_folder}/{self.task_folder_name}/output",
+            ),
+            ContainerEnvNames.SESSION_FOLDER.value: (
+                f"{self.data_folder}/{self.session_folder_name}",
+            ),
+            ContainerEnvNames.SESSION_FILE.value: (
+                f"{self.data_folder}/{self.session_folder_name}"
+                f"/{self.session_state_file_name}"
+            ),
+            ContainerEnvNames.HOST.value: f"http://{proxy_host}",
+            ContainerEnvNames.PORT.value: os.environ.get("PROXY_SERVER_PORT", 8080),
+            ContainerEnvNames.API_PATH.value: "",
+            ContainerEnvNames.FUNCTION_ACTION.value: self.action.value,
         }
+
+        if self.action == LocalAction.COMPUTE:
+            environment_variables[ContainerEnvNames.TOKEN_FILE.value] = (
+                f"{self.data_folder}/{self.task_folder_name}/token"
+            )
 
         # Add squid proxy environment variables
         if self.proxy:
@@ -515,67 +714,83 @@ class DockerTaskManager(DockerBaseManager):
             environment_variables["NO_PROXY"] = ", ".join(no_proxy)
             environment_variables["no_proxy"] = ", ".join(no_proxy)
 
-        for database in databases_to_use:
-            if database["label"] not in self.databases:
-                # In this case the algorithm might crash if it tries to access
-                # the DATABASE_LABEL environment variable
-                self.log.warning(
-                    "A user specified a database '%s' that does not exist. Available "
-                    "databases are: %s. This is likely to result in an algorithm "
-                    "crash.",
-                    database,
-                    self.databases.keys(),
+        # Only the data extraction step can access the source databases
+        if self.action == LocalAction.DATA_EXTRACTION:
+            # TODO
+            # 1. Check that the database type is source
+            # 2. Check that only one database has been requested
+            # 3. Pass the database URI to the algorithm
+            failed = False
+            if len(databases_to_use) > 1:
+                self.log.error(
+                    "Only one database can be used in the data extraction step."
                 )
-            # define env vars for the preprocessing and extra parameters such
-            # as query and sheet_name
-            extra_params = (
-                json.loads(database.get("parameters"))
-                if database.get("parameters")
-                else {}
-            )
-            for optional_key in ["query", "sheet_name", "preprocessing"]:
-                if optional_key in extra_params:
-                    env_var_value = (
-                        extra_params[optional_key]
-                        if optional_key != "preprocessing"
-                        else json.dumps(extra_params[optional_key])
-                    )
-                    environment_variables[
-                        f"{database['label'].upper()}_{optional_key.upper()}"
-                    ] = env_var_value
+                failed = True
 
-        environment_variables["USER_REQUESTED_DATABASE_LABELS"] = ",".join(
-            [db["label"] for db in databases_to_use]
-        )
+            source_database = databases_to_use[0]
 
-        # Only prepend the data_folder is it is a file-based database
-        # This allows algorithms to access multiple data sources at the
-        # same time
-        db_labels = []
-        for label in self.databases:
-            db = self.databases[label]
+            if source_database["type"] != "source":
+                self.log.error(
+                    "The database used in the data extraction step must be of type "
+                    "'source'."
+                )
+                failed = True
 
-            uri_var_name = f"{label.upper()}_DATABASE_URI"
-            environment_variables[uri_var_name] = (
+            if source_database["label"] not in self.databases:
+                self.log.error(
+                    "The database used in the data extraction step does not exist."
+                )
+                failed = True
+
+            if failed:
+                self.status = RunStatus.FAILED
+                raise PermanentAlgorithmStartFail()
+
+            db = self.databases[source_database["label"]]
+
+            environment_variables[ContainerEnvNames.DATABASE_URI.value] = (
                 f"{self.data_folder}/{os.path.basename(db['uri'])}"
                 if db["is_file"]
                 else db["uri"]
             )
 
-            type_var_name = f"{label.upper()}_DATABASE_TYPE"
-            environment_variables[type_var_name] = db["type"]
+            environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = db["type"]
 
-            # Add optional database parameter settings, these can be used by
-            # the algorithm (wrapper). Note that all env keys are prefixed
-            # with DB_PARAM_ to avoid collisions with other environment
             # variables.
             if "env" in db:
                 for key in db["env"]:
-                    env_key = f"{label.upper()}_DB_PARAM_{key.upper()}"
+                    env_key = f"{ContainerEnvNames.DB_PARAM_PREFIX}{key.upper()}"
                     environment_variables[env_key] = db["env"][key]
 
-            db_labels.append(label)
-        environment_variables["DB_LABELS"] = ",".join(db_labels)
+        # In the other case we are dealing with a dataframe in a session
+        else:
+
+            if not all(df["type"] == "handle" for df in databases_to_use):
+                self.log.error(
+                    "All databases used in the algorithm must be of type 'handle'."
+                )
+                self.status = RunStatus.FAILED
+                raise PermanentAlgorithmStartFail()
+
+            # Validate that the requested handles exists. At this point they need to as
+            # we are about to start the task.
+            requested_handles = {db["label"] for db in databases_to_use}
+            available_handles = {
+                file_.stem for file_ in Path(self.session_folder_path).glob("*.parquet")
+            }
+            # check that requested handles is a subset of available handles
+            if not requested_handles.issubset(available_handles):
+                self.log.error(
+                    "Requested dataframe handle(s) not found in session folder."
+                )
+                self.log.debug(f"Requested dataframe handles: {requested_handles}")
+                self.log.debug(f"Available dataframe handles: {available_handles}")
+                self.status = RunStatus.DATAFRAME_NOT_FOUND
+                raise DataFrameNotFound(f"user requested {requested_handles}")
+
+            environment_variables[
+                ContainerEnvNames.USER_REQUESTED_DATAFRAME_HANDLES.value
+            ] = ",".join([db["label"] for db in databases_to_use])
 
         # Load additional environment variables
         if algorithm_env:
@@ -629,7 +844,7 @@ class DockerTaskManager(DockerBaseManager):
                     "be overwritten."
                 )
             if msg:
-                self.status = TaskStatus.FAILED
+                self.status = RunStatus.FAILED
                 self.log.error(msg)
                 raise PermanentAlgorithmStartFail(msg)
 

@@ -16,3 +16,7 @@ from vantage6.server.model.algorithm_port import AlgorithmPort
 from vantage6.server.model.task_database import TaskDatabase
 from vantage6.server.model.algorithm_store import AlgorithmStore
 from vantage6.server.model.study import Study
+from vantage6.server.model.session import Session
+from vantage6.server.model.dataframe import Dataframe
+from vantage6.server.model.column import Column
+from vantage6.server.model.task_depends_on import task_depends_on

@@ -160,3 +160,16 @@ class NodePermissionException(AlgorithmError):
     Example usage:
     - The node does not allow the computation to be executed on a certain data column.
     """
+
+
+# ---------------- Session exceptions ----------------
+
+
+class SessionError(AlgorithmError):
+    """
+    Generic error raised when a step of the session fails.
+
+    Example usage:
+    - The function requested to be executed to build the session is not started using
+      the correction action (data extraction, preprocessing, etc.)
+    """

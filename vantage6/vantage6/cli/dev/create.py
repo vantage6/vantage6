@@ -288,7 +288,7 @@ def create_vserver_config(server_name: str, port: int, extra_config_file: Path) 
         port=port, jwt_secret_key=generate_apikey(), user_provided_config=extra_config
     )
     folders = ServerContext.instance_folders(
-        instance_type="server", instance_name=server_name, system_folders=True
+        instance_type="server", instance_name=server_name, system_folders=False
     )
 
     config_dir = Path(folders["config"] / server_name)
@@ -416,7 +416,7 @@ def create_demo_network(
     organizations/collaborations/users and tasks.
     """
     server_name = prompt_config_name(name)
-    if not ServerContext.config_exists(server_name):
+    if not ServerContext.config_exists(server_name, False):
         demo = demo_network(
             num_nodes,
             server_url,
@@ -434,7 +434,7 @@ def create_demo_network(
         error(f"Configuration {Fore.RED}{server_name}{Style.RESET_ALL} already exists!")
         exit(1)
     (node_config, server_import_config, server_config) = demo
-    ctx = get_server_context(server_name, True, ServerContext)
+    ctx = get_server_context(server_name, False, ServerContext)
     click_ctx.invoke(
         cli_server_import,
         ctx=ctx,
