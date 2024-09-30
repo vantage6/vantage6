@@ -323,11 +323,20 @@ class UserClient(ClientBase):
             dict
                 Message from the server
             """
-            assert email or username, "You need to provide username or email!"
+            if not (email or username):
+                self.parent.log.error("--> You need to provide username or email")
+                return
+
+            data = {}
+            if email:
+                data["email"] = email
+            if username:
+                data["username"] = username
+
             result = self.parent.request(
                 "recover/lost",
                 method="post",
-                json={"username": username, "email": email},
+                json=data,
             )
             msg = result.get("msg")
             self.parent.log.info(f"--> {msg}")
