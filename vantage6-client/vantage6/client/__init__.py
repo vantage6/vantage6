@@ -324,7 +324,7 @@ class UserClient(ClientBase):
                 Message from the server
             """
             if not (email or username):
-                self.parent.log.info("--> You need to provide username or email")
+                self.parent.log.error("--> You need to provide username or email")
                 return
 
             data = {}
