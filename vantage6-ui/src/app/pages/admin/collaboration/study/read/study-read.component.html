@@ -47,6 +47,12 @@
       </div>
     </mat-card-content>
   </mat-card>
+  <app-node-admin-card
+    [nodes]="nodes"
+    [organizations]="study.organizations"
+    [collaboration]="collaboration"
+    (nodesUpdated)="onUpdatedNodes()"
+  ></app-node-admin-card>
 </ng-container>
 <ng-template #loading>
   <mat-card>

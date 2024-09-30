@@ -43,41 +43,12 @@
       </div>
     </mat-card-content>
   </mat-card>
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>{{ "collaboration-read.card-nodes.title" | translate }}</mat-card-title>
-      <button
-        actions
-        mat-flat-button
-        class="right-aligned-button"
-        color="primary"
-        *ngIf="canCreateNodes && isMissingNodes()"
-        (click)="onRegisterMissingNodes()"
-      >
-        <mat-icon>add</mat-icon>{{ "collaboration-read.card-nodes.add" | translate }}
-      </button>
-      <button
-        actions
-        mat-flat-button
-        class="right-aligned-button"
-        color="primary"
-        *ngIf="!canCreateNodes && canCreateNodesOwnOrg && isMissingOwnOrgNode()"
-        (click)="onRegisterMissingNodes(false)"
-      >
-        <mat-icon>add</mat-icon>{{ "collaboration-read.card-nodes.add-own-org" | translate }}
-      </button>
-    </mat-card-header>
-    <mat-card-content>
-      <app-alert *ngIf="isMissingNodes()" class="node-alert" label="{{ 'collaboration-read.alert-missing-nodes' | translate }}"></app-alert>
-      <div class="chip-container">
-        <app-chip
-          *ngFor="let node of collaboration.nodes"
-          label="{{ getNodeLabelText(node) }}"
-          [type]="node.status === nodeStatus.Online ? 'success' : 'error'"
-        ></app-chip>
-      </div>
-    </mat-card-content>
-  </mat-card>
+  <app-node-admin-card
+    [nodes]="collaboration.nodes"
+    [organizations]="collaboration.organizations"
+    [collaboration]="collaboration"
+    (nodesUpdated)="onUpdatedNodes()"
+  ></app-node-admin-card>
   <mat-card>
     <mat-card-header>
       <mat-card-title>{{ "collaboration-read.card-algorithm-stores.title" | translate }}</mat-card-title>
