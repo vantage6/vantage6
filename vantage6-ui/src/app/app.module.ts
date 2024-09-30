@@ -125,6 +125,7 @@ import { ReviewReadComponent } from './pages/store/algorithms-in-review/review-r
 import { ReviewSubmitComponent } from './pages/store/algorithms-in-review/review-submit/review-submit.component';
 import { MyPendingAlgorithmsComponent } from './pages/store/algorithms-in-review/my-pending-algorithms/my-pending-algorithms.component';
 import { OldAlgorithmListComponent } from './pages/store/algorithm/old-list/old-algorithm-list.component';
+import { NodeAdminCardComponent } from './components/helpers/node-admin-card/node-admin-card.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -222,7 +223,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     ReviewReadComponent,
     ReviewSubmitComponent,
     MyPendingAlgorithmsComponent,
-    OldAlgorithmListComponent
+    OldAlgorithmListComponent,
+    NodeAdminCardComponent
   ],
   bootstrap: [AppComponent],
   imports: [

@@ -39,8 +39,6 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
   canDelete = false;
   canEdit = false;
   canCreateStudy = false;
-  canCreateNodes = false;
-  canCreateNodesOwnOrg = false;
 
   isEditAlgorithmStore = false;
   selectedAlgoStore?: AlgorithmStore;
@@ -50,8 +48,6 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
   selectedStudy?: Study;
   studyTable?: TableData;
 
-  private nodeStatusUpdateSubscription?: Subscription;
-
   constructor(
     private dialog: MatDialog,
     private router: Router,
@@ -59,35 +55,16 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
     private algorithmStoreService: AlgorithmStoreService,
     private translateService: TranslateService,
     private permissionService: PermissionService,
-    private socketioConnectService: SocketioConnectService,
-    private chosenCollaborationService: ChosenCollaborationService,
-    private nodeService: NodeService
+    private chosenCollaborationService: ChosenCollaborationService
   ) {}
 
   async ngOnInit(): Promise<void> {
     await this.initData();
     this.setPermissions();
-    this.nodeStatusUpdateSubscription = this.socketioConnectService
-      .getNodeStatusUpdates()
-      .subscribe((nodeStatusUpdate: NodeOnlineStatusMsg | null) => {
-        if (nodeStatusUpdate) this.onNodeStatusUpdate(nodeStatusUpdate);
-      });
   }
 
   ngOnDestroy(): void {
     this.destroy$.next(true);
-    this.nodeStatusUpdateSubscription?.unsubscribe();
-  }
-
-  public isMissingNodes(): boolean {
-    return this.collaboration !== undefined && this.collaboration.nodes.length < this.collaboration.organizations.length;
-  }
-
-  public isMissingOwnOrgNode(): boolean {
-    return (
-      this.collaboration !== undefined &&
-      this.collaboration.nodes.filter((node) => node.organization.id === this.permissionService.activeUser?.organization.id).length === 0
-    );
   }
 
   private async initData(): Promise<void> {
@@ -114,14 +91,6 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
     this.isLoading = false;
   }
 
-  private onNodeStatusUpdate(nodeStatusUpdate: NodeOnlineStatusMsg): void {
-    if (!this.collaboration) return;
-    const node = this.collaboration.nodes.find((n) => n.id === nodeStatusUpdate.id);
-    if (node) {
-      node.status = nodeStatusUpdate.online ? NodeStatus.Online : NodeStatus.Offline;
-    }
-  }
-
   private setPermissions() {
     this.permissionService
       .isInitialized()
@@ -135,32 +104,11 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
             OperationType.CREATE,
             this.collaboration || null
           );
-          this.canCreateNodes = this.permissionService.isAllowedForCollab(
-            ResourceType.NODE,
-            OperationType.CREATE,
-            this.collaboration || null
-          );
-          const activeUserOrgId = this.permissionService.activeUser?.organization.id;
-          this.canCreateNodesOwnOrg =
-            this.permissionService.isAllowedForOrg(ResourceType.NODE, OperationType.CREATE, activeUserOrgId || null) &&
-            (this.collaboration?.organizations || []).some((org) => org.id === activeUserOrgId);
         }
       });
   }
 
-  async onRegisterMissingNodes(allOrgs: boolean = true): Promise<void> {
-    if (!this.collaboration) return;
-    // find organizations that are not yet registered
-    let missingOrganizations = this.collaboration?.organizations.filter(
-      (organization) => !this.collaboration?.nodes.some((node) => node.organization.id === organization.id)
-    );
-    if (!allOrgs) {
-      missingOrganizations = missingOrganizations.filter(
-        (organization) => organization.id === this.permissionService.activeUser?.organization.id
-      );
-    }
-    await this.nodeService.registerNodes(this.collaboration, missingOrganizations);
-    // refresh the collaboration
+  onUpdatedNodes(): void {
     this.initData();
   }
 
@@ -258,17 +206,5 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
           this.chosenCollaborationService.refresh();
         }
       });
-  }
-
-  getNodeLabelText(node: BaseNode): string {
-    return node.status === NodeStatus.Online ? node.name : node.name + this.nodeOfflineText(node);
-  }
-
-  private nodeOfflineText(node: BaseNode): string {
-    if (!node.last_seen) {
-      return ` (${this.translateService.instant('general.offline')} - never been online)`;
-    } else {
-      return ` (${this.translateService.instant('general.offline')} since ${printDate(node.last_seen)})`;
-    }
   }
 }

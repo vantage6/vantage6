@@ -10,6 +10,10 @@ import { StudyService } from 'src/app/services/study.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
+import { BaseNode } from 'src/app/models/api/node.model';
+import { NodeService } from 'src/app/services/node.service';
+import { Collaboration, CollaborationLazyProperties } from 'src/app/models/api/collaboration.model';
+import { CollaborationService } from 'src/app/services/collaboration.service';
 
 @Component({
   selector: 'app-study-read',
@@ -24,6 +28,8 @@ export class StudyReadComponent implements OnInit, OnDestroy {
 
   isLoading = true;
   study?: Study;
+  collaboration?: Collaboration;
+  nodes?: BaseNode[];
 
   canDelete = false;
   canEdit = false;
@@ -34,6 +40,8 @@ export class StudyReadComponent implements OnInit, OnDestroy {
     private translateService: TranslateService,
     private permissionService: PermissionService,
     private studyService: StudyService,
+    private nodeService: NodeService,
+    private collaborationService: CollaborationService,
     private chosenCollaborationService: ChosenCollaborationService
   ) {}
 
@@ -60,7 +68,17 @@ export class StudyReadComponent implements OnInit, OnDestroy {
 
   private async initData(): Promise<void> {
     this.study = await this.studyService.getStudy(this.id, [StudyLazyProperties.Collaboration, StudyLazyProperties.Organizations]);
+    this.nodes = await this.nodeService.getNodes({ study_id: this.id });
+    if (this.study.collaboration) {
+      this.collaboration = await this.collaborationService.getCollaboration(this.study.collaboration?.id.toString(), [
+        CollaborationLazyProperties.Organizations
+      ]);
+    }
     this.isLoading = false;
+  }
+
+  onUpdatedNodes(): void {
+    this.initData();
   }
 
   handleDelete(): void {
