@@ -869,7 +869,7 @@ class SessionDataframes(SessionBase):
     def get(self, session_id):
         """view all dataframes in a session
         ---
-         description: >-
+        description: >-
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
@@ -1253,7 +1253,7 @@ class SessionDataframe(SessionBase):
     @only_for(("node",))
     def patch(self, session_id, dataframe_handle):
         """Nodes report their column names
-         ---
+        ---
         description: >-
           Endpoints used by nodes to report dataframe metadata.\n
 
