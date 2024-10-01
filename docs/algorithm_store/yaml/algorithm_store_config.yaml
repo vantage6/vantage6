@@ -7,7 +7,7 @@ description: Test
 ip: 0.0.0.0
 
 # Port to which the algorithm store binds
-port: 5000
+port: 7602
 
 # The URI to the algorithm store database. This should be a valid SQLAlchemy URI,
 # e.g. for an Sqlite database: sqlite:///database-name.sqlite,
@@ -68,7 +68,7 @@ policies:
   # any user from these servers will be able use the algorithms from the store.
   allowed_servers:
     - "https://cotopaxi.vantage6.ai"
-    - "http://localhost:5000/api"
+    - "http://localhost:7601/api"
 
   # Localhost servers are by default never allowed to connect to the algorithm store,
   # even if no allowed servers lists are given. This setting can be used to allow
@@ -107,6 +107,6 @@ dev:
 # existing user in a vantage6 server.
 root_user:
   # URI to the vantage6 server
-  v6_server_uri: http://localhost:5000/api
+  v6_server_uri: http://localhost:7601/api
   # username of the vantage6 server's user you want to make root in the algorithm store
   username: root

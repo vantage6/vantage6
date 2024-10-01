@@ -34,7 +34,7 @@ from pathlib import Path
 
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
-from vantage6.common.enum import StorePolicies
+from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
 from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
 from vantage6.backend.common.globals import HOST_URI_ENV
 from vantage6.backend.common.jsonable import jsonable
@@ -154,7 +154,7 @@ class AlgorithmStoreApp:
         def _get_request_path(request: Request) -> str:
             """
             Return request extension of request URL, e.g.
-            http://localhost:5000/api/task/1 -> api/task/1
+            http://localhost:7601/api/task/1 -> api/task/1
 
             Parameters
             ----------
@@ -303,22 +303,34 @@ class AlgorithmStoreApp:
         config: dict
             Configuration object containing the policies
         """
-        old_policies = db.Policy.get()
-
         # delete old policies from the database
         # pylint: disable=expression-not-assigned
-        [p.delete() for p in old_policies]
+        [p.delete() for p in db.Policy.get()]
 
         policies: dict = config.get("policies", {})
         for policy, policy_value in policies.items():
             # TODO v5+ remove this deprecated policy in favour of 'algorithm_view'
-            if policy in ["algorithms_open", "algorithms_open_to_whitelisted"]:
-                continue
+            if policy == "algorithms_open":
+                db.Policy(
+                    key=StorePolicies.ALGORITHM_VIEW, value=AlgorithmViewPolicies.PUBLIC
+                ).save()
+                log.warning(
+                    "Policy 'algorithms_open' will be deprecated in v5.0. Please use "
+                    "'algorithm_view' instead."
+                )
+            elif policy == "algorithms_open_to_whitelisted":
+                db.Policy(
+                    key=StorePolicies.ALGORITHM_VIEW,
+                    value=AlgorithmViewPolicies.WHITELISTED,
+                ).save()
+                log.warning(
+                    "Policy 'algorithms_open_to_whitelisted' will be deprecated in v5.0"
+                    ". Please use 'algorithm_view' instead."
+                )
             elif policy not in [p.value for p in StorePolicies]:
                 log.warning("Policy '%s' is not a valid policy, skipping", policy)
                 continue
-            # add other policies to the database
-            if isinstance(policy_value, list):
+            elif isinstance(policy_value, list):
                 for value in policy_value:
                     db.Policy(key=policy, value=value).save()
             else:
@@ -330,6 +342,20 @@ class AlgorithmStoreApp:
             localhost_servers = db.Vantage6Server.get_localhost_servers()
             for server in localhost_servers:
                 server.delete()
+
+        # If multiple instances of the algorithm store are running and are started
+        # simultaneously, it is possible that this function is run at the same time as
+        # well. That may lead to double policies in the database. To prevent this, we
+        # remove non-unique policies from the database.
+        # TODO a more elegant solution would be to claim the policy table on the
+        # database for this entire function, or so. Check if doable.
+        db_policies = db.Policy.get()
+        unique_policies = set()
+        for policy in db_policies:
+            if (policy.key, policy.value) in unique_policies:
+                policy.delete()
+            else:
+                unique_policies.add((policy.key, policy.value))
 
     def setup_disable_review(self) -> None:
         """

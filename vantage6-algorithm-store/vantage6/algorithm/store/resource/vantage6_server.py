@@ -230,7 +230,7 @@ class Vantage6Servers(AlgorithmStoreResources):
             return {
                 "msg": "This server is already whitelisted in this algorithm store "
                 "instance."
-            }, HTTPStatus.FORBIDDEN
+            }, HTTPStatus.ALREADY_REPORTED
 
         # the user that is whitelisting the server should be able to delete it
         # in the future. Assign the server manager role to the user executing this

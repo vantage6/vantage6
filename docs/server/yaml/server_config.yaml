@@ -11,7 +11,7 @@ server_name: demo
 ip: 0.0.0.0
 
 # Port to which the server binds
-port: 5000
+port: 7601
 
 # API path prefix. (i.e. https://yourdomain.org/api_path/<endpoint>). In the
 # case you use a referse proxy and use a subpath, make sure to include it
@@ -24,7 +24,7 @@ api_path: /api
 # Example for the cotopaxi server
 server_url: https://cotopaxi.vantage6.ai
 # Example for running the server locally with default settings:
-# server_url: http://localhost:5000
+# server_url: http://localhost:7601
 
 # The URI to the server database. This should be a valid SQLAlchemy URI,
 # e.g. for an Sqlite database: sqlite:///database-name.sqlite,

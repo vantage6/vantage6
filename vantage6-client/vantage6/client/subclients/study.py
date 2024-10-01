@@ -14,6 +14,14 @@ class StudySubClient(ClientBase.SubClient):
         ----------
         id_ : int
             The id of the study
+        field: str, optional
+            Which data field to keep in the result. For instance, "field='name'"
+            will only return the name of the study. Default is None.
+        fields: list[str], optional
+            Which data fields to keep in the result. For instance,
+            "fields=['name', 'id']" will only return the name and id of the
+            study. Default is None.
+
 
         Returns
         -------
@@ -41,6 +49,21 @@ class StudySubClient(ClientBase.SubClient):
             Filter studies by organization id
         include_organizations: bool, optional
             Include organizations in the response, by default False
+        field: str, optional
+            Which data field to keep in the result. For instance, "field='name'"
+            will only return the name of the studies. Default is None.
+        fields: list[str], optional
+            Which data fields to keep in the result. For instance,
+            "fields=['name', 'id']" will only return the name and id of the
+            studies. Default is None.
+        filter_: tuple, optional
+            Filter the result on key-value pairs. For instance,
+            "filter_=('name', 'study1')" will only return the studies with the name
+            'study1'. Default is None.
+        filters: list[tuple], optional
+            Filter the result on multiple key-value pairs. For instance,
+            "filters=[('name', 'study1'), ('id', 1)]" will only return the studies
+            with the name 'study1' and id 1. Default is None.
         page: int, optional
             Pagination page, by default 1
         per_page: int, optional
@@ -76,6 +99,13 @@ class StudySubClient(ClientBase.SubClient):
         collaboration : int | None
             Id of the collaboration the study is part of. If None, the value of
             setup_collaboration() is used.
+        field: str, optional
+            Which data field to keep in the returned dict. For instance, "field='name'"
+            will only return the name of the study. Default is None.
+        fields: list[str], optional
+            Which data fields to keep in the returned dict. For instance,
+            "fields=['name', 'id']" will only return the name and id of the study.
+            Default is None.
 
         Returns
         -------
@@ -99,21 +129,16 @@ class StudySubClient(ClientBase.SubClient):
             },
         )
 
-    @post_filtering(iterable=False)
-    def delete(self, id_: int = None) -> dict:
+    def delete(self, id_: int = None) -> None:
         """Deletes a study
 
         Parameters
         ----------
         id_ : int
             Id of the study you want to delete
-
-        Returns
-        -------
-        dict
-            Message from the server
         """
-        return self.parent.request(f"study/{id_}", method="delete")
+        res = self.parent.request(f"study/{id_}", method="delete")
+        self.parent.log.info(f"--> {res.get('msg')}")
 
     @post_filtering(iterable=False)
     def update(
@@ -133,6 +158,13 @@ class StudySubClient(ClientBase.SubClient):
             New name of the study
         organizations : list[int], optional
             New list of organization ids which participate in the study
+        field: str, optional
+            Which data field to keep in the returned dict. For instance, "field='name'"
+            will only return the name of the study. Default is None.
+        fields: list[str], optional
+            Which data fields to keep in the returned dict. For instance,
+            "fields=['name', 'id']" will only return the name and id of the study.
+            Default is None.
 
         Returns
         -------

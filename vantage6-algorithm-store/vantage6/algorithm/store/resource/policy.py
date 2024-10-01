@@ -91,13 +91,13 @@ class PoliciesBase(AlgorithmStoreResources):
         # reshape the policies to a more readable format
         # e.g. from
         #   {'value': 'public', 'key': 'algorithm_view'},
-        #   {'value': 'http://localhost:5000/api', 'key': 'allowed_servers'},
+        #   {'value': 'http://localhost:7601/api', 'key': 'allowed_servers'},
         #   {'value': 'https://cotopaxi.vantage6.ai', 'key': 'allowed_servers'},
         #   {'value': '1', 'key': 'allow_localhost'}
         # to
         #   {'algorithm_view': 'public',
         #    'allowed_servers': [
-        #      'http://localhost:5000/api', 'https://cotopaxi.vantage6.ai'
+        #      'http://localhost:7601/api', 'https://cotopaxi.vantage6.ai'
         #     ],
         #    'allow_localhost': 1}
         response_dict = {}

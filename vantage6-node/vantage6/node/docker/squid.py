@@ -15,7 +15,7 @@ from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 
 from vantage6.common import logger_name
-from vantage6.common.globals import APPNAME
+from vantage6.common.globals import APPNAME, Ports
 from vantage6.common.docker.addons import (
     remove_container,
     running_in_docker,
@@ -147,7 +147,9 @@ class Squid(DockerBaseManager):
         safe = True
 
         has_domains = len(whitelist.domains) > 0
-        non_https_ports = len([p for p in whitelist.ports if p != 443]) > 0
+        non_https_ports = (
+            len([p for p in whitelist.ports if p != Ports.HTTPS.value]) > 0
+        )
         if has_domains and non_https_ports:
             log.warning("Whitelist contains domains and non-https ports!")
             log.warning("This is not safe!")

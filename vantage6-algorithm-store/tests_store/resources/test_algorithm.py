@@ -3,6 +3,7 @@ import datetime
 import unittest
 from unittest.mock import patch
 
+from vantage6.common.globals import Ports
 from vantage6.algorithm.store.model.argument import Argument
 from vantage6.algorithm.store.model.common.enums import (
     AlgorithmStatus,
@@ -22,7 +23,7 @@ from vantage6.common.enum import StorePolicies, AlgorithmViewPolicies
 
 from ..base.unittest_base import MockResponse, TestResources
 
-SERVER_URL = "http://localhost:5000"
+SERVER_URL = f"http://localhost:{Ports.DEV_SERVER.value}"
 HEADERS = {"server_url": SERVER_URL, "Authorization": "Mock"}
 USERNAME = "test_user"
 

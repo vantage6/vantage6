@@ -53,6 +53,9 @@ class Rule(Base):
 
     # fields
     name = Column(Text)
+    # TODO v5+ maybe get rid of these enums as they have weird side-effects - e.g.
+    # you have to do `client.rule.list(operation='v', scope='glo')` to get all rules
+    # with global view - which is very difficult for the user
     operation = Column(Enum(Operation))
     scope = Column(Enum(Scope))
     description = Column(String)

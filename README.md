@@ -37,13 +37,24 @@ You can find more (user) documentation at [readthedocs (docs.vantage6.ai)](https
 
 ![Vantage6 architecture overview](docs/images/overview-infrastructure.png)
 
-_A High level overview of the vantage6 infrastructure. Vantage6 has both a client-server and peer-to-peer architecture. The client is used by the researcher to create (PET) computation requests. It is also used to manage users, organizations and collaborations. The server contains users, organizations, collaborations, tasks and their results. It provides a central access point for both the clients and nodes. The nodes have access to privacy sensitive data and handle computation requests retrieved from the server. Computation request are executed as separate containers on the node. These containers are connected to containers at other nodes by a VPN network._
+_A High level overview of the vantage6 infrastructure. Vantage6 has both a
+client-server and peer-to-peer architecture. The client is used by the researcher to
+create (PET) computation requests. It is also used to manage users, organizations and
+collaborations. The server contains users, organizations, collaborations, tasks and
+their results. It provides a central access point for both the clients and nodes. The
+nodes have access to privacy sensitive data and handle computation requests retrieved
+from the server. Computation request are executed as separate containers on the node.
+These containers are connected to containers at other nodes by a VPN network._
 
 ## :books: Quickstart
 
 ### Requirements
 
-The **vantage6** infrastructure is delivered in Docker images. To run these images, you need to have [Docker](https://docs.docker.com/get-docker/) installed. To install the latest version of the vantage6 CLI, you need to have [Python](https://www.python.org/downloads/), we recommend using an environment manager like [mini-conda](https://docs.conda.io/en/latest/miniconda.html).
+The **vantage6** infrastructure is delivered in Docker images. To run these images, you
+need to have [Docker](https://docs.docker.com/get-docker/) installed. To install the
+latest version of the vantage6 CLI, you need to have
+[Python](https://www.python.org/downloads/), we recommend using an environment manager
+like [mini-conda](https://docs.conda.io/en/latest/miniconda.html).
 
 Install the latest version of the vantage6 CLI by using:
 
@@ -79,7 +90,9 @@ v6 node attach
 v6 server attach
 ```
 
-From here you can use the [vantage6-client](https://pypi.org/project/vantage6-client) to interact with the server. The demo network has a pre-configured organization with the following credentials:
+From here you can use the [vantage6-client](https://pypi.org/project/vantage6-client)
+to interact with the server. The demo network has a pre-configured organization with
+the following credentials:
 
 - Username: `dev_admin`
 - Password: `password`
@@ -89,7 +102,7 @@ For example, you can create a new organization by running:
 ```python
 from vantage6.client import Client
 
-client = Client('http://127.0.0.1', 5000, '/api', log_level='debug')
+client = Client('http://127.0.0.1', 7601, '/api', log_level='debug')
 client.authenticate('dev_admin', 'password')
 client.setup_encryption(None)
 
@@ -103,7 +116,8 @@ client.organization.create(
 )
 ```
 
-You can find more (user) documentation at [readthedocs (docs.vantage6.ai)](https://docs.vantage6.ai)
+You can find more (user) documentation at
+[readthedocs (docs.vantage6.ai)](https://docs.vantage6.ai)
 
 ## Project structure
 
@@ -128,14 +142,16 @@ easily.
 
 ### Docker images
 
-The vantage6 infrastructure is delivered in Docker images. All Docker images are stored in our private [Harbor](https://goharbor.io/) registry. The most important images are:
+The vantage6 infrastructure is delivered in Docker images. All Docker images are stored
+in our private [Harbor](https://goharbor.io/) registry. The most important images are:
 
 - `harbor2.vantage6.ai/infrastructure/node:VERSION` -> _Node application Docker image_
 - `harbor2.vantage6.ai/infrastructure/server:VERSION` -> _Server application Docker image_
 - `harbor2.vantage6.ai/infrastructure/ui:VERSION` -> _User interface Docker image_
 - `harbor2.vantage6.ai/infrastructure/algorithm-store:VERSION` -> _Algorithm store Docker image_
 
-with `VERSION` being the full semantic version of the vantage6 infrastructure, e.g. `4.0.0` or `4.1.0rc0`.
+with `VERSION` being the full semantic version of the vantage6 infrastructure, e.g.
+`4.0.0` or `4.1.0rc0`.
 
 Several other images are used to support the infrastructure:
 
@@ -153,7 +169,10 @@ And finally there are some images released for algorithm development:
 
 ## :gift_heart: Join the community!
 
-We hope to continue developing, improving, and supporting **vantage6** with the help of the federated learning community. If you are interested in contributing, first of all, thank you! Second, please take a look at our [contributing guidelines](https://docs.vantage6.ai/en/main/devops/contribute.html)
+We hope to continue developing, improving, and supporting **vantage6** with the help of
+the federated learning community. If you are interested in contributing, first of all,
+thank you! Second, please take a look at our
+[contributing guidelines](https://docs.vantage6.ai/en/main/devops/contribute.html)
 
 <a href="https://github.com/vantage6/vantage6/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=vantage6/vantage6" />

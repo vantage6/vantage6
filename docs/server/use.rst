@@ -154,6 +154,12 @@ You can view all available commands in the table below, or alternatively, use
 ``v6 dev start-demo-network --help``), you can view more details on how to
 execute them.
 
+.. warning::
+
+  If you are using Linux without Docker desktop, you will need to run
+  ``v6 dev create-demo-network --server-url http://172.17.0.1``. This address points
+  towards the localhost from within Docker and thereby ensures that the nodes will be
+  able to connect to the local server.
 
 +--------------------------------+-----------------------------------------------------+
 | **Command**                    | **Description**                                     |

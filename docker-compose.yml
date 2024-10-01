@@ -6,14 +6,14 @@ services:
     image: harbor2.vantage6.ai/infrastructure/server:latest
     dockerfile: server.Dockerfile
     ports:
-      - "5000:5000"
+      - "7601:7601"
     depends_on:
       - database
     volumes:
       # - ./configs/sqlite.yaml:/mnt/config.yaml
       - ./configs/postgress.yaml:/mnt/config.yaml
     command: [
-      "uwsgi --http :5000 --gevent 1000 --http-websockets
+      "uwsgi --http :7601 --gevent 1000 --http-websockets
         --master --callable app --disable-logging
         --wsgi-file /vantage6/vantage6-server/vantage6/server/wsgi.py
         --pyargv /mnt/config.yaml"

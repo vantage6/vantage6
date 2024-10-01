@@ -14,6 +14,13 @@ class AlgorithmSubClient(ClientBase.SubClient):
         ----------
         id_ : int
             The id of the algorithm.
+        field : str, optional
+            Which data field to keep in the result. For instance, "field='name'"
+            will only return the name of the algorithm. Default is None.
+        fields : list[str], optional
+            Which data fields to keep in the result. For instance,
+            "fields=['name', 'id']" will only return the name and id of the
+            algorithm. Default is None.
 
         Returns
         -------
@@ -38,6 +45,8 @@ class AlgorithmSubClient(ClientBase.SubClient):
         under_review: bool = None,
         in_review_process: bool = None,
         invalidated: bool = None,
+        page: int = 1,
+        per_page: int = 10,
     ) -> list[dict]:
         """
         List algorithms.
@@ -65,6 +74,25 @@ class AlgorithmSubClient(ClientBase.SubClient):
             awaiting reviewer assignment or under review.
         invalidated : bool
             Filter by whether the algorithm is invalidated.
+        field : str, optional
+            Which data field to keep in the result. For instance, "field='name'"
+            will only return the name of the algorithms. Default is None.
+        fields : list[str], optional
+            Which data fields to keep in the result. For instance,
+            "fields=['name', 'id']" will only return the name and id of the
+            algorithms. Default is None.
+        filter_: tuple, optional
+            Filter the result on key-value pairs. For instance,
+            "filter_=('name', 'algorithm1')" will only return the algorithms with
+            the name 'algorithm1'. Default is None.
+        filters: list[tuple], optional
+            Filter the result on multiple key-value pairs. For instance,
+            "filters=[('name', 'algorithm1'), ('id', 1)]" will only return the
+            algorithms with the name 'algorithm1' and id 1. Default is None.
+        page : int, optional
+            The page number to retrieve.
+        per_page : int, optional
+            The number of items to retrieve per page.
 
         Returns
         -------
@@ -77,6 +105,8 @@ class AlgorithmSubClient(ClientBase.SubClient):
             "image": image,
             "partitioning": partitioning,
             "v6_version": v6_version,
+            "page": page,
+            "per_page": per_page,
         }
         if awaiting_reviewer_assignment is not None:
             params["awaiting_reviewer_assignment"] = awaiting_reviewer_assignment
@@ -168,7 +198,12 @@ class AlgorithmSubClient(ClientBase.SubClient):
                         List of column names to visualize
         documentation_url : str, optional
             URL to the documentation of the algorithm
-
+        field : str, optional
+            Which data field to keep in the returned dict. For instance, "field='name'"
+            will only return the name of the algorithm. Default is None.
+        fields : list[str], optional
+            Which data fields to keep in the returned dict. For instance,
+            "fields=['name', 'id']" will only return the name and id of the algorithm.
 
         Returns
         -------
@@ -194,7 +229,7 @@ class AlgorithmSubClient(ClientBase.SubClient):
             json=body,
         )
 
-    def delete(self, id_: int) -> dict:
+    def delete(self, id_: int) -> None:
         """
         Delete an algorithm from the algorithm store
 
@@ -202,19 +237,16 @@ class AlgorithmSubClient(ClientBase.SubClient):
         ----------
         id_ : int
             Id of the algorithm
-
-        Returns
-        -------
-        dict
-            The deleted algorithm
         """
-        return self.parent.request(
+        res = self.parent.request(
             f"algorithm/{id_}",
             method="delete",
             is_for_algorithm_store=True,
             headers=self.parent.util._get_server_url_header(),
         )
+        self.parent.log.info(f"--> {res.get('msg')}")
 
+    @post_filtering(iterable=False)
     def invalidate(self, id_: int) -> dict:
         """
         Invalidate an algorithm in the algorithm store. An invalidated algorithm
@@ -225,6 +257,12 @@ class AlgorithmSubClient(ClientBase.SubClient):
         ----------
         id_ : int
             Id of the algorithm
+        field : str, optional
+            Which data field to keep in the returned dict. For instance, "field='name'"
+            will only return the name of the algorithm. Default is None.
+        fields : list[str], optional
+            Which data fields to keep in the returned dict. For instance,
+            "fields=['name', 'id']" will only return the name and id of the algorithm.
 
         Returns
         -------
@@ -238,6 +276,7 @@ class AlgorithmSubClient(ClientBase.SubClient):
             headers=self.parent.util._get_server_url_header(),
         )
 
+    @post_filtering(iterable=False)
     def update(
         self,
         id_: int,
@@ -320,6 +359,14 @@ class AlgorithmSubClient(ClientBase.SubClient):
                 Whether to refresh the digest of the algorithm. This is useful
                 when the algorithm image has been updated before the algorithm was
                 in review.
+            field : str, optional
+                Which data field to keep in the returned dict. For instance,
+                "field='name'" will only return the name of the algorithm. Default is
+                None.
+            fields : list[str], optional
+                Which data fields to keep in the returned dict. For instance,
+                "fields=['name', 'id']" will only return the name and id of the
+                algorithm. Default is None.
 
         Returns
         -------
