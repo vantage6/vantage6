@@ -42,6 +42,8 @@ Release notes
    (`PR#1490 <https://github.com/vantage6/vantage6/pull/1490>`_).
  - Added missing field and filter options to docstrings in the Python client
    (`PR#1492 <https://github.com/vantage6/vantage6/pull/1492>`_).
+ - Prevent error if server is whitelisted at the store for the second time
+   (`PR#1491 <https://github.com/vantage6/vantage6/pull/1491>`_).
 
 
 4.7.0
