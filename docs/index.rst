@@ -61,6 +61,7 @@ This documentation space consists of the following main sections:
   vantage6*
 * :doc:`/function-docs/index` |rarr|
   *Documentation of the vantage6 infrastructure code*
+* :doc:`/project-examples/index` |rarr| *Examples of how vantage6 has been setup*
 * :doc:`/glossary` |rarr| *A dictionary of common terms used in these docs*
 * :doc:`/release_notes` |rarr| *Log of what has been released and when*
 
@@ -118,6 +119,7 @@ Index
    features/index
    devops/index
    function-docs/index
+   project-examples/index
    glossary
 
 .. toctree::

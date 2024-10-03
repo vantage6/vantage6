@@ -1,0 +1,4 @@
+PLUGIN
+======
+
+Plugin content
