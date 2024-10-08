@@ -271,9 +271,10 @@ class AlgorithmStoreApp:
             "permissions": self.permissions,
         }
 
+        api_path = self.ctx.config.get("api_path", API_PATH)
         for res in RESOURCES:
             module = importlib.import_module("vantage6.algorithm.store.resource." + res)
-            module.setup(self.api, API_PATH, services)
+            module.setup(self.api, api_path, services)
 
     @staticmethod
     def _add_default_roles() -> None:
