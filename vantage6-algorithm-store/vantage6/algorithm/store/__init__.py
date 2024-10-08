@@ -36,7 +36,7 @@ from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
 from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
 from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
-from vantage6.backend.common.globals import HOST_URI_ENV
+from vantage6.backend.common.globals import HOST_URI_ENV, DEFAULT_API_PATH
 from vantage6.backend.common.jsonable import jsonable
 
 # TODO move this to common, then remove dependency on CLI in algorithm store
@@ -46,7 +46,6 @@ from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewS
 from vantage6.algorithm.store import db
 from vantage6.algorithm.store.default_roles import get_default_roles, DefaultRole
 from vantage6.algorithm.store.globals import (
-    API_PATH,
     RESOURCES,
     RESOURCES_PATH,
     SERVER_MODULE_NAME,
@@ -271,7 +270,7 @@ class AlgorithmStoreApp:
             "permissions": self.permissions,
         }
 
-        api_path = self.ctx.config.get("api_path", API_PATH)
+        api_path = self.ctx.config.get("api_path", DEFAULT_API_PATH)
         for res in RESOURCES:
             module = importlib.import_module("vantage6.algorithm.store.resource." + res)
             module.setup(self.api, api_path, services)
