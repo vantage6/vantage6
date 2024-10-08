@@ -63,6 +63,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   columns: string[] = [];
   isLoading: boolean = true;
   isLoadingColumns: boolean = false;
+  hasLoadedColumns: boolean = false;
   isSubmitting: boolean = false;
   isTaskRepeat: boolean = false;
   isDataInitialized: boolean = false;
@@ -415,6 +416,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       this.columns = task.results?.[0].decoded_result || JSON.parse('');
     }
     this.isLoadingColumns = false;
+    this.hasLoadedColumns = true;
   }
 
   shouldShowParameterSimpleInput(argument: Argument): boolean {
@@ -424,6 +426,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       !this.shouldShowParameterBooleanInput(argument)
     );
   }
+
   shouldIncludeFormField(argument: Argument): boolean {
     return !this.shouldShowParameterBooleanInput(argument) && !this.shouldShowMultipleInput(argument);
   }
@@ -433,7 +436,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       argument.type === this.argumentType.IntegerList ||
       argument.type === this.argumentType.FloatList ||
       argument.type === this.argumentType.StringList ||
-      (argument.type === this.argumentType.ColumnList && this.columns.length === 0)
+      (argument.type === this.argumentType.ColumnList && this.columns.length === 0 && this.hasLoadedColumns)
     );
   }
 

@@ -19,7 +19,8 @@
     "description": "Description",
     "overview": "Overview",
     "file-select": "Select file",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "parameter": "Parameter"
   },
   "resources": {
     "collaboration": "Collaboration",
