@@ -43,6 +43,7 @@ from vantage6.node.docker.exceptions import (
     AlgorithmContainerNotFound,
 )
 from vantage6.node.globals import DEFAULT_REQUIRE_ALGO_IMAGE_PULL
+from vantage6.common.configuration_manager import DictNamesIds
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -285,16 +286,315 @@ class DockerManager(DockerBaseManager):
             self.log.debug("Creating volume %s", volume_name)
             self.docker.volumes.create(volume_name)
 
-    def is_docker_image_allowed(self, evaluated_img: str, task_info: dict) -> bool:
+    def _check_pol_org(
+        self,
+        init_org_id: int,
+    ) -> bool:
         """
-        Checks the docker image name.
-
-        Against a list of regular expressions as defined in the configuration
-        file. If no expressions are defined, all docker images are accepted.
+        Check if execution of the task is allowed by the organizations allowlist policy
 
         Parameters
         ----------
-        assessed_img: str
+        init_org_id: int
+            ID of the organization that initiated the task
+
+        Returns
+        -------
+        bool
+            True if policy allows execution, False otherwise
+        """
+        # NOTE/TODO: we assume node config has been properly validated, this
+        # means that validation should better be done at the vantage6-node
+        # level, not vantage6-cli
+        allowed_orgs = self._policies.get(NodePolicy.ALLOWED_ORGANIZATIONS, False)
+
+        if not allowed_orgs:
+            self.log.info("No allowed organizations policy set. All organizations are allowed to send tasks.")
+            return True
+
+        allowed_orgs_ids = allowed_orgs.get("ids", [])
+        allowed_orgs_names = allowed_orgs.get("names", [])
+
+        self.log.debug(
+            "Allowed organizations: %s", allowed_orgs_ids + allowed_orgs_names
+        )
+        self.log.debug("Initiating organization: %s", init_org_id)
+
+        if allowed_orgs_ids:
+            # check against allowed ids
+            if init_org_id in allowed_orgs_ids:
+                self.log.info(
+                    "Initiating organization with ID %s is in allowed organizations: %s",
+                    init_org_id, allowed_orgs_ids
+                )
+                return True
+
+        if allowed_orgs_names:
+            # if config has org names, we need to get name of init org from its id
+            init_org = self.client.request(f'organization/{init_org_id}', method='GET')
+            if 'name' in init_org and init_org.get('name') in allowed_orgs_names:
+                self.log.info(
+                    "Initiating organization with ID %s is in allowed organizations: %s",
+                    init_org_id, allowed_orgs_names
+                )
+                return True
+
+        self.log.error(
+            "Initiating organization with ID %s not in allowed organizations: %s",
+            init_org_id, allowed_orgs_ids + allowed_orgs_names
+        )
+        return False
+
+    def _check_pol_user(
+        self,
+        init_user_id: int,
+    ) -> bool:
+        """
+        Check if the user is allowed to send a task to this node
+
+        Parameters
+        ----------
+        allowed_users: DictNamesIds
+            List of allowed user IDs
+        init_user_id: int
+            ID of the user that initiated the task
+
+        Returns
+        -------
+        bool
+            Whether or not the user is allowed to send a task to this node
+        """
+        allowed_users = self._policies.get(NodePolicy.ALLOWED_USERS, False)
+
+        # ultimate decision
+        allowed = False
+
+        # TODO: Do we want to make this more explicit to the node admin?
+        if not allowed_users:
+            self.log.info("No allowed users policy set. All users allows to send tasks.")
+            return True
+
+        # NOTE/TODO: we assume node config has been properly validated, this
+        # means that validation should better be done at the vantage6-node
+        # level, not vantage6-cli
+        allowed_users_ids = allowed_users.get("ids", [])
+        if init_user_id in allowed_users_ids:
+            self.log.info(
+                "Initiating user with ID %s is in allowed users: %s",
+                init_user_id, allowed_users_ids
+            )
+            allowed = True
+
+        self.log.error(
+            "Initiating user with ID %s not in allowed users: %s",
+            init_user_id, allowed_users_ids
+        )
+
+
+        # TODO: below is old comment, but confirm it is still the case that
+        # node does not have permission to access user information, hence not
+        # possible to check user name
+        # # TODO it would be nicer to check all users in a single request
+        # # but that requires other multi-filter options in the API
+        # # TODO this option is now disabled since nodes do not have permission
+        # # to access user information. We need to decide if we want to give them
+        # # that permission for this.
+        # # ----------------------------------------------------------
+        # # check if task-initiating user name is in allowed users
+        # # for user in allowed_users:
+        # #     resp = self.request("user", params={"username": user})
+        # #     print(resp)
+        # #     for d in resp:
+        # #         if d.get("username") == user and d.get("id") == init_user_id:
+        # #             return True
+
+        return allowed
+
+    def _check_pol_allowlist(self, req_image: str) -> bool:
+        """
+        Check if a requested image is allowed by the allowlist algorithm policy.
+
+        Parameters
+        ----------
+        req_image: str
+            docker image name of the requested image to be checked
+
+        Returns
+        -------
+        bool
+            True if policy allows for execution, False otherwise
+        """
+        allowed_algorithms = self._policies.get(NodePolicy.ALLOWED_ALGORITHMS, False)
+
+        if not allowed_algorithms:
+            self.log.warn("No allowed algorithms policy set. All algorithms are allowed!")
+            return True
+
+        # ultimate decision for allowlist policy
+        allowed = False
+
+        try:
+            req_image_wo_tag = get_image_name_wo_tag(req_image)
+        except Exception as exc:
+            self.log.warning(
+                "Could not parse image with name %s: %s",
+                req_image,
+                exc,
+            )
+            req_image_wo_tag = None
+
+        # TODO v5+: would be nice if there if we had a configuration loader
+        # that parses, transforms, and validates config at the node level
+        if isinstance(allowed_algorithms, str):
+            allowed_algorithms = [allowed_algorithms]
+
+        for allowed_algo in allowed_algorithms:
+            # TODO v5+: we'd rather have the node admin be explicit about if
+            # they are using a regex or a string in their policies
+            if not self._is_regex_pattern(allowed_algo):
+                try:
+                    allowed_wo_tag = get_image_name_wo_tag(allowed_algo)
+                except Exception as exc:
+                    self.log.warning(
+                        "Could not parse allowed_algorithm policy with name %s: %s",
+                        allowed_algo,
+                        exc,
+                    )
+                    self.log.warning("Skipping policy as it cannot be parsed")
+                    # skip policy as it cannot be parsed
+                    continue
+                if allowed_algo == req_image:
+                    # OK if allowed algorithm and provided algorithm match exactly
+                    allowed = True
+                    break
+                elif allowed_algo == req_image_wo_tag:
+                    # OK if allowed algorithm is an image name without a tag, and
+                    # the provided image is the same but includes extra tag
+                    allowed = True
+                    break
+                elif allowed_wo_tag == req_image_wo_tag:
+                    # The allowed image and the evaluated image are indeed the same
+                    # image but the allowed image only allows certain tags or sha's.
+                    # Gather the digests of the images and compare them - if they
+                    # are the same, the image is allowed.
+                    # Note that by comparing the digests, we also take into account
+                    # the situation where e.g. the allowed image has a tag, but the
+                    # evaluated image has a sha256.
+                    digest_evaluated_image = get_digest(
+                        req_image, client=self.docker
+                    )
+                    if not digest_evaluated_image:
+                        self.log.warning(
+                            "Could not obtain digest for image %s",
+                            req_image,
+                        )
+                    digest_policy_image = get_digest(
+                        allowed_algo, client=self.docker
+                    )
+                    if not digest_policy_image:
+                        self.log.warning(
+                            "Could not obtain digest for image %s", allowed_algo
+                        )
+                    if (
+                        digest_evaluated_image
+                        and digest_policy_image
+                        and (digest_evaluated_image == digest_policy_image)
+                    ):
+                        allowed = True
+                        break
+            else:
+                expr_ = re.compile(allowed_algo)
+                if expr_.match(req_image):
+                    allowed = True
+
+        return allowed
+
+
+    def _check_pol_store(self, req_image: str, store_id) -> bool:
+        """
+        Check if a requested image is allowed by the store policy.
+
+        Parameters
+        ----------
+        allowed_stores = self._policies.get(NodePolicy.ALLOWED_ALGORITHM_STORES)
+
+        Returns
+        -------
+        bool
+            True if policy allows for execution, False otherwise
+        """
+        allowed_stores = self._policies.get(NodePolicy.ALLOWED_ALGORITHM_STORES, False)
+
+        if not allowed_stores:
+            self.log.warn("No allowed stores policy set. All stores are allowed!")
+            return True
+
+        # TODO: What is store ID? Is it an integer? if so int 0 would be False
+        if not store_id:
+            self.log.warn("No store ID was provided in the task.")
+            return False
+
+        # ultimate decision for store policy
+        allowed = False
+
+        store = self.client.algorithm_store.get(store_id)
+        store_from_task = store["url"]
+        # check if the store matches any of the regex cases
+        if isinstance(allowed_stores, str):
+            allowed_stores = [allowed_stores]
+        for store in allowed_stores:
+            if not self._is_regex_pattern(store):
+                # check if string matches exactly
+                if store == store_from_task:
+                    allowed = True
+                    break
+            else:
+                expr_ = re.compile(store)
+                if expr_.match(store_from_task):
+                    allowed = True
+                    break
+
+        return allowed
+
+    def _check_pol_basics(self, req_image: str) -> bool:
+        """
+        Check if a requested image is allowed by the basics alogirthm policy.
+
+        Parameters
+        ----------
+        req_image: str
+            docker image name of the requested image to be checked
+
+        Returns
+        -------
+        bool
+            True if policy allows, False otherwise
+        """
+        allow_basics = self._policies.get(NodePolicy.ALLOW_BASICS_ALGORITHM, True)
+
+        if req_image.startswith(BASIC_PROCESSING_IMAGE):
+            if allow_basics:
+                return True
+            else:
+                self.log.warn(
+                    "A task was sent with a basics algorithm that "
+                    "this node does not allow to run."
+                )
+
+        return False
+
+
+    def is_task_allowed(self, req_image: str, task_info: dict) -> bool:
+        """
+        Checks if a task is allowed to run on this node.
+
+        Several task details such as the docker image name, initiaing user, or
+        initiating organization are checked against policies defined by the
+        node administrator.
+
+        Parameters
+        ----------
+        req_img: str
             URI of the docker image of which we are checking if it is allowed
         task_info: dict
             Dictionary with information about the task
@@ -302,147 +602,58 @@ class DockerManager(DockerBaseManager):
         Returns
         -------
         bool
-            Whether docker image is allowed or not
+            True if the task is allowed to run, False otherwise
         """
-        # check if algorithm matches any of the regex cases
-        allow_basics = self._policies.get(NodePolicy.ALLOW_BASICS_ALGORITHM, True)
-        allowed_algorithms = self._policies.get(NodePolicy.ALLOWED_ALGORITHMS)
-        allowed_stores = self._policies.get(NodePolicy.ALLOWED_ALGORITHM_STORES)
+        # TODO: we currently presume that if the node admin has not set a
+        # certain pocily, that certain policy is allow everything by it.
+        # We might want to make this more explicit.
+        # TODO: let the node admin choose how the different policies should be
+        # combined and evaluated accordingly.
+
+        # ultimate decision
+        allowed = False
+
+        # policies for how the indivual policies come together
         allow_either_whitelist_or_store = self._policies.get(
             "allow_either_whitelist_or_store", False
         )
-        if evaluated_img.startswith(BASIC_PROCESSING_IMAGE):
-            if not allow_basics:
-                self.log.warn(
-                    "A task was sent with a basics algorithm that "
-                    "this node does not allow to run."
-                )
-                return False
-            # else: basics are allowed, so we don't need to check the regex
+        allow_either_org_or_user = self._policies.get(
+            "allow_either_org_or_user", False
+        )
 
-        # check if user or their organization is allowed
-        allowed_users = self._policies.get(NodePolicy.ALLOWED_USERS, [])
-        allowed_orgs = self._policies.get(NodePolicy.ALLOWED_ORGANIZATIONS, [])
-        if allowed_users or allowed_orgs:
-            is_allowed = self.client.check_user_allowed_to_send_task(
-                allowed_users,
-                allowed_orgs,
-                task_info["init_org"]["id"],
-                task_info["init_user"]["id"],
-            )
-            if not is_allowed:
-                self.log.warning(
-                    "A task was sent by a user or organization that this node does not "
-                    "allow to start tasks."
-                )
-                return False
+        # basics algorithm policy
+        checks_pol_basics = self._check_pol_basics(req_image)
+        # passing the basics policy means the requested image is a basic
+        # algorithms and the node allows it to run
+        if checks_pol_basics:
+            return True
 
-        algorithm_whitelisted = False
-        if allowed_algorithms:
-            if isinstance(allowed_algorithms, str):
-                allowed_algorithms = [allowed_algorithms]
-            try:
-                evaluated_img_wo_tag = get_image_name_wo_tag(evaluated_img)
-            except Exception as exc:
-                self.log.warning(
-                    "Could not parse image with name %s: %s",
-                    evaluated_img,
-                    exc,
-                )
-                evaluated_img_wo_tag = None
-            for allowed_algo in allowed_algorithms:
-                if not self._is_regex_pattern(allowed_algo):
-                    try:
-                        allowed_wo_tag = get_image_name_wo_tag(allowed_algo)
-                    except Exception as exc:
-                        self.log.warning(
-                            "Could not parse allowed_algorithm policy with name %s: %s",
-                            allowed_algo,
-                            exc,
-                        )
-                        self.log.warning("Skipping policy as it cannot be parsed")
-                        continue  # skip policy as it cannot be parsed
-                    if allowed_algo == evaluated_img:
-                        # OK if allowed algorithm and provided algorithm match exactly
-                        algorithm_whitelisted = True
-                        break
-                    elif allowed_algo == evaluated_img_wo_tag:
-                        # OK if allowed algorithm is an image name without a tag, and
-                        # the provided image is the same but includes extra tag
-                        algorithm_whitelisted = True
-                        break
-                    elif allowed_wo_tag == evaluated_img_wo_tag:
-                        # The allowed image and the evaluated image are indeed the same
-                        # image but the allowed image only allows certain tags or sha's.
-                        # Gather the digests of the images and compare them - if they
-                        # are the same, the image is allowed.
-                        # Note that by comparing the digests, we also take into account
-                        # the situation where e.g. the allowed image has a tag, but the
-                        # evaluated image has a sha256.
-                        digest_evaluated_image = get_digest(
-                            evaluated_img, client=self.docker
-                        )
-                        if not digest_evaluated_image:
-                            self.log.warning(
-                                "Could not obtain digest for image %s",
-                                evaluated_img,
-                            )
-                        digest_policy_image = get_digest(
-                            allowed_algo, client=self.docker
-                        )
-                        if not digest_policy_image:
-                            self.log.warning(
-                                "Could not obtain digest for image %s", allowed_algo
-                            )
-                        if (
-                            digest_evaluated_image
-                            and digest_policy_image
-                            and (digest_evaluated_image == digest_policy_image)
-                        ):
-                            algorithm_whitelisted = True
-                            break
-                else:
-                    expr_ = re.compile(allowed_algo)
-                    if expr_.match(evaluated_img):
-                        algorithm_whitelisted = True
+        # initiating organizaion and user policies
+        checks_pol_user = self._check_pol_user(task_info["init_user"]["id"])
+        checks_pol_org = self._check_pol_org(task_info["init_org"]["id"])
+        if allow_either_org_or_user:
+            allowed = checks_pol_user or checks_pol_org
+        else:
+            allowed = checks_pol_user and checks_pol_org
 
-        store_whitelisted = False
-        if allowed_stores:
-            # get the store from the task_info
-            try:
-                store_id = task_info["algorithm_store"]["id"]
-            except Exception:
-                store_id = None
-            if store_id:
-                store = self.client.algorithm_store.get(store_id)
-                store_from_task = store["url"]
-                # check if the store matches any of the regex cases
-                if isinstance(allowed_stores, str):
-                    allowed_stores = [allowed_stores]
-                for store in allowed_stores:
-                    if not self._is_regex_pattern(store):
-                        # check if string matches exactly
-                        if store == store_from_task:
-                            store_whitelisted = True
-                    else:
-                        expr_ = re.compile(store)
-                        if expr_.match(store_from_task):
-                            store_whitelisted = True
-
-        allowed_from_whitelist = not allowed_algorithms or algorithm_whitelisted
-        allowed_from_store = not allowed_stores or store_whitelisted
+        # allowed algorithms policy based on allowlists and algorithm stores
+        checks_pol_allowlist = self._check_pol_allowlist(req_image)
+        store_id = None
+        if algorithm_store := task_info.get("algorithm_store"):
+            store_id = algorithm_store.get("id")
+        checks_pol_store = self._check_pol_store(req_image, store_id)
         if allow_either_whitelist_or_store:
             # if we allow an algorithm if it is defined in the whitelist or the store,
             # we return True if either the algorithm or the store is whitelisted
-            allowed = allowed_from_whitelist or allowed_from_store
+            allowed &= checks_pol_allowlist or checks_pol_store
         else:
             # only allow algorithm if it is allowed for both the allowed_algorithms and
             # the allowed_algorithm_stores
-            allowed = allowed_from_whitelist and allowed_from_store
+            allowed &= checks_pol_allowlist and checks_pol_store
 
         if not allowed:
             self.log.warning(
-                "This node does not allow the algorithm %s to run!", evaluated_img
+                "This node does not allow the algorithm %s to run!", req_image
             )
 
         return allowed
@@ -599,7 +810,7 @@ class DockerManager(DockerBaseManager):
             container (``None`` if VPN is not set up).
         """
         # Verify that an allowed image is used
-        if not self.is_docker_image_allowed(image, task_info):
+        if not self.is_task_allowed(image, task_info):
             msg = f"Docker image {image} is not allowed on this Node!"
             self.log.critical(msg)
             return TaskStatus.NOT_ALLOWED, None
