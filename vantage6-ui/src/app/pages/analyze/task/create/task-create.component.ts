@@ -30,6 +30,7 @@ import { OrganizationService } from 'src/app/services/organization.service';
 import { MAX_ATTEMPTS_RENEW_NODE, SECONDS_BETWEEN_ATTEMPTS_RENEW_NODE } from 'src/app/models/constants/wait';
 import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 import { EncryptionService } from 'src/app/services/encryption.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-task-create',
@@ -345,6 +346,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       collaboration_id: this.collaboration?.id || -1,
       databases: taskDatabases,
       store_id: this.algorithm?.algorithm_store_id || -1,
+      server_url: environment.server_url,
       organizations: selectedOrganizations.map((organizationID) => {
         return {
           id: Number.parseInt(organizationID),

@@ -136,15 +136,16 @@ export interface CreateTask {
   collaboration_id: number;
   study_id?: number;
   store_id: number;
+  server_url: string;
   databases: TaskDatabase[];
-  organizations: Organization[];
+  organizations: CreateTaskOrganization[];
 }
 
 export interface KillTask {
   id: number;
 }
 
-interface Organization {
+interface CreateTaskOrganization {
   id: number;
   input: string;
 }
@@ -157,7 +158,7 @@ export interface CreateTaskInput {
 export interface ColumnRetrievalInput {
   collaboration_id: number;
   db_label: string;
-  organizations: Organization[];
+  organizations: CreateTaskOrganization[];
   query?: string;
   sheet_name?: string;
 }
