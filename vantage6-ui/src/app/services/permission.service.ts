@@ -74,7 +74,7 @@ export class PermissionService {
       return true;
     } else if (this.activeUser.permissions) {
       const orgsInUserCollabs = this.activeUser.permissions.orgs_in_collabs;
-      return orgId in orgsInUserCollabs && this.isAllowed(ScopeType.COLLABORATION, resource, operation);
+      return orgsInUserCollabs.includes(orgId) && this.isAllowed(ScopeType.COLLABORATION, resource, operation);
     } else {
       return false;
     }

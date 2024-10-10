@@ -459,7 +459,7 @@ class Roles(RoleBase):
         # verify that the organization for which we create a role exists
         if not db.Organization.get(organization_id):
             return {
-                "msg": f'organization "{organization_id}" does not ' "exist!"
+                "msg": f'organization "{organization_id}" does not exist!'
             }, HTTPStatus.NOT_FOUND
 
         # check if user is allowed to create this role
