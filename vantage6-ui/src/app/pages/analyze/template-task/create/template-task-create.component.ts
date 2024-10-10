@@ -15,6 +15,7 @@ import { Router } from '@angular/router';
 import { MatSelectChange } from '@angular/material/select';
 import { SnackbarService } from 'src/app/services/snackbar.service';
 import { NodeService } from 'src/app/services/node.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-template-task-create',
@@ -195,6 +196,7 @@ export class TemplateTaskCreateComponent implements OnInit {
       image: this.algorithm?.image || '',
       collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
       store_id: this.algorithm?.algorithm_store_id || -1,
+      server_url: environment.server_url,
       databases: taskDatabases,
       organizations: selectedOrganizations.map((organizationID) => {
         return { id: Number.parseInt(organizationID), input: btoa(JSON.stringify(input)) || '' };
