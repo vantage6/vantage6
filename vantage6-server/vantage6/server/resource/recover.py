@@ -21,6 +21,7 @@ from vantage6.server.globals import (
     DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES,
     DEFAULT_BETWEEN_USER_EMAILS_MINUTES,
 )
+from vantage6.server.model.rule import Operation
 from vantage6.server.resource import ServicesResources, with_user
 from vantage6.server.resource.common.auth_helper import create_qr_uri, user_login
 from vantage6.server.resource.common.input_schema import (
@@ -619,12 +620,10 @@ class ResetAPIKey(ServicesResources):
             return {"msg": f"Node id={id_} is not found!"}, HTTPStatus.NOT_FOUND
 
         # check if user is allowed to edit the node
-        if not self.r.e_glo.can():
-            own = g.user.organization.id == node.organization.id
-            if not (self.r.e_org.can() and own):
-                return {
-                    "msg": "You lack the permission to do that!"
-                }, HTTPStatus.UNAUTHORIZED
+        if not self.r.can_for_org(Operation.EDIT, node.organization_id):
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         # all good, change API key
         log.info(f"Successful API key reset for node {id}")
