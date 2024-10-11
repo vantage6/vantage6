@@ -178,6 +178,11 @@ class AlgorithmSubClient(ClientBase.SubClient):
                 - type: str
                     Type of the argument. Can be 'string', 'integer', 'float',
                     'boolean', 'json', 'column', 'organization' or 'organizations'
+                - has_default_value: bool, optional
+                    Whether the argument has a default value. Default is False.
+                - default_value: str, optional
+                    Default value of the argument. Default is None. Required if
+                    has_default_value is True.
             - ui_visualizations: list[dict]
                 List of UI visualizations of the function. Each visualization
                 is a dict with the following keys:
@@ -311,9 +316,9 @@ class AlgorithmSubClient(ClientBase.SubClient):
             URL to the repository containing the algorithm code
         documentation_url : str, optional
             URL to the documentation of the algorithm
-        functions : list[dict]
-            List of functions of the algorithm. Each function is a dict with
-            the following keys:
+        functions : list[dict], optional
+            List of functions of the algorithm. If given, all old functions are replaced
+            with these new ones. Each function is a dict with the following keys:
             - name: str
                 Name of the function
             - description: str, optional
@@ -337,6 +342,11 @@ class AlgorithmSubClient(ClientBase.SubClient):
                 - type: str
                     Type of the argument. Can be 'string', 'integer', 'float',
                     'boolean', 'json', 'column', 'organization' or 'organizations'
+                - has_default_value: bool, optional
+                    Whether the argument has a default value. Default is False.
+                - default_value: str, optional
+                    Default value of the argument. Default is None. Required if
+                    has_default_value is True.
             - ui_visualizations: list[dict]
                 List of UI visualizations of the function. Each visualization
                 is a dict with the following keys:

@@ -421,6 +421,15 @@ class Algorithms(AlgorithmBaseResource):
                                   'string_list', 'integer', 'integer_list', 'float',
                                   'float_list', 'boolean', 'json', 'column',
                                   'column_list', 'organization' or 'organization_list'
+                              has_default_value:
+                                type: boolean
+                                description: Whether the argument has a default
+                                  value. If true, the 'default_value' field must be
+                                  provided. Default is false.
+                              default_value:
+                                type: string
+                                description: Default value of the argument. Only
+                                  required if 'has_default_value' is true.
                         ui_visualizations:
                           type: array
                           description: List of visualizations that are available in
@@ -504,6 +513,8 @@ class Algorithms(AlgorithmBaseResource):
                     name=argument["name"],
                     description=argument.get("description", ""),
                     type_=argument["type"],
+                    has_default_value=argument.get("has_default_value", False),
+                    default_value=argument.get("default_value", None),
                     function_id=func.id,
                 )
                 arg.save()
@@ -652,8 +663,9 @@ class Algorithm(AlgorithmBaseResource):
                     description: URL to the algorithm documentation
                   functions:
                     type: array
-                    description: List of functions that are available in the
-                      algorithm
+                    description: List of functions that are available in the algorithm.
+                      If provided, all existing functions will be replaced by the new
+                      ones.
                     items:
                       properties:
                         name:
@@ -697,6 +709,15 @@ class Algorithm(AlgorithmBaseResource):
                                 description: Type of argument. Can be 'string',
                                   'integer', 'float', 'boolean', 'json',
                                   'column', 'organizations' or 'organization'
+                              has_default_value:
+                                type: boolean
+                                description: Whether the argument has a default
+                                  value. If true, the 'default_value' field must be
+                                  provided. Default is false.
+                              default_value:
+                                type: string
+                                description: Default value of the argument. Only
+                                  required if 'has_default_value' is true.
                         ui_visualizations:
                           type: array
                           description: List of visualizations that are available in
@@ -819,6 +840,8 @@ class Algorithm(AlgorithmBaseResource):
                         name=argument["name"],
                         description=argument.get("description", ""),
                         type_=argument["type"],
+                        has_default_value=argument.get("has_default_value", False),
+                        default_value=argument.get("default_value", None),
                         function_id=func.id,
                     )
                     arg.save()

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { Algorithm, AlgorithmForm } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmForm, DefaultValueType } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from './chosen-collaboration.service';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { Pagination } from 'src/app/models/api/pagination.model';
@@ -65,6 +65,7 @@ export class AlgorithmService {
   }
 
   async createAlgorithm(algorithm: AlgorithmForm): Promise<Algorithm | undefined> {
+    algorithm = this.cleanAlgorithmForm(algorithm);
     const algorithmStore = this.chosenStoreService.store$.value;
     if (!algorithmStore) return;
     const result = await this.apiService.postForAlgorithmApi<Algorithm>(algorithmStore.url, '/api/algorithm', algorithm);
@@ -72,6 +73,7 @@ export class AlgorithmService {
   }
 
   async editAlgorithm(algorithmId: string, algorithm: AlgorithmForm): Promise<Algorithm | undefined> {
+    algorithm = this.cleanAlgorithmForm(algorithm);
     const algorithmStore = this.chosenStoreService.store$.value;
     if (!algorithmStore) return;
     const result = await this.apiService.patchForAlgorithmApi<Algorithm>(algorithmStore.url, `/api/algorithm/${algorithmId}`, algorithm);
@@ -96,5 +98,21 @@ export class AlgorithmService {
       return [];
     }
     return collaboration.algorithm_stores;
+  }
+
+  private cleanAlgorithmForm(algorithmForm: AlgorithmForm): AlgorithmForm {
+    // remove the parameter's 'default_value_type' fields - they are only needed to
+    // acquire a correct value in the UI but are not needed for the backend
+    // also cast the 'has_default_value' field to a boolean, in the HTML it is a string.
+    algorithmForm.functions.forEach((func) => {
+      func.arguments.forEach((arg) => {
+        arg.has_default_value = arg.has_default_value === 'true';
+        if (arg.default_value_type === DefaultValueType.None) {
+          delete arg.default_value;
+        }
+        delete arg.default_value_type;
+      });
+    });
+    return algorithmForm;
   }
 }

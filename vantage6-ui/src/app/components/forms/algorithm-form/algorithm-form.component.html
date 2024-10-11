@@ -95,7 +95,6 @@
                       let paramIdx = index
                     "
                   >
-                    <!-- *ngFor="let parameterFormGroup of getParamFormGroups(funcIdx); let paramIdx = index" -->
                     <mat-expansion-panel-header>
                       <mat-panel-title
                         >{{ "algorithm-create.function.parameter.title" | translate }} {{ parameterFormGroup.get("name")?.value || "" }}
@@ -119,6 +118,46 @@
                             </mat-option>
                           </mat-select>
                         </mat-form-field>
+                        <mat-form-field subscriptSizing="dynamic">
+                          <mat-label>{{ "algorithm.function.argument.has_default" | translate }}</mat-label>
+                          <mat-select formControlName="has_default_value">
+                            <mat-option value="true">{{ "general.yes" | translate }}</mat-option>
+                            <mat-option value="false">{{ "general.no" | translate }}</mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                        <div *ngIf="isTruthy(parameterFormGroup.controls['has_default_value'].value)">
+                          <mat-form-field subscriptSizing="dynamic">
+                            <mat-label>{{ "algorithm.function.argument.default_value_type" | translate }}</mat-label>
+                            <mat-select formControlName="default_value_type">
+                              <mat-option *ngFor="let argType of defaultValueTypes" [value]="argType">
+                                {{ argType | titlecase }}
+                              </mat-option>
+                            </mat-select>
+                          </mat-form-field>
+                          <div *ngIf="requiresDefaultValueTypeField(parameterFormGroup)">
+                            <mat-form-field *ngIf="!hasBooleanDefaultValueType(parameterFormGroup)" subscriptSizing="dynamic">
+                              <mat-label>{{ "algorithm.function.argument.default_value" | translate }}</mat-label>
+                              <input
+                                appNumberOnly
+                                matInput
+                                [type]="
+                                  parameterFormGroup.controls['type'].value === argumentType.Integer ||
+                                  parameterFormGroup.controls['type'].value === argumentType.Float
+                                    ? 'number'
+                                    : 'text'
+                                "
+                                formControlName="default_value"
+                              />
+                            </mat-form-field>
+                            <mat-form-field *ngIf="hasBooleanDefaultValueType(parameterFormGroup)" subscriptSizing="dynamic">
+                              <mat-label>{{ "algorithm.function.argument.default_value" | translate }}</mat-label>
+                              <mat-select formControlName="default_value">
+                                <mat-option value="true">{{ "general.true" | translate }}</mat-option>
+                                <mat-option value="false">{{ "general.false" | translate }}</mat-option>
+                              </mat-select>
+                            </mat-form-field>
+                          </div>
+                        </div>
                         <div class="button-container button-container-separate">
                           <button mat-flat-button color="warn" (click)="deleteParameter(functionFormGroup, paramIdx)">
                             {{ "algorithm-create.function.parameter.delete" | translate }}

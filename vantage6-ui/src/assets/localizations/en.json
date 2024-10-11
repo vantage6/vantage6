@@ -19,7 +19,9 @@
     "description": "Description",
     "overview": "Overview",
     "file-select": "Select file",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "true": "True",
+    "false": "False"
   },
   "resources": {
     "collaboration": "Collaboration",
@@ -225,7 +227,17 @@
       "type": "Type of function",
       "argument": {
         "title": "Parameters",
-        "type": "Type of argument"
+        "type": "Type of argument",
+        "has_default": "Has default value",
+        "default_value_type": "Type of default value",
+        "default_value": "Default value",
+        "default_value_types": {
+          "empty": "Empty (None/NULL)",
+          "string": "String",
+          "integer": "Integer",
+          "float": "Float",
+          "boolean": "Boolean"
+        }
       },
       "databases": "Databases",
       "visualization": {

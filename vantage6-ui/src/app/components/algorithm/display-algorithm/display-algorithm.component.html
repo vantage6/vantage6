@@ -109,6 +109,14 @@
                           <b>{{ "general.description" | translate }}</b>
                           <span>{{ argument.description || "-" }}</span>
                         </div>
+                        <div class="data-list__item">
+                          <b>{{ "algorithm.function.argument.has_default" | translate }}</b>
+                          <span>{{ argument.has_default_value ? ("general.yes" | translate) : ("general.no" | translate) }}</span>
+                        </div>
+                        <div class="data-list__item" *ngIf="argument.has_default_value">
+                          <b>{{ "algorithm.function.argument.default_value" | translate }}</b>
+                          <span>{{ argument.default_value || ("general.none" | translate) }}</span>
+                        </div>
                       </div>
                     </ng-template>
                   </mat-expansion-panel>

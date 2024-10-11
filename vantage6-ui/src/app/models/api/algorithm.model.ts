@@ -17,6 +17,14 @@ export enum ArgumentType {
   Boolean = 'boolean'
 }
 
+export enum DefaultValueType {
+  None = 'none',
+  String = 'string',
+  Integer = 'integer',
+  Float = 'float',
+  Boolean = 'bool'
+}
+
 export enum OutputType {
   Int = 'int',
   Dict = 'dict'
@@ -128,6 +136,8 @@ export interface Argument {
   name: string;
   type: ArgumentType;
   description?: string;
+  has_default_value: boolean;
+  default_value?: string | number | boolean | null;
 }
 
 export interface FunctionDatabase {
@@ -138,6 +148,9 @@ export interface FunctionDatabase {
 
 interface ArgumentForm extends NameDescription {
   type: string;
+  has_default_value: boolean | string;
+  default_value_type?: DefaultValueType;
+  default_value?: string | number | boolean | null;
 }
 export interface FunctionForm extends NameDescription {
   arguments: ArgumentForm[];

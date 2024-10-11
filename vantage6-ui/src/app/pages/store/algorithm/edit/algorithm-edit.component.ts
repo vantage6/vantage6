@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { MessageDialogComponent } from 'src/app/components/dialogs/message-dialog/message-dialog.component';
+import { getDefaultValueType } from 'src/app/helpers/algorithm.helper';
 import { Algorithm, AlgorithmForm } from 'src/app/models/api/algorithm.model';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
@@ -71,7 +72,10 @@ export class AlgorithmEditComponent implements OnInit, OnDestroy {
             return {
               name: arg.name,
               type: arg.type,
-              description: arg.description
+              description: arg.description,
+              has_default_value: arg.has_default_value,
+              default_value: arg.default_value || null,
+              default_value_type: getDefaultValueType(arg.default_value)
             };
           }),
           databases: func.databases.map((db) => {
