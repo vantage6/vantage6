@@ -180,9 +180,10 @@ class AlgorithmSubClient(ClientBase.SubClient):
                     'boolean', 'json', 'column', 'organization' or 'organizations'
                 - has_default_value: bool, optional
                     Whether the argument has a default value. Default is False.
-                - default_value: str, optional
-                    Default value of the argument. Default is None. Required if
-                    has_default_value is True.
+                - default_value: str | int | float | boolean | list, optional
+                    Default value of the argument. Only required if 'has_default_value'
+                    is true. The type should match the 'type' field, e.g. if 'type' is
+                    'integer', 'default_value' should be an integer.
             - ui_visualizations: list[dict]
                 List of UI visualizations of the function. Each visualization
                 is a dict with the following keys:
@@ -344,9 +345,10 @@ class AlgorithmSubClient(ClientBase.SubClient):
                     'boolean', 'json', 'column', 'organization' or 'organizations'
                 - has_default_value: bool, optional
                     Whether the argument has a default value. Default is False.
-                - default_value: str, optional
-                    Default value of the argument. Default is None. Required if
-                    has_default_value is True.
+                - default_value: str | int | float | boolean | list, optional
+                    Default value of the argument. Only required if 'has_default_value'
+                    is true. The type should match the 'type' field, e.g. if 'type' is
+                    'integer', 'default_value' should be an integer.
             - ui_visualizations: list[dict]
                 List of UI visualizations of the function. Each visualization
                 is a dict with the following keys:

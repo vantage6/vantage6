@@ -427,9 +427,11 @@ class Algorithms(AlgorithmBaseResource):
                                   value. If true, the 'default_value' field must be
                                   provided. Default is false.
                               default_value:
-                                type: string
+                                type: string | int | float | boolean | list
                                 description: Default value of the argument. Only
-                                  required if 'has_default_value' is true.
+                                  required if 'has_default_value' is true. The type
+                                  should match the 'type' field, e.g. if 'type' is
+                                  'integer', 'default_value' should be an integer.
                         ui_visualizations:
                           type: array
                           description: List of visualizations that are available in
@@ -715,9 +717,11 @@ class Algorithm(AlgorithmBaseResource):
                                   value. If true, the 'default_value' field must be
                                   provided. Default is false.
                               default_value:
-                                type: string
+                                type: string | int | float | boolean | list
                                 description: Default value of the argument. Only
-                                  required if 'has_default_value' is true.
+                                  required if 'has_default_value' is true. The type
+                                  should match the 'type' field, e.g. if 'type' is
+                                  'integer', 'default_value' should be an integer.
                         ui_visualizations:
                           type: array
                           description: List of visualizations that are available in
