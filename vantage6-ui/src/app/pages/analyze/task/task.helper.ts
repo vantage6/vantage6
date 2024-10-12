@@ -59,7 +59,7 @@ export const addParameterFormControlsForFunction = (func: AlgorithmFunction, for
       form.addControl(argument.name, new FormControl(null, [...requiredValidators, Validators.pattern(stringListRegex)]));
     }
     // set default value
-    if (argument.has_default_value) {
+    if (argument.has_default_value && argument.default_value) {
       form.get(argument.name)?.setValue(argument.default_value);
     }
   });
