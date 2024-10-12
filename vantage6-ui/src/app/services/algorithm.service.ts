@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { Algorithm, AlgorithmForm, DefaultValueType } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmForm, ArgumentType } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from './chosen-collaboration.service';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { Pagination } from 'src/app/models/api/pagination.model';
 import { ChosenStoreService } from './chosen-store.service';
+import { isListTypeArgument } from '../helpers/algorithm.helper';
 
 @Injectable({
   providedIn: 'root'
@@ -106,11 +107,30 @@ export class AlgorithmService {
     // also cast the 'has_default_value' field to a boolean, in the HTML it is a string.
     algorithmForm.functions.forEach((func) => {
       func.arguments.forEach((arg) => {
-        arg.has_default_value = arg.has_default_value === 'true';
-        if (arg.default_value_type === DefaultValueType.None) {
+        arg.has_default_value = arg.has_default_value === 'true' || arg.has_default_value === true;
+        if (arg.is_default_value_null === true) {
           delete arg.default_value;
+        } else if (isListTypeArgument(arg.type) && arg.default_value) {
+          // if the argument is a list type, parse the comma-separated string to an
+          // array of the right type
+          arg.default_value = (arg.default_value as string).split(',');
+          if (arg.type === ArgumentType.FloatList) {
+            arg.default_value = JSON.stringify(
+              arg.default_value.map((val) => {
+                return Number.parseFloat(val);
+              })
+            );
+          } else if (arg.type === ArgumentType.IntegerList || arg.type === ArgumentType.OrganizationList) {
+            arg.default_value = JSON.stringify(
+              arg.default_value.map((val) => {
+                return Number.parseInt(val);
+              })
+            );
+          } else {
+            arg.default_value = JSON.stringify(arg.default_value);
+          }
         }
-        delete arg.default_value_type;
+        delete arg.is_default_value_null;
       });
     });
     return algorithmForm;

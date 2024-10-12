@@ -3,6 +3,7 @@ import { floatListRegex, floatRegex, intListRegex, integerRegex, stringListRegex
 import { AlgorithmFunction, ArgumentType } from 'src/app/models/api/algorithm.model';
 import { TaskDatabase } from 'src/app/models/api/task.models';
 import { Database } from 'src/app/models/api/node.model';
+import { isListTypeArgument } from 'src/app/helpers/algorithm.helper';
 
 function jsonValidator(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -60,7 +61,11 @@ export const addParameterFormControlsForFunction = (func: AlgorithmFunction, for
     }
     // set default value
     if (argument.has_default_value && argument.default_value) {
-      form.get(argument.name)?.setValue(argument.default_value);
+      if (!isListTypeArgument(argument.type)) {
+        form.get(argument.name)?.setValue(argument.default_value);
+      } else {
+        form.get(argument.name)?.setValue(JSON.parse(argument.default_value as string));
+      }
     }
   });
 };

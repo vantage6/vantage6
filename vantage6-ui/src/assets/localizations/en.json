@@ -228,16 +228,10 @@
       "argument": {
         "title": "Parameters",
         "type": "Type of argument",
-        "has_default": "Has default value",
-        "default_value_type": "Type of default value",
+        "has_default": "Has default value:",
+        "default_value_null": "Default value is empty (null/none):",
         "default_value": "Default value",
-        "default_value_types": {
-          "empty": "Empty (None/NULL)",
-          "string": "String",
-          "integer": "Integer",
-          "float": "Float",
-          "boolean": "Boolean"
-        }
+        "list-warning": "This argument is a list. Provide a list of values separated by a comma."
       },
       "databases": "Databases",
       "visualization": {

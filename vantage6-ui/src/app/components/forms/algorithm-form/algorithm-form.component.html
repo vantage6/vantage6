@@ -118,28 +118,39 @@
                             </mat-option>
                           </mat-select>
                         </mat-form-field>
-                        <mat-form-field subscriptSizing="dynamic">
+                        <mat-radio-group formControlName="has_default_value">
                           <mat-label>{{ "algorithm.function.argument.has_default" | translate }}</mat-label>
-                          <mat-select formControlName="has_default_value">
-                            <mat-option value="true">{{ "general.yes" | translate }}</mat-option>
-                            <mat-option value="false">{{ "general.no" | translate }}</mat-option>
-                          </mat-select>
-                        </mat-form-field>
+                          <mat-radio-button [value]="true" color="primary">{{ "general.yes" | translate }}</mat-radio-button>
+                          <mat-radio-button [value]="false" color="primary">{{ "general.no" | translate }}</mat-radio-button>
+                        </mat-radio-group>
                         <div *ngIf="isTruthy(parameterFormGroup.controls['has_default_value'].value)">
-                          <mat-form-field subscriptSizing="dynamic">
-                            <mat-label>{{ "algorithm.function.argument.default_value_type" | translate }}</mat-label>
-                            <mat-select formControlName="default_value_type">
-                              <mat-option *ngFor="let argType of defaultValueTypes" [value]="argType">
-                                {{ argType | titlecase }}
-                              </mat-option>
-                            </mat-select>
-                          </mat-form-field>
-                          <div *ngIf="requiresDefaultValueTypeField(parameterFormGroup)">
-                            <mat-form-field *ngIf="!hasBooleanDefaultValueType(parameterFormGroup)" subscriptSizing="dynamic">
+                          <mat-radio-group formControlName="is_default_value_null">
+                            <mat-label>{{ "algorithm.function.argument.default_value_null" | translate }}</mat-label>
+                            <mat-radio-button [value]="true" color="primary">{{ "general.yes" | translate }}</mat-radio-button>
+                            <mat-radio-button [value]="false" color="primary">{{ "general.no" | translate }}</mat-radio-button>
+                          </mat-radio-group>
+                          <div *ngIf="!isTruthy(parameterFormGroup.controls['is_default_value_null'].value)">
+                            <app-alert
+                              class="node-alert"
+                              *ngIf="isListTypeArgument(parameterFormGroup.controls['type'].value)"
+                              label="{{ 'algorithm.function.argument.list-warning' | translate }}"
+                            ></app-alert>
+                            <mat-radio-group
+                              *ngIf="parameterFormGroup.controls['type'].value === argumentType.Boolean"
+                              formControlName="default_value"
+                            >
+                              <mat-label>{{ "algorithm.function.argument.default_value" | translate }}</mat-label>
+                              <mat-radio-button [value]="true" color="primary">{{ "general.true" | translate }}</mat-radio-button>
+                              <mat-radio-button [value]="false" color="primary">{{ "general.false" | translate }}</mat-radio-button>
+                            </mat-radio-group>
+                            <mat-form-field
+                              *ngIf="parameterFormGroup.controls['type'].value !== argumentType.Boolean"
+                              subscriptSizing="dynamic"
+                            >
                               <mat-label>{{ "algorithm.function.argument.default_value" | translate }}</mat-label>
                               <input
-                                appNumberOnly
                                 matInput
+                                appNumberOnly
                                 [type]="
                                   parameterFormGroup.controls['type'].value === argumentType.Integer ||
                                   parameterFormGroup.controls['type'].value === argumentType.Float
@@ -148,13 +159,6 @@
                                 "
                                 formControlName="default_value"
                               />
-                            </mat-form-field>
-                            <mat-form-field *ngIf="hasBooleanDefaultValueType(parameterFormGroup)" subscriptSizing="dynamic">
-                              <mat-label>{{ "algorithm.function.argument.default_value" | translate }}</mat-label>
-                              <mat-select formControlName="default_value">
-                                <mat-option value="true">{{ "general.true" | translate }}</mat-option>
-                                <mat-option value="false">{{ "general.false" | translate }}</mat-option>
-                              </mat-select>
                             </mat-form-field>
                           </div>
                         </div>

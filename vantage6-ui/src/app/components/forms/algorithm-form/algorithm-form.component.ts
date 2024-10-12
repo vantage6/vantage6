@@ -2,19 +2,13 @@ import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, OnIni
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatExpansionPanel } from '@angular/material/expansion';
 import { readFile } from 'src/app/helpers/file.helper';
-import {
-  AlgorithmForm,
-  ArgumentType,
-  DefaultValueType,
-  FunctionForm,
-  FunctionType,
-  PartitioningType
-} from 'src/app/models/api/algorithm.model';
+import { AlgorithmForm, ArgumentType, FunctionForm, FunctionType, PartitioningType } from 'src/app/models/api/algorithm.model';
 import { VisualizationType, getVisualizationSchema } from 'src/app/models/api/visualization.model';
 import { MessageDialogComponent } from 'src/app/components/dialogs/message-dialog/message-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { isTruthy } from 'src/app/helpers/utils.helper';
+import { isListTypeArgument } from 'src/app/helpers/algorithm.helper';
 
 @Component({
   selector: 'app-algorithm-form',
@@ -30,6 +24,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   @ViewChildren('expansionPanel') matExpansionPanels?: QueryList<MatExpansionPanel>;
   argumentType = ArgumentType;
   isTruthy = isTruthy;
+  isListTypeArgument = isListTypeArgument;
 
   isEdit: boolean = false;
   isLoading: boolean = true;
@@ -37,7 +32,6 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   functionTypes = Object.values(FunctionType);
   paramTypes = Object.values(ArgumentType);
   visualizationTypes = Object.values(VisualizationType);
-  defaultValueTypes = Object.values(DefaultValueType);
   selectedFile: File | null = null;
   uploadForm = this.fb.nonNullable.group({
     jsonFile: ''
@@ -57,7 +51,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     description: [''],
     type: ['', [Validators.required]],
     has_default_value: [false],
-    default_value_type: [''],
+    is_default_value_null: [false],
     default_value: ['']
   });
   visualizationSchemaForm = this.fb.nonNullable.group({});
@@ -173,14 +167,6 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     this.setSchemaControls(visSchemaForm, visType, funcIdx, visIdx);
   }
 
-  requiresDefaultValueTypeField(parameterFormGroup: FormGroup): boolean {
-    return !['', DefaultValueType.None].includes(parameterFormGroup.controls['default_value_type'].value);
-  }
-
-  hasBooleanDefaultValueType(parameterFormGroup: FormGroup): boolean {
-    return parameterFormGroup.controls['default_value_type'].value === DefaultValueType.Boolean;
-  }
-
   getVisSchemaField(funcIdx: number, visIdx: number, schemaField: string, infoField: string): string {
     return this.schemaDetails[`${funcIdx}-${visIdx}`][schemaField][infoField];
   }
@@ -230,6 +216,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
           argumentFormGroup.controls['description'].setValue(arg.description);
           argumentFormGroup.controls['type'].setValue(arg.type);
           argumentFormGroup.controls['has_default_value'].setValue(arg.has_default_value);
+          argumentFormGroup.controls['is_default_value_null'].setValue(arg.default_value === null);
           (functionFormGroup.controls['arguments'] as FormArray).push(argumentFormGroup);
         });
       }
@@ -343,7 +330,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       description: [''],
       type: ['', [Validators.required]],
       has_default_value: [false],
-      default_value_type: [''],
+      is_default_value_null: [false],
       default_value: ['']
     });
   }
