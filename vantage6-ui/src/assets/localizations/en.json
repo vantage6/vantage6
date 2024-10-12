@@ -19,7 +19,9 @@
     "description": "Description",
     "overview": "Overview",
     "file-select": "Select file",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "true": "True",
+    "false": "False"
   },
   "resources": {
     "collaboration": "Collaboration",
@@ -225,7 +227,11 @@
       "type": "Type of function",
       "argument": {
         "title": "Parameters",
-        "type": "Type of argument"
+        "type": "Type of argument",
+        "has_default": "Has default value:",
+        "default_value_null": "Default value is empty (null/none):",
+        "default_value": "Default value",
+        "list-warning": "This argument is a list. Provide a list of values separated by a comma."
       },
       "databases": "Databases",
       "visualization": {
