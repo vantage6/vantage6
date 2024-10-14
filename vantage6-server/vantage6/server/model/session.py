@@ -159,6 +159,21 @@ class Session(Base):
         """
         return [org.id for org in self.organizations()]
 
+    def delete(self):
+        """
+        Deletes the current session along with its associated dataframes, tasks, and
+        results.
+        """
+
+        for dataframe in self.dataframes:
+            dataframe.delete()
+
+        for task in self.tasks:
+            for result in task.results:
+                result.delete()
+            task.delete()
+        self.delete()
+
     def __repr__(self):
         """
         Returns a string representation of the session.

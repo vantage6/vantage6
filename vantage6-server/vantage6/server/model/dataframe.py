@@ -80,6 +80,7 @@ class Dataframe(Base):
 
     @ready.expression
     def ready(cls):
+        """SQLAlchemy expression to check if the dataframe is ready."""
         return and_(
             cls.last_session_task != None,
             *[

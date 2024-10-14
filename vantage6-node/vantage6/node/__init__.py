@@ -340,7 +340,7 @@ class Node:
             container_action = LocalAction(task_incl_run["action"])
         except ValueError:
             self.log.error(
-                f"Unrecognized action {task_incl_run['action']}. " "Cancelling task."
+                f"Unrecognized action {task_incl_run['action']}. Cancelling task."
             )
             self.client.run.patch(
                 id_=task_id,
@@ -358,9 +358,6 @@ class Node:
         if container_action == LocalAction.COMPUTE:
             token = self.client.request_token_for_container(task["id"], task["image"])
             token = token["container_token"]
-
-        # TODO we should attach the label here somehow?
-        # if container_action in [LocalAction.DATA_EXTRACTION, LocalAction.PREPROCESSING]:
 
         # For some reason, if the key 'input' consists of JSON, it is
         # automatically marshalled? This causes trouble, so we'll serialize it

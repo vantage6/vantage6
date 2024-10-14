@@ -1,13 +1,7 @@
-from typing import TYPE_CHECKING
-
 from sqlalchemy import Column, Integer, ForeignKey, String
 from sqlalchemy.orm import relationship
 
-from vantage6.common.enum import RunStatus
 from vantage6.server.model.base import Base, DatabaseSessionManager
-
-if TYPE_CHECKING:
-    from vantage6.server.model import Session
 
 
 class Column(Base):

@@ -134,7 +134,6 @@ class DockerTaskManager(DockerBaseManager):
         if task_info.get("dataframe"):
             self.dataframe_handle = task_info["dataframe"].get("handle", None)
 
-        print(session_id)
         self.container = None
         self.status_code = None
         self.docker_input = None
@@ -691,72 +690,24 @@ class DockerTaskManager(DockerBaseManager):
 
         # Add squid proxy environment variables
         if self.proxy:
-            # applications/libraries in the algorithm container need to adhere
-            # to the proxy settings. Because we are not sure which application
-            # is used for the request we both set HTTP_PROXY and http_proxy and
-            # HTTPS_PROXY and https_proxy for the secure connection.
-            environment_variables["HTTP_PROXY"] = self.proxy.address
-            environment_variables["http_proxy"] = self.proxy.address
-            environment_variables["HTTPS_PROXY"] = self.proxy.address
-            environment_variables["https_proxy"] = self.proxy.address
-
-            no_proxy = []
-            if self.__vpn_manager.subnet:
-                # Computing all ips in the vpn network is not feasible as the
-                # no_proxy environment variable will be too long for the
-                # container to start. So we only add the net + mask. For some
-                # applications and libraries this is format is ignored.
-                no_proxy.append(self.__vpn_manager.subnet)
-            no_proxy.append("localhost")
-            no_proxy.append(proxy_host)
-
-            # Add the NO_PROXY and no_proxy environment variable.
-            environment_variables["NO_PROXY"] = ", ".join(no_proxy)
-            environment_variables["no_proxy"] = ", ".join(no_proxy)
+            self._set_proxy_env_vars(environment_variables, proxy_host)
 
         # Only the data extraction step can access the source databases
         if self.action == LocalAction.DATA_EXTRACTION:
-            # TODO
-            # 1. Check that the database type is source
-            # 2. Check that only one database has been requested
-            # 3. Pass the database URI to the algorithm
-            failed = False
-            if len(databases_to_use) > 1:
-                self.log.error(
-                    "Only one database can be used in the data extraction step."
-                )
-                failed = True
+
+            # Validate the source database
+            self._validate_source_database(databases_to_use)
 
             source_database = databases_to_use[0]
-
-            if source_database["type"] != "source":
-                self.log.error(
-                    "The database used in the data extraction step must be of type "
-                    "'source'."
-                )
-                failed = True
-
-            if source_database["label"] not in self.databases:
-                self.log.error(
-                    "The database used in the data extraction step does not exist."
-                )
-                failed = True
-
-            if failed:
-                self.status = RunStatus.FAILED
-                raise PermanentAlgorithmStartFail()
-
             db = self.databases[source_database["label"]]
-
             environment_variables[ContainerEnvNames.DATABASE_URI.value] = (
                 f"{self.data_folder}/{os.path.basename(db['uri'])}"
                 if db["is_file"]
                 else db["uri"]
             )
-
             environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = db["type"]
 
-            # variables.
+            # additional environment variables for the database
             if "env" in db:
                 for key in db["env"]:
                     env_key = f"{ContainerEnvNames.DB_PARAM_PREFIX}{key.upper()}"
@@ -765,28 +716,8 @@ class DockerTaskManager(DockerBaseManager):
         # In the other case we are dealing with a dataframe in a session
         else:
 
-            if not all(df["type"] == "handle" for df in databases_to_use):
-                self.log.error(
-                    "All databases used in the algorithm must be of type 'handle'."
-                )
-                self.status = RunStatus.FAILED
-                raise PermanentAlgorithmStartFail()
-
-            # Validate that the requested handles exists. At this point they need to as
-            # we are about to start the task.
-            requested_handles = {db["label"] for db in databases_to_use}
-            available_handles = {
-                file_.stem for file_ in Path(self.session_folder_path).glob("*.parquet")
-            }
-            # check that requested handles is a subset of available handles
-            if not requested_handles.issubset(available_handles):
-                self.log.error(
-                    "Requested dataframe handle(s) not found in session folder."
-                )
-                self.log.debug(f"Requested dataframe handles: {requested_handles}")
-                self.log.debug(f"Available dataframe handles: {available_handles}")
-                self.status = RunStatus.DATAFRAME_NOT_FOUND
-                raise DataFrameNotFound(f"user requested {requested_handles}")
+            # Validate the dataframe names
+            self._validate_dataframe_names(databases_to_use)
 
             environment_variables[
                 ContainerEnvNames.USER_REQUESTED_DATAFRAME_HANDLES.value
@@ -813,6 +744,113 @@ class DockerTaskManager(DockerBaseManager):
         )
 
         return environment_variables
+
+    def _set_proxy_env_vars(self, environment_variables: dict, proxy_host: str) -> None:
+
+        # applications/libraries in the algorithm container need to adhere
+        # to the proxy settings. Because we are not sure which application
+        # is used for the request we both set HTTP_PROXY and http_proxy and
+        # HTTPS_PROXY and https_proxy for the secure connection.
+        environment_variables["HTTP_PROXY"] = self.proxy.address
+        environment_variables["http_proxy"] = self.proxy.address
+        environment_variables["HTTPS_PROXY"] = self.proxy.address
+        environment_variables["https_proxy"] = self.proxy.address
+
+        no_proxy = []
+        if self.__vpn_manager.subnet:
+            # Computing all ips in the vpn network is not feasible as the
+            # no_proxy environment variable will be too long for the
+            # container to start. So we only add the net + mask. For some
+            # applications and libraries this is format is ignored.
+            no_proxy.append(self.__vpn_manager.subnet)
+        no_proxy.append("localhost")
+        no_proxy.append(proxy_host)
+
+        # Add the NO_PROXY and no_proxy environment variable.
+        environment_variables["NO_PROXY"] = ", ".join(no_proxy)
+        environment_variables["no_proxy"] = ", ".join(no_proxy)
+
+    def _validate_dataframe_names(self, databases_to_use: list[str]) -> None:
+        """
+        Validates that all provided databases are of type 'handle' and that the
+        requested handles exist in the session folder.
+
+        Parameters
+        ----------
+        databases_to_use: list[str]
+            A list of dictionaries where each dictionary represents a database
+            with a 'type' and 'label'.
+
+        Raises
+        ------
+        PermanentAlgorithmStartFail:
+            If any database is not of type 'handle'.
+        DataFrameNotFound:
+            If any requested handle is not found in the session folder.
+        """
+
+        if not all(df["type"] == "handle" for df in databases_to_use):
+            self.log.error(
+                "All databases used in the algorithm must be of type 'handle'."
+            )
+            self.status = RunStatus.FAILED
+            raise PermanentAlgorithmStartFail()
+
+        # Validate that the requested handles exists. At this point they need to as
+        # we are about to start the task.
+        requested_handles = {db["label"] for db in databases_to_use}
+        available_handles = {
+            file_.stem for file_ in Path(self.session_folder_path).glob("*.parquet")
+        }
+        # check that requested handles is a subset of available handles
+        if not requested_handles.issubset(available_handles):
+            self.log.error("Requested dataframe handle(s) not found in session folder.")
+            self.log.debug(f"Requested dataframe handles: {requested_handles}")
+            self.log.debug(f"Available dataframe handles: {available_handles}")
+            self.status = RunStatus.DATAFRAME_NOT_FOUND
+            raise DataFrameNotFound(f"user requested {requested_handles}")
+
+    def _validate_source_database(self, databases_to_use: list[dict]) -> None:
+        """
+        Validates the source database configuration for the data extraction step.
+        This method checks if the provided list of databases contains exactly one
+        database, and if that database is of type 'source' and exists in the
+        available databases.
+
+        Parameters
+        ----------
+        databases_to_use : list[dict]
+            A list of dictionaries where each dictionary represents a database
+            configuration.
+        Raises
+        ------
+        PermanentAlgorithmStartFail
+            If the validation fails due to any of the conditions not being met.
+        """
+
+        ok = True
+        if len(databases_to_use) > 1:
+            self.log.error("Only one database can be used in the data extraction step.")
+            ok = False
+
+        source_database = databases_to_use[0]
+
+        if source_database["type"] != "source":
+            self.log.error(
+                "The database used in the data extraction step must be of type "
+                "'source'."
+            )
+            ok = False
+
+        if source_database["label"] not in self.databases:
+            self.log.error(
+                "The database used in the data extraction step does not exist."
+            )
+            ok = False
+
+        if not ok:
+            self.status = RunStatus.FAILED
+            raise PermanentAlgorithmStartFail()
 
     def _validate_environment_variables(self, environment_variables: dict) -> None:
         """

@@ -108,7 +108,6 @@ def permissions(permissions: PermissionManager) -> None:
         operation=P.VIEW,
         description="view any session initiated from your organization",
     )
-    add(scope=S.OWN, operation=P.VIEW, description="view your own session")
 
     # create
     add(scope=S.OWN, operation=P.CREATE, description="create a new session")
@@ -209,7 +208,7 @@ class SessionBase(ServicesResources):
         ) and session.organization_id == self.obtain_organization_id():
             return True
 
-        if self.is_user() and self.r.v_own.can() and session.user_id == g.user.id:
+        if self.is_user() and session.user_id == g.user.id:
             return True
 
         return False
@@ -348,15 +347,6 @@ class SessionBase(ServicesResources):
             Session to delete
         """
         log.debug(f"Deleting session id={session.id}")
-
-        for dataframe in session.dataframes:
-            dataframe.delete()
-
-        for task in session.tasks:
-            for result in task.results:
-                result.delete()
-            task.delete()
-
         session.delete()
 
 
@@ -457,7 +447,7 @@ class Sessions(SessionBase):
         if "collaboration_id" in args:
             q = q.filter(db.Session.collaboration_id == args["collaboration_id"])
         if "scope" in args:
-            q = q.filter(db.Session.scope == args["scope"])
+            q = q.filter(db.Session.scope == args["scope"].upper())
 
         # Filter the list of organizations based on the scope. If you have collaboration
         # permissions you can see all sessions within the collaboration. If you have
@@ -485,7 +475,7 @@ class Sessions(SessionBase):
                         ),
                     )
                 )
-            elif self.r.v_own.can():
+            else:
                 q = q.filter(
                     or_(
                         db.Session.user_id == g.user.id,
@@ -499,10 +489,6 @@ class Sessions(SessionBase):
                         ),
                     )
                 )
-            else:
-                return {
-                    "msg": "You lack the permission to do that!"
-                }, HTTPStatus.UNAUTHORIZED
 
         # Query and paginate the results
         try:
@@ -580,7 +566,7 @@ class Sessions(SessionBase):
             return {
                 "msg": (
                     "You lack the permission to create a session for "
-                    f"the {data['scope']} scope!"
+                    f"the {data['scope'].upper()} scope!"
                 )
             }, HTTPStatus.UNAUTHORIZED
 
@@ -783,7 +769,7 @@ class Session(SessionBase):
                 return {
                     "msg": (
                         "You lack the permission to change the scope of the session "
-                        f"to {data['scope']}!"
+                        f"to {data['scope'].upper()}!"
                     )
                 }, HTTPStatus.UNAUTHORIZED
 

@@ -118,16 +118,6 @@ class NodeTaskNamespace(ClientNamespace):
                     status,
                 )
 
-        # In case a container in the network completed successfully it could be that a
-        # dependent task for this node has been completed. In case this node fails to
-        # receive this event it should pick it up when the queue is synced on reconnect
-        # elif status == RunStatus.COMPLETED:
-        #     self.log.debug(
-        #         "Another node in the collaboration completed a task. This "
-        #         "node will check if any dependent tasks are ready to start."
-        #     )
-        #     self.node_worker_ref.sync_task_queue_with_server()
-
         # else: no need to do anything when a task has started/finished/... on
         # another node
 
