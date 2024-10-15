@@ -147,7 +147,9 @@ class BaseDatabase:
                     sleep(RETRY_DELAY_IN_SECONDS)
                 else:
                     raise Exception(
-                        f"Unable to connect to the database after {max_time_in_minutes} minutes of attempts. Please ensure the database is up and running."
+                        f"Unable to connect to the database!"
+                        f" Timeout after {MAX_NUMBER_OF_ATTEMPTS} attempts and {max_time_in_minutes} minutes."
+                        f" Please ensure the database is up and running."
                     ) from e
 
         log.info("Database initialized!")
