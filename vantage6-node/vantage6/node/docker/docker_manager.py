@@ -194,17 +194,21 @@ class DockerManager(DockerBaseManager):
         for label in db_labels:
             label_upper = label.upper()
             db_config = get_database_config(databases, label)
+
             if running_in_docker():
                 uri = os.environ[f"{label_upper}_DATABASE_URI"]
             else:
                 uri = db_config["uri"]
 
             if running_in_docker():
-                db_is_file = Path(f"/mnt/{uri}").exists()
+                db_is_file = Path(f"/mnt/{uri}").exists() and Path(f"/mnt/{uri}").is_file()
+                db_is_dir = Path(f"/mnt/{uri}").exists() and Path(f"/mnt/{uri}").is_dir()
+
                 if db_is_file:
                     uri = f"/mnt/{uri}"
             else:
-                db_is_file = Path(uri).exists()
+                db_is_file = Path(uri).exists() and Path(uri).is_file()
+                db_is_dir = Path(uri).exists() and Path(uri).is_dir()
 
             if db_is_file:
                 # We'll copy the file to the folder `data` in our task_dir.
@@ -212,9 +216,16 @@ class DockerManager(DockerBaseManager):
                 shutil.copy(uri, self.__tasks_dir)
                 uri = self.__tasks_dir / os.path.basename(uri)
 
+            if db_is_dir:
+                self.log.debug("Well waddaya know! We gots ourselves a folder!")
+                # Ignore all previouscomments about file locations: folders
+                # need to be mounted from the host.
+                uri = db_config["uri"]
+
             self.databases[label] = {
                 "uri": uri,
                 "is_file": db_is_file,
+                "is_dir": db_is_dir,
                 "type": db_config["type"],
                 "env": db_config.get("env", {}),
             }
