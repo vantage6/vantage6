@@ -444,10 +444,9 @@ class DockerTaskManager(DockerBaseManager):
         }
 
         for db_label, db in self.databases.items():
-
-            if db['is_dir']:
+            if db["is_dir"]:
                 self.log.debug(f"Adding folder as database '{db_label}'")
-                volumes[db['uri']] = {"bind": f"/mnt/{db_label}", "mode": "rw"}
+                volumes[db["uri"]] = {"bind": f"/mnt/{db_label}", "mode": "rw"}
 
         if running_in_docker():
             volumes[self.data_volume_name] = {"bind": self.data_folder, "mode": "rw"}
