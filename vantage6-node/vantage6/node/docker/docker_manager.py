@@ -201,8 +201,12 @@ class DockerManager(DockerBaseManager):
                 uri = db_config["uri"]
 
             if running_in_docker():
-                db_is_file = Path(f"/mnt/{uri}").exists() and Path(f"/mnt/{uri}").is_file()
-                db_is_dir = Path(f"/mnt/{uri}").exists() and Path(f"/mnt/{uri}").is_dir()
+                db_is_file = (
+                    Path(f"/mnt/{uri}").exists() and Path(f"/mnt/{uri}").is_file()
+                )
+                db_is_dir = (
+                    Path(f"/mnt/{uri}").exists() and Path(f"/mnt/{uri}").is_dir()
+                )
 
                 if db_is_file:
                     uri = f"/mnt/{uri}"
