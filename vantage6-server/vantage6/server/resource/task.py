@@ -723,7 +723,10 @@ class Tasks(TaskBase):
                 # get the algorithm from the algorithm store
                 try:
                     image, digest = Tasks._get_image_and_hash_from_store(
-                        store, image, config
+                        store=store,
+                        image=image,
+                        config=config,
+                        server_url_from_request=data.get("server_url"),
                     )
                 except Exception as e:
                     log.exception("Error while getting image from store: %s", e)
@@ -984,7 +987,10 @@ class Tasks(TaskBase):
 
     @staticmethod
     def _get_image_and_hash_from_store(
-        store: db.AlgorithmStore, image: str, config: dict
+        store: db.AlgorithmStore,
+        image: str,
+        config: dict,
+        server_url_from_request: str | None = None,
     ) -> tuple[str, str]:
         """
         Determine the image and hash from the algorithm store.
@@ -997,6 +1003,8 @@ class Tasks(TaskBase):
             URL of the docker image to be used.
         config : dict
             Configuration dictionary.
+        server_url_from_request : str, optional
+            Server URL from the request, by default None
 
         Returns
         -------
@@ -1008,7 +1016,7 @@ class Tasks(TaskBase):
         Exception
             If the algorithm cannot be retrieved from the store.
         """
-        server_url = get_server_url(config, request.args.get("server_url"))
+        server_url = get_server_url(config, server_url_from_request)
         if not server_url:
             raise ValueError(
                 "Server URL is not set in the configuration nor in the request "
