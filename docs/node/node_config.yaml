@@ -93,6 +93,7 @@ databases:
   # For folder mounts, directory on the host will be mounted under /mnt/<label>.
   # In the example below, the folder `/path/to/share/with/container` will be
   # made available as `/mnt/persistent`. The folder will be mounted read/write.
+  # **WARNING**: do *NOT* use 'data' as label.
   - label: persistent
     type: folder
     uri: /path/to/share/with/container
