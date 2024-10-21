@@ -443,10 +443,16 @@ class DockerTaskManager(DockerBaseManager):
             tmp_vol_name: {"bind": self.tmp_folder, "mode": "rw"},
         }
 
+        for db_label, db in self.databases.items():
+            if db["is_dir"]:
+                self.log.debug(f"Adding folder as database '{db_label}'")
+                volumes[db["uri"]] = {"bind": f"/mnt/{db_label}", "mode": "rw"}
+
         if running_in_docker():
             volumes[self.data_volume_name] = {"bind": self.data_folder, "mode": "rw"}
         else:
             volumes[self.__tasks_dir] = {"bind": self.data_folder, "mode": "rw"}
+
         return volumes
 
     def _setup_environment_vars(

@@ -90,6 +90,13 @@ databases:
       cdm_schema: public
       results_schema: results
 
+  # For folder mounts, directory on the host will be mounted under /mnt/<label>.
+  # In the example below, the folder `/path/to/share/with/container` will be
+  # made available as `/mnt/persistent`. The folder will be mounted read/write.
+  - label: persistent
+    type: folder
+    uri: /path/to/share/with/container
+
 
 # end-to-end encryption settings
 encryption:
