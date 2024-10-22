@@ -152,7 +152,7 @@ class VPNManager(DockerBaseManager):
             volumes=volumes,
             detach=True,
             environment=env,
-            restart_policy={"Name": "always"},
+            restart_policy={"Name": "unless-stopped"},
             name=self.vpn_client_container_name,
             cap_add=["NET_ADMIN", "SYSLOG"],
             devices=["/dev/net/tun"],
