@@ -7,6 +7,7 @@ from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from flask_socketio import Namespace, emit, join_room, leave_room
 
 from vantage6.common import logger_name
+from vantage6.common.globals import AuthStatus
 from vantage6.common.task_status import has_task_failed
 from vantage6.server import db
 from vantage6.server.model.authenticatable import Authenticatable
@@ -71,7 +72,7 @@ class DefaultSocketNamespace(Namespace):
         # get identity from token.
         session.auth_id = get_jwt_identity()
         auth = db.Authenticatable.get(session.auth_id)
-        auth.status = "online"
+        auth.status = AuthStatus.ONLINE.value
         auth.save()
 
         # It appears to be necessary to use the root socketio instance
@@ -167,7 +168,7 @@ class DefaultSocketNamespace(Namespace):
             self.__leave_room_and_notify(room)
 
         auth = db.Authenticatable.get(session.auth_id)
-        auth.status = "offline"
+        auth.status = AuthStatus.OFFLINE.value
         auth.save()
 
         # It appears to be necessary to use the root socketio instance
@@ -343,8 +344,8 @@ class DefaultSocketNamespace(Namespace):
         ping and sets them as online.
         """
         auth = db.Authenticatable.get(session.auth_id)
-        auth.status = "online"
-        auth.last_seen = dt.datetime.utcnow()
+        auth.status = AuthStatus.ONLINE.value
+        auth.last_seen = dt.datetime.now(dt.timezone.utc)
         auth.save()
 
     def __join_room_and_notify(self, room: str) -> None:

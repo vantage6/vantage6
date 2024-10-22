@@ -13,7 +13,7 @@ import traceback
 
 from pathlib import Path
 
-from vantage6.common.globals import APPNAME
+from vantage6.common.globals import APPNAME, AuthStatus
 from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common import WhoAmI
 from vantage6.common.serialization import serialize
@@ -838,7 +838,9 @@ class UserClient(ClientBase):
                 "last_seen_till": last_seen_till,
             }
             if is_online is not None:
-                params["status"] = "online" if is_online else "offline"
+                params["status"] = (
+                    AuthStatus.ONLINE.value if is_online else AuthStatus.OFFLINE.value
+                )
             return self.parent.request("node", params=params)
 
         @post_filtering(iterable=False)
