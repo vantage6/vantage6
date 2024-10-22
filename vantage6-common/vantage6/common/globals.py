@@ -72,6 +72,7 @@ class Ports(str, Enum):
     DEV_UI = 7600
     DEV_ALGO_STORE = 7602
 
+
 class AuthStatus(str, Enum):
     """Enum containing the different statuses of the authenticable (node/user)"""
 
