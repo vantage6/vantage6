@@ -426,6 +426,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       !this.shouldShowParameterBooleanInput(argument)
     );
   }
+
   shouldIncludeFormField(argument: Argument): boolean {
     return !this.shouldShowParameterBooleanInput(argument) && !this.shouldShowMultipleInput(argument);
   }
