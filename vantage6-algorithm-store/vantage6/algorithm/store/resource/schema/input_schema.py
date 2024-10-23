@@ -98,6 +98,7 @@ class ArgumentInputSchema(_NameDescriptionSchema):
     """
 
     type_ = fields.String(required=True, data_key="type")
+    display_name = fields.String(required=False)
 
     @validates("type_")
     def validate_type(self, value):

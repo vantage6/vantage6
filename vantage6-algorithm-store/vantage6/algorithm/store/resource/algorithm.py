@@ -421,6 +421,9 @@ class Algorithms(AlgorithmBaseResource):
                                 type: string
                                 description: Name of the argument in the
                                   function
+                              display_name:
+                                type: string
+                                description: Display name of the argument
                               description:
                                 type: string
                                 description: Description of the argument
@@ -512,6 +515,7 @@ class Algorithms(AlgorithmBaseResource):
             for argument in function.get("arguments", []):
                 arg = Argument(
                     name=argument["name"],
+                    display_name=argument.get("display_name", ""),
                     description=argument.get("description", ""),
                     type_=argument["type"],
                     function_id=func.id,
@@ -702,6 +706,9 @@ class Algorithm(AlgorithmBaseResource):
                                 type: string
                                 description: Name of the argument in the
                                   function
+                              display_name:
+                                type: string
+                                description: Display name of the argument
                               description:
                                 type: string
                                 description: Description of the argument
@@ -831,6 +838,7 @@ class Algorithm(AlgorithmBaseResource):
                 for argument in new_function.get("arguments", []):
                     arg = Argument(
                         name=argument["name"],
+                        display_name=argument.get("display_name", ""),
                         description=argument.get("description", ""),
                         type_=argument["type"],
                         function_id=func.id,
