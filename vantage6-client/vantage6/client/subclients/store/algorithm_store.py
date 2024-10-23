@@ -220,9 +220,9 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         id_ = self.__get_store_id(id_)
         if id_ is None:
             return
-        data = {
-            "name": name,
-        }
+        data = {}
+        if name is not None:
+            data["name"] = name
         if collaboration is not None or all_collaborations:
             data["collaboration_id"] = collaboration
         return self.parent.request(f"algorithmstore/{id_}", method="patch", json=data)

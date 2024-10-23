@@ -656,14 +656,16 @@ class UserClient(ClientBase):
                 Containing the updated collaboration information
             """
             id_ = self.__get_id_or_use_provided_id(id_)
+            data = {
+                "name": name,
+                "encrypted": encrypted,
+                "organization_ids": organizations,
+            }
+            data = {k: v for k, v in data.items() if v is not None}
             return self.parent.request(
                 f"collaboration/{id_}",
                 method="patch",
-                json={
-                    "name": name,
-                    "encrypted": encrypted,
-                    "organization_ids": organizations,
-                },
+                json=data,
             )
 
         def add_organization(
@@ -918,9 +920,9 @@ class UserClient(ClientBase):
             dict
                 Containing the meta-data of the updated node
             """
-            data = {
-                "name": name,
-            }
+            data = {}
+            if name is not None:
+                data["name"] = name
             if clear_ip is not None:
                 data["clear_ip"] = clear_ip
             return self.parent.request(
@@ -1100,18 +1102,21 @@ class UserClient(ClientBase):
             if not id_:
                 id_ = self.parent.whoami.organization_id
 
+            data = {
+                "name": name,
+                "address1": address1,
+                "address2": address2,
+                "zipcode": zipcode,
+                "country": country,
+                "domain": domain,
+                "public_key": public_key,
+            }
+            data = {k: v for k, v in data.items() if v is not None}
+
             return self.parent.request(
                 f"organization/{id_}",
                 method="patch",
-                json={
-                    "name": name,
-                    "address1": address1,
-                    "address2": address2,
-                    "zipcode": zipcode,
-                    "country": country,
-                    "domain": domain,
-                    "public_key": public_key,
-                },
+                json=data,
             )
 
         @post_filtering(iterable=False)
@@ -1602,10 +1607,16 @@ class UserClient(ClientBase):
             dict
                 Containing the updated role data
             """
+            data = {
+                "name": name,
+                "description": description,
+                "rules": rules,
+            }
+            data = {k: v for k, v in data.items() if v is not None}
             return self.parent.request(
                 f"role/{role}",
                 method="patch",
-                json={"name": name, "description": description, "rules": rules},
+                json=data,
             )
 
         def delete(self, role: int) -> None:
