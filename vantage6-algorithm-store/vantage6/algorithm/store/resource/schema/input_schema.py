@@ -66,6 +66,7 @@ class FunctionInputSchema(_NameDescriptionSchema):
     """
 
     type_ = fields.String(required=True, data_key="type")
+    display_name = fields.String(required=False)
     databases = fields.Nested("DatabaseInputSchema", many=True)
     arguments = fields.Nested("ArgumentInputSchema", many=True)
     ui_visualizations = fields.Nested("UIVisualizationInputSchema", many=True)
@@ -97,6 +98,7 @@ class ArgumentInputSchema(_NameDescriptionSchema):
     """
 
     type_ = fields.String(required=True, data_key="type")
+    display_name = fields.String(required=False)
 
     @validates("type_")
     def validate_type(self, value):
