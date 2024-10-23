@@ -266,6 +266,7 @@ def create_vserver_config(
     port: int,
     server_url: str,
     extra_config_file: Path,
+    ui_image: str | None,
     ui_port: int,
     store_port: int,
 ) -> Path:
@@ -281,6 +282,9 @@ def create_vserver_config(
         Url of the server this
     extra_config_file : Path
         Path to file with additional server configuration.
+    ui_image : str | None
+        UI docker image to specify in configuration files. Will be used on startup of
+        the network.
     ui_port : int
         Port to run the UI on.
     store_port : int
@@ -299,6 +303,10 @@ def create_vserver_config(
     )
 
     extra_config = _read_extra_config_file(extra_config_file)
+    if ui_image is not None:
+        if extra_config:
+            extra_config += "\n"
+        extra_config += f"images:\n  ui: {ui_image}"
 
     template = environment.get_template("server_config.j2")
     server_config = template.render(
@@ -409,6 +417,7 @@ def demo_network(
     extra_server_config: Path,
     extra_node_config: Path,
     extra_store_config: Path,
+    ui_image: str,
     ui_port: int,
     algorithm_store_port: int,
 ) -> tuple[list[dict], Path, Path]:
@@ -430,6 +439,9 @@ def demo_network(
         Path to file with additional node configuration.
     extra_store_config : Path
         Path to file with additional algorithm store configuration.
+    ui_image : str | None
+        UI docker image to specify in configuration files. Will be used on startup of
+        the network.
     ui_port : int
         Port to run the UI on.
     algorithm_store_port : int
@@ -449,6 +461,7 @@ def demo_network(
         server_port,
         server_url,
         extra_server_config,
+        ui_image,
         ui_port,
         algorithm_store_port,
     )
@@ -505,6 +518,13 @@ def demo_network(
     "the development server",
 )
 @click.option(
+    "--ui-image",
+    type=str,
+    default=None,
+    help="UI docker image to specify in configuration files. Will be used on startup of"
+    " the network",
+)
+@click.option(
     "--extra-server-config",
     type=click.Path(exists=True),
     default=None,
@@ -536,6 +556,7 @@ def create_demo_network(
     ui_port: int,
     algorithm_store_port: int,
     image: str = None,
+    ui_image: str = None,
     extra_server_config: Path = None,
     extra_node_config: Path = None,
     extra_store_config: Path = None,
@@ -557,6 +578,7 @@ def create_demo_network(
             extra_server_config,
             extra_node_config,
             extra_store_config,
+            ui_image,
             ui_port,
             algorithm_store_port,
         )
