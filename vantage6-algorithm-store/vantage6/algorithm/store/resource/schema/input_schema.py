@@ -97,6 +97,8 @@ class ArgumentInputSchema(_NameDescriptionSchema):
     """
 
     type_ = fields.String(required=True, data_key="type")
+    has_default_value = fields.Boolean()
+    default_value = fields.String()
 
     @validates("type_")
     def validate_type(self, value):
@@ -107,6 +109,16 @@ class ArgumentInputSchema(_NameDescriptionSchema):
         if value not in types:
             raise ValidationError(
                 f"Argument type '{value}' is not one of the allowed values: {types}"
+            )
+
+    @validates_schema
+    def validate_default_value(self, data, **kwargs):
+        """
+        Validate that the default value is present if has_default_value is True.
+        """
+        if data.get("default_value") and not data.get("has_default_value"):
+            raise ValidationError(
+                "Default value cannot be given if has_default_value is False"
             )
 
 

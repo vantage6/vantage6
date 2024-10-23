@@ -1,5 +1,5 @@
 from __future__ import annotations
-from sqlalchemy import Column, String, ForeignKey, Integer
+from sqlalchemy import Column, String, ForeignKey, Integer, Boolean
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base
@@ -31,6 +31,10 @@ class Argument(Base):
     description = Column(String)
     function_id = Column(Integer, ForeignKey("function.id"))
     type_ = Column("type", String)
+    # note that we have both column 'has_default_value' and 'default_value' because the
+    # default value itself can be NULL
+    has_default_value = Column(Boolean, default=False)
+    default_value = Column(String)
 
     # relationships
     function = relationship("Function", back_populates="arguments")
