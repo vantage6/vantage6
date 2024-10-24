@@ -1,0 +1,23 @@
+allow_drop_all: 'True'
+description: 'default_algorithm_store'
+ip: 0.0.0.0
+logging:
+  backup_count: 5
+  datefmt: '%Y-%m-%d %H:%M:%S'
+  file: test-server.log
+  format: '%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s'
+  level: DEBUG
+  max_size: 1024
+  use_console: true
+port: {{ port }}
+uri: sqlite:///default.sqlite
+root_user:
+  v6_server_uri: http://localhost:{{ server_port }}/api
+  username: dev_admin
+dev:
+  host_uri: {{ host_uri }}
+  disable_review: true
+policies:
+  algorithm_view: public
+  allow_localhost: true
+{{ user_provided_config }}

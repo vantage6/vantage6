@@ -3,7 +3,7 @@ import questionary as q
 from pathlib import Path
 
 from vantage6.common import generate_apikey
-from vantage6.common.globals import DATABASE_TYPES, InstanceType, NodePolicy
+from vantage6.common.globals import DATABASE_TYPES, InstanceType, NodePolicy, Ports
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.context import AppContext
 from vantage6.common import error, warning, info
@@ -12,7 +12,6 @@ from vantage6.cli.configuration_manager import (
     NodeConfigurationManager,
     ServerConfigurationManager,
 )
-from vantage6.cli.globals import AlgoStoreGlobals, ServerGlobals
 
 
 def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
@@ -40,11 +39,25 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
                 "message": "The base-URL of the server:",
                 "default": "http://localhost",
             },
+        ]
+    )
+    # remove trailing slash from server_url if entered by user
+    config["server_url"] = config["server_url"].rstrip("/")
+
+    # set default port to the https port if server_url is https
+    default_port = (
+        str(Ports.HTTPS.value)
+        if config["server_url"].startswith("https")
+        else str(Ports.DEV_SERVER.value)
+    )
+
+    config = config | q.prompt(
+        [
             {
                 "type": "text",
                 "name": "port",
                 "message": "Enter port to which the server listens:",
-                "default": "5000",
+                "default": default_port,
             },
             {
                 "type": "text",
@@ -107,12 +120,12 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
             "Do you want to enter a list of allowed algorithms?"
         ).ask()
         if ask_single_algorithms:
-            policies[NodePolicy.ALLOWED_ALGORITHMS] = _get_allowed_algorithms()
+            policies[NodePolicy.ALLOWED_ALGORITHMS.value] = _get_allowed_algorithms()
         ask_algorithm_stores = q.confirm(
             "Do you want to allow algorithms from specific algorithm stores?"
         ).ask()
         if ask_algorithm_stores:
-            policies[NodePolicy.ALLOWED_ALGORITHM_STORES] = (
+            policies[NodePolicy.ALLOWED_ALGORITHM_STORES.value] = (
                 _get_allowed_algorithm_stores()
             )
         if ask_single_algorithms and ask_algorithm_stores:
@@ -291,9 +304,9 @@ def _get_common_server_config(
                 "message": "Enter port to which the server listens:",
                 "default": (
                     # Note that .value is required in YAML to get proper str value
-                    ServerGlobals.PORT.value
+                    str(Ports.DEV_SERVER.value)
                     if instance_type == InstanceType.SERVER
-                    else AlgoStoreGlobals.PORT.value
+                    else str(Ports.DEV_ALGO_STORE.value)
                 ),
             },
         ]
@@ -489,7 +502,7 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
         InstanceType.ALGORITHM_STORE, instance_name, include_api_path=False
     )
 
-    default_v6_server_uri = "http://localhost:5000/api"
+    default_v6_server_uri = f"http://localhost:{Ports.DEV_SERVER.value}/api"
     default_root_username = "root"
 
     v6_server_uri = q.text(

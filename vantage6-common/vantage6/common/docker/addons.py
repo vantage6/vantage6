@@ -1,6 +1,13 @@
 import logging
 import signal
 import pathlib
+import re
+import json
+import hashlib
+from http import HTTPStatus
+
+import requests
+from requests.auth import HTTPBasicAuth
 
 import docker
 from docker.client import DockerClient
@@ -308,7 +315,7 @@ def parse_image_name(image: str) -> tuple[str, str, str]:
     Parse image name into registry, repository, tag.
 
     The returned tag may also be a digest. If image contains both a tag and a digest,
-    the digest will be returned rather than the tag.
+    the tag will be returned rather than the digest.
 
     Parameters
     ----------
@@ -357,6 +364,180 @@ def get_image_name_wo_tag(image: str) -> str:
         return f"{registry}/{repository}"
 
 
+def get_manifest(
+    full_image: str,
+    registry_user: str | None = None,
+    registry_password: str | None = None,
+) -> requests.Response:
+    """
+    Get the manifest of an image
+
+    This uses the OCI distribution specification which is supported by all major
+    container registries.
+
+    Parameters
+    ----------
+    full_image: str
+        Image name. E.g. "harbor2.vantage6.ai/algorithms/average:latest"
+    registry_user: str | None
+        Docker username to authenticate with at the registry. Required if the image is
+        private
+    registry_password: str | None
+        Docker password to authenticate with at the registry. Required if the image is
+        private
+
+    Returns
+    -------
+    requests.Response
+        Response containing the manifest of the image
+
+    Raises
+    ------
+    ValueError
+        If the image name is invalid
+    """
+    registry, image, tag = parse_image_name(full_image)
+
+    # if requesting from docker hub, manifests are at 'registry-1.docker.io'
+    if registry == "docker.io":
+        registry = "registry-1.docker.io"
+
+    # request manifest. First try without authentication, as that is the most common
+    # case. If that fails, try with authentication
+    headers = {"Accept": "application/vnd.docker.distribution.manifest.v2+json"}
+    manifest_endpoint = f"https://{registry}/v2/{image}/manifests/{tag}"
+    response = requests.get(manifest_endpoint, headers=headers, timeout=60)
+
+    # try requesting manifest using authentication from 'www-authenticate' header if
+    # anonymous request failed. This has been tested with DockerHub and Github container
+    # registry
+    if (
+        response.status_code == HTTPStatus.UNAUTHORIZED
+        and "www-authenticate" in response.headers
+    ):
+        realm_pattern = r'Bearer realm="(?P<realm>[^"]+)"'
+        scope_pattern = r'scope="(?P<scope>[^"]+)"'
+        service_pattern = r'service="(?P<service>[^"]+)"'
+        realm_match = re.match(realm_pattern, response.headers["www-authenticate"])
+        scope_match = re.search(scope_pattern, response.headers["www-authenticate"])
+        service_match = re.search(service_pattern, response.headers["www-authenticate"])
+        if realm_match and scope_match and service_match:
+            token_response = requests.get(
+                realm_match.group("realm"),
+                params={
+                    "scope": scope_match.group("scope"),
+                    "service": service_match.group("service"),
+                },
+                timeout=60,
+            )
+            if token_response.status_code == HTTPStatus.OK:
+                token = token_response.json()["token"]
+                response = requests.get(
+                    manifest_endpoint,
+                    headers={"Authorization": f"Bearer {token}", **headers},
+                    timeout=60,
+                )
+
+    # If still getting unauthorize, try with username and password. The following code
+    # was tested with private images on harbor2.vantage6.ai.
+    if response.status_code == HTTPStatus.UNAUTHORIZED:
+        response = requests.get(
+            manifest_endpoint,
+            headers=headers,
+            auth=HTTPBasicAuth(registry_user, registry_password),
+            timeout=60,
+        )
+
+    # handle errors or return manifest
+    if response.status_code == HTTPStatus.NOT_FOUND:
+        raise ValueError(f"Image {image}:{tag} from registry {registry} not found!")
+    elif response.status_code != HTTPStatus.OK:
+        raise ValueError(
+            "Could not retrieve image manifest from "
+            f"https://{registry}/v2/{image}/manifests/{tag}"
+        )
+    return response
+
+
+def _get_digest_via_docker(
+    full_image: str,
+    client: DockerClient,
+    docker_username: str | None = None,
+    docker_password: str | None = None,
+) -> str:
+    """
+    Get digest of an image by fetching the distribution specs using the Docker client
+
+    Parameters
+    ----------
+    full_image: str
+        Image name. E.g. "harbor2.vantage6.ai/algorithms/average:latest"
+    client: DockerClient
+        Docker client.
+    docker_username: str | None
+        Docker username to authenticate with at the registry. Required if the image is
+        private
+    docker_password: str | None
+        Docker password to authenticate with at the registry. Required if the image is
+        private
+
+    Returns
+    -------
+    str | None
+        Digest of the image or `None` if the digest could not be found
+    """
+    try:
+        if docker_username and docker_password:
+            distribution = client.api.inspect_distribution(
+                full_image,
+                auth_config={"username": docker_username, "password": docker_password},
+            )
+        else:
+            distribution = client.api.inspect_distribution(full_image)
+    except docker.errors.APIError:
+        log.warning("Could not find distribution specs of image %s", full_image)
+        return None
+
+    try:
+        return distribution["Descriptor"]["digest"]
+    except KeyError:
+        log.warning(
+            "Distribution spec of image '%s' did not include image digest", full_image
+        )
+        return None
+
+
+def _get_digest_via_manifest(
+    full_image: str,
+    docker_username: str | None = None,
+    docker_password: str | None = None,
+) -> str:
+    """
+    Get digest of an image by fetching the manifest
+
+    Parameters
+    ----------
+    full_image: str
+        Image name. E.g. "harbor2.vantage6.ai/algorithms/average:latest"
+    docker_username: str | None
+        Docker username to authenticate with at the registry. Required if the image is
+        private
+    docker_password: str | None
+        Docker password to authenticate with at the registry. Required if the image is
+        private
+
+    Returns
+    -------
+    str
+        Digest of the image
+    """
+    manifest_response = get_manifest(full_image, docker_username, docker_password)
+    if "Docker-Content-Digest" in manifest_response.headers:
+        return manifest_response.headers["Docker-Content-Digest"]
+    else:
+        return __calculate_digest(manifest_response.json())
+
+
 def get_digest(
     full_image: str,
     client: DockerClient | None = None,
@@ -364,7 +545,7 @@ def get_digest(
     docker_password: str | None = None,
 ) -> str:
     """
-    Get digest of an image
+    Get digest of a Docker image
 
     Parameters
     ----------
@@ -386,24 +567,32 @@ def get_digest(
     str | None
         Digest of the image or `None` if the digest could not be found
     """
-    if not client:
-        client = docker.from_env()
-    try:
-        if docker_username and docker_password:
-            distribution = client.api.inspect_distribution(
-                full_image,
-                auth_config={"username": docker_username, "password": docker_password},
-            )
-        else:
-            distribution = client.api.inspect_distribution(full_image)
-    except docker.errors.APIError:
-        log.warning("Could not find distribution specs of image %s", full_image)
-        return None
-
-    try:
-        return distribution["Descriptor"]["digest"]
-    except KeyError:
-        log.warning(
-            "Distribution spec of image '%s' did not include image digest", full_image
+    if client is not None:
+        return _get_digest_via_docker(
+            full_image, client, docker_username, docker_password
         )
-        return None
+    else:
+        return _get_digest_via_manifest(full_image, docker_username, docker_password)
+
+
+def __calculate_digest(manifest: str) -> str:
+    """
+    Calculate the SHA256 digest from a Docker image manifest.
+    Parameters
+    ----------
+    manifest : str
+        Docker image manifest
+
+    Returns
+    -------
+    str
+        SHA256 digest of the manifest
+    """
+    # Serialize the manifest using canonical JSON
+    serialized_manifest = json.dumps(
+        manifest,
+        indent=3,  # Believe it or not, this spacing is required to get the right SHA
+    ).encode("utf-8")
+    # Calculate the SHA256 digest
+    digest = hashlib.sha256(serialized_manifest).hexdigest()
+    return f"sha256:{digest}"

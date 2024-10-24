@@ -38,7 +38,7 @@ marshmallow-sqlalchemy==0.15.0
 mistune==2.0.4
 numpy==1.24.2
 oauthlib==3.2.2
-pandas==1.5.3
+pandas>=1.5.3
 parso==0.8.3
 pickleshare==0.7.5
 prompt-toolkit==3.0.36

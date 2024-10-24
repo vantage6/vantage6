@@ -1,13 +1,17 @@
 from pathlib import Path
-import csv
+from importlib import resources as impresources
 import yaml
 import click
+import pandas as pd
+
 from jinja2 import Environment, FileSystemLoader
 from colorama import Fore, Style
 
-from vantage6.common.globals import APPNAME, InstanceType
+from vantage6.common.globals import APPNAME, InstanceType, Ports
 from vantage6.common import info, error, generate_apikey
 
+import vantage6.cli.dev.data as data_dir
+from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.globals import PACKAGE_FOLDER
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.context.node import NodeContext
@@ -16,49 +20,45 @@ from vantage6.cli.server.import_ import cli_server_import
 from vantage6.cli.utils import prompt_config_name
 
 
-def create_dummy_data(node_name: str, dev_folder: Path) -> Path:
-    """Synthesize csv dataset.
+def create_node_data_files(num_nodes: int, server_name: str) -> list[Path]:
+    """Create data files for nodes.
 
     Parameters
     ----------
-    node_name : str
-        Name of node to be used as part of dataset.
-    dev_folder : Path
-        Path to the dev folder.
+    num_nodes : int
+        Number of nodes to create data files for.
+    server_name : str
+        Name of the server.
 
     Returns
     -------
-    Path
-        Directory the data is saved in.
+    list[Path]
+        List of paths to the created data files.
     """
-    header = ["name", "mask", "weapon", "age"]
-    data = [
-        ["Raphael", "red", "sai", 44],
-        ["Donatello", "purple", "bo staff", 60],
-    ]
+    info(f"Creating data files for {num_nodes} nodes.")
+    data_files = []
+    full_df = pd.read_csv(impresources.files(data_dir) / "olympic_athletes_2016.csv")
+    length_df = len(full_df)
+    for i in range(num_nodes):
+        node_name = f"{server_name}_node_{i + 1}"
+        dev_folder = NodeContext.instance_folders("node", node_name, False)["dev"]
+        data_folder = Path(dev_folder / server_name)
+        data_folder.mkdir(parents=True, exist_ok=True)
 
-    data_file = dev_folder / f"df_{node_name}.csv"
-    with open(data_file, "w", encoding="UTF8", newline="") as f:
-        writer = csv.writer(f)
+        # Split the data over the nodes
+        start = i * length_df // num_nodes
+        end = (i + 1) * length_df // num_nodes
+        data = full_df[start:end]
+        data_file = data_folder / f"df_{node_name}.csv"
 
-        # write the header
-        writer.writerow(header)
-
-        # write the data
-        for row in data:
-            writer.writerow(row)
-
-        f.close()
-
-    info(
-        f"Spawned dataset for {Fore.GREEN}{node_name}{Style.RESET_ALL}, "
-        f"writing to {Fore.GREEN}{data_file}{Style.RESET_ALL}"
-    )
-    return data_file
+        # write data to file
+        data.to_csv(data_file, index=False)
+        data_files.append(data_file)
+    return data_files
 
 
 def create_node_config_file(
-    server_url: str, port: int, config: dict, server_name: str
+    server_url: str, port: int, config: dict, server_name: str, datafile: Path
 ) -> None:
     """Create a node configuration file (YAML).
 
@@ -77,6 +77,8 @@ def create_node_config_file(
         additional user_defined_config.
     server_name : str
         Configuration name of the dummy server.
+    datafile : Path
+        Path to the data file for the node to use.
     """
     environment = Environment(
         loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
@@ -91,7 +93,6 @@ def create_node_config_file(
     folders = NodeContext.instance_folders("node", node_name, False)
     path_to_dev_dir = Path(folders["dev"] / server_name)
     path_to_dev_dir.mkdir(parents=True, exist_ok=True)
-    dummy_datafile = create_dummy_data(node_name, path_to_dev_dir)
 
     path_to_data_dir = Path(folders["data"])
     path_to_data_dir.mkdir(parents=True, exist_ok=True)
@@ -104,7 +105,7 @@ def create_node_config_file(
     node_config = template.render(
         {
             "api_key": config["api_key"],
-            "databases": {"default": dummy_datafile},
+            "databases": {"default": datafile},
             "logging": {"file": f"{node_name}.log"},
             "port": port,
             "server_url": server_url,
@@ -176,6 +177,7 @@ def generate_node_configs(
     """
     configs = []
     extra_config = _read_extra_config_file(extra_node_config)
+    node_data_files = create_node_data_files(num_nodes, server_name)
     for i in range(num_nodes):
         config = {
             "org_id": i + 1,
@@ -183,7 +185,9 @@ def generate_node_configs(
             "node_name": f"{server_name}_node_{i + 1}",
             "user_defined_config": extra_config,
         }
-        create_node_config_file(server_url, port, config, server_name)
+        create_node_config_file(
+            server_url, port, config, server_name, node_data_files[i]
+        )
         configs.append(config)
 
     return configs
@@ -257,7 +261,14 @@ def create_vserver_import_config(node_configs: list[dict], server_name: str) -> 
     return full_path
 
 
-def create_vserver_config(server_name: str, port: int, extra_config_file: Path) -> Path:
+def create_vserver_config(
+    server_name: str,
+    port: int,
+    server_url: str,
+    extra_config_file: Path,
+    ui_port: int,
+    store_port: int,
+) -> Path:
     """Creates server configuration file (YAML).
 
     Parameters
@@ -266,8 +277,14 @@ def create_vserver_config(server_name: str, port: int, extra_config_file: Path) 
         Server name.
     port : int
         Server port.
+    server_url : str
+        Url of the server this
     extra_config_file : Path
         Path to file with additional server configuration.
+    ui_port : int
+        Port to run the UI on.
+    store_port : int
+        Port to run the algorithm store on.
 
     Returns
     -------
@@ -285,10 +302,17 @@ def create_vserver_config(server_name: str, port: int, extra_config_file: Path) 
 
     template = environment.get_template("server_config.j2")
     server_config = template.render(
-        port=port, jwt_secret_key=generate_apikey(), user_provided_config=extra_config
+        port=port,
+        host_uri=server_url,
+        jwt_secret_key=generate_apikey(),
+        user_provided_config=extra_config,
+        ui_port=ui_port,
+        store_port=store_port,
     )
     folders = ServerContext.instance_folders(
-        instance_type="server", instance_name=server_name, system_folders=True
+        instance_type=InstanceType.SERVER,
+        instance_name=server_name,
+        system_folders=False,
     )
 
     config_dir = Path(folders["config"] / server_name)
@@ -312,6 +336,71 @@ def create_vserver_config(server_name: str, port: int, extra_config_file: Path) 
     return full_path
 
 
+def create_algo_store_config(
+    server_name: str,
+    server_url: str,
+    server_port: int,
+    store_port: int,
+    extra_config_file: Path,
+) -> Path:
+    """Create algorithm store configuration file (YAML).
+
+    Parameters
+    ----------
+    server_name : str
+        Server name.
+    server_url : str
+        Url of the server this store connects to.
+    server_port : int
+        Port of the server this store connects to.
+    port : int
+        Port of the algorithm store.
+    extra_config_file : Path
+        Path to file with additional algorithm store configuration.
+    """
+    environment = Environment(
+        loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
+        trim_blocks=True,
+        lstrip_blocks=True,
+        autoescape=True,
+    )
+
+    extra_config = _read_extra_config_file(extra_config_file)
+
+    template = environment.get_template("algo_store_config.j2")
+    store_config = template.render(
+        port=store_port,
+        server_port=server_port,
+        host_uri=server_url,
+        user_provided_config=extra_config,
+    )
+    folders = AlgorithmStoreContext.instance_folders(
+        instance_type=InstanceType.ALGORITHM_STORE,
+        instance_name="{server_name}_store",
+        system_folders=False,
+    )
+
+    config_dir = Path(folders["config"] / f"{server_name}_store")
+    config_dir.mkdir(parents=True, exist_ok=True)
+    full_path = folders["config"] / f"{server_name}_store.yaml"
+    if full_path.exists():
+        error(f"Algorithm store configuration file already exists: {full_path}")
+        exit(1)
+
+    try:
+        with open(full_path, "x") as f:
+            f.write(store_config)
+            info(
+                "Algorithm store configuration ready, writing to "
+                f"{Fore.GREEN}{full_path}{Style.RESET_ALL}"
+            )
+    except Exception as e:
+        error(f"Could not write algorithm store configuration file: {e}")
+        exit(1)
+
+    return full_path
+
+
 def demo_network(
     num_nodes: int,
     server_url: str,
@@ -319,6 +408,9 @@ def demo_network(
     server_name: str,
     extra_server_config: Path,
     extra_node_config: Path,
+    extra_store_config: Path,
+    ui_port: int,
+    algorithm_store_port: int,
 ) -> tuple[list[dict], Path, Path]:
     """Generates the demo network.
 
@@ -336,6 +428,12 @@ def demo_network(
         Path to file with additional server configuration.
     extra_node_config : Path
         Path to file with additional node configuration.
+    extra_store_config : Path
+        Path to file with additional algorithm store configuration.
+    ui_port : int
+        Port to run the UI on.
+    algorithm_store_port : int
+        Port to run the algorithm store on.
 
     Returns
     -------
@@ -346,8 +444,18 @@ def demo_network(
         num_nodes, server_url, server_port, server_name, extra_node_config
     )
     server_import_config = create_vserver_import_config(node_configs, server_name)
-    server_config = create_vserver_config(server_name, server_port, extra_server_config)
-    return (node_configs, server_import_config, server_config)
+    server_config = create_vserver_config(
+        server_name,
+        server_port,
+        server_url,
+        extra_server_config,
+        ui_port,
+        algorithm_store_port,
+    )
+    store_config = create_algo_store_config(
+        server_name, server_url, server_port, algorithm_store_port, extra_store_config
+    )
+    return (node_configs, server_import_config, server_config, store_config)
 
 
 @click.command()
@@ -371,8 +479,22 @@ def demo_network(
     "-p",
     "--server-port",
     type=int,
-    default=5000,
-    help="Port to run the server on. Default is 5000.",
+    default=Ports.DEV_SERVER.value,
+    help=f"Port to run the server on. Default is {Ports.DEV_SERVER.value}.",
+)
+@click.option(
+    "--ui-port",
+    type=int,
+    default=Ports.DEV_UI.value,
+    help=f"Port to run the UI on. Default is {Ports.DEV_UI.value}.",
+)
+@click.option(
+    "--algorithm-store-port",
+    type=int,
+    default=Ports.DEV_ALGO_STORE.value,
+    help=(
+        f"Port to run the algorithm store on. Default is {Ports.DEV_ALGO_STORE.value}."
+    ),
 )
 @click.option(
     "-i",
@@ -397,6 +519,13 @@ def demo_network(
     help="YAML File with additional node configuration. This will be"
     " appended to each of the node configuration files",
 )
+@click.option(
+    "--extra-store-config",
+    type=click.Path("rb"),
+    default=None,
+    help="YAML File with additional algorithm store configuration. This will be"
+    " appended to the algorithm store configuration file",
+)
 @click.pass_context
 def create_demo_network(
     click_ctx: click.Context,
@@ -404,9 +533,12 @@ def create_demo_network(
     num_nodes: int,
     server_url: str,
     server_port: int,
+    ui_port: int,
+    algorithm_store_port: int,
     image: str = None,
     extra_server_config: Path = None,
     extra_node_config: Path = None,
+    extra_store_config: Path = None,
 ) -> dict:
     """Creates a demo network.
 
@@ -416,7 +548,7 @@ def create_demo_network(
     organizations/collaborations/users and tasks.
     """
     server_name = prompt_config_name(name)
-    if not ServerContext.config_exists(server_name):
+    if not ServerContext.config_exists(server_name, False):
         demo = demo_network(
             num_nodes,
             server_url,
@@ -424,6 +556,9 @@ def create_demo_network(
             server_name,
             extra_server_config,
             extra_node_config,
+            extra_store_config,
+            ui_port,
+            algorithm_store_port,
         )
         info(
             f"Created {Fore.GREEN}{len(demo[0])}{Style.RESET_ALL} node "
@@ -433,8 +568,8 @@ def create_demo_network(
     else:
         error(f"Configuration {Fore.RED}{server_name}{Style.RESET_ALL} already exists!")
         exit(1)
-    (node_config, server_import_config, server_config) = demo
-    ctx = get_server_context(server_name, True, ServerContext)
+    (node_config, server_import_config, server_config, store_config) = demo
+    ctx = get_server_context(server_name, False, ServerContext)
     click_ctx.invoke(
         cli_server_import,
         ctx=ctx,
@@ -447,7 +582,7 @@ def create_demo_network(
     )
     info(
         "Development network was set up successfully! You can now start the "
-        f"server and nodes with {Fore.GREEN}v6 server start-demo-network"
+        f"server and nodes with {Fore.GREEN}v6 dev start-demo-network"
         f"{Style.RESET_ALL}"
     )
     # find user credentials to print. Read from server import file
@@ -471,4 +606,5 @@ def create_demo_network(
         "node_configs": node_config,
         "server_import_config": server_import_config,
         "server_config": server_config,
+        "store_config": store_config,
     }

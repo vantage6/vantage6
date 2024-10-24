@@ -14,7 +14,7 @@ import traceback
 from pathlib import Path
 
 from vantage6.common.globals import APPNAME
-from vantage6.common.encryption import RSACryptor
+from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common import WhoAmI
 from vantage6.common.serialization import serialize
 from vantage6.client.filter import post_filtering
@@ -170,6 +170,10 @@ class UserClient(ClientBase):
             self.log.info(
                 f" --> Organization: {organization_name} " f"(id={organization_id})"
             )
+
+            # setup default encryption so user doesn't have to do this unless encryption
+            # is enabled
+            self.cryptor = DummyCryptor()
         except Exception:
             self.log.info("--> Retrieving additional user info failed!")
             self.log.error(traceback.format_exc())
@@ -319,11 +323,20 @@ class UserClient(ClientBase):
             dict
                 Message from the server
             """
-            assert email or username, "You need to provide username or email!"
+            if not (email or username):
+                self.parent.log.error("--> You need to provide username or email")
+                return
+
+            data = {}
+            if email:
+                data["email"] = email
+            if username:
+                data["username"] = username
+
             result = self.parent.request(
                 "recover/lost",
                 method="post",
-                json={"username": username, "email": email},
+                json=data,
             )
             msg = result.get("msg")
             self.parent.log.info(f"--> {msg}")
@@ -477,6 +490,21 @@ class UserClient(ClientBase):
                 collaboration
             encrypted: bool, optional
                 Filter collaborations by whether or not they are encrypted
+            field: str, optional
+                Which data field to keep in the result. For instance, "field='name'"
+                will only return the names of the collaborations. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the result. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                collaborations. Default is None.
+            filter_: tuple, optional
+                Filter the result on key-value pairs. For instance,
+                "filter_=('name', 'collab1')" will only return the collaborations
+                with the name 'collab1'. Default is None.
+            filters: list[tuple], optional
+                Filter the result on multiple key-value pairs. For instance,
+                "filters=[('name', 'collab1'), ('id', 1)]" will only return the
+                collaborations with the name 'collab1' and id 1. Default is None.
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional
@@ -518,6 +546,13 @@ class UserClient(ClientBase):
             ----------
             id_ : int
                 Id from the collaboration you want to view
+            field: str, optional
+                Which data field to keep in the result. For instance, "field='name'"
+                will only return the name of the collaboration. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the result. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                collaboration. Default is None.
 
             Returns
             -------
@@ -542,6 +577,13 @@ class UserClient(ClientBase):
             encrypted : bool, optional
                 Whenever the collaboration should be encrypted or not,
                 by default False
+            field: str, optional
+                Which data field to keep in the result. For instance, "field='name'"
+                will only return the name of the collaboration. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the result. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                collaboration. Default is None.
 
             Returns
             -------
@@ -558,8 +600,7 @@ class UserClient(ClientBase):
                 },
             )
 
-        @post_filtering(iterable=False)
-        def delete(self, id_: int = None, delete_dependents: bool = None) -> dict:
+        def delete(self, id_: int = None, delete_dependents: bool = False) -> None:
             """Deletes a collaboration
 
             Parameters
@@ -570,19 +611,14 @@ class UserClient(ClientBase):
                 Delete the tasks, nodes and studies that are part of the collaboration
                 as well. If this is False, and dependents exist, the server will refuse
                 to delete the collaboration. Default is False.
-
-            Returns
-            -------
-            dict
-                Message from the server
             """
             id_ = self.__get_id_or_use_provided_id(id_)
-            params = {}
-            if delete_dependents:
-                params["delete_dependents"] = delete_dependents
-            return self.parent.request(
-                f"collaboration/{id_}", method="delete", params=params
+            res = self.parent.request(
+                f"collaboration/{id_}",
+                method="delete",
+                params={"delete_dependents": delete_dependents},
             )
+            self.parent.log.info(f"--> {res.get('msg')}")
 
         @post_filtering(iterable=False)
         def update(
@@ -606,6 +642,13 @@ class UserClient(ClientBase):
                 New encryption status of the collaboration
             organizations : list[int], optional
                 New list of organization ids which participate in the collaboration
+            field: str, optional
+                Which data field to keep in the result. For instance, "field='name'"
+                will only return the name of the collaboration. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the result. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                collaboration. Default is None.
 
             Returns
             -------
@@ -705,6 +748,13 @@ class UserClient(ClientBase):
             ----------
             id_ : int
                 Id of the node you want to inspect
+            field: str, optional
+                Which data field to keep in the result. For instance, "field='name'"
+                will only return the name of the node. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the result. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                node. Default is None.
 
             Returns
             -------
@@ -748,6 +798,21 @@ class UserClient(ClientBase):
                 Filter if node has been online since date (format: yyyy-mm-dd)
             last_seen_till: str, optional
                 Filter if node has been online until date (format: yyyy-mm-dd)
+            field: str, optional
+                Which data field to keep in the result. For instance, "field='name'"
+                will only return the name of the node. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the result. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                node. Default is None.
+            filter_: tuple, optional
+                Filter the result on key-value pairs. For instance,
+                "filter_=('name', 'node1')" will only return the nodes with the name
+                'node1'. Default is None.
+            filters: list[tuple], optional
+                Filter the result on multiple key-value pairs. For instance,
+                "filters=[('name', 'node1'), ('id', 1)]" will only return the nodes
+                with the name 'node1' and id 1. Default is None.
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional
@@ -778,7 +843,10 @@ class UserClient(ClientBase):
 
         @post_filtering(iterable=False)
         def create(
-            self, collaboration: int = None, organization: int = None, name: str = None
+            self,
+            collaboration: int | None = None,
+            organization: int = None,
+            name: str = None,
         ) -> dict:
             """Register new node
 
@@ -793,6 +861,13 @@ class UserClient(ClientBase):
             name : str, optional
                 Name of the node. If no name is provided the server will
                 generate one. Default value is None
+            field: str, optional
+                Which data field to keep in the returned dict. For instance,
+                "field='name'" will only return the name of the node. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the returned dict. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                node. Default is None.
 
             Returns
             -------
@@ -810,15 +885,13 @@ class UserClient(ClientBase):
             if not organization:
                 organization = self.parent.whoami.organization_id
 
-            return self.parent.request(
-                "node",
-                method="post",
-                json={
-                    "organization_id": organization,
-                    "collaboration_id": collaboration,
-                    "name": name,
-                },
-            )
+            body = {
+                "organization_id": organization,
+                "collaboration_id": collaboration,
+            }
+            if name:
+                body["name"] = name
+            return self.parent.request("node", method="post", json=body)
 
         @post_filtering(iterable=False)
         def update(self, id_: int, name: str = None, clear_ip: bool = None) -> dict:
@@ -832,6 +905,13 @@ class UserClient(ClientBase):
                 New node name, by default None
             clear_ip : bool, optional
                 Clear the VPN IP address of the node, by default None
+            field: str, optional
+                Which data field to keep in the returned dict. For instance,
+                "field='name'" will only return the name of the node. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the returned dict. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                node. Default is None.
 
             Returns
             -------
@@ -849,20 +929,16 @@ class UserClient(ClientBase):
                 json=data,
             )
 
-        def delete(self, id_: int) -> dict:
+        def delete(self, id_: int) -> None:
             """Deletes a node
 
             Parameters
             ----------
             id_ : int
                 Id of the node you want to delete
-
-            Returns
-            -------
-            dict
-                Message from the server
             """
-            return self.parent.request(f"node/{id_}", method="delete")
+            res = self.parent.request(f"node/{id_}", method="delete")
+            self.parent.log.info(f"--> {res.get('msg')}")
 
         def kill_tasks(self, id_: int) -> dict:
             """
@@ -908,6 +984,21 @@ class UserClient(ClientBase):
                 the previously setup collaboration is used. Default value is None
             study: int, optional
                 Filter by study id
+            field: str, optional
+                Which data field to keep in the result. For instance, "field='name'"
+                will only return the name of the organization. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the result. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                organizations. Default is None.
+            filter_: tuple, optional
+                Filter the result on key-value pairs. For instance,
+                "filter_=('name', 'org1')" will only return the organizations with the
+                name 'org1'. Default is None.
+            filters: list[tuple], optional
+                Filter the result on multiple key-value pairs. For instance,
+                "filters=[('name', 'org1'), ('id', 1)]" will only return the
+                organizations with the name 'org1' and id 1. Default is None.
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional
@@ -940,6 +1031,15 @@ class UserClient(ClientBase):
                 Organization `id` of the organization you want to view.
                 In case no `id` is provided it will display your own
                 organization, default value is None.
+            field: str, optional
+                Which data field to keep in the returned dict. For instance,
+                "field='name'" will only return the name of the organization. Default
+                is None.
+            fields: list[str], optional
+                Which data fields to keep in the returned dict. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                organization. Default is None.
+
 
             Returns
             -------
@@ -983,6 +1083,14 @@ class UserClient(ClientBase):
                 Domain of the organization (e.g. `iknl.nl`), by default None
             public_key : str, optional
                 public key, by default None
+            field: str, optional
+                Which data field to keep in the returned dict. For instance,
+                "field='name'" will only return the name of the organization. Default
+                is None.
+            fields: list[str], optional
+                Which data fields to keep in the returned dict. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                organization. Default is None.
 
             Returns
             -------
@@ -1006,6 +1114,7 @@ class UserClient(ClientBase):
                 },
             )
 
+        @post_filtering(iterable=False)
         def create(
             self,
             name: str,
@@ -1035,6 +1144,14 @@ class UserClient(ClientBase):
             public_key : str, optional
                 Public key of the organization. This can be set later,
                 by default None
+            field: str, optional
+                Which data field to keep in the returned dict. For instance,
+                "field='name'" will only return the name of the organization. Default
+                is None.
+            fields: list[str], optional
+                Which data fields to keep in the returned dict. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                organization. Default is None.
 
             Returns
             -------
@@ -1054,6 +1171,25 @@ class UserClient(ClientBase):
                 json_data["public_key"] = public_key
 
             return self.parent.request("organization", method="post", json=json_data)
+
+        def delete(self, id_: int, delete_dependents: bool = False) -> None:
+            """Deletes an organization
+
+            Parameters
+            ----------
+            id_ : int
+                Id of the organization you want to delete.
+            delete_dependents : bool, optional
+                Delete the nodes, users, runs, tasks and roles that are part of
+                the organization as well. If this is False, and dependents exist, the
+                server will refuse to delete the organization. Default is False.
+            """
+            res = self.parent.request(
+                f"organization/{id_}",
+                method="delete",
+                params={"delete_dependents": delete_dependents},
+            )
+            self.parent.log.info(f"--> {res.get('msg')}")
 
     class User(ClientBase.SubClient):
         @post_filtering()
@@ -1093,6 +1229,21 @@ class UserClient(ClientBase):
                 Filter users that have logged on since (format yyyy-mm-dd)
             last_seen_till: str, optional
                 Filter users that have logged on until (format yyyy-mm-dd)
+            field: str, optional
+                Which data field to keep in the result. For instance, "field='name'"
+                will only return the name of the user. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the result. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                users. Default is None.
+            filter_: tuple, optional
+                Filter the result on key-value pairs. For instance,
+                "filter_=('name', 'user1')" will only return the users with the name
+                'user1'. Default is None.
+            filters: list[tuple], optional
+                Filter the result on multiple key-value pairs. For instance,
+                "filters=[('name', 'user1'), ('id', 1)]" will only return the
+                users with the name 'user1' and id 1. Default is None.
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional
@@ -1127,6 +1278,13 @@ class UserClient(ClientBase):
             id_ : int, optional
                 User `id`, by default None. When no `id` is provided
                 your own user information is displayed
+            field: str, optional
+                Which data field to keep in the result. For instance, "field='name'"
+                will only return the name of the user. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the result. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                user. Default is None.
 
             Returns
             -------
@@ -1172,6 +1330,13 @@ class UserClient(ClientBase):
                 this user. All previous assigned roles will be removed!
             email : str
                 New email from the user
+            field: str, optional
+                Which data field to keep in the returned dict. For instance,
+                "field='name'" will only return the name of the user. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the returned dict. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                user. Default is None.
 
             Returns
             -------
@@ -1232,6 +1397,13 @@ class UserClient(ClientBase):
             rules : list of ints
                 Rule ids that are assigned to this user. Note that you
                 can only assign rules that you own
+            field: str, optional
+                Which data field to keep in the returned dict. For instance,
+                "field='name'" will only return the name of the user. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the returned dict. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                user. Default is None.
 
             Returns
             -------
@@ -1249,6 +1421,17 @@ class UserClient(ClientBase):
                 "rules": rules,
             }
             return self.parent.request("user", json=user_data, method="post")
+
+        def delete(self, id_: int) -> None:
+            """Delete user
+
+            Parameters
+            ----------
+            id_ : int
+                Id of the user you want to delete
+            """
+            res = self.parent.request(f"user/{id_}", method="delete")
+            self.parent.log.info(f'--> {res.get("msg")}')
 
     class Role(ClientBase.SubClient):
         @post_filtering()
@@ -1280,6 +1463,21 @@ class UserClient(ClientBase):
             include_root: bool, optional
                 Include roles that are not assigned to any particular
                 organization
+            field: str, optional
+                Which data field to keep in the result. For instance, "field='name'"
+                will only return the name of the role. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the result. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                roles. Default is None.
+            filter_: tuple, optional
+                Filter the result on key-value pairs. For instance,
+                "filter_=('name', 'role1')" will only return the roles with the name
+                'role1'. Default is None.
+            filters: list[tuple], optional
+                Filter the result on multiple key-value pairs. For instance,
+                "filters=[('name', 'role1'), ('id', 1)]" will only return the roles
+                with the name 'role1' and id 1. Default is None.
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional
@@ -1302,14 +1500,21 @@ class UserClient(ClientBase):
             }
             return self.parent.request("role", params=params)
 
-        @post_filtering(iterable=True)
+        @post_filtering(iterable=False)
         def get(self, id_: int) -> dict:
             """View specific role
 
             Parameters
             ----------
             id_ : int
-                Id of the role you want to insepct
+                Id of the role you want to inspect
+            field: str, optional
+                Which data field to keep in the result. For instance, "field='name'"
+                will only return the name of the role. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the result. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                role. Default is None.
 
             Returns
             -------
@@ -1318,7 +1523,7 @@ class UserClient(ClientBase):
             """
             return self.parent.request(f"role/{id_}")
 
-        @post_filtering(iterable=True)
+        @post_filtering(iterable=False)
         def create(
             self, name: str, description: str, rules: list, organization: int = None
         ) -> dict:
@@ -1329,13 +1534,20 @@ class UserClient(ClientBase):
             name : str
                 Role name
             description : str
-                Human readable description of the role
+                Human readable description of the role.
             rules : list
-                Rules that this role contains
+                Rules that this role contains.
             organization : int, optional
                 Organization to which this role belongs. In case this is
                 not provided the users organization is used. By default
-                None
+                None.
+            field: str, optional
+                Which data field to keep in the returned dict. For instance,
+                "field='name'" will only return the name of the role. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the returned dict. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                role. Default is None.
 
             Returns
             -------
@@ -1355,7 +1567,7 @@ class UserClient(ClientBase):
                 },
             )
 
-        @post_filtering(iterable=True)
+        @post_filtering(iterable=False)
         def update(
             self,
             role: int,
@@ -1377,6 +1589,13 @@ class UserClient(ClientBase):
                 CAUTION! This will not *add* rules but replace them. If
                 you remove rules from your own role you lose access. By
                 default None
+            field: str, optional
+                Which data field to keep in the returned dict. For instance,
+                "field='name'" will only return the name of the role. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the returned dict. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                role. Default is None.
 
             Returns
             -------
@@ -1389,7 +1608,7 @@ class UserClient(ClientBase):
                 json={"name": name, "description": description, "rules": rules},
             )
 
-        def delete(self, role: int) -> dict:
+        def delete(self, role: int) -> None:
             """Delete role
 
             Parameters
@@ -1397,11 +1616,6 @@ class UserClient(ClientBase):
             role : int
                 CAUTION! Id of the role to be deleted. If you remove
                 roles that are attached to you, you might lose access!
-
-            Returns
-            -------
-            dict
-                Message from the server
             """
             res = self.parent.request(f"role/{role}", method="delete")
             self.parent.log.info(f'--> {res.get("msg")}')
@@ -1417,6 +1631,13 @@ class UserClient(ClientBase):
                 Id of the task you want to view
             include_results : bool, optional
                 Whenever to include the results or not, by default False
+            field: str, optional
+                Which data field to keep in the result. For instance, "field='name'"
+                will only return the name of the task. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the result. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                task. Default is None.
 
             Returns
             -------
@@ -1489,6 +1710,21 @@ class UserClient(ClientBase):
             user_created: bool, optional
                 If True, show only top-level tasks created by users. If False,
                 show only subtasks created by algorithm containers.
+            field: str, optional
+                Which data field to keep in the result. For instance, "field='name'"
+                will only return the name of the tasks. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the result. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                tasks. Default is None.
+            filter_: tuple, optional
+                Filter the result on key-value pairs. For instance,
+                "filter_=('name', 'task1')" will only return the tasks with the name
+                'task1'. Default is None.
+            filters: list[tuple], optional
+                Filter the result on multiple key-value pairs. For instance,
+                "filters=[('name', 'task1'), ('id', 1)]" will only return the
+                tasks with the name 'task1' and id 1. Default is None.
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional
@@ -1534,15 +1770,15 @@ class UserClient(ClientBase):
         @post_filtering(iterable=False)
         def create(
             self,
-            organizations: list,
+            organizations: list | None,
             name: str,
             image: str,
             description: str,
             input_: dict,
-            collaboration: int = None,
-            study: int = None,
-            store: int = None,
-            databases: list[dict] = None,
+            collaboration: int | None = None,
+            study: int | None = None,
+            store: int | None = None,
+            databases: list[dict] | None = None,
         ) -> dict:
             """Create a new task
 
@@ -1572,6 +1808,13 @@ class UserClient(ClientBase):
                 at least a 'label' key. Additional keys are 'query' (if using
                 SQL/SPARQL databases), 'sheet_name' (if using Excel databases),
                 and 'preprocessing' information.
+            field: str, optional
+                Which data field to keep in the returned dict. For instance,
+                "field='name'" will only return the name of the task. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the returned dict. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                task. Default is None
 
             Returns
             -------
@@ -1700,7 +1943,7 @@ class UserClient(ClientBase):
                     )
             return databases
 
-        def delete(self, id_: int) -> dict:
+        def delete(self, id_: int) -> None:
             """Delete a task
 
             Also removes the related runs.
@@ -1709,11 +1952,6 @@ class UserClient(ClientBase):
             ----------
             id_ : int
                 Id of the task to be removed
-
-            Returns
-            -------
-            dict
-                Message from the server
             """
             msg = self.parent.request(f"task/{id_}", method="delete")
             self.parent.log.info(f"--> {msg}")
@@ -1748,6 +1986,13 @@ class UserClient(ClientBase):
                 id of the run you want to inspect
             include_task : bool, optional
                 Whenever to include the task or not, by default False
+            field: str, optional
+                Which data field to keep in the result. For instance, "field='name'"
+                will only return the name of the run. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the result. For instance,
+                "fields=['name', 'id']" will only return the name and id of the
+                run. Default is None.
 
             Returns
             -------
@@ -1802,6 +2047,13 @@ class UserClient(ClientBase):
                 Filter on a range of finished times (format: yyyy-mm-dd)
             port: int, optional
                 Port on which run was computed
+            field: str, optional
+                Which data field to keep in the result. For instance, "field='name'"
+                will only return the name of the runs. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the result. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                runs. Default is None.
             page: int, optional
                 Pagination page number, defaults to 1
             per_page: int, optional
@@ -1846,6 +2098,7 @@ class UserClient(ClientBase):
 
             return runs
 
+        @post_filtering(iterable=True)
         def from_task(self, task_id: int, include_task: bool = False) -> list[dict]:
             """
             Get all algorithm runs from a specific task
@@ -1856,6 +2109,21 @@ class UserClient(ClientBase):
                 Id of the task to get results from
             include_task : bool, optional
                 Whenever to include the task or not, by default False
+            field: str, optional
+                Which data field to keep in the result. For instance, "field='name'"
+                will only return the name of the runs. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the result. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                runs. Default is None.
+            filter_: tuple, optional
+                Filter the result on key-value pairs. For instance,
+                "filter_=('name', 'run1')" will only return the runs with the name
+                'run1'. Default is None.
+            filters: list[tuple], optional
+                Filter the result on multiple key-value pairs. For instance,
+                "filters=[('name', 'run1'), ('id', 1)]" will only return the runs
+                with the name 'run1' and id 1. Default is None.
 
             Returns
             -------
@@ -1903,7 +2171,6 @@ class UserClient(ClientBase):
         Client to get the results of one or multiple algorithm runs
         """
 
-        @post_filtering(iterable=False)
         def get(self, id_: int) -> dict:
             """View a specific result
 
@@ -1974,6 +2241,13 @@ class UserClient(ClientBase):
             ----------
             id_ : int
                 Id of the rule you want to view
+            field: str, optional
+                Which data field to keep in the result. For instance, "field='name'"
+                will only return the name of the rule. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the result. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                rule. Default is None.
 
             Returns
             -------
@@ -2004,6 +2278,21 @@ class UserClient(ClientBase):
                 Filter by scope
             role: int, optional
                 Only show rules that belong to this role id
+            field: str, optional
+                Which data field to keep in the result. For instance, "field='name'"
+                will only return the name of the rule. Default is None.
+            fields: list[str], optional
+                Which data fields to keep in the result. For instance,
+                "fields=['name', 'id']" will only return the names and ids of the
+                rule. Default is None.
+            filter_: tuple, optional
+                Filter the result on key-value pairs. For instance,
+                "filter_=('scope', 'own')" will only return the rules with the scope
+                'own'. Default is None.
+            filters: list[tuple], optional
+                Filter the result on multiple key-value pairs. For instance,
+                "filters=[('scope', 'own'), ('name', 'node')]" will only return the
+                rules with the scope 'own' and name 'node'. Default is None.
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional

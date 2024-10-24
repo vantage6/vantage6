@@ -1,5 +1,5 @@
 from __future__ import annotations
-import vantage6.server.globals as constants
+from vantage6.common.globals import APPNAME, InstanceType
 
 from vantage6.common.context import AppContext
 from vantage6.cli.configuration_manager import TestingConfigurationManager
@@ -17,7 +17,9 @@ class TestContext(AppContext):
     LOGGING_ENABLED = False
 
     @classmethod
-    def from_external_config_file(cls) -> TestContext:
+    def from_external_config_file(
+        cls, package_folder: str, instance_type: InstanceType
+    ) -> TestContext:
         """
         Create a context the unittest configuration file.
 
@@ -27,11 +29,11 @@ class TestContext(AppContext):
             Context object
         """
         return super().from_external_config_file(
-            cls.test_config_location(), "unittest", True
+            cls.test_config_location(package_folder, instance_type), "unittest", True
         )
 
     @staticmethod
-    def test_config_location() -> str:
+    def test_config_location(package_folder: str, instance_type: InstanceType) -> str:
         """
         Location of the unittest configuration file.
 
@@ -40,10 +42,16 @@ class TestContext(AppContext):
         str
             Path to the unittest configuration file
         """
-        return (
-            constants.PACKAGE_FOLDER
-            / constants.APPNAME
-            / "server"
-            / "_data"
-            / "unittest_config.yaml"
-        )
+        if instance_type == InstanceType.SERVER:
+            return (
+                package_folder / APPNAME / "server" / "_data" / "unittest_config.yaml"
+            )
+        elif instance_type == InstanceType.ALGORITHM_STORE:
+            return (
+                package_folder
+                / APPNAME
+                / "algorithm"
+                / "store"
+                / "_data"
+                / "unittest_config.yaml"
+            )

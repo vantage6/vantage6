@@ -81,7 +81,7 @@ the following steps to test a release:
    to check the VPN functionality.
 
 6. *Check swagger*. Check if the swagger docs run without error. They should be
-   on http://localhost:5000/apidocs/ when running server locally.
+   on http://localhost:7601/apidocs/ when running server locally.
 
 7. *Test the UI*. Also make a release candidate there.
 

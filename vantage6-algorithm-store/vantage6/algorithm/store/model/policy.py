@@ -20,6 +20,21 @@ class Policy(Base):
     value = Column(String)
 
     @classmethod
+    def get_as_dict(cls) -> dict[str, str]:
+        """
+        Get the policies as a dictionary.
+
+        Returns
+        -------
+        dict[str, str]
+            Dictionary of policies
+        """
+        session = DatabaseSessionManager.get_session()
+        result = session.query(cls).all()
+        session.commit()
+        return {r.key: r.value for r in result}
+
+    @classmethod
     def get_servers_allowed_to_be_whitelisted(cls) -> list[str]:
         """
         Get the servers that are allowed to be whitelisted.

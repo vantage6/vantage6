@@ -1,12 +1,11 @@
-# from pathlib import Path
+from pathlib import Path
 
 from vantage6.common.globals import APPNAME
 
-# TODO cleanup this file
 #
 #   INSTALLATION SETTINGS
 #
-# PACKAGE_FOLDER = Path(__file__).parent.parent.parent
+PACKAGE_FOLDER = Path(__file__).parent.parent.parent.parent
 
 SERVER_MODULE_NAME = APPNAME + "-algorithm-store"
 
@@ -26,3 +25,6 @@ RESOURCES = [
     "policy",
     "review",
 ]
+
+# Where the resources modules have to be loaded from
+RESOURCES_PATH = "vantage6.algorithm.store.resource"

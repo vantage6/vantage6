@@ -30,6 +30,7 @@ import { SocketioConnectService } from 'src/app/services/socketio-connect.servic
 import { AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { printDate } from 'src/app/helpers/general.helper';
+import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
 
 @Component({
   selector: 'app-task-read',
@@ -70,6 +71,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     private translateService: TranslateService,
     private taskService: TaskService,
     private algorithmService: AlgorithmService,
+    private algorithmStoreService: AlgorithmStoreService,
     private chosenCollaborationService: ChosenCollaborationService,
     private permissionService: PermissionService,
     private fileService: FileService,
@@ -122,9 +124,14 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       this.childTasks = await this.getChildTasks();
     }
     try {
-      this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image);
-      this.function = this.algorithm?.functions.find((_) => _.name === this.task?.input?.method) || null;
-      this.selectedVisualization = this.function?.ui_visualizations?.[0] || null;
+      if (this.task.algorithm_store) {
+        const store = await this.algorithmStoreService.getAlgorithmStore(this.task.algorithm_store?.id.toString());
+        this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image, store);
+        this.function = this.algorithm?.functions.find((_) => _.name === this.task?.input?.method) || null;
+        this.selectedVisualization = this.function?.ui_visualizations?.[0] || null;
+      } else {
+        this.algorithmNotFoundInStore = true;
+      }
     } catch (error) {
       // error message is already displayed - we only catch failure to get the algorithm
       // here.
@@ -271,7 +278,23 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     this.fileService.downloadTxtFile(textResult, filename);
   }
 
+  getPrintableTaskName(task: Task): string {
+    // print only max 30 characters
+    if (task.name.length > 30) {
+      return task.name.substring(0, 30) + '...';
+    } else {
+      return task.name;
+    }
+  }
+
+  private async waitUntilInitialized(): Promise<void> {
+    while (this.isLoading) {
+      await new Promise((f) => setTimeout(f, 200));
+    }
+  }
+
   private async onAlgorithmStatusUpdate(statusUpdate: AlgorithmStatusChangeMsg): Promise<void> {
+    await this.waitUntilInitialized();
     // Update status of child tasks
     this.childTasks.forEach((task: BaseTask) => {
       if (task.id === statusUpdate.task_id) {
@@ -343,6 +366,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   }
 
   private async onNewTask(newTaskMsg: NewTaskMsg): Promise<void> {
+    await this.waitUntilInitialized();
     if (!this.task) return;
     if (newTaskMsg.parent_id !== this.task.id) return;
 
@@ -351,6 +375,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   }
 
   private async onNodeStatusUpdate(nodeStatus: NodeOnlineStatusMsg): Promise<void> {
+    await this.waitUntilInitialized();
     // first update the child tasks
     this.childTasks.forEach((task: BaseTask) => {
       task.runs.forEach((run: TaskRun) => {

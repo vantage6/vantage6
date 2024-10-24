@@ -1,6 +1,6 @@
 <ng-container *ngIf="!isLoading && user; else loading">
   <app-page-header [title]="user.username">
-    <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="canDelete">
+    <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="canEdit || canDelete">
       <mat-icon>more_vert</mat-icon>
     </button>
     <mat-menu #menu="matMenu">

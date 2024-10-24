@@ -19,13 +19,28 @@ class StoreUserSubClient(ClientBase.SubClient):
 
         Parameters
         ----------
-        username : str
+        username : str, optional
             Filter by username (with LIKE operator).
-        role : int
+        role : int, optional
             Filter by role id.
-        page : int
+        field : str, optional
+            Which data field to keep in the result. For instance, "field='username'"
+            will only return the username of the registered users. Default is None.
+        fields : list[str], optional
+            Which data fields to keep in the result. For instance,
+            "fields=['username', 'id']" will only return the username and id of the
+            registered users. Default is None.
+        filter_ : tuple, optional
+            Filter the result on key-value pairs. For instance,
+            "filter_=('username', 'my_username')" will only return the registered
+            users with the username 'my_username'. Default is None.
+        filters : list[tuple], optional
+            Filter the result on multiple key-value pairs. For instance,
+            "filters=[('username', 'my_username'), ('id', 1)]" will only return the
+            registered users with the username 'my_username' and id 1. Default is None.
+        page : int, optional
             Page number for pagination (default=1)
-        per_page : int
+        per_page : int, optional
             Number of items per page (default=10)
 
         Returns
@@ -55,6 +70,13 @@ class StoreUserSubClient(ClientBase.SubClient):
         ----------
         id_ : int
             The id of the user registration
+        field : str, optional
+            Which data field to keep in the result. For instance, "field='username'"
+            will only return the username of the user. Default is None.
+        fields : list[str], optional
+            Which data fields to keep in the result. For instance,
+            "fields=['username', 'id']" will only return the username and id of the
+            user. Default is None.
 
         Returns
         -------
@@ -67,6 +89,7 @@ class StoreUserSubClient(ClientBase.SubClient):
             headers=self.parent.util._get_server_url_header(),
         )
 
+    @post_filtering(iterable=False)
     def register(self, username: str, roles: List[int]) -> dict:
         """
         Register a vantage6 user in this algorithm store.
@@ -77,6 +100,14 @@ class StoreUserSubClient(ClientBase.SubClient):
             The username of the user
         roles : list[int]
             The roles of the user in this algorithm store
+        field : str, optional
+            Which data field to keep in the returned dict. For instance,
+            "field='username'" will only return the username of the user. Default is
+            None.
+        fields : list[str], optional
+            Which data fields to keep in the returned dict. For instance,
+            "fields=['username', 'id']" will only return the username and id of the
+            user. Default is None.
 
         Returns
         -------
@@ -95,6 +126,7 @@ class StoreUserSubClient(ClientBase.SubClient):
             json=data,
         )
 
+    @post_filtering(iterable=False)
     def update(self, id_: int, roles: List[int]) -> dict:
         """
         Update a user registration by id
@@ -105,6 +137,19 @@ class StoreUserSubClient(ClientBase.SubClient):
             The id of the user registration
         roles : list[int]
             The new roles of the user in this algorithm store
+        field : str, optional
+            Which data field to keep in the returned dict. For instance,
+            "field='username'" will only return the username of the user. Default is
+            None.
+        fields : list[str], optional
+            Which data fields to keep in the returned dict. For instance,
+            "fields=['username', 'id']" will only return the username and id of the
+            user. Default is None.
+
+        Returns
+        -------
+        dict
+            The updated user registration
         """
         data = {
             "roles": roles,
@@ -117,7 +162,7 @@ class StoreUserSubClient(ClientBase.SubClient):
             json=data,
         )
 
-    def delete(self, id_: int) -> dict:
+    def delete(self, id_: int) -> None:
         """
         Delete a user registration by id
 
@@ -126,9 +171,10 @@ class StoreUserSubClient(ClientBase.SubClient):
         id_ : int
             The id of the user registration
         """
-        return self.parent.request(
+        res = self.parent.request(
             f"user/{id_}",
             method="DELETE",
             is_for_algorithm_store=True,
             headers=self.parent.util._get_server_url_header(),
         )
+        self.parent.log.info(f"--> {res.get('msg')}")

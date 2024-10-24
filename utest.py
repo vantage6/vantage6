@@ -5,6 +5,7 @@ import sys
 
 
 def run():
+
     # run common tests
     common_test_suites = find_tests(str(Path(__file__).parent / "vantage6-common"))
     success_common = run_tests(common_test_suites)
@@ -17,7 +18,20 @@ def run():
     server_test_suites = find_tests(str(Path(__file__).parent / "vantage6-server"))
     success_server = run_tests(server_test_suites)
 
-    sys.exit(not (success_server and success_cli and success_common))
+    # run algorithm store tests
+    algorithm_store_test_suites = find_tests(
+        str(Path(__file__).parent / "vantage6-algorithm-store")
+    )
+    success_algorithm_store = run_tests(algorithm_store_test_suites)
+
+    sys.exit(
+        not (
+            success_server
+            and success_cli
+            and success_common
+            and success_algorithm_store
+        )
+    )
 
 
 if __name__ == "__main__":

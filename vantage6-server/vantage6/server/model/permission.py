@@ -11,7 +11,7 @@ may contain multiple entries for the same user.
 
 from sqlalchemy import Column, Integer, ForeignKey, Table
 
-from .base import Base
+from vantage6.server.model.base import Base
 
 
 Permission = Table(

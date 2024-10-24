@@ -7,7 +7,7 @@ description: Test
 ip: 0.0.0.0
 
 # Port to which the algorithm store binds
-port: 5000
+port: 7602
 
 # The URI to the algorithm store database. This should be a valid SQLAlchemy URI,
 # e.g. for an Sqlite database: sqlite:///database-name.sqlite,
@@ -68,7 +68,7 @@ policies:
   # any user from these servers will be able use the algorithms from the store.
   allowed_servers:
     - "https://cotopaxi.vantage6.ai"
-    - "http://localhost:5000/api"
+    - "http://localhost:7601/api"
 
   # Localhost servers are by default never allowed to connect to the algorithm store,
   # even if no allowed servers lists are given. This setting can be used to allow
@@ -91,12 +91,22 @@ dev:
   # should normally use http://172.17.0.1.
   host_uri: http://host.docker.internal
 
+  # disable review process - all submitted algorithms are automatically accepted, which
+  # can be useful while developing algorithms locally. By default, the review process
+  # is enabled.
+  disable_review: false
+
+  # Define whether or not developers are able to review their own algorithms. For
+  # production, this is not recommended, but it can facilitate development. By default,
+  # this is disabled.
+  review_own_algorithm: false
+
 # Provide an initial root user for the algorithm store. This user will be created
 # when the store is started for the first time. The root user has full access to
 # the store and can create other users. The root user should be a reference to an
 # existing user in a vantage6 server.
 root_user:
   # URI to the vantage6 server
-  v6_server_uri: http://localhost:5000/api
+  v6_server_uri: http://localhost:7601/api
   # username of the vantage6 server's user you want to make root in the algorithm store
   username: root

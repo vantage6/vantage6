@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs';
 import { BaseReadComponent } from 'src/app/components/admin-base/base-read/base-read.component';
-import { OperationType, ResourceType, Rule } from 'src/app/models/api/rule.model';
+import { OperationType, ResourceType, Rule, ScopeType } from 'src/app/models/api/rule.model';
 import { User, UserLazyProperties } from 'src/app/models/api/user.model';
 import { routePaths } from 'src/app/routes';
 import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dialog.service';
@@ -94,8 +94,10 @@ export class UserReadComponent extends BaseReadComponent implements OnInit, OnDe
             !!this.user?.organization &&
             this.permissionService.isAllowedForOrg(ResourceType.USER, OperationType.DELETE, this.user.organization.id);
           this.canEdit =
-            !!this.user?.organization &&
-            this.permissionService.isAllowedForOrg(ResourceType.USER, OperationType.EDIT, this.user.organization.id);
+            (!!this.user?.organization &&
+              this.permissionService.isAllowedForOrg(ResourceType.USER, OperationType.EDIT, this.user.organization.id)) ||
+            (this.user?.id === this.permissionService.activeUser?.id &&
+              this.permissionService.isAllowed(ScopeType.OWN, ResourceType.USER, OperationType.EDIT));
         }
       });
   }

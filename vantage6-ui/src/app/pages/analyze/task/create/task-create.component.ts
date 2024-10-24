@@ -63,6 +63,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   columns: string[] = [];
   isLoading: boolean = true;
   isLoadingColumns: boolean = false;
+  isSubmitting: boolean = false;
   isTaskRepeat: boolean = false;
   isDataInitialized: boolean = false;
   isNgInitDone: boolean = false;
@@ -72,7 +73,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     studyOrCollabID: ['', Validators.required]
   });
   packageForm = this.fb.nonNullable.group({
-    algorithmID: ['', Validators.required],
+    algorithmSpec: ['', Validators.required],
     name: ['', Validators.required],
     description: ''
   });
@@ -182,9 +183,10 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       // get algorithm including digest
       algorithm = this.algorithms.find((_) => `${_.image}@${_.digest}` === this.repeatedTask?.image);
     }
-    if (!algorithm) return;
-    this.packageForm.controls.algorithmID.setValue(algorithm.id.toString());
-    await this.handleAlgorithmChange(algorithm.id);
+    if (!algorithm || !algorithm.algorithm_store_id) return;
+    const algoSpec = this.getAlgoSpec(algorithm);
+    this.packageForm.controls.algorithmSpec.setValue(algoSpec);
+    await this.handleAlgorithmChange(algorithm.id, algorithm.algorithm_store_id);
     // set function step
     if (!this.repeatedTask.input) return;
     this.functionForm.controls.functionName.setValue(this.repeatedTask?.input?.method);
@@ -225,6 +227,8 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
           controls[controls.length - 1].setValue(value);
           isFirst = false;
         }
+      } else if (argument.type === ArgumentType.Boolean) {
+        this.parameterForm.get(parameter.label)?.setValue(parameter.value ? true : false);
       } else {
         this.parameterForm.get(parameter.label)?.setValue(parameter.value);
       }
@@ -237,6 +241,10 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
         this.myStepper?.next();
       }
     }
+  }
+
+  getAlgoSpec(algorithm: Algorithm): string {
+    return `${algorithm.id}_${algorithm.algorithm_store_id}`;
   }
 
   async handleDatabaseStepInitialized(): Promise<void> {
@@ -262,6 +270,16 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   async handleSubmit(): Promise<void> {
+    if (this.isSubmitting) return;
+    this.isSubmitting = true;
+    try {
+      await this.submitTask();
+    } catch (error) {
+      this.isSubmitting = false;
+    }
+  }
+
+  async submitTask(): Promise<void> {
     if (
       this.studyForm.invalid ||
       this.packageForm.invalid ||
@@ -326,7 +344,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       image: image,
       collaboration_id: this.collaboration?.id || -1,
       databases: taskDatabases,
-      store_id: this.algorithm?.algorith_store_id || -1,
+      store_id: this.algorithm?.algorithm_store_id || -1,
       organizations: selectedOrganizations.map((organizationID) => {
         return {
           id: Number.parseInt(organizationID),
@@ -532,8 +550,9 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       }
     });
 
-    this.packageForm.controls.algorithmID.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (algorithmID) => {
-      this.handleAlgorithmChange(Number(algorithmID));
+    this.packageForm.controls.algorithmSpec.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (algorithmSpec) => {
+      const [algorithmID, algorithmStoreID] = algorithmSpec.split('_');
+      this.handleAlgorithmChange(Number(algorithmID), Number(algorithmStoreID));
     });
 
     this.functionForm.controls.functionName.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (functionName) => {
@@ -567,7 +586,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     this.setOrganizations();
   }
 
-  private async handleAlgorithmChange(algorithmID: number): Promise<void> {
+  private async handleAlgorithmChange(algorithmID: number, algoStoreID: number): Promise<void> {
     //Clear form
     this.clearFunctionStep();
     this.clearDatabaseStep();
@@ -576,7 +595,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     this.clearParameterStep();
 
     //Get selected algorithm
-    this.algorithm = this.algorithms.find((_) => _.id === algorithmID) || null;
+    this.algorithm = this.algorithms.find((_) => _.id === algorithmID && _.algorithm_store_id == algoStoreID) || null;
   }
 
   private handleFunctionChange(functionName: string): void {

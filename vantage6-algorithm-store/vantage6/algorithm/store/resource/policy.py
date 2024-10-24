@@ -91,13 +91,13 @@ class PoliciesBase(AlgorithmStoreResources):
         # reshape the policies to a more readable format
         # e.g. from
         #   {'value': 'public', 'key': 'algorithm_view'},
-        #   {'value': 'http://localhost:5000/api', 'key': 'allowed_servers'},
+        #   {'value': 'http://localhost:7601/api', 'key': 'allowed_servers'},
         #   {'value': 'https://cotopaxi.vantage6.ai', 'key': 'allowed_servers'},
         #   {'value': '1', 'key': 'allow_localhost'}
         # to
         #   {'algorithm_view': 'public',
         #    'allowed_servers': [
-        #      'http://localhost:5000/api', 'https://cotopaxi.vantage6.ai'
+        #      'http://localhost:7601/api', 'https://cotopaxi.vantage6.ai'
         #     ],
         #    'allow_localhost': 1}
         response_dict = {}
@@ -118,7 +118,11 @@ class PoliciesBase(AlgorithmStoreResources):
         # convert policies where necessary
         for boolean_policy in [p.value for p in BooleanPolicies]:
             if boolean_policy in response_dict:
-                response_dict[boolean_policy] = response_dict[boolean_policy] == "1"
+                response_dict[boolean_policy] = (
+                    response_dict[boolean_policy] == "1"
+                    or response_dict[boolean_policy].lower() == "true"
+                    or response_dict[boolean_policy] is True
+                )
         for list_policy in [p.value for p in ListPolicies]:
             if list_policy in response_dict and isinstance(
                 response_dict[list_policy], str
@@ -136,6 +140,8 @@ class PoliciesBase(AlgorithmStoreResources):
 
 
 class PrivatePoliciesAPI(PoliciesBase):
+    """Resource for /api/policy"""
+
     @with_authentication()
     def get(self):
         """List algorithm store policies
@@ -184,6 +190,8 @@ class PrivatePoliciesAPI(PoliciesBase):
 
 
 class PublicPoliciesAPI(PoliciesBase):
+    """Resource for /api/policy/public"""
+
     def get(self):
         """List public algorithm store policies
         ---

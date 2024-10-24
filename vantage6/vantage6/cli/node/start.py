@@ -309,7 +309,11 @@ def cli_node_start(
         extra_hosts=extra_hosts,
     )
 
-    info("Node container was successfully started!")
+    info("Node container was started!")
+    info(
+        "Please check the node logs to see if the node successfully connects to the "
+        "server."
+    )
 
     if attach:
         logs = container.attach(stream=True, logs=True)

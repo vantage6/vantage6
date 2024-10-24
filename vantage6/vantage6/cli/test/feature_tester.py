@@ -1,6 +1,7 @@
 import sys
 import click
 
+from vantage6.common.globals import Ports
 from vantage6.client import UserClient
 from vantage6.cli.utils import error
 from vantage6.cli.test.common.diagnostic_runner import DiagnosticRunner
@@ -8,7 +9,9 @@ from vantage6.cli.test.common.diagnostic_runner import DiagnosticRunner
 
 @click.command()
 @click.option("--host", type=str, default="http://localhost", help="URL of the server")
-@click.option("--port", type=int, default=5000, help="Port of the server")
+@click.option(
+    "--port", type=int, default=Ports.DEV_SERVER.value, help="Port of the server"
+)
 @click.option("--api-path", type=str, default="/api", help="API path of the server")
 @click.option(
     "--username",

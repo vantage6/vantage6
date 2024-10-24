@@ -30,7 +30,7 @@ Install
 It is important to install the Python client with the same version as the
 vantage6 server you are talking to. Check your server version by going to
 ``https://<server_url>/version`` (e.g. `https://cotopaxi.vantage6.ai/version`
-or `http://localhost:5000/api/version`) to find its version.
+or `http://localhost:7601/api/version`) to find its version.
 
 Then you can install the ``vantage6-client`` with:
 

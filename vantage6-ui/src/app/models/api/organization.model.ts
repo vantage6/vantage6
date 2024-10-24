@@ -16,6 +16,7 @@ export interface GetOrganizationParameters {
   collaboration_id?: string;
   study_id?: number;
   sort?: OrganizationSortProperties;
+  ids?: number[];
 }
 
 export interface BaseOrganization {

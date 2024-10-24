@@ -11,7 +11,7 @@ from vantage6.common.globals import (
     InstanceType,
 )
 
-from vantage6.cli.globals import DEFAULT_UI_PORT, ServerGlobals
+from vantage6.common.globals import Ports
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
 from vantage6.cli.server.common import stop_ui
@@ -151,7 +151,7 @@ def cli_server_start(
     info(cmd)
 
     info("Run Docker container")
-    port_ = str(port or ctx.config["port"] or ServerGlobals.PORT)
+    port_ = str(port or ctx.config["port"] or Ports.DEV_SERVER.value)
     container = docker_client.containers.run(
         image,
         command=cmd,
@@ -222,9 +222,9 @@ def _start_ui(client: DockerClient, ctx: ServerContext, ui_port: int) -> None:
     if not isinstance(ui_port, int) or not 0 < ui_port < 65536:
         warning(
             f"UI port '{ui_port}' is not valid! Using default port "
-            f"{DEFAULT_UI_PORT}"
+            f"{Ports.DEV_UI.value}"
         )
-        ui_port = DEFAULT_UI_PORT
+        ui_port = str(Ports.DEV_UI.value)
 
     # find image to use
     image = get_image(None, ctx, "ui", DEFAULT_UI_IMAGE)

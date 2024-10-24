@@ -284,7 +284,11 @@ class Reviews(AlgorithmStoreResources):
             return {
                 "msg": f"User id='{reviewer.id}' is not allowed to review algorithms!"
             }, HTTPStatus.BAD_REQUEST
-        if reviewer == algorithm.developer:
+        # the developer of the algorithm may not review their own algorithm, unless
+        # a different dev policy is set
+        if reviewer == algorithm.developer and not self.config.get("dev", {}).get(
+            "review_own_algorithm", False
+        ):
             return {
                 "msg": (
                     "You cannot assign the developer of the algorithm to review "
@@ -405,7 +409,7 @@ class Review(AlgorithmStoreResources):
             # deleted.
             return {
                 "msg": "Reviews of approved algorithms may not be deleted!"
-            }, HTTPStatus.BAD_REQUEST
+            }, HTTPStatus.FORBIDDEN
 
         review.delete()
         log.info("Review with id=%s deleted", id)
@@ -438,6 +442,8 @@ class ReviewApprove(AlgorithmStoreResources):
             description: Ok
           401:
             description: Unauthorized, or not assigned to this review
+          403:
+            description: Reviewer is not assigned to this review
           404:
             description: Review not found
 
@@ -459,9 +465,7 @@ class ReviewApprove(AlgorithmStoreResources):
 
         # check that the reviewer is assigned to this review
         if review.reviewer_id != g.user.id:
-            return {
-                "msg": "You are not assigned to this review!"
-            }, HTTPStatus.UNAUTHORIZED
+            return {"msg": "You are not assigned to this review!"}, HTTPStatus.FORBIDDEN
 
         # check if review can still be approved
         if review.status != ReviewStatus.UNDER_REVIEW:
@@ -480,22 +484,7 @@ class ReviewApprove(AlgorithmStoreResources):
         # that needed to be approved
         algorithm: db.Algorithm = review.algorithm
         if algorithm.are_all_reviews_approved():
-            algorithm.status = AlgorithmStatus.APPROVED
-            algorithm.approved_at = datetime.datetime.now(datetime.timezone.utc)
-            algorithm.save()
-
-            # if the algorithm is approved, invalidate the previously approved versions
-            for other_version in db.Algorithm.get_by_image(algorithm.image):
-                # skip the current version and versions that are not yet reviewed and
-                # are newer (as in submitted later) than the current version
-                if (
-                    not other_version.is_review_finished()
-                    and other_version.submitted_at > algorithm.submitted_at
-                ) or other_version.id == algorithm.id:
-                    continue
-                other_version.invalidated_at = algorithm.approved_at
-                other_version.status = AlgorithmStatus.REPLACED
-                other_version.save()
+            algorithm.approve()
 
         log.info("Review with id=%s has been approved", id)
         return {"msg": f"Review id={id} has been approved"}, HTTPStatus.OK
@@ -527,6 +516,8 @@ class ReviewReject(AlgorithmStoreResources):
             description: Ok
           401:
             description: Unauthorized, or not assigned to this review
+          403:
+            description: Reviewer is not assigned to this review
           404:
             description: Review not found
 
@@ -548,9 +539,7 @@ class ReviewReject(AlgorithmStoreResources):
 
         # check that the reviewer is assigned to this review
         if review.reviewer_id != g.user.id:
-            return {
-                "msg": "You are not assigned to this review!"
-            }, HTTPStatus.UNAUTHORIZED
+            return {"msg": "You are not assigned to this review!"}, HTTPStatus.FORBIDDEN
 
         # check if review can still be rejected
         if review.status != ReviewStatus.UNDER_REVIEW:

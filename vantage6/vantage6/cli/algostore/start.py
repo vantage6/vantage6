@@ -1,7 +1,12 @@
 import click
 
 from vantage6.common import info
-from vantage6.common.globals import APPNAME, DEFAULT_ALGO_STORE_IMAGE, InstanceType
+from vantage6.common.globals import (
+    APPNAME,
+    DEFAULT_ALGO_STORE_IMAGE,
+    InstanceType,
+    Ports,
+)
 from vantage6.cli.common.start import (
     attach_logs,
     check_for_start,
@@ -11,7 +16,6 @@ from vantage6.cli.common.start import (
     mount_source,
     pull_infra_image,
 )
-from vantage6.cli.globals import AlgoStoreGlobals
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.common.decorator import click_insert_context
 
@@ -68,11 +72,6 @@ def cli_algo_store_start(
     if mount:
         mounts.append(mount)
 
-    volume_spec = [
-        ("/var/run/docker.sock", "/var/run/docker.sock"),
-    ]
-    volumes = [f"{v[1]}:{v[0]}" for v in volume_spec]
-
     # The `ip` and `port` refer here to the ip and port within the container.
     # So we do not really care that is it listening on all interfaces.
     internal_port = 5000
@@ -85,12 +84,11 @@ def cli_algo_store_start(
     info(cmd)
 
     info("Run Docker container")
-    port_ = str(port or ctx.config["port"] or AlgoStoreGlobals.PORT)
+    port_ = str(port or ctx.config["port"] or Ports.DEV_ALGO_STORE.value)
     container = docker_client.containers.run(
         image,
         command=cmd,
         mounts=mounts,
-        volumes=volumes,
         detach=True,
         labels={
             f"{APPNAME}-type": InstanceType.ALGORITHM_STORE,

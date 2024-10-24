@@ -99,13 +99,12 @@ def cli_node_remove(name: str, system_folders: bool, force: bool) -> None:
 
     # remove the log file. As this process opens the log file above, the log
     # handlers need to be closed before deleting
-    info(f"Removing log file {ctx.log_file}")
+    log_dir = Path(ctx.log_file.parent)
+    info(f"Removing log file {log_dir}")
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
         handler.close()
-    # remove_file(ctx.log_file, 'log')
-
-    # removes the whole folder
-    rmtree(Path(ctx.log_file.parent))
+    # remove the whole folder with all the log files
+    rmtree(log_dir)
 
     # remove the folder: if it hasn't been started yet this won't exist...
     if Path.exists(ctx.config_dir / name):

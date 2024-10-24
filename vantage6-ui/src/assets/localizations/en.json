@@ -172,7 +172,10 @@
     },
     "card-status": {
       "title": "Status",
-      "child-title": "Subtasks",
+      "main-process-title": "Main process",
+      "child-process-title": "Child processes",
+      "task-name": "Name:",
+      "node-name": "Node:",
       "actions": {
         "kill": "Kill task"
       }
@@ -425,6 +428,10 @@
     "card-nodes": {
       "title": "Nodes"
     },
+    "delete-dialog": {
+      "title": "Are you sure you want to delete the organization '{{name}}'?",
+      "content": "Note, this will also delete all users, nodes, tasks, algorithm runs and nodes related to this organization.\nThis operation cannot be undone."
+    },
     "no-collaborations": "No collaborations are available for this organization yet.",
     "no-nodes": "No nodes are available for this organization yet."
   },
@@ -645,6 +652,9 @@
       "content": "Note, this will also delete all tasks this user created.\nThis operation cannot be undone."
     }
   },
+  "user-edit": {
+    "own-user-no-roles": "Roles and rules not shown: you cannot change your own permissions."
+  },
   "node": {
     "name": "Name",
     "status": "Status",
@@ -695,10 +705,9 @@
   },
   "header": {
     "actions": {
-      "admin": "Administration",
-      "admin-leave": "Leave administration",
       "logout": "Logout",
-      "change_password": "Change password"
+      "change_password": "Change password",
+      "my-user": "View my user"
     }
   },
   "login": {

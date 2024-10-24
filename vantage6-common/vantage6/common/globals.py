@@ -62,3 +62,12 @@ class NodePolicy(str, Enum):
     ALLOWED_USERS = "allowed_users"
     ALLOW_BASICS_ALGORITHM = "allow_basics_algorithm"
     REQUIRE_ALGORITHM_PULL = "require_algorithm_pull"
+
+
+class Ports(str, Enum):
+
+    HTTP = 80
+    HTTPS = 443
+    DEV_SERVER = 7601
+    DEV_UI = 7600
+    DEV_ALGO_STORE = 7602

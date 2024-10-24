@@ -1,11 +1,13 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, Subscription, takeUntil } from 'rxjs';
+import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { downloadFile } from 'src/app/helpers/file.helper';
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { Organization, OrganizationLazyProperties } from 'src/app/models/api/organization.model';
-import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
+import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { TableData } from 'src/app/models/application/table.model';
 import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
 import { routePaths } from 'src/app/routes';
@@ -28,6 +30,7 @@ export class OrganizationReadComponent implements OnInit, OnDestroy {
 
   isLoading: boolean = true;
   canEdit: boolean = false;
+  canDelete: boolean = false;
   organization?: Organization;
   collaborationTable?: TableData;
 
@@ -35,6 +38,7 @@ export class OrganizationReadComponent implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
+    private dialog: MatDialog,
     private translateService: TranslateService,
     private organizationService: OrganizationService,
     private permissionService: PermissionService,
@@ -61,6 +65,31 @@ export class OrganizationReadComponent implements OnInit, OnDestroy {
 
   handleCollaborationClick(id: string): void {
     this.router.navigate([routePaths.collaboration, id]);
+  }
+
+  async handleDelete(): Promise<void> {
+    if (!this.organization) return;
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: this.translateService.instant('organization-read.delete-dialog.title', { name: this.organization.name }),
+        content: this.translateService.instant('organization-read.delete-dialog.content'),
+        confirmButtonText: this.translateService.instant('general.delete'),
+        confirmButtonType: 'warn'
+      }
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(async (result) => {
+        if (result === true) {
+          if (!this.organization) return;
+          this.isLoading = true;
+          await this.organizationService.deleteOrganization(this.organization.id.toString());
+          this.router.navigate([routePaths.organizations]);
+        }
+      });
   }
 
   private async initData() {
@@ -93,6 +122,7 @@ export class OrganizationReadComponent implements OnInit, OnDestroy {
           this.canEdit =
             !!this.organization &&
             this.permissionService.isAllowedForOrg(ResourceType.ORGANIZATION, OperationType.EDIT, this.organization.id);
+          this.canDelete = this.permissionService.isAllowed(ScopeType.GLOBAL, ResourceType.ORGANIZATION, OperationType.DELETE);
         }
       });
   }

@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ReactiveFormsModule } from '@angular/forms';
 import { QRCodeModule } from 'angularx-qrcode';
 
@@ -125,6 +125,7 @@ import { ReviewReadComponent } from './pages/store/algorithms-in-review/review-r
 import { ReviewSubmitComponent } from './pages/store/algorithms-in-review/review-submit/review-submit.component';
 import { MyPendingAlgorithmsComponent } from './pages/store/algorithms-in-review/my-pending-algorithms/my-pending-algorithms.component';
 import { OldAlgorithmListComponent } from './pages/store/algorithm/old-list/old-algorithm-list.component';
+import { NodeAdminCardComponent } from './components/helpers/node-admin-card/node-admin-card.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -222,13 +223,14 @@ export function HttpLoaderFactory(http: HttpClient) {
     ReviewReadComponent,
     ReviewSubmitComponent,
     MyPendingAlgorithmsComponent,
-    OldAlgorithmListComponent
+    OldAlgorithmListComponent,
+    NodeAdminCardComponent
   ],
+  bootstrap: [AppComponent],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
     AppRoutingModule,
-    HttpClientModule,
     ReactiveFormsModule,
     TranslateModule.forRoot({
       loader: {
@@ -267,8 +269,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     {
       provide: MAT_DATE_LOCALE,
       useValue: enCA
-    }
-  ],
-  bootstrap: [AppComponent]
+    },
+    provideHttpClient(withInterceptorsFromDi())
+  ]
 })
 export class AppModule {}

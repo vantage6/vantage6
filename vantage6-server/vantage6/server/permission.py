@@ -1,119 +1,21 @@
 import logging
-import importlib
 
-from collections import namedtuple
-from flask_principal import Permission
-
-from vantage6.server.globals import RESOURCES
-from vantage6.server.default_roles import DefaultRole
+from vantage6.backend.common.permission import RuleCollectionBase, PermissionManagerBase
 from vantage6.server.model.base import Base
 from vantage6.server.model.role import Role
 from vantage6.server.model.rule import Rule, Operation, Scope
-from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.utils import obtain_auth_collaborations, obtain_auth_organization
 from vantage6.common import logger_name
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
-RuleNeed = namedtuple("RuleNeed", ["name", "scope", "operation"])
 
-
-# TODO BvB 2023-07-27 this utility is a bit superfluous with the definition
-# of the operation and scope enums. We should remove it but then add longer
-# values to the enums, which leads to many other changes
-def print_operation(operation: Operation) -> str:
+class RuleCollection(RuleCollectionBase):
     """
-    String representation of the operation, that is readable by humans.
-
-    Parameters
-    ----------
-    operation : Operation
-        Operation to be printed
-
-    Returns
-    -------
-    str
-        String representation of the operation
-
-    Raises
-    ------
-    ValueError
-        If the operation is not known
+    Class that tracks a set of all rules for a certain resource name for
+    permissions of the vantage6 server.
     """
-    if operation.VIEW:
-        return "view"
-    elif operation.EDIT:
-        return "edit"
-    elif operation.CREATE:
-        return "create"
-    elif operation.DELETE:
-        return "delete"
-    elif operation.SEND:
-        return "send"
-    elif operation.RECEIVE:
-        return "receive"
-    else:
-        raise ValueError(f"Unknown operation {operation}")
-
-
-def print_scope(scope: Scope) -> str:
-    """
-    String representation of the scope, that is readable by humans.
-
-    Parameters
-    ----------
-    scope : Scope
-        Scope to be printed
-
-    Returns
-    -------
-    str
-        String representation of the scope
-
-    Raises
-    ------
-    ValueError
-        If the scope is not known
-    """
-    if scope.ORGANIZATION:
-        return "organization"
-    elif scope.COLLABORATION:
-        return "collaboration"
-    elif scope.GLOBAL:
-        return "global"
-    elif scope.OWN:
-        return "own"
-    else:
-        raise ValueError(f"Unknown scope {scope}")
-
-
-class RuleCollection(dict):
-    """
-    Class that tracks a set of all rules for a certain resource name
-
-    Parameters
-    ----------
-    name: str
-        Name of the resource endpoint (e.g. node, organization, user)
-    """
-
-    def __init__(self, name: str) -> None:
-        self.name = name
-
-    def add(self, scope: Scope, operation: Operation) -> None:
-        """
-        Add a rule to the rule collection
-
-        Parameters
-        ----------
-        scope: Scope
-            Scope within which to apply the rule
-        operation: Operation
-            What operation the rule applies to
-        """
-        permission = Permission(RuleNeed(self.name, scope, operation))
-        self.__setattr__(f"{operation}_{scope}", permission)
 
     def can_for_org(self, operation: Operation, subject_org_id: int | str) -> bool:
         """
@@ -295,46 +197,7 @@ class RuleCollection(dict):
             raise ValueError(f"Unknown scope '{minimal_scope}'")
 
 
-class PermissionManager:
-    """
-    Loads the permissions and syncs rules in database with rules defined in
-    the code
-    """
-
-    def __init__(self) -> None:
-        self.collections: dict[str, RuleCollection] = {}
-        log.info("Loading permission system...")
-        self.load_rules_from_resources()
-
-    def load_rules_from_resources(self) -> None:
-        """
-        Collect all permission rules from all registered API resources
-        """
-        for res in RESOURCES:
-            module = importlib.import_module("vantage6.server.resource." + res)
-            try:
-                module.permissions(self)
-            except Exception:
-                module_name = module.__name__.split(".")[-1]
-                log.debug(
-                    "Resource '%s' contains no or invalid permissions", module_name
-                )
-
-    def assign_rule_to_root(
-        self, name: str, scope: Scope, operation: Operation
-    ) -> None:
-        """
-        Assign a rule to the root role.
-
-        resource: str
-            Resource that the rule applies to
-        scope: Scope
-            Scope that the rule applies to
-        operation: Operation
-            Operation that the rule applies to
-        """
-        self.assign_rule_to_fixed_role(DefaultRole.ROOT, name, scope, operation)
-
+class PermissionManager(PermissionManagerBase):
     def assign_rule_to_node(
         self, resource: str, scope: Scope, operation: Operation
     ) -> None:
@@ -350,7 +213,9 @@ class PermissionManager:
         operation: Operation
             Operation that the rule applies to
         """
-        self.assign_rule_to_fixed_role(DefaultRole.NODE, resource, scope, operation)
+        self.assign_rule_to_fixed_role(
+            self.default_roles.NODE, resource, operation, scope
+        )
 
     def assign_rule_to_container(
         self, resource: str, scope: Scope, operation: Operation
@@ -368,12 +233,11 @@ class PermissionManager:
             Operation that the rule applies to
         """
         self.assign_rule_to_fixed_role(
-            DefaultRole.CONTAINER, resource, scope, operation
+            self.default_roles.CONTAINER, resource, operation, scope
         )
 
-    @staticmethod
     def assign_rule_to_fixed_role(
-        fixedrole: str, resource: str, scope: Scope, operation: Operation
+        self, fixedrole: str, resource: str, operation: Operation, scope: Scope
     ) -> None:
         """
         Attach a rule to a fixed role (not adjustable by users).
@@ -396,15 +260,30 @@ class PermissionManager:
                 name=fixedrole, description=f"{fixedrole} role", is_default_role=True
             )
 
-        rule = Rule.get_by_(resource, scope, operation)
+        rule = Rule.get_by_(name=resource, scope=scope, operation=operation)
+        rule_params = f"{resource},{scope},{operation}"
+
         if not rule:
-            log.error(f"Rule ({resource},{scope},{operation}) not found!")
+            log.error(f"Rule ({rule_params}) not found!")
 
         if rule not in role.rules:
             role.rules.append(rule)
-            log.info(
-                f"Rule ({resource},{scope},{operation}) added to " f"{fixedrole} role!"
-            )
+            log.info(f"Rule ({rule_params}) added to " f"{fixedrole} role!")
+
+    def get_new_collection(self, name: str) -> RuleCollection:
+        """
+        Initialize and return a new ServerRuleCollection.
+        Parameters
+        ----------
+        name: str
+            Name of the collection
+
+        Returns
+        -------
+        RuleCollectionBase
+            New ServerRuleCollection
+        """
+        return RuleCollection(name)
 
     def register_rule(
         self,
@@ -416,7 +295,7 @@ class PermissionManager:
         assign_to_container=False,
     ) -> None:
         """
-        Register a permission rule in the database.
+        Register a permission rule in the database with the scope.
 
         If a rule already exists, nothing is done. This rule can be used in API
         endpoints to determine if a user, node or container can do a certain
@@ -426,10 +305,10 @@ class PermissionManager:
         ----------
         resource : str
             API resource that the rule applies to
-        scope : Scope
-            Scope of the rule
         operation : Operation
             Operation of the rule
+        scope : Scope
+            Scope of the rule
         description : String, optional
             Human readable description where the rule is used for, by default
             None
@@ -439,10 +318,10 @@ class PermissionManager:
         assign_to_container: bool, optional
             Whether rule should be assigned to the container role or not.
             Default False
+
         """
-        # verify that the rule is in the DB, so that these can be assigned to
-        # roles and users
-        rule = Rule.get_by_(resource, scope, operation)
+
+        rule = Rule.get_by_(name=resource, scope=scope, operation=operation)
         if not rule:
             rule = Rule(
                 name=resource, operation=operation, scope=scope, description=description
@@ -462,103 +341,9 @@ class PermissionManager:
             self.assign_rule_to_node(resource, scope, operation)
 
         # assign all new rules to root user
-        self.assign_rule_to_root(resource, scope, operation)
+        self.assign_rule_to_root(resource, operation, scope)
 
-        self.collection(resource).add(rule.scope, rule.operation)
-
-    def appender(self, name: str) -> callable:
-        """
-        Add a module's rules to the rule collection
-
-        Parameters
-        ----------
-        name: str
-            The name of the module whose rules are to be registered
-
-        Returns
-        -------
-        Callable
-            A callable ``register_rule`` function
-        """
-        # make sure collection exists
-        self.collection(name)
-        return lambda *args, **kwargs: self.register_rule(name, *args, **kwargs)
-
-    def collection(self, name: str) -> RuleCollection:
-        """
-        Get a RuleCollection object. If it doesn't exist yet, it will be
-        created.
-
-        Parameters
-        ----------
-        name: str
-            Name of the module whose RuleCollection is to be obtained or
-            created
-
-        Returns
-        -------
-        RuleCollection
-            The collection of rules belonging to the module name
-        """
-        if self._collection_exists(name):
-            return self.collections[name]
-        else:
-            self.collections[name] = RuleCollection(name)
-            return self.collections[name]
-
-    def _collection_exists(self, name: str) -> bool:
-        """
-        Check if a module's rule collection is defined
-
-        Parameters
-        ----------
-        name: str
-            Name of the module to be checked
-
-        Returns
-        -------
-        bool:
-            True if RuleCollection is defined for module, else False
-        """
-        return name in self.collections
-
-    def __getattr__(self, name: str) -> RuleCollection:
-        # TODO BvB 2023-01-18 I think this function might not be used. It would
-        # be triggered when we do something like
-        # `permissionManager.resource_name` but we don't ever do that (?!)
-        try:
-            collection = self.collections[name]
-            return collection
-        except Exception as e:
-            log.critical(f"Missing permission collection! {name}")
-            raise e
-
-    @staticmethod
-    def rule_exists_in_db(name: str, scope: Scope, operation: Operation) -> bool:
-        """Check if the rule exists in the DB.
-
-        Parameters
-        ----------
-        name: str
-            Name of the rule
-        scope: Scope
-            Scope of the rule
-        operation: Operation
-            Operation of the rule
-
-        Returns
-        -------
-        bool
-            Whenever this rule exists in the database or not
-        """
-        session = DatabaseSessionManager.get_session()
-        result = (
-            session.query(Rule)
-            .filter_by(name=name, operation=operation, scope=scope)
-            .scalar()
-        )
-        session.commit()
-        return result
+        self.collection(resource).add(rule.operation, rule.scope)
 
     def check_user_rules(self, rules: list[Rule]) -> dict | None:
         """
@@ -580,7 +365,7 @@ class PermissionManager:
             ):
                 return {
                     "msg": f"You don't have the rule ({rule.name}, "
-                    f"{print_scope(rule.scope)}, "
-                    f"{print_operation(rule.operation)})"
+                    f"{rule.scope.name.lower()}, "
+                    f"{rule.operation.name.lower()})"
                 }
         return None

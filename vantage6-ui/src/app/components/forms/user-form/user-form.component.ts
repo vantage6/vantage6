@@ -1,16 +1,17 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs';
-import { BaseOrganization, OrganizationSortProperties } from 'src/app/models/api/organization.model';
+import { BaseOrganization, Organization } from 'src/app/models/api/organization.model';
 import { Role } from 'src/app/models/api/role.model';
 import { User } from 'src/app/models/api/user.model';
 import { PASSWORD_VALIDATORS } from 'src/app/validators/passwordValidators';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { createCompareValidator } from 'src/app/validators/compare.validator';
 import { RuleService } from 'src/app/services/rule.service';
-import { Rule, Rule_ } from 'src/app/models/api/rule.model';
+import { OperationType, ResourceType, Rule, Rule_ } from 'src/app/models/api/rule.model';
 import { RoleService } from 'src/app/services/role.service';
 import { BaseFormComponent } from '../../admin-base/base-form/base-form.component';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-user-form',
@@ -19,6 +20,7 @@ import { BaseFormComponent } from '../../admin-base/base-form/base-form.componen
 })
 export class UserFormComponent extends BaseFormComponent implements OnInit, OnDestroy {
   @Input() user?: User;
+  organizations: (BaseOrganization | Organization)[] = [];
 
   form = this.fb.nonNullable.group(
     {
@@ -35,8 +37,8 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
     { validators: [createCompareValidator('password', 'passwordRepeat')] }
   );
 
-  organizations: BaseOrganization[] = [];
   organizationRoles: Role[] = [];
+  isEditOwnUser: boolean = false;
   /* Roles assigned to the user, prior to editing. */
   userRoles: Role[] = [];
   /* The rules that belong to the selected roles */
@@ -52,7 +54,8 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
     private fb: FormBuilder,
     private organizationService: OrganizationService,
     private ruleService: RuleService,
-    private roleService: RoleService
+    private roleService: RoleService,
+    private permissionService: PermissionService
   ) {
     super();
   }
@@ -61,6 +64,8 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
     this.isLoading = true;
 
     this.isEdit = !!this.user;
+    this.setPermissions();
+
     await this.initData();
     if (this.isEdit && this.user) {
       this.form.controls.username.setValue(this.user.username);
@@ -106,8 +111,7 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
   private async initData(): Promise<void> {
     if (!this.isEdit) {
       // we only need to collect organizations when creating a new user
-      // TODO ensure that user doesn't get organizations that they can't create users for
-      this.organizations = await this.organizationService.getOrganizations({ sort: OrganizationSortProperties.Name });
+      this.organizations = await this.organizationService.getAllowedOrganizations(ResourceType.USER, OperationType.CREATE);
     }
     // TODO these should depend on the logged-in user's permissions
     this.selectableRules = await this.ruleService.getRules();
@@ -131,9 +135,32 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
     this.form.controls.rules.setValue(rules.map((rule) => rule.id));
   }
 
+  override handleSubmit() {
+    if (!this.form.valid) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const formValue: any = this.form.getRawValue();
+    if (this.isEditOwnUser) {
+      // remove roles and rules to prevent error that you are not allowed to edit your own roles and rules
+      delete formValue.roles;
+      delete formValue.rules;
+    }
+    this.submitted.emit(formValue);
+  }
+
   /* Determine the set of selected rules that has no overlap with role rules. */
   private determineUserRules(roleRules: Rule[], userSelectedRules: Rule[]): Rule[] {
     if (!roleRules || !userSelectedRules) return [];
     return userSelectedRules.filter((userRule) => !roleRules.some((roleRule) => roleRule.id === userRule.id));
+  }
+
+  private setPermissions() {
+    this.permissionService
+      .isInitialized()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((initialized) => {
+        if (initialized) {
+          this.isEditOwnUser = this.isEdit && this.user?.id === this.permissionService.activeUser?.id;
+        }
+      });
   }
 }

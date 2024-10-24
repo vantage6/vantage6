@@ -6,10 +6,9 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from vantage6.common import logger_name
-from vantage6.server.model.base import Base
+from vantage6.server.model.base import Base, DatabaseSessionManager
 from vantage6.server.model import Node, Collaboration, Organization
 from vantage6.server.model.task import Task
-from vantage6.server.model.base import DatabaseSessionManager
 
 log_ = logging.getLogger(logger_name(__name__))
 

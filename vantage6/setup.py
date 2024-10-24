@@ -39,6 +39,7 @@ setup(
         "docker==7.1.0",
         "ipython==8.10.0",
         "jinja2==3.1.4",
+        "pandas>=1.5.3",
         "questionary==1.10.0",
         "rich==13.5.2",
         "schema==0.7.5",
@@ -60,6 +61,8 @@ setup(
             "template/node_config.j2",
             "template/server_config.j2",
             "template/server_import_config.j2",
+            "template/algo_store_config.j2",
+            "dev/data/olympic_athletes_2016.csv",
         ],
     },
     entry_points={
