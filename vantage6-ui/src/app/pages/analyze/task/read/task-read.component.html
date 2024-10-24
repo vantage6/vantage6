@@ -149,6 +149,10 @@
             ></app-chip>
           </div>
         </div>
+        <div class="data-list__item" *ngIf="study">
+          <b>{{ "resources.study" | translate }}</b>
+          <span>{{ study.name }}</span>
+        </div>
       </div>
     </mat-card-content>
   </mat-card>
