@@ -22,9 +22,11 @@ class AlgorithmPort(Base):
         port belongs to
     label: str
         The label that is claimed by the algorithm
-    result: :class:`~vantage6.server.model.result.Result`
-        The :class:`~vantage6.server.model.result.Result` that this port
-        belongs to
+
+    Relationships
+    -------------
+    run: :class:`~vantage6.server.model.run.Run`
+        The run that this port belongs to
     """
 
     # fields
@@ -32,4 +34,5 @@ class AlgorithmPort(Base):
     run_id = Column(Integer, ForeignKey("run.id"))
     label = Column(String)
 
+    # relationships
     run = relationship("Run", back_populates="ports")

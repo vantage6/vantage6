@@ -17,14 +17,16 @@ from vantage6.common.globals import APPNAME
 from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common import WhoAmI
 from vantage6.common.serialization import serialize
-from vantage6.client.filter import post_filtering
 from vantage6.common.client.utils import print_qr_code
-from vantage6.client.utils import LogLevel
-from vantage6.common.task_status import has_task_finished
+from vantage6.common.enum import RunStatus
 from vantage6.common.client.client_base import ClientBase
+from vantage6.client.filter import post_filtering
+from vantage6.client.utils import LogLevel
 from vantage6.client.subclients.study import StudySubClient
 from vantage6.client.subclients.store.algorithm import AlgorithmSubClient
 from vantage6.client.subclients.store.algorithm_store import AlgorithmStoreSubClient
+from vantage6.client.subclients.session import SessionSubClient
+from vantage6.client.subclients.dataframe import DataFrameSubClient
 
 # make sure the version is available
 from vantage6.client._version import __version__  # noqa: F401
@@ -65,9 +67,11 @@ class UserClient(ClientBase):
         self.study = StudySubClient(self)
         self.store = AlgorithmStoreSubClient(self)
         self.algorithm = AlgorithmSubClient(self)
+        self.session = SessionSubClient(self)
+        self.dataframe = DataFrameSubClient(self)
 
-        # set collaboration id to None
         self.collaboration_id = None
+        self.session_id = None
 
         # Display welcome message
         self.log.info(" Welcome to")
@@ -223,7 +227,7 @@ class UserClient(ClientBase):
         animation = itertools.cycle(["|", "/", "-", "\\"])
         t = time.time()
 
-        while not has_task_finished(self.task.get(task_id).get("status")):
+        while not RunStatus.has_finished(self.task.get(task_id).get("status")):
             frame = next(animation)
             sys.stdout.write(
                 f"\r{frame} Waiting for task {task_id} ({int(time.time()-t)}s)"
@@ -1666,6 +1670,8 @@ class UserClient(ClientBase):
             run: int = None,
             status: str = None,
             user_created: bool = None,
+            session: int = None,
+            dataframe: int = None,
             page: int = 1,
             per_page: int = 20,
         ) -> dict:
@@ -1757,6 +1763,8 @@ class UserClient(ClientBase):
                 "run_id": run,
                 "status": status,
                 "store_id": store,
+                "session_id": session,
+                "dataframe_id": dataframe,
             }
             includes = []
             if include_results:

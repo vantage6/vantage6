@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.abspath("../vantage6-backend-common"))
 
 project = "vantage6"
 
-copyright = "2022 vantage6"
+copyright = "2024 vantage6"
 author = (
     "A. van Gestel, "
     "B. van Beusekom, "
@@ -43,8 +43,8 @@ author = (
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx.ext.autodoc",
-    "sphinx.ext.autosummary",
+    # "sphinx.ext.autodoc",
+    # "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",
     "sphinx.ext.intersphinx",

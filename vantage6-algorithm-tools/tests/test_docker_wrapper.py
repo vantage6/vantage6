@@ -4,6 +4,7 @@ from unittest.mock import patch, MagicMock
 
 import pandas as pd
 
+from vantage6.common.globals import ContainerEnvNames
 from vantage6.algorithm.tools import wrapper
 
 MODULE_NAME = "algorithm_module"
@@ -76,10 +77,10 @@ def run_docker_wrapper_with_echo_db(input_file, tmp_path):
     token_file.write_text(TOKEN)
     with patch("vantage6.algorithm.tools.docker_wrapper.os") as mock_os:
         mock_os.environ = {
-            "INPUT_FILE": input_file,
-            "TOKEN_FILE": token_file,
-            "OUTPUT_FILE": output_file,
-            "DATABASE_URI": db_file,
+            ContainerEnvNames.INPUT_FILE.value: input_file,
+            ContainerEnvNames.TOKEN_FILE.value: token_file,
+            ContainerEnvNames.DATABASE_URI.value: db_file,
+            ContainerEnvNames.OUTPUT_FILE.value: output_file,
         }
 
         wrapper.docker_wrapper(MODULE_NAME)
@@ -100,10 +101,10 @@ def test_sparql_docker_wrapper_passes_dataframe(
     output_file = tmp_path / "output.pkl"
 
     environ = {
-        "INPUT_FILE": str(input_file),
-        "TOKEN_FILE": str(token_file),
-        "DATABASE_URI": MOCK_SPARQL_ENDPOINT,
-        "OUTPUT_FILE": str(output_file),
+        ContainerEnvNames.INPUT_FILE.value: str(input_file),
+        ContainerEnvNames.TOKEN_FILE.value: str(token_file),
+        ContainerEnvNames.DATABASE_URI.value: MOCK_SPARQL_ENDPOINT,
+        ContainerEnvNames.OUTPUT_FILE.value: str(output_file),
     }
 
     os.environ = environ
