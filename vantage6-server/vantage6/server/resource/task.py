@@ -911,23 +911,6 @@ class Tasks(TaskBase):
 
         # All checks completed, save task to database
         task.save()
-        [db_record.save() for db_record in db_records]  # pylint: disable=W0106
-
-        # send socket event that task has been created
-        # FIXME: FM 02-04-2024: @Bart, Is this signal used by the UI? It is not used
-        # in the node and I dont see it either in de front-end search. If it is not
-        # used, it should be removed.
-        socketio.emit(
-            "task_created",
-            {
-                "task_id": task.id,
-                "job_id": task.job_id,
-                "collaboration_id": collaboration_id,
-                "init_org_id": init_org.id,
-            },
-            room=f"collaboration_{collaboration_id}",
-            namespace="/tasks",
-        )
 
         # now we need to create results for the nodes to fill. Each node
         # receives their instructions from a result, not from the task itself

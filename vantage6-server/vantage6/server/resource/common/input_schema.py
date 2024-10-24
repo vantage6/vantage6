@@ -103,6 +103,28 @@ def _validate_organization_ids(organization_ids: list[int]) -> None:
         raise ValidationError("At least one organization id is required")
 
 
+def _validate_organizations(organizations: list[dict]) -> None:
+    """
+    Validate the organizations in the input.
+
+    Parameters
+    ----------
+    organizations : list[dict]
+        List of organizations to validate. Each organization must have at
+        least an organization id.
+
+    Raises
+    ------
+    ValidationError
+        If the organizations are not valid.
+    """
+    if not len(organizations):
+        raise ValidationError("At least one organization is required")
+    for organization in organizations:
+        if "id" not in organization:
+            raise ValidationError("Organization id is required for each organization")
+
+
 class _OnlyIdSchema(Schema):
     """Schema for validating POST requests that only require an ID field."""
 
@@ -433,27 +455,7 @@ class TaskInputSchema(_NameValidationSchema):
 
     @validates("organizations")
     def validate_organizations(self, organizations: list[dict]):
-        """
-        Validate the organizations in the input.
-
-        Parameters
-        ----------
-        organizations : list[dict]
-            List of organizations to validate. Each organization must have at
-            least an organization id.
-
-        Raises
-        ------
-        ValidationError
-            If the organizations are not valid.
-        """
-        if not len(organizations):
-            raise ValidationError("At least one organization is required")
-        for organization in organizations:
-            if "id" not in organization:
-                raise ValidationError(
-                    "Organization id is required for each organization"
-                )
+        _validate_organizations(organizations)
 
     @validates("databases")
     def validate_databases(self, databases: list[dict]):
@@ -490,25 +492,22 @@ class TokenUserInputSchema(BasicAuthInputSchema):
 
     mfa_code = fields.String(validate=Length(max=10))
 
-    # TODO in v5+, activate the code below to validate the username (allowed characters
-    # etc). We cannot do this in v4 because some existing usernames do not comply and
-    # those would then no longer be able to login
-    # @validates("username")
-    # def validate_username(self, username: str):
-    #     """
-    #     Check if the username is appropriate
+    @validates("username")
+    def validate_username(self, username: str):
+        """
+        Check if the username is appropriate
 
-    #     Parameters
-    #     ----------
-    #     username : str
-    #         Username to validate.
+        Parameters
+        ----------
+        username : str
+            Username to validate.
 
-    #     Raises
-    #     ------
-    #     ValidationError
-    #         If the username is too short, too long or numeric.
-    #     """
-    #     _validate_username(username)
+        Raises
+        ------
+        ValidationError
+            If the username is too short, too long or numeric.
+        """
+        _validate_username(username)
 
 
 class TokenNodeInputSchema(Schema):
@@ -590,27 +589,7 @@ class ColumnNameInputSchema(Schema):
 
     @validates("organizations")
     def validate_organizations(self, organizations: list[dict]):
-        """
-        Validate the organizations in the input.
-
-        Parameters
-        ----------
-        organizations : list[dict]
-            List of organizations to validate. Each organization must have at
-            least an organization id.
-
-        Raises
-        ------
-        ValidationError
-            If the organizations are not valid.
-        """
-        if not len(organizations):
-            raise ValidationError("At least one organization is required")
-        for organization in organizations:
-            if "id" not in organization:
-                raise ValidationError(
-                    "Organization id is required for each organization"
-                )
+        _validate_organizations(organizations)
 
 
 class AlgorithmStoreInputSchema(Schema):
@@ -666,27 +645,7 @@ class SessionTaskInputSchema(Schema):
 
     @validates("organizations")
     def validate_organizations(self, organizations: list[dict]):
-        """
-        Validate the organizations in the input.
-
-        Parameters
-        ----------
-        organizations : list[dict]
-            List of organizations to validate. Each organization must have at
-            least an organization id.
-
-        Raises
-        ------
-        ValidationError
-            If the organizations are not valid.
-        """
-        if not len(organizations):
-            raise ValidationError("At least one organization is required")
-        for organization in organizations:
-            if "id" not in organization:
-                raise ValidationError(
-                    "Organization id is required for each organization"
-                )
+        _validate_organizations(organizations)
 
 
 class SessionInputSchema(Schema):

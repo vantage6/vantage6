@@ -63,9 +63,6 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
             "algorithm_store",
             lambda obj: self.create_hateoas("algorithm_store", obj),
         )
-        # setattr(
-        #     self, "node_session", lambda obj: self.create_hateoas("node_session", obj)
-        # )
 
         # call super class. Do this after setting the attributes above, because
         # the super class initializer will call the attributes.
