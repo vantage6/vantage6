@@ -77,7 +77,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
 
   async handlePageEvent(e: PageEvent) {
     this.currentPage = e.pageIndex + 1;
-    let parameters: GetTaskParameters = { sort: TaskSortProperties.ID, is_user_created: 1 };
+    const parameters: GetTaskParameters = { sort: TaskSortProperties.ID, is_user_created: 1 };
     if(this.currentSearchInput?.length){
       delete parameters.is_user_created;
       parameters.name = this.currentSearchInput;
