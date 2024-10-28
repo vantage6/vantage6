@@ -132,7 +132,7 @@ There are three senarions:
 
 .. uml::
     :caption: Example dependency tasks tree in a single dataframe. Note that (7) is
-        not dependant on (4) as in this case (7) was requested after (4) was completed.
+        not dependent on (4) as in this case (7) was requested after (4) was completed.
 
     !theme superhero-outline
     skinparam linetype polyline

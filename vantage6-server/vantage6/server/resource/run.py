@@ -721,16 +721,16 @@ class Run(SingleRunBase):
         # In case there are dependent tasks and the current task has failed,
         # we should mark the dependent tasks as failed as well.
         if RunStatus.has_failed(run.status):
-            dependant_tasks = run.task.required_by
-            while dependant_tasks:
-                dependant_task = dependant_tasks.pop()
-                log.debug(f"Marking dependent task {dependant_task.id} runs as failed.")
+            dependent_tasks = run.task.required_by
+            while dependent_tasks:
+                dependent_task = dependent_tasks.pop()
+                log.debug(f"Marking dependent task {dependent_task.id} runs as failed.")
 
                 # Also mark all decentant runs as failed
-                if dependant_task.required_by:
-                    dependant_tasks.extend(dependant_task.required_by)
+                if dependent_task.required_by:
+                    dependent_tasks.extend(dependent_task.required_by)
 
-                for dependent_run in dependant_task.runs:
+                for dependent_run in dependent_task.runs:
                     dependent_run.status = RunStatus.FAILED
                     dependent_run.finished_at = run.finished_at
                     dependent_run.save()
