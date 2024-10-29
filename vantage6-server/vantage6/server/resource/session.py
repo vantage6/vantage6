@@ -80,7 +80,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     )
     api.add_resource(
         DataframePreprocessing,
-        path + "/<int:session_id>/dataframe/<string:dataframe_handle>/preprocessing",
+        path + "/<int:session_id>/dataframe/<string:dataframe_handle>/preprocess",
         endpoint="session_dataframe_preprocessing",
         methods=("POST",),
         resource_class_kwargs=services,
