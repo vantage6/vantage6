@@ -25,6 +25,8 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
         # set lambda functions to create links for one to one relationship
         setattr(self, "node", lambda obj: self.create_hateoas("node", obj))
 
+        # Note that removing the `get_` prefix is not possible as this is a reserved
+        # SQLAlchemy property.
         setattr(self, "get_session", lambda obj: self.create_hateoas("session", obj))
 
         setattr(
