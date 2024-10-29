@@ -149,7 +149,6 @@ class Task(Base):
         "Dataframe", back_populates="tasks", foreign_keys=[dataframe_id]
     )
 
-    # TODO FM 26-07-2024: Clean up these action methods. Use the same LocalAction enums
     @hybrid_property
     def action(self) -> str:
         """
@@ -161,7 +160,10 @@ class Task(Base):
         str
             Action that needs to be taken by the algorithm container
         """
-        return "compute" if not self.dataframe_id else "preprocess"
+        if self.runs and self.runs[-1].action:
+            return self.runs[-1].action
+        else:
+            return "no action as there are no runs"
 
     @action.expression
     def action(cls):
