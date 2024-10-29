@@ -665,13 +665,13 @@ class DockerTaskManager(DockerBaseManager):
         #   filename
         environment_variables = {
             ContainerEnvNames.INPUT_FILE.value: (
-                f"{self.data_folder}/{self.task_folder_name}/input",
+                f"{self.data_folder}/{self.task_folder_name}/input"
             ),
             ContainerEnvNames.OUTPUT_FILE.value: (
-                f"{self.data_folder}/{self.task_folder_name}/output",
+                f"{self.data_folder}/{self.task_folder_name}/output"
             ),
             ContainerEnvNames.SESSION_FOLDER.value: (
-                f"{self.data_folder}/{self.session_folder_name}",
+                f"{self.data_folder}/{self.session_folder_name}"
             ),
             ContainerEnvNames.SESSION_FILE.value: (
                 f"{self.data_folder}/{self.session_folder_name}"
