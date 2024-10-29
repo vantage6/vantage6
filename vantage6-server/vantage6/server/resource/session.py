@@ -16,8 +16,7 @@ from vantage6.server.permission import (
     PermissionManager,
     RuleCollection,
 )
-from vantage6.server.model.base import DatabaseSessionManager
-from vantage6.server.resource import only_for, with_user, ServicesResources
+from vantage6.server.resource import only_for, with_user, ServicesResources, with_node
 from vantage6.server.resource.common.input_schema import (
     SessionInputSchema,
     DataframeInitInputSchema,
@@ -76,7 +75,21 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         SessionDataframe,
         path + "/<int:session_id>/dataframe/<string:dataframe_handle>",
         endpoint="session_dataframe_with_id",
-        methods=("GET", "POST", "PATCH"),
+        methods=("GET", "PATCH"),
+        resource_class_kwargs=services,
+    )
+    api.add_resource(
+        DataframePreprocessing,
+        path + "/<int:session_id>/dataframe/<string:dataframe_handle>/preprocessing",
+        endpoint="session_dataframe_preprocessing",
+        methods=("POST",),
+        resource_class_kwargs=services,
+    )
+    api.add_resource(
+        DataframeColumns,
+        path + "/<int:session_id>/dataframe/<string:dataframe_handle>/column",
+        endpoint="session_dataframe_column",
+        methods=("POST",),
         resource_class_kwargs=services,
     )
 
@@ -458,11 +471,7 @@ class Sessions(SessionBase):
         # can see the sessions in the collaboration that have a scope collaboration.
         if not self.r.v_glo.can():
             if self.r.v_col.can():
-                q = q.filter(
-                    db.Session.collaboration_id.in_(
-                        self.obtain_auth_collaboration_ids()
-                    )
-                )
+                q = q.filter(db.Session.collaboration_id.in_(auth_org.collaborations))
             elif self.r.v_org.can():
                 q = q.filter(
                     or_(
@@ -546,11 +555,6 @@ class Sessions(SessionBase):
 
         tags: ["Session"]
         """
-        if not self.r.has_at_least_scope(S.OWN, P.CREATE):
-            return {
-                "msg": "You lack the permission to do that!"
-            }, HTTPStatus.UNAUTHORIZED
-
         data = request.get_json()
         errors = session_input_schema.validate(data)
 
@@ -574,10 +578,18 @@ class Sessions(SessionBase):
         if not collaboration:
             return {"msg": "Collaboration not found"}, HTTPStatus.NOT_FOUND
 
+        # Check that the user is part of the collaboration
+        if collaboration.id not in self.obtain_auth_collaboration_ids():
+            return {
+                "msg": (
+                    "You lack the permission to create a session for the collaboration!"
+                )
+            }, HTTPStatus.UNAUTHORIZED
+
         # When no label is provided, we generate a unique label.
         if data.get("name") is None:
             while db.Session.name_exists(
-                propose_name := generate_name(), collaboration
+                propose_name := "s_" + generate_name(), collaboration
             ):
                 pass
             data["name"] = propose_name
@@ -674,7 +686,7 @@ class Session(SessionBase):
 
         return session_schema.dump(session, many=False), HTTPStatus.OK
 
-    @only_for(("user",))
+    @with_user
     def patch(self, id):
         """Update session
         ---
@@ -778,7 +790,7 @@ class Session(SessionBase):
         session.save()
         return session_schema.dump(session, many=False), HTTPStatus.OK
 
-    @only_for(("user",))
+    @with_user
     def delete(self, id):
         """Delete session
         ---
@@ -839,7 +851,10 @@ class Session(SessionBase):
         delete_dependents = request.args.get("delete_dependents", False)
         if (session.dataframes or session.tasks) and not delete_dependents:
             return {
-                "msg": "This session has dependents, please delete them first."
+                "msg": (
+                    "This session has dependents, please delete them first or set"
+                    " the `delete_dependents` option to `true` to delete them."
+                )
             }, HTTPStatus.BAD_REQUEST
 
         # This only deletes the session metadata from the server
@@ -877,6 +892,23 @@ class SessionDataframes(SessionBase):
               type: integer
             description: Session ID
             required: true
+          - in: query
+            name: no_pagination
+            schema:
+              type: integer
+            description: >-
+              Disable pagination. When set to 1, pagination is disabled and all
+              results are returned at once.
+          - in: query
+            name: page
+            schema:
+              type: integer
+            description: Page number for pagination (default=1)
+          - in: query
+            name: per_page
+            schema:
+              type: integer
+            description: Number of items per page (default=10)
 
         responses:
           200:
@@ -917,7 +949,7 @@ class SessionDataframes(SessionBase):
 
         return self.response(page, dataframe_schema)
 
-    @only_for(("user",))
+    @with_user
     def post(self, session_id):
         """Create a new dataframe in a session
         ---
@@ -1000,7 +1032,9 @@ class SessionDataframes(SessionBase):
         # datasets that are send after the data extraction task. The handle can be
         # provided by the user, if not a unique handle is generated.
         if "handle" not in data:
-            while (handle := generate_name()) and db.Dataframe.select(session, handle):
+            while (handle := "df_" + generate_name()) and db.Dataframe.select(
+                session, handle
+            ):
                 pass
         else:
             handle = data["handle"]
@@ -1015,23 +1049,29 @@ class SessionDataframes(SessionBase):
         # required. This step is the first step in the dataframe and is used to
         # extract the data from the source database.
         extraction_details = data["task"]
+        if "description" in extraction_details and extraction_details["description"]:
+            description = extraction_details["description"]
+        else:
+            description = (
+                f"Data extraction step for session {session.name} ({session.id})."
+                f"This session is in the {collaboration.name} collaboration. This "
+                f"data extraction step uses the {source_db_label} database. And "
+                f"will initialize the dataframe with the handle {handle}."
+            )
+
         response, status_code = self.create_session_task(
             session=session,
             image=extraction_details["image"],
             organizations=extraction_details["organizations"],
             # TODO FM 10-7-2024: we should make a custom type for this
             database=[{"label": source_db_label, "type": "source"}],
-            description=(
-                f"Data extraction step for session {session.name} ({session.id})."
-                f"This session is in the {collaboration.name} collaboration. This "
-                f"data extraction step uses the {source_db_label} database. And "
-                f"will initialize the dataframe with the handle {handle}."
-            ),
+            description=description,
             action=LocalAction.DATA_EXTRACTION,
             dataframe=dataframe,
         )
 
         if status_code != HTTPStatus.CREATED:
+            dataframe.delete()
             return response, status_code
 
         dataframe.last_session_task_id = response["id"]
@@ -1043,7 +1083,7 @@ class SessionDataframes(SessionBase):
 class SessionDataframe(SessionBase):
     "/session/<int:session_id>/dataframe/<string:dataframe_handle>"
 
-    @only_for(("user",))
+    @with_user
     def get(self, session_id, dataframe_handle):
         """View specific dataframe
         ---
@@ -1109,7 +1149,11 @@ class SessionDataframe(SessionBase):
 
         return dataframe_schema.dump(dataframe, many=False), HTTPStatus.OK
 
-    @only_for(("user",))
+
+class DataframePreprocessing(SessionBase):
+    "/session/<int:session_id>/dataframe/<string:dataframe_handle>/preprocessing"
+
+    @with_user
     def post(self, session_id, dataframe_handle):
         """Add a preprocessing step to a dataframe
         ---
@@ -1118,9 +1162,9 @@ class SessionDataframe(SessionBase):
           is to extract the data from the source database. This is done by creating a
           task that extracts the data from the source database.
 
-          This endpoints returns a handle that can be used to identify the dataframe
-          in the future. This handle can be used to add preprocessing steps to the
-          dataframe. It can also be used to add compute steps to the dataframe.
+          This endpoints returns a handle that can be used to identify the dataframe.
+          This handle can be used to add preprocessing steps to the dataframe. It can
+          also be used as a reference to execute tasks on the dataframe.
 
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
@@ -1215,11 +1259,20 @@ class SessionDataframe(SessionBase):
 
         # Meta data about the modifying task
         preprocessing_task = dataframe_step["task"]
+        if "description" in preprocessing_task and preprocessing_task["description"]:
+            description = preprocessing_task["description"]
+        else:
+            description = (
+                f"Preprocessing step for session {session.name} ({session.id})."
+                f"This session is in the {session.collaboration.name} collaboration. "
+                f"This preprocessing step will modify the dataframe with the handle "
+                f"{dataframe_handle}."
+            )
 
         response, status_code = self.create_session_task(
             session=session,
             database=[{"label": dataframe_handle, "type": "handle"}],
-            description=f"Preprocessing step for session {session.name}",
+            description=description,
             depends_on_ids=[rt.id for rt in requires_tasks],
             action=LocalAction.PREPROCESSING,
             image=preprocessing_task["image"],
@@ -1236,8 +1289,12 @@ class SessionDataframe(SessionBase):
 
         return dataframe_schema.dump(dataframe, many=False), HTTPStatus.CREATED
 
-    @only_for(("node",))
-    def patch(self, session_id, dataframe_handle):
+
+class DataframeColumns(SessionBase):
+    "/session/<int:session_id>/dataframe/<string:dataframe_handle>/column"
+
+    @with_node
+    def post(self, session_id, dataframe_handle):
         """Nodes report their column names
         ---
         description: >-

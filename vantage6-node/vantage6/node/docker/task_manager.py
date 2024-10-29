@@ -299,8 +299,8 @@ class DockerTaskManager(DockerBaseManager):
             {"name": field.name, "dtype": str(field.type)} for field in table.schema
         ]
         self.client.request(
-            f"/session/{self.session_id}/dataframe/{self.dataframe_handle}",
-            method="patch",
+            f"/session/{self.session_id}/dataframe/{self.dataframe_handle}/column",
+            method="post",
             json=columns_info,
         )
         self.log.debug(f"Columns info sent to server: {columns_info}")

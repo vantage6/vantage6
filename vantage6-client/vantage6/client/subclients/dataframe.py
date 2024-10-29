@@ -237,7 +237,7 @@ class DataFrameSubClient(ClientBase.SubClient):
             )
 
         return self.parent.request(
-            f"session/{session_id}/dataframe/{handle}",
+            f"session/{session_id}/dataframe/{handle}/preprocess",
             method="POST",
             json={
                 "task": {

@@ -146,7 +146,7 @@ swagger_template = {
                         "description": "Label of the source database",
                     },
                     "handle": {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Handle of the DataFrame",
                     },
                     "task": {
