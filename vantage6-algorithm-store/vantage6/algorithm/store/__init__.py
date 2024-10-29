@@ -26,6 +26,7 @@ from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
 from flask import Flask, make_response, request, send_from_directory, Request, Response
 from flask_cors import CORS
+from flask_mail import Mail
 from flask_marshmallow import Marshmallow
 from flask_restful import Api
 from flask_principal import Principal
@@ -38,6 +39,7 @@ from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
 from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
 from vantage6.backend.common.globals import HOST_URI_ENV
 from vantage6.backend.common.jsonable import jsonable
+from vantage6.backend.common.mail_service import MailService
 
 # TODO move this to common, then remove dependency on CLI in algorithm store
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
@@ -97,6 +99,9 @@ class AlgorithmStoreApp:
 
         # SWAGGER documentation
         self.swagger = Swagger(self.app, template={})
+
+        # setup Flask mail client
+        self.mail = MailService(self.app, Mail(self.app))
 
         # setup the permission manager for the API endpoints
         self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)

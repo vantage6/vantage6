@@ -51,13 +51,12 @@ from vantage6.common import logger_name, split_rabbitmq_uri
 from vantage6.common.globals import PING_INTERVAL_SECONDS
 from vantage6.backend.common.globals import HOST_URI_ENV
 from vantage6.backend.common.jsonable import jsonable
-from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.backend.common.permission import RuleNeed
-from vantage6.server.model import Role, Rule
-from vantage6.server.model.rule import Operation, Scope
+from vantage6.backend.common.mail_service import MailService
+from vantage6.cli.context.server import ServerContext
+from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.server.permission import PermissionManager
 from vantage6.server import db
-from vantage6.cli.context.server import ServerContext
 from vantage6.server.resource.common.output_schema import HATEOASModelSchema
 from vantage6.server.globals import (
     APPNAME,
@@ -72,7 +71,6 @@ from vantage6.server.globals import (
     SERVER_MODULE_NAME,
 )
 from vantage6.server.resource.common.swagger_templates import swagger_template
-from vantage6.server.mail_service import MailService
 from vantage6.server.websockets import DefaultSocketNamespace
 from vantage6.server.default_roles import get_default_roles, DefaultRole
 from vantage6.server.hashedpassword import HashedPassword
