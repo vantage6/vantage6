@@ -831,16 +831,16 @@ class Tasks(TaskBase):
         dependent_task_ids = data.get("depends_on_ids", [])
         for dependent_task_id in dependent_task_ids:
 
-            dependant_task = db.Task.get(dependent_task_id)
+            dependent_task = db.Task.get(dependent_task_id)
 
-            if not dependant_task:
+            if not dependent_task:
                 return {
                     "msg": f"Task with id={dependent_task_id} not found!"
                 }, HTTPStatus.NOT_FOUND
 
-            if dependant_task.session_id != session_id:
-                log.debug(dependant_task)
-                log.debug(f"{dependant_task.session_id} {session_id}")
+            if dependent_task.session_id != session_id:
+                log.debug(dependent_task)
+                log.debug(f"{dependent_task.session_id} {session_id}")
                 return {
                     "msg": (
                         "The task you are trying to depend on is not part of the "
@@ -848,7 +848,7 @@ class Tasks(TaskBase):
                     )
                 }, HTTPStatus.BAD_REQUEST
 
-            dependent_tasks.append(dependant_task)
+            dependent_tasks.append(dependent_task)
 
         # Filter that we did not end up with duplicates because of various conditions
         dependent_tasks = list(set(dependent_tasks))
