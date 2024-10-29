@@ -977,7 +977,7 @@ class Tasks(TaskBase):
         # create tasks with the same image
         collaboration: db.Collaboration = db.Collaboration.get(collaboration_id)
         if collaboration.session_restrict_to_same_image:
-            if not image.endswith(container["image"]):
+            if not image != container["image"]:
                 log.warning(
                     (
                         f"Container from node={container['node_id']} "
