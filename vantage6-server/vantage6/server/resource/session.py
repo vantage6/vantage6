@@ -1369,8 +1369,8 @@ class DataframeColumns(SessionBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        # first we clear out all previous reported columns
-        db.Column.clear(dataframe.id)
+        # first we clear out all previous reported columns for this node
+        db.Column.clear(dataframe.id, g.node.id)
 
         for column in data:
             db.Column(

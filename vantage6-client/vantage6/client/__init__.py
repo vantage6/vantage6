@@ -1783,6 +1783,7 @@ class UserClient(ClientBase):
             image: str,
             description: str,
             input_: dict,
+            session: int | None = None,
             collaboration: int | None = None,
             study: int | None = None,
             store: int | None = None,
@@ -1803,6 +1804,9 @@ class UserClient(ClientBase):
                 Human readable description
             input_ : dict
                 Algorithm input
+            session : int, optional
+                ID of the session to which this task belongs. If not set, the
+                session id of the client needs to be set. Default is None.
             collaboration : int, optional
                 ID of the collaboration to which this task belongs. Should be set if
                 the study is not set
@@ -1831,6 +1835,11 @@ class UserClient(ClientBase):
                 from the server if the task could not be created
             """
             assert self.parent.cryptor, "Encryption has not yet been setup!"
+
+            if session is None and self.parent.session_id is None:
+                raise ValueError(
+                    "No session specified! Cannot create task without a session."
+                )
 
             if collaboration is None:
                 collaboration = self.parent.collaboration_id
@@ -1882,6 +1891,7 @@ class UserClient(ClientBase):
                 "description": description,
                 "organizations": organization_json_list,
                 "databases": databases,
+                "session_id": session,
             }
 
             if collaboration:
