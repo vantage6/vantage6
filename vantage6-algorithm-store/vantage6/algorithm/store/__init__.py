@@ -387,6 +387,7 @@ class AlgorithmStoreApp:
         if root_user := self.ctx.config.get("root_user", {}):
             whitelisted_uri = root_user.get("v6_server_uri")
             root_username = root_user.get("username")
+            root_email = root_user.get("email")
             if whitelisted_uri and root_username:
                 if not (v6_server := db.Vantage6Server.get_by_url(whitelisted_uri)):
                     log.info("This server will be whitelisted: %s", whitelisted_uri)
@@ -407,6 +408,7 @@ class AlgorithmStoreApp:
                     user = db.User(
                         v6_server_id=v6_server.id,
                         username=root_username,
+                        email=root_email,
                         roles=[root],
                     )
                     user.save()

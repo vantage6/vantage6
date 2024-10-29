@@ -232,7 +232,9 @@ class BaseDatabase:
         col_type = column.type.compile(self.engine.dialect)
         tab_name = table_cls.__tablename__
         log.warn(
-            f"Adding column {col_name} to table {tab_name} as it did not " "exist yet"
+            "Adding column '%s' to table '%s' as it did not exist yet",
+            col_name,
+            tab_name,
         )
         self.engine.execute(
             'ALTER TABLE "%s" ADD COLUMN %s %s' % (tab_name, col_name, col_type)

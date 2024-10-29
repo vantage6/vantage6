@@ -150,8 +150,31 @@ class UIVisualizationInputSchema(_NameDescriptionSchema):
 class UserInputSchema(Schema):
     """Schema for validating input for creating a user."""
 
+    username = fields.String(required=True)
     roles = fields.List(fields.Integer(validate=validate.Range(min=1)))
-    username = fields.String()
+
+
+class UserUpdateInputSchema(Schema):
+    """Schema for validating input for updating a user."""
+
+    # separate schema for PATCH /user: we don't allow updating the username, email is
+    # retrieved automatically in POST /user. Finally, there is an additional field to
+    # update the email from the server
+    email = fields.String()
+    roles = fields.List(fields.Integer(validate=validate.Range(min=1)))
+    update_email = fields.Boolean()
+
+    @validates_schema
+    def validate_email(self, data, **kwargs):
+        """
+        Validate that the email is not present when update_email is True.
+        """
+        if data.get("update_email") and data.get("email"):
+            raise ValidationError(
+                "Both options 'email' and 'update_email' are present, but only one "
+                "can be used simultaneously, since 'update_email' is a flag to update "
+                "the email with the value from the vantage6 server."
+            )
 
 
 class Vantage6ServerInputSchema(Schema):

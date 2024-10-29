@@ -110,3 +110,5 @@ root_user:
   v6_server_uri: http://localhost:7601/api
   # username of the vantage6 server's user you want to make root in the algorithm store
   username: root
+  # email of the vantage6 server's user you want to make root in the algorithm store
+  email: root@organization.com
