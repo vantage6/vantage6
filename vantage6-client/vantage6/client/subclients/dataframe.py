@@ -1,8 +1,3 @@
-import pandas as pd
-
-from rich.table import Table
-from rich.console import Console
-
 from vantage6.common.serialization import serialize
 from vantage6.client import ClientBase
 from vantage6.client.filter import post_filtering
@@ -13,13 +8,13 @@ class DataFrameSubClient(ClientBase.SubClient):
     """Sub client data frames."""
 
     @post_filtering(iterable=False)
-    def get(self, handle: int, session: int = None, display=False) -> dict:
+    def get(self, handle: str = None, session: int = None, display=False) -> dict:
         """
-        Get a data frame by its id.
+        Get a data frame by its ID or by supplying the handle and session ID.
 
         Parameters
         ----------
-        handle : int
+        handle : str
             The name of the data frame
         session : int, optional
             The session ID in which the data frame is located. When not provided, the
@@ -33,7 +28,6 @@ class DataFrameSubClient(ClientBase.SubClient):
         dict
             The data frame details.
         """
-
         session_id = session or self.parent.session_id
         if not session_id:
             self.parent.log.error(

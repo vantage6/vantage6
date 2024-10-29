@@ -901,13 +901,13 @@ class Tasks(TaskBase):
             # task and using the ID here, there are other database operations
             # that silently update the task.id (i.e. next_job_id() and
             # db.Task.get()). Task.id should be updated explicitly instead.
-            db_records.append(
-                db.TaskDatabase(
-                    task_id=task.id,
-                    database=database["label"],
-                    type_=database["type"],
-                )
+            task_db = db.TaskDatabase(
+                task_id=task.id,
+                database=database["label"],
+                type_=database["type"],
             )
+            task_db.save()
+            db_records.append(task_db)
 
         # All checks completed, save task to database
         task.save()

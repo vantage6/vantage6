@@ -295,20 +295,20 @@ class SessionBase(ServicesResources):
         op = "e" if operation == P.EDIT else "d"
 
         if (
-            self.r.getattr(f"{op}_col").can()
+            getattr(self.r, f"{op}_col").can()
             and session.collaboration_id in self.obtain_auth_collaboration_ids()
         ):
             return True
 
         if (
-            self.r.getattr(f"{op}_org").can()
+            getattr(self.r, f"{op}_org").can()
             and session.organization_id == self.obtain_organization_id()
         ):
             return True
 
         if (
             self.is_user()
-            and self.r.getattr(f"{op}_own").can()
+            and getattr(self.r, f"{op}_own").can()
             and session.user_id == g.user.id
         ):
             return True
@@ -320,7 +320,7 @@ class SessionBase(ServicesResources):
         session: db.Session,
         image: str,
         organizations: dict,
-        database: dict,
+        database: list[dict],
         action: LocalAction,
         dataframe: db.Dataframe,
         description="",
@@ -345,6 +345,7 @@ class SessionBase(ServicesResources):
         }
         # remove empty values
         input_ = {k: v for k, v in input_.items() if v is not None}
+        print(input_)
         return Tasks.post_task(
             input_, self.socketio, getattr(self.permissions, "task"), {}, action
         )
