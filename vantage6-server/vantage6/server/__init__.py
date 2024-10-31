@@ -49,7 +49,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common import logger_name, split_rabbitmq_uri
 from vantage6.common.globals import PING_INTERVAL_SECONDS
-from vantage6.backend.common.globals import HOST_URI_ENV
+from vantage6.backend.common.globals import HOST_URI_ENV, DEFAULT_SUPPORT_EMAIL_ADDRESS
 from vantage6.backend.common.jsonable import jsonable
 from vantage6.backend.common.permission import RuleNeed
 from vantage6.backend.common.mail_service import MailService
@@ -65,7 +65,6 @@ from vantage6.server.globals import (
     RESOURCES_PATH,
     SUPER_USER_INFO,
     REFRESH_TOKENS_EXPIRE_HOURS,
-    DEFAULT_SUPPORT_EMAIL_ADDRESS,
     MIN_TOKEN_VALIDITY_SECONDS,
     MIN_REFRESH_TOKEN_EXPIRY_DELTA,
     SERVER_MODULE_NAME,

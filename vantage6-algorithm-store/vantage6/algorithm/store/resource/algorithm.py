@@ -1,14 +1,21 @@
 import logging
 from http import HTTPStatus
 import datetime
-from flask import g, request
+from flask import g, render_template, request, current_app, Flask
+from flask_mail import Mail
 from flask_restful import Api
 from sqlalchemy import or_
+from threading import Thread
 
+from vantage6.common import logger_name
+from vantage6.backend.common.globals import (
+    DEFAULT_EMAIL_FROM_ADDRESS,
+    DEFAULT_SUPPORT_EMAIL_ADDRESS,
+)
 from vantage6.algorithm.store import db
+from vantage6.algorithm.store.default_roles import DefaultRole
 from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
 from vantage6.algorithm.store.model.rule import Operation
-from vantage6.common import logger_name
 from vantage6.algorithm.store.model.ui_visualization import UIVisualization
 from vantage6.algorithm.store.resource.schema.input_schema import (
     AlgorithmInputSchema,
@@ -485,8 +492,10 @@ class Algorithms(AlgorithmBaseResource):
         algorithm.save()
 
         # If reviews are disabled, approve the algorithm immediately
+        approved = False
         if self.config.get("dev", {}).get("disable_review", False):
             algorithm.approve()
+            approved = True
 
         # create the algorithm's subresources
         for function in data["functions"]:
@@ -526,7 +535,105 @@ class Algorithms(AlgorithmBaseResource):
                 )
                 vis.save()
 
+        if not approved:
+            # send email to users responsible to assign reviewers. Do this in a
+            # separate thread to avoid blocking the response
+            Thread(
+                target=self._send_email_to_reviewers,
+                args=(
+                    current_app,
+                    self.mail,
+                    algorithm,
+                    g.user.username,
+                    self.config,
+                ),
+            ).start()
+
         return algorithm_output_schema.dump(algorithm, many=False), HTTPStatus.CREATED
+
+    def _send_email_to_reviewers(
+        self,
+        app: Flask,
+        mail: Mail,
+        algorithm: db_Algorithm,
+        submitting_user_name: str,
+        config: dict,
+    ) -> None:
+        """
+        When new algorithm is created, send email to users responsible to assign
+        reviewers.
+
+        Parameters
+        ----------
+        app : Flask
+            Flask app instance
+        mail: flask_mail.Mail
+            Flask mail instance
+        algorithm : Algorithm
+            Algorithm that has been created
+        submitting_user_name : str
+            Username of the user that submitted the algorithm
+        config : dict
+            Configuration dictionary
+        """
+        # TODO refactor to prevent duplicate code
+        smtp_settings = config.get("smtp", {})
+        if not smtp_settings:
+            log.warning(
+                "No SMTP settings found. No emails will be sent to alert "
+                "algorithm managers that reviews have to be assigned."
+            )
+            return
+        email_sender = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
+        support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
+
+        # get users with the role 'algorithm manager'
+        log.info(
+            "Sending email to alert store administrators that reviewers have to be "
+            "assigned."
+        )
+        algorithm_managers = db.Role.get_by_name(DefaultRole.ALGORITHM_MANAGER).users
+        if not algorithm_managers:
+            algorithm_managers = db.User.get_by_permission("review", Operation.CREATE)
+            if algorithm_managers:
+                log.info(
+                    "No users with algorithm manager role found. Sending email to all "
+                    "users with permission to assign reviews instead."
+                )
+            else:
+                log.warning(
+                    "No users found that can assign reviewers. No email will be sent."
+                )
+
+        # send email to each algorithm manager
+        for algo_manager in algorithm_managers:
+            other_admins_msg = ""
+            if len(algorithm_managers) > 1:
+                other_admins_msg = (
+                    f", together with {len(algorithm_managers) - 1} other users"
+                )
+            template_vars = {
+                "admin_username": algo_manager.username,
+                "algorithm_name": algorithm.name,
+                # TODO this doesn't work yet! Define variables
+                "store_url": store_url,
+                "server_url": server_url,
+                "dev_username": submitting_user_name,
+                "other_admins": other_admins_msg,
+                "support_email": support_email,
+            }
+            with app.app_context():
+                mail.send_email(
+                    subject="New algorithm needs reviewer assignment",
+                    sender=email_sender,
+                    recipients=[algo_manager.email],
+                    text_body=render_template(
+                        "mail/new_algorithm.txt", **template_vars
+                    ),
+                    html_body=render_template(
+                        "mail/new_algorithm.html", **template_vars
+                    ),
+                )
 
 
 class Algorithm(AlgorithmBaseResource):

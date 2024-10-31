@@ -9,15 +9,15 @@ from flask_mail import Mail
 from jwt.exceptions import DecodeError
 from http import HTTPStatus
 from sqlalchemy.orm.exc import NoResultFound
-import datetime as dt
 
 from vantage6.common import logger_name, generate_apikey
 from vantage6.common.globals import APPNAME, MAIN_VERSION_NAME
+from vantage6.backend.common.globals import (
+    DEFAULT_EMAIL_FROM_ADDRESS,
+    DEFAULT_SUPPORT_EMAIL_ADDRESS,
+)
 from vantage6.server import db
 from vantage6.server.globals import (
-    DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES,
-    DEFAULT_SUPPORT_EMAIL_ADDRESS,
-    DEFAULT_EMAIL_FROM_ADDRESS,
     DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES,
     DEFAULT_BETWEEN_USER_EMAILS_MINUTES,
 )
