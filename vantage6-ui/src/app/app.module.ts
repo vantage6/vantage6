@@ -1,13 +1,14 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { QRCodeModule } from 'angularx-qrcode';
 
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -20,12 +21,14 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatTreeModule } from '@angular/material/tree';
 import { MatDateFnsModule } from '@angular/material-date-fns-adapter';
 import { MatRadioModule } from '@angular/material/radio';
 import { enCA } from 'date-fns/locale';
@@ -46,6 +49,7 @@ import { TaskListComponent } from './pages/analyze/task/list/task-list.component
 import { TaskReadComponent } from './pages/analyze/task/read/task-read.component';
 import { PageHeaderComponent } from './components/page-header/page-header.component';
 import { ChipComponent } from './components/helpers/chip/chip.component';
+import { TreeDropdownComponent } from './components/helpers/tree-dropdown/tree-dropdown.component';
 import { AlertComponent } from './components/alerts/alert/alert.component';
 import { StatusInfoComponent } from './components/helpers/status-info/status-info.component';
 import { LogDialogComponent } from './components/dialogs/log/log-dialog.component';
@@ -146,6 +150,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     TaskListComponent,
     TaskReadComponent,
     PageHeaderComponent,
+    TreeDropdownComponent,
     ChipComponent,
     AlertComponent,
     StatusInfoComponent,
@@ -232,6 +237,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     BrowserAnimationsModule,
     AppRoutingModule,
     ReactiveFormsModule,
+    FormsModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,
@@ -240,10 +246,12 @@ export function HttpLoaderFactory(http: HttpClient) {
       },
       defaultLanguage: 'en'
     }),
+    MatAutocompleteModule,
     MatDateFnsModule,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
+    MatChipsModule,
     MatDatepickerModule,
     MatDialogModule,
     MatExpansionModule,
@@ -262,6 +270,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     MatTabsModule,
     MatTableModule,
     MatToolbarModule,
+    MatTreeModule,
     MatRadioModule,
     QRCodeModule
   ],
