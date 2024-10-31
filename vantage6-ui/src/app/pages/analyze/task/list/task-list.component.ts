@@ -17,13 +17,11 @@ import { routePaths } from 'src/app/routes';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
-import { StudyService } from 'src/app/services/study.service';
 import { TaskService } from 'src/app/services/task.service';
 
 enum TableRows {
   ID = 'id',
   Name = 'name',
-  Study = 'study',
   Status = 'status'
 }
 
@@ -53,7 +51,6 @@ export class TaskListComponent implements OnInit, OnDestroy {
     private router: Router,
     private translateService: TranslateService,
     private taskService: TaskService,
-    private studyService: StudyService,
     private chosenCollaborationService: ChosenCollaborationService,
     private permissionService: PermissionService,
     private socketioConnectService: SocketioConnectService
@@ -124,7 +121,6 @@ export class TaskListComponent implements OnInit, OnDestroy {
     if (!collaborationID || !userID) return;
 
     parameters = { ...parameters, collaboration_id: collaborationID };
-    const studies = await this.studyService.getStudies();
     const taskData = await this.taskService.getPaginatedTasks(page, parameters);
     this.tasks = taskData.data;
     this.pagination = taskData.links;
@@ -142,10 +138,6 @@ export class TaskListComponent implements OnInit, OnDestroy {
           initSearchString: unlikeApiParameter(parameters.name)
         },
         {
-          id: TableRows.Study,
-          label: this.translateService.instant('resources.study')
-        },
-        {
           id: TableRows.Status,
           label: this.translateService.instant('task.status'),
           filterEnabled: true,
@@ -158,7 +150,6 @@ export class TaskListComponent implements OnInit, OnDestroy {
         columnData: {
           id: _.id.toString(),
           name: _.name,
-          study: _.study ? studies?.find(study => study.id === _.study?.id)?.name : '-',
           status: this.getTaskStatusTranslation(_.status),
           statusType: this.getChipTypeForStatus(_.status)
         }
