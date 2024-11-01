@@ -1778,6 +1778,7 @@ class UserClient(ClientBase):
             collaboration: int | None = None,
             study: int | None = None,
             store: int | None = None,
+            server_url: str | None = None,
             databases: list[dict] | None = None,
         ) -> dict:
             """Create a new task
@@ -1803,6 +1804,11 @@ class UserClient(ClientBase):
                 collaboration is not set
             store : int, optional
                 ID of the algorithm store to retrieve the algorithm from
+            server_url: str, optional
+                URL of the server on which the task is created. This should be given if
+                the algorithm is retrieved from an algorithm store, and the server does
+                not contain its own URL in the configuration (you will be alerted of
+                this in an error message).
             databases: list[dict], optional
                 Databases to be used at the node. Each dict should contain
                 at least a 'label' key. Additional keys are 'query' (if using
@@ -1882,6 +1888,8 @@ class UserClient(ClientBase):
                 params["study_id"] = study
             if store:
                 params["store_id"] = store
+            if server_url:
+                params["server_url"] = server_url
 
             return self.parent.request(
                 "task",
