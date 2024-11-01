@@ -106,7 +106,7 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
         ).ask()
 
     is_policies = q.confirm(
-        "Do you want to add limit the algorithms allowed to run on your node? This "
+        "Do you want to limit the algorithms allowed to run on your node? This "
         "should always be done for production scenarios.",
         default=True,
     ).ask()

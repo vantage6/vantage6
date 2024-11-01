@@ -87,7 +87,7 @@ class RabbitMQManager:
             volumes=volumes,
             ports=ports,
             detach=True,
-            restart_policy={"Name": "always"},
+            restart_policy={"Name": "unless-stopped"},
             hostname=self.host,
             labels={
                 f"{APPNAME}-type": "rabbitmq",
