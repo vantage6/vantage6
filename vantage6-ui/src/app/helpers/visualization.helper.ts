@@ -9,9 +9,12 @@ export function parseDefaultPandasFormat(
   }
   const indices = Object.keys(Object.values(df)[0]);
   const rows: any = [];
-  // if the indices are not simply numbers, add them as first row
-  const indices_are_numbers: boolean = indices[0] !== '0';
-  if (indices_are_numbers) {
+  // If the indices of the Pandas data frame are simply numbers starting at zero, do not
+  // add them as first column. Indices as 0, 1, 2... are the default indices, and are
+  // not interesting to display. However, if the indices are something like 'sum',
+  // 'mean', 'std', etc., then they are interesting and should be displayed as a column.
+  const pandasIndicesAreNumbers: boolean = indices[0] !== '0';
+  if (pandasIndicesAreNumbers) {
     // add extra column for indices
     columns = [parameterTxt, ...columns];
   }
