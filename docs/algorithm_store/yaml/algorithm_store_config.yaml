@@ -130,3 +130,10 @@ smtp:
 # Set an email address you want to direct your users to for support
 # (defaults to support@vantage6.ai)
 support_email: your-support@example.com
+
+# Let the algorithm store know where it is hosted. This is used as a setting to
+# communicate back and forth with other vantage6 components such as the server.
+# Example for the cotopaxi server
+server_url: https://store.cotopaxi.vantage6.ai
+# Example for running the store locally with default settings:
+# server_url: http://localhost:7602

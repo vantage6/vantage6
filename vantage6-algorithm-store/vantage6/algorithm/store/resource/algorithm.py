@@ -12,6 +12,7 @@ from vantage6.backend.common.globals import (
     DEFAULT_EMAIL_FROM_ADDRESS,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
 )
+from vantage6.backend.common import get_server_url
 from vantage6.algorithm.store import db
 from vantage6.algorithm.store.default_roles import DefaultRole
 from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
@@ -558,6 +559,7 @@ class Algorithms(AlgorithmBaseResource):
         algorithm: db_Algorithm,
         submitting_user_name: str,
         config: dict,
+        store_url: str | None,
     ) -> None:
         """
         When new algorithm is created, send email to users responsible to assign
@@ -575,6 +577,8 @@ class Algorithms(AlgorithmBaseResource):
             Username of the user that submitted the algorithm
         config : dict
             Configuration dictionary
+        store_url : str | None
+            URL of the algorithm store
         """
         # TODO refactor to prevent duplicate code
         smtp_settings = config.get("smtp", {})
@@ -615,9 +619,8 @@ class Algorithms(AlgorithmBaseResource):
             template_vars = {
                 "admin_username": algo_manager.username,
                 "algorithm_name": algorithm.name,
-                # TODO this doesn't work yet! Define variables
-                "store_url": store_url,
-                "server_url": server_url,
+                "store_url": get_server_url(config, store_url),
+                "server_url": algo_manager.server.url,
                 "dev_username": submitting_user_name,
                 "other_admins": other_admins_msg,
                 "support_email": support_email,
