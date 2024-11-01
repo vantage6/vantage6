@@ -13,9 +13,8 @@ ip: 0.0.0.0
 # Port to which the server binds
 port: 7601
 
-# API path prefix. (i.e. https://yourdomain.org/api_path/<endpoint>). In the
-# case you use a referse proxy and use a subpath, make sure to include it
-# here also.
+# API path prefix. Server may be reached at https://domain.org/<api_path>/<endpoint>.
+# In case you use a reverse proxy and use a subpath, make sure to set this option.
 api_path: /api
 
 # Let the server know where it is hosted. This is used as a setting to
