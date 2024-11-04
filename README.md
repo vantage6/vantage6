@@ -29,9 +29,9 @@
 
 ---
 
-This repository is contains all the **vantage6** infrastructure source code. The **vantage6** technology enables to manage and deploy privacy enhancing technologies like Federated Learning (FL) and Multi-Party Computation (MPC). Please visit our [website (vantage6.ai)](https://vantage6.ai) to learn more!
+This repository is contains all the **vantage6** infrastructure source code. The **vantage6** technology enables to manage and deploy privacy enhancing technologies like Federated Learning (FL) and Multi-Party Computation (MPC). Please visit our [website](https://vantage6.ai) to learn more!
 
-You can find more (user) documentation at [readthedocs (docs.vantage6.ai)](https://docs.vantage6.ai). If you have any questions, suggestions or just want to chat about federated learning: join our [Discord (https://discord.gg/yAyFf6Y)](https://discord.gg/yAyFf6Y) channel.
+You can find more (user) documentation at [readthedocs](https://docs.vantage6.ai). If you have any questions, suggestions or just want to chat about federated learning: join our [Discord)](https://discord.gg/yAyFf6Y) channel.
 
 ## Infrastructure overview
 
@@ -43,7 +43,7 @@ _A High level overview of the vantage6 infrastructure. Vantage6 has both a clien
 
 ### Requirements
 
-The **vantage6** infrastructure is delivered in Docker images. To run these images, you need to have [Docker (docs.docker.com)](https://docs.docker.com/get-docker/) installed. To install the latest version of the vantage6 CLI, you need to have [Python (python.org)](https://www.python.org/downloads/), we recommend using an environment manager like [mini-conda (docs.conda.io)](https://docs.conda.io/en/latest/miniconda.html).
+The **vantage6** infrastructure is delivered in Docker images. To run these images, you need to have [Docker](https://docs.docker.com/get-docker/) installed. To install the latest version of the vantage6 CLI, you need to have [Python](https://www.python.org/downloads/), we recommend using an environment manager like [mini-conda](https://docs.conda.io/en/latest/miniconda.html).
 
 Install the latest version of the vantage6 CLI by using:
 
@@ -79,7 +79,7 @@ v6 node attach
 v6 server attach
 ```
 
-From here you can use the [vantage6-client (pypi.org)](https://pypi.org/project/vantage6-client) to interact with the server. The demo network has a pre-configured organization with the following credentials:
+From here you can use the [vantage6-client](https://pypi.org/project/vantage6-client) to interact with the server. The demo network has a pre-configured organization with the following credentials:
 
 - Username: `dev_admin`
 - Password: `password`
@@ -103,7 +103,7 @@ client.organization.create(
 )
 ```
 
-You can find more (user) documentation at [readthedocs (docs.vantage6.ai)](https://docs.vantage6.ai)
+You can find more (user) documentation at [readthedocs](https://docs.vantage6.ai)
 
 ## Project structure
 
@@ -128,7 +128,7 @@ easily.
 
 ### Docker images
 
-The vantage6 infrastructure is delivered in Docker images. All Docker images are stored in our private [Harbor (goharbor.io)](https://goharbor.io/) registry. The most important images are:
+The vantage6 infrastructure is delivered in Docker images. All Docker images are stored in our private [Harbor](https://goharbor.io/) registry. The most important images are:
 
 - `harbor2.vantage6.ai/infrastructure/node:VERSION` -> _Node application Docker image_
 - `harbor2.vantage6.ai/infrastructure/server:VERSION` -> _Server application Docker image_
@@ -153,7 +153,7 @@ And finally there are some images released for algorithm development:
 
 ## :gift_heart: Join the community!
 
-We hope to continue developing, improving, and supporting **vantage6** with the help of the federated learning community. If you are interested in contributing, first of all, thank you! Second, please take a look at our [contributing guidelines (docs.vantage6.ai)](https://docs.vantage6.ai/en/main/devops/contribute.html) and our [code of conduct (github.com)](CODE_OF_CONDUCT.md).
+We hope to continue developing, improving, and supporting **vantage6** with the help of the federated learning community. If you are interested in contributing, first of all, thank you! Second, please take a look at our [contributing guidelines](https://docs.vantage6.ai/en/main/devops/contribute.html) and our [code of conduct](CODE_OF_CONDUCT.md).
 
 <a href="https://github.com/vantage6/vantage6/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=vantage6/vantage6" />
