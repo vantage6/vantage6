@@ -1,6 +1,71 @@
 Release notes
 =============
 
+4.8.0
+-----
+
+* ? November 2024*
+
+- **Feature**
+
+  - Added options ``--ui-image`` and ``--server-image`` to the
+    ``v6 dev create-demo-network``
+    (`Issue#1518 <https://github.com/vantage6/vantage6/issues/1518>`_,
+    `PR#1525 <https://github.com/vantage6/vantage6/pull/1525>`_).
+  - Directories can be mounted as databases at the nodes
+    (`Issue#1172 <https://github.com/vantage6/vantage6/issues/1172>`_,
+    `PR#1540 <https://github.com/vantage6/vantage6/pull/1540>`_).
+  - Added retry mechanism for the server database connection on initial connect
+    (`Issue#1479 <https://github.com/vantage6/vantage6/issues/1479>`_,
+    `PR#1526 <https://github.com/vantage6/vantage6/pull/1526>`_).
+  - In case a study is used for an analysis, it is shown in the result page
+    (`Issue#1489 <https://github.com/vantage6/vantage6/issues/1489>`_,
+    `PR#1561 <https://github.com/vantage6/vantage6/pull/1561>`_).
+  - Optional algorithm arguments in the UI
+    (`Issue#1219 <https://github.com/vantage6/vantage6/issues/1219>`_,
+    `PR#1532 <https://github.com/vantage6/vantage6/pull/1532>`_).
+  - Added code of conduct
+    (`Issue#1459 <https://github.com/vantage6/vantage6/issues/1459>`_,
+    `PR#1480 <https://github.com/vantage6/vantage6/pull/1480>`_).
+
+- **Change**
+
+  - Removed some unused configuration files
+    (`Issue#1502 <https://github.com/vantage6/vantage6/issues/1502>`_,
+    `PR#1554 <https://github.com/vantage6/vantage6/pull/1554>`_).
+  - The API path of the algorithm store is now settable
+    (`Issue#1519 <https://github.com/vantage6/vantage6/issues/1519>`_,
+    `PR#1524 <https://github.com/vantage6/vantage6/pull/1524>`_).
+
+- **Bugfix**
+
+  - Fixed a buggy seach filter on the task overview page
+    (`Issue#1361 <https://github.com/vantage6/vantage6/issues/1361>`_,
+    `PR#1561 <https://github.com/vantage6/vantage6/pull/1561>`_)
+  - When a node has never been online the status is set to ``ofline`` instead of
+    ``None`` (`Issue#1461 <https://github.com/vantage6/vantage6/issues/1461>`_,
+    `PR#1552 <https://github.com/vantage6/vantage6/pull/1552>`_).
+  - The node support containers are now started with the ``restart-unless-stopped``
+    restart policy to prevent them from restarting when the node is shut down in a
+    controlled manner (`Issue#1111 <https://github.com/vantage6/vantage6/issues/1111>`_,
+    `PR#1553 <https://github.com/vantage6/vantage6/pull/1553>`_).
+  - Fixed a bug where the ``server_url`` could not be overruled by the Python client
+    or UI. This is used to identify the originating vantage6 server in the algorithm
+    store (`Issue#1454 <https://github.com/vantage6/vantage6/issues/1454>`_,
+    `PR#1528 <https://github.com/vantage6/vantage6/pull/1528>`_).
+  - All fields in the client ``.update`` required to be set, even if they are not
+    changed. This is no longer needed
+    (`Issue#1515 <https://github.com/vantage6/vantage6/issues/1515>`_,
+    `PR#1555 <https://github.com/vantage6/vantage6/pull/1555>`_).
+  - Fixed a bug which caused the visualization selection in the result page to reset
+    when the computation is complete
+    (`Issue#1511 <https://github.com/vantage6/vantage6/issues/1511>`_,
+    `PR#1523 <https://github.com/vantage6/vantage6/pull/1523>`_).
+  - Users with collaboration edit scope are allowed to reset API keys of nodes from
+    all organizations within collaboration the users organization participates in
+    (`Issue#1530 <https://github.com/vantage6/vantage6/issues/1530>`_,
+    `PR#1529 <https://github.com/vantage6/vantage6/pull/1529>`_).
+
 4.7.1
 -----
 
