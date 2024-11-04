@@ -1,17 +1,34 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function parseDefaultPandasFormat(df: { [key: string]: any[] }, columns: string[] | null): { columns: string[]; rows: any } {
+export function parseDefaultPandasFormat(
+  df: { [key: string]: any[] },
+  parameterTxt: string,
+  columns: string[] | null
+): { columns: string[]; rows: any[] } {
   if (!columns) {
     columns = Object.keys(df);
   }
-  const rows = [];
-  for (let i = 0; i < Object.keys(Object.values(df)[0]).length; i++) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const indices = Object.keys(Object.values(df)[0]);
+  const rows: any = [];
+  // If the indices of the Pandas data frame are simply numbers starting at zero, do not
+  // add them as first column. Indices as 0, 1, 2... are the default indices, and are
+  // not interesting to display. However, if the indices are something like 'sum',
+  // 'mean', 'std', etc., then they are interesting and should be displayed as a column.
+  const pandasIndicesAreNumbers: boolean = indices[0] !== '0';
+  if (pandasIndicesAreNumbers) {
+    // add extra column for indices
+    columns = [parameterTxt, ...columns];
+  }
+  indices.forEach((index: any) => {
     const row: any = {};
     for (const column of columns) {
-      row[column] = df[column][i] as string;
+      if (column === parameterTxt) {
+        row[parameterTxt] = index;
+      } else {
+        row[column] = df[column][index] as string;
+      }
     }
     rows.push(row);
-  }
+  });
   return { columns: columns, rows: rows };
 }
 

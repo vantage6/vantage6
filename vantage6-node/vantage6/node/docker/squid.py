@@ -259,7 +259,7 @@ class Squid(DockerBaseManager):
             volumes=mounts,
             detach=True,
             name=self.container_name,
-            restart_policy={"Name": "always"},
+            restart_policy={"Name": "unless-stopped"},
             auto_remove=False,
         )
 
