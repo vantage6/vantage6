@@ -1,11 +1,12 @@
 import logging
-from http import HTTPStatus
 import datetime
+from http import HTTPStatus
+from threading import Thread
+
 from flask import g, render_template, request, current_app, Flask
 from flask_mail import Mail
 from flask_restful import Api
 from sqlalchemy import or_
-from threading import Thread
 
 from vantage6.common import logger_name
 from vantage6.backend.common.globals import (
@@ -540,7 +541,7 @@ class Algorithms(AlgorithmBaseResource):
             # send email to users responsible to assign reviewers. Do this in a
             # separate thread to avoid blocking the response
             Thread(
-                target=self._send_email_to_reviewers,
+                target=self._send_email_to_review_assigners,
                 args=(
                     current_app._get_current_object(),
                     self.mail,
@@ -553,7 +554,7 @@ class Algorithms(AlgorithmBaseResource):
 
         return algorithm_output_schema.dump(algorithm, many=False), HTTPStatus.CREATED
 
-    def _send_email_to_reviewers(
+    def _send_email_to_review_assigners(
         self,
         app: Flask,
         mail: Mail,
@@ -581,7 +582,6 @@ class Algorithms(AlgorithmBaseResource):
         store_url : str | None
             URL of the algorithm store
         """
-        # TODO refactor to prevent duplicate code
         smtp_settings = config.get("smtp", {})
         if not smtp_settings:
             log.warning(
@@ -609,7 +609,8 @@ class Algorithms(AlgorithmBaseResource):
                 )
             else:
                 log.warning(
-                    "No users found that can assign reviewers. No email will be sent."
+                    "No users with known email addresses found that can assign "
+                    "reviewers. No email will be sent."
                 )
 
         # send email to each algorithm manager
@@ -630,7 +631,7 @@ class Algorithms(AlgorithmBaseResource):
             }
             with app.app_context():
                 mail.send_email(
-                    subject="New algorithm needs reviewer assignment",
+                    subject="New vantage6 algorithm needs reviewer assignment",
                     sender=email_sender,
                     recipients=[algo_manager.email],
                     text_body=render_template(

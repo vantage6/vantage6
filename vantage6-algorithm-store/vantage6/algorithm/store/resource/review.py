@@ -2,11 +2,19 @@ import logging
 import datetime
 
 from http import HTTPStatus
-from flask import request, g
+from threading import Thread
+
+from flask import request, g, render_template, Flask, current_app
+from flask_mail import Mail
 from flask_restful import Api
 
 from vantage6.common import logger_name
 from vantage6.backend.common.resource.pagination import Pagination
+from vantage6.backend.common.globals import (
+    DEFAULT_EMAIL_FROM_ADDRESS,
+    DEFAULT_SUPPORT_EMAIL_ADDRESS,
+)
+from vantage6.backend.common import get_server_url
 
 from vantage6.algorithm.store.model.common.enums import ReviewStatus, AlgorithmStatus
 from vantage6.algorithm.store.permission import PermissionManager, Operation as P
@@ -317,7 +325,92 @@ class Reviews(AlgorithmStoreResources):
         algorithm.status = AlgorithmStatus.UNDER_REVIEW
         algorithm.save()
 
+        # send email to the reviewer to notify them of the new review
+        Thread(
+            target=self._send_email_to_reviewer,
+            args=(
+                current_app._get_current_object(),
+                self.mail,
+                review,
+                g.user.username,
+                self.config,
+                request.headers.get("store_url"),
+            ),
+        ).start()
+
         return review_output_schema.dump(review), HTTPStatus.CREATED
+
+    def _send_email_to_reviewer(
+        self,
+        app: Flask,
+        mail: Mail,
+        review: db.Review,
+        review_assigner_username: str,
+        config: dict,
+        store_url: str | None,
+    ) -> None:
+        """
+        Send an email to the reviewer to notify them of a new review assignment.
+
+        Parameters
+        ----------
+        app : Flask
+            Flask application instance
+        mail : Mail
+            Flask-Mail instance
+        review : db.Review
+            Review instance
+        review_assigner_username : str
+            Username of the user that assigned the review
+        config : dict
+            Configuration dictionary
+        store_url : str | None
+            URL of the store API
+        """
+        log.info(
+            "Sending email to reviewer %s (id %s) to notify them of a new review "
+            "assignment",
+            review.reviewer.username,
+            review.reviewer_id,
+        )
+        smtp_settings = config.get("smtp", {})
+        if not smtp_settings:
+            log.warning(
+                "No SMTP settings found. No emails will be sent to alert the reviewer "
+                "that they have been assigned a review."
+            )
+            return
+        email_sender = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
+        support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
+
+        # get the reviewer's email address
+        # TODO remove v5+ as all users should have an email address
+        if not review.reviewer.email:
+            log.warning(
+                "No email address found for the reviewer %s (id %s). No email will be "
+                "sent to alert the reviewer that they have been assigned a review.",
+                review.reviewer.username,
+                review.reviewer_id,
+            )
+            return
+
+        template_vars = {
+            "reviewer_username": review.reviewer.username,
+            "algorithm_name": review.algorithm.name,
+            "dev_username": review.algorithm.developer.username,
+            "assigner_username": review_assigner_username,
+            "store_url": get_server_url(config, store_url),
+            "server_url": review.reviewer.server.url,
+            "support_email": support_email,
+        }
+        with app.app_context():
+            mail.send_email(
+                subject="New vantage6 algorithm to review",
+                sender=email_sender,
+                recipients=[review.reviewer.email],
+                text_body=render_template("mail/new_review.txt", **template_vars),
+                html_body=render_template("mail/new_review.html", **template_vars),
+            )
 
 
 class Review(AlgorithmStoreResources):
