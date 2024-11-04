@@ -150,18 +150,26 @@ def permissions(permissions: PermissionManager) -> None:
     )
 
     # delete permissions
-    add(scope=S.OWN, operation=P.DELETE, description="delete your own session")
+    add(
+        scope=S.OWN,
+        operation=P.DELETE,
+        description="delete your own session and data frames",
+    )
     add(
         scope=S.ORGANIZATION,
         operation=P.DELETE,
-        description="delete any session initiated from your organization",
+        description="delete any session or data frame initiated from your organization",
     )
     add(
         scope=S.COLLABORATION,
         operation=P.DELETE,
-        description="delete any session within your collaborations",
+        description="delete any session or data frame within your collaborations",
     )
-    add(scope=S.GLOBAL, operation=P.DELETE, description="delete any session")
+    add(
+        scope=S.GLOBAL,
+        operation=P.DELETE,
+        description="delete any session or data frame",
+    )
 
 
 # ------------------------------------------------------------------------------
@@ -1149,6 +1157,103 @@ class SessionDataframe(SessionBase):
             }, HTTPStatus.NOT_FOUND
 
         return dataframe_schema.dump(dataframe, many=False), HTTPStatus.OK
+
+    @with_user
+    def delete(self, session_id, dataframe_handle):
+        """Delete data frame
+        ---
+        description: >-
+          Delete the data frame specified by the handle. When the `delete_dependents`
+          option is set to `true` also all associated columns are deleted. \n
+
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Session|Global|Delete|❌|❌|Delete any data frame|\n
+          |Session|Collaboration|Delete|❌|❌|Delete any data frame within the
+          collaboration the user is part of|\n
+          |Session|Organization|Delete|❌|❌|Delete any data frame that is initiated
+          from your organization|\n
+          |Session|Own|Delete|❌|❌|Delete any data frame you created|\n
+
+          Accessible to users.
+
+        parameters:
+          - in: path
+            name: session_id
+            schema:
+              type: integer
+            description: Session ID
+            required: true
+          - in: path
+            name: dataframe_handle
+            schema:
+                type: string
+            description: Handle of the data frame
+            required: true
+          - in: query
+            name: delete_dependents
+            schema:
+                type: boolean
+            description: >-
+                Delete all dependents of the data frame. This includes the columns
+                that are part of the data frame.
+
+        responses:
+            204:
+                description: Ok
+            401:
+                description: Unauthorized
+            404:
+                description: Session or DataFrame not found
+
+        security:
+            - bearerAuth: []
+
+        tags: ["Session"]
+        """
+        session: db.Session = db.Session.get(session_id)
+        if not session:
+            return {
+                "msg": f"Session with id={session_id} not found"
+            }, HTTPStatus.NOT_FOUND
+
+        if not self.can_delete_session(session):
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
+
+        dataframe = db.Dataframe.select(session, dataframe_handle)
+        if not dataframe:
+            return {
+                "msg": f"Data frame with handle={dataframe_handle} not found"
+            }, HTTPStatus.NOT_FOUND
+
+        delete_dependents = request.args.get("delete_dependents", False)
+        if dataframe.columns and not delete_dependents:
+            return {
+                "msg": (
+                    "This data frame has dependents, please delete them first or set"
+                    " the `delete_dependents` option to `true` to delete them."
+                )
+            }, HTTPStatus.BAD_REQUEST
+
+        # Delete alls that are part of this dataframe
+        for column in dataframe.columns:
+            column.delete()
+
+        # Delete the dataframe itself from the server
+        dataframe.delete()
+
+        # TODO instruct nodes to delete the data frame, consider the tracability of the
+        # data frame. Simply deleting the data frame is not good, we should track it in
+        # the session log or something.
+        # https://github.com/vantage6/vantage6/issues/1567
+
+        return {
+            "msg": f"Successfully deleted data frame with handle={dataframe_handle}"
+        }, HTTPStatus.OK
 
 
 class DataframePreprocessing(SessionBase):

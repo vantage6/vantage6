@@ -242,7 +242,16 @@ class DataFrameSubClient(ClientBase.SubClient):
         )
 
     @post_filtering(iterable=False)
-    def delete(self):
+    def delete(self, handle: str, session: int = None) -> dict:
         """Delete a data frame."""
-        # TODO: https://github.com/vantage6/vantage6/issues/1476
-        self.parent.log.error("Not implemented yet.")
+
+        session_id = session or self.parent.session_id
+        if not session_id:
+            self.parent.log.error(
+                "No session ID provided and no session ID set in the client."
+            )
+            return
+
+        return self.parent.request(
+            f"session/{session_id}/dataframe/{handle}", method="DELETE"
+        )
