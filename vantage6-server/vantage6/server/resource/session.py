@@ -75,7 +75,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         SessionDataframe,
         path + "/<int:session_id>/dataframe/<string:dataframe_handle>",
         endpoint="session_dataframe_with_id",
-        methods=("GET", "PATCH"),
+        methods=("GET", "PATCH", "DELETE"),
         resource_class_kwargs=services,
     )
     api.add_resource(

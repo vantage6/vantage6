@@ -242,7 +242,9 @@ class DataFrameSubClient(ClientBase.SubClient):
         )
 
     @post_filtering(iterable=False)
-    def delete(self, handle: str, session: int = None) -> dict:
+    def delete(
+        self, handle: str, session: int = None, delete_dependents: bool = False
+    ) -> dict:
         """Delete a data frame."""
 
         session_id = session or self.parent.session_id
@@ -253,5 +255,7 @@ class DataFrameSubClient(ClientBase.SubClient):
             return
 
         return self.parent.request(
-            f"session/{session_id}/dataframe/{handle}", method="DELETE"
+            f"session/{session_id}/dataframe/{handle}",
+            method="DELETE",
+            params={"delete_dependents": delete_dependents},
         )
