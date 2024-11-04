@@ -235,7 +235,7 @@ class Users(AlgorithmStoreResources):
                 "review_own_algorithm", False
             )
             if not can_review_self:
-                reviewers = [r for r in reviewers if r != algorithm.developer]
+                reviewers = [r for r in reviewers if r != algorithm.developer.id]
             q = q.filter(db.User.id.in_(reviewers))
 
         # paginate results
