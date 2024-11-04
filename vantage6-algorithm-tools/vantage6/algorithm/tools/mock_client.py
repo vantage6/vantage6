@@ -1,10 +1,11 @@
 import json
 import logging
-import pandas as pd
 
 from typing import Any
 from importlib import import_module
 from copy import deepcopy
+
+import pandas as pd
 
 from vantage6.common.globals import AuthStatus
 from vantage6.algorithm.tools.wrappers import load_data
