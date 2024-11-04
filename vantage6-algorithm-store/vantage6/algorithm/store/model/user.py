@@ -93,7 +93,7 @@ class User(Base):
         list[User]
             List of users that have the requested permission
         """
-        return [user.can(resource, operation) for user in cls.get()]
+        return [user for user in cls.get() if user.can(resource, operation)]
 
     @classmethod
     def get_by_server(cls, username: str, v6_server_id: int) -> User:

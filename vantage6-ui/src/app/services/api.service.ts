@@ -120,7 +120,11 @@ export class ApiService {
     algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
     return await this.handleResult(
       this.http.post<T>(algo_store_url + path, body, {
-        headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() }
+        headers: {
+          server_url: `${environment.server_url}${environment.api_path}`,
+          store_url: algo_store_url,
+          ...this.getApiAuthenticationHeaders()
+        }
       })
     );
   }

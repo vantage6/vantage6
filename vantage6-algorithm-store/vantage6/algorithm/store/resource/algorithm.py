@@ -542,11 +542,12 @@ class Algorithms(AlgorithmBaseResource):
             Thread(
                 target=self._send_email_to_reviewers,
                 args=(
-                    current_app,
+                    current_app._get_current_object(),
                     self.mail,
                     algorithm,
                     g.user.username,
                     self.config,
+                    request.headers.get("store_url"),
                 ),
             ).start()
 
@@ -599,6 +600,8 @@ class Algorithms(AlgorithmBaseResource):
         algorithm_managers = db.Role.get_by_name(DefaultRole.ALGORITHM_MANAGER).users
         if not algorithm_managers:
             algorithm_managers = db.User.get_by_permission("review", Operation.CREATE)
+            # TODO v5+ email is always present for all users, so remove this check
+            algorithm_managers = [am for am in algorithm_managers if am.email]
             if algorithm_managers:
                 log.info(
                     "No users with algorithm manager role found. Sending email to all "
@@ -614,7 +617,7 @@ class Algorithms(AlgorithmBaseResource):
             other_admins_msg = ""
             if len(algorithm_managers) > 1:
                 other_admins_msg = (
-                    f", together with {len(algorithm_managers) - 1} other users"
+                    f", together with {len(algorithm_managers) - 1} other user(s)"
                 )
             template_vars = {
                 "admin_username": algo_manager.username,

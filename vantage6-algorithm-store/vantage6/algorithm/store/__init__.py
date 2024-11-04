@@ -290,6 +290,7 @@ class AlgorithmStoreApp:
             "api": self.api,
             "config": self.ctx.config,
             "permissions": self.permissions,
+            "mail": self.mail,
         }
 
         api_path = self.ctx.config.get("api_path", DEFAULT_API_PATH)
