@@ -920,10 +920,7 @@ class UserClient(ClientBase):
             dict
                 Containing the meta-data of the updated node
             """
-            data = {
-                "name": name,
-                "clear_ip": clear_ip
-            }
+            data = {"name": name, "clear_ip": clear_ip}
             data = self._clean_update_data(data)
             return self.parent.request(
                 f"node/{id_}",
