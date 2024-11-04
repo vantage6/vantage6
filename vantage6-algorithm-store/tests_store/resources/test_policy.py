@@ -3,6 +3,7 @@ import unittest
 from unittest.mock import patch
 
 from tests_store.base.unittest_base import MockResponse, TestResources
+from vantage6.common.globals import Ports
 from vantage6.algorithm.store.model.common.enums import (
     BooleanPolicies,
     ListPolicies,
@@ -12,7 +13,7 @@ from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.resource.policy import PoliciesBase
 from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
 
-ALLOWED_SERVER = "http://localhost:5000"
+ALLOWED_SERVER = f"http://localhost:{Ports.DEV_SERVER.value}"
 HEADERS = {"server_url": ALLOWED_SERVER, "Authorization": "Mock"}
 USERNAME = "test_user"
 
@@ -95,7 +96,7 @@ class TestPolicyResources(TestResources):
             Policy(key=StorePolicies.ALGORITHM_VIEW.value, value="public"),
             Policy(
                 key=StorePolicies.ALLOWED_SERVERS.value,
-                value="http://localhost:5000/api",
+                value=f"http://localhost:{Ports.DEV_SERVER.value}/api",
             ),
             Policy(key=StorePolicies.ALLOW_LOCALHOST.value, value="1"),
         ]
@@ -109,7 +110,7 @@ class TestPolicyResources(TestResources):
 
         expected_dict = {
             "algorithm_view": "public",
-            "allowed_servers": ["http://localhost:5000/api"],
+            "allowed_servers": [f"http://localhost:{Ports.DEV_SERVER.value}/api"],
             "allow_localhost": True,
         }
         self.assertEqual(response_dict, expected_dict)
@@ -119,7 +120,7 @@ class TestPolicyResources(TestResources):
             Policy(key=StorePolicies.ALGORITHM_VIEW.value, value="public"),
             Policy(
                 key=StorePolicies.ALLOWED_SERVERS.value,
-                value="http://localhost:5000/api",
+                value=f"http://localhost:{Ports.DEV_SERVER.value}/api",
             ),
         ]
         include_defaults = True
@@ -132,7 +133,7 @@ class TestPolicyResources(TestResources):
 
         expected_dict = {
             "algorithm_view": "public",
-            "allowed_servers": ["http://localhost:5000/api"],
+            "allowed_servers": [f"http://localhost:{Ports.DEV_SERVER.value}/api"],
         }
         self.assertEqual(response_dict, expected_dict)
 
@@ -143,7 +144,7 @@ class TestPolicyResources(TestResources):
         )
         expected_dict = {
             "algorithm_view": "public",
-            "allowed_servers": ["http://localhost:5000/api"],
+            "allowed_servers": [f"http://localhost:{Ports.DEV_SERVER.value}/api"],
             "allow_localhost": False,
         }
         self.assertEqual(response_dict, expected_dict)
@@ -152,7 +153,8 @@ class TestPolicyResources(TestResources):
         policies = [
             Policy(key=StorePolicies.ALGORITHM_VIEW, value="public"),
             Policy(
-                key=StorePolicies.ALLOWED_SERVERS, value="http://localhost:5000/api"
+                key=StorePolicies.ALLOWED_SERVERS,
+                value=f"http://localhost:{Ports.DEV_SERVER.value}/api",
             ),
             Policy(key=StorePolicies.ALLOW_LOCALHOST, value="1"),
         ]
@@ -166,7 +168,7 @@ class TestPolicyResources(TestResources):
 
         expected_dict = {
             "algorithm_view": "public",
-            "allowed_servers": ["http://localhost:5000/api"],
+            "allowed_servers": [f"http://localhost:{Ports.DEV_SERVER.value}/api"],
             "allow_localhost": True,
         }
 
@@ -176,7 +178,8 @@ class TestPolicyResources(TestResources):
         policies = [
             Policy(key=StorePolicies.ALGORITHM_VIEW, value="public"),
             Policy(
-                key=StorePolicies.ALLOWED_SERVERS, value="http://localhost:5000/api"
+                key=StorePolicies.ALLOWED_SERVERS,
+                value=f"http://localhost:{Ports.DEV_SERVER.value}/api",
             ),
             Policy(key=BooleanPolicies.ALLOW_LOCALHOST, value="1"),
         ]
@@ -190,7 +193,7 @@ class TestPolicyResources(TestResources):
 
         expected_dict = {
             "algorithm_view": "public",
-            "allowed_servers": ["http://localhost:5000/api"],
+            "allowed_servers": [f"http://localhost:{Ports.DEV_SERVER.value}/api"],
             "allow_localhost": True,
         }
 
@@ -199,7 +202,10 @@ class TestPolicyResources(TestResources):
     def test_policies_to_dict_with_list_policies(self):
         policies = [
             Policy(key=StorePolicies.ALGORITHM_VIEW, value="public"),
-            Policy(key=ListPolicies.ALLOWED_SERVERS, value="http://localhost:5000/api"),
+            Policy(
+                key=ListPolicies.ALLOWED_SERVERS,
+                value=f"http://localhost:{Ports.DEV_SERVER.value}/api",
+            ),
             Policy(key=StorePolicies.ALLOW_LOCALHOST, value="1"),
         ]
         include_defaults = True
@@ -212,7 +218,7 @@ class TestPolicyResources(TestResources):
 
         expected_dict = {
             "algorithm_view": "public",
-            "allowed_servers": ["http://localhost:5000/api"],
+            "allowed_servers": [f"http://localhost:{Ports.DEV_SERVER.value}/api"],
             "allow_localhost": True,
         }
 

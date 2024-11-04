@@ -1,6 +1,7 @@
 from pathlib import Path
 import click
 
+from vantage6.common.globals import Ports
 from vantage6.cli.utils import info
 from vantage6.cli.dev.create import create_demo_network
 from vantage6.cli.dev.start import start_demo_network
@@ -74,7 +75,7 @@ def cli_test_integration(
         name=name,
         num_nodes=3,
         server_url=server_url,
-        server_port=5000,
+        server_port=Ports.DEV_SERVER.value,
         image=image,
         extra_server_config=extra_server_config,
         extra_node_config=extra_node_config,
@@ -84,7 +85,6 @@ def cli_test_integration(
     click_ctx.invoke(
         start_demo_network,
         name=name,
-        system_folders=True,
         server_image=image,
         node_image=image,
     )
@@ -98,7 +98,7 @@ def cli_test_integration(
     diagnose_results = click_ctx.invoke(
         cli_test_features,
         host="http://localhost",
-        port=5000,
+        port=Ports.DEV_SERVER.value,
         api_path="/api",
         username="dev_admin",
         password="password",
@@ -110,12 +110,12 @@ def cli_test_integration(
     )
 
     # clean up the test resources
-    click_ctx.invoke(stop_demo_network, name=name, system_folders=True)
+    click_ctx.invoke(stop_demo_network, name=name)
     if not keep:
-        click_ctx.invoke(remove_demo_network, name=name, system_folders=True)
+        click_ctx.invoke(remove_demo_network, name=name)
     else:
         info(
-            "Keeping the demo network {name}. You can start it with `v6 dev "
+            f"Keeping the demo network {name}. You can start it with `v6 dev "
             "start-demo-network`"
         )
 

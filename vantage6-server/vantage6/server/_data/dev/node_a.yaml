@@ -1,11 +1,11 @@
 application:
   api_key: demo-key-node2
   server_url: http://localhost
-  port: 5000
+  port: 7601
   api_path: '/api'
   task_dir: tasks
   databases:
-    default: 
+    default:
 
   logging:
       level:        DEBUG # Can be on of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'

@@ -53,6 +53,13 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         ----------
         id_ : int
             The id of the algorithm store.
+        field : str, optional
+            Which data field to keep in the result. For instance, "field='name'"
+            will only return the name of the algorithm store. Default is None.
+        fields : list[str], optional
+            Which data fields to keep in the result. For instance,
+            "fields=['name', 'id']" will only return the name and id of the
+            algorithm store. Default is None.
 
         Returns
         -------
@@ -82,6 +89,13 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
             Filter by collaboration id. If not given and client.setup_collaboration()
             was called, the collaboration id from the setup is used. Otherwise, all
             algorithm stores are returned.
+        field : str, optional
+            Which data field to keep in the result. For instance, "field='name'"
+            will only return the name of the algorithm stores. Default is None.
+        fields : list[str], optional
+            Which data fields to keep in the result. For instance,
+            "fields=['name', 'id']" will only return the name and id of the
+            algorithm stores. Default is None.
         page : int, optional
             The page number to retrieve.
         per_page : int, optional
@@ -133,6 +147,13 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
             If True, the algorithm store will be linked to the collaboration even for
             localhost urls - which is not recommended in production scenarios for
             security reasons.
+        field : str, optional
+            Which data field to keep in the returned dict. For instance, "field='name'"
+            will only return the name of the algorithm store. Default is None.
+        fields : list[str], optional
+            Which data fields to keep in the returned dict. For instance,
+            "fields=['name', 'id']" will only return the name and id of the algorithm
+            store. Default is None.
 
         Returns
         -------
@@ -161,6 +182,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
             data["collaboration_id"] = (collaboration,)
         return self.parent.request("algorithmstore", method="post", json=data)
 
+    @post_filtering(iterable=False)
     def update(
         self,
         id_: int = None,
@@ -182,6 +204,13 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         all_collaborations : bool, optional
             If True, the algorithm store is linked to all collaborations. If False,
             the collaboration_id must be given.
+        field : str, optional
+            Which data field to keep in the returned dict. For instance, "field='name'"
+            will only return the name of the algorithm store. Default is None.
+        fields : list[str], optional
+            Which data fields to keep in the returned dict. For instance,
+            "fields=['name', 'id']" will only return the name and id of the algorithm
+            store. Default is None.
 
         Returns
         -------
@@ -198,7 +227,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
             data["collaboration_id"] = collaboration
         return self.parent.request(f"algorithmstore/{id_}", method="patch", json=data)
 
-    def delete(self, id_: int = None) -> dict:
+    def delete(self, id_: int = None) -> None:
         """Delete an algorithm store.
 
         Parameters
@@ -206,22 +235,18 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         id_ : int
             The id of the algorithm store. If not given, the algorithm store must be
             set with client.store.set().
-
-        Returns
-        -------
-        dict
-            The deleted algorithm store.
         """
         id_ = self.__get_store_id(id_)
         if id_ is None:
             return
-        return self.parent.request(
+        res = self.parent.request(
             f"algorithmstore/{id_}",
             method="delete",
             params={
                 "server_url": self.parent.base_path,
             },
         )
+        self.parent.log.info(f"--> {res.get('msg')}")
 
     def __get_store_id(self, id_: int = None) -> int:
         """

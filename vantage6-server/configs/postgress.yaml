@@ -10,5 +10,5 @@ logging:
   level: DEBUG
   max_size: 1024
   use_console: true
-port: '5000'
+port: '7601'
 uri: postgresql://postgres:changeme@database

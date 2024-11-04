@@ -5,6 +5,7 @@ from http import HTTPStatus
 from unittest.mock import patch
 
 from tests_store.base.unittest_base import TestResources, MockResponse
+from vantage6.common.globals import Ports
 from vantage6.algorithm.store.default_roles import DefaultRole
 from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.model.rule import Operation, Rule
@@ -12,7 +13,7 @@ from vantage6.algorithm.store.model.user import User
 from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 from vantage6.common.enum import StorePolicies
 
-SERVER_URL = "http://localhost:5000"
+SERVER_URL = f"http://localhost:{Ports.DEV_SERVER.value}"
 HEADERS = {"server_url": SERVER_URL, "Authorization": "Mock"}
 USERNAME = "test_user"
 
@@ -135,7 +136,7 @@ class TestVantage6ServerResource(TestResources):
 
         # if we try this again it should fail
         response = self.app.post("/api/vantage6-server", headers=HEADERS, json=body_)
-        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+        self.assertEqual(response.status_code, HTTPStatus.ALREADY_REPORTED)
 
         # check that whitelisting localhost servers cannot be done with default policy
         policy.delete()

@@ -54,8 +54,8 @@ export interface UserForm {
   firstname: string;
   lastname: string;
   organization_id: number;
-  roles: number[];
-  rules: number[];
+  roles?: number[];
+  rules?: number[];
 }
 
 export interface UserPermissions {

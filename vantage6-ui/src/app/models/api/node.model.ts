@@ -30,6 +30,7 @@ export enum NodeStatus {
 export interface GetNodeParameters {
   organization_id?: string;
   collaboration_id?: string;
+  study_id?: string;
   sort?: NodeSortProperties;
 }
 

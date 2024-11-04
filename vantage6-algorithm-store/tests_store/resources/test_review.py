@@ -3,12 +3,13 @@ import unittest
 from unittest.mock import patch
 
 from tests_store.base.unittest_base import MockResponse, TestResources
+from vantage6.common.globals import Ports
 from vantage6.algorithm.store.model.algorithm import Algorithm
 from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
 from vantage6.algorithm.store.model.review import Review
 from vantage6.algorithm.store.model.rule import Rule, Operation
 
-SERVER_URL = "http://localhost:5000"
+SERVER_URL = f"http://localhost:{Ports.DEV_SERVER.value}"
 HEADERS = {"server_url": SERVER_URL, "Authorization": "Mock"}
 USERNAME = "test_user"
 REVIEWER_USERNAME = "reviewer_user"
