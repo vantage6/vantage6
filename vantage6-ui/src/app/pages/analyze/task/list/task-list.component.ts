@@ -1,5 +1,5 @@
-import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
-import { PageEvent } from '@angular/material/paginator';
+import { Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, Subscription, combineLatest, takeUntil } from 'rxjs';
@@ -31,6 +31,7 @@ enum TableRows {
 })
 export class TaskListComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
+  @ViewChild(MatPaginator) paginator?: MatPaginator;
   tableRows = TableRows;
   routes = routePaths;
   destroy$ = new Subject();
@@ -41,6 +42,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
   isLoading: boolean = true;
   pagination: PaginationLinks | null = null;
   currentPage: number = 1;
+  currentSearchInput: string = '';
   canCreate: boolean = false;
 
   private taskStatusUpdateSubscription?: Subscription;
@@ -72,7 +74,22 @@ export class TaskListComponent implements OnInit, OnDestroy {
 
   async handlePageEvent(e: PageEvent) {
     this.currentPage = e.pageIndex + 1;
-    await this.getTasks(this.currentPage, { sort: TaskSortProperties.ID, is_user_created: 1 });
+    const parameters: GetTaskParameters = { sort: TaskSortProperties.ID, is_user_created: 1 };
+    if(this.currentSearchInput?.length){
+      delete parameters.is_user_created;
+      parameters.name = this.currentSearchInput;
+    }
+    await this.getTasks(this.currentPage, parameters);
+  }
+  
+  handleSearchChanged(searchRequests: SearchRequest[]) {
+    this.isLoading = true
+    const parameters: GetTaskParameters = getApiSearchParameters<GetTaskParameters>(searchRequests);
+    this.currentSearchInput = parameters?.name ?? '';
+    if(!parameters?.name?.length)
+      parameters.is_user_created = 1;
+    this.paginator?.firstPage();
+    this.initData(1, parameters);
   }
 
   handleTableClick(task_id: string) {
@@ -91,11 +108,6 @@ export class TaskListComponent implements OnInit, OnDestroy {
 
   getTaskStatusTranslation(status: TaskStatus) {
     return getTaskStatusTranslation(this.translateService, status);
-  }
-
-  public handleSearchChanged(searchRequests: SearchRequest[]): void {
-    const parameters: GetTaskParameters = getApiSearchParameters<GetTaskParameters>(searchRequests);
-    this.initData(1, parameters);
   }
 
   private async initData(page: number, parameters: GetTaskParameters) {
