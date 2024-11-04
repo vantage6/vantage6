@@ -661,7 +661,7 @@ class UserClient(ClientBase):
                 "encrypted": encrypted,
                 "organization_ids": organizations,
             }
-            data = {k: v for k, v in data.items() if v is not None}
+            data = self._clean_update_data(data)
             return self.parent.request(
                 f"collaboration/{id_}",
                 method="patch",
@@ -920,11 +920,11 @@ class UserClient(ClientBase):
             dict
                 Containing the meta-data of the updated node
             """
-            data = {}
-            if name is not None:
-                data["name"] = name
-            if clear_ip is not None:
-                data["clear_ip"] = clear_ip
+            data = {
+                "name": name,
+                "clear_ip": clear_ip
+            }
+            data = self._clean_update_data(data)
             return self.parent.request(
                 f"node/{id_}",
                 method="patch",
@@ -1111,7 +1111,7 @@ class UserClient(ClientBase):
                 "domain": domain,
                 "public_key": public_key,
             }
-            data = {k: v for k, v in data.items() if v is not None}
+            data = self._clean_update_data(data)
 
             return self.parent.request(
                 f"organization/{id_}",
@@ -1351,7 +1351,7 @@ class UserClient(ClientBase):
             if not id_:
                 id_ = self.parent.whoami.id_
 
-            json_body = {
+            data = {
                 "firstname": firstname,
                 "lastname": lastname,
                 "organization_id": organization,
@@ -1359,11 +1359,9 @@ class UserClient(ClientBase):
                 "roles": roles,
                 "email": email,
             }
+            data = self._clean_update_data(data)
 
-            # only submit supplied keys
-            json_body = {k: v for k, v in json_body.items() if v is not None}
-
-            user = self.parent.request(f"user/{id_}", method="patch", json=json_body)
+            user = self.parent.request(f"user/{id_}", method="patch", json=data)
             return user
 
         @post_filtering(iterable=False)
@@ -1612,7 +1610,7 @@ class UserClient(ClientBase):
                 "description": description,
                 "rules": rules,
             }
-            data = {k: v for k, v in data.items() if v is not None}
+            self._clean_update_data(data)
             return self.parent.request(
                 f"role/{role}",
                 method="patch",
