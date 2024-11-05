@@ -164,14 +164,14 @@
         </div>
         <div class="data-list__item">
           <b>{{ "task.function" | translate }}</b>
-          <span>{{ task.input?.method || "-" }}</span>
+          <span>{{ this.function?.display_name ?? task.input?.method || "-" }}</span>
         </div>
       </div>
       <ng-container *ngIf="task.input?.parameters">
         <h4 class="data-list__header">{{ "task.parameters" | translate }}</h4>
         <div class="data-list">
           <div class="data-list__item" *ngFor="let parameter of task?.input?.parameters">
-            <b>{{ parameter.label }}</b>
+            <b>{{ getParameterDisplayName(parameter) }}</b>
             <span>{{ getParameterValueAsString(parameter) }}</span>
           </div>
         </div>

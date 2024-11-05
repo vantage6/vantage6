@@ -43,6 +43,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   });
   argumentForm = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
+    display_name: [''],
     description: [''],
     type: ['', [Validators.required]]
   });
@@ -55,6 +56,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   });
   functionForm = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
+    display_name: [''],
     description: [''],
     type: ['', [Validators.required]],
     arguments: this.fb.nonNullable.array([this.argumentForm]),
@@ -199,12 +201,14 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     this.algorithm.functions.forEach((func, funcIdx) => {
       const functionFormGroup = this.getFunctionForm();
       functionFormGroup.controls['name'].setValue(func.name);
+      functionFormGroup.controls['display_name'].setValue(func.display_name);
       functionFormGroup.controls['description'].setValue(func.description);
       functionFormGroup.controls['type'].setValue(func.type);
       if (func.arguments) {
         func.arguments.forEach((arg) => {
           const argumentFormGroup = this.getArgumentForm();
           argumentFormGroup.controls['name'].setValue(arg.name);
+          argumentFormGroup.controls['display_name'].setValue(arg.display_name);
           argumentFormGroup.controls['description'].setValue(arg.description);
           argumentFormGroup.controls['type'].setValue(arg.type);
           (functionFormGroup.controls['arguments'] as FormArray).push(argumentFormGroup);
@@ -306,6 +310,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   private getFunctionForm(): FormGroup {
     return this.fb.group({
       name: ['', [Validators.required]],
+      display_name: [''],
       description: [''],
       type: ['', [Validators.required]],
       arguments: this.fb.array([]),
@@ -317,6 +322,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   private getArgumentForm(): FormGroup {
     return this.fb.group({
       name: ['', [Validators.required]],
+      display_name: [''],
       description: [''],
       type: ['', [Validators.required]]
     });

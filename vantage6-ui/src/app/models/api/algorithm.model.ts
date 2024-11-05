@@ -88,6 +88,7 @@ export interface Algorithm {
 export interface AlgorithmFunction {
   id: number;
   name: string;
+  display_name?: string;
   description: string;
   type: FunctionType;
   arguments: Argument[];
@@ -126,6 +127,7 @@ export interface FilterParameter {
 export interface Argument {
   id: number;
   name: string;
+  display_name?: string;
   type: ArgumentType;
   description?: string;
 }
@@ -137,9 +139,11 @@ export interface FunctionDatabase {
 }
 
 interface ArgumentForm extends NameDescription {
+  display_name?: string;
   type: string;
 }
 export interface FunctionForm extends NameDescription {
+  display_name?: string;
   arguments: ArgumentForm[];
   databases: NameDescription[];
   ui_visualizations: VisualizationForm[];
