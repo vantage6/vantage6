@@ -1,4 +1,5 @@
 import { Component, Input, OnChanges } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { isNested } from 'src/app/helpers/utils.helper';
 import { parseDefaultPandasFormat } from 'src/app/helpers/visualization.helper';
 import { Visualization } from 'src/app/models/api/visualization.model';
@@ -21,7 +22,10 @@ export class VisualizeTableComponent implements OnChanges {
   name?: string;
   description?: string;
 
-  constructor(private fileService: FileService) {}
+  constructor(
+    private fileService: FileService,
+    private translateService: TranslateService
+  ) {}
 
   ngOnChanges(): void {
     // if the result is found at a key, use that key. E.g. if the result is { data: [1, 2, 3] },
@@ -54,7 +58,7 @@ export class VisualizeTableComponent implements OnChanges {
     if (this.schemaDefinesColumns()) {
       columns = this.visualization?.schema.columns as string[];
     }
-    const parsedData = parseDefaultPandasFormat(tableData, columns);
+    const parsedData = parseDefaultPandasFormat(tableData, this.translateService.instant('general.parameter'), columns);
     this.columns = parsedData.columns;
     this.rows = parsedData.rows;
   }

@@ -7,6 +7,7 @@ from flask import request, g
 from flask_restful import Api
 
 from vantage6.common import logger_name
+from vantage6.common.globals import AuthStatus
 from vantage6.common.task_status import has_task_finished, TaskStatus
 from vantage6.server.resource import ServicesResources, with_user
 from vantage6.server import db
@@ -253,7 +254,7 @@ class KillNodeTasks(ServicesResources):
         if not node:
             return {"msg": f"Node id={id_} not found"}, HTTPStatus.NOT_FOUND
 
-        if node.status != "online":
+        if node.status != AuthStatus.ONLINE.value:
             return {
                 "msg": f"Node {id_} is not online so cannot kill its tasks!"
             }, HTTPStatus.BAD_REQUEST

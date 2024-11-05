@@ -48,7 +48,7 @@ from pathlib import Path
 from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common import logger_name, split_rabbitmq_uri
-from vantage6.common.globals import PING_INTERVAL_SECONDS
+from vantage6.common.globals import PING_INTERVAL_SECONDS, AuthStatus
 from vantage6.backend.common.globals import HOST_URI_ENV, DEFAULT_SUPPORT_EMAIL_ADDRESS
 from vantage6.backend.common.jsonable import jsonable
 from vantage6.backend.common.permission import RuleNeed
@@ -787,7 +787,7 @@ class ServerApp:
                 online_status_nodes = db.Node.get_online_nodes()
                 for node in online_status_nodes:
                     if node.last_seen < before_wait:
-                        node.status = "offline"
+                        node.status = AuthStatus.OFFLINE.value
                         node.save()
             except Exception:
                 log.exception("Node-status thread had an exception")

@@ -373,26 +373,18 @@ class AlgorithmSubClient(ClientBase.SubClient):
         dict
             The updated algorithm
         """
-        body = {}
-        if name:
-            body["name"] = name
-        if description:
-            body["description"] = description
-        if image:
-            body["image"] = image
-        if partitioning:
-            body["partitioning"] = partitioning
-        if vantage6_version:
-            body["vantage6_version"] = vantage6_version
-        if code_url:
-            body["code_url"] = code_url
-        if documentation_url:
-            body["documentation_url"] = documentation_url
-        if functions:
-            body["functions"] = functions
-        if refresh_digest:
-            body["refresh_digest"] = refresh_digest
-
+        body = {
+            "name": name,
+            "description": description,
+            "image": image,
+            "partitioning": partitioning,
+            "vantage6_version": vantage6_version,
+            "code_url": code_url,
+            "documentation_url": documentation_url,
+            "functions": functions,
+            "refresh_digest": refresh_digest,
+        }
+        body = self._clean_update_data(body)
         return self.parent.request(
             f"algorithm/{id_}",
             method="PATCH",
