@@ -1,10 +1,11 @@
 from __future__ import annotations
 import bcrypt
 
-from vantage6.server.model.base import DatabaseSessionManager
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy import Column, Integer, String, ForeignKey
 
+from vantage6.common.globals import AuthStatus
+from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.model.authenticatable import Authenticatable
 
 
@@ -123,7 +124,7 @@ class Node(Authenticatable):
         """
         session = DatabaseSessionManager.get_session()
 
-        result = session.query(cls).filter_by(status="online").all()
+        result = session.query(cls).filter_by(status=AuthStatus.ONLINE.value).all()
         session.commit()
         return result
 
