@@ -410,7 +410,7 @@ class ValidateToken(ServicesResources):
             "msg": "Token is valid",
             "user_id": g.user.id,
             "username": g.user.username,
-            "email": g.user.email
+            "email": g.user.email,
         }, HTTPStatus.OK
 
 
