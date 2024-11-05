@@ -554,8 +554,8 @@ class Algorithms(AlgorithmBaseResource):
 
         return algorithm_output_schema.dump(algorithm, many=False), HTTPStatus.CREATED
 
+    @staticmethod
     def _send_email_to_review_assigners(
-        self,
         app: Flask,
         mail: Mail,
         algorithm: db_Algorithm,
