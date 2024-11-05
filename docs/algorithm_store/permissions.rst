@@ -80,23 +80,28 @@ These operations can be performed on the available resources according to the fo
      - N/A
      - ✅
 
-Note that not some permissions are not defined, e.g.
+Note that not some permissions are not defined, because they do not correspond to any
+existing operation that requires permission.
 
 Rules can be assigned to a user by another user who has at least the same permission level
-as the rules assigned. Single rules can be assigned, but default combinations of rules are available,
-as roles. There are 5 roles available in the algorithms store:
+as the rules assigned. Single rules can be assigned, but default combinations of rules
+are available, as roles. The following default roles available in the algorithms store:
 
-#. Developer
-#. Reviewer
-#. Root
-#. Store Manager
-#. Viewer
+#. **Root**: Has all permissions.
+#. **Developer**: Can submit new algorithms to the store and edit them before they are
+   reviewed.
+#. **Algorithm Manager**: Can assign reviewers to new algorithms, and submit and delete
+   algorithms.
+#. **Reviewer**: Can approve or reject algorithms that they have been requested to
+   review.
+#. **Viewer**: Can view all resources in the store.
+#. **Store Manager**: Can manage the store's users and their permissions.
+#. **Server Manager**: This role is automatically given to the user that whitelists
+   their vantage6 server in the algorithm store. This role only gives them permission to
+   undo the whitelisting of their server.
 
-Root user has all the permissions. Other roles have a subset of the permissions - you
-can view the permissions of other roles via UI or one of the other clients. To give an
-example, the permissions of a reviewer are shown below. Note that they can view all
-resources, and otherwise are only allowed to review algorithms. Other roles, such as
-the developer, have permissions to create and edit algorithms but cannot review them.
+Note that all default roles have permission to view all resources. To give an example,
+the permissions of a reviewer are shown below.
 
 .. list-table::
    :name: rules-algo-store-reviewer
