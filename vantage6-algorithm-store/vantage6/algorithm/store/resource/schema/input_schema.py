@@ -2,6 +2,7 @@
 Marshmallow schemas for validating input data for the API.
 """
 
+import json
 from marshmallow import Schema, fields, ValidationError, validates, validates_schema
 import marshmallow.validate as validate
 from jsonschema import validate as json_validate
@@ -114,12 +115,92 @@ class ArgumentInputSchema(_NameDescriptionSchema):
     @validates_schema
     def validate_default_value(self, data, **kwargs):
         """
-        Validate that the default value is present if has_default_value is True.
+        Validate that if the default value is present, has_default_value is True, and
+        check, if the default value is given, that it matches the type
         """
         if data.get("default_value") and not data.get("has_default_value"):
             raise ValidationError(
                 "Default value cannot be given if has_default_value is False"
             )
+        # if default value is given, validate that it matches the type
+        if default := data.get("default_value"):
+            type_ = data.get("type_")
+            if (
+                type_ == ArgumentType.INTEGER.value
+                or type_ == ArgumentType.ORGANIZATION.value
+            ):
+                try:
+                    int(default)
+                except ValueError as exc:
+                    raise ValidationError(
+                        f"Default value '{default}' is not a valid integer, while the "
+                        f"argument type {type_} requires an integer"
+                    ) from exc
+            elif type_ == ArgumentType.FLOAT.value:
+                try:
+                    float(default)
+                except ValueError as exc:
+                    raise ValidationError(
+                        f"Default value '{default}' is not a valid float, while the "
+                        f"argument type {type_} requires a float"
+                    ) from exc
+            elif type_ == ArgumentType.BOOLEAN.value:
+                if str(default).lower() not in ["true", "false", "1", "0"]:
+                    raise ValidationError(
+                        f"Default value '{default}' is not a valid boolean, while the "
+                        f"argument type {type_} requires a boolean. Please use 'true', "
+                        "'false', '1', or '0'"
+                    )
+            elif type_ == ArgumentType.JSON.value:
+                try:
+                    json.loads(default)
+                except ValueError as exc:
+                    raise ValidationError(
+                        f"Default value '{default}' is not a valid JSON object, while "
+                        f"the argument type {type_} requires a JSON object"
+                    ) from exc
+            elif (
+                type_ == ArgumentType.STRINGS.value
+                or type_ == ArgumentType.COLUMNS.value
+            ):
+                try:
+                    json_list = json.loads(default)
+                    if not isinstance(json_list, list):
+                        raise ValueError(f"Not a list: {json_list}")
+                except ValueError as exc:
+                    raise ValidationError(
+                        f"Default value '{default}' is not a valid JSON array, while "
+                        f"the argument type {type_} requires a JSON array"
+                    ) from exc
+            elif (
+                type_ == ArgumentType.INTEGERS.value
+                or type_ == ArgumentType.ORGANIZATIONS.value
+            ):
+                try:
+                    json_list = json.loads(default)
+                    if not isinstance(json_list, list):
+                        raise ValueError(f"Not a list: {json_list}")
+                    for value in json_list:
+                        int(value)
+                except ValueError as exc:
+                    raise ValidationError(
+                        f"Default value '{default}' is not a valid JSON array of "
+                        f"integers, while the argument type {type_} requires a JSON "
+                        "array of integers"
+                    ) from exc
+            elif type_ == ArgumentType.FLOATS.value:
+                try:
+                    json_list = json.loads(default)
+                    if not isinstance(json_list, list):
+                        raise ValueError(f"Not a list: {json_list}")
+                    for value in json_list:
+                        float(value)
+                except ValueError as exc:
+                    raise ValidationError(
+                        f"Default value '{default}' is not a valid JSON array of "
+                        f"floats, while the argument type {type_} requires a JSON array"
+                        " of floats"
+                    ) from exc
 
 
 class UIVisualizationInputSchema(_NameDescriptionSchema):
