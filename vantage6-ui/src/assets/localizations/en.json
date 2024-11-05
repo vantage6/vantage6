@@ -22,7 +22,7 @@
     "unknown": "Unknown",
     "true": "True",
     "false": "False"
-  },
+    "parameter": "Parameter"
   "resources": {
     "collaboration": "Collaboration",
     "collaborations": "Collaborations",
