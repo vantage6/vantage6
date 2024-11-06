@@ -16,7 +16,7 @@
           {{ column.label }}
         </th>
         <div *ngIf="!column.isChip">
-          <td mat-cell *matCellDef="let element" [innerHtml]="element.columnData[column.id] | highlight:searchForm?.value?.name:column.searchEnabled ?? false"></td>
+          <td mat-cell *matCellDef="let element" [innerHtml]="element.columnData[column.id] | highlight:searchForm.value?.name:column.searchEnabled ?? false"></td>
         </div>
         <div *ngIf="column.isChip && column.chipTypeProperty">
           <td mat-cell *matCellDef="let element">
