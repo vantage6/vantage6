@@ -8,8 +8,15 @@ Release notes
 
 - **Feature**
 
-  - Added options ``--ui-image`` and ``--server-image`` to the
-    ``v6 dev create-demo-network``
+  - Algorithm store arguments can now be indicated as optional and can have default
+    values (`Issue#1219 <https://github.com/vantage6/vantage6/issues/1219>`_,
+    `PR#1532 <https://github.com/vantage6/vantage6/pull/1532>`_).
+  - In the algorithm review process in the algorithm store, several emails are now sent
+    to alert users that they e.g. have to review an algorithm or that their algorithm
+    has been reviewed
+    (`Issue#1364 <https://github.com/vantage6/vantage6/issues/1364>`_,
+    `PR#1569 <https://github.com/vantage6/vantage6/pull/1569>`_).
+  - Added options to set UI image ``--ui-image`` in ``v6 dev create-demo-network``
     (`Issue#1518 <https://github.com/vantage6/vantage6/issues/1518>`_,
     `PR#1525 <https://github.com/vantage6/vantage6/pull/1525>`_).
   - Directories can be mounted as databases at the nodes
@@ -21,9 +28,6 @@ Release notes
   - In case a study is used for an analysis, it is shown in the result page
     (`Issue#1489 <https://github.com/vantage6/vantage6/issues/1489>`_,
     `PR#1561 <https://github.com/vantage6/vantage6/pull/1561>`_).
-  - Optional algorithm arguments in the UI
-    (`Issue#1219 <https://github.com/vantage6/vantage6/issues/1219>`_,
-    `PR#1532 <https://github.com/vantage6/vantage6/pull/1532>`_).
   - Added code of conduct
     (`Issue#1459 <https://github.com/vantage6/vantage6/issues/1459>`_,
     `PR#1480 <https://github.com/vantage6/vantage6/pull/1480>`_).
@@ -36,10 +40,15 @@ Release notes
   - The API path of the algorithm store is now settable
     (`Issue#1519 <https://github.com/vantage6/vantage6/issues/1519>`_,
     `PR#1524 <https://github.com/vantage6/vantage6/pull/1524>`_).
+  - Tasks that failed can now get a more specific status, such as ``killed by user`` or
+    ``not allowed to start``. They only get a more specific status if all failed runs
+    in the task failed for the same reason
+    (`Issue#1541 <https://github.com/vantage6/vantage6/issues/1541>`_,
+    `PR#1570 <https://github.com/vantage6/vantage6/pull/1570>`_).
 
 - **Bugfix**
 
-  - Fixed a buggy seach filter on the task overview page
+  - Fixed a buggy search filter on the task overview page in the UI
     (`Issue#1361 <https://github.com/vantage6/vantage6/issues/1361>`_,
     `PR#1561 <https://github.com/vantage6/vantage6/pull/1561>`_)
   - When a node has never been online the status is set to ``ofline`` instead of
@@ -53,18 +62,22 @@ Release notes
     or UI. This is used to identify the originating vantage6 server in the algorithm
     store (`Issue#1454 <https://github.com/vantage6/vantage6/issues/1454>`_,
     `PR#1528 <https://github.com/vantage6/vantage6/pull/1528>`_).
-  - All fields in the client ``.update`` required to be set, even if they are not
-    changed. This is no longer needed
+  - All fields in client ``.update()`` calls were required, even if they were not
+    changed. This is now no longer needed
     (`Issue#1515 <https://github.com/vantage6/vantage6/issues/1515>`_,
     `PR#1555 <https://github.com/vantage6/vantage6/pull/1555>`_).
-  - Fixed a bug which caused the visualization selection in the result page to reset
+  - Fixed a bug which caused the visualization selection in the UI result page to reset
     when the computation is complete
     (`Issue#1511 <https://github.com/vantage6/vantage6/issues/1511>`_,
     `PR#1523 <https://github.com/vantage6/vantage6/pull/1523>`_).
-  - Users with collaboration edit scope are allowed to reset API keys of nodes from
-    all organizations within collaboration the users organization participates in
-    (`Issue#1530 <https://github.com/vantage6/vantage6/issues/1530>`_,
+  - UI permission fix: users with collaboration edit scope are allowed to reset API keys
+    of nodes from all organizations within collaboration the users organization
+    participates in (`Issue#1530 <https://github.com/vantage6/vantage6/issues/1530>`_,
     `PR#1529 <https://github.com/vantage6/vantage6/pull/1529>`_).
+  - A warning was logged if nodes whitelisted port 443 because the check to recognize
+    this port as HTTPS port was broken
+    (`Issue#1563 <https://github.com/vantage6/vantage6/issues/1563>`_,
+    `PR#1574 <https://github.com/vantage6/vantage6/pull/1574>`_).
 
 4.7.1
 -----
