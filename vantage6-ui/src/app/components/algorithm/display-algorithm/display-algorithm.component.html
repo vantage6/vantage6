@@ -69,7 +69,7 @@
     <mat-accordion *ngIf="algorithm && algorithm.functions.length > 0; else noFunctions" class="card-accordion">
       <mat-expansion-panel *ngFor="let function of algorithm.functions" (opened)="selectFunction(function.id)">
         <mat-expansion-panel-header>
-          <mat-panel-title>{{ function.name }}</mat-panel-title>
+          <mat-panel-title>{{ function.display_name ?? function.name }}</mat-panel-title>
         </mat-expansion-panel-header>
         <ng-template matExpansionPanelContent>
           <mat-spinner *ngIf="!selectedFunction" diameter="48"></mat-spinner>
@@ -78,6 +78,10 @@
               <div class="data-list__item">
                 <b>{{ "general.name" | translate }}</b>
                 <span>{{ selectedFunction.name || "-" }}</span>
+              </div>
+              <div class="data-list__item">
+                <b>{{ "general.display_name" | translate }}</b>
+                <span>{{ selectedFunction.display_name || "-" }}</span>
               </div>
               <div class="data-list__item">
                 <b>{{ "algorithm.function.type" | translate }}</b>
@@ -93,13 +97,17 @@
                 <mat-accordion *ngIf="function.arguments.length > 0; else noArguments" class="card-accordion sub-accordeon" [multi]="true">
                   <mat-expansion-panel *ngFor="let argument of function.arguments">
                     <mat-expansion-panel-header>
-                      <mat-panel-title>{{ argument.name }}</mat-panel-title>
+                      <mat-panel-title>{{ argument.display_name ?? argument.name }}</mat-panel-title>
                     </mat-expansion-panel-header>
                     <ng-template matExpansionPanelContent>
                       <div class="data-list">
                         <div class="data-list__item">
                           <b>{{ "general.name" | translate }}</b>
                           <span>{{ argument.name || "-" }}</span>
+                        </div>
+                        <div class="data-list__item">
+                          <b>{{ "general.display_name" | translate }}</b>
+                          <span>{{ argument.display_name || "-" }}</span>
                         </div>
                         <div class="data-list__item">
                           <b>{{ "algorithm.function.argument.type" | translate }}</b>

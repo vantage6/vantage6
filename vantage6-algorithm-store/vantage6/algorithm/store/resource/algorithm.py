@@ -190,6 +190,11 @@ class Algorithms(AlgorithmBaseResource):
               type: string
             description: Filter on algorithm name using the SQL operator LIKE.
           - in: query
+            name: display_name
+            schema:
+              type: string
+            description: Filter on algorithm display name using the SQL operator LIKE.
+          - in: query
             name: description
             schema:
               type: string
@@ -256,6 +261,7 @@ class Algorithms(AlgorithmBaseResource):
         # filter on properties
         for field in [
             "name",
+            "display_name",
             "description",
             "partitioning",
             "vantage6_version",
@@ -382,6 +388,9 @@ class Algorithms(AlgorithmBaseResource):
                         name:
                           type: string
                           description: Name of the function
+                        display_name:
+                          type: string
+                          description: Display name of the function
                         description:
                           type: string
                           description: Description of the function
@@ -412,6 +421,9 @@ class Algorithms(AlgorithmBaseResource):
                                 type: string
                                 description: Name of the argument in the
                                   function
+                              display_name:
+                                type: string
+                                description: Display name of the argument
                               description:
                                 type: string
                                 description: Description of the argument
@@ -493,6 +505,7 @@ class Algorithms(AlgorithmBaseResource):
             # create the function
             func = Function(
                 name=function["name"],
+                display_name=function.get("display_name", ""),
                 description=function.get("description", ""),
                 type_=function["type"],
                 algorithm_id=algorithm.id,
@@ -502,6 +515,7 @@ class Algorithms(AlgorithmBaseResource):
             for argument in function.get("arguments", []):
                 arg = Argument(
                     name=argument["name"],
+                    display_name=argument.get("display_name", ""),
                     description=argument.get("description", ""),
                     type_=argument["type"],
                     function_id=func.id,
@@ -659,6 +673,9 @@ class Algorithm(AlgorithmBaseResource):
                         name:
                           type: string
                           description: Name of the function
+                        display_name:
+                          type: string
+                          description: Name of the function
                         description:
                           type: string
                           description: Description of the function
@@ -689,6 +706,9 @@ class Algorithm(AlgorithmBaseResource):
                                 type: string
                                 description: Name of the argument in the
                                   function
+                              display_name:
+                                type: string
+                                description: Display name of the argument
                               description:
                                 type: string
                                 description: Description of the argument
@@ -773,6 +793,7 @@ class Algorithm(AlgorithmBaseResource):
 
         fields = [
             "name",
+            "display_name",
             "description",
             "partitioning",
             "vantage6_version",
@@ -817,6 +838,7 @@ class Algorithm(AlgorithmBaseResource):
                 for argument in new_function.get("arguments", []):
                     arg = Argument(
                         name=argument["name"],
+                        display_name=argument.get("display_name", ""),
                         description=argument.get("description", ""),
                         type_=argument["type"],
                         function_id=func.id,

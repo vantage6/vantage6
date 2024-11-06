@@ -157,6 +157,8 @@ class AlgorithmSubClient(ClientBase.SubClient):
             the following keys:
             - name: str
                 Name of the function
+            - display_name: str, optional
+                Display name of the function
             - description: str, optional
                 Description of the function
             - type: string
@@ -173,6 +175,8 @@ class AlgorithmSubClient(ClientBase.SubClient):
                 the following keys:
                 - name: str
                     Name of the argument
+                - display_name: str, optional
+                    Display name of the argument
                 - description: str, optional
                     Description of the argument
                 - type: str
@@ -316,6 +320,8 @@ class AlgorithmSubClient(ClientBase.SubClient):
             the following keys:
             - name: str
                 Name of the function
+            - display_name: str, optional
+                Display name of the function
             - description: str, optional
                 Description of the function
             - type: string
@@ -332,6 +338,8 @@ class AlgorithmSubClient(ClientBase.SubClient):
                 the following keys:
                 - name: str
                     Name of the argument
+                - display_name: str, optional
+                    Display name of the argument
                 - description: str, optional
                     Description of the argument
                 - type: str
