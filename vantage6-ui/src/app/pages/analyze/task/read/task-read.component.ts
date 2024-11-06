@@ -264,9 +264,9 @@ export class TaskReadComponent implements OnInit, OnDestroy {
 
   getParameterDisplayName(parameter: TaskParameter): string {
     const argument: Argument | undefined = this.function?.arguments.find((_) => _.name === parameter.label);
-    if(argument){
+    if (argument) {
       return argument.display_name ?? argument.name
-    }else{
+    } else {
       return parameter.label;
     }
   }
