@@ -1,14 +1,22 @@
 import logging
-from http import HTTPStatus
 import datetime
-from flask import g, request
+from http import HTTPStatus
+from threading import Thread
+
+from flask import g, render_template, request, current_app, Flask
+from flask_mail import Mail
 from flask_restful import Api
 from sqlalchemy import or_
 
+from vantage6.common import logger_name
+from vantage6.backend.common.globals import (
+    DEFAULT_EMAIL_FROM_ADDRESS,
+    DEFAULT_SUPPORT_EMAIL_ADDRESS,
+)
+from vantage6.backend.common import get_server_url
 from vantage6.algorithm.store import db
 from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
 from vantage6.algorithm.store.model.rule import Operation
-from vantage6.common import logger_name
 from vantage6.algorithm.store.model.ui_visualization import UIVisualization
 from vantage6.algorithm.store.resource.schema.input_schema import (
     AlgorithmInputSchema,
@@ -190,6 +198,11 @@ class Algorithms(AlgorithmBaseResource):
               type: string
             description: Filter on algorithm name using the SQL operator LIKE.
           - in: query
+            name: display_name
+            schema:
+              type: string
+            description: Filter on algorithm display name using the SQL operator LIKE.
+          - in: query
             name: description
             schema:
               type: string
@@ -256,6 +269,7 @@ class Algorithms(AlgorithmBaseResource):
         # filter on properties
         for field in [
             "name",
+            "display_name",
             "description",
             "partitioning",
             "vantage6_version",
@@ -382,6 +396,9 @@ class Algorithms(AlgorithmBaseResource):
                         name:
                           type: string
                           description: Name of the function
+                        display_name:
+                          type: string
+                          description: Display name of the function
                         description:
                           type: string
                           description: Description of the function
@@ -412,6 +429,9 @@ class Algorithms(AlgorithmBaseResource):
                                 type: string
                                 description: Name of the argument in the
                                   function
+                              display_name:
+                                type: string
+                                description: Display name of the argument
                               description:
                                 type: string
                                 description: Description of the argument
@@ -421,6 +441,17 @@ class Algorithms(AlgorithmBaseResource):
                                   'string_list', 'integer', 'integer_list', 'float',
                                   'float_list', 'boolean', 'json', 'column',
                                   'column_list', 'organization' or 'organization_list'
+                              has_default_value:
+                                type: boolean
+                                description: Whether the argument has a default
+                                  value. If true, the 'default_value' field must be
+                                  provided. Default is false.
+                              default_value:
+                                type: string | int | float | boolean | list | None
+                                description: Default value of the argument. The type
+                                  should match the 'type' field, e.g. if 'type' is
+                                  'integer', 'default_value' should be an integer.
+                                  To set an empty (null) default value, use None.
                         ui_visualizations:
                           type: array
                           description: List of visualizations that are available in
@@ -485,14 +516,17 @@ class Algorithms(AlgorithmBaseResource):
         algorithm.save()
 
         # If reviews are disabled, approve the algorithm immediately
+        approved = False
         if self.config.get("dev", {}).get("disable_review", False):
             algorithm.approve()
+            approved = True
 
         # create the algorithm's subresources
         for function in data["functions"]:
             # create the function
             func = Function(
                 name=function["name"],
+                display_name=function.get("display_name", ""),
                 description=function.get("description", ""),
                 type_=function["type"],
                 algorithm_id=algorithm.id,
@@ -502,8 +536,11 @@ class Algorithms(AlgorithmBaseResource):
             for argument in function.get("arguments", []):
                 arg = Argument(
                     name=argument["name"],
+                    display_name=argument.get("display_name", ""),
                     description=argument.get("description", ""),
                     type_=argument["type"],
+                    has_default_value=argument.get("has_default_value", False),
+                    default_value=argument.get("default_value", None),
                     function_id=func.id,
                 )
                 arg.save()
@@ -526,7 +563,108 @@ class Algorithms(AlgorithmBaseResource):
                 )
                 vis.save()
 
+        if not approved:
+            # send email to users responsible to assign reviewers. Do this in a
+            # separate thread to avoid blocking the response
+            Thread(
+                target=self._send_email_to_review_assigners,
+                args=(
+                    current_app._get_current_object(),
+                    self.mail,
+                    algorithm,
+                    g.user.username,
+                    self.config,
+                    request.headers.get("store_url"),
+                ),
+            ).start()
+
         return algorithm_output_schema.dump(algorithm, many=False), HTTPStatus.CREATED
+
+    @staticmethod
+    def _send_email_to_review_assigners(
+        app: Flask,
+        mail: Mail,
+        algorithm: db_Algorithm,
+        submitting_user_name: str,
+        config: dict,
+        store_url: str | None,
+    ) -> None:
+        """
+        When new algorithm is created, send email to users responsible to assign
+        reviewers.
+
+        Parameters
+        ----------
+        app : Flask
+            Flask app instance
+        mail: flask_mail.Mail
+            Flask mail instance
+        algorithm : Algorithm
+            Algorithm that has been created
+        submitting_user_name : str
+            Username of the user that submitted the algorithm
+        config : dict
+            Configuration dictionary
+        store_url : str | None
+            URL of the algorithm store
+        """
+        smtp_settings = config.get("smtp", {})
+        if not smtp_settings:
+            log.warning(
+                "No SMTP settings found. No emails will be sent to alert "
+                "algorithm managers that reviews have to be assigned."
+            )
+            return
+        email_sender = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
+        support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
+
+        # get users with the role 'algorithm manager'
+        log.info(
+            "Sending email to alert store administrators that reviewers have to be "
+            "assigned."
+        )
+        algorithm_managers = db.User.get_by_permission("review", Operation.CREATE)
+        # TODO v5+ email is always present for all users, so remove this check
+        algorithm_managers = [am for am in algorithm_managers if am.email]
+        if not algorithm_managers:
+            log.warning(
+                "No users with known email addresses found that can assign "
+                "reviewers. No email will be sent."
+            )
+        else:
+            log.info(
+                "No users with algorithm manager role found. Sending email to all "
+                "users with permission to assign reviews instead."
+            )
+
+        # send email to each algorithm manager
+        for algo_manager in algorithm_managers:
+            other_admins_msg = ""
+            if len(algorithm_managers) > 1:
+                other_admins_msg = (
+                    f", together with {len(algorithm_managers) - 1} other user(s)"
+                )
+            template_vars = {
+                "admin_username": algo_manager.username,
+                "algorithm_name": algorithm.name,
+                "store_url": get_server_url(config, store_url),
+                "server_url": algo_manager.server.url,
+                "dev_username": submitting_user_name,
+                "other_admins": other_admins_msg,
+                "support_email": support_email,
+            }
+            with app.app_context():
+                mail.send_email(
+                    subject="New vantage6 algorithm needs reviewer assignment",
+                    sender=email_sender,
+                    recipients=[algo_manager.email],
+                    text_body=render_template(
+                        "mail/new_algorithm.txt", **template_vars
+                    ),
+                    html_body=render_template(
+                        "mail/new_algorithm.html", **template_vars
+                    ),
+                )
 
 
 class Algorithm(AlgorithmBaseResource):
@@ -652,11 +790,15 @@ class Algorithm(AlgorithmBaseResource):
                     description: URL to the algorithm documentation
                   functions:
                     type: array
-                    description: List of functions that are available in the
-                      algorithm
+                    description: List of functions that are available in the algorithm.
+                      If provided, all existing functions will be replaced by the new
+                      ones.
                     items:
                       properties:
                         name:
+                          type: string
+                          description: Name of the function
+                        display_name:
                           type: string
                           description: Name of the function
                         description:
@@ -689,6 +831,9 @@ class Algorithm(AlgorithmBaseResource):
                                 type: string
                                 description: Name of the argument in the
                                   function
+                              display_name:
+                                type: string
+                                description: Display name of the argument
                               description:
                                 type: string
                                 description: Description of the argument
@@ -697,6 +842,17 @@ class Algorithm(AlgorithmBaseResource):
                                 description: Type of argument. Can be 'string',
                                   'integer', 'float', 'boolean', 'json',
                                   'column', 'organizations' or 'organization'
+                              has_default_value:
+                                type: boolean
+                                description: Whether the argument has a default
+                                  value. If true, the 'default_value' field must be
+                                  provided. Default is false.
+                              default_value:
+                                type: string | int | float | boolean | list | None
+                                description: Default value of the argument. The type
+                                  should match the 'type' field, e.g. if 'type' is
+                                  'integer', 'default_value' should be an integer.
+                                  To set an empty (null) default value, use None.
                         ui_visualizations:
                           type: array
                           description: List of visualizations that are available in
@@ -773,6 +929,7 @@ class Algorithm(AlgorithmBaseResource):
 
         fields = [
             "name",
+            "display_name",
             "description",
             "partitioning",
             "vantage6_version",
@@ -817,8 +974,11 @@ class Algorithm(AlgorithmBaseResource):
                 for argument in new_function.get("arguments", []):
                     arg = Argument(
                         name=argument["name"],
+                        display_name=argument.get("display_name", ""),
                         description=argument.get("description", ""),
                         type_=argument["type"],
+                        has_default_value=argument.get("has_default_value", False),
+                        default_value=argument.get("default_value", None),
                         function_id=func.id,
                     )
                     arg.save()

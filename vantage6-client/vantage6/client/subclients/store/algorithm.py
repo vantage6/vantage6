@@ -157,6 +157,8 @@ class AlgorithmSubClient(ClientBase.SubClient):
             the following keys:
             - name: str
                 Name of the function
+            - display_name: str, optional
+                Display name of the function
             - description: str, optional
                 Description of the function
             - type: string
@@ -173,11 +175,19 @@ class AlgorithmSubClient(ClientBase.SubClient):
                 the following keys:
                 - name: str
                     Name of the argument
+                - display_name: str, optional
+                    Display name of the argument
                 - description: str, optional
                     Description of the argument
                 - type: str
                     Type of the argument. Can be 'string', 'integer', 'float',
                     'boolean', 'json', 'column', 'organization' or 'organizations'
+                - has_default_value: bool, optional
+                    Whether the argument has a default value. Default is False.
+                - default_value: str | int | float | boolean | list, optional
+                    Default value of the argument. Only required if 'has_default_value'
+                    is true. The type should match the 'type' field, e.g. if 'type' is
+                    'integer', 'default_value' should be an integer.
             - ui_visualizations: list[dict]
                 List of UI visualizations of the function. Each visualization
                 is a dict with the following keys:
@@ -311,11 +321,13 @@ class AlgorithmSubClient(ClientBase.SubClient):
             URL to the repository containing the algorithm code
         documentation_url : str, optional
             URL to the documentation of the algorithm
-        functions : list[dict]
-            List of functions of the algorithm. Each function is a dict with
-            the following keys:
+        functions : list[dict], optional
+            List of functions of the algorithm. If given, all old functions are replaced
+            with these new ones. Each function is a dict with the following keys:
             - name: str
                 Name of the function
+            - display_name: str, optional
+                Display name of the function
             - description: str, optional
                 Description of the function
             - type: string
@@ -332,11 +344,19 @@ class AlgorithmSubClient(ClientBase.SubClient):
                 the following keys:
                 - name: str
                     Name of the argument
+                - display_name: str, optional
+                    Display name of the argument
                 - description: str, optional
                     Description of the argument
                 - type: str
                     Type of the argument. Can be 'string', 'integer', 'float',
                     'boolean', 'json', 'column', 'organization' or 'organizations'
+                - has_default_value: bool, optional
+                    Whether the argument has a default value. Default is False.
+                - default_value: str | int | float | boolean | list, optional
+                    Default value of the argument. Only required if 'has_default_value'
+                    is true. The type should match the 'type' field, e.g. if 'type' is
+                    'integer', 'default_value' should be an integer.
             - ui_visualizations: list[dict]
                 List of UI visualizations of the function. Each visualization
                 is a dict with the following keys:
@@ -373,26 +393,18 @@ class AlgorithmSubClient(ClientBase.SubClient):
         dict
             The updated algorithm
         """
-        body = {}
-        if name:
-            body["name"] = name
-        if description:
-            body["description"] = description
-        if image:
-            body["image"] = image
-        if partitioning:
-            body["partitioning"] = partitioning
-        if vantage6_version:
-            body["vantage6_version"] = vantage6_version
-        if code_url:
-            body["code_url"] = code_url
-        if documentation_url:
-            body["documentation_url"] = documentation_url
-        if functions:
-            body["functions"] = functions
-        if refresh_digest:
-            body["refresh_digest"] = refresh_digest
-
+        body = {
+            "name": name,
+            "description": description,
+            "image": image,
+            "partitioning": partitioning,
+            "vantage6_version": vantage6_version,
+            "code_url": code_url,
+            "documentation_url": documentation_url,
+            "functions": functions,
+            "refresh_digest": refresh_digest,
+        }
+        body = self._clean_update_data(body)
         return self.parent.request(
             f"algorithm/{id_}",
             method="PATCH",

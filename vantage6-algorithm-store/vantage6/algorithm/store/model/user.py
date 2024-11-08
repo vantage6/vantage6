@@ -30,6 +30,7 @@ class User(Base):
     # fields
     # link with the v6 server. This is a temporary solution
     username = Column(String)
+    email = Column(String)
     v6_server_id = Column(Integer, ForeignKey("vantage6server.id"))
 
     # relationships
@@ -74,6 +75,25 @@ class User(Base):
         """
         rule = Rule.get_by_(resource, operation)
         return any(rule in role.rules for role in self.roles) or rule in self.rules
+
+    @classmethod
+    def get_by_permission(cls, resource: str, operation: Operation) -> list[User]:
+        """
+        Get all users that have a certain permission
+
+        Parameters
+        ----------
+        resource: str
+            The resource type on which the action is to be performed
+        operation: Operation
+            The operation a user wants to execute
+
+        Returns
+        -------
+        list[User]
+            List of users that have the requested permission
+        """
+        return [user for user in cls.get() if user.can(resource, operation)]
 
     @classmethod
     def get_by_server(cls, username: str, v6_server_id: int) -> User:

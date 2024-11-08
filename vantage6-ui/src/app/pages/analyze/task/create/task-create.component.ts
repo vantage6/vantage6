@@ -30,6 +30,7 @@ import { OrganizationService } from 'src/app/services/organization.service';
 import { MAX_ATTEMPTS_RENEW_NODE, SECONDS_BETWEEN_ATTEMPTS_RENEW_NODE } from 'src/app/models/constants/wait';
 import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 import { EncryptionService } from 'src/app/services/encryption.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-task-create',
@@ -306,7 +307,9 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       Object.keys(this.parameterForm.controls).forEach((control) => {
         if (control === arg.name) {
           const value = this.parameterForm.get(control)?.value;
-          if (arg.type === ArgumentType.Json) {
+          if (arg.has_default_value && value === null) {
+            return; // note that within .forEach, return is like continue
+          } else if (arg.type === ArgumentType.Json) {
             kwargs[arg.name] = JSON.parse(value);
           } else if (arg.type === ArgumentType.Float || arg.type === ArgumentType.Integer) {
             kwargs[arg.name] = Number(value);
@@ -346,6 +349,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       collaboration_id: this.collaboration?.id || -1,
       databases: taskDatabases,
       store_id: this.algorithm?.algorithm_store_id || -1,
+      server_url: environment.server_url,
       organizations: selectedOrganizations.map((organizationID) => {
         return {
           id: Number.parseInt(organizationID),
@@ -426,6 +430,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       !this.shouldShowParameterBooleanInput(argument)
     );
   }
+
   shouldIncludeFormField(argument: Argument): boolean {
     return !this.shouldShowParameterBooleanInput(argument) && !this.shouldShowMultipleInput(argument);
   }

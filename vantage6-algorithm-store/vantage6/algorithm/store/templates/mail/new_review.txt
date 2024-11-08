@@ -1,0 +1,11 @@
+Dear {{reviewer_username}},
+
+A new algorithm '{{algorithm_name}}' has been submitted to the algorithm store
+{{store_url}} by the user {{dev_username}}. The algorithm manager
+{{assigner_username}} has requested you to review this algorithm.
+
+Please login to your vantage6 server ({{server_url}}) and provide your review of the
+algorithm in a timely manner.
+
+Sincerely,
+Your vantage6 support team

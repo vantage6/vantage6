@@ -5,6 +5,7 @@ from flask import g, request
 from flask_restful import Api
 
 from vantage6.common import generate_apikey
+from vantage6.common.globals import AuthStatus
 from vantage6.server.resource import with_user_or_node, with_user
 from vantage6.server.resource import ServicesResources
 from vantage6.backend.common.resource.pagination import Pagination
@@ -439,6 +440,7 @@ class Nodes(NodeBase):
             collaboration=collaboration,
             organization=organization,
             api_key=api_key,
+            status=AuthStatus.OFFLINE.value,
         )
         node.save()
 

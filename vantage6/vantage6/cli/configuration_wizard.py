@@ -3,7 +3,13 @@ import questionary as q
 from pathlib import Path
 
 from vantage6.common import generate_apikey
-from vantage6.common.globals import DATABASE_TYPES, InstanceType, NodePolicy, Ports
+from vantage6.common.globals import (
+    DATABASE_TYPES,
+    InstanceType,
+    NodePolicy,
+    Ports,
+    DEFAULT_API_PATH,
+)
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.context import AppContext
 from vantage6.common import error, warning, info
@@ -269,9 +275,7 @@ def _get_allowed_algorithm_stores() -> list[str]:
     return allowed_algorithm_stores
 
 
-def _get_common_server_config(
-    instance_type: InstanceType, instance_name: str, include_api_path: bool = True
-) -> dict:
+def _get_common_server_config(instance_type: InstanceType, instance_name: str) -> dict:
     """
     Part of the questionaire that is common to all server types (vantage6
     server and algorithm store server).
@@ -282,8 +286,6 @@ def _get_common_server_config(
         Type of server instance.
     instance_name : str
         Name of the server instance.
-    include_api_path : bool
-        Whether to include the api path in the questionaire.
 
     Returns
     -------
@@ -311,21 +313,6 @@ def _get_common_server_config(
             },
         ]
     )
-
-    # TODO v5+ remove api_path. It complicates configuration
-    if include_api_path:
-        config.update(
-            q.prompt(
-                [
-                    {
-                        "type": "text",
-                        "name": "api_path",
-                        "message": "Path of the api:",
-                        "default": "/api",
-                    }
-                ]
-            )
-        )
 
     config.update(
         q.prompt(
@@ -369,6 +356,8 @@ def _get_common_server_config(
         ],
     }
 
+    config["api_path"] = DEFAULT_API_PATH
+
     return config
 
 
@@ -387,9 +376,7 @@ def server_configuration_questionaire(instance_name: str) -> dict:
         Dictionary with the new server configuration
     """
 
-    config = _get_common_server_config(
-        InstanceType.SERVER, instance_name, include_api_path=True
-    )
+    config = _get_common_server_config(InstanceType.SERVER, instance_name)
 
     constant_jwt_secret = q.confirm("Do you want a constant JWT secret?").ask()
     if constant_jwt_secret:
@@ -498,9 +485,7 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
     dict
         Dictionary with the new server configuration
     """
-    config = _get_common_server_config(
-        InstanceType.ALGORITHM_STORE, instance_name, include_api_path=False
-    )
+    config = _get_common_server_config(InstanceType.ALGORITHM_STORE, instance_name)
 
     default_v6_server_uri = f"http://localhost:{Ports.DEV_SERVER.value}/api"
     default_root_username = "root"
