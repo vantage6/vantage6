@@ -115,3 +115,30 @@ root_user:
   v6_server_uri: http://localhost:7601/api
   # username of the vantage6 server's user you want to make root in the algorithm store
   username: root
+  # email of the vantage6 server's user you want to make root in the algorithm store
+  email: root@organization.com
+
+# Configure a smtp mail server for the store to use for administrative
+# purposes, e.g. to alert users that they have been assigned to review an algorithm,
+# that their algorithm has been approved, etc.
+# OPTIONAL
+smtp:
+  port: 587
+  server: smtp.yourmailserver.example.com
+  # credentials for authenticating with the SMTP server
+  username: your-username
+  password: super-secret-password
+  # email address to send emails from (header)
+  # (defaults to noreply@vantage6.ai)
+  email_from: noreply@example.com
+
+# Set an email address you want to direct your users to for support
+# (defaults to support@vantage6.ai)
+support_email: your-support@example.com
+
+# Let the algorithm store know where it is hosted. This is used as a setting to
+# communicate back and forth with other vantage6 components such as the server.
+# Example for the cotopaxi server
+server_url: https://store.cotopaxi.vantage6.ai
+# Example for running the store locally with default settings:
+# server_url: http://localhost:7602

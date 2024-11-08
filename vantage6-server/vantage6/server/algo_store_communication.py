@@ -4,8 +4,9 @@ import requests
 from flask import Response, request
 from http import HTTPStatus
 
-from vantage6.backend.common.globals import HOST_URI_ENV
 from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
+from vantage6.backend.common.globals import HOST_URI_ENV
+from vantage6.backend.common import get_server_url
 from vantage6.server import db
 
 
@@ -334,28 +335,3 @@ def _execute_algo_store_request(
         json=json,
         headers=headers,
     )
-
-
-def get_server_url(config: dict, server_url_from_request: str | None = None) -> str:
-    """ "
-    Get the server url from the server configuration, or from the request
-    data if it is not present in the configuration.
-
-    Parameters
-    ----------
-    config : dict
-        Server configuration
-    server_url_from_request : str | None
-        Server url from the request data.
-
-    Returns
-    -------
-    str | None
-        The server url
-    """
-    server_url = config.get("server_url", server_url_from_request)
-    # make sure that the server url ends with the api path
-    api_path = config.get("api_path")
-    if server_url and not server_url.endswith(api_path):
-        server_url = server_url + api_path
-    return server_url

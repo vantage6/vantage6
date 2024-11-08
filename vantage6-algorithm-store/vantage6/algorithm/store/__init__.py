@@ -36,8 +36,13 @@ from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
 from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
 from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
-from vantage6.backend.common.globals import HOST_URI_ENV, DEFAULT_API_PATH
+from vantage6.backend.common.globals import (
+    HOST_URI_ENV,
+    DEFAULT_API_PATH,
+    DEFAULT_SUPPORT_EMAIL_ADDRESS,
+)
 from vantage6.backend.common.jsonable import jsonable
+from vantage6.backend.common.mail_service import MailService
 
 # TODO move this to common, then remove dependency on CLI in algorithm store
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
@@ -97,6 +102,9 @@ class AlgorithmStoreApp:
         # SWAGGER documentation
         self.swagger = Swagger(self.app, template={})
 
+        # setup Flask mail client
+        self.mail = MailService(self.app)
+
         # setup the permission manager for the API endpoints
         self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
 
@@ -132,7 +140,9 @@ class AlgorithmStoreApp:
         log.info("Initialization done")
 
     def configure_flask(self) -> None:
-        """Configure the Flask settings of the vantage6 server."""
+        """Configure the Flask settings of the vantage6 algorithm store."""
+        # TODO there is some duplicate code with the server here, check if it can be
+        # refactored
 
         # let us handle exceptions
         self.app.config["PROPAGATE_EXCEPTIONS"] = True
@@ -144,6 +154,17 @@ class AlgorithmStoreApp:
             "openapi": "3.0.0",
             "version": __version__,
         }
+
+        # Mail settings
+        mail_config = self.ctx.config.get("smtp", {})
+        self.app.config["MAIL_PORT"] = mail_config.get("port", 1025)
+        self.app.config["MAIL_SERVER"] = mail_config.get("server", "localhost")
+        self.app.config["MAIL_USERNAME"] = mail_config.get(
+            "username", DEFAULT_SUPPORT_EMAIL_ADDRESS
+        )
+        self.app.config["MAIL_PASSWORD"] = mail_config.get("password", "")
+        self.app.config["MAIL_USE_TLS"] = mail_config.get("MAIL_USE_TLS", True)
+        self.app.config["MAIL_USE_SSL"] = mail_config.get("MAIL_USE_SSL", False)
 
         debug_mode = self.debug.get("flask", False)
         if debug_mode:
@@ -268,6 +289,7 @@ class AlgorithmStoreApp:
             "api": self.api,
             "config": self.ctx.config,
             "permissions": self.permissions,
+            "mail": self.mail,
         }
 
         api_path = self.ctx.config.get("api_path", DEFAULT_API_PATH)
@@ -387,6 +409,7 @@ class AlgorithmStoreApp:
         if root_user := self.ctx.config.get("root_user", {}):
             whitelisted_uri = root_user.get("v6_server_uri")
             root_username = root_user.get("username")
+            root_email = root_user.get("email")
             if whitelisted_uri and root_username:
                 if not (v6_server := db.Vantage6Server.get_by_url(whitelisted_uri)):
                     log.info("This server will be whitelisted: %s", whitelisted_uri)
@@ -407,6 +430,7 @@ class AlgorithmStoreApp:
                     user = db.User(
                         v6_server_id=v6_server.id,
                         username=root_username,
+                        email=root_email,
                         roles=[root],
                     )
                     user.save()

@@ -45,7 +45,9 @@ more reviewers have to be assigned. Depending on their permissions, the algorith
 developer can do this themselves or a store manager can assign reviewers. The reviewers
 can then view the algorithm and provide feedback. If the algorithm is approved, it will
 be shown as approved in the UI and can be used to run tasks. While the algorithm is
-under review, it is not yet available for running tasks in the UI.
+under review, it is not yet available for running tasks in the UI. If your algorithm
+store has been configured with an email server, emails will be sent to alert users that,
+for instance, their review is requested.
 
 Regularly, a developer has submitted an update to an algorithm that was already
 approved. In such cases, when the changes are approved, the algorithm store will

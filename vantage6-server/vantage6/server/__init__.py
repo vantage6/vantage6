@@ -40,7 +40,6 @@ from flask_cors.core import probably_regex
 from flask_jwt_extended import JWTManager
 from flask_marshmallow import Marshmallow
 from flask_restful import Api
-from flask_mail import Mail
 from flask_principal import Principal, Identity, identity_changed
 from flask_socketio import SocketIO
 from threading import Thread
@@ -49,13 +48,14 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common import logger_name, split_rabbitmq_uri
 from vantage6.common.globals import PING_INTERVAL_SECONDS, AuthStatus
-from vantage6.backend.common.globals import HOST_URI_ENV
+from vantage6.backend.common.globals import HOST_URI_ENV, DEFAULT_SUPPORT_EMAIL_ADDRESS
 from vantage6.backend.common.jsonable import jsonable
-from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.backend.common.permission import RuleNeed
+from vantage6.backend.common.mail_service import MailService
+from vantage6.cli.context.server import ServerContext
+from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.server.permission import PermissionManager
 from vantage6.server import db
-from vantage6.cli.context.server import ServerContext
 from vantage6.server.resource.common.output_schema import HATEOASModelSchema
 from vantage6.server.globals import (
     APPNAME,
@@ -64,13 +64,11 @@ from vantage6.server.globals import (
     RESOURCES_PATH,
     SUPER_USER_INFO,
     REFRESH_TOKENS_EXPIRE_HOURS,
-    DEFAULT_SUPPORT_EMAIL_ADDRESS,
     MIN_TOKEN_VALIDITY_SECONDS,
     MIN_REFRESH_TOKEN_EXPIRY_DELTA,
     SERVER_MODULE_NAME,
 )
 from vantage6.server.resource.common.swagger_templates import swagger_template
-from vantage6.server.mail_service import MailService
 from vantage6.server.websockets import DefaultSocketNamespace
 from vantage6.server.default_roles import get_default_roles, DefaultRole
 from vantage6.server.hashedpassword import HashedPassword
@@ -130,7 +128,7 @@ class ServerApp:
         self.swagger = Swagger(self.app, template=swagger_template)
 
         # Setup the Flask-Mail client
-        self.mail = MailService(self.app, Mail(self.app))
+        self.mail = MailService(self.app)
 
         # Setup websocket channel
         self.socketio = self.setup_socket_connection()

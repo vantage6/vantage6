@@ -36,7 +36,6 @@ setup(
         "flask==2.2.5",
         "Flask-Cors==5.0.0",
         "Flask-JWT-Extended==4.4.4",
-        "Flask-Mail==0.9.1",
         "Flask-Principal==0.4.0",
         "Flask-RESTful==0.3.10",
         "flask-marshmallow==0.15.0",

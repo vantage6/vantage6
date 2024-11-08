@@ -18,13 +18,11 @@ class MailService:
     ----------
     app: flask.Flask
         The vantage6 flask application
-    mail: flask_mail.Mail
-        An instance of the Flask mail class
     """
 
-    def __init__(self, app: Flask, mail: Mail) -> None:
+    def __init__(self, app: Flask) -> None:
         self.app = app
-        self.mail = mail
+        self.mail = Mail(app)
 
     def _send_async_email(self, app: Flask, msg: Message) -> None:
         """

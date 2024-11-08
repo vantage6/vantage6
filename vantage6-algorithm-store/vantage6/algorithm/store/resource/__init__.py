@@ -4,6 +4,7 @@ import requests
 from functools import wraps
 from http import HTTPStatus
 from flask import Response, request, current_app, g
+from flask_mail import Mail
 from flask_principal import Identity, identity_changed
 from flask_restful import Api
 
@@ -33,15 +34,16 @@ class AlgorithmStoreResources(BaseServicesResources):
         Api instance
     config: dict
         Configuration dictionary
+    permissions : PermissionManager
+        Permission manager instance
+    mail : Mail
+        Flask Mail instance
     """
 
     def __init__(
-        self,
-        api: Api,
-        config: dict,
-        permissions: PermissionManager,
+        self, api: Api, config: dict, permissions: PermissionManager, mail: Mail
     ):
-        super().__init__(api, config, permissions)
+        super().__init__(api, config, permissions, mail)
 
 
 def request_from_store_to_v6_server(

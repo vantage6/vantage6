@@ -1,0 +1,12 @@
+Dear {{admin_username}},
+
+A new algorithm '{{algorithm_name}}' has been submitted to the algorithm store
+{{store_url}} by the user {{dev_username}}.
+
+You are responsible to assign reviewers for this algorithm store{{other_admins}}. Please
+login to your vantage6 server ({{server_url}}) and assign reviewers to ensure that the
+algorithm is reviewed in a
+timely manner.
+
+Sincerely,
+Your vantage6 support team

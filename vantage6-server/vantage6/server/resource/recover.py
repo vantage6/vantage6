@@ -1,5 +1,6 @@
 import logging
-import datetime
+import datetime as dt
+from http import HTTPStatus
 
 import gevent
 from flask import request, render_template, g, current_app, Flask
@@ -7,17 +8,16 @@ from flask_jwt_extended import create_access_token, decode_token
 from flask_restful import Api
 from flask_mail import Mail
 from jwt.exceptions import DecodeError
-from http import HTTPStatus
 from sqlalchemy.orm.exc import NoResultFound
-import datetime as dt
 
 from vantage6.common import logger_name, generate_apikey
 from vantage6.common.globals import APPNAME, MAIN_VERSION_NAME
+from vantage6.backend.common.globals import (
+    DEFAULT_EMAIL_FROM_ADDRESS,
+    DEFAULT_SUPPORT_EMAIL_ADDRESS,
+)
 from vantage6.server import db
 from vantage6.server.globals import (
-    DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES,
-    DEFAULT_SUPPORT_EMAIL_ADDRESS,
-    DEFAULT_EMAIL_FROM_ADDRESS,
     DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES,
     DEFAULT_BETWEEN_USER_EMAILS_MINUTES,
 )
@@ -447,7 +447,7 @@ class RecoverTwoFactorSecret(ServicesResources):
         minutes_token_valid = smtp_settings.get(
             "email_token_validity_minutes", DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES
         )
-        expires = datetime.timedelta(minutes=minutes_token_valid)
+        expires = dt.timedelta(minutes=minutes_token_valid)
         reset_token = create_access_token({"id": str(user.id)}, expires_delta=expires)
 
         email_from = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)

@@ -103,7 +103,7 @@ class TestPolicyResources(TestResources):
         include_defaults = True
         include_private = False
 
-        resource = PoliciesBase(None, None, None)
+        resource = PoliciesBase(None, None, None, None)
         response_dict = resource.policies_to_dict(
             policies, include_defaults, include_private
         )
@@ -126,7 +126,7 @@ class TestPolicyResources(TestResources):
         include_defaults = True
         include_private = False
 
-        resource = PoliciesBase(None, None, None)
+        resource = PoliciesBase(None, None, None, None)
         response_dict = resource.policies_to_dict(
             policies, include_defaults, include_private
         )
@@ -161,7 +161,7 @@ class TestPolicyResources(TestResources):
         include_defaults = True
         include_private = True
 
-        resource = PoliciesBase(None, None, None)
+        resource = PoliciesBase(None, None, None, None)
         response_dict = resource.policies_to_dict(
             policies, include_defaults, include_private
         )
@@ -186,7 +186,7 @@ class TestPolicyResources(TestResources):
         include_defaults = True
         include_private = False
 
-        resource = PoliciesBase(None, None, None)
+        resource = PoliciesBase(None, None, None, None)
         response_dict = resource.policies_to_dict(
             policies, include_defaults, include_private
         )
@@ -211,7 +211,7 @@ class TestPolicyResources(TestResources):
         include_defaults = True
         include_private = False
 
-        resource = PoliciesBase(None, None, None)
+        resource = PoliciesBase(None, None, None, None)
         response_dict = resource.policies_to_dict(
             policies, include_defaults, include_private
         )

@@ -212,13 +212,12 @@ class Vantage6Servers(AlgorithmStoreResources):
             )
 
         # users can only whitelist their own server. Check if this is the case
-        response, status_code = request_validate_server_token(data["url"])
-        if response is None or status_code != HTTPStatus.OK:
+        user_validate_response, status_code = request_validate_server_token(data["url"])
+        if user_validate_response is None or status_code != HTTPStatus.OK:
             return {
                 "msg": "You can only whitelist your own vantage6 server! It could not "
                 "be verified that you are from the server you are trying to whitelist."
             }, HTTPStatus.FORBIDDEN
-        username = response.json()["username"]
 
         # only create a new server if previous didn't exist yet
         existing_server = db_Vantage6Server.get_by_url(data["url"])
@@ -235,12 +234,14 @@ class Vantage6Servers(AlgorithmStoreResources):
         # the user that is whitelisting the server should be able to delete it
         # in the future. Assign the server manager role to the user executing this
         # request.
-        self._assign_server_manager_role_to_auth_user(server, username)
+        username = user_validate_response.json()["username"]
+        email = user_validate_response.json()["email"]
+        self._assign_server_manager_role_to_auth_user(server, username, email)
 
         return v6_server_output_schema.dump(server, many=False), HTTPStatus.CREATED
 
     def _assign_server_manager_role_to_auth_user(
-        self, server: db_Vantage6Server, username: str
+        self, server: db_Vantage6Server, username: str, email: str
     ) -> None:
         """
         Assign the server manager role to the user that is currently authenticated.
@@ -251,6 +252,8 @@ class Vantage6Servers(AlgorithmStoreResources):
             The server that is being whitelisted
         username : str
             The username of the user that is whitelisting the server
+        email : str
+            The email of the user that is whitelisting the server
         """
         # then find if the user already exists
         user = User.get_by_server(username, server.id)
@@ -258,7 +261,10 @@ class Vantage6Servers(AlgorithmStoreResources):
         if not user:
             # create new user registration
             user = User(
-                username=username, v6_server_id=server.id, roles=[server_manager_role]
+                username=username,
+                email=email,
+                v6_server_id=server.id,
+                roles=[server_manager_role],
             )
             user.save()
         else:
