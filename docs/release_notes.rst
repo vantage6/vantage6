@@ -4,7 +4,7 @@ Release notes
 4.8.0
 -----
 
-*? November 2024*
+*11 November 2024*
 
 - **Feature**
 
