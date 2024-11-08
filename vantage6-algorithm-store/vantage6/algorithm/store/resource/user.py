@@ -464,6 +464,11 @@ class User(AlgorithmStoreResources):
                     "msg": f"User '{user.username}' not found in the Vantage6 server."
                 }, HTTPStatus.BAD_REQUEST
             user.email = server_response.json()["data"][0].get("email")
+            if not user.email:
+                log.warning(
+                    "No email address found for user '%s' in the Vantage6 server.",
+                    user.username,
+                )
 
         if "roles" in data:
             # validate that these roles exist

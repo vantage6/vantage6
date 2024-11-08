@@ -40,7 +40,6 @@ from flask_cors.core import probably_regex
 from flask_jwt_extended import JWTManager
 from flask_marshmallow import Marshmallow
 from flask_restful import Api
-from flask_mail import Mail
 from flask_principal import Principal, Identity, identity_changed
 from flask_socketio import SocketIO
 from threading import Thread
@@ -129,7 +128,7 @@ class ServerApp:
         self.swagger = Swagger(self.app, template=swagger_template)
 
         # Setup the Flask-Mail client
-        self.mail = MailService(self.app, Mail(self.app))
+        self.mail = MailService(self.app)
 
         # Setup websocket channel
         self.socketio = self.setup_socket_connection()

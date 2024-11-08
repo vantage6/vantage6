@@ -26,7 +26,6 @@ from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
 from flask import Flask, make_response, request, send_from_directory, Request, Response
 from flask_cors import CORS
-from flask_mail import Mail
 from flask_marshmallow import Marshmallow
 from flask_restful import Api
 from flask_principal import Principal
@@ -104,7 +103,7 @@ class AlgorithmStoreApp:
         self.swagger = Swagger(self.app, template={})
 
         # setup Flask mail client
-        self.mail = MailService(self.app, Mail(self.app))
+        self.mail = MailService(self.app)
 
         # setup the permission manager for the API endpoints
         self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)

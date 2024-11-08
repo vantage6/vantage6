@@ -90,10 +90,10 @@ are available, as roles. The following default roles available in the algorithms
 #. **Root**: Has all permissions.
 #. **Developer**: Can submit new algorithms to the store and edit them before they are
    reviewed.
-#. **Algorithm Manager**: Can assign reviewers to new algorithms, and submit and delete
-   algorithms. Whenever a new algorithm is submitted, users with these role are alerted
-   by email to assign reviewers (if an email server has been set up). If no users have
-   this role, all users with permission to assign reviewers will be alerted.
+#. **Algorithm Manager**: Can assign reviewers to new algorithms, and manage
+   algorithms. Whenever a new algorithm is submitted, users with permission to register
+   new reviews are alerted, so users with this role as well as the root role will be
+   alerted to assign reviewers (if an email server has been set up).
 #. **Reviewer**: Can approve or reject algorithms that they have been requested to
    review.
 #. **Viewer**: Can view all resources in the store.

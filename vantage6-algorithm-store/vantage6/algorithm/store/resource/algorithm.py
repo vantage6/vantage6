@@ -597,21 +597,19 @@ class Algorithms(AlgorithmBaseResource):
             "Sending email to alert store administrators that reviewers have to be "
             "assigned."
         )
-        algorithm_managers = db.Role.get_by_name(DefaultRole.ALGORITHM_MANAGER).users
+        algorithm_managers = db.User.get_by_permission("review", Operation.CREATE)
+        # TODO v5+ email is always present for all users, so remove this check
+        algorithm_managers = [am for am in algorithm_managers if am.email]
         if not algorithm_managers:
-            algorithm_managers = db.User.get_by_permission("review", Operation.CREATE)
-            # TODO v5+ email is always present for all users, so remove this check
-            algorithm_managers = [am for am in algorithm_managers if am.email]
-            if algorithm_managers:
-                log.info(
-                    "No users with algorithm manager role found. Sending email to all "
-                    "users with permission to assign reviews instead."
-                )
-            else:
-                log.warning(
-                    "No users with known email addresses found that can assign "
-                    "reviewers. No email will be sent."
-                )
+            log.warning(
+                "No users with known email addresses found that can assign "
+                "reviewers. No email will be sent."
+            )
+        else:
+            log.info(
+                "No users with algorithm manager role found. Sending email to all "
+                "users with permission to assign reviews instead."
+            )
 
         # send email to each algorithm manager
         for algo_manager in algorithm_managers:

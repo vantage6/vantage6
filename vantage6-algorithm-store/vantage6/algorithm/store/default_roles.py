@@ -76,6 +76,7 @@ def get_default_roles() -> list[dict]:
     # Algorithm manager role
     ALGORITHM_MANAGER_RULES = REVIEWER_RULES + [
         Rule.get_by_("algorithm", Operation.CREATE),
+        Rule.get_by_("algorithm", Operation.EDIT),
         Rule.get_by_("algorithm", Operation.DELETE),
         Rule.get_by_("review", Operation.CREATE),
         Rule.get_by_("review", Operation.DELETE),

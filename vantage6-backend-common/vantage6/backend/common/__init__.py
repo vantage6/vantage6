@@ -7,7 +7,9 @@ from vantage6.backend.common._version import __version__  # noqa: F401
 from vantage6.backend.common.globals import DEFAULT_API_PATH
 
 
-def get_server_url(config: dict, server_url_from_request: str | None = None) -> str:
+def get_server_url(
+    config: dict, server_url_from_request: str | None = None
+) -> str | None:
     """ "
     Get the server url from the request data, or from the configuration if it is
     not present in the request.

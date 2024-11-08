@@ -830,7 +830,7 @@ class ReviewReject(ReviewUpdateResources):
         if not smtp_settings:
             log.warning(
                 "No SMTP settings found. No emails will be sent to alert the reviewer "
-                "that they have been assigned a review."
+                "that their review is no longer required."
             )
             return
         email_sender = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
