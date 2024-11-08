@@ -3,11 +3,16 @@ import questionary as q
 from pathlib import Path
 
 from vantage6.common import generate_apikey
-from vantage6.common.globals import DATABASE_TYPES, InstanceType, NodePolicy, Ports
+from vantage6.common.globals import (
+    DATABASE_TYPES,
+    InstanceType,
+    NodePolicy,
+    Ports,
+    DEFAULT_API_PATH,
+)
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.context import AppContext
 from vantage6.common import error, warning, info
-from vantage6.backend.common.globals import DEFAULT_API_PATH
 from vantage6.cli.context import select_context_class
 from vantage6.cli.configuration_manager import (
     NodeConfigurationManager,

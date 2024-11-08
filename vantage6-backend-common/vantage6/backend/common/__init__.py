@@ -1,10 +1,10 @@
 """ Common functionality for the vantage6 server and algorithm store.
 """
 
+from vantage6.common.globals import DEFAULT_API_PATH
+
 # make sure the version is available
 from vantage6.backend.common._version import __version__  # noqa: F401
-
-from vantage6.backend.common.globals import DEFAULT_API_PATH
 
 
 def get_server_url(

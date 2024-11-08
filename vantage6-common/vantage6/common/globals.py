@@ -43,6 +43,9 @@ BASIC_PROCESSING_IMAGE = "harbor2.vantage6.ai/algorithms/basics"
 # Character to replace '=' with in encoded environment variables
 ENV_VAR_EQUALS_REPLACEMENT = "!"
 
+# default API path (for server and algorithm store)
+DEFAULT_API_PATH = "/api"
+
 
 class InstanceType(str, Enum):
     """The types of instances that can be created."""

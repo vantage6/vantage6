@@ -33,12 +33,11 @@ from flasgger import Swagger
 from pathlib import Path
 
 from vantage6.common import logger_name
-from vantage6.common.globals import APPNAME
+from vantage6.common.globals import APPNAME, DEFAULT_API_PATH
 from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
 from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
 from vantage6.backend.common.globals import (
     HOST_URI_ENV,
-    DEFAULT_API_PATH,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
 )
 from vantage6.backend.common.jsonable import jsonable
