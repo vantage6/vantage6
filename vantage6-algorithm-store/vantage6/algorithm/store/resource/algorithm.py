@@ -15,7 +15,6 @@ from vantage6.backend.common.globals import (
 )
 from vantage6.backend.common import get_server_url
 from vantage6.algorithm.store import db
-from vantage6.algorithm.store.default_roles import DefaultRole
 from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.algorithm.store.model.ui_visualization import UIVisualization
