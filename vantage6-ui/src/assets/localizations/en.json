@@ -11,6 +11,7 @@
     "yes": "Yes",
     "no": "No",
     "name": "Name",
+    "display_name": "Display name",
     "offline": "Offline",
     "online": "Online",
     "none": "None",

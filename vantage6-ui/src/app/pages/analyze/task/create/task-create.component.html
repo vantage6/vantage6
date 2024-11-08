@@ -66,7 +66,7 @@
               <mat-label>{{ "task.function" | translate }}</mat-label>
               <mat-select formControlName="functionName">
                 <mat-option *ngFor="let function of algorithm?.functions" [value]="function.name">
-                  {{ function.name }} <span class="detail-txt">({{ function.type }})</span>
+                  {{ function.display_name ?? function.name }} <span class="detail-txt">({{ function.type }})</span>
                 </mat-option>
               </mat-select>
             </mat-form-field>
@@ -167,7 +167,7 @@
                 <p *ngIf="argument.type === argumentType.Json">{{ "task-create.step-parameters.valid-json" | translate }}</p>
                 <!-- Show form field for dropdowns or single input fields (float, int, string) -->
                 <mat-form-field *ngIf="shouldIncludeFormField(argument)" subscriptSizing="dynamic">
-                  <mat-label>{{ argument.name }}</mat-label>
+                  <mat-label>{{ argument.display_name ?? argument.name }}</mat-label>
                   <mat-select
                     *ngIf="shouldShowColumnDropdown(argument)"
                     [formControlName]="argument.name"

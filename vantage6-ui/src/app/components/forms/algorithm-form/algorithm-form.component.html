@@ -74,6 +74,10 @@
                   <input matInput type="text" formControlName="name" />
                 </mat-form-field>
                 <mat-form-field subscriptSizing="dynamic">
+                  <mat-label>{{ "general.display_name" | translate }}</mat-label>
+                  <input matInput type="text" formControlName="display_name" />
+                </mat-form-field>
+                <mat-form-field subscriptSizing="dynamic">
                   <mat-label>{{ "general.description" | translate }}</mat-label>
                   <input matInput type="text" formControlName="description" />
                 </mat-form-field>
@@ -105,6 +109,10 @@
                         <mat-form-field subscriptSizing="dynamic">
                           <mat-label>{{ "general.name" | translate }}</mat-label>
                           <input matInput type="text" formControlName="name" />
+                        </mat-form-field>
+                        <mat-form-field subscriptSizing="dynamic">
+                          <mat-label>{{ "general.display_name" | translate }}</mat-label>
+                          <input matInput type="text" formControlName="display_name" />
                         </mat-form-field>
                         <mat-form-field subscriptSizing="dynamic">
                           <mat-label>{{ "general.description" | translate }}</mat-label>

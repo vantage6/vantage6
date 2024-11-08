@@ -64,7 +64,7 @@ class NodePolicy(str, Enum):
     REQUIRE_ALGORITHM_PULL = "require_algorithm_pull"
 
 
-class Ports(str, Enum):
+class Ports(int, Enum):
 
     HTTP = 80
     HTTPS = 443

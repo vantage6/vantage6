@@ -14,8 +14,9 @@ port: 7602
 api_path: /api
 
 # The URI to the algorithm store database. This should be a valid SQLAlchemy URI,
-# e.g. for an Sqlite database: sqlite:///database-name.sqlite,
+# e.g. for a SQLite database: sqlite:///database-name.sqlite,
 # or Postgres: postgresql://username:password@172.17.0.1/database).
+# Note that SQLite is not recommended for production use.
 uri: sqlite:///test.sqlite
 
 # This should be set to false in production as this allows to completely
