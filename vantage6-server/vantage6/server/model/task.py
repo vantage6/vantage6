@@ -128,7 +128,13 @@ class Task(Base):
         # TODO what if there are no result ids? -> currently returns unknown
         run_statuses = [r.status for r in self.runs]
         if any([has_task_failed(status) for status in run_statuses]):
-            return TaskStatus.FAILED.value
+            # check if all runs that have failed have failed for the same reason - if
+            # so, return that reason. If not, return generic failed status
+            failed_runs = [r for r in self.runs if has_task_failed(r.status)]
+            if len(set([r.status for r in failed_runs])) == 1:
+                return failed_runs[0].status
+            else:
+                return TaskStatus.FAILED.value
         elif TaskStatus.ACTIVE in run_statuses:
             return TaskStatus.ACTIVE.value
         elif TaskStatus.INITIALIZING in run_statuses:

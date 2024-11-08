@@ -13,7 +13,7 @@ import traceback
 
 from pathlib import Path
 
-from vantage6.common.globals import APPNAME
+from vantage6.common.globals import APPNAME, AuthStatus
 from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common import WhoAmI
 from vantage6.common.serialization import serialize
@@ -656,14 +656,16 @@ class UserClient(ClientBase):
                 Containing the updated collaboration information
             """
             id_ = self.__get_id_or_use_provided_id(id_)
+            data = {
+                "name": name,
+                "encrypted": encrypted,
+                "organization_ids": organizations,
+            }
+            data = self._clean_update_data(data)
             return self.parent.request(
                 f"collaboration/{id_}",
                 method="patch",
-                json={
-                    "name": name,
-                    "encrypted": encrypted,
-                    "organization_ids": organizations,
-                },
+                json=data,
             )
 
         def add_organization(
@@ -838,7 +840,9 @@ class UserClient(ClientBase):
                 "last_seen_till": last_seen_till,
             }
             if is_online is not None:
-                params["status"] = "online" if is_online else "offline"
+                params["status"] = (
+                    AuthStatus.ONLINE.value if is_online else AuthStatus.OFFLINE.value
+                )
             return self.parent.request("node", params=params)
 
         @post_filtering(iterable=False)
@@ -918,11 +922,8 @@ class UserClient(ClientBase):
             dict
                 Containing the meta-data of the updated node
             """
-            data = {
-                "name": name,
-            }
-            if clear_ip is not None:
-                data["clear_ip"] = clear_ip
+            data = {"name": name, "clear_ip": clear_ip}
+            data = self._clean_update_data(data)
             return self.parent.request(
                 f"node/{id_}",
                 method="patch",
@@ -1100,18 +1101,21 @@ class UserClient(ClientBase):
             if not id_:
                 id_ = self.parent.whoami.organization_id
 
+            data = {
+                "name": name,
+                "address1": address1,
+                "address2": address2,
+                "zipcode": zipcode,
+                "country": country,
+                "domain": domain,
+                "public_key": public_key,
+            }
+            data = self._clean_update_data(data)
+
             return self.parent.request(
                 f"organization/{id_}",
                 method="patch",
-                json={
-                    "name": name,
-                    "address1": address1,
-                    "address2": address2,
-                    "zipcode": zipcode,
-                    "country": country,
-                    "domain": domain,
-                    "public_key": public_key,
-                },
+                json=data,
             )
 
         @post_filtering(iterable=False)
@@ -1346,7 +1350,7 @@ class UserClient(ClientBase):
             if not id_:
                 id_ = self.parent.whoami.id_
 
-            json_body = {
+            data = {
                 "firstname": firstname,
                 "lastname": lastname,
                 "organization_id": organization,
@@ -1354,11 +1358,9 @@ class UserClient(ClientBase):
                 "roles": roles,
                 "email": email,
             }
+            data = self._clean_update_data(data)
 
-            # only submit supplied keys
-            json_body = {k: v for k, v in json_body.items() if v is not None}
-
-            user = self.parent.request(f"user/{id_}", method="patch", json=json_body)
+            user = self.parent.request(f"user/{id_}", method="patch", json=data)
             return user
 
         @post_filtering(iterable=False)
@@ -1602,10 +1604,16 @@ class UserClient(ClientBase):
             dict
                 Containing the updated role data
             """
+            data = {
+                "name": name,
+                "description": description,
+                "rules": rules,
+            }
+            self._clean_update_data(data)
             return self.parent.request(
                 f"role/{role}",
                 method="patch",
-                json={"name": name, "description": description, "rules": rules},
+                json=data,
             )
 
         def delete(self, role: int) -> None:

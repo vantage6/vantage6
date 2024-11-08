@@ -466,7 +466,7 @@ class Organization(OrganizationBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        name = data.get("name", None)
+        name = data.get("name")
         if name:
             if organization.name != name and db.Organization.exists("name", name):
                 return {

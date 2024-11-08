@@ -1,11 +1,13 @@
 import json
 import logging
+
 from typing import Any
 from importlib import import_module
 from copy import deepcopy
 
 import pandas as pd
 
+from vantage6.common.globals import AuthStatus
 from vantage6.algorithm.tools.wrappers import load_data
 from vantage6.algorithm.tools.util import info
 from vantage6.algorithm.tools.preprocessing import preprocess_data
@@ -281,7 +283,7 @@ class MockAlgorithmClient:
                             "id": org_id,
                             "ip": None,
                             "name": "mock_node",
-                            "status": "online",
+                            "status": AuthStatus.ONLINE.value,
                         },
                         "organization": {
                             "id": org_id,
@@ -564,7 +566,9 @@ class MockAlgorithmClient:
             return {
                 "id": node_id,
                 "name": "mock-node",
-                "status": "online" if is_online else "offline",
+                "status": (
+                    AuthStatus.ONLINE.value if is_online else AuthStatus.OFFLINE.value
+                ),
                 "ip": "1.2.3.4",
                 "config": {
                     "key": "value",
