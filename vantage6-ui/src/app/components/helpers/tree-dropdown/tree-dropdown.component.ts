@@ -1,10 +1,11 @@
 // TODO markupNodeLabel needs to be replaced by HighlightedTextPipe introduced in task #1361 (PR in review)
-// TODO check if multiselect works properly
 
-import { Component, Input, OnInit, ElementRef, ViewChild, Output, EventEmitter, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, ElementRef, ViewChild, Output, EventEmitter, SimpleChanges, ViewContainerRef } from '@angular/core';
 import { SelectionModel } from '@angular/cdk/collections';
 import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree';
 import { CustomTreeControl } from './custom-tree-control';
+import { ConnectionPositionPair } from '@angular/cdk/overlay';
+import { MatFormField } from '@angular/material/form-field';
 
 export interface ITreeInputSearchConfig {
   searchActive: boolean;
@@ -51,6 +52,7 @@ export class TreeDropdownComponent implements OnInit {
   @Output() valueChanged: EventEmitter<ITreeSelectedValue[]> = new EventEmitter();
   @ViewChild('searchInput')
   searchInput?: ElementRef<HTMLInputElement>;
+  @ViewChild(MatFormField) formField?: MatFormField;
 
   private getLevel = (node: ITreeInputNodeFlat) => node.level;
   private isExpandable = (node: ITreeInputNodeFlat) => node.expandable;
@@ -93,8 +95,23 @@ export class TreeDropdownComponent implements OnInit {
       searchInput: ''
     }
   };
+  public isOverlayOpen = false;
+  public overlayPosition: ConnectionPositionPair[] = [
+    {
+      originX: 'start',
+      originY: 'bottom',
+      overlayX: 'start',
+      overlayY: 'top',
+    }, {
+      originX: 'start',
+      originY: 'top',
+      overlayX: 'start',
+      overlayY: 'bottom',
+    },
+  ];
+  public overlayWidth: string = '100%';
 
-  constructor() {}
+  constructor() { }
 
   public ngOnInit(): void {
     this.setTreeNodes();
@@ -109,9 +126,9 @@ export class TreeDropdownComponent implements OnInit {
   private getSelectedFlatNodes(selectedNodes: ITreeSelectedValue[], flattenedData: ITreeInputNodeFlat[]): ITreeInputNodeFlat[] {
     return selectedNodes
       ? selectedNodes.map((selectedValueItem: ITreeSelectedValue) => {
-          const currentFlatTreeItem = flattenedData.find((item: ITreeInputNodeFlat) => item.code === selectedValueItem.code);
-          return currentFlatTreeItem ? currentFlatTreeItem : <ITreeInputNodeFlat>{};
-        })
+        const currentFlatTreeItem = flattenedData.find((item: ITreeInputNodeFlat) => item.code === selectedValueItem.code);
+        return currentFlatTreeItem ? currentFlatTreeItem : <ITreeInputNodeFlat>{};
+      })
       : [];
   }
 
@@ -227,17 +244,20 @@ export class TreeDropdownComponent implements OnInit {
 
   private changedSelectedValues() {
     const values: ITreeInputNodeFlat[] = this.checklistSelection ? this.checklistSelection.selected : [];
-    const selectedValue = values && values.length !== 0
+    const selectedValues = values && values.length !== 0
       ? values.map((item) => {
-          return {
-            code: item.code,
-            label: item.label,
-            parentCode: item.parentCode,
-            pathLabel: item.pathLabel
-          }
-        })
-      : [];
-    this.valueChanged.emit([...selectedValue]);
+        return {
+          code: item.code,
+          label: item.label,
+          parentCode: item.parentCode,
+          pathLabel: item.pathLabel
+        }
+      })
+      : [];    
+    if (this.isOverlayOpen) {        
+      window.dispatchEvent(new Event('resize'))
+    }
+    this.valueChanged.emit([...selectedValues]);
   }
 
   private resetTree(): void {
@@ -258,8 +278,14 @@ export class TreeDropdownComponent implements OnInit {
     }
   }
 
+  public expandOrCollapse(node: ITreeInputNodeFlat) {
+    this.treeControl.toggle(node)
+  }
+
   public isSomeCollapsed(): boolean {
-    return this.treeControl.dataNodes.some((e: any) => !this.treeControl.isExpanded(e));
+    return this.treeControl.dataNodes.some(
+      (e: any) => !this.treeControl.isExpanded(e)
+    );
   }
 
   public isSomeDescendentSelected(node: ITreeInputNodeFlat): boolean {
@@ -278,6 +304,17 @@ export class TreeDropdownComponent implements OnInit {
 
   public isTreeLayered(): boolean {
     return this.treeControl && this.treeControl.dataNodes && this.uniqDataNodes(this.treeControl.dataNodes, 'level').length > 1;
+  }
+
+  public openOverlay(event: Event) {
+    this.setOverlayWidth()
+    this.isOverlayOpen = true;
+    event.stopPropagation();
+  }
+
+  public setOverlayWidth() {
+    const formFieldWidth = this.formField?._elementRef.nativeElement.offsetWidth ?? 'auto';
+    this.overlayWidth = formFieldWidth;
   }
 
   public markupNodeLabel(node: ITreeInputNodeFlat): string {

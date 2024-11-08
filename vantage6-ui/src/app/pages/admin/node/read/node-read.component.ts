@@ -52,7 +52,7 @@ export class NodeReadComponent implements OnInit, OnDestroy {
     private socketioConnectService: SocketioConnectService,
     private translateService: TranslateService,
     private fileService: FileService
-  ) {}
+  ) { }
 
   async ngOnInit(): Promise<void> {
     await this.initData();
@@ -199,7 +199,7 @@ export class NodeReadComponent implements OnInit, OnDestroy {
         organization_id: selectedValue.code.toString(),
         sort: NodeSortProperties.Name
       });
-    } else if (selectedValue &&  selectedValue.parentCode === 'collaboration') {
+    } else if (selectedValue && selectedValue.parentCode === 'collaboration') {
       result = await this.nodeService.getPaginatedNodes(this.currentPage, {
         collaboration_id: selectedValue.code.toString(),
         sort: NodeSortProperties.Name

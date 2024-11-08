@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { QRCodeModule } from 'angularx-qrcode';
 
 import { MAT_DATE_LOCALE } from '@angular/material/core';
@@ -21,7 +22,6 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatStepperModule } from '@angular/material/stepper';
@@ -246,7 +246,6 @@ export function HttpLoaderFactory(http: HttpClient) {
       },
       defaultLanguage: 'en'
     }),
-    MatAutocompleteModule,
     MatDateFnsModule,
     MatButtonModule,
     MatCardModule,
@@ -272,7 +271,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     MatToolbarModule,
     MatTreeModule,
     MatRadioModule,
-    QRCodeModule
+    QRCodeModule,
+    OverlayModule
   ],
   providers: [
     {
@@ -282,4 +282,4 @@ export function HttpLoaderFactory(http: HttpClient) {
     provideHttpClient(withInterceptorsFromDi())
   ]
 })
-export class AppModule {}
+export class AppModule { }

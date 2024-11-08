@@ -1,6 +1,10 @@
 <app-page-header title="{{ 'node-read.title' | translate }}"></app-page-header>
-<app-tree-dropdown [selectedNodes]="selectedTreeNodes" [isMultiSelect]="false" [nodes]="treeNodes"
-  (valueChanged)="handleSelectedTreeNodesChange($event)"></app-tree-dropdown>
+<app-tree-dropdown
+  [selectedNodes]="selectedTreeNodes"
+  [isMultiSelect]="false"
+  [nodes]="treeNodes"
+  (valueChanged)="handleSelectedTreeNodesChange($event)"
+></app-tree-dropdown>
 <ng-container *ngIf="!isLoading; else loading">
   <mat-card>
     <mat-card-content>
