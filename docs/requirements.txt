@@ -5,9 +5,9 @@
 -r ../vantage6/requirements.txt
 -r ../vantage6-node/requirements.txt
 -r ../vantage6-server/requirements.txt
-sphinx==5.3.0
+sphinx==8.1.3
 sphinx-autobuild
 sphinx-autodoc-typehints
-sphinx-click==4.4.0
+sphinx-click
 sphinxcontrib-plantuml
-furo==2022.12.7
+furo
