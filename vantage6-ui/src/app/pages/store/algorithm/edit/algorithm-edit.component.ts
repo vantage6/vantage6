@@ -73,7 +73,10 @@ export class AlgorithmEditComponent implements OnInit, OnDestroy {
               name: arg.name,
               display_name: arg.display_name,
               type: arg.type,
-              description: arg.description
+              description: arg.description,
+              has_default_value: arg.has_default_value,
+              default_value: arg.default_value || null,
+              is_default_value_null: arg.default_value === null ? 'true' : 'false'
             };
           }),
           databases: func.databases.map((db) => {

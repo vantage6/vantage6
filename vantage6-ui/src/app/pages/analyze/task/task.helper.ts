@@ -3,6 +3,7 @@ import { floatListRegex, floatRegex, intListRegex, integerRegex, stringListRegex
 import { AlgorithmFunction, ArgumentType } from 'src/app/models/api/algorithm.model';
 import { TaskDatabase } from 'src/app/models/api/task.models';
 import { Database } from 'src/app/models/api/node.model';
+import { isListTypeArgument } from 'src/app/helpers/algorithm.helper';
 
 function jsonValidator(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -22,40 +23,49 @@ function jsonValidator(): ValidatorFn {
 
 export const addParameterFormControlsForFunction = (func: AlgorithmFunction, form: FormGroup) => {
   func?.arguments.forEach((argument) => {
+    const requiredValidators = argument.has_default_value ? [] : [Validators.required];
     if (argument.type === ArgumentType.String || argument.type === ArgumentType.Column) {
-      form.addControl(argument.name, new FormControl(null, Validators.required));
+      form.addControl(argument.name, new FormControl(null, requiredValidators));
     }
     if (argument.type === ArgumentType.Integer || argument.type === ArgumentType.Organization) {
-      form.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(integerRegex)]));
+      form.addControl(argument.name, new FormControl(null, [...requiredValidators, Validators.pattern(integerRegex)]));
     }
     if (argument.type === ArgumentType.Float) {
-      form.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(floatRegex)]));
+      form.addControl(argument.name, new FormControl(null, [...requiredValidators, Validators.pattern(floatRegex)]));
     }
     if (argument.type === ArgumentType.Json) {
-      form.addControl(argument.name, new FormControl(null, [Validators.required, jsonValidator()]));
+      form.addControl(argument.name, new FormControl(null, [...requiredValidators, jsonValidator()]));
     }
     if (argument.type === ArgumentType.Boolean) {
-      form.addControl(argument.name, new FormControl(false, Validators.required));
+      form.addControl(argument.name, new FormControl(false, requiredValidators));
     }
     if (argument.type === ArgumentType.OrganizationList || argument.type === ArgumentType.IntegerList) {
       // validate that the input is a list of integers
-      form.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(intListRegex)]));
+      form.addControl(argument.name, new FormControl(null, [...requiredValidators, Validators.pattern(intListRegex)]));
     }
     if (argument.type === ArgumentType.IntegerList) {
       // validate that the input is a list of integers
-      form.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(intListRegex)]));
+      form.addControl(argument.name, new FormControl(null, [...requiredValidators, Validators.pattern(intListRegex)]));
     }
     if (argument.type === ArgumentType.FloatList) {
       // validate that the input is a list of floats
-      form.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(floatListRegex)]));
+      form.addControl(argument.name, new FormControl(null, [...requiredValidators, Validators.pattern(floatListRegex)]));
     }
     if (argument.type === ArgumentType.ColumnList) {
       // validate that the input is a list of strings
-      form.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(stringListRegex)]));
+      form.addControl(argument.name, new FormControl(null, [...requiredValidators, Validators.pattern(stringListRegex)]));
     }
     if (argument.type === ArgumentType.StringList) {
       // validate that the input is a list of strings
-      form.addControl(argument.name, new FormControl(null, [Validators.required, Validators.pattern(stringListRegex)]));
+      form.addControl(argument.name, new FormControl(null, [...requiredValidators, Validators.pattern(stringListRegex)]));
+    }
+    // set default value
+    if (argument.has_default_value && argument.default_value) {
+      if (!isListTypeArgument(argument.type)) {
+        form.get(argument.name)?.setValue(argument.default_value);
+      } else {
+        form.get(argument.name)?.setValue(JSON.parse(argument.default_value as string));
+      }
     }
   });
 };

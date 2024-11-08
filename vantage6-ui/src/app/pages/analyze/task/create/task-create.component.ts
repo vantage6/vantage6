@@ -307,7 +307,9 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       Object.keys(this.parameterForm.controls).forEach((control) => {
         if (control === arg.name) {
           const value = this.parameterForm.get(control)?.value;
-          if (arg.type === ArgumentType.Json) {
+          if (arg.has_default_value && value === null) {
+            return; // note that within .forEach, return is like continue
+          } else if (arg.type === ArgumentType.Json) {
             kwargs[arg.name] = JSON.parse(value);
           } else if (arg.type === ArgumentType.Float || arg.type === ArgumentType.Integer) {
             kwargs[arg.name] = Number(value);

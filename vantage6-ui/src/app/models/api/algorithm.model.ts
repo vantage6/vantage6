@@ -130,6 +130,8 @@ export interface Argument {
   display_name?: string;
   type: ArgumentType;
   description?: string;
+  has_default_value: boolean;
+  default_value?: string | number | boolean | null;
 }
 
 export interface FunctionDatabase {
@@ -141,6 +143,9 @@ export interface FunctionDatabase {
 interface ArgumentForm extends NameDescription {
   display_name?: string;
   type: string;
+  has_default_value: boolean | string;
+  is_default_value_null?: boolean | string;
+  default_value?: string | number | boolean | null | string[] | number[] | boolean[];
 }
 export interface FunctionForm extends NameDescription {
   display_name?: string;

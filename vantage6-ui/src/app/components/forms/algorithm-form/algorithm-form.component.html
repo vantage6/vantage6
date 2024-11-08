@@ -99,7 +99,6 @@
                       let paramIdx = index
                     "
                   >
-                    <!-- *ngFor="let parameterFormGroup of getParamFormGroups(funcIdx); let paramIdx = index" -->
                     <mat-expansion-panel-header>
                       <mat-panel-title
                         >{{ "algorithm-create.function.parameter.title" | translate }} {{ parameterFormGroup.get("name")?.value || "" }}
@@ -127,6 +126,50 @@
                             </mat-option>
                           </mat-select>
                         </mat-form-field>
+                        <mat-radio-group formControlName="has_default_value">
+                          <mat-label>{{ "algorithm.function.argument.has_default" | translate }}</mat-label>
+                          <mat-radio-button [value]="true" color="primary">{{ "general.yes" | translate }}</mat-radio-button>
+                          <mat-radio-button [value]="false" color="primary">{{ "general.no" | translate }}</mat-radio-button>
+                        </mat-radio-group>
+                        <div *ngIf="isTruthy(parameterFormGroup.controls['has_default_value'].value)">
+                          <mat-radio-group formControlName="is_default_value_null">
+                            <mat-label>{{ "algorithm.function.argument.default_value_null" | translate }}</mat-label>
+                            <mat-radio-button [value]="true" color="primary">{{ "general.yes" | translate }}</mat-radio-button>
+                            <mat-radio-button [value]="false" color="primary">{{ "general.no" | translate }}</mat-radio-button>
+                          </mat-radio-group>
+                          <div *ngIf="!isTruthy(parameterFormGroup.controls['is_default_value_null'].value)">
+                            <app-alert
+                              class="node-alert"
+                              *ngIf="isListTypeArgument(parameterFormGroup.controls['type'].value)"
+                              label="{{ 'algorithm.function.argument.list-warning' | translate }}"
+                            ></app-alert>
+                            <mat-radio-group
+                              *ngIf="parameterFormGroup.controls['type'].value === argumentType.Boolean"
+                              formControlName="default_value"
+                            >
+                              <mat-label>{{ "algorithm.function.argument.default_value" | translate }}</mat-label>
+                              <mat-radio-button [value]="true" color="primary">{{ "general.true" | translate }}</mat-radio-button>
+                              <mat-radio-button [value]="false" color="primary">{{ "general.false" | translate }}</mat-radio-button>
+                            </mat-radio-group>
+                            <mat-form-field
+                              *ngIf="parameterFormGroup.controls['type'].value !== argumentType.Boolean"
+                              subscriptSizing="dynamic"
+                            >
+                              <mat-label>{{ "algorithm.function.argument.default_value" | translate }}</mat-label>
+                              <input
+                                matInput
+                                appNumberOnly
+                                [type]="
+                                  parameterFormGroup.controls['type'].value === argumentType.Integer ||
+                                  parameterFormGroup.controls['type'].value === argumentType.Float
+                                    ? 'number'
+                                    : 'text'
+                                "
+                                formControlName="default_value"
+                              />
+                            </mat-form-field>
+                          </div>
+                        </div>
                         <div class="button-container button-container-separate">
                           <button mat-flat-button color="warn" (click)="deleteParameter(functionFormGroup, paramIdx)">
                             {{ "algorithm-create.function.parameter.delete" | translate }}
