@@ -22,8 +22,9 @@
     "file-select": "Select file",
     "unknown": "Unknown",
     "true": "True",
-    "false": "False"
+    "false": "False",
     "parameter": "Parameter"
+  },
   "resources": {
     "collaboration": "Collaboration",
     "collaborations": "Collaborations",
