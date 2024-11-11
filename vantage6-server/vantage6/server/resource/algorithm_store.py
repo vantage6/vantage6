@@ -248,7 +248,7 @@ class AlgorithmStores(AlgorithmStoreBase):
                     description: Human readable name for the algorithm store
                   algorithm_store_url:
                     type: string
-                    description: URL to the algorithm store
+                    description: URL to the algorithm store, including the API path
                   server_url:
                     type: string
                     description: URL to this vantage6 server. This is used to

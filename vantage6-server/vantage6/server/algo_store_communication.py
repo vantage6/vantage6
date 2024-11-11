@@ -330,7 +330,7 @@ def _execute_algo_store_request(
         raise ValueError(f"Method {method} not supported")
 
     return request_function(
-        f"{algo_store_url}/api/{endpoint}",
+        f"{algo_store_url}/{endpoint}",
         params=params,
         json=json,
         headers=headers,
