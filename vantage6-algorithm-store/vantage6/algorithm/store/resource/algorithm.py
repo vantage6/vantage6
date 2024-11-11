@@ -631,11 +631,6 @@ class Algorithms(AlgorithmBaseResource):
                 "No users with known email addresses found that can assign "
                 "reviewers. No email will be sent."
             )
-        else:
-            log.info(
-                "No users with algorithm manager role found. Sending email to all "
-                "users with permission to assign reviews instead."
-            )
 
         # send email to each algorithm manager
         for algo_manager in algorithm_managers:
