@@ -4,8 +4,9 @@ import requests
 from flask import Response, request
 from http import HTTPStatus
 
-from vantage6.backend.common.globals import HOST_URI_ENV
 from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
+from vantage6.backend.common.globals import HOST_URI_ENV
+from vantage6.backend.common import get_server_url
 from vantage6.server import db
 
 
@@ -232,8 +233,8 @@ def request_algo_store(
     if response is None:
         return {
             "msg": "Algorithm store cannot be reached. Make sure that "
-            "it is online and that you have not included /api at the "
-            "end of the algorithm store URL"
+            "it is online and that you have included the API path (default /api) at the"
+            " end of the algorithm store URL"
         }, HTTPStatus.NOT_FOUND
     elif response.status_code not in [HTTPStatus.CREATED, HTTPStatus.OK]:
         try:
@@ -241,7 +242,7 @@ def request_algo_store(
                 f"Algorithm store error: {response.json()['msg']}, HTTP status: "
                 f"{response.status_code}"
             )
-        except KeyError:
+        except (KeyError, requests.exceptions.JSONDecodeError):
             msg = (
                 "Communication to algorithm store failed. HTTP status: "
                 f"{response.status_code}"
@@ -329,33 +330,8 @@ def _execute_algo_store_request(
         raise ValueError(f"Method {method} not supported")
 
     return request_function(
-        f"{algo_store_url}/api/{endpoint}",
+        f"{algo_store_url}/{endpoint}",
         params=params,
         json=json,
         headers=headers,
     )
-
-
-def get_server_url(config: dict, server_url_from_request: str | None = None) -> str:
-    """ "
-    Get the server url from the server configuration, or from the request
-    data if it is not present in the configuration.
-
-    Parameters
-    ----------
-    config : dict
-        Server configuration
-    server_url_from_request : str | None
-        Server url from the request data.
-
-    Returns
-    -------
-    str | None
-        The server url
-    """
-    server_url = config.get("server_url", server_url_from_request)
-    # make sure that the server url ends with the api path
-    api_path = config.get("api_path")
-    if server_url and not server_url.endswith(api_path):
-        server_url = server_url + api_path
-    return server_url

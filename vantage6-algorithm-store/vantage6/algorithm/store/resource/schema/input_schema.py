@@ -2,6 +2,7 @@
 Marshmallow schemas for validating input data for the API.
 """
 
+import json
 from marshmallow import Schema, fields, ValidationError, validates, validates_schema
 import marshmallow.validate as validate
 from jsonschema import validate as json_validate
@@ -66,6 +67,7 @@ class FunctionInputSchema(_NameDescriptionSchema):
     """
 
     type_ = fields.String(required=True, data_key="type")
+    display_name = fields.String(required=False)
     databases = fields.Nested("DatabaseInputSchema", many=True)
     arguments = fields.Nested("ArgumentInputSchema", many=True)
     ui_visualizations = fields.Nested("UIVisualizationInputSchema", many=True)
@@ -97,6 +99,9 @@ class ArgumentInputSchema(_NameDescriptionSchema):
     """
 
     type_ = fields.String(required=True, data_key="type")
+    has_default_value = fields.Boolean()
+    default_value = fields.String()
+    display_name = fields.String(required=False)
 
     @validates("type_")
     def validate_type(self, value):
@@ -108,6 +113,96 @@ class ArgumentInputSchema(_NameDescriptionSchema):
             raise ValidationError(
                 f"Argument type '{value}' is not one of the allowed values: {types}"
             )
+
+    @validates_schema
+    def validate_default_value(self, data, **kwargs):
+        """
+        Validate that if the default value is present, has_default_value is True, and
+        check, if the default value is given, that it matches the type
+        """
+        if data.get("default_value") and not data.get("has_default_value"):
+            raise ValidationError(
+                "Default value cannot be given if has_default_value is False"
+            )
+        # if default value is given, validate that it matches the type
+        if default := data.get("default_value"):
+            type_ = data.get("type_")
+            if (
+                type_ == ArgumentType.INTEGER.value
+                or type_ == ArgumentType.ORGANIZATION.value
+            ):
+                try:
+                    int(default)
+                except ValueError as exc:
+                    raise ValidationError(
+                        f"Default value '{default}' is not a valid integer, while the "
+                        f"argument type {type_} requires an integer"
+                    ) from exc
+            elif type_ == ArgumentType.FLOAT.value:
+                try:
+                    float(default)
+                except ValueError as exc:
+                    raise ValidationError(
+                        f"Default value '{default}' is not a valid float, while the "
+                        f"argument type {type_} requires a float"
+                    ) from exc
+            elif type_ == ArgumentType.BOOLEAN.value:
+                if str(default).lower() not in ["true", "false", "1", "0"]:
+                    raise ValidationError(
+                        f"Default value '{default}' is not a valid boolean, while the "
+                        f"argument type {type_} requires a boolean. Please use 'true', "
+                        "'false', '1', or '0'"
+                    )
+            elif type_ == ArgumentType.JSON.value:
+                try:
+                    json.loads(default)
+                except ValueError as exc:
+                    raise ValidationError(
+                        f"Default value '{default}' is not a valid JSON object, while "
+                        f"the argument type {type_} requires a JSON object"
+                    ) from exc
+            elif (
+                type_ == ArgumentType.STRINGS.value
+                or type_ == ArgumentType.COLUMNS.value
+            ):
+                try:
+                    json_list = json.loads(default)
+                    if not isinstance(json_list, list):
+                        raise ValueError(f"Not a list: {json_list}")
+                except ValueError as exc:
+                    raise ValidationError(
+                        f"Default value '{default}' is not a valid JSON array, while "
+                        f"the argument type {type_} requires a JSON array"
+                    ) from exc
+            elif (
+                type_ == ArgumentType.INTEGERS.value
+                or type_ == ArgumentType.ORGANIZATIONS.value
+            ):
+                try:
+                    json_list = json.loads(default)
+                    if not isinstance(json_list, list):
+                        raise ValueError(f"Not a list: {json_list}")
+                    for value in json_list:
+                        int(value)
+                except ValueError as exc:
+                    raise ValidationError(
+                        f"Default value '{default}' is not a valid JSON array of "
+                        f"integers, while the argument type {type_} requires a JSON "
+                        "array of integers"
+                    ) from exc
+            elif type_ == ArgumentType.FLOATS.value:
+                try:
+                    json_list = json.loads(default)
+                    if not isinstance(json_list, list):
+                        raise ValueError(f"Not a list: {json_list}")
+                    for value in json_list:
+                        float(value)
+                except ValueError as exc:
+                    raise ValidationError(
+                        f"Default value '{default}' is not a valid JSON array of "
+                        f"floats, while the argument type {type_} requires a JSON array"
+                        " of floats"
+                    ) from exc
 
 
 class UIVisualizationInputSchema(_NameDescriptionSchema):
@@ -150,8 +245,31 @@ class UIVisualizationInputSchema(_NameDescriptionSchema):
 class UserInputSchema(Schema):
     """Schema for validating input for creating a user."""
 
+    username = fields.String(required=True)
     roles = fields.List(fields.Integer(validate=validate.Range(min=1)))
-    username = fields.String()
+
+
+class UserUpdateInputSchema(Schema):
+    """Schema for validating input for updating a user."""
+
+    # separate schema for PATCH /user: we don't allow updating the username, email is
+    # retrieved automatically in POST /user. Finally, there is an additional field to
+    # update the email from the server
+    email = fields.Email()
+    roles = fields.List(fields.Integer(validate=validate.Range(min=1)))
+    update_email = fields.Boolean()
+
+    @validates_schema
+    def validate_email(self, data, **kwargs):
+        """
+        Validate that the email is not present when update_email is True.
+        """
+        if data.get("update_email") and data.get("email"):
+            raise ValidationError(
+                "Both options 'email' and 'update_email' are present, but only one "
+                "can be used simultaneously, since 'update_email' is a flag to update "
+                "the email with the value from the vantage6 server."
+            )
 
 
 class Vantage6ServerInputSchema(Schema):

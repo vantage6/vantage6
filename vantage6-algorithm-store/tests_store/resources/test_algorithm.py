@@ -542,7 +542,7 @@ class TestAlgorithmResources(TestResources):
     def test_get_image_digest(self, get_digest_mock):
         """Test AlgorithmBaseResource._get_image_digest"""
         # test that invalid image raises an error
-        resource = AlgorithmBaseResource(None, None, None)
+        resource = AlgorithmBaseResource(None, None, None, None)
 
         # Test case 1: Image with digest found
         image_name = "example/image:latest"

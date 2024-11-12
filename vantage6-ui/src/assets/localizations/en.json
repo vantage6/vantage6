@@ -11,6 +11,7 @@
     "yes": "Yes",
     "no": "No",
     "name": "Name",
+    "display_name": "Display name",
     "offline": "Offline",
     "online": "Online",
     "none": "None",
@@ -19,7 +20,10 @@
     "description": "Description",
     "overview": "Overview",
     "file-select": "Select file",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "true": "True",
+    "false": "False",
+    "parameter": "Parameter"
   },
   "resources": {
     "collaboration": "Collaboration",
@@ -225,7 +229,11 @@
       "type": "Type of function",
       "argument": {
         "title": "Parameters",
-        "type": "Type of argument"
+        "type": "Type of argument",
+        "has_default": "Has default value:",
+        "default_value_null": "Default value is empty (null/none):",
+        "default_value": "Default value",
+        "list-warning": "This argument is a list. Provide a list of values separated by a comma."
       },
       "databases": "Databases",
       "visualization": {
@@ -515,7 +523,7 @@
     "server_url": "Vantage6 server URL",
     "form": {
       "name-hint": "This name will be used to identify the algorithm store in your collaboration(s).",
-      "url-hint": "The web address of the algorithm store. This should be the address of the algorithm store without '/api' at the end.",
+      "url-hint": "The web address of the algorithm store, including the API path (often '/api') at the end.",
       "server-url-hint": "The web address of this vantage6 server. This should be the address of the vantage6 server's including the API path.",
       "all-collaborations": "Make this algorithm store available to all collaborations"
     },

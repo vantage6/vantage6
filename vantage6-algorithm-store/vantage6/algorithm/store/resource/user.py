@@ -22,7 +22,10 @@ from vantage6.algorithm.store.resource import (
     AlgorithmStoreResources,
 )
 
-from vantage6.algorithm.store.resource.schema.input_schema import UserInputSchema
+from vantage6.algorithm.store.resource.schema.input_schema import (
+    UserInputSchema,
+    UserUpdateInputSchema,
+)
 from vantage6.algorithm.store.resource.schema.output_schema import UserOutputSchema
 
 module_name = logger_name(__name__)
@@ -90,6 +93,7 @@ def permissions(permissions: PermissionManager) -> None:
 # ------------------------------------------------------------------------------
 user_output_schema = UserOutputSchema()
 user_input_schema = UserInputSchema()
+user_patch_input_schema = UserUpdateInputSchema()
 
 
 # user_schema_with_permissions = UserWithPermissionDetailsSchema()
@@ -231,7 +235,7 @@ class Users(AlgorithmStoreResources):
                 "review_own_algorithm", False
             )
             if not can_review_self:
-                reviewers = [r for r in reviewers if r != algorithm.developer]
+                reviewers = [r for r in reviewers if r != algorithm.developer.id]
             q = q.filter(db.User.id.in_(reviewers))
 
         # paginate results
@@ -257,7 +261,7 @@ class Users(AlgorithmStoreResources):
                 properties:
                   username:
                     type: string
-                    description: Unique username
+                    description: Username unique to the whitelisted server
                   roles:
                     type: array
                     items:
@@ -315,6 +319,7 @@ class Users(AlgorithmStoreResources):
             return {
                 "msg": f"User '{data['username']}' not found in the Vantage6 server."
             }, HTTPStatus.BAD_REQUEST
+        user_email = server_response.json()["data"][0].get("email")
 
         # process the required roles. It is only possible to assign roles with
         # rules that you already have permission to. This way we ensure you can
@@ -332,6 +337,7 @@ class Users(AlgorithmStoreResources):
 
         user = db.User(
             username=data["username"],
+            email=user_email,
             v6_server_id=server.id,
             roles=roles,
         )
@@ -395,6 +401,15 @@ class User(AlgorithmStoreResources):
                     items:
                       type: integer
                     description: User's roles
+                  email:
+                    type: string
+                    description: User's email address. Do not combine this option with
+                      the update_email option.
+                  update_email:
+                    type: boolean
+                    description: Whether to update the email address by using the value
+                      from the vantage6 server. Do not combine this option with the
+                      email option to manually set the email address.
 
         parameters:
           - in: path
@@ -426,14 +441,35 @@ class User(AlgorithmStoreResources):
 
         data = request.get_json()
         # validate request body
-        errors = user_input_schema.validate(data, partial=True)
+        errors = user_patch_input_schema.validate(data)
         if errors:
             return {
                 "msg": "Request body is incorrect",
                 "errors": errors,
             }, HTTPStatus.BAD_REQUEST
 
-        # request parser is awefull with lists
+        if email := data.get("email"):
+            user.email = email
+        elif "update_email" in data and data["update_email"]:
+            server = Vantage6Server.get_by_url(request.headers["Server-Url"])
+            server_response, status_code = request_from_store_to_v6_server(
+                url=f"{server.url}/user",
+                params={"username": user.username},
+            )
+            if (
+                status_code != HTTPStatus.OK
+                or len(server_response.json().get("data", [])) != 1
+            ):
+                return {
+                    "msg": f"User '{user.username}' not found in the Vantage6 server."
+                }, HTTPStatus.BAD_REQUEST
+            user.email = server_response.json()["data"][0].get("email")
+            if not user.email:
+                log.warning(
+                    "No email address found for user '%s' in the Vantage6 server.",
+                    user.username,
+                )
+
         if "roles" in data:
             # validate that these roles exist
             roles = []
