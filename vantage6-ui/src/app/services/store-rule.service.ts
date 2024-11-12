@@ -11,7 +11,7 @@ export class StoreRuleService {
 
   async getRules(store_url: string, parameters?: GetStoreRuleParameters, showAuthError: boolean = true): Promise<StoreRule[]> {
     const result = await this.apiService.getForAlgorithmApi<Pagination<StoreRule>>(
-      `${store_url}/api`,
+      store_url,
       '/rule',
       {
         ...parameters,

@@ -41,6 +41,9 @@ NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS = 600
 # Character to replace '=' with in encoded environment variables
 ENV_VAR_EQUALS_REPLACEMENT = "!"
 
+# default API path (for server and algorithm store)
+DEFAULT_API_PATH = "/api"
+
 
 class InstanceType(str, Enum):
     """The types of instances that can be created."""
@@ -61,8 +64,9 @@ class NodePolicy(str, Enum):
     REQUIRE_ALGORITHM_PULL = "require_algorithm_pull"
 
 
-class Ports(str, Enum):
+class Ports(int, Enum):
     """Enum containing the default ports used by the vantage6 components"""
+
     HTTP = 80
     HTTPS = 443
     DEV_SERVER = 7601
@@ -86,3 +90,10 @@ class ContainerEnvNames(str, Enum):
     DATABASE_TYPE = "DATABASE_TYPE"
     DB_PARAM_PREFIX = "DB_PARAM_"
     USER_REQUESTED_DATAFRAME_HANDLES = "USER_REQUESTED_DATAFRAME_HANDLES"
+
+
+class AuthStatus(str, Enum):
+    """Enum containing the different statuses of the authenticable (node/user)"""
+
+    ONLINE = "online"
+    OFFLINE = "offline"

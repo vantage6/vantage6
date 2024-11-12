@@ -17,7 +17,7 @@ export class StoreUserService {
   constructor(private apiService: ApiService) {}
 
   async getUsers(store_url: string, parameters?: GetStoreUserParameters): Promise<StoreUser[]> {
-    const result = await this.apiService.getForAlgorithmApi<Pagination<StoreUser>>(store_url, `/api/user`, {
+    const result = await this.apiService.getForAlgorithmApi<Pagination<StoreUser>>(store_url, `/user`, {
       per_page: 9999,
       ...parameters
     });
@@ -25,14 +25,14 @@ export class StoreUserService {
   }
 
   async getPaginatedUsers(store_url: string, currentPage: number, parameters?: GetStoreUserParameters): Promise<Pagination<StoreUser>> {
-    const result = await this.apiService.getForAlgorithmApiWithPagination<StoreUser>(store_url, `/api/user`, currentPage, {
+    const result = await this.apiService.getForAlgorithmApiWithPagination<StoreUser>(store_url, `/user`, currentPage, {
       ...parameters
     });
     return result;
   }
 
   async getUser(store_url: string, id: string, lazyProperties: StoreUserLazyProperties[] = []): Promise<StoreUser> {
-    const result = await this.apiService.getForAlgorithmApi<StoreUser>(store_url, `/api/user/${id}`);
+    const result = await this.apiService.getForAlgorithmApi<StoreUser>(store_url, `/user/${id}`);
 
     const user = { ...result, roles: [] };
     await getLazyProperties(result, user, lazyProperties, this.apiService, store_url);
@@ -41,14 +41,14 @@ export class StoreUserService {
   }
 
   async createUser(store_url: string, user: StoreUserCreate): Promise<StoreUser> {
-    return await this.apiService.postForAlgorithmApi<StoreUser>(store_url, `/api/user`, user);
+    return await this.apiService.postForAlgorithmApi<StoreUser>(store_url, `/user`, user);
   }
 
   async editUser(store_url: string, id: number, user: StoreUserFormSubmit): Promise<StoreUser> {
-    return await this.apiService.patchForAlgorithmApi<StoreUser>(store_url, `/api/user/${id}`, user);
+    return await this.apiService.patchForAlgorithmApi<StoreUser>(store_url, `/user/${id}`, user);
   }
 
   async deleteUser(store_url: string, id: number): Promise<void> {
-    return await this.apiService.deleteForAlgorithmApi(store_url, `/api/user/${id}`);
+    return await this.apiService.deleteForAlgorithmApi(store_url, `/user/${id}`);
   }
 }

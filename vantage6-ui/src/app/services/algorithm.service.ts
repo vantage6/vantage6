@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { Algorithm, AlgorithmForm } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmForm, ArgumentType } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from './chosen-collaboration.service';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { Pagination } from 'src/app/models/api/pagination.model';
 import { ChosenStoreService } from './chosen-store.service';
+import { isListTypeArgument } from '../helpers/algorithm.helper';
 
 @Injectable({
   providedIn: 'root'
@@ -28,7 +29,7 @@ export class AlgorithmService {
   }
 
   async getAlgorithmsForAlgorithmStore(algorithmStore: AlgorithmStore, params: object = {}): Promise<Algorithm[]> {
-    const result = await this.apiService.getForAlgorithmApi<Pagination<Algorithm>>(`${algorithmStore.url}/api`, '/algorithm', {
+    const result = await this.apiService.getForAlgorithmApi<Pagination<Algorithm>>(`${algorithmStore.url}`, '/algorithm', {
       per_page: 9999,
       ...params
     });
@@ -42,7 +43,7 @@ export class AlgorithmService {
   }
 
   async getPaginatedAlgorithms(store: AlgorithmStore, currentPage: number, params: object = {}): Promise<Pagination<Algorithm>> {
-    const result = await this.apiService.getForAlgorithmApiWithPagination<Algorithm>(store.url, '/api/algorithm', currentPage, params);
+    const result = await this.apiService.getForAlgorithmApiWithPagination<Algorithm>(store.url, '/algorithm', currentPage, params);
     result.data.forEach((algorithm) => {
       algorithm.algorithm_store_url = store.url;
       algorithm.algorithm_store_id = store.id;
@@ -51,7 +52,7 @@ export class AlgorithmService {
   }
 
   async getAlgorithm(algorithm_store_url: string, id: string): Promise<Algorithm> {
-    const result = await this.apiService.getForAlgorithmApi<Algorithm>(algorithm_store_url, `/api/algorithm/${id}`);
+    const result = await this.apiService.getForAlgorithmApi<Algorithm>(algorithm_store_url, `/algorithm/${id}`);
     return result;
   }
 
@@ -65,29 +66,31 @@ export class AlgorithmService {
   }
 
   async createAlgorithm(algorithm: AlgorithmForm): Promise<Algorithm | undefined> {
+    algorithm = this.cleanAlgorithmForm(algorithm);
     const algorithmStore = this.chosenStoreService.store$.value;
     if (!algorithmStore) return;
-    const result = await this.apiService.postForAlgorithmApi<Algorithm>(algorithmStore.url, '/api/algorithm', algorithm);
+    const result = await this.apiService.postForAlgorithmApi<Algorithm>(algorithmStore.url, '/algorithm', algorithm);
     return result;
   }
 
   async editAlgorithm(algorithmId: string, algorithm: AlgorithmForm): Promise<Algorithm | undefined> {
+    algorithm = this.cleanAlgorithmForm(algorithm);
     const algorithmStore = this.chosenStoreService.store$.value;
     if (!algorithmStore) return;
-    const result = await this.apiService.patchForAlgorithmApi<Algorithm>(algorithmStore.url, `/api/algorithm/${algorithmId}`, algorithm);
+    const result = await this.apiService.patchForAlgorithmApi<Algorithm>(algorithmStore.url, `/algorithm/${algorithmId}`, algorithm);
     return result;
   }
 
   async deleteAlgorithm(algorithmId: string): Promise<void> {
     const algorithmStore = this.chosenStoreService.store$.value;
     if (!algorithmStore) return;
-    return await this.apiService.deleteForAlgorithmApi(algorithmStore.url, `/api/algorithm/${algorithmId}`);
+    return await this.apiService.deleteForAlgorithmApi(algorithmStore.url, `/algorithm/${algorithmId}`);
   }
 
   async invalidateAlgorithm(algorithmId: string): Promise<void> {
     const algorithmStore = this.chosenStoreService.store$.value;
     if (!algorithmStore) return;
-    return await this.apiService.postForAlgorithmApi(algorithmStore.url, `/api/algorithm/${algorithmId}/invalidate`, {});
+    return await this.apiService.postForAlgorithmApi(algorithmStore.url, `/algorithm/${algorithmId}/invalidate`, {});
   }
 
   private getAlgorithmStoresForCollaboration(): AlgorithmStore[] {
@@ -96,5 +99,40 @@ export class AlgorithmService {
       return [];
     }
     return collaboration.algorithm_stores;
+  }
+
+  private cleanAlgorithmForm(algorithmForm: AlgorithmForm): AlgorithmForm {
+    // remove the parameter's 'default_value_type' fields - they are only needed to
+    // acquire a correct value in the UI but are not needed for the backend
+    // also cast the 'has_default_value' field to a boolean, in the HTML it is a string.
+    algorithmForm.functions.forEach((func) => {
+      func.arguments.forEach((arg) => {
+        arg.has_default_value = arg.has_default_value === 'true' || arg.has_default_value === true;
+        if (arg.is_default_value_null === true) {
+          delete arg.default_value;
+        } else if (isListTypeArgument(arg.type) && arg.default_value) {
+          // if the argument is a list type, parse the comma-separated string to an
+          // array of the right type
+          arg.default_value = (arg.default_value as string).split(',');
+          if (arg.type === ArgumentType.FloatList) {
+            arg.default_value = JSON.stringify(
+              arg.default_value.map((val) => {
+                return Number.parseFloat(val);
+              })
+            );
+          } else if (arg.type === ArgumentType.IntegerList || arg.type === ArgumentType.OrganizationList) {
+            arg.default_value = JSON.stringify(
+              arg.default_value.map((val) => {
+                return Number.parseInt(val);
+              })
+            );
+          } else {
+            arg.default_value = JSON.stringify(arg.default_value);
+          }
+        }
+        delete arg.is_default_value_null;
+      });
+    });
+    return algorithmForm;
   }
 }

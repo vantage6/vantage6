@@ -32,6 +32,7 @@ setup(
     python_requires=">=3.10",
     install_requires=[
         "flask==2.2.5",
+        "flask-mail==0.9.1",
         "Flask-RESTful==0.3.10",
         "marshmallow==3.19.0",
         "marshmallow-sqlalchemy==0.29.0",

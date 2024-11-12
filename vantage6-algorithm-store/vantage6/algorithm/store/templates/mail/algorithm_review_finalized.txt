@@ -1,0 +1,9 @@
+Dear {{developer_username}},
+
+Your algorithm '{{algorithm_name}}' has been {{status_text}} for the algorithm store
+{{store_url}}.
+
+{{final_paragraph}}
+
+Sincerely,
+Your vantage6 support team

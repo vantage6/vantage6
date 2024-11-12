@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from flask import request
+from flask_mail import Mail
 from flask_restful import Resource, Api
 
 from vantage6.backend.common.permission import PermissionManagerBase
@@ -17,12 +18,19 @@ class BaseServicesResources(Resource):
         Api instance
     config: dict
         Configuration dictionary
+    permissions : PermissionManagerBase
+        Instance of class that manages permissions
+    mail : Mail
+        Flask Mail instance
     """
 
-    def __init__(self, api: Api, config: dict, permissions: PermissionManagerBase):
+    def __init__(
+        self, api: Api, config: dict, permissions: PermissionManagerBase, mail: Mail
+    ):
         self.api = api
         self.config = config
         self.permissions = permissions
+        self.mail = mail
 
     @staticmethod
     def is_included(field) -> bool:

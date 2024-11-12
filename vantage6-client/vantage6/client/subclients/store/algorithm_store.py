@@ -132,7 +132,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         Parameters
         ----------
         algorithm_store_url : str
-            The url of the algorithm store.
+            The url of the algorithm store, including the API path.
         name : str
             The name of the algorithm store.
         collaboration : int, optional
@@ -220,9 +220,9 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         id_ = self.__get_store_id(id_)
         if id_ is None:
             return
-        data = {
-            "name": name,
-        }
+        data = {}
+        if name is not None:
+            data["name"] = name
         if collaboration is not None or all_collaborations:
             data["collaboration_id"] = collaboration
         return self.parent.request(f"algorithmstore/{id_}", method="patch", json=data)

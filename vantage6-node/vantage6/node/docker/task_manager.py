@@ -626,10 +626,16 @@ class DockerTaskManager(DockerBaseManager):
             pq.write_table(session_state, self.session_state_file)
 
         volumes = {}
+        for db_label, db in self.databases.items():
+            if db["is_dir"]:
+                self.log.debug(f"Adding folder as database '{db_label}'")
+                volumes[db["uri"]] = {"bind": f"/mnt/{db_label}", "mode": "rw"}
+
         if running_in_docker():
             volumes[self.data_volume_name] = {"bind": self.data_folder, "mode": "rw"}
         else:
             volumes[self.__tasks_dir] = {"bind": self.data_folder, "mode": "rw"}
+
         return volumes
 
     def _setup_environment_vars(
@@ -705,6 +711,17 @@ class DockerTaskManager(DockerBaseManager):
                 if db["is_file"]
                 else db["uri"]
             )
+            if db["is_file"]:
+                environment_variables[ContainerEnvNames.DATABASE_URI.value] = (
+                    f"{self.data_folder}/{os.path.basename(db['uri'])}"
+                )
+            elif db["is_dir"]:
+                environment_variables[ContainerEnvNames.DATABASE_URI.value] = (
+                    f"/mnt/{source_database['label']}"
+                )
+            else:
+                environment_variables[ContainerEnvNames.DATABASE_URI.value] = db["uri"]
+
             environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = db["type"]
 
             # additional environment variables for the database

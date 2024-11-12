@@ -174,12 +174,9 @@ class StudySubClient(ClientBase.SubClient):
         dict
             Containing the updated study information
         """
-        json_data = {}
-        if name:
-            json_data["name"] = name
-        if organizations:
-            json_data["organization_ids"] = organizations
-        return self.parent.request(f"study/{id_}", method="patch", json=json_data)
+        data = {"name": name, "organization_ids": organizations}
+        data = self._clean_update_data(data)
+        return self.parent.request(f"study/{id_}", method="patch", json=data)
 
     def add_organization(self, organization: int, study: int = None) -> List[dict]:
         """

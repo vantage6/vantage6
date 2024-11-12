@@ -15,6 +15,8 @@ class Function(Base):
     ----------
     name : str
         Name of the function
+    display_name : str
+        Display name of the function
     description : str
         Description of the function
     type_ : str
@@ -33,6 +35,7 @@ class Function(Base):
 
     # fields
     name = Column(String)
+    display_name = Column(String)
     description = Column(String)
     type_ = Column("type", String)
     algorithm_id = Column(Integer, ForeignKey("algorithm.id"))

@@ -27,11 +27,7 @@ def wrap_algorithm(log_traceback: bool = True) -> None:
     - ``OUTPUT_FILE``: location where the results of the algorithm should
       be stored
     - ``TOKEN_FILE``: access token for the vantage6 server REST api
-    - ``USER_REQUESTED_DATABASE_LABELS``: comma-separated list of database
-      labels that the user requested
-    - ``<DB_LABEL>_DATABASE_URI``: uri of the each of the databases that
-      the user requested, where ``<DB_LABEL>`` is the label of the
-      database given in ``USER_REQUESTED_DATABASE_LABELS``.
+    - ``DATABASE_URI``: uri of the database that the user requested
 
     The wrapper expects the input file to be a json file. Any other file
     format will result in an error.

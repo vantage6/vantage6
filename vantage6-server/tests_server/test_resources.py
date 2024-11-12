@@ -286,13 +286,13 @@ class TestResources(TestResourceBase):
         result = self.app.post("/api/user", headers=headers, json=new_user)
         self.assertEqual(result.status_code, 400)
 
-    @patch("vantage6.server.mail_service.MailService.send_email")
+    @patch("vantage6.backend.common.mail_service.MailService.send_email")
     def test_reset_password(self, send_email):
         user_ = {"username": "root"}
         result = self.app.post("/api/recover/lost", json=user_)
         self.assertEqual(result.status_code, 200)
 
-    @patch("vantage6.server.mail_service.MailService.send_email")
+    @patch("vantage6.backend.common.mail_service.MailService.send_email")
     def test_reset_password_missing_error(self, send_email):
         result = self.app.post("/api/recover/lost", json={})
         self.assertEqual(result.status_code, 400)
