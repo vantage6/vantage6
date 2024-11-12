@@ -16,6 +16,7 @@ from vantage6.common.enum import StorePolicies
 SERVER_URL = f"http://localhost:{Ports.DEV_SERVER.value}"
 HEADERS = {"server_url": SERVER_URL, "Authorization": "Mock"}
 USERNAME = "test_user"
+EMAIL = "test@email.org"
 
 
 class TestVantage6ServerResource(TestResources):
@@ -122,7 +123,9 @@ class TestVantage6ServerResource(TestResources):
 
         # check that creating this server works
         validate_token_mock.return_value = (
-            MockResponse({"username": USERNAME}, status_code=HTTPStatus.OK),
+            MockResponse(
+                {"username": USERNAME, "email": EMAIL}, status_code=HTTPStatus.OK
+            ),
             HTTPStatus.OK,
         )
         response = self.app.post("/api/vantage6-server", headers=HEADERS, json=body_)

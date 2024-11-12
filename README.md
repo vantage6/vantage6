@@ -24,14 +24,16 @@
   <a href="#books-quickstart">Quickstart</a> •
   <a href="#project-structure">Project structure</a> •
   <a href="#gift_heart-join-the-community">Join the community</a> •
+  <a href="#scroll-license">License</a> •
+  <a href="#black_nib-code-of-conduct">Code of conduct</a> •
   <a href="#black_nib-references">References</a>
 </p>
 
 ---
 
-This repository is contains all the **vantage6** infrastructure source code. The **vantage6** technology enables to manage and deploy privacy enhancing technologies like Federated Learning (FL) and Multi-Party Computation (MPC). Please visit our [website (vantage6.ai)](https://vantage6.ai) to learn more!
+This repository is contains all the **vantage6** infrastructure source code. The **vantage6** technology enables to manage and deploy privacy enhancing technologies like Federated Learning (FL) and Multi-Party Computation (MPC). Please visit our [website](https://vantage6.ai) to learn more!
 
-You can find more (user) documentation at [readthedocs (docs.vantage6.ai)](https://docs.vantage6.ai). If you have any questions, suggestions or just want to chat about federated learning: join our [Discord (https://discord.gg/yAyFf6Y)](https://discord.gg/yAyFf6Y) channel.
+You can find more (user) documentation at [readthedocs](https://docs.vantage6.ai). If you have any questions, suggestions or just want to chat about federated learning: join our [Discord)](https://discord.gg/yAyFf6Y) channel.
 
 ## Infrastructure overview
 
@@ -116,8 +118,7 @@ client.organization.create(
 )
 ```
 
-You can find more (user) documentation at
-[readthedocs (docs.vantage6.ai)](https://docs.vantage6.ai)
+You can find more (user) documentation at [readthedocs](https://docs.vantage6.ai)
 
 ## Project structure
 
@@ -169,14 +170,23 @@ And finally there are some images released for algorithm development:
 
 ## :gift_heart: Join the community!
 
-We hope to continue developing, improving, and supporting **vantage6** with the help of
-the federated learning community. If you are interested in contributing, first of all,
-thank you! Second, please take a look at our
-[contributing guidelines](https://docs.vantage6.ai/en/main/devops/contribute.html)
+We hope to continue developing, improving, and supporting **vantage6** with the help of 
+the federated learning community. If you are interested in contributing, first of all, 
+thank you! Second, please take a look at our 
+[contributing guidelines](https://docs.vantage6.ai/en/main/devops/contribute.html) 
+and our [code of conduct](CODE_OF_CONDUCT.md).
 
 <a href="https://github.com/vantage6/vantage6/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=vantage6/vantage6" />
 </a>
+
+## :scroll: License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## :black_nib: Code of Conduct
+
+Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). **By participating in any way in this project you agree to abide by its terms.**
 
 ## :black_nib: References
 
@@ -192,5 +202,5 @@ If you are using **vantage6**, please cite this repository as well as the accomp
   <a href="https://vantage6.ai">vantage6.ai</a> •
   <a href="https://discord.gg/yAyFf6Y">Discord</a> •
   <a href="https://vantage6.discourse.group/">Discourse</a> •
-  <a href="https://docs.vantage6.ai">User documentation</a> •
+  <a href="https://docs.vantage6.ai">User documentation</a>
 </p>

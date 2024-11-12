@@ -10,6 +10,7 @@ class DefaultRole(str, Enum):
     ROOT = "Root"
     REVIEWER = "Reviewer"
     STORE_MANAGER = "Store Manager"
+    ALGORITHM_MANAGER = "Algorithm Manager"
     VIEWER = "Viewer"
     SERVER_MANAGER = "Server Manager"
 
@@ -59,22 +60,31 @@ def get_default_roles() -> list[dict]:
         "rules": REVIEWER_RULES,
     }
     # 4. Store manager role
-    STORE_MANAGER = REVIEWER_RULES + [
-        Rule.get_by_("algorithm", Operation.CREATE),
-        Rule.get_by_("algorithm", Operation.DELETE),
+    STORE_MANAGER = VIEWER_RULES + [
         Rule.get_by_("user", Operation.CREATE),
         Rule.get_by_("user", Operation.EDIT),
         Rule.get_by_("user", Operation.DELETE),
         Rule.get_by_("role", Operation.CREATE),
         Rule.get_by_("role", Operation.EDIT),
         Rule.get_by_("role", Operation.DELETE),
-        Rule.get_by_("review", Operation.CREATE),
-        Rule.get_by_("review", Operation.DELETE),
     ]
     STORE_MANAGER = {
         "name": DefaultRole.STORE_MANAGER,
-        "description": "Can manage algorithms and other store resources.",
+        "description": "Can view resources and manage users and roles.",
         "rules": STORE_MANAGER,
+    }
+    # Algorithm manager role
+    ALGORITHM_MANAGER_RULES = REVIEWER_RULES + [
+        Rule.get_by_("algorithm", Operation.CREATE),
+        Rule.get_by_("algorithm", Operation.EDIT),
+        Rule.get_by_("algorithm", Operation.DELETE),
+        Rule.get_by_("review", Operation.CREATE),
+        Rule.get_by_("review", Operation.DELETE),
+    ]
+    ALGORITHM_MANAGER = {
+        "name": DefaultRole.ALGORITHM_MANAGER,
+        "description": "Can view store resources and manage algorithms and reviews.",
+        "rules": ALGORITHM_MANAGER_RULES,
     }
     # Developer role
     DEVELOPER_RULES = VIEWER_RULES + [
@@ -104,6 +114,7 @@ def get_default_roles() -> list[dict]:
         VIEWER_ROLE,
         REVIEWER_ROLE,
         STORE_MANAGER,
+        ALGORITHM_MANAGER,
         DEVELOPER_ROLE,
         SERVER_MANAGER_ROLE,
     ]

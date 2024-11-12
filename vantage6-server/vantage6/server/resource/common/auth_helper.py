@@ -8,13 +8,15 @@ from flask import request, render_template, current_app, Flask
 from flask_mail import Mail
 from threading import Thread
 
-from vantage6.common.globals import APPNAME, MAIN_VERSION_NAME
-from vantage6.server.globals import (
+from vantage6.common.globals import APPNAME
+from vantage6.backend.common.globals import (
+    DEFAULT_EMAIL_FROM_ADDRESS,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
+)
+from vantage6.server.globals import (
     DEFAULT_MAX_FAILED_ATTEMPTS,
     DEFAULT_INACTIVATION_MINUTES,
     DEFAULT_BETWEEN_USER_EMAILS_MINUTES,
-    DEFAULT_EMAIL_FROM_ADDRESS,
 )
 from vantage6.server.model.user import User
 

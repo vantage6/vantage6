@@ -64,8 +64,9 @@ images:
 # certain database by using its label. The type is used by the
 # auto_wrapper method used by algorithms. This way the algorithm wrapper
 # knows how to read the data from the source. The auto_wrapper currently
-# supports: 'csv', 'parquet', 'sql', 'sparql', 'excel', 'omop'. If your
-# algorithm does not use the wrapper and you have a different type of
+# supports: 'csv', 'parquet', 'sql', 'sparql', 'excel', 'omop'. You can
+# also user 'folder' to mount an entire data folder as a single database.
+# If your algorithm does not use the wrapper and you have a different type of
 # data source you can specify 'other'.
 databases:
   - label: default
@@ -89,6 +90,14 @@ databases:
       cdm_database: postgres
       cdm_schema: public
       results_schema: results
+
+  # For folder mounts, directory on the host will be mounted under /mnt/<label>.
+  # In the example below, the folder `/path/to/share/with/container` will be
+  # made available as `/mnt/persistent`. The folder will be mounted read/write.
+  # **WARNING**: do *NOT* use 'data' as label.
+  - label: persistent
+    type: folder
+    uri: /path/to/share/with/container
 
 
 # end-to-end encryption settings

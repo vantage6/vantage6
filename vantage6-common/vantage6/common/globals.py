@@ -43,6 +43,9 @@ BASIC_PROCESSING_IMAGE = "harbor2.vantage6.ai/algorithms/basics"
 # Character to replace '=' with in encoded environment variables
 ENV_VAR_EQUALS_REPLACEMENT = "!"
 
+# default API path (for server and algorithm store)
+DEFAULT_API_PATH = "/api"
+
 
 class InstanceType(str, Enum):
     """The types of instances that can be created."""
@@ -64,10 +67,17 @@ class NodePolicy(str, Enum):
     REQUIRE_ALGORITHM_PULL = "require_algorithm_pull"
 
 
-class Ports(str, Enum):
+class Ports(int, Enum):
 
     HTTP = 80
     HTTPS = 443
     DEV_SERVER = 7601
     DEV_UI = 7600
     DEV_ALGO_STORE = 7602
+
+
+class AuthStatus(str, Enum):
+    """Enum containing the different statuses of the authenticable (node/user)"""
+
+    ONLINE = "online"
+    OFFLINE = "offline"

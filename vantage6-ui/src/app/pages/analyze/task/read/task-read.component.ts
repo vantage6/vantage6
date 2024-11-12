@@ -31,6 +31,8 @@ import { AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/a
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { printDate } from 'src/app/helpers/general.helper';
 import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
+import { StudyService } from 'src/app/services/study.service';
+import { Study } from 'src/app/models/api/study.model';
 
 @Component({
   selector: 'app-task-read',
@@ -51,6 +53,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
 
   task: Task | null = null;
   childTasks: BaseTask[] = [];
+  study: Study | null = null;
   algorithm: Algorithm | null = null;
   function: AlgorithmFunction | null = null;
   selectedVisualization: Visualization | null = null;
@@ -70,6 +73,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     private activatedRoute: ActivatedRoute,
     private translateService: TranslateService,
     private taskService: TaskService,
+    private studyService: StudyService,
     private algorithmService: AlgorithmService,
     private algorithmStoreService: AlgorithmStoreService,
     private chosenCollaborationService: ChosenCollaborationService,
@@ -122,13 +126,19 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     if (!this.task || sync_tasks) {
       this.task = await this.getMainTask();
       this.childTasks = await this.getChildTasks();
+      if(this.task.study)
+        this.study = await this.studyService.getStudy(this.task.study.id.toString())
     }
     try {
       if (this.task.algorithm_store) {
         const store = await this.algorithmStoreService.getAlgorithmStore(this.task.algorithm_store?.id.toString());
         this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image, store);
         this.function = this.algorithm?.functions.find((_) => _.name === this.task?.input?.method) || null;
-        this.selectedVisualization = this.function?.ui_visualizations?.[0] || null;
+        if (!this.selectedVisualization) {
+          // by checking in if statement whether visualization was already set, we prevent
+          // the visualization from being reset to the first one when the task is reloaded
+          this.selectedVisualization = this.function?.ui_visualizations?.[0] || null;
+        }
       } else {
         this.algorithmNotFoundInStore = true;
       }
@@ -260,6 +270,15 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       return textResult.substring(0, 100) + '...';
     }
     return textResult;
+  }
+
+  getParameterDisplayName(parameter: TaskParameter): string {
+    const argument: Argument | undefined = this.function?.arguments.find((_) => _.name === parameter.label);
+    if (argument) {
+      return argument.display_name ?? argument.name
+    } else {
+      return parameter.label;
+    }
   }
 
   getParameterValueAsString(parameter: TaskParameter): string {

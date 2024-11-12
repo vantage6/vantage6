@@ -1,0 +1,219 @@
+<!--
+	HTML Email Starter Kit
+	Documentation: https://github.com/timothylong/html-email-starter-kit
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" initial-scale="1" />
+    <!--[if !mso]>
+      <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <![endif]-->
+    <meta name="x-apple-disable-message-reformatting" />
+    <title></title>
+    <!--[if mso]>
+      <style>
+        * {
+          font-family: sans-serif !important;
+        }
+      </style>
+    <![endif]-->
+    <!--[if !mso]><!-->
+    <!-- Insert font reference, e.g. <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700" rel="stylesheet"> -->
+    <!--<![endif]-->
+    <style>
+      *,
+      *:after,
+      *:before {
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+      }
+      * {
+        -ms-text-size-adjust: 100%;
+        -webkit-text-size-adjust: 100%;
+      }
+      html,
+      body,
+      .document {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 1.05em;
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
+      div[style*="margin: 16px 0"] {
+        margin: 0 !important;
+      }
+      table,
+      td {
+        mso-table-lspace: 0pt;
+        mso-table-rspace: 0pt;
+      }
+      table {
+        border-spacing: 0;
+        border-collapse: collapse;
+        table-layout: fixed;
+        margin: 0 auto;
+      }
+      img {
+        -ms-interpolation-mode: bicubic;
+        max-width: 100%;
+        border: 0;
+      }
+      *[x-apple-data-detectors] {
+        color: inherit !important;
+        text-decoration: none !important;
+      }
+      .x-gmail-data-detectors,
+      .x-gmail-data-detectors *,
+      .aBn {
+        border-bottom: 0 !important;
+        cursor: default !important;
+      }
+      .btn {
+        -webkit-transition: all 200ms ease;
+        transition: all 200ms ease;
+      }
+      .btn:hover {
+        background-color: dodgerblue;
+      }
+      @media screen and (max-width: 750px) {
+        .container {
+          width: 100%;
+          margin: auto;
+        }
+        .stack {
+          display: block;
+          width: 100%;
+          max-width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div style="display: none; max-height: 0px; overflow: hidden">
+      <!-- Preheader message here -->
+    </div>
+    <div style="display: none; max-height: 0px; overflow: hidden">
+      &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
+    </div>
+    <table
+      style="background-color: #fff"
+      role="presentation"
+      aria-hidden="true"
+      cellspacing="0"
+      cellpadding="0"
+      border="0"
+      align="center"
+      class="document"
+    >
+      <tr>
+        <td valign="top">
+          <table
+            role="presentation"
+            aria-hidden="true"
+            cellspacing="0"
+            cellpadding="0"
+            border="0"
+            align="center"
+            width="750"
+            class="container"
+          >
+            <tr>
+              <td>
+                <table
+                  role="presentation"
+                  aria-hidden="true"
+                  cellspacing="0"
+                  cellpadding="0"
+                  border="0"
+                  align="center"
+                  width="100%"
+                >
+                  <tr>
+                    <td width="250"></td>
+                    <td style="padding: 20px">
+                      <img
+                        src="https://raw.githubusercontent.com/IKNL/guidelines/master/resources/logos/vantage6.png"
+                        width="250"
+                      />
+                    </td>
+                    <td width="250"></td>
+                  </tr>
+                  <tr style="background-color: #f9f9f9" width="100%">
+                    <td colspan="3" style="padding: 40px; color: #0f497b">
+                      Dear <strong>{{developer_username}}</strong>,
+                      <p>
+                        Your algorithm '{{algorithm_name}}' has been
+                        {{status_text}} for the algorithm store {{store_url}}.
+                      </p>
+                      <p>{{final_paragraph}}</p>
+                      <p>
+                        Sincerely,<br />
+                        Your vantage6 support team
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+          <table
+            role="presentation"
+            aria-hidden="true"
+            cellspacing="0"
+            cellpadding="0"
+            border="0"
+            align="center"
+            width="750"
+            class="container"
+          >
+            <tr style="font-size: 0.6em">
+              <td style="padding-top: 20px; padding-bottom: 20px">
+                <a
+                  style="color: #0f497b; font-weight: bold"
+                  href="https://vantage6.ai"
+                  >vantage6.ai</a
+                >
+              </td>
+              <td
+                style="
+                  padding-top: 20px;
+                  padding-bottom: 20px;
+                  text-align: center;
+                "
+              >
+                <a
+                  style="color: #0f497b; font-weight: bold"
+                  href="https://discord.gg/yAyFf6Y"
+                  >Join our Discord channel</a
+                >
+              </td>
+              <td
+                style="
+                  padding-top: 20px;
+                  padding-bottom: 20px;
+                  text-align: right;
+                "
+              >
+                <a
+                  style="color: #0f497b; font-weight: bold"
+                  href="mailto:{{support_email}}"
+                  >{{support_email}}</a
+                >
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -8,6 +8,7 @@ from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.server.start import cli_server_start
 from vantage6.cli.dev.utils import get_dev_server_context
+from vantage6.common.globals import DEFAULT_API_PATH
 
 
 @click.command()
@@ -96,7 +97,8 @@ def start_demo_network(
     client.authenticate(USERNAME, PASSWORD)
     existing_stores = client.store.list().get("data", [])
     existing_urls = [store["url"] for store in existing_stores]
-    local_store_url = f"http://localhost:{store_ctx.config['port']}"
+    api_path = store_ctx.config.get("api_path", DEFAULT_API_PATH)
+    local_store_url = f"http://localhost:{store_ctx.config['port']}{api_path}"
     if not local_store_url in existing_urls:
         client.store.create(
             algorithm_store_url=local_store_url,

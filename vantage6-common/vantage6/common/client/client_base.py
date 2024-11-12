@@ -599,3 +599,20 @@ class ClientBase(object):
                 self.parent = parent.parent
             else:
                 self.parent = parent
+
+        @staticmethod
+        def _clean_update_data(data: dict) -> dict:
+            """
+            Remove key-value pair where the value is equal to `None`
+
+            Parameters
+            ----------
+            data: dict
+                Items to filter
+
+            Returns
+            -------
+            dict
+                Input `data` but with the key-value pair where value is `None` removed
+            """
+            return {k: v for k, v in data.items() if v is not None}

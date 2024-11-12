@@ -7,13 +7,13 @@ from sqlalchemy import or_
 
 from vantage6.server import db
 from vantage6.backend.common.resource.pagination import Pagination
+from vantage6.backend.common import get_server_url
 from vantage6.server.resource.common.input_schema import AlgorithmStoreInputSchema
 from vantage6.server.permission import RuleCollection, Operation as P
 from vantage6.server.resource.common.output_schema import AlgorithmStoreSchema
 from vantage6.server.resource import with_user, with_user_or_node, ServicesResources
 from vantage6.server.algo_store_communication import (
     post_algorithm_store,
-    get_server_url,
     request_algo_store,
 )
 
@@ -248,7 +248,7 @@ class AlgorithmStores(AlgorithmStoreBase):
                     description: Human readable name for the algorithm store
                   algorithm_store_url:
                     type: string
-                    description: URL to the algorithm store
+                    description: URL to the algorithm store, including the API path
                   server_url:
                     type: string
                     description: URL to this vantage6 server. This is used to

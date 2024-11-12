@@ -2,11 +2,19 @@ import logging
 import datetime
 
 from http import HTTPStatus
-from flask import request, g
+from threading import Thread
+
+from flask import request, g, render_template, Flask, current_app
+from flask_mail import Mail
 from flask_restful import Api
 
 from vantage6.common import logger_name
 from vantage6.backend.common.resource.pagination import Pagination
+from vantage6.backend.common.globals import (
+    DEFAULT_EMAIL_FROM_ADDRESS,
+    DEFAULT_SUPPORT_EMAIL_ADDRESS,
+)
+from vantage6.backend.common import get_server_url
 
 from vantage6.algorithm.store.model.common.enums import ReviewStatus, AlgorithmStatus
 from vantage6.algorithm.store.permission import PermissionManager, Operation as P
@@ -317,7 +325,92 @@ class Reviews(AlgorithmStoreResources):
         algorithm.status = AlgorithmStatus.UNDER_REVIEW
         algorithm.save()
 
+        # send email to the reviewer to notify them of the new review
+        Thread(
+            target=self._send_email_to_reviewer,
+            args=(
+                current_app._get_current_object(),
+                self.mail,
+                review,
+                g.user.username,
+                self.config,
+                request.headers.get("store_url"),
+            ),
+        ).start()
+
         return review_output_schema.dump(review), HTTPStatus.CREATED
+
+    @staticmethod
+    def _send_email_to_reviewer(
+        app: Flask,
+        mail: Mail,
+        review: db.Review,
+        review_assigner_username: str,
+        config: dict,
+        store_url: str | None,
+    ) -> None:
+        """
+        Send an email to the reviewer to notify them of a new review assignment.
+
+        Parameters
+        ----------
+        app : Flask
+            Flask application instance
+        mail : Mail
+            Flask-Mail instance
+        review : db.Review
+            Review instance
+        review_assigner_username : str
+            Username of the user that assigned the review
+        config : dict
+            Configuration dictionary
+        store_url : str | None
+            URL of the store API
+        """
+        smtp_settings = config.get("smtp", {})
+        if not smtp_settings:
+            log.warning(
+                "No SMTP settings found. No emails will be sent to alert the reviewer "
+                "that they have been assigned a review."
+            )
+            return
+        email_sender = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
+        support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
+
+        # get the reviewer's email address
+        # TODO remove v5+ as all users should have an email address
+        if not review.reviewer.email:
+            log.warning(
+                "No email address found for the reviewer %s (id %s). No email will be "
+                "sent to alert the reviewer that they have been assigned a review.",
+                review.reviewer.username,
+                review.reviewer_id,
+            )
+            return
+        log.info(
+            "Sending email to reviewer %s (id %s) to notify them of a new review "
+            "assignment.",
+            review.reviewer.username,
+            review.reviewer_id,
+        )
+
+        template_vars = {
+            "reviewer_username": review.reviewer.username,
+            "algorithm_name": review.algorithm.name,
+            "dev_username": review.algorithm.developer.username,
+            "assigner_username": review_assigner_username,
+            "store_url": get_server_url(config, store_url),
+            "server_url": review.reviewer.server.url,
+            "support_email": support_email,
+        }
+        with app.app_context():
+            mail.send_email(
+                subject="New vantage6 algorithm to review",
+                sender=email_sender,
+                recipients=[review.reviewer.email],
+                text_body=render_template("mail/new_review.txt", **template_vars),
+                html_body=render_template("mail/new_review.html", **template_vars),
+            )
 
 
 class Review(AlgorithmStoreResources):
@@ -416,7 +509,104 @@ class Review(AlgorithmStoreResources):
         return {"msg": f"Review id={id} has been deleted"}, HTTPStatus.OK
 
 
-class ReviewApprove(AlgorithmStoreResources):
+class ReviewUpdateResources(AlgorithmStoreResources):
+
+    @staticmethod
+    def send_email_review_update(
+        app: Flask,
+        mail: Mail,
+        algorithm: db.Algorithm,
+        is_approved: bool,
+        config: dict,
+        store_url: str | None,
+    ) -> None:
+        """
+        Send an email to the algorithm developer to alert them that their algorithm has
+        been rejected or approved.
+
+        Parameters
+        ----------
+        app : Flask
+            Flask application instance
+        mail : Mail
+            Flask-Mail instance
+        algorithm : db.Algorithm
+            Algorithm instance
+        is_approved : bool
+            Whether the algorithm has been approved (True) or rejected (False)
+        config : dict
+            Configuration dictionary
+        store_url : str | None
+            URL of the store API
+        """
+        smtp_settings = config.get("smtp", {})
+        if not smtp_settings:
+            log.warning(
+                "No SMTP settings found. No emails will be sent to alert the reviewer "
+                "that they have been assigned a review."
+            )
+            return
+        email_sender = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
+        support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
+
+        # get the developer's email address
+        # TODO remove v5+ as all users should have an email address
+        status_text = "approved" if is_approved else "rejected"
+        if not algorithm.developer.email:
+            log.warning(
+                "No email address found for the developer %s (id %s). No email will be "
+                "sent to alert the developer that their algorithm has been %s.",
+                algorithm.developer.username,
+                algorithm.developer_id,
+                status_text,
+            )
+            return
+        log.info(
+            "Sending email to developer %s (id %s) to notify them that their algorithm "
+            "has been %s.",
+            algorithm.developer.username,
+            algorithm.developer_id,
+            status_text,
+        )
+
+        final_paragraph = (
+            (
+                "Congratulations! Your algorithm is now available to be used by "
+                "everyone that has access to this algorithm store."
+            )
+            if is_approved
+            else (
+                "Unfortunately, your algorithm has been rejected. Please check the "
+                "review comments for more information, and take them into account "
+                "before resubmitting your algorithm."
+            )
+        )
+
+        template_vars = {
+            "developer_username": algorithm.developer.username,
+            "algorithm_name": algorithm.name,
+            "status_text": status_text,
+            "store_url": get_server_url(config, store_url),
+            "final_paragraph": final_paragraph,
+            "support_email": support_email,
+        }
+        with app.app_context():
+            mail.send_email(
+                subject=(
+                    f"Your Vantage6 algorithm {algorithm.name} has been {status_text}"
+                ),
+                sender=email_sender,
+                recipients=[algorithm.developer.email],
+                text_body=render_template(
+                    "mail/algorithm_review_finalized.txt", **template_vars
+                ),
+                html_body=render_template(
+                    "mail/algorithm_review_finalized.html", **template_vars
+                ),
+            )
+
+
+class ReviewApprove(ReviewUpdateResources):
     """Resource for the /review/<id>/approve endpoint"""
 
     @with_permission("review", P.EDIT)
@@ -486,11 +676,24 @@ class ReviewApprove(AlgorithmStoreResources):
         if algorithm.are_all_reviews_approved():
             algorithm.approve()
 
+            # notify the developer by email that their algorithm has been approved
+            Thread(
+                target=self.send_email_review_update,
+                args=(
+                    current_app._get_current_object(),
+                    self.mail,
+                    algorithm,
+                    True,
+                    self.config,
+                    request.headers.get("store_url"),
+                ),
+            ).start()
+
         log.info("Review with id=%s has been approved", id)
         return {"msg": f"Review id={id} has been approved"}, HTTPStatus.OK
 
 
-class ReviewReject(AlgorithmStoreResources):
+class ReviewReject(ReviewUpdateResources):
     """Resource for the /review/<id>/reject endpoint"""
 
     @with_permission("review", P.EDIT)
@@ -567,8 +770,104 @@ class ReviewReject(AlgorithmStoreResources):
             other_review.status = ReviewStatus.DROPPED
             other_review.save()
 
+            # notify the reviewer by email that this review is no longer necessary
+            Thread(
+                target=self._send_email_review_dropped,
+                args=(
+                    current_app._get_current_object(),
+                    self.mail,
+                    other_review,
+                    self.config,
+                    request.headers.get("store_url"),
+                ),
+            ).start()
+
+        # Notify the developer that their algorithm has been rejected
+        Thread(
+            target=self.send_email_review_update,
+            args=(
+                current_app._get_current_object(),
+                self.mail,
+                algorithm,
+                False,
+                self.config,
+                request.headers.get("store_url"),
+            ),
+        ).start()
+
         # note that we do not invalidate the previously approved versions here, as the
         # algorithm is rejected and not replaced by a new version
 
         log.info("Review with id=%s has been rejected", id)
         return {"msg": f"Review id={id} has been rejected"}, HTTPStatus.OK
+
+    @staticmethod
+    def _send_email_review_dropped(
+        app: Flask,
+        mail: Mail,
+        review: db.Review,
+        config: dict,
+        store_url: str | None,
+    ) -> None:
+        """
+        Send an email to the reviewer to notify them that their review is no longer
+        necessary, because the algorithm has been rejected.
+
+        Parameters
+        ----------
+        app : Flask
+            Flask application instance
+        mail : Mail
+            Flask-Mail instance
+        review : db.Review
+            Review instance
+        config : dict
+            Configuration dictionary
+        store_url : str | None
+            URL of the store API
+        """
+        smtp_settings = config.get("smtp", {})
+        if not smtp_settings:
+            log.warning(
+                "No SMTP settings found. No emails will be sent to alert the reviewer "
+                "that their review is no longer required."
+            )
+            return
+        email_sender = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
+        support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
+
+        # get the reviewer's email address
+        # TODO remove v5+ as all users should have an email address
+        if not review.reviewer.email:
+            log.warning(
+                "No email address found for the reviewer %s (id %s). No email will be "
+                "sent to alert the reviewer that their review is no longer required.",
+                review.reviewer.username,
+                review.reviewer_id,
+            )
+            return
+        log.info(
+            "Sending email to reviewer %s (id %s) to notify them that their review is "
+            "no longer required.",
+            review.reviewer.username,
+            review.reviewer_id,
+        )
+
+        template_vars = {
+            "reviewer_username": review.reviewer.username,
+            "algorithm_name": review.algorithm.name,
+            "store_url": get_server_url(config, store_url),
+            "support_email": support_email,
+        }
+        with app.app_context():
+            mail.send_email(
+                subject="Vantage6 algorithm review no longer required",
+                sender=email_sender,
+                recipients=[review.reviewer.email],
+                text_body=render_template(
+                    "mail/review_no_longer_required.txt", **template_vars
+                ),
+                html_body=render_template(
+                    "mail/review_no_longer_required.html", **template_vars
+                ),
+            )

@@ -1,0 +1,9 @@
+Dear {{reviewer_username}},
+
+You were previously assigned to review the algorithm '{{algorithm_name}}' in the
+algorithm store {{store_url}}. However, the algorithm has been rejected by other
+reviewers. This email serves to alert you that your review is therefore no longer
+required.
+
+Sincerely,
+Your vantage6 support team
