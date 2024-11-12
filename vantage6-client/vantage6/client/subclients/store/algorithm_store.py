@@ -132,7 +132,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         Parameters
         ----------
         algorithm_store_url : str
-            The url of the algorithm store.
+            The url of the algorithm store, including the API path.
         name : str
             The name of the algorithm store.
         collaboration : int, optional

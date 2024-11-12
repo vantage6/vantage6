@@ -40,7 +40,7 @@ ALGORITHM_TEMPLATE_REPO = "gh:vantage6/v6-algorithm-template.git"
 DIAGNOSTICS_IMAGE = "harbor2.vantage6.ai/algorithms/diagnostic"
 
 # Address of community algorithm store
-COMMUNITY_STORE = "https://store.cotopaxi.vantage6.ai"
+COMMUNITY_STORE = "https://store.cotopaxi.vantage6.ai/api"
 
 
 class ServerType(str, Enum):
