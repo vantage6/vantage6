@@ -29,7 +29,7 @@ export class AlgorithmService {
   }
 
   async getAlgorithmsForAlgorithmStore(algorithmStore: AlgorithmStore, params: object = {}): Promise<Algorithm[]> {
-    const result = await this.apiService.getForAlgorithmApi<Pagination<Algorithm>>(`${algorithmStore.url}/api`, '/algorithm', {
+    const result = await this.apiService.getForAlgorithmApi<Pagination<Algorithm>>(`${algorithmStore.url}`, '/algorithm', {
       per_page: 9999,
       ...params
     });
@@ -43,7 +43,7 @@ export class AlgorithmService {
   }
 
   async getPaginatedAlgorithms(store: AlgorithmStore, currentPage: number, params: object = {}): Promise<Pagination<Algorithm>> {
-    const result = await this.apiService.getForAlgorithmApiWithPagination<Algorithm>(store.url, '/api/algorithm', currentPage, params);
+    const result = await this.apiService.getForAlgorithmApiWithPagination<Algorithm>(store.url, '/algorithm', currentPage, params);
     result.data.forEach((algorithm) => {
       algorithm.algorithm_store_url = store.url;
       algorithm.algorithm_store_id = store.id;
@@ -52,7 +52,7 @@ export class AlgorithmService {
   }
 
   async getAlgorithm(algorithm_store_url: string, id: string): Promise<Algorithm> {
-    const result = await this.apiService.getForAlgorithmApi<Algorithm>(algorithm_store_url, `/api/algorithm/${id}`);
+    const result = await this.apiService.getForAlgorithmApi<Algorithm>(algorithm_store_url, `/algorithm/${id}`);
     return result;
   }
 
@@ -69,7 +69,7 @@ export class AlgorithmService {
     algorithm = this.cleanAlgorithmForm(algorithm);
     const algorithmStore = this.chosenStoreService.store$.value;
     if (!algorithmStore) return;
-    const result = await this.apiService.postForAlgorithmApi<Algorithm>(algorithmStore.url, '/api/algorithm', algorithm);
+    const result = await this.apiService.postForAlgorithmApi<Algorithm>(algorithmStore.url, '/algorithm', algorithm);
     return result;
   }
 
@@ -77,20 +77,20 @@ export class AlgorithmService {
     algorithm = this.cleanAlgorithmForm(algorithm);
     const algorithmStore = this.chosenStoreService.store$.value;
     if (!algorithmStore) return;
-    const result = await this.apiService.patchForAlgorithmApi<Algorithm>(algorithmStore.url, `/api/algorithm/${algorithmId}`, algorithm);
+    const result = await this.apiService.patchForAlgorithmApi<Algorithm>(algorithmStore.url, `/algorithm/${algorithmId}`, algorithm);
     return result;
   }
 
   async deleteAlgorithm(algorithmId: string): Promise<void> {
     const algorithmStore = this.chosenStoreService.store$.value;
     if (!algorithmStore) return;
-    return await this.apiService.deleteForAlgorithmApi(algorithmStore.url, `/api/algorithm/${algorithmId}`);
+    return await this.apiService.deleteForAlgorithmApi(algorithmStore.url, `/algorithm/${algorithmId}`);
   }
 
   async invalidateAlgorithm(algorithmId: string): Promise<void> {
     const algorithmStore = this.chosenStoreService.store$.value;
     if (!algorithmStore) return;
-    return await this.apiService.postForAlgorithmApi(algorithmStore.url, `/api/algorithm/${algorithmId}/invalidate`, {});
+    return await this.apiService.postForAlgorithmApi(algorithmStore.url, `/algorithm/${algorithmId}/invalidate`, {});
   }
 
   private getAlgorithmStoresForCollaboration(): AlgorithmStore[] {

@@ -47,7 +47,7 @@ export class AlgorithmStoreService {
   }
 
   async getAlgorithmStorePolicies(store_url: string, public_: boolean = false): Promise<StorePolicies> {
-    const endpoint = public_ ? '/api/policy/public' : '/api/policy';
+    const endpoint = public_ ? '/policy/public' : '/policy';
     return await this.apiService.getForAlgorithmApi<StorePolicies>(store_url, endpoint);
   }
 }
