@@ -283,6 +283,13 @@ combination with the options ``--mount-src`` and optionally ``--image``.
   the ``--mount-src`` option will only overwrite the source code and not
   re-install dependencies.
 
+Often, it is helpful to run the server and nodes locally with the ``v6 dev``
+:ref:`commands <local-test>` to test your changes. With those commands, you can run quickly setup
+and manage a local network to test your changes. If you are working on a change in the
+server, note that you should still restart the server with ``--mount-src`` and/or
+``--image`` to apply your changes, but the ``v6 dev`` commands can be used to quickly
+generate nodes and start a UI so that testing your changes is easier.
+
 .. note::
 
   If you are using Docker Desktop (which is usually the case if you are on
