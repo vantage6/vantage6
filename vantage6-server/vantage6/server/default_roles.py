@@ -67,7 +67,6 @@ def get_default_roles(db) -> list[dict]:
         db.Rule.get_by_("event", Scope.ORGANIZATION, Operation.RECEIVE),
         db.Rule.get_by_("event", Scope.COLLABORATION, Operation.RECEIVE),
         db.Rule.get_by_("study", Scope.ORGANIZATION, Operation.VIEW),
-        db.Rule.get_by_("session", Scope.OWN, Operation.VIEW),
         db.Rule.get_by_("session", Scope.ORGANIZATION, Operation.VIEW),
         db.Rule.get_by_("session", Scope.COLLABORATION, Operation.VIEW),
     ]
