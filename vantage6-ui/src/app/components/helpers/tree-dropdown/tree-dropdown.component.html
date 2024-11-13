@@ -79,7 +79,11 @@
             (change)="changedNode(node)"
           >
           </mat-radio-button>
-          <div class="tree-dropdown__node-label" (click)="changedNode(node)" [innerHTML]="markupNodeLabel(node)"></div>
+          <div
+            class="tree-dropdown__node-label"
+            (click)="changedNode(node)"
+            [innerHtml]="node?.label | highlight: treeSearch.config.searchInput : treeSearch.config.searchActive"
+          ></div>
         </mat-tree-node>
 
         <ng-container *matTreeNodeDef="let node; when: hasChild">
@@ -119,7 +123,11 @@
               color="primary"
               (change)="changedNode(node)"
             ></mat-radio-button>
-            <div class="tree-dropdown__node-label" (click)="changedNode(node)" [innerHTML]="markupNodeLabel(node)"></div>
+            <div
+              class="tree-dropdown__node-label"
+              (click)="changedNode(node)"
+              [innerHtml]="node?.label | highlight: treeSearch.config.searchInput : treeSearch.config.searchActive"
+            ></div>
           </mat-tree-node>
         </ng-container>
       </mat-tree>

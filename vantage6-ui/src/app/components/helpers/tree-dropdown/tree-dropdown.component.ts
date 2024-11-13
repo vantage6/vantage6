@@ -1,6 +1,4 @@
-// TODO markupNodeLabel needs to be replaced by HighlightedTextPipe introduced in task #1361 (PR in review)
-
-import { Component, Input, OnInit, ElementRef, ViewChild, Output, EventEmitter, SimpleChanges, ViewContainerRef } from '@angular/core';
+import { Component, Input, OnInit, ElementRef, ViewChild, Output, EventEmitter, SimpleChanges } from '@angular/core';
 import { SelectionModel } from '@angular/cdk/collections';
 import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree';
 import { CustomTreeControl } from './custom-tree-control';
@@ -315,21 +313,6 @@ export class TreeDropdownComponent implements OnInit {
   public setOverlayWidth() {
     const formFieldWidth = this.formField?._elementRef.nativeElement.offsetWidth ?? 'auto';
     this.overlayWidth = formFieldWidth;
-  }
-
-  public markupNodeLabel(node: ITreeInputNodeFlat): string {
-    if (this.treeSearch?.config && this.treeSearch?.config?.searchActive !== false) {
-      const searchIndex = node?.label?.toLowerCase()?.indexOf(this.treeSearch?.config?.searchInput?.toLowerCase());
-      if (searchIndex !== -1) {
-        const startIndex = searchIndex;
-        const endIndex = searchIndex + this.treeSearch?.config?.searchInput?.length;
-        const firstPart = node?.label?.substring(0, startIndex);
-        const searchPart = node?.label?.substring(startIndex, endIndex);
-        const lastPart = node?.label?.substring(endIndex, node?.label?.length);
-        return `${firstPart}<strong>${searchPart}</strong>${lastPart}`.split(' ').join('&nbsp;');
-      }
-    }
-    return `${node?.label}`;
   }
 
   private uniqDataNodes = (dataNodes: ITreeInputNodeFlat[], param: string) => {
