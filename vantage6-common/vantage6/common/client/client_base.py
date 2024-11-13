@@ -600,6 +600,7 @@ class ClientBase(object):
             else:
                 self.parent = parent
 
+        @staticmethod
         def _clean_update_data(data: dict) -> dict:
             """
             Remove key-value pair where the value is equal to `None`

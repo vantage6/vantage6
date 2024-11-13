@@ -64,8 +64,9 @@ images:
 # certain database by using its label. The type is used by the
 # auto_wrapper method used by algorithms. This way the algorithm wrapper
 # knows how to read the data from the source. The auto_wrapper currently
-# supports: 'csv', 'parquet', 'sql', 'sparql', 'excel', 'omop'. If your
-# algorithm does not use the wrapper and you have a different type of
+# supports: 'csv', 'parquet', 'sql', 'sparql', 'excel', 'omop'. You can
+# also user 'folder' to mount an entire data folder as a single database.
+# If your algorithm does not use the wrapper and you have a different type of
 # data source you can specify 'other'.
 databases:
   - label: default

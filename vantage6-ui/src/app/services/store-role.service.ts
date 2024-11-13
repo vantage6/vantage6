@@ -11,19 +11,19 @@ export class StoreRoleService {
   constructor(private apiService: ApiService) {}
 
   async getRoles(store_url: string): Promise<StoreRole[]> {
-    const result = await this.apiService.getForAlgorithmApi<Pagination<StoreRole>>(store_url, '/api/role', { per_page: 9999 });
+    const result = await this.apiService.getForAlgorithmApi<Pagination<StoreRole>>(store_url, '/role', { per_page: 9999 });
     return result.data;
   }
 
   async getPaginatedRoles(store_url: string, currentPage: number, parameters?: GetStoreRoleParameters): Promise<Pagination<StoreRole>> {
-    const result = await this.apiService.getForAlgorithmApiWithPagination<StoreRole>(store_url, `/api/role`, currentPage, {
+    const result = await this.apiService.getForAlgorithmApiWithPagination<StoreRole>(store_url, `/role`, currentPage, {
       ...parameters
     });
     return result;
   }
 
   async getRole(store_url: string, id: string, lazyProperties: StoreRoleLazyProperties[]): Promise<StoreRole> {
-    const result = await this.apiService.getForAlgorithmApi<StoreRole>(store_url, `/api/role/${id}`);
+    const result = await this.apiService.getForAlgorithmApi<StoreRole>(store_url, `/role/${id}`);
 
     const role = { ...result, users: [] };
     await getLazyProperties(result, role, lazyProperties, this.apiService, store_url);
