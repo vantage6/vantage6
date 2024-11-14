@@ -1,8 +1,24 @@
 Sessions
 --------
 
-Sessions are an important feature as all functions executed on the data are connected
-to a session.
+Sessions have been added to vantage6 to provide a way to prepare a dataset that can be
+re-used in many computation tasks. They are important to ensure that vantage6 can
+interact with the data in a flexible and reproducible way.
+Sessions are especially useful when the data is large and
+querying it from the nodes is slow. Also, it allows for flexible pre-processing of the
+data and storing the final result reliably and reusable.
+
+A session is started by extracting data from one or more of the node's databases, and
+can be submitted to as many pre-processing steps as required. When the data is ready,
+the session can be used to perform as many computations on the data as you wish. It is
+also possible to pre-process the data further after computation tasks have been executed.
+
+Data that is extracted from a node database is added to the session as a dataframe. Each
+session contains one or more data frames. These data frames can be used for computation
+tasks. Some computation tasks may use all data frames in the session, while others may
+just use one.
+
+Sessions are related to the other entities in the following way:
 
 .. uml::
 
@@ -27,99 +43,103 @@ to a session.
     Task "n" -- "1" Session
     Task "0" - "1" DataFrame
 
-Sessions provide a way to store data between different tasks. A session can contain
-several data frames. A data frame is constructed from the source data. These data
-frames can be used for computation tasks.
+Data frames are the representation of the data that will eventually be used in the most
+important tasks - computation tasks that produces the research results. Data frames
+provide the following features:
 
-Data frames provide the following features:
-
-- They allow for the data to be loaded once and then used multiple times. This
+- The data is loaded in the data frames once and can then be used multiple times. This
   saves the time of having to load the data from the source every time a new task
-  is executed. This is especially useful when the data is large and the source
-  is slow.
-- They allow to be modified. For example by adding or removing columns, or by
-  filtering rows. This can be useful when the data needs to be preprocessed before
-  it can be used in a computation task.
-- They can be shared with other users in their organization or with the entire
-  collaboration.
-- They provide a standardized way to store data. This makes it easier to write
-  algorithms that can be used in multiple collaborations.
-- Data extraction, pre-processing and computation on the data are seperated processes.
-
-  - This makes it easier to share algorithms with other projects.
-  - The different steps can be written in different programming languages.
-  - There is more security, as the compute tasks no longer have access to the source data.
-
-- Data frames can share standardized metadata. This makes it easier to provide
-  information about the data to the users of the data.
+  is executed. This is especially useful when the database is large and retrieving the
+  data is slow.
+- Data frames can be modified using pre-processing tasks. These can, for example, add or
+  remove columns, or filter rows. The latest version of the data frame is used in the
+  computation tasks.
+- Data frames can have different permission scopes. You can create data frames that only
+  you are allowed to use, but you can also share them with other users in your
+  organization or with the entire collaboration.
+- Data frames provide a standardized way to store data. This makes it easier to write
+  algorithms that can be used across different collaborations.
+- Data extraction, pre-processing and computation on the data are separated processes.
+  This makes it easier to share algorithms with other projects. It even allows for the
+  different steps to be written in different programming languages. Finally, it is also
+  more secure, as the compute tasks no longer have access to the source data.
+- Data frames have standardized metadata that they can share. This allows the
+  infrastructure to provide the researchers with information about the data, such as
+  which columns are available, and what the data types of those columns are.
 
 Function actions
 ^^^^^^^^^^^^^^^^
-Every function that is being executed in a vantage6 network is linked to one of the
+
+Every algorithm function that is being executed in a vantage6 network is one of the
 following actions:
 
 - ``data-extraction``: function to retrieve the data from the source, and store it in
   a data frame.
 - ``pre-processing``: function to modify the data frame.
-- ``compute``: function to perform the computation on the data frame.
+- ``compute``: function to use the data frame to answer a research question. This can be
+  a machine learning model, a statistical analysis, or any other type of computation.
+
+These actions are managed by the infrastructure. For example, the infrastructure ensures
+that data extraction functions are the only functions that are allowed to access the
+source data.
+
+The ``compute`` action can be triggered by the user when the ``/task`` endpoint is used.
+In the Python client this is done by calling the ``client.task.create()`` method. The
+``data extraction`` and ``pre-processing`` actions are triggered when the ``/session``
+endpoints are used. In the Python client this is done by calling the
+``client.dataframe.create()`` methods and ``client.dataframe.preprocess()`` methods.
+
+
 
 .. uml::
-
+    :caption: An illustration of how the actions are related to each other. In this
+        example, there are ``n`` pre-processing steps and ``m`` compute steps. First,
+        the data is extracted. Then, the data is pre-processed. Finally, the data is
+        used to compute the research results. Note that in this schema, the first
+        compute task is done after the first pre-processing step - not after ``n``
+        steps. At any point in the pre-processing steps, it is possible to send a task
+        to the current data frame. It is thus also possible to execute a compute task
+        directly after data extraction.
     !theme superhero-outline
     skinparam linetype ortho
     left to right direction
 
 
     package "Modify Session" {
-        package "data-extraction" {
-            rectangle step as A
+        package "Data extraction" {
+            rectangle Extract as A
         }
-        package "pre-processing" {
-            rectangle "step 1" as C
-            rectangle "step n" as D
+        package "Pre-processing" {
+            rectangle "Step 1" as C
+            rectangle "Step n" as D
         }
     }
 
-    package "compute" {
+    package "Compute" {
         rectangle 1 as E
         rectangle 2 as F
-        rectangle N as N
+        rectangle m as M
     }
 
-    rectangle server as server
+    rectangle Server as server
 
     A --> C
     C --> D
     C --> E
     D --> F
-    D --> N
+    D --> M
     E --> server
     F --> server
-    N --> server
-
-
-These actions are managed by the infrastructure. For example, the infrastructure ensures
-that the data-extraction function is the only function that has access to the source
-data.
-
-The ``compute`` action can be triggered by the user when the ``/task`` endpoint is used.
-In the Python client this is done by calling the ``client.task.create()`` method. The
-``data-extraction`` and ``pre-processing`` actions are triggered when the ``/session``
-endpoints are used. In the Python client this is done by calling the
-``client.dataframe.create()`` methods and ``client.dataframe.preprocess()`` methods.
+    M --> server
 
 Dependent tasks
 ^^^^^^^^^^^^^^^
-There are basically two different types of tasks:
 
-- Tasks that modify the data frame. These tasks are executing a ``data-extraction``
-  or a ``pre-processing`` action.
-- Tasks that are computing on the data frame. These tasks are executing a ```compute```
-  action.
-
-In order to ensure that the data frame is not modified while a task is computing on it,
-the infrastructure ensures that the tasks are executed in the correct order. This is
-done by making the tasks dependent on each other.
+As described above, there are tasks that modify the data frame (``data extraction`` and
+``pre-processing``) and tasks that compute on the data frame (``compute``). In order to
+ensure that the data frame is not modified while another task is using it to compute
+analysis results, the infrastructure ensures that such tasks are executed in the
+proper order. This is done by making the tasks dependent on each other.
 
 There are three senarions:
 
@@ -127,8 +147,8 @@ There are three senarions:
 - A ``pre-processing`` task is *always* dependent on the previous ``pre-processing`` or,
   in case there is none, the ``data-extraction`` task. But it is also dependent on all
   ``compute`` tasks that have been requested prior to the new ``pre-processing`` task.
-- A ``compute`` task is *always* dependent on the last ``pre-processing`` task or in case
-  there is none the ``data-extraction`` task.
+- A ``compute`` task is *always* dependent on the last ``pre-processing`` task or, in
+  case there is none, the ``data-extraction`` task.
 
 .. uml::
     :caption: Example dependency tasks tree in a single dataframe. Note that (7) is
@@ -164,12 +184,12 @@ There are three senarions:
 
 Session storage
 ^^^^^^^^^^^^^^^
-When a new session is created each node creates a new session folder. In this folder,
+When a new session is created, each node creates a new session folder. In this folder,
 the data frames and session log are stored. This log keeps track on which action was
 performed on the data frame. You can inspect the log on the node by using the command
 ``parquet-tools show state.parquet``.
 
 The session folder can also be used to share data between different tasks that are not
 related to sessions, for example, when you need to store a secret key that is used in a
-successor computation task. In the algorithms you can use the session folder by using
-the environment variable ``SESSION_FOLDER``.
+successor computation task. In the algorithms you can use the session folder with the
+environment variable ``SESSION_FOLDER``.
