@@ -264,4 +264,4 @@ test:
 # Note that the value of the envvar does not matter, just that it is set.
 devdocs: export READTHEDOCS = Yes
 devdocs:
-	sphinx-autobuild docs docs/_build/html --watch . --ignore docs/function-docs
+	sphinx-autobuild docs docs/_build/html --watch .
