@@ -21,7 +21,6 @@ sys.path.insert(0, os.path.abspath("../vantage6-algorithm-tools"))
 sys.path.insert(0, os.path.abspath("../vantage6-common"))
 sys.path.insert(0, os.path.abspath("../vantage6-backend-common"))
 
-
 # -- Project information -----------------------------------------------------
 
 project = "vantage6"
