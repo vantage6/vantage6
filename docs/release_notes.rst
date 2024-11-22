@@ -1,6 +1,16 @@
 Release notes
 =============
 
+4.8.1
+-----
+
+*22 November 2024*
+
+- **Security**
+
+ - Update ``cryptography`` and ``werkzeug`` dependencies
+   (`PR#1594 <https://github.com/vantage6/vantage6/pull/1594>`_).
+
 4.8.0
 -----
 
