@@ -29,6 +29,10 @@
         <span>{{ algorithm?.image || "-" }}</span>
       </div>
       <div class="data-list__item data-list__item--big">
+        <b>{{ "algorithm.digest" | translate }}</b>
+        <span>{{ algorithm?.digest || "-" }}</span>
+      </div>
+      <div class="data-list__item data-list__item--big">
         <b>{{ "algorithm.code-url" | translate }}</b>
         <div *ngIf="algorithm && algorithm.code_url">
           <a [href]="algorithm.code_url">{{ algorithm.code_url }}</a>
