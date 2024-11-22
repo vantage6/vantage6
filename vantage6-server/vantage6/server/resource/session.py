@@ -591,17 +591,18 @@ class Sessions(SessionBase):
         if collaboration.id not in self.obtain_auth_collaboration_ids():
             return {
                 "msg": (
-                    "You lack the permission to create a session for the collaboration!"
+                    "You lack the permission to create a session for this "
+                    "collaboration!"
                 )
             }, HTTPStatus.UNAUTHORIZED
 
         # When no label is provided, we generate a unique label.
         if data.get("name") is None:
             while db.Session.name_exists(
-                propose_name := "s_" + generate_name(), collaboration
+                proposed_name := "s_" + generate_name(), collaboration
             ):
                 pass
-            data["name"] = propose_name
+            data["name"] = proposed_name
 
         # In case the user provides a name, we check if the name already exists
         if db.Session.name_exists(data["name"], collaboration):
@@ -861,8 +862,9 @@ class Session(SessionBase):
         if (session.dataframes or session.tasks) and not delete_dependents:
             return {
                 "msg": (
-                    "This session has dependents, please delete them first or set"
-                    " the `delete_dependents` option to `true` to delete them."
+                    "This session contains tasks and dataframes. Please delete them "
+                    "first or set `delete_dependents` to `true` to delete them together"
+                    " with the session."
                 )
             }, HTTPStatus.BAD_REQUEST
 
@@ -995,7 +997,7 @@ class SessionDataframes(SessionBase):
           401:
             description: Unauthorized
           400:
-            description: The request body is incorrect, or an illigal combination of
+            description: The request body is incorrect, or an illegal combination of
                 parameters is provided
           404:
             description: Session not found
@@ -1234,7 +1236,7 @@ class SessionDataframe(SessionBase):
         if dataframe.columns and not delete_dependents:
             return {
                 "msg": (
-                    "This data frame has dependents, please delete them first or set"
+                    "This data frame contains columns. Please delete them first or set"
                     " the `delete_dependents` option to `true` to delete them."
                 )
             }, HTTPStatus.BAD_REQUEST
@@ -1246,7 +1248,7 @@ class SessionDataframe(SessionBase):
         # Delete the dataframe itself from the server
         dataframe.delete()
 
-        # TODO instruct nodes to delete the data frame, consider the tracability of the
+        # TODO instruct nodes to delete the data frame, consider the traceability of the
         # data frame. Simply deleting the data frame is not good, we should track it in
         # the session log or something.
         # https://github.com/vantage6/vantage6/issues/1567

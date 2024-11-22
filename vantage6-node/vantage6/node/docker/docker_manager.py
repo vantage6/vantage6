@@ -37,8 +37,6 @@ from vantage6.node.docker.task_manager import DockerTaskManager
 from vantage6.node.docker.squid import Squid
 from vantage6.common.client.node_client import NodeClient
 from vantage6.node.docker.exceptions import (
-    UnknownAlgorithmStartFail,
-    PermanentAlgorithmStartFail,
     AlgorithmContainerNotFound,
     TemporaryAlgorithmFail,
     PermanentAlgorithmFail,

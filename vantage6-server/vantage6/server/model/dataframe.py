@@ -26,7 +26,8 @@ class Dataframe(Base):
     session_id : int
         ID of the session that this dataframe belongs to
     last_session_task_id : int
-        ID of the last task that alters this session.
+        ID of the last task that alters this session (i.e. a data extraction or
+        preprocessing task).
 
     Relationships
     -------------

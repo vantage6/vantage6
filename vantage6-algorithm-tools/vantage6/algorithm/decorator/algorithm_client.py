@@ -59,8 +59,7 @@ def _algorithm_client() -> callable:
             if not token_file:
                 error(
                     "Token file not found. Is the method you called started as a "
-                    "compute container?"
-                    "Exiting..."
+                    "compute container? Exiting..."
                 )
                 exit(1)
 

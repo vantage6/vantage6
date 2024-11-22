@@ -1,4 +1,3 @@
-from ctypes.wintypes import POINT
 from enum import Enum
 from pathlib import Path
 

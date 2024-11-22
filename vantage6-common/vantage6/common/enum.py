@@ -153,7 +153,7 @@ class RunStatus(EnumBase):
 
     @classmethod
     def failed_statuses(cls) -> list[str]:
-        """Return a list of all the status values that are considered finished"""
+        """Return a list of all the failed status values"""
 
         return [
             cls.FAILED.value,
@@ -165,13 +165,13 @@ class RunStatus(EnumBase):
 
     @classmethod
     def finished_statuses(cls) -> list[str]:
-        """Return a list of all the status values that are considered finished"""
+        """Return a list of all the finished status values"""
 
         return cls.failed_statuses() + [cls.COMPLETED.value]
 
     @classmethod
     def alive_statuses(cls) -> list[str]:
-        """Return a list of all the status values that are considered running"""
+        """Return a list of all the status values where run is not completed"""
 
         return [
             cls.PENDING,

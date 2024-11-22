@@ -239,7 +239,7 @@ class DockerTaskManager(DockerBaseManager):
 
                 self._update_session_state(
                     LocalAction.COMPUTE.value,
-                    "no file",
+                    "No file",
                     f"Algorithm from '{self.image}' completed successfully.",
                 )
                 return result
@@ -274,7 +274,7 @@ class DockerTaskManager(DockerBaseManager):
             return
 
         try:
-            # Create or overwrite the parquet data frame that results from the algorithm
+            # Create or overwrite the parquet data frame with the algorithm result
             pq.write_table(
                 table,
                 os.path.join(
@@ -282,7 +282,7 @@ class DockerTaskManager(DockerBaseManager):
                 ),
             )
         except Exception:
-            self.log.exception(f"Error writing data frame to parquet file")
+            self.log.exception("Error writing data frame to parquet file")
             self.status = RunStatus.FAILED
             return
 
@@ -303,7 +303,7 @@ class DockerTaskManager(DockerBaseManager):
             method="post",
             json=columns_info,
         )
-        self.log.debug(f"Columns info sent to server: {columns_info}")
+        self.log.debug("Column data sent to server: %s", columns_info)
 
     def _update_session_state(
         self, action: str, filename: str, message: str, dataframe: str = ""
@@ -578,10 +578,9 @@ class DockerTaskManager(DockerBaseManager):
         """
         The algorithm is provisioned with a session and data volume. The data
         folder is used for the IO interface with the node instance (e.g. to read the
-        output from the algorithm). The session folder is used to intermediate data
-        between subsequent steps in the algorithm (e.g. one container extracts the
+        output from the algorithm). The session folder is used to access session
+        data between subsequent steps in the algorithm (e.g. one container extracts the
         data and the next one actually computes statistics on this container).
-
 
         Parameters
         ----------
@@ -813,7 +812,7 @@ class DockerTaskManager(DockerBaseManager):
             self.status = RunStatus.FAILED
             raise PermanentAlgorithmStartFail()
 
-        # Validate that the requested handles exists. At this point they need to as
+        # Validate that the requested handles exist. At this point they need to as
         # we are about to start the task.
         requested_handles = {db["label"] for db in databases_to_use}
         available_handles = {
@@ -825,7 +824,7 @@ class DockerTaskManager(DockerBaseManager):
             self.log.debug(f"Requested dataframe handles: {requested_handles}")
             self.log.debug(f"Available dataframe handles: {available_handles}")
             self.status = RunStatus.DATAFRAME_NOT_FOUND
-            raise DataFrameNotFound(f"user requested {requested_handles}")
+            raise DataFrameNotFound(f"User requested {requested_handles}")
 
     def _validate_source_database(self, databases_to_use: list[dict]) -> None:
         """
@@ -839,6 +838,7 @@ class DockerTaskManager(DockerBaseManager):
         databases_to_use : list[dict]
             A list of dictionaries where each dictionary represents a database
             configuration.
+
         Raises
         ------
         PermanentAlgorithmStartFail

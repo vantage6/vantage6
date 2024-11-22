@@ -308,9 +308,12 @@ class ContainerToken(ServicesResources):
         # enlisted
         if g.node.collaboration_id != db_task.collaboration_id:
             log.warning(
-                f"Node {g.node.id} attempts to generate key for task {task_id}"
-                f" which is outside its collaboration "
-                f"({g.node.collaboration_id}/{db_task.collaboration_id})."
+                "Node %s attempts to generate key for task %s which is outside its "
+                "collaboration. Node is in collaboration %s, task in %s).",
+                g.node.id,
+                task_id,
+                g.node.collaboration_id,
+                db_task.collaboration_id,
             )
             return {
                 "msg": "You are not within the collaboration"
@@ -321,17 +324,21 @@ class ContainerToken(ServicesResources):
         if collaboration.session_restrict_to_same_image:
             if claim_image != db_task.image:
                 log.warning(
-                    f"Node {g.node.id} attempts to generate key for image {claim_image}"
-                    f"that does not belong to task {task_id} and the "
-                    "'session_restrict_to_same_image' option is set to True."
+                    "Node %s attempts to generate key for image %s that does not belong"
+                    " to task %s. This is not allowed because this collaboration has "
+                    " the 'session_restrict_to_same_image' option set to True.",
+                    g.node.id,
+                    claim_image,
+                    task_id,
                 )
                 return {"msg": "Image and task do no match"}, HTTPStatus.UNAUTHORIZED
 
         # validate that the task not has been finished yet
         if TaskStatus.has_finished(db_task.status):
             log.warning(
-                f"Node {g.node.id} attempts to generate a key for "
-                f"completed task {task_id}"
+                "Node %s attempts to generate a key for completed task %s",
+                g.node.id,
+                task_id,
             )
             return {"msg": "Task is already finished!"}, HTTPStatus.BAD_REQUEST
 

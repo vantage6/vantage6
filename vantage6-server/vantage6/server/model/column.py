@@ -6,9 +6,12 @@ from vantage6.server.model.base import Base, DatabaseSessionManager
 
 class Column(Base):
     """
-    Table to store column metadata in for a dataframe. Each dataframe has a list of
-    columns that are used to store the data. Each column has a name and a data type.
-    Each node has its own dataframe, which is a collection of columns.
+    Table to store column metadata in for a dataframe.
+
+    A session contains one or more data extractions stored as dataframes.
+    Each dataframe is requested for each node. The nodes then return the
+    columns that they have available for that dataframe. This table thus stores which
+    columns are available for a certain node in a session's dataframe.
 
     Attributes
     ----------

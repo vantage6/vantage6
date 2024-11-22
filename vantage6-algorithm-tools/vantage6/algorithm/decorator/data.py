@@ -16,8 +16,7 @@ def _get_user_database_labels() -> list[str]:
     list[str]
         List of database labels
     """
-    # read the labels that the user requested, which is a comma
-    # separated list of labels.
+    # read the labels that the user requested, which is a comma-separated str of labels.
     labels = os.environ[ContainerEnvNames.USER_REQUESTED_DATAFRAME_HANDLES.value]
     return labels.split(",")
 

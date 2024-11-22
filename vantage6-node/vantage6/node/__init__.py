@@ -484,8 +484,7 @@ class Node:
 
                 if not task_id:
                     self.log.error(
-                        f"task_id of run (id={results.run_id}) "
-                        f"could not be retrieved"
+                        "Task id for run id=%s could not be retrieved", results.run_id
                     )
                     return
 
@@ -494,8 +493,9 @@ class Node:
                 init_org = response.get("init_org")
                 if not init_org:
                     self.log.error(
-                        f"Initiator organization from task (id={task_id}) "
-                        "could not be retrieved!"
+                        "Initiator organization from task (id=%s) could not be "
+                        "retrieved!",
+                        task_id,
                     )
 
                 self.client.run.patch(

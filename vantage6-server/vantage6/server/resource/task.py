@@ -548,9 +548,9 @@ class Tasks(TaskBase):
           When this endpoint is accessed by an algorithm container, it is considered to
           be a child-task of the container, and will get the `job_id` from the initial
           task. Containers have limited permissions to create tasks: they are only
-          allowed to create tasks in the same collaboration and in case the option
-          'session_restrict_to_same_image' it requires to use the same image as that
-          it originates from.\n
+          allowed to create tasks in the same collaboration and in case the
+          collaboration option 'session_restrict_to_same_image' is set to True, it
+          the same image as the parent task has to be used.\n
 
         requestBody:
           content:
@@ -807,10 +807,9 @@ class Tasks(TaskBase):
         #    modification task(s) that are currently modifying the dataframe. This is
         #    to prevent that the dataframe is modified during the computation.
         #
-        # Thus when a modification task is running all new compute tasks will be
-        # depending on it. A modification task will always be dependent on the last
-        # modification task. And finally a compute task will always be dependent on
-        # any running modification tasks (could also be none).
+        # Thus when a modification task is running, all new compute tasks and all new
+        # modification tasks will be depending on it. When a compute task is running,
+        # all new modification tasks will depend on it.
         dependent_tasks = []
         for database in databases:
             for key in ["label", "type"]:
@@ -820,6 +819,7 @@ class Tasks(TaskBase):
                         f"{database} should contain a '{key}' key"
                     }, HTTPStatus.BAD_REQUEST
 
+            # add last modification task to dependent tasks
             if database["type"] == "handle":
                 df = db.Dataframe.select(session, database["label"])
                 if not df:
@@ -983,21 +983,22 @@ class Tasks(TaskBase):
         if collaboration.session_restrict_to_same_image:
             if not image != container["image"]:
                 log.warning(
-                    (
-                        f"Container from node={container['node_id']} "
-                        f"attempts to post a task using illegal image!?"
-                    )
+                    "Container from node=%s attempts to post a "
+                    "task using a different image than the parent task. That is not "
+                    "allowed in this collaboration.",
+                    container["node_id"],
                 )
-                log.warning(f"  task image: {image}")
-                log.warning(f"  container image: {container['image']}")
+                log.warning("  requested image: %s", image)
+                log.warning("  parent image: %s", container["image"])
                 return False
 
         # check that parent task is not completed yet
         if RunStatus.has_finished(db.Task.get(container["task_id"]).status):
             log.warning(
-                f"Container from node={container['node_id']} "
-                f"attempts to start sub-task for a completed "
-                f"task={container['task_id']}"
+                "Container from node=%s attempts to start sub-task for a completed "
+                "task=%s",
+                container["node_id"],
+                container["task_id"],
             )
             return False
 

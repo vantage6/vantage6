@@ -10,7 +10,6 @@ from sqlalchemy import (
     DateTime,
     UniqueConstraint,
     and_,
-    case,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property

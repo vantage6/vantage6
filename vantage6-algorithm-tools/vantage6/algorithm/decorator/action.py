@@ -17,10 +17,9 @@ def _exit_if_action_mismatch(function_action: LocalAction):
     """
     Check if the requested action matches the container action.
 
-    Each container is started with a specific action depending on the user action. For
-    example, if the user requests a data extraction, the container is started with the
-    data extraction action. This function checks if the requested action matches the
-    container action.
+    Each container is started with a specific action type. For example, if the user
+    requests a data extraction, the container is started with the data extraction
+    action. This function checks if the requested action matches the container action.
 
     The user requests these different actions by using different endpoints, therefore
     we need to validate that the container/method the user requested is actually
@@ -45,7 +44,7 @@ def _exit_if_action_mismatch(function_action: LocalAction):
     if requested_action != function_action:
         raise SessionError(
             f"Container started as {requested_action}, but user requested "
-            f"{function_action}. "
+            f"{function_action}."
         )
 
 

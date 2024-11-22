@@ -1,7 +1,5 @@
 import datetime
 
-import vantage6.server.model as models
-
 from sqlalchemy import (
     Column,
     String,
@@ -17,6 +15,7 @@ from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from vantage6.common.enum import TaskStatus, RunStatus
+import vantage6.server.model as models
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
@@ -26,21 +25,11 @@ class Task(Base):
 
     A single Task can create algorithm Runs for multiple organizations.
 
-    A task always belongs to a session and collaboration. Optionally it can be assigned
-    to a study. A task can have a parent task or can depend on other tasks. A task can
-    have multiple runs and results. A single task can require multiple datasets to be
-    provided.
-
-    Each Task is associated with a specific session and collaboration. It can optionally
-    be assigned to a study.
-
-    A Task can have a parent task or can depend on other tasks. It can also have
-    multiple runs and results.
-
-    The input for each Task differs per organization due to encryption, in other words
-    each Task's input is encrypted separately for each organization.
-
-    A single Task may require multiple datasets to be provided.
+    A task always belongs to a session and collaboration. Optionally, it can be assigned
+    to a study (which is part of a collaboration). A task can have a parent task or can
+    depend on other tasks (that need to be completed first). A task can have multiple
+    runs and results, one for each node that the task is assigned to. A single task can
+    involve multiple datasets.
 
     Attributes
     ----------
@@ -163,7 +152,7 @@ class Task(Base):
         if self.runs and self.runs[-1].action:
             return self.runs[-1].action
         else:
-            return "no action as there are no runs"
+            return "No action as there are no runs"
 
     @action.expression
     def action(cls):

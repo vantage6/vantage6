@@ -169,9 +169,9 @@ class DataFrameSubClient(ClientBase.SubClient):
         """
         Modify a data frame in a session.
 
-        Data frames can be modified by preprocessing them. Preprocessing is handles in
+        Data frames can be modified by preprocessing them. Preprocessing is handled in
         a sequential manner. In other words, you can add many preprocessing steps to a
-        data frame, they will be executed one after the other.
+        data frame, and they will be executed one after the other in order of creation.
 
         The modification will be done after all computation tasks have been executed.
         This is to avoid that a data frame is modified while it is being used in a
