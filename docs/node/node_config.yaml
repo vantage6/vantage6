@@ -55,9 +55,9 @@ node_extra_hosts:
 images:
   node: harbor2.vantage6.ai/infrastructure/node:cotopaxi
   alpine: harbor2.vantage6.ai/infrastructure/alpine
-  vpn_client: harbor2.vantage6.ai/infrastructure/vpn_client
-  network_config: harbor2.vantage6.ai/infrastructure/vpn_network
-  ssh_tunnel: harbor2.vantage6.ai/infrastructure/ssh_tunnel
+  vpn_client: harbor2.vantage6.ai/infrastructure/vpn-client
+  network_config: harbor2.vantage6.ai/infrastructure/vpn-configurator
+  ssh_tunnel: harbor2.vantage6.ai/infrastructure/ssh-tunnel
   squid: harbor2.vantage6.ai/infrastructure/squid
 
 # path or endpoint to the local data source. The client can request a

@@ -61,9 +61,7 @@ to your own environment.
 Alternatively, you can also run the UI locally with Angular. In that case, follow the
 instructions on the `UI Github page <https://github.com/vantage6/vantage6/tree/main/vantage6-ui>`__
 
-The UI is not compatible with older versions (<3.3) of vantage6.
-
-.. figure:: /images/screenshot_ui.png
+.. figure:: /images/screenshot_ui.jpg
     :alt: UI screenshot
     :align: center
 
@@ -84,7 +82,7 @@ private registry.
 .. note::
 
   If you use your own registry, make sure that it conforms to the
-  `OCI distribution specification <https://distribution.github.io/distribution/spec/api/`_.
+  `OCI distribution specification <https://distribution.github.io/distribution/spec/api/>`_.
   This specification is supported by all major container registry providers, such
   as Docker Hub, Harbor, Azure Container Registry and Github container registry.
 
