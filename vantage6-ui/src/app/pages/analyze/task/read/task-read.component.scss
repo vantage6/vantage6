@@ -42,9 +42,11 @@
     margin: $spacing-px-2 auto;
     display: block;
   }
+
   &--small {
     grid-template-columns: repeat(auto-fit, minmax(100px, 0.1fr));
   }
+  
   app-status-info {
     display: contents;
   }
