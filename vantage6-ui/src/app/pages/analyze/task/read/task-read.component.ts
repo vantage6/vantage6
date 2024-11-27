@@ -62,6 +62,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   canCreate = false;
   canKill = false;
   algorithmNotFoundInStore = false;
+  showAllChildTasks = false;
 
   private nodeStatusUpdateSubscription?: Subscription;
   private taskStatusUpdateSubscription?: Subscription;
@@ -176,6 +177,11 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     if (this.task.results?.some((result) => result.result === null)) return false;
     if (this.task.runs.every((run) => run.status === TaskStatus.Completed)) return true;
     return false;
+  }
+
+  isSmallTileView(): boolean {
+    const runs = this.childTasks.flatMap(tasks => tasks.runs) ?? [];
+    return runs.length > 10;
   }
 
   isFailedRun(status: TaskStatus): boolean {

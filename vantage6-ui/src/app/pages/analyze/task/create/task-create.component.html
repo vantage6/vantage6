@@ -162,7 +162,7 @@
             <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
             <ng-container *ngIf="!containsColumnArguments() || !isLoadingColumns; else loadingColumns">
               <div class="field-description">{{ "task-create.step-parameters.description" | translate }}</div>
-              <ng-container *ngFor="let argument of function?.arguments">
+              <ng-container *ngFor="let argument of function?.arguments | orderBy: 'id'">
                 <b>{{ argument.description }}</b>
                 <p *ngIf="argument.type === argumentType.Json">{{ "task-create.step-parameters.valid-json" | translate }}</p>
                 <!-- Show form field for dropdowns or single input fields (float, int, string) -->

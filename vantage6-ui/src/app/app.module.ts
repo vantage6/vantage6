@@ -82,6 +82,7 @@ import { RoleReadComponent } from './pages/admin/role/read/role-read.component';
 import { RoleCreateComponent } from './pages/admin/role/create/role-create.component';
 import { RoleFormComponent } from './components/forms/role-form/role-form.component';
 import { OrderByPipe } from './pipes/order-by.pipe';
+import { OrderByTaskStatusPipe } from './pipes/order-by-status.pipe';
 import { HighlightedTextPipe } from './pipes/highlighted-text.pipe';
 import { SetupMfaComponent } from './pages/auth/setup-mfa/setup-mfa.component';
 import { MfaCodeComponent } from './pages/auth/mfa-code/mfa-code.component';
@@ -182,6 +183,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     RoleCreateComponent,
     RoleFormComponent,
     OrderByPipe,
+    OrderByTaskStatusPipe,
     HighlightedTextPipe,
     SetupMfaComponent,
     MfaCodeComponent,

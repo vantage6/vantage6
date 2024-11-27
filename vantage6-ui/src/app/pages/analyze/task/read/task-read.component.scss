@@ -2,17 +2,49 @@
 
 .status-info-container {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(1, 1fr);
   gap: $spacing-px-2;
+  margin-bottom: $spacing-px-2; 
+  
+  @media only screen and (min-width: 300px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
 
-  @media only screen and (min-width: 905px) {
+  @media only screen and (min-width: 400px) {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  @media only screen and (min-width: 1240px) {
+  @media only screen and (min-width: 600px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media only screen and (min-width: 768px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media only screen and (min-width: 960px) {
     grid-template-columns: repeat(4, 1fr);
   }
 
+  @media only screen and (min-width: 1240px) {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  @media only screen and (min-width: 1400px) {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  @media only screen and (min-width: 1600px) {
+    grid-template-columns: repeat(7, 1fr);
+  }
+
+  &__load-more{
+    margin: $spacing-px-2 auto;
+    display: block;
+  }
+  &--small {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 0.1fr));
+  }
   app-status-info {
     display: contents;
   }
