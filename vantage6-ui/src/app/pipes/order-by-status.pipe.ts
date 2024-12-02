@@ -1,14 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Pipe, PipeTransform } from '@angular/core';
 
+export enum RunStatus {
+  Killed = 'killed by user',
+  StartFailed = 'start failed',
+  Crashed = 'crashed',
+  NotAllowed = 'not allowed',
+  NoDockerImage = 'non-existing Docker image',
+  Failed = 'failed',
+  Active = 'active',
+  Initializing = 'initializing',
+  Pending = 'pending',
+  Completed = 'completed'
+}
+
 @Pipe({
   name: 'orderByTaskStatus'
 })
 export class OrderByTaskStatusPipe implements PipeTransform {
   transform(list: unknown, property: string, direction?: 'asc' | 'desc'): any[] {
-    const statusOrder = ['killed by user', 'start failed', 'crashed',
-      'not allowed', 'non-existing Docker image', 'failed', 'active',
-      'initializing', 'pending', 'completed'];
+    const statusOrder = Object.values(RunStatus);
     if (!Array.isArray(list)) {
       return [];
     }
