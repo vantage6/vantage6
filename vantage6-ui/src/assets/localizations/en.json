@@ -23,7 +23,9 @@
     "unknown": "Unknown",
     "true": "True",
     "false": "False",
-    "parameter": "Parameter"
+    "parameter": "Parameter",
+    "show_more": "Show more",
+    "show_less": "Show less"
   },
   "resources": {
     "collaboration": "Collaboration",

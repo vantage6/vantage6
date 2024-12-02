@@ -95,7 +95,7 @@
               <div class="data-list__item data-list__item--full">
                 <h4>{{ "algorithm.function.argument.title" | translate }}</h4>
                 <mat-accordion *ngIf="function.arguments.length > 0; else noArguments" class="card-accordion sub-accordeon" [multi]="true">
-                  <mat-expansion-panel *ngFor="let argument of function.arguments">
+                  <mat-expansion-panel *ngFor="let argument of function.arguments | orderBy: 'id'">
                     <mat-expansion-panel-header>
                       <mat-panel-title>{{ argument.display_name ?? argument.name }}</mat-panel-title>
                     </mat-expansion-panel-header>

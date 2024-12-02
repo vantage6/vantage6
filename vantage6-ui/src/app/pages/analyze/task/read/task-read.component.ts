@@ -28,6 +28,8 @@ import { Subject, Subscription, takeUntil, timer } from 'rxjs';
 import { FileService } from 'src/app/services/file.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
+import { THRESHOLD_LONG_TEXT, THRESHOLD_PRINTABLE_TEXT, THRESHOLD_SMALL_TILES } from 'src/app/models/constants/thresholds';
+import { WAIT_200_MILLISECONDS } from 'src/app/models/constants/wait';
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { printDate } from 'src/app/helpers/general.helper';
 import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
@@ -62,6 +64,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   canCreate = false;
   canKill = false;
   algorithmNotFoundInStore = false;
+  showAllChildTasks = false;
 
   private nodeStatusUpdateSubscription?: Subscription;
   private taskStatusUpdateSubscription?: Subscription;
@@ -178,6 +181,11 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     return false;
   }
 
+  isSmallTileView(): boolean {
+    const runs = this.childTasks.flatMap(tasks => tasks.runs) ?? [];
+    return runs.length > THRESHOLD_SMALL_TILES;
+  }
+
   isFailedRun(status: TaskStatus): boolean {
     return (
       status === TaskStatus.Failed ||
@@ -266,8 +274,8 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   displayTextResult(result: object | undefined): string {
     if (result === undefined) return '';
     const textResult = JSON.stringify(result);
-    if (textResult.length > 100) {
-      return textResult.substring(0, 100) + '...';
+    if (textResult.length > THRESHOLD_LONG_TEXT) {
+      return textResult.substring(0, THRESHOLD_LONG_TEXT) + '...';
     }
     return textResult;
   }
@@ -298,9 +306,8 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   }
 
   getPrintableTaskName(task: Task): string {
-    // print only max 30 characters
-    if (task.name.length > 30) {
-      return task.name.substring(0, 30) + '...';
+    if (task.name.length > THRESHOLD_PRINTABLE_TEXT) {
+      return task.name.substring(0, THRESHOLD_PRINTABLE_TEXT) + '...';
     } else {
       return task.name;
     }
@@ -308,7 +315,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
 
   private async waitUntilInitialized(): Promise<void> {
     while (this.isLoading) {
-      await new Promise((f) => setTimeout(f, 200));
+      await new Promise((f) => setTimeout(f, WAIT_200_MILLISECONDS));
     }
   }
 
