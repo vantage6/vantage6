@@ -53,10 +53,15 @@ provide the following features:
   data is slow.
 - Data frames can be modified using pre-processing tasks. These can, for example, add or
   remove columns, or filter rows. The latest version of the data frame is used in the
-  computation tasks.
-- Data frames can have different permission scopes. You can create data frames that only
-  you are allowed to use, but you can also share them with other users in your
-  organization or with the entire collaboration.
+  computation tasks. The data frame keeps track of the last task that modified it.
+- Data frames can have different permission scopes. You can create data frames that are
+  scoped to you, but you can also share them with other users in your organization or
+  with the entire collaboration. Users with the organization or collaboration permission
+  scope can also see, modify and delete data frames that are scoped to you within the
+  organization or collaboration. In other words, scoping a data frame to yourself is
+  not a way to keep the data frame private. If you scoped a data frame to your
+  organization or collaboration, any user in the organization or collaboration can see
+  the data frame.
 - Data frames provide a standardized way to store data. This makes it easier to write
   algorithms that can be used across different collaborations.
 - Data extraction, pre-processing and computation on the data are separated processes.
@@ -67,8 +72,8 @@ provide the following features:
   infrastructure to provide the researchers with information about the data, such as
   which columns are available, and what the data types of those columns are.
 
-Function actions
-^^^^^^^^^^^^^^^^
+Algorithm Step Types
+^^^^^^^^^^^^^^^^^^^^
 
 Every algorithm function that is being executed in a vantage6 network is one of the
 following actions:

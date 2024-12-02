@@ -12,15 +12,24 @@ def source_database(func) -> callable:
         This decorator provides a the source database URI to the function.
 
         The user can request different databases that correspond to the different data
-        sources that are available at each node. This decorator can exclusively be used
-        in combination with the `data_extraction` decorator. This is Because this
-        decorator relies on certain environment variables, that are only present when
-        the method is executed in a container with data-extraction privileges.
+        sources that are available at each node. This decorator should be used in
+        combination with the `data_extraction` decorator. This `@source_database`
+        decorator relies on certain environment variables, that are validated by the
+        `@data_extraction` decorator.
 
         Parameters
         ----------
         mock_uri : str
             Mock URI to use instead of the regular URI
+
+        Examples
+        --------
+        ```python
+        @data_extraction
+        @source_database
+        def my_function(uri: str):
+            print(uri)
+        ```
         """
         uri = os.environ.get(ContainerEnvNames.DATABASE_URI.value, mock_uri)
         if uri is None:
