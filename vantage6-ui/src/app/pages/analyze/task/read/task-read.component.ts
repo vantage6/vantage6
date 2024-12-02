@@ -29,6 +29,7 @@ import { FileService } from 'src/app/services/file.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
 import { THRESHOLD_LONG_TEXT, THRESHOLD_PRINTABLE_TEXT, THRESHOLD_SMALL_TILES } from 'src/app/models/constants/thresholds';
+import { WAIT_200_MILLISECONDS } from 'src/app/models/constants/wait';
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { printDate } from 'src/app/helpers/general.helper';
 import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
@@ -314,7 +315,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
 
   private async waitUntilInitialized(): Promise<void> {
     while (this.isLoading) {
-      await new Promise((f) => setTimeout(f, 200));
+      await new Promise((f) => setTimeout(f, WAIT_200_MILLISECONDS));
     }
   }
 
