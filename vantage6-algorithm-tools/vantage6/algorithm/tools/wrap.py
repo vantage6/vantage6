@@ -11,7 +11,7 @@ from vantage6.common.client import deserialization
 from vantage6.common.globals import ContainerEnvNames
 from vantage6.algorithm.tools.util import info, error, get_env_var, get_action
 from vantage6.algorithm.tools.exceptions import DeserializationError
-from vantage6.common.enum import LocalAction
+from vantage6.common.enum import AlgorithmStepType
 
 
 def wrap_algorithm(log_traceback: bool = True) -> None:
@@ -184,7 +184,7 @@ def _write_output(output: Any, output_file: str) -> None:
     """
     action = get_action()
 
-    if action in [LocalAction.DATA_EXTRACTION, LocalAction.PREPROCESSING]:
+    if action in [AlgorithmStepType.DATA_EXTRACTION, AlgorithmStepType.PREPROCESSING]:
         # If the action is data extraction or preprocessing, the output should be a
         # parquet table. In this case, the output file should contain the parquet data.
         # It is important that we do not alter this format as it would complicate

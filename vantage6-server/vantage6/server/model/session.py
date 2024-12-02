@@ -14,7 +14,6 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from vantage6.common.enum import SessionStatus
 from vantage6.server.model.rule import Scope
 from vantage6.server.model.base import Base
 
@@ -84,8 +83,7 @@ class Session(Base):
     tasks = relationship("Task", back_populates="session")
     dataframes = relationship("Dataframe", back_populates="session")
 
-    @hybrid_property
-    def is_ready(self):
+    def is_ready(self) -> bool:
         """
         Are all dataframes ready to be used by compute tasks?
 
@@ -99,18 +97,6 @@ class Session(Base):
                 return False
 
         return True
-
-    @is_ready.expression
-    def is_ready(cls):
-        """
-        Are all dataframes ready to be used by compute tasks?
-
-        Returns
-        -------
-        bool
-            True if the session is ready, False otherwise
-        """
-        return and_(*[dataframe.ready for dataframe in cls.dataframes])
 
     @staticmethod
     def name_exists(name: str, collaboration: "Collaboration"):
@@ -129,7 +115,7 @@ class Session(Base):
         """
         return any(session.name == name for session in collaboration.sessions)
 
-    def organizations(self):
+    def organizations(self) -> list["Organization"]:
         """
         Returns the organizations that are part of the session. In case the session
         is scoped to a study, the organizations of the study are returned. Otherwise,
@@ -145,7 +131,7 @@ class Session(Base):
         else:
             return self.collaboration.organizations
 
-    def organization_ids(self):
+    def organization_ids(self) -> list[int]:
         """
         Returns the organization IDs that are part of the session. In case a the session
         is scoped to a study, the organization IDs of the study are returned. Otherwise,
@@ -158,7 +144,7 @@ class Session(Base):
         """
         return [org.id for org in self.organizations()]
 
-    def delete(self):
+    def delete(self) -> None:
         """
         Deletes the current session along with its associated dataframes, tasks, and
         results.
@@ -173,7 +159,7 @@ class Session(Base):
             task.delete()
         self.delete()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Returns a string representation of the session.
 

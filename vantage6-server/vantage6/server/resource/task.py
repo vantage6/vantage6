@@ -10,7 +10,7 @@ from sqlalchemy import desc
 from sqlalchemy.sql import visitors
 
 from vantage6.common.globals import STRING_ENCODING, NodePolicy
-from vantage6.common.enum import RunStatus, LocalAction
+from vantage6.common.enum import RunStatus, AlgorithmStepType
 from vantage6.common.encryption import DummyCryptor
 from vantage6.backend.common import get_server_url
 from vantage6.server import db
@@ -581,7 +581,11 @@ class Tasks(TaskBase):
         except Exception:
             return {"msg": "Request body is incorrect"}, HTTPStatus.BAD_REQUEST
         return self.post_task(
-            request.get_json(), self.socketio, self.r, self.config, LocalAction.COMPUTE
+            request.get_json(),
+            self.socketio,
+            self.r,
+            self.config,
+            AlgorithmStepType.COMPUTE,
         )
 
     # TODO this function should be refactored to make it more readable
@@ -591,7 +595,7 @@ class Tasks(TaskBase):
         socketio: SocketIO,
         rules: RuleCollection,
         config: dict,
-        action: LocalAction,
+        action: AlgorithmStepType,
     ):
         """
         Create new task and algorithm runs. Send the task to the nodes.
@@ -606,7 +610,7 @@ class Tasks(TaskBase):
             Rule collection instance
         config : dict
             Configuration dictionary
-        action : LocalAction
+        action : AlgorithmStepType
             Action to performed by the task
         """
         # validate request body
@@ -784,15 +788,13 @@ class Tasks(TaskBase):
             else:
                 # no need to determine hash if we don't look it up in a store
                 image_with_hash = image
-        elif g.container:
+        else:  # ( we are dealing with g.container)
             parent = db.Task.get(g.container["task_id"])
             store = parent.algorithm_store
             image_with_hash = parent.image
 
         # Obtain the user requested database or dataframes
-        databases = data.get("databases")
-        if databases is None:
-            databases = []
+        databases = data.get("databases", [])
 
         # A task can be dependent on one or more other task(s). There are three cases:
         #
@@ -809,7 +811,8 @@ class Tasks(TaskBase):
         #
         # Thus when a modification task is running, all new compute tasks and all new
         # modification tasks will be depending on it. When a compute task is running,
-        # all new modification tasks will depend on it.
+        # all new modification tasks will depend on it. The `depends_on_ids` parameter
+        # is set by the session endpoints.
         dependent_tasks = []
         for database in databases:
             for key in ["label", "type"]:
@@ -843,8 +846,6 @@ class Tasks(TaskBase):
                 }, HTTPStatus.NOT_FOUND
 
             if dependent_task.session_id != session_id:
-                log.debug(dependent_task)
-                log.debug(f"{dependent_task.session_id} {session_id}")
                 return {
                     "msg": (
                         "The task you are trying to depend on is not part of the "
@@ -898,7 +899,6 @@ class Tasks(TaskBase):
             log.debug(f"Sub task from parent_id={task.parent_id}")
 
         # save the databases that the task uses
-        db_records = []
         for database in databases:
 
             # TODO task.id is only set here because in between creating the
@@ -911,7 +911,6 @@ class Tasks(TaskBase):
                 type_=database["type"],
             )
             task_db.save()
-            db_records.append(task_db)
 
         # All checks completed, save task to database
         task.save()
@@ -940,7 +939,7 @@ class Tasks(TaskBase):
         # notify nodes a new task available (only to online nodes), nodes that
         # are offline will receive this task on sign in.
         socketio.emit(
-            "new_task",
+            "new_task_update",
             {"id": task.id, "parent_id": task.parent_id},
             namespace="/tasks",
             room=f"collaboration_{task.collaboration_id}",

@@ -5,7 +5,7 @@ import re
 from marshmallow import Schema, fields, ValidationError, validates, validates_schema
 from marshmallow.validate import Length, Range, OneOf
 
-from vantage6.common.enum import RunStatus, SessionStatus
+from vantage6.common.enum import RunStatus
 from vantage6.server.model.rule import Scope
 from vantage6.server.default_roles import DefaultRole
 from vantage6.server.model.common.utils import validate_password
@@ -219,7 +219,7 @@ class CollaborationInputSchema(_NameValidationSchema):
 
     organization_ids = fields.List(fields.Integer(), required=True)
     encrypted = fields.Boolean(required=True)
-    session_restrict_to_same_image = fields.Boolean(required=True)
+    session_restrict_to_same_image = fields.Boolean(load_default=False)
 
     @validates("organization_ids")
     def validate_organization_ids(self, organization_ids):

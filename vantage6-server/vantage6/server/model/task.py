@@ -141,18 +141,15 @@ class Task(Base):
     @hybrid_property
     def action(self) -> str:
         """
-        Determine the action that needs to be taken by the algorithm container
-        for this task.
+        Determine the action that needs to be taken by the algorithm container for this
+        task.
 
         Returns
         -------
         str
             Action that needs to be taken by the algorithm container
         """
-        if self.runs and self.runs[-1].action:
-            return self.runs[-1].action
-        else:
-            return "No action as there are no runs"
+        return self.runs[-1].action
 
     @action.expression
     def action(cls):
@@ -196,7 +193,7 @@ class Task(Base):
         elif all([RunStatus.has_finished(status) for status in run_statuses]):
             return TaskStatus.COMPLETED.value
         else:
-            return TaskStatus.AWAITING.value
+            return TaskStatus.WAITING.value
 
     @status.expression
     def status(cls):
@@ -214,7 +211,7 @@ class Task(Base):
         status_case = case(
             [
                 (func.sum(failed_case) > 0, TaskStatus.FAILED.value),
-                (func.sum(alive_case) > 0, TaskStatus.AWAITING.value),
+                (func.sum(alive_case) > 0, TaskStatus.WAITING.value),
             ],
             else_=TaskStatus.COMPLETED.value,
         )

@@ -67,7 +67,7 @@ export class SocketioConnectService {
     });
 
     // get messages when a new task is created
-    this.socket?.on('new_task', (data) => {
+    this.socket?.on('new_task_update', (data) => {
       this.taskCreated$.next(data);
     });
   }

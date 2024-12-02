@@ -7,7 +7,7 @@ from sqlalchemy import or_, and_
 from names_generator import generate_name
 
 from vantage6.common import logger_name
-from vantage6.common.enum import LocalAction
+from vantage6.common.enum import AlgorithmStepType
 from vantage6.server import db
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.permission import (
@@ -146,7 +146,6 @@ def permissions(permissions: PermissionManager) -> None:
         scope=S.COLLABORATION,
         operation=P.EDIT,
         description="edit any session within your collaboration",
-        assign_to_node=True,
     )
 
     # delete permissions
@@ -329,12 +328,44 @@ class SessionBase(ServicesResources):
         image: str,
         organizations: dict,
         database: list[dict],
-        action: LocalAction,
+        action: AlgorithmStepType,
         dataframe: db.Dataframe,
         description="",
         depends_on_ids=None,
-    ) -> int:
-        """Create a task to initialize a session"""
+        store_id=None,
+        server_url=None,
+    ) -> dict:
+        """
+        Create a task to initialize a session.
+
+        Arguments
+        ---------
+        session : db.Session
+            Session to create the task for
+        image : str
+            Docker image to use for the task
+        organizations : dict
+            Organizations that need to execute the task
+        database : list[dict]
+            Databases used for the task
+        action : AlgorithmStepType
+            Action to perform (e.g. data extraction, preprocessing, etc)
+        dataframe : db.Dataframe
+            Dataframe to use for the task
+        description : str
+            Human readable description of the task
+        depends_on_ids : list[int]
+            List of task ids that this task depends on
+        store_id : int
+            Id of the store to use for the task
+        server_url : str
+            URL of the server to use for the task
+
+        Returns
+        -------
+        dict
+            Task object
+        """
 
         if not depends_on_ids:
             depends_on_ids = []
@@ -350,12 +381,17 @@ class SessionBase(ServicesResources):
             "databases": database,
             "depends_on_ids": depends_on_ids,
             "dataframe_id": dataframe.id,
+            "store_id": store_id,
+            "server_url": server_url,
         }
         # remove empty values
         input_ = {k: v for k, v in input_.items() if v is not None}
-        print(input_)
         return Tasks.post_task(
-            input_, self.socketio, getattr(self.permissions, "task"), {}, action
+            input_,
+            self.socketio,
+            getattr(self.permissions, "task"),
+            self.config,
+            action,
         )
 
     @staticmethod
@@ -373,7 +409,6 @@ class SessionBase(ServicesResources):
 
 
 class Sessions(SessionBase):
-    "/session"
 
     @only_for(("user", "node"))
     def get(self):
@@ -524,7 +559,9 @@ class Sessions(SessionBase):
           Create a new session in a collaboration or study. A session can be scoped
           to the entire collaboration, the organization or only to the owner of the
           session. This way sessions can be shared with other users within the
-          collaboration or organization.
+          collaboration or organization. Note that users with organization,
+          collaboration or global permissions can view all sessions within the
+          that scope.
 
           A session is a container for data frames and tasks. A session can have
           multiple data frames, each extracted from the same or a different database.
@@ -537,6 +574,11 @@ class Sessions(SessionBase):
           collaboration|\n
           |Session|Organization|Create|❌|❌|Create session to be used by your organization|\n
           |Session|Own|Create|❌|❌|Create session only to be used by you|\n
+
+          It is important to note that a user who creates a session with scope own,
+          does not mean the session is private. As this session is accessible to all
+          users who have sufficient permissions within the collaboration or
+          organization.
 
           Only accessible to users.
 
@@ -599,7 +641,7 @@ class Sessions(SessionBase):
         # When no label is provided, we generate a unique label.
         if data.get("name") is None:
             while db.Session.name_exists(
-                proposed_name := "s_" + generate_name(), collaboration
+                proposed_name := generate_name(), collaboration
             ):
                 pass
             data["name"] = proposed_name
@@ -641,7 +683,6 @@ class Sessions(SessionBase):
 
 
 class Session(SessionBase):
-    "/session/<int:id>"
 
     @only_for(("user", "node"))
     def get(self, id):
@@ -875,7 +916,6 @@ class Session(SessionBase):
 
 
 class SessionDataframes(SessionBase):
-    "/session/<int:session_id>/dataframe"
 
     @only_for(("user", "node"))
     def get(self, session_id):
@@ -1043,9 +1083,7 @@ class SessionDataframes(SessionBase):
         # datasets that are send after the data extraction task. The handle can be
         # provided by the user, if not a unique handle is generated.
         if "handle" not in data:
-            while (handle := "df_" + generate_name()) and db.Dataframe.select(
-                session, handle
-            ):
+            while (handle := generate_name()) and db.Dataframe.select(session, handle):
                 pass
         else:
             handle = data["handle"]
@@ -1070,16 +1108,22 @@ class SessionDataframes(SessionBase):
                 f"will initialize the dataframe with the handle {handle}."
             )
 
-        response, status_code = self.create_session_task(
-            session=session,
-            image=extraction_details["image"],
-            organizations=extraction_details["organizations"],
-            # TODO FM 10-7-2024: we should make a custom type for this
-            database=[{"label": source_db_label, "type": "source"}],
-            description=description,
-            action=LocalAction.DATA_EXTRACTION,
-            dataframe=dataframe,
-        )
+        try:
+            response, status_code = self.create_session_task(
+                session=session,
+                image=extraction_details["image"],
+                organizations=extraction_details["organizations"],
+                # TODO FM 10-7-2024: we should make a custom type for this
+                database=[{"label": source_db_label, "type": "source"}],
+                description=description,
+                action=AlgorithmStepType.DATA_EXTRACTION,
+                dataframe=dataframe,
+                store_id=extraction_details.get("store_id"),
+                server_url=extraction_details.get("server_url"),
+            )
+        except Exception as e:
+            dataframe.delete()
+            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         if status_code != HTTPStatus.CREATED:
             dataframe.delete()
@@ -1092,7 +1136,6 @@ class SessionDataframes(SessionBase):
 
 
 class SessionDataframe(SessionBase):
-    "/session/<int:session_id>/dataframe/<string:dataframe_handle>"
 
     @with_user
     def get(self, session_id, dataframe_handle):
@@ -1194,13 +1237,6 @@ class SessionDataframe(SessionBase):
                 type: string
             description: Handle of the data frame
             required: true
-          - in: query
-            name: delete_dependents
-            schema:
-                type: boolean
-            description: >-
-                Delete all dependents of the data frame. This includes the columns
-                that are part of the data frame.
 
         responses:
             204:
@@ -1232,15 +1268,6 @@ class SessionDataframe(SessionBase):
                 "msg": f"Data frame with handle={dataframe_handle} not found"
             }, HTTPStatus.NOT_FOUND
 
-        delete_dependents = request.args.get("delete_dependents", False)
-        if dataframe.columns and not delete_dependents:
-            return {
-                "msg": (
-                    "This data frame contains columns. Please delete them first or set"
-                    " the `delete_dependents` option to `true` to delete them."
-                )
-            }, HTTPStatus.BAD_REQUEST
-
         # Delete alls that are part of this dataframe
         for column in dataframe.columns:
             column.delete()
@@ -1259,7 +1286,6 @@ class SessionDataframe(SessionBase):
 
 
 class DataframePreprocessing(SessionBase):
-    "/session/<int:session_id>/dataframe/<string:dataframe_handle>/preprocessing"
 
     @with_user
     def post(self, session_id, dataframe_handle):
@@ -1379,10 +1405,12 @@ class DataframePreprocessing(SessionBase):
             database=[{"label": dataframe_handle, "type": "handle"}],
             description=description,
             depends_on_ids=[rt.id for rt in requires_tasks],
-            action=LocalAction.PREPROCESSING,
+            action=AlgorithmStepType.PREPROCESSING,
             image=preprocessing_task["image"],
             organizations=preprocessing_task["organizations"],
             dataframe=dataframe,
+            store_id=preprocessing_task.get("store_id"),
+            server_url=preprocessing_task.get("server_url"),
         )
         # In case the task is not created we do not want to modify the chain of tasks.
         # The user can try again.
@@ -1396,7 +1424,6 @@ class DataframePreprocessing(SessionBase):
 
 
 class DataframeColumns(SessionBase):
-    "/session/<int:session_id>/dataframe/<string:dataframe_handle>/column"
 
     @with_node
     def post(self, session_id, dataframe_handle):

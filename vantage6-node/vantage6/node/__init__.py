@@ -48,7 +48,7 @@ from vantage6.common.docker.addons import (
 from vantage6.common.globals import VPN_CONFIG_FILE, PING_INTERVAL_SECONDS, NodePolicy
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.common.enum import RunStatus, LocalAction, TaskStatusQueryOptions
+from vantage6.common.enum import RunStatus, AlgorithmStepType, TaskStatusQueryOptions
 from vantage6.common.log import get_file_logger
 from vantage6.cli.context.node import NodeContext
 from vantage6.node.context import DockerNodeContext
@@ -337,7 +337,7 @@ class Node:
 
         # each algorithm container has its own purpose annotated by the action
         try:
-            container_action = LocalAction(task_incl_run["action"])
+            container_action = AlgorithmStepType(task_incl_run["action"])
         except ValueError:
             self.log.error(
                 f"Unrecognized action {task_incl_run['action']}. Cancelling task."
@@ -347,6 +347,7 @@ class Node:
                 data={
                     "status": RunStatus.FAILED,
                     "finished_at": datetime.datetime.now().isoformat(),
+                    "log": f"Unrecognized action {task_incl_run['action']}",
                 },
             )
             self.__emit_algorithm_status_change(task, task_incl_run, RunStatus.FAILED)
@@ -355,7 +356,7 @@ class Node:
         # Only compute containers need a token as they are the only ones that should
         # create subtasks
         token = None
-        if container_action == LocalAction.COMPUTE:
+        if container_action == AlgorithmStepType.COMPUTE:
             token = self.client.request_token_for_container(task["id"], task["image"])
             token = token["container_token"]
 

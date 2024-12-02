@@ -119,6 +119,12 @@ class DataFrameSubClient(ClientBase.SubClient):
 
         # Get the organizations that are part of the session.
         session = self.parent.request(f"session/{session_id}")
+        if not session:
+            self.parent.log.error(
+                f"An error occurred while fetching session {session_id}"
+            )
+            return
+
         if session.get("study"):
             study_id = session["study"]["id"]
             params = {"study": study_id}
@@ -205,6 +211,12 @@ class DataFrameSubClient(ClientBase.SubClient):
 
         # Get the organizations that are part of the session.
         session = self.parent.request(f"session/{session_id}")
+        if not session:
+            self.parent.log.error(
+                f"An error occurred while fetching session {session_id}"
+            )
+            return
+
         if session.get("study"):
             study_id = session["study"]["id"]
             params = {"study": study_id}
@@ -242,10 +254,19 @@ class DataFrameSubClient(ClientBase.SubClient):
         )
 
     @post_filtering(iterable=False)
-    def delete(
-        self, handle: str, session: int = None, delete_dependents: bool = False
-    ) -> dict:
-        """Delete a data frame."""
+    def delete(self, handle: str, session: int = None) -> dict:
+        """
+        Delete a data frame.
+
+        Parameters
+        ----------
+        handle : str
+            The name of the data frame.
+        session : int, optional
+            The session ID in which the data frame is located. When not provided, the
+            session ID of the client is used when it is set. In case the session ID is
+            not set, an error is printed.
+        """
 
         session_id = session or self.parent.session_id
         if not session_id:
@@ -254,8 +275,8 @@ class DataFrameSubClient(ClientBase.SubClient):
             )
             return
 
-        return self.parent.request(
-            f"session/{session_id}/dataframe/{handle}",
-            method="DELETE",
-            params={"delete_dependents": delete_dependents},
+        res = self.parent.request(
+            f"session/{session_id}/dataframe/{handle}", method="DELETE"
         )
+
+        self.parent.log.info(f"--> {res.get('msg')}")

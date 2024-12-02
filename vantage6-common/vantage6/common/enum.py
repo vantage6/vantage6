@@ -28,7 +28,7 @@ class EnumBase(str, Enum):
         return [status.value.lower() for status in cls]
 
 
-class LocalAction(EnumBase):
+class AlgorithmStepType(EnumBase):
     """Enum to represent the local actions
 
     A container (= function) on a node can perform a single action. Depending on the
@@ -42,21 +42,6 @@ class LocalAction(EnumBase):
     POST_PROCESSING = "post processing"
 
 
-class SessionStatus(EnumBase):
-    """Enum to represent the status of a session"""
-
-    # Session creation has not yet started
-    PENDING = "pending"
-    # Session is executing the data extraction step(s)
-    DATA_EXTRACTION = "data extraction"
-    # Session is executing the preprocessing step(s)
-    PREPROCESSING = "preprocessing"
-    # Session is ready to be used by compute tasks
-    READY = "ready"
-    # Session creation has failed
-    FAILED = "failed"
-
-
 class TaskStatus(EnumBase):
     """Enum to represent the status of a task"""
 
@@ -65,7 +50,7 @@ class TaskStatus(EnumBase):
     # At least one run has failed
     FAILED = "failed"
     # At least one run is not completed and no runs have failed
-    AWAITING = "awaiting"
+    WAITING = "awaiting"
 
     @classmethod
     def has_finished(cls, status) -> bool:
@@ -161,6 +146,10 @@ class RunStatus(EnumBase):
             cls.KILLED.value,
             cls.NOT_ALLOWED.value,
             cls.UNKNOWN_ERROR.value,
+            cls.START_FAILED.value,
+            cls.NO_DOCKER_IMAGE.value,
+            cls.UNEXPECTED_OUTPUT.value,
+            cls.DATAFRAME_NOT_FOUND.value,
         ]
 
     @classmethod

@@ -55,7 +55,6 @@ class Dataframe(Base):
     columns = relationship("Column", back_populates="dataframe")
     last_session_task = relationship("Task", foreign_keys=[last_session_task_id])
 
-    @hybrid_property
     def ready(self) -> bool:
         """
         Check if the dataframe is not being modified. The dataframe is considered to be
@@ -79,17 +78,6 @@ class Dataframe(Base):
             [RunStatus.has_finished(run.status) for run in self.last_session_task.runs]
         )
 
-    @ready.expression
-    def ready(cls):
-        """SQLAlchemy expression to check if the dataframe is ready."""
-        return and_(
-            cls.last_session_task != None,
-            *[
-                run.status.in_(RunStatus.finished_statuses())
-                for run in cls.last_session_task.runs
-            ],
-        )
-
     @hybrid_property
     def active_compute_tasks(self) -> list[models.Task]:
         """
@@ -106,7 +94,7 @@ class Dataframe(Base):
             db_session.query(models.Task)
             .join(models.TaskDatabase)
             .filter(models.Task.action == "compute")
-            .filter(models.Task.status == TaskStatus.AWAITING.value)
+            .filter(models.Task.status == TaskStatus.WAITING.value)
             .filter(models.TaskDatabase.database == self.handle)
             .filter(models.Task.session_id == self.session_id)
             .all()

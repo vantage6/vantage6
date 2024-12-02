@@ -7,7 +7,7 @@ from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from vantage6.common import logger_name
 from vantage6.server.model.base import Base, DatabaseSessionManager
-from vantage6.common.enum import LocalAction
+from vantage6.common.enum import AlgorithmStepType
 from vantage6.server.model import Node, Collaboration, Organization
 from vantage6.server.model.task import Task
 
@@ -42,7 +42,7 @@ class Run(Base):
         Status of the task
     log : str
         Log of the task
-    action : :class:`.~vantage6.common.LocalAction`
+    action : :class:`.~vantage6.common.AlgorithmStepType`
         Action type of the task
 
     Relationships
@@ -90,9 +90,9 @@ class Run(Base):
         Raises
         ------
         ValueError
-            If the action is not a valid LocalAction
+            If the action is not a valid AlgorithmStepType
         """
-        if action not in LocalAction.list():
+        if action not in AlgorithmStepType.list():
             raise ValueError(f"Invalid action: {action}")
         return action
 

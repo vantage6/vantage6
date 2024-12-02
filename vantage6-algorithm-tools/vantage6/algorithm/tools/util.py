@@ -8,7 +8,7 @@ from vantage6.common.globals import (
     ENV_VAR_EQUALS_REPLACEMENT,
     ContainerEnvNames,
 )
-from vantage6.common.enum import LocalAction
+from vantage6.common.enum import AlgorithmStepType
 from vantage6.algorithm.tools.exceptions import EnvironmentVariableError
 
 
@@ -182,7 +182,7 @@ def check_envvar_value_positive(envvar_name: str, envvar_value: int | float) -> 
         )
 
 
-def get_action() -> LocalAction:
+def get_action() -> AlgorithmStepType:
     """
     Get the action of the container.
 
@@ -192,7 +192,7 @@ def get_action() -> LocalAction:
 
     Returns
     -------
-    LocalAction
+    AlgorithmStepType
         The action of the container.
     """
     if ContainerEnvNames.FUNCTION_ACTION.value not in os.environ:
@@ -202,7 +202,7 @@ def get_action() -> LocalAction:
 
     requested_action = os.environ[ContainerEnvNames.FUNCTION_ACTION.value]
     try:
-        action = LocalAction(requested_action)
+        action = AlgorithmStepType(requested_action)
     except ValueError as exc:
         raise EnvironmentVariableError(
             f"Environment variable {ContainerEnvNames.FUNCTION_ACTION.value} has value "

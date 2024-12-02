@@ -5,7 +5,7 @@ from typing import Any
 from functools import wraps
 
 from vantage6.common import info
-from vantage6.common.enum import LocalAction
+from vantage6.common.enum import AlgorithmStepType
 from vantage6.algorithm.tools.exceptions import (
     DataTypeError,
     SessionError,
@@ -13,7 +13,7 @@ from vantage6.algorithm.tools.exceptions import (
 from vantage6.algorithm.tools.util import get_action
 
 
-def _exit_if_action_mismatch(function_action: LocalAction):
+def _exit_if_action_mismatch(function_action: AlgorithmStepType):
     """
     Check if the requested action matches the container action.
 
@@ -27,7 +27,7 @@ def _exit_if_action_mismatch(function_action: LocalAction):
 
     Parameters
     ----------
-    function_action : LocalAction
+    function_action : AlgorithmStepType
         The action requested by the user.
 
     Raises
@@ -99,7 +99,7 @@ def data_extraction(func: callable) -> callable:
 
         # Validate that the correct action is invoked in combination with the function
         # that is wrapped by this decorator.
-        _exit_if_action_mismatch(LocalAction.DATA_EXTRACTION)
+        _exit_if_action_mismatch(AlgorithmStepType.DATA_EXTRACTION)
 
         # TODO: should we add the data in here??
         result = func(*args, **kwargs)
@@ -117,7 +117,7 @@ def pre_processing(func: callable) -> callable:
 
         # Validate that the correct action is invoked in combination with the function
         # that is wrapped by this decorator.
-        _exit_if_action_mismatch(LocalAction.PREPROCESSING)
+        _exit_if_action_mismatch(AlgorithmStepType.PREPROCESSING)
 
         result = func(*args, **kwargs)
 
@@ -131,7 +131,7 @@ def federated(func: callable) -> callable:
 
     @wraps(func)
     def wrapper(*args, **kwargs) -> callable:
-        _exit_if_action_mismatch(LocalAction.COMPUTE)
+        _exit_if_action_mismatch(AlgorithmStepType.COMPUTE)
         result = func(*args, **kwargs)
         return result
 
@@ -143,7 +143,7 @@ def central(func: callable) -> callable:
 
     @wraps(func)
     def wrapper(*args, **kwargs) -> callable:
-        _exit_if_action_mismatch(LocalAction.COMPUTE)
+        _exit_if_action_mismatch(AlgorithmStepType.COMPUTE)
         result = func(*args, **kwargs)
         return result
 

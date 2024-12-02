@@ -1739,6 +1739,10 @@ class UserClient(ClientBase):
                 Filter the result on multiple key-value pairs. For instance,
                 "filters=[('name', 'task1'), ('id', 1)]" will only return the
                 tasks with the name 'task1' and id 1. Default is None.
+            session: int, optional
+                Filter by session id
+            dataframe: int, optional
+                Filter by dataframe id
             page: int, optional
                 Pagination page, by default 1
             per_page: int, optional
@@ -1747,7 +1751,7 @@ class UserClient(ClientBase):
             Returns
             -------
             dict
-                dictonairy containing the key 'data' which contains the
+                dictionary containing the key 'data' which contains the
                 tasks and a key 'links' containing the pagination
                 metadata
             """

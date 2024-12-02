@@ -121,6 +121,7 @@ class TestSessionResource(TestResourceBase):
 
     def test_update_node_sessions(self):
 
+        # API key is coming from the unittest.yaml file
         node = Node.get_by_api_key("123e4567-e89b-12d3-a456-426614174000")
         collaboration_id = node.collaboration_id
 

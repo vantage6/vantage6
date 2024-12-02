@@ -94,11 +94,6 @@ class TaskSchema(HATEOASModelSchema):
     # )
     depends_on = fields.Function(lambda obj: [dep.id for dep in obj.depends_on])
 
-    # required_by = fields.Function(
-    #     lambda obj: create_one_to_many_link(
-    #         obj, link_to="task", link_from="required_by"
-    #     )
-    # )
     required_by = fields.Function(lambda obj: [req.id for req in obj.required_by])
 
     children = fields.Function(
@@ -113,7 +108,19 @@ class TaskSchema(HATEOASModelSchema):
     dataframe = fields.Nested("SimpleDataframeSchema", many=False)
 
     @staticmethod
-    def databases_(obj):
+    def databases_(obj) -> list[dict]:
+        """Returns the database label and type for all databases of a task.
+
+        Arguments
+        ---------
+        obj : Task
+            The task to get the databases from.
+
+        Returns
+        -------
+            list[dict]
+                A list of dictionaries containing the database label and type.
+        """
         return [{"label": db.database, "type": db.type_} for db in obj.databases]
 
 
@@ -179,7 +186,6 @@ class RunSchema(HATEOASModelSchema):
     ports = fields.Function(
         serialize=lambda obj: RunPortSchema().dump(obj.ports, many=True)
     )
-    action = fields.String()
 
     @staticmethod
     def result_link(obj):

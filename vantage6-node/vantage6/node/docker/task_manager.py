@@ -26,7 +26,7 @@ from vantage6.common.docker.addons import (
     running_in_docker,
 )
 from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.common.enum import RunStatus, LocalAction
+from vantage6.common.enum import RunStatus, AlgorithmStepType
 from vantage6.node import NodeClient
 from vantage6.node.util import get_parent_id
 from vantage6.node.globals import ALPINE_IMAGE, ENV_VARS_NOT_SETTABLE_BY_NODE
@@ -61,7 +61,7 @@ class DockerTaskManager(DockerBaseManager):
         run_id: int,
         task_info: dict,
         tasks_dir: Path,
-        action: LocalAction,
+        action: AlgorithmStepType,
         isolated_network_mgr: NetworkManager,
         databases: dict,
         docker_volume_name: str,
@@ -92,7 +92,7 @@ class DockerTaskManager(DockerBaseManager):
             Dictionary with info about the task
         tasks_dir: Path
             Directory in which this task's data are stored
-        action: LocalAction
+        action: AlgorithmStepType
             Action to be performed by the container
         isolated_network_mgr: NetworkManager
             Manager of isolated network to which algorithm needs to connect
@@ -149,7 +149,6 @@ class DockerTaskManager(DockerBaseManager):
         # FIXME: these values should be retrieved from DockerNodeContext
         #   in some way.
         self.data_folder = "/mnt/data"
-        self.session_folder = "/mnt/session"
         self.session_state_file_name = "state.parquet"
         # FIXME: this `tmp_folder` might be used by some algorithms.In v5+ the
         # `TEMPORARY_FOLDER` environment variable should be removed and all these
@@ -220,7 +219,7 @@ class DockerTaskManager(DockerBaseManager):
 
         match self.action:
 
-            case LocalAction.DATA_EXTRACTION | LocalAction.PREPROCESSING:
+            case AlgorithmStepType.DATA_EXTRACTION | AlgorithmStepType.PREPROCESSING:
 
                 try:
                     result = pq.read_table(self.output_file)
@@ -232,14 +231,14 @@ class DockerTaskManager(DockerBaseManager):
                 self._update_session(result)
                 return b""
 
-            case LocalAction.COMPUTE:
+            case AlgorithmStepType.COMPUTE:
 
                 with open(self.output_file, "rb") as fp:
                     result = fp.read()
 
                 self._update_session_state(
-                    LocalAction.COMPUTE.value,
-                    "No file",
+                    AlgorithmStepType.COMPUTE.value,
+                    None,
                     f"Algorithm from '{self.image}' completed successfully.",
                 )
                 return result
@@ -688,7 +687,7 @@ class DockerTaskManager(DockerBaseManager):
             ContainerEnvNames.FUNCTION_ACTION.value: self.action.value,
         }
 
-        if self.action == LocalAction.COMPUTE:
+        if self.action == AlgorithmStepType.COMPUTE:
             environment_variables[ContainerEnvNames.TOKEN_FILE.value] = (
                 f"{self.data_folder}/{self.task_folder_name}/token"
             )
@@ -698,7 +697,7 @@ class DockerTaskManager(DockerBaseManager):
             self._set_proxy_env_vars(environment_variables, proxy_host)
 
         # Only the data extraction step can access the source databases
-        if self.action == LocalAction.DATA_EXTRACTION:
+        if self.action == AlgorithmStepType.DATA_EXTRACTION:
 
             # Validate the source database
             self._validate_source_database(databases_to_use)
@@ -824,7 +823,13 @@ class DockerTaskManager(DockerBaseManager):
             self.log.debug(f"Requested dataframe handles: {requested_handles}")
             self.log.debug(f"Available dataframe handles: {available_handles}")
             self.status = RunStatus.DATAFRAME_NOT_FOUND
-            raise DataFrameNotFound(f"User requested {requested_handles}")
+
+            problematic_handles = requested_handles - available_handles
+
+            raise DataFrameNotFound(
+                f"User requested {problematic_handles} that are not available in the "
+                f"session folder. Available handles are {available_handles}."
+            )
 
     def _validate_source_database(self, databases_to_use: list[dict]) -> None:
         """
@@ -924,7 +929,7 @@ class DockerTaskManager(DockerBaseManager):
             """Encode env var value
 
             We first encode to bytes, then to b32 and then decode to a string.
-            Finally, '=' is replaced by less sensitve characters to prevent
+            Finally, '=' is replaced by less sensitive characters to prevent
             issues with interpreting the encoded string in the env var value.
 
             Parameters

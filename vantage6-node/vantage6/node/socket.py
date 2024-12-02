@@ -50,7 +50,7 @@ class NodeTaskNamespace(ClientNamespace):
         # self.node_worker_ref.socketIO.disconnect()
         self.log.info("Disconnected from the server")
 
-    def on_new_task(self, data: dict):
+    def on_new_task_update(self, data: dict):
         """
         Actions to be taken when node is notified of new task by server
 

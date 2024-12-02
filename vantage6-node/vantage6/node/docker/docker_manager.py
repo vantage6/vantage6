@@ -27,9 +27,10 @@ from vantage6.common.docker.addons import (
     running_in_docker,
 )
 from vantage6.common.globals import APPNAME, NodePolicy
-from vantage6.common.enum import RunStatus, LocalAction
+from vantage6.common.enum import RunStatus, AlgorithmStepType
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.cli.context.node import NodeContext
+from vantage6.node.globals import TASK_START_RETRIES, TASK_START_RETRY_SLEEP
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
@@ -574,7 +575,7 @@ class DockerManager(DockerBaseManager):
         session_id: int,
         token: str | None,
         databases_to_use: list[str],
-        action: LocalAction,
+        action: AlgorithmStepType,
     ) -> tuple[RunStatus, list[dict] | None]:
         """
         Checks if docker task is running. If not, creates DockerTaskManager to
@@ -643,7 +644,7 @@ class DockerManager(DockerBaseManager):
         # again. If it fails permanently we add it to the failed tasks to be
         # handled by the speaking worker of the node
         attempts = 1
-        while not (task.status == RunStatus.ACTIVE) and attempts < 3:
+        while not (task.status == RunStatus.ACTIVE) and attempts < TASK_START_RETRIES:
             try:
                 vpn_ports = task.run(
                     docker_input=docker_input,
@@ -654,7 +655,9 @@ class DockerManager(DockerBaseManager):
 
             except TemporaryAlgorithmFail:
                 self.log.exception(f"Failed to start run {run_id}")
-                time.sleep(1)  # add some time before retrying the next attempt
+                time.sleep(
+                    TASK_START_RETRY_SLEEP
+                )  # add some time before retrying the next attempt
 
             except PermanentAlgorithmFail:
                 break

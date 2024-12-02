@@ -273,7 +273,7 @@ class DefaultSocketNamespace(Namespace):
             )
             for task in dependent_tasks:
                 emit(
-                    "new_task",
+                    "new_task_update",
                     {"id": task.id, "parent_id": task.parent_id},
                     room=f"collaboration_{task.collaboration_id}",
                 )
