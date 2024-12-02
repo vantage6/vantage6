@@ -49,7 +49,7 @@ def create_node_data_files(num_nodes: int, server_name: str) -> list[Path]:
         start = i * length_df // num_nodes
         end = (i + 1) * length_df // num_nodes
         data = full_df[start:end]
-        data_file = data_folder / f"df_{node_name}.csv"
+        data_file = data_folder / f"{node_name}.csv"
 
         # write data to file
         data.to_csv(data_file, index=False)

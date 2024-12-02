@@ -2,11 +2,12 @@ import datetime
 import logging
 
 from sqlalchemy import Column, Text, DateTime, Integer, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from vantage6.common import logger_name
 from vantage6.server.model.base import Base, DatabaseSessionManager
+from vantage6.common.enum import AlgorithmStepType
 from vantage6.server.model import Node, Collaboration, Organization
 from vantage6.server.model.task import Task
 
@@ -41,6 +42,11 @@ class Run(Base):
         Status of the task
     log : str
         Log of the task
+    action : :class:`.~vantage6.common.AlgorithmStepType`
+        Action type of the task
+
+    Relationships
+    -------------
     task : :class:`.~vantage6.server.model.task.Task`
         Task that was executed
     organization : :class:`.~vantage6.server.model.organization.Organization`
@@ -59,11 +65,36 @@ class Run(Base):
     finished_at = Column(DateTime)
     status = Column(Text)
     log = Column(Text)
+    action = Column(Text)
 
     # relationships
     task = relationship("Task", back_populates="runs")
     organization = relationship("Organization", back_populates="runs")
     ports = relationship("AlgorithmPort", back_populates="run")
+
+    @validates("action")
+    def validate_action(self, _, action):
+        """
+        Validate the action field.
+
+        Parameters
+        ----------
+        action : str
+            The action to validate
+
+        Returns
+        -------
+        str
+            The validated action
+
+        Raises
+        ------
+        ValueError
+            If the action is not a valid AlgorithmStepType
+        """
+        if action not in AlgorithmStepType.list():
+            raise ValueError(f"Invalid action: {action}")
+        return action
 
     @property
     def node(self) -> Node:

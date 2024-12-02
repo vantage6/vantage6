@@ -17,7 +17,7 @@ from flask_restful import Api
 from http import HTTPStatus
 
 from vantage6 import server
-from vantage6.common.task_status import has_task_finished
+from vantage6.common.enum import TaskStatus
 from vantage6.common.globals import MAIN_VERSION_NAME
 from vantage6.server import db
 from vantage6.server.model.user import User
@@ -304,36 +304,46 @@ class ContainerToken(ServicesResources):
             )
             return {"msg": "Parent task does not exist!"}, HTTPStatus.BAD_REQUEST
 
-        # verify that task the token is requested for exists
-        if claim_image != db_task.image:
-            log.warning(
-                f"Node {g.node.id} attempts to generate key for image "
-                f"{claim_image} that does not belong to task {task_id}."
-            )
-            return {"msg": "Image and task do no match"}, HTTPStatus.UNAUTHORIZED
-
         # check if the node is in the collaboration to which the task is
         # enlisted
         if g.node.collaboration_id != db_task.collaboration_id:
             log.warning(
-                f"Node {g.node.id} attempts to generate key for task {task_id}"
-                f" which is outside its collaboration "
-                f"({g.node.collaboration_id}/{db_task.collaboration_id})."
+                "Node %s attempts to generate key for task %s which is outside its "
+                "collaboration. Node is in collaboration %s, task in %s).",
+                g.node.id,
+                task_id,
+                g.node.collaboration_id,
+                db_task.collaboration_id,
             )
             return {
                 "msg": "You are not within the collaboration"
             }, HTTPStatus.UNAUTHORIZED
 
+        # verify that task the token is requested for exists
+        collaboration = db.Collaboration.get(db_task.collaboration_id)
+        if collaboration.session_restrict_to_same_image:
+            if claim_image != db_task.image:
+                log.warning(
+                    "Node %s attempts to generate key for image %s that does not belong"
+                    " to task %s. This is not allowed because this collaboration has "
+                    " the 'session_restrict_to_same_image' option set to True.",
+                    g.node.id,
+                    claim_image,
+                    task_id,
+                )
+                return {"msg": "Image and task do no match"}, HTTPStatus.UNAUTHORIZED
+
         # validate that the task not has been finished yet
-        if has_task_finished(db_task.status):
+        if TaskStatus.has_finished(db_task.status):
             log.warning(
-                f"Node {g.node.id} attempts to generate a key for "
-                f"completed task {task_id}"
+                "Node %s attempts to generate a key for completed task %s",
+                g.node.id,
+                task_id,
             )
             return {"msg": "Task is already finished!"}, HTTPStatus.BAD_REQUEST
 
-        # container identity consists of its node_id,
-        # task_id, collaboration_id and image_id
+        # We store the task metadata in the token, so the server can verify later on
+        # that the container is allowed to access certain server resources.
         container = {
             "client_type": "container",
             "node_id": g.node.id,
@@ -344,7 +354,7 @@ class ContainerToken(ServicesResources):
             "task_id": task_id,
             "image": claim_image,
             "databases": [
-                json.loads(db_entry.parameters) | {"label": db_entry.database}
+                {"label": db_entry.database, "type": db_entry.type_}
                 for db_entry in db_task.databases
             ],
         }

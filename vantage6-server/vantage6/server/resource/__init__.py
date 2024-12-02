@@ -53,6 +53,18 @@ class ServicesResources(BaseServicesResources):
         self.socketio = socketio
 
     @staticmethod
+    def is_user() -> bool:
+        """
+        Check if the current auth is a user.
+
+        Returns
+        -------
+        bool
+            True if the current auth is a user, False otherwise
+        """
+        return g.user is not None
+
+    @staticmethod
     def obtain_auth() -> db.Authenticatable | dict:
         """
         Read authenticatable object or dict from the flask global context.

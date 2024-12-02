@@ -21,10 +21,22 @@ class Node(Authenticatable):
         Name of the node
     api_key : str
         API key of the node
+    collaboration_id : int
+        ID of the collaboration that the node belongs to
+    organization_id : int
+        ID of the organization that the node belongs to
+
+    Relationships
+    -------------
     collaboration : :class:`~.model.collaboration.Collaboration`
         Collaboration that the node belongs to
     organization : :class:`~.model.organization.Organization`
         Organization that the node belongs to
+    config : :class:`~.model.node_config.NodeConfig`
+        Configuration of the node
+    columns : list[:class:`~.model.column.Column`]
+        List of columns that are part of this node. Note that these columns can belong
+        to different dataframes.
     """
 
     _hidden_attributes = ["api_key"]
@@ -41,6 +53,7 @@ class Node(Authenticatable):
     collaboration = relationship("Collaboration", back_populates="nodes")
     organization = relationship("Organization", back_populates="nodes")
     config = relationship("NodeConfig", back_populates="node")
+    columns = relationship("Column", back_populates="node")
 
     # the type specification in Authenticatable
     __mapper_args__ = {

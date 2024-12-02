@@ -159,13 +159,15 @@ class NodeClient(ClientBase):
 
             # if there are multiple pages of algorithm runs, get them all
             links = run_data.get("links")
+
             page = 1
             while links and links.get("next"):
                 page += 1
-                run_data["data"] += self.parent.request(
+                next_page = self.parent.request(
                     endpoint="run", params={**params, "page": page}
-                )["data"]
-                links = run_data.get("links")
+                )
+                run_data["data"] += next_page["data"]
+                links = next_page.get("links")
 
             # strip pagination links
             run_data = run_data["data"]

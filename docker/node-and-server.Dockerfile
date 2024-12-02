@@ -56,4 +56,4 @@ RUN chmod +x /vantage6/vantage6-server/server.sh
 # expose the proxy server port
 ARG port=80
 EXPOSE ${port}
-ENV PROXY_SERVER_PORT ${port}
+ENV PROXY_SERVER_PORT=${port}

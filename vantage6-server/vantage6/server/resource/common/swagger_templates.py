@@ -19,6 +19,10 @@ swagger_template = {
                         "type": "string",
                         "description": "Human-readable task name",
                     },
+                    "session_id": {
+                        "type": "integer",
+                        "description": "Session id to which this task belongs",
+                    },
                     "collaboration_id": {
                         "type": "integer",
                         "description": (
@@ -105,7 +109,7 @@ swagger_template = {
                     },
                     "domain": {
                         "type": "string",
-                        "description": "Link to website of the organization.",
+                        "description": "Domain name of the organization",
                     },
                 },
                 "example": {
@@ -121,6 +125,48 @@ swagger_template = {
             "Collaboration": {
                 "properties": {"collaboration_id": {"type": "integer"}},
                 "example": {"collaboration_id": 1},
+            },
+            "Session": {
+                "properties": {
+                    "name": {"type": "string"},
+                    "collaboration_id": {"type": "integer"},
+                    "study_id": {"type": "integer"},
+                    "scope": {"type": "string"},
+                },
+                "example": {
+                    "name": "unique-session-label",
+                    "collaboration_id": 1,
+                    "scope": "own",
+                },
+            },
+            "DataFrame": {
+                "properties": {
+                    "label": {
+                        "type": "string",
+                        "description": "Label of the source database",
+                    },
+                    "handle": {
+                        "type": "string",
+                        "description": "Handle of the DataFrame",
+                    },
+                    "task": {
+                        "type": "object",
+                        "description": "Data extraction task",
+                    },
+                },
+                "example": {
+                    "label": "database-label",
+                    "handle": "my-data-frame",
+                    "task": {
+                        "image": "hello-world",
+                        "organizations": [
+                            {
+                                "id": 1,
+                                "input": "encrypted-encoded-serialized-dict",
+                            }
+                        ],
+                    },
+                },
             },
             "Node": {
                 "example": {"api_key": "unique-uuid-string"},

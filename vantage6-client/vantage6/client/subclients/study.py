@@ -8,7 +8,8 @@ class StudySubClient(ClientBase.SubClient):
 
     @post_filtering(iterable=False)
     def get(self, id_: int) -> dict:
-        """Get a study by its id.
+        """
+        Get a study by its id.
 
         Parameters
         ----------
@@ -39,7 +40,8 @@ class StudySubClient(ClientBase.SubClient):
         page: int = 1,
         per_page: int = 20,
     ) -> List[dict]:
-        """View your studies
+        """
+        View your studies
 
         Parameters
         ----------
@@ -88,7 +90,8 @@ class StudySubClient(ClientBase.SubClient):
     def create(
         self, name: str, organizations: List[int], collaboration: int = None
     ) -> dict:
-        """Create new study
+        """
+        Create new study
 
         Parameters
         ----------

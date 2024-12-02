@@ -145,11 +145,6 @@ policies:
     - 6
     - root
 
-  # The basics algorithm (harbor2.vantage5.ai/algorithms/basics) is whitelisted
-  # by default. It is used to collect column names in the User Interface to
-  # facilitate task creation. Set to false to disable this.
-  allow_basics_algorithm: true
-
   # Set to true to always require that the algorithm image is successfully pulled. This
   # ensures that no potentially outdated local images are used if internet connection
   # is not available. This option should be set to false if you are testing with local

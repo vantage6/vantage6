@@ -27,9 +27,9 @@ class ClientBase(object):
         Parameters
         ----------
         host : str
-            Adress (including protocol, e.g. `https://`) of the vantage6 server
+            Address (including protocol, e.g. `https://`) of the vantage6 server
         port : int
-            port numer to which the server listens
+            port number to which the server listens
         path : str, optional
             path of the api, by default '/api'
         """
@@ -585,6 +585,10 @@ class ClientBase(object):
         """
         Create sub groups of commands using this SubClient
 
+        For example, the class `vantage6.client.subclients.study.Study` defines the
+        commands that can be run on studies. These are accessible for the user as
+        subclient: `client.study`.
+
         Parameters
         ----------
         parent : UserClient | AlgorithmClient
@@ -596,9 +600,9 @@ class ClientBase(object):
             # grandparents and so on.
             # TODO maybe this should ideally get a name of 'main_client' or something
             if hasattr(parent, "parent"):
-                self.parent = parent.parent
+                self.parent: ClientBase = parent.parent
             else:
-                self.parent = parent
+                self.parent: ClientBase = parent
 
         @staticmethod
         def _clean_update_data(data: dict) -> dict:

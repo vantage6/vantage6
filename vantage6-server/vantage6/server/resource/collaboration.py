@@ -333,6 +333,10 @@ class Collaborations(CollaborationBase):
                     type: integer
                     description: Boolean (0 or 1) to indicate if the
                       collaboration uses encryption
+                  session_restrict_to_same_image:
+                    type: integer
+                    description: Boolean (0 or 1) to indicate if the session
+                      should be restricted to the same image
 
         responses:
           200:
@@ -368,6 +372,9 @@ class Collaborations(CollaborationBase):
             }, HTTPStatus.UNAUTHORIZED
 
         encrypted = True if data["encrypted"] == 1 else False
+        restricted_sessions = (
+            True if data["session_restrict_to_same_image"] == 1 else False
+        )
 
         collaboration = db.Collaboration(
             name=name,
@@ -377,6 +384,7 @@ class Collaborations(CollaborationBase):
                 if db.Organization.get(org_id)
             ],
             encrypted=encrypted,
+            session_restrict_to_same_image=restricted_sessions,
         )
 
         collaboration.save()

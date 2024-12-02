@@ -27,6 +27,12 @@ TIME_LIMIT_RETRY_CONNECT_NODE = 60 * 60 * 24 * 7  # i.e. 1 week
 # constant for waiting for the initial websocket connection
 TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET = 60
 
+# constants for retrying task start due to a temporary error
+TASK_START_RETRIES = 3
+
+# constant for waiting between task start retries
+TASK_START_RETRY_SLEEP = 10
+
 #
 #    VPN CONFIGURATION RELATED CONSTANTS
 #

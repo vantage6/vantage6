@@ -67,6 +67,8 @@ def get_default_roles(db) -> list[dict]:
         db.Rule.get_by_("event", Scope.ORGANIZATION, Operation.RECEIVE),
         db.Rule.get_by_("event", Scope.COLLABORATION, Operation.RECEIVE),
         db.Rule.get_by_("study", Scope.ORGANIZATION, Operation.VIEW),
+        db.Rule.get_by_("session", Scope.ORGANIZATION, Operation.VIEW),
+        db.Rule.get_by_("session", Scope.COLLABORATION, Operation.VIEW),
     ]
     VIEWER_ROLE = {
         "name": DefaultRole.VIEWER,
@@ -79,6 +81,12 @@ def get_default_roles(db) -> list[dict]:
     RESEARCHER_RULES = VIEWER_RULES + [
         db.Rule.get_by_("task", Scope.COLLABORATION, Operation.CREATE),
         db.Rule.get_by_("task", Scope.ORGANIZATION, Operation.DELETE),
+        db.Rule.get_by_("session", Scope.OWN, Operation.CREATE),
+        db.Rule.get_by_("session", Scope.ORGANIZATION, Operation.CREATE),
+        db.Rule.get_by_("session", Scope.OWN, Operation.EDIT),
+        db.Rule.get_by_("session", Scope.ORGANIZATION, Operation.EDIT),
+        db.Rule.get_by_("session", Scope.OWN, Operation.DELETE),
+        db.Rule.get_by_("session", Scope.ORGANIZATION, Operation.DELETE),
     ]
     RESEARCHER_ROLE = {
         "name": DefaultRole.RESEARCHER,
@@ -127,6 +135,9 @@ def get_default_roles(db) -> list[dict]:
         db.Rule.get_by_("study", Scope.COLLABORATION, Operation.CREATE),
         db.Rule.get_by_("study", Scope.COLLABORATION, Operation.EDIT),
         db.Rule.get_by_("study", Scope.COLLABORATION, Operation.DELETE),
+        db.Rule.get_by_("session", Scope.COLLABORATION, Operation.CREATE),
+        db.Rule.get_by_("session", Scope.COLLABORATION, Operation.EDIT),
+        db.Rule.get_by_("session", Scope.COLLABORATION, Operation.DELETE),
     ]
     COLLAB_ADMIN_ROLE = {
         "name": DefaultRole.COL_ADMIN,

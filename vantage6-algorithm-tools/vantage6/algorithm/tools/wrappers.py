@@ -21,9 +21,7 @@ import os
 import pandas as pd
 
 from sqlalchemy import create_engine
-
 from enum import Enum
-
 from SPARQLWrapper import SPARQLWrapper, CSV
 
 from vantage6.algorithm.tools.util import info, error
@@ -108,35 +106,6 @@ def load_data(
         df = loader(database_uri)
 
     return df
-
-
-def get_column_names(
-    database_uri: str, db_type: str = None, query: str = None, sheet_name: str = None
-) -> list[str]:
-    """
-    Get the column names of dataframe that will be loaded into an algorithm
-
-    Parameters
-    ----------
-    database_uri : str
-        Path to the database file or URI of the database.
-    db_type : str
-        The type of the database. This should be one of the CSV, SQL, Excel, Sparql or
-        Parquet.
-    query : str
-        The query to execute on the database. This is required for SQL and Sparql
-        databases.
-    sheet_name : str
-        The sheet name to read from the Excel file. This is optional and only for Excel
-        databases.
-
-    Returns
-    -------
-    list[str]
-        The column names of the dataframe
-    """
-    df = load_data(database_uri, db_type, query, sheet_name)
-    return df.columns.tolist()
 
 
 def _select_loader(database_type: str) -> callable | None:

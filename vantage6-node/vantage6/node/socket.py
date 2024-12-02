@@ -3,7 +3,7 @@ import logging
 from socketio import ClientNamespace
 
 from vantage6.common import logger_name
-from vantage6.common.task_status import TaskStatus, has_task_failed
+from vantage6.common.enum import RunStatus
 
 
 class NodeTaskNamespace(ClientNamespace):
@@ -50,7 +50,7 @@ class NodeTaskNamespace(ClientNamespace):
         # self.node_worker_ref.socketIO.disconnect()
         self.log.info("Disconnected from the server")
 
-    def on_new_task(self, data: dict):
+    def on_new_task_update(self, data: dict):
         """
         Actions to be taken when node is notified of new task by server
 
@@ -86,13 +86,25 @@ class NodeTaskNamespace(ClientNamespace):
                 job_id of the algorithm container that changed status
             status: str
                 New status of the algorithm container
+            run_id: int
+                run_id of the algorithm container that changed status
+            task_id: int
+                task_id of the algorithm container that changed status
+            collaboration_id: int
+                collaboration_id of the algorithm container that changed status
+            node_id: int
+                node_id of the algorithm container that changed status
+            organization_id: int
+                organization_id of the algorithm container that changed status
+            parent_id: int
+                parent_id of the algorithm container that changed status
         """
         status = data.get("status")
         job_id = data.get("job_id")
-        if has_task_failed(status):
+        if RunStatus.has_failed(status):
             # TODO handle run sequence at this node. Maybe terminate all
             #     containers with the same job_id?
-            if status == TaskStatus.NOT_ALLOWED:
+            if status == RunStatus.NOT_ALLOWED:
                 self.log.critical(
                     "A node within your collaboration part did not allow a "
                     "container of job_id=%s to start",
@@ -105,6 +117,7 @@ class NodeTaskNamespace(ClientNamespace):
                     job_id,
                     status,
                 )
+
         # else: no need to do anything when a task has started/finished/... on
         # another node
 
@@ -159,7 +172,7 @@ class NodeTaskNamespace(ClientNamespace):
                     "task_id": killed.task_id,
                     "collaboration_id": self.node_worker_ref.client.collaboration_id,
                     "node_id": self.node_worker_ref.client.whoami.id_,
-                    "status": TaskStatus.KILLED,
+                    "status": RunStatus.KILLED,
                     "organization_id": self.node_worker_ref.client.whoami.organization_id,
                     "parent_id": killed.parent_id,
                 },

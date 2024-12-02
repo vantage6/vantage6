@@ -3,7 +3,12 @@ import os
 import base64
 import binascii
 
-from vantage6.common.globals import STRING_ENCODING, ENV_VAR_EQUALS_REPLACEMENT
+from vantage6.common.globals import (
+    STRING_ENCODING,
+    ENV_VAR_EQUALS_REPLACEMENT,
+    ContainerEnvNames,
+)
+from vantage6.common.enum import AlgorithmStepType
 from vantage6.algorithm.tools.exceptions import EnvironmentVariableError
 
 
@@ -175,3 +180,33 @@ def check_envvar_value_positive(envvar_name: str, envvar_value: int | float) -> 
             f"Environment variable '{envvar_name}' has value '{envvar_value}' while a "
             "positive value is required."
         )
+
+
+def get_action() -> AlgorithmStepType:
+    """
+    Get the action of the container.
+
+    Check that the environment variable `FUNCTION_ACTION` is set and that the value
+    corresponds to a valid action. An action is a certain role for an algorithm
+    container, such as `data_extraction`, `data_preprocessing`, etc.
+
+    Returns
+    -------
+    AlgorithmStepType
+        The action of the container.
+    """
+    if ContainerEnvNames.FUNCTION_ACTION.value not in os.environ:
+        raise EnvironmentVariableError(
+            f"Environment variable {ContainerEnvNames.FUNCTION_ACTION.value} not found."
+        )
+
+    requested_action = os.environ[ContainerEnvNames.FUNCTION_ACTION.value]
+    try:
+        action = AlgorithmStepType(requested_action)
+    except ValueError as exc:
+        raise EnvironmentVariableError(
+            f"Environment variable {ContainerEnvNames.FUNCTION_ACTION.value} has value "
+            f"'{requested_action}' which is not a valid action."
+        ) from exc
+
+    return action

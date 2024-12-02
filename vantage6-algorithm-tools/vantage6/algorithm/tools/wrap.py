@@ -2,13 +2,16 @@ import os
 import importlib
 import traceback
 import json
+import pyarrow.parquet as pq
 
 from typing import Any
 
-from vantage6.common.client import deserialization
 from vantage6.common import serialization
-from vantage6.algorithm.tools.util import info, error, get_env_var
+from vantage6.common.client import deserialization
+from vantage6.common.globals import ContainerEnvNames
+from vantage6.algorithm.tools.util import info, error, get_env_var, get_action
 from vantage6.algorithm.tools.exceptions import DeserializationError
+from vantage6.common.enum import AlgorithmStepType
 
 
 def wrap_algorithm(log_traceback: bool = True) -> None:
@@ -24,11 +27,7 @@ def wrap_algorithm(log_traceback: bool = True) -> None:
     - ``OUTPUT_FILE``: location where the results of the algorithm should
       be stored
     - ``TOKEN_FILE``: access token for the vantage6 server REST api
-    - ``USER_REQUESTED_DATABASE_LABELS``: comma-separated list of database
-      labels that the user requested
-    - ``<DB_LABEL>_DATABASE_URI``: uri of the each of the databases that
-      the user requested, where ``<DB_LABEL>`` is the label of the
-      database given in ``USER_REQUESTED_DATABASE_LABELS``.
+    - ``DATABASE_URI``: uri of the database that the user requested
 
     The wrapper expects the input file to be a json file. Any other file
     format will result in an error.
@@ -57,7 +56,7 @@ def wrap_algorithm(log_traceback: bool = True) -> None:
     _decode_env_vars()
 
     # read input from the mounted input file.
-    input_file = os.environ["INPUT_FILE"]
+    input_file = os.environ[ContainerEnvNames.INPUT_FILE.value]
     info(f"Reading input file {input_file}")
     input_data = load_input(input_file)
 
@@ -67,7 +66,7 @@ def wrap_algorithm(log_traceback: bool = True) -> None:
 
     # write output from the method to mounted output file. Which will be
     # transferred back to the server by the node-instance.
-    output_file = os.environ["OUTPUT_FILE"]
+    output_file = os.environ[ContainerEnvNames.OUTPUT_FILE.value]
     info(f"Writing output to {output_file}")
 
     _write_output(output, output_file)
@@ -167,7 +166,14 @@ def load_input(input_file: str) -> Any:
 
 def _write_output(output: Any, output_file: str) -> None:
     """
-    Write output to output file using JSON serialization.
+    Write output to output file.
+
+    In case the result needs to be sent to the server the output file should contain
+    valid JSON data. This is because the node will read the output file and send the
+    data to the server.
+
+    In the case we are building a session, the output of the algorithm is expected to
+    be a parquet table. In this case, the output file should contain the parquet data.
 
     Parameters
     ----------
@@ -176,9 +182,20 @@ def _write_output(output: Any, output_file: str) -> None:
     output_file : str
         Path to the output file
     """
-    with open(output_file, "wb") as fp:
-        serialized = serialization.serialize(output)
-        fp.write(serialized)
+    action = get_action()
+
+    if action in [AlgorithmStepType.DATA_EXTRACTION, AlgorithmStepType.PREPROCESSING]:
+        # If the action is data extraction or preprocessing, the output should be a
+        # parquet table. In this case, the output file should contain the parquet data.
+        # It is important that we do not alter this format as it would complicate
+        # writing algorithms that are not using this wrapper. So we use the standard
+        # paruet serialization method.
+        pq.write_table(output, output_file)
+    else:
+
+        with open(output_file, "wb") as fp:
+            serialized = serialization.serialize(output)
+            fp.write(serialized)
 
 
 def _decode_env_vars() -> None:
