@@ -394,19 +394,6 @@ class SessionBase(ServicesResources):
             action,
         )
 
-    @staticmethod
-    def delete_session(session: db.Session) -> None:
-        """
-        Deletes the session and all associated configurations.
-
-        Parameters
-        ----------
-        session : db.Session
-            Session to delete
-        """
-        log.debug(f"Deleting session id={session.id}")
-        session.delete()
-
 
 class Sessions(SessionBase):
 
@@ -910,7 +897,7 @@ class Session(SessionBase):
             }, HTTPStatus.BAD_REQUEST
 
         # This only deletes the session metadata from the server
-        self.delete_session(session)
+        session.delete()
 
         return {"msg": f"Successfully deleted session id={id}"}, HTTPStatus.OK
 

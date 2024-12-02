@@ -99,7 +99,7 @@ class Session(Base):
         return True
 
     @staticmethod
-    def name_exists(name: str, collaboration: "Collaboration"):
+    def name_exists(name: str, collaboration: "Collaboration") -> bool:
         """
         Check if a session with the given name already exists in the collaboration.
 
@@ -107,6 +107,8 @@ class Session(Base):
         ----------
         name : str
             Name of the session to check
+        collaboration : :class:`~vantage6.server.model.collaboration.Collaboration`
+            Collaboration to check the session name in
 
         Returns
         -------
@@ -115,7 +117,7 @@ class Session(Base):
         """
         return any(session.name == name for session in collaboration.sessions)
 
-    def organizations(self) -> list["Organization"]:
+    def organizations(self) -> list:
         """
         Returns the organizations that are part of the session. In case the session
         is scoped to a study, the organizations of the study are returned. Otherwise,
