@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpResponse, HttpStatusCode } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, first } from 'rxjs';
 import { ACCESS_TOKEN_KEY } from 'src/app/models/constants/sessionStorage';
@@ -190,7 +190,7 @@ export class ApiService {
           resolve(response as T);
         },
         (error) => {
-          if (error.status !== 401) {
+          if (error.status !== HttpStatusCode.Unauthorized && error.status !== HttpStatusCode.Forbidden) {
             const errorMsg = this.getErrorMsg(error);
             this.snackBarService.showMessage(errorMsg);
           }
