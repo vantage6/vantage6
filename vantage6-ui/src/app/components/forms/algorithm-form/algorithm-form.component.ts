@@ -110,7 +110,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
 
   handleSubmit() {
     if (this.form.valid) {
-      const formValue = this.visualizationSchemasToArrays(this.form.getRawValue());
+      const formValue = this.formatFormForSubmission(this.form.getRawValue());
       this.submitted.emit(formValue);
     }
   }
@@ -221,6 +221,30 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
           argumentFormGroup.controls['type'].setValue(arg.type);
           argumentFormGroup.controls['has_default_value'].setValue(arg.has_default_value);
           argumentFormGroup.controls['is_default_value_null'].setValue(arg.default_value === null);
+          if (arg.default_value != null) {
+            if (
+              arg.type === ArgumentType.StringList ||
+              arg.type === ArgumentType.ColumnList ||
+              arg.type === ArgumentType.ColumnList ||
+              arg.type === ArgumentType.FloatList ||
+              arg.type === ArgumentType.IntegerList
+            ) {
+              try {
+                const array_vals = JSON.parse(arg.default_value as string);
+                argumentFormGroup.controls['default_value'].setValue(array_vals.join(','));
+              } catch {
+                argumentFormGroup.controls['default_value'].setValue(arg.default_value);
+              }
+            } else if (arg.type === ArgumentType.Boolean) {
+              if (isTruthy(arg.default_value) || arg.default_value == '0') {
+                argumentFormGroup.controls['default_value'].setValue(true);
+              } else {
+                argumentFormGroup.controls['default_value'].setValue(false);
+              }
+            } else {
+              argumentFormGroup.controls['default_value'].setValue(arg.default_value);
+            }
+          }
           (functionFormGroup.controls['arguments'] as FormArray).push(argumentFormGroup);
         });
       }
@@ -284,11 +308,11 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     this.form.controls.functions.controls[0].controls.ui_visualizations.clear();
   }
 
-  // visualization schemas should sometimes contain arrays, while input may be comma-separated strings. Convert those
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private visualizationSchemasToArrays(formValue: any): any {
+  private formatFormForSubmission(formValue: any): any {
     // TODO it would be better to already have arrays in the input -- JSON validation there? Or multiple fields (as in task parameters)?
     formValue.functions.forEach((func: FunctionForm) => {
+      // visualization schemas should sometimes contain arrays, while input may be comma-separated strings. Convert those
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       func.ui_visualizations.forEach((vis: any) => {
         const schema = vis.schema;
@@ -306,6 +330,12 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
             else delete schema[parameter];
           }
         });
+      });
+      // convert default values to strings, as they are always stored as strings in the database
+      func.arguments.forEach((arg) => {
+        if (arg.default_value != null) {
+          arg.default_value = arg.default_value.toString();
+        }
       });
     });
     return formValue;
