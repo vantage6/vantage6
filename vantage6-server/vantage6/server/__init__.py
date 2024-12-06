@@ -150,6 +150,23 @@ class ServerApp:
         # done after the resources are loaded to ensure that rules are set up
         # self.couple_algorithm_stores()
 
+        # TODO v5+ clean this up (simply delete community store URL update). This
+        # change is here to prevent errors when going from v4.3-4.7 to 4.8+.
+        # Because in v4.8, the algorithm store's API path was made
+        # flexible, the /api from then on had to be included in the database
+        community_stores = db.AlgorithmStore.get_by_url(
+            "https://store.cotopaxi.vantage6.ai"
+        )
+        if community_stores:
+            # only need to update first one (there shouldn't be more than 1 anyway)
+            community_store = community_stores[0]
+            log.warning(
+                "Updating community store URL to include '/api'. This change is"
+                " necessary as you are updating to v4.8"
+            )
+            community_store.url = f"{community_store.url}/api"
+            community_store.save()
+
         # set the server version
         self.__version__ = __version__
 
