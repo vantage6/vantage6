@@ -221,7 +221,30 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
           argumentFormGroup.controls['type'].setValue(arg.type);
           argumentFormGroup.controls['has_default_value'].setValue(arg.has_default_value);
           argumentFormGroup.controls['is_default_value_null'].setValue(arg.default_value === null);
-          argumentFormGroup.controls['default_value'].setValue(arg.default_value);
+          if (arg.default_value != null) {
+            if (
+              arg.type === ArgumentType.StringList ||
+              arg.type === ArgumentType.ColumnList ||
+              arg.type === ArgumentType.ColumnList ||
+              arg.type === ArgumentType.FloatList ||
+              arg.type === ArgumentType.IntegerList
+            ) {
+              try {
+                const array_vals = JSON.parse(arg.default_value as string);
+                argumentFormGroup.controls['default_value'].setValue(array_vals.join(','));
+              } catch {
+                argumentFormGroup.controls['default_value'].setValue(arg.default_value);
+              }
+            } else if (arg.type === ArgumentType.Boolean) {
+              if (isTruthy(arg.default_value) || arg.default_value == '0') {
+                argumentFormGroup.controls['default_value'].setValue(true);
+              } else {
+                argumentFormGroup.controls['default_value'].setValue(false);
+              }
+            } else {
+              argumentFormGroup.controls['default_value'].setValue(arg.default_value);
+            }
+          }
           (functionFormGroup.controls['arguments'] as FormArray).push(argumentFormGroup);
         });
       }
