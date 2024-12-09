@@ -80,6 +80,10 @@ policies:
   # localhost servers to connect.
   allow_localhost: false
 
+  # Set the minimum number of reviewers that need to approve an algorithm before it
+  # is available in the store.
+  min_reviewers: 2
+
 # Credentials used to login to private Docker registries. These credentials are used
 # to e.g. find the digests of the algorithm.
 docker_registries:

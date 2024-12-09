@@ -322,8 +322,12 @@ class Reviews(AlgorithmStoreResources):
         review.save()
 
         # also update the algorithm status to 'under review'
-        algorithm.status = AlgorithmStatus.UNDER_REVIEW
-        algorithm.save()
+        # if the minimum number of reviewers has been reached
+        if len(algorithm.reviews) >= (
+                self.config.get("policies", {}).get("min_reviewers", 1)
+        ):
+            algorithm.status = AlgorithmStatus.UNDER_REVIEW
+            algorithm.save()
 
         # send email to the reviewer to notify them of the new review
         Thread(
@@ -488,9 +492,12 @@ class Review(AlgorithmStoreResources):
         # 2. set to awaiting reviewer assignment if there are no other reviews
         algorithm: db.Algorithm = review.algorithm
         if not algorithm.is_review_finished():
-            # if the only review is deleted, new reviewers should be assigned
+            # if number of reviews after deletion is less than the minium,
+            # new reviewers should be assigned
             other_reviews = [r for r in algorithm.reviews if not r.id == review.id]
-            if not other_reviews:
+            if not other_reviews or len(other_reviews) < self.config.get(
+                "policies", {}
+            ).get("min_reviewers", 1):
                 algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
             elif all([r.status == ReviewStatus.APPROVED for r in other_reviews]):
                 # if this was the last remaining review that needed to be approved, but
@@ -673,7 +680,10 @@ class ReviewApprove(ReviewUpdateResources):
         # also update the algorithm status to 'approved' if this was the last review
         # that needed to be approved
         algorithm: db.Algorithm = review.algorithm
-        if algorithm.are_all_reviews_approved():
+        if (
+            algorithm.status == AlgorithmStatus.UNDER_REVIEW
+            and algorithm.are_all_reviews_approved()
+        ):
             algorithm.approve()
 
             # notify the developer by email that their algorithm has been approved
