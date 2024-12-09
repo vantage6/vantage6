@@ -36,7 +36,7 @@ def cli_algo_store_attach(name: str, system_folders: bool) -> None:
         ).ask()
     else:
         post_fix = "system" if system_folders else "user"
-        name = f"{APPNAME}-{name}-{post_fix}-{InstanceType.SERVER}"
+        name = f"{APPNAME}-{name}-{post_fix}-{InstanceType.ALGORITHM_STORE}"
 
     if name in running_server_names:
         container = client.containers.get(name)
