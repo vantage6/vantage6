@@ -84,3 +84,22 @@ class Policy(Base):
         result = session.query(cls).filter_by(key=StorePolicies.ALLOWED_SERVERS).all()
         session.commit()
         return [r.value for r in result]
+
+    @classmethod
+    def get_minimum_reviewers(cls) -> int:
+        """
+        Get the minimum number of reviewers for approving the algorithms.
+
+        Returns
+        -------
+        int
+            Minimum number of reviewers
+        """
+        session = DatabaseSessionManager.get_session()
+        result = (
+            session.query(cls).filter_by(key=StorePolicies.MIN_REVIEWERS).one_or_none()
+        )
+        session.commit()
+        if result is None:
+            return 1
+        return int(result.value)

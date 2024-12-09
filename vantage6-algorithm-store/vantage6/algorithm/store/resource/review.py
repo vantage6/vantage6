@@ -23,6 +23,7 @@ from vantage6.algorithm.store.resource import (
     AlgorithmStoreResources,
 )
 from vantage6.algorithm.store import db
+from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.resource.schema.input_schema import (
     ReviewCreateInputSchema,
     ReviewUpdateInputSchema,
@@ -323,9 +324,7 @@ class Reviews(AlgorithmStoreResources):
 
         # also update the algorithm status to 'under review'
         # if the minimum number of reviewers has been reached
-        if len(algorithm.reviews) >= (
-                self.config.get("policies", {}).get("min_reviewers", 1)
-        ):
+        if len(algorithm.reviews) >= Policy.get_minimum_reviewers():
             algorithm.status = AlgorithmStatus.UNDER_REVIEW
             algorithm.save()
 
@@ -495,9 +494,7 @@ class Review(AlgorithmStoreResources):
             # if number of reviews after deletion is less than the minium,
             # new reviewers should be assigned
             other_reviews = [r for r in algorithm.reviews if not r.id == review.id]
-            if not other_reviews or len(other_reviews) < self.config.get(
-                "policies", {}
-            ).get("min_reviewers", 1):
+            if not other_reviews or len(other_reviews) < Policy.get_minimum_reviewers():
                 algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
             elif all([r.status == ReviewStatus.APPROVED for r in other_reviews]):
                 # if this was the last remaining review that needed to be approved, but
@@ -517,7 +514,6 @@ class Review(AlgorithmStoreResources):
 
 
 class ReviewUpdateResources(AlgorithmStoreResources):
-
     @staticmethod
     def send_email_review_update(
         app: Flask,
