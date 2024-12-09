@@ -22,7 +22,7 @@ with codecs.open(version_path) as f:
 
 # setup the package
 setup(
-    name="vantage6-backend-common",
+    name="vantage6_backend_common",
     version=version_ns["__version__"],
     description="Vantage6 common backend functionalities",
     long_description=long_description,
