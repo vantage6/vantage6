@@ -22,7 +22,7 @@ with codecs.open(version_path) as f:
 
 # setup the package
 setup(
-    name="vantage6-node",
+    name="vantage6_node",
     version=version_ns["__version__"],
     description="vantage6 node",
     long_description=long_description,
