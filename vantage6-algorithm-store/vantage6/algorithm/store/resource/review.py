@@ -281,6 +281,15 @@ class Reviews(AlgorithmStoreResources):
                 "msg": "Algorithm review is already finished!"
             }, HTTPStatus.BAD_REQUEST
 
+        # check if the developer is the review assigner and if this is allowed
+        if (
+            algorithm.developer_id == g.user.id
+            and not Policy.is_developer_allowed_assign_review()
+        ):
+            return {
+                "msg": "You cannot assign reviewers for your own algorithm!"
+            }, HTTPStatus.BAD_REQUEST
+
         # check that
         # 1. the assigned reviewer exists
         # 2. that they are allowed to review

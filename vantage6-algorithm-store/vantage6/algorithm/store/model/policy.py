@@ -103,3 +103,25 @@ class Policy(Base):
         if result is None:
             return 1
         return int(result.value)
+
+    @classmethod
+    def is_developer_allowed_assign_review(cls):
+        """
+        Check if developers are allowed to assign reviews to their own algorithms.
+
+        Returns
+        -------
+        bool
+            True if developers are allowed to assign reviews to their own algorithms,
+            False otherwise
+        """
+        session = DatabaseSessionManager.get_session()
+        result = (
+            session.query(cls)
+            .filter_by(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM)
+            .one_or_none()
+        )
+        session.commit()
+        if result is None:
+            return False
+        return result.value == "True" or result.value == "1"

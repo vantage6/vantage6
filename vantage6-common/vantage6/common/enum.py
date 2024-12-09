@@ -10,6 +10,7 @@ class StorePolicies(str, Enum):
     ALLOWED_SERVERS = "allowed_servers"
     ALLOW_LOCALHOST = "allow_localhost"
     MIN_REVIEWERS = "min_reviewers"
+    ASSIGN_REVIEW_OWN_ALGORITHM = "assign_review_own_algorithm"
 
 
 class AlgorithmViewPolicies(str, Enum):

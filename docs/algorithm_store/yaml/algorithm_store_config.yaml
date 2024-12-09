@@ -84,6 +84,9 @@ policies:
   # is available in the store.
   min_reviewers: 2
 
+  # Define weather or not developers are able to assign reviewers to their own algorithms.
+  assign_review_own_algorithm: false
+
 # Credentials used to login to private Docker registries. These credentials are used
 # to e.g. find the digests of the algorithm.
 docker_registries:
