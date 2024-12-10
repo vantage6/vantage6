@@ -51,7 +51,9 @@ i.e. ``v6 node start --help`` .
 +---------------------+------------------------------------------------+
 | ``v6 node start``   | Start a node                                   |
 +---------------------+------------------------------------------------+
-| ``v6 node stop``    | Stop a nodes                                   |
+| ``v6 node stop``    | Stop a node                                    |
++---------------------+------------------------------------------------+
+| ``v6 node restart`` | Restart a node (stop and start combined)       |
 +---------------------+------------------------------------------------+
 | ``v6 node files``   | List the files of a node (e.g. config and log  |
 |                     | files)                                         |

@@ -17,6 +17,7 @@ from vantage6.cli.node.files import cli_node_files
 from vantage6.cli.node.list import cli_node_list
 from vantage6.cli.node.new import cli_node_new_configuration
 from vantage6.cli.node.remove import cli_node_remove
+from vantage6.cli.node.restart import cli_node_restart
 from vantage6.cli.node.set_api_key import cli_node_set_api_key
 from vantage6.cli.node.start import cli_node_start
 from vantage6.cli.node.stop import cli_node_stop
@@ -75,6 +76,7 @@ cli_node.add_command(cli_node_files, name="files")
 cli_node.add_command(cli_node_list, name="list")
 cli_node.add_command(cli_node_new_configuration, name="new")
 cli_node.add_command(cli_node_remove, name="remove")
+cli_node.add_command(cli_node_restart, name="restart")
 cli_node.add_command(cli_node_set_api_key, name="set-api-key")
 cli_node.add_command(cli_node_start, name="start")
 cli_node.add_command(cli_node_stop, name="stop")

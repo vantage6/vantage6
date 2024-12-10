@@ -67,7 +67,7 @@ def start_demo_network(
     cmd = ["v6", "algorithm-store", "start", "--name", f"{ctx.name}_store", "--user"]
     if store_image:
         cmd.extend(["--image", store_image])
-    subprocess.run(cmd)
+    subprocess.run(cmd, check=True)
 
     # run all nodes that belong to this server
     configs, _ = NodeContext.available_configurations(system_folders=False)
@@ -78,7 +78,7 @@ def start_demo_network(
         cmd = ["v6", "node", "start", "--name", name]
         if node_image:
             cmd.extend(["--image", node_image])
-        subprocess.run(cmd)
+        subprocess.run(cmd, check=True)
 
     # now that both server and store have been started, couple them
     info("Linking local algorithm store to server...")

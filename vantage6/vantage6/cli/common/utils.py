@@ -135,3 +135,22 @@ def print_log_worker(logs_stream: Iterable[bytes]) -> None:
                 "the container."
             )
             print(log)
+
+
+def get_name_from_container_name(container_name: str) -> str:
+    """
+    Get the node/server/store name from a container name.
+
+    Parameters
+    ----------
+    container_name : str
+        The name of the container
+
+    Returns
+    -------
+    str
+        The name of the node/server/store
+    """
+    # Container name is structured as: f"{APPNAME}-{name}-{post_fix}"
+    # Take into account that name can contain '-'
+    return "-".join(container_name.split("-")[1:-1])
