@@ -9,7 +9,6 @@ from io import BytesIO, StringIO
 from click.testing import CliRunner
 from docker.errors import APIError
 
-from vantage6.cli.node.restart import cli_node_restart
 from vantage6.common.globals import Ports
 from vantage6.cli.globals import APPNAME
 from vantage6.common import STRING_ENCODING
@@ -18,6 +17,7 @@ from vantage6.cli.node.list import cli_node_list
 from vantage6.cli.node.new import cli_node_new_configuration
 from vantage6.cli.node.files import cli_node_files
 from vantage6.cli.node.start import cli_node_start
+from vantage6.cli.node.restart import cli_node_restart
 from vantage6.cli.node.stop import cli_node_stop
 from vantage6.cli.node.attach import cli_node_attach
 from vantage6.cli.node.create_private_key import cli_node_create_private_key
@@ -287,7 +287,6 @@ class NodeCLITest(unittest.TestCase):
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(cli_node_restart, ["--name", "iknl"])
-        print(result.output)
         self.assertEqual(result.exit_code, 0)
 
     @patch("vantage6.cli.node.attach.time")
