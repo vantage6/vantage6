@@ -9,6 +9,7 @@ from io import BytesIO, StringIO
 from click.testing import CliRunner
 from docker.errors import APIError
 
+from vantage6.cli.node.restart import cli_node_restart
 from vantage6.common.globals import Ports
 from vantage6.cli.globals import APPNAME
 from vantage6.common import STRING_ENCODING
@@ -248,14 +249,17 @@ class NodeCLITest(unittest.TestCase):
 
         self.assertEqual(result.exit_code, 0)
 
+    def _setup_stop_test(self, containers):
+        container1 = MagicMock()
+        container1.name = f"{APPNAME}-iknl-user"
+        containers.list.return_value = [container1]
+
     @patch("docker.DockerClient.containers")
     @patch("vantage6.cli.node.stop.check_docker_running", return_value=True)
     @patch("vantage6.cli.node.stop.NodeContext")
     @patch("vantage6.cli.node.stop.delete_volume_if_exists")
     def test_stop(self, delete_volume, node_context, check_docker, containers):
-        container1 = MagicMock()
-        container1.name = f"{APPNAME}-iknl-user"
-        containers.list.return_value = [container1]
+        self._setup_stop_test(containers)
 
         runner = CliRunner()
 
@@ -265,6 +269,25 @@ class NodeCLITest(unittest.TestCase):
             result.output, "[info ] - Stopped the vantage6-iknl-user Node.\n"
         )
 
+        self.assertEqual(result.exit_code, 0)
+
+    @patch("docker.DockerClient.containers")
+    @patch("vantage6.cli.node.stop.check_docker_running", return_value=True)
+    @patch("vantage6.cli.node.stop.NodeContext")
+    @patch("vantage6.cli.node.stop.delete_volume_if_exists")
+    @patch("vantage6.cli.node.restart.subprocess.run")
+    def test_restart(
+        self, subprocess_run, delete_volume, node_context, check_docker, containers
+    ):
+        """Restart a node without errors."""
+        self._setup_stop_test(containers)
+        # The subprocess.run() function is called with the command to start the node.
+        # Unfortunately it is hard to test this, so we just return a successful run
+        subprocess_run.return_value = MagicMock(returncode=0)
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli_node_restart, ["--name", "iknl"])
+        print(result.output)
         self.assertEqual(result.exit_code, 0)
 
     @patch("vantage6.cli.node.attach.time")
