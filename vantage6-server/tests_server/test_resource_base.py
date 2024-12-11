@@ -19,7 +19,6 @@ from vantage6.server.model.base import Database, DatabaseSessionManager
 from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.common.enum import RunStatus
 from vantage6.server.controller.fixture import load
-from vantage6.server.globals import PACKAGE_FOLDER
 from vantage6.server import ServerApp
 from vantage6.server.model import (
     Organization,
