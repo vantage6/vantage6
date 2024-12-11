@@ -6,7 +6,7 @@ import questionary as q
 import docker
 from colorama import Fore, Style
 
-from vantage6.common import error, info, debug
+from vantage6.common import error, info, warning, debug
 from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.client import UserClient
 
@@ -38,7 +38,9 @@ def create_client(ctx: NodeContext) -> UserClient:
     return UserClient(host, port, api_path, log_level="warn")
 
 
-def create_client_and_authenticate(ctx: NodeContext) -> UserClient:
+def create_client_and_authenticate(
+    ctx: NodeContext, ask_mfa: bool = False
+) -> UserClient:
     """
     Generate a client and authenticate with the server.
 
@@ -46,6 +48,8 @@ def create_client_and_authenticate(ctx: NodeContext) -> UserClient:
     ----------
     ctx : NodeContext
         Context of the node loaded from the configuration file
+    ask_mfa : bool, optional
+        Whether to ask for MFA code, by default False
 
     Returns
     -------
@@ -56,9 +60,10 @@ def create_client_and_authenticate(ctx: NodeContext) -> UserClient:
 
     username = q.text("Username:").ask()
     password = q.password("Password:").ask()
+    mfa_code = q.text("MFA code:").ask() if ask_mfa else None
 
     try:
-        client.authenticate(username, password)
+        client.authenticate(username, password, mfa_code=mfa_code)
 
     except Exception as exc:
         error("Could not authenticate with server!")
