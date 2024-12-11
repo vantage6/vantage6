@@ -82,13 +82,11 @@ class TestResourceBase(unittest.TestCase):
     def tearDownClass(cls):
         Database().clear_data()
 
-    @classmethod
-    def setUp(cls):
+    def setUp(self):
         # set session.session
         DatabaseSessionManager.get_session()
 
-    @classmethod
-    def tearDown(cls):
+    def tearDown(self):
         # unset session.session
         DatabaseSessionManager.clear_session()
 
