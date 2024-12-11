@@ -77,7 +77,7 @@ def _convert_to_parquet(data: Any) -> pa.Table:
                 data = pa.Table.from_pandas(data)
             except Exception as e:
                 raise SessionError(
-                    f"Could not convert DataFrame to Parquet Table"
+                    "Could not convert DataFrame to Parquet Table"
                 ) from e
             return data
 

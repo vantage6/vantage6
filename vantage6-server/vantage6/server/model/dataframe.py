@@ -2,7 +2,7 @@ import vantage6.server.model as models
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Column, Integer, ForeignKey, String, and_, case
+from sqlalchemy import Column, Integer, ForeignKey, String
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 

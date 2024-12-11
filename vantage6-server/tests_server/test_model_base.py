@@ -8,8 +8,8 @@ from vantage6.server.globals import PACKAGE_FOLDER, APPNAME
 
 
 class TestModelBase(TestCase):
-    @classmethod
-    def setUpClass(cls):
+
+    def setUpClass(self):
         Database().connect("sqlite://", allow_drop_all=True)
 
         # FIXME: move path generation to a function in vantage6.server
@@ -17,17 +17,14 @@ class TestModelBase(TestCase):
             PACKAGE_FOLDER / APPNAME / "server" / "_data" / "unittest_fixtures.yaml"
         )
         with open(file_) as f:
-            cls.entities = yaml.safe_load(f.read())
-        load(cls.entities)
+            self.entities = yaml.safe_load(f.read())
+        load(self.entities)
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDownClass(self):
         Database().clear_data()
 
-    @classmethod
-    def setUp(cls):
+    def setUp(self):
         DatabaseSessionManager.get_session()
 
-    @classmethod
-    def tearDown(cls):
+    def tearDown(self):
         DatabaseSessionManager.clear_session()

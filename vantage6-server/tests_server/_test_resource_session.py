@@ -154,5 +154,5 @@ class TestSessionResource(TestResourceBase):
         )
         assert response.status_code == 200
 
-        data = response.json
-        conf = data["config"][0]
+        # data = response.json
+        # conf = data["config"][0]

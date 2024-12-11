@@ -103,7 +103,9 @@ class TestResourceBase(unittest.TestCase):
             print(tokens)
             return None
 
-    def create_user(self, organization=None, rules=[], password="password"):
+    def create_user(self, organization=None, rules=None, password="password"):
+        if not rules:
+            rules = []
         if not organization:
             organization = Organization(name=str(uuid1()))
             organization.save()
@@ -230,9 +232,11 @@ class TestResourceBase(unittest.TestCase):
         return result, json_data
 
     def create_node_and_login(self, *args, **kwargs):
-        node, api_key = self.create_node(*args, **kwargs)
+        _, api_key = self.create_node(*args, **kwargs)
         return self.login_node(api_key)
 
-    def get_user_auth_header(self, organization=None, rules=[]):
+    def get_user_auth_header(self, organization=None, rules=None):
+        if rules is None:
+            rules = []
         user = self.create_user(organization, rules)
         return self.login(user.username)
