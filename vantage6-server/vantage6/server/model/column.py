@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey, String, and_
+from sqlalchemy import Column as Column_, Integer, ForeignKey, String, and_
 from sqlalchemy.orm import relationship
 
 from vantage6.server.model.base import Base, DatabaseSessionManager
@@ -33,10 +33,10 @@ class Column(Base):
     """
 
     # fields
-    name = Column(String)
-    dtype = Column(String)
-    node_id = Column(Integer, ForeignKey("node.id"))
-    dataframe_id = Column(Integer, ForeignKey("dataframe.id"))
+    name = Column_(String)
+    dtype = Column_(String)
+    node_id = Column_(Integer, ForeignKey("node.id"))
+    dataframe_id = Column_(Integer, ForeignKey("dataframe.id"))
 
     # relationships
     dataframe = relationship("Dataframe", back_populates="columns")
