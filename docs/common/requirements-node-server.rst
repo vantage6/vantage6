@@ -68,7 +68,7 @@ you can run the ``hello-world`` example from Docker.
 
    docker run hello-world
 
-..  warning::
+.. warning::
 
     Note that for **Linux**, some `post-installation
     steps <https://docs.docker.com/engine/install/linux-postinstall/>`__ may

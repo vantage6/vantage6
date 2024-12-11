@@ -116,8 +116,10 @@ def _stop_node(
     scope = "system" if system_folders else "user"
     config_name = get_server_config_name(container_name, scope)
     ctx = NodeContext(config_name, system_folders, print_log_header=False)
+
+    # Do not delete the data volume as this would remove all sessions.
     for volume in [
-        ctx.docker_volume_name,
+        # ctx.docker_volume_name,
         ctx.docker_squid_volume_name,
         ctx.docker_ssh_volume_name,
         ctx.docker_vpn_volume_name,

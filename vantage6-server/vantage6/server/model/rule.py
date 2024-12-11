@@ -26,14 +26,26 @@ class Scope(str, Enumerate):
     COLLABORATION = "col"
     GLOBAL = "glo"
 
+    @classmethod
+    def list(cls) -> list[str]:
+        """
+        List all available scopes.
+
+        Returns
+        -------
+        list[str]
+            List of all available scopes
+        """
+        return [scope.name.lower() for scope in cls]
+
 
 class Rule(Base):
     """Rules to determine permissions in an API endpoint.
 
-    A rule gives access to a single type of action with a given operation,
-    scope and resource on which it acts. Note that rules are defined on startup
-    of the server, based on permissions defined in the endpoints. You cannot
-    edit the rules in the database.
+    A rule gives access to a single type of action with a given operation, scope and
+    resource on which it acts. Note that rules are defined on startup of the server,
+    based on permissions defined in the endpoints. You cannot edit the rules in the
+    database.
 
     Attributes
     ----------
@@ -45,6 +57,9 @@ class Rule(Base):
         Scope of the rule
     description : str
         Description of the rule
+
+    Relationships
+    -------------
     roles : list[:class:`.~vantage6.server.model.role.Role`]
         Roles that have this rule
     users : list[:class:`.~vantage6.server.model.user.User`]

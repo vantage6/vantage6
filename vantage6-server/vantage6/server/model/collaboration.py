@@ -25,6 +25,12 @@ class Collaboration(Base):
         Name of the collaboration
     encrypted : bool
         Whether the collaboration is encrypted or not
+    session_restrict_to_same_image : bool
+        when set to True, enforces that all functions calls in a single session must
+        originate from the same image
+
+    Relationships
+    -------------
     organizations :
             list[:class:`~vantage6.server.model.organization.Organization`]
         List of organizations that are part of this collaboration
@@ -32,11 +38,19 @@ class Collaboration(Base):
         List of nodes that are part of this collaboration
     tasks : list[:class:`~vantage6.server.model.task.Task`]
         List of tasks that are part of this collaboration
+    studies : list[:class:`~vantage6.server.model.study.Study`]
+        List of studies that are part of this collaboration
+    sessions : list[:class:`~vantage6.server.model.session.Session`]
+        List of sessions that are part of this collaboration
+    algorithm_stores : list[:class:`~vantage6.server.model.algorithm_store.AlgorithmStore`]
+        List of algorithm stores that are part of this collaboration
+
     """
 
     # fields
     name = Column(String, unique=True)
     encrypted = Column(Boolean, default=1)
+    session_restrict_to_same_image = Column(Boolean, default=0)
 
     # relationships
     organizations = relationship(
@@ -45,6 +59,7 @@ class Collaboration(Base):
     nodes = relationship("Node", back_populates="collaboration")
     tasks = relationship("Task", back_populates="collaboration")
     studies = relationship("Study", back_populates="collaboration")
+    sessions = relationship("Session", back_populates="collaboration")
     algorithm_stores = relationship("AlgorithmStore", back_populates="collaboration")
 
     def get_organization_ids(self) -> list[int]:
@@ -118,7 +133,7 @@ class Collaboration(Base):
 
         Returns
         -------
-        Union[Collaboration, None]
+        Collaboration | None
             Collaboration with the given name, or None if no collaboration
             with the given name exists.
         """
@@ -130,7 +145,7 @@ class Collaboration(Base):
         except NoResultFound:
             return None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Returns a string representation of the collaboration.
 

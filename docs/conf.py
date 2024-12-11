@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.abspath("../vantage6-backend-common"))
 
 project = "vantage6"
 
-copyright = "2022 vantage6"
+copyright = "2024 vantage6"
 author = (
     "A. van Gestel, "
     "B. van Beusekom, "

@@ -36,6 +36,7 @@ MarkupSafe==2.1.2
 marshmallow==3.20.2
 marshmallow-sqlalchemy==0.15.0
 mistune==2.0.4
+names_generator==0.2.0
 numpy==1.24.2
 oauthlib==3.2.2
 pandas>=1.5.3

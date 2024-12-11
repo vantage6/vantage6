@@ -5,7 +5,8 @@ import re
 from marshmallow import Schema, fields, ValidationError, validates, validates_schema
 from marshmallow.validate import Length, Range, OneOf
 
-from vantage6.common.task_status import TaskStatus
+from vantage6.common.enum import RunStatus
+from vantage6.server.model.rule import Scope
 from vantage6.server.default_roles import DefaultRole
 from vantage6.server.model.common.utils import validate_password
 
@@ -102,6 +103,28 @@ def _validate_organization_ids(organization_ids: list[int]) -> None:
         raise ValidationError("At least one organization id is required")
 
 
+def _validate_organizations(organizations: list[dict]) -> None:
+    """
+    Validate the organizations in the input.
+
+    Parameters
+    ----------
+    organizations : list[dict]
+        List of organizations to validate. Each organization must have at
+        least an organization id.
+
+    Raises
+    ------
+    ValidationError
+        If the organizations are not valid.
+    """
+    if not len(organizations):
+        raise ValidationError("At least one organization is required")
+    for organization in organizations:
+        if "id" not in organization:
+            raise ValidationError("Organization id is required for each organization")
+
+
 class _OnlyIdSchema(Schema):
     """Schema for validating POST requests that only require an ID field."""
 
@@ -196,6 +219,7 @@ class CollaborationInputSchema(_NameValidationSchema):
 
     organization_ids = fields.List(fields.Integer(), required=True)
     encrypted = fields.Boolean(required=True)
+    session_restrict_to_same_image = fields.Boolean(load_default=False)
 
     @validates("organization_ids")
     def validate_organization_ids(self, organization_ids):
@@ -389,22 +413,27 @@ class RunInputSchema(Schema):
     finished_at = fields.DateTime()
     log = fields.String()
     result = fields.String()
-    status = fields.String(validate=OneOf([s.value for s in TaskStatus]))
+    status = fields.String(validate=OneOf([s.value for s in RunStatus]))
 
 
 class TaskInputSchema(_NameValidationSchema):
     """Schema for validating input for creating a task."""
 
     # overwrite name attr as it is not required for a task
-    name = fields.String(required=False)
+    name = fields.String()
     description = fields.String(validate=Length(max=_MAX_LEN_STR_LONG))
     image = fields.String(required=True, validate=Length(min=1))
     collaboration_id = fields.Integer(validate=Range(min=1))
     study_id = fields.Integer(validate=Range(min=1))
     store_id = fields.Integer(validate=Range(min=1))
     server_url = fields.Url()
+    depends_on_ids = fields.List(
+        fields.Integer(validate=Range(min=1), required=False), missing=[]
+    )
     organizations = fields.List(fields.Dict(), required=True)
     databases = fields.List(fields.Dict(), allow_none=True)
+    session_id = fields.Integer(validate=Range(min=1), required=True)
+    dataframe_id = fields.Integer(validate=Range(min=1))
 
     @validates_schema
     def validate_collaboration_or_study(self, data: dict, **kwargs) -> None:
@@ -427,27 +456,7 @@ class TaskInputSchema(_NameValidationSchema):
 
     @validates("organizations")
     def validate_organizations(self, organizations: list[dict]):
-        """
-        Validate the organizations in the input.
-
-        Parameters
-        ----------
-        organizations : list[dict]
-            List of organizations to validate. Each organization must have at
-            least an organization id.
-
-        Raises
-        ------
-        ValidationError
-            If the organizations are not valid.
-        """
-        if not len(organizations):
-            raise ValidationError("At least one organization is required")
-        for organization in organizations:
-            if "id" not in organization:
-                raise ValidationError(
-                    "Organization id is required for each organization"
-                )
+        _validate_organizations(organizations)
 
     @validates("databases")
     def validate_databases(self, databases: list[dict]):
@@ -470,20 +479,8 @@ class TaskInputSchema(_NameValidationSchema):
         for database in databases:
             if "label" not in database:
                 raise ValidationError("Database label is required for each database")
-            if "preprocessing" in database:
-                if not isinstance(database["preprocessing"], list):
-                    raise ValidationError(
-                        "Database preprocessing must be a list of dictionaries"
-                    )
-                # TODO we may add further validation on the preprocessing
-                # parameters when that is completed
-                for prepro in database["preprocessing"]:
-                    if "function" not in prepro:
-                        raise ValidationError(
-                            f"Database preprocessing {prepro} is missing a "
-                            "'function'"
-                        )
-            allowed_keys = {"label", "preprocessing", "query", "sheet_name"}
+
+            allowed_keys = {"label", "type"}
             if not set(database.keys()).issubset(set(allowed_keys)):
                 raise ValidationError(
                     f"Database {database} contains unknown keys. Allowed keys "
@@ -496,25 +493,22 @@ class TokenUserInputSchema(BasicAuthInputSchema):
 
     mfa_code = fields.String(validate=Length(max=10))
 
-    # TODO in v5+, activate the code below to validate the username (allowed characters
-    # etc). We cannot do this in v4 because some existing usernames do not comply and
-    # those would then no longer be able to login
-    # @validates("username")
-    # def validate_username(self, username: str):
-    #     """
-    #     Check if the username is appropriate
+    @validates("username")
+    def validate_username(self, username: str):
+        """
+        Check if the username is appropriate
 
-    #     Parameters
-    #     ----------
-    #     username : str
-    #         Username to validate.
+        Parameters
+        ----------
+        username : str
+            Username to validate.
 
-    #     Raises
-    #     ------
-    #     ValidationError
-    #         If the username is too short, too long or numeric.
-    #     """
-    #     _validate_username(username)
+        Raises
+        ------
+        ValidationError
+            If the username is too short, too long or numeric.
+        """
+        _validate_username(username)
 
 
 class TokenNodeInputSchema(Schema):
@@ -596,27 +590,7 @@ class ColumnNameInputSchema(Schema):
 
     @validates("organizations")
     def validate_organizations(self, organizations: list[dict]):
-        """
-        Validate the organizations in the input.
-
-        Parameters
-        ----------
-        organizations : list[dict]
-            List of organizations to validate. Each organization must have at
-            least an organization id.
-
-        Raises
-        ------
-        ValidationError
-            If the organizations are not valid.
-        """
-        if not len(organizations):
-            raise ValidationError("At least one organization is required")
-        for organization in organizations:
-            if "id" not in organization:
-                raise ValidationError(
-                    "Organization id is required for each organization"
-                )
+        _validate_organizations(organizations)
 
 
 class AlgorithmStoreInputSchema(Schema):
@@ -659,3 +633,59 @@ class StudyChangeOrganizationSchema(_OnlyIdSchema):
     """
 
     pass
+
+
+class SessionTaskInputSchema(Schema):
+    """Schema for validating input for creating a session task."""
+
+    image = fields.String(required=True)
+
+    # This is a list of dictionaries, where each dictionary contains the
+    # organization id and the organization's data extraction input (optional).
+    organizations = fields.List(fields.Dict(), required=True)
+
+    @validates("organizations")
+    def validate_organizations(self, organizations: list[dict]):
+        _validate_organizations(organizations)
+
+
+class SessionInputSchema(Schema):
+    """Schema for validating input for creating a session."""
+
+    # Used to identify the session
+    name = fields.String(allow_none=True)
+
+    collaboration_id = fields.Integer(required=True, validate=Range(min=1))
+    study_id = fields.Integer(validate=Range(min=1), allow_none=True)
+    scope = fields.String(
+        required=True, validate=OneOf(Scope.list()), default=Scope.OWN.value
+    )
+
+
+class DataframeInitInputSchema(Schema):
+    """Schema for validating input for creating a new dataframe in a session."""
+
+    # Databse label that is specified in the node configuration file
+    label = fields.String(required=True)
+
+    # handle that can be used in within the session
+    handle = fields.String()
+
+    # Task metadata that is executed on the node for session initialization, which is
+    # the data extraction task
+    task = fields.Nested(SessionTaskInputSchema, required=True)
+
+
+class DataframeStepInputSchema(Schema):
+    """Schema for validating input for creating a new dataframe step in a session."""
+
+    # Task metadata that is executed on the node for session extension, which is a
+    # pre-processing task
+    task = fields.Nested(SessionTaskInputSchema, required=True)
+
+
+class DataframeNodeUpdateSchema(Schema):
+    """Schema for validating input for updating the column names"""
+
+    name = fields.String(required=True)
+    dtype = fields.String(required=True)

@@ -17,6 +17,11 @@ class Role(Base):
         Description of the role
     organization_id : int
         Id of the organization this role belongs to
+    is_default_role : bool
+        Whether this role is the default role
+
+    Relationships
+    -------------
     rules : list[:class:`.~vantage6.server.model.rule.Rule`]
         List of rules that belong to this role
     organization : :class:`.~vantage6.server.model.organization.Organization`

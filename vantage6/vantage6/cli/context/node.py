@@ -230,24 +230,6 @@ class NodeContext(AppContext):
     def proxy_log_file(self):
         return self.log_file_name(type_="proxy_server")
 
-    def docker_temporary_volume_name(self, job_id: int) -> str:
-        """
-        Docker volume in which temporary data is stored. Temporary data is
-        linked to a specific run. Multiple algorithm containers can have the
-        same run id, and therefore the share same temporary volume.
-
-        Parameters
-        ----------
-        job_id : int
-            run id provided by the server
-
-        Returns
-        -------
-        str
-            Docker volume name
-        """
-        return f"{APPNAME}-{self.name}-{self.scope}-{job_id}-tmpvol"
-
     def get_database_uri(self, label: str = "default") -> str:
         """
         Obtain the database URI for a specific database.

@@ -26,11 +26,11 @@ from vantage6.common.docker.addons import (
     get_image_name_wo_tag,
     running_in_docker,
 )
-from vantage6.common.globals import APPNAME, BASIC_PROCESSING_IMAGE, NodePolicy
-from vantage6.common.task_status import TaskStatus, has_task_failed
+from vantage6.common.globals import APPNAME, NodePolicy
+from vantage6.common.enum import RunStatus, AlgorithmStepType
 from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.algorithm.tools.wrappers import get_column_names
 from vantage6.cli.context.node import NodeContext
+from vantage6.node.globals import TASK_START_RETRIES, TASK_START_RETRY_SLEEP
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.vpn_manager import VPNManager
@@ -38,9 +38,9 @@ from vantage6.node.docker.task_manager import DockerTaskManager
 from vantage6.node.docker.squid import Squid
 from vantage6.common.client.node_client import NodeClient
 from vantage6.node.docker.exceptions import (
-    UnknownAlgorithmStartFail,
-    PermanentAlgorithmStartFail,
     AlgorithmContainerNotFound,
+    TemporaryAlgorithmFail,
+    PermanentAlgorithmFail,
 )
 from vantage6.node.globals import DEFAULT_REQUIRE_ALGO_IMAGE_PULL
 
@@ -57,7 +57,7 @@ class Result(NamedTuple):
         ID of the current algorithm run
     logs: str
         Logs attached to current algorithm run
-    data: str
+    data: bytes
         Output data of the algorithm
     status_code: int
         Status code of the algorithm run
@@ -66,7 +66,7 @@ class Result(NamedTuple):
     run_id: int
     task_id: int
     logs: str
-    data: str
+    data: bytes
     status: str
     parent_id: int | None
 
@@ -279,7 +279,7 @@ class DockerManager(DockerBaseManager):
             )
         return policies
 
-    def create_volume(self, volume_name: str) -> None:
+    def create_volume_if_not_exists(self, volume_name: str) -> None:
         """
         Create a temporary volume for a single run.
 
@@ -320,20 +320,11 @@ class DockerManager(DockerBaseManager):
             Whether docker image is allowed or not
         """
         # check if algorithm matches any of the regex cases
-        allow_basics = self._policies.get(NodePolicy.ALLOW_BASICS_ALGORITHM, True)
         allowed_algorithms = self._policies.get(NodePolicy.ALLOWED_ALGORITHMS)
         allowed_stores = self._policies.get(NodePolicy.ALLOWED_ALGORITHM_STORES)
         allow_either_whitelist_or_store = self._policies.get(
             "allow_either_whitelist_or_store", False
         )
-        if evaluated_img.startswith(BASIC_PROCESSING_IMAGE):
-            if not allow_basics:
-                self.log.warn(
-                    "A task was sent with a basics algorithm that "
-                    "this node does not allow to run."
-                )
-                return False
-            # else: basics are allowed, so we don't need to check the regex
 
         # check if user or their organization is allowed
         allowed_users = self._policies.get(NodePolicy.ALLOWED_USERS, [])
@@ -581,10 +572,11 @@ class DockerManager(DockerBaseManager):
         task_info: dict,
         image: str,
         docker_input: bytes,
-        tmp_vol_name: str,
-        token: str,
+        session_id: int,
+        token: str | None,
         databases_to_use: list[str],
-    ) -> tuple[TaskStatus, list[dict] | None]:
+        action: AlgorithmStepType,
+    ) -> tuple[RunStatus, list[dict] | None]:
         """
         Checks if docker task is running. If not, creates DockerTaskManager to
         run the task
@@ -599,16 +591,16 @@ class DockerManager(DockerBaseManager):
             Docker image name
         docker_input: bytes
             Input that can be read by docker container
-        tmp_vol_name: str
-            Name of temporary docker volume assigned to the algorithm
-        token: str
-            Bearer token that the container can use
+        session_id: int
+            ID of the session
+        token: str | None
+            Bearer token that the container can use to authenticate with the server
         databases_to_use: list[str]
             Labels of the databases to use
 
         Returns
         -------
-        TaskStatus, list[dict] | None
+        RunStatus, list[dict] | None
             Returns a tuple with the status of the task and a description of
             each port on the VPN client that forwards traffic to the algorithm
             container (``None`` if VPN is not set up).
@@ -617,18 +609,19 @@ class DockerManager(DockerBaseManager):
         if not self.is_docker_image_allowed(image, task_info):
             msg = f"Docker image {image} is not allowed on this Node!"
             self.log.critical(msg)
-            return TaskStatus.NOT_ALLOWED, None
+            return RunStatus.NOT_ALLOWED, None
 
         # Check that this task is not already running
         if self.is_running(run_id):
             self.log.info("Task is already being executed, discarding task")
             self.log.debug("run_id=%s is discarded", run_id)
-            return TaskStatus.ACTIVE, None
+            return RunStatus.ACTIVE, None
 
         # we pass self.docker instance, in which we may have logged in to registries
         task = DockerTaskManager(
             image=image,
             docker_client=self.docker,
+            client=self.client,
             run_id=run_id,
             task_info=task_info,
             vpn_manager=self.vpn_manager,
@@ -643,36 +636,36 @@ class DockerManager(DockerBaseManager):
             requires_pull=self._policies.get(
                 NodePolicy.REQUIRE_ALGORITHM_PULL, DEFAULT_REQUIRE_ALGO_IMAGE_PULL
             ),
+            session_id=session_id,
+            action=action,
         )
 
         # attempt to kick of the task. If it fails do to unknown reasons we try
         # again. If it fails permanently we add it to the failed tasks to be
         # handled by the speaking worker of the node
         attempts = 1
-        while not (task.status == TaskStatus.ACTIVE) and attempts < 3:
+        while not (task.status == RunStatus.ACTIVE) and attempts < TASK_START_RETRIES:
             try:
                 vpn_ports = task.run(
                     docker_input=docker_input,
-                    tmp_vol_name=tmp_vol_name,
                     token=token,
                     algorithm_env=self.algorithm_env,
                     databases_to_use=databases_to_use,
                 )
 
-            except UnknownAlgorithmStartFail:
-                self.log.exception(
-                    f"Failed to start run {run_id} for an "
-                    "unknown reason. Retrying..."
-                )
-                time.sleep(1)  # add some time before retrying the next attempt
+            except TemporaryAlgorithmFail:
+                self.log.exception(f"Failed to start run {run_id}")
+                time.sleep(
+                    TASK_START_RETRY_SLEEP
+                )  # add some time before retrying the next attempt
 
-            except PermanentAlgorithmStartFail:
+            except PermanentAlgorithmFail:
                 break
 
             attempts += 1
 
         # keep track of the active container
-        if has_task_failed(task.status):
+        if RunStatus.has_failed(task.status):
             self.failed_tasks.append(task)
             return task.status, None
         else:
@@ -882,44 +875,3 @@ class DockerManager(DockerBaseManager):
             else:
                 self.log.warn("Instructed to kill tasks but none were running")
         return killed_runs
-
-    def get_column_names(self, label: str, type_: str) -> list[str]:
-        """
-        Get column names from a node database
-
-        Parameters
-        ----------
-        label: str
-            Label of the database
-        type_: str
-            Type of the database
-
-        Returns
-        -------
-        list[str]
-            List of column names
-        """
-        db = self.databases.get(label)
-        if not db:
-            self.log.error("Database with label %s not found", label)
-            return []
-        if not db["is_file"]:
-            self.log.error(
-                "Database with label %s is not a file. Cannot"
-                " determine columns without query",
-                label,
-            )
-            return []
-        if db["type"] == "excel":
-            self.log.error(
-                "Cannot determine columns for excel database without a worksheet"
-            )
-            return []
-        if type_ not in ("csv", "sparql"):
-            self.log.error(
-                "Cannot determine columns for database of type %s."
-                "Only csv and sparql are supported",
-                type_,
-            )
-            return []
-        return get_column_names(db["uri"], type_)

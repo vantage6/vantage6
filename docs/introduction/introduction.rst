@@ -78,24 +78,25 @@ organizations can only collaborate with each other if they agree to do so.
 The following statements and the figure below should help you understand
 their relationships.
 
--  A **collaboration** is a collection of one or more
-   **organizations**.
--  For each collaboration, each participating organization needs a
-   **node** to compute tasks. When a collaboration is created, accounts are also created
-   for the nodes so that they can securely communicate with the server.
+-  A **collaboration** is a collection of one or more **organizations**.
+-  For each collaboration, each participating organization needs a **node** to compute
+   tasks. When a collaboration is created, accounts are also created for the nodes so
+   that they can securely communicate with the server.
 -  Collaborations can contain **studies**. A study is a subset of organizations from the
    collaboration that are involved in a specific research question. By setting up
    studies, it can be easier to send tasks to a subset of the organizations in a
    collaboration and to keep track of the results of these analyses.
--  Each organization has zero or more **users** who can perform certain
-   actions.
+-  Each organization has zero or more **users** who can perform certain actions.
 -  The permissions of the user are defined by the assigned **rules**.
--  It is possible to collect multiple rules into a **role**, which can
-   also be assigned to a user.
--  Users can create **tasks** for one or more organizations within a
-   collaboration. Tasks lead to the execution of the algorithms.
--  A task should produce an algorithm **run** for each organization involved in
-   the task. The **results** are part of such an algorithm run.
+-  It is possible to collect multiple rules into a **role**, which can also be assigned
+   to a user.
+-  A **session** can contain several **data frames**. A data frame is a collection of
+   data retrieved from the original source database. A data frame can be modified by
+   additional user defined pre-processing steps and can be used as input for **tasks**.
+-  Users can create **tasks** for one or more organizations within a collaboration and
+   session. Tasks lead to the execution of the algorithms.
+-  A task should produce an algorithm **run** for each organization involved in the
+   task. The **results** are part of such an algorithm run.
 
 The following schema is a *simplified* version of the database. A `1-n` relationship
 means that the entity on the left side of the relationship can have multiple entities
@@ -112,10 +113,13 @@ in multiple collaborations.
     skinparam nodesep 100
     skinparam ranksep 100
     left to right direction
+    skinparam linetype polyline
 
     rectangle Collaboration
     rectangle Node
     rectangle Organization
+    rectangle Session
+    rectangle DataFrame
     rectangle Study
     rectangle Task
     rectangle Result
@@ -126,16 +130,21 @@ in multiple collaborations.
     Collaboration "1" -- "n" Node
     Collaboration "n" -- "n" Organization
     Collaboration "1" -- "n" Study
+    Collaboration "1" - "n" Session
     Collaboration "1" -- "n" Task
 
     Study "n" -left- "n" Organization
     Study "1" -right- "n" Task
+    Task "n" -right- "1" Session
 
     Node "n" -right- "1" Organization
 
     Organization "1" -- "n" User
     Organization "0" -- "n" Role
-    Task "1" -- "n" Result
+    Task "1" - "n" Result
+    Session "n" -left- "1" User
+
+    Session "1" -- "n" DataFrame
 
     User "n" -left- "n" Role
     Role "n" -- "n" Rule

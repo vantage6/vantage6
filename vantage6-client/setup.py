@@ -34,6 +34,7 @@ setup(
     install_requires=[
         "PyJWT==2.6.0",
         "pyfiglet==0.8.post1",
+        "rich==13.5.2",
         f'vantage6-common=={version_ns["__version__"]}',
     ],
     extras_require={

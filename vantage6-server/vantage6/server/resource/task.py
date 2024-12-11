@@ -10,7 +10,7 @@ from sqlalchemy import desc
 from sqlalchemy.sql import visitors
 
 from vantage6.common.globals import STRING_ENCODING, NodePolicy
-from vantage6.common.task_status import TaskStatus, has_task_finished
+from vantage6.common.enum import RunStatus, AlgorithmStepType
 from vantage6.common.encryption import DummyCryptor
 from vantage6.backend.common import get_server_url
 from vantage6.server import db
@@ -286,6 +286,16 @@ class Tasks(TaskBase):
             description: Filter by task status, e.g. 'active' for active
               tasks, 'completed' for finished or 'crashed' for failed tasks.
           - in: query
+            name: session_id
+            schema:
+              type: int
+            description: A session id that belongs to the task
+          - in: query
+            name: dataframe_id
+            schema:
+                type: int
+            description: Dataframe ID
+          - in: query
             name: page
             schema:
               type: integer
@@ -468,6 +478,14 @@ class Tasks(TaskBase):
                 }, HTTPStatus.BAD_REQUEST
             q = q.filter(db.Task.algorithmstore_id == store_id)
 
+        if "session_id" in args:
+            session_id = int(args["session_id"])
+            q = q.filter(db.Task.session_id == session_id)
+
+        if "dataframe_id" in args:
+            dataframe_id = args["dataframe_id"]
+            q = q.filter(db.Task.dataframe_id == dataframe_id)
+
         if "database" in args:
             q = q.join(db.TaskDatabase).filter(
                 db.TaskDatabase.database == args["database"]
@@ -527,11 +545,12 @@ class Tasks(TaskBase):
           posted.\n
 
           ## Accessed as `Container`\n
-          When this endpoint is accessed by an algorithm container, it is
-          considered to be a child-task of the container, and will get the
-          `job_id` from the initial task. Containers have limited permissions
-          to create tasks: they are only allowed to create tasks in the same
-          collaboration using the same image.\n
+          When this endpoint is accessed by an algorithm container, it is considered to
+          be a child-task of the container, and will get the `job_id` from the initial
+          task. Containers have limited permissions to create tasks: they are only
+          allowed to create tasks in the same collaboration and in case the
+          collaboration option 'session_restrict_to_same_image' is set to True, it
+          the same image as the parent task has to be used.\n
 
         requestBody:
           content:
@@ -550,7 +569,7 @@ class Tasks(TaskBase):
           403:
             description: Algorithm store is not part of the collaboration
           404:
-            description: Collaboration with `collaboration_id` not found
+            description: Collaboration, session or study not found
 
         security:
           - bearerAuth: []
@@ -561,11 +580,23 @@ class Tasks(TaskBase):
             request.get_json()
         except Exception:
             return {"msg": "Request body is incorrect"}, HTTPStatus.BAD_REQUEST
-        return self.post_task(request.get_json(), self.socketio, self.r, self.config)
+        return self.post_task(
+            request.get_json(),
+            self.socketio,
+            self.r,
+            self.config,
+            AlgorithmStepType.COMPUTE,
+        )
 
     # TODO this function should be refactored to make it more readable
     @staticmethod
-    def post_task(data: dict, socketio: SocketIO, rules: RuleCollection, config: dict):
+    def post_task(
+        data: dict,
+        socketio: SocketIO,
+        rules: RuleCollection,
+        config: dict,
+        action: AlgorithmStepType,
+    ):
         """
         Create new task and algorithm runs. Send the task to the nodes.
 
@@ -579,6 +610,8 @@ class Tasks(TaskBase):
             Rule collection instance
         config : dict
             Configuration dictionary
+        action : AlgorithmStepType
+            Action to performed by the task
         """
         # validate request body
         errors = task_input_schema.validate(data)
@@ -588,6 +621,12 @@ class Tasks(TaskBase):
                 "errors": errors,
             }, HTTPStatus.BAD_REQUEST
 
+        # A task always belongs to a session
+        session_id = data["session_id"]
+        session: db.Session = db.Session.get(session_id)
+        if not session:
+            return {"msg": f"Session id={session_id} not found!"}, HTTPStatus.NOT_FOUND
+
         # A task can be created for a collaboration or a study. If it is for a study,
         # a study_id is always given, and a collaboration_id is optional. If it is for
         # a collaboration, a collaboration_id is always given, and a study_id is
@@ -595,6 +634,12 @@ class Tasks(TaskBase):
         # collaboration_id are valid and when both are provided, checks if they match.
         collaboration_id = data.get("collaboration_id")
         study_id = data.get("study_id")
+
+        if not collaboration_id and not study_id:
+            return {
+                "msg": "Either a collaboration_id or a study_id should be provided!"
+            }, HTTPStatus.BAD_REQUEST
+
         study = None
         if collaboration_id:
             collaboration = db.Collaboration.get(collaboration_id)
@@ -743,10 +788,75 @@ class Tasks(TaskBase):
             else:
                 # no need to determine hash if we don't look it up in a store
                 image_with_hash = image
-        elif g.container:
+        else:  # ( we are dealing with g.container)
             parent = db.Task.get(g.container["task_id"])
             store = parent.algorithm_store
             image_with_hash = parent.image
+
+        # Obtain the user requested database or dataframes
+        databases = data.get("databases", [])
+
+        # A task can be dependent on one or more other task(s). There are three cases:
+        #
+        # 1. When a dataframe modification task is created (data extraction or
+        #    preprocessing) the next modification task should be dependent on the
+        #    previous modification task. This is to prevent that the dataframe is
+        #    modified by two tasks at the same time.
+        # 2. When a dataframe modification task is created, the task should be dependent
+        #    on the compute task(s) that are currently computing the dataframe. This is
+        #    to prevent that the dataframe is modified during the computation.
+        # 3. When a compute task is created, the task should be dependent on the
+        #    modification task(s) that are currently modifying the dataframe. This is
+        #    to prevent that the dataframe is modified during the computation.
+        #
+        # Thus when a modification task is running, all new compute tasks and all new
+        # modification tasks will be depending on it. When a compute task is running,
+        # all new modification tasks will depend on it. The `depends_on_ids` parameter
+        # is set by the session endpoints.
+        dependent_tasks = []
+        for database in databases:
+            for key in ["label", "type"]:
+                if key not in database:
+                    return {
+                        "msg": f"Database {key} missing! The dictionary "
+                        f"{database} should contain a '{key}' key"
+                    }, HTTPStatus.BAD_REQUEST
+
+            # add last modification task to dependent tasks
+            if database["type"] == "handle":
+                df = db.Dataframe.select(session, database["label"])
+                if not df:
+                    return {
+                        "msg": f"Dataframe '{database['label']}' not found!"
+                    }, HTTPStatus.NOT_FOUND
+
+                if not df.ready:
+                    dependent_tasks.append(df.last_session_task)
+
+        # These `depends_on_ids` are the task ids supplied by the session endpoints.
+        # However they can also be user defined, although this has no use case yet.
+        dependent_task_ids = data.get("depends_on_ids", [])
+        for dependent_task_id in dependent_task_ids:
+
+            dependent_task = db.Task.get(dependent_task_id)
+
+            if not dependent_task:
+                return {
+                    "msg": f"Task with id={dependent_task_id} not found!"
+                }, HTTPStatus.NOT_FOUND
+
+            if dependent_task.session_id != session_id:
+                return {
+                    "msg": (
+                        "The task you are trying to depend on is not part of the "
+                        "same session."
+                    )
+                }, HTTPStatus.BAD_REQUEST
+
+            dependent_tasks.append(dependent_task)
+
+        # Filter that we did not end up with duplicates because of various conditions
+        dependent_tasks = list(set(dependent_tasks))
 
         # check that the input is valid. If the collaboration is encrypted, it
         # should not be possible to read the input, and we should not save it
@@ -769,6 +879,9 @@ class Tasks(TaskBase):
             init_org=init_org,
             algorithm_store=store,
             created_at=datetime.datetime.now(datetime.timezone.utc),
+            session=session,
+            depends_on=dependent_tasks,
+            dataframe_id=data.get("dataframe_id"),
         )
 
         # create job_id. Users can only create top-level -tasks (they will not
@@ -786,37 +899,21 @@ class Tasks(TaskBase):
             log.debug(f"Sub task from parent_id={task.parent_id}")
 
         # save the databases that the task uses
-        databases = data.get("databases")
-        if isinstance(databases, str):
-            databases = [{"label": databases}]
-        elif databases is None:
-            databases = []
-        db_records = []
         for database in databases:
-            if "label" not in database:
-                return {
-                    "msg": "Database label missing! The dictionary "
-                    f"{database} should contain a 'label' key"
-                }, HTTPStatus.BAD_REQUEST
-            # remove label from the database dictionary, which apart from it
-            # may only contain some optional parameters . Save optional
-            # parameters as JSON without spaces to database
-            label = database.pop("label")
+
             # TODO task.id is only set here because in between creating the
             # task and using the ID here, there are other database operations
             # that silently update the task.id (i.e. next_job_id() and
             # db.Task.get()). Task.id should be updated explicitly instead.
-            db_records.append(
-                db.TaskDatabase(
-                    task_id=task.id,
-                    database=label,
-                    parameters=json.dumps(database, separators=(",", ":")),
-                )
+            task_db = db.TaskDatabase(
+                task_id=task.id,
+                database=database["label"],
+                type_=database["type"],
             )
+            task_db.save()
 
         # All checks completed, save task to database
         task.save()
-        [db_record.save() for db_record in db_records]  # pylint: disable=W0106
 
         # now we need to create results for the nodes to fill. Each node
         # receives their instructions from a result, not from the task itself
@@ -834,14 +931,15 @@ class Tasks(TaskBase):
                 task=task,
                 organization=organization,
                 input=input_,
-                status=TaskStatus.PENDING,
+                status=RunStatus.PENDING,
+                action=action,
             )
             run.save()
 
         # notify nodes a new task available (only to online nodes), nodes that
         # are offline will receive this task on sign in.
         socketio.emit(
-            "new_task",
+            "new_task_update",
             {"id": task.id, "parent_id": task.parent_id},
             namespace="/tasks",
             room=f"collaboration_{task.collaboration_id}",
@@ -861,6 +959,7 @@ class Tasks(TaskBase):
         log.debug(f" url: '{url_for('task_with_id', id=task.id)}'")
         log.debug(f" name: '{task.name}'")
         log.debug(f" image: '{task.image}'")
+        log.debug(f" session ID: '{task.session_id}'")
 
         return task_schema.dump(task, many=False), HTTPStatus.CREATED
 
@@ -868,34 +967,37 @@ class Tasks(TaskBase):
     def __verify_container_permissions(container, image, collaboration_id):
         """Validates that the container is allowed to create the task."""
 
-        # check that the image is allowed: algorithm containers can only
-        # create tasks with the same image
-        if not image.endswith(container["image"]):
-            log.warning(
-                (
-                    f"Container from node={container['node_id']} "
-                    f"attempts to post a task using illegal image!?"
-                )
-            )
-            log.warning(f"  task image: {image}")
-            log.warning(f"  container image: {container['image']}")
-            return False
-
-        # check that parent task is not completed yet
-        if has_task_finished(db.Task.get(container["task_id"]).status):
-            log.warning(
-                f"Container from node={container['node_id']} "
-                f"attempts to start sub-task for a completed "
-                f"task={container['task_id']}"
-            )
-            return False
-
         # check that node id is indeed part of the collaboration
         if not container["collaboration_id"] == collaboration_id:
             log.warning(
                 f"Container attempts to create a task outside "
                 f"collaboration_id={container['collaboration_id']} in "
                 f"collaboration_id={collaboration_id}!"
+            )
+            return False
+
+        # check that the image is allowed: algorithm containers can only
+        # create tasks with the same image
+        collaboration: db.Collaboration = db.Collaboration.get(collaboration_id)
+        if collaboration.session_restrict_to_same_image:
+            if not image != container["image"]:
+                log.warning(
+                    "Container from node=%s attempts to post a "
+                    "task using a different image than the parent task. That is not "
+                    "allowed in this collaboration.",
+                    container["node_id"],
+                )
+                log.warning("  requested image: %s", image)
+                log.warning("  parent image: %s", container["image"])
+                return False
+
+        # check that parent task is not completed yet
+        if RunStatus.has_finished(db.Task.get(container["task_id"]).status):
+            log.warning(
+                "Container from node=%s attempts to start sub-task for a completed "
+                "task=%s",
+                container["node_id"],
+                container["task_id"],
             )
             return False
 
@@ -1185,7 +1287,7 @@ class Task(TaskBase):
             }, HTTPStatus.UNAUTHORIZED
 
         # kill the task if it is still running
-        if not has_task_finished(task.status):
+        if not RunStatus.has_finished(task.status):
             kill_task(task, self.socketio)
 
         # retrieve runs that belong to this task

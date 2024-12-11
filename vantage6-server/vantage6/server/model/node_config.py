@@ -11,6 +11,20 @@ class NodeConfig(Base):
     This information includes e.g. which algorithms are allowed on a certain
     node. The information is stored in the database while the node is
     connected.
+
+    Attributes
+    ----------
+    node_id : int
+        ID of the node that this configuration belongs to
+    key : str
+        Key of the configuration
+    value : str
+        Value of the configuration
+
+    Relationships
+    -------------
+    node : :class:`~.model.node.Node`
+        Node that this configuration belongs to
     """
 
     # fields

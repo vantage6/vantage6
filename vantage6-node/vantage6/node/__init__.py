@@ -48,7 +48,7 @@ from vantage6.common.docker.addons import (
 from vantage6.common.globals import VPN_CONFIG_FILE, PING_INTERVAL_SECONDS, NodePolicy
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.common.task_status import TaskStatus
+from vantage6.common.enum import RunStatus, AlgorithmStepType, TaskStatusQueryOptions
 from vantage6.common.log import get_file_logger
 from vantage6.cli.context.node import NodeContext
 from vantage6.node.context import DockerNodeContext
@@ -268,7 +268,9 @@ class Node:
         assert self.client.cryptor, "Encrpytion has not been setup"
 
         # request open tasks from the server
-        task_results = self.client.run.list(state="open", include_task=True)
+        task_results = self.client.run.list(
+            state=TaskStatusQueryOptions.OPEN.value, include_task=True
+        )
         self.log.debug("task_results: %s", task_results)
 
         # add the tasks to the queue
@@ -287,7 +289,7 @@ class Node:
         """
         # fetch open algorithm runs for this node
         task_runs = self.client.run.list(
-            include_task=True, state="open", task_id=task_id
+            include_task=True, state=TaskStatusQueryOptions.OPEN.value, task_id=task_id
         )
 
         # add the tasks to the queue
@@ -330,14 +332,33 @@ class Node:
         self.log.info("Starting task {id} - {name}".format(**task))
 
         # notify that we are processing this task
-        self.client.set_task_start_time(task_incl_run["id"])
+        task_id = task_incl_run["id"]
+        self.client.set_task_start_time(task_id)
 
-        token = self.client.request_token_for_container(task["id"], task["image"])
-        token = token["container_token"]
+        # each algorithm container has its own purpose annotated by the action
+        try:
+            container_action = AlgorithmStepType(task_incl_run["action"])
+        except ValueError:
+            self.log.error(
+                f"Unrecognized action {task_incl_run['action']}. Cancelling task."
+            )
+            self.client.run.patch(
+                id_=task_id,
+                data={
+                    "status": RunStatus.FAILED,
+                    "finished_at": datetime.datetime.now().isoformat(),
+                    "log": f"Unrecognized action {task_incl_run['action']}",
+                },
+            )
+            self.__emit_algorithm_status_change(task, task_incl_run, RunStatus.FAILED)
+            return
 
-        # create a temporary volume for each job_id
-        vol_name = self.ctx.docker_temporary_volume_name(task["job_id"])
-        self.__docker.create_volume(vol_name)
+        # Only compute containers need a token as they are the only ones that should
+        # create subtasks
+        token = None
+        if container_action == AlgorithmStepType.COMPUTE:
+            token = self.client.request_token_for_container(task["id"], task["image"])
+            token = token["container_token"]
 
         # For some reason, if the key 'input' consists of JSON, it is
         # automatically marshalled? This causes trouble, so we'll serialize it
@@ -349,24 +370,52 @@ class Node:
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
         task_status, vpn_ports = self.__docker.run(
-            run_id=task_incl_run["id"],
+            action=container_action,
+            run_id=task_id,
             task_info=task,
             image=task["image"],
             docker_input=task_incl_run["input"],
-            tmp_vol_name=vol_name,
+            session_id=task["session"]["id"],
             token=token,
             databases_to_use=task.get("databases", []),
         )
 
         # save task status to the server
         update = {"status": task_status}
-        if task_status == TaskStatus.NOT_ALLOWED:
+        if task_status == RunStatus.NOT_ALLOWED:
             # set finished_at to now, so that the task is not picked up again
             # (as the task is not started at all, unlike other crashes, it will
             # never finish and hence not be set to finished)
             update["finished_at"] = datetime.datetime.now().isoformat()
-        self.client.run.patch(id_=task_incl_run["id"], data=update)
+        self.client.run.patch(id_=task_id, data=update)
 
+        # send socket event to alert everyone of task status change. In case the
+        # namespace is not connected, the socket notification will not be sent to other
+        # nodes, but the task will still be processed
+        self.__emit_algorithm_status_change(task, task_incl_run, task_status)
+
+        if vpn_ports:
+            # Save port of VPN client container at which it redirects traffic
+            # to the algorithm container. First delete any existing port
+            # assignments in case algorithm has crashed
+            self.client.request("port", params={"run_id": task_id}, method="DELETE")
+            for port in vpn_ports:
+                port["run_id"] = task_id
+                self.client.request("port", method="POST", json=port)
+
+    def __emit_algorithm_status_change(
+        self, task: dict, run: dict, status: RunStatus
+    ) -> None:
+        """
+        Emit a socket event to alert everyone of task status change.
+
+        Parameters
+        ----------
+        task_id : dict
+            Task metadata
+        status : RunStatus
+            Task status
+        """
         # ensure that the /tasks namespace is connected. This may take a while
         # (usually < 5s) when the socket just (re)connected
         MAX_ATTEMPTS = 30
@@ -376,16 +425,13 @@ class Node:
             self.log.debug("Waiting for /tasks namespace to connect...")
             time.sleep(1)
         self.log.debug("Connected to /tasks namespace")
-        # in case the namespace is still not connected, the socket notification
-        # will not be sent to other nodes, but the task will still be processed
 
-        # send socket event to alert everyone of task status change
         self.socketIO.emit(
             "algorithm_status_change",
             data={
                 "node_id": self.client.whoami.id_,
-                "status": task_status,
-                "run_id": task_incl_run["id"],
+                "status": status,
+                "run_id": run["id"],
                 "task_id": task["id"],
                 "collaboration_id": self.client.collaboration_id,
                 "organization_id": self.client.whoami.organization_id,
@@ -393,17 +439,6 @@ class Node:
             },
             namespace="/tasks",
         )
-
-        if vpn_ports:
-            # Save port of VPN client container at which it redirects traffic
-            # to the algorithm container. First delete any existing port
-            # assignments in case algorithm has crashed
-            self.client.request(
-                "port", params={"run_id": task_incl_run["id"]}, method="DELETE"
-            )
-            for port in vpn_ports:
-                port["run_id"] = task_incl_run["id"]
-                self.client.request("port", method="POST", json=port)
 
     def __listening_worker(self) -> None:
         """
@@ -440,6 +475,40 @@ class Node:
         while True:
             try:
                 results = self.__docker.get_result()
+                self.log.info(f"Sending result (run={results.run_id}) to the server!")
+
+                # FIXME: why are we retrieving the result *again*? Shouldn't we
+                # just store the task_id when retrieving the task the first
+                # time?
+                response = self.client.request(f"run/{results.run_id}")
+                task_id = response.get("task").get("id")
+
+                if not task_id:
+                    self.log.error(
+                        "Task id for run id=%s could not be retrieved", results.run_id
+                    )
+                    return
+
+                response = self.client.request(f"task/{task_id}")
+
+                init_org = response.get("init_org")
+                if not init_org:
+                    self.log.error(
+                        "Initiator organization from task (id=%s) could not be "
+                        "retrieved!",
+                        task_id,
+                    )
+
+                self.client.run.patch(
+                    id_=results.run_id,
+                    data={
+                        "result": results.data,
+                        "log": results.logs,
+                        "status": results.status,
+                        "finished_at": datetime.datetime.now().isoformat(),
+                    },
+                    init_org_id=init_org.get("id"),
+                )
 
                 # notify socket channel of algorithm status change
                 self.socketIO.emit(
@@ -454,41 +523,6 @@ class Node:
                         "parent_id": results.parent_id,
                     },
                     namespace="/tasks",
-                )
-
-                self.log.info(f"Sending result (run={results.run_id}) to the server!")
-
-                # FIXME: why are we retrieving the result *again*? Shouldn't we
-                # just store the task_id when retrieving the task the first
-                # time?
-                response = self.client.request(f"run/{results.run_id}")
-                task_id = response.get("task").get("id")
-
-                if not task_id:
-                    self.log.error(
-                        f"task_id of run (id={results.run_id}) "
-                        f"could not be retrieved"
-                    )
-                    return
-
-                response = self.client.request(f"task/{task_id}")
-
-                init_org = response.get("init_org")
-                if not init_org:
-                    self.log.error(
-                        f"Initiator organization from task (id={task_id}) "
-                        "could not be retrieved!"
-                    )
-
-                self.client.run.patch(
-                    id_=results.run_id,
-                    data={
-                        "result": results.data,
-                        "log": results.logs,
-                        "status": results.status,
-                        "finished_at": datetime.datetime.now().isoformat(),
-                    },
-                    init_org_id=init_org.get("id"),
                 )
             except Exception:
                 self.log.exception("Speaking thread had an exception")
@@ -1043,7 +1077,7 @@ class Node:
         # update status of killed tasks
         for killed_algo in killed_algos:
             self.client.run.patch(
-                id_=killed_algo.run_id, data={"status": TaskStatus.KILLED}
+                id_=killed_algo.run_id, data={"status": RunStatus.KILLED}
             )
         return killed_algos
 
@@ -1080,25 +1114,6 @@ class Node:
             config_to_share["allowed_orgs"] = policies.get(
                 NodePolicy.ALLOWED_ORGANIZATIONS
             )
-
-        # share node database labels, types, and column names (if they are
-        # fixed as e.g. for csv file)
-        labels = []
-        types = {}
-        col_names = {}
-        for db in self.config.get("databases", []):
-            label = db.get("label")
-            type_ = db.get("type")
-            labels.append(label)
-            types[f"db_type_{label}"] = type_
-            if type_ in ("csv", "parquet"):
-                col_names[f"columns_{label}"] = self.__docker.get_column_names(
-                    label, type_
-                )
-        config_to_share["database_labels"] = labels
-        config_to_share["database_types"] = types
-        if col_names:
-            config_to_share["database_columns"] = col_names
 
         self.log.debug("Sharing node configuration: %s", config_to_share)
         self.socketIO.emit("node_info_update", config_to_share, namespace="/tasks")

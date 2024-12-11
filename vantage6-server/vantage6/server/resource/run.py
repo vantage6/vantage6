@@ -5,9 +5,10 @@ import sqlalchemy as sa
 from flask import g, request
 from flask_restful import Api
 from http import HTTPStatus
-from sqlalchemy import desc
+from sqlalchemy import desc, or_, and_
 
 from vantage6.common import logger_name
+from vantage6.common.enum import RunStatus, TaskStatusQueryOptions, AlgorithmStepType
 from vantage6.server import db
 from vantage6.server.permission import (
     RuleCollection,
@@ -150,6 +151,7 @@ class MultiRunBase(RunBase):
         """
         auth_org = self.obtain_auth_organization()
         args = request.args
+        log.debug(f"Querying runs with args: {args}")
 
         q = g.session.query(db_Run)
 
@@ -202,11 +204,48 @@ class MultiRunBase(RunBase):
             if f"{param}_from" in args:
                 q = q.filter(db_Run.assigned_at >= args[f"{param}_from"])
 
-        # custom filters
-        if args.get("state") == "open":
-            q = q.filter(db_Run.finished_at.is_(None))
-
         q = q.join(Organization).join(Node).join(Task, db_Run.task).join(Collaboration)
+
+        # The state can be one of the following:
+        #   open:
+        #       Runs that are not finished and all depending runs from all tasks are
+        #       completed or do not exist
+        #   waiting:
+        #       Runs that are not finished and depending runs are not completed
+        #   finished:
+        #       Runs that are finished
+        #
+        if args.get("state") == TaskStatusQueryOptions.OPEN.value:
+            q = q.filter(
+                and_(
+                    or_(
+                        db.Task.depends_on == None,
+                        and_(
+                            db.Task.depends_on != None,
+                            ~db.Task.depends_on.any(
+                                db.Task.runs.any(db.Run.finished_at.is_(None))
+                            ),
+                        ),
+                    ),
+                    db_Run.finished_at.is_(None),
+                )
+            )
+
+        elif args.get("state") == TaskStatusQueryOptions.WAITING.value:
+            q = q.filter(
+                and_(
+                    or_(
+                        db.Task.depends_on == None,
+                        db.Task.depends_on.any(
+                            db.Task.runs.any(db.Run.finished_at.is_(None))
+                        ),
+                    ),
+                    db_Run.finished_at.is_(None),
+                )
+            )
+
+        elif args.get("state") == TaskStatusQueryOptions.FINISHED.value:
+            q = q.filter(db_Run.finished_at.isnot(None))
 
         if "collaboration_id" in args:
             if not self.r.can_for_col(P.VIEW, args["collaboration_id"]):
@@ -645,7 +684,7 @@ class Run(SingleRunBase):
 
         tags: ["Algorithm"]
         """
-        run = db_Run.get(id)
+        run: db_Run = db_Run.get(id)
         if not run:
             return {"msg": f"Run id={id} not found!"}, HTTPStatus.NOT_FOUND
 
@@ -672,6 +711,36 @@ class Run(SingleRunBase):
                 "msg": "Cannot update an already finished algorithm run!"
             }, HTTPStatus.BAD_REQUEST
 
+        run.started_at = parse_datetime(data.get("started_at"), run.started_at)
+        run.finished_at = parse_datetime(data.get("finished_at"))
+        run.result = data.get("result")
+        run.log = data.get("log")
+        run.status = data.get("status", run.status)
+        run.save()
+
+        # In case there are dependent tasks and the current task has failed,
+        # we should mark the dependent tasks as failed as well.
+        if RunStatus.has_failed(run.status):
+            dependent_tasks = run.task.required_by
+            while dependent_tasks:
+                dependent_task: db.Task = dependent_tasks.pop()
+
+                # Skip the mark as failed for tasks that are compute tasks, as these
+                # might still be able to run.
+                if dependent_task.action == AlgorithmStepType.COMPUTE:
+                    continue
+
+                log.debug(f"Marking dependent task {dependent_task.id} runs as failed.")
+
+                # Also mark all decentant runs as failed
+                if dependent_task.required_by:
+                    dependent_tasks.extend(dependent_task.required_by)
+
+                for dependent_run in dependent_task.runs:
+                    dependent_run.status = RunStatus.FAILED
+                    dependent_run.finished_at = run.finished_at
+                    dependent_run.save()
+
         # notify collaboration nodes/users that the task has an update
         self.socketio.emit(
             "status_update",
@@ -680,12 +749,12 @@ class Run(SingleRunBase):
             room=f"collaboration_{run.task.collaboration.id}",
         )
 
-        run.started_at = parse_datetime(data.get("started_at"), run.started_at)
-        run.finished_at = parse_datetime(data.get("finished_at"))
-        run.result = data.get("result")
-        run.log = data.get("log")
-        run.status = data.get("status", run.status)
-        run.save()
+        self.socketio.emit(
+            "algorithm_status_change",
+            {"job_id": run.id, "status": run.status},
+            namespace="/tasks",
+            room=f"collaboration_{run.task.collaboration.id}",
+        )
 
         return run_schema.dump(run, many=False), HTTPStatus.OK
 
