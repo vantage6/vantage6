@@ -12,7 +12,7 @@ class TestSessionResource(TestResourceBase):
             user = User.get_by_username("root")
 
         session = Session(
-            label=str(uuid1()), collaboration_id=1, scope="OWN", owner=user
+            name=str(uuid1()), collaboration_id=1, scope="OWN", owner=user
         )
         session.save()
 
@@ -25,7 +25,7 @@ class TestSessionResource(TestResourceBase):
         assert sessions_response.status_code == 200
 
         data = sessions_response.json["data"][0]
-        self.assertEqual(data["label"], session.label)
+        self.assertEqual(data["name"], session.name)
         self.assertEqual(data["scope"], session.scope)
         self.assertIn("owner", data)
         self.assertIn("collaboration", data)
@@ -40,7 +40,7 @@ class TestSessionResource(TestResourceBase):
     def test_create_session(self):
         headers = self.login()
         session_input = {
-            "label": str(uuid1()),
+            "name": str(uuid1()),
             "collaboration_id": 1,
             "scope": "own",
         }
@@ -48,7 +48,7 @@ class TestSessionResource(TestResourceBase):
         assert response.status_code == 201
 
         session = Session.get(response.json["id"])
-        self.assertEqual(session.label, session_input["label"])
+        self.assertEqual(session.name, session_input["name"])
         self.assertEqual(session.scope, session_input["scope"])
 
         session.delete()
@@ -60,7 +60,7 @@ class TestSessionResource(TestResourceBase):
         assert response.status_code == 200
 
         data = response.json
-        self.assertEqual(data["label"], session.label)
+        self.assertEqual(data["name"], session.name)
         self.assertEqual(data["scope"], session.scope)
         self.assertIn("owner", data)
         self.assertIn("collaboration", data)
@@ -76,7 +76,7 @@ class TestSessionResource(TestResourceBase):
         session = self.create_session()
         headers = self.login()
         session_input = {
-            "label": str(uuid1()),
+            "name": str(uuid1()),
             "scope": "own",
         }
         response = self.app.patch(
@@ -85,7 +85,7 @@ class TestSessionResource(TestResourceBase):
         assert response.status_code == 200
 
         session = Session.get(session.id)
-        self.assertEqual(session.label, session_input["label"])
+        self.assertEqual(session.name, session_input["name"])
         self.assertEqual(session.scope, session_input["scope"])
 
         session.delete()
@@ -103,7 +103,7 @@ class TestSessionResource(TestResourceBase):
         headers = self.login()
         session_rep = self.app.post(
             "/api/session",
-            json={"label": str(uuid1()), "collaboration_id": 1, "scope": "own"},
+            json={"name": str(uuid1()), "collaboration_id": 1, "scope": "own"},
             headers=headers,
         )
 
@@ -129,7 +129,7 @@ class TestSessionResource(TestResourceBase):
         session_rep = self.app.post(
             "/api/session",
             json={
-                "label": str(uuid1()),
+                "name": str(uuid1()),
                 "collaboration_id": collaboration_id,
                 "scope": "own",
             },

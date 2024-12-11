@@ -9,13 +9,11 @@ from sqlalchemy import (
     ForeignKey,
     DateTime,
     UniqueConstraint,
-    and_,
 )
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.hybrid import hybrid_property
 
 from vantage6.server.model.rule import Scope
-from vantage6.server.model.base import Base
+from vantage6.server.model.base import Base, DatabaseSessionManager
 
 if TYPE_CHECKING:
     from vantage6.server.model.collaboration import Collaboration
@@ -152,6 +150,9 @@ class Session(Base):
         results.
         """
 
+        session = DatabaseSessionManager.get_session()
+        session.add(self)
+
         for dataframe in self.dataframes:
             dataframe.delete()
 
@@ -159,7 +160,8 @@ class Session(Base):
             for result in task.results:
                 result.delete()
             task.delete()
-        self.delete()
+
+        super().delete()
 
     def __repr__(self) -> str:
         """

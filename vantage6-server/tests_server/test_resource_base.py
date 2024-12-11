@@ -12,9 +12,11 @@ from flask.testing import FlaskClient
 from flask_socketio import SocketIO
 from werkzeug.utils import cached_property
 
-from vantage6.server import context
+from vantage6.backend.common.test_context import TestContext
+from vantage6.server.globals import PACKAGE_FOLDER
+
 from vantage6.server.model.base import Database, DatabaseSessionManager
-from vantage6.common.globals import APPNAME
+from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.common.enum import RunStatus
 from vantage6.server.controller.fixture import load
 from vantage6.server.globals import PACKAGE_FOLDER
@@ -51,7 +53,7 @@ class TestResourceBase(unittest.TestCase):
         """Called immediately before running a test method."""
         Database().connect("sqlite://", allow_drop_all=True)
 
-        ctx = context.TestContext.from_external_config_file()
+        ctx = TestContext.from_external_config_file(PACKAGE_FOLDER, InstanceType.SERVER)
 
         # create server instance. Patch the start_background_task method
         # to prevent the server from starting a ping/pong thread that will
@@ -232,6 +234,6 @@ class TestResourceBase(unittest.TestCase):
         node, api_key = self.create_node(*args, **kwargs)
         return self.login_node(api_key)
 
-    def create_user_and_login(self, organization=None, rules=[]):
+    def get_user_auth_header(self, organization=None, rules=[]):
         user = self.create_user(organization, rules)
         return self.login(user.username)
