@@ -111,7 +111,7 @@ def cli_node_create_private_key(
         warning(f"File '{Fore.CYAN}{file_}{Style.RESET_ALL}' exists!")
 
         if overwrite:
-            warning("'--override' specified, so it will be overwritten ...")
+            warning("'--overwrite' specified, so it will be overwritten ...")
 
     if file_.exists() and not overwrite:
         error("Could not create private key!")
