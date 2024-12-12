@@ -6,7 +6,7 @@ import questionary as q
 import docker
 from colorama import Fore, Style
 
-from vantage6.common import error, info, warning, debug
+from vantage6.common import error, info, debug
 from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.client import UserClient
 
