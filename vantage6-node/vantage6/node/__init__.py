@@ -333,7 +333,22 @@ class Node:
         self.client.set_task_start_time(task_incl_run["id"])
 
         token = self.client.request_token_for_container(task["id"], task["image"])
-        token = token["container_token"]
+        try:
+            token = token["container_token"]
+        except KeyError:
+            # if a token could not be generated, this is a sign that task is already
+            # finished. To prevent this from happening every time node is restarted,
+            # patch the node to failed
+            self.log.error(
+                "Container token could not be obtained: %s", token.get("msg")
+            )
+            self.client.run.patch(
+                id_=task_incl_run["id"],
+                data={
+                    "status": TaskStatus.FAILED,
+                    "log": "Could not obtain algorithm container token",
+                },
+            )
 
         # create a temporary volume for each job_id
         vol_name = self.ctx.docker_temporary_volume_name(task["job_id"])
