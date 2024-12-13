@@ -64,7 +64,7 @@ from vantage6.cli.node.common import select_node, create_client_and_authenticate
     "ask_mfa",
     flag_value=True,
     default=False,
-    help="Ask for MFA code",
+    help="Ask for multi-factor authentication code. Use this if MFA is enabled on the server.",
 )
 def cli_node_create_private_key(
     name: str,
