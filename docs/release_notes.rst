@@ -1,6 +1,33 @@
 Release notes
 =============
 
+4.8.2
+-----
+
+*13 December 2024*
+
+- **Change**
+
+  - Modify filename of PyPI packages to conform to PEP625
+   (`PR#1625 <https://github.com/vantage6/vantage6/pull/1625>`_).
+
+- **Bugfix**
+
+  - Ensure node doesn't don't try to restart dangling subtasks every time node is
+    restarted (`PR#1621 <https://github.com/vantage6/vantage6/pull/1621>`_).
+  - To be compatible with v4.3-v4.7, modify path of the community store in the server's
+    database (added API path) to make sure it works
+    (`Issue#1609 <https://github.com/vantage6/vantage6/issues/1609>`_,
+    `PR#1622 <https://github.com/vantage6/vantage6/pull/1622>`_).
+  - Prevent superfluous permission error showing up in the UI for users not registered
+    in an algorithm store when they try to check their permissions there
+    (`Issue#1597 <https://github.com/vantage6/vantage6/issues/1597>`_,
+    `PR#1623 <https://github.com/vantage6/vantage6/pull/1623>`_).
+  - Ensure that default values for optional boolean and list arguments in the algorithm
+    store are properly parsed
+    (`Issue#1607 <https://github.com/vantage6/vantage6/issues/1607>`_,
+    `PR#1624 <https://github.com/vantage6/vantage6/pull/1624>`_).
+
 4.8.1
 -----
 
@@ -8,8 +35,8 @@ Release notes
 
 - **Security**
 
- - Update ``cryptography`` and ``werkzeug`` dependencies
-   (`PR#1594 <https://github.com/vantage6/vantage6/pull/1594>`_).
+  - Update ``cryptography`` and ``werkzeug`` dependencies
+    (`PR#1594 <https://github.com/vantage6/vantage6/pull/1594>`_).
 
 4.8.0
 -----
@@ -97,10 +124,10 @@ Release notes
 - **Change**
 
  - Show nodes in UI on page that shows study
-  (`PR#1507 <https://github.com/vantage6/vantage6/pull/1507>`_).
+   (`PR#1507 <https://github.com/vantage6/vantage6/pull/1507>`_).
  - Improved viewing/editing your own user in the UI: extra link in top menu, hide
    permissions on edit page because they can't be changed, permission check improvements
-  (`PR#1493 <https://github.com/vantage6/vantage6/pull/1493>`_).
+   (`PR#1493 <https://github.com/vantage6/vantage6/pull/1493>`_).
 
 - **Bugfix**
 
