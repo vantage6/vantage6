@@ -23,7 +23,7 @@ with codecs.open(version_path) as f:
 
 # setup the package
 setup(
-    name="vantage6-client",
+    name="vantage6_client",
     version=version_ns["__version__"],
     description="Vantage6 client",
     long_description=long_description,

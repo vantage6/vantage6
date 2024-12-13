@@ -22,7 +22,7 @@ with codecs.open(version_path) as f:
 
 # setup the package
 setup(
-    name="vantage6-common",
+    name="vantage6_common",
     version=version_ns["__version__"],
     description="Vantage6 common",
     long_description=long_description,
@@ -34,7 +34,7 @@ setup(
         "appdirs==1.4.4",
         "click==8.1.3",
         "colorama==0.4.6",
-        "cryptography==42.0.4",
+        "cryptography==43.0.1",
         "docker>=7.1.0",
         "pyfiglet==0.8.post1",
         "PyJWT==2.6.0",
