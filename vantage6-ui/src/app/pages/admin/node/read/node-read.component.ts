@@ -52,7 +52,7 @@ export class NodeReadComponent implements OnInit, OnDestroy {
     private socketioConnectService: SocketioConnectService,
     private translateService: TranslateService,
     private fileService: FileService
-  ) { }
+  ) {}
 
   async ngOnInit(): Promise<void> {
     await this.initData();
@@ -158,11 +158,11 @@ export class NodeReadComponent implements OnInit, OnDestroy {
               children: [],
               label: organization.name,
               code: organization.id,
-              parentCode: 'organization'
+              parentCode: this.translateService.instant('node.organization').toLowerCase()
             };
           }),
           label: this.translateService.instant('node.organization'),
-          code: 'organization'
+          code: this.translateService.instant('node.organization').toLowerCase()
         },
         {
           isFolder: true,
@@ -172,11 +172,11 @@ export class NodeReadComponent implements OnInit, OnDestroy {
               children: [],
               label: collaboration.name,
               code: collaboration.id,
-              parentCode: 'collaboration'
+              parentCode: this.translateService.instant('node.collaboration').toLowerCase()
             };
           }),
           label: this.translateService.instant('node.collaboration'),
-          code: 'collaboration'
+          code: this.translateService.instant('node.collaboration').toLowerCase()
         }
       ];
     });

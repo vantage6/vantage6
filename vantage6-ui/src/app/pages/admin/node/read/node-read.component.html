@@ -1,6 +1,6 @@
 <app-page-header title="{{ 'node-read.title' | translate }}"></app-page-header>
 <app-tree-dropdown
-  [selectedNodes]="selectedTreeNodes"
+  [selectedTreeNodes]="selectedTreeNodes"
   [isMultiSelect]="false"
   [nodes]="treeNodes"
   (valueChanged)="handleSelectedTreeNodesChange($event)"

@@ -1,11 +1,11 @@
 <div class="tree-dropdown" cdkOverlayOrigin #trigger="cdkOverlayOrigin" (click)="openOverlay($event)">
   <mat-form-field class="tree-dropdown__search-form">
-    <mat-label for="searchInput">{{ "node-read.actions.filter" | translate }}</mat-label>
+    <mat-label for="searchInput">{{ "general.filter" | translate }}</mat-label>
     <mat-chip-grid class="tree-dropdown__chip-grid" #chipGrid>
-      @for (selectedNode of selectedNodes; track selectedNode) {
-        <mat-chip-row class="tree-dropdown__chip-row" (removed)="deselectNodeByCode(selectedNode.code.toString())" [editable]="false">
-          {{ selectedNode?.pathLabel ?? selectedNode?.label }}
-          <button matChipRemove [attr.aria-label]="'remove ' + selectedNode?.label">
+      @for (selectedTreeNode of selectedTreeNodes; track selectedTreeNode) {
+        <mat-chip-row class="tree-dropdown__chip-row" (removed)="deselectNodeByCode(selectedTreeNode.code.toString())" [editable]="false">
+          {{ selectedTreeNode?.pathLabel ?? selectedTreeNode?.label }}
+          <button matChipRemove [attr.aria-label]="'remove ' + selectedTreeNode?.label">
             <mat-icon>cancel</mat-icon>
           </button>
         </mat-chip-row>
@@ -51,82 +51,82 @@
         }"
       >
         <mat-tree-node
-          *matTreeNodeDef="let node"
+          *matTreeNodeDef="let treeNode"
           [ngClass]="{
             'tree-dropdown__node': true,
-            'tree-dropdown__node--invisible': !node.visible
+            'tree-dropdown__node--invisible': !treeNode.visible
           }"
           matTreeNodePadding
           matTreeNodePaddingIndent="20"
         >
           <button mat-icon-button disabled></button>
           <mat-checkbox
-            *ngIf="isMultiSelect && !node.isFolder"
+            *ngIf="isMultiSelect && !treeNode.isFolder"
             class="tree-dropdown__checkbox"
-            [checked]="isNodeSelected(node)"
-            [disabled]="node.disabled"
+            [checked]="isTreeNodeSelected(treeNode)"
+            [disabled]="treeNode.disabled"
             color="primary"
-            (change)="changedNode(node)"
+            (change)="changedNode(treeNode)"
           >
           </mat-checkbox>
           <mat-radio-button
-            *ngIf="!isMultiSelect && !node.isFolder"
+            *ngIf="!isMultiSelect && !treeNode.isFolder"
             class="tree-dropdown__radio"
-            [checked]="isNodeSelected(node)"
-            [disabled]="node.disabled"
-            [name]="node.code"
+            [checked]="isTreeNodeSelected(treeNode)"
+            [disabled]="treeNode.disabled"
+            [name]="treeNode.code"
             color="primary"
-            (change)="changedNode(node)"
+            (change)="changedNode(treeNode)"
           >
           </mat-radio-button>
           <div
             class="tree-dropdown__node-label"
-            (click)="changedNode(node)"
-            [innerHtml]="node?.label | highlight: treeSearch.config.searchInput : treeSearch.config.searchActive"
+            (click)="changedNode(treeNode)"
+            [innerHtml]="treeNode?.label | highlight: treeSearch.config.searchInput : treeSearch.config.searchActive"
           ></div>
         </mat-tree-node>
 
-        <ng-container *matTreeNodeDef="let node; when: hasChild">
+        <ng-container *matTreeNodeDef="let treeNode; when: hasChild">
           <mat-tree-node
             matTreeNodePadding
             matTreeNodePaddingIndent="20"
             [ngClass]="{
               'tree-dropdown__nodenested tree-dropdown__node--haschilds mat-tree-node': true,
-              'tree-dropdown__node--invisible': !node.visible
+              'tree-dropdown__node--invisible': !treeNode.visible
             }"
           >
-            <button mat-icon-button (click)="expandOrCollapse(node)" [attr.aria-label]="'Toggle ' + node.label">
+            <button mat-icon-button (click)="expandOrCollapse(treeNode)" [attr.aria-label]="'Toggle ' + treeNode.label">
               <mat-icon
                 [ngClass]="{
                   'mat-icon-rtl-mirror': true,
-                  'tree-dropdown__chevron--child-selected': isSomeDescendentSelected(node)
+                  'tree-dropdown__chevron--child-selected': isSomeDescendentSelected(treeNode)
                 }"
               >
-                {{ treeControl.isExpanded(node) ? "expand_more" : "chevron_right" }}
+                {{ treeControl.isExpanded(treeNode) ? "expand_more" : "chevron_right" }}
               </mat-icon>
             </button>
             <mat-checkbox
-              *ngIf="isMultiSelect && !node.isFolder"
-              [checked]="isNodeSelected(node)"
-              (change)="changedNode(node)"
-              [disabled]="node.disabled"
+              *ngIf="isMultiSelect && !treeNode.isFolder"
+              [checked]="isTreeNodeSelected(treeNode)"
+              (change)="changedNode(treeNode)"
+              [disabled]="treeNode.disabled"
               color="primary"
               class="tree-dropdown__checkbox"
             >
             </mat-checkbox>
             <mat-radio-button
-              *ngIf="!isMultiSelect && !node.isFolder"
+              *ngIf="!isMultiSelect && !treeNode.isFolder"
               class="tree-dropdown__radio"
-              [checked]="isNodeSelected(node)"
-              [disabled]="node.disabled"
-              [name]="node?.code"
+              [checked]="isTreeNodeSelected(treeNode)"
+              [disabled]="treeNode.disabled"
+              [name]="treeNode?.code"
               color="primary"
-              (change)="changedNode(node)"
+              (change)="changedNode(treeNode)"
             ></mat-radio-button>
             <div
               class="tree-dropdown__node-label"
-              (click)="changedNode(node)"
-              [innerHtml]="node?.label | highlight: treeSearch.config.searchInput : treeSearch.config.searchActive"
+              (click)="changedNode(treeNode)"
+              [innerHtml]="treeNode?.label | highlight: treeSearch.config.searchInput : treeSearch.config.searchActive"
             ></div>
           </mat-tree-node>
         </ng-container>

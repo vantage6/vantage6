@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, ElementRef, ViewChild, Output, EventEmitter, SimpleChanges } from '@angular/core';
 import { SelectionModel } from '@angular/cdk/collections';
 import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree';
-import { CustomTreeControl } from './custom-tree-control';
+import { ParentTreeControl } from './parent-tree-control';
 import { ConnectionPositionPair } from '@angular/cdk/overlay';
 import { MatFormField } from '@angular/material/form-field';
 
@@ -46,40 +46,40 @@ export interface ITreeSelectedValue {
 export class TreeDropdownComponent implements OnInit {
   @Input() isMultiSelect = false;
   @Input() nodes: ITreeInputNode[] = [];
-  @Input() selectedNodes: ITreeSelectedValue[] = [];
+  @Input() selectedTreeNodes: ITreeSelectedValue[] = [];
   @Output() valueChanged: EventEmitter<ITreeSelectedValue[]> = new EventEmitter();
   @ViewChild('searchInput')
   searchInput?: ElementRef<HTMLInputElement>;
   @ViewChild(MatFormField) formField?: MatFormField;
 
-  private getLevel = (node: ITreeInputNodeFlat) => node.level;
-  private isExpandable = (node: ITreeInputNodeFlat) => node.expandable;
-  private getChildren = (node: ITreeInputNode): ITreeInputNode[] => node.children;
-  private transformer = (node: ITreeInputNode, level: number) => {
-    const existingNode = this.nestedNodeMap.get(node);
-    const flatNode = existingNode && existingNode.code === node.code ? existingNode : <ITreeInputNodeFlat>{};
-    flatNode.code = node.code;
-    flatNode.label = node.label;
-    flatNode.description = node.description;
+  private getLevel = (treeNode: ITreeInputNodeFlat) => treeNode.level;
+  private isExpandable = (treeNode: ITreeInputNodeFlat) => treeNode.expandable;
+  private getChildren = (treeNode: ITreeInputNode): ITreeInputNode[] => treeNode.children;
+  private transformer = (treeNode: ITreeInputNode, level: number) => {
+    const existingNode = this.nestedTreeNodeMap.get(treeNode);
+    const flatNode = existingNode && existingNode.code === treeNode.code ? existingNode : <ITreeInputNodeFlat>{};
+    flatNode.code = treeNode.code;
+    flatNode.label = treeNode.label;
+    flatNode.description = treeNode.description;
     flatNode.visible = true;
     flatNode.level = level;
-    flatNode.expandable = !!node.children?.length;
-    flatNode.isFolder = node.isFolder;
-    flatNode.parentCode = node.parentCode;
-    flatNode.pathLabel = node.pathLabel;
-    this.flatNodeMap.set(flatNode, node);
-    this.nestedNodeMap.set(node, flatNode);
+    flatNode.expandable = !!treeNode.children?.length;
+    flatNode.isFolder = treeNode.isFolder;
+    flatNode.parentCode = treeNode.parentCode;
+    flatNode.pathLabel = treeNode.pathLabel;
+    this.flatTreeNodeMap.set(flatNode, treeNode);
+    this.nestedTreeNodeMap.set(treeNode, flatNode);
     return flatNode;
   };
-  private flatNodeMap = new Map<ITreeInputNodeFlat, ITreeInputNode>();
-  private nestedNodeMap = new Map<ITreeInputNode, ITreeInputNodeFlat>();
+  private flatTreeNodeMap = new Map<ITreeInputNodeFlat, ITreeInputNode>();
+  private nestedTreeNodeMap = new Map<ITreeInputNode, ITreeInputNodeFlat>();
   private treeFlattener: MatTreeFlattener<ITreeInputNode, ITreeInputNodeFlat> = new MatTreeFlattener(
     this.transformer,
     this.getLevel,
     this.isExpandable,
     this.getChildren
   );
-  public treeControl: CustomTreeControl<ITreeInputNodeFlat> = new CustomTreeControl<ITreeInputNodeFlat>(this.getLevel, this.isExpandable);
+  public treeControl: ParentTreeControl<ITreeInputNodeFlat> = new ParentTreeControl<ITreeInputNodeFlat>(this.getLevel, this.isExpandable);
   public dataSource: MatTreeFlatDataSource<ITreeInputNode, ITreeInputNodeFlat> = new MatTreeFlatDataSource(
     this.treeControl,
     this.treeFlattener
@@ -99,17 +99,18 @@ export class TreeDropdownComponent implements OnInit {
       originX: 'start',
       originY: 'bottom',
       overlayX: 'start',
-      overlayY: 'top',
-    }, {
+      overlayY: 'top'
+    },
+    {
       originX: 'start',
       originY: 'top',
       overlayX: 'start',
-      overlayY: 'bottom',
-    },
+      overlayY: 'bottom'
+    }
   ];
   public overlayWidth: string = '100%';
 
-  constructor() { }
+  constructor() {}
 
   public ngOnInit(): void {
     this.setTreeNodes();
@@ -124,9 +125,9 @@ export class TreeDropdownComponent implements OnInit {
   private getSelectedFlatNodes(selectedNodes: ITreeSelectedValue[], flattenedData: ITreeInputNodeFlat[]): ITreeInputNodeFlat[] {
     return selectedNodes
       ? selectedNodes.map((selectedValueItem: ITreeSelectedValue) => {
-        const currentFlatTreeItem = flattenedData.find((item: ITreeInputNodeFlat) => item.code === selectedValueItem.code);
-        return currentFlatTreeItem ? currentFlatTreeItem : <ITreeInputNodeFlat>{};
-      })
+          const currentFlatTreeItem = flattenedData.find((item: ITreeInputNodeFlat) => item.code === selectedValueItem.code);
+          return currentFlatTreeItem ? currentFlatTreeItem : <ITreeInputNodeFlat>{};
+        })
       : [];
   }
 
@@ -134,9 +135,9 @@ export class TreeDropdownComponent implements OnInit {
     const clonedNodes = JSON.parse(JSON.stringify(this.nodes));
     const treeNodes = this.formatTreeNodes(clonedNodes);
     this.dataSource.data = [...treeNodes];
-    const selectedNodes: ITreeInputNodeFlat[] = this.getSelectedFlatNodes(this.selectedNodes, this.treeControl.dataNodes)?.filter(
+    const selectedNodes: ITreeInputNodeFlat[] = this.getSelectedFlatNodes(this.selectedTreeNodes, this.treeControl.dataNodes)?.filter(
       () => {
-        return this.selectedNodes.find((item) => item.code !== undefined);
+        return this.selectedTreeNodes.find((item) => item.code !== undefined);
       }
     );
     this.checklistSelection = new SelectionModel(true, selectedNodes);
@@ -165,7 +166,7 @@ export class TreeDropdownComponent implements OnInit {
 
   private filterTreeNodesByName(term: string): void {
     const foundLabels: string[] = [];
-    const highestLevelNumber: number = this.uniqDataNodes(this.treeControl.dataNodes, 'level')
+    const highestLevelNumber: number = this.uniqTreeNodes(this.treeControl.dataNodes, 'level')
       .map((item) => item.level)
       .reduce(function (p, v) {
         return p > v ? p : v;
@@ -187,35 +188,35 @@ export class TreeDropdownComponent implements OnInit {
       return;
     });
 
-    this.treeControl.dataNodes.map((node: ITreeInputNodeFlat) => {
-      node.visible = foundLabels.indexOf(node.label) !== -1;
-      if (node.visible) {
-        this.treeControl.expand(node);
+    this.treeControl.dataNodes.map((treeNode: ITreeInputNodeFlat) => {
+      treeNode.visible = foundLabels.indexOf(treeNode.label) !== -1;
+      if (treeNode.visible) {
+        this.treeControl.expand(treeNode);
       }
-      return node;
+      return treeNode;
     });
   }
 
   public deselectNodeByCode(code: string) {
     if (this.checklistSelection) {
-      const node = this.checklistSelection.selected?.find((flatNode) => flatNode.code == code);
-      if (node) {
-        this.isMultiSelect ? this.checklistSelection.deselect(node) : this.checklistSelection.clear();
+      const treeNode = this.checklistSelection.selected?.find((flatNode) => flatNode.code == code);
+      if (treeNode) {
+        this.isMultiSelect ? this.checklistSelection.deselect(treeNode) : this.checklistSelection.clear();
       }
     }
     this.changedSelectedValues();
   }
 
-  public changedNode(node: ITreeInputNodeFlat): void {
-    if (node.isFolder) {
+  public changedNode(treeNode: ITreeInputNodeFlat): void {
+    if (treeNode.isFolder) {
       return;
     }
     if (this.checklistSelection) {
       if (!this.isMultiSelect) {
         this.checklistSelection.clear();
-        this.checklistSelection.select(node);
+        this.checklistSelection.select(treeNode);
       } else {
-        this.checklistSelection.toggle(node);
+        this.checklistSelection.toggle(treeNode);
       }
     }
     this.changedSelectedValues();
@@ -242,18 +243,19 @@ export class TreeDropdownComponent implements OnInit {
 
   private changedSelectedValues() {
     const values: ITreeInputNodeFlat[] = this.checklistSelection ? this.checklistSelection.selected : [];
-    const selectedValues = values && values.length !== 0
-      ? values.map((item) => {
-        return {
-          code: item.code,
-          label: item.label,
-          parentCode: item.parentCode,
-          pathLabel: item.pathLabel
-        }
-      })
-      : [];    
-    if (this.isOverlayOpen) {        
-      window.dispatchEvent(new Event('resize'))
+    const selectedValues =
+      values && values.length !== 0
+        ? values.map((item) => {
+            return {
+              code: item.code,
+              label: item.label,
+              parentCode: item.parentCode,
+              pathLabel: item.pathLabel
+            };
+          })
+        : [];
+    if (this.isOverlayOpen) {
+      window.dispatchEvent(new Event('resize'));
     }
     this.valueChanged.emit([...selectedValues]);
   }
@@ -276,36 +278,34 @@ export class TreeDropdownComponent implements OnInit {
     }
   }
 
-  public expandOrCollapse(node: ITreeInputNodeFlat) {
-    this.treeControl.toggle(node)
+  public expandOrCollapse(treeNode: ITreeInputNodeFlat) {
+    this.treeControl.toggle(treeNode);
   }
 
   public isSomeCollapsed(): boolean {
-    return this.treeControl.dataNodes.some(
-      (e: any) => !this.treeControl.isExpanded(e)
-    );
+    return this.treeControl.dataNodes.some((e: any) => !this.treeControl.isExpanded(e));
   }
 
-  public isSomeDescendentSelected(node: ITreeInputNodeFlat): boolean {
-    const isNodeSelected = this.isNodeSelected(node);
-    const anyChildNodeSelected = this.treeControl?.getDescendants(node)?.filter((child) => this.isNodeSelected(child))?.length > 0;
-    return isNodeSelected || anyChildNodeSelected;
+  public isSomeDescendentSelected(treeNode: ITreeInputNodeFlat): boolean {
+    const isTreeNodeSelected = this.isTreeNodeSelected(treeNode);
+    const anyChildNodeSelected = this.treeControl?.getDescendants(treeNode)?.filter((child) => this.isTreeNodeSelected(child))?.length > 0;
+    return isTreeNodeSelected || anyChildNodeSelected;
   }
 
-  public isNodeSelected(node: ITreeInputNodeFlat): boolean {
+  public isTreeNodeSelected(treeNode: ITreeInputNodeFlat): boolean {
     if (this.checklistSelection) {
-      return this.checklistSelection && this.checklistSelection.isSelected(node);
+      return this.checklistSelection && this.checklistSelection.isSelected(treeNode);
     } else {
       return false;
     }
   }
 
   public isTreeLayered(): boolean {
-    return this.treeControl && this.treeControl.dataNodes && this.uniqDataNodes(this.treeControl.dataNodes, 'level').length > 1;
+    return this.treeControl && this.treeControl.dataNodes && this.uniqTreeNodes(this.treeControl.dataNodes, 'level').length > 1;
   }
 
   public openOverlay(event: Event) {
-    this.setOverlayWidth()
+    this.setOverlayWidth();
     this.isOverlayOpen = true;
     event.stopPropagation();
   }
@@ -315,16 +315,16 @@ export class TreeDropdownComponent implements OnInit {
     this.overlayWidth = formFieldWidth;
   }
 
-  private uniqDataNodes = (dataNodes: ITreeInputNodeFlat[], param: string) => {
+  private uniqTreeNodes = (treeNodes: ITreeInputNodeFlat[], param: string) => {
     const cb = typeof param === 'function' ? param : (o: any) => o[param];
     return [
-      ...dataNodes
-        .reduce((map, node) => {
-          const key = node === null || node === undefined ? node : cb(node);
-          map.has(key) || map.set(key, node);
+      ...treeNodes
+        .reduce((map, treeNode) => {
+          const key = treeNode === null || treeNode === undefined ? treeNode : cb(treeNode);
+          map.has(key) || map.set(key, treeNode);
           return map;
         }, new Map())
         .values()
     ];
-  }
+  };
 }
