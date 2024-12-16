@@ -121,19 +121,14 @@
       "description": "Select the study you want to run a task for. If you want to run the task for the entire collaboration, select that option.",
       "select-full-collaboration": "Entire collaboration"
     },
-    "step-package": {
-      "title": "Select algorithm",
-      "description": {
-        "algorithm": "Select which algorithm you want to run",
-        "name": "Provide a suitable name for your task",
-        "description": "Optionally, describe your task so you can find it back later"
-      }
-    },
     "step-function": {
-      "title": "Select function",
+      "title": "Select algorithm function",
       "organization": "Organization(s) to run this function",
       "description": {
-        "function": "Select which function you want to run",
+        "function": "Select which algorithm function you want to run",
+        "function-placeholder": "Provide your search term here",
+        "name": "Provide a suitable name for your task",
+        "description": "Optionally, describe your task so you can find it back later",
         "organization-central": "Select the organization that will run this function. Note that you have selected a central function, which will probably create subtasks for other organizations in the collaboration",
         "organization-partial": "Select the organizations that will carry out a partial function"
       }
