@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ElementRef, ViewChild, Output, EventEmitter, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, ElementRef, ViewChild, Output, EventEmitter, SimpleChanges } from '@angular/core';
 import { SelectionModel } from '@angular/cdk/collections';
 import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree';
 import { ParentTreeControl } from './parent-tree-control';
@@ -43,7 +43,7 @@ export interface ITreeSelectedValue {
   templateUrl: './tree-dropdown.component.html',
   styleUrls: ['./tree-dropdown.component.scss']
 })
-export class TreeDropdownComponent implements OnInit {
+export class TreeDropdownComponent implements OnInit, OnChanges {
   @Input() isMultiSelect = false;
   @Input() nodes: ITreeInputNode[] = [];
   @Input() selectedTreeNodes: ITreeSelectedValue[] = [];
@@ -189,7 +189,17 @@ export class TreeDropdownComponent implements OnInit {
     });
 
     this.treeControl.dataNodes.map((treeNode: ITreeInputNodeFlat) => {
-      treeNode.visible = foundLabels.indexOf(treeNode.label) !== -1;
+      const treeNodeLevel = this.getLevel(treeNode);
+      let isParentMatch = false;
+      let curTreeNode = treeNode;
+      for (let i = treeNodeLevel; i > 0 && !isParentMatch; i--) {
+        const parent = this.treeControl.getParent(curTreeNode);
+        if (parent !== null) {
+          isParentMatch = foundLabels.indexOf(parent.label) !== -1;
+          curTreeNode = parent;
+        }
+      }
+      treeNode.visible = foundLabels.indexOf(treeNode.label) !== -1 || isParentMatch;
       if (treeNode.visible) {
         this.treeControl.expand(treeNode);
       }
@@ -283,7 +293,7 @@ export class TreeDropdownComponent implements OnInit {
   }
 
   public isSomeCollapsed(): boolean {
-    return this.treeControl.dataNodes.some((e: any) => !this.treeControl.isExpanded(e));
+    return this.treeControl.dataNodes.some((treeNodeFlat: ITreeInputNodeFlat) => !this.treeControl.isExpanded(treeNodeFlat));
   }
 
   public isSomeDescendentSelected(treeNode: ITreeInputNodeFlat): boolean {
@@ -316,7 +326,7 @@ export class TreeDropdownComponent implements OnInit {
   }
 
   private uniqTreeNodes = (treeNodes: ITreeInputNodeFlat[], param: string) => {
-    const cb = typeof param === 'function' ? param : (o: any) => o[param];
+    const cb = typeof param === 'function' ? param : (treeNode: ITreeInputNodeFlat) => treeNode[param as keyof ITreeInputNodeFlat];
     return [
       ...treeNodes
         .reduce((map, treeNode) => {

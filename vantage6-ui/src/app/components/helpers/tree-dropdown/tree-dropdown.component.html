@@ -2,7 +2,7 @@
   <mat-form-field class="tree-dropdown__search-form">
     <mat-label for="searchInput">{{ "general.filter" | translate }}</mat-label>
     <mat-chip-grid class="tree-dropdown__chip-grid" #chipGrid>
-      @for (selectedTreeNode of selectedTreeNodes; track selectedTreeNode) {
+      @for (selectedTreeNode of selectedTreeNodes; track selectedTreeNode.code) {
         <mat-chip-row class="tree-dropdown__chip-row" (removed)="deselectNodeByCode(selectedTreeNode.code.toString())" [editable]="false">
           {{ selectedTreeNode?.pathLabel ?? selectedTreeNode?.label }}
           <button matChipRemove [attr.aria-label]="'remove ' + selectedTreeNode?.label">

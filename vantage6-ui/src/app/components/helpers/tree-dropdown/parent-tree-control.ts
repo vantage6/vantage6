@@ -3,16 +3,18 @@ export class ParentTreeControl<T> extends FlatTreeControl<T> {
   // Expand all parent folders. This is used to expand parent folders of selected items when the tree is loaded.
   public expandParents(treeNode: T): void {
     const parent = this.getParent(treeNode);
-    this.expand(parent);
-    if (parent && this.getLevel(parent) > 0) {
-      this.expandParents(parent);
+    if (parent) {
+      this.expand(parent);
+      if (this.getLevel(parent) > 0) {
+        this.expandParents(parent);
+      }
     }
   }
 
-  public getParent(treeNode: T): T {
+  public getParent(treeNode: T): T | null {
     const currentLevel = this.getLevel(treeNode);
     if (currentLevel < 1) {
-      return null as any;
+      return null;
     }
 
     const startIndex = this.dataNodes.indexOf(treeNode) - 1;
@@ -22,6 +24,6 @@ export class ParentTreeControl<T> extends FlatTreeControl<T> {
         return currentNode;
       }
     }
-    return null as any;
+    return null;
   }
 }

@@ -68,6 +68,7 @@ export class NodeReadComponent implements OnInit, OnDestroy {
   }
 
   async handleSelectedTreeNodesChange(newSelected: ITreeSelectedValue[]): Promise<void> {
+    // Tree-dropdown component supports multiselect, but the API call for retrieving paginated nodes does not (yet) support multiple filter parameters. For now, the first value is selected.
     this.selectedTreeNodes = newSelected.length ? [newSelected[0]] : [];
     await this.getNodes(newSelected[0]);
   }

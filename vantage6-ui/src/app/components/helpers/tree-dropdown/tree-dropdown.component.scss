@@ -1,9 +1,10 @@
-mat-tree-node>.mdc-icon-button.mat-mdc-icon-button.mat-unthemed.mat-mdc-button-base {
+/* stylelint-disable */
+mat-tree-node > .mdc-icon-button.mat-mdc-icon-button.mat-unthemed.mat-mdc-button-base {
   height: 24px;
   width: 24px;
 }
 
-mat-tree-node>.mat-mdc-icon-button.mat-mdc-button-base .mat-icon {
+mat-tree-node > .mat-mdc-icon-button.mat-mdc-button-base .mat-icon {
   top: 0;
   left: 0;
   right: 0;
@@ -11,14 +12,14 @@ mat-tree-node>.mat-mdc-icon-button.mat-mdc-button-base .mat-icon {
   position: absolute;
 }
 
-mat-tree-node>mat-ripple.mat-mdc-checkbox-ripple.mat-mdc-focus-indicator {
+mat-tree-node > mat-ripple.mat-mdc-checkbox-ripple.mat-mdc-focus-indicator {
   height: 30px;
   width: 30px;
   top: 5px;
   left: 5px;
 }
 
-mat-form-field>.mat-mdc-form-field-subscript-wrapper {
+mat-form-field > .mat-mdc-form-field-subscript-wrapper {
   display: none !important;
 }
 
@@ -47,6 +48,7 @@ mat-form-field>.mat-mdc-form-field-subscript-wrapper {
   margin-bottom: -1.25em !important;
   display: none !important;
 }
+/* stylelint-enable */
 
 .tree-dropdown {
   width: 100%;
@@ -67,6 +69,7 @@ mat-form-field>.mat-mdc-form-field-subscript-wrapper {
     color: var(--mat-select-enabled-arrow-color);
     height: 32px;
   }
+
   &__chip-grid {
     height: fit-content;
   }
@@ -82,7 +85,10 @@ mat-form-field>.mat-mdc-form-field-subscript-wrapper {
     width: calc(100% - 32px);
     background-color: white;
     padding: 16px;
-    box-shadow: 0px 2px 1px -1px rgba(0, 0, 0, 0.2), 0px 1px 1px 0px rgba(0, 0, 0, 0.14), 0px 1px 3px 0px rgba(0, 0, 0, 0.12);
+    box-shadow:
+      0 2px 1px -1px rgba(0, 0, 0, 0.2),
+      0 1px 1px 0 rgba(0, 0, 0, 0.14),
+      0 1px 3px 0 rgba(0, 0, 0, 0.12);
   }
 
   &__tree {
@@ -90,7 +96,7 @@ mat-form-field>.mat-mdc-form-field-subscript-wrapper {
     padding-left: 0;
 
     &--nomultiplelevels {
-      padding-left: 0px;
+      padding-left: 0;
 
       button {
         display: none;
@@ -115,7 +121,7 @@ mat-form-field>.mat-mdc-form-field-subscript-wrapper {
   &__nodenested {
     min-height: 32px;
 
-    +.mat-tree-node {
+    + .mat-tree-node {
       align-items: center;
       flex-direction: row;
     }
