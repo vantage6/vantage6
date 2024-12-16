@@ -40,7 +40,7 @@ export class TemplateTaskCreateComponent implements OnInit {
   node: BaseNode | null = null;
 
   templateID = this.fb.nonNullable.control('', [Validators.required]);
-  packageForm = this.fb.nonNullable.group({});
+  functionForm = this.fb.nonNullable.group({});
   databaseForm = this.fb.nonNullable.group({});
   parameterForm = this.fb.nonNullable.group({});
 
@@ -56,7 +56,7 @@ export class TemplateTaskCreateComponent implements OnInit {
 
   get isFormValid(): boolean {
     return (
-      this.packageForm.invalid ||
+      this.functionForm.invalid ||
       (this.shouldShowDatabaseStep && this.databaseForm.invalid) ||
       (this.shouldShowParameterStep && this.parameterForm.invalid)
     );
@@ -139,12 +139,12 @@ export class TemplateTaskCreateComponent implements OnInit {
     this.templateTask.variable?.forEach((variable) => {
       if (typeof variable === 'string') {
         if (variable === 'name') {
-          this.packageForm.addControl('name', new FormControl('', [Validators.required]));
+          this.functionForm.addControl('name', new FormControl('', [Validators.required]));
         } else if (variable === 'description') {
-          this.packageForm.addControl('description', new FormControl(''));
+          this.functionForm.addControl('description', new FormControl(''));
         } else if (variable === 'organizations') {
-          this.packageForm.addControl('organizationIDs', new FormControl('', [Validators.required]));
-          this.packageForm
+          this.functionForm.addControl('organizationIDs', new FormControl('', [Validators.required]));
+          this.functionForm
             .get('organizationIDs')
             ?.valueChanges.pipe(takeUntil(this.destroy$))
             .subscribe(async (organizationID) => {
@@ -166,7 +166,7 @@ export class TemplateTaskCreateComponent implements OnInit {
     }
 
     let selectedOrganizations: string[] = [];
-    const organizationIDsControl = this.packageForm.get('organizationIDs');
+    const organizationIDsControl = this.functionForm.get('organizationIDs');
     if (this.templateTask?.fixed?.organizations) {
       selectedOrganizations = this.templateTask?.fixed.organizations;
     } else if (organizationIDsControl) {
@@ -189,10 +189,10 @@ export class TemplateTaskCreateComponent implements OnInit {
     };
 
     const createTask: CreateTask = {
-      name: this.templateTask?.fixed?.name ? this.templateTask.fixed.name : this.packageForm.get('name')?.value || '',
+      name: this.templateTask?.fixed?.name ? this.templateTask.fixed.name : this.functionForm.get('name')?.value || '',
       description: this.templateTask?.fixed?.description
         ? this.templateTask.fixed.description
-        : this.packageForm.get('description')?.value || '',
+        : this.functionForm.get('description')?.value || '',
       image: this.algorithm?.image || '',
       collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
       store_id: this.algorithm?.algorithm_store_id || -1,
@@ -242,7 +242,7 @@ export class TemplateTaskCreateComponent implements OnInit {
     this.algorithm = null;
     this.function = null;
     this.node = null;
-    this.packageForm = this.fb.nonNullable.group({});
+    this.functionForm = this.fb.nonNullable.group({});
     this.clearDatabaseStep();
     this.parameterForm = this.fb.nonNullable.group({});
   }

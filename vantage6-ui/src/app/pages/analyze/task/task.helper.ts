@@ -1,6 +1,6 @@
 import { AbstractControl, FormControl, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { floatListRegex, floatRegex, intListRegex, integerRegex, stringListRegex } from 'src/app/helpers/regex.helper';
-import { AlgorithmFunction, ArgumentType } from 'src/app/models/api/algorithm.model';
+import { AlgorithmFunction, AlgorithmFunctionExtended, ArgumentType } from 'src/app/models/api/algorithm.model';
 import { TaskDatabase } from 'src/app/models/api/task.models';
 import { Database } from 'src/app/models/api/node.model';
 import { isListTypeArgument } from 'src/app/helpers/algorithm.helper';
@@ -21,7 +21,7 @@ function jsonValidator(): ValidatorFn {
   };
 }
 
-export const addParameterFormControlsForFunction = (func: AlgorithmFunction, form: FormGroup) => {
+export const addParameterFormControlsForFunction = (func: AlgorithmFunctionExtended, form: FormGroup) => {
   func?.arguments.forEach((argument) => {
     const requiredValidators = argument.has_default_value ? [] : [Validators.required];
     if (argument.type === ArgumentType.String || argument.type === ArgumentType.Column) {

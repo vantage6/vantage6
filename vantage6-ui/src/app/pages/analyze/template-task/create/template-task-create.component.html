@@ -17,8 +17,8 @@
         <ng-template matStepperIcon="edit">
           <mat-icon>check</mat-icon>
         </ng-template>
-        <mat-step [stepControl]="packageForm">
-          <ng-template matStepLabel>{{ "task-create.step-package.title" | translate }}</ng-template>
+        <mat-step [stepControl]="functionForm">
+          <ng-template matStepLabel>{{ "task-create.step-function.title" | translate }}</ng-template>
           <div class="data-list">
             <div class="data-list__item">
               <b>{{ "task.algorithm" | translate }}</b>
@@ -41,7 +41,7 @@
               <span>{{ organizationsToDisplay() || "-" }}</span>
             </div>
           </div>
-          <form class="form variable-form" [formGroup]="packageForm">
+          <form class="form variable-form" [formGroup]="functionForm">
             <!-- Name -->
             <mat-form-field *ngIf="this.templateTask?.variable?.includes('name')" subscriptSizing="dynamic">
               <mat-label>{{ "task.name" | translate }}</mat-label>
