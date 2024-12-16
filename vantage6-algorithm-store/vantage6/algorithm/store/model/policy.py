@@ -101,7 +101,7 @@ class Policy(Base):
         )
         session.commit()
         if result is None:
-            return 1
+            return 2
         return int(result.value)
 
     @classmethod

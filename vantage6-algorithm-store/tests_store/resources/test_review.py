@@ -3,6 +3,8 @@ import unittest
 from unittest.mock import patch
 
 from tests_store.base.unittest_base import MockResponse, TestResources
+from vantage6.algorithm.store.model import Policy
+from vantage6.common.enum import StorePolicies
 from vantage6.common.globals import Ports
 from vantage6.algorithm.store.model.algorithm import Algorithm
 from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
@@ -12,7 +14,8 @@ from vantage6.algorithm.store.model.rule import Rule, Operation
 SERVER_URL = f"http://localhost:{Ports.DEV_SERVER.value}"
 HEADERS = {"server_url": SERVER_URL, "Authorization": "Mock"}
 USERNAME = "test_user"
-REVIEWER_USERNAME = "reviewer_user"
+REVIEWER_USERNAME_1 = "reviewer_user_1"
+REVIEWER_USERNAME_2 = "reviewer_user_2"
 
 
 class TestReviewResources(TestResources):
@@ -148,12 +151,12 @@ class TestReviewResources(TestResources):
         # register users allowed to do reviews
         reviewer = self.register_user(
             server.id,
-            username=REVIEWER_USERNAME,
+            username=REVIEWER_USERNAME_1,
             user_rules=[Rule.get_by_("review", Operation.EDIT)],
         )
         another_reviewer = self.register_user(
             server.id,
-            username="another_reviewer",
+            username=REVIEWER_USERNAME_2,
             user_rules=[Rule.get_by_("review", Operation.EDIT)],
         )
         # register another user not allowed to do reviews
@@ -192,6 +195,8 @@ class TestReviewResources(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
         # create a review to a proper user
+        # allow self review
+        Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM, value=True).save()
         json_body["reviewer_id"] = reviewer.id
         response = self.app.post("/api/review", headers=HEADERS, json=json_body)
         self.assertEqual(response.status_code, HTTPStatus.CREATED)
@@ -275,6 +280,9 @@ class TestReviewResources(TestResources):
         algorithm = Algorithm.get(algorithm.id)
         self.assertEqual(algorithm.status, AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT)
 
+        # set policy to require one review
+        Policy(key=StorePolicies.MIN_REVIEWERS, value=1).save()
+
         # check that if there are two reviews, one of which is approved and the other is
         # deleted, the algorithm status is updated to approved
         approved_review = Review(status=ReviewStatus.APPROVED, algorithm=algorithm)
@@ -316,7 +324,7 @@ class TestReviewResources(TestResources):
         )
         another_reviewer = self.register_user(
             server.id,
-            username=REVIEWER_USERNAME,
+            username=REVIEWER_USERNAME_1,
             user_rules=[Rule.get_by_("review", Operation.EDIT)],
         )
 
@@ -408,7 +416,7 @@ class TestReviewResources(TestResources):
         )
         another_reviewer = self.register_user(
             server.id,
-            username=REVIEWER_USERNAME,
+            username=REVIEWER_USERNAME_1,
             user_rules=[Rule.get_by_("review", Operation.EDIT)],
         )
 
@@ -470,6 +478,77 @@ class TestReviewResources(TestResources):
         # check also that old algorithm is still present
         current_algorithm = Algorithm.get(current_algorithm.id)
         self.assertEqual(current_algorithm.status, AlgorithmStatus.APPROVED)
+
+    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
+    def test_algorithm_status_update_to_under_review(self, validate_token_mock):
+        """Test that algorithm status is updated to under review if the minimum number of
+        reviews are assigned"""
+
+        validate_token_mock.return_value = (
+            MockResponse({"username": USERNAME}),
+            HTTPStatus.OK,
+        )
+
+        # register policy for minimum reviewers
+        Policy(key=StorePolicies.MIN_REVIEWERS, value="2").save()
+
+        # create algorithm
+        algorithm = Algorithm(
+            status=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT, image="image"
+        )
+        algorithm.save()
+
+        # register server
+        server = self.register_server()
+
+        # register user allowed to assign reviews
+        reviewer_1 = self.register_user(
+            server.id,
+            username=REVIEWER_USERNAME_1,
+            user_rules=[Rule.get_by_("review", Operation.EDIT)],
+        )
+
+        reviewer_2 = self.register_user(
+            server.id,
+            username=REVIEWER_USERNAME_2,
+            user_rules=[Rule.get_by_("review", Operation.EDIT)],
+        )
+
+        json_body = {
+            "algorithm_id": algorithm.id,
+            "reviewer_id": reviewer_1.id,
+        }
+
+        # register user allowed to create reviews
+        self.register_user(
+            server.id,
+            username=USERNAME,
+            user_rules=[Rule.get_by_("review", Operation.CREATE)],
+        )
+
+        response = self.app.get(f"/api/algorithm/{algorithm.id}", headers=HEADERS)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+
+        # assign a review
+        response = self.app.post("/api/review", headers=HEADERS, json=json_body)
+        self.assertEqual(response.status_code, HTTPStatus.CREATED)
+        response = self.app.get(f"/api/algorithm/{algorithm.id}", headers=HEADERS)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+
+        # check that the status did not change after the first assignment
+        self.assertEqual(
+            response.json["status"], AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
+        )
+
+        # assign second reviewer
+        json_body["reviewer_id"] = reviewer_2.id
+        response = self.app.post("/api/review", headers=HEADERS, json=json_body)
+        self.assertEqual(response.status_code, HTTPStatus.CREATED)
+        response = self.app.get(f"/api/algorithm/{algorithm.id}", headers=HEADERS)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+
+        # check that the status changed after the second assignment
+        self.assertEqual(response.json["status"], AlgorithmStatus.UNDER_REVIEW.value)
 
 
 if __name__ == "__main__":
