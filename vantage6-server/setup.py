@@ -22,7 +22,7 @@ with codecs.open(version_path) as f:
 
 # setup the package
 setup(
-    name="vantage6-server",
+    name="vantage6_server",
     version=version_ns["__version__"],
     description="Vantage6 server",
     long_description=long_description,
@@ -44,14 +44,14 @@ setup(
         "ipython==8.10.0",
         "kombu==5.2.4",
         "marshmallow==3.19.0",
+        "names_generator==0.2.0",
         "PyJWT==2.6.0",
         "pyotp==2.8.0",
         "requests==2.32.3",
         "requests-oauthlib==1.3.1",
         "schema==0.7.5",
         "SQLAlchemy==1.4.46",
-        "werkzeug==3.0.3",
-        "names_generator==0.2.0",
+        "werkzeug==3.0.6",
         f'vantage6 == {version_ns["__version__"]}',
         f'vantage6-common == {version_ns["__version__"]}',
     ],

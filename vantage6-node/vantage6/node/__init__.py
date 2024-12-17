@@ -358,7 +358,22 @@ class Node:
         token = None
         if container_action == AlgorithmStepType.COMPUTE:
             token = self.client.request_token_for_container(task["id"], task["image"])
-            token = token["container_token"]
+            try:
+                token = token["container_token"]
+            except KeyError:
+                # if a token could not be generated, this is a sign that task is already
+                # finished. To prevent this from happening every time node is restarted,
+                # patch the node to failed
+                self.log.error(
+                    "Container token could not be obtained: %s", token.get("msg")
+                )
+                self.client.run.patch(
+                    id_=task_incl_run["id"],
+                    data={
+                        "status": RunStatus.FAILED,
+                        "log": "Could not obtain algorithm container token",
+                    },
+                )
 
         # For some reason, if the key 'input' consists of JSON, it is
         # automatically marshalled? This causes trouble, so we'll serialize it

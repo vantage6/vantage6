@@ -23,7 +23,7 @@ with codecs.open(version_path) as f:
 
 # setup the package
 setup(
-    name="vantage6-algorithm-tools",
+    name="vantage6_algorithm_tools",
     version=version_ns["__version__"],
     description="Vantage6 algorithm tools",
     long_description=long_description,

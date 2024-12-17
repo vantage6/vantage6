@@ -70,6 +70,6 @@ traitlets==5.8.1
 urllib3==1.26.19
 wcwidth==0.2.6
 websocket-client==1.5.0
-Werkzeug==3.0.3
+werkzeug==3.0.6
 zope.event==4.6
 zope.interface==5.5.2
