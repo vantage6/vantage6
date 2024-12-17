@@ -31,6 +31,7 @@ class User(Base):
     # link with the v6 server. This is a temporary solution
     username = Column(String)
     email = Column(String)
+    organization_id = Column(Integer)
     v6_server_id = Column(Integer, ForeignKey("vantage6server.id"))
 
     # relationships

@@ -409,6 +409,7 @@ class AlgorithmStoreApp:
             whitelisted_uri = root_user.get("v6_server_uri")
             root_username = root_user.get("username")
             root_email = root_user.get("email")
+            root_organization = root_user.get("organization_id")
             if whitelisted_uri and root_username:
                 if not (v6_server := db.Vantage6Server.get_by_url(whitelisted_uri)):
                     log.info("This server will be whitelisted: %s", whitelisted_uri)
@@ -430,6 +431,7 @@ class AlgorithmStoreApp:
                         v6_server_id=v6_server.id,
                         username=root_username,
                         email=root_email,
+                        organization_id=root_organization,
                         roles=[root],
                     )
                     user.save()

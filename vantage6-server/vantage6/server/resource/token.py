@@ -411,6 +411,7 @@ class ValidateToken(ServicesResources):
             "user_id": g.user.id,
             "username": g.user.username,
             "email": g.user.email,
+            "organization_id": g.user.organization_id,
         }, HTTPStatus.OK
 
 

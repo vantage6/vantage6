@@ -124,6 +124,8 @@ root_user:
   username: root
   # email of the vantage6 server's user you want to make root in the algorithm store
   email: root@organization.com
+  # organization id of the vantage6 server's user you want to make root in the algorithm store
+  organization_id: 1
 
 # Configure a smtp mail server for the store to use for administrative
 # purposes, e.g. to alert users that they have been assigned to review an algorithm,
