@@ -195,9 +195,13 @@ class TestReviewResources(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
         # create a review to a proper user
-        # allow self review
-        Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM, value=True).save()
+        # check that the developer cannot assign a review
         json_body["reviewer_id"] = reviewer.id
+        response = self.app.post("/api/review", headers=HEADERS, json=json_body)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
+
+        # allow self review and check that the developer can assign now a review
+        Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM, value=True).save()
         response = self.app.post("/api/review", headers=HEADERS, json=json_body)
         self.assertEqual(response.status_code, HTTPStatus.CREATED)
 
