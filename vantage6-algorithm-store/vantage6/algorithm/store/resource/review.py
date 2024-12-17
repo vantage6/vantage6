@@ -113,6 +113,35 @@ review_update_schema = ReviewUpdateInputSchema()
 review_output_schema = ReviewOutputSchema()
 
 
+def _is_reviewers_assignment_finished(reviews: list[db.Review]) -> bool:
+    """
+    Check if the reviewers assignment is finished for the given algorithm, according to the
+    policies set. This is the case if:
+    1. the minimum number of reviewers has been reached
+    2. the minimum number of different organizations has been involved
+
+    Parameters
+    ----------
+    reviews : list[db.Review]
+        reviews of the algorithm
+
+    Returns
+    -------
+    bool
+        True if the reviewers assignment is finished, False otherwise
+    """
+    # get the number of unique organizations assigned to review the algorithm.
+    # A unique organization is defined by the combination of organization id and server
+    current_orgs = len(
+        set([(rev.reviewer.organization_id, rev.reviewer.server) for rev in reviews])
+    )
+
+    return (
+        current_orgs >= Policy.get_minimum_reviewing_orgs()
+        and len(reviews) >= Policy.get_minimum_reviewers()
+    )
+
+
 class Reviews(AlgorithmStoreResources):
     """Resource for the /review endpoint"""
 
@@ -331,9 +360,8 @@ class Reviews(AlgorithmStoreResources):
         )
         review.save()
 
-        # also update the algorithm status to 'under review'
-        # if the minimum number of reviewers has been reached
-        if len(algorithm.reviews) >= Policy.get_minimum_reviewers():
+        # also update the algorithm status to 'under review' if policies are met:
+        if _is_reviewers_assignment_finished(algorithm.reviews):
             algorithm.status = AlgorithmStatus.UNDER_REVIEW
             algorithm.save()
 
@@ -503,7 +531,9 @@ class Review(AlgorithmStoreResources):
             # if number of reviews after deletion is less than the minium,
             # new reviewers should be assigned
             other_reviews = [r for r in algorithm.reviews if not r.id == review.id]
-            if not other_reviews or len(other_reviews) < Policy.get_minimum_reviewers():
+            if not other_reviews or not _is_reviewers_assignment_finished(
+                other_reviews
+            ):
                 algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
             elif all([r.status == ReviewStatus.APPROVED for r in other_reviews]):
                 # if this was the last remaining review that needed to be approved, but

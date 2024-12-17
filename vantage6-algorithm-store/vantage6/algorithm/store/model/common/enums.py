@@ -105,3 +105,4 @@ class DefaultStorePolicies(Enum):
     ALLOW_LOCALHOST = False
     MIN_REVIEWERS = 2
     ASSIGN_REVIEW_OWN_ALGORITHM = False
+    MIN_REVIEWING_ORGANIZATIONS = 2

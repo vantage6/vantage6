@@ -125,3 +125,24 @@ class Policy(Base):
         if result is None:
             return False
         return result.value == "True" or result.value == "1"
+
+    @classmethod
+    def get_minimum_reviewing_orgs(cls) -> int:
+        """
+        Get the minimum number of organizations that have to be involved in the review process.
+
+        Returns
+        -------
+        int
+            Minimum number of reviewers
+        """
+        session = DatabaseSessionManager.get_session()
+        result = (
+            session.query(cls)
+            .filter_by(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS)
+            .one_or_none()
+        )
+        session.commit()
+        if result is None:
+            return 1
+        return int(result.value)
