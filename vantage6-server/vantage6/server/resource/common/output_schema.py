@@ -474,7 +474,7 @@ class SessionSchema(HATEOASModelSchema):
             obj, link_to="session_dataframe", link_from="session_id"
         )
     )
-    ready = fields.Function(lambda obj: obj.is_ready)
+    ready = fields.Function(lambda obj: obj.is_ready())
 
 
 class SimpleDataframeSchema(HATEOASModelSchema):
