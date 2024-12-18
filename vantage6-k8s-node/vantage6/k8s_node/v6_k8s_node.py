@@ -158,6 +158,77 @@ class NodePod:
             
 
 
+    def sync_task_queue_with_server(self) -> None:
+        """Get all unprocessed tasks from the server for this node.
+            Method Linked to a Socket.io event : on_sync)    
+            This method:
+                - Check for encryption settings
+                - Get 'open' tasks   (@Question What does 'open' mean in this context?)
+                - Add these task to the queue        
+        """
+        assert self.client.cryptor, "Encrpytion has not been setup"
+
+        # request open tasks from the server
+        task_results = self.client.run.list(state="open", include_task=True)
+        self.log.debug("task_results: %s", task_results)
+
+        # add the tasks to the queue
+        self.__add_tasks_to_queue(task_results)
+        self.log.info("Received %s tasks", self.queue._qsize())
+
+
+
+    def get_task_and_add_to_queue(self, task_id: int) -> None:            
+            """
+            Fetches (open) task with task_id from the server. The `task_id` is
+            delivered by the websocket-connection.
+
+            Linked to Socket.io event - on_new_task
+
+            Parameters
+            ----------
+            task_id : int
+                Task identifier
+            """
+            # fetch open algorithm runs for this node
+            task_runs = self.client.run.list(
+                include_task=True, state="open", task_id=task_id
+            )
+
+            # add the tasks to the queue
+            self.__add_tasks_to_queue(task_runs)
+
+
+
+    def __add_tasks_to_queue(self, task_results: list[dict]) -> None:
+        """
+        Add a task to the queue.
+
+        #POC task_result: misleading variable name?
+
+        Parameters
+        ----------
+        taskresult : list[dict]
+            A list of dictionaries with information required to run the
+            algorithm
+        """
+        for task_result in task_results:
+
+            try:
+                print(f"K8S >>>>> Is task {task_result['id']} running?:{self.k8s_container_manager.is_running(task_result['id'])}")             
+                
+                if not self.k8s_container_manager.is_running(task_result['id']):
+                    self.queue.put(task_result)
+                else:
+                    self.log.info(
+                        f"Not starting task {task_result['task']['id']} - "
+                        f"{task_result['task']['name']} as it is already "
+                        "running"
+                    )
+            except Exception:
+                self.log.exception("Error while syncing task queue")
+
+
     def __print_connection_error_logs(self):
         """Print error message when node cannot find the server"""
         self.log.warning("Could not connect to the server. Retrying in 10 seconds")
@@ -322,76 +393,6 @@ class NodePod:
         self.log.info("Bye!")
 
 
-
-    def sync_task_queue_with_server(self) -> None:
-        """Get all unprocessed tasks from the server for this node.
-            Method Linked to a Socket.io event : on_sync)    
-            This method:
-                - Check for encryption settings
-                - Get 'open' tasks   (@Question What does 'open' mean in this context?)
-                - Add these task to the queue        
-        """
-        assert self.client.cryptor, "Encrpytion has not been setup"
-
-        # request open tasks from the server
-        task_results = self.client.run.list(state="open", include_task=True)
-        self.log.debug("task_results: %s", task_results)
-
-        # add the tasks to the queue
-        self.__add_tasks_to_queue(task_results)
-        self.log.info("Received %s tasks", self.queue._qsize())
-
-
-
-    def get_task_and_add_to_queue(self, task_id: int) -> None:            
-            """
-            Fetches (open) task with task_id from the server. The `task_id` is
-            delivered by the websocket-connection.
-
-            Linked to Socket.io event - on_new_task
-
-            Parameters
-            ----------
-            task_id : int
-                Task identifier
-            """
-            # fetch open algorithm runs for this node
-            task_runs = self.client.run.list(
-                include_task=True, state="open", task_id=task_id
-            )
-
-            # add the tasks to the queue
-            self.__add_tasks_to_queue(task_runs)
-
-
-
-    def __add_tasks_to_queue(self, task_results: list[dict]) -> None:
-        """
-        Add a task to the queue.
-
-        #POC task_result: misleading variable name?
-
-        Parameters
-        ----------
-        taskresult : list[dict]
-            A list of dictionaries with information required to run the
-            algorithm
-        """
-        for task_result in task_results:
-
-            try:
-                print(f"K8S >>>>> Is task {task_result['id']} running?:{self.k8s_container_manager.is_running(task_result['id'])}")             
-                
-                if not self.k8s_container_manager.is_running(task_result['id']):
-                    self.queue.put(task_result)
-                else:
-                    self.log.info(
-                        f"Not starting task {task_result['task']['id']} - "
-                        f"{task_result['task']['name']} as it is already "
-                        "running"
-                    )
-            except Exception:
-                self.log.exception("Error while syncing task queue")
 
 
 

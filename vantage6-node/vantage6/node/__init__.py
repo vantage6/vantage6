@@ -145,29 +145,23 @@ class Node:
 
         self.log.info("Init complete")
 
+
     def __proxy_server_worker(self) -> None:
         """
         Proxy algorithm container communcation.
 
         A proxy for communication between algorithms and central
         server.
-        """
-        if self.ctx.running_in_docker:
-            # NODE_PROXY_SERVER_HOSTNAME points to the name of the proxy
-            # when running in the isolated docker network.
-            default_proxy_host = NODE_PROXY_SERVER_HOSTNAME
-        else:
-            # If we're running non-dockerized, assume that the proxy is
-            # accessible from within the docker algorithm container on
-            # host.docker.internal.
-            default_proxy_host = "host.docker.internal"
-
+        """        
+        default_proxy_host = pod_node_constants.V6_NODE_FQDN
+            
         # If PROXY_SERVER_HOST was set in the environment, it overrides our
         # value.
         proxy_host = os.environ.get("PROXY_SERVER_HOST", default_proxy_host)
         os.environ["PROXY_SERVER_HOST"] = proxy_host
 
-        proxy_port = int(os.environ.get("PROXY_SERVER_PORT", 8080))
+        #proxy_port = int(os.environ.get("PROXY_SERVER_PORT", 8080))
+        proxy_port = pod_node_constants.V6_NODE_PROXY_PORT
 
         # 'app' is defined in vantage6.node.proxy_server
         debug_mode = self.debug.get("proxy_server", False)
@@ -175,7 +169,14 @@ class Node:
             self.log.debug("Debug mode enabled for proxy server")
             proxy_server.app.debug = True
         proxy_server.app.config["SERVER_IO"] = self.client
+        
+        #The value on the module variable 'server_url' defines the target of the 'make_request' method.
+        #TODO improve encapsulation here - why proxy_server.server_url, and proxy_host?
         proxy_server.server_url = self.client.base_path
+        self.log.info(">>>> Setting target endpoint for the algorithm's client as : %s",proxy_server.server_url)            
+
+        self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)            
+
 
         # set up proxy server logging
         log_level = getattr(logging, self.config["logging"]["level"].upper())
@@ -185,13 +186,14 @@ class Node:
 
         # this is where we try to find a port for the proxyserver
         for try_number in range(5):
-            self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)
+            self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)            
             http_server = WSGIServer(
                 ("0.0.0.0", proxy_port), proxy_server.app, log=self.proxy_log
             )
 
             try:
                 http_server.serve_forever()
+                
 
             except OSError as e:
                 self.log.info("Error during attempt %s", try_number)
@@ -208,6 +210,8 @@ class Node:
             except Exception as e:
                 self.log.error("Proxyserver could not be started or crashed!")
                 self.log.error(e)
+
+
 
     def sync_task_queue_with_server(self) -> None:
         """Get all unprocessed tasks from the server for this node."""
@@ -253,7 +257,7 @@ class Node:
         """
         for task_result in task_results:
             try:
-                if not self.__docker.is_running(task_result["id"]):
+                if not self.k8s_container_manager.is_running(task_result["id"]):
                     self.queue.put(task_result)
                 else:
                     self.log.info(
