@@ -334,7 +334,7 @@ class Node:
 
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
-        task_status, vpn_ports = self.__docker.run(
+        task_status, vpn_ports = self.k8s_container_manager.run(
             action=container_action,
             run_id=task_id,
             task_info=task,
@@ -359,14 +359,6 @@ class Node:
         # nodes, but the task will still be processed
         self.__emit_algorithm_status_change(task, task_incl_run, task_status)
 
-        if vpn_ports:
-            # Save port of VPN client container at which it redirects traffic
-            # to the algorithm container. First delete any existing port
-            # assignments in case algorithm has crashed
-            self.client.request("port", params={"run_id": task_id}, method="DELETE")
-            for port in vpn_ports:
-                port["run_id"] = task_id
-                self.client.request("port", method="POST", json=port)
 
     def __emit_algorithm_status_change(
         self, task: dict, run: dict, status: RunStatus
@@ -405,26 +397,26 @@ class Node:
             namespace="/tasks",
         )
 
-    def __listening_worker(self) -> None:
-        """
-        Listen for incoming (websocket) messages from the server.
+    # def __listening_worker(self) -> None:
+    #     """
+    #     Listen for incoming (websocket) messages from the server.
 
-        Runs in a separate thread. Received events are handled by the
-        appropriate action handler.
-        """
-        self.log.debug("Listening for incoming messages")
+    #     Runs in a separate thread. Received events are handled by the
+    #     appropriate action handler.
+    #     """
+    #     self.log.debug("Listening for incoming messages")
 
-        # FIXME: while True in combination with a wait() call that never exits
-        #   makes joining the tread (to terminate) difficult?
-        while True:
-            # incoming messages are handled by the action_handler instance
-            # which is attached when the socket connection was made. wait()
-            # is blocks forever (if no time is specified).
-            try:
-                self.socketIO.wait()
-            except Exception as e:
-                self.log.error("Listening thread had an exception")
-                self.log.exception(e)
+    #     # FIXME: while True in combination with a wait() call that never exits
+    #     #   makes joining the tread (to terminate) difficult?
+    #     while True:
+    #         # incoming messages are handled by the action_handler instance
+    #         # which is attached when the socket connection was made. wait()
+    #         # is blocks forever (if no time is specified).
+    #         try:
+    #             self.socketIO.wait()
+    #         except Exception as e:
+    #             self.log.error("Listening thread had an exception")
+    #             self.log.exception(e)
 
     def __speaking_worker(self) -> None:
         """
@@ -439,7 +431,7 @@ class Node:
 
         while True:
             try:
-                results = self.__docker.get_result()
+                results = self.k8s_container_manager.get_result()
                 self.log.info(f"Sending result (run={results.run_id}) to the server!")
 
                 # FIXME: why are we retrieving the result *again*? Shouldn't we
@@ -468,7 +460,7 @@ class Node:
                     id_=results.run_id,
                     data={
                         "result": results.data,
-                        "log": results.logs,
+                        "log": results.logs[0],
                         "status": results.status,
                         "finished_at": datetime.datetime.now().isoformat(),
                     },

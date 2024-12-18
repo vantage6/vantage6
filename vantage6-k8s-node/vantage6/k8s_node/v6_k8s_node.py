@@ -229,6 +229,185 @@ class NodePod:
                 self.log.exception("Error while syncing task queue")
 
 
+    def __start_task(self, task_incl_run: dict) -> None:
+        """
+        Start the docker image and notify the server that the task has been
+        started.
+
+        Parameters
+        ----------
+        task_incl_run : dict
+            A dictionary with information required to run the algorithm
+        """
+        task = task_incl_run["task"]
+        self.log.info("Starting task {id} - {name}".format(**task))
+
+        # notify that we are processing this task
+        self.client.set_task_start_time(task_incl_run["id"])
+
+        token = self.client.request_token_for_container(task["id"], task["image"])
+        token = token["container_token"]
+
+        # create a temporary volume for each job_id
+        #vol_name = self.ctx.docker_temporary_volume_name(task["job_id"])
+        #self.__docker.create_volume(vol_name)
+
+        # (message from the original source code) 
+        # For some reason, if the key 'input' consists of JSON, it is
+        # automatically marshalled? This causes trouble, so we'll serialize it
+        # again.
+        # FIXME: should probably find & fix the root cause?
+        if type(task_incl_run["input"]) == dict:
+            task_incl_run["input"] = json.dumps(task_incl_run["input"])
+
+        # Run the container. This adds the created container/task to the list
+        # __docker.active_tasks
+        # PoC running with K8S Container Manager
+        
+        task_status, vpn_ports = self.k8s_container_manager.run(
+            run_id=task_incl_run["id"],
+            task_info=task,
+            image=task["image"],
+            docker_input=task_incl_run["input"],
+            tmp_vol_name="****tmp_vol_name key is deprecated",
+            token=token,
+            databases_to_use=task.get("databases", []),
+        )
+
+        # save task status to the server
+        update = {"status": task_status}
+        if task_status == RunStatus.NOT_ALLOWED:
+            # set finished_at to now, so that the task is not picked up again
+            # (as the task is not started at all, unlike other crashes, it will
+            # never finish and hence not be set to finished)
+            update["finished_at"] = datetime.datetime.now().isoformat()
+        self.client.run.patch(id_=task_incl_run["id"], data=update)
+
+        # ensure that the /tasks namespace is connected. This may take a while
+        # (usually < 5s) when the socket just (re)connected
+        MAX_ATTEMPTS = 30
+        retries = 0
+        while "/tasks" not in self.socketIO.namespaces and retries < MAX_ATTEMPTS:
+            retries += 1
+            self.log.debug("Waiting for /tasks namespace to connect...")
+            time.sleep(1)
+        self.log.debug("Connected to /tasks namespace")
+        # in case the namespace is still not connected, the socket notification
+        # will not be sent to other nodes, but the task will still be processed
+
+        # send socket event to alert everyone of task status change
+        self.socketIO.emit(
+            "algorithm_status_change",
+            data={
+                "node_id": self.client.whoami.id_,
+                "status": task_status,
+                "run_id": task_incl_run["id"],
+                "task_id": task["id"],
+                "collaboration_id": self.client.collaboration_id,
+                "organization_id": self.client.whoami.organization_id,
+                "parent_id": get_parent_id(task),
+            },
+            namespace="/tasks",
+        )
+
+    def __poll_task_results(self):
+        """
+        Polls the K8S server for finished jobs
+        """
+        
+        #Prevent the K8S rest client from creating DEBUG logging messages (these may lead to unnecesarily
+        # massive log files)
+
+        self.log.info("Starting node's task results polling thread")
+        try:        
+            while True:    
+                time.sleep(1)
+                next_result = self.k8s_container_manager.get_result()
+                self.log.info(f"""
+                    *********************************************************************************  
+                    EVENT @ NODE - task result reported. The following will be notified to the server:
+                    {next_result}
+                    *********************************************************************************  
+                    """)
+                
+                                #Notify other nodes about algorithm status change
+                self.log.info(f"Sending result (run={next_result.run_id}) to the server!")
+
+                response = self.client.request(f"task/{next_result.task_id}")
+
+                init_org = response.get("init_org")            
+
+                self.client.run.patch(
+                    id_=next_result.run_id,
+                    data={
+                        "result": next_result.data,
+                        "log":next_result.logs[0],
+                        "status": next_result.status,
+                        "finished_at": datetime.datetime.now().isoformat(),
+                    },
+                    init_org_id=init_org.get("id"),
+                )
+                
+                # notify other nodes about algorithm status change
+                self.socketIO.emit(
+                    "algorithm_status_change",
+                    data={
+                        "node_id": self.client.whoami.id_,
+                        "status": next_result.status,
+                        "run_id": next_result.run_id,
+                        "task_id": next_result.task_id,
+                        "collaboration_id": self.client.collaboration_id,
+                        "organization_id": self.client.whoami.organization_id,
+                        "parent_id": next_result.parent_id,
+                    },
+                    namespace="/tasks",
+                )
+
+
+
+
+
+                
+        except (KeyboardInterrupt, InterruptedError):
+            self.log.info("Node is interrupted, shutting down...")
+            self.cleanup()
+            sys.exit()
+
+
+
+
+    def __process_tasks_queue(self) -> None:
+        # previously called def run_forever(self) -> None:
+
+        """
+        Keep checking queue for incoming tasks (and execute them).
+
+            Note: In the original version SIGINT/SIGTERM signals were also captured to guarantee a gracefuly shutdown of the containers.
+            E.g., aborting the node with CTRL-C would lead to a container execution inconsistent state, as these are handled by the node.
+            
+            In this new version the K8S server would keep running idependently of the node status. How to ensure consistency after an
+            abrupt failure should be further explored.
+
+
+            taskresult: misleading name? not the result of a task, but a task description
+
+        """
+         
+        try:
+            while True:
+                self.log.info("********************  Waiting for new tasks....")
+                taskresult = self.queue.get()
+                self.log.info(">>>>> New task received")
+                pprint.pp(taskresult)
+                self.__start_task(taskresult)
+
+        except (KeyboardInterrupt, InterruptedError):
+            self.log.info("Node is interrupted, shutting down...")
+            self.cleanup()
+            sys.exit()
+
+
+
     def __print_connection_error_logs(self):
         """Print error message when node cannot find the server"""
         self.log.warning("Could not connect to the server. Retrying in 10 seconds")
@@ -520,98 +699,6 @@ class NodePod:
         queue_processing_thread.start()
         
     
-    def __poll_task_results(self):
-        """
-        Polls the K8S server for finished jobs
-        """
-        
-        #Prevent the K8S rest client from creating DEBUG logging messages (these may lead to unnecesarily
-        # massive log files)
-
-        self.log.info("Starting node's task results polling thread")
-        try:        
-            while True:    
-                time.sleep(1)
-                next_result = self.k8s_container_manager.get_result()
-                self.log.info(f"""
-                    *********************************************************************************  
-                    EVENT @ NODE - task result reported. The following will be notified to the server:
-                    {next_result}
-                    *********************************************************************************  
-                    """)
-                
-                # notify other nodes about algorithm status change
-                self.socketIO.emit(
-                    "algorithm_status_change",
-                    data={
-                        "node_id": self.client.whoami.id_,
-                        "status": next_result.status,
-                        "run_id": next_result.run_id,
-                        "task_id": next_result.task_id,
-                        "collaboration_id": self.client.collaboration_id,
-                        "organization_id": self.client.whoami.organization_id,
-                        "parent_id": next_result.parent_id,
-                    },
-                    namespace="/tasks",
-                )
-
-
-                #Notify other nodes about algorithm status change
-                self.log.info(f"Sending result (run={next_result.run_id}) to the server!")
-
-                response = self.client.request(f"task/{next_result.task_id}")
-
-                init_org = response.get("init_org")            
-
-                self.client.run.patch(
-                    id_=next_result.run_id,
-                    data={
-                        "result": next_result.data,
-                        "log":next_result.logs[0],
-                        "status": next_result.status,
-                        "finished_at": datetime.datetime.now().isoformat(),
-                    },
-                    init_org_id=init_org.get("id"),
-                )
-
-
-                
-        except (KeyboardInterrupt, InterruptedError):
-            self.log.info("Node is interrupted, shutting down...")
-            self.cleanup()
-            sys.exit()
-
-
-    def __process_tasks_queue(self) -> None:
-        # previously called def run_forever(self) -> None:
-
-        """
-        Keep checking queue for incoming tasks (and execute them).
-
-            Note: In the original version SIGINT/SIGTERM signals were also captured to guarantee a gracefuly shutdown of the containers.
-            E.g., aborting the node with CTRL-C would lead to a container execution inconsistent state, as these are handled by the node.
-            
-            In this new version the K8S server would keep running idependently of the node status. How to ensure consistency after an
-            abrupt failure should be further explored.
-
-
-            taskresult: misleading name? not the result of a task, but a task description
-
-        """
-         
-        try:
-            while True:
-                self.log.info("********************  Waiting for new tasks....")
-                taskresult = self.queue.get()
-                self.log.info(">>>>> New task received")
-                pprint.pp(taskresult)
-                self.__start_task(taskresult)
-
-        except (KeyboardInterrupt, InterruptedError):
-            self.log.info("Node is interrupted, shutting down...")
-            self.cleanup()
-            sys.exit()
-
 
 
     def kill_containers(self, kill_info: dict) -> list[dict]:
@@ -674,99 +761,6 @@ class NodePod:
             "collaboration_id": 1
     
         """
-
-
-    def __start_task(self, task_incl_run: dict) -> None:
-        """
-        Start the docker image and notify the server that the task has been
-        started.
-
-        Parameters
-        ----------
-        task_incl_run : dict
-            A dictionary with information required to run the algorithm
-        """
-        task = task_incl_run["task"]
-        self.log.info("Starting task {id} - {name}".format(**task))
-
-        # notify that we are processing this task
-        self.client.set_task_start_time(task_incl_run["id"])
-
-        token = self.client.request_token_for_container(task["id"], task["image"])
-        token = token["container_token"]
-
-        # create a temporary volume for each job_id
-        #vol_name = self.ctx.docker_temporary_volume_name(task["job_id"])
-        #self.__docker.create_volume(vol_name)
-
-        # (message from the original source code) 
-        # For some reason, if the key 'input' consists of JSON, it is
-        # automatically marshalled? This causes trouble, so we'll serialize it
-        # again.
-        # FIXME: should probably find & fix the root cause?
-        if type(task_incl_run["input"]) == dict:
-            task_incl_run["input"] = json.dumps(task_incl_run["input"])
-
-        # Run the container. This adds the created container/task to the list
-        # __docker.active_tasks
-        # PoC running with K8S Container Manager
-        
-        task_status, vpn_ports = self.k8s_container_manager.run(
-            run_id=task_incl_run["id"],
-            task_info=task,
-            image=task["image"],
-            docker_input=task_incl_run["input"],
-            tmp_vol_name="****tmp_vol_name key is deprecated",
-            token=token,
-            databases_to_use=task.get("databases", []),
-        )
-
-        # save task status to the server
-        update = {"status": task_status}
-        if task_status == RunStatus.NOT_ALLOWED:
-            # set finished_at to now, so that the task is not picked up again
-            # (as the task is not started at all, unlike other crashes, it will
-            # never finish and hence not be set to finished)
-            update["finished_at"] = datetime.datetime.now().isoformat()
-        self.client.run.patch(id_=task_incl_run["id"], data=update)
-
-        # ensure that the /tasks namespace is connected. This may take a while
-        # (usually < 5s) when the socket just (re)connected
-        MAX_ATTEMPTS = 30
-        retries = 0
-        while "/tasks" not in self.socketIO.namespaces and retries < MAX_ATTEMPTS:
-            retries += 1
-            self.log.debug("Waiting for /tasks namespace to connect...")
-            time.sleep(1)
-        self.log.debug("Connected to /tasks namespace")
-        # in case the namespace is still not connected, the socket notification
-        # will not be sent to other nodes, but the task will still be processed
-
-        # send socket event to alert everyone of task status change
-        self.socketIO.emit(
-            "algorithm_status_change",
-            data={
-                "node_id": self.client.whoami.id_,
-                "status": task_status,
-                "run_id": task_incl_run["id"],
-                "task_id": task["id"],
-                "collaboration_id": self.client.collaboration_id,
-                "organization_id": self.client.whoami.organization_id,
-                "parent_id": get_parent_id(task),
-            },
-            namespace="/tasks",
-        )
-
-        if vpn_ports:
-            # Save port of VPN client container at which it redirects traffic
-            # to the algorithm container. First delete any existing port
-            # assignments in case algorithm has crashed
-            self.client.request(
-                "port", params={"run_id": task_incl_run["id"]}, method="DELETE"
-            )
-            for port in vpn_ports:
-                port["run_id"] = task_incl_run["id"]
-                self.client.request("port", method="POST", json=port)
 
 
 if __name__ == '__main__':
