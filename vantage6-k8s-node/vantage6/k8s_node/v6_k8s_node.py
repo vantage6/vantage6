@@ -393,6 +393,7 @@ class NodePod:
 
 
 
+    
     def share_node_details(self) -> None:
         """
         Share part of the node's configuration with the server.

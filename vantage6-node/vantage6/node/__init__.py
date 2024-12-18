@@ -71,12 +71,6 @@ from vantage6.node.k8s.squid import Squid
 from vantage6.node._version import __version__  # noqa: F401
 
 
-class VPNConnectMode(Enum):
-    FIRST_TRY = 1
-    REFRESH_KEYPAIR = 2
-    REFRESH_COMPLETE = 3
-
-
 # ------------------------------------------------------------------------------
 class Node:
     """
@@ -92,7 +86,7 @@ class Node:
 
     """
 
-    def __init__(self, ctx: NodeContext | DockerNodeContext):
+    def __init__(self, ctx: NodeContext):
         self.log = logging.getLogger(logger_name(__name__))
         self.ctx = ctx
 
@@ -106,12 +100,13 @@ class Node:
 
     def initialize(self) -> None:
         """Initialization of the node"""
-        # check if docker is running, otherwise exit with error
-        check_docker_running()
+        
+        self.k8s_container_manager = ContainerManager(ctx)
+        
 
         self.config = self.ctx.config
         self.debug: dict = self.config.get("debug", {})
-        self.queue = queue.Queue()
+
         self._using_encryption = None
 
         # initialize Node connection to the server
@@ -125,6 +120,7 @@ class Node:
 
         # Authenticate with the server, obtaining a JSON Web Token.
         # Note that self.authenticate() blocks until it succeeds.
+        self.queue = queue.Queue()
         self.log.debug("Authenticating")
         self.authenticate()
 
@@ -138,26 +134,26 @@ class Node:
         t.start()
 
         # setup docker isolated network manager
-        internal_ = running_in_docker()
-        if not internal_:
-            self.log.warn(
-                "Algorithms have internet connection! "
-                "This happens because you use 'vnode-local'!"
-            )
-        isolated_network_mgr = NetworkManager(self.ctx.docker_network_name)
-        isolated_network_mgr.create_network(is_internal=internal_)
+        #internal_ = running_in_docker()
+        #if not internal_:
+        #    self.log.warn(
+        #        "Algorithms have internet connection! "
+        #        "This happens because you use 'vnode-local'!"
+        #    )
+        #isolated_network_mgr = NetworkManager(self.ctx.docker_network_name)
+        #isolated_network_mgr.create_network(is_internal=internal_)
 
         # Setup tasks dir
-        self._set_task_dir(self.ctx)
+        #self._set_task_dir(self.ctx)
 
         # Setup VPN connection
-        self.vpn_manager = self.setup_vpn_connection(isolated_network_mgr, self.ctx)
+        #self.vpn_manager = self.setup_vpn_connection(isolated_network_mgr, self.ctx)
 
         # Create SSH tunnel according to the node configuration
-        self.ssh_tunnels = self.setup_ssh_tunnels(isolated_network_mgr)
+        #self.ssh_tunnels = self.setup_ssh_tunnels(isolated_network_mgr)
 
         # Create Squid proxy server
-        self.squid = self.setup_squid_proxy(isolated_network_mgr)
+        #self.squid = self.setup_squid_proxy(isolated_network_mgr)
 
         # setup the docker manager
         self.log.debug("Setting up the docker manager")
