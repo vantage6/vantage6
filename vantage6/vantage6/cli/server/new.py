@@ -1,7 +1,7 @@
 import click
 from colorama import Fore, Style
 
-from vantage6.common import info, error, check_config_writeable
+from vantage6.common import info, error, ensure_config_dir_writable
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.configuration_wizard import configuration_wizard
@@ -36,7 +36,7 @@ def cli_server_new(name: str, system_folders: bool) -> None:
         exit(1)
 
     # Check that we can write in this folder
-    if not check_config_writeable(system_folders):
+    if not ensure_config_dir_writable(system_folders):
         error("Your user does not have write access to all folders. Exiting")
         info(
             f"Create a new server using '{Fore.GREEN}v6 server new "
