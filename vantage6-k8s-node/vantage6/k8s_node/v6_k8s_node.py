@@ -7,7 +7,7 @@ from vantage6.common.exceptions import AuthenticationException
 from vantage6.common import logger_name
 from vantage6.node.socket import NodeTaskNamespace
 from vantage6.cli.context.node import NodeContext
-from vantage6.common.task_status import TaskStatus
+from vantage6.common.enum import RunStatus
 from vantage6.node.util import get_parent_id
 from vantage6.k8s_node.log_manager import logs_setup
 from vantage6.k8s_node.csv_utils import get_csv_column_names
@@ -648,7 +648,7 @@ class NodePod:
         # update status of killed tasks
         for killed_algo in killed_algos:
             self.client.run.patch(
-                id_=killed_algo.run_id, data={"status": TaskStatus.KILLED}
+                id_=killed_algo.run_id, data={"status": RunStatus.KILLED}
             )
         return killed_algos
         """
@@ -717,7 +717,7 @@ class NodePod:
 
         # save task status to the server
         update = {"status": task_status}
-        if task_status == TaskStatus.NOT_ALLOWED:
+        if task_status == RunStatus.NOT_ALLOWED:
             # set finished_at to now, so that the task is not picked up again
             # (as the task is not started at all, unlike other crashes, it will
             # never finish and hence not be set to finished)

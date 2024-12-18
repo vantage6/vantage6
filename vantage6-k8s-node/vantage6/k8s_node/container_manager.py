@@ -1,16 +1,14 @@
 from kubernetes import client, config, watch
 from kubernetes.client.rest import ApiException
 from kubernetes.client import V1EnvVar
-from vantage6.common.task_status import TaskStatus
+
 from vantage6.cli.context.node import NodeContext
 from typing import Tuple, List
-from vantage6.common.task_status import TaskStatus, has_task_failed
+from vantage6.common.enum import RunStatus 
 from vantage6.common import logger_name
 from vantage6.node.util import get_parent_id
 from typing import NamedTuple
-from enum import Enum
 from pathlib import Path
-
 
 from vantage6.k8s_node import pod_node_constants
 from vantage6.k8s_node import pod_job_constants
@@ -19,8 +17,6 @@ import os
 import yaml
 import logging
 import time
-import json
-import pprint
 
 
 #logging.basicConfig(level=logging.INFO)
@@ -152,7 +148,7 @@ class ContainerManager:
     def run(self, run_id: int, task_info: dict, image: str,
             docker_input: bytes, tmp_vol_name: str, token: str,
             databases_to_use: list[str]
-        )->tuple[TaskStatus, list[dict] | None]:
+        )->tuple[RunStatus, list[dict] | None]:
         """
         Checks if docker task is running. If not, creates DockerTaskManager to
         run the task
@@ -176,7 +172,7 @@ class ContainerManager:
 
         Returns
         -------
-        TaskStatus, list[dict] | None
+        RunStatus, list[dict] | None
             Returns a tuple with the status of the task and a description of
             each port on the VPN client that forwards traffic to the algorithm
             container (``None`` if VPN is not set up).
@@ -225,13 +221,13 @@ class ContainerManager:
         if not self.is_docker_image_allowed(image, task_info):
             msg = f"Docker image {image} is not allowed on this Node!"
             self.log.critical(msg)
-            return TaskStatus.NOT_ALLOWED, None
+            return RunStatus.NOT_ALLOWED, None
 
         # Check that this task is not already running
         if self.is_running(run_id):
             self.log.warn("Task is already being executed, discarding task")
             self.log.debug(f"run_id={run_id} is discarded")
-            return TaskStatus.ACTIVE, None
+            return RunStatus.ACTIVE, None
 
         str_task_id = str(task_info["id"])
         str_run_id  = str(run_id)
@@ -326,13 +322,13 @@ class ContainerManager:
             elif time.time() - start_time > timeout:
                 self.log.error(f"Timeoit while waiting Job POD with label app={run_id} to report a running state.")
                 #The job could still start after the timeout
-                return TaskStatus.UNKNOWN_ERROR
+                return RunStatus.UNKNOWN_ERROR
                 
             else:            
                 time.sleep(interval)
 
 
-    def __wait_until_pod_running(self,run_id_label_selector:str)->TaskStatus:
+    def __wait_until_pod_running(self,run_id_label_selector:str)->RunStatus:
         """
         This method execution gets blocked until the POD with the given label selector (which corresponds
         to the task's 'run_id') reports a 'Running' state. This method is expected to be used right
@@ -340,8 +336,8 @@ class ContainerManager:
         'Pending' and then 'Running'. 
 
         Returns:
-        Either TaskStatus.ACTIVE when the POD status is 'Running' (the POD container was kicked off), 
-                          or TaskStatus.UNKNOWN_ERROR if there is a timeout while waiting for
+        Either RunStatus.ACTIVE when the POD status is 'Running' (the POD container was kicked off), 
+                          or RunStatus.UNKNOWN_ERROR if there is a timeout while waiting for
                            reaching such 'Running' status (due to other errors)
         
 
@@ -366,10 +362,10 @@ class ContainerManager:
 
             if pod_phase == "Running":
                 w.stop()
-                return TaskStatus.ACTIVE
+                return RunStatus.ACTIVE
                             
         #This point is reached after timeout 
-        return TaskStatus.UNKNOWN_ERROR    
+        return RunStatus.UNKNOWN_ERROR    
     
 
     def _create_io_files(self,alg_input_file_path: str, docker_input: bytes, token_file_path: str, token: str, output_file_path:str):
@@ -722,13 +718,13 @@ class ContainerManager:
                 When failed-job found (after N attempts handled by kubernetes (N = job backoffLimit) ) => 
                     Cleanup POD/containers
                     return Result with:
-                        TaskStatus.CRASHED
+                        RunStatus.CRASHED
                         Result: empty
                         Log error: Logs from the N pods (backoff limit)
 
                 When Successful POD found =>
                     return Result with:
-                        TaskStatus.COMPLETED
+                        RunStatus.COMPLETED
                         Result: file content
                         Log: Logs from the N pods (backoff limit)
 
@@ -776,7 +772,7 @@ class ContainerManager:
                                 task_id=job.metadata.annotations["task_id"],
                                 logs=pod_tty_output,  
                                 data=results,   
-                                status=TaskStatus.COMPLETED,
+                                status=RunStatus.COMPLETED,
                                 parent_id=job.metadata.annotations["task_parent_id"],
                             )
                         completed_job = True    
@@ -800,7 +796,7 @@ class ContainerManager:
                                 task_id=job.metadata.annotations["task_id"],
                                 logs=pod_tty_output,  
                                 data=b"",   
-                                status=TaskStatus.CRASHED,
+                                status=RunStatus.CRASHED,
                                 parent_id=job.metadata.annotations["task_parent_id"],
                             )    
                         completed_job = True
