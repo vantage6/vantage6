@@ -86,6 +86,78 @@ class NodePod:
         self.log.debug("Creating websocket connection with the server")
         self.connect_to_socket()
 
+    def __proxy_server_worker(self) -> None:
+        """
+        Proxy algorithm container communcation.
+
+        A proxy for communication between algorithms and central
+        server.
+        """
+        if self.k8s_container_manager.running_on_guest_env:
+            default_proxy_host = pod_node_constants.V6_NODE_FQDN
+        else:            
+            #TODO to be removed
+            default_proxy_host = "host.docker.internal"
+            
+        # If PROXY_SERVER_HOST was set in the environment, it overrides our
+        # value.
+        proxy_host = os.environ.get("PROXY_SERVER_HOST", default_proxy_host)
+        os.environ["PROXY_SERVER_HOST"] = proxy_host
+
+        #proxy_port = int(os.environ.get("PROXY_SERVER_PORT", 8080))
+        proxy_port = pod_node_constants.V6_NODE_PROXY_PORT
+
+        # 'app' is defined in vantage6.node.proxy_server
+        debug_mode = self.debug.get("proxy_server", False)
+        if debug_mode:
+            self.log.debug("Debug mode enabled for proxy server")
+            proxy_server.app.debug = True
+        proxy_server.app.config["SERVER_IO"] = self.client
+        
+        #The value on the module variable 'server_url' defines the target of the 'make_request' method.
+        #TODO improve encapsulation here - why proxy_server.server_url, and proxy_host?
+        proxy_server.server_url = self.client.base_path
+        self.log.info(">>>> Setting target endpoint for the algorithm's client as : %s",proxy_server.server_url)            
+
+        self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)            
+
+
+        # set up proxy server logging
+        log_level = getattr(logging, self.config["logging"]["level"].upper())
+        self.proxy_log = get_file_logger(
+            "proxy_server", self.ctx.proxy_log_file, log_level_file=log_level
+        )
+
+        # this is where we try to find a port for the proxyserver
+        for try_number in range(5):
+            self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)            
+            http_server = WSGIServer(
+                ("0.0.0.0", proxy_port), proxy_server.app, log=self.proxy_log
+            )
+
+            try:
+                http_server.serve_forever()
+                
+
+            except OSError as e:
+                self.log.info("Error during attempt %s", try_number)
+                self.log.info("%s: %s", type(e), e)
+
+                if e.errno == 48:
+                    proxy_port = random.randint(2048, 16384)
+                    self.log.warning("Retrying with a different port: %s", proxy_port)
+                    os.environ["PROXY_SERVER_PORT"] = str(proxy_port)
+
+                else:
+                    raise
+
+            except Exception as e:
+                self.log.error("Proxyserver could not be started or crashed!")
+                self.log.error(e)
+
+            
+
+
     def __print_connection_error_logs(self):
         """Print error message when node cannot find the server"""
         self.log.warning("Could not connect to the server. Retrying in 10 seconds")
@@ -162,76 +234,6 @@ class NodePod:
         self.client.auto_refresh_token()        
 
 
-    def __proxy_server_worker(self) -> None:
-        """
-        Proxy algorithm container communcation.
-
-        A proxy for communication between algorithms and central
-        server.
-        """
-        if self.k8s_container_manager.running_on_guest_env:
-            default_proxy_host = pod_node_constants.V6_NODE_FQDN
-        else:            
-            #TODO to be removed
-            default_proxy_host = "host.docker.internal"
-            
-        # If PROXY_SERVER_HOST was set in the environment, it overrides our
-        # value.
-        proxy_host = os.environ.get("PROXY_SERVER_HOST", default_proxy_host)
-        os.environ["PROXY_SERVER_HOST"] = proxy_host
-
-        #proxy_port = int(os.environ.get("PROXY_SERVER_PORT", 8080))
-        proxy_port = pod_node_constants.V6_NODE_PROXY_PORT
-
-        # 'app' is defined in vantage6.node.proxy_server
-        debug_mode = self.debug.get("proxy_server", False)
-        if debug_mode:
-            self.log.debug("Debug mode enabled for proxy server")
-            proxy_server.app.debug = True
-        proxy_server.app.config["SERVER_IO"] = self.client
-        
-        #The value on the module variable 'server_url' defines the target of the 'make_request' method.
-        #TODO improve encapsulation here - why proxy_server.server_url, and proxy_host?
-        proxy_server.server_url = self.client.base_path
-        self.log.info(">>>> Setting target endpoint for the algorithm's client as : %s",proxy_server.server_url)            
-
-        self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)            
-
-
-        # set up proxy server logging
-        log_level = getattr(logging, self.config["logging"]["level"].upper())
-        self.proxy_log = get_file_logger(
-            "proxy_server", self.ctx.proxy_log_file, log_level_file=log_level
-        )
-
-        # this is where we try to find a port for the proxyserver
-        for try_number in range(5):
-            self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)            
-            http_server = WSGIServer(
-                ("0.0.0.0", proxy_port), proxy_server.app, log=self.proxy_log
-            )
-
-            try:
-                http_server.serve_forever()
-                
-
-            except OSError as e:
-                self.log.info("Error during attempt %s", try_number)
-                self.log.info("%s: %s", type(e), e)
-
-                if e.errno == 48:
-                    proxy_port = random.randint(2048, 16384)
-                    self.log.warning("Retrying with a different port: %s", proxy_port)
-                    os.environ["PROXY_SERVER_PORT"] = str(proxy_port)
-
-                else:
-                    raise
-
-            except Exception as e:
-                self.log.error("Proxyserver could not be started or crashed!")
-                self.log.error(e)
-
-            
 
     def connect_to_socket(self) -> None:
         """
@@ -509,7 +511,9 @@ class NodePod:
         (2) polls the K8S server for finished jobs, collects their output, and send it to the server;  
         """
         self.log.info("Starting threads")
+        #polls for results on completed jobpods using the k8s api, also reports the results (or error status) back to the server
         results_polling_thread = threading.Thread(target=self.__poll_task_results)
+        #polls for new tasks sent by the server, and starts them using the k8s API
         queue_processing_thread = threading.Thread(target=self.__process_tasks_queue)
         results_polling_thread.start()
         queue_processing_thread.start()
