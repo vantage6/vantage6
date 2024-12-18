@@ -61,11 +61,11 @@ from vantage6.node.globals import (
 from vantage6.common.client.node_client import NodeClient
 from vantage6.node import proxy_server
 from vantage6.node.util import get_parent_id
-from vantage6.node.docker.docker_manager import DockerManager
-from vantage6.node.docker.vpn_manager import VPNManager
+from vantage6.node.k8s.docker_manager import DockerManager
+from vantage6.node.k8s.vpn_manager import VPNManager
 from vantage6.node.socket import NodeTaskNamespace
-from vantage6.node.docker.ssh_tunnel import SSHTunnel
-from vantage6.node.docker.squid import Squid
+from vantage6.node.k8s.ssh_tunnel import SSHTunnel
+from vantage6.node.k8s.squid import Squid
 
 # make sure the version is available
 from vantage6.node._version import __version__  # noqa: F401

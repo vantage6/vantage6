@@ -1,6 +1,6 @@
 # API key used to authenticate at the server.
-api_key: 3a487e78-cf48-4ff2-a5ba-0f3067cc3e9b
-
+#api_key: 3a487e78-cf48-4ff2-a5ba-0f3067cc3e9b
+api_key: c1217bb8-3b94-438a-85e8-6d7b9d537048
 # URL of the vantage6 server
 server_url: https://v6-server.tail984a0.ts.net
 

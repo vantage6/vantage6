@@ -32,12 +32,12 @@ from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.cli.context.node import NodeContext
 from vantage6.node.globals import TASK_START_RETRIES, TASK_START_RETRY_SLEEP
 from vantage6.node.context import DockerNodeContext
-from vantage6.node.docker.docker_base import DockerBaseManager
-from vantage6.node.docker.vpn_manager import VPNManager
-from vantage6.node.docker.task_manager import DockerTaskManager
-from vantage6.node.docker.squid import Squid
+from vantage6.node.k8s.docker_base import DockerBaseManager
+from vantage6.node.k8s.vpn_manager import VPNManager
+from vantage6.node.k8s.task_manager import DockerTaskManager
+from vantage6.node.k8s.squid import Squid
 from vantage6.common.client.node_client import NodeClient
-from vantage6.node.docker.exceptions import (
+from vantage6.node.k8s.exceptions import (
     AlgorithmContainerNotFound,
     TemporaryAlgorithmFail,
     PermanentAlgorithmFail,
