@@ -100,9 +100,8 @@ class Node:
 
     def initialize(self) -> None:
         """Initialization of the node"""
-        
+
         self.k8s_container_manager = ContainerManager(ctx)
-        
 
         self.config = self.ctx.config
         self.debug: dict = self.config.get("debug", {})
@@ -137,14 +136,9 @@ class Node:
         self.log.debug("Creating websocket connection with the server")
         self.connect_to_socket()
 
-
-        
         self.start_processing_threads()
-    
-
 
         self.log.info("Init complete")
-
 
     def __proxy_server_worker(self) -> None:
         """
@@ -152,15 +146,15 @@ class Node:
 
         A proxy for communication between algorithms and central
         server.
-        """        
+        """
         default_proxy_host = pod_node_constants.V6_NODE_FQDN
-            
+
         # If PROXY_SERVER_HOST was set in the environment, it overrides our
         # value.
         proxy_host = os.environ.get("PROXY_SERVER_HOST", default_proxy_host)
         os.environ["PROXY_SERVER_HOST"] = proxy_host
 
-        #proxy_port = int(os.environ.get("PROXY_SERVER_PORT", 8080))
+        # proxy_port = int(os.environ.get("PROXY_SERVER_PORT", 8080))
         proxy_port = pod_node_constants.V6_NODE_PROXY_PORT
 
         # 'app' is defined in vantage6.node.proxy_server
@@ -169,14 +163,16 @@ class Node:
             self.log.debug("Debug mode enabled for proxy server")
             proxy_server.app.debug = True
         proxy_server.app.config["SERVER_IO"] = self.client
-        
-        #The value on the module variable 'server_url' defines the target of the 'make_request' method.
-        #TODO improve encapsulation here - why proxy_server.server_url, and proxy_host?
+
+        # The value on the module variable 'server_url' defines the target of the 'make_request' method.
+        # TODO improve encapsulation here - why proxy_server.server_url, and proxy_host?
         proxy_server.server_url = self.client.base_path
-        self.log.info(">>>> Setting target endpoint for the algorithm's client as : %s",proxy_server.server_url)            
+        self.log.info(
+            ">>>> Setting target endpoint for the algorithm's client as : %s",
+            proxy_server.server_url,
+        )
 
-        self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)            
-
+        self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)
 
         # set up proxy server logging
         log_level = getattr(logging, self.config["logging"]["level"].upper())
@@ -186,14 +182,13 @@ class Node:
 
         # this is where we try to find a port for the proxyserver
         for try_number in range(5):
-            self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)            
+            self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)
             http_server = WSGIServer(
                 ("0.0.0.0", proxy_port), proxy_server.app, log=self.proxy_log
             )
 
             try:
                 http_server.serve_forever()
-                
 
             except OSError as e:
                 self.log.info("Error during attempt %s", try_number)
@@ -210,8 +205,6 @@ class Node:
             except Exception as e:
                 self.log.error("Proxyserver could not be started or crashed!")
                 self.log.error(e)
-
-
 
     def sync_task_queue_with_server(self) -> None:
         """Get all unprocessed tasks from the server for this node."""
@@ -359,7 +352,6 @@ class Node:
         # nodes, but the task will still be processed
         self.__emit_algorithm_status_change(task, task_incl_run, task_status)
 
-
     def __emit_algorithm_status_change(
         self, task: dict, run: dict, status: RunStatus
     ) -> None:
@@ -461,7 +453,7 @@ class Node:
                     id_=results.run_id,
                     data={
                         "result": results.data,
-                        #TODO (HC) check if only logs[0] are enough
+                        # TODO (HC) check if only logs[0] are enough
                         "log": results.logs[0],
                         "status": results.status,
                         "finished_at": datetime.datetime.now().isoformat(),
@@ -485,9 +477,8 @@ class Node:
                 )
             except Exception:
                 self.log.exception("Speaking thread had an exception")
-                
-            time.sleep(1)                
 
+            time.sleep(1)
 
     def __print_connection_error_logs(self):
         """Print error message when node cannot find the server"""
@@ -577,14 +568,13 @@ class Node:
 
         if encrypted_collaboration:
             self.log.warning("Enabling encryption!")
-            #TODO (HC) check that encryption works with k8s-based node
+            # TODO (HC) check that encryption works with k8s-based node
             private_key_file = self.private_key_filename()
             self.client.setup_encryption(private_key_file)
 
         else:
             self.log.warning("Disabling encryption!")
             self.client.setup_encryption(None)
-
 
     def connect_to_socket(self) -> None:
         """
@@ -648,13 +638,11 @@ class Node:
             # Wait before sending next ping
             time.sleep(PING_INTERVAL_SECONDS)
 
-    
     def __process_tasks_queue(self) -> None:
         """Keep checking queue for incoming tasks (and execute them)."""
-        #TODO check if this listener is used anywhere else, before removing it
+        # TODO check if this listener is used anywhere else, before removing it
 
-
-        #kill_listener = ContainerKillListener()
+        # kill_listener = ContainerKillListener()
         try:
             while True:
                 self.log.info("Waiting for new tasks....")
@@ -666,7 +654,6 @@ class Node:
             self.log.info("Node is interrupted, shutting down...")
             self.cleanup()
             sys.exit()
-            
 
     def kill_containers(self, kill_info: dict) -> list[dict]:
         """
@@ -707,10 +694,11 @@ class Node:
         #         id_=killed_algo.run_id, data={"status": RunStatus.KILLED}
         #     )
         # return killed_algos
-        #TODO (HC) Implement using k8s container manager
-        print(f">>>>>>>Here I'm supposed to kill a runnin job pod given this info: {json.dumps(kill_info, indent = 4)}")
+        # TODO (HC) Implement using k8s container manager
+        print(
+            f">>>>>>>Here I'm supposed to kill a runnin job pod given this info: {json.dumps(kill_info, indent = 4)}"
+        )
         return []
-
 
     def share_node_details(self) -> None:
         """
@@ -754,31 +742,25 @@ class Node:
         # still executed
         if hasattr(self, "socketIO") and self.socketIO:
             self.socketIO.disconnect()
-        
-        #TODO To be re-enabled once the cleanup method is implemented for the k8s container maanger
-        #if hasattr(self, "_Node__docker") and self.__docker:
+
+        # TODO To be re-enabled once the cleanup method is implemented for the k8s container maanger
+        # if hasattr(self, "_Node__docker") and self.__docker:
         #    self.__docker.cleanup()
 
         self.log.info("Bye!")
 
-
-
     def start_processing_threads(self) -> None:
         """
-        Start the threads that (1) consumes the queue with the requests produced by the server, and 
-        (2) polls the K8S server for finished jobs, collects their output, and send it to the server;  
+        Start the threads that (1) consumes the queue with the requests produced by the server, and
+        (2) polls the K8S server for finished jobs, collects their output, and send it to the server;
         """
         self.log.info("Starting threads")
-        #polls for results on completed jobpods using the k8s api, also reports the results (or error status) back to the server
+        # polls for results on completed jobpods using the k8s api, also reports the results (or error status) back to the server
         results_polling_thread = threading.Thread(target=self.__poll_task_results)
-        #polls for new tasks sent by the server, and starts them using the k8s API
+        # polls for new tasks sent by the server, and starts them using the k8s API
         queue_processing_thread = threading.Thread(target=self.__process_tasks_queue)
         results_polling_thread.start()
         queue_processing_thread.start()
-        
-
-
-
 
 
 # ------------------------------------------------------------------------------
@@ -786,4 +768,3 @@ def run(ctx):
     """Start the node."""
     node = Node(ctx)
     node.start_processing_threads()
-
