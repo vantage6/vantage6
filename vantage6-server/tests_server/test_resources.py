@@ -99,6 +99,16 @@ class TestResources(TestResourceBase):
         db_cols = Collaboration.get()
         self.assertEqual(len(collaborations.json["data"]), len(db_cols))
 
+        # Create a new collaboration
+        col_details = {
+            "name": "New Collaboration",
+            "organization_ids": [org.id],
+            "encrypted": True,
+            "session_restrict_to_same_image": True,
+        }
+
+        self.app.post("/api/collaboration", json=col_details, headers=headers)
+
     def test_node_without_id(self):
         # GET
         rule = Rule.get_by_("node", Scope.GLOBAL, Operation.VIEW)
