@@ -142,3 +142,11 @@ support_email: your-support@example.com
 server_url: https://store.cotopaxi.vantage6.ai
 # Example for running the store locally with default settings:
 # server_url: http://localhost:7602
+
+# set up with which origins the server should allow CORS requests. The default
+# is to allow all origins. If you want to restrict this, you can specify a list
+# of origins here. Below are examples to allow requests from the Cotopaxi UI, and
+# port 7600 on localhost. Usually, only the UI needs to access the store.
+cors_allowed_origins:
+  - https://portal.cotopaxi.vantage6.ai
+  - http://localhost:7600

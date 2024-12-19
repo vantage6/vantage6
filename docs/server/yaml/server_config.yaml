@@ -183,10 +183,10 @@ password_policy:
 # set up with which origins the server should allow CORS requests. The default
 # is to allow all origins. If you want to restrict this, you can specify a list
 # of origins here. Below are examples to allow requests from the Cotopaxi UI, and
-#  port 3456 on localhost
+# port 7600 on localhost. Usually, only the UI needs to access the server.
 cors_allowed_origins:
   - https://portal.cotopaxi.vantage6.ai
-  - http://localhost:3456
+  - http://localhost:7600
 
 # development mode settings. Only use when running both the server and the algorithm
 # store that it communicates with locally
