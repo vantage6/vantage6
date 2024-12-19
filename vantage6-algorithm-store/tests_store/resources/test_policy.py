@@ -30,6 +30,8 @@ class TestPolicyResources(TestResources):
             ),
             Policy(key=StorePolicies.ALLOWED_SERVERS, value=ALLOWED_SERVER),
             Policy(key=StorePolicies.ALLOW_LOCALHOST, value="True"),
+            Policy(key=StorePolicies.MIN_REVIEWERS, value="2"),
+            Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM, value="False"),
         ]
         # pylint: disable=expression-not-assigned
         [p.save() for p in policies]
@@ -122,6 +124,9 @@ class TestPolicyResources(TestResources):
                 key=StorePolicies.ALLOWED_SERVERS.value,
                 value=f"http://localhost:{Ports.DEV_SERVER.value}/api",
             ),
+            Policy(key=StorePolicies.MIN_REVIEWERS.value, value=2),
+            Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value, value="False"),
+            Policy(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS.value, value=2),
         ]
         include_defaults = True
         include_private = False
@@ -134,6 +139,9 @@ class TestPolicyResources(TestResources):
         expected_dict = {
             "algorithm_view": "public",
             "allowed_servers": [f"http://localhost:{Ports.DEV_SERVER.value}/api"],
+            "min_reviewers": 2,
+            "assign_review_own_algorithm": False,
+            "min_reviewing_organizations": 2,
         }
         self.assertEqual(response_dict, expected_dict)
 
@@ -146,6 +154,9 @@ class TestPolicyResources(TestResources):
             "algorithm_view": "public",
             "allowed_servers": [f"http://localhost:{Ports.DEV_SERVER.value}/api"],
             "allow_localhost": False,
+            "min_reviewers": 2,
+            "assign_review_own_algorithm": False,
+            "min_reviewing_organizations": 2,
         }
         self.assertEqual(response_dict, expected_dict)
 
@@ -157,6 +168,9 @@ class TestPolicyResources(TestResources):
                 value=f"http://localhost:{Ports.DEV_SERVER.value}/api",
             ),
             Policy(key=StorePolicies.ALLOW_LOCALHOST, value="1"),
+            Policy(key=StorePolicies.MIN_REVIEWERS.value, value=2),
+            Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value, value="False"),
+            Policy(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS.value, value=2),
         ]
         include_defaults = True
         include_private = True
@@ -170,6 +184,9 @@ class TestPolicyResources(TestResources):
             "algorithm_view": "public",
             "allowed_servers": [f"http://localhost:{Ports.DEV_SERVER.value}/api"],
             "allow_localhost": True,
+            "min_reviewers": 2,
+            "assign_review_own_algorithm": False,
+            "min_reviewing_organizations": 2,
         }
 
         self.assertEqual(response_dict, expected_dict)
@@ -182,6 +199,8 @@ class TestPolicyResources(TestResources):
                 value=f"http://localhost:{Ports.DEV_SERVER.value}/api",
             ),
             Policy(key=BooleanPolicies.ALLOW_LOCALHOST, value="1"),
+            Policy(key=StorePolicies.MIN_REVIEWERS.value, value=2),
+            Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value, value="0"),
         ]
         include_defaults = True
         include_private = False
@@ -190,11 +209,14 @@ class TestPolicyResources(TestResources):
         response_dict = resource.policies_to_dict(
             policies, include_defaults, include_private
         )
+        print(f"RESPONSE DICT: {response_dict}")
 
         expected_dict = {
             "algorithm_view": "public",
             "allowed_servers": [f"http://localhost:{Ports.DEV_SERVER.value}/api"],
             "allow_localhost": True,
+            "min_reviewers": 2,
+            "assign_review_own_algorithm": False,
         }
 
         self.assertEqual(response_dict, expected_dict)
@@ -207,6 +229,8 @@ class TestPolicyResources(TestResources):
                 value=f"http://localhost:{Ports.DEV_SERVER.value}/api",
             ),
             Policy(key=StorePolicies.ALLOW_LOCALHOST, value="1"),
+            Policy(key=StorePolicies.MIN_REVIEWERS.value, value=2),
+            Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value, value="False"),
         ]
         include_defaults = True
         include_private = False
@@ -220,6 +244,8 @@ class TestPolicyResources(TestResources):
             "algorithm_view": "public",
             "allowed_servers": [f"http://localhost:{Ports.DEV_SERVER.value}/api"],
             "allow_localhost": True,
+            "min_reviewers": 2,
+            "assign_review_own_algorithm": False,
         }
 
         self.assertEqual(response_dict, expected_dict)

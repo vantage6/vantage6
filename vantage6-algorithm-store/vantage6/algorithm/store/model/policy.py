@@ -84,3 +84,65 @@ class Policy(Base):
         result = session.query(cls).filter_by(key=StorePolicies.ALLOWED_SERVERS).all()
         session.commit()
         return [r.value for r in result]
+
+    @classmethod
+    def get_minimum_reviewers(cls) -> int:
+        """
+        Get the minimum number of reviewers for approving the algorithms.
+
+        Returns
+        -------
+        int
+            Minimum number of reviewers
+        """
+        session = DatabaseSessionManager.get_session()
+        result = (
+            session.query(cls).filter_by(key=StorePolicies.MIN_REVIEWERS).one_or_none()
+        )
+        session.commit()
+        if result is None:
+            return 2
+        return int(result.value)
+
+    @classmethod
+    def is_developer_allowed_assign_review(cls):
+        """
+        Check if developers are allowed to assign reviews to their own algorithms.
+
+        Returns
+        -------
+        bool
+            True if developers are allowed to assign reviews to their own algorithms,
+            False otherwise
+        """
+        session = DatabaseSessionManager.get_session()
+        result = (
+            session.query(cls)
+            .filter_by(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM)
+            .one_or_none()
+        )
+        session.commit()
+        if result is None:
+            return False
+        return result.value == "True" or result.value == "1"
+
+    @classmethod
+    def get_minimum_reviewing_orgs(cls) -> int:
+        """
+        Get the minimum number of organizations that have to be involved in the review process.
+
+        Returns
+        -------
+        int
+            Minimum number of reviewers
+        """
+        session = DatabaseSessionManager.get_session()
+        result = (
+            session.query(cls)
+            .filter_by(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS)
+            .one_or_none()
+        )
+        session.commit()
+        if result is None:
+            return 1
+        return int(result.value)
