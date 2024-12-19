@@ -128,10 +128,9 @@ class TestVantage6ServerResource(TestResources):
                 {
                     "username": USERNAME,
                     "email": EMAIL,
-                    "organization":
-                        {
-                            "id": ORGANIZATION_ID,
-                        }
+                    "organization": {
+                        "id": ORGANIZATION_ID,
+                    },
                 },
                 status_code=HTTPStatus.OK,
             ),
