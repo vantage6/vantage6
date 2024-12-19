@@ -339,7 +339,7 @@ class AlgorithmClient(ClientBase):
 
         def create(
             self,
-            input_: bytes,
+            input_: dict,
             organizations: list[int] = None,
             name: str = "subtask",
             description: str = None,
