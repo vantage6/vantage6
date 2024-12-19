@@ -413,24 +413,6 @@ class NodePod:
         self.log.warning("Could not connect to the server. Retrying in 10 seconds")
 
 
-    def setup_encryption(self) -> None:
-        #TODO check collaboration encryption configuration    
-        """Setup encryption if the node is part of encrypted collaboration"""
-        encrypted_collaboration = self.client.is_encrypted_collaboration()
-        encrypted_node = self.config["encryption"]["enabled"]
-
-        if encrypted_collaboration != encrypted_node:
-            # You can't force it if it just ain't right, you know?
-            raise Exception("Expectations on encryption don't match?!")
-
-        if encrypted_collaboration:
-            self.log.warning("Enabling encryption!")
-            private_key_file = self.private_key_filename()
-            self.client.setup_encryption(private_key_file)
-
-        else:
-            self.log.warning("Disabling encryption!")
-            self.client.setup_encryption(None)
 
 
     def authenticate(self):
@@ -482,6 +464,25 @@ class NodePod:
 
         # start thread to keep the connection alive by refreshing the token
         self.client.auto_refresh_token()        
+
+    def setup_encryption(self) -> None:
+        #TODO check collaboration encryption configuration    
+        """Setup encryption if the node is part of encrypted collaboration"""
+        encrypted_collaboration = self.client.is_encrypted_collaboration()
+        encrypted_node = self.config["encryption"]["enabled"]
+
+        if encrypted_collaboration != encrypted_node:
+            # You can't force it if it just ain't right, you know?
+            raise Exception("Expectations on encryption don't match?!")
+
+        if encrypted_collaboration:
+            self.log.warning("Enabling encryption!")
+            private_key_file = self.private_key_filename()
+            self.client.setup_encryption(private_key_file)
+
+        else:
+            self.log.warning("Disabling encryption!")
+            self.client.setup_encryption(None)
 
 
 

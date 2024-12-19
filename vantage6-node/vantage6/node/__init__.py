@@ -460,6 +460,7 @@ class Node:
                     id_=results.run_id,
                     data={
                         "result": results.data,
+                        #TODO (HC) check if only logs[0] are enough
                         "log": results.logs[0],
                         "status": results.status,
                         "finished_at": datetime.datetime.now().isoformat(),
@@ -467,7 +468,7 @@ class Node:
                     init_org_id=init_org.get("id"),
                 )
 
-                # notify socket channel of algorithm status change
+                # notify other nodes about algorithm status change
                 self.socketIO.emit(
                     "algorithm_status_change",
                     data={
@@ -483,24 +484,16 @@ class Node:
                 )
             except Exception:
                 self.log.exception("Speaking thread had an exception")
+                
+            time.sleep(1)                
+
 
     def __print_connection_error_logs(self):
         """Print error message when node cannot find the server"""
         self.log.warning("Could not connect to the server. Retrying in 10 seconds")
-        if self.client.host == "http://localhost" and running_in_docker():
-            self.log.warning(
-                "You are trying to reach the server at %s."
-                " As your node is running inside a Docker container, it cannot"
-                " reach localhost on your host system. Probably, you have to"
-                " change your server URL to http://host.docker.internal (Windows/MacOS)"
-                ' or look into node config option "node_extra_hosts" if using'
-                " http://172.17.0.1 does not work (Linux).",
-                self.client.host,
-            )
-        else:
-            self.log.info(
-                "Are you sure the server can be reached at %s?", self.client.base_path
-            )
+        self.log.info(
+            "Are you sure the server can be reached at %s?", self.client.base_path
+        )
 
     def authenticate(self) -> None:
         """
@@ -582,55 +575,14 @@ class Node:
             raise Exception("Expectations on encryption don't match?!")
 
         if encrypted_collaboration:
-            self.log.warn("Enabling encryption!")
+            self.log.warning("Enabling encryption!")
+            #TODO (HC) check that encryption works with k8s-based node
             private_key_file = self.private_key_filename()
             self.client.setup_encryption(private_key_file)
 
         else:
-            self.log.warn("Disabling encryption!")
+            self.log.warning("Disabling encryption!")
             self.client.setup_encryption(None)
-
-    def _set_task_dir(self, ctx) -> None:
-        """
-        Set the task dir
-
-        Parameters
-        ----------
-        ctx: DockerNodeContext or NodeContext
-            Context object containing settings
-        """
-        # If we're in a 'regular' context, we'll copy the dataset to our data
-        # dir and mount it in any algorithm container that's run; bind mounts
-        # on a folder will work just fine.
-        #
-        # If we're running in dockerized mode we *cannot* bind mount a folder,
-        # because the folder is in the container and not in the host. We'll
-        # have to use a docker volume instead. This means:
-        #  1. we need to know the name of the volume so we can pass it along
-        #  2. need to have this volume mounted so we can copy files to it.
-        #
-        #  Ad 1: We'll use a default name that can be overridden by an
-        #        environment variable.
-        #  Ad 2: We'll expect `ctx.data_dir` to point to the right place. This
-        #        is OK, since ctx will be a DockerNodeContext.
-        #
-        #  This also means that the volume will have to be created & mounted
-        #  *before* this node is started, so we won't do anything with it here.
-
-        # We'll create a subfolder in the data_dir. We need this subfolder so
-        # we can easily mount it in the algorithm containers; the root folder
-        # may contain the private key, which which we don't want to share.
-        # We'll only do this if we're running outside docker, otherwise we
-        # would create '/data' on the data volume.
-        if not ctx.running_in_docker:
-            self.__tasks_dir = ctx.data_dir / "data"
-            os.makedirs(self.__tasks_dir, exist_ok=True)
-            self.__vpn_dir = ctx.data_dir / "vpn"
-            os.makedirs(self.__vpn_dir, exist_ok=True)
-        else:
-            self.__tasks_dir = ctx.data_dir
-            self.__vpn_dir = ctx.vpn_dir
-
 
 
     def connect_to_socket(self) -> None:
