@@ -567,7 +567,11 @@ class UserClient(ClientBase):
 
         @post_filtering(iterable=False)
         def create(
-            self, name: str, organizations: list, encrypted: bool = False
+            self,
+            name: str,
+            organizations: list,
+            encrypted: bool = False,
+            session_restrict_to_same_image: bool = False,
         ) -> dict:
             """Create new collaboration
 
@@ -581,6 +585,9 @@ class UserClient(ClientBase):
             encrypted : bool, optional
                 Whenever the collaboration should be encrypted or not,
                 by default False
+            session_restrict_to_same_image : bool, optional
+                Whenever the collaboration should restrict algorithm containers to
+                the same image in a single session, by default False
             field: str, optional
                 Which data field to keep in the result. For instance, "field='name'"
                 will only return the name of the collaboration. Default is None.
@@ -601,6 +608,7 @@ class UserClient(ClientBase):
                     "name": name,
                     "organization_ids": organizations,
                     "encrypted": encrypted,
+                    "session_restrict_to_same_image": session_restrict_to_same_image,
                 },
             )
 
