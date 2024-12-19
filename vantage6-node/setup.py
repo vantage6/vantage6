@@ -1,9 +1,9 @@
 import codecs
 import os
-
 from os import path
-from setuptools import setup, find_namespace_packages
 from pathlib import Path
+
+from setuptools import find_namespace_packages, setup
 
 # get current directory
 here = Path(path.abspath(path.dirname(__file__)))
@@ -32,9 +32,9 @@ setup(
     python_requires=">=3.10",
     install_requires=[
         "click==8.1.3",
-        "docker==7.1.0",
         "gevent==23.9.1",
         "jinja2==3.1.4",
+        "kubernetes==28.1.0",
         "python-socketio==5.7.2",
         "requests==2.32.3",
         "parquet-tools==0.2.16",

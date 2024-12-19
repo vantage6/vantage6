@@ -32,7 +32,7 @@ setup(
     python_requires=">=3.10",
     install_requires=[
         "click==8.1.3",
-        "kubernetes"=="28.1.0",
+        "kubernetes==28.1.0",
         "gevent==23.9.1",
         "jinja2==3.1.4",
         "python-socketio==5.7.2",
