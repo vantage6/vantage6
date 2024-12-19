@@ -22,53 +22,42 @@ is mainly used for sharing status updates. This avoids the need for polling to
 see if there are new tasks available.
 """
 
-import sys
-import os
-import random
-import time
 import datetime
-import logging
-import queue
 import json
-import shutil
-import requests.exceptions
-
+import logging
+import os
+import queue
+import random
+import sys
+import time
 from pathlib import Path
 from threading import Thread
-from socketio import Client as SocketIO
-from gevent.pywsgi import WSGIServer
-from enum import Enum
 
-from vantage6.common import logger_name
-from vantage6.common.docker.addons import (
-    ContainerKillListener,
-    check_docker_running,
-    running_in_docker,
-)
-from vantage6.common.globals import VPN_CONFIG_FILE, PING_INTERVAL_SECONDS, NodePolicy
-from vantage6.common.exceptions import AuthenticationException
-from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.common.enum import RunStatus, AlgorithmStepType, TaskStatusQueryOptions
-from vantage6.common.log import get_file_logger
+import requests.exceptions
+from gevent.pywsgi import WSGIServer
+from socketio import Client as SocketIO
+
 from vantage6.cli.context.node import NodeContext
-from vantage6.node.context import DockerNodeContext
-from vantage6.node.globals import (
-    NODE_PROXY_SERVER_HOSTNAME,
-    SLEEP_BTWN_NODE_LOGIN_TRIES,
-    TIME_LIMIT_RETRY_CONNECT_NODE,
-    TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET,
-)
+from vantage6.common import logger_name
 from vantage6.common.client.node_client import NodeClient
+from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskStatusQueryOptions
+from vantage6.common.exceptions import AuthenticationException
+from vantage6.common.globals import PING_INTERVAL_SECONDS, NodePolicy
+from vantage6.common.log import get_file_logger
 from vantage6.node import proxy_server
-from vantage6.node.util import get_parent_id
-from vantage6.node.k8s.docker_manager import DockerManager
-from vantage6.node.k8s.vpn_manager import VPNManager
-from vantage6.node.socket import NodeTaskNamespace
-from vantage6.node.k8s.ssh_tunnel import SSHTunnel
-from vantage6.node.k8s.squid import Squid
 
 # make sure the version is available
 from vantage6.node._version import __version__  # noqa: F401
+from vantage6.node.globals import (
+    SLEEP_BTWN_NODE_LOGIN_TRIES,
+    TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET,
+    TIME_LIMIT_RETRY_CONNECT_NODE,
+    V6_NODE_FQDN,
+    V6_NODE_PROXY_PORT,
+)
+from vantage6.node.k8s.container_manager import ContainerManager
+from vantage6.node.socket import NodeTaskNamespace
+from vantage6.node.util import get_parent_id
 
 
 # ------------------------------------------------------------------------------
@@ -101,7 +90,7 @@ class Node:
     def initialize(self) -> None:
         """Initialization of the node"""
 
-        self.k8s_container_manager = ContainerManager(ctx)
+        self.k8s_container_manager = ContainerManager(self.ctx)
 
         self.config = self.ctx.config
         self.debug: dict = self.config.get("debug", {})
@@ -147,7 +136,7 @@ class Node:
         A proxy for communication between algorithms and central
         server.
         """
-        default_proxy_host = pod_node_constants.V6_NODE_FQDN
+        default_proxy_host = V6_NODE_FQDN
 
         # If PROXY_SERVER_HOST was set in the environment, it overrides our
         # value.
@@ -155,7 +144,7 @@ class Node:
         os.environ["PROXY_SERVER_HOST"] = proxy_host
 
         # proxy_port = int(os.environ.get("PROXY_SERVER_PORT", 8080))
-        proxy_port = pod_node_constants.V6_NODE_PROXY_PORT
+        proxy_port = V6_NODE_PROXY_PORT
 
         # 'app' is defined in vantage6.node.proxy_server
         debug_mode = self.debug.get("proxy_server", False)

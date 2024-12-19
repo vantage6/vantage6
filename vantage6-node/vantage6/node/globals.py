@@ -1,5 +1,5 @@
 from pathlib import Path
-from enum import Enum
+
 from vantage6.common.globals import APPNAME
 
 #
@@ -60,3 +60,20 @@ ENV_VARS_NOT_SETTABLE_BY_NODE = ["PKG_NAME"]
 
 # default policies
 DEFAULT_REQUIRE_ALGO_IMAGE_PULL = False
+
+
+# Paths within the Job POD-containers (the ones running the algorithms) defined by convention
+
+JOB_POD_INPUT_PATH = "/app/output"
+JOB_POD_OUTPUT_PATH = "/app/input"
+JOB_POD_TOKEN_PATH = "/app/token"
+JOB_POD_TMP_FOLDER_PATH = "/app/tmp"
+
+# Paths within the Node POD-container defined by convention - these must match the mountPaths on kubeconfs/node_pod_config.yaml
+
+TASK_FILES_ROOT = "/app/tasks"
+KUBE_CONFIG_FILE_PATH = "/app/.kube/config"
+V6_NODE_CONFIG_FILE = "/app/.v6node/configs/node_legacy_config.yaml"
+V6_NODE_DATABASE_BASE_PATH = "/app/.databases/"
+V6_NODE_FQDN = "http://v6proxy-subdomain.v6-jobs.svc.cluster.local"  # Must be consistent with kubeconfs/node_pod_config.yaml
+V6_NODE_PROXY_PORT = 4567
