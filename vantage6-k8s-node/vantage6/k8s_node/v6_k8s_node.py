@@ -376,36 +376,6 @@ class NodePod:
 
 
 
-    def __process_tasks_queue(self) -> None:
-        # previously called def run_forever(self) -> None:
-
-        """
-        Keep checking queue for incoming tasks (and execute them).
-
-            Note: In the original version SIGINT/SIGTERM signals were also captured to guarantee a gracefuly shutdown of the containers.
-            E.g., aborting the node with CTRL-C would lead to a container execution inconsistent state, as these are handled by the node.
-            
-            In this new version the K8S server would keep running idependently of the node status. How to ensure consistency after an
-            abrupt failure should be further explored.
-
-
-            taskresult: misleading name? not the result of a task, but a task description
-
-        """
-         
-        try:
-            while True:
-                self.log.info("********************  Waiting for new tasks....")
-                taskresult = self.queue.get()
-                self.log.info(">>>>> New task received")
-                pprint.pp(taskresult)
-                self.__start_task(taskresult)
-
-        except (KeyboardInterrupt, InterruptedError):
-            self.log.info("Node is interrupted, shutting down...")
-            self.cleanup()
-            sys.exit()
-
 
 
     def __print_connection_error_logs(self):
@@ -553,25 +523,97 @@ class NodePod:
             # Wait before sending next ping
             time.sleep(PING_INTERVAL_SECONDS)
 
-    def cleanup(self) -> None:
-        # TODO add try/catch for all cleanups so that if one fails, the others are
-        # still executed
+    def __process_tasks_queue(self) -> None:
+        # previously called def run_forever(self) -> None:
 
-        if hasattr(self, "socketIO") and self.socketIO:
-            self.socketIO.disconnect()
         """
-        TODO include these if apply to the POC:        
-        if hasattr(self, "vpn_manager") and self.vpn_manager:
-            self.vpn_manager.exit_vpn()
-        if hasattr(self, "ssh_tunnels") and self.ssh_tunnels:
-            for tunnel in self.ssh_tunnels:
-                tunnel.stop()
-        if hasattr(self, "_Node__docker") and self.__docker:
-            self.__docker.cleanup()
+        Keep checking queue for incoming tasks (and execute them).
+
+            Note: In the original version SIGINT/SIGTERM signals were also captured to guarantee a gracefuly shutdown of the containers.
+            E.g., aborting the node with CTRL-C would lead to a container execution inconsistent state, as these are handled by the node.
+            
+            In this new version the K8S server would keep running idependently of the node status. How to ensure consistency after an
+            abrupt failure should be further explored.
+
+
+            taskresult: misleading name? not the result of a task, but a task description
+
         """
+         
+        try:
+            while True:
+                self.log.info("********************  Waiting for new tasks....")
+                taskresult = self.queue.get()
+                self.log.info(">>>>> New task received")
+                pprint.pp(taskresult)
+                self.__start_task(taskresult)
 
-        self.log.info("Bye!")
+        except (KeyboardInterrupt, InterruptedError):
+            self.log.info("Node is interrupted, shutting down...")
+            self.cleanup()
+            sys.exit()
 
+
+    def kill_containers(self, kill_info: dict) -> list[dict]:
+
+        """
+        Kill containers on instruction from socket event
+
+        Parameters
+        ----------
+        kill_info: dict
+            Dictionary received over websocket with instructions for which
+            tasks to kill
+
+        Returns
+        -------
+        list[dict]:
+            List of dictionaries with information on killed task (keys:
+            run_id, task_id and parent_id)
+        """
+        
+        """
+        if kill_info["collaboration_id"] != self.client.collaboration_id:
+            self.log.debug(
+                "Not killing tasks as this node is in another collaboration."
+            )
+            return []
+        elif "node_id" in kill_info and kill_info["node_id"] != self.client.whoami.id_:
+            self.log.debug(
+                "Not killing tasks as instructions to kill tasks were directed"
+                " at another node in this collaboration."
+            )
+            return []
+
+        # kill specific task if specified, else kill all algorithms
+        kill_list = kill_info.get("kill_list")
+
+        killed_algos = self.__docker.kill_tasks(
+            org_id=self.client.whoami.organization_id, kill_list=kill_list
+        )
+        # update status of killed tasks
+        for killed_algo in killed_algos:
+            self.client.run.patch(
+                id_=killed_algo.run_id, data={"status": RunStatus.KILLED}
+            )
+        return killed_algos
+        """
+        #PoC TODO, using k8s container manager
+        print(f">>>>>>>Here I'm supposed to kill a runnin job pod given this info: {json.dumps(kill_info, indent = 4)}")
+        return []
+        
+        """"
+        kill_info:
+            "kill_list": [
+                {
+                    "task_id": 3,
+                    "run_id": 3,
+                    "organization_id": 2
+                }
+            ],
+            "collaboration_id": 1
+    
+        """
 
 
 
@@ -639,6 +681,28 @@ class NodePod:
         self.log.debug("Sharing node configuration: %s", config_to_share)
         self.socketIO.emit("node_info_update", config_to_share, namespace="/tasks")        
 
+    def cleanup(self) -> None:
+        # TODO add try/catch for all cleanups so that if one fails, the others are
+        # still executed
+
+        if hasattr(self, "socketIO") and self.socketIO:
+            self.socketIO.disconnect()
+        """
+        TODO include these if apply to the POC:        
+        if hasattr(self, "vpn_manager") and self.vpn_manager:
+            self.vpn_manager.exit_vpn()
+        if hasattr(self, "ssh_tunnels") and self.ssh_tunnels:
+            for tunnel in self.ssh_tunnels:
+                tunnel.stop()
+        if hasattr(self, "_Node__docker") and self.__docker:
+            self.__docker.cleanup()
+        """
+
+        self.log.info("Bye!")
+
+
+
+
 
 
 
@@ -702,66 +766,7 @@ class NodePod:
     
 
 
-    def kill_containers(self, kill_info: dict) -> list[dict]:
 
-        """
-        Kill containers on instruction from socket event
-
-        Parameters
-        ----------
-        kill_info: dict
-            Dictionary received over websocket with instructions for which
-            tasks to kill
-
-        Returns
-        -------
-        list[dict]:
-            List of dictionaries with information on killed task (keys:
-            run_id, task_id and parent_id)
-        """
-        
-        """
-        if kill_info["collaboration_id"] != self.client.collaboration_id:
-            self.log.debug(
-                "Not killing tasks as this node is in another collaboration."
-            )
-            return []
-        elif "node_id" in kill_info and kill_info["node_id"] != self.client.whoami.id_:
-            self.log.debug(
-                "Not killing tasks as instructions to kill tasks were directed"
-                " at another node in this collaboration."
-            )
-            return []
-
-        # kill specific task if specified, else kill all algorithms
-        kill_list = kill_info.get("kill_list")
-
-        killed_algos = self.__docker.kill_tasks(
-            org_id=self.client.whoami.organization_id, kill_list=kill_list
-        )
-        # update status of killed tasks
-        for killed_algo in killed_algos:
-            self.client.run.patch(
-                id_=killed_algo.run_id, data={"status": RunStatus.KILLED}
-            )
-        return killed_algos
-        """
-        #PoC TODO, using k8s container manager
-        print(f">>>>>>>Here I'm supposed to kill a runnin job pod given this info: {json.dumps(kill_info, indent = 4)}")
-        return []
-        
-        """"
-        kill_info:
-            "kill_list": [
-                {
-                    "task_id": 3,
-                    "run_id": 3,
-                    "organization_id": 2
-                }
-            ],
-            "collaboration_id": 1
-    
-        """
 
 
 if __name__ == '__main__':

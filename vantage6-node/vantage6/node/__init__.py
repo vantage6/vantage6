@@ -397,6 +397,7 @@ class Node:
             namespace="/tasks",
         )
 
+    # TODO double-check that this worker can be removed
     # def __listening_worker(self) -> None:
     #     """
     #     Listen for incoming (websocket) messages from the server.
@@ -418,7 +419,7 @@ class Node:
     #             self.log.error("Listening thread had an exception")
     #             self.log.exception(e)
 
-    def __speaking_worker(self) -> None:
+    def __poll_task_results(self) -> None:
         """
         Sending messages to central server.
 
@@ -648,41 +649,24 @@ class Node:
             time.sleep(PING_INTERVAL_SECONDS)
 
     
-    def run_forever(self) -> None:
+    def __process_tasks_queue(self) -> None:
         """Keep checking queue for incoming tasks (and execute them)."""
-        kill_listener = ContainerKillListener()
+        #TODO check if this listener is used anywhere else, before removing it
+
+
+        #kill_listener = ContainerKillListener()
         try:
             while True:
-                # blocking untill a task comes available
-                # timeout specified, else Keyboard interupts are ignored
                 self.log.info("Waiting for new tasks....")
-
-                while not kill_listener.kill_now:
-                    try:
-                        taskresult = self.queue.get(timeout=1)
-                        # if no item is returned, the Empty exception is
-                        # triggered, thus break statement is not reached
-                        break
-
-                    except queue.Empty:
-                        pass
-
-                    except Exception as e:
-                        self.log.warning(e)
-
-                if kill_listener.kill_now:
-                    raise InterruptedError
-
-                # if task becomes available, attempt to execute it
-                try:
-                    self.__start_task(taskresult)
-                except Exception as e:
-                    self.log.exception(e)
+                taskresult = self.queue.get()
+                self.log.info("New task received")
+                self.__start_task(taskresult)
 
         except (KeyboardInterrupt, InterruptedError):
             self.log.info("Node is interrupted, shutting down...")
             self.cleanup()
             sys.exit()
+            
 
     def kill_containers(self, kill_info: dict) -> list[dict]:
         """
@@ -700,29 +684,33 @@ class Node:
             List of dictionaries with information on killed task (keys:
             run_id, task_id and parent_id)
         """
-        if kill_info["collaboration_id"] != self.client.collaboration_id:
-            self.log.debug(
-                "Not killing tasks as this node is in another collaboration."
-            )
-            return []
-        elif "node_id" in kill_info and kill_info["node_id"] != self.client.whoami.id_:
-            self.log.debug(
-                "Not killing tasks as instructions to kill tasks were directed"
-                " at another node in this collaboration."
-            )
-            return []
+        # if kill_info["collaboration_id"] != self.client.collaboration_id:
+        #     self.log.debug(
+        #         "Not killing tasks as this node is in another collaboration."
+        #     )
+        #     return []
+        # elif "node_id" in kill_info and kill_info["node_id"] != self.client.whoami.id_:
+        #     self.log.debug(
+        #         "Not killing tasks as instructions to kill tasks were directed"
+        #         " at another node in this collaboration."
+        #     )
+        #     return []
 
-        # kill specific task if specified, else kill all algorithms
-        kill_list = kill_info.get("kill_list")
-        killed_algos = self.__docker.kill_tasks(
-            org_id=self.client.whoami.organization_id, kill_list=kill_list
-        )
-        # update status of killed tasks
-        for killed_algo in killed_algos:
-            self.client.run.patch(
-                id_=killed_algo.run_id, data={"status": RunStatus.KILLED}
-            )
-        return killed_algos
+        # # kill specific task if specified, else kill all algorithms
+        # kill_list = kill_info.get("kill_list")
+        # killed_algos = self.__docker.kill_tasks(
+        #     org_id=self.client.whoami.organization_id, kill_list=kill_list
+        # )
+        # # update status of killed tasks
+        # for killed_algo in killed_algos:
+        #     self.client.run.patch(
+        #         id_=killed_algo.run_id, data={"status": RunStatus.KILLED}
+        #     )
+        # return killed_algos
+        #TODO (HC) Implement using k8s container manager
+        print(f">>>>>>>Here I'm supposed to kill a runnin job pod given this info: {json.dumps(kill_info, indent = 4)}")
+        return []
+
 
     def share_node_details(self) -> None:
         """
@@ -766,23 +754,36 @@ class Node:
         # still executed
         if hasattr(self, "socketIO") and self.socketIO:
             self.socketIO.disconnect()
-        if hasattr(self, "vpn_manager") and self.vpn_manager:
-            self.vpn_manager.exit_vpn()
-        if hasattr(self, "ssh_tunnels") and self.ssh_tunnels:
-            for tunnel in self.ssh_tunnels:
-                tunnel.stop()
-        if hasattr(self, "_Node__docker") and self.__docker:
-            self.__docker.cleanup()
+        
+        #TODO To be re-enabled once the cleanup method is implemented for the k8s container maanger
+        #if hasattr(self, "_Node__docker") and self.__docker:
+        #    self.__docker.cleanup()
 
         self.log.info("Bye!")
+
+
+
+    def start_processing_threads(self) -> None:
+        """
+        Start the threads that (1) consumes the queue with the requests produced by the server, and 
+        (2) polls the K8S server for finished jobs, collects their output, and send it to the server;  
+        """
+        self.log.info("Starting threads")
+        #polls for results on completed jobpods using the k8s api, also reports the results (or error status) back to the server
+        results_polling_thread = threading.Thread(target=self.__poll_task_results)
+        #polls for new tasks sent by the server, and starts them using the k8s API
+        queue_processing_thread = threading.Thread(target=self.__process_tasks_queue)
+        results_polling_thread.start()
+        queue_processing_thread.start()
+        
+
+
+
 
 
 # ------------------------------------------------------------------------------
 def run(ctx):
     """Start the node."""
-
-    # initialize node, connect to the server using websockets
     node = Node(ctx)
+    node.start_processing_threads()
 
-    # put the node to work, executing tasks that are in the que
-    node.run_forever()
