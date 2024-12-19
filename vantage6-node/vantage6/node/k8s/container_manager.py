@@ -12,7 +12,7 @@ from kubernetes.client.rest import ApiException
 
 from vantage6.cli.context.node import NodeContext
 from vantage6.common import logger_name
-from vantage6.common.enum import RunStatus
+from vantage6.common.enum import AlgorithmStepType, RunStatus
 from vantage6.node import globals
 from vantage6.node.util import get_parent_id
 
@@ -106,15 +106,12 @@ class ContainerManager:
             )
 
         # before a task is executed it gets exposed to these policies
-        self._policies = self._setup_policies(config)
+        self._policies = self._setup_policies(ctx.config)
 
         # K8S Batch API instance
         self.batch_api = client.BatchV1Api()
         # K8S Core API instance
         self.core_api = client.CoreV1Api()
-
-    def version(self) -> str:
-        return "0"
 
     def _setup_policies(self, config: dict) -> dict:
         """
@@ -130,7 +127,7 @@ class ContainerManager:
         dict
             Dictionary with the policies
         """
-        policies = self.v6_config.get("policies", {})
+        policies = config.get("policies", {})
         if not policies or not policies.get("allowed_algorithms"):
             self.log.warning(
                 "No policies on allowed algorithms have been set for this node!"
@@ -140,15 +137,17 @@ class ContainerManager:
             )
         return policies
 
+    # TODO add parameters "action" and "session_id"
     def run(
         self,
         run_id: int,
         task_info: dict,
         image: str,
         docker_input: bytes,
-        tmp_vol_name: str,
+        session_id: int,
         token: str,
         databases_to_use: list[str],
+        action: AlgorithmStepType,
     ) -> tuple[RunStatus, list[dict] | None]:
         """
         Checks if docker task is running. If not, creates DockerTaskManager to
@@ -164,12 +163,14 @@ class ContainerManager:
             Docker image name
         docker_input: bytes
             Input that can be read by docker container
-        tmp_vol_name: str
-            Name of temporary docker volume assigned to the algorithm
+        session_id: int
+            ID of the session
         token: str
             Bearer token that the container can use
         databases_to_use: list[str]
             Labels of the databases to use
+        action: AlgorithmStepType
+            The action to perform
 
         Returns
         -------
@@ -225,7 +226,7 @@ class ContainerManager:
 
         # Check that this task is not already running
         if self.is_running(run_id):
-            self.log.warn("Task is already being executed, discarding task")
+            self.log.warning("Task is already being executed, discarding task")
             self.log.debug(f"run_id={run_id} is discarded")
             return RunStatus.ACTIVE, None
 
