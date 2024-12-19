@@ -63,8 +63,11 @@ class TestResources(unittest.TestCase):
         username: str = "test_user",
         user_roles: list[Role] = None,
         user_rules: list[Rule] = None,
+        organization_id: int = 1,
     ) -> User:
-        user = User(username=username, v6_server_id=server_id)
+        user = User(
+            username=username, v6_server_id=server_id, organization_id=organization_id
+        )
         if user_roles and len(user_roles) > 0:
             user.roles = user_roles
         if user_rules and len(user_rules) > 0:

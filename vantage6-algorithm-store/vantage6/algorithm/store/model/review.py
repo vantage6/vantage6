@@ -19,7 +19,6 @@ class Review(Base):
         Review status
     comment : str
         Reviewer's comment
-
     reviewers : list[:class:`~.model.user.User`]
         List of users that have written reviews
     algorithm : :class:`~.model.algorithm.Algorithm`

@@ -23,6 +23,7 @@ from vantage6.algorithm.store.resource import (
     AlgorithmStoreResources,
 )
 from vantage6.algorithm.store import db
+from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.resource.schema.input_schema import (
     ReviewCreateInputSchema,
     ReviewUpdateInputSchema,
@@ -110,6 +111,35 @@ def permissions(permissions: PermissionManager) -> None:
 review_create_schema = ReviewCreateInputSchema()
 review_update_schema = ReviewUpdateInputSchema()
 review_output_schema = ReviewOutputSchema()
+
+
+def _is_reviewers_assignment_finished(reviews: list[db.Review]) -> bool:
+    """
+    Check if the reviewers assignment is finished for the given algorithm, according to the
+    policies set. This is the case if:
+    1. the minimum number of reviewers has been reached
+    2. the minimum number of different organizations has been involved
+
+    Parameters
+    ----------
+    reviews : list[db.Review]
+        reviews of the algorithm
+
+    Returns
+    -------
+    bool
+        True if the reviewers assignment is finished, False otherwise
+    """
+    # get the number of unique organizations assigned to review the algorithm.
+    # A unique organization is defined by the combination of organization id and server
+    current_orgs = len(
+        set([(rev.reviewer.organization_id, rev.reviewer.server) for rev in reviews])
+    )
+
+    return (
+        current_orgs >= Policy.get_minimum_reviewing_orgs()
+        and len(reviews) >= Policy.get_minimum_reviewers()
+    )
 
 
 class Reviews(AlgorithmStoreResources):
@@ -279,6 +309,20 @@ class Reviews(AlgorithmStoreResources):
             return {
                 "msg": "Algorithm review is already finished!"
             }, HTTPStatus.BAD_REQUEST
+        # check if a policy exist that allow the user to assign a review
+        if not Policy.is_user_allowed_to_assign_review(g.user.id):
+            return {
+                "msg": "You are not allowed to assign reviews."
+            }, HTTPStatus.UNAUTHORIZED
+
+        # check if the developer is the review assigner and if this is allowed
+        if (
+            algorithm.developer_id == g.user.id
+            and not Policy.is_developer_allowed_assign_review()
+        ):
+            return {
+                "msg": "You cannot assign reviewers for your own algorithm!"
+            }, HTTPStatus.BAD_REQUEST
 
         # check that
         # 1. the assigned reviewer exists
@@ -288,7 +332,9 @@ class Reviews(AlgorithmStoreResources):
         reviewer: db.User = db.User.get(data["reviewer_id"])
         if not reviewer:
             return {"msg": "Reviewer not found"}, HTTPStatus.BAD_REQUEST
-        if not reviewer.is_reviewer():
+        if not reviewer.is_reviewer() or not Policy.is_user_allowed_to_review(
+            reviewer.id
+        ):
             return {
                 "msg": f"User id='{reviewer.id}' is not allowed to review algorithms!"
             }, HTTPStatus.BAD_REQUEST
@@ -321,9 +367,10 @@ class Reviews(AlgorithmStoreResources):
         )
         review.save()
 
-        # also update the algorithm status to 'under review'
-        algorithm.status = AlgorithmStatus.UNDER_REVIEW
-        algorithm.save()
+        # also update the algorithm status to 'under review' if policies are met:
+        if _is_reviewers_assignment_finished(algorithm.reviews):
+            algorithm.status = AlgorithmStatus.UNDER_REVIEW
+            algorithm.save()
 
         # send email to the reviewer to notify them of the new review
         Thread(
@@ -488,9 +535,12 @@ class Review(AlgorithmStoreResources):
         # 2. set to awaiting reviewer assignment if there are no other reviews
         algorithm: db.Algorithm = review.algorithm
         if not algorithm.is_review_finished():
-            # if the only review is deleted, new reviewers should be assigned
+            # if number of reviews after deletion is less than the minium,
+            # new reviewers should be assigned
             other_reviews = [r for r in algorithm.reviews if not r.id == review.id]
-            if not other_reviews:
+            if not other_reviews or not _is_reviewers_assignment_finished(
+                other_reviews
+            ):
                 algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
             elif all([r.status == ReviewStatus.APPROVED for r in other_reviews]):
                 # if this was the last remaining review that needed to be approved, but
@@ -510,7 +560,6 @@ class Review(AlgorithmStoreResources):
 
 
 class ReviewUpdateResources(AlgorithmStoreResources):
-
     @staticmethod
     def send_email_review_update(
         app: Flask,
@@ -673,7 +722,10 @@ class ReviewApprove(ReviewUpdateResources):
         # also update the algorithm status to 'approved' if this was the last review
         # that needed to be approved
         algorithm: db.Algorithm = review.algorithm
-        if algorithm.are_all_reviews_approved():
+        if (
+            algorithm.status == AlgorithmStatus.UNDER_REVIEW
+            and algorithm.are_all_reviews_approved()
+        ):
             algorithm.approve()
 
             # notify the developer by email that their algorithm has been approved

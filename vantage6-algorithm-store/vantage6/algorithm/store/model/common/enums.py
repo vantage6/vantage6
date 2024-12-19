@@ -85,6 +85,7 @@ class BooleanPolicies(str, Enum):
     # whether localhost servers are allowed to be registered. This should only be
     # allowed for local development servers and should be disabled in production
     ALLOW_LOCALHOST = "allow_localhost"
+    ASSIGN_REVIEW_OWN_ALGORITHM = "assign_review_own_algorithm"
 
 
 class ListPolicies(str, Enum):
@@ -92,6 +93,8 @@ class ListPolicies(str, Enum):
 
     # which servers are allowed to edit algorithms
     ALLOWED_SERVERS = "allowed_servers"
+    ALLOWED_REVIEWERS = "allowed_reviewers"
+    ALLOWED_REVIEW_ASSIGNERS = "allowed_review_assigners"
 
 
 class DefaultStorePolicies(Enum):
@@ -102,3 +105,8 @@ class DefaultStorePolicies(Enum):
     ALGORITHM_VIEW = AlgorithmViewPolicies.WHITELISTED.value
     ALLOWED_SERVERS = "all"
     ALLOW_LOCALHOST = False
+    MIN_REVIEWERS = 2
+    ASSIGN_REVIEW_OWN_ALGORITHM = False
+    MIN_REVIEWING_ORGANIZATIONS = 2
+    ALLOWED_REVIEWERS = None
+    ALLOWED_REVIEW_ASSIGNERS = None
