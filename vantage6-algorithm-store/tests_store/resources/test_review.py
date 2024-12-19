@@ -496,7 +496,7 @@ class TestReviewResources(TestResources):
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     def test_algorithm_status_update_to_under_review(self, validate_token_mock):
         """Test that algorithm status is updated to under review if the minimum number of
-        reviews are assigned"""
+        reviews and organizations are assigned"""
 
         validate_token_mock.return_value = (
             MockResponse({"username": USERNAME}),
@@ -505,6 +505,9 @@ class TestReviewResources(TestResources):
 
         # register policy for minimum reviewers
         Policy(key=StorePolicies.MIN_REVIEWERS, value="2").save()
+
+        # register policy for minimum reviewing organizations
+        Policy(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS, value="2").save()
 
         # create algorithm
         algorithm = Algorithm(
@@ -520,12 +523,21 @@ class TestReviewResources(TestResources):
             server.id,
             username=REVIEWER_USERNAME_1,
             user_rules=[Rule.get_by_("review", Operation.EDIT)],
+            organization_id=1,
         )
 
         reviewer_2 = self.register_user(
             server.id,
             username=REVIEWER_USERNAME_2,
             user_rules=[Rule.get_by_("review", Operation.EDIT)],
+            organization_id=2,
+        )
+
+        reviewer_3 = self.register_user(
+            server.id,
+            username="reviewer_user_3",
+            user_rules=[Rule.get_by_("review", Operation.EDIT)],
+            organization_id=1,
         )
 
         json_body = {
@@ -537,7 +549,10 @@ class TestReviewResources(TestResources):
         self.register_user(
             server.id,
             username=USERNAME,
-            user_rules=[Rule.get_by_("review", Operation.CREATE)],
+            user_rules=[
+                Rule.get_by_("review", Operation.CREATE),
+                Rule.get_by_("review", Operation.DELETE),
+            ],
         )
 
         response = self.app.get(f"/api/algorithm/{algorithm.id}", headers=HEADERS)
@@ -557,11 +572,39 @@ class TestReviewResources(TestResources):
         # assign second reviewer
         json_body["reviewer_id"] = reviewer_2.id
         response = self.app.post("/api/review", headers=HEADERS, json=json_body)
+        review2_id = response.json["id"]
         self.assertEqual(response.status_code, HTTPStatus.CREATED)
         response = self.app.get(f"/api/algorithm/{algorithm.id}", headers=HEADERS)
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
         # check that the status changed after the second assignment
+        self.assertEqual(response.json["status"], AlgorithmStatus.UNDER_REVIEW.value)
+
+        # delete a review and check that the status is back to awaiting reviewer assignment
+        response = self.app.delete(f"/api/review/{review2_id}", headers=HEADERS)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        response = self.app.get(f"/api/algorithm/{algorithm.id}", headers=HEADERS)
+        self.assertEqual(
+            response.json["status"], AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
+        )
+
+        # assign a new reviewer from the same organization of the first one and check that
+        # the status is still awaiting reviewer assignment
+        json_body["reviewer_id"] = reviewer_3.id
+        response = self.app.post("/api/review", headers=HEADERS, json=json_body)
+        self.assertEqual(response.status_code, HTTPStatus.CREATED)
+        response = self.app.get(f"/api/algorithm/{algorithm.id}", headers=HEADERS)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(
+            response.json["status"], AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
+        )
+        # assign a new reviewer from a different organization and check that
+        # the status is now under review
+        json_body["reviewer_id"] = reviewer_2.id
+        response = self.app.post("/api/review", headers=HEADERS, json=json_body)
+        self.assertEqual(response.status_code, HTTPStatus.CREATED)
+        response = self.app.get(f"/api/algorithm/{algorithm.id}", headers=HEADERS)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response.json["status"], AlgorithmStatus.UNDER_REVIEW.value)
 
 
