@@ -1,8 +1,10 @@
 import logging
 
+from http import HTTPStatus
+
 from flask import request, g
 from flask_restful import Api
-from http import HTTPStatus
+from marshmallow import ValidationError
 
 from vantage6.server import db
 from vantage6.backend.common.resource.pagination import Pagination
@@ -336,7 +338,7 @@ class Collaborations(CollaborationBase):
                   session_restrict_to_same_image:
                     type: integer
                     description: Boolean (0 or 1) to indicate if the session
-                      should be restricted to the same image
+                      should be restricted to the same image. By default set to 0.
 
         responses:
           200:
@@ -351,13 +353,15 @@ class Collaborations(CollaborationBase):
 
         tags: ["Collaboration"]
         """
-        data = request.get_json()
-        # validate request body
-        errors = collaboration_input_schema.validate(data)
-        if errors:
+
+        data = request.get_json(silent=True)
+
+        try:
+            data = collaboration_input_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         name = data["name"]
