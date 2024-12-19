@@ -264,7 +264,12 @@ class TestReviewResources(TestResources):
         # check that deleting a non-existing review fails
         response = self.app.delete("/api/review/9999", headers=HEADERS)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-
+        # register user allowed to approve reviews
+        reviewer = self.register_user(
+            server.id,
+            username=REVIEWER_USERNAME_1,
+            user_rules=[Rule.get_by_("review", Operation.EDIT)],
+        )
         # re-create review
         review = Review(status=ReviewStatus.UNDER_REVIEW, algorithm=algorithm)
         review.save()
@@ -284,15 +289,20 @@ class TestReviewResources(TestResources):
         algorithm = Algorithm.get(algorithm.id)
         self.assertEqual(algorithm.status, AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT)
 
-        # set policy to require one review
+        # set policy to require one review adn one organization
         Policy(key=StorePolicies.MIN_REVIEWERS, value=1).save()
+        Policy(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS, value=1).save()
 
         # check that if there are two reviews, one of which is approved and the other is
         # deleted, the algorithm status is updated to approved
-        approved_review = Review(status=ReviewStatus.APPROVED, algorithm=algorithm)
+        approved_review = Review(
+            status=ReviewStatus.APPROVED, algorithm=algorithm, reviewer=reviewer
+        )
         approved_review.save()
         # re-create review again
-        review = Review(status=ReviewStatus.UNDER_REVIEW, algorithm=algorithm)
+        review = Review(
+            status=ReviewStatus.UNDER_REVIEW, algorithm=algorithm, reviewer=reviewer
+        )
         review.save()
         response = self.app.delete(f"/api/review/{review.id}", headers=HEADERS)
         self.assertEqual(response.status_code, HTTPStatus.OK)

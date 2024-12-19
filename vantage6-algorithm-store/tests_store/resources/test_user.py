@@ -102,7 +102,9 @@ class TestUserResource(TestResources):
         request_mock.return_value = (
             MockResponse(
                 status_code=HTTPStatus.OK,
-                json_data={"data": [{"id": 1, "username": "mock"}]},
+                json_data={
+                    "data": [{"id": 1, "username": "mock", "organization": {"id": 1}}]
+                },
             ),
             HTTPStatus.OK,
         )
@@ -110,7 +112,7 @@ class TestUserResource(TestResources):
         server = self.register_server(SERVER_URL)
 
         # test without authentication
-        body_ = {"username": "new_user", "roles": []}
+        body_ = {"username": "new_user", "roles": [], "organization": {"id": 1}}
         response = self.app.post("/api/user", headers=HEADERS, json=body_)
         self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
@@ -129,7 +131,11 @@ class TestUserResource(TestResources):
         # ensure we cannot register a user with more permissions then we have
         role = Role(rules=Rule.get())
         role.save()
-        body_ = {"username": "yet_another_user", "roles": [role.id]}
+        body_ = {
+            "username": "yet_another_user",
+            "roles": [role.id],
+            "organization": {"id": 1},
+        }
         response = self.app.post("/api/user", headers=HEADERS, json=body_)
         self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
