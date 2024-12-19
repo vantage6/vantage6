@@ -171,10 +171,12 @@ class Policy(Base):
 
         session.commit()
 
-        if result is None or len(result) == 0:
+        if result is None or result == []:
             # if the policy has not been set, allow all users to assign reviews
             return True
         else:
+            if not isinstance(result, list):
+                result = [result]
             result = next((r for r in result if r.value == str(user_id)), None)
 
         if result is None:
@@ -200,14 +202,16 @@ class Policy(Base):
         result = (
             session.query(cls)
             .filter_by(key=StorePolicies.ALLOWED_REVIEWERS.value)
-            .one_or_none()
+            .all()
         )
         session.commit()
 
-        if result is None or len(result) == 0:
+        if result is None or result == []:
             # if the policy has not been set, allow all users to review
             return True
         else:
+            if not isinstance(result, list):
+                result = [result]
             result = next((r for r in result if r.value == str(user_id)), None)
 
         if result is None:
