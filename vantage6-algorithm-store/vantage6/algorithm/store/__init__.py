@@ -96,7 +96,11 @@ class AlgorithmStoreApp:
         self.principal = Principal(self.app, use_sessions=False)
 
         # Enable cross-origin resource sharing
-        self.cors = CORS(self.app)
+        cors_allowed_origins = self.ctx.config.get("cors_allowed_origins", "*")
+        self.cors = CORS(
+            self.app,
+            resources={r"/*": {"origins": cors_allowed_origins}},
+        )
 
         # SWAGGER documentation
         self.swagger = Swagger(self.app, template={})
