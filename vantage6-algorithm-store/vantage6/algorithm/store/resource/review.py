@@ -309,6 +309,11 @@ class Reviews(AlgorithmStoreResources):
             return {
                 "msg": "Algorithm review is already finished!"
             }, HTTPStatus.BAD_REQUEST
+        # check if a policy exist that allow the user to assign a review
+        if not Policy.is_user_allowed_to_assign_review(g.user.id):
+            return {
+                "msg": "You are not allowed to assign reviews."
+            }, HTTPStatus.UNAUTHORIZED
 
         # check if the developer is the review assigner and if this is allowed
         if (
@@ -327,7 +332,9 @@ class Reviews(AlgorithmStoreResources):
         reviewer: db.User = db.User.get(data["reviewer_id"])
         if not reviewer:
             return {"msg": "Reviewer not found"}, HTTPStatus.BAD_REQUEST
-        if not reviewer.is_reviewer():
+        if not reviewer.is_reviewer() or not Policy.is_user_allowed_to_review(
+            reviewer.id
+        ):
             return {
                 "msg": f"User id='{reviewer.id}' is not allowed to review algorithms!"
             }, HTTPStatus.BAD_REQUEST

@@ -2,7 +2,7 @@
 # your peers to identify the store
 description: Test
 
-# IP adress to which the algorithm store server binds. In case you specify 0.0.0.0
+# IP address to which the algorithm store server binds. In case you specify 0.0.0.0
 # the server listens on all interfaces
 ip: 0.0.0.0
 
@@ -70,7 +70,7 @@ policies:
 
   # List of servers for which users are allowed to modify algorithms or other resources
   # in the algorithm store. If used together with "whitelisted" algorithm_view policy,
-  # any user from these servers will be able use the algorithms from the store.
+  # any user from these servers will be able to use the algorithms from the store.
   allowed_servers:
     - "https://cotopaxi.vantage6.ai"
     - "http://localhost:7601/api"
@@ -90,6 +90,20 @@ policies:
 
   # Define the minimum amount of organizations that must be involved in the review process.
   min_reviewing_organizations: 2
+
+  # Specify the users that are allowed to review algorithms. This is a list of usernames and servers
+  # that identify unique users. This works in combination with the permission system. If this policy
+  # is not set, all users with the right permissions are allowed to review algorithms.
+  allowed_reviewers:
+    - username: "username"
+      server: "http://localhost:7601/api"
+
+  # Specify the users that are allowed to assign reviews. This is a list of usernames and servers
+  # that identify unique users. This works in combination with the permission system. If this policy
+  # is not set, all users with the right permissions are allowed to assign reviews.
+  allowed_review_assigners:
+    - username: "username"
+      server: "http://localhost:7601/api"
 
 # Credentials used to login to private Docker registries. These credentials are used
 # to e.g. find the digests of the algorithm.
@@ -128,8 +142,6 @@ root_user:
   username: root
   # email of the vantage6 server's user you want to make root in the algorithm store
   email: root@organization.com
-  # organization id of the vantage6 server's user you want to make root in the algorithm store
-  organization_id: 1
 
 # Configure a smtp mail server for the store to use for administrative
 # purposes, e.g. to alert users that they have been assigned to review an algorithm,

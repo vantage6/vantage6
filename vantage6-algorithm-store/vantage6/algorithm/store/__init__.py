@@ -348,6 +348,34 @@ class AlgorithmStoreApp:
                     "Policy 'algorithms_open_to_whitelisted' will be deprecated in v5.0"
                     ". Please use 'algorithm_view' instead."
                 )
+            elif policy in [
+                StorePolicies.ALLOWED_REVIEWERS,
+                StorePolicies.ALLOWED_REVIEW_ASSIGNERS,
+            ]:
+                if not isinstance(policy_value, list):
+                    log.warning("Policy '%s' should be a list, skipping", policy)
+                    continue
+                for value in policy_value:
+                    # get the server id
+                    server = db.Vantage6Server.get_by_url(value["server"])
+                    if not server:
+                        log.warning(
+                            "Server '%s' does not exist, skipping policy",
+                            value["server"],
+                        )
+                        continue
+                    # get the user id
+                    user = db.User.get_by_server(value["username"], server.id)
+                    if not user:
+                        log.warning(
+                            "User '%s' on server '%s' is not registered in the store, "
+                            "skipping policy",
+                            value["username"],
+                            value["server"],
+                        )
+                        continue
+                    # store the policy
+                    db.Policy(key=policy, value=user.id).save()
             elif policy not in [p.value for p in StorePolicies]:
                 log.warning("Policy '%s' is not a valid policy, skipping", policy)
                 continue

@@ -12,6 +12,8 @@ class StorePolicies(str, Enum):
     MIN_REVIEWERS = "min_reviewers"
     ASSIGN_REVIEW_OWN_ALGORITHM = "assign_review_own_algorithm"
     MIN_REVIEWING_ORGANIZATIONS = "min_reviewing_organizations"
+    ALLOWED_REVIEWERS = "allowed_reviewers"
+    ALLOWED_REVIEW_ASSIGNERS = "allowed_review_assigners"
 
 
 class AlgorithmViewPolicies(str, Enum):

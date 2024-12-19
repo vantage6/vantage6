@@ -127,6 +127,8 @@ class TestPolicyResources(TestResources):
             Policy(key=StorePolicies.MIN_REVIEWERS.value, value=2),
             Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value, value="False"),
             Policy(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS.value, value=2),
+            Policy(key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS.value, value=1),
+            Policy(key=StorePolicies.ALLOWED_REVIEWERS.value, value=1),
         ]
         include_defaults = True
         include_private = False
@@ -142,6 +144,8 @@ class TestPolicyResources(TestResources):
             "min_reviewers": 2,
             "assign_review_own_algorithm": False,
             "min_reviewing_organizations": 2,
+            "allowed_review_assigners": 1,
+            "allowed_reviewers": 1,
         }
         self.assertEqual(response_dict, expected_dict)
 
@@ -157,6 +161,8 @@ class TestPolicyResources(TestResources):
             "min_reviewers": 2,
             "assign_review_own_algorithm": False,
             "min_reviewing_organizations": 2,
+            "allowed_review_assigners": 1,
+            "allowed_reviewers": 1,
         }
         self.assertEqual(response_dict, expected_dict)
 
@@ -171,6 +177,8 @@ class TestPolicyResources(TestResources):
             Policy(key=StorePolicies.MIN_REVIEWERS.value, value=2),
             Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value, value="False"),
             Policy(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS.value, value=2),
+            Policy(key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS.value, value=1),
+            Policy(key=StorePolicies.ALLOWED_REVIEWERS.value, value=1),
         ]
         include_defaults = True
         include_private = True
@@ -187,6 +195,8 @@ class TestPolicyResources(TestResources):
             "min_reviewers": 2,
             "assign_review_own_algorithm": False,
             "min_reviewing_organizations": 2,
+            "allowed_review_assigners": 1,
+            "allowed_reviewers": 1,
         }
 
         self.assertEqual(response_dict, expected_dict)
@@ -201,6 +211,8 @@ class TestPolicyResources(TestResources):
             Policy(key=BooleanPolicies.ALLOW_LOCALHOST, value="1"),
             Policy(key=StorePolicies.MIN_REVIEWERS.value, value=2),
             Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value, value="0"),
+            Policy(key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS.value, value=1),
+            Policy(key=StorePolicies.ALLOWED_REVIEWERS.value, value=1),
         ]
         include_defaults = True
         include_private = False
@@ -217,6 +229,8 @@ class TestPolicyResources(TestResources):
             "allow_localhost": True,
             "min_reviewers": 2,
             "assign_review_own_algorithm": False,
+            "allowed_review_assigners": 1,
+            "allowed_reviewers": 1,
         }
 
         self.assertEqual(response_dict, expected_dict)
@@ -231,6 +245,8 @@ class TestPolicyResources(TestResources):
             Policy(key=StorePolicies.ALLOW_LOCALHOST, value="1"),
             Policy(key=StorePolicies.MIN_REVIEWERS.value, value=2),
             Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value, value="False"),
+            Policy(key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS.value, value=1),
+            Policy(key=StorePolicies.ALLOWED_REVIEWERS.value, value=1),
         ]
         include_defaults = True
         include_private = False
@@ -246,6 +262,8 @@ class TestPolicyResources(TestResources):
             "allow_localhost": True,
             "min_reviewers": 2,
             "assign_review_own_algorithm": False,
+            "allowed_review_assigners": 1,
+            "allowed_reviewers": 1,
         }
 
         self.assertEqual(response_dict, expected_dict)

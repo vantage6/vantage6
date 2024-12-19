@@ -146,3 +146,70 @@ class Policy(Base):
         if result is None:
             return 1
         return int(result.value)
+
+    @classmethod
+    def is_user_allowed_to_assign_review(cls, user_id: int) -> bool:
+        """
+        Check if a user is allowed to assign reviews.
+
+        Parameters
+        ----------
+        user_id : int
+            Id of the user
+
+        Returns
+        -------
+        bool
+            True if users are allowed to assign reviews, False otherwise
+        """
+        session = DatabaseSessionManager.get_session()
+        result = (
+            session.query(cls)
+            .filter_by(key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS.value)
+            .all()
+        )
+
+        session.commit()
+
+        if result is None or len(result) == 0:
+            # if the policy has not been set, allow all users to assign reviews
+            return True
+        else:
+            result = next((r for r in result if r.value == str(user_id)), None)
+
+        if result is None:
+            return False
+        return True
+
+    @classmethod
+    def is_user_allowed_to_review(cls, user_id: int) -> bool:
+        """
+        Check if a user is allowed to perform a review.
+
+        Parameters
+        ----------
+        user_id : int
+            Id of the user
+
+        Returns
+        -------
+        bool
+            True if users are allowed to perform a review, False otherwise
+        """
+        session = DatabaseSessionManager.get_session()
+        result = (
+            session.query(cls)
+            .filter_by(key=StorePolicies.ALLOWED_REVIEWERS.value)
+            .one_or_none()
+        )
+        session.commit()
+
+        if result is None or len(result) == 0:
+            # if the policy has not been set, allow all users to review
+            return True
+        else:
+            result = next((r for r in result if r.value == str(user_id)), None)
+
+        if result is None:
+            return False
+        return True

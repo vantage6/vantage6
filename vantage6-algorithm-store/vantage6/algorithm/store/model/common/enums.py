@@ -93,6 +93,8 @@ class ListPolicies(str, Enum):
 
     # which servers are allowed to edit algorithms
     ALLOWED_SERVERS = "allowed_servers"
+    ALLOWED_REVIEWERS = "allowed_reviewers"
+    ALLOWED_REVIEW_ASSIGNERS = "allowed_review_assigners"
 
 
 class DefaultStorePolicies(Enum):
@@ -106,3 +108,5 @@ class DefaultStorePolicies(Enum):
     MIN_REVIEWERS = 2
     ASSIGN_REVIEW_OWN_ALGORITHM = False
     MIN_REVIEWING_ORGANIZATIONS = 2
+    ALLOWED_REVIEWERS = []
+    ALLOWED_REVIEW_ASSIGNERS = []
