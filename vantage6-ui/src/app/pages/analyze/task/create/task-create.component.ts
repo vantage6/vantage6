@@ -259,7 +259,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
       const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
       return [func.algorithm_name, func.type, storeName, func.display_name, func.name].some((val) =>
-        val?.toLocaleLowerCase()?.includes(value.toLowerCase())
+        val?.toLowerCase()?.includes(value.toLowerCase())
       );
     });
   }
@@ -272,7 +272,8 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   getFunctionOptionLabel(func: AlgorithmFunctionExtended): string {
     const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
     const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
-    return `${func.display_name ?? func.name} <div class="detail-txt"> (${func.algorithm_name}, ${func.type}), ${storeName}</div>`;
+    console.log(func.display_name ?? func.name, func.algorithm_name, func.type, storeName);
+    return `${func.display_name ?? func.name} <div class="detail-txt"> | ${func.algorithm_name}, ${storeName}, ${func.type}</div>`;
   }
 
   getAlgorithmFunctionSpec(func: AlgorithmFunctionExtended): string {
@@ -564,7 +565,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.collaboration?.algorithm_stores && this.collaboration.algorithm_stores.length > 1) {
       const store_name = this.collaboration.algorithm_stores.find((_) => _.url === algorithm.algorithm_store_url)?.name;
       if (store_name) {
-        return `(${store_name})`;
+        return `${store_name}`;
       }
     }
     return '';
@@ -597,7 +598,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
         this.handleStudyChange(Number(studyID.substring(StudyOrCollab.Study.length)));
       }
     });
-
 
     this.functionForm.controls.algorithmFunctionSpec.valueChanges
       .pipe(takeUntil(this.destroy$))
