@@ -13,8 +13,6 @@ import {
 } from 'src/app/models/api/task.models';
 import { Pagination } from 'src/app/models/api/pagination.model';
 import { getLazyProperties } from 'src/app/helpers/api.helper';
-// import { mockDataCrossTabTemplateTask, mockDataQualityTemplateTask } from 'src/app/pages/analyze/template-task/create/mock';
-// import { TemplateTask } from 'src/app/models/api/templateTask.models';
 import { isTaskFinished } from 'src/app/helpers/task.helper';
 import { SnackbarService } from './snackbar.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -54,9 +52,6 @@ export class TaskService {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let input: any = this.getDecodedInput(task.runs[0].input);
       // TODO this may not always true: what if different runs have different inputs?
-
-      // TODO(RIAN): Ask Bart if message for function and parameters is needed? What is the best implementation?
-
       if (input) {
         task.input = {
           method: input.method || '',
@@ -70,7 +65,6 @@ export class TaskService {
             : []
         };
       }
-      // Encrypted input download buttn (niet laten zien string), input leeg.
     }
     if (Array.isArray(task.results) && task.results.length > 0) {
       for (const result of task.results) {
