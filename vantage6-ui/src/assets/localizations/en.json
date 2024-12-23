@@ -100,9 +100,9 @@
     "filter-function": "Filter function",
     "alert-node-offline": "The node '{{name}}' is offline. This task will be handled when the node is back online.",
     "alert-no-result": "Failed to retrieve result.",
-    "alert-failed-read-input": "Failed to parse task input",
-    "alert-failed-read-input-function": "Failed to parse task input, meaning no information about the function can be displayed.",
-    "alert-failed-read-input-visualization": "Failed to parse task input, meaning no visualization can be displayed.",
+    "alert-failed-read-input": "Failed to parse input.",
+    "alert-failed-read-input-function": "Failed to parse input, therefore, information about the function cannot be displayed.",
+    "alert-failed-read-input-visualization": "Failed to parse input, therefore, no visualization can be displayed.",
     "alert-failed-read-encrypted-result": "Result was not successfully decoded and decrypted. Please use your private key locally to decrypt the results, and then perform base64 decoding.",
     "alert-failed-read-result": "Result was not successfully decoded. Please perform base64 decoding locally to get the results."
   },

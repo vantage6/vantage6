@@ -50,7 +50,7 @@ export class TaskService {
     //Handle base64 input
     if (Array.isArray(task.runs) && task.runs.length > 0) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let input: any = this.getDecodedInput(task.runs[0].input);
+      const input: any = this.getDecodedInput(task.runs[0].input);
       // TODO this may not always true: what if different runs have different inputs?
       if (input) {
         task.input = {

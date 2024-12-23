@@ -301,7 +301,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
 
   downloadInput(run: TaskRun): void {
     const filename = `vantage6_input_${run.id}.txt`;
-    let textInput = JSON.stringify(run.input);
+    const textInput = JSON.stringify(run.input);
     this.fileService.downloadTxtFile(textInput, filename);
   }
 
