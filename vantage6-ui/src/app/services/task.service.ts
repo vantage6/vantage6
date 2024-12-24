@@ -119,7 +119,6 @@ export class TaskService {
     try {
       decryptedResult = isEncrypted ? this.encryptionService.decryptData(taskResult.result) : atob(taskResult.result);
     } catch (error) {
-      console.error(this.translateService.instant(errorTranslationCode) + ': ', error);
       this.snackBarService.showMessage(this.translateService.instant(errorTranslationCode));
       return;
     }
@@ -128,7 +127,6 @@ export class TaskService {
     try {
       decodedResult = JSON.parse(decryptedResult);
     } catch (error) {
-      console.error(this.translateService.instant(errorTranslationCode) + ': ', error);
       this.snackBarService.showMessage(this.translateService.instant(errorTranslationCode));
     }
     return decodedResult;
@@ -141,7 +139,6 @@ export class TaskService {
     try {
       decryptedInput = isEncrypted ? this.encryptionService.decryptData(taskRunInput) : atob(taskRunInput);
     } catch (error) {
-      console.error(this.translateService.instant('task.alert-failed-read-input') + ': ', error);
       this.snackBarService.showMessage(this.translateService.instant('task.alert-failed-read-input'));
       return;
     }
@@ -150,7 +147,6 @@ export class TaskService {
     try {
       decodedInput = JSON.parse(decryptedInput);
     } catch (error) {
-      console.error(this.translateService.instant('task.alert-failed-read-input') + ': ', error);
       this.snackBarService.showMessage(this.translateService.instant('task.alert-failed-read-input'));
     }
     return decodedInput;

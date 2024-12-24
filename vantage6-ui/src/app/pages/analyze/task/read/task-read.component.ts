@@ -301,7 +301,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
 
   downloadInput(run: TaskRun): void {
     const filename = `vantage6_input_${run.id}.txt`;
-    const textInput = JSON.stringify(run.input);
+    const textInput = run.input || '';
     this.fileService.downloadTxtFile(textInput, filename);
   }
 
@@ -309,7 +309,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     const filename = `vantage6_result_${result.id}.txt`;
     let textResult = '';
     if (result.decoded_result === undefined) {
-      textResult = JSON.stringify(result.result);
+      textResult = result.result || '';
     } else {
       textResult = JSON.stringify(result.decoded_result);
     }
