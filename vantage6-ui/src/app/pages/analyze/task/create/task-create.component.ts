@@ -272,7 +272,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   getFunctionOptionLabel(func: AlgorithmFunctionExtended): string {
     const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
     const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
-    console.log(func.display_name ?? func.name, func.algorithm_name, func.type, storeName);
     return `${func.display_name ?? func.name} <div class="detail-txt"> | ${func.algorithm_name}, ${storeName}, ${func.type}</div>`;
   }
 
