@@ -75,6 +75,11 @@ class KilledRun(NamedTuple):
 
 # TODO remove DockerNodeContext as it is no longer used?
 # TODO how to handle GPU requests
+# TODO what happens when multiple nodes run in the same cluster? In the previous
+#      implementation we matched against the node name. We potentially could do the
+#      same here by adding the node name to the labels of the POD.
+# TODO check that we nog longer need to login to the registries, I think this is now
+#      done separately by the kubernetes cluster
 
 
 class ContainerManager:
@@ -97,12 +102,13 @@ class ContainerManager:
         self.running_on_pod: bool
 
         # minik8s config, by default in the user's home directory root
-        # TODO Upgrade this so that other kubeconfigs also van be used, allow
-        #  the user to specify the kubeconfig file path. This is only used when
+        # TODO Upgrade this so that other Kube configs also van be used, allow
+        #  the user to specify the Kube config file path. This is only used when
         #  the node is running on a regular host
         home_dir = os.path.expanduser("~")
         kube_config_file_path = os.path.join(home_dir, ".kube", "config")
 
+        # TODO clean this
         # The Node can be running on a regular host or within a POD. The K8S
         # configuration file is loaded from different locations depending on
         # the context.
@@ -123,6 +129,7 @@ class ContainerManager:
                 "K8S configuration could not be found. Node must be running within a "
                 "POD or a host"
             )
+            # TODO graceful exit
 
         # before a task is executed it gets exposed to these policies
         self._policies = self._setup_policies(ctx.config)
@@ -423,41 +430,21 @@ class ContainerManager:
         # This point is reached after timeout
         return RunStatus.UNKNOWN_ERROR
 
-    def _create_io_files(
-        self,
-        alg_input_file_path: str,
-        docker_input: bytes,
-        token_file_path: str,
-        token: str,
-        output_file_path: str,
-    ):
+    def _create_file(self, file_path: str, content: bytes) -> None:
         """
-        Create the files required by the algorithms, which will be bound to the PODs through a volume mount:
-        'docker_input' as the 'input' file, and 'token'
+        Create a file with the given content.
+
+        Parameters
+        ----------
+        file_path: str
+            Path to the file that is going to be created
+        content: bytes
+            Content that is going to be written to the file
         """
-        self.log.info(f"Creating {alg_input_file_path} and {token_file_path}")
-
-        # Check if the files already exist
-        # if Path(alg_input_file_path).exists() or Path(token_file_path).exists():
-        #    raise Exception(f"Input file {alg_input_file_path} or Token file {token_file_path} already exist. Cannot overwrite.")
-
-        # Create the directories if they don't exist (if there are no writing rights this will rise)
-        alg_input_dir = Path(alg_input_file_path).parent
-        token_dir = Path(token_file_path).parent
-        output_dir = Path(token_file_path).parent
-
-        alg_input_dir.mkdir(parents=True, exist_ok=True)
-        token_dir.mkdir(parents=True, exist_ok=True)
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        with open(alg_input_file_path, "wb") as alg_input_file:
-            alg_input_file.write(docker_input)
-
-        with open(token_file_path, "wb") as token_file:
-            token_file.write(token.encode("ascii"))
-
-        with open(output_file_path, "wb") as token_file:
-            token_file.write(b"")
+        file_dir = Path(file_path).parent
+        file_dir.mkdir(parents=True, exist_ok=True)
+        with open(file_path, "wb") as file_:
+            file_.write(content)
 
     def _get_session_volume_mount(
         self, session_id: int
@@ -527,13 +514,13 @@ class ContainerManager:
         # This method creates the folders required for the required tasks (subfolders
         # of the 'tasks-dir' defined in the v6 node configuration file), and then
         # bind these as host-volume mounts. The folder is created from the context
-        # of the running node, so the target folder dependes on whether the node
+        # of the running node, so the target folder depends on whether the node
         # is running from the host or from a POD.
 
         # If running whithin the POD, use the tas
         if self.running_on_pod:
             task_base_path = TASK_FILES_ROOT
-        # If running withn the host, use the value defined by the v6-config file
+        # If running with the host, use the value defined by the v6-config file
         else:
             task_base_path = self.ctx.config["task_dir"]
 
@@ -542,13 +529,9 @@ class ContainerManager:
         _output_file_path = os.path.join(task_base_path, run_id, "output")
 
         # Create algorithm's input and token files before creating volume mounts with them (relative to the node's file system: POD or host)
-        self._create_io_files(
-            alg_input_file_path=_input_file_path,
-            docker_input=docker_input,
-            token_file_path=_token_file_path,
-            token=token,
-            output_file_path=_output_file_path,
-        )
+        self._create_file(_input_file_path, docker_input)
+        self._create_file(_token_file_path, token.encode("ascii"))
+        self._create_file(_output_file_path, b"")
 
         # Binding the required files and folders to the Job POD as HostPathVolume (using actual host path folder
         # as this is made by the K8S server).
