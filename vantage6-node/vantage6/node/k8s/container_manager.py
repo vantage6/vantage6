@@ -13,7 +13,16 @@ from kubernetes.client.rest import ApiException
 from vantage6.cli.context.node import NodeContext
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmStepType, RunStatus
-from vantage6.node import globals
+from vantage6.node.globals import (
+    KUBE_CONFIG_FILE_PATH,
+    V6_NODE_FQDN,
+    V6_NODE_PROXY_PORT,
+    TASK_FILES_ROOT,
+    JOB_POD_OUTPUT_PATH,
+    JOB_POD_INPUT_PATH,
+    JOB_POD_TOKEN_PATH,
+    JOB_POD_TMP_FOLDER_PATH,
+)
 from vantage6.node.util import get_parent_id
 
 # logging.basicConfig(level=logging.INFO)
@@ -64,6 +73,7 @@ class KilledRun(NamedTuple):
 
 
 class ContainerManager:
+
     def __init__(self, ctx: NodeContext):
         self.log = logging.getLogger(logger_name(__name__))
 
@@ -93,10 +103,10 @@ class ContainerManager:
             # pprint.pp(self.v6_config)
 
         # Instanced within a pod
-        elif os.path.exists(globals.KUBE_CONFIG_FILE_PATH):
+        elif os.path.exists(KUBE_CONFIG_FILE_PATH):
             self.running_on_pod = True
             # Default mount location defined on POD configuration
-            config.load_kube_config(globals.KUBE_CONFIG_FILE_PATH)
+            config.load_kube_config(KUBE_CONFIG_FILE_PATH)
             self.log.info(
                 ">>> Loading K8S configuration file from a hostPath volume (Node running within a POD)"
             )
@@ -137,7 +147,6 @@ class ContainerManager:
             )
         return policies
 
-    # TODO add parameters "action" and "session_id"
     def run(
         self,
         run_id: int,
@@ -261,13 +270,11 @@ class ContainerManager:
         env_vars: List[V1EnvVar] = [
             client.V1EnvVar(
                 name="HOST",
-                value=os.environ.get("PROXY_SERVER_HOST", globals.V6_NODE_FQDN),
+                value=os.environ.get("PROXY_SERVER_HOST", V6_NODE_FQDN),
             ),
             client.V1EnvVar(
                 name="PORT",
-                value=os.environ.get(
-                    "PROXY_SERVER_PORT", str(globals.V6_NODE_PROXY_PORT)
-                ),
+                value=os.environ.get("PROXY_SERVER_PORT", str(V6_NODE_PROXY_PORT)),
             ),
             # TODO This environment variable correspond to the API PATH of the PROXY (not to be confused of the one of the
             # actual server). This variable should be eventually removed, as it is not being used to setup such PATH, so if
@@ -455,7 +462,7 @@ class ContainerManager:
         env_vars: V1EnvVar
 
         if self.running_on_pod:
-            task_base_path = globals.TASK_FILES_ROOT
+            task_base_path = TASK_FILES_ROOT
         # If running withn the host, use the value defined by the v6-config file
         else:
             task_base_path = self.v6_config["task_dir"]
@@ -513,7 +520,7 @@ class ContainerManager:
 
         # If running whithin the POD, use the tas
         if self.running_on_pod:
-            task_base_path = globals.TASK_FILES_ROOT
+            task_base_path = TASK_FILES_ROOT
         # If running withn the host, use the value defined by the v6-config file
         else:
             task_base_path = self.v6_config["task_dir"]
@@ -557,12 +564,12 @@ class ContainerManager:
         output_volume_mount = client.V1VolumeMount(
             # standard containers volume mount location
             name=f"task-{run_id}-output",
-            mount_path=globals.JOB_POD_OUTPUT_PATH,
+            mount_path=JOB_POD_OUTPUT_PATH,
         )
 
         vol_mounts.append(output_volume_mount)
         io_env_vars.append(
-            client.V1EnvVar(name="OUTPUT_FILE", value=globals.JOB_POD_OUTPUT_PATH)
+            client.V1EnvVar(name="OUTPUT_FILE", value=JOB_POD_OUTPUT_PATH)
         )
 
         ##### Volume for the INPUT file (this creates an empty file, in which the input parameters user by the algorithm
@@ -577,13 +584,11 @@ class ContainerManager:
         alg_input_volume_mount = client.V1VolumeMount(
             # standard containers volume mount location
             name=f"task-{run_id}-input",
-            mount_path=globals.JOB_POD_INPUT_PATH,
+            mount_path=JOB_POD_INPUT_PATH,
         )
 
         vol_mounts.append(alg_input_volume_mount)
-        io_env_vars.append(
-            client.V1EnvVar(name="INPUT_FILE", value=globals.JOB_POD_INPUT_PATH)
-        )
+        io_env_vars.append(client.V1EnvVar(name="INPUT_FILE", value=JOB_POD_INPUT_PATH))
 
         ####### Volume and volume mount for the TOKEN file. This creates an empty file first,
         # the Token should be written on it before launching the Job
@@ -597,13 +602,11 @@ class ContainerManager:
         token_volume_mount = client.V1VolumeMount(
             # standard containers volume mount location
             name=f"token-{run_id}-input",
-            mount_path=globals.JOB_POD_TOKEN_PATH,
+            mount_path=JOB_POD_TOKEN_PATH,
         )
 
         vol_mounts.append(token_volume_mount)
-        io_env_vars.append(
-            client.V1EnvVar(name="TOKEN_FILE", value=globals.JOB_POD_TOKEN_PATH)
-        )
+        io_env_vars.append(client.V1EnvVar(name="TOKEN_FILE", value=JOB_POD_TOKEN_PATH))
 
         ######## Volume for temporal data folder
         tmp_volume = client.V1Volume(
@@ -616,15 +619,13 @@ class ContainerManager:
         tmp_volume_mount = client.V1VolumeMount(
             # standard containers volume mount location
             name=f"task-{run_id}-tmp",
-            mount_path=globals.JOB_POD_TMP_FOLDER_PATH,
+            mount_path=JOB_POD_TMP_FOLDER_PATH,
         )
 
         vol_mounts.append(tmp_volume_mount)
 
         io_env_vars.append(
-            client.V1EnvVar(
-                name="TEMPORARY_FOLDER", value=globals.JOB_POD_TMP_FOLDER_PATH
-            )
+            client.V1EnvVar(name="TEMPORARY_FOLDER", value=JOB_POD_TMP_FOLDER_PATH)
         )
 
         ##### Environment variable with the labels of the databases to be used
@@ -913,9 +914,7 @@ class ContainerManager:
             # Running within a POD: use the standard tasks folder path mapped to the POD-container's file system.
             # @precondition:
             #  node_constants.TASK_FILES_ROOT is mapped to the path defined in the vantge6 configuration file (task_dir)
-            succeded_job_output_file = os.path.join(
-                globals.TASK_FILES_ROOT, job_id, "output"
-            )
+            succeded_job_output_file = os.path.join(TASK_FILES_ROOT, job_id, "output")
         else:
             # Running from the host (e.g., for testing purposes) - use the path defined in the configuration file
             succeded_job_output_file = os.path.join(
