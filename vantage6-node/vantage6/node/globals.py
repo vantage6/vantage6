@@ -67,7 +67,7 @@ DEFAULT_REQUIRE_ALGO_IMAGE_PULL = False
 JOB_POD_INPUT_PATH = "/app/output"
 JOB_POD_OUTPUT_PATH = "/app/input"
 JOB_POD_TOKEN_PATH = "/app/token"
-JOB_POD_TMP_FOLDER_PATH = "/app/tmp"
+JOB_POD_SESSION_FOLDER_PATH = "/app/session"
 
 # Paths within the Node POD-container defined by convention - these must match the mountPaths on kubeconfs/node_pod_config.yaml
 
