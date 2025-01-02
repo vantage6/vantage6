@@ -12,6 +12,7 @@ from kubernetes.client.rest import ApiException
 
 from vantage6.cli.context.node import NodeContext
 from vantage6.common import logger_name
+from vantage6.common.globals import NodePolicy
 from vantage6.common.enum import AlgorithmStepType, RunStatus
 from vantage6.node.globals import (
     KUBE_CONFIG_FILE_PATH,
@@ -72,47 +73,55 @@ class KilledRun(NamedTuple):
     parent_id: int
 
 
+# TODO remove DockerNodeContext as it is no longer used?
+# TODO how to handle GPU requests
+
+
 class ContainerManager:
 
     def __init__(self, ctx: NodeContext):
-        self.log = logging.getLogger(logger_name(__name__))
+        """
+        Initialization of ``ContainerManager`` that handles communication with the
+        Kubernetes cluster.
 
-        # v6-node configuration entries
-        self.v6_config: dict
+        Parameters
+        ----------
+        ctx: NodeContext
+            Context object from which some settings are obtained
+        """
+        self.log = logging.getLogger(logger_name(__name__))
+        self.log.debug("Initializing ContainerManager")
+
+        self.ctx = ctx
 
         self.running_on_pod: bool
 
-        # Load v6-node configuration file
-        with open(ctx.config_file, "r") as file:
-            self.v6_config = yaml.safe_load(file)
-
-        self.log.info(f"v6-K8S Node - loaded v6 settings:{self.v6_config}")
-
         # minik8s config, by default in the user's home directory root
+        # TODO Upgrade this so that other kubeconfigs also van be used, allow
+        #  the user to specify the kubeconfig file path. This is only used when
+        #  the node is running on a regular host
         home_dir = os.path.expanduser("~")
         kube_config_file_path = os.path.join(home_dir, ".kube", "config")
 
-        # Instanced within the host
+        # The Node can be running on a regular host or within a POD. The K8S
+        # configuration file is loaded from different locations depending on
+        # the context.
         if os.path.exists(kube_config_file_path):
             self.running_on_pod = False
             # default microk8s config
             config.load_kube_config(kube_config_file_path)
-            self.log.info(
-                ">>> Loading K8S configuration file from the host filesystem (Node running on a regular host)"
-            )
-            # pprint.pp(self.v6_config)
+            self.log.info("Node running on a regular host")
 
         # Instanced within a pod
         elif os.path.exists(KUBE_CONFIG_FILE_PATH):
             self.running_on_pod = True
             # Default mount location defined on POD configuration
             config.load_kube_config(KUBE_CONFIG_FILE_PATH)
-            self.log.info(
-                ">>> Loading K8S configuration file from a hostPath volume (Node running within a POD)"
-            )
+            self.log.info("Node running within a POD")
         else:
             raise ValueError(
-                "No K8S configuration file found. Node must be running within a POD or a host"
+                "K8S configuration could not be found. Node must be running within a "
+                "POD or a host"
             )
 
         # before a task is executed it gets exposed to these policies
@@ -138,7 +147,10 @@ class ContainerManager:
             Dictionary with the policies
         """
         policies = config.get("policies", {})
-        if not policies or not policies.get("allowed_algorithms"):
+        if not policies or (
+            not policies.get(NodePolicy.ALLOWED_ALGORITHMS)
+            and not policies.get(NodePolicy.ALLOWED_ALGORITHM_STORES)
+        ):
             self.log.warning(
                 "No policies on allowed algorithms have been set for this node!"
             )
@@ -465,7 +477,7 @@ class ContainerManager:
             task_base_path = TASK_FILES_ROOT
         # If running withn the host, use the value defined by the v6-config file
         else:
-            task_base_path = self.v6_config["task_dir"]
+            task_base_path = self.ctx.config["task_dir"]
 
         session_folder_name = f"session-{self.session_id:09d}"
         session_folder = os.path.join(task_base_path, session_folder_name)
@@ -523,7 +535,7 @@ class ContainerManager:
             task_base_path = TASK_FILES_ROOT
         # If running withn the host, use the value defined by the v6-config file
         else:
-            task_base_path = self.v6_config["task_dir"]
+            task_base_path = self.ctx.config["task_dir"]
 
         _input_file_path = os.path.join(task_base_path, run_id, "input")
         _token_file_path = os.path.join(task_base_path, run_id, "token")
@@ -541,7 +553,7 @@ class ContainerManager:
         # Binding the required files and folders to the Job POD as HostPathVolume (using actual host path folder
         # as this is made by the K8S server).
 
-        host_task_base_path = self.v6_config["task_dir"]
+        host_task_base_path = self.ctx.config["task_dir"]
 
         _host_input_file_path = os.path.join(host_task_base_path, run_id, "input")
         _host_token_file_path = os.path.join(host_task_base_path, run_id, "token")
@@ -642,7 +654,7 @@ class ContainerManager:
         # TODO bind other input data types
         # TODO include only the ones given in the 'databases_to_use parameter
         csv_input_files = list(
-            filter(lambda o: (o["type"] == "csv"), self.v6_config["databases"])
+            filter(lambda o: (o["type"] == "csv"), self.ctx.config["databases"])
         )
 
         for csv_input in csv_input_files:
@@ -907,7 +919,7 @@ class ContainerManager:
                 Node container filesystem
 
         #if executing from HOST, use path given in v6 config file
-            #output_file = os.path.join(self.v6_config['task_dir'],run_id,'output')
+            #output_file = os.path.join(self.ctx.config['task_dir'],run_id,'output')
 
         """
         if self.running_on_pod:
@@ -918,7 +930,7 @@ class ContainerManager:
         else:
             # Running from the host (e.g., for testing purposes) - use the path defined in the configuration file
             succeded_job_output_file = os.path.join(
-                self.v6_config["task_dir"], job_id, "output"
+                self.ctx.config["task_dir"], job_id, "output"
             )
 
         self.log.info(
