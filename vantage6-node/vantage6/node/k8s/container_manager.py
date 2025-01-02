@@ -236,6 +236,7 @@ class ContainerManager:
 
         _io_related_env_variables: List[V1EnvVar]
 
+        # TODO only mount the token in compute actions
         _volumes, _volume_mounts, _io_related_env_variables = (
             self._create_volume_mounts(
                 run_id=str_run_id,
@@ -244,6 +245,14 @@ class ContainerManager:
                 databases_to_use=databases_to_use,
             )
         )
+
+        ses_volumes, ses_vol_mount, ses_env_vars = self._get_session_volume_mount(
+            session_id=session_id
+        )
+
+        _volumes.append(ses_volumes)
+        _volume_mounts.append(ses_vol_mount)
+        _io_related_env_variables.extend(ses_env_vars)
 
         # Setting the environment variables required by V6 algorithms.
         #   As these environment variables are used within the container/POD environment, file paths are relative
@@ -282,6 +291,8 @@ class ContainerManager:
                 "run_id": str_run_id,
                 "task_id": str_task_id,
                 "task_parent_id": parent_id,
+                "action": str(action),
+                "session_id": str(session_id),
             },
         )
 
@@ -428,6 +439,46 @@ class ContainerManager:
 
         with open(output_file_path, "wb") as token_file:
             token_file.write(b"")
+
+    def _get_session_volume_mount(
+        self, session_id: int
+    ) -> Tuple[client.V1Volume, client.V1VolumeMount, V1EnvVar]:
+        """
+        Define the mounts required by the VPN client to forward traffic to the algorithm container
+
+        Returns: a tuple with (1) the created volume names and their corresponding volume mounts and (2) the list
+        of the environment variables required by the algorithms to use such mounts.
+
+        """
+        volume: client.V1Volume
+        vol_mount: client.V1VolumeMount
+        env_vars: V1EnvVar
+
+        if self.running_on_pod:
+            task_base_path = globals.TASK_FILES_ROOT
+        # If running withn the host, use the value defined by the v6-config file
+        else:
+            task_base_path = self.v6_config["task_dir"]
+
+        session_folder_name = f"session-{self.session_id:09d}"
+        session_folder = os.path.join(task_base_path, session_folder_name)
+        os.makedirs(session_folder, exist_ok=True)
+
+        volume = client.V1Volume(
+            name=session_folder_name,
+            host_path=client.V1HostPathVolumeSource(path=session_folder),
+        )
+
+        # TODO move "/mnt/session" to a global variable
+        vol_mount = client.V1VolumeMount(
+            # standard containers volume mount location
+            name=session_folder_name,
+            mount_path="/mnt/session",
+        )
+
+        env_vars = [client.V1EnvVar(name="SESSION_FOLDER", value="/mnt/session")]
+
+        return volume, vol_mount, env_vars
 
     def _create_volume_mounts(
         self, run_id: str, docker_input: bytes, token: str, databases_to_use: list[str]
@@ -623,73 +674,56 @@ class ContainerManager:
 
         return volumes, vol_mounts, io_env_vars
 
-    def create_volume(self, volume_name: str) -> None:
-        """
-        This method creates a persistent volume through volume claims. However, this method is not being
-        used yet, as using only host_path volume binds seems to be enough and more convenient
-        (see details on _create_volume_mounts) - this is to be discussed
-        """
+    # TODO we need this code when we move to k8s clusters
+    # def create_volume(self, volume_name: str) -> None:
+    #     """
+    #     This method creates a persistent volume through volume claims. However, this method is not being
+    #     used yet, as using only host_path volume binds seems to be enough and more convenient
+    #     (see details on _create_volume_mounts) - this is to be discussed
+    #     """
 
-        """
-        @precondition: at least one persistent volume has been provisioned in the (single) kubernetes node
+    #     """
+    #     @precondition: at least one persistent volume has been provisioned in the (single) kubernetes node
 
-        """
+    #     """
 
-        is_valid_vol_name = re.search(
-            "[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*",
-            volume_name,
-        )
+    #     is_valid_vol_name = re.search(
+    #         "[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*",
+    #         volume_name,
+    #     )
 
-        if not is_valid_vol_name:
-            # TODO custom exceptions to decouple codebase from kubernetes
-            raise Exception(f"Invalid volume name; {volume_name}")
+    #     if not is_valid_vol_name:
+    #         # TODO custom exceptions to decouple codebase from kubernetes
+    #         raise Exception(f"Invalid volume name; {volume_name}")
 
-        # create a persistent volume claim with the given name
-        pvc = client.V1PersistentVolumeClaim(
-            api_version="v1",
-            kind="PersistentVolumeClaim",
-            metadata=client.V1ObjectMeta(name=volume_name),
-            spec=client.V1PersistentVolumeClaimSpec(
-                storage_class_name="manual",
-                access_modes=["ReadWriteOnce"],
-                resources=client.V1ResourceRequirements(
-                    # TODO Storage quota to be defined in system properties
-                    requests={"storage": "1Gi"}
-                ),
-            ),
-        )
+    #     # create a persistent volume claim with the given name
+    #     pvc = client.V1PersistentVolumeClaim(
+    #         api_version="v1",
+    #         kind="PersistentVolumeClaim",
+    #         metadata=client.V1ObjectMeta(name=volume_name),
+    #         spec=client.V1PersistentVolumeClaimSpec(
+    #             storage_class_name="manual",
+    #             access_modes=["ReadWriteOnce"],
+    #             resources=client.V1ResourceRequirements(
+    #                 # TODO Storage quota to be defined in system properties
+    #                 requests={"storage": "1Gi"}
+    #             ),
+    #         ),
+    #     )
 
-        """
-        If the volume was not claimed with the given name yet, there won't be exception.
-        If the volume was already claimed with the same name, (which should not make the function to fail),
-            the API is expected to return an 409 error code.
-        """
-        try:
-            self.core_api.create_namespaced_persistent_volume_claim("v6-jobs", body=pvc)
-        except client.rest.ApiException as e:
-            if e.status != 409:
-                # TODO custom exceptions to decouple codebase from kubernetes
-                raise Exception(
-                    f"Unexpected kubernetes API error code {e.status}"
-                ) from e
-
-    def _create_host_path_persistent_volume(self, path: str) -> None:
-        """
-        Programatically creates a persistent volume (in case it is needed for creating a
-        volume claim). Just for reference, not currently being used.
-        """
-        pv = client.V1PersistentVolume(
-            metadata=client.V1ObjectMeta(
-                name="task-pv-volume", labels={"type": "local"}
-            ),
-            spec=client.V1PersistentVolumeSpec(
-                storage_class_name="manual",
-                capacity={"storage": "10Gi"},
-                access_modes=["ReadWriteOnce"],
-                host_path=client.V1HostPathVolumeSource(path=path),
-            ),
-        )
-        self.core_api.create_persistent_volume(body=pv)
+    #     """
+    #     If the volume was not claimed with the given name yet, there won't be exception.
+    #     If the volume was already claimed with the same name, (which should not make the function to fail),
+    #         the API is expected to return an 409 error code.
+    #     """
+    #     try:
+    #         self.core_api.create_namespaced_persistent_volume_claim("v6-jobs", body=pvc)
+    #     except client.rest.ApiException as e:
+    #         if e.status != 409:
+    #             # TODO custom exceptions to decouple codebase from kubernetes
+    #             raise Exception(
+    #                 f"Unexpected kubernetes API error code {e.status}"
+    #             ) from e
 
     def is_docker_image_allowed(self, docker_image_name: str, task_info: dict) -> bool:
         """
@@ -712,7 +746,6 @@ class ContainerManager:
         """
 
         # TODO use original v6 implementation
-
         return True
 
     def is_running(self, run_id: int) -> bool:
@@ -734,18 +767,15 @@ class ContainerManager:
         """
         To be discussed:
         Potential statuses of a Job POD: Pending, Running, Succeeded, Failed, Unknown
-        This method is used locally to check whether a given task was already executed. In which case does
-        happen?
-        Given the above What would be the expected return value if the task was already completed or failed?
+        This method is used locally to check whether a given task was already executed.
+        In which case does happen? Given the above What would be the expected return
+        value if the task was already completed or failed?
 
         """
         pods = self.core_api.list_namespaced_pod(
             namespace="v6-jobs", label_selector=f"app={run_id}"
         )
-        if pods.items:
-            return True
-        else:
-            return False
+        return True if pods.items else False
 
     def get_result(self) -> Result:
         """
