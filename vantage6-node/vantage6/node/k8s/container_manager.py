@@ -1,9 +1,9 @@
-import datetime
 import logging
 import os
 import time
+import re
+import base64
 
-from pathlib import Path
 from typing import List, NamedTuple, Tuple
 
 
@@ -13,8 +13,18 @@ from kubernetes.client.rest import ApiException
 
 from vantage6.cli.context.node import NodeContext
 from vantage6.common import logger_name
-from vantage6.common.globals import NodePolicy, ContainerEnvNames
+from vantage6.common.globals import (
+    NodePolicy,
+    ContainerEnvNames,
+    STRING_ENCODING,
+    ENV_VAR_EQUALS_REPLACEMENT,
+)
 from vantage6.common.enum import AlgorithmStepType, RunStatus
+from vantage6.common.docker.addons import (
+    get_digest,
+    get_image_name_wo_tag,
+)
+from vantage6.common.client.node_client import NodeClient
 from vantage6.node.globals import (
     KUBE_CONFIG_FILE_PATH,
     V6_NODE_FQDN,
@@ -75,20 +85,35 @@ class KilledRun(NamedTuple):
     parent_id: int
 
 
-# TODO remove DockerNodeContext as it is no longer used?
+# HIGH
+# TODO encoding of envvars (sec risk) (re-instantiate `_encode_environment_variables`)
+# TODO re-instantiate `_validate_dataframe_names`, `_validate_source_database` and
+#      `_validate_environment_variables`
+# TODO copy `is_file` database to a volume mount
+# TODO implement the dataframe DATABASE_URI for sessions based on the action
+
+# MEDIUM
+# TODO additional environment variables for algorithms seem to be missing?
+# TODO implement the `kill` method
 # TODO how to handle GPU requests
+# TODO implement the `cleanup` methods
+
+# LOW
 # TODO what happens when multiple nodes run in the same cluster? In the previous
 #      implementation we matched against the node name. We potentially could do the
 #      same here by adding the node name to the labels of the POD.
 # TODO check that we nog longer need to login to the registries, I think this is now
 #      done separately by the kubernetes cluster
 # TODO we probably also need to clean up the volumes after a task has been finished
-# TODO additional enironment variables for algorithms seem to be missing?
+# TODO only mount token in `compute` actions
+# TODO make the k8s jobs namespace settable in the config file
+# TODO the return of `_printable_input`
+# TODO remove DockerNodeContext as it is no longer used?
 
 
 class ContainerManager:
 
-    def __init__(self, ctx: NodeContext):
+    def __init__(self, ctx: NodeContext, client: NodeClient):
         """
         Initialization of ``ContainerManager`` that handles communication with the
         Kubernetes cluster.
@@ -104,6 +129,8 @@ class ContainerManager:
         self.ctx = ctx
 
         self.running_on_pod: bool
+
+        self.client = client
 
         # minik8s config, by default in the user's home directory root
         # TODO Upgrade this so that other Kube configs also van be used, allow
@@ -134,6 +161,10 @@ class ContainerManager:
                 "POD or a host"
             )
             # TODO graceful exit
+
+        self.data_dir = (
+            TASK_FILES_ROOT if self.running_on_pod else self.ctx.config["task_dir"]
+        )
 
         # before a task is executed it gets exposed to these policies
         self._policies = self._setup_policies(ctx.config)
@@ -180,10 +211,9 @@ class ContainerManager:
         token: str,
         databases_to_use: list[str],
         action: AlgorithmStepType,
-    ) -> tuple[RunStatus, list[dict] | None]:
+    ) -> RunStatus:
         """
-        Checks if docker task is running. If not, creates DockerTaskManager to
-        run the task
+        Run a vantage6 algorithm on the Kubernetes cluster.
 
         Parameters
         ----------
@@ -206,103 +236,66 @@ class ContainerManager:
 
         Returns
         -------
-        RunStatus, list[dict] | None
-            Returns a tuple with the status of the task and a description of
-            each port on the VPN client that forwards traffic to the algorithm
-            container (``None`` if VPN is not set up).
+        RunStatus
+            Returns the status of the run
+
+        Notes
+        -----
+        stackoverflow.com/questions/57563359/how-to-properly-update-the-status-of-a-job
+        kubernetes.io/docs/concepts/workloads/controllers/job/#pod-backoff-failure-
+            policy
         """
 
-        """
-        Current V6 algorithm dispatch sequence:
-
-            __start_task(task_incl_run)
-                __docker.run(
-                    ...
-                     'docker_input' <- task_incl_run["input"]
-                    ...
-                )
-                -->
-                    task.run(
-                        docker_input <- docker_input
-                    )
-                    -->
-                        - Create input, output and token files: https://github.com/vantage6/vantage6/blob/3b38ac1e738a95cda1d78d90cc34f4f1190e9cdb/vantage6-node/vantage6/node/docker/task_manager.py#L428
-                            - input: docker_input
-                            - output: empty file
-                            - token: token.encode("ascii")
-                        - Set environment variables: https://github.com/vantage6/vantage6/blob/2a16890bde9abaf61cf134b00d8553ff5b5ce276/vantage6-node/vantage6/node/docker/task_manager.py#L477
-                            "INPUT_FILE":
-                            "OUTPUT_FILE":
-                            "TOKEN_FILE":
-                            "TEMPORARY_FOLDER":
-                            "HOST": (proxy/server _host)
-                            "PORT": (server port)
-                            "API_PATH": ""
-
-                            "USER_REQUESTED_DATABASE_LABELS"
-                            "<LABEL>_DATABASE_URI"
-                            "<LABEL>_DATABASE_TYPE"
-                            "<LABEL>_DB_PARAM_<ADDITIONAL_PARAMETER>"
-                        - Create and run an image container: https://github.com/vantage6/vantage6/blob/2a16890bde9abaf61cf134b00d8553ff5b5ce276/vantage6-node/vantage6/node/docker/task_manager.py#L344
-
-
-
-        """
-        # Usage context: https://github.com/vantage6/vantage6/blob/b0c961c8a060d9ea656e078e685a8e7d0560ef44/vantage6-node/vantage6/node/__init__.py#L349
-
-        run_io = RunIO(run_id, session_id)
+        # In case we are dealing with a data-extraction or prediction task, we need to
+        # know the dataframe handle that is being created or modified by the algorithm.
+        dataframe_handle = task_info.get("dataframe", {}).get("handle")
+        run_io = RunIO(run_id, session_id, dataframe_handle, self.data_dir)
 
         # Verify that an allowed image is used
         if not self.is_docker_image_allowed(image, task_info):
-            msg = f"Docker image {image} is not allowed on this Node!"
-            self.log.critical(msg)
-            return RunStatus.NOT_ALLOWED, None
+            self.log.critical(f"Docker image {image} is not allowed on this Node!")
+            return RunStatus.NOT_ALLOWED
 
         # Check that this task is not already running
-        if self.is_running(run_id):
-            self.log.warning("Task is already being executed, discarding task")
-            self.log.debug(f"run_id={run_id} is discarded")
-            return RunStatus.ACTIVE, None
-
-        str_task_id = str(task_info["id"])
-        str_run_id = str(run_id)
-        parent_id = str(get_parent_id(task_info))
-
-        _io_related_env_variables: List[V1EnvVar]
-
-        # TODO only mount the token in compute actions
-        _volumes, _volume_mounts, _io_related_env_variables = (
-            self._create_volume_mounts(
-                run_io=run_io,
-                docker_input=docker_input,
-                token=token,
-                databases_to_use=databases_to_use,
+        if self.is_running(run_io.container_name):
+            self.log.warning(
+                f"Task (run_id={run_id}) is already being executed, discarding task"
             )
+            return RunStatus.ACTIVE
+
+        task_id = task_info["id"]
+        parent_task_id = get_parent_id(task_info)
+
+        _volumes, _volume_mounts, env_vars = self._create_volume_mounts(
+            run_io=run_io,
+            docker_input=docker_input,
+            token=token,
+            databases_to_use=databases_to_use,
         )
 
-        # Setting the environment variables required by V6 algorithms.
-        #   As these environment variables are used within the container/POD environment, file paths are relative
-        #   to the mount paths (i.e., the container's file system) created by the method _crate_volume_mounts
-        #
-        env_vars: List[V1EnvVar] = [
-            client.V1EnvVar(
-                name="HOST",
-                value=os.environ.get("PROXY_SERVER_HOST", V6_NODE_FQDN),
-            ),
-            client.V1EnvVar(
-                name="PORT",
-                value=os.environ.get("PROXY_SERVER_PORT", str(V6_NODE_PROXY_PORT)),
-            ),
-            # TODO This environment variable correspond to the API PATH of the PROXY (not to be confused of the one of the
-            # actual server). This variable should be eventually removed, as it is not being used to setup such PATH, so if
-            # it is changed to a value different than empty, it leads to an error.
-            client.V1EnvVar(name="API_PATH", value=""),
-        ]
-
-        env_vars.extend(_io_related_env_variables)
+        # Set environment variables for the algorithm client. This client is used
+        # to communicate from the algorithm to the vantage6 server through the proxy.
+        env_vars.extend(
+            [
+                client.V1EnvVar(
+                    name="HOST",
+                    value=os.environ.get("PROXY_SERVER_HOST", V6_NODE_FQDN),
+                ),
+                client.V1EnvVar(
+                    name="PORT",
+                    value=os.environ.get("PROXY_SERVER_PORT", str(V6_NODE_PROXY_PORT)),
+                ),
+                # TODO This environment variable correspond to the API PATH of the PROXY
+                # (not to be confused of the one of the actual server). This variable
+                # should be eventually removed, as it is not being used to setup such \
+                # PATH, so if it is changed to a value different than empty, it leads to
+                # an error.
+                client.V1EnvVar(name="API_PATH", value=""),
+            ]
+        )
 
         container = client.V1Container(
-            name=str_run_id,
+            name=run_io.container_name,
             image=image,
             tty=True,
             volume_mounts=_volume_mounts,
@@ -310,13 +303,14 @@ class ContainerManager:
         )
 
         job_metadata = client.V1ObjectMeta(
-            name=str_run_id,
+            name=run_io.container_name,
             annotations={
-                "run_id": str_run_id,
-                "task_id": str_task_id,
-                "task_parent_id": parent_id,
+                "run_id": run_io.run_id,
+                "task_id": str(task_id),
+                "task_parent_id": str(parent_task_id),
                 "action": str(action),
                 "session_id": str(session_id),
+                "dataframe_handle": dataframe_handle if dataframe_handle else "",
             },
         )
 
@@ -327,7 +321,7 @@ class ContainerManager:
             metadata=job_metadata,
             spec=client.V1JobSpec(
                 template=client.V1PodTemplateSpec(
-                    metadata=client.V1ObjectMeta(labels={"app": str_run_id}),
+                    metadata=client.V1ObjectMeta(labels={"app": run_io.container_name}),
                     spec=client.V1PodSpec(
                         containers=[container],
                         volumes=_volumes,
@@ -339,88 +333,95 @@ class ContainerManager:
         )
 
         self.log.info(
-            f"Creating namedspaced K8S job for task_id={str_task_id} and run_id={str_run_id}."
+            f"Creating namespaced K8S job for task_id={task_id} and run_id={run_id}."
         )
-
         self.batch_api.create_namespaced_job(namespace="v6-jobs", body=job)
 
-        # Based on
-        # https://stackoverflow.com/questions/57563359/how-to-properly-update-the-status-of-a-job
-        # https://kubernetes.io/docs/concepts/workloads/controllers/job/#pod-backoff-failure-policy
-
-        """
-        Pending, Running, Succeeded, Failed, Unknown
-        Kubernetes will automatically retry the job N times (backoff_limit value above). According
-        to the Pod's backoff failure policy, it will have a failed status only after the last failed retry.
-        """
-
+        # Wait till the job is up and running. The job is considered to be running
+        # when the POD created by the job reports at least a 'Running' state. The states
+        # that a POD can report:
+        #                      - Succeeded
+        #                     /
+        # Pending - Running ---- Failed
+        #                     \
+        #                      - Unknown
+        #
+        # Kubernetes will automatically retry the job ``backoff_limit`` times. According
+        # to the Pod's backoff failure policy, it will have a failed status only after
+        # the last failed retry.
         interval = 1
         timeout = 60
-
         start_time = time.time()
 
-        # the create_namespaced_job() method is asynchronous, so evaluating the pod execution status
-        # requires first polling the K8S API until the new job/POD shows up.
+        # Wait until the POD is running. This method is blocking until the POD is
+        # running or a timeout is reached.
+        # TODO even though the timeout is reached, the POD could still be running
+        # TODO we could make this non-blocking by keeping track of the started jobs
+        #     and checking their status in a separate thread
+        # TODO in the previous `DockerTaskManager` a few checks where performed to
+        #      tackle any issues with the prerequisites. For example it checked wether
+        #      the dataframe requested by the user was available. We should implement
+
         while True:
+
             pods = self.core_api.list_namespaced_pod(
-                namespace="v6-jobs", label_selector=f"app={run_id}"
+                namespace="v6-jobs", label_selector=f"app={run_io.container_name}"
             )
+
             if pods.items:
-                # The container was created. Now wait until it reports either an 'active' or 'failed' status
-                # Pod-creation -> Pending -> Running -> Failed
-                # What should be done in the case of a timeout while checking this?
+
+                # The container was created and has at least the `pending` state. Wait
+                # until it reports either an `active` or `failed` state.
                 self.log.info(
-                    f"{len(pods.items)} Job POD with label app={run_id} created successfuly on v6-jobs namespace. Waiting until it has a (k8S) running state."
+                    f"{len(pods.items)} Job POD with label app={run_io.container_name} "
+                    "created  successfully on v6-jobs namespace. Waiting until it has "
+                    "a (k8S) running state."
                 )
-                status = self.__wait_until_pod_running(f"app={run_id}")
+                status = self.__wait_until_pod_running(f"app={run_io.container_name}")
                 self.log.info(
-                    f"Job POD with label app={run_id} is now on a running state."
+                    f"Job POD with label app={run_io.container_name} is now on a "
+                    "running state."
                 )
 
-                return status, None
+                return status
 
             elif time.time() - start_time > timeout:
                 self.log.error(
-                    f"Timeoit while waiting Job POD with label app={run_id} to report a running state."
+                    "Time out while waiting Job POD with label "
+                    f"app={run_io.container_name} to report any state."
                 )
-                # The job could still start after the timeout
                 return RunStatus.UNKNOWN_ERROR
 
-            else:
-                time.sleep(interval)
+            time.sleep(interval)
 
-    def __wait_until_pod_running(self, run_id_label_selector: str) -> RunStatus:
+    def __wait_until_pod_running(self, label: str) -> RunStatus:
         """
-        This method execution gets blocked until the POD with the given label selector (which corresponds
-        to the task's 'run_id') reports a 'Running' state. This method is expected to be used right
-        after the job's creation request. Once this request is done, the POD has two initial statuses:
-        'Pending' and then 'Running'.
+        Wait until the POD created by a job is running.
 
-        Returns:
-        Either RunStatus.ACTIVE when the POD status is 'Running' (the POD container was kicked off),
-                          or RunStatus.UNKNOWN_ERROR if there is a timeout while waiting for
-                           reaching such 'Running' status (due to other errors)
+        Parameters
+        ----------
+        label: str
+            Label of the POD for this run (kubernetes job)
 
 
-        *Question: where are the failures detected on v6? : error code of command
-
-        Wait for the POD to start
-                                                              / Succeded
-        Potential statuses of a Job POD: Pending -> Running - - Failed
-                                                              \ Unknown
+        Returns
+        -------
+        RunStatus
+            Status of the run
         """
-
         # Start watching for events on the pod
         w = watch.Watch()
 
         for event in w.stream(
             func=self.core_api.list_namespaced_pod,
             namespace="v6-jobs",
-            label_selector=run_id_label_selector,
+            label_selector=label,
             timeout_seconds=120,
         ):
             pod_phase = event["object"].status.phase
 
+            # TODO we need to also check for the 'Failed' status, we could have
+            # missed that event.
             if pod_phase == "Running":
                 w.stop()
                 return RunStatus.ACTIVE
@@ -445,7 +446,7 @@ class ContainerManager:
 
         Returns
         -------
-        Tuple[client.V1Volume, client.V1VolumeMount]
+        V1Volume, V1VolumeMount
             Tuple with the volume and volume mount
         """
         volume = client.V1Volume(
@@ -468,24 +469,43 @@ class ContainerManager:
         databases_to_use: list[str],
     ) -> Tuple[List[client.V1Volume], List[client.V1VolumeMount], List[V1EnvVar]]:
         """
-        Define all the mounts required by the algorithm/job: input files (csv), output, and temporal data
+        Create all volumes and volume mounts required by the algorithm/job.
 
-        Returns: a tuple with (1) the created volume names and their corresponding volume mounts and (2) the list
-        of the environment variables required by the algorithms to use such mounts.
+        Parameters
+        ----------
+        run_io: RunIO
+            RunIO object that contains information about the run
+        docker_input: bytes
+            Input that can be read by the algorithm container
+        token: str
+            Bearer token that the container can use to communicate with the server
+        databases_to_use: list[str]
+            Labels of the databases to use
 
-         Note: in the following Volume-claims could be used insted of 'host_path'
-            volumes to decouple vantage6 file management from the storage provider
-            (NFS, GCP, etc). However, persitent-volumes (from which volume-claims are
-            be created), present a risk when used on local file systems. In particular,
-            if two VC are created from the same PV, both would end sharing the same
-            files.
+        Returns
+        -------
+        List[client.V1Volume], List[client.V1VolumeMount], List[V1EnvVar]
+            a tuple with (1) the created volume names and (2) their corresponding volume
+            mounts and (3) the list of the environment variables required by the
+            algorithms to use such mounts.
 
-          e.g. : Define the volume for temporal data
-          tmp_volume = client.V1Volume(
+        Notes
+        -----
+        In this method volume-claims could be used instead of 'host_path' volumes to
+        decouple vantage6 file management from the storage provider (NFS, GCP, etc).
+        However, persistent-volumes (from which volume-claims are be created), present
+        a risk when used on local file systems. In particular, if two VC are created
+        from the same PV, both would end sharing the same files. e.g. define the volume
+        for temporal data:
+
+        ```python
+        tmp_volume = client.V1Volume(
             name=f'task-{str_run_id}-tmp',
-            persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(claim_name=tmp_vol_name)
-          )
-
+            persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
+                claim_name=tmp_vol_name
+            )
+        )
+        ```
         """
         volumes: List[client.V1Volume] = []
         vol_mounts: List[client.V1VolumeMount] = []
@@ -537,14 +557,10 @@ class ContainerManager:
                 [db["label"] for db in databases_to_use]
             ),
             ContainerEnvNames.SESSION_FOLDER.value: JOB_POD_SESSION_FOLDER_PATH,
-            # TODO Make the `state.parquet` file name a constant
             ContainerEnvNames.SESSION_FILE.value: os.path.join(
-                JOB_POD_SESSION_FOLDER_PATH, "state.parquet"
+                JOB_POD_SESSION_FOLDER_PATH, run_io.session_state_file_name
             ),
         }
-
-        for key, value in environment_variables.items():
-            io_env_vars.append(client.V1EnvVar(name=key, value=value))
 
         # Bind-mounting all the CSV files (read only) defined on the configuration file
         # TODO bind other input data types
@@ -555,7 +571,7 @@ class ContainerManager:
 
         for csv_input in csv_input_files:
             _volume = client.V1Volume(
-                name=f"task-{run_id}-input-{csv_input['label']}",
+                name=f"task-{run_io.run_id}-input-{csv_input['label']}",
                 host_path=client.V1HostPathVolumeSource(csv_input["uri"]),
             )
 
@@ -563,12 +579,13 @@ class ContainerManager:
 
             _volume_mount = client.V1VolumeMount(
                 mount_path=f"/mnt/{csv_input['label']}",
-                name=f"task-{run_id}-input-{csv_input['label']}",
+                name=f"task-{run_io.run_id}-input-{csv_input['label']}",
                 read_only=True,
             )
 
             vol_mounts.append(_volume_mount)
 
+            environment_variables[]
             io_env_vars.append(
                 client.V1EnvVar(
                     name=f"{csv_input['label'].upper()}_DATABASE_URI",
@@ -581,60 +598,17 @@ class ContainerManager:
                 )
             )
 
+        # Encode the environment variables to avoid issues with special characters and
+        # for security reasons. The environment variables are encoded in base64.
+        environment_variables = self._encode_environment_variables(
+            environment_variables
+        )
+        for key, value in environment_variables.items():
+            io_env_vars.append(client.V1EnvVar(name=key, value=value))
+
         return volumes, vol_mounts, io_env_vars
 
-    # TODO we need this code when we move to k8s clusters
-    # def create_volume(self, volume_name: str) -> None:
-    #     """
-    #     This method creates a persistent volume through volume claims. However, this method is not being
-    #     used yet, as using only host_path volume binds seems to be enough and more convenient
-    #     (see details on _create_volume_mounts) - this is to be discussed
-    #     """
-
-    #     """
-    #     @precondition: at least one persistent volume has been provisioned in the (single) kubernetes node
-
-    #     """
-
-    #     is_valid_vol_name = re.search(
-    #         "[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*",
-    #         volume_name,
-    #     )
-
-    #     if not is_valid_vol_name:
-    #         # TODO custom exceptions to decouple codebase from kubernetes
-    #         raise Exception(f"Invalid volume name; {volume_name}")
-
-    #     # create a persistent volume claim with the given name
-    #     pvc = client.V1PersistentVolumeClaim(
-    #         api_version="v1",
-    #         kind="PersistentVolumeClaim",
-    #         metadata=client.V1ObjectMeta(name=volume_name),
-    #         spec=client.V1PersistentVolumeClaimSpec(
-    #             storage_class_name="manual",
-    #             access_modes=["ReadWriteOnce"],
-    #             resources=client.V1ResourceRequirements(
-    #                 # TODO Storage quota to be defined in system properties
-    #                 requests={"storage": "1Gi"}
-    #             ),
-    #         ),
-    #     )
-
-    #     """
-    #     If the volume was not claimed with the given name yet, there won't be exception.
-    #     If the volume was already claimed with the same name, (which should not make the function to fail),
-    #         the API is expected to return an 409 error code.
-    #     """
-    #     try:
-    #         self.core_api.create_namespaced_persistent_volume_claim("v6-jobs", body=pvc)
-    #     except client.rest.ApiException as e:
-    #         if e.status != 409:
-    #             # TODO custom exceptions to decouple codebase from kubernetes
-    #             raise Exception(
-    #                 f"Unexpected kubernetes API error code {e.status}"
-    #             ) from e
-
-    def is_docker_image_allowed(self, docker_image_name: str, task_info: dict) -> bool:
+    def is_docker_image_allowed(self, evaluated_img: str, task_info: dict) -> bool:
         """
         Checks the docker image name.
 
@@ -643,8 +617,8 @@ class ContainerManager:
 
         Parameters
         ----------
-        docker_image_name: str
-            uri to the docker image
+        evaluated_img: str
+            URI of the docker image of which we are checking if it is allowed
         task_info: dict
             Dictionary with information about the task
 
@@ -653,207 +627,284 @@ class ContainerManager:
         bool
             Whether docker image is allowed or not
         """
+        # check if algorithm matches any of the regex cases
+        allowed_algorithms = self._policies.get(NodePolicy.ALLOWED_ALGORITHMS)
+        allowed_stores = self._policies.get(NodePolicy.ALLOWED_ALGORITHM_STORES)
+        allow_either_whitelist_or_store = self._policies.get(
+            "allow_either_whitelist_or_store", False
+        )
 
-        # TODO use original v6 implementation
-        return True
+        # check if user or their organization is allowed
+        allowed_users = self._policies.get(NodePolicy.ALLOWED_USERS, [])
+        allowed_orgs = self._policies.get(NodePolicy.ALLOWED_ORGANIZATIONS, [])
+        if allowed_users or allowed_orgs:
+            is_allowed = self.client.check_user_allowed_to_send_task(
+                allowed_users,
+                allowed_orgs,
+                task_info["init_org"]["id"],
+                task_info["init_user"]["id"],
+            )
+            if not is_allowed:
+                self.log.warning(
+                    "A task was sent by a user or organization that this node does not "
+                    "allow to start tasks."
+                )
+                return False
 
-    def is_running(self, run_id: int) -> bool:
+        algorithm_whitelisted = False
+        if allowed_algorithms:
+            if isinstance(allowed_algorithms, str):
+                allowed_algorithms = [allowed_algorithms]
+            try:
+                evaluated_img_wo_tag = get_image_name_wo_tag(evaluated_img)
+            except Exception as exc:
+                self.log.warning(
+                    "Could not parse image with name %s: %s",
+                    evaluated_img,
+                    exc,
+                )
+                evaluated_img_wo_tag = None
+            for allowed_algo in allowed_algorithms:
+                if not self._is_regex_pattern(allowed_algo):
+                    try:
+                        allowed_wo_tag = get_image_name_wo_tag(allowed_algo)
+                    except Exception as exc:
+                        self.log.warning(
+                            "Could not parse allowed_algorithm policy with name %s: %s",
+                            allowed_algo,
+                            exc,
+                        )
+                        self.log.warning("Skipping policy as it cannot be parsed")
+                        continue  # skip policy as it cannot be parsed
+                    if allowed_algo == evaluated_img:
+                        # OK if allowed algorithm and provided algorithm match exactly
+                        algorithm_whitelisted = True
+                        break
+                    elif allowed_algo == evaluated_img_wo_tag:
+                        # OK if allowed algorithm is an image name without a tag, and
+                        # the provided image is the same but includes extra tag
+                        algorithm_whitelisted = True
+                        break
+                    elif allowed_wo_tag == evaluated_img_wo_tag:
+                        # The allowed image and the evaluated image are indeed the same
+                        # image but the allowed image only allows certain tags or sha's.
+                        # Gather the digests of the images and compare them - if they
+                        # are the same, the image is allowed.
+                        # Note that by comparing the digests, we also take into account
+                        # the situation where e.g. the allowed image has a tag, but the
+                        # evaluated image has a sha256.
+                        digest_evaluated_image = get_digest(
+                            evaluated_img, client=self.docker
+                        )
+                        if not digest_evaluated_image:
+                            self.log.warning(
+                                "Could not obtain digest for image %s",
+                                evaluated_img,
+                            )
+                        digest_policy_image = get_digest(
+                            allowed_algo, client=self.docker
+                        )
+                        if not digest_policy_image:
+                            self.log.warning(
+                                "Could not obtain digest for image %s", allowed_algo
+                            )
+                        if (
+                            digest_evaluated_image
+                            and digest_policy_image
+                            and (digest_evaluated_image == digest_policy_image)
+                        ):
+                            algorithm_whitelisted = True
+                            break
+                else:
+                    expr_ = re.compile(allowed_algo)
+                    if expr_.match(evaluated_img):
+                        algorithm_whitelisted = True
+
+        store_whitelisted = False
+        if allowed_stores:
+            # get the store from the task_info
+            try:
+                store_id = task_info["algorithm_store"]["id"]
+            except Exception:
+                store_id = None
+            if store_id:
+                store = self.client.algorithm_store.get(store_id)
+                store_from_task = store["url"]
+                # check if the store matches any of the regex cases
+                if isinstance(allowed_stores, str):
+                    allowed_stores = [allowed_stores]
+                for store in allowed_stores:
+                    if not self._is_regex_pattern(store):
+                        # check if string matches exactly
+                        if store == store_from_task:
+                            store_whitelisted = True
+                    else:
+                        expr_ = re.compile(store)
+                        if expr_.match(store_from_task):
+                            store_whitelisted = True
+
+        allowed_from_whitelist = not allowed_algorithms or algorithm_whitelisted
+        allowed_from_store = not allowed_stores or store_whitelisted
+        if allow_either_whitelist_or_store:
+            # if we allow an algorithm if it is defined in the whitelist or the store,
+            # we return True if either the algorithm or the store is whitelisted
+            allowed = allowed_from_whitelist or allowed_from_store
+        else:
+            # only allow algorithm if it is allowed for both the allowed_algorithms and
+            # the allowed_algorithm_stores
+            allowed = allowed_from_whitelist and allowed_from_store
+
+        if not allowed:
+            self.log.warning(
+                "This node does not allow the algorithm %s to run!", evaluated_img
+            )
+
+        return allowed
+
+    @staticmethod
+    def _is_regex_pattern(pattern: str) -> bool:
         """
+        Check if a string just a string or if it is a regex pattern. Note that there is
+        no failsafe way to do this so we make a best effort.
 
-        Check if a container is already running for <run_id>.
+        Note, for instance, that if a user provides the allowed algorithm "some.name",
+        we will interpret this as a regular string. This prevents that "someXname" is
+        allowed as well. The user is thus not able to define a regex pattern with only
+        a dot as special character. However we expect that this use case is extremely
+        rare - not doing so is likely to lead to regex's that lead to unintended
+        algorithms passing the filter criteria.
 
         Parameters
         ----------
-        run_id: int
-            run_id of the algorithm container to be found
+        pattern: str
+            String to be checked
 
         Returns
         -------
         bool
-            Whether or not algorithm container is running already
+            Returns False if the pattern is a normal string, True if it is a regex.
         """
+        # Inspired by
+        # https://github.com/corydolphin/flask-cors/blob/main/flask_cors/core.py#L254.
+        common_regex_chars = [
+            "*",
+            "\\",
+            "?",
+            "$",
+            "^",
+            "[",
+            "]",
+            "(",
+            ")",
+            "{",
+            "}",
+            "|",
+            "+",
+            "\.",
+        ]
+        # Use common characters used in regular expressions as a proxy
+        # for if this string is in fact a regex.
+        return any((c in pattern for c in common_regex_chars))
 
+    def is_running(self, label: str) -> bool:
         """
-        To be discussed:
-        Potential statuses of a Job POD: Pending, Running, Succeeded, Failed, Unknown
-        This method is used locally to check whether a given task was already executed.
-        In which case does happen? Given the above What would be the expected return
-        value if the task was already completed or failed?
+        Check if a container is already running for a certain run.
 
+        Parameters
+        ----------
+        label: str
+            Label of the container constructed from the `run_id`
+
+        Returns
+        -------
+        bool
+            Whether or not algorithm container is currently running
         """
         pods = self.core_api.list_namespaced_pod(
-            namespace="v6-jobs", label_selector=f"app={run_id}"
+            namespace="v6-jobs", label_selector=f"app={label}"
         )
         return True if pods.items else False
 
-    def get_result(self) -> Result:
+    def process_next_completed_job(self) -> Result:
         """
-        * Original description:
-            Returns the oldest (FIFO) finished docker container.
-            This is a blocking method until a finished container shows up. Once the
-            container is obtained and the results are read, the container is
-            removed from the docker environment.
+        Wait until a job is completed and process it.
 
-        * Proposed (more accurate) description:
-            proposed name: process_next_completed_job
-            Process the next completed job (which can be either finsihed or failed), as soon any of these is shown (not necesarily FIFO):
+        This method is blocking until a job is completed. It checks the status of the
+        kubernetes jobs and returns the results of the first completed job. The results
+        are then sent back to the server.
 
-                When failed-job found (after N attempts handled by kubernetes (N = job backoffLimit) ) =>
-                    Cleanup POD/containers
-                    return Result with:
-                        RunStatus.CRASHED
-                        Result: empty
-                        Log error: Logs from the N pods (backoff limit)
-
-                When Successful POD found =>
-                    return Result with:
-                        RunStatus.COMPLETED
-                        Result: file content
-                        Log: Logs from the N pods (backoff limit)
-
-
-                                                              / Succeded
-        Potential statuses of a Job POD: Pending -> Running - - Failed
-                                                              \ Unknown
-
+        Returns
+        -------
+        Result
+            Result of the completed job
         """
-        jobs = []
-
-        # wait until there is at least one completed job available (successful or failed)
-        # other statuses (pending/running/unknown) are ignored (for the moment)
-
+        # wait until there is at least one completed job available (successful or
+        # failed) other statuses (pending/running/unknown) are ignored
         completed_job = False
-
         while not completed_job:
-            jobs = self.batch_api.list_namespaced_job("v6-jobs")
 
+            # Get all jobs from the v6-jobs namespace
+            jobs = self.batch_api.list_namespaced_job("v6-jobs")
             if not jobs:
                 time.sleep(1)
-            else:
-                for job in jobs.items:
-                    if job.status.succeeded:
-                        job_id = job.metadata.name
-                        self.log.info(
-                            f"Found a completed job with a (k8s) Succeded status: {job_id}. Returning result with v6-COMPLETED status"
-                        )
+                continue
 
-                        # get results by reading the output file created by the 'algorithm' container runned by the job (provisional convention: /output/avg.txt)
-                        results = self.__get_job_result(job_id)
+            # Check if any of the jobs is completed
+            for job in jobs.items:
 
-                        # get PODs logs
-                        pod_tty_output = self.__get_job_pod_logs(
-                            job_id=job_id, namespace="v6-jobs"
-                        )
+                if not job.status.succeeded and not job.status.failed:
+                    # If the job is not completed or failed, continue to check the
+                    # next job
+                    continue
 
-                        # destroy job and related POD(s)
-                        self.log.info(
-                            f"Cleaning up kubernetes Job {job.metadata.name} (job id = {job_id}) and related PODs"
-                        )
-                        self.batch_api.delete_namespaced_job(
-                            name=job_id, namespace="v6-jobs"
-                        )
-                        self.__delete_job_related_pods(
-                            job_id=job_id, namespace="v6-jobs"
-                        )
+                # Create helper object to process the output of the job
+                run_io = RunIO.from_dict(job.metadata.annotations, self.data_dir)
+                results, status = (
+                    run_io.process_output()
+                    if job.status.succeeded
+                    else (b"", RunStatus.CRASHED)
+                )
 
-                        self.log.info(
-                            f"Sending results of run_id={job.metadata.annotations['run_id']} and task_id={job.metadata.annotations['task_id']} back to the server"
-                        )
+                self.log.info(
+                    f"Sending results of run_id={run_io.run_id} "
+                    f"and task_id={job.metadata.annotations['task_id']} back to the "
+                    "server"
+                )
+                result = Result(
+                    run_id=run_io.run_id,
+                    task_id=job.metadata.annotations["task_id"],
+                    logs=self.__get_job_pod_logs(run_io=run_io, namespace="v6-jobs"),
+                    data=results,
+                    status=status,
+                    parent_id=job.metadata.annotations["task_parent_id"],
+                )
 
-                        result = Result(
-                            run_id=job.metadata.annotations["run_id"],
-                            task_id=job.metadata.annotations["task_id"],
-                            logs=pod_tty_output,
-                            data=results,
-                            status=RunStatus.COMPLETED,
-                            parent_id=job.metadata.annotations["task_parent_id"],
-                        )
-                        completed_job = True
-
-                    elif job.status.failed:
-                        job_id = job.metadata.name
-
-                        self.log.info(
-                            f"Found a completed job with a (k8s) Failed status: {job.metadata.name} (job_id = {job_id}). Returning result with v6-CRASHED status"
-                        )
-
-                        # get PODs logs
-                        pod_tty_output = self.__get_job_pod_logs(
-                            job_id=job_id, namespace="v6-jobs"
-                        )
-
-                        # destroy POD
-                        # Should the POD be cleaned up in this case too?
-                        self.log.info(
-                            f"Cleaning up container & job POD {job.metadata.name} / {job_id}"
-                        )
-                        self.batch_api.delete_namespaced_job(
-                            name=job_id, namespace="v6-jobs"
-                        )
-                        self.__delete_job_related_pods(
-                            job_id=job_id, namespace="v6-jobs"
-                        )
-                        self.log.info(
-                            f"Sending failure details of run_id={job.metadata.annotations['run_id']} and task_id={job.metadata.annotations['task_id']} back to the server"
-                        )
-                        result = Result(
-                            run_id=job.metadata.annotations["run_id"],
-                            task_id=job.metadata.annotations["task_id"],
-                            logs=pod_tty_output,
-                            data=b"",
-                            status=RunStatus.CRASHED,
-                            parent_id=job.metadata.annotations["task_parent_id"],
-                        )
-                        completed_job = True
+                # destroy job and related POD(s)
+                self.__delete_job_related_pods(run_io=run_io, namespace="v6-jobs")
+                completed_job = True
 
         return result
 
-    def __get_job_result(self, job_id: str) -> bytes:
-        """
-        If executing the Node within a POD:
-            TODO - define the convention of where the tasks folders are bind to the
-                Node container filesystem
-
-        #if executing from HOST, use path given in v6 config file
-            #output_file = os.path.join(self.ctx.config['task_dir'],run_id,'output')
-
-        """
-        if self.running_on_pod:
-            # Running within a POD: use the standard tasks folder path mapped to the POD-container's file system.
-            # @precondition:
-            #  node_constants.TASK_FILES_ROOT is mapped to the path defined in the vantge6 configuration file (task_dir)
-            succeded_job_output_file = os.path.join(TASK_FILES_ROOT, job_id, "output")
-        else:
-            # Running from the host (e.g., for testing purposes) - use the path defined in the configuration file
-            succeded_job_output_file = os.path.join(
-                self.ctx.config["task_dir"], job_id, "output"
-            )
-
-        self.log.info(
-            f"Reading data generated by job {job_id} at {succeded_job_output_file}"
-        )
-        with open(succeded_job_output_file, "rb") as fp:
-            results = fp.read()
-        return results
-
-    def __get_job_pod_logs(self, job_id: str, namespace="v6-jobs") -> List[str]:
+    def __get_job_pod_logs(self, run_io: str, namespace="v6-jobs") -> List[str]:
         """ "
         Get the logs generated by the PODs created by a job.
 
-        If there are multiple PODs created by the job (e.g., due to multiple failed execution attempts -see
-        backofflimit setting-) all the POD logs are merged as one.
+        If there are multiple PODs created by the job (e.g., due to multiple failed
+        execution attempts -see backofflimit setting-) all the POD logs are merged as
+        one.
         """
 
         pods_tty_logs = []
 
-        job_selector = f"job-name={job_id}"
+        job_selector = f"job-name={run_io.container_name}"
         job_pods_list = self.core_api.list_namespaced_pod(
             namespace, label_selector=job_selector
         )
 
         for job_pod in job_pods_list.items:
             self.log.info(
-                f"Getting logs from POD {job_pod.metadata.name}, created by job {job_id}"
+                f"Getting logs from POD {job_pod.metadata.name}, created by job "
+                f"{run_io.run_id}"
             )
 
             pod_log = self.core_api.read_namespaced_pod_log(
@@ -861,28 +912,97 @@ class ContainerManager:
             )
 
             pods_tty_logs.append(
-                f"LOGS of POD {job_pod.metadata.name} (created by job {job_id}) \n {pod_log}"
+                f"LOGS of POD {job_pod.metadata.name} (created by job "
+                f"{run_io.container_name}) \n\n {pod_log} \n\n\n"
             )
 
         return pods_tty_logs
 
-    def __delete_job_related_pods(self, job_id, namespace="v6-job"):
+    def __delete_job_related_pods(self, run_io, namespace="v6-job"):
         """
         Deletes all the PODs created by a Kubernetes job in a given namespace
         """
-        job_selector = f"job-name={job_id}"
+        self.log.info(
+            f"Cleaning up kubernetes Job {run_io.container_name} (job id = "
+            f"{run_io.container_name}) and related PODs"
+        )
+
+        self.batch_api.delete_namespaced_job(
+            name=run_io.container_name, namespace="v6-jobs"
+        )
+
+        job_selector = f"job-name={run_io.container_name}"
         job_pods_list = self.core_api.list_namespaced_pod(
             namespace, label_selector=job_selector
         )
         for job_pod in job_pods_list.items:
             try:
-                self.log.info(f"Deleting pod {job_pod.metadata.name} of job {job_id}")
-                self.core_api.delete_namespaced_pod(job_pod.metadata.name, namespace)
-                self.log.info(f"Pod {job_pod.metadata.name} of job {job_id} deleted.")
-            except ApiException:
-                self.log.warn(
-                    f"Warning: POD {job_pod.metadata.name} of job {job_id} couldn't be deleted."
+                self.log.info(
+                    f"Deleting pod {job_pod.metadata.name} of job "
+                    f"{run_io.container_name}"
                 )
+                self.core_api.delete_namespaced_pod(job_pod.metadata.name, namespace)
+                self.log.info(
+                    f"Pod {job_pod.metadata.name} of job {run_io.container_name} "
+                    "deleted."
+                )
+            except ApiException:
+                self.log.warning(
+                    f"Warning: POD {job_pod.metadata.name} of job "
+                    f"{run_io.container_name} couldn't be deleted."
+                )
+
+    def _encode_environment_variables(self, environment_variables: dict) -> dict:
+        """
+        Encode environment variable values to ensure that special characters
+        are not interpretable as code while transferring them to the algorithm
+        container.
+
+        Parameters
+        ----------
+        environment_variables: dict
+            Environment variables required to run algorithm
+
+        Returns
+        -------
+        dict:
+            Environment variables with encoded values
+        """
+
+        def _encode(string: str) -> str:
+            """Encode env var value
+
+            We first encode to bytes, then to b32 and then decode to a string.
+            Finally, '=' is replaced by less sensitive characters to prevent
+            issues with interpreting the encoded string in the env var value.
+
+            Parameters
+            ----------
+            string: str
+                String to be encoded
+
+            Returns
+            -------
+            str:
+                Encoded string
+
+            Examples
+            --------
+            >>> _encode("abc")
+            'MFRGG!!!'
+            """
+            return (
+                base64.b32encode(string.encode(STRING_ENCODING))
+                .decode(STRING_ENCODING)
+                .replace("=", ENV_VAR_EQUALS_REPLACEMENT)
+            )
+
+        self.log.debug("Encoding environment variables")
+
+        encoded_environment_variables = {}
+        for key, val in environment_variables.items():
+            encoded_environment_variables[key] = _encode(str(val))
+        return encoded_environment_variables
 
         # def cleanup_tasks(self) -> list[KilledRun]:
         """
@@ -1039,3 +1159,55 @@ class ContainerManager:
         list[str]
             List of column names
         """
+
+
+# TODO we need this code when we move to k8s clusters
+# def create_volume(self, volume_name: str) -> None:
+#     """
+#     This method creates a persistent volume through volume claims. However, this method is not being
+#     used yet, as using only host_path volume binds seems to be enough and more convenient
+#     (see details on _create_volume_mounts) - this is to be discussed
+#     """
+
+#     """
+#     @precondition: at least one persistent volume has been provisioned in the (single) kubernetes node
+
+#     """
+
+#     is_valid_vol_name = re.search(
+#         "[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*",
+#         volume_name,
+#     )
+
+#     if not is_valid_vol_name:
+#         # TODO custom exceptions to decouple codebase from kubernetes
+#         raise Exception(f"Invalid volume name; {volume_name}")
+
+#     # create a persistent volume claim with the given name
+#     pvc = client.V1PersistentVolumeClaim(
+#         api_version="v1",
+#         kind="PersistentVolumeClaim",
+#         metadata=client.V1ObjectMeta(name=volume_name),
+#         spec=client.V1PersistentVolumeClaimSpec(
+#             storage_class_name="manual",
+#             access_modes=["ReadWriteOnce"],
+#             resources=client.V1ResourceRequirements(
+#                 # TODO Storage quota to be defined in system properties
+#                 requests={"storage": "1Gi"}
+#             ),
+#         ),
+#     )
+
+#     """
+#     If the volume was not claimed with the given name yet, there won't be exception.
+#     If the volume was already claimed with the same name, (which should not make the function to fail),
+#         the API is expected to return an 409 error code.
+#     """
+#     try:
+#         self.core_api.create_namespaced_persistent_volume_claim("v6-jobs", body=pvc)
+#     except client.rest.ApiException as e:
+#         if e.status != 409:
+#             # TODO custom exceptions to decouple codebase from kubernetes
+#             raise Exception(
+#                 f"Unexpected kubernetes API error code {e.status}"
+#             ) from e

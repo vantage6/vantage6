@@ -6,19 +6,31 @@ from pathlib import Path
 
 import pyarrow as pa
 import pyarrow.parquet as pq
+import pandas as pd
 
 from vantage6.node.globals import TASK_FILES_ROOT
+from vantage6.common.enum import RunStatus, AlgorithmStepType
 
 
 class RunIO:
 
     def __init__(
-        self, run_id: int, session_id: int, host_data_dir: str = TASK_FILES_ROOT
+        self,
+        run_id: int,
+        session_id: int,
+        action: str,
+        dataframe_handle: str = None,
+        host_data_dir: str = TASK_FILES_ROOT,
     ):
+        """
+        Responsible for the IO files between the node and the algorithm.
+        """
 
         self.logger = logging.getLogger(__name__)
         self.run_id = run_id
         self.session_id = session_id
+        self.action = action
+        self.dataframe_handle = dataframe_handle
 
         # The directory where the data is stored
         self.dir = host_data_dir
@@ -36,6 +48,38 @@ class RunIO:
         self.session_state_file = os.path.join(
             self.session_folder, self.session_state_file_name
         )
+
+    @classmethod
+    def from_dict(cls, data: dict, host_data_dir: str = TASK_FILES_ROOT):
+        # TODO validate that the keys are present
+        # TODO the host_data_dir should be passed as an argument
+        return cls(
+            run_id=int(data["run_id"]),
+            session_id=int(data["session_id"]),
+            action=data["action"],
+            dataframe_handle=data["dataframe_handle"],
+            host_data_dir=host_data_dir,
+        )
+
+    @property
+    def input_volume_name(self) -> str:
+        return f"task_{self.run_id}_input"
+
+    @property
+    def output_volume_name(self) -> str:
+        return f"task_{self.run_id}_output"
+
+    @property
+    def session_volume_name(self) -> str:
+        return self.session_name
+
+    @property
+    def container_name(self) -> str:
+        return f"run_{self.run_id}"
+
+    @property
+    def output_file(self) -> str:
+        return os.path.join(self.run_folder, "output")
 
     def create_files(self, input_, output, token) -> tuple[str, str, str]:
         """
@@ -107,14 +151,141 @@ class RunIO:
         )
         pq.write_table(session_state, self.session_state_file)
 
-    @property
-    def input_volume_name(self) -> str:
-        return f"task_{self.run_id}_input"
+    def process_output(self) -> tuple[bytes, RunStatus]:
+        """
+        Read the output file of the run.
 
-    @property
-    def output_volume_name(self) -> str:
-        return f"task_{self.run_id}_output"
+        Returns
+        -------
+        bytes
+            Content of the output file
+        """
+        match self.action:
 
-    @property
-    def session_volume_name(self) -> str:
-        return self.session_name
+            case AlgorithmStepType.DATA_EXTRACTION | AlgorithmStepType.PREPROCESSING:
+
+                try:
+                    table = pq.read_table(self.output_file)
+                except Exception:
+                    self.log.exception("Error reading output file")
+                    return b"", RunStatus.UNEXPECTED_OUTPUT
+
+                return b"", self._update_session(table)
+
+            case AlgorithmStepType.COMPUTE:
+
+                with open(self.output_file, "rb") as fp:
+                    result = fp.read()
+
+                self._update_session_state(
+                    AlgorithmStepType.COMPUTE.value,
+                    None,
+                    f"Algorithm from '{self.image}' completed successfully.",
+                )
+                return result, RunStatus.COMPLETED
+
+            case _:
+
+                self.log.error("Unknown action: %s", self.action)
+                return b"", RunStatus.UNKNOWN_ERROR
+
+    def _update_session(self, table: pa.Table) -> RunStatus:
+        """
+        Update the session dataframe with the results of the algorithm
+
+        Parameters
+        ----------
+        table: pa.Table
+            Table with the results of the algorithm
+
+        Returns
+        -------
+        RunStatus
+            Status of the run
+        """
+        self.log.debug(
+            f"Updating session {self.session_id} for handle {self.dataframe_handle}."
+        )
+
+        if not self.dataframe_handle:
+            self.log.error("No dataframe handle found.")
+            self.log.debug(
+                "A session task was started but had no dataframe handle. The session ID "
+                f"is {self.session_id} and the task ID is {self.task_id}.",
+            )
+            return RunStatus.FAILED
+
+        try:
+            # Create or overwrite the parquet data frame with the algorithm result
+            pq.write_table(
+                table,
+                os.path.join(self.session_folder, f"{self.dataframe_handle}.parquet"),
+            )
+        except Exception:
+            self.log.exception("Error writing data frame to parquet file")
+            return RunStatus.FAILED
+
+        self._update_session_state(
+            self.action,
+            f"{self.dataframe_handle}.parquet",
+            "Session updated.",
+            self.dataframe_handle,
+        )
+
+        # Each node reports the column names for this dataframe in the session. In the
+        # horizontal case all the nodes should report the same column names.
+        columns_info = [
+            {"name": field.name, "dtype": str(field.type)} for field in table.schema
+        ]
+        self.client.request(
+            f"/session/{self.session_id}/dataframe/{self.dataframe_handle}/column",
+            method="post",
+            json=columns_info,
+        )
+        self.log.debug("Column data sent to server: %s", columns_info)
+        return RunStatus.COMPLETED
+
+    def _update_session_state(
+        self, action: str, filename: str, message: str, dataframe: str = ""
+    ) -> None:
+        """
+        Update the session state file with the current action, file and message
+
+        Parameters
+        ----------
+        action: str
+            Action that was performed
+        filename: str
+            File resulting from the action
+        message: str
+            Message to be added to the state file
+        dataframe: str, optional
+            Dataframe handle that was updated. Some actions on the session are not
+            related to a specific dataframe, so this parameter is optional.
+        """
+        self.log.debug(
+            "Update session state file for action '%s' on dataframe '%s' ",
+            action,
+            dataframe,
+        )
+        state = pq.read_table(self.session_state_file).to_pandas()
+        new_row = pd.DataFrame(
+            [
+                {
+                    "action": action,
+                    "file": filename,
+                    "timestamp": datetime.now(),
+                    "message": message,
+                    "dataframe": dataframe,
+                }
+            ]
+        )
+        state = pd.concat([state, new_row], ignore_index=True)
+
+        try:
+            session_table = pa.Table.from_pandas(state)
+            pq.write_table(session_table, self.session_state_file)
+        except Exception:
+            self.log.exception("Error writing session state to parquet file")
+
+        return

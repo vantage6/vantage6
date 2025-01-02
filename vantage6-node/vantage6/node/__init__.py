@@ -30,6 +30,7 @@ import queue
 import random
 import sys
 import time
+import threading
 from pathlib import Path
 from threading import Thread
 
@@ -316,7 +317,7 @@ class Node:
 
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
-        task_status, vpn_ports = self.k8s_container_manager.run(
+        task_status = self.k8s_container_manager.run(
             action=container_action,
             run_id=task_id,
             task_info=task,
@@ -413,7 +414,7 @@ class Node:
 
         while True:
             try:
-                results = self.k8s_container_manager.get_result()
+                results = self.k8s_container_manager.process_next_completed_job()
                 self.log.info(f"Sending result (run={results.run_id}) to the server!")
 
                 # FIXME: why are we retrieving the result *again*? Shouldn't we
