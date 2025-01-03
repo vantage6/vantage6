@@ -5,6 +5,7 @@ import re
 import base64
 
 from typing import List, NamedTuple, Tuple
+from pathlib import Path
 
 
 from kubernetes import client, config, watch
@@ -12,7 +13,7 @@ from kubernetes.client import V1EnvVar
 from kubernetes.client.rest import ApiException
 
 from vantage6.cli.context.node import NodeContext
-from vantage6.common import logger_name
+from vantage6.common import logger_name, get_database_config
 from vantage6.common.globals import (
     NodePolicy,
     ContainerEnvNames,
@@ -29,6 +30,7 @@ from vantage6.node.globals import (
     KUBE_CONFIG_FILE_PATH,
     V6_NODE_FQDN,
     V6_NODE_PROXY_PORT,
+    V6_NODE_DATABASE_BASE_PATH,
     TASK_FILES_ROOT,
     JOB_POD_OUTPUT_PATH,
     JOB_POD_INPUT_PATH,
@@ -37,6 +39,12 @@ from vantage6.node.globals import (
 )
 from vantage6.node.util import get_parent_id
 from vantage6.node.k8s.run_io import RunIO
+from vantage6.node.k8s.exceptions import (
+    UnknownAlgorithmStartFail,
+    PermanentAlgorithmStartFail,
+    AlgorithmContainerNotFound,
+    DataFrameNotFound,
+)
 
 # logging.basicConfig(level=logging.INFO)
 # log = logging.getLogger(logger_name(__name__))
@@ -86,11 +94,36 @@ class KilledRun(NamedTuple):
 
 
 # HIGH
-# TODO encoding of envvars (sec risk) (re-instantiate `_encode_environment_variables`)
 # TODO re-instantiate `_validate_dataframe_names`, `_validate_source_database` and
 #      `_validate_environment_variables`
 # TODO copy `is_file` database to a volume mount
 # TODO implement the dataframe DATABASE_URI for sessions based on the action
+#
+# The configurations should be:
+#
+# config.yml
+# -----------
+# databases:
+#   - label: employees-label
+#     uri: /<path>/employees.csv
+#     type: csv
+#   - label: students-label
+#     uri: https://students.api
+#     type: api
+#
+# kubernetes-app-config.yml
+# -------------------------
+# volumeMounts:
+# ...
+# - name: v6-node-employee-database
+#   mountPath: /app/.databases/employees.csv
+# ...
+# volumes:
+# ...
+# - name: v6-node-employee-database
+#   hostPath:
+#     path: ABSOLUTE_HOST_PATH_OF_DEFAULT_DATABASE
+
 
 # MEDIUM
 # TODO additional environment variables for algorithms seem to be missing?
@@ -166,6 +199,8 @@ class ContainerManager:
             TASK_FILES_ROOT if self.running_on_pod else self.ctx.config["task_dir"]
         )
 
+        self.databases = self._set_database(self.ctx.config["databases"])
+
         # before a task is executed it gets exposed to these policies
         self._policies = self._setup_policies(ctx.config)
 
@@ -200,6 +235,64 @@ class ContainerManager:
                 "This means that all algorithms are allowed to run on this node."
             )
         return policies
+
+    def _set_database(self, databases: dict | list) -> dict:
+        """
+        Set database location and whether or not it is a file
+
+        Parameters
+        ----------
+        databases: dict | list
+            databases as specified in the config file
+
+        Returns
+        -------
+        dict
+            Dictionary with the information about the databases
+        """
+        db_labels = [db["label"] for db in databases]
+
+        databases = {}
+        for label in db_labels:
+
+            db_config = get_database_config(databases, label)
+
+            # The URI on the host system. This can either be a path to a file or folder
+            # or an address to a service.
+            uri = db_config["uri"]
+
+            # In case we are dealing with a file or directory and when running the node
+            # instance in a POD, our internal path to that file or folder is different.
+            # At this point we are not sure what the type of database is so we just
+            # see wether it exists or not. In case it does, we create a `local_uri` that
+            # points to the file or folder in the POD. We keep the original URI as we
+            # need it when we are creating new volume mounts for the algorithm
+            # containers
+            local_uri = uri
+            filename = os.path.basename(uri)
+            tmp_uri = Path(V6_NODE_DATABASE_BASE_PATH) / filename
+
+            if self.running_on_pod:
+                db_is_file = tmp_uri.exists() and tmp_uri.is_file()
+                db_is_dir = tmp_uri.exists() and tmp_uri.is_dir()
+
+                if db_is_file or db_is_dir:
+                    local_uri = str(tmp_uri)
+            else:
+                db_is_file = Path(uri).exists() and Path(uri).is_file()
+                db_is_dir = Path(uri).exists() and Path(tmp_uri).is_dir()
+
+            databases[label] = {
+                "uri": uri,
+                "local_uri": local_uri,
+                "is_file": db_is_file,
+                "is_dir": db_is_dir,
+                "type": db_config["type"],
+                "env": db_config.get("env", {}),
+            }
+
+        self.log.debug("Databases: %s", databases)
+        return databases
 
     def run(
         self,
@@ -266,15 +359,19 @@ class ContainerManager:
         task_id = task_info["id"]
         parent_task_id = get_parent_id(task_info)
 
-        _volumes, _volume_mounts, env_vars = self._create_volume_mounts(
-            run_io=run_io,
-            docker_input=docker_input,
-            token=token,
-            databases_to_use=databases_to_use,
-        )
+        try:
+            _volumes, _volume_mounts, env_vars = self._create_volume_mounts(
+                run_io=run_io,
+                docker_input=docker_input,
+                token=token,
+                databases_to_use=databases_to_use,
+            )
+        except PermanentAlgorithmStartFail:
+            return RunStatus.FAILED
 
         # Set environment variables for the algorithm client. This client is used
         # to communicate from the algorithm to the vantage6 server through the proxy.
+        # TODO these environment vars need to be encoded...
         env_vars.extend(
             [
                 client.V1EnvVar(
@@ -556,6 +653,7 @@ class ContainerManager:
             ContainerEnvNames.OUTPUT_FILE.value: JOB_POD_OUTPUT_PATH,
             ContainerEnvNames.INPUT_FILE.value: JOB_POD_INPUT_PATH,
             ContainerEnvNames.TOKEN_FILE.value: JOB_POD_TOKEN_PATH,
+            # TODO we only do not need to pass this when the action is `data extraction`
             ContainerEnvNames.USER_REQUESTED_DATAFRAME_HANDLES.value: ",".join(
                 [db["label"] for db in databases_to_use]
             ),
@@ -569,25 +667,41 @@ class ContainerManager:
         # TODO bind other input data types
         # TODO include only the ones given in the 'databases_to_use parameter
         # TODO distinguish between the different actions
-        csv_input_files = list(
-            filter(lambda o: (o["type"] == "csv"), self.ctx.config["databases"])
-        )
+        if run_io.action == AlgorithmStepType.DATA_EXTRACTION:
+            # In case we are dealing with a file based database, we need to create an
+            # additional volume mount for the database file. In case it is an URI the
+            # URI should be reachable from the container.
+            self._validate_source_database(databases_to_use)
 
-        for csv_input in csv_input_files:
+            source_database = databases_to_use[0]
+            db = self.databases[source_database["label"]]
+            if db["is_file"] or db["is_dir"]:
 
-            csv_volume, csv_mount = self._create_run_mount(
-                volume_name=f"task-{run_io.run_id}-input-{csv_input['label']}",
-                host_path=csv_input["uri"],
-                mount_path=f"/mnt/data/{csv_input['label']}",
-                read_only=True,
-            )
-            volumes.append(csv_volume)
-            vol_mounts.append(csv_mount)
+                db_volume, db_mount = self._create_run_mount(
+                    volume_name=f"task-{run_io.run_id}-input-{source_database['label']}",
+                    host_path=db["uri"],
+                    mount_path=db["local_uri"],
+                    read_only=True,
+                )
+                volumes.append(db_volume)
+                vol_mounts.append(db_mount)
 
-            environment_variables[ContainerEnvNames.DATABASE_URI.value] = (
-                f"/mnt/{csv_input['label']}"
-            )
-            environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = "csv"
+            environment_variables[ContainerEnvNames.DATABASE_URI.value] = db[
+                "local_uri"
+            ]
+            environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = db["type"]
+
+            # additional environment variables for the database
+            if "env" in db:
+                for key in db["env"]:
+                    env_key = f"{ContainerEnvNames.DB_PARAM_PREFIX}{key.upper()}"
+                    environment_variables[env_key] = db["env"][key]
+
+        else:
+            # In the other case we are dealing with a dataframe in a session. So we only
+            # need to validate that the dataframe is available in the session.
+            # run_io.session_folder
+            pass
 
         # Encode the environment variables to avoid issues with special characters and
         # for security reasons. The environment variables are encoded in base64.
@@ -598,6 +712,49 @@ class ContainerManager:
             io_env_vars.append(client.V1EnvVar(name=key, value=value))
 
         return volumes, vol_mounts, io_env_vars
+
+    def _validate_source_database(self, databases_to_use: list[dict]) -> None:
+        """
+        Validates the source database configuration for the data extraction step.
+        This method checks if the provided list of databases contains exactly one
+        database, and if that database is of type 'source' and exists in the
+        available databases.
+
+        Parameters
+        ----------
+        databases_to_use : list[dict]
+            A list of dictionaries where each dictionary represents a database
+            configuration.
+
+        Raises
+        ------
+        PermanentAlgorithmStartFail
+            If the validation fails due to any of the conditions not being met.
+        """
+
+        ok = True
+        if len(databases_to_use) > 1:
+            self.log.error("Only one database can be used in the data extraction step.")
+            ok = False
+
+        source_database = databases_to_use[0]
+
+        if source_database["type"] != "source":
+            self.log.error(
+                "The database used in the data extraction step must be of type "
+                "'source'."
+            )
+            ok = False
+
+        available_databases = [db["label"] for db in self.databases]
+        if source_database["label"] not in available_databases:
+            self.log.error(
+                "The database used in the data extraction step does not exist."
+            )
+            ok = False
+
+        if not ok:
+            raise PermanentAlgorithmStartFail()
 
     def is_docker_image_allowed(self, evaluated_img: str, task_info: dict) -> bool:
         """
