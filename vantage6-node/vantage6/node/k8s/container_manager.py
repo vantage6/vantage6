@@ -123,7 +123,6 @@ class KilledRun(NamedTuple):
 
 
 # MEDIUM
-# TODO additional environment variables for algorithms seem to be missing?
 # TODO implement the `kill` method
 # TODO how to handle GPU requests
 # TODO implement the `cleanup` methods
@@ -697,7 +696,8 @@ class ContainerManager:
             ]
             environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = db["type"]
 
-            # additional environment variables for the database
+            # additional environment variables for the database. These will be stored
+            # as {PREFIX}{KEY}=value in the container
             if "env" in db:
                 for key in db["env"]:
                     env_key = f"{ContainerEnvNames.DB_PARAM_PREFIX}{key.upper()}"
