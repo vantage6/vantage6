@@ -33,6 +33,11 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
         setattr(self, "user", lambda obj: self.create_hateoas("user", obj))
         setattr(self, "review", lambda obj: self.create_hateoas("review", obj))
         setattr(self, "server", lambda obj: self.create_hateoas("server", obj))
+        setattr(
+            self,
+            "conditional_on_",
+            lambda obj: self.create_hateoas("conditional_argument", obj),
+        )
 
         # call super class. Do this after setting the attributes above, because
         # the super class initializer will call the attributes.
@@ -81,6 +86,7 @@ class ArgumentOutputSchema(HATEOASModelSchema):
         model = Argument
 
     type_ = fields.String(data_key="type")
+    conditional_on = fields.Method("conditional_on_")
 
 
 class UIVisualizationOutputSchema(HATEOASModelSchema):

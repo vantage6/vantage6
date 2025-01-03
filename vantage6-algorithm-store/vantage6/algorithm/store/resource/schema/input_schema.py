@@ -14,7 +14,7 @@ from vantage6.algorithm.store.model.common.enums import (
     ArgumentType,
     VisualizationType,
 )
-
+from vantage6.algorithm.store.globals import ConditionalArgComparator
 from vantage6.algorithm.store.model.common.ui_visualization_schemas import (
     get_schema_for_visualization,
 )
@@ -83,6 +83,83 @@ class FunctionInputSchema(_NameDescriptionSchema):
                 f"Function type '{value}' is not one of the allowed values {types}"
             )
 
+    @validates_schema
+    def validate_conditional_arguments(self, data, **kwargs):
+        """
+        Validate that the conditional arguments are valid.
+        """
+        arguments = data.get("arguments")
+        if not arguments:
+            return
+        # check that all arguments have a unique name - they cannot have the same name
+        # because they are used as keys in the function arguments
+        names = [arg.get("name") for arg in arguments]
+        if len(names) != len(set(names)):
+            raise ValidationError("All arguments must have a unique name")
+        for argument in arguments:
+            arg_name = argument.get("name")
+            if not arg_name:
+                # this will lead to error elsewhere but cannot proceed with this check
+                continue
+            if conditional_on := argument.get("conditional_on"):
+                if not any(arg["name"] == conditional_on for arg in arguments):
+                    raise ValidationError(
+                        f"The argument '{arg_name}' is conditional on "
+                        f"'{conditional_on}', but no other argument with that name "
+                        "exists."
+                    )
+                conditional_arg = next(
+                    arg for arg in arguments if arg["name"] == conditional_on
+                )
+                # argument of list types cannot be conditional - this is not supported
+                if conditional_arg.get("type_") in [
+                    ArgumentType.COLUMNS.value,
+                    ArgumentType.STRINGS.value,
+                    ArgumentType.INTEGERS.value,
+                    ArgumentType.FLOATS.value,
+                    ArgumentType.ORGANIZATIONS.value,
+                ]:
+                    raise ValidationError(
+                        f"The argument '{arg_name}' is conditional on "
+                        f"'{conditional_on}', but the conditional argument is of a list"
+                        " type, which is not supported."
+                    )
+                # check that the conditional value matches the type of the argument
+                # that the argument is conditional on
+                conditional_value = argument.get("conditional_value")
+                conditional_type = conditional_arg.get("type_")
+                if not conditional_type:
+                    continue  # this will lead to error elsewhere but cannot proceed
+                if (
+                    conditional_type == ArgumentType.INTEGER.value
+                    or conditional_type == ArgumentType.ORGANIZATION.value
+                ):
+                    try:
+                        int(conditional_value)
+                    except ValueError as exc:
+                        raise ValidationError(
+                            f"Conditional value '{conditional_value}' is not a valid "
+                            f"integer, while the conditional argument '{conditional_on}' "
+                            "requires an integer"
+                        ) from exc
+                elif conditional_type == ArgumentType.FLOAT.value:
+                    try:
+                        float(conditional_value)
+                    except ValueError as exc:
+                        raise ValidationError(
+                            f"Conditional value '{conditional_value}' is not a valid "
+                            f"float, while the conditional argument '{conditional_on}' "
+                            "requires a float"
+                        ) from exc
+                elif conditional_type == ArgumentType.BOOLEAN.value:
+                    if conditional_value.lower() not in ["true", "false", "1", "0"]:
+                        raise ValidationError(
+                            f"Conditional value '{conditional_value}' is not a valid "
+                            "boolean, while the conditional argument "
+                            f"'{conditional_on}' requires a boolean. Please use 'true',"
+                            " 'false', '1', or '0'"
+                        )
+
 
 class DatabaseInputSchema(_NameDescriptionSchema):
     """
@@ -98,10 +175,13 @@ class ArgumentInputSchema(_NameDescriptionSchema):
     Schema for the input of an argument.
     """
 
+    display_name = fields.String()
     type_ = fields.String(required=True, data_key="type")
     has_default_value = fields.Boolean()
     default_value = fields.String()
-    display_name = fields.String(required=False)
+    conditional_on = fields.String()
+    conditional_comparator = fields.String()
+    conditional_value = fields.String()
 
     @validates("type_")
     def validate_type(self, value):
@@ -112,6 +192,18 @@ class ArgumentInputSchema(_NameDescriptionSchema):
         if value not in types:
             raise ValidationError(
                 f"Argument type '{value}' is not one of the allowed values: {types}"
+            )
+
+    @validates("conditional_comparator")
+    def validate_conditional_comparator(self, value):
+        """
+        Validate that the conditional comparator is one of the allowed values.
+        """
+        comparators = [c.value for c in ConditionalArgComparator]
+        if value not in comparators:
+            raise ValidationError(
+                f"Conditional comparator '{value}' is not one of the allowed values: "
+                f"{comparators}"
             )
 
     @validates_schema

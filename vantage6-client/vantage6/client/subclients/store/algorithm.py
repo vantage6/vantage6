@@ -188,6 +188,13 @@ class AlgorithmSubClient(ClientBase.SubClient):
                     Default value of the argument. Only required if 'has_default_value'
                     is true. The type should match the 'type' field, e.g. if 'type' is
                     'integer', 'default_value' should be an integer.
+                - conditional_on: str, optional
+                    Name of the argument that this argument is conditional on.
+                - conditional_comparator: str, optional
+                    Comparator to use for the conditional argument. Can be '==', '!=',
+                    '>', '<', '>=', or '<='.
+                - conditional_value: str | int | float | boolean, optional
+                    Value to compare the conditional argument to.
             - ui_visualizations: list[dict]
                 List of UI visualizations of the function. Each visualization
                 is a dict with the following keys:
@@ -357,6 +364,13 @@ class AlgorithmSubClient(ClientBase.SubClient):
                     Default value of the argument. Only required if 'has_default_value'
                     is true. The type should match the 'type' field, e.g. if 'type' is
                     'integer', 'default_value' should be an integer.
+                - conditional_on: str, optional
+                    Name of the argument that this argument is conditional on.
+                - conditional_comparator: str, optional
+                    Comparator to use for the conditional argument. Can be '==', '!=',
+                    '>', '<', '>=', or '<='.
+                - conditional_value: str | int | float | boolean, optional
+                    Value to compare the conditional argument to.
             - ui_visualizations: list[dict]
                 List of UI visualizations of the function. Each visualization
                 is a dict with the following keys:

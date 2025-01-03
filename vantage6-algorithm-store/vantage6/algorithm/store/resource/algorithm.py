@@ -452,6 +452,19 @@ class Algorithms(AlgorithmBaseResource):
                                   should match the 'type' field, e.g. if 'type' is
                                   'integer', 'default_value' should be an integer.
                                   To set an empty (null) default value, use None.
+                              conditional_on:
+                                type: string
+                                description: Name of the argument that this argument
+                                  is conditional on.
+                              conditional_comparator:
+                                type: string
+                                description: Comparator used for the conditional
+                                  argument. Can be one of: '==', '!=', '>', '<', '>=',
+                                  '<='.
+                              conditional_value:
+                                type: string
+                                description: Value that the argument should be compared
+                                  to.
                         ui_visualizations:
                           type: array
                           description: List of visualizations that are available in
@@ -532,8 +545,29 @@ class Algorithms(AlgorithmBaseResource):
                 algorithm_id=algorithm.id,
             )
             func.save()
+            # sort so that arguments that conditions for others are created first
+            sorted_args = sorted(
+                function.get("arguments", []),
+                key=lambda x: x.get("conditional_on", ""),
+            )
             # create the arguments
-            for argument in function.get("arguments", []):
+            print(sorted_args)
+            for argument in sorted_args:
+                conditional_on = None
+                print(argument)
+                print(argument.get("conditional_on"))
+                if argument.get("conditional_on"):
+                    conditional_on = Argument.get_by_name(
+                        argument["conditional_on"], func.id
+                    )
+                    # note that this error should never occur, as the arguments are
+                    # sorted and checked in the input schema - but better raise this
+                    # error than unclear SQLalchemy errors
+                    if not conditional_on:
+                        return {
+                            "msg": "Conditional argument "
+                            f"{argument['conditional_on']} not found",
+                        }, HTTPStatus.BAD_REQUEST
                 arg = Argument(
                     name=argument["name"],
                     display_name=argument.get("display_name", ""),
@@ -541,6 +575,9 @@ class Algorithms(AlgorithmBaseResource):
                     type_=argument["type"],
                     has_default_value=argument.get("has_default_value", False),
                     default_value=argument.get("default_value", None),
+                    conditional_on_id=conditional_on.id if conditional_on else None,
+                    conditional_comparator=argument.get("conditional_comparator", None),
+                    conditional_value=argument.get("conditional_value", None),
                     function_id=func.id,
                 )
                 arg.save()
@@ -848,6 +885,19 @@ class Algorithm(AlgorithmBaseResource):
                                   should match the 'type' field, e.g. if 'type' is
                                   'integer', 'default_value' should be an integer.
                                   To set an empty (null) default value, use None.
+                              conditional_on:
+                                type: string
+                                description: Name of the argument that this argument
+                                  is conditional on.
+                              conditional_comparator:
+                                type: string
+                                description: Comparator used for the conditional
+                                  argument. Can be one of: '==', '!=', '>', '<', '>=',
+                                  '<='.
+                              conditional_value:
+                                type: string
+                                description: Value that the argument should be compared
+                                  to.
                         ui_visualizations:
                           type: array
                           description: List of visualizations that are available in
@@ -966,6 +1016,8 @@ class Algorithm(AlgorithmBaseResource):
                 )
                 func.save()
 
+                # TODO update to deal with conditional arguments
+                # create arguments, databases and visualizations
                 for argument in new_function.get("arguments", []):
                     arg = Argument(
                         name=argument["name"],
@@ -974,6 +1026,11 @@ class Algorithm(AlgorithmBaseResource):
                         type_=argument["type"],
                         has_default_value=argument.get("has_default_value", False),
                         default_value=argument.get("default_value", None),
+                        conditional_on_id=argument.get("conditional_on", None),
+                        conditional_comparator=argument.get(
+                            "conditional_comparator", None
+                        ),
+                        conditional_value=argument.get("conditional_value", None),
                         function_id=func.id,
                     )
                     arg.save()
