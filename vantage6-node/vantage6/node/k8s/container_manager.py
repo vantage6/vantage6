@@ -27,6 +27,7 @@ from vantage6.common.docker.addons import (
 )
 from vantage6.common.client.node_client import NodeClient
 from vantage6.node.globals import (
+    ENV_VARS_NOT_SETTABLE_BY_NODE,
     KUBE_CONFIG_FILE_PATH,
     V6_NODE_FQDN,
     V6_NODE_PROXY_PORT,
@@ -94,10 +95,6 @@ class KilledRun(NamedTuple):
 
 
 # HIGH
-# TODO re-instantiate `_validate_dataframe_names`, `_validate_source_database` and
-#      `_validate_environment_variables`
-# TODO copy `is_file` database to a volume mount
-# TODO implement the dataframe DATABASE_URI for sessions based on the action
 #
 # The configurations should be:
 #
@@ -366,30 +363,40 @@ class ContainerManager:
                 token=token,
                 databases_to_use=databases_to_use,
             )
-        except PermanentAlgorithmStartFail:
+        except PermanentAlgorithmStartFail as e:
+            self.log.warning(e)
             return RunStatus.FAILED
+        except DataFrameNotFound as e:
+            self.log.info(e)
+            return RunStatus.DATAFRAME_NOT_FOUND
+        except Exception as e:
+            self.log.exception(e)
+            return RunStatus.UNKNOWN_ERROR
 
         # Set environment variables for the algorithm client. This client is used
         # to communicate from the algorithm to the vantage6 server through the proxy.
-        # TODO these environment vars need to be encoded...
-        env_vars.extend(
-            [
-                client.V1EnvVar(
-                    name="HOST",
-                    value=os.environ.get("PROXY_SERVER_HOST", V6_NODE_FQDN),
-                ),
-                client.V1EnvVar(
-                    name="PORT",
-                    value=os.environ.get("PROXY_SERVER_PORT", str(V6_NODE_PROXY_PORT)),
-                ),
-                # TODO This environment variable correspond to the API PATH of the PROXY
-                # (not to be confused of the one of the actual server). This variable
-                # should be eventually removed, as it is not being used to setup such \
-                # PATH, so if it is changed to a value different than empty, it leads to
-                # an error.
-                client.V1EnvVar(name="API_PATH", value=""),
-            ]
+        env_vars[ContainerEnvNames.HOST.value] = os.environ.get(
+            "PROXY_SERVER_HOST", V6_NODE_FQDN
         )
+        env_vars[ContainerEnvNames.PORT.value] = os.environ.get(
+            "PROXY_SERVER_PORT", str(V6_NODE_PROXY_PORT)
+        )
+        env_vars[ContainerEnvNames.API_PATH.value] = ("",)
+
+        # Encode the environment variables to avoid issues with special characters and
+        # for security reasons. The environment variables are encoded in base64.
+        io_env_vars = []
+        environment_variables = self._encode_environment_variables(
+            environment_variables
+        )
+        for key, value in environment_variables.items():
+            io_env_vars.append(client.V1EnvVar(name=key, value=value))
+
+        try:
+            self._validate_environment_variables(env_vars)
+        except PermanentAlgorithmStartFail as e:
+            self.log.warning(e)
+            return RunStatus.FAILED
 
         container = client.V1Container(
             name=run_io.container_name,
@@ -609,7 +616,6 @@ class ContainerManager:
         """
         volumes: List[client.V1Volume] = []
         vol_mounts: List[client.V1VolumeMount] = []
-        io_env_vars: List[V1EnvVar] = []
 
         # Create algorithm's input and token files before creating volume mounts with
         # them (relative to the node's file system: POD or host)
@@ -698,20 +704,92 @@ class ContainerManager:
                     environment_variables[env_key] = db["env"][key]
 
         else:
-            # In the other case we are dealing with a dataframe in a session. So we only
-            # need to validate that the dataframe is available in the session.
-            # run_io.session_folder
-            pass
+            # In the other cases (preprocessing, compute, ...) we are dealing with a
+            # dataframe in a session. So we only need to validate that the dataframe is
+            # available in the session.
+            self._validate_dataframe_names(databases_to_use, run_io)
 
-        # Encode the environment variables to avoid issues with special characters and
-        # for security reasons. The environment variables are encoded in base64.
-        environment_variables = self._encode_environment_variables(
-            environment_variables
-        )
-        for key, value in environment_variables.items():
-            io_env_vars.append(client.V1EnvVar(name=key, value=value))
+            environment_variables[
+                ContainerEnvNames.USER_REQUESTED_DATAFRAME_HANDLES.value
+            ] = ",".join([db["label"] for db in databases_to_use])
 
-        return volumes, vol_mounts, io_env_vars
+        return volumes, vol_mounts, environment_variables
+
+    def _validate_environment_variables(self, environment_variables: dict) -> None:
+        """
+        Check whether environment variables don't contain any illegal
+        characters
+
+        Parameters
+        ----------
+        environment_variables: dict
+            Environment variables required to run algorithm
+
+        Raises
+        ------
+        PermanentAlgorithmStartFail
+            If environment variables contain illegal characters
+        """
+        msg = None
+        for key in environment_variables:
+            if not key.isidentifier():
+                msg = (
+                    f"Environment variable '{key}' is invalid: environment "
+                    " variable names should only contain number, letters and "
+                    " underscores, and start with a letter."
+                )
+            elif key in ENV_VARS_NOT_SETTABLE_BY_NODE:
+                msg = (
+                    f"Environment variable '{key}' cannot be set: this "
+                    "variable is set in the algorithm Dockerfile and cannot "
+                    "be overwritten."
+                )
+            if msg:
+                raise PermanentAlgorithmStartFail(msg)
+
+    def _validate_dataframe_names(
+        self, databases_to_use: list[str], run_io: RunIO
+    ) -> None:
+        """
+        Validates that all provided databases are of type 'handle' and that the
+        requested handles exist in the session folder.
+
+        Parameters
+        ----------
+        databases_to_use: list[str]
+            A list of dictionaries where each dictionary represents a database
+            with a 'type' and 'label'.
+
+        Raises
+        ------
+        PermanentAlgorithmStartFail:
+            If any database is not of type 'handle'.
+        DataFrameNotFound:
+            If any requested handle is not found in the session folder.
+        """
+
+        if not all(df["type"] == "handle" for df in databases_to_use):
+            self.log.error(
+                "All databases used in the algorithm must be of type 'handle'."
+            )
+            raise PermanentAlgorithmStartFail()
+
+        # Validate that the requested handles exist. At this point they need to as
+        # we are about to start the task.
+        requested_handles = {db["label"] for db in databases_to_use}
+        available_handles = {
+            file_.stem for file_ in Path(run_io.session_folder).glob("*.parquet")
+        }
+        # check that requested handles is a subset of available handles
+        if not requested_handles.issubset(available_handles):
+            self.log.error("Requested dataframe handle(s) not found in session folder.")
+            self.log.debug(f"Requested dataframe handles: {requested_handles}")
+            self.log.debug(f"Available dataframe handles: {available_handles}")
+            problematic_handles = requested_handles - available_handles
+            raise DataFrameNotFound(
+                f"User requested {problematic_handles} that are not available in the "
+                f"session folder. Available handles are {available_handles}."
+            )
 
     def _validate_source_database(self, databases_to_use: list[dict]) -> None:
         """
