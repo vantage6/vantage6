@@ -18,7 +18,7 @@ class RunIO:
         self,
         run_id: int,
         session_id: int,
-        action: str,
+        action: AlgorithmStepType,
         dataframe_handle: str = None,
         host_data_dir: str = TASK_FILES_ROOT,
     ):

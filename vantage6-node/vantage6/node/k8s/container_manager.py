@@ -249,7 +249,7 @@ class ContainerManager:
         # In case we are dealing with a data-extraction or prediction task, we need to
         # know the dataframe handle that is being created or modified by the algorithm.
         dataframe_handle = task_info.get("dataframe", {}).get("handle")
-        run_io = RunIO(run_id, session_id, dataframe_handle, self.data_dir)
+        run_io = RunIO(run_id, session_id, action, dataframe_handle, self.data_dir)
 
         # Verify that an allowed image is used
         if not self.is_docker_image_allowed(image, task_info):
@@ -430,7 +430,7 @@ class ContainerManager:
         return RunStatus.UNKNOWN_ERROR
 
     def _create_run_mount(
-        volume_name: str, host_path, mount_path: str
+        volume_name: str, host_path, mount_path: str, read_only: bool = False
     ) -> Tuple[client.V1Volume, client.V1VolumeMount]:
         """
         Create a volume and its corresponding volume mount
@@ -443,6 +443,8 @@ class ContainerManager:
             Path to the host, could be a file or a folder
         mount_path: str
             Path where the ``host_path`` is going to be mounted
+        read_only: bool
+            Whether the volume is read-only or not in the mount
 
         Returns
         -------
@@ -457,6 +459,7 @@ class ContainerManager:
         vol_mount = client.V1VolumeMount(
             name=volume_name,
             mount_path=mount_path,
+            read_only=read_only,
         )
 
         return (volume, vol_mount)
@@ -565,38 +568,26 @@ class ContainerManager:
         # Bind-mounting all the CSV files (read only) defined on the configuration file
         # TODO bind other input data types
         # TODO include only the ones given in the 'databases_to_use parameter
+        # TODO distinguish between the different actions
         csv_input_files = list(
             filter(lambda o: (o["type"] == "csv"), self.ctx.config["databases"])
         )
 
         for csv_input in csv_input_files:
-            _volume = client.V1Volume(
-                name=f"task-{run_io.run_id}-input-{csv_input['label']}",
-                host_path=client.V1HostPathVolumeSource(csv_input["uri"]),
-            )
 
-            volumes.append(_volume)
-
-            _volume_mount = client.V1VolumeMount(
-                mount_path=f"/mnt/{csv_input['label']}",
-                name=f"task-{run_io.run_id}-input-{csv_input['label']}",
+            csv_volume, csv_mount = self._create_run_mount(
+                volume_name=f"task-{run_io.run_id}-input-{csv_input['label']}",
+                host_path=csv_input["uri"],
+                mount_path=f"/mnt/data/{csv_input['label']}",
                 read_only=True,
             )
+            volumes.append(csv_volume)
+            vol_mounts.append(csv_mount)
 
-            vol_mounts.append(_volume_mount)
-
-            environment_variables[]
-            io_env_vars.append(
-                client.V1EnvVar(
-                    name=f"{csv_input['label'].upper()}_DATABASE_URI",
-                    value=f"/mnt/{csv_input['label']}",
-                )
+            environment_variables[ContainerEnvNames.DATABASE_URI.value] = (
+                f"/mnt/{csv_input['label']}"
             )
-            io_env_vars.append(
-                client.V1EnvVar(
-                    name=f"{csv_input['label'].upper()}_DATABASE_TYPE", value="csv"
-                )
-            )
+            environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = "csv"
 
         # Encode the environment variables to avoid issues with special characters and
         # for security reasons. The environment variables are encoded in base64.
