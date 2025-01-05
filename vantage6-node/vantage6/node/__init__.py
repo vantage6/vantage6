@@ -91,8 +91,6 @@ class Node:
     def initialize(self) -> None:
         """Initialization of the node"""
 
-        self.k8s_container_manager = ContainerManager(self.ctx)
-
         self.config = self.ctx.config
         self.debug: dict = self.config.get("debug", {})
 
@@ -104,6 +102,8 @@ class Node:
             port=self.config.get("port"),
             path=self.config.get("api_path"),
         )
+
+        self.k8s_container_manager = ContainerManager(self.ctx, self.client)
 
         self.log.info(f"Connecting server: {self.client.base_path}")
 
@@ -158,7 +158,7 @@ class Node:
         # TODO improve encapsulation here - why proxy_server.server_url, and proxy_host?
         proxy_server.server_url = self.client.base_path
         self.log.info(
-            ">>>> Setting target endpoint for the algorithm's client as : %s",
+            "Setting target endpoint for the algorithm's client as : %s",
             proxy_server.server_url,
         )
 
@@ -194,7 +194,7 @@ class Node:
 
             except Exception as e:
                 self.log.error("Proxyserver could not be started or crashed!")
-                self.log.error(e)
+                self.log.exception(e)
 
     def sync_task_queue_with_server(self) -> None:
         """Get all unprocessed tasks from the server for this node."""
@@ -288,7 +288,7 @@ class Node:
 
         # Only compute containers need a token as they are the only ones that should
         # create subtasks
-        token = None
+        token = ""
         if container_action == AlgorithmStepType.COMPUTE:
             token = self.client.request_token_for_container(task["id"], task["image"])
             try:
@@ -757,4 +757,4 @@ class Node:
 def run(ctx):
     """Start the node."""
     node = Node(ctx)
-    node.start_processing_threads()
+    # node.start_processing_threads()

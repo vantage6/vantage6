@@ -8,7 +8,7 @@ from typing import List, NamedTuple, Tuple
 from pathlib import Path
 
 
-from kubernetes import client, config, watch
+from kubernetes import client as k8s_client, config, watch
 from kubernetes.client import V1EnvVar
 from kubernetes.client.rest import ApiException
 
@@ -51,7 +51,6 @@ from vantage6.node.k8s.exceptions import (
 # log = logging.getLogger(logger_name(__name__))
 
 
-# Taken from docker_manager.py
 class Result(NamedTuple):
     """
     Data class to store the result of the docker image.
@@ -94,8 +93,6 @@ class KilledRun(NamedTuple):
     parent_id: int
 
 
-# HIGH
-#
 # The configurations should be:
 #
 # config.yml
@@ -121,6 +118,7 @@ class KilledRun(NamedTuple):
 #   hostPath:
 #     path: ABSOLUTE_HOST_PATH_OF_DEFAULT_DATABASE
 
+# HIGH
 
 # MEDIUM
 # TODO implement the `kill` method
@@ -138,6 +136,9 @@ class KilledRun(NamedTuple):
 # TODO make the k8s jobs namespace settable in the config file
 # TODO the return of `_printable_input`
 # TODO remove DockerNodeContext as it is no longer used?
+# TODO check which other docker_addons are no longer used (consider the algorithm store)
+# TODO the `RunIO` object requires the client now (as it needs to communicate the
+#      column names to the server). Better to keep this logic in the `ContainerManager`
 
 
 class ContainerManager:
@@ -198,12 +199,12 @@ class ContainerManager:
         self.databases = self._set_database(self.ctx.config["databases"])
 
         # before a task is executed it gets exposed to these policies
-        self._policies = self._setup_policies(ctx.config)
+        self._policies = self._setup_policies(self.ctx.config)
 
-        # K8S Batch API :09
-        self.batch_api = client.BatchV1Api()
+        # K8S Batch API
+        self.batch_api = k8s_client.BatchV1Api()
         # K8S Core API instance
-        self.core_api = client.CoreV1Api()
+        self.core_api = k8s_client.CoreV1Api()
 
     def _setup_policies(self, config: dict) -> dict:
         """
@@ -232,7 +233,7 @@ class ContainerManager:
             )
         return policies
 
-    def _set_database(self, databases: dict | list) -> dict:
+    def _set_database(self, config_databases: dict | list) -> dict:
         """
         Set database location and whether or not it is a file
 
@@ -246,12 +247,12 @@ class ContainerManager:
         dict
             Dictionary with the information about the databases
         """
-        db_labels = [db["label"] for db in databases]
+        db_labels = [db["label"] for db in config_databases]
 
         databases = {}
         for label in db_labels:
 
-            db_config = get_database_config(databases, label)
+            db_config = get_database_config(config_databases, label)
 
             # The URI on the host system. This can either be a path to a file or folder
             # or an address to a service.
@@ -338,7 +339,9 @@ class ContainerManager:
         # In case we are dealing with a data-extraction or prediction task, we need to
         # know the dataframe handle that is being created or modified by the algorithm.
         dataframe_handle = task_info.get("dataframe", {}).get("handle")
-        run_io = RunIO(run_id, session_id, action, dataframe_handle, self.data_dir)
+        run_io = RunIO(
+            run_id, session_id, action, self.client, dataframe_handle, self.data_dir
+        )
 
         # Verify that an allowed image is used
         if not self.is_docker_image_allowed(image, task_info):
@@ -382,14 +385,14 @@ class ContainerManager:
         )
         env_vars[ContainerEnvNames.API_PATH.value] = ("",)
 
+        env_vars[ContainerEnvNames.FUNCTION_ACTION.value] = action.value
+
         # Encode the environment variables to avoid issues with special characters and
         # for security reasons. The environment variables are encoded in base64.
         io_env_vars = []
-        environment_variables = self._encode_environment_variables(
-            environment_variables
-        )
-        for key, value in environment_variables.items():
-            io_env_vars.append(client.V1EnvVar(name=key, value=value))
+        env_vars = self._encode_environment_variables(env_vars)
+        for key, value in env_vars.items():
+            io_env_vars.append(k8s_client.V1EnvVar(name=key, value=value))
 
         try:
             self._validate_environment_variables(env_vars)
@@ -397,35 +400,37 @@ class ContainerManager:
             self.log.warning(e)
             return RunStatus.FAILED
 
-        container = client.V1Container(
+        container = k8s_client.V1Container(
             name=run_io.container_name,
             image=image,
             tty=True,
             volume_mounts=_volume_mounts,
-            env=env_vars,
+            env=io_env_vars,
         )
 
-        job_metadata = client.V1ObjectMeta(
+        job_metadata = k8s_client.V1ObjectMeta(
             name=run_io.container_name,
             annotations={
-                "run_id": run_io.run_id,
+                "run_id": str(run_io.run_id),
                 "task_id": str(task_id),
                 "task_parent_id": str(parent_task_id),
-                "action": str(action),
+                "action": str(action.value),
                 "session_id": str(session_id),
                 "dataframe_handle": dataframe_handle if dataframe_handle else "",
             },
         )
 
         # Define the job
-        job = client.V1Job(
+        job = k8s_client.V1Job(
             api_version="batch/v1",
             kind="Job",
             metadata=job_metadata,
-            spec=client.V1JobSpec(
-                template=client.V1PodTemplateSpec(
-                    metadata=client.V1ObjectMeta(labels={"app": run_io.container_name}),
-                    spec=client.V1PodSpec(
+            spec=k8s_client.V1JobSpec(
+                template=k8s_client.V1PodTemplateSpec(
+                    metadata=k8s_client.V1ObjectMeta(
+                        labels={"app": run_io.container_name}
+                    ),
+                    spec=k8s_client.V1PodSpec(
                         containers=[container],
                         volumes=_volumes,
                         restart_policy="Never",
@@ -533,8 +538,8 @@ class ContainerManager:
         return RunStatus.UNKNOWN_ERROR
 
     def _create_run_mount(
-        volume_name: str, host_path, mount_path: str, read_only: bool = False
-    ) -> Tuple[client.V1Volume, client.V1VolumeMount]:
+        self, volume_name: str, host_path: str, mount_path: str, read_only: bool = False
+    ) -> Tuple[k8s_client.V1Volume, k8s_client.V1VolumeMount]:
         """
         Create a volume and its corresponding volume mount
 
@@ -554,12 +559,12 @@ class ContainerManager:
         V1Volume, V1VolumeMount
             Tuple with the volume and volume mount
         """
-        volume = client.V1Volume(
+        volume = k8s_client.V1Volume(
             name=volume_name,
-            host_path=client.V1HostPathVolumeSource(path=host_path),
+            host_path=k8s_client.V1HostPathVolumeSource(path=host_path),
         )
 
-        vol_mount = client.V1VolumeMount(
+        vol_mount = k8s_client.V1VolumeMount(
             name=volume_name,
             mount_path=mount_path,
             read_only=read_only,
@@ -573,7 +578,9 @@ class ContainerManager:
         docker_input: bytes,
         token: str,
         databases_to_use: list[str],
-    ) -> Tuple[List[client.V1Volume], List[client.V1VolumeMount], List[V1EnvVar]]:
+    ) -> Tuple[
+        List[k8s_client.V1Volume], List[k8s_client.V1VolumeMount], List[V1EnvVar]
+    ]:
         """
         Create all volumes and volume mounts required by the algorithm/job.
 
@@ -613,8 +620,8 @@ class ContainerManager:
         )
         ```
         """
-        volumes: List[client.V1Volume] = []
-        vol_mounts: List[client.V1VolumeMount] = []
+        volumes: List[k8s_client.V1Volume] = []
+        vol_mounts: List[k8s_client.V1VolumeMount] = []
 
         # Create algorithm's input and token files before creating volume mounts with
         # them (relative to the node's file system: POD or host)
@@ -629,6 +636,7 @@ class ContainerManager:
             volume_name=run_io.output_volume_name,
             host_path=_host_output_file_path,
             mount_path=JOB_POD_OUTPUT_PATH,
+            read_only=False,
         )
 
         input_volume, input_mount = self._create_run_mount(
@@ -638,7 +646,7 @@ class ContainerManager:
         )
 
         token_volume, token_mount = self._create_run_mount(
-            volume_name=run_io.input_volume_name,
+            volume_name=run_io.token_volume_name,
             host_path=_host_token_file_path,
             mount_path=JOB_POD_TOKEN_PATH,
         )
@@ -824,8 +832,8 @@ class ContainerManager:
             )
             ok = False
 
-        available_databases = [db["label"] for db in self.databases]
-        if source_database["label"] not in available_databases:
+        self.log.debug(self.databases.keys())
+        if source_database["label"] not in self.databases.keys():
             self.log.error(
                 "The database used in the data extraction step does not exist."
             )
@@ -1064,6 +1072,7 @@ class ContainerManager:
         Result
             Result of the completed job
         """
+        self.log.info("Waiting for a completed job to process")
         # wait until there is at least one completed job available (successful or
         # failed) other statuses (pending/running/unknown) are ignored
         completed_job = False
@@ -1071,7 +1080,7 @@ class ContainerManager:
 
             # Get all jobs from the v6-jobs namespace
             jobs = self.batch_api.list_namespaced_job("v6-jobs")
-            if not jobs:
+            if not jobs.items:
                 time.sleep(1)
                 continue
 
@@ -1084,12 +1093,22 @@ class ContainerManager:
                     continue
 
                 # Create helper object to process the output of the job
-                run_io = RunIO.from_dict(job.metadata.annotations, self.data_dir)
+                run_io = RunIO.from_dict(
+                    job.metadata.annotations, self.client, self.data_dir
+                )
                 results, status = (
                     run_io.process_output()
                     if job.status.succeeded
                     else (b"", RunStatus.CRASHED)
                 )
+
+                try:
+                    logs = self.__get_job_pod_logs(run_io=run_io, namespace="v6-jobs")
+                except Exception as e:
+                    self.log.warning(
+                        f"Error while getting logs of job {run_io.container_name}: {e}"
+                    )
+                    logs = ["error while getting logs"]
 
                 self.log.info(
                     f"Sending results of run_id={run_io.run_id} "
@@ -1099,7 +1118,7 @@ class ContainerManager:
                 result = Result(
                     run_id=run_io.run_id,
                     task_id=job.metadata.annotations["task_id"],
-                    logs=self.__get_job_pod_logs(run_io=run_io, namespace="v6-jobs"),
+                    logs=logs,
                     data=results,
                     status=status,
                     parent_id=job.metadata.annotations["task_parent_id"],

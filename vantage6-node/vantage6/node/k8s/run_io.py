@@ -10,6 +10,8 @@ import pandas as pd
 
 from vantage6.node.globals import TASK_FILES_ROOT
 from vantage6.common.enum import RunStatus, AlgorithmStepType
+from vantage6.common import logger_name
+from vantage6.common.client.node_client import NodeClient
 
 
 class RunIO:
@@ -19,6 +21,7 @@ class RunIO:
         run_id: int,
         session_id: int,
         action: AlgorithmStepType,
+        client: NodeClient,
         dataframe_handle: str = None,
         host_data_dir: str = TASK_FILES_ROOT,
     ):
@@ -26,48 +29,59 @@ class RunIO:
         Responsible for the IO files between the node and the algorithm.
         """
 
-        self.logger = logging.getLogger(__name__)
+        self.log = logging.getLogger(logger_name(__name__))
         self.run_id = run_id
         self.session_id = session_id
         self.action = action
         self.dataframe_handle = dataframe_handle
+        self.client = client
 
         # The directory where the data is stored
         self.dir = host_data_dir
 
         # This run needs its own directory to store the IO files
-        self.run_folder = os.path.join(self.dir, self.run_id)
+        self.run_folder = os.path.join(self.dir, str(self.run_id))
 
         # A session folder is used to store the dataframes that are shared between
         # the runs. It also contains the session state file.
-        self.session_name = f"session_{self.session_id:09d}"
+        self.session_name = f"session{self.session_id:09d}"
         self.session_state_file_name = "session_state.parquet"
 
         self.session_folder = os.path.join(self.dir, "sessions", self.session_name)
-        os.mkdir(self.session_folder, exist_ok=True)
+        os.makedirs(self.session_folder, exist_ok=True)
         self.session_state_file = os.path.join(
             self.session_folder, self.session_state_file_name
         )
 
+        if not Path(self.session_state_file).exists():
+            self._create_session_state_file(self.session_id)
+
     @classmethod
-    def from_dict(cls, data: dict, host_data_dir: str = TASK_FILES_ROOT):
+    def from_dict(
+        cls, data: dict, client: NodeClient, host_data_dir: str = TASK_FILES_ROOT
+    ):
         # TODO validate that the keys are present
         # TODO the host_data_dir should be passed as an argument
         return cls(
             run_id=int(data["run_id"]),
             session_id=int(data["session_id"]),
-            action=data["action"],
+            action=AlgorithmStepType(data["action"]),
             dataframe_handle=data["dataframe_handle"],
             host_data_dir=host_data_dir,
+            client=client,
         )
 
     @property
     def input_volume_name(self) -> str:
-        return f"task_{self.run_id}_input"
+        return f"task-{self.run_id}-input"
+
+    @property
+    def token_volume_name(self) -> str:
+        return f"token-{self.run_id}-input"
 
     @property
     def output_volume_name(self) -> str:
-        return f"task_{self.run_id}_output"
+        return f"task-{self.run_id}-output"
 
     @property
     def session_volume_name(self) -> str:
@@ -75,7 +89,7 @@ class RunIO:
 
     @property
     def container_name(self) -> str:
-        return f"run_{self.run_id}"
+        return f"run-{self.run_id}"
 
     @property
     def output_file(self) -> str:
@@ -117,7 +131,7 @@ class RunIO:
             Content that is going to be written to the file
         """
         self.log.debug(f"Creating file {filename} for run {self.run_id}")
-        file_path = os.path.join(self.dir, self.run_id, filename)
+        file_path = os.path.join(self.dir, str(self.run_id), filename)
         file_dir = Path(file_path).parent
         file_dir.mkdir(parents=True, exist_ok=True)
         with open(file_path, "wb") as file_:
@@ -144,7 +158,7 @@ class RunIO:
             {
                 "action": [""],
                 "file": [self.session_state_file_name],
-                "timestamp": [datetime.now()],
+                "timestamp": [datetime.datetime.now()],
                 "message": ["Created this session file."],
                 "dataframe": [""],
             }
@@ -160,6 +174,14 @@ class RunIO:
         bytes
             Content of the output file
         """
+        self.log.debug(AlgorithmStepType.DATA_EXTRACTION)
+        self.log.debug(self.action)
+
+        self.log.debug(AlgorithmStepType.DATA_EXTRACTION == self.action)
+
+        self.log.debug(type(self.action))
+        self.log.debug(type(AlgorithmStepType.DATA_EXTRACTION))
+
         match self.action:
 
             case AlgorithmStepType.DATA_EXTRACTION | AlgorithmStepType.PREPROCESSING:
@@ -226,7 +248,7 @@ class RunIO:
             return RunStatus.FAILED
 
         self._update_session_state(
-            self.action,
+            self.action.value,
             f"{self.dataframe_handle}.parquet",
             "Session updated.",
             self.dataframe_handle,
@@ -274,7 +296,7 @@ class RunIO:
                 {
                     "action": action,
                     "file": filename,
-                    "timestamp": datetime.now(),
+                    "timestamp": datetime.datetime.now(),
                     "message": message,
                     "dataframe": dataframe,
                 }
