@@ -338,7 +338,9 @@ class ContainerManager:
 
         # In case we are dealing with a data-extraction or prediction task, we need to
         # know the dataframe handle that is being created or modified by the algorithm.
-        dataframe_handle = task_info.get("dataframe", {}).get("handle")
+        df_details = task_info.get("dataframe", {})
+
+        dataframe_handle = df_details.get("handle") if df_details else None
         run_io = RunIO(
             run_id, session_id, action, self.client, dataframe_handle, self.data_dir
         )
