@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vantage6-server-frontend
+  namespace: vantage6-server
+  labels:
+    app: vantage6-server-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vantage6-server-frontend
+  template:
+    metadata:
+      labels:
+        app: vantage6-server-frontend
+    spec:
+      containers:
+      - name: vantage6-server-frontend
+        image: harbor2.vantage6.ai/infrastructure/ui:5.0.0a0
+        ports:
+        - containerPort: 80
+        env:
+        - name: SERVER_URL
+          value: http://localhost
+        - name: API_PATH
+          value: /api
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
