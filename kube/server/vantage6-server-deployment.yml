@@ -113,6 +113,49 @@ spec:
             memory: "256Mi"
             cpu: "250m"
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-service
+spec:
+  ports:
+    - port: 5672
+      targetPort: 5672
+  selector:
+    app: rabbitmq
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+spec:
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+      - name: rabbitmq
+        image: rabbitmq:3-management
+        ports:
+        - containerPort: 5672
+        - containerPort: 15672
+        env:
+        - name: RABBITMQ_DEFAULT_USER
+          value: rabbitmquser
+        - name: RABBITMQ_DEFAULT_PASS
+          value: rabbitmquserpassword
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -236,3 +279,6 @@ data:
     port: '7601'
     server_url: http://localhost/api
     uri: postgresql://vantage6user:vantage6password@postgres-service:5432/vantage6
+    rabbitmq:
+      uri: amqp://rabbitmquser:rabbitmquserpassword@rabbitmq-service:5672//vantage6
+      start_with_server: false
