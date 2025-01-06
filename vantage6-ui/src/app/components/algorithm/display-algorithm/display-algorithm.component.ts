@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input } from '@angular/core';
 import { Subject } from 'rxjs';
 import { printDate } from 'src/app/helpers/general.helper';
-import { Algorithm, AlgorithmFunction } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmFunction, Argument } from 'src/app/models/api/algorithm.model';
 import { Visualization } from 'src/app/models/api/visualization.model';
 import { routePaths } from 'src/app/routes';
 import { FileService } from 'src/app/services/file.service';
@@ -29,6 +29,14 @@ export class DisplayAlgorithmComponent {
 
   getVisualizationSchemaAsText(vis: Visualization): string {
     return JSON.stringify(vis.schema);
+  }
+
+  getDisplayName(obj: AlgorithmFunction | Argument) {
+    return obj.display_name && obj.display_name != '' ? obj.display_name : obj.name;
+  }
+
+  getArgName(argID: number) {
+    return this.selectedFunction?.arguments.find((arg) => arg.id === argID)?.name;
   }
 
   downloadAlgorithmJson(): void {

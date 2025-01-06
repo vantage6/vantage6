@@ -188,10 +188,10 @@
                             </mat-select>
                           </mat-form-field>
                           <mat-form-field subscriptSizing="dynamic">
-                            <mat-label>{{ "algorithm.function.argument.condition.comparator" | translate }}</mat-label>
+                            <mat-label>{{ "algorithm.function.argument.condition.operator" | translate }}</mat-label>
                             <mat-select formControlName="conditional_operator">
                               <mat-option *ngFor="let arg of getAvailableComparators(functionFormGroup, parameterFormGroup)" [value]="arg">
-                                {{ "algorithm.function.argument.condition.comparators." + arg | translate }}
+                                {{ "algorithm.function.argument.condition.operators." + arg | translate }}
                               </mat-option>
                             </mat-select>
                           </mat-form-field>

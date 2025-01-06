@@ -240,9 +240,9 @@
           "has_condition": "Should only be provided conditionally on other argument:",
           "explanation": "Fill in the conditions under which this argument should be provided.",
           "conditional_on": "Conditional on",
-          "comparator": "Conditional operator",
+          "operator": "Conditional operator",
           "value": "Conditional value",
-          "comparators": {
+          "operators": {
             "==": "Equals",
             "!=": "Not equals",
             ">": "Greater than",

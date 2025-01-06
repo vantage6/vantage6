@@ -142,7 +142,7 @@ export interface Argument {
   has_default_value: boolean;
   default_value?: string | number | boolean | null;
   conditional_on_id?: number;
-  conditional_comparator?: string;
+  conditional_operator?: string;
   conditional_value?: string | number | boolean;
 }
 
