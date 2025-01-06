@@ -6,7 +6,7 @@ I needed to install the ingress controller for my Kubernetes cluster. I used the
 - [x] make sessions to the server sticky
 - [ ] add algorithm store service
 - [ ] use secrets for sensitive data
-- [ ] add persistent storage for the database
+- [x] add persistent storage for the database
 - [x] Add namespace for all resources
 
 ```bash

@@ -33,3 +33,11 @@ spec:
           requests:
             memory: "256Mi"
             cpu: "250m"
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+          subPath: postgres
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc
