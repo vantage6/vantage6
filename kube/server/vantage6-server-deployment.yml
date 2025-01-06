@@ -23,7 +23,8 @@
 # exposed, and accessible within the Kubernetes cluster.
 #
 # - [ ] write documentation
-# - [ ] add RabbitMQ service
+# - [x] add RabbitMQ service
+# - [ ] make sessions to the server sticky
 # - [ ] add algorithm store service
 
 apiVersion: apps/v1
@@ -242,6 +243,7 @@ spec:
       targetPort: 7601  # Container port for the server
       name: vantage6-server-backend
   type: ClusterIP
+  sessionAffinity: ClientIP
 ---
 apiVersion: v1
 kind: ConfigMap
