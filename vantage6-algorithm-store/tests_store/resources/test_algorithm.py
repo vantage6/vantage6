@@ -421,20 +421,37 @@ class TestAlgorithmResources(TestResources):
             },
         ]
         rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
-        from pprint import pprint
-
-        pprint(rv.json)
         self.assertEqual(rv.status_code, 201)
         self.assertEqual(
-            rv.json["functions"][0]["arguments"][0]["conditional_on"],
-            rv.json["functions"][0]["arguments"][1]["id"],
+            rv.json["functions"][0]["arguments"][1]["conditional_on_id"],
+            rv.json["functions"][0]["arguments"][0]["id"],
         )
         self.assertEqual(
-            rv.json["functions"][0]["arguments"][0]["conditional_comparator"], "=="
+            rv.json["functions"][0]["arguments"][1]["conditional_comparator"], "=="
         )
         self.assertEqual(
-            rv.json["functions"][0]["arguments"][0]["conditional_value"], "test"
+            rv.json["functions"][0]["arguments"][1]["conditional_value"], "test"
         )
+
+        # test that we get an error if conditions are circular
+        json_data["functions"][0]["arguments"] = [
+            {
+                "name": "dependent",
+                "type": ArgumentType.STRING,
+                "conditional_on": "conditional",
+                "conditional_comparator": "==",
+                "conditional_value": "test",
+            },
+            {
+                "name": "conditional",
+                "type": ArgumentType.STRING,
+                "conditional_on": "dependent",
+                "conditional_comparator": "==",
+                "conditional_value": "test",
+            },
+        ]
+        rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
+        self.assertEqual(rv.status_code, 400)
 
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     @patch(

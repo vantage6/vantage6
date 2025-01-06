@@ -551,11 +551,8 @@ class Algorithms(AlgorithmBaseResource):
                 key=lambda x: x.get("conditional_on", ""),
             )
             # create the arguments
-            print(sorted_args)
             for argument in sorted_args:
                 conditional_on = None
-                print(argument)
-                print(argument.get("conditional_on"))
                 if argument.get("conditional_on"):
                     conditional_on = Argument.get_by_name(
                         argument["conditional_on"], func.id

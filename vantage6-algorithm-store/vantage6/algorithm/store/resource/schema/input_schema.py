@@ -96,17 +96,43 @@ class FunctionInputSchema(_NameDescriptionSchema):
         names = [arg.get("name") for arg in arguments]
         if len(names) != len(set(names)):
             raise ValidationError("All arguments must have a unique name")
+        # check that the conditional arguments are valid
+        self._validate_conditional_values_and_types(arguments)
+        # check that there are no circular conditions
+        self._check_circular_conditions(arguments)
+
+    @staticmethod
+    def _validate_conditional_values_and_types(arguments: list[dict]) -> None:
+        """
+        Check that the conditional arguments are valid: they should have a value that
+        matches the type of the argument that they are conditional on.
+
+        Parameters
+        ----------
+        arguments : list[dict]
+            List of arguments in the function
+
+        Raises
+        ------
+        ValidationError
+            If the conditional arguments are not valid
+        """
         for argument in arguments:
             arg_name = argument.get("name")
             if not arg_name:
                 # this will lead to error elsewhere but cannot proceed with this check
                 continue
             if conditional_on := argument.get("conditional_on"):
+                # check that conditional_on argument exists
                 if not any(arg["name"] == conditional_on for arg in arguments):
                     raise ValidationError(
                         f"The argument '{arg_name}' is conditional on "
                         f"'{conditional_on}', but no other argument with that name "
                         "exists."
+                    )
+                elif conditional_on == arg_name:
+                    raise ValidationError(
+                        f"The argument '{arg_name}' is conditional on itself."
                     )
                 conditional_arg = next(
                     arg for arg in arguments if arg["name"] == conditional_on
@@ -159,6 +185,47 @@ class FunctionInputSchema(_NameDescriptionSchema):
                             f"'{conditional_on}' requires a boolean. Please use 'true',"
                             " 'false', '1', or '0'"
                         )
+
+    @staticmethod
+    def _check_circular_conditions(arguments: list[dict]) -> None:
+        """
+        Check that there are no circular conditions in conditional arguments.
+
+        Parameters
+        ----------
+        arguments : list[dict]
+            List of arguments in the function
+
+        Raises
+        ------
+        ValidationError
+            If there are circular conditions
+        """
+        # make list of all conditional arguments
+        conditions = []
+        for argument in arguments:
+            if conditional_on := argument.get("conditional_on"):
+                conditions.append((argument["name"], conditional_on))
+        # check for circular conditions. Since one argument can only be dependent on one
+        # other argument, we can check for circular conditions by following the chain of
+        # conditions until we reach the first condition again. If we reach the first
+        # condition again, there is a circular condition.
+        # note that we already check in function above that name != conditional_on.
+        for condition in conditions:
+            first_condition = condition
+            first_iteration = True
+            condition_chain = [condition[0]]
+            while first_iteration or condition != first_condition:
+                first_iteration = False
+                condition = next((c for c in conditions if c[0] == condition[1]), None)
+                if not condition:
+                    break
+                condition_chain.append(condition[0])
+            if condition == first_condition:
+                raise ValidationError(
+                    "Circular conditional arguments detected: "
+                    f"{' -> '.join(condition_chain)}"
+                )
 
 
 class DatabaseInputSchema(_NameDescriptionSchema):

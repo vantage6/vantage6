@@ -58,7 +58,7 @@ class Argument(Base):
     conditional_argument = relationship(
         "Argument",
         backref="dependent_arguments",
-        remote_side=["Argument.id"],
+        remote_side="Argument.id",
     )
 
     @classmethod
