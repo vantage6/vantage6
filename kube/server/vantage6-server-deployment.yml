@@ -1,3 +1,5 @@
+# vantage6-server-deployment.yml
+#
 # This YAML file defines the deployment and service configurations for the Vantage6
 # server backend and frontend components. The architecture includes a LoadBalancer for
 # external access, an Ingress Controller for routing, and separate services for the
@@ -19,6 +21,11 @@
 #
 # This configuration ensures that the Vantage6 server components are properly deployed,
 # exposed, and accessible within the Kubernetes cluster.
+#
+# - [ ] write documentation
+# - [ ] add RabbitMQ service
+# - [ ] add algorithm store service
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -63,6 +70,49 @@ spec:
         configMap:
           name: vantage6-server-config
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+spec:
+  ports:
+    - port: 5432
+  selector:
+    app: postgres
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:13
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: vantage6
+        - name: POSTGRES_USER
+          value: vantage6user
+        - name: POSTGRES_PASSWORD
+          value: vantage6password
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -101,9 +151,8 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: vantage6-server-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
+  ingressClassName: nginx
   rules:
   - host: localhost
     http:
@@ -159,7 +208,7 @@ data:
   config.yaml: |
     algorithm_stores: []
     allow_drop_all: 'True'
-    api_path: ""
+    api_path: /api
     description: Vantage6 server version 5
     ip: 0.0.0.0
     jwt_secret_key: 90251a41-f4c1-441c-8e62-a2d51bd47de9
@@ -185,5 +234,5 @@ data:
       max_size: 1024
       use_console: true
     port: '7601'
-    server_url: http://kubernetes.docker.internal:7601/api
-    uri: sqlite:///default.sqlite
+    server_url: http://localhost/api
+    uri: postgresql://vantage6user:vantage6password@postgres-service:5432/vantage6
