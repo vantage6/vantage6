@@ -456,7 +456,7 @@ class Algorithms(AlgorithmBaseResource):
                                 type: string
                                 description: Name of the argument that this argument
                                   is conditional on.
-                              conditional_comparator:
+                              conditional_operator:
                                 type: string
                                 description: Comparator used for the conditional
                                   argument. Can be one of: '==', '!=', '>', '<', '>=',
@@ -573,7 +573,7 @@ class Algorithms(AlgorithmBaseResource):
                     has_default_value=argument.get("has_default_value", False),
                     default_value=argument.get("default_value", None),
                     conditional_on_id=conditional_on.id if conditional_on else None,
-                    conditional_comparator=argument.get("conditional_comparator", None),
+                    conditional_operator=argument.get("conditional_operator", None),
                     conditional_value=argument.get("conditional_value", None),
                     function_id=func.id,
                 )
@@ -886,7 +886,7 @@ class Algorithm(AlgorithmBaseResource):
                                 type: string
                                 description: Name of the argument that this argument
                                   is conditional on.
-                              conditional_comparator:
+                              conditional_operator:
                                 type: string
                                 description: Comparator used for the conditional
                                   argument. Can be one of: '==', '!=', '>', '<', '>=',
@@ -1024,9 +1024,7 @@ class Algorithm(AlgorithmBaseResource):
                         has_default_value=argument.get("has_default_value", False),
                         default_value=argument.get("default_value", None),
                         conditional_on_id=argument.get("conditional_on", None),
-                        conditional_comparator=argument.get(
-                            "conditional_comparator", None
-                        ),
+                        conditional_operator=argument.get("conditional_operator", None),
                         conditional_value=argument.get("conditional_value", None),
                         function_id=func.id,
                     )

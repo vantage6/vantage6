@@ -150,16 +150,22 @@ class FunctionInputSchema(_NameDescriptionSchema):
                         f"'{conditional_on}', but the conditional argument is of a list"
                         " type, which is not supported."
                     )
+                elif conditional_arg.get("type_") in [
+                    ArgumentType.ORGANIZATION.value,
+                    ArgumentType.JSON.value,
+                ]:
+                    raise ValidationError(
+                        f"The argument '{arg_name}' is conditional on "
+                        f"'{conditional_on}', but the conditional argument is of type "
+                        f"'{conditional_arg.get('type_')}', which is not supported."
+                    )
                 # check that the conditional value matches the type of the argument
                 # that the argument is conditional on
                 conditional_value = argument.get("conditional_value")
                 conditional_type = conditional_arg.get("type_")
                 if not conditional_type:
                     continue  # this will lead to error elsewhere but cannot proceed
-                if (
-                    conditional_type == ArgumentType.INTEGER.value
-                    or conditional_type == ArgumentType.ORGANIZATION.value
-                ):
+                if conditional_type == ArgumentType.INTEGER.value:
                     try:
                         int(conditional_value)
                     except ValueError as exc:
@@ -247,7 +253,7 @@ class ArgumentInputSchema(_NameDescriptionSchema):
     has_default_value = fields.Boolean()
     default_value = fields.String()
     conditional_on = fields.String()
-    conditional_comparator = fields.String()
+    conditional_operator = fields.String()
     conditional_value = fields.String()
 
     @validates("type_")
@@ -261,8 +267,8 @@ class ArgumentInputSchema(_NameDescriptionSchema):
                 f"Argument type '{value}' is not one of the allowed values: {types}"
             )
 
-    @validates("conditional_comparator")
-    def validate_conditional_comparator(self, value):
+    @validates("conditional_operator")
+    def validate_conditional_operator(self, value):
         """
         Validate that the conditional comparator is one of the allowed values.
         """

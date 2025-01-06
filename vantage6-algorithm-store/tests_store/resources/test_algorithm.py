@@ -412,7 +412,7 @@ class TestAlgorithmResources(TestResources):
                 "name": "dependent",
                 "type": ArgumentType.STRING,
                 "conditional_on": "conditional",
-                "conditional_comparator": "==",
+                "conditional_operator": "==",
                 "conditional_value": "test",
             },
             {
@@ -427,7 +427,7 @@ class TestAlgorithmResources(TestResources):
             rv.json["functions"][0]["arguments"][0]["id"],
         )
         self.assertEqual(
-            rv.json["functions"][0]["arguments"][1]["conditional_comparator"], "=="
+            rv.json["functions"][0]["arguments"][1]["conditional_operator"], "=="
         )
         self.assertEqual(
             rv.json["functions"][0]["arguments"][1]["conditional_value"], "test"
@@ -439,14 +439,14 @@ class TestAlgorithmResources(TestResources):
                 "name": "dependent",
                 "type": ArgumentType.STRING,
                 "conditional_on": "conditional",
-                "conditional_comparator": "==",
+                "conditional_operator": "==",
                 "conditional_value": "test",
             },
             {
                 "name": "conditional",
                 "type": ArgumentType.STRING,
                 "conditional_on": "dependent",
-                "conditional_comparator": "==",
+                "conditional_operator": "==",
                 "conditional_value": "test",
             },
         ]

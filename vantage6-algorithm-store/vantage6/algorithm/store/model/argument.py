@@ -30,7 +30,7 @@ class Argument(Base):
         Default value of the argument
     conditional_on_id : int
         ID of the argument that this argument is conditional on
-    conditional_comparator : str
+    conditional_operator : str
         Comparator used for the conditional argument
     conditional_value : str
         Value that the argument should be compared to
@@ -50,7 +50,7 @@ class Argument(Base):
     default_value = Column(String)
     # columns for conditional arguments
     conditional_on_id = Column(Integer, ForeignKey("argument.id"))
-    conditional_comparator = Column(String)
+    conditional_operator = Column(String)
     conditional_value = Column(String)
 
     # relationships
