@@ -4,6 +4,8 @@ import { MatExpansionPanel } from '@angular/material/expansion';
 import { readFile } from 'src/app/helpers/file.helper';
 import {
   AlgorithmForm,
+  Argument,
+  ArgumentForm,
   ArgumentType,
   ConditionalArgComparatorType,
   FunctionForm,
@@ -197,6 +199,11 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     }
   }
 
+  isConditionalArgBoolean(functionFormGroup: FormGroup, parameterFormGroup: FormGroup): boolean {
+    const condArgType = this.getConditionalParamType(functionFormGroup, parameterFormGroup);
+    return condArgType === ArgumentType.Boolean;
+  }
+
   private getConditionalParamType(functionFormGroup: FormGroup, parameterFormGroup: FormGroup): ArgumentType {
     const conditionalArgName = parameterFormGroup.controls['conditional_on'].value;
     return (functionFormGroup.controls['arguments'] as FormArray).controls.find((control) => control.value.name === conditionalArgName)
@@ -315,7 +322,14 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
           argumentFormGroup.controls['hasCondition'].setValue(arg.conditional_on !== undefined);
           argumentFormGroup.controls['conditional_on'].setValue(arg.conditional_on);
           argumentFormGroup.controls['conditional_operator'].setValue(arg.conditional_operator);
-          argumentFormGroup.controls['conditional_value'].setValue(arg.conditional_value);
+          if (arg.conditional_on) {
+            const conditionalArg = func.arguments.find((other_arg: ArgumentForm) => other_arg.name === arg.conditional_on);
+            if (conditionalArg?.type === ArgumentType.Boolean) {
+              argumentFormGroup.controls['conditional_value'].setValue(isTruthy(arg.conditional_value));
+            } else {
+              argumentFormGroup.controls['conditional_value'].setValue(arg.conditional_value);
+            }
+          }
           (functionFormGroup.controls['arguments'] as FormArray).push(argumentFormGroup);
         });
       }

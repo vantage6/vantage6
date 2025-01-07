@@ -195,7 +195,7 @@
                               </mat-option>
                             </mat-select>
                           </mat-form-field>
-                          <mat-form-field subscriptSizing="dynamic">
+                          <mat-form-field *ngIf="!isConditionalArgBoolean(functionFormGroup, parameterFormGroup)" subscriptSizing="dynamic">
                             <mat-label>{{ "algorithm.function.argument.condition.value" | translate }}</mat-label>
                             <input
                               matInput
@@ -204,6 +204,14 @@
                               formControlName="conditional_value"
                             />
                           </mat-form-field>
+                          <mat-radio-group
+                            *ngIf="isConditionalArgBoolean(functionFormGroup, parameterFormGroup)"
+                            formControlName="conditional_value"
+                          >
+                            <mat-label>{{ "algorithm.function.argument.condition.value" | translate }}:</mat-label>
+                            <mat-radio-button [value]="true" color="primary">{{ "general.true" | translate }}</mat-radio-button>
+                            <mat-radio-button [value]="false" color="primary">{{ "general.false" | translate }}</mat-radio-button>
+                          </mat-radio-group>
                           <!-- TODO add error text like this for all errors -->
                           <!-- <div *ngIf="parameterFormGroup.errors?.['conditionalFields']" class="error">
                             {{ parameterFormGroup.errors?.["conditionalFields"] }}

@@ -152,7 +152,7 @@ export interface FunctionDatabase {
   description?: string;
 }
 
-interface ArgumentForm extends NameDescription {
+export interface ArgumentForm extends NameDescription {
   display_name?: string;
   type: string;
   has_default_value: boolean | string;
