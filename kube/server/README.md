@@ -13,6 +13,10 @@ I needed to install the ingress controller for my Kubernetes cluster. I used the
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
 ```
 
+```bash
+kubectl apply -f kube/server/.
+```
+
 This YAML file defines the deployment and service configurations for the Vantage6
 server backend and frontend components. The architecture includes a LoadBalancer for
 external access, an Ingress Controller for routing, and separate services for the
