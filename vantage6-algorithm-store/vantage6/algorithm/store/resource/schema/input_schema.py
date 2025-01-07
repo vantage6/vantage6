@@ -280,14 +280,38 @@ class ArgumentInputSchema(_NameDescriptionSchema):
             )
 
     @validates_schema
-    def validate_default_value(self, data, **kwargs):
+    def validate_schema(self, data, **kwargs):
         """
-        Validate that if the default value is present, has_default_value is True, and
-        check, if the default value is given, that it matches the type
+        Validate that
+        - if the default value is present, has_default_value is True,
+        - if the default value is given, that it matches the type
+        - No conditionals are provided if the argument must always be specified
+        - That if one of the conditional fields is specified, all are specified
         """
         if data.get("default_value") and not data.get("has_default_value"):
             raise ValidationError(
                 "Default value cannot be given if has_default_value is False"
+            )
+        if data.get("conditional_on") and not data.get("has_default_value"):
+            raise ValidationError(
+                "Variable cannot be conditional on another variable if it has no "
+                "default: arguments without defaults must always be specified"
+            )
+        # Check that either all conditional fields are specified or none
+        conditional_fields = [
+            "conditional_on",
+            "conditional_operator",
+            "conditional_value",
+        ]
+        specified_conditionals = [
+            field for field in conditional_fields if data.get(field)
+        ]
+        if specified_conditionals and len(specified_conditionals) != len(
+            conditional_fields
+        ):
+            raise ValidationError(
+                "Either all conditional fields must be specified or none of them should"
+                " be specified"
             )
         # if default value is given, validate that it matches the type
         if default := data.get("default_value"):
