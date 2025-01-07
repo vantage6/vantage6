@@ -35,17 +35,31 @@ export class DisplayAlgorithmComponent {
     return obj.display_name && obj.display_name != '' ? obj.display_name : obj.name;
   }
 
-  getArgName(argID: number) {
-    return this.selectedFunction?.arguments.find((arg) => arg.id === argID)?.name;
+  getArgName(argID: number, function_: AlgorithmFunction | undefined = undefined) {
+    if (!function_) {
+      function_ = this.selectedFunction;
+    }
+    return function_?.arguments.find((arg) => arg.id === argID)?.name;
   }
 
   downloadAlgorithmJson(): void {
     if (!this.algorithm) return;
     const filename = `${this.algorithm.name}.json`;
 
+    const cleanedAlgorithmRepresentation: any = { ...this.algorithm };
+
+    // add conditional argument names and remove the conditional_on_id
+    for (const func of cleanedAlgorithmRepresentation.functions) {
+      for (const arg of func.arguments) {
+        if (arg.conditional_on_id) {
+          arg.conditional_on = this.getArgName(arg.conditional_on_id, func);
+        }
+        delete arg.conditional_on_id;
+      }
+    }
+
     // remove all nested ID fields as they should not be included in the download
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const cleanedAlgorithmRepresentation: any = { ...this.algorithm };
     delete cleanedAlgorithmRepresentation.id;
     for (const func of cleanedAlgorithmRepresentation.functions) {
       delete func.id;
