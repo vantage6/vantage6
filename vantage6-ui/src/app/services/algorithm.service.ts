@@ -138,6 +138,10 @@ export class AlgorithmService {
           delete arg.conditional_operator;
           delete arg.conditional_value;
         }
+        if (arg.conditional_value) {
+          // cast to string as it is stored as string in the database
+          arg.conditional_value = arg.conditional_value.toString();
+        }
       });
     });
     return algorithmForm;

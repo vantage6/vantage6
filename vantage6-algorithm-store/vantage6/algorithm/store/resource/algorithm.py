@@ -545,26 +545,9 @@ class Algorithms(AlgorithmBaseResource):
                 algorithm_id=algorithm.id,
             )
             func.save()
-            # sort so that arguments that conditions for others are created first
-            sorted_args = sorted(
-                function.get("arguments", []),
-                key=lambda x: x.get("conditional_on", ""),
-            )
-            # create the arguments
-            for argument in sorted_args:
-                conditional_on = None
-                if argument.get("conditional_on"):
-                    conditional_on = Argument.get_by_name(
-                        argument["conditional_on"], func.id
-                    )
-                    # note that this error should never occur, as the arguments are
-                    # sorted and checked in the input schema - but better raise this
-                    # error than unclear SQLalchemy errors
-                    if not conditional_on:
-                        return {
-                            "msg": "Conditional argument "
-                            f"{argument['conditional_on']} not found",
-                        }, HTTPStatus.BAD_REQUEST
+            # create the arguments. Note that the field `conditional_on_id` is skipped
+            # because it might not exist yet (depending on the order of the arguments)
+            for argument in function.get("arguments", []):
                 arg = Argument(
                     name=argument["name"],
                     display_name=argument.get("display_name", ""),
@@ -572,12 +555,21 @@ class Algorithms(AlgorithmBaseResource):
                     type_=argument["type"],
                     has_default_value=argument.get("has_default_value", False),
                     default_value=argument.get("default_value", None),
-                    conditional_on_id=conditional_on.id if conditional_on else None,
                     conditional_operator=argument.get("conditional_operator", None),
                     conditional_value=argument.get("conditional_value", None),
                     function_id=func.id,
                 )
                 arg.save()
+            # after creating the arguments, all have had their IDs assigned so we can
+            # now set the column `conditional_on_id`
+            for argument in function.get("arguments", []):
+                arg = Argument.get_by_name(argument["name"], func.id)
+                if argument.get("conditional_on"):
+                    conditional_on = Argument.get_by_name(
+                        argument["conditional_on"], func.id
+                    )
+                    arg.conditional_on_id = conditional_on.id
+                    arg.save()
             # create the databases
             for database in function.get("databases", []):
                 db_ = Database(
