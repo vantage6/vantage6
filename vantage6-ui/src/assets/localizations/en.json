@@ -192,7 +192,7 @@
         "download-json": "Download JSON",
         "download-csv": "Download CSV",
         "download-result": "Download result",
-        "download-input":"Download input"
+        "download-input": "Download input"
       }
     },
     "card-algorithm": {
@@ -325,7 +325,8 @@
       "parameter": {
         "title": "Parameter",
         "add": "Add function parameter",
-        "delete": "Delete parameter"
+        "delete": "Delete parameter",
+        "conditional-fields-error": "All conditional fields must be filled or all must be empty"
       },
       "database": {
         "title": "Database",

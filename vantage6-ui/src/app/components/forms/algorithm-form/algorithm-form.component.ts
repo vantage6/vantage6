@@ -19,20 +19,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { isTruthy } from 'src/app/helpers/utils.helper';
 import { isListTypeArgument } from 'src/app/helpers/algorithm.helper';
 
-export const conditionalFieldsValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
-  const conditional_on = control.get('conditional_on')?.value;
-  const conditional_operator = control.get('conditional_operator')?.value;
-  const conditional_value = control.get('conditional_value')?.value;
-
-  const allFieldsFilled = conditional_on && conditional_operator && conditional_value;
-  const allFieldsEmpty = !conditional_on && !conditional_operator && !conditional_value;
-
-  if (allFieldsFilled || allFieldsEmpty) {
-    return null; // Valid
-  } else {
-    return { conditionalFields: 'All conditional fields must be filled or all must be empty' }; // Invalid
-  }
-};
 @Component({
   selector: 'app-algorithm-form',
   templateUrl: './algorithm-form.component.html',
@@ -83,7 +69,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       conditional_operator: [''],
       conditional_value: ['']
     },
-    { validators: conditionalFieldsValidator }
+    { validators: this.conditionalFieldsValidator }
   );
   visualizationSchemaForm = this.fb.nonNullable.group({});
   visualizationForm = this.fb.nonNullable.group({
@@ -458,7 +444,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
         conditional_operator: [''],
         conditional_value: ['']
       },
-      { validators: conditionalFieldsValidator }
+      { validators: this.conditionalFieldsValidator }
     );
   }
 
@@ -488,5 +474,20 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
         confirmButtonType: 'default'
       }
     });
+  }
+
+  conditionalFieldsValidator(control: AbstractControl): ValidationErrors | null {
+    const conditional_on = control.get('conditional_on')?.value;
+    const conditional_operator = control.get('conditional_operator')?.value;
+    const conditional_value = control.get('conditional_value')?.value;
+
+    const allFieldsFilled = conditional_on && conditional_operator && conditional_value;
+    const allFieldsEmpty = !conditional_on && !conditional_operator && !conditional_value;
+
+    if (allFieldsFilled || allFieldsEmpty) {
+      return null; // Valid
+    } else {
+      return { conditionalFields: this.translateService.instant('algorithm-create.function.parameter.conditional-fields-error') }; // Invalid
+    }
   }
 }
