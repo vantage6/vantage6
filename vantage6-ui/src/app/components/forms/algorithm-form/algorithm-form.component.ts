@@ -265,7 +265,6 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       }, 500);
     } catch (error) {
       this.showJsonUploadError(error);
-      console.log(error);
     }
   }
 

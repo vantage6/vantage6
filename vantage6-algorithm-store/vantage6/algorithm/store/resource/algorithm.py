@@ -1005,8 +1005,9 @@ class Algorithm(AlgorithmBaseResource):
                 )
                 func.save()
 
-                # TODO update to deal with conditional arguments
-                # create arguments, databases and visualizations
+                # create arguments. Note that the field `conditional_on_id` is skipped
+                # because it might not exist yet (depending on the order of the
+                # arguments)
                 for argument in new_function.get("arguments", []):
                     arg = Argument(
                         name=argument["name"],
@@ -1015,12 +1016,22 @@ class Algorithm(AlgorithmBaseResource):
                         type_=argument["type"],
                         has_default_value=argument.get("has_default_value", False),
                         default_value=argument.get("default_value", None),
-                        conditional_on_id=argument.get("conditional_on", None),
                         conditional_operator=argument.get("conditional_operator", None),
                         conditional_value=argument.get("conditional_value", None),
                         function_id=func.id,
                     )
                     arg.save()
+                # after creating the arguments, all have had their IDs assigned so we
+                # can now set the column `conditional_on_id`
+                for argument in function.get("arguments", []):
+                    arg = Argument.get_by_name(argument["name"], func.id)
+                    if argument.get("conditional_on"):
+                        conditional_on = Argument.get_by_name(
+                            argument["conditional_on"], func.id
+                        )
+                        arg.conditional_on_id = conditional_on.id
+                        arg.save()
+                # Create databases and visualizations
                 for database in new_function.get("databases", []):
                     db = Database(
                         name=database["name"],
