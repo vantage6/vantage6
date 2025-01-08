@@ -406,11 +406,10 @@ class TestAlgorithmResources(TestResources):
 
         # test that conditional arguments are correctly created
         json_data["functions"][0]["arguments"] = [
-            # Note that the order should not matter here: as extra test the conditional
-            # argument is defined before the argument it is conditional on
             {
                 "name": "dependent",
                 "type": ArgumentType.STRING,
+                "has_default_value": True,
                 "conditional_on": "conditional",
                 "conditional_operator": "==",
                 "conditional_value": "test",
@@ -423,15 +422,21 @@ class TestAlgorithmResources(TestResources):
         rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
         self.assertEqual(rv.status_code, 201)
         self.assertEqual(
-            rv.json["functions"][0]["arguments"][1]["conditional_on_id"],
-            rv.json["functions"][0]["arguments"][0]["id"],
+            rv.json["functions"][0]["arguments"][0]["conditional_on_id"],
+            rv.json["functions"][0]["arguments"][1]["id"],
         )
         self.assertEqual(
-            rv.json["functions"][0]["arguments"][1]["conditional_operator"], "=="
+            rv.json["functions"][0]["arguments"][0]["conditional_operator"], "=="
         )
         self.assertEqual(
-            rv.json["functions"][0]["arguments"][1]["conditional_value"], "test"
+            rv.json["functions"][0]["arguments"][0]["conditional_value"], "test"
         )
+
+        # test that there is an error if argument with conditional does not have a
+        # default value
+        json_data["functions"][0]["arguments"][0]["has_default_value"] = False
+        rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
+        self.assertEqual(rv.status_code, 400)
 
         # test that we get an error if conditions are circular
         json_data["functions"][0]["arguments"] = [
