@@ -105,6 +105,12 @@ export interface AlgorithmFunction {
   ui_visualizations: Visualization[];
 }
 
+export interface AlgorithmFunctionExtended extends AlgorithmFunction {
+  algorithm_id?: number;
+  algorithm_name?: string;
+  algorithm_store_id?: number;
+}
+
 export interface Select {
   function: string;
   description?: string;

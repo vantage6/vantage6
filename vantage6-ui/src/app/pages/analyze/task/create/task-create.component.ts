@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, HostBinding, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import {
@@ -7,6 +7,7 @@ import {
   AlgorithmFunction,
   Argument,
   FunctionType,
+  AlgorithmFunctionExtended,
   ConditionalArgComparatorType
 } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
@@ -43,7 +44,8 @@ import { isTruthy } from 'src/app/helpers/utils.helper';
 @Component({
   selector: 'app-task-create',
   templateUrl: './task-create.component.html',
-  styleUrls: ['./task-create.component.scss']
+  styleUrls: ['./task-create.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   @HostBinding('class') class = 'card-container';
@@ -67,7 +69,9 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   algorithm: Algorithm | null = null;
   collaboration?: Collaboration | null = null;
   organizations: BaseOrganization[] = [];
-  function: AlgorithmFunction | null = null;
+  functions: AlgorithmFunctionExtended[] = [];
+  filteredFunctions: AlgorithmFunctionExtended[] = [];
+  function: AlgorithmFunctionExtended | null = null;
   node: BaseNode | null = null;
   columns: string[] = [];
   isLoading: boolean = true;
@@ -82,14 +86,12 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   studyForm = this.fb.nonNullable.group({
     studyOrCollabID: ['', Validators.required]
   });
-  packageForm = this.fb.nonNullable.group({
-    algorithmSpec: ['', Validators.required],
+  functionForm = this.fb.nonNullable.group({
+    algorithmFunctionSpec: ['', Validators.required],
+    algorithmFunctionSearch: '',
+    organizationIDs: ['', Validators.required],
     name: ['', Validators.required],
     description: ''
-  });
-  functionForm = this.fb.nonNullable.group({
-    functionName: ['', Validators.required],
-    organizationIDs: ['', Validators.required]
   });
   databaseForm = this.fb.nonNullable.group({});
   preprocessingForm = this.fb.array([]);
@@ -186,21 +188,28 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     // set algorithm step
-    this.packageForm.controls.name.setValue(this.repeatedTask.name);
-    this.packageForm.controls.description.setValue(this.repeatedTask.description);
+    this.functionForm.controls.name.setValue(this.repeatedTask.name);
+    this.functionForm.controls.description.setValue(this.repeatedTask.description);
     let algorithm = this.algorithms.find((_) => _.image === this.repeatedTask?.image);
     if (!algorithm && this.repeatedTask?.image.includes('@sha256:')) {
       // get algorithm including digest
       algorithm = this.algorithms.find((_) => `${_.image}@${_.digest}` === this.repeatedTask?.image);
     }
     if (!algorithm || !algorithm.algorithm_store_id) return;
-    const algoSpec = this.getAlgoSpec(algorithm);
-    this.packageForm.controls.algorithmSpec.setValue(algoSpec);
     await this.handleAlgorithmChange(algorithm.id, algorithm.algorithm_store_id);
     // set function step
     if (!this.repeatedTask.input) return;
-    this.functionForm.controls.functionName.setValue(this.repeatedTask?.input?.method);
-    await this.handleFunctionChange(this.repeatedTask.input?.method);
+
+    const func =
+      this.functions.find(
+        (_) =>
+          _.name === this.repeatedTask?.input?.method &&
+          _.algorithm_id == algorithm.id &&
+          _.algorithm_store_id == algorithm.algorithm_store_id
+      ) || null;
+    if (!func) return;
+    this.functionForm.controls.algorithmFunctionSpec.setValue(this.getAlgorithmFunctionSpec(func));
+    await this.handleFunctionChange(this.repeatedTask.input?.method, algorithm.id, algorithm.algorithm_store_id);
     if (!this.function) return;
     const organizationIDs = this.repeatedTask.runs.map((_) => _.organization?.id).toString();
     this.functionForm.controls.organizationIDs.setValue(organizationIDs);
@@ -253,8 +262,30 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  getAlgoSpec(algorithm: Algorithm): string {
-    return `${algorithm.id}_${algorithm.algorithm_store_id}`;
+  search() {
+    const value = this.functionForm.controls.algorithmFunctionSearch.value;
+    this.filteredFunctions = this.functions.filter((func) => {
+      const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
+      const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
+      return [func.algorithm_name, func.type, storeName, func.display_name, func.name].some((val) =>
+        val?.toLowerCase()?.includes(value.toLowerCase())
+      );
+    });
+  }
+
+  clearFunctionSearchInput() {
+    this.functionForm.controls.algorithmFunctionSearch.setValue('');
+    this.search();
+  }
+
+  getFunctionOptionLabel(func: AlgorithmFunctionExtended): string {
+    const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
+    const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
+    return `${this.getDisplayName(func)} <div class="detail-txt"> | ${func.algorithm_name}, ${storeName}, ${func.type}</div>`;
+  }
+
+  getAlgorithmFunctionSpec(func: AlgorithmFunctionExtended): string {
+    return `${func.name}__${func.algorithm_id}__${func.algorithm_store_id}`;
   }
 
   async handleDatabaseStepInitialized(): Promise<void> {
@@ -292,7 +323,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   async submitTask(): Promise<void> {
     if (
       this.studyForm.invalid ||
-      this.packageForm.invalid ||
       this.functionForm.invalid ||
       this.databaseForm.invalid ||
       this.preprocessingForm.invalid ||
@@ -351,8 +381,8 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     const createTask: CreateTask = {
-      name: this.packageForm.controls.name.value,
-      description: this.packageForm.controls.description.value,
+      name: this.functionForm.controls.name.value,
+      description: this.functionForm.controls.description.value,
       image: image,
       collaboration_id: this.collaboration?.id || -1,
       databases: taskDatabases,
@@ -563,7 +593,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.collaboration?.algorithm_stores && this.collaboration.algorithm_stores.length > 1) {
       const store_name = this.collaboration.algorithm_stores.find((_) => _.url === algorithm.algorithm_store_url)?.name;
       if (store_name) {
-        return `(${store_name})`;
+        return `${store_name}`;
       }
     }
     return '';
@@ -617,7 +647,19 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private async initData(): Promise<void> {
     this.collaboration = this.chosenCollaborationService.collaboration$.value;
-    this.algorithms = await this.algorithmService.getAlgorithms();
+    const algorithmsObj = await this.algorithmService.getAlgorithms();
+    this.algorithms = algorithmsObj;
+    this.functions = algorithmsObj.flatMap((curAlgorithm) => {
+      return curAlgorithm.functions.map((func) => {
+        return {
+          ...func,
+          algorithm_id: curAlgorithm.id,
+          algorithm_name: curAlgorithm.name,
+          algorithm_store_id: curAlgorithm.algorithm_store_id
+        };
+      });
+    });
+    this.filteredFunctions = this.functions;
     this.node = await this.getOnlineNode();
 
     // set default for study step: full collaboration (this is not visible but required
@@ -631,14 +673,12 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       }
     });
 
-    this.packageForm.controls.algorithmSpec.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (algorithmSpec) => {
-      const [algorithmID, algorithmStoreID] = algorithmSpec.split('_');
-      this.handleAlgorithmChange(Number(algorithmID), Number(algorithmStoreID));
-    });
-
-    this.functionForm.controls.functionName.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (functionName) => {
-      this.handleFunctionChange(functionName);
-    });
+    this.functionForm.controls.algorithmFunctionSpec.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(async (algorithmFunctionSpec) => {
+        const [functionName, algorithmID, algorithmStoreID] = algorithmFunctionSpec.split('__');
+        this.handleFunctionChange(String(functionName), Number(algorithmID), Number(algorithmStoreID));
+      });
 
     this.nodeStatusUpdateSubscription = this.socketioConnectService
       .getNodeStatusUpdates()
@@ -679,16 +719,18 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     this.algorithm = this.algorithms.find((_) => _.id === algorithmID && _.algorithm_store_id == algoStoreID) || null;
   }
 
-  private handleFunctionChange(functionName: string): void {
+  private handleFunctionChange(functionName: string, algorithmID: number, algoStoreID: number): void {
     // Clear form
-    this.clearFunctionStep(); // Also clear function step, so user needs to reselect organization
+    this.clearFunctionStep(); //Also clear function step, so user needs to reselect organization
     this.clearDatabaseStep();
     this.clearPreprocessingStep(); // this depends on the database, so it should be cleared
     this.clearFilterStep();
     this.clearParameterStep();
 
+    this.algorithm = this.algorithms.find((_) => _.id === algorithmID && _.algorithm_store_id == algoStoreID) || null;
     // Get selected function
-    const selectedFunction = this.algorithm?.functions.find((_) => _.name === functionName) || null;
+    const selectedFunction =
+      this.functions.find((_) => _.name === functionName && _.algorithm_id == algorithmID && _.algorithm_store_id == algoStoreID) || null;
 
     if (selectedFunction) {
       // Add form controls for parameters for selected function
