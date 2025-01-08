@@ -1,7 +1,14 @@
 import { AfterViewInit, ChangeDetectorRef, Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
-import { Algorithm, ArgumentType, AlgorithmFunction, Argument, FunctionType } from 'src/app/models/api/algorithm.model';
+import {
+  Algorithm,
+  ArgumentType,
+  AlgorithmFunction,
+  Argument,
+  FunctionType,
+  ConditionalArgComparatorType
+} from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { BaseNode, NodeStatus } from 'src/app/models/api/node.model';
@@ -31,6 +38,7 @@ import { MAX_ATTEMPTS_RENEW_NODE, SECONDS_BETWEEN_ATTEMPTS_RENEW_NODE } from 'sr
 import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 import { EncryptionService } from 'src/app/services/encryption.service';
 import { environment } from 'src/environments/environment';
+import { isTruthy } from 'src/app/helpers/utils.helper';
 
 @Component({
   selector: 'app-task-create',
@@ -505,6 +513,26 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     return id1 === id2;
   }
 
+  sortArgumentsForDisplay(arguments_: Argument[] | undefined) {
+    if (!arguments_) return undefined;
+    // first order by ID
+    arguments_ = arguments_.sort((a, b) => a.id - b.id);
+    // Sort the parameters of the function such that parameters that are conditional on
+    // others are just behind those
+    for (let idx = 0; idx < arguments_.length; idx++) {
+      const arg = arguments_[idx];
+      if (arg?.conditional_on_id) {
+        // Find the idx in the list of the one it is conditional on
+        const conditionalIdx = arguments_.findIndex((condArg) => condArg.id === arg.conditional_on_id);
+        if (conditionalIdx > idx) {
+          [arguments_[idx], arguments_[conditionalIdx]] = [arguments_[conditionalIdx], arguments_[idx]];
+          idx = -1;
+        }
+      }
+    }
+    return arguments_;
+  }
+
   compareStudyOrCollabForSelection(val1: number | string, val2: number | string): boolean {
     return val1 === val2;
   }
@@ -539,6 +567,52 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       }
     }
     return '';
+  }
+
+  getDisplayName(obj: AlgorithmFunction | Argument): string {
+    return obj.display_name && obj.display_name != '' ? obj.display_name : obj.name;
+  }
+
+  shouldDisplayArgument(function_: AlgorithmFunction | null, argument: Argument): boolean {
+    // argument should not be displayed if it is conditional on another and the
+    // condition is not fulfilled
+    if (!argument.conditional_on_id) {
+      return true;
+    }
+    const conditionalArg = function_?.arguments.find((arg: Argument) => arg.id === argument.conditional_on_id);
+    if (!conditionalArg) {
+      return true;
+    }
+    let curConditionalValue = this.parameterForm.get(conditionalArg.name)?.value;
+    // cast the values (if necessary)
+    let conditionDatabaseValue: string | number | boolean | undefined;
+    if (conditionalArg.type === ArgumentType.Boolean) {
+      conditionDatabaseValue = isTruthy(argument.conditional_value);
+      curConditionalValue = isTruthy(curConditionalValue);
+    } else if (conditionalArg.type === ArgumentType.Float || conditionalArg.type === ArgumentType.Integer) {
+      conditionDatabaseValue = Number(argument.conditional_value);
+      curConditionalValue = Number(curConditionalValue);
+    } else {
+      conditionDatabaseValue = argument.conditional_value;
+    }
+    // evaluate the condition
+    if (argument.conditional_operator === ConditionalArgComparatorType.Equal) {
+      return conditionDatabaseValue === curConditionalValue;
+    } else if (argument.conditional_operator === ConditionalArgComparatorType.NotEqual) {
+      return conditionDatabaseValue !== curConditionalValue;
+    } else if (conditionDatabaseValue) {
+      if (argument.conditional_operator === ConditionalArgComparatorType.GreaterThan) {
+        return conditionDatabaseValue > curConditionalValue;
+      } else if (argument.conditional_operator === ConditionalArgComparatorType.GreaterThanOrEqual) {
+        return conditionDatabaseValue >= curConditionalValue;
+      } else if (argument.conditional_operator === ConditionalArgComparatorType.LessThan) {
+        return conditionDatabaseValue < curConditionalValue;
+      } else if (argument.conditional_operator === ConditionalArgComparatorType.LessThanOrEqual) {
+        return conditionDatabaseValue <= curConditionalValue;
+      }
+    }
+    // fallback - just display it, but should never get here
+    return true;
   }
 
   private async initData(): Promise<void> {
@@ -606,22 +680,22 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private handleFunctionChange(functionName: string): void {
-    //Clear form
-    this.clearFunctionStep(); //Also clear function step, so user needs to reselect organization
+    // Clear form
+    this.clearFunctionStep(); // Also clear function step, so user needs to reselect organization
     this.clearDatabaseStep();
     this.clearPreprocessingStep(); // this depends on the database, so it should be cleared
     this.clearFilterStep();
     this.clearParameterStep();
 
-    //Get selected function
+    // Get selected function
     const selectedFunction = this.algorithm?.functions.find((_) => _.name === functionName) || null;
 
     if (selectedFunction) {
-      //Add form controls for parameters for selected function
+      // Add form controls for parameters for selected function
       addParameterFormControlsForFunction(selectedFunction, this.parameterForm);
     }
 
-    //Delay setting function, so that form controls are added
+    // Delay setting function, so that form controls are added
     this.function = selectedFunction;
   }
 
