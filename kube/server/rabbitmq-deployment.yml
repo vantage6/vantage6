@@ -23,10 +23,10 @@ spec:
           value: rabbitmquser
         - name: RABBITMQ_DEFAULT_PASS
           value: rabbitmquserpassword
-        resources:
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
+        # resources:
+        #   limits:
+        #     memory: "512Mi"
+        #     cpu: "500m"
+        #   requests:
+        #     memory: "256Mi"
+        #     cpu: "250m"

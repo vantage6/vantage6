@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: vantage6-server-backend
+  name: vantage6-store-backend
   namespace: vantage6-server
   labels:
-    app: vantage6-server-backend
+    app: vantage6-store-backend
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: vantage6-server-backend
+      app: vantage6-store-backend
   template:
     metadata:
       labels:
-        app: vantage6-server-backend
+        app: vantage6-store-backend
     spec:
       containers:
-      - name: vantage6-server-backend
-        image: harbor2.vantage6.ai/infrastructure/server:5.0.0a0
+      - name: vantage6-store-backend
+        image: harbor2.vantage6.ai/infrastructure/algorithm-store:5.0.0a0
         ports:
-        - containerPort: 7601
+        - containerPort: 7602
         # resources:
         #   limits:
         #     memory: "512Mi"
@@ -28,10 +28,10 @@ spec:
         #     memory: "256Mi"
         #     cpu: "250m"
         command: [
-          "uwsgi", "--http", ":7601", "--gevent", "1000", "--http-websockets",
+          "uwsgi", "--http", ":7602", "--gevent", "1000", "--http-websockets",
           "--master", "--callable", "app", "--disable-logging", "--wsgi-file",
-          "/vantage6/vantage6-server/vantage6/server/wsgi.py", "--pyargv",
-          "/mnt/config.yaml",
+          "/vantage6/vantage6-algorithm-store/vantage6/algorithm/store/wsgi.py",
+          "--pyargv", "/mnt/config.yaml",
         ]
         volumeMounts:
         - name: config-file
@@ -41,4 +41,4 @@ spec:
       volumes:
       - name: config-file
         configMap:
-          name: vantage6-server-config
+          name: vantage6-store-config

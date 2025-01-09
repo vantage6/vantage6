@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vantage6-store-backend-service
+  namespace: vantage6-server
+spec:
+  selector:
+    app: vantage6-store-backend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 7602
+      name: vantage6-store-backend
+  type: ClusterIP
+  sessionAffinity: ClientIP

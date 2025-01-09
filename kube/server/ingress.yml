@@ -16,6 +16,13 @@ spec:
             name: vantage6-server-backend-service
             port:
               number: 80
+      - path: /store
+        pathType: Prefix
+        backend:
+          service:
+            name: vantage6-store-backend-service
+            port:
+              number: 80
       - path: /
         pathType: Prefix
         backend:
