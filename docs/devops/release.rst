@@ -61,29 +61,45 @@ the following steps to test a release:
     conda activate <name>
     pip install vantage6==<version>
 
-3. *Start server and node*. Start the server and node for the release candidate:
+3. *Start server and nodes*. Start the server, nodes, UI and algorithm store for the
+   release candidate using ``v6 dev`` network:
 
   .. code:: bash
 
-    v6 server start --name <server name>
-        --image harbor2.vantage6.ai/infrastructure/server:<version>
-        --attach
-    v6 node start --name <node name>
-        --image harbor2.vantage6.ai/infrastructure/node:<version>
-        --attach
+    v6 dev create-demo-network \
+        -i harbor2.vantage6.ai/infrastructure/server:<version> \
+        --ui-image harbor2.vantage6.ai/infrastructure/ui:<version>
+
+    v6 dev start-demo-network \
+        --server-image harbor2.vantage6.ai/infrastructure/server:<version> \
+        --node-image harbor2.vantage6.ai/infrastructure/node:<version> \
+        --store-image harbor2.vantage6.ai/infrastructure/algorithm-store:<version>
 
 4. *Test code changes*. Go through all issues that are part of the new release
-   and test their functionality.
+   and test if they work as intended.
 
 5. *Run test algorithms*. The algorithm `v6-feature-tester` is run and checked.
    This algorithm checks several features to see if they are performing as
    expected. Additionaly, the `v6-node-to-node-diagnostics` algorithm is run
    to check the VPN functionality.
 
-6. *Check swagger*. Check if the swagger docs run without error. They should be
-   on http://localhost:7601/apidocs/ when running server locally.
+6. *Check swagger*. Check if the API documentation runs without error. They should be
+   on http://localhost:7601/apidocs for the server and on http://localhost:7602/apidocs
+   for the algorithm store.
 
-7. *Test the UI*. Also make a release candidate there.
+7. *Update algorithms*. For some releases, algorithms have to be updated, either because
+   they no longer work in the new version of vantage6, or, less urgently, if the
+   algorithm store is extended so new metadata on the algorithm can be stored. updating
+   the algorithms is especially important for the algorithms in the community store, as
+   these are used by the entire vantage6 community.
+
+7. *Stop the network*. After testing is finished, you can stop the network and clean up:
+
+  .. code:: bash
+
+    v6 dev stop-demo-network
+
+    v6 dev remove-demo-network
 
 After these steps, the release is ready. It is executed for both the main
 infrastructure and the UI. The release process is described below.
