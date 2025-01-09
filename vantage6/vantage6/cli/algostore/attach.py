@@ -31,7 +31,7 @@ def cli_algo_store_attach(name: str, system_folders: bool) -> None:
 
     if not name:
         name = q.select(
-            "Select the algorithm store you wish to inspect:",
+            "Select the algorithm store you wish to attach:",
             choices=running_server_names,
         ).ask()
     else:
