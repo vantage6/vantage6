@@ -18,6 +18,7 @@ kubectl apply -f kube/server/.
 > a higher number if you want to run multiple instances of the server.
 >    * **However** you need to make sure to enable the `sessionAffinity: ClientIP` in the *backend* and *store* file!
 >    * First start the server with `replicas: 1` to populate the database. Then you can scale up the server to multiple instances.
+> * This kubernetes deployment is now using an alpha build of vantage6, so the components are not yet fully functional.
 
 ## Deployment Overview
 The deployment consists of the following components:
