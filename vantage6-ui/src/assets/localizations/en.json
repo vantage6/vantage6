@@ -193,7 +193,7 @@
         "download-json": "Download JSON",
         "download-csv": "Download CSV",
         "download-result": "Download result",
-        "download-input":"Download input"
+        "download-input": "Download input"
       }
     },
     "card-algorithm": {
@@ -238,7 +238,22 @@
         "has_default": "Has default value:",
         "default_value_null": "Default value is empty (null/none):",
         "default_value": "Default value",
-        "list-warning": "This argument is a list. Provide a list of values separated by a comma."
+        "list-warning": "This argument is a list. Provide a list of values separated by a comma.",
+        "condition": {
+          "has_condition": "Should only be provided conditionally on other argument:",
+          "explanation": "Fill in the conditions under which this argument should be provided.",
+          "conditional_on": "Conditional on",
+          "operator": "Conditional operator",
+          "value": "Conditional value",
+          "operators": {
+            "==": "Equals",
+            "!=": "Not equals",
+            ">": "Greater than",
+            "<": "Less than",
+            ">=": "Greater than or equals",
+            "<=": "Less than or equals"
+          }
+        }
       },
       "databases": "Databases",
       "visualization": {
@@ -312,7 +327,8 @@
       "parameter": {
         "title": "Parameter",
         "add": "Add function parameter",
-        "delete": "Delete parameter"
+        "delete": "Delete parameter",
+        "conditional-fields-error": "All conditional fields must be filled or all must be empty"
       },
       "database": {
         "title": "Database",

@@ -60,6 +60,15 @@ export enum AlgorithmStatus {
   Removed = 'removed'
 }
 
+export enum ConditionalArgComparatorType {
+  Equal = '==',
+  NotEqual = '!=',
+  GreaterThan = '>',
+  GreaterThanOrEqual = '>=',
+  LessThan = '<',
+  LessThanOrEqual = '<='
+}
+
 // TODO this interface must be updated to match the API
 export interface Algorithm {
   id: number;
@@ -138,6 +147,9 @@ export interface Argument {
   description?: string;
   has_default_value: boolean;
   default_value?: string | number | boolean | null;
+  conditional_on_id?: number;
+  conditional_operator?: string;
+  conditional_value?: string | number | boolean;
 }
 
 export interface FunctionDatabase {
@@ -146,12 +158,16 @@ export interface FunctionDatabase {
   description?: string;
 }
 
-interface ArgumentForm extends NameDescription {
+export interface ArgumentForm extends NameDescription {
   display_name?: string;
   type: string;
   has_default_value: boolean | string;
   is_default_value_null?: boolean | string;
   default_value?: string | number | boolean | null | string[] | number[] | boolean[];
+  hasCondition?: boolean | string;
+  conditional_on?: string;
+  conditional_operator?: string;
+  conditional_value?: string | number | boolean;
 }
 export interface FunctionForm extends NameDescription {
   display_name?: string;

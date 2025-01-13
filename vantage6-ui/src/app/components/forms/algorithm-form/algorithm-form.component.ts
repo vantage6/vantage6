@@ -1,8 +1,16 @@
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChildren } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { MatExpansionPanel } from '@angular/material/expansion';
 import { readFile } from 'src/app/helpers/file.helper';
-import { AlgorithmForm, ArgumentType, FunctionForm, FunctionType, PartitioningType } from 'src/app/models/api/algorithm.model';
+import {
+  AlgorithmForm,
+  ArgumentForm,
+  ArgumentType,
+  ConditionalArgComparatorType,
+  FunctionForm,
+  FunctionType,
+  PartitioningType
+} from 'src/app/models/api/algorithm.model';
 import { VisualizationType, getVisualizationSchema } from 'src/app/models/api/visualization.model';
 import { MessageDialogComponent } from 'src/app/components/dialogs/message-dialog/message-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
@@ -46,15 +54,22 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     name: ['', [Validators.required]],
     description: ['']
   });
-  argumentForm = this.fb.nonNullable.group({
-    name: ['', [Validators.required]],
-    display_name: [''],
-    description: [''],
-    type: ['', [Validators.required]],
-    has_default_value: [false],
-    is_default_value_null: [false],
-    default_value: ['']
-  });
+  argumentForm = this.fb.nonNullable.group(
+    {
+      name: ['', [Validators.required]],
+      display_name: [''],
+      description: [''],
+      type: ['', [Validators.required]],
+      has_default_value: [false],
+      is_default_value_null: [false],
+      default_value: [''],
+      hasCondition: [false],
+      conditional_on: [''],
+      conditional_operator: [''],
+      conditional_value: ['']
+    },
+    { validators: this.conditionalFieldsValidator }
+  );
   visualizationSchemaForm = this.fb.nonNullable.group({});
   visualizationForm = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
@@ -135,6 +150,49 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
 
   deleteParameter(functionFormGroup: FormGroup, index: number): void {
     (functionFormGroup.controls['arguments'] as FormArray).removeAt(index);
+  }
+
+  getAvailableConditionalArguments(functionFormGroup: FormGroup, argumentIndex: number): string[] {
+    // return the names of other arguments than the current argument, and only those of types
+    // that are suitable as conditional argument. E.g. it is not currently implemented to
+    // have a condition if a list of floats is exactly (0.5, 0.7) as that is an unlikely usecase
+    const currentArgumentName = (functionFormGroup.controls['arguments'] as FormArray).controls[argumentIndex].value.name;
+    return (functionFormGroup.controls['arguments'] as FormArray).controls
+      .map((control) => control.value)
+      .filter((arg) =>
+        [ArgumentType.Boolean, ArgumentType.Integer, ArgumentType.Float, ArgumentType.Column, ArgumentType.String].includes(arg.type)
+      )
+      .map((arg) => arg.name)
+      .filter((name) => name !== currentArgumentName);
+  }
+
+  getAvailableComparators(functionFormGroup: FormGroup, parameterFormGroup: FormGroup): string[] {
+    const condArgType = this.getConditionalParamType(functionFormGroup, parameterFormGroup);
+    if (condArgType === ArgumentType.Integer || condArgType === ArgumentType.Float) {
+      return Object.values(ConditionalArgComparatorType);
+    } else {
+      return [ConditionalArgComparatorType.Equal, ConditionalArgComparatorType.NotEqual];
+    }
+  }
+
+  getConditionalParamInputType(functionFormGroup: FormGroup, parameterFormGroup: FormGroup): string {
+    const condArgType = this.getConditionalParamType(functionFormGroup, parameterFormGroup);
+    if (condArgType === ArgumentType.Integer || condArgType === ArgumentType.Float) {
+      return 'number';
+    } else {
+      return 'text';
+    }
+  }
+
+  isConditionalArgBoolean(functionFormGroup: FormGroup, parameterFormGroup: FormGroup): boolean {
+    const condArgType = this.getConditionalParamType(functionFormGroup, parameterFormGroup);
+    return condArgType === ArgumentType.Boolean;
+  }
+
+  private getConditionalParamType(functionFormGroup: FormGroup, parameterFormGroup: FormGroup): ArgumentType {
+    const conditionalArgName = parameterFormGroup.controls['conditional_on'].value;
+    return (functionFormGroup.controls['arguments'] as FormArray).controls.find((control) => control.value.name === conditionalArgName)
+      ?.value.type;
   }
 
   addDatabase(functionFormGroup: FormGroup): void {
@@ -243,6 +301,17 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
               }
             } else {
               argumentFormGroup.controls['default_value'].setValue(arg.default_value);
+            }
+          }
+          argumentFormGroup.controls['hasCondition'].setValue(arg.conditional_on !== undefined);
+          argumentFormGroup.controls['conditional_on'].setValue(arg.conditional_on);
+          argumentFormGroup.controls['conditional_operator'].setValue(arg.conditional_operator);
+          if (arg.conditional_on) {
+            const conditionalArg = func.arguments.find((other_arg: ArgumentForm) => other_arg.name === arg.conditional_on);
+            if (conditionalArg?.type === ArgumentType.Boolean) {
+              argumentFormGroup.controls['conditional_value'].setValue(isTruthy(arg.conditional_value));
+            } else {
+              argumentFormGroup.controls['conditional_value'].setValue(arg.conditional_value);
             }
           }
           (functionFormGroup.controls['arguments'] as FormArray).push(argumentFormGroup);
@@ -360,15 +429,22 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   }
 
   private getArgumentForm(): FormGroup {
-    return this.fb.group({
-      name: ['', [Validators.required]],
-      display_name: [''],
-      description: [''],
-      type: ['', [Validators.required]],
-      has_default_value: [false],
-      is_default_value_null: [false],
-      default_value: ['']
-    });
+    return this.fb.group(
+      {
+        name: ['', [Validators.required]],
+        display_name: [''],
+        description: [''],
+        type: ['', [Validators.required]],
+        has_default_value: [false],
+        is_default_value_null: [false],
+        default_value: [''],
+        hasCondition: [false],
+        conditional_on: [''],
+        conditional_operator: [''],
+        conditional_value: ['']
+      },
+      { validators: this.conditionalFieldsValidator }
+    );
   }
 
   private getDatabaseForm(): FormGroup {
@@ -397,5 +473,20 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
         confirmButtonType: 'default'
       }
     });
+  }
+
+  conditionalFieldsValidator(control: AbstractControl): ValidationErrors | null {
+    const conditional_on = control.get('conditional_on')?.value;
+    const conditional_operator = control.get('conditional_operator')?.value;
+    const conditional_value = control.get('conditional_value')?.value;
+
+    const allFieldsFilled = conditional_on && conditional_operator && conditional_value;
+    const allFieldsEmpty = !conditional_on && !conditional_operator && !conditional_value;
+
+    if (allFieldsFilled || allFieldsEmpty) {
+      return null; // Valid
+    } else {
+      return { conditionalFields: this.translateService.instant('algorithm-create.function.parameter.conditional-fields-error') }; // Invalid
+    }
   }
 }

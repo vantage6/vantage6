@@ -73,7 +73,7 @@
     <mat-accordion *ngIf="algorithm && algorithm.functions.length > 0; else noFunctions" class="card-accordion">
       <mat-expansion-panel *ngFor="let function of algorithm.functions" (opened)="selectFunction(function.id)">
         <mat-expansion-panel-header>
-          <mat-panel-title>{{ function.display_name ?? function.name }}</mat-panel-title>
+          <mat-panel-title>{{ getDisplayName(function) }}</mat-panel-title>
         </mat-expansion-panel-header>
         <ng-template matExpansionPanelContent>
           <mat-spinner *ngIf="!selectedFunction" diameter="48"></mat-spinner>
@@ -101,7 +101,7 @@
                 <mat-accordion *ngIf="function.arguments.length > 0; else noArguments" class="card-accordion sub-accordeon" [multi]="true">
                   <mat-expansion-panel *ngFor="let argument of function.arguments | orderBy: 'id'">
                     <mat-expansion-panel-header>
-                      <mat-panel-title>{{ argument.display_name ?? argument.name }}</mat-panel-title>
+                      <mat-panel-title>{{ getDisplayName(argument) }}</mat-panel-title>
                     </mat-expansion-panel-header>
                     <ng-template matExpansionPanelContent>
                       <div class="data-list">
@@ -128,6 +128,18 @@
                         <div class="data-list__item" *ngIf="argument.has_default_value">
                           <b>{{ "algorithm.function.argument.default_value" | translate }}</b>
                           <span>{{ argument.default_value || ("general.none" | translate) }}</span>
+                        </div>
+                        <div class="data-list__item" *ngIf="argument.conditional_on_id">
+                          <b>{{ "algorithm.function.argument.condition.conditional_on" | translate }}</b>
+                          <span>{{ getArgName(argument.conditional_on_id) }}</span>
+                        </div>
+                        <div class="data-list__item" *ngIf="argument.conditional_operator">
+                          <b>{{ "algorithm.function.argument.condition.operator" | translate }}</b>
+                          <span>{{ "algorithm.function.argument.condition.operators." + argument.conditional_operator | translate }}</span>
+                        </div>
+                        <div class="data-list__item" *ngIf="argument.conditional_value">
+                          <b>{{ "algorithm.function.argument.condition.value" | translate }}</b>
+                          <span>{{ argument.conditional_value }}</span>
                         </div>
                       </div>
                     </ng-template>

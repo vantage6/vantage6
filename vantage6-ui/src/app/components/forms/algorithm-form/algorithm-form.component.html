@@ -169,6 +169,59 @@
                               />
                             </mat-form-field>
                           </div>
+                          <mat-radio-group formControlName="hasCondition">
+                            <mat-label>{{ "algorithm.function.argument.condition.has_condition" | translate }}</mat-label>
+                            <mat-radio-button [value]="true" color="primary">{{ "general.yes" | translate }}</mat-radio-button>
+                            <mat-radio-button [value]="false" color="primary">{{ "general.no" | translate }}</mat-radio-button>
+                          </mat-radio-group>
+                          <div *ngIf="isTruthy(parameterFormGroup.controls['hasCondition'].value)">
+                            <p>
+                              <b>{{ "algorithm.function.argument.condition.explanation" | translate }}</b>
+                            </p>
+                            <mat-form-field subscriptSizing="dynamic">
+                              <mat-label>{{ "algorithm.function.argument.condition.conditional_on" | translate }}</mat-label>
+                              <mat-select formControlName="conditional_on">
+                                <mat-option *ngFor="let arg of getAvailableConditionalArguments(functionFormGroup, paramIdx)" [value]="arg">
+                                  {{ arg }}
+                                </mat-option>
+                              </mat-select>
+                            </mat-form-field>
+                            <mat-form-field subscriptSizing="dynamic">
+                              <mat-label>{{ "algorithm.function.argument.condition.operator" | translate }}</mat-label>
+                              <mat-select formControlName="conditional_operator">
+                                <mat-option
+                                  *ngFor="let arg of getAvailableComparators(functionFormGroup, parameterFormGroup)"
+                                  [value]="arg"
+                                >
+                                  {{ "algorithm.function.argument.condition.operators." + arg | translate }}
+                                </mat-option>
+                              </mat-select>
+                            </mat-form-field>
+                            <mat-form-field
+                              *ngIf="!isConditionalArgBoolean(functionFormGroup, parameterFormGroup)"
+                              subscriptSizing="dynamic"
+                            >
+                              <mat-label>{{ "algorithm.function.argument.condition.value" | translate }}</mat-label>
+                              <input
+                                matInput
+                                appNumberOnly
+                                [type]="getConditionalParamInputType(functionFormGroup, parameterFormGroup)"
+                                formControlName="conditional_value"
+                              />
+                            </mat-form-field>
+                            <mat-radio-group
+                              *ngIf="isConditionalArgBoolean(functionFormGroup, parameterFormGroup)"
+                              formControlName="conditional_value"
+                            >
+                              <mat-label>{{ "algorithm.function.argument.condition.value" | translate }}:</mat-label>
+                              <mat-radio-button [value]="true" color="primary">{{ "general.true" | translate }}</mat-radio-button>
+                              <mat-radio-button [value]="false" color="primary">{{ "general.false" | translate }}</mat-radio-button>
+                            </mat-radio-group>
+                            <!-- TODO add error text like this for all errors -->
+                            <!-- <div *ngIf="parameterFormGroup.errors?.['conditionalFields']" class="error">
+                            {{ parameterFormGroup.errors?.["conditionalFields"] }}
+                          </div> -->
+                          </div>
                         </div>
                         <div class="button-container button-container-separate">
                           <button mat-flat-button color="warn" (click)="deleteParameter(functionFormGroup, paramIdx)">
