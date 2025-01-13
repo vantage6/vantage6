@@ -40,3 +40,5 @@ This configuration ensures that the Vantage6 server components are properly depl
 exposed, and accessible within the Kubernetes cluster.
 
 
+! Start only one server instance the first time to populate the database.
+

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: postgres-pv
+  name: store-postgres-pv
   namespace: vantage6-server
   labels:
     type: local

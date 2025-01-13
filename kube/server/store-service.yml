@@ -12,4 +12,4 @@ spec:
       targetPort: 7602
       name: vantage6-store-backend
   type: ClusterIP
-  sessionAffinity: ClientIP
+  # sessionAffinity: ClientIP # does not work on WSL

@@ -37,4 +37,4 @@ data:
     root_user:
       username: root
       v6_server_uri: http://vantage6-server-backend-service/api
-    uri: postgresql://vantage6user:vantage6password@postgres-service:5432/vantage6-store
+    uri: postgresql://vantage6user:vantage6password@store-postgres-service:5432/store

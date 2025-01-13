@@ -12,4 +12,4 @@ spec:
       targetPort: 7601  # Container port for the server
       name: vantage6-server-backend
   type: ClusterIP
-  sessionAffinity: ClientIP
+  # sessionAffinity: ClientIP # does not work in wsl

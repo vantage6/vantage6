@@ -6,7 +6,7 @@ metadata:
   labels:
     app: vantage6-server-backend
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: vantage6-server-backend

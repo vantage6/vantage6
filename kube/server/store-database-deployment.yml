@@ -1,43 +1,36 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: postgres
+  name: store-postgres
   namespace: vantage6-server
   labels:
-    app: postgres
+    app: store-postgres
 spec:
   selector:
     matchLabels:
-      app: postgres
+      app: store-postgres
   template:
     metadata:
       labels:
-        app: postgres
+        app: store-postgres
     spec:
       containers:
-      - name: postgres
+      - name: store-postgres
         image: postgres:13
         ports:
         - containerPort: 5432
         env:
         - name: POSTGRES_DB
-          value: vantage6
+          value: store
         - name: POSTGRES_USER
           value: vantage6user
         - name: POSTGRES_PASSWORD
           value: vantage6password
-        # resources:
-        #   limits:
-        #     memory: "512Mi"
-        #     cpu: "500m"
-        #   requests:
-        #     memory: "256Mi"
-        #     cpu: "250m"
         volumeMounts:
-        - name: postgres-storage
+        - name: store-postgres-storage
           mountPath: /var/lib/postgresql/data
           subPath: postgres
       volumes:
-      - name: postgres-storage
+      - name: store-postgres-storage
         persistentVolumeClaim:
-          claimName: postgres-pvc
+          claimName: store-postgres-pvc
