@@ -121,7 +121,7 @@ class FunctionInputSchema(_NameDescriptionSchema):
             arg_name = argument.get("name")
             if not arg_name:
                 # this will lead to error elsewhere but cannot proceed with this check
-                continue
+                raise ValidationError("Argument name is required")
             if conditional_on := argument.get("conditional_on"):
                 # check that conditional_on argument exists
                 if not any(arg["name"] == conditional_on for arg in arguments):
@@ -164,7 +164,9 @@ class FunctionInputSchema(_NameDescriptionSchema):
                 conditional_value = argument.get("conditional_value")
                 conditional_type = conditional_arg.get("type_")
                 if not conditional_type:
-                    continue  # this will lead to error elsewhere but cannot proceed
+                    raise ValidationError(
+                        f"Type of conditional argument '{conditional_on}' is not set"
+                    )
                 if conditional_type == ArgumentType.INTEGER.value:
                     try:
                         int(conditional_value)
