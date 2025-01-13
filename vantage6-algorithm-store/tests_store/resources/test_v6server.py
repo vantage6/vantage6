@@ -128,9 +128,7 @@ class TestVantage6ServerResource(TestResources):
                 {
                     "username": USERNAME,
                     "email": EMAIL,
-                    "organization": {
-                        "id": ORGANIZATION_ID,
-                    },
+                    "organization_id": ORGANIZATION_ID,
                 },
                 status_code=HTTPStatus.OK,
             ),
@@ -155,7 +153,7 @@ class TestVantage6ServerResource(TestResources):
         response = self.app.post("/api/vantage6-server", headers=HEADERS, json=body_)
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
-        # check that whitelisting localhost still doesnt work without force
+        # check that whitelisting localhost still doesn't work without force
         policy = Policy(key=StorePolicies.ALLOW_LOCALHOST, value="1")
         policy.save()
         response = self.app.post("/api/vantage6-server", headers=HEADERS, json=body_)

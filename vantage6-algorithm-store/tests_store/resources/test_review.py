@@ -289,7 +289,7 @@ class TestReviewResources(TestResources):
         algorithm = Algorithm.get(algorithm.id)
         self.assertEqual(algorithm.status, AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT)
 
-        # set policy to require one review adn one organization
+        # set policy to require one review and one organization
         Policy(key=StorePolicies.MIN_REVIEWERS, value=1).save()
         Policy(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS, value=1).save()
 
@@ -545,13 +545,14 @@ class TestReviewResources(TestResources):
             "reviewer_id": reviewer_1.id,
         }
 
-        # register user allowed to create reviews
+        # register user allowed to create, delete and edit reviews
         self.register_user(
             server.id,
             username=USERNAME,
             user_rules=[
                 Rule.get_by_("review", Operation.CREATE),
                 Rule.get_by_("review", Operation.DELETE),
+                Rule.get_by_("review", Operation.EDIT),
             ],
         )
 
@@ -602,10 +603,22 @@ class TestReviewResources(TestResources):
         # the status is now under review
         json_body["reviewer_id"] = reviewer_2.id
         response = self.app.post("/api/review", headers=HEADERS, json=json_body)
+        review_id = response.json["id"]
         self.assertEqual(response.status_code, HTTPStatus.CREATED)
         response = self.app.get(f"/api/algorithm/{algorithm.id}", headers=HEADERS)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response.json["status"], AlgorithmStatus.UNDER_REVIEW.value)
+
+        # check that the status changes back to awaiting reviewer assignment if the reviewer
+        # is removed, even if one of the reviews has been submitted.
+
+        self.app.post(f"/api/review/{review_id}/approve", headers=HEADERS, json={})
+        response = self.app.delete(f"/api/review/{review_id}", headers=HEADERS)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        response = self.app.get(f"/api/algorithm/{algorithm.id}", headers=HEADERS)
+        self.assertEqual(
+            response.json["status"], AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
+        )
 
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     def test_reviewer_assigners_policy(self, validate_token_mock):
@@ -613,7 +626,7 @@ class TestReviewResources(TestResources):
         themselves to review an algorithm"""
 
         validate_token_mock.return_value = (
-            MockResponse({"username": USERNAME}),
+            MockResponse({"username": "assigner_user_2"}),
             HTTPStatus.OK,
         )
 
@@ -648,7 +661,7 @@ class TestReviewResources(TestResources):
 
         assigner_2 = self.register_user(
             server.id,
-            username=USERNAME,
+            username="assigner_user_2",
             user_rules=[Rule.get_by_("review", Operation.CREATE)],
         )
 
@@ -658,18 +671,23 @@ class TestReviewResources(TestResources):
         }
 
         # register policy for allowed assigners
-        Policy(key=StorePolicies.ALLOWED_REVIEWERS, value=reviewer_1.id).save()
+        reviewer_1_ref = f"{reviewer_1.username}|{reviewer_1.server.url}"
+        Policy(key=StorePolicies.ALLOWED_REVIEWERS, value=reviewer_1_ref).save()
 
         # register policy for allowed reviewers
-        Policy(key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS, value=assigner_1.id).save()
+        Policy(key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS, value=reviewer_1_ref).save()
 
-        # verify that the assigner cannot assign a review
+        # verify that the assigner 2 (returned by the mocked token validation)
+        # cannot assign a review, as they are not in the allowed reviewers policy
         response = self.app.post("/api/review", headers=HEADERS, json=json_body)
         self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
         # add the assigner to the allowed reviewers policy and verify that
         # the assigner can now assign a review
-        Policy(key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS, value=assigner_2.id).save()
+        Policy(
+            key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS,
+            value=f"{assigner_2.username}|{assigner_2.server.url}",
+        ).save()
         response = self.app.post("/api/review", headers=HEADERS, json=json_body)
         self.assertEqual(response.status_code, HTTPStatus.CREATED)
 
@@ -681,7 +699,10 @@ class TestReviewResources(TestResources):
 
         # add the reviewer to the allowed reviewers policy and verify that
         # a review can now be assigned
-        Policy(key=StorePolicies.ALLOWED_REVIEWERS, value=reviewer_2.id).save()
+        Policy(
+            key=StorePolicies.ALLOWED_REVIEWERS,
+            value=f"{reviewer_2.username}|{reviewer_2.server.url}",
+        ).save()
         response = self.app.post("/api/review", headers=HEADERS, json=json_body)
         self.assertEqual(response.status_code, HTTPStatus.CREATED)
 

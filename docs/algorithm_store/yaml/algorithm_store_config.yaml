@@ -85,7 +85,7 @@ policies:
   # the min_reviewing_organizations still has to be met to proceed with the review process.
   min_reviewers: 2
 
-  # Define weather or not developers are able to assign reviewers to their own algorithms.
+  # Define whether or not developers are able to assign reviewers to their own algorithms.
   assign_review_own_algorithm: false
 
   # Define the minimum amount of organizations that must be involved in the review process.
@@ -142,6 +142,8 @@ root_user:
   username: root
   # email of the vantage6 server's user you want to make root in the algorithm store
   email: root@organization.com
+  # id of the organization the user belongs to
+  organization_id: 1
 
 # Configure a smtp mail server for the store to use for administrative
 # purposes, e.g. to alert users that they have been assigned to review an algorithm,

@@ -236,7 +236,7 @@ class Vantage6Servers(AlgorithmStoreResources):
         # request.
         username = user_validate_response.json()["username"]
         email = user_validate_response.json()["email"]
-        organization_id = user_validate_response.json()["organization"]["id"]
+        organization_id = user_validate_response.json()["organization_id"]
         self._assign_server_manager_role_to_auth_user(
             server, username, email, organization_id
         )

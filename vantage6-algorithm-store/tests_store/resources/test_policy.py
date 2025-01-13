@@ -221,7 +221,6 @@ class TestPolicyResources(TestResources):
         response_dict = resource.policies_to_dict(
             policies, include_defaults, include_private
         )
-        print(f"RESPONSE DICT: {response_dict}")
 
         expected_dict = {
             "algorithm_view": "public",

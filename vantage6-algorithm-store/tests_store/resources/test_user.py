@@ -112,7 +112,7 @@ class TestUserResource(TestResources):
         server = self.register_server(SERVER_URL)
 
         # test without authentication
-        body_ = {"username": "new_user", "roles": [], "organization": {"id": 1}}
+        body_ = {"username": "new_user", "roles": []}
         response = self.app.post("/api/user", headers=HEADERS, json=body_)
         self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
@@ -134,7 +134,6 @@ class TestUserResource(TestResources):
         body_ = {
             "username": "yet_another_user",
             "roles": [role.id],
-            "organization": {"id": 1},
         }
         response = self.app.post("/api/user", headers=HEADERS, json=body_)
         self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)

@@ -1,6 +1,8 @@
 from sqlalchemy import Column, String
 
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
+from vantage6.algorithm.store.model.user import User
+from vantage6.algorithm.store.model.common.enums import DefaultStorePolicies
 from vantage6.common.enum import StorePolicies
 
 
@@ -101,7 +103,7 @@ class Policy(Base):
         )
         session.commit()
         if result is None:
-            return 2
+            return DefaultStorePolicies.MIN_REVIEWERS.value
         return int(result.value)
 
     @classmethod
@@ -123,7 +125,7 @@ class Policy(Base):
         )
         session.commit()
         if result is None:
-            return False
+            return DefaultStorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value
         return result.value == "True" or result.value == "1"
 
     @classmethod
@@ -144,66 +146,30 @@ class Policy(Base):
         )
         session.commit()
         if result is None:
-            return 1
+            return DefaultStorePolicies.MIN_REVIEWING_ORGANIZATIONS.value
         return int(result.value)
 
     @classmethod
-    def is_user_allowed_to_assign_review(cls, user_id: int) -> bool:
+    def search_user_in_policy(cls, user: User, policy: str) -> bool:
         """
-        Check if a user is allowed to assign reviews.
+        Search a user in a policy where specific users are indicated.
+        The users have to be saved in the policy as "username|server_url".
 
         Parameters
         ----------
-        user_id : int
-            Id of the user
+        user : User
+            User to search for
+        policy : str
+            Policy to search in
 
         Returns
         -------
         bool
-            True if users are allowed to assign reviews, False otherwise
+            True if user is found in policy, False otherwise
         """
+
         session = DatabaseSessionManager.get_session()
-        result = (
-            session.query(cls)
-            .filter_by(key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS.value)
-            .all()
-        )
-
-        session.commit()
-
-        if result is None or result == []:
-            # if the policy has not been set, allow all users to assign reviews
-            return True
-        else:
-            if not isinstance(result, list):
-                result = [result]
-            result = next((r for r in result if r.value == str(user_id)), None)
-
-        if result is None:
-            return False
-        return True
-
-    @classmethod
-    def is_user_allowed_to_review(cls, user_id: int) -> bool:
-        """
-        Check if a user is allowed to perform a review.
-
-        Parameters
-        ----------
-        user_id : int
-            Id of the user
-
-        Returns
-        -------
-        bool
-            True if users are allowed to perform a review, False otherwise
-        """
-        session = DatabaseSessionManager.get_session()
-        result = (
-            session.query(cls)
-            .filter_by(key=StorePolicies.ALLOWED_REVIEWERS.value)
-            .all()
-        )
+        result = session.query(cls).filter_by(key=policy).all()
         session.commit()
 
         if result is None or result == []:
@@ -212,7 +178,10 @@ class Policy(Base):
         else:
             if not isinstance(result, list):
                 result = [result]
-            result = next((r for r in result if r.value == str(user_id)), None)
+            result = next(
+                (r for r in result if r.value == f"{user.username}|{user.server.url}"),
+                None,
+            )
 
         if result is None:
             return False
