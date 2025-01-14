@@ -22,3 +22,6 @@ docs/function-docs/_autosummary
 
 # UI build files
 **/node_modules/
+
+# Ignore DevSpace cache and log folder
+.devspace/
