@@ -66,9 +66,10 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       hasCondition: [false],
       conditional_on: [''],
       conditional_operator: [''],
-      conditional_value: ['']
+      conditional_value: [''],
+      is_frontend_only: [false]
     },
-    { validators: this.conditionalFieldsValidator }
+    { validators: this.conditionalFieldsValidator.bind(this) }
   );
   visualizationSchemaForm = this.fb.nonNullable.group({});
   visualizationForm = this.fb.nonNullable.group({
@@ -277,6 +278,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
           argumentFormGroup.controls['display_name'].setValue(arg.display_name);
           argumentFormGroup.controls['description'].setValue(arg.description);
           argumentFormGroup.controls['type'].setValue(arg.type);
+          argumentFormGroup.controls['is_frontend_only'].setValue(arg.is_frontend_only);
           argumentFormGroup.controls['has_default_value'].setValue(arg.has_default_value);
           argumentFormGroup.controls['is_default_value_null'].setValue(arg.default_value === null);
           if (arg.default_value != null) {
@@ -441,9 +443,10 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
         hasCondition: [false],
         conditional_on: [''],
         conditional_operator: [''],
-        conditional_value: ['']
+        conditional_value: [''],
+        is_frontend_only: [false]
       },
-      { validators: this.conditionalFieldsValidator }
+      { validators: this.conditionalFieldsValidator.bind(this) }
     );
   }
 
@@ -476,12 +479,16 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   }
 
   conditionalFieldsValidator(control: AbstractControl): ValidationErrors | null {
-    const conditional_on = control.get('conditional_on')?.value;
-    const conditional_operator = control.get('conditional_operator')?.value;
-    const conditional_value = control.get('conditional_value')?.value;
+    const conditionalOn = control.get('conditional_on')?.value;
+    const conditionalOperator = control.get('conditional_operator')?.value;
+    const conditionalValue = control.get('conditional_value')?.value;
 
-    const allFieldsFilled = conditional_on && conditional_operator && conditional_value;
-    const allFieldsEmpty = !conditional_on && !conditional_operator && !conditional_value;
+    // note that the check whether conditionalValue is set, is different from check whether the
+    // other fields are set. This is because the conditionalValue may be set to 'false'.
+    const isConditionalValueSet = conditionalValue !== null && conditionalValue !== undefined && conditionalValue !== '';
+
+    const allFieldsFilled = conditionalOn && conditionalOperator && isConditionalValueSet;
+    const allFieldsEmpty = !conditionalOn && !conditionalOperator && !isConditionalValueSet;
 
     if (allFieldsFilled || allFieldsEmpty) {
       return null; // Valid

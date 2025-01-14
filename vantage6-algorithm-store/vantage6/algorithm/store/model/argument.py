@@ -34,6 +34,9 @@ class Argument(Base):
         Comparator used for the conditional argument
     conditional_value : str
         Value that the argument should be compared to
+    is_frontend_only : bool
+        Whether the argument should be passed to the algorithm or should only be shown
+        in the UI form
     function : :class:`~.model.algorithm.algorithm`
         Algorithm function that this argument belongs to
     """
@@ -52,6 +55,8 @@ class Argument(Base):
     conditional_on_id = Column(Integer, ForeignKey("argument.id"))
     conditional_operator = Column(String)
     conditional_value = Column(String)
+    # flag arguments that should not be passed to the algorithm
+    is_frontend_only = Column(Boolean, default=False)
 
     # relationships
     function = relationship("Function", back_populates="arguments")

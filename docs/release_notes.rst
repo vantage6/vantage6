@@ -15,6 +15,10 @@ Release notes
     only if a parameter use_binning=True is set, then the parameter bin_size can be set
     in the UI (`Issue#1535 <https://github.com/vantage6/vantage6/issues/1535>`_,
     `PR#1645 <https://github.com/vantage6/vantage6/pull/1645>`_).
+  - Set 'UI-only' arguments in the algorithm store. This is for instance useful if
+    algorithm functions need either argument A to be specified: then a frontend-only
+    boolean argument 'choose_A' can be set so that A is shown if that is flagged, and
+    otherwise B is shown (`PR#1655 <https://github.com/vantage6/vantage6/pull/1655>`_).
   - Added 'v6 node restart' command
     (`Issue#1367 <https://github.com/vantage6/vantage6/issues/1367>`_,
     `PR#1627 <https://github.com/vantage6/vantage6/pull/1627>`_).

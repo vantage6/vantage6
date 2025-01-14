@@ -465,6 +465,11 @@ class Algorithms(AlgorithmBaseResource):
                                 type: string
                                 description: Value that the argument should be compared
                                   to.
+                              is_frontend_only:
+                                type: boolean
+                                description: Frontend-only arguments are displayed in
+                                  the UI, but are not passed to the algorithm. Default
+                                  is false.
                         ui_visualizations:
                           type: array
                           description: List of visualizations that are available in
@@ -557,6 +562,7 @@ class Algorithms(AlgorithmBaseResource):
                     default_value=argument.get("default_value", None),
                     conditional_operator=argument.get("conditional_operator", None),
                     conditional_value=argument.get("conditional_value", None),
+                    is_frontend_only=argument.get("is_frontend_only", False),
                     function_id=func.id,
                 )
                 arg.save()
@@ -887,6 +893,11 @@ class Algorithm(AlgorithmBaseResource):
                                 type: string
                                 description: Value that the argument should be compared
                                   to.
+                              is_frontend_only:
+                                type: boolean
+                                description: Frontend-only arguments are displayed in
+                                  the UI, but are not passed to the algorithm. Default
+                                  is false.
                         ui_visualizations:
                           type: array
                           description: List of visualizations that are available in
@@ -1018,6 +1029,7 @@ class Algorithm(AlgorithmBaseResource):
                         default_value=argument.get("default_value", None),
                         conditional_operator=argument.get("conditional_operator", None),
                         conditional_value=argument.get("conditional_value", None),
+                        is_frontend_only=argument.get("is_frontend_only", False),
                         function_id=func.id,
                     )
                     arg.save()
