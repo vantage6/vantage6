@@ -1,0 +1,183 @@
+# Human readable description of the server instance. This is to help
+# your peers to identify the server
+description: Development server
+
+# Human readable name of the server instance. This can help users identify
+# the server quickly. It's used for example in the TOTP issuer for 2FA.
+server_name: DevelopmentPlanets
+
+# IP adress to which the server binds. In case you specify 0.0.0.0
+# the server listens on all interfaces
+ip: 0.0.0.0
+
+# Port to which the server binds
+port: 80
+
+# API path prefix. (i.e. https://yourdomain.org/api_path/<endpoint>). In the
+# case you use a referse proxy and use a subpath, make sure to include it
+# here also.
+api_path: /api
+
+# Let the server know where it is hosted. This is used as a setting to
+# communicate back and forth with other vantage6 components such as the
+# algorithm store.
+# Example for the cotopaxi server
+server_url: http://127.0.6.1:80
+# Example for running the server locally with default settings:
+# server_url: http://localhost:5000
+
+# The URI to the server database. This should be a valid SQLAlchemy URI,
+# e.g. for an Sqlite database: sqlite:///database-name.sqlite,
+# or Postgres: postgresql://username:password@172.17.0.1/database).
+uri: sqlite:///development.sqlite
+
+# This should be set to false in production as this allows to completely
+# wipe the database in a single command. Useful to set to true when
+# testing/developing.
+allow_drop_all: True
+
+two_factor_auth: False
+
+# Settings for the logger
+logging:
+  # Controls the logging output level. Could be one of the following
+  # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+  level: DEBUG
+
+  # Filename of the log-file, used by RotatingFileHandler
+  file: dev.log
+
+  # Whether the output is shown in the console or not
+  use_console: True
+
+  # The number of log files that are kept, used by RotatingFileHandler
+  backup_count: 5
+
+  # Size in kB of a single log file, used by RotatingFileHandler
+  max_size: 1024
+
+  # format: input for logging.Formatter,
+  format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+  datefmt: "%Y-%m-%d %H:%M:%S"
+
+  # (optional) set the individual log levels per logger name, for example
+  # mute some loggers that are too verbose.
+  loggers:
+    - name: urllib3
+      level: warning
+    - name: socketIO-client
+      level: warning
+    - name: engineio.server
+      level: warning
+    - name: socketio.server
+      level: warning
+    - name: sqlalchemy.engine
+      level: warning
+    - name: requests_oauthlib.oauth2_session
+      level: warning
+
+# Additional debug flags
+debug:
+  # Set to `true` to enable debug mode for the socketio server
+  socketio: false
+
+  # Set to `true` to enable debug mode in the Flask app
+  flask: false
+
+# Configure a smtp mail server for the server to use for administrative
+# purposes. e.g. allowing users to reset their password.
+# OPTIONAL
+smtp:
+  port: 587
+  server: smtp.yourmailserver.example.com
+  # credentials for authenticating with the SMTP server
+  username: your-username
+  password: super-secret-password
+  # email address to send emails from (header)
+  # (defaults to noreply@vantage6.ai)
+  email_from: noreply@example.com
+
+# Set an email address you want to direct your users to for support
+# (defaults to support@vantage6.ai)
+support_email: your-support@example.com
+
+# set how long reset token provided via email are valid (default 1 hour)
+email_token_validity_minutes: 60
+
+# set how long tokens and refresh tokens are valid (default 6 and 48
+# hours, respectively)
+token_expires_hours: 6
+refresh_token_expires_hours: 48
+
+# options for starting the User Interface when starting the server
+ui:
+  # set this to true to start the UI when starting the server with
+  # `v6 server start`
+  enabled: false
+
+  # port at which the UI will be available on your local machine
+  port: 8060
+
+# set password policies for the server
+password_policy:
+  # maximum number of failed login attempts before the user is locked out for
+  # a certain amount of time. Default is 5.
+  max_failed_attempts: 5
+
+  # number of minutes the user is locked out after the maximum number of failed
+  # login attempts is reached. Default is 15.
+  inactivation_minutes: 15
+
+  # number of minutes to wait between emails sent to the user for each of the following events:
+  #  - their account has been blocked (max login attempts exceeded)
+  #  - a password reset request via email
+  #  - a 2FA reset request via email
+  # (these events have an independent timer). Default is 60.
+  between_user_emails_minutes: 60
+
+# set up with which origins the server should allow CORS requests. The default
+# is to allow all origins. If you want to restrict this, you can specify a list
+# of origins here. Below are examples to allow requests from the Cotopaxi UI, and
+#  port 3456 on localhost
+# cors_allowed_origins:
+#   - http://127.0.6.1:8080
+  # - https://portal.cotopaxi.vantage6.ai
+  # - http://localhost:3456
+
+# set up which algorithm stores are available for all collaborations in the server.
+# In the example below, the vantage6 community algorithm store is made available to
+# this server. Note that the 'server_url' *has* to be set in the configuration file
+# for this to work (it is required to communicate with the algorithm store what the
+# server's address is).
+# algorithm_stores:
+#   # Each store should have a name and a URL.
+#   - name: Community store
+#     url: https://store.cotopaxi.vantage6.ai
+
+# development mode settings. Only use when running both the server and the algorithm
+# store that it communicates with locally
+dev:
+  # Specify the URI to the host. This is used to generate the correct URIs to
+  # communicate with the algorithm store. On Windows and Mac, you can use the special
+  # hostname `host.docker.internal` to refer to the host machine. On Linux, you
+  # should normally use http://172.17.0.1.
+  host_uri: http://127.0.6.1
+  # Path within container to yaml containing fixtures to be loaded
+  # because we are mouting the entire source code, this ends up here
+  fixtures: /vantage6/dev/v6-dev-profile/server/entities.yaml
+  # Specifying the path to the debugpy package will start the server in debug
+  # mode using debugpy
+  # TODO: dropping in fixtures seems to be brokoen
+  fixtures_drop_all: False
+
+# debugger settings for vantage6 server code
+debugger:
+  # directory on the host where debugpy module and `server-debug.sh` live
+  dir: ../../debugger
+  cmd: ./server-debug.sh
+  # host IP to bind to
+  host: 127.0.6.1
+  # host port to bind to
+  port_host: 5678
+  # container port the above host:port_host is mapped to
+  port_container: 5678

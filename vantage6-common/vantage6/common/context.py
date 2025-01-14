@@ -370,6 +370,19 @@ class AppContext(metaclass=Singleton):
         """
         return self.__config_file
 
+    @property
+    def config_file_abs_dir(self) -> Path:
+        """Return the absolute path to the directory of the configuration file.
+
+        Returns
+        -------
+        Path
+            Absolute path to the directory of the configuration file
+        """
+        return self.config_file.parent
+
+    # FIXME: this actually reads in config? Perhaps document/refactor/make more
+    # explicit?
     @config_file.setter
     def config_file(self, path: str) -> None:
         """
@@ -386,7 +399,7 @@ class AppContext(metaclass=Singleton):
             If the configuration file does not exist
         """
         assert Path(path).exists(), f"config {path} not found"
-        self.__config_file = Path(path)
+        self.__config_file = Path(path).resolve()
         self.config_manager = self.INST_CONFIG_MANAGER.from_file(path)
         self.config = self.config_manager.config
 
@@ -427,6 +440,9 @@ class AppContext(metaclass=Singleton):
             If the configuration file is not found
         """
 
+        # TODO: What's the utility of config_file? I would have expected it to
+        # be a path to the config file.. but seems to be limited to path from
+        # the current dir and config_dir?
         if config_file is None:
             config_file = f"{instance_name}.yaml"
 

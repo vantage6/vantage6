@@ -1,0 +1,59 @@
+services:
+  server-planets-debug:
+    image: harbor2.vantage6.ai/infrastructure/server:4.8.1
+    container_name: v6-server-planets-debug
+    environment:
+      # hashed super user password for local dev (e.g. some-planets-password)
+      V6_INIT_SUPER_PASS_HASHED: $$2b$$12$$Zh7y3c/1T/kZnCspD4JfD.QkZn8edqxyGvxZ8Jvkg12EIfIqAevTG
+    ports:
+      - "127.0.6.1:80:80"
+      - "127.0.6.1:5678:5678"
+    volumes:
+      # source code (and dev directory expected at /vantage6/dev)
+      - "../../../../vantage6:/vantage6:ro"
+      # config is expected at /mnt/config.yaml
+      - "./planets.yaml:/mnt/config.yaml:ro"
+    # use debugpy wrapper script to start server
+    entrypoint: ["/vantage6/dev/debugger/server-debug.sh"]
+    # TODO: handle SIGTERM gracefully, for now we lower grace period
+    stop_grace_period: 1s
+    networks:
+      v6-dev-network:
+        aliases:
+          - server-planets.local
+
+  server-planets-dev:
+    image: harbor2.vantage6.ai/infrastructure/server:4.8.1
+    container_name: v6-server-planets-dev
+    environment:
+      # hashed super user password for local dev (e.g. some-planets-password)
+      V6_INIT_SUPER_PASS_HASHED: $$2b$$12$$Zh7y3c/1T/kZnCspD4JfD.QkZn8edqxyGvxZ8Jvkg12EIfIqAevTG
+    ports:
+      - "127.0.6.1:80:80"
+    volumes:
+      # source code & dev directory (expected at /vantage6/dev/)
+      - "../../../../vantage6:/vantage6:ro"
+      # config is expected at /mnt/config.yaml
+      - "./planets.yaml:/mnt/config.yaml:ro"
+    # TODO: handle SIGTERM gracefully, for now we lower grace period
+    stop_grace_period: 1s
+    # regular entrypoint, no debugging
+    entrypoint: ["/vantage6/vantage6-server/server.sh"]
+    networks:
+      v6-dev-network:
+        aliases:
+          - server-planets.local
+
+  ui-planets:
+    image: harbor2.vantage6.ai/infrastructure/ui:cotopaxi
+    ports:
+      - "127.0.6.1:8080:80"
+    environment:
+      - SERVER_URL=http://127.0.6.1
+      - API_PATH=/api
+
+networks:
+  v6-dev-network:
+    name: v6-dev-network
+    driver: bridge
+

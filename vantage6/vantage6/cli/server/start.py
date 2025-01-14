@@ -1,6 +1,7 @@
 import click
 import docker
 from docker.client import DockerClient
+from pathlib import Path
 
 from vantage6.common import info, warning, error
 from vantage6.common.docker.network_manager import NetworkManager
@@ -24,6 +25,7 @@ from vantage6.cli.common.start import (
     mount_database,
     mount_source,
     pull_infra_image,
+    setup_debugger,
 )
 
 
@@ -168,40 +170,53 @@ def cli_server_start(
     if start_ui or ctx.config.get("ui") and ctx.config["ui"].get("enabled"):
         _start_ui(docker_client, ctx, ui_port)
 
-    # The `ip` and `port` refer here to the ip and port within the container.
-    # So we do not really care that is it listening on all interfaces.
-    internal_port = 5000
-    cmd = (
-        f"uwsgi --http :{internal_port} --gevent 1000 --http-websockets "
-        "--master --callable app --disable-logging "
-        "--wsgi-file /vantage6/vantage6-server/vantage6/server/wsgi.py "
-        f"--pyargv {config_file}"
-    )
-    info(cmd)
+    # Internal port for the containerized server
+    internal_port = ctx.config.get("internal_port", 80)
+    # Host port mapped to the container's internal port
+    host_port = str(port or ctx.config["port"] or Ports.DEV_SERVER.value)
+    host_ip = ip or ctx.config.get("ip", "0.0.0.0")
+    # Port mappings for the container
+    ports = {f"{internal_port}/tcp": (host_ip, host_port)}
+    # Set environment variable for the server's exposed port
+    environment_vars["VANTAGE6_SERVER_PORT"] = internal_port
+    # Ensure the server binds to all interfaces _within_ the container
+    environment_vars["VANTAGE6_SERVER_HOST"] = "0.0.0.0"
 
-    info("Run Docker container")
-    port_ = str(port or ctx.config["port"] or Ports.DEV_SERVER.value)
     prometheus_exporter_port = ctx.config.get("prometheus", {}).get(
         "exporter_port", DEFAULT_PROMETHEUS_EXPORTER_PORT
     )
+
+    #  is started by default
+    ports[f"{prometheus_exporter_port}/tcp"] = prometheus_exporter_port
+
+    cmd = "/vantage6/vantage6-server/server.sh"
+    working_dir = "/"
+
+    # setup debugger if configured
+    mounts, ports, cmd, working_dir = setup_debugger(ctx, mounts, ports, cmd, working_dir, use_mount_object=True)
+
+    info("Starting Docker container")
+
     container = docker_client.containers.run(
         image,
         command=cmd,
         mounts=mounts,
         detach=True,
+        # Docker recommends DNS notation https://docs.docker.com/engine/manage-resources/labels/
+        # previous labels left for now
         labels={
             f"{APPNAME}-type": InstanceType.SERVER.value,
             "name": ctx.config_file_name,
+            "ai.vantage6.v6.config-name": ctx.config_file_name,
+            "ai.vantage6.v6.config-file-path": str(ctx.config_file)
         },
         environment=environment_vars,
-        ports={
-            f"{internal_port}/tcp": (ip, port_),  # API port
-            f"{prometheus_exporter_port}/tcp": prometheus_exporter_port,
-        },
+        ports=ports,
         name=ctx.docker_container_name,
         auto_remove=not keep,
         tty=True,
         network=server_network_mgr.network_name,
+        working_dir=working_dir,
     )
 
     info(f"Success! container id = {container.id}")

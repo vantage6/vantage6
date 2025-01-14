@@ -99,6 +99,11 @@ install-dev:
 	cd vantage6-server && pip install -e .[dev]
 	cd vantage6-algorithm-store && pip install -e .[dev]
 
+install-cli-dev:
+	cd vantage6-common && pip install -e .
+	cd vantage6-client && pip install -e .
+	cd vantage6 && pip install -e .[dev]
+
 base-image:
 	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:${TAG}"
 	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:latest"
@@ -278,3 +283,7 @@ test:
 devdocs: export READTHEDOCS = Yes
 devdocs:
 	sphinx-autobuild docs docs/_build/html --watch . ${_autosummary_flags}
+
+devtestdebug:
+	@echo "Creating local dev/test/debug environment"
+	./dev/bin/create-dev-env.sh

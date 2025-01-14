@@ -32,6 +32,11 @@ def create_client(ctx: NodeContext) -> UserClient:
     # the host address of docker
     if host in ["http://host.docker.internal", "http://172.17.0.1"]:
         host = "http://localhost"
+    # In local dev/test environments, the server_url might be a docker network
+    # alias not resolvably at the host level, so we use server_url_from_host
+    # instead if specified
+    if server_url_from_host := ctx.config.get("server_url_from_host"):
+        host = server_url_from_host
     port = ctx.config["port"]
     api_path = ctx.config["api_path"]
     info(f"Connecting to server at '{host}:{port}{api_path}'")
@@ -117,7 +122,7 @@ def select_node(name: str, system_folders: bool) -> tuple[str, str]:
 
 def find_running_node_names(client: docker.DockerClient) -> list[str]:
     """
-    Returns a list of names of running nodes.
+    Returns a list of container names of running nodes.
 
     Parameters
     ----------
@@ -133,3 +138,31 @@ def find_running_node_names(client: docker.DockerClient) -> list[str]:
         filters={"label": f"{APPNAME}-type={InstanceType.NODE.value}"}
     )
     return [node.name for node in running_nodes]
+
+
+def find_running_node_by_name(
+    client: docker.DockerClient, name: str
+) -> list[docker.models.containers.Container]:
+    """
+    Locate running Docker containers corresponding to a specific node configuration.
+
+    Parameters
+    ----------
+    client : docker.DockerClient
+        Docker client instance
+    name : str
+        Config name of the node to find
+
+    Returns
+    -------
+    List of docker.models.containers.Container
+        Container instance of the running nodes that match that config name, typically one
+    """
+    return client.containers.list(
+        filters={
+            # TODO: for 'type' we are not yet using DNS notation as recommended
+            # by https://docs.docker.com/engine/manage-resources/labels/
+            "label": f"{APPNAME}-type={InstanceType.NODE}",
+            "label": f"ai.vantage6.v6.config-name={name}",
+        }
+    )

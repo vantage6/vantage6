@@ -1,0 +1,100 @@
+{
+    "settings": {
+        "mount_src_path": "../../../vantage6"
+    },
+    "profiles": {
+        "run-server": {
+            "server": {
+                "compose": "server/docker-compose.yaml",
+                "service": "server-planets-dev"
+            },
+            "ui": {
+                "compose": "server/docker-compose.yaml",
+                "service": "ui-planets"
+            }
+        },
+        "debug-server": {
+            "server": {
+                "compose": "server/docker-compose.yaml",
+                "service": "server-planets-debug"
+            },
+            "ui": {
+                "compose": "server/docker-compose.yaml",
+                "service": "ui-planets"
+            }
+        },
+        "run-node-mars": {
+            "server": {
+                "compose": "server/docker-compose.yaml",
+                "service": "server-planets-dev"
+            },
+            "ui": {
+                "compose": "server/docker-compose.yaml",
+                "service": "ui-planets"
+            },
+            "nodes": [
+                {
+                    "name": "mars",
+                    "config": "nodes/mars/mars.yaml",
+                    "options": {
+                        "skip_debugger": true,
+                        "attach": true
+                    }
+                }
+            ]
+        },
+        "debug-node-mars": {
+            "server": {
+                "compose": "server/docker-compose.yaml",
+                "service": "server-planets-dev"
+            },
+            "ui": {
+                "compose": "server/docker-compose.yaml",
+                "service": "ui-planets"
+            },
+            "nodes": [
+                {
+                    "name": "mars",
+                    "config": "nodes/mars/mars.yaml",
+                    "options": {
+                        "skip_debugger": false,
+                        "attach": true
+                    }
+                }
+            ]
+        },
+        "run-all": {
+            "server": {
+                "compose": "server/docker-compose.yaml",
+                "service": "server-planets-dev"
+            },
+            "ui": {
+                "compose": "server/docker-compose.yaml",
+                "service": "ui-planets"
+            },
+            "nodes": [
+                {
+                    "name": "jupiter",
+                    "config": "nodes/jupiter/jupiter.yaml",
+                    "options": {
+                        "skip_debugger": true
+                    }
+                },
+                {
+                    "name": "mars",
+                    "config": "nodes/mars/mars.yaml",
+                    "options": {
+                        "skip_debugger": true
+                    }
+                },
+                {
+                    "name": "saturn",
+                    "config": "nodes/saturn/saturn.yaml",
+                    "options": {
+                        "skip_debugger": true
+                    }
+                }
+            ]
+        }
+    }
+}

@@ -38,7 +38,7 @@ from vantage6.cli.algostore.stop import cli_algo_store_stop
 from vantage6.cli.algostore.files import cli_algo_store_files
 from vantage6.cli.algostore.list import cli_algo_store_configuration_list
 from vantage6.cli.algostore.remove import cli_algo_store_remove
-
+from vantage6.cli.dev.profile import profile
 
 # Define the server group
 @click.group(name="server")
@@ -99,6 +99,7 @@ cli_dev.add_command(create_demo_network, name="create-demo-network")
 cli_dev.add_command(remove_demo_network, name="remove-demo-network")
 cli_dev.add_command(start_demo_network, name="start-demo-network")
 cli_dev.add_command(stop_demo_network, name="stop-demo-network")
+cli_dev.add_command(profile, name="profile")
 
 
 # Define the algorithm group

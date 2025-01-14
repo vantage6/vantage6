@@ -11,7 +11,9 @@ from vantage6.common.globals import APPNAME
 from vantage6.common.docker.addons import (
     check_docker_running,
     delete_volume_if_exists,
-    get_server_config_name,
+    get_config_file_from_container,
+    get_config_name_from_container,
+    find_node_by_config,
     stop_container,
 )
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
@@ -42,8 +44,16 @@ from vantage6.cli.node.common import find_running_node_names
     flag_value=True,
     help="Kill nodes instantly; don't wait for them to shut down",
 )
+@click.option(
+    "-c",
+    "--config",
+    "config_file",
+    required=False,
+    type=click.Path(exists=True),
+    help="Path to the configuration file.",
+)
 def cli_node_stop(
-    name: str, system_folders: bool, all_nodes: bool, force: bool
+    name: str, system_folders: bool, all_nodes: bool, force: bool, config_file: str
 ) -> None:
     """
     Stop one or all running nodes.
@@ -68,7 +78,12 @@ def cli_node_stop(
         for container_name in running_node_names:
             _stop_node(client, container_name, force, system_folders)
     else:
-        if not name:
+        if config_file:
+            container_name = find_node_by_config(client, config_file)
+            if not container_name:
+                error(f"No running node found with config file {config_file}")
+                return
+        elif not name:
             try:
                 container_name = q.select(
                     "Select the node you wish to stop:", choices=running_node_names
@@ -104,6 +119,9 @@ def _stop_node(
     system_folders : bool
         Whether to use system folders or not
     """
+    config_file = get_config_file_from_container(client, container_name)
+    config_name = get_config_name_from_container(client, container_name)
+
     container = client.containers.get(container_name)
     # Stop the container. Using stop() gives the container 10s to exit
     # itself, if not then it will be killed
@@ -117,9 +135,8 @@ def _stop_node(
     # Delete volumes. This is done here rather than within the node container when
     # it is stopped, because at that point the volumes are still in use. Here, the node
     # has already been stopped
-    scope = "system" if system_folders else "user"
-    config_name = get_server_config_name(container_name, scope)
-    ctx = NodeContext(config_name, system_folders, print_log_header=False)
+    # NOTE: if user upgrades to this new code, node container might not have right label yet
+    ctx = NodeContext(config_name, system_folders, config_file, print_log_header=False)
     for volume in [
         ctx.docker_volume_name,
         ctx.docker_squid_volume_name,

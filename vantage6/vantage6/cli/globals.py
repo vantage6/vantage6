@@ -61,6 +61,8 @@ class ServerType(str, Enum):
     V6SERVER = "server"
     ALGORITHM_STORE = "algorithm-store"
 
+    def __str__(self):
+        return self.value
 
 class ServerGlobals(str, Enum):
     """Enum containing server environment variables"""

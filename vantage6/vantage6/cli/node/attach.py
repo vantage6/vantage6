@@ -12,7 +12,7 @@ from vantage6.common.docker.addons import check_docker_running
 
 from vantage6.cli.common.utils import print_log_worker
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
-from vantage6.cli.node.common import find_running_node_names
+from vantage6.cli.node.common import find_running_node_by_name, find_running_node_names
 
 
 @click.command()
@@ -53,8 +53,19 @@ def cli_node_attach(name: str, system_folders: bool) -> None:
             error("Aborted by user!")
             return
     else:
-        post_fix = "system" if system_folders else "user"
-        name = f"{APPNAME}-{name}-{post_fix}"
+        # if we find it with the new label (DNS format), we use that
+        nodes_found = find_running_node_by_name(client, name)
+        if nodes_found:
+            if len(nodes_found) > 1:
+                warning(
+                    f"Multiple nodes found with name {Fore.RED}{name}{Style.RESET_ALL}. "
+                    "Using the first one."
+                )
+            name = nodes_found[0].name
+        # else we resort to older way of coming up with container name from config name
+        else:
+            post_fix = "system" if system_folders else "user"
+            name = f"{APPNAME}-{name}-{post_fix}"
 
     if name in running_node_names:
         container = client.containers.get(name)

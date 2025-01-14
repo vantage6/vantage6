@@ -141,11 +141,13 @@ class Node:
         t.start()
 
         # setup docker isolated network manager
-        internal_ = running_in_docker()
+        internal_ = running_in_docker() and not self.ctx.debugger_algorithm
         if not internal_:
-            self.log.warn(
+            self.log.warning(
                 "Algorithms have internet connection! "
-                "This happens because you use 'vnode-local'!"
+                "This happens because you are running this node outside of a "
+                "docker container or because you have enabled the algorithm debugger. "
+                "This is not recommended for production environments. "
             )
         isolated_network_mgr = NetworkManager(self.ctx.docker_network_name)
         isolated_network_mgr.create_network(is_internal=internal_)
@@ -716,7 +718,7 @@ class Node:
             self.log.warn("Disabling encryption!")
             self.client.setup_encryption(None)
 
-    def _set_task_dir(self, ctx) -> None:
+    def _set_task_dir(self, ctx: NodeContext | DockerNodeContext) -> None:
         """
         Set the task dir
 
@@ -748,6 +750,8 @@ class Node:
         # may contain the private key, which which we don't want to share.
         # We'll only do this if we're running outside docker, otherwise we
         # would create '/data' on the data volume.
+        # TODO: won't this fail if ctx is not a DockerNodeContext?
+        #       perhaps better to do isinstance(ctx, DockerNodeContext) here?
         if not ctx.running_in_docker:
             self.__tasks_dir = ctx.data_dir / "data"
             os.makedirs(self.__tasks_dir, exist_ok=True)
@@ -1231,6 +1235,7 @@ class Node:
             for tunnel in self.ssh_tunnels:
                 tunnel.stop()
         if hasattr(self, "_Node__docker") and self.__docker:
+            self.log.debug("Cleaning up docker")
             self.__docker.cleanup()
 
         self.log.info("Bye!")

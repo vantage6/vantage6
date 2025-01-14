@@ -1,6 +1,5 @@
 import logging
 import signal
-import pathlib
 import re
 import json
 import hashlib
@@ -16,6 +15,7 @@ from docker.models.volumes import Volume
 from docker.models.networks import Network
 from docker.utils import parse_repository_tag
 from docker.auth import resolve_repository_name
+from pathlib import Path
 
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME
@@ -61,7 +61,8 @@ def running_in_docker() -> bool:
     bool
         True if the code is executed within a Docker container, False otherwise
     """
-    return pathlib.Path("/.dockerenv").exists()
+    # TODO: Is this robust / future-proof enough?
+    return Path("/.dockerenv").exists()
 
 
 def pull_image(
@@ -266,6 +267,44 @@ def get_num_nonempty_networks(container: Container) -> int:
             count_non_empty_networks += 1
     return count_non_empty_networks
 
+def get_config_file_from_container(docker_client: DockerClient, container_name: str) -> Path:
+    """
+    Get the configuration file of a server/node from its docker container
+
+    Parameters
+    ----------
+    client: DockerClient
+        Docker client
+    container_name: str
+        Name of the docker container in which the server is running
+
+    Returns
+    -------
+    Path
+        Path to the server/node's configuration file
+    """
+    container = docker_client.containers.get(container_name)
+    config_file = container.labels.get("ai.vantage6.v6.config-file-path")
+    return Path(config_file)
+
+def get_config_name_from_container(docker_client: DockerClient, container_name: str) -> str:
+    """
+    Get the configuration name of a server/node from its docker container
+
+    Parameters
+    ----------
+    client: DockerClient
+        Docker client
+    container_name: str
+        Name of the docker container in which the server is running
+
+    Returns
+    -------
+    str
+        A server/node's configuration name
+    """
+    container = docker_client.containers.get(container_name)
+    return container.labels.get("ai.vantage6.v6.config-name")
 
 def get_server_config_name(container_name: str, scope: str) -> str:
     """
@@ -289,6 +328,30 @@ def get_server_config_name(container_name: str, scope: str) -> str:
     idx_scope = container_name.rfind(scope)
     length_app_name = len(APPNAME)
     return container_name[length_app_name + 1 : idx_scope - 1]
+
+def find_node_by_config(docker_client: DockerClient, config_file: Path | str) -> str:
+    """
+    Find a node by its configuration file
+
+    Parameters
+    ----------
+    docker_client: DockerClient
+        Docker client
+    config_file: Path | str
+        Path to the configuration file
+
+    Returns
+    -------
+    str
+        Name of the node container
+    """
+    # we normalize to absolute
+    config_file = Path(config_file).resolve()
+
+    for container in docker_client.containers.list(all=True):
+        if container.labels.get("ai.vantage6.v6.config-file-path") == str(config_file):
+            return container.name
+    return None
 
 
 def delete_volume_if_exists(client: docker.DockerClient, volume_name: Volume) -> None:

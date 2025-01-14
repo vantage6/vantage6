@@ -22,6 +22,7 @@ import json
 import time
 import datetime as dt
 import traceback
+import yaml
 
 from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
@@ -76,7 +77,7 @@ from vantage6.server.globals import (
 from vantage6.server.websockets import DefaultSocketNamespace
 from vantage6.server.default_roles import get_default_roles, DefaultRole
 from vantage6.server.hashedpassword import HashedPassword
-from vantage6.server.controller import cleanup
+from vantage6.server.controller import cleanup, fixture
 
 # make sure the version is available
 from vantage6.server._version import __version__  # noqa: F401
@@ -148,6 +149,20 @@ class ServerApp:
         host_uri = self.ctx.config.get("dev", {}).get("host_uri")
         if host_uri:
             os.environ[HOST_URI_ENV] = host_uri
+
+        fixtures = self.ctx.config.get("dev", {}).get("fixtures")
+        fixtures_drop_all = self.ctx.config.get("dev", {}).get(
+            "fixtures_drop_all", False
+        )
+        if fixtures:
+            log.warning(
+                "Loading fixtures. This is meant for development purposes only."
+            )
+            with open(fixtures) as f:
+                entities = yaml.safe_load(f.read())
+
+            log.info("Adding entities to database.")
+            fixture.load(entities, drop_all=fixtures_drop_all)
 
         # couple any algoritm stores to the server if defined in config. This should be
         # done after the resources are loaded to ensure that rules are set up
@@ -925,6 +940,26 @@ def run_server(config: str, system_folders: bool = True) -> ServerApp:
     return ServerApp(ctx).start()
 
 
+def run_server_app(config: str, system_folders: bool = True) -> Flask:
+    """
+    Run a vantage6 server, and return the Flask app. This is useful for running the
+    server using Flask's cli. See https://flask.palletsprojects.com/en/stable/cli/
+
+    Parameters
+    ----------
+    config: str
+        Configuration file path
+    system_folders: bool
+        Whether to use system or user folders. Default is True.
+
+    Returns
+    -------
+    Flask
+        A running instance of the vantage6 server
+    """
+    return run_server(config, system_folders).app
+
+
 def run_dev_server(server_app: ServerApp, *args, **kwargs) -> None:
     """
     Run a vantage6 development server (outside of a Docker container).
@@ -934,8 +969,8 @@ def run_dev_server(server_app: ServerApp, *args, **kwargs) -> None:
     server_app: ServerApp
         Instance of a vantage6 server
     """
-    log.warn("*" * 80)
-    log.warn(" DEVELOPMENT SERVER ".center(80, "*"))
-    log.warn("*" * 80)
+    log.warning("*" * 80)
+    log.warning(" DEVELOPMENT SERVER ".center(80, "*"))
+    log.warning("*" * 80)
     kwargs.setdefault("log_output", False)
     server_app.socketio.run(server_app.app, *args, **kwargs)

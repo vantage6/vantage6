@@ -1,0 +1,82 @@
+{
+    "configurations": [
+        {
+            "name": "Debug: Server Planets",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "127.0.6.1",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "/vantage6"
+                }
+            ],
+            // "preLaunchTask": "start debug-server profile",
+            // "postDebugTask": "stop debug-server profile"
+        },
+        {
+            "name": "Debug: Node Mars",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "127.0.6.10",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "/vantage6"
+                }
+            ],
+            // "preLaunchTask": "start debug-node-mars profile",
+            // "postDebugTask": "stop debug-node-mars profile"
+        },
+        {
+            "name": "Debug: Node Mars Algorithm",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "127.0.66.10",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/dev/algorithm-dev/v6-average-py",
+                    "remoteRoot": "/app"
+                }
+            ]
+        },
+        {
+            "name": "Run: Server Planets (no debug)",
+            "type": "debugpy",
+            "request": "launch",
+            // "preLaunchTask": "start run-server profile",
+            // "postDebugTask": "stop run-server profile"
+        },
+        {
+            "name": "Run: Node Mars (no debug)",
+            "type": "debugpy",
+            "request": "launch",
+            // "preLaunchTask": "start run-node-mars profile",
+            // "postDebugTask": "stop run-node-mars profile"
+        },
+        // You can debug the general v6 CLI by launching it with something like this from the command line:
+        // $ function debugpy_run() {
+        // >    python -Xfrozen_modules=off -m debugpy --listen 127.0.0.6:5678 --wait-for-client "$@"
+        // > }
+        // $ debugpy_run $(which v6) node list
+        {
+            "name": "Attach to local debugpy (cli v6)",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "127.0.0.6",
+                "port": 5678
+            },
+            "justMyCode": false
+        }
+    ]
+}

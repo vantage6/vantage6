@@ -8,7 +8,7 @@ import docker
 
 from colorama import Fore, Style
 
-from vantage6.cli.common.start import pull_infra_image
+from vantage6.cli.common.start import pull_infra_image, setup_debugger
 from vantage6.common import warning, error, info, debug, get_database_config
 from vantage6.common.globals import (
     APPNAME,
@@ -16,6 +16,7 @@ from vantage6.common.globals import (
     DEFAULT_NODE_IMAGE,
     DEFAULT_NODE_IMAGE_WO_TAG,
     InstanceType,
+    NodeDefaults,
 )
 from vantage6.common.docker.addons import (
     remove_container_if_exists,
@@ -53,6 +54,11 @@ from vantage6.cli import __version__
     help="Override vantage6 source code in container with the source"
     " code in this path",
 )
+@click.option(
+    "--no-debugger",
+    is_flag=True,
+    help="Disable the (node) debugger for this node if enabled in its config",
+)
 @click_insert_context(InstanceType.NODE, include_name=True, include_system_folders=True)
 def cli_node_start(
     ctx: NodeContext,
@@ -63,6 +69,7 @@ def cli_node_start(
     mount_src: str,
     attach: bool,
     force_db_mount: bool,
+    no_debugger: bool,
 ) -> None:
     """
     Start the node.
@@ -83,9 +90,9 @@ def cli_node_start(
 
     suffix = "system" if system_folders else "user"
     for node in running_nodes:
-        if node.name == f"{APPNAME}-{name}-{suffix}":
-            error(f"Node {Fore.RED}{name}{Style.RESET_ALL} is already running")
-            exit(1)
+        if node.name == ctx.docker_container_name:
+            error(f"Node {Fore.GREEN}{name}{Style.RESET_ALL} is already running")
+            exit(0)
 
     # make sure the (host)-task and -log dir exists
     info("Checking that data and log dirs exist")
@@ -117,7 +124,7 @@ def cli_node_start(
                 )
             except Exception:
                 warning(
-                    "Could not determine server version. Using default " "node image"
+                    "Could not determine server version. Using default node image."
                 )
 
             if major_minor and not __version__.startswith(major_minor):
@@ -227,6 +234,9 @@ def cli_node_start(
         db_config = get_database_config(ctx.databases, label)
         uri = db_config["uri"]
         db_type = db_config["type"]
+        # relative URIs are useful in dev/test environments, but we ask for
+        # explicitness if used so as not to misinterpret user intent
+        uri_path_relative = db_config.get("uri_path_relative", False)
 
         info(
             f"  Processing {Fore.GREEN}{db_type}{Style.RESET_ALL} database "
@@ -235,7 +245,12 @@ def cli_node_start(
         label_capitals = label.upper()
 
         try:
-            db_file_exists = Path(uri).exists()
+            # TODO: Having users use file:/// for file-based databases would be
+            # more robust IMHO, but this is a breaking change. Perhaps for
+            # version 5?
+            db_file_exists = (Path(uri).exists() and Path(uri).is_absolute()) or (
+                uri_path_relative and Path(ctx.config_dir / uri).exists()
+            )
         except Exception:
             # If the database uri cannot be parsed, it is definitely not a
             # file. In case of http servers or sql servers, checking the path
@@ -255,16 +270,58 @@ def cli_node_start(
             debug("  - non file-based database added")
             env[f"{label_capitals}_DATABASE_URI"] = uri
         else:
-            debug("  - file-based database added")
-            suffix = Path(uri).suffix
-            env[f"{label_capitals}_DATABASE_URI"] = f"{label}{suffix}"
-            mounts.append((f"/mnt/{label}{suffix}", str(uri)))
+            debug("  - file-based database to be added")
+            uri = Path(uri)
+            if not uri.is_absolute() and uri_path_relative:
+                # docker needs absolute paths for mounts
+                uri = ctx.config_dir / uri
+                # sanity check
+                if not uri.exists():
+                    error(
+                        f"Database uri path {Fore.RED}{uri}{Style.RESET_ALL} "
+                        f"does not exist. It's detected as a relative path to "
+                        f"the config directory {Fore.RED}{ctx.config_dir}{Style.RESET_ALL}."
+                    )
+                    exit(1)
+            info(f"    path: {uri}")
+            # TODO: With https://github.com/vantage6/vantage6/pull/1539, is
+            # below necessary for dir mounts?
+            if uri.is_file():
+                suffix = uri.suffix
+                env[f"{label_capitals}_DATABASE_URI"] = f"{label}{suffix}"
+                mounts.append((f"/mnt/{label}{suffix}", str(uri)))
 
-    system_folders_option = "--system" if system_folders else "--user"
-    cmd = (
-        f"vnode-local start -c /mnt/config/{name}.yaml -n {name} "
-        f" --dockerized {system_folders_option}"
-    )
+    ports = {}
+    # TODO: Simplify configuration handling:
+    #
+    # - If --config and --dockerized are passed, "-n name" and "--system"
+    #   shouldn't be required.
+    # - Instead of letting users choose "system_folders" via CLI, v6 could just
+    #   search for YAML files in both /etc/vantage6 and ~/.config/vantage6 (like
+    #   git, vim, ssh, etc). The node/server name could be specified inside the
+    #   YAML file instead of deriving it from the filename alone.
+    # - Ideally, Docker-specifc context wouldn't exist; containerized vantage6
+    #   could directly mount on "system" folders.
+    #
+    # However, a full refactor it's not worth it IMHO. "system_folders" alone
+    # appears ~270 times in the code. Long-term, instead of using v6 to
+    # start/stop nodes/servers, docker-compose could be used. v6 commands would
+    # still exist as a starting point withint the container (i.e.
+    # vantage6-server/vantage6/server/cli, etc) And, as an extra helper
+    # utility, a v6 cli to generate configs, and maybe docker-compose files.
+    env["VANTAGE6_CONFIG_LOCATION"] = f"/mnt/config/{name}.yaml"
+    cmd = "/vantage6/vantage6-node/node.sh"
+
+    working_dir = "/"
+
+    if not no_debugger:
+        mounts, ports, cmd, working_dir = setup_debugger(
+            ctx, mounts, ports, cmd, working_dir
+        )
+
+    # the node will check debugger algorithm settings and directories and mount
+    # it on the algorithm container
+    mounts, env = mount_algorithm_debug(ctx, mounts, env)
 
     volumes = []
     for mount in mounts:
@@ -292,6 +349,9 @@ def cli_node_start(
         exit(1)
     env.update(extra_env)
 
+    # use specified network
+    network = ctx.config.get("network_name", None)
+
     # Add extra hosts to the environment
     extra_hosts = ctx.config.get("node_extra_hosts", {})
 
@@ -309,12 +369,20 @@ def cli_node_start(
             f"{APPNAME}-type": InstanceType.NODE.value,
             "system": str(system_folders),
             "name": ctx.config_file_name,
+            # docker recommends DNS format like below, but leaving existing
+            # ones above for now
+            "ai.vantage6.v6.config-name": ctx.config_file_name,
+            "ai.vantage6.v6.config-file-path": str(ctx.config_file),
         },
         environment=env,
         name=ctx.docker_container_name,
         auto_remove=not keep,
         tty=True,
         extra_hosts=extra_hosts,
+        # 'ports' is only populated if debugger is used
+        ports=ports,
+        working_dir=working_dir,
+        network=network,
     )
 
     info("Node container was started!")
@@ -337,7 +405,42 @@ def cli_node_start(
                 )
                 exit(0)
     else:
+        # a user can start two nodes with --config a/config.yaml and --config
+        # b/config.yaml so deriving name from config file name is not always
+        # good idea. Not worth the refactor for now if we move to docker
+        # compose at some point. So for now just treat --config starts
+        # differently
         info(
             f"To see the logs, run: {Fore.GREEN}v6 node attach --name "
             f"{ctx.name}{Style.RESET_ALL}"
         )
+        container.name
+
+
+def mount_algorithm_debug(ctx: NodeContext, mounts, env):
+    """
+    Mount the debugger algorithm in the node container if the debugger is
+    enabled in the node config.
+
+    Args:
+        ctx: NodeContext
+        mounts: List of mounts
+        env: Dictionary of environment variables
+
+    Returns:
+        Tuple of mounts and env
+    """
+    if ctx.debugger_algorithm is None:
+        return mounts, env
+
+    mount_src = str(ctx.debugger_algorithm.debug_dir)
+    mount_dest = NodeDefaults.ALGORITHM_DEBUG_DEBUGGER_MOUNT_POINT
+    mounts.append((mount_dest, mount_src))
+    env[NodeDefaults.ALGORITHM_DEBUG_DEBUGGER_DIR_ENV_VAR] = mount_dest
+
+    mount_src = str(ctx.debugger_algorithm.algo_source_dir)
+    mount_dest = NodeDefaults.ALGORITHM_DEBUG_SOURCE_MOUNT_POINT
+    mounts.append((mount_dest, mount_src))
+    env[NodeDefaults.ALGORITHM_DEBUG_SOURCE_DIR_ENV_VAR] = mount_dest
+
+    return mounts, env

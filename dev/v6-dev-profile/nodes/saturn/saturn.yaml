@@ -1,0 +1,63 @@
+# API key used to authenticate at the server.
+# This is a test key previously set in dev fixtures
+api_key: b91d24fe-beef-feed-baff-0b9c7b70dbec
+
+# node container's name
+container_name: v6-node-saturn
+# server's docker-compose will create this network
+network_name: v6-dev-network
+
+# URL of the vantage6 server (used by containerized node)
+server_url: http://server-planets.local
+# URL of the vantage6 server (used by host v6 cli util)
+server_url_from_host: http://127.0.6.1
+port: 80
+api_path: '/api'
+
+databases:
+  - label: letters
+    uri: ./letters.csv
+    type: csv
+    uri_path_relative: true
+
+encryption:
+  enabled: false
+
+policies:
+  allowed_algorithms:
+    - ^harbor2\.vantage6\.ai/demo/average$
+
+logging:
+  level:        DEBUG
+  use_console:  true
+  backup_count: 5
+  max_size:     1024
+  format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+  datefmt:      "%Y-%m-%d %H:%M:%S"
+  loggers:
+    - name: urllib3
+      level: warning
+    - name: requests
+      level: warning
+    - name: engineio.client
+      level: warning
+    - name: docker.utils.config
+      level: warning
+    - name: docker.auth
+      level: warning
+
+# Share some configuration and headers of databases with the server
+share_config: true
+
+
+# Additional debug flags
+debug:
+  # Set to `true` to enable the Flask/socketio into debug mode.
+  socketio: true
+  # Set to `true` to set the Flask app used for the LOCAL proxy service
+  # into debug mode
+  proxy_server: true
+
+# vantage6 node images are temporarily hosted on medicaldataworks/vantage6/
+images:
+  node: medicaldataworks/vantage6-devtestdebug-node:latest
