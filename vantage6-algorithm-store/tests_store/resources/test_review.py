@@ -653,7 +653,7 @@ class TestReviewResources(TestResources):
         )
 
         # register users allowed to create reviews
-        assigner_1 = self.register_user(
+        self.register_user(
             server.id,
             username="assigner_user_1",
             user_rules=[Rule.get_by_("review", Operation.CREATE)],
