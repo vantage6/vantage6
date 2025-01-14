@@ -5,7 +5,7 @@
 # * harbor2.vantage6.ai/infrastructure/algorithm-store:x.x.x
 #
 ARG TAG=latest
-ARG BASE=4.8
+ARG BASE=4.9
 FROM harbor2.vantage6.ai/infrastructure/infrastructure-base:${BASE}
 
 LABEL version=${TAG}
