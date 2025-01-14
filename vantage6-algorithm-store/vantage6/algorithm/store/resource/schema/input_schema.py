@@ -448,6 +448,7 @@ class UserUpdateInputSchema(Schema):
     # retrieved automatically in POST /user. Finally, there is an additional field to
     # update the email from the server
     email = fields.Email()
+    organization_id = fields.Integer()
     roles = fields.List(fields.Integer(validate=validate.Range(min=1)))
     update_email = fields.Boolean()
 
