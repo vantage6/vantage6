@@ -150,6 +150,7 @@ export interface Argument {
   conditional_on_id?: number;
   conditional_operator?: string;
   conditional_value?: string | number | boolean;
+  is_frontend_only: boolean;
 }
 
 export interface FunctionDatabase {
@@ -168,6 +169,7 @@ export interface ArgumentForm extends NameDescription {
   conditional_on?: string;
   conditional_operator?: string;
   conditional_value?: string | number | boolean;
+  is_frontend_only: boolean | string;
 }
 export interface FunctionForm extends NameDescription {
   display_name?: string;

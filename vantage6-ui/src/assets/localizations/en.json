@@ -253,6 +253,11 @@
             ">=": "Greater than or equals",
             "<=": "Less than or equals"
           }
+        },
+        "frontend_only": {
+          "toggle_explain": "This argument is only used in the UI and will not be passed to the algorithm.",
+          "details": "Use this if e.g. for a flag if user should provide either one argument or the other, to say which they want to provide.",
+          "short_header": "Only for UI"
         }
       },
       "databases": "Databases",

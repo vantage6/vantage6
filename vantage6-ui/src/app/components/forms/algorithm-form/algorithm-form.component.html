@@ -223,6 +223,11 @@
                           </div> -->
                           </div>
                         </div>
+                        <mat-radio-group formControlName="is_frontend_only">
+                          <mat-label>{{ "algorithm.function.argument.frontend_only.toggle_explain" | translate }}</mat-label>
+                          <mat-radio-button [value]="true" color="primary">{{ "general.yes" | translate }}</mat-radio-button>
+                          <mat-radio-button [value]="false" color="primary">{{ "general.no" | translate }}</mat-radio-button>
+                        </mat-radio-group>
                         <div class="button-container button-container-separate">
                           <button mat-flat-button color="warn" (click)="deleteParameter(functionFormGroup, paramIdx)">
                             {{ "algorithm-create.function.parameter.delete" | translate }}

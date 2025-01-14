@@ -195,6 +195,9 @@ class AlgorithmSubClient(ClientBase.SubClient):
                     '>', '<', '>=', or '<='.
                 - conditional_value: str | int | float | boolean, optional
                     Value to compare the conditional argument to.
+                - is_frontend_only: bool, optional
+                    Whether the argument should should only be shown in the UI form, or
+                    also be passed to the algorithm. Default is False.
             - ui_visualizations: list[dict]
                 List of UI visualizations of the function. Each visualization
                 is a dict with the following keys:
@@ -371,6 +374,9 @@ class AlgorithmSubClient(ClientBase.SubClient):
                     '>', '<', '>=', or '<='.
                 - conditional_value: str | int | float | boolean, optional
                     Value to compare the conditional argument to.
+                - is_frontend_only: bool, optional
+                    Whether the argument should should only be shown in the UI form, or
+                    also be passed to the algorithm. Default is False.
             - ui_visualizations: list[dict]
                 List of UI visualizations of the function. Each visualization
                 is a dict with the following keys:

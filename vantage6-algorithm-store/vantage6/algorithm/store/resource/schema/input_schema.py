@@ -257,6 +257,7 @@ class ArgumentInputSchema(_NameDescriptionSchema):
     conditional_on = fields.String()
     conditional_operator = fields.String()
     conditional_value = fields.String()
+    is_frontend_only = fields.Boolean()
 
     @validates("type_")
     def validate_type(self, value):

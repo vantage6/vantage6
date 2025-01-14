@@ -4,6 +4,7 @@ import { AlgorithmFunction, AlgorithmFunctionExtended, ArgumentType } from 'src/
 import { TaskDatabase } from 'src/app/models/api/task.models';
 import { Database } from 'src/app/models/api/node.model';
 import { isListTypeArgument } from 'src/app/helpers/algorithm.helper';
+import { isTruthy } from 'src/app/helpers/utils.helper';
 
 function jsonValidator(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -60,8 +61,10 @@ export const addParameterFormControlsForFunction = (func: AlgorithmFunctionExten
       form.addControl(argument.name, new FormControl(null, [...requiredValidators, Validators.pattern(stringListRegex)]));
     }
     // set default value
-    if (argument.has_default_value && argument.default_value) {
-      if (!isListTypeArgument(argument.type)) {
+    if (argument.has_default_value && (argument.default_value || argument.default_value === false)) {
+      if (argument.type === ArgumentType.Boolean) {
+        form.get(argument.name)?.setValue(isTruthy(argument.default_value));
+      } else if (!isListTypeArgument(argument.type)) {
         form.get(argument.name)?.setValue(argument.default_value);
       } else {
         form.get(argument.name)?.setValue(JSON.parse(argument.default_value as string));

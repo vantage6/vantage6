@@ -82,7 +82,8 @@ export class AlgorithmEditComponent implements OnInit, OnDestroy {
               hasCondition: arg.conditional_on_id !== null,
               conditional_on: conditionalArgName,
               conditional_operator: arg.conditional_operator,
-              conditional_value: arg.conditional_value
+              conditional_value: arg.conditional_value,
+              is_frontend_only: arg.is_frontend_only
             };
           }),
           databases: func.databases.map((db) => {
