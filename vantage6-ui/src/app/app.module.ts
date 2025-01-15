@@ -1,13 +1,15 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { QRCodeModule } from 'angularx-qrcode';
 
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -26,6 +28,7 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatTreeModule } from '@angular/material/tree';
 import { MatDateFnsModule } from '@angular/material-date-fns-adapter';
 import { MatRadioModule } from '@angular/material/radio';
 import { enCA } from 'date-fns/locale';
@@ -46,6 +49,7 @@ import { TaskListComponent } from './pages/analyze/task/list/task-list.component
 import { TaskReadComponent } from './pages/analyze/task/read/task-read.component';
 import { PageHeaderComponent } from './components/page-header/page-header.component';
 import { ChipComponent } from './components/helpers/chip/chip.component';
+import { TreeDropdownComponent } from './components/helpers/tree-dropdown/tree-dropdown.component';
 import { AlertComponent } from './components/alerts/alert/alert.component';
 import { StatusInfoComponent } from './components/helpers/status-info/status-info.component';
 import { LogDialogComponent } from './components/dialogs/log/log-dialog.component';
@@ -82,6 +86,7 @@ import { RoleReadComponent } from './pages/admin/role/read/role-read.component';
 import { RoleCreateComponent } from './pages/admin/role/create/role-create.component';
 import { RoleFormComponent } from './components/forms/role-form/role-form.component';
 import { OrderByPipe } from './pipes/order-by.pipe';
+import { OrderByTaskStatusPipe } from './pipes/order-by-status.pipe';
 import { HighlightedTextPipe } from './pipes/highlighted-text.pipe';
 import { SetupMfaComponent } from './pages/auth/setup-mfa/setup-mfa.component';
 import { MfaCodeComponent } from './pages/auth/mfa-code/mfa-code.component';
@@ -147,6 +152,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     TaskListComponent,
     TaskReadComponent,
     PageHeaderComponent,
+    TreeDropdownComponent,
     ChipComponent,
     AlertComponent,
     StatusInfoComponent,
@@ -182,6 +188,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     RoleCreateComponent,
     RoleFormComponent,
     OrderByPipe,
+    OrderByTaskStatusPipe,
     HighlightedTextPipe,
     SetupMfaComponent,
     MfaCodeComponent,
@@ -234,6 +241,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     BrowserAnimationsModule,
     AppRoutingModule,
     ReactiveFormsModule,
+    FormsModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,
@@ -246,6 +254,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
+    MatChipsModule,
     MatDatepickerModule,
     MatDialogModule,
     MatExpansionModule,
@@ -264,8 +273,10 @@ export function HttpLoaderFactory(http: HttpClient) {
     MatTabsModule,
     MatTableModule,
     MatToolbarModule,
+    MatTreeModule,
     MatRadioModule,
-    QRCodeModule
+    QRCodeModule,
+    OverlayModule
   ],
   providers: [
     {
@@ -275,4 +286,4 @@ export function HttpLoaderFactory(http: HttpClient) {
     provideHttpClient(withInterceptorsFromDi())
   ]
 })
-export class AppModule {}
+export class AppModule { }

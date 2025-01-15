@@ -21,15 +21,20 @@
         <mat-panel-title>{{ "task-read.card-status.title" | translate }}</mat-panel-title>
       </mat-expansion-panel-header>
       <h3>{{ "task-read.card-status.main-process-title" | translate }}</h3>
-      <div class="status-info-container">
+      <div
+        [ngClass]="{
+          'status-info-container': true,
+          'status-info-container--small': isSmallTileView()
+        }"
+      >
         <app-status-info
-          *ngFor="let run of task?.runs"
+          *ngFor="let run of task?.runs | orderByTaskStatus: 'status' : 'asc'"
           [type]="getStatusType(run.status)"
           taskName="{{ getPrintableTaskName(task) }}"
           nodeName="{{ run.node.name }}"
           [status]="getTaskStatusTranslation(run.status)"
         >
-          <button actions mat-raised-button *ngIf="run.log" (click)="openLog(run.log)">
+          <button actions mat-raised-button [disabled]="!run.log" (click)="openLog(run.log)">
             {{ "task-run.show-log" | translate }}
           </button>
           <span actionText *ngIf="run.node.status !== 'online' && isActive(run.status)">{{
@@ -39,15 +44,25 @@
       </div>
       <div *ngIf="childTasks.length > 0">
         <h3>{{ "task-read.card-status.child-process-title" | translate }}</h3>
-        <div class="status-info-container" *ngFor="let childTask of childTasks">
+        <div
+          [ngClass]="{
+            'status-info-container': true,
+            'status-info-container--small': isSmallTileView()
+          }"
+          *ngFor="
+            let childTask of childTasks
+              | orderBy: 'id'
+              | slice: (!showAllChildTasks && childTasks.length > 1 ? childTasks.length - 1 : 0) : childTasks.length
+          "
+        >
           <app-status-info
-            *ngFor="let run of childTask?.runs"
+            *ngFor="let run of childTask?.runs | orderByTaskStatus: 'status' : 'asc'"
             [type]="getStatusType(run.status)"
             taskName="{{ childTask.name }}"
             nodeName="{{ run.node.name }}"
             [status]="getTaskStatusTranslation(run.status)"
           >
-            <button actions mat-raised-button *ngIf="run.log" (click)="openLog(run.log)">
+            <button actions mat-raised-button [disabled]="!run.log" (click)="openLog(run.log)">
               {{ "task-run.show-log" | translate }}
             </button>
             <span actionText *ngIf="run.node.status !== 'online' && isActive(run.status)">{{
@@ -55,6 +70,14 @@
             }}</span>
           </app-status-info>
         </div>
+        <button
+          mat-raised-button
+          class="status-info-container__load-more"
+          *ngIf="childTasks.length > 1"
+          (click)="showAllChildTasks = !showAllChildTasks"
+        >
+          {{ (showAllChildTasks ? "general.show_less" : "general.show_more") | translate }}
+        </button>
       </div>
       <mat-card-actions *ngIf="canKill && isActive(task.status)">
         <button mat-flat-button color="warn" (click)="handleTaskKill()">
@@ -66,7 +89,7 @@
   <mat-card *ngIf="!isLoading && task.results && task.results.length > 0">
     <mat-card-header>
       <mat-card-title>{{ "task-read.card-results.title" | translate }}</mat-card-title>
-      <mat-form-field class="select-visualization">
+      <mat-form-field class="select-visualization" *ngIf="function && function.ui_visualizations.length > 0">
         <mat-label>{{ "task-read.card-results.actions.visualization" | translate }}</mat-label>
         <mat-select [formControl]="visualization">
           <mat-option *ngFor="let visualization of function?.ui_visualizations; index as index" [value]="index">
@@ -77,20 +100,31 @@
     </mat-card-header>
     <mat-card-content>
       <div *ngFor="let result of task.results">
-        <ng-container *ngIf="result.decoded_result">
+        <ng-container *ngIf="result.decoded_result && task.input; else resultDownload">
           <b *ngIf="function?.type === functionType.Federated">{{ getRunForResult(result.id)?.node?.name }}</b>
           <app-visualize-result
             [result]="result.decoded_result"
             [visualization]="selectedVisualization"
             [result_id]="result.id.toString()"
           ></app-visualize-result>
-          <!-- TODO only display text result if there are no visualizations -->
-          <!-- <p>{{ displayTextResult(result.decoded_result) }}</p> -->
+          <p *ngIf="function && function.ui_visualizations.length < 1">{{ displayTextResult(result.decoded_result) }}</p>
           <br />
           <button mat-flat-button color="primary" (click)="downloadResult(result)">
             {{ "task-read.card-results.actions.download-json" | translate }}
           </button>
         </ng-container>
+        <ng-template #resultDownload>
+          <ng-container *ngIf="result.result">
+            <div *ngIf="result.decoded_result">
+              <app-alert *ngIf="result.decoded_result" label="{{ 'task.alert-failed-read-input-visualization' | translate }}"> </app-alert>
+              <p>{{ displayTextResult(result.decoded_result) }}</p>
+            </div>
+            <app-alert *ngIf="!result.decoded_result" label="{{ 'task.alert-failed-read-result' | translate }}"> </app-alert>
+            <button mat-flat-button color="primary" (click)="downloadResult(result)">
+              {{ "task-read.card-results.actions.download-result" | translate }}
+            </button>
+          </ng-container>
+        </ng-template>
       </div>
     </mat-card-content>
   </mat-card>
@@ -166,9 +200,9 @@
           <b>{{ "task.algorithm" | translate }}</b>
           <span>{{ algorithm?.name || "-" }}</span>
         </div>
-        <div class="data-list__item">
+        <div class="data-list__item" *ngIf="task.input">
           <b>{{ "task.function" | translate }}</b>
-          <span>{{ this.function?.display_name ?? task.input?.method || "-" }}</span>
+          <span>{{ (this.function?.display_name ?? task.input.method) || "-" }}</span>
         </div>
       </div>
       <ng-container *ngIf="task.input?.parameters">
@@ -180,6 +214,11 @@
           </div>
         </div>
       </ng-container>
+      <app-alert *ngIf="!task.input" label="{{ 'task.alert-failed-read-input-function' | translate }}"> </app-alert>
+      <br />
+      <button *ngIf="!task.input && task.runs[0]?.input" mat-flat-button color="primary" (click)="downloadInput(task.runs[0])">
+        {{ "task-read.card-results.actions.download-input" | translate }}
+      </button>
     </mat-card-content>
   </mat-card>
   <mat-card *ngIf="!isLoading && task && task.runs.length > 0">

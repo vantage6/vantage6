@@ -24,11 +24,24 @@ commands:
 
 ::
 
+    # install requirements to run documentation (only required once)
     pip install -r docs/requirements.txt
+
+    # run documentation interactively
+    make devdocs
+    # or alternatively, if you don't have make
     sphinx-autobuild docs docs/_build/html --watch .
 
-Of course, you only have to install the requirements if you had not done so
-before.
+Then, you can access the documentation on ``http://127.0.0.1:8000``. The ``--watch``
+option makes sure that if you make changes to either the documentation text or the
+docstrings, the documentation pages will also be reloaded.
+
+.. note::
+
+    The command ``make devdocs`` does *not* build the function documentation by default,
+    because building that interactively is slow. If you need to build the function
+    documentation locally, you can do so by either running ``make html`` or
+    ``make devdocs FUNCTIONDOCS=true``.
 
 .. note::
 
@@ -37,11 +50,6 @@ before.
     `install Java <https://www.java.com/en/download/help/download_options.html>`_.
     PlantUML itself is included in the Python requirements, so you do not have to
     install it separately.
-
-Then you can access the documentation on ``http://127.0.0.1:8000``. The
-``--watch`` option makes sure that if you make changes to either the
-documentation text or the docstrings, the documentation pages will also be
-reloaded.
 
 This documentation is automatically built and published on a commit (on
 certain branches, including ``main``). Both Frank and Bart have access to the

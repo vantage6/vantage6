@@ -34,8 +34,9 @@ class StudySubClient(ClientBase.SubClient):
     @post_filtering()
     def list(
         self,
-        name: str = None,
-        organization: int = None,
+        name: str | None = None,
+        organization: int | None = None,
+        collaboration: int | None = None,
         include_organizations: bool = False,
         page: int = 1,
         per_page: int = 20,
@@ -49,6 +50,8 @@ class StudySubClient(ClientBase.SubClient):
             Filter studies by name
         organization: int, optional
             Filter studies by organization id
+        collaboration: int, optional
+            Filter studies by collaboration id
         include_organizations: bool, optional
             Include organizations in the response, by default False
         field: str, optional
@@ -80,8 +83,11 @@ class StudySubClient(ClientBase.SubClient):
             "page": page,
             "per_page": per_page,
             "name": name,
-            "organization_id": organization,
         }
+        if organization is not None:
+            params["organization_id"] = organization
+        if collaboration is not None:
+            params["collaboration_id"] = collaboration
         if include_organizations:
             params["include"] = "organizations"
         return self.parent.request("study", params=params)

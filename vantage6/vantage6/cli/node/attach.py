@@ -46,7 +46,7 @@ def cli_node_attach(name: str, system_folders: bool) -> None:
 
     if not name:
         name = q.select(
-            "Select the node you wish to inspect:", choices=running_node_names
+            "Select the node you wish to attach:", choices=running_node_names
         ).ask()
     else:
         post_fix = "system" if system_folders else "user"

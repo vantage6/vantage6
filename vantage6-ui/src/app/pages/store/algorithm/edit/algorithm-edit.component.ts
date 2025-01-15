@@ -69,6 +69,8 @@ export class AlgorithmEditComponent implements OnInit, OnDestroy {
           description: func.description,
           type: func.type,
           arguments: func.arguments.map((arg) => {
+            const conditionalArgName =
+              arg.conditional_on_id === undefined ? undefined : func.arguments.find((a) => a.id === arg.conditional_on_id)?.name;
             return {
               name: arg.name,
               display_name: arg.display_name,
@@ -76,7 +78,12 @@ export class AlgorithmEditComponent implements OnInit, OnDestroy {
               description: arg.description,
               has_default_value: arg.has_default_value,
               default_value: arg.default_value || null,
-              is_default_value_null: arg.default_value === null ? 'true' : 'false'
+              is_default_value_null: arg.default_value === null ? 'true' : 'false',
+              hasCondition: arg.conditional_on_id !== null,
+              conditional_on: conditionalArgName,
+              conditional_operator: arg.conditional_operator,
+              conditional_value: arg.conditional_value,
+              is_frontend_only: arg.is_frontend_only
             };
           }),
           databases: func.databases.map((db) => {
