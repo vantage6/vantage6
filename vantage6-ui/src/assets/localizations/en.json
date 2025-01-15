@@ -225,6 +225,7 @@
     "submitted-at": "Submitted at",
     "approved-at": "Approved at",
     "invalidated-at": "Invalidated at",
+    "submission-comments": "Submission comments",
     "function": {
       "type": "Type of function",
       "argument": {

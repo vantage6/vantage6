@@ -55,6 +55,10 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ "algorithm.submission-comments" | translate }}</mat-label>
+          <input matInput type="text" formControlName="submission_comments" />
+        </mat-form-field>
         <!-- Card per function -->
         <mat-accordion
           *ngFor="let functionFormGroup of functionFormGroups; let funcIdx = index"
