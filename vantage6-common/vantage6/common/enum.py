@@ -9,6 +9,11 @@ class StorePolicies(str, Enum):
     ALGORITHM_VIEW = "algorithm_view"
     ALLOWED_SERVERS = "allowed_servers"
     ALLOW_LOCALHOST = "allow_localhost"
+    MIN_REVIEWERS = "min_reviewers"
+    ASSIGN_REVIEW_OWN_ALGORITHM = "assign_review_own_algorithm"
+    MIN_REVIEWING_ORGANIZATIONS = "min_reviewing_organizations"
+    ALLOWED_REVIEWERS = "allowed_reviewers"
+    ALLOWED_REVIEW_ASSIGNERS = "allowed_review_assigners"
 
 
 class AlgorithmViewPolicies(str, Enum):

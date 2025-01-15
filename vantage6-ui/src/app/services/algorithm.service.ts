@@ -102,12 +102,13 @@ export class AlgorithmService {
   }
 
   private cleanAlgorithmForm(algorithmForm: AlgorithmForm): AlgorithmForm {
-    // remove the parameter's 'default_value_type' fields - they are only needed to
-    // acquire a correct value in the UI but are not needed for the backend
-    // also cast the 'has_default_value' field to a boolean, in the HTML it is a string.
     algorithmForm.functions.forEach((func) => {
       func.arguments.forEach((arg) => {
+        // remove the parameter's 'default_value_type' fields - they are only needed to
+        // acquire a correct value in the UI but are not needed for the backend
+        // also cast the 'has_default_value' field to a boolean, in the HTML it is a string.
         arg.has_default_value = arg.has_default_value === 'true' || arg.has_default_value === true;
+        arg.is_frontend_only = arg.is_frontend_only === 'true' || arg.is_frontend_only === true;
         if (arg.is_default_value_null === true) {
           delete arg.default_value;
         } else if (isListTypeArgument(arg.type) && arg.default_value) {
@@ -131,6 +132,20 @@ export class AlgorithmService {
           }
         }
         delete arg.is_default_value_null;
+        // similarly, clean up the conditional argument fields
+        delete arg.hasCondition;
+        // Note: we do NOT check the conditional value and operator here. It is checked
+        // in the form that they are either all or none defined. Checking the
+        // conditional_value may also be more complex as it may be 'false'.
+        if (!arg.conditional_on) {
+          delete arg.conditional_on;
+          delete arg.conditional_operator;
+          delete arg.conditional_value;
+        }
+        if (arg.conditional_value || arg.conditional_value === false) {
+          // cast to string as it is stored as string in the database
+          arg.conditional_value = arg.conditional_value.toString();
+        }
       });
     });
     return algorithmForm;

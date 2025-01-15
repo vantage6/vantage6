@@ -29,44 +29,43 @@
             </div>
           </form>
         </mat-step>
-        <mat-step [stepControl]="packageForm">
-          <form class="form" [formGroup]="packageForm">
-            <ng-template matStepLabel>{{ "task-create.step-package.title" | translate }}</ng-template>
-            <div class="field-description">{{ "task-create.step-package.description.algorithm" | translate }}</div>
-            <mat-form-field subscriptSizing="dynamic">
-              <mat-label>{{ "task.algorithm" | translate }}</mat-label>
-              <mat-select formControlName="algorithmSpec">
-                <mat-option *ngFor="let algorithm of algorithms" [value]="getAlgoSpec(algorithm)">
-                  {{ algorithm.name }}
-                  <div class="detail-txt">{{ getAlgorithmStoreName(algorithm) }}</div>
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-            <div class="field-description">{{ "task-create.step-package.description.name" | translate }}</div>
-            <mat-form-field subscriptSizing="dynamic">
-              <mat-label>{{ "task.name" | translate }}</mat-label>
-              <input matInput type="text" formControlName="name" />
-            </mat-form-field>
-            <div class="field-description">{{ "task-create.step-package.description.description" | translate }}</div>
-            <mat-form-field subscriptSizing="dynamic">
-              <mat-label>{{ "task.description" | translate }}</mat-label>
-              <input matInput type="text" formControlName="description" />
-            </mat-form-field>
-            <div>
-              <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
-              <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
-            </div>
-          </form>
-        </mat-step>
         <mat-step [stepControl]="functionForm">
           <form class="form" [formGroup]="functionForm">
             <ng-template matStepLabel>{{ "task-create.step-function.title" | translate }}</ng-template>
             <div class="field-description">{{ "task-create.step-function.description.function" | translate }}</div>
-            <mat-form-field subscriptSizing="dynamic">
+            <mat-form-field subscriptSizing="dynamic" class="select-form-field">
               <mat-label>{{ "task.function" | translate }}</mat-label>
-              <mat-select formControlName="functionName">
-                <mat-option *ngFor="let function of algorithm?.functions" [value]="function.name">
-                  {{ function.display_name ?? function.name }} <span class="detail-txt">({{ function.type }})</span>
+              <mat-select formControlName="algorithmFunctionSpec">
+                <mat-form-field class="search-form-field">
+                  <input
+                    matInput
+                    placeholder="{{ 'task-create.step-function.description.function-placeholder' | translate }}"
+                    (keyup)="$event.stopPropagation(); search()"
+                    formControlName="algorithmFunctionSearch"
+                    type="text"
+                  />
+                  <button
+                    matSuffix
+                    mat-icon-button
+                    aria-label="Clear"
+                    color="primary"
+                    *ngIf="functionForm.controls.algorithmFunctionSearch.value"
+                    (click)="clearFunctionSearchInput()"
+                  >
+                    <mat-icon>close</mat-icon>
+                  </button>
+                  <button matSuffix mat-icon-button aria-label="Search" color="primary">
+                    <mat-icon>search</mat-icon>
+                  </button>
+                </mat-form-field>
+
+                <mat-option
+                  *ngFor="let function of filteredFunctions"
+                  class="function-select-option"
+                  [innerHTML]="getFunctionOptionLabel(function) | highlight: functionForm.controls.algorithmFunctionSearch.value : true"
+                  [value]="getAlgorithmFunctionSpec(function)"
+                >
+                  <span [innerHTML]="getFunctionOptionLabel(function)"></span>
                 </mat-option>
               </mat-select>
             </mat-form-field>
@@ -106,6 +105,16 @@
               *ngIf="node && node?.status !== 'online'"
               label="{{ 'task.alert-node-offline' | translate: { name: node.name } }}"
             ></app-alert>
+            <div class="field-description">{{ "task-create.step-function.description.name" | translate }}</div>
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ "task.name" | translate }}</mat-label>
+              <input matInput type="text" formControlName="name" />
+            </mat-form-field>
+            <div class="field-description">{{ "task-create.step-function.description.description" | translate }}</div>
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ "task.description" | translate }}</mat-label>
+              <input matInput type="text" formControlName="description" />
+            </mat-form-field>
             <div>
               <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
               <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
@@ -162,64 +171,66 @@
             <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
             <ng-container *ngIf="!containsColumnArguments() || !isLoadingColumns; else loadingColumns">
               <div class="field-description">{{ "task-create.step-parameters.description" | translate }}</div>
-              <ng-container *ngFor="let argument of function?.arguments">
-                <b>{{ argument.description }}</b>
-                <p *ngIf="argument.type === argumentType.Json">{{ "task-create.step-parameters.valid-json" | translate }}</p>
-                <!-- Show form field for dropdowns or single input fields (float, int, string) -->
-                <mat-form-field *ngIf="shouldIncludeFormField(argument)" subscriptSizing="dynamic">
-                  <mat-label>{{ argument.display_name ?? argument.name }}</mat-label>
-                  <mat-select
-                    *ngIf="shouldShowColumnDropdown(argument)"
+              <ng-container *ngFor="let argument of sortArgumentsForDisplay(function?.arguments)">
+                <ng-container *ngIf="shouldDisplayArgument(function, argument)">
+                  <b>{{ argument.description }}</b>
+                  <p *ngIf="argument.type === argumentType.Json">{{ "task-create.step-parameters.valid-json" | translate }}</p>
+                  <!-- Show form field for dropdowns or single input fields (float, int, string) -->
+                  <mat-form-field *ngIf="shouldIncludeFormField(argument)" subscriptSizing="dynamic">
+                    <mat-label>{{ getDisplayName(argument) }}</mat-label>
+                    <mat-select
+                      *ngIf="shouldShowColumnDropdown(argument)"
+                      [formControlName]="argument.name"
+                      [multiple]="argument.type === argumentType.ColumnList"
+                    >
+                      <mat-option *ngFor="let column of columns" [value]="column">{{ column }}</mat-option>
+                    </mat-select>
+                    <mat-select
+                      *ngIf="shouldShowOrganizationDropdown(argument)"
+                      [formControlName]="argument.name"
+                      [compareWith]="compareIDsForSelection"
+                      [multiple]="argument.type === argumentType.OrganizationList"
+                    >
+                      <mat-option *ngFor="let organization of organizations" [value]="organization.id">
+                        {{ organization.name }}
+                      </mat-option>
+                    </mat-select>
+                    <input
+                      *ngIf="shouldShowParameterSimpleInput(argument)"
+                      matInput
+                      appNumberOnly
+                      [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
+                      [formControlName]="argument.name"
+                    />
+                  </mat-form-field>
+                  <!-- Show checkbox for boolean parameters -->
+                  <mat-checkbox
+                    class="newLineCheckbox"
+                    *ngIf="shouldShowParameterBooleanInput(argument)"
                     [formControlName]="argument.name"
-                    [multiple]="argument.type === argumentType.ColumnList"
+                    [checked]="false"
                   >
-                    <mat-option *ngFor="let column of columns" [value]="column">{{ column }}</mat-option>
-                  </mat-select>
-                  <mat-select
-                    *ngIf="shouldShowOrganizationDropdown(argument)"
-                    [formControlName]="argument.name"
-                    [compareWith]="compareIDsForSelection"
-                    [multiple]="argument.type === argumentType.OrganizationList"
-                  >
-                    <mat-option *ngFor="let organization of organizations" [value]="organization.id">
-                      {{ organization.name }}
-                    </mat-option>
-                  </mat-select>
-                  <input
-                    *ngIf="shouldShowParameterSimpleInput(argument)"
-                    matInput
-                    appNumberOnly
-                    [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
-                    [formControlName]="argument.name"
-                  />
-                </mat-form-field>
-                <!-- Show checkbox for boolean parameters -->
-                <mat-checkbox
-                  class="newLineCheckbox"
-                  *ngIf="shouldShowParameterBooleanInput(argument)"
-                  [formControlName]="argument.name"
-                  [checked]="false"
-                >
-                  {{ argument.name }}
-                </mat-checkbox>
-                <!-- Show expandable list for multiple inputs (list of str, int, or float) -->
-                <div *ngIf="shouldShowMultipleInput(argument)">
-                  <div formArrayName="{{ argument.name }}" *ngFor="let input of getFormArrayControls(argument); let idx = index">
-                    <div style="display: flex; align-items: center">
-                      <mat-form-field subscriptSizing="dynamic">
-                        <mat-label>{{ argument.name }} {{ idx + 1 }}</mat-label>
-                        <input
-                          matInput
-                          appNumberOnly
-                          [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
-                          [formControlName]="idx"
-                        />
-                      </mat-form-field>
-                      <button mat-raised-button color="warn" (click)="removeInputFieldForArg(argument, idx)">Delete</button>
+                    {{ argument.name }}
+                  </mat-checkbox>
+                  <!-- Show expandable list for multiple inputs (list of str, int, or float) -->
+                  <div *ngIf="shouldShowMultipleInput(argument)">
+                    <div formArrayName="{{ argument.name }}" *ngFor="let input of getFormArrayControls(argument); let idx = index">
+                      <div style="display: flex; align-items: center">
+                        <mat-form-field subscriptSizing="dynamic">
+                          <mat-label>{{ argument.name }} {{ idx + 1 }}</mat-label>
+                          <input
+                            matInput
+                            appNumberOnly
+                            [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
+                            [formControlName]="idx"
+                          />
+                        </mat-form-field>
+                        <button mat-raised-button color="warn" (click)="removeInputFieldForArg(argument, idx)">Delete</button>
+                      </div>
                     </div>
+                    <button mat-raised-button color="primary" (click)="addInputFieldForArg(argument)">Add More</button>
                   </div>
-                  <button mat-raised-button color="primary" (click)="addInputFieldForArg(argument)">Add More</button>
-                </div>
+                </ng-container>
               </ng-container>
             </ng-container>
             <div>
@@ -232,12 +243,7 @@
         mat-flat-button
         color="primary"
         [disabled]="
-          packageForm.invalid ||
-          functionForm.invalid ||
-          databaseForm.invalid ||
-          preprocessingForm.invalid ||
-          filterForm.invalid ||
-          parameterForm.invalid
+          functionForm.invalid || databaseForm.invalid || preprocessingForm.invalid || filterForm.invalid || parameterForm.invalid
         "
         (click)="handleSubmit()"
       >

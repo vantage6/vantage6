@@ -96,7 +96,11 @@ class AlgorithmStoreApp:
         self.principal = Principal(self.app, use_sessions=False)
 
         # Enable cross-origin resource sharing
-        self.cors = CORS(self.app)
+        cors_allowed_origins = self.ctx.config.get("cors_allowed_origins", "*")
+        self.cors = CORS(
+            self.app,
+            resources={r"/*": {"origins": cors_allowed_origins}},
+        )
 
         # SWAGGER documentation
         self.swagger = Swagger(self.app, template={})
@@ -348,6 +352,26 @@ class AlgorithmStoreApp:
                     "Policy 'algorithms_open_to_whitelisted' will be deprecated in v5.0"
                     ". Please use 'algorithm_view' instead."
                 )
+            elif policy in [
+                StorePolicies.ALLOWED_REVIEWERS,
+                StorePolicies.ALLOWED_REVIEW_ASSIGNERS,
+            ]:
+                if not isinstance(policy_value, list):
+                    log.warning("Policy '%s' should be a list, skipping", policy)
+                    continue
+                for value in policy_value:
+                    # get server
+                    server = db.Vantage6Server.get_by_url(value["server"])
+                    if not server:
+                        log.warning(
+                            "Server '%s' does not exist, skipping policy",
+                            value["server"],
+                        )
+                        continue
+                    # store the policy
+                    db.Policy(
+                        key=policy, value=f"{value['username']}|{server.url}"
+                    ).save()
             elif policy not in [p.value for p in StorePolicies]:
                 log.warning("Policy '%s' is not a valid policy, skipping", policy)
                 continue
@@ -409,6 +433,7 @@ class AlgorithmStoreApp:
             whitelisted_uri = root_user.get("v6_server_uri")
             root_username = root_user.get("username")
             root_email = root_user.get("email")
+            root_organization = root_user.get("organization_id")
             if whitelisted_uri and root_username:
                 if not (v6_server := db.Vantage6Server.get_by_url(whitelisted_uri)):
                     log.info("This server will be whitelisted: %s", whitelisted_uri)
@@ -430,6 +455,7 @@ class AlgorithmStoreApp:
                         v6_server_id=v6_server.id,
                         username=root_username,
                         email=root_email,
+                        organization_id=root_organization,
                         roles=[root],
                     )
                     user.save()

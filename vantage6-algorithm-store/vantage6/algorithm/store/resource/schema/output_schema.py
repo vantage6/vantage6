@@ -81,6 +81,7 @@ class ArgumentOutputSchema(HATEOASModelSchema):
         model = Argument
 
     type_ = fields.String(data_key="type")
+    conditional_on_id = fields.Integer()
 
 
 class UIVisualizationOutputSchema(HATEOASModelSchema):

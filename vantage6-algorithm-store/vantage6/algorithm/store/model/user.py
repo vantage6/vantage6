@@ -15,6 +15,10 @@ class User(Base):
     ----------
     username : str
         Username
+    email : str
+        Email address
+    organization_id : int
+        Id of the organization to which the user belongs
     v6_server_id : int
         Id of the whitelisted server through which the user is authenticated
     server : :class:`~.model.vantage6_server.Vantage6Server`
@@ -31,6 +35,7 @@ class User(Base):
     # link with the v6 server. This is a temporary solution
     username = Column(String)
     email = Column(String)
+    organization_id = Column(Integer)
     v6_server_id = Column(Integer, ForeignKey("vantage6server.id"))
 
     # relationships

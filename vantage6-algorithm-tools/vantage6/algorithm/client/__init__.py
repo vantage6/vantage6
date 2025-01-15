@@ -339,7 +339,7 @@ class AlgorithmClient(ClientBase):
 
         def create(
             self,
-            input_: bytes,
+            input_: dict,
             organizations: list[int] = None,
             name: str = "subtask",
             description: str = None,
@@ -353,8 +353,9 @@ class AlgorithmClient(ClientBase):
 
             Parameters
             ----------
-            input_ : bytes
-                Input to the task. Should be b64 encoded.
+            input_ : dict
+                Input to the task. This dictionary usually contains the algorithm method
+                to call and the arguments to pass to the method.
             organizations : list[int]
                 List of organization IDs that should execute the task.
             name: str, optional

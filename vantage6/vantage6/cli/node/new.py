@@ -1,7 +1,7 @@
 import click
 from colorama import Fore, Style
 
-from vantage6.common import error, info, check_config_writeable
+from vantage6.common import error, info, ensure_config_dir_writable
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.configuration_wizard import configuration_wizard
@@ -41,7 +41,7 @@ def cli_node_new_configuration(name: str, system_folders: bool) -> None:
         exit(1)
 
     # Check that we can write in this folder
-    if not check_config_writeable(system_folders):
+    if not ensure_config_dir_writable(system_folders):
         error("Cannot write configuration file. Exiting...")
         exit(1)
 
