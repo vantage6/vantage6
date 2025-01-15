@@ -459,7 +459,7 @@ class Algorithms(AlgorithmBaseResource):
                               conditional_operator:
                                 type: string
                                 description: Comparator used for the conditional
-                                  argument. Can be one of: '==', '!=', '>', '<', '>=',
+                                  argument. Can be one of '==', '!=', '>', '<', '>=',
                                   '<='.
                               conditional_value:
                                 type: string
@@ -887,7 +887,7 @@ class Algorithm(AlgorithmBaseResource):
                               conditional_operator:
                                 type: string
                                 description: Comparator used for the conditional
-                                  argument. Can be one of: '==', '!=', '>', '<', '>=',
+                                  argument. Can be one of '==', '!=', '>', '<', '>=',
                                   '<='.
                               conditional_value:
                                 type: string
