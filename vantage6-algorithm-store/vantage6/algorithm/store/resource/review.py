@@ -344,8 +344,8 @@ class Reviews(ReviewBase):
             return {"msg": "Reviewer not found"}, HTTPStatus.BAD_REQUEST
         if not reviewer.is_reviewer():
             return {
-                "msg": f"User id='{reviewer.id}' is not does not have the role of reviewer "
-                f"and is not allowed to review algorithms!"
+                "msg": f"User id='{reviewer.id}' is not does not have the role of "
+                "reviewer and is not allowed to review algorithms!"
             }, HTTPStatus.BAD_REQUEST
         # the developer of the algorithm may not review their own algorithm, unless
         # a different dev policy is set
@@ -354,8 +354,8 @@ class Reviews(ReviewBase):
             reviewer, StorePolicies.ALLOWED_REVIEWERS.value
         ):
             return {
-                "msg": f"User id='{reviewer.id}' is not allowed to review algorithms, according"
-                f"to the policies set by the administrator of this store"
+                "msg": f"User id='{reviewer.id}' is not allowed to review algorithms, "
+                "according to the policies set by the administrator of this store"
             }, HTTPStatus.BAD_REQUEST
 
         if reviewer == algorithm.developer and not self.config.get("dev", {}).get(
