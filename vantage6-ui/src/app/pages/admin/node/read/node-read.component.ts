@@ -1,11 +1,10 @@
 import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
 import { BaseNode, Node, NodeEdit, NodeLazyProperties, NodeSortProperties, NodeStatus } from 'src/app/models/api/node.model';
 import { NodeService } from 'src/app/services/node.service';
-import { BaseOrganization, OrganizationSortProperties } from 'src/app/models/api/organization.model';
+import { OrganizationSortProperties } from 'src/app/models/api/organization.model';
 import { OrganizationService } from 'src/app/services/organization.service';
-import { MatSelectChange } from '@angular/material/select';
 import { CollaborationService } from 'src/app/services/collaboration.service';
-import { BaseCollaboration, CollaborationSortProperties } from 'src/app/models/api/collaboration.model';
+import { CollaborationSortProperties } from 'src/app/models/api/collaboration.model';
 import { FormControl, Validators } from '@angular/forms';
 import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
 import { Pagination, PaginationLinks } from 'src/app/models/api/pagination.model';
@@ -19,6 +18,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MessageDialogComponent } from 'src/app/components/dialogs/message-dialog/message-dialog.component';
 import { FileService } from 'src/app/services/file.service';
 import { printDate } from 'src/app/helpers/general.helper';
+import { ITreeInputNode, ITreeSelectedValue } from 'src/app/components/helpers/tree-dropdown/tree-dropdown.component';
 
 @Component({
   selector: 'app-node-read',
@@ -30,17 +30,16 @@ export class NodeReadComponent implements OnInit, OnDestroy {
   nodeStatus = NodeStatus;
   printDate = printDate;
 
+  treeNodes: ITreeInputNode[] = [];
+  selectedTreeNodes: ITreeSelectedValue[] = [];
+
   name = new FormControl<string>('', [Validators.required]);
   isLoading: boolean = true;
   isEdit: boolean = false;
   nodes: BaseNode[] = [];
-  organizations: BaseOrganization[] = [];
-  collaborations: BaseCollaboration[] = [];
   selectedNode?: Node;
   pagination: PaginationLinks | null = null;
   currentPage: number = 1;
-  filterType: string = '';
-  filterValue: string = '';
 
   private nodeStatusUpdateSubscription?: Subscription;
 
@@ -68,16 +67,10 @@ export class NodeReadComponent implements OnInit, OnDestroy {
     this.nodeStatusUpdateSubscription?.unsubscribe();
   }
 
-  async handleFilterChange(e: MatSelectChange): Promise<void> {
-    if (e.value) {
-      const values = e.value.split(';');
-      this.filterType = values[0];
-      this.filterValue = values[1];
-    } else {
-      this.filterType = '';
-      this.filterValue = '';
-    }
-    await this.getNodes();
+  async handleSelectedTreeNodesChange(newSelected: ITreeSelectedValue[]): Promise<void> {
+    // Tree-dropdown component supports multiselect, but the API call for retrieving paginated nodes does not (yet) support multiple filter parameters. For now, the first value is selected.
+    this.selectedTreeNodes = newSelected.length ? [newSelected[0]] : [];
+    await this.getNodes(newSelected[0]);
   }
 
   async handlePageEvent(e: PageEvent) {
@@ -157,10 +150,37 @@ export class NodeReadComponent implements OnInit, OnDestroy {
     const loadOrganizations = this.organizationService.getOrganizations({ sort: OrganizationSortProperties.Name });
     const loadCollaborations = await this.collaborationService.getCollaborations({ sort: CollaborationSortProperties.Name });
     await Promise.all([loadOrganizations, loadCollaborations, this.getNodes()]).then((values) => {
-      this.organizations = values[0];
-      this.collaborations = values[1];
+      this.treeNodes = [
+        {
+          isFolder: true,
+          children: values[0].map((organization) => {
+            return {
+              isFolder: false,
+              children: [],
+              label: organization.name,
+              code: organization.id,
+              parentCode: this.translateService.instant('node.organization').toLowerCase()
+            };
+          }),
+          label: this.translateService.instant('node.organization'),
+          code: this.translateService.instant('node.organization').toLowerCase()
+        },
+        {
+          isFolder: true,
+          children: values[1].map((collaboration) => {
+            return {
+              isFolder: false,
+              children: [],
+              label: collaboration.name,
+              code: collaboration.id,
+              parentCode: this.translateService.instant('node.collaboration').toLowerCase()
+            };
+          }),
+          label: this.translateService.instant('node.collaboration'),
+          code: this.translateService.instant('node.collaboration').toLowerCase()
+        }
+      ];
     });
-
     this.isLoading = false;
   }
 
@@ -173,22 +193,21 @@ export class NodeReadComponent implements OnInit, OnDestroy {
     this.name.setValue(this.selectedNode.name);
   }
 
-  private async getNodes(): Promise<void> {
+  private async getNodes(selectedValue?: ITreeSelectedValue): Promise<void> {
     let result: Pagination<BaseNode> | null = null;
-    if (this.filterType === 'organization') {
+    if (selectedValue && selectedValue.parentCode === 'organization') {
       result = await this.nodeService.getPaginatedNodes(this.currentPage, {
-        organization_id: this.filterValue,
+        organization_id: selectedValue.code.toString(),
         sort: NodeSortProperties.Name
       });
-    } else if (this.filterType === 'collaboration') {
+    } else if (selectedValue && selectedValue.parentCode === 'collaboration') {
       result = await this.nodeService.getPaginatedNodes(this.currentPage, {
-        collaboration_id: this.filterValue,
+        collaboration_id: selectedValue.code.toString(),
         sort: NodeSortProperties.Name
       });
     } else {
       result = await this.nodeService.getPaginatedNodes(this.currentPage, { sort: NodeSortProperties.Name });
     }
-
     this.nodes = result.data;
     this.pagination = result.links;
   }

@@ -112,7 +112,7 @@ class ServerCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
 
     @patch("vantage6.cli.server.new.configuration_wizard")
-    @patch("vantage6.cli.server.new.check_config_writeable")
+    @patch("vantage6.cli.server.new.ensure_config_dir_writable")
     @patch("vantage6.cli.server.new.ServerContext")
     def test_new(self, context, permissions, wizard):
         """New configuration without errors."""

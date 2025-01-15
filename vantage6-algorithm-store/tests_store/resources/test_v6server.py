@@ -17,6 +17,7 @@ SERVER_URL = f"http://localhost:{Ports.DEV_SERVER.value}"
 HEADERS = {"server_url": SERVER_URL, "Authorization": "Mock"}
 USERNAME = "test_user"
 EMAIL = "test@email.org"
+ORGANIZATION_ID = 1
 
 
 class TestVantage6ServerResource(TestResources):
@@ -124,7 +125,12 @@ class TestVantage6ServerResource(TestResources):
         # check that creating this server works
         validate_token_mock.return_value = (
             MockResponse(
-                {"username": USERNAME, "email": EMAIL}, status_code=HTTPStatus.OK
+                {
+                    "username": USERNAME,
+                    "email": EMAIL,
+                    "organization_id": ORGANIZATION_ID,
+                },
+                status_code=HTTPStatus.OK,
             ),
             HTTPStatus.OK,
         )
@@ -147,7 +153,7 @@ class TestVantage6ServerResource(TestResources):
         response = self.app.post("/api/vantage6-server", headers=HEADERS, json=body_)
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
-        # check that whitelisting localhost still doesnt work without force
+        # check that whitelisting localhost still doesn't work without force
         policy = Policy(key=StorePolicies.ALLOW_LOCALHOST, value="1")
         policy.save()
         response = self.app.post("/api/vantage6-server", headers=HEADERS, json=body_)

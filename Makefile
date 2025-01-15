@@ -16,13 +16,20 @@ BASE ?= 4.0
 # Use `make PUSH_REG=true` to push images to registry after building
 PUSH_REG ?= false
 
-
 # We use a conditional (true on any non-empty string) later. To avoid
 # accidents, we don't use user-controlled PUSH_REG directly.
 # See: https://www.gnu.org/software/make/manual/html_node/Conditional-Functions.html
 _condition_push :=
 ifeq ($(PUSH_REG), true)
 	_condition_push := not_empty_so_true
+endif
+
+# Use `make devdocs FUNCTIONDOCS=true` to build the function documentation
+FUNCTIONDOCS ?= false
+
+_autosummary_flags := --define autosummary_generate=0
+ifeq ($(FUNCTIONDOCS), true)
+	_autosummary_flags :=
 endif
 
 help:
@@ -264,4 +271,4 @@ test:
 # Note that the value of the envvar does not matter, just that it is set.
 devdocs: export READTHEDOCS = Yes
 devdocs:
-	sphinx-autobuild docs docs/_build/html --watch .
+	sphinx-autobuild docs docs/_build/html --watch . ${_autosummary_flags}

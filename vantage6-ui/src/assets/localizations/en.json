@@ -2,6 +2,7 @@
   "general": {
     "back": "Back",
     "next": "Next",
+    "filter": "Filter",
     "submit": "Submit",
     "close": "Close",
     "cancel": "Cancel",
@@ -23,7 +24,9 @@
     "unknown": "Unknown",
     "true": "True",
     "false": "False",
-    "parameter": "Parameter"
+    "parameter": "Parameter",
+    "show_more": "Show more",
+    "show_less": "Show less"
   },
   "resources": {
     "collaboration": "Collaboration",
@@ -61,7 +64,8 @@
   },
   "upload-key": {
     "title": "Upload encryption key",
-    "description": "The collaboration that you selected is encrypted. To be able to view the analyses, you need to upload your private key. This key will be used to decrypt the data locally, and does not leave your browser.",
+    "description": "The collaboration that you selected is encrypted. Upload your private key to decrypt the encrypted data.",
+    "description-part-two": "Your private key will be used to decrypt the data locally, and does not leave your browser. Uploading an incorrect key will allow you to continue to view some task metadata, but not the task's input and results.",
     "file-label": "Upload PEM file"
   },
   "chosen-collaboration-alert": {
@@ -94,11 +98,14 @@
     "user": "Initiating user",
     "preprocessor": "Preprocessor",
     "preprocessing-function": "Preprocessing function",
-    "filter": "Filter",
     "filter-function": "Filter function",
     "alert-node-offline": "The node '{{name}}' is offline. This task will be handled when the node is back online.",
-    "alert-failed-read-input": "Failed to parse task input",
-    "alert-failed-read-result": "Failed to parse task result"
+    "alert-no-result": "Failed to retrieve result.",
+    "alert-failed-read-input": "Failed to parse input.",
+    "alert-failed-read-input-function": "Failed to parse input, therefore, information about the function cannot be displayed.",
+    "alert-failed-read-input-visualization": "Failed to parse input, therefore, no visualization can be displayed.",
+    "alert-failed-read-encrypted-result": "Result was not successfully decoded and decrypted. Please use your private key locally to decrypt the results, and then perform base64 decoding.",
+    "alert-failed-read-result": "Result was not successfully decoded. Please perform base64 decoding locally to get the results."
   },
   "task-run": {
     "assigned-at": "Created",
@@ -119,19 +126,14 @@
       "description": "Select the study you want to run a task for. If you want to run the task for the entire collaboration, select that option.",
       "select-full-collaboration": "Entire collaboration"
     },
-    "step-package": {
-      "title": "Select algorithm",
-      "description": {
-        "algorithm": "Select which algorithm you want to run",
-        "name": "Provide a suitable name for your task",
-        "description": "Optionally, describe your task so you can find it back later"
-      }
-    },
     "step-function": {
-      "title": "Select function",
+      "title": "Select algorithm function",
       "organization": "Organization(s) to run this function",
       "description": {
-        "function": "Select which function you want to run",
+        "function": "Select which algorithm function you want to run",
+        "function-placeholder": "Provide your search term here",
+        "name": "Provide a suitable name for your task",
+        "description": "Optionally, describe your task so you can find it back later",
         "organization-central": "Select the organization that will run this function. Note that you have selected a central function, which will probably create subtasks for other organizations in the collaboration",
         "organization-partial": "Select the organizations that will carry out a partial function"
       }
@@ -189,7 +191,9 @@
       "actions": {
         "visualization": "Visualization",
         "download-json": "Download JSON",
-        "download-csv": "Download CSV"
+        "download-csv": "Download CSV",
+        "download-result": "Download result",
+        "download-input": "Download input"
       }
     },
     "card-algorithm": {
@@ -220,6 +224,7 @@
     "partitioning": "Data partioning type",
     "description": "Description",
     "v6version": "Written for vantage6 version",
+    "digest": "Image digest",
     "code-url": "Link to code",
     "documentation-url": "Link to documentation",
     "submitted-at": "Submitted at",
@@ -233,7 +238,27 @@
         "has_default": "Has default value:",
         "default_value_null": "Default value is empty (null/none):",
         "default_value": "Default value",
-        "list-warning": "This argument is a list. Provide a list of values separated by a comma."
+        "list-warning": "This argument is a list. Provide a list of values separated by a comma.",
+        "condition": {
+          "has_condition": "Should only be provided conditionally on other argument:",
+          "explanation": "Fill in the conditions under which this argument should be provided.",
+          "conditional_on": "Conditional on",
+          "operator": "Conditional operator",
+          "value": "Conditional value",
+          "operators": {
+            "==": "Equals",
+            "!=": "Not equals",
+            ">": "Greater than",
+            "<": "Less than",
+            ">=": "Greater than or equals",
+            "<=": "Less than or equals"
+          }
+        },
+        "frontend_only": {
+          "toggle_explain": "This argument is only used in the UI and will not be passed to the algorithm.",
+          "details": "Use this if e.g. for a flag if user should provide either one argument or the other, to say which they want to provide.",
+          "short_header": "Only for UI"
+        }
       },
       "databases": "Databases",
       "visualization": {
@@ -307,7 +332,8 @@
       "parameter": {
         "title": "Parameter",
         "add": "Add function parameter",
-        "delete": "Delete parameter"
+        "delete": "Delete parameter",
+        "conditional-fields-error": "All conditional fields must be filled or all must be empty"
       },
       "database": {
         "title": "Database",
@@ -558,9 +584,15 @@
   "store-policies": {
     "type": "Type",
     "policy": "Policy",
+    "not-defined": "No extra limitations",
     "algorithm_view": "Who can view algorithms?",
     "allowed_servers": "Which servers are responsible for managing this algorithm store?",
     "allow_localhost": "Are localhost servers allowed to access the store?",
+    "min_reviewers": "Minimum number of reviewers",
+    "min_reviewing_organizations": "Minimum number of organizations providing reviewers",
+    "assign_review_own_algorithm": "Are developers allowed to assign reviewers for their own algorithms?",
+    "allowed_reviewers": "Users allowed to review (extra check on top of permission)",
+    "allowed_review_assigners": "Users allowed to assign reviews (extra check on top of permission)",
     "algorithm_view-values": {
       "public": "Everyone",
       "whitelisted": "Any user from whitelisted servers",
@@ -671,10 +703,7 @@
     "collaboration": "Collaboration"
   },
   "node-read": {
-    "title": "Nodes",
-    "actions": {
-      "filter": "Filter"
-    }
+    "title": "Nodes"
   },
   "node-edit": {
     "actions": {
