@@ -244,6 +244,7 @@ class TestAlgorithmResources(TestResources):
             vantage6_version="1.0",
             code_url="https://github.com/test_algorithm",
             documentation_url="https://docs.test_algorithm.com",
+            submission_comments="test_comments",
         )
         algorithm.save()
 
@@ -259,6 +260,7 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(
             response.json["documentation_url"], "https://docs.test_algorithm.com"
         )
+        self.assertEqual(response.json["submission_comments"], "test_comments")
 
         # Cleanup
         algorithm.delete()
@@ -303,6 +305,7 @@ class TestAlgorithmResources(TestResources):
                 "vantage6_version": "6.6.6",
                 "image": "some-image",
                 "functions": [],
+                "submission_comments": "test_comments",
             },
             headers=HEADERS,
         )
@@ -322,6 +325,7 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(rv.json["invalidated_at"], None)
         self.assertNotEqual(rv.json["submitted_at"], None)
         self.assertEqual(rv.json["developer_id"], user.id)
+        self.assertEqual(rv.json["submission_comments"], "test_comments")
 
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     @patch(
@@ -362,6 +366,7 @@ class TestAlgorithmResources(TestResources):
             vantage6_version="6.6.6",
             image="some-image",
             developer_id=user.id,
+            submission_comments="test_comments",
         )
         algorithm.save()
 
