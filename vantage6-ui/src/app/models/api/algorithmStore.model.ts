@@ -41,7 +41,12 @@ export enum AlgorithmStoreLazyProperties {
 export enum AvailableStorePolicies {
   ALGORITHM_VIEW = 'algorithm_view',
   ALLOWED_SERVERS = 'allowed_servers',
-  ALLOW_LOCALHOST = 'allow_localhost'
+  ALLOW_LOCALHOST = 'allow_localhost',
+  MIN_REVIEWERS = 'min_reviewers',
+  ASSIGN_REVIEW_OWN_ALGORITHM = 'assign_review_own_algorithm',
+  MIN_REVIEWING_ORGANIZATIONS = 'min_reviewing_organizations',
+  ALLOWED_REVIEWERS = 'allowed_reviewers',
+  ALLOWED_REVIEW_ASSIGNERS = 'allowed_review_assigners'
 }
 export interface StorePolicies {
   // TODO it would be nice if we could have a more specific type here like
