@@ -71,6 +71,8 @@ Release notes
   - For dangling subtasks, prevent that they are picked up again every time the node is
     restarted (`Issue#1371 <https://github.com/vantage6/vantage6/issues/1371>`_,
     `PR#1621 <https://github.com/vantage6/vantage6/pull/1621>`_).
+  - Fix loading lazy-loaded resources in algorithm store, which were not loaded because
+    API path was duplicated (`PR#1657 <https://github.com/vantage6/vantage6/pull/1657>`_).
 
 4.8.2
 -----
