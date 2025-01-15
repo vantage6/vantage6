@@ -20,7 +20,8 @@ export const getLazyProperties = async (
         if (algo_store_url === null) {
           resultProperty = await apiService.getForApi<any>((result as any)[lazyProperty].link);
         } else if (algo_store_url !== null) {
-          resultProperty = await apiService.getForAlgorithmApi<any>(algo_store_url, (result as any)[lazyProperty].link);
+          const cleanApiLink = removeAPIPathFromLink((result as any)[lazyProperty].link, algo_store_url);
+          resultProperty = await apiService.getForAlgorithmApi<any>(algo_store_url, cleanApiLink);
         }
         data[lazyProperty] = resultProperty;
       } else {
@@ -28,13 +29,37 @@ export const getLazyProperties = async (
         if (algo_store_url === null) {
           resultProperty = await apiService.getForApi<Pagination<any>>(result[lazyProperty], { per_page: 9999 });
         } else {
-          resultProperty = await apiService.getForAlgorithmApi<Pagination<any>>(algo_store_url, result[lazyProperty], { per_page: 9999 });
+          // TODO we have double API Path here - we need to fix it. Now we find API path but this is wonky
+          const cleanApiLink = removeAPIPathFromLink(result[lazyProperty], algo_store_url);
+          resultProperty = await apiService.getForAlgorithmApi<Pagination<any>>(algo_store_url, cleanApiLink, { per_page: 9999 });
         }
         data[lazyProperty] = resultProperty.data;
       }
     })
   );
 };
+
+function removeAPIPathFromLink(apiLink: string, storeUrl: string): string {
+  const apiPath = findAPIPath(storeUrl, apiLink);
+  return apiLink.replace(apiPath, '');
+}
+
+// this is used to find the API path. It checks that if store URL is some-url/apipath, and the API link is
+// /apipath/role/1, that '/apipath' is the API path by finding max common substring.
+function findAPIPath(storeUrl: string, apiLink: string): string {
+  let maxSubstring = '';
+
+  // Iterate over substrings of decreasing length from the start of str1
+  for (let i = 0; i < apiLink.length; i++) {
+    const substring = apiLink.substring(0, apiLink.length - i);
+    if (storeUrl.endsWith(substring)) {
+      maxSubstring = substring;
+      break; // Found the longest match, no need to check shorter substrings
+    }
+  }
+
+  return maxSubstring;
+}
 
 export const getApiSearchParameters = function <T>(searchRequests?: SearchRequest[]): T {
   if (!searchRequests) return {} as T;
