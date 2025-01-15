@@ -81,6 +81,7 @@ export class DisplayAlgorithmComponent {
     delete cleanedAlgorithmRepresentation.submitted_at;
     delete cleanedAlgorithmRepresentation.approved_at;
     delete cleanedAlgorithmRepresentation.invalidated_at;
+    delete cleanedAlgorithmRepresentation.submission_comments;
 
     const text = JSON.stringify(cleanedAlgorithmRepresentation, null, 2);
     this.fileService.downloadTxtFile(text, filename);
