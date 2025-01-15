@@ -584,9 +584,15 @@
   "store-policies": {
     "type": "Type",
     "policy": "Policy",
+    "not-defined": "No extra limitations",
     "algorithm_view": "Who can view algorithms?",
     "allowed_servers": "Which servers are responsible for managing this algorithm store?",
     "allow_localhost": "Are localhost servers allowed to access the store?",
+    "min_reviewers": "Minimum number of reviewers",
+    "min_reviewing_organizations": "Minimum number of organizations providing reviewers",
+    "assign_review_own_algorithm": "Are developers allowed to assign reviewers for their own algorithms?",
+    "allowed_reviewers": "Users allowed to review (extra check on top of permission)",
+    "allowed_review_assigners": "Users allowed to assign reviews (extra check on top of permission)",
     "algorithm_view-values": {
       "public": "Everyone",
       "whitelisted": "Any user from whitelisted servers",
