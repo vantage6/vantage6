@@ -6,23 +6,11 @@ metadata:
   labels:
     app: vantage6-node
 spec:
-  hostname: v6-node-pod
-  subdomain: v6-pod-subdomain
-  # selector:
-  #   matchLabels:
-  #     app: vantage6-node
-  # template:
-  #   metadata:
-  #     labels:
-  #       app: vantage6-node
-
   containers:
   - name: vantage6-node
     image: harbor2.vantage6.ai/infrastructure/node:5.0.0a0
     env:
-    - name: HOST_IP
-      value: "host.docker.internal"
-    - name: PROXY_SERVER_PORT   # TODO check if this is necessary
+    - name: PROXY_SERVER_PORT
       value: "7654"
     command: ["vnode-local", "start", "-c", "/app/config/config.yml", "--dockerized"]
     volumeMounts:
