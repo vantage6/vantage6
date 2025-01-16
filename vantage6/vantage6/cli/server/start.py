@@ -131,7 +131,7 @@ def cli_server_start(
         )
     else:
         warning(
-            "Message queue disabled! This means that the vantage6 server "
+            "Message queue is not set up! This means that the vantage6 server "
             "cannot be scaled horizontally!"
         )
 
