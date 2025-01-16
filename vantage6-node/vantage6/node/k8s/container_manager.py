@@ -41,14 +41,9 @@ from vantage6.node.globals import (
 from vantage6.node.util import get_parent_id
 from vantage6.node.k8s.run_io import RunIO
 from vantage6.node.k8s.exceptions import (
-    UnknownAlgorithmStartFail,
     PermanentAlgorithmStartFail,
-    AlgorithmContainerNotFound,
     DataFrameNotFound,
 )
-
-# logging.basicConfig(level=logging.INFO)
-# log = logging.getLogger(logger_name(__name__))
 
 
 class Result(NamedTuple):
@@ -91,46 +86,6 @@ class KilledRun(NamedTuple):
     run_id: int
     task_id: int
     parent_id: int
-
-
-# The configurations should be:
-#
-# config.yml
-# -----------
-# databases:
-#   - label: employees-label
-#     uri: /<path>/employees.csv
-#     type: csv
-#   - label: students-label
-#     uri: https://students.api
-#     type: api
-#
-# kubernetes-app-config.yml
-# -------------------------
-# volumeMounts:
-# ...
-# - name: v6-node-employee-database
-#   mountPath: /app/.databases/employees.csv
-# ...
-# volumes:
-# ...
-# - name: v6-node-employee-database
-#   hostPath:
-#     path: ABSOLUTE_HOST_PATH_OF_DEFAULT_DATABASE
-
-
-# LOW
-# TODO what happens when multiple nodes run in the same cluster? In the previous
-#      implementation we matched against the node name. We potentially could do the
-#      same here by adding the node name to the labels of the POD.
-# TODO check that we nog longer need to login to the registries, I think this is now
-#      done separately by the kubernetes cluster
-# TODO we probably also need to clean up the volumes after a task has been finished
-# TODO only mount token in `compute` actions
-# TODO make the k8s jobs namespace settable in the config file
-# TODO check which other docker_addons are no longer used (consider the algorithm store)
-# TODO the `RunIO` object requires the client now (as it needs to communicate the
-#      column names to the server). Better to keep this logic in the `ContainerManager`
 
 
 class ContainerManager:
