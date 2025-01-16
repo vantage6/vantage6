@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vantage6-node-config
+  namespace: vantage6-node
+data:
+  config.yml: |
+    api_key: 33364053-dc41-4be9-b011-0c8035dba93f
+    api_path: /api
+    databases:
+    - label: default
+      uri: "/Users/frankmartin/Library/Application Support/vantage6/dev/five/five_node_1.csv"
+      type: csv
+    encryption:
+      enabled: false
+      private_key: null
+    logging:
+      backup_count: 5
+      datefmt: '%Y-%m-%d %H:%M:%S'
+      file: five_node_1.log
+      format: '%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s'
+      level: DEBUG
+      max_size: 1024
+      use_console: true
+      loggers:
+      - level: warning
+        name: urllib3
+      - level: warning
+        name: requests
+      - level: warning
+        name: engineio.client
+      - level: warning
+        name: docker.utils.config
+      - level: warning
+        name: docker.auth
+    port: 7601
+    server_url: http://host.docker.internal
+    task_dir: /Users/frankmartin/Library/Application Support/vantage6/node/five_node_1
+    images:
+      node: harbor2.vantage6.ai/infrastructure/node:5.0.0a0

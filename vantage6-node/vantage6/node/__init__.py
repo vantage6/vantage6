@@ -144,8 +144,7 @@ class Node:
         proxy_host = os.environ.get("PROXY_SERVER_HOST", default_proxy_host)
         os.environ["PROXY_SERVER_HOST"] = proxy_host
 
-        # proxy_port = int(os.environ.get("PROXY_SERVER_PORT", 8080))
-        proxy_port = V6_NODE_PROXY_PORT
+        proxy_port = int(os.environ.get("PROXY_SERVER_PORT", V6_NODE_PROXY_PORT))
 
         # 'app' is defined in vantage6.node.proxy_server
         debug_mode = self.debug.get("proxy_server", False)

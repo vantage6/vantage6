@@ -1,4 +1,6 @@
-# Kubernetes Deployment for Vantage6 Server
+# Kubernetes Deployment
+
+## Vantage6 Server
 I needed to install the ingress controller for my Kubernetes cluster. I used the
 following command to install the ingress controller:
 
@@ -67,3 +69,9 @@ The following services are deployed in the Kubernetes cluster:
                   └─────────────────────────────────────────────────────┘
 ```
 
+## Vantage6 Node
+
+```bash
+kubectl apply -f kube/node/namespaces.yaml
+kubectl apply -f kube/node/.
+```

@@ -1,0 +1,12 @@
+# Policy to disable job's networking, except with the Node
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: v6-jobs-allow-egress-to-node-proxy-only
+  namespace: vantage6-node
+spec:
+  podSelector: {} # This selects all pods in the v6-jobs namespace
+  policyTypes:
+  - Egress
+  egress:
+  - {}

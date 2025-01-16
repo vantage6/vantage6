@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: Deployment
+metadata:
+  name: vantage6-node
+  namespace: vantage6-node
+  labels:
+    app: vantage6-node
+spec:
+  hostname: v6-node-pod
+  subdomain: v6-pod-subdomain
+  # selector:
+  #   matchLabels:
+  #     app: vantage6-node
+  # template:
+  #   metadata:
+  #     labels:
+  #       app: vantage6-node
+
+  containers:
+  - name: vantage6-node
+    image: harbor2.vantage6.ai/infrastructure/node:5.0.0a0
+    env:
+    - name: HOST_IP
+      value: "host.docker.internal"
+    - name: PROXY_SERVER_PORT   # TODO check if this is necessary
+      value: "7654"
+    command: ["vnode-local", "start", "-c", "/app/config/config.yml", "--dockerized"]
+    volumeMounts:
+    - name: task-files-root
+      mountPath: /app/tasks
+    - name: kube-config-file
+      mountPath: /app/.kube/config
+    - name: config-volume
+      mountPath: /app/config
+    - name: database-volume
+      mountPath: /app/databases/default.csv
+    resources:
+      requests:
+        memory: "1024Mi"
+        cpu: "500m"
+      limits:
+        memory: "1Gi"
+        cpu: "1"
+
+  volumes:
+  - name: task-files-root
+    hostPath:
+      path: /tmp/v6-tasks
+      type: DirectoryOrCreate
+  - name: kube-config-file
+    hostPath:
+      path: /Users/frankmartin/.kube/config.v6
+  - name: config-volume
+    configMap:
+      name: vantage6-node-config
+  - name: database-volume
+    hostPath:
+      path: /Users/frankmartin/Library/Application Support/vantage6/dev/five/five_node_1.csv
