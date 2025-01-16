@@ -2,10 +2,10 @@
 kind: NetworkPolicy
 apiVersion: networking.k8s.io/v1
 metadata:
-  name: v6-jobs-allow-egress-to-node-proxy-only
+  name: vantage6-node-allow-egress-to-node-proxy-only
   namespace: vantage6-node
 spec:
-  podSelector: {} # This selects all pods in the v6-jobs namespace
+  podSelector: {} # This selects all pods in the vantage6-node namespace
   policyTypes:
   - Egress
   egress:

@@ -118,12 +118,6 @@ class KilledRun(NamedTuple):
 #   hostPath:
 #     path: ABSOLUTE_HOST_PATH_OF_DEFAULT_DATABASE
 
-# HIGH
-
-# MEDIUM
-# TODO implement the `kill` method
-# TODO how to handle GPU requests
-# TODO implement the `cleanup` methods
 
 # LOW
 # TODO what happens when multiple nodes run in the same cluster? In the previous
@@ -134,8 +128,6 @@ class KilledRun(NamedTuple):
 # TODO we probably also need to clean up the volumes after a task has been finished
 # TODO only mount token in `compute` actions
 # TODO make the k8s jobs namespace settable in the config file
-# TODO the return of `_printable_input`
-# TODO remove DockerNodeContext as it is no longer used?
 # TODO check which other docker_addons are no longer used (consider the algorithm store)
 # TODO the `RunIO` object requires the client now (as it needs to communicate the
 #      column names to the server). Better to keep this logic in the `ContainerManager`
@@ -163,13 +155,9 @@ class ContainerManager:
         self.client = client
 
         # minik8s config, by default in the user's home directory root
-        # TODO Upgrade this so that other Kube configs also van be used, allow
-        #  the user to specify the Kube config file path. This is only used when
-        #  the node is running on a regular host
         home_dir = os.path.expanduser("~")
         kube_config_file_path = os.path.join(home_dir, ".kube", "config")
 
-        # TODO clean this
         # The Node can be running on a regular host or within a POD. The K8S
         # configuration file is loaded from different locations depending on
         # the context.
@@ -190,7 +178,6 @@ class ContainerManager:
                 "K8S configuration could not be found. Node must be running within a "
                 "POD or a host"
             )
-            # TODO graceful exit
 
         self.data_dir = (
             TASK_FILES_ROOT if self.running_on_pod else self.ctx.config["task_dir"]
@@ -445,7 +432,7 @@ class ContainerManager:
         self.log.info(
             f"Creating namespaced K8S job for task_id={task_id} and run_id={run_id}."
         )
-        self.batch_api.create_namespaced_job(namespace="v6-jobs", body=job)
+        self.batch_api.create_namespaced_job(namespace="vantage6-node", body=job)
 
         # Wait till the job is up and running. The job is considered to be running
         # when the POD created by the job reports at least a 'Running' state. The states
@@ -475,7 +462,7 @@ class ContainerManager:
         while True:
 
             pods = self.core_api.list_namespaced_pod(
-                namespace="v6-jobs", label_selector=f"app={run_io.container_name}"
+                namespace="vantage6-node", label_selector=f"app={run_io.container_name}"
             )
 
             if pods.items:
@@ -484,7 +471,7 @@ class ContainerManager:
                 # until it reports either an `active` or `failed` state.
                 self.log.info(
                     f"{len(pods.items)} Job POD with label app={run_io.container_name} "
-                    "created  successfully on v6-jobs namespace. Waiting until it has "
+                    "created  successfully on vantage6-node namespace. Waiting until it has "
                     "a (k8S) running state."
                 )
                 status = self.__wait_until_pod_running(f"app={run_io.container_name}")
@@ -524,7 +511,7 @@ class ContainerManager:
 
         for event in w.stream(
             func=self.core_api.list_namespaced_pod,
-            namespace="v6-jobs",
+            namespace="vantage6-node",
             label_selector=label,
             timeout_seconds=120,
         ):
@@ -1057,7 +1044,7 @@ class ContainerManager:
             Whether or not algorithm container is currently running
         """
         pods = self.core_api.list_namespaced_pod(
-            namespace="v6-jobs", label_selector=f"app={label}"
+            namespace="vantage6-node", label_selector=f"app={label}"
         )
         return True if pods.items else False
 
@@ -1080,8 +1067,8 @@ class ContainerManager:
         completed_job = False
         while not completed_job:
 
-            # Get all jobs from the v6-jobs namespace
-            jobs = self.batch_api.list_namespaced_job("v6-jobs")
+            # Get all jobs from the vantage6-node namespace
+            jobs = self.batch_api.list_namespaced_job("vantage6-node")
             if not jobs.items:
                 time.sleep(1)
                 continue
@@ -1105,7 +1092,9 @@ class ContainerManager:
                 )
 
                 try:
-                    logs = self.__get_job_pod_logs(run_io=run_io, namespace="v6-jobs")
+                    logs = self.__get_job_pod_logs(
+                        run_io=run_io, namespace="vantage6-node"
+                    )
                 except Exception as e:
                     self.log.warning(
                         f"Error while getting logs of job {run_io.container_name}: {e}"
@@ -1127,12 +1116,12 @@ class ContainerManager:
                 )
 
                 # destroy job and related POD(s)
-                self.__delete_job_related_pods(run_io=run_io, namespace="v6-jobs")
+                self.__delete_job_related_pods(run_io=run_io, namespace="vantage6-node")
                 completed_job = True
 
         return result
 
-    def __get_job_pod_logs(self, run_io: str, namespace="v6-jobs") -> List[str]:
+    def __get_job_pod_logs(self, run_io: str, namespace="vantage6-node") -> List[str]:
         """ "
         Get the logs generated by the PODs created by a job.
 
@@ -1155,7 +1144,9 @@ class ContainerManager:
             )
 
             pod_log = self.core_api.read_namespaced_pod_log(
-                name=job_pod.metadata.name, namespace="v6-jobs", _preload_content=True
+                name=job_pod.metadata.name,
+                namespace="vantage6-node",
+                _preload_content=True,
             )
 
             pods_tty_logs.append(
@@ -1175,7 +1166,7 @@ class ContainerManager:
         )
 
         self.batch_api.delete_namespaced_job(
-            name=run_io.container_name, namespace="v6-jobs"
+            name=run_io.container_name, namespace="vantage6-node"
         )
 
         job_selector = f"job-name={run_io.container_name}"
@@ -1451,7 +1442,7 @@ class ContainerManager:
 #         the API is expected to return an 409 error code.
 #     """
 #     try:
-#         self.core_api.create_namespaced_persistent_volume_claim("v6-jobs", body=pvc)
+#         self.core_api.create_namespaced_persistent_volume_claim("vantage6-node", body=pvc)
 #     except client.rest.ApiException as e:
 #         if e.status != 409:
 #             # TODO custom exceptions to decouple codebase from kubernetes
