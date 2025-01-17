@@ -219,15 +219,13 @@ def _get_allowed_algorithms() -> list[str]:
         "use strings to provide one algorithm at a time."
     )
     info("Examples:")
-    # pylint: disable=W1401
-    # flake8: noqa: W605
-    info("^harbor2\.vantage6\.ai/demo/average$    Allow the demo average algorithm")
+    info(r"^harbor2\.vantage6\.ai/demo/average$    Allow the demo average algorithm")
     info(
-        "^harbor2\.vantage6\.ai/algorithms/.*   Allow all algorithms from "
+        r"^harbor2\.vantage6\.ai/algorithms/.*   Allow all algorithms from "
         "harbor2.vantage6.ai/algorithms"
     )
     info(
-        "^harbor2\.vantage6\.ai/demo/average@sha256:82becede...$    Allow a "
+        r"^harbor2\.vantage6\.ai/demo/average@sha256:82becede...$    Allow a "
         "specific hash of average algorithm"
     )
     allowed_algorithms = []
@@ -261,7 +259,7 @@ def _get_allowed_algorithm_stores() -> list[str]:
         "community store"
     )
     info(
-        "^https://*\.vantage6\.ai$               Allow all algorithms from any "
+        r"^https://*\.vantage6\.ai$               Allow all algorithms from any "
         "store hosted on vantage6.ai"
     )
     allowed_algorithm_stores = []
