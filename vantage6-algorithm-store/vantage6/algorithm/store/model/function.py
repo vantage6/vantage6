@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, ForeignKey, Integer
+from sqlalchemy import Boolean, Column, String, ForeignKey, Integer
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base
@@ -21,6 +21,8 @@ class Function(Base):
         Description of the function
     type_ : str
         Type of function
+    hidden : bool
+        Hide this function in the create task UI to prevent a user from running it directly
     algorithm_id : int
         ID of the algorithm that this function belongs to
     algorithm : :class:`~.model.algorithm.Algorithm`
@@ -39,6 +41,7 @@ class Function(Base):
     description = Column(String)
     type_ = Column("type", String)
     algorithm_id = Column(Integer, ForeignKey("algorithm.id"))
+    hidden = Column(Boolean, default=False)
 
     # relationships
     algorithm = relationship("Algorithm", back_populates="functions")

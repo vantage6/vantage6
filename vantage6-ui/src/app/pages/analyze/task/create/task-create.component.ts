@@ -650,7 +650,9 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     const algorithmsObj = await this.algorithmService.getAlgorithms();
     this.algorithms = algorithmsObj;
     this.functions = algorithmsObj.flatMap((curAlgorithm) => {
-      return curAlgorithm.functions.map((func) => {
+      return curAlgorithm.functions
+      .filter((func) => !func.hidden)
+      .map((func) => {
         return {
           ...func,
           algorithm_id: curAlgorithm.id,

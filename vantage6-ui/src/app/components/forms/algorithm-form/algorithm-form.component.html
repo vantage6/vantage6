@@ -89,6 +89,11 @@
                     </mat-option>
                   </mat-select>
                 </mat-form-field>
+                <mat-checkbox 
+                  matTooltip="{{ 'algorithm.function.hidden_tooltip' | translate }}"
+                  formControlName="hidden">
+                  {{"algorithm.function.hidden" | translate}}
+                </mat-checkbox>
                 <!-- Accordion per parameter -->
                 <mat-accordion class="card-accordion" [multi]="true">
                   <mat-expansion-panel

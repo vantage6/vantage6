@@ -232,6 +232,8 @@
     "invalidated-at": "Invalidated at",
     "function": {
       "type": "Type of function",
+      "hidden": "Hide function",
+      "hidden_tooltip": "Hide this function in the create task UI to prevent a user from running it directly.",
       "argument": {
         "title": "Parameters",
         "type": "Type of argument",

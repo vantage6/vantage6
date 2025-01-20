@@ -83,6 +83,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     display_name: [''],
     description: [''],
     type: ['', [Validators.required]],
+    hidden: [false],
     arguments: this.fb.nonNullable.array([this.argumentForm]),
     databases: this.fb.nonNullable.array([this.databaseForm]),
     ui_visualizations: this.fb.nonNullable.array([this.visualizationForm])
@@ -271,6 +272,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       functionFormGroup.controls['display_name'].setValue(func.display_name);
       functionFormGroup.controls['description'].setValue(func.description);
       functionFormGroup.controls['type'].setValue(func.type);
+      functionFormGroup.controls['hidden'].setValue(func.hidden);
       if (func.arguments) {
         func.arguments.forEach((arg) => {
           const argumentFormGroup = this.getArgumentForm();
@@ -424,6 +426,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       display_name: [''],
       description: [''],
       type: ['', [Validators.required]],
+      hidden: [false],
       arguments: this.fb.array([]),
       databases: this.fb.array([]),
       ui_visualizations: this.fb.array([])

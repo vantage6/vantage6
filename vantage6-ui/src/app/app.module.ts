@@ -132,6 +132,7 @@ import { ReviewSubmitComponent } from './pages/store/algorithms-in-review/review
 import { MyPendingAlgorithmsComponent } from './pages/store/algorithms-in-review/my-pending-algorithms/my-pending-algorithms.component';
 import { OldAlgorithmListComponent } from './pages/store/algorithm/old-list/old-algorithm-list.component';
 import { NodeAdminCardComponent } from './components/helpers/node-admin-card/node-admin-card.component';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -275,6 +276,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     MatToolbarModule,
     MatTreeModule,
     MatRadioModule,
+    MatTooltipModule,
     QRCodeModule,
     OverlayModule
   ],

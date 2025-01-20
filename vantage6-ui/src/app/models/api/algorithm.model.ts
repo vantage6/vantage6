@@ -100,6 +100,7 @@ export interface AlgorithmFunction {
   display_name?: string;
   description: string;
   type: FunctionType;
+  hidden?: boolean;
   arguments: Argument[];
   databases: FunctionDatabase[];
   ui_visualizations: Visualization[];
@@ -177,6 +178,7 @@ export interface FunctionForm extends NameDescription {
   databases: NameDescription[];
   ui_visualizations: VisualizationForm[];
   type: string;
+  hidden?: boolean;
 }
 
 export interface AlgorithmForm {

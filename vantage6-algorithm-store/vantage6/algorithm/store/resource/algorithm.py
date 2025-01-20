@@ -406,6 +406,9 @@ class Algorithms(AlgorithmBaseResource):
                           type: string
                           description: Type of function. Can be 'central' or
                             'federated'
+                        hidden:
+                          type: boolean
+                          description: Hide this function in the create task UI to prevent a user from running it directly
                         databases:
                           type: array
                           description: List of databases that this function
@@ -547,6 +550,7 @@ class Algorithms(AlgorithmBaseResource):
                 display_name=function.get("display_name", ""),
                 description=function.get("description", ""),
                 type_=function["type"],
+                hidden=function.get("hidden", False),
                 algorithm_id=algorithm.id,
             )
             func.save()
@@ -835,6 +839,9 @@ class Algorithm(AlgorithmBaseResource):
                           type: string
                           description: Type of function. Can be 'central' or
                             'federated'
+                        hidden:
+                          type: boolean
+                          description: Hide this function in the create task UI to prevent a user from running it directly
                         databases:
                           type: array
                           description: List of databases that this function
@@ -1012,6 +1019,7 @@ class Algorithm(AlgorithmBaseResource):
                     name=new_function["name"],
                     description=new_function.get("description", ""),
                     type_=new_function["type"],
+                    hidden=new_function.get("hidden", False),
                     algorithm_id=id,
                 )
                 func.save()
