@@ -5,7 +5,7 @@ from http import HTTPStatus
 import gevent
 from flask import request, render_template, g, current_app, Flask
 from flask_jwt_extended import create_access_token, decode_token
-from flask_restful import Api
+from flask_restx import Api
 from flask_mail import Mail
 from jwt.exceptions import DecodeError
 from sqlalchemy.orm.exc import NoResultFound

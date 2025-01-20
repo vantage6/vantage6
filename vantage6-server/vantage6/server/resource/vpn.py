@@ -8,7 +8,7 @@ from http import HTTPStatus
 import requests
 from flask import request
 from flask.globals import g
-from flask_restful import Api
+from flask_restx import Api
 from requests_oauthlib import OAuth2Session
 
 from vantage6.common import logger_name

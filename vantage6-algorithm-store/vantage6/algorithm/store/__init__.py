@@ -27,7 +27,7 @@ from werkzeug.exceptions import HTTPException
 from flask import Flask, make_response, request, send_from_directory, Request, Response
 from flask_cors import CORS
 from flask_marshmallow import Marshmallow
-from flask_restful import Api
+from flask_restx import Api
 from flask_principal import Principal
 from flasgger import Swagger
 from pathlib import Path

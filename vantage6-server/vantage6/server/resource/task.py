@@ -3,7 +3,7 @@ import json
 import datetime
 
 from flask import g, request, url_for
-from flask_restful import Api
+from flask_restx import Api
 from flask_socketio import SocketIO
 from http import HTTPStatus
 from sqlalchemy import desc
@@ -137,8 +137,14 @@ task_input_schema = TaskInputSchema()
 
 
 class TaskBase(ServicesResources):
-    def __init__(self, socketio, mail, api, permissions, config):
-        super().__init__(socketio, mail, api, permissions, config)
+    def __init__(self, *args, socketio, mail, api, permissions, config):
+        super().__init__(
+            socketio=socketio,
+            mail=mail,
+            api=api,
+            permissions=permissions,
+            config=config,
+        )
         self.r: RuleCollection = getattr(self.permissions, module_name)
         # permissions for the run resource are also relevant for the task
         # resource as they are sometimes included

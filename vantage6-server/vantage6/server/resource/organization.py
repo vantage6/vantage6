@@ -1,7 +1,7 @@
 import logging
 
 from flask import request, g
-from flask_restful import Api
+from flask_restx import Api
 from http import HTTPStatus
 
 from vantage6.common import logger_name
@@ -107,8 +107,14 @@ org_input_schema = OrganizationInputSchema()
 
 
 class OrganizationBase(ServicesResources):
-    def __init__(self, socketio, mail, api, permissions, config):
-        super().__init__(socketio, mail, api, permissions, config)
+    def __init__(self, *args, socketio, mail, api, permissions, config):
+        super().__init__(
+            socketio=socketio,
+            mail=mail,
+            api=api,
+            permissions=permissions,
+            config=config,
+        )
         self.r: RuleCollection = getattr(self.permissions, module_name)
 
 

@@ -39,7 +39,7 @@ from flask_cors import CORS
 from flask_cors.core import probably_regex
 from flask_jwt_extended import JWTManager
 from flask_marshmallow import Marshmallow
-from flask_restful import Api
+from flask_restx import Api
 from flask_principal import Principal, Identity, identity_changed
 from flask_socketio import SocketIO
 from threading import Thread
@@ -653,10 +653,10 @@ class ServerApp:
         # make services available to the endpoints, this way each endpoint can
         # make use of 'em.
         services = {
-            "socketio": self.socketio,
             "mail": self.mail,
             "api": self.api,
             "permissions": self.permissions,
+            "socketio": self.socketio,
             "config": self.ctx.config,
         }
 

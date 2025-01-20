@@ -1,7 +1,7 @@
 from http import HTTPStatus
 from flask import request
 from flask_mail import Mail
-from flask_restful import Resource, Api
+from flask_restx import Resource, Api
 
 from vantage6.backend.common.permission import PermissionManagerBase
 from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
@@ -25,7 +25,11 @@ class BaseServicesResources(Resource):
     """
 
     def __init__(
-        self, api: Api, config: dict, permissions: PermissionManagerBase, mail: Mail
+        self,
+        api: Api,
+        config: dict,
+        permissions: PermissionManagerBase,
+        mail: Mail,
     ):
         self.api = api
         self.config = config

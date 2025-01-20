@@ -2,7 +2,7 @@ import logging
 
 from http import HTTPStatus
 from flask import request, g
-from flask_restful import Api
+from flask_restx import Api
 from sqlalchemy import or_
 
 from vantage6.server import db
@@ -64,8 +64,14 @@ algorithm_store_input_schema = AlgorithmStoreInputSchema()
 class AlgorithmStoreBase(ServicesResources):
     """Base class for algorithm store resources."""
 
-    def __init__(self, socketio, mail, api, permissions, config):
-        super().__init__(socketio, mail, api, permissions, config)
+    def __init__(self, *args, socketio, mail, api, permissions, config):
+        super().__init__(
+            socketio=socketio,
+            mail=mail,
+            api=api,
+            permissions=permissions,
+            config=config,
+        )
         self.r_col: RuleCollection = getattr(self.permissions, "collaboration")
 
     @staticmethod

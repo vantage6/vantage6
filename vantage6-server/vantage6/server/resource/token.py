@@ -13,7 +13,7 @@ from flask_jwt_extended import (
     create_refresh_token,
     get_jwt_identity,
 )
-from flask_restful import Api
+from flask_restx import Api
 from http import HTTPStatus
 
 from vantage6 import server

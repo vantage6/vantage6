@@ -3,7 +3,7 @@ import logging
 from http import HTTPStatus
 from flask.globals import request
 from flask import g
-from flask_restful import Api
+from flask_restx import Api
 from sqlalchemy import or_
 
 from vantage6.server.resource import with_user, ServicesResources

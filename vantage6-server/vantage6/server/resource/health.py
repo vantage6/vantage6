@@ -2,7 +2,7 @@ import logging
 
 from http import HTTPStatus
 from flask.globals import g
-from flask_restful import Api
+from flask_restx import Api
 
 from vantage6.server.resource import ServicesResources
 from vantage6.common import logger_name

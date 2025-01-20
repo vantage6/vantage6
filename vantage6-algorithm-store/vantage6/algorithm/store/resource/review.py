@@ -6,7 +6,7 @@ from threading import Thread
 
 from flask import request, g, render_template, Flask, current_app
 from flask_mail import Mail
-from flask_restful import Api
+from flask_restx import Api
 
 from vantage6.common import logger_name
 from vantage6.common.enum import StorePolicies

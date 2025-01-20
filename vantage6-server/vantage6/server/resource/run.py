@@ -3,7 +3,7 @@ from typing import Union
 import sqlalchemy as sa
 
 from flask import g, request
-from flask_restful import Api
+from flask_restx import Api
 from http import HTTPStatus
 from sqlalchemy import desc, or_, and_
 
@@ -131,8 +131,14 @@ def permissions(permissions: PermissionManager):
 class RunBase(ServicesResources):
     """Base class for run resources"""
 
-    def __init__(self, socketio, mail, api, permissions, config):
-        super().__init__(socketio, mail, api, permissions, config)
+    def __init__(self, *args, socketio, mail, api, permissions, config):
+        super().__init__(
+            socketio=socketio,
+            mail=mail,
+            api=api,
+            permissions=permissions,
+            config=config,
+        )
         self.r: RuleCollection = getattr(self.permissions, module_name)
 
 

@@ -4,7 +4,7 @@ Resources below '/<api_base>/version'
 
 import logging
 
-from flask_restful import Api
+from flask_restx import Api
 from http import HTTPStatus
 from vantage6.common import logger_name
 from vantage6.server.resource import ServicesResources

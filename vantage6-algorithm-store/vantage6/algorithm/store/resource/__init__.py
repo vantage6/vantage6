@@ -6,7 +6,7 @@ from http import HTTPStatus
 from flask import Response, request, current_app, g
 from flask_mail import Mail
 from flask_principal import Identity, identity_changed
-from flask_restful import Api
+from flask_restx import Api
 
 from vantage6.algorithm.store import PermissionManager
 from vantage6.algorithm.store.model.rule import Operation
@@ -41,9 +41,9 @@ class AlgorithmStoreResources(BaseServicesResources):
     """
 
     def __init__(
-        self, api: Api, config: dict, permissions: PermissionManager, mail: Mail
+        self, *args, api: Api, config: dict, permissions: PermissionManager, mail: Mail
     ):
-        super().__init__(api, config, permissions, mail)
+        super().__init__(api=api, config=config, permissions=permissions, mail=mail)
 
 
 def request_from_store_to_v6_server(

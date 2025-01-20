@@ -3,7 +3,7 @@ import sqlalchemy.exc
 
 from http import HTTPStatus
 from flask import g, request
-from flask_restful import Api
+from flask_restx import Api
 
 from vantage6.common import logger_name
 from vantage6.server import db
@@ -104,8 +104,14 @@ user_schema_with_permissions = UserWithPermissionDetailsSchema()
 
 
 class UserBase(ServicesResources):
-    def __init__(self, socketio, mail, api, permissions, config):
-        super().__init__(socketio, mail, api, permissions, config)
+    def __init__(self, *args, socketio, mail, api, permissions, config):
+        super().__init__(
+            socketio=socketio,
+            mail=mail,
+            api=api,
+            permissions=permissions,
+            config=config,
+        )
         self.r: RuleCollection = getattr(self.permissions, module_name)
 
 

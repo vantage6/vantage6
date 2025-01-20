@@ -5,7 +5,7 @@ from threading import Thread
 
 from flask import g, render_template, request, current_app, Flask
 from flask_mail import Mail
-from flask_restful import Api
+from flask_restx import Api
 from sqlalchemy import or_
 
 from vantage6.common import logger_name

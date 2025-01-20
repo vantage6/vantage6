@@ -4,7 +4,7 @@ import logging
 from functools import wraps
 
 from flask import g, request
-from flask_restful import Api
+from flask_restx import Api
 from flask_mail import Mail
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 from flask_socketio import SocketIO
@@ -43,13 +43,14 @@ class ServicesResources(BaseServicesResources):
 
     def __init__(
         self,
+        *args,
         socketio: SocketIO,
         mail: Mail,
         api: Api,
         permissions: PermissionManager,
         config: dict,
     ):
-        super().__init__(api, config, permissions, mail)
+        super().__init__(api=api, config=config, permissions=permissions, mail=mail)
         self.socketio = socketio
 
     @staticmethod

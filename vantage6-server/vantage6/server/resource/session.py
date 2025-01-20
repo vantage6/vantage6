@@ -1,7 +1,7 @@
 import logging
 
 from flask import request, g
-from flask_restful import Api
+from flask_restx import Api
 from http import HTTPStatus
 from sqlalchemy import or_, and_
 from names_generator import generate_name
@@ -185,8 +185,14 @@ dataframe_node_update_schema = DataframeNodeUpdateSchema()
 
 
 class SessionBase(ServicesResources):
-    def __init__(self, socketio, mail, api, permissions, config):
-        super().__init__(socketio, mail, api, permissions, config)
+    def __init__(self, *args, socketio, mail, api, permissions, config):
+        super().__init__(
+            socketio=socketio,
+            mail=mail,
+            api=api,
+            permissions=permissions,
+            config=config,
+        )
         self.r: RuleCollection = getattr(self.permissions, module_name)
 
     def can_view_session(self, session: db.Session) -> bool:

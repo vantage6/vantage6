@@ -36,7 +36,7 @@ setup(
         "Flask-Cors==5.0.0",
         "Flask-Principal==0.4.0",
         "flask-marshmallow==0.15.0",
-        "Flask-RESTful==0.3.10",
+        "flask-restx==1.3.0",
         "gevent==23.9.1",
         "jsonschema==4.21.1",
         "marshmallow==3.19.0",
