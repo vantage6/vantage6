@@ -62,11 +62,7 @@
         <b>{{ "algorithm.invalidated-at" | translate }}</b>
         <span>{{ printDate(algorithm?.invalidated_at) }}</span>
       </div>
-      <div class="data-list__item data-list__item--big">
-        <b>{{ "algorithm.description" | translate }}</b>
-        <span>{{ algorithm?.description || "-" }}</span>
-      </div>
-      <div class="data-list__item data-list__item--big">
+      <div *ngIf="algorithm?.status === algorithmStatus.AwaitingReviewerAssignment || algorithm?.status === algorithmStatus.UnderReview" class="data-list__item data-list__item--big">
         <b>{{ "algorithm.submission-comments" | translate }}</b>
         <span>{{ algorithm?.submission_comments || "-" }}</span>
       </div>
