@@ -64,7 +64,7 @@
       </div>
       <div *ngIf="algorithm?.status === algorithmStatus.AwaitingReviewerAssignment || algorithm?.status === algorithmStatus.UnderReview" class="data-list__item data-list__item--big">
         <b>{{ "algorithm.submission-comments" | translate }}</b>
-        <span>{{ algorithm?.submission_comments || "-" }}</span>
+        <markdown class="variable-binding" [data]="algorithm?.submission_comments || '-'"></markdown>
       </div>
     </div>
   </mat-card-content>
