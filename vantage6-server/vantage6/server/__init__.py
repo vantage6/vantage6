@@ -72,6 +72,7 @@ from vantage6.server.resource.common.swagger_templates import swagger_template
 from vantage6.server.websockets import DefaultSocketNamespace
 from vantage6.server.default_roles import get_default_roles, DefaultRole
 from vantage6.server.hashedpassword import HashedPassword
+from vantage6.server.controller import cleanup
 
 # make sure the version is available
 from vantage6.server._version import __version__  # noqa: F401
@@ -169,6 +170,14 @@ class ServerApp:
 
         # set the server version
         self.__version__ = __version__
+
+        if self.ctx.config.get("results_cleanup_days"):
+            log.info(
+                "Results older than %s days will be removed",
+                self.ctx.config.get("results_cleanup_days"),
+            )
+            t_cleanup = Thread(target=self.__results_cleanup_worker, daemon=True)
+            t_cleanup.start()
 
         # set up socket ping/pong
         log.debug("Starting thread to set node status")
@@ -808,6 +817,13 @@ class ServerApp:
             except Exception:
                 log.exception("Node-status thread had an exception")
                 time.sleep(PING_INTERVAL_SECONDS)
+
+    def __results_cleanup_worker(self):
+        """Start a background thread to clean up old tasks."""
+        while True:
+            cleanup.cleanup_results(self.ctx.config.get("results_cleanup_days"))
+            # simple for now: check every hour
+            time.sleep(3600)
 
     # TODO this functionality is temporarily disabled since it requires a user token
     # to couple the algorithm stores. It may be nice to find a way later to offer this
