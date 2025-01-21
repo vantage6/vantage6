@@ -22,7 +22,7 @@ spec:
         - containerPort: 80
         env:
         - name: SERVER_URL
-          value: http://localhost
+          value: http://localhost:7601
         - name: API_PATH
           value: /api
         # resources:

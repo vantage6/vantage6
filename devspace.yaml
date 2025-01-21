@@ -37,7 +37,7 @@ pipelines:
       run_dependencies --all      # 1. Deploy any projects this project needs (see "dependencies")
       ensure_pull_secrets --all   # 2. Ensure pull secrets
       create_deployments vantage6-server vantage6-store vantage6-ui     # 3. Deploy Helm charts and manifests specfied as "deployments"
-      start_dev vantage6-server # vantage6-store vantage6-ui
+      start_dev vantage6-server vantage6-ui # vantage6-store
 
   node:
     run: |-
@@ -134,6 +134,14 @@ dev:
     logs:
       enabled: true
 
+  vantage6-ui:
+
+    imageSelector: harbor2.vantage6.ai/infrastructure/ui:5.0.0a0
+    namespace: vantage6-server
+
+    ports:
+      - port: 7600:80
+
   vantage6-node:
 
     imageSelector: ${NODE_IMAGE}
@@ -162,7 +170,7 @@ dev:
     restartHelper:
       inject: true
 
-    command: ["python", "/vantage6/vantage6-node/vantage6/dev_start.py", "/mnt/config/config-alt.yml"]
+    command: ["python", "/vantage6/vantage6-node/vantage6/dev_start.py", "/mnt/config/"]
 
 
 
@@ -172,10 +180,10 @@ commands:
     command: "python dev/load-basic-fixtures.py"
   delete-basic-fixtures:
     command: "python dev/delete-basic-fixtures.py"
-  start-nodes:
-    command: devspace run-pipeline node
-  start-nodes-2:
-    command: v6 node start -c dev/.data/node_org_1.yaml --image ${NODE_IMAGE}
+  # start-nodes:
+  #   command: devspace run-pipeline node
+  # start-nodes-2:
+  #   command: v6 node start -c dev/.data/node_org_1.yaml --image ${NODE_IMAGE}
   stop-nodes:
     command: v6 node stop --all
 

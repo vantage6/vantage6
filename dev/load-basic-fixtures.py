@@ -86,8 +86,8 @@ else:
             "api_key": response_1["api_key"],
             "databases": {"default": "/henk.csv"},
             "logging": {"file": f"node_1.log"},
-            "port": 7650,
-            "server_url": "http://localhost:7601",
+            "port": 7601,
+            "server_url": "http://host.docker.internal",
             "task_dir": "/tasks",
             # TODO user defined config
         }
@@ -95,11 +95,24 @@ else:
     with open(dev_dir / "node_org_1.yaml", "w") as f:
         f.write(node_config_1)
 
-# if client.node.list(name="node org 2")["data"]:
-#     print("==> `node org 2` already exists")
-# else:
-#     response_2 = client.node.create(
-#         collaboration=collab_1["id"], organization=org_2["id"], name="node org 2"
-#     )
-#     with open(dev_dir / "node_org_2.json", "w") as f:
-#         f.write(str(response_2))
+
+if client.node.list(name="node org 2")["data"]:
+    print("==> `node org 2` already exists")
+else:
+    print("==> Registering nodes")
+    response_2 = client.node.create(
+        collaboration=collab_1["id"], organization=org_2["id"], name="node org 2"
+    )
+    node_config_2 = template.render(
+        {
+            "api_key": response_2["api_key"],
+            "databases": {"default": "/henk.csv"},
+            "logging": {"file": f"node_2.log"},
+            "port": 7601,
+            "server_url": "http://docker.host.internal",
+            "task_dir": "/tasks",
+            # TODO user defined config
+        }
+    )
+    with open(dev_dir / "node_org_2.yaml", "w") as f:
+        f.write(node_config_1)
