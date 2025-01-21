@@ -9,7 +9,7 @@ data:
     api_path: /api
     databases:
     - label: default
-      uri: "/Users/frankmartin/Library/Application Support/vantage6/dev/five/five_node_1.csv"
+      uri: "/app/.databases/default.csv"
       type: csv
     encryption:
       enabled: false
@@ -35,6 +35,4 @@ data:
         name: docker.auth
     port: 7601
     server_url: http://host.docker.internal
-    task_dir: /Users/frankmartin/Library/Application Support/vantage6/node/five_node_1
-    images:
-      node: harbor2.vantage6.ai/infrastructure/node:5.0.0a0
+    task_dir: /tmp/task

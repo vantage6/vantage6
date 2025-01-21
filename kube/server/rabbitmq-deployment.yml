@@ -23,6 +23,8 @@ spec:
           value: rabbitmquser
         - name: RABBITMQ_DEFAULT_PASS
           value: rabbitmquserpassword
+        - name: RABBITMQ_DEFAULT_VHOST
+          value: /vantage6
         # resources:
         #   limits:
         #     memory: "512Mi"

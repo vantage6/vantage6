@@ -45,7 +45,6 @@ from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskStatusQueryOp
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.globals import PING_INTERVAL_SECONDS, NodePolicy
 from vantage6.common.log import get_file_logger
-from vantage6.node import proxy_server
 
 # make sure the version is available
 from vantage6.node._version import __version__  # noqa: F401
@@ -59,6 +58,7 @@ from vantage6.node.globals import (
 from vantage6.node.k8s.container_manager import ContainerManager
 from vantage6.node.socket import NodeTaskNamespace
 from vantage6.node.util import get_parent_id
+from vantage6.node import proxy_server
 
 
 # ------------------------------------------------------------------------------
