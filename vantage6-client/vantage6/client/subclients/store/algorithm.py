@@ -163,8 +163,8 @@ class AlgorithmSubClient(ClientBase.SubClient):
                 Description of the function
             - type: string
                 Type of the function (central or federated)
-            - hidden: bool
-                Hide this function in the create task UI to prevent a user from running it directly
+            - standalone: bool
+                Whether this function produces useful results when running it by itself
             - databases: list[dict]
                 List of databases of the function. Each database is a dict with
                 the following keys:
@@ -344,8 +344,8 @@ class AlgorithmSubClient(ClientBase.SubClient):
                 Description of the function
             - type: string
                 Type of the function (central or federated)
-            - hidden: bool, optional
-                Hide this function in the create task UI to prevent a user from running it directly
+            - standalone: bool
+                Whether this function produces useful results when running it by itself
             - databases: list[dict]
                 List of databases of the function. Each database is a dict with
                 the following keys:

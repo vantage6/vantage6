@@ -68,7 +68,7 @@ export class AlgorithmEditComponent implements OnInit, OnDestroy {
           display_name: func.display_name,
           description: func.description,
           type: func.type,
-          hidden: func.hidden,
+          standalone: func.standalone,
           arguments: func.arguments.map((arg) => {
             const conditionalArgName =
               arg.conditional_on_id === undefined ? undefined : func.arguments.find((a) => a.id === arg.conditional_on_id)?.name;

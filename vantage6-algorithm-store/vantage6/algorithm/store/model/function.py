@@ -21,8 +21,8 @@ class Function(Base):
         Description of the function
     type_ : str
         Type of function
-    hidden : bool
-        Hide this function in the create task UI to prevent a user from running it directly
+    standalone : bool
+        Whether this function produces useful results when running it by itself
     algorithm_id : int
         ID of the algorithm that this function belongs to
     algorithm : :class:`~.model.algorithm.Algorithm`
@@ -41,7 +41,7 @@ class Function(Base):
     description = Column(String)
     type_ = Column("type", String)
     algorithm_id = Column(Integer, ForeignKey("algorithm.id"))
-    hidden = Column(Boolean, default=False)
+    standalone = Column(Boolean, default=True)
 
     # relationships
     algorithm = relationship("Algorithm", back_populates="functions")

@@ -272,7 +272,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       functionFormGroup.controls['display_name'].setValue(func.display_name);
       functionFormGroup.controls['description'].setValue(func.description);
       functionFormGroup.controls['type'].setValue(func.type);
-      functionFormGroup.controls['hidden'].setValue(func.hidden);
+      functionFormGroup.controls['standalone'].setValue(func.standalone);
       if (func.arguments) {
         func.arguments.forEach((arg) => {
           const argumentFormGroup = this.getArgumentForm();
@@ -426,7 +426,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       display_name: [''],
       description: [''],
       type: ['', [Validators.required]],
-      hidden: [false],
+      standalone: [true],
       arguments: this.fb.array([]),
       databases: this.fb.array([]),
       ui_visualizations: this.fb.array([])

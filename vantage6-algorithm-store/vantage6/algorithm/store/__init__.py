@@ -135,8 +135,13 @@ class AlgorithmStoreApp:
                 algorithm.status = ReviewStatus.APPROVED.value
                 algorithm.submitted_at = datetime.datetime.now(datetime.timezone.utc)
                 algorithm.approved_at = datetime.datetime.now(datetime.timezone.utc)
-                algorithm.save()
-
+        
+        # TODO v5+ remove this - for backwards compatibility we are setting the standalone property in all functions created before v4.11 to true
+        for function in db.Function.get():
+            if not function.standalone:
+                function.standalone = True
+                function.save()
+        
         if self.ctx.config.get("dev", {}).get("disable_review", False):
             self.setup_disable_review()
 
