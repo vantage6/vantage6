@@ -92,6 +92,7 @@ export interface Algorithm {
   developer_id?: number;
   developer?: StoreUser;
   reviewer?: StoreUser;
+  submission_comments?: string;
 }
 
 export interface AlgorithmFunction {
@@ -187,5 +188,6 @@ export interface AlgorithmForm {
   vantage6_version: string;
   code_url: string;
   documentation_url?: string;
+  submission_comments?: string;
   functions: FunctionForm[];
 }

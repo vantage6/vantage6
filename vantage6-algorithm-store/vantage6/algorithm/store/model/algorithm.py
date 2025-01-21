@@ -38,6 +38,8 @@ class Algorithm(Base):
         Date at which the algorithm was rejected or replaced by a newer version
     developer_id : int
         ID of the user that developed the algorithm
+    submission_comments : str
+        Comments done by the developer to the submission of the algorithm
 
     functions : list[:class:`~.model.function.function`]
         List of functions that are available in the algorithm
@@ -63,6 +65,7 @@ class Algorithm(Base):
     approved_at = Column(DateTime)
     invalidated_at = Column(DateTime)
     developer_id = Column(Integer, ForeignKey("user.id"))
+    submission_comments = Column(String)
 
     # relationships
     functions = relationship("Function", back_populates="algorithm")

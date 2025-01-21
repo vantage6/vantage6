@@ -24,6 +24,10 @@
     <ng-container *ngIf="!isLoading; else loading">
       <form class="form" [formGroup]="form" (ngSubmit)="handleSubmit()">
         <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ "algorithm.submission-comments" | translate }}</mat-label>
+          <textarea matInput type="text" formControlName="submission_comments" ></textarea>
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ "general.name" | translate }}</mat-label>
           <input matInput type="text" formControlName="name" />
         </mat-form-field>

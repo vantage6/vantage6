@@ -5,6 +5,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { QRCodeModule } from 'angularx-qrcode';
 
+import { MarkdownModule } from 'ngx-markdown';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -250,6 +251,7 @@ export function HttpLoaderFactory(http: HttpClient) {
       },
       defaultLanguage: 'en'
     }),
+    MarkdownModule.forRoot(),
     MatDateFnsModule,
     MatButtonModule,
     MatCardModule,

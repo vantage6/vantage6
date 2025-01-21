@@ -95,6 +95,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     vantage6_version: ['', [Validators.required]],
     code_url: ['', [Validators.required]],
     documentation_url: [''],
+    submission_comments: [''],
     // Note that we initialize the functions form to already contain one function
     functions: this.fb.nonNullable.array([this.functionForm])
   });
@@ -264,6 +265,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     this.form.controls.vantage6_version.setValue(this.algorithm.vantage6_version);
     this.form.controls.code_url.setValue(this.algorithm.code_url);
     this.form.controls.documentation_url.setValue(this.algorithm.documentation_url || '');
+    this.form.controls.submission_comments.setValue(this.algorithm.submission_comments || '');
     this.form.controls.functions.clear();
     this.algorithm.functions.forEach((func, funcIdx) => {
       const functionFormGroup = this.getFunctionForm();

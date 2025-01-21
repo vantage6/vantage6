@@ -230,6 +230,7 @@
     "submitted-at": "Submitted at",
     "approved-at": "Approved at",
     "invalidated-at": "Invalidated at",
+    "submission-comments": "Submission comments",
     "function": {
       "type": "Type of function",
       "argument": {
@@ -422,7 +423,8 @@
       "content": "If other reviews are present and have been approved, the algorithm will be approved. If no other reviews are present, the algorithm will have to be assigned reviewers again."
     },
     "add-new-review": "Add another review",
-    "button-details": "View algorithm details"
+    "button-details": "View algorithm details",
+    "submission-comments": "Comments from algorithm developer {{developer}}"
   },
   "review-submit": {
     "title": "Submit review for algorithm '{{name}}'",

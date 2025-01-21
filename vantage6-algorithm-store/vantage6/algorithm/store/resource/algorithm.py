@@ -387,6 +387,9 @@ class Algorithms(AlgorithmBaseResource):
                   documentation_url:
                     type: string
                     description: URL to the algorithm documentation
+                  submission_comments:
+                    type: string
+                    description: Comments done by the developer to the submission
                   functions:
                     type: array
                     description: List of functions that are available in the
@@ -530,6 +533,7 @@ class Algorithms(AlgorithmBaseResource):
             documentation_url=data.get("documentation_url", None),
             digest=digest,
             developer=g.user,
+            submission_comments=data.get("submission_comments", None),
         )
         algorithm.save()
 
@@ -815,6 +819,9 @@ class Algorithm(AlgorithmBaseResource):
                   documentation_url:
                     type: string
                     description: URL to the algorithm documentation
+                  submission_comments:
+                    type: string
+                    description: Comments done by the developer to the submission
                   functions:
                     type: array
                     description: List of functions that are available in the algorithm.
@@ -980,6 +987,7 @@ class Algorithm(AlgorithmBaseResource):
             "vantage6_version",
             "code_url",
             "documentation_url",
+            "submission_comments",
         ]
         for field in fields:
             if field in data and data.get(field) is not None:
