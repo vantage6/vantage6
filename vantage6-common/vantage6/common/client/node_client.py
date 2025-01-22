@@ -81,7 +81,14 @@ class NodeClient(ClientBase):
             ]
             time_until_expiry = expiry_time - time.time()
             if time_until_expiry < NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS:
-                self.refresh_token()
+                try:
+                    self.refresh_token()
+                except Exception as e:
+                    self.log.error("Refreshing token failed: %s", e)
+                    # sleep for a bit and then try again. The server might be
+                    # unreachable or internet connection down. We sleep so long that
+                    # we should have about 20 attempts before the token expires.
+                    time.sleep(NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS / 20)
             else:
                 time.sleep(
                     int(
