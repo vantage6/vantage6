@@ -233,7 +233,7 @@
     "function": {
       "type": "Type of function",
       "standalone": "Standalone function",
-      "standalone_tooltip": "Whether this function produces useful results when running it by itself. Disabling this option will hide the function in the create task UI.",
+      "standalone_tooltip": "Whether this function produces useful results when running it by itself. Disabling this option will hide the function when creating tasks in this UI.",
       "argument": {
         "title": "Parameters",
         "type": "Type of argument",
