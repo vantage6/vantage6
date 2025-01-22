@@ -409,6 +409,9 @@ class Algorithms(AlgorithmBaseResource):
                           type: string
                           description: Type of function. Can be 'central' or
                             'federated'
+                        standalone:
+                          type: boolean
+                          description: Whether this function produces useful results when running it by itself
                         databases:
                           type: array
                           description: List of databases that this function
@@ -551,6 +554,7 @@ class Algorithms(AlgorithmBaseResource):
                 display_name=function.get("display_name", ""),
                 description=function.get("description", ""),
                 type_=function["type"],
+                standalone=function.get("standalone", True),
                 algorithm_id=algorithm.id,
             )
             func.save()
@@ -842,6 +846,9 @@ class Algorithm(AlgorithmBaseResource):
                           type: string
                           description: Type of function. Can be 'central' or
                             'federated'
+                        standalone:
+                          type: boolean
+                          description: Whether this function produces useful results when running it by itself
                         databases:
                           type: array
                           description: List of databases that this function
@@ -1020,6 +1027,7 @@ class Algorithm(AlgorithmBaseResource):
                     name=new_function["name"],
                     description=new_function.get("description", ""),
                     type_=new_function["type"],
+                    standalone=new_function.get("standalone", True),
                     algorithm_id=id,
                 )
                 func.save()

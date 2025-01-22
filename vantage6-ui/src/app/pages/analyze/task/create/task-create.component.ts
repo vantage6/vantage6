@@ -650,7 +650,10 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     const algorithmsObj = await this.algorithmService.getAlgorithms();
     this.algorithms = algorithmsObj;
     this.functions = algorithmsObj.flatMap((curAlgorithm) => {
-      return curAlgorithm.functions.map((func) => {
+      return curAlgorithm.functions
+      // TODO v5+ remove the func.standalone === undefined check. After v5+ the standalone property should be set for all functions
+      .filter((func) => func.standalone || func.standalone === undefined)
+      .map((func) => {
         return {
           ...func,
           algorithm_id: curAlgorithm.id,
