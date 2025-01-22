@@ -27,9 +27,10 @@ pipelines:
       create_deployments vantage6-server vantage6-store vantage6-ui
       start_dev init
       # TODO replace this with a retry mechanism
-      sleep 30
-      devspace run delete-basic-fixtures
-      devspace run load-basic-fixtures
+      echo "Waiting for server to start..."
+      sleep 10
+      python dev/delete-basic-fixtures.py
+      python dev/load-basic-fixtures.py
       stop_dev --all
 
   server:
@@ -176,16 +177,25 @@ dev:
 
 # Use the `commands` section to define repeatable dev workflows for this project
 commands:
-  load-basic-fixtures:
-    command: "python dev/load-basic-fixtures.py"
-  delete-basic-fixtures:
-    command: "python dev/delete-basic-fixtures.py"
+  populate-server:
+    command: devspace run-pipeline init
+  start-dev:
+    command: devspace dev
+  stop-dev:
+    command: |-
+      devspace reset pods
+      devspace purge
+
+  # load-basic-fixtures:
+  #   command: "python dev/load-basic-fixtures.py"
+  # delete-basic-fixtures:
+  #   command: "python dev/delete-basic-fixtures.py"
   # start-nodes:
   #   command: devspace run-pipeline node
   # start-nodes-2:
   #   command: v6 node start -c dev/.data/node_org_1.yaml --image ${NODE_IMAGE}
-  stop-nodes:
-    command: v6 node stop --all
+  # stop-nodes:
+  #   command: v6 node stop --all
 
 # Define dependencies to other projects with a devspace.yaml
 # dependencies:

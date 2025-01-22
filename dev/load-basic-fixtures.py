@@ -109,10 +109,10 @@ else:
             "databases": {"default": "/henk.csv"},
             "logging": {"file": f"node_2.log"},
             "port": 7601,
-            "server_url": "http://docker.host.internal",
+            "server_url": "http://host.docker.internal",
             "task_dir": "/tasks",
             # TODO user defined config
         }
     )
     with open(dev_dir / "node_org_2.yaml", "w") as f:
-        f.write(node_config_1)
+        f.write(node_config_2)

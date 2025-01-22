@@ -12,41 +12,14 @@ def run_function(config):
         return
 
     name = Path(config).stem
+    print("HELLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
+    DockerNodeContext.LOGGING_ENABLED = False
+    ctx = DockerNodeContext(name, True, config, logger_prefix=f"{name} | ")
 
-    class PrefixLogger(logging.Handler):
-        def __init__(self, prefix):
-            super().__init__()
-            self.prefix = prefix
-
-        def emit(self, record):
-            log_entry = self.format(record)
-            print(f"[{self.prefix}] {log_entry}")
-
-    try:
-
-        ctx = DockerNodeContext(name, True, config, logger_prefix=f"{name} | ")
-        run(ctx)
-    finally:
-        pass
-        # logger.removeHandler(handler)
+    run(ctx)
 
 
 if __name__ == "__main__":
-
-    # Create a separate logger for each thread
-    # logger = logging.getLogger()
-    # logger.setLevel(logging.DEBUG)
-
-    # # Clear existing handlers
-    # if logger.hasHandlers():
-    #     logger.handlers.clear()
-
-    # handler = PrefixLogger(name)
-    # formatter = logging.Formatter(
-    #     "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
-    # )
-    # handler.setFormatter(formatter)
-    # logger.addHandler(handler)
 
     config_folder = Path(sys.argv[1]) if len(sys.argv) > 1 else None
     configs = config_folder.glob("*.yaml")
