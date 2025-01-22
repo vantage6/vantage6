@@ -349,6 +349,7 @@ class Node:
                     "log": "Could not obtain algorithm container token",
                 },
             )
+            return  # prevent starting the run if there is no token
 
         # create a temporary volume for each job_id
         vol_name = self.ctx.docker_temporary_volume_name(task["job_id"])
