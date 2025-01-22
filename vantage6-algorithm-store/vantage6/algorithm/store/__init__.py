@@ -135,7 +135,7 @@ class AlgorithmStoreApp:
                 algorithm.status = ReviewStatus.APPROVED.value
                 algorithm.submitted_at = datetime.datetime.now(datetime.timezone.utc)
                 algorithm.approved_at = datetime.datetime.now(datetime.timezone.utc)
-                function.save()
+                algorithm.save()
 
         if self.ctx.config.get("dev", {}).get("disable_review", False):
             self.setup_disable_review()
