@@ -18,7 +18,7 @@ pipelines:
   dev:
     run: |-
       run_dependencies --all
-      run_pipelines server node
+      run_pipelines server node --sequential
 
   init:
     run: |-
@@ -37,7 +37,7 @@ pipelines:
     run: |-
       run_dependencies --all      # 1. Deploy any projects this project needs (see "dependencies")
       ensure_pull_secrets --all   # 2. Ensure pull secrets
-      create_deployments vantage6-server vantage6-store vantage6-ui     # 3. Deploy Helm charts and manifests specfied as "deployments"
+      create_deployments vantage6-server vantage6-ui # vantage6-store     # 3. Deploy Helm charts and manifests specfied as "deployments"
       start_dev vantage6-server vantage6-ui # vantage6-store
 
   node:
@@ -66,25 +66,25 @@ deployments:
     kubectl:
       manifests:
         - kube/server-namespace.yml
-        - kube/server/*
+        - kube/server/.
 
   vantage6-store:
     kubectl:
       manifests:
         - kube/server-namespace.yml
-        - kube/store/*
+        - kube/store/.
 
   vantage6-ui:
     kubectl:
       manifests:
         - kube/server-namespace.yml
-        - kube/ui/*
+        - kube/ui/.
 
   vantage6-node:
     kubectl:
       manifests:
         - kube/node/namespace.yml
-        - kube/node/*
+        - kube/node/.
 
 
 # This is a list of `dev` containers that are based on the containers created by your deployments
@@ -166,6 +166,11 @@ dev:
       startContainer: true
       onUpload:
         restartContainer: true
+    # - path: /Users/frankmartin/.kube/config:/app/.kube/config
+    #   disableDownload: true
+    #   startContainer: true
+    #   onUpload:
+    #     restartContainer: true
 
 
     restartHelper:

@@ -1,0 +1,65 @@
+# Override the chart name
+nameOverride: vantage6-server
+
+server:
+
+  # The external URL of the server
+  url: http://localhost:7601/api
+
+  internal:
+    port: 7601
+
+  # The number of replicas of the server
+  replications: 1
+
+  # The image of the server
+  image:
+    repository: harbor2.vantage6.ai/infrastructure/server
+    tag: 5.0.0a0
+
+  logging:
+    level: DEBUG
+
+rabbitmq:
+  # The image of the RabbitMQ server
+  image:
+    repository: rabbitmq
+    tag: 3-management
+
+  # The username of the RabbitMQ server
+  username: rabbitmquser
+
+  # The password of the RabbitMQ server
+  password: rabbitmquserpassword
+
+  # The vhost of the RabbitMQ server
+  vhost: /vantage6
+
+database:
+  # The image of the database
+  image:
+    repository: postgres
+    tag: 13
+
+  # The username of the database
+  username: vantage6
+
+  # The password of the database
+  password: vantage6
+
+  # The name of the database
+  name: vantage6
+
+  #hostpath of the database mount
+  volumePath: /mnt/data
+
+ui:
+
+  # The image of the UI
+  image:
+    repository: harbor2.vantage6.ai/infrastructure/ui
+    tag: 5.0.0a0
+
+
+
+
