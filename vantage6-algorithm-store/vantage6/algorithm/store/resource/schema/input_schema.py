@@ -68,7 +68,7 @@ class FunctionInputSchema(_NameDescriptionSchema):
 
     type_ = fields.String(required=True, data_key="type")
     display_name = fields.String(required=False)
-    standalone = fields.Boolean(required=True)
+    standalone = fields.Boolean(required=False)
     databases = fields.Nested("DatabaseInputSchema", many=True)
     arguments = fields.Nested("ArgumentInputSchema", many=True)
     ui_visualizations = fields.Nested("UIVisualizationInputSchema", many=True)
