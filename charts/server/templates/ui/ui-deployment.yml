@@ -25,9 +25,9 @@ spec:
         - containerPort: 80
         env:
         - name: SERVER_URL
-          value: {{ .Values.server.url | quote }}
+          value: {{ .Values.server.baseUrl | quote }}
         - name: API_PATH
-          value: ""
+          value: /api
         # resources:
         #   limits:
         #     memory: "512Mi"

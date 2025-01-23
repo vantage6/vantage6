@@ -5,6 +5,7 @@ server:
 
   # The external URL of the server
   url: http://localhost:7601/api
+  baseUrl: http://localhost:7601
 
   internal:
     port: 7601
@@ -18,7 +19,7 @@ server:
     tag: 5.0.0a0
 
   logging:
-    level: DEBUG
+    level: INFO
 
 rabbitmq:
   # The image of the RabbitMQ server

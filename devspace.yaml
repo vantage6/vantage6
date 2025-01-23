@@ -2,11 +2,9 @@ version: v2beta1
 name: vantage6git
 
 vars:
-  SERVER_IMAGE:
-    question: Which image server image should be used?
-    default: harbor2.vantage6.ai/infrastructure/server:5.0.0a0
+  SERVER_IMAGE: harbor2.vantage6.ai/infrastructure/server
+  SERVER_IMAGE_TAG: 5.0.0a0
   NODE_IMAGE:
-    question: Which image node image should be used?
     default: harbor2.vantage6.ai/infrastructure/node:5.0.0a0
   NODE_CONFIG_FILE: null
 
@@ -24,21 +22,23 @@ pipelines:
     run: |-
       run_dependencies --all
       ensure_pull_secrets --all
-      create_deployments vantage6-server vantage6-store vantage6-ui
-      start_dev init
+      create_deployments vantage6-server
+      create_deployments vantage6-store # vantage6-ui
+      start_dev init vantage6-store
       # TODO replace this with a retry mechanism
-      echo "Waiting for server to start..."
-      sleep 10
+      echo "Waiting for server to start... (30 seconds)"
+      sleep 30
       python dev/delete-basic-fixtures.py
       python dev/load-basic-fixtures.py
+      python dev/connect-store.py
       stop_dev --all
 
   server:
     run: |-
       run_dependencies --all      # 1. Deploy any projects this project needs (see "dependencies")
       ensure_pull_secrets --all   # 2. Ensure pull secrets
-      create_deployments vantage6-server vantage6-ui # vantage6-store     # 3. Deploy Helm charts and manifests specfied as "deployments"
-      start_dev vantage6-server vantage6-ui # vantage6-store
+      create_deployments vantage6-server # vantage6-ui # vantage6-store     # 3. Deploy Helm charts and manifests specfied as "deployments"
+      start_dev vantage6-server vantage6-ui vantage6-store
 
   node:
     run: |-
@@ -62,23 +62,46 @@ images:
 deployments:
 
   vantage6-server:
-    # This deployment uses `kubectl` but you can also define `helm` deployments
-    kubectl:
-      manifests:
-        - kube/server-namespace.yml
-        - kube/server/.
+    helm:
+      chart:
+        name: ./charts/server
+      values:
+        server:
+          image:
+            repository: ${SERVER_IMAGE}
+            tag: ${SERVER_IMAGE_TAG}
+          logging:
+            level: DEBUG
+
+        database:
+          volumePath: /mnt/data
 
   vantage6-store:
-    kubectl:
-      manifests:
-        - kube/server-namespace.yml
-        - kube/store/.
+    helm:
+      chart:
+        name: ./charts/store
+      values:
 
-  vantage6-ui:
-    kubectl:
-      manifests:
-        - kube/server-namespace.yml
-        - kube/ui/.
+        store:
+
+          image:
+            repository: harbor2.vantage6.ai/infrastructure/algorithm-store
+            tag: 5.0.0a0
+          logging:
+            level: DEBUG
+          vantage6Server:
+            uri: http://host.docker.internal:7601/api
+          policies:
+            allowLocalhost: 'True'
+
+        database:
+          volumePath: /mnt/data
+
+  # vantage6-ui:
+  #   kubectl:
+  #     manifests:
+  #       - kube/server-namespace.yml
+  #       - kube/ui/.
 
   vantage6-node:
     kubectl:
@@ -101,7 +124,7 @@ dev:
   vantage6-server:
 
     # Search for the container that runs this image
-    imageSelector: ${SERVER_IMAGE}
+    imageSelector: ${SERVER_IMAGE}:${SERVER_IMAGE_TAG}
     namespace: vantage6-server
 
     sync:
@@ -135,10 +158,15 @@ dev:
     logs:
       enabled: true
 
+  vantage6-store:
+
+    imageSelector: harbor2.vantage6.ai/infrastructure/algorithm-store:5.0.0a0
+    ports:
+      - port: 7602:7602
+
   vantage6-ui:
 
     imageSelector: harbor2.vantage6.ai/infrastructure/ui:5.0.0a0
-    namespace: vantage6-server
 
     ports:
       - port: 7600:80
@@ -187,9 +215,9 @@ commands:
   start-dev:
     command: devspace dev
   stop-dev:
-    command: |-
-      devspace reset pods
-      devspace purge
+    command: devspace reset pods
+  purge:
+    command: devspace purge
 
   # load-basic-fixtures:
   #   command: "python dev/load-basic-fixtures.py"

@@ -1,21 +1,20 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-vantage6-server-config
+  name: {{ .Release.Name }}-store-configmap
   namespace: {{ .Release.Namespace | quote }}
 data:
   config.yaml: |
-    algorithm_stores: []
     allow_drop_all: 'True'
-    api_path: /api
-    description: Vantage6 server version 5
+    api_path: /store
+    description: 'Vantage store version 5'
     ip: 0.0.0.0
     logging:
       backup_count: 5
       datefmt: '%Y-%m-%d %H:%M:%S'
-      file: five.log
+      file: k8s.log
       format: '%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s'
-      level: {{ .Values.server.logging.level }}
+      level: DEBUG
       loggers:
       - level: warning
         name: urllib3
@@ -31,11 +30,15 @@ data:
         name: requests_oauthlib.oauth2_session
       max_size: 1024
       use_console: true
-    port: {{ .Values.server.internal.port }}
-    server_url: {{ .Values.server.url }}
-    uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-postgres-service:5432/{{ .Values.database.name }}
-    rabbitmq:
-      uri: amqp://{{ .Values.rabbitmq.username }}:{{ .Values.rabbitmq.password }}@{{ .Release.Name }}-rabbitmq-service:5672/{{ .Values.rabbitmq.vhost }}
-      start_with_server: false
+    policies:
+      algorithm_view: {{ .Values.store.policies.algorithmView }}
+      allow_localhost: "True"
+      allowed_servers:
+      - "http://localhost:7601/api"
     dev:
       host_uri: host.docker.internal
+    port: {{ .Values.store.internal.port }}
+    root_user:
+      username: {{ .Values.store.vantage6Server.rootUser }}
+      v6_server_uri: {{ .Values.store.vantage6Server.uri }}
+    uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-postgres-service:5432/{{ .Values.database.name }}

@@ -353,6 +353,7 @@ class AlgorithmStoreApp:
                 continue
             elif isinstance(policy_value, list):
                 for value in policy_value:
+                    log.debug("Setting policy %s to %s", policy, value)
                     db.Policy(key=policy, value=value).save()
             else:
                 db.Policy(key=policy, value=policy_value).save()

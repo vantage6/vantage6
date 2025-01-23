@@ -14,7 +14,7 @@ data:
       datefmt: '%Y-%m-%d %H:%M:%S'
       file: k8s.log
       format: '%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s'
-      level: DEBUG
+      level: {{ .Values.store.logging.level }}
       loggers:
       - level: warning
         name: urllib3
