@@ -821,7 +821,10 @@ class ServerApp:
     def __results_cleanup_worker(self):
         """Start a background thread to clean up old tasks."""
         while True:
-            cleanup.cleanup_results(self.ctx.config.get("results_cleanup_days"))
+            try:
+                cleanup.cleanup_results(self.ctx.config.get("results_cleanup_days"))
+            except:
+                log.error("Results cleanup failed. Will try again in one hour.")
             # simple for now: check every hour
             time.sleep(3600)
 
