@@ -38,7 +38,7 @@ class Run(Base):
     finished_at : datetime
         Time when the task was finished
     cleanup_at : datetime
-        Time when the results where deleted as part of a cleanup
+        Time when the results were deleted as part of a cleanup
     status : str
         Status of the task
     log : str

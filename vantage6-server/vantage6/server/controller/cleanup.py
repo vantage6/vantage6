@@ -7,9 +7,10 @@ module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
 
 
-def cleanup_results(days: int):
+def cleanup_results(days: int, include_input: bool = False):
     """
-    Clear the `result` field for `Run` instances older than the specified number of days.
+    Clear the `result` and (optionally) `input` field for `Run` instances older
+    than the specified number of days.
 
     Parameters
     ----------
@@ -32,6 +33,8 @@ def cleanup_results(days: int):
             )
             for run in runs:
                 run.result = ""
+                if include_input:
+                    run.input = ""
                 run.cleanup_at = datetime.now(timezone.utc)
                 log.info(f"Cleared result for Run ID {run.id}.")
 

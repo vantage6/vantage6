@@ -124,6 +124,9 @@ refresh_token_expires_hours: 48
 # Careful! Make sure you have regular backups of your database before enabling
 # this feature, as a wrong configuration could lead to data loss.
 results_cleanup_days: 30
+# the cleanup worker will also delete the input of the runs if this is set to
+# true. False by default.
+results_cleanup_include_input: false
 
 # If you have a server with a high workload, it is recommended to use
 # multiple server instances (horizontal scaling). If you do so, you also
