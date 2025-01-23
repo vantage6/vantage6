@@ -80,7 +80,12 @@ class NodeClient(ClientBase):
                 "exp"
             ]
             time_until_expiry = expiry_time - time.time()
-            if time_until_expiry < NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS:
+            if time_until_expiry < 0:
+                self.log.error(
+                    "Token and refresh token have expired. Please restart the node!"
+                )
+                return
+            elif time_until_expiry < NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS:
                 try:
                     self.refresh_token()
                 except Exception as e:
