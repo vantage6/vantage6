@@ -25,9 +25,14 @@ def cleanup_results(days: int):
 
     try:
         with session.begin():
-            runs = session.query(Run).filter(Run.finished_at < threshold_date).all()
+            runs = (
+                session.query(Run)
+                .filter(Run.finished_at < threshold_date, Run.cleanup_at == None)
+                .all()
+            )
             for run in runs:
                 run.result = ""
+                run.cleanup_at = datetime.now(timezone.utc)
                 log.info(f"Cleared result for Run ID {run.id}.")
 
         log.info(
