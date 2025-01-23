@@ -58,3 +58,16 @@ you.
 
 You can now access the user interface by navigating to http://localhost:7600 in your
 browser and log in with the username ``dev_admin`` and password ``password``. Enjoy!
+
+Stopping the network
+--------------------
+
+Once you are done, you can stop and remove the network by running:
+
+.. code-block:: bash
+
+    # Stop the network
+    v6 dev stop-demo-network
+
+    # Remove the network permanently (clean up logs, configuration files, etc)
+    v6 dev remove-demo-network
