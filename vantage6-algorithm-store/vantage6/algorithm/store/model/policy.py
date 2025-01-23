@@ -70,7 +70,7 @@ class Policy(Base):
         session.commit()
         if result is None:
             return False
-        return result.value == "True" or result.value == "1"
+        return result.value.lower() == "true" or result.value == "1"
 
     @classmethod
     def get_servers_with_edit_permission(cls) -> list[str]:
@@ -126,7 +126,7 @@ class Policy(Base):
         session.commit()
         if result is None:
             return DefaultStorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value
-        return result.value == "True" or result.value == "1"
+        return result.value.lower() == "true" or result.value == "1"
 
     @classmethod
     def get_minimum_reviewing_orgs(cls) -> int:

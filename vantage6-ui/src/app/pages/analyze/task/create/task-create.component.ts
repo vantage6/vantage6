@@ -515,7 +515,8 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
   getFormArrayControls(argument: Argument) {
     if ((this.parameterForm.get(argument.name) as FormArray).controls === undefined) {
-      this.parameterForm.setControl(argument.name, this.fb.array([this.getNewControlForInputList(argument)]));
+      const initialControl = argument.has_default_value ? [] : [this.getNewControlForInputList(argument)];
+      this.parameterForm.setControl(argument.name, this.fb.array(initialControl));
     }
     return (this.parameterForm.get(argument.name) as FormArray).controls;
   }

@@ -1,6 +1,21 @@
 Release notes
 =============
 
+4.9.1
+-----
+
+*24 January 2025*
+
+- **Bugfix**
+
+  - Prevent crash of thread that refreshes the node token, thereby improving node
+    stability (`Issue#1669 <https://github.com/vantage6/vantage6/issues/1669>`_,
+    `PR#1694 <https://github.com/vantage6/vantage6/pull/1694>`_).
+  - Improve recognizing text-based 'true' values for policies in the algorithm store (
+    `PR#1687 <https://github.com/vantage6/vantage6/pull/1687>`_).
+  - For default list of str/float/int arguments, don't create superfluous form control
+    in the UI when creating a task (`PR#1688 <https://github.com/vantage6/vantage6/pull/1688>`_).
+
 4.9.0
 -----
 
@@ -82,7 +97,7 @@ Release notes
 - **Change**
 
   - Modify filename of PyPI packages to conform to PEP625
-   (`PR#1625 <https://github.com/vantage6/vantage6/pull/1625>`_).
+    (`PR#1625 <https://github.com/vantage6/vantage6/pull/1625>`_).
 
 - **Bugfix**
 
