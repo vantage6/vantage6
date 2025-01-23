@@ -75,9 +75,10 @@ you can run the ``hello-world`` example from Docker.
     be required. Vantage6 needs to be able to run docker without ``sudo``,
     and these steps ensure just that.
 
-    For Windows, if you are using Docker Desktop, it may be preferable to limit
-    the amount of memory Docker can use - in some cases it may otherwise
-    consume much memory and slow down the system. This may be achieved as
+    When installing vantage6 on your personal **Windows** machine, we recommend using
+    Docker Desktop. Make sure to enable Windows Subsystem for Linux in your windows
+    feature. It may be preferable to limit the amount of memory Docker can use - in some
+    cases it may otherwise consume much memory and slow down your system. This may be achieved as
     described `here <https://stackoverflow.com/questions/62405765/memory-allocation-to-docker-containers-after-moving-to-wsl-2-in-windows>`__.
 
 .. note::
