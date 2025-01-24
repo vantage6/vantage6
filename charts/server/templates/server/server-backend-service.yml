@@ -13,6 +13,6 @@ spec:
       targetPort: {{ .Values.server.internal.port }}
       name: vantage6-server-backend
   type: ClusterIP
-  {{- if gt (int .Values.server.replications) 1 -}}
+  {{- if gt (int .Values.server.replications) 1 }}
   sessionAffinity: ClientIP # does not work in wsl
-  {{- end -}}
+  {{- end }}

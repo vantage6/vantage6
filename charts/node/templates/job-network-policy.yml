@@ -1,0 +1,12 @@
+# Policy to disable job's networking, except with the Node
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: {{ .Release.Name }}-egress-isolation
+  namespace: {{ .Release.Namespace | quote }}
+spec:
+  podSelector: {} # This selects all pods in the vantage6-node namespace
+  policyTypes:
+  - Egress
+  egress:
+  - {}

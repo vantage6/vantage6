@@ -1,0 +1,35 @@
+node:
+
+  # TODO: networking
+  # TODO: encryption
+
+  apiKey: 33364053-dc41-4be9-b011-0c8035dba93f
+
+  server:
+    url: http://host.docker.internal
+    port: 7601
+    path: /api
+
+  image:
+    repository: harbor2.vantage6.ai/infrastructure/node
+    tag: v5
+
+  logging:
+    level: INFO
+
+  proxyPort: 7654
+
+  # TODO the way databases are mounted and named can lead to possible naming conflicts
+  databases:
+    fileBased:
+    - name: default
+      # /run/desktop/
+      uri: /mnt/data/default.csv
+      type: csv
+    serviceBased:
+    - name: postgres
+      uri: postgres://vantage6:vantage6@vantage6-vantage6-postgres:5432/vantage6
+      type: other
+
+  kubeConfig: /root/.kube/config
+
