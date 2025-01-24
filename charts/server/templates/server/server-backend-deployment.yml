@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: vantage6-server
-        image: "{{ .Values.server.image.repository }}:{{ .Values.server.image.tag }}"
+        image: {{ .Values.server.image }}
         ports:
         - containerPort: {{ .Values.server.internal.port }}
         command: [

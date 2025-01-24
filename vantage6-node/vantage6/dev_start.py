@@ -12,8 +12,8 @@ def run_function(config):
         return
 
     name = Path(config).stem
-    print("HELLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
-    DockerNodeContext.LOGGING_ENABLED = False
+    print("BYEEEE")
+    # DockerNodeContext.LOGGING_ENABLED = True
     ctx = DockerNodeContext(name, True, config, logger_prefix=f"{name} | ")
 
     run(ctx)

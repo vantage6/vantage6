@@ -164,6 +164,7 @@ class Node:
         self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)
 
         # set up proxy server logging
+        Path(self.ctx.proxy_log_file).parent.mkdir(parents=True, exist_ok=True)
         log_level = getattr(logging, self.config["logging"]["level"].upper())
         self.proxy_log = get_file_logger(
             "proxy_server", self.ctx.proxy_log_file, log_level_file=log_level

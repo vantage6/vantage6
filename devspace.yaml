@@ -1,18 +1,15 @@
 version: v2beta1
 name: vantage6git
 
+# TODO using tags isnt safe with the devspace build stuff
 vars:
   SERVER_IMAGE: harbor2.vantage6.ai/infrastructure/server
-  SERVER_IMAGE_TAG: 5.0.0a0
   NODE_IMAGE: harbor2.vantage6.ai/infrastructure/node
-  NODE_IMAGE_TAG: 5.0.0a0
   STORE_IMAGE: harbor2.vantage6.ai/infrastructure/algorithm-store
-  STORE_IMAGE_TAG: 5.0.0a0
   UI_IMAGE: harbor2.vantage6.ai/infrastructure/ui
-  UI_IMAGE_TAG: 5.0.0a0
   KUBE_CONFIG:
-    question: "Where is your kube config located?"
-    default: "/Users/frankmartin/.kube/config"
+    question: "Where is your kube config from k8s located?"
+    default: "/Users/frankmartin/.kube/config.k8s"
 
 pipelines:
 
@@ -73,22 +70,22 @@ pipelines:
 # build with `devspace build` or when running `devspace dev -b`.
 images:
   server:
-    image: "${SERVER_IMAGE}:${SERVER_IMAGE_TAG}"
+    image: ${SERVER_IMAGE}
     dockerfile: docker/node-and-server.Dockerfile
     context: .
 
   node:
-    image: "${NODE_IMAGE}:${NODE_IMAGE_TAG}"
+    image: ${NODE_IMAGE}
     dockerfile: docker/node-and-server.Dockerfile
     context: .
 
   store:
-    image: "${STORE_IMAGE}:${STORE_IMAGE_TAG}"
+    image: ${STORE_IMAGE}
     dockerfile: docker/algorithm-store.Dockerfile
     context: .
 
   ui:
-    image: "${UI_IMAGE}:${UI_IMAGE_TAG}"
+    image: "${UI_IMAGE}"
     dockerfile: docker/ui.Dockerfile
     context: .
 
@@ -104,9 +101,7 @@ deployments:
         name: ./charts/server
       values:
         server:
-          image:
-            repository: ${SERVER_IMAGE}
-            tag: ${SERVER_IMAGE_TAG}
+          image: ${SERVER_IMAGE}
           logging:
             level: DEBUG
 
@@ -120,9 +115,7 @@ deployments:
         name: ./charts/store
       values:
         store:
-          image:
-            repository: ${STORE_IMAGE}
-            tag: ${STORE_IMAGE_TAG}
+          image: ${STORE_IMAGE}
           logging:
             level: DEBUG
           vantage6Server:
@@ -156,15 +149,13 @@ deployments:
         name: ./charts/node
       values:
         node:
-          image:
-            repository: ${NODE_IMAGE}
-            tag: ${NODE_IMAGE_TAG}
+          image: ${NODE_IMAGE}
           logging:
             level: DEBUG
           databases:
             fileBased:
             - name: default
-              uri: /mnt/data/default.csv
+              uri: /Users/frankmartin/Repositories/vantage6/dev/olympic_athletes_2016.csv
               type: csv
             # serviceBased:
             # - name: postgres
@@ -179,26 +170,44 @@ dev:
   # we use this to populate the database with some basic data. We need a port to talk
   # to as the ingress is not deployed yet.
   vantage6-server-init:
-    imageSelector: ${SERVER_IMAGE}:${SERVER_IMAGE_TAG}
+    imageSelector: ${SERVER_IMAGE}
     ports:
       - port: 7601:7601
 
   # We use this to enable the server and the store to be coupled. We need a port to talk
   # to as the ingress is not deployed yet.
   vantage6-store-init:
-    imageSelector: ${STORE_IMAGE}:${STORE_IMAGE_TAG}
+    imageSelector: ${STORE_IMAGE}
     ports:
       - port: 7602:7602
+
+  vantage6-store:
+    imageSelector: ${STORE_IMAGE}
+    ports:
+      - port: 7602:7602
+
+    sync:
+    - path: ./vantage6/:/vantage6/vantage6/
+      disableDownload: true
+    - path: ./vantage6-common/:/vantage6/vantage6-common/
+      disableDownload: true
+    - path: ./vantage6-backend-common/:/vantage6/vantage6-backend-common/
+      disableDownload: true
+    - path: ./vantage6-algorithm-store/:/vantage6/vantage6-algorithm-store/
+      disableDownload: true
+      startContainer: true
 
   # This puts the server container in development mode. It syncs the local files with
   # the container and starts the server in development mode. Code changes will be
   # hot-reloaded and a port forward is created to access the server.
   vantage6-server:
-    imageSelector: ${SERVER_IMAGE}:${SERVER_IMAGE_TAG}
+    imageSelector: ${SERVER_IMAGE}
     sync:
     - path: ./vantage6/:/vantage6/vantage6/
       disableDownload: true
     - path: ./vantage6-common/:/vantage6/vantage6-common/
+      disableDownload: true
+    - path: ./vantage6-backend-common/:/vantage6/vantage6-backend-common/
       disableDownload: true
     - path: ./vantage6-server/:/vantage6/vantage6-server/
       disableDownload: true
@@ -215,7 +224,7 @@ dev:
   # This puts the store container in development mode.
   # TODO sync and hot-reload
   vantage6-ui:
-    imageSelector: ${UI_IMAGE}:${UI_IMAGE_TAG}
+    imageSelector: ${UI_IMAGE}
     ports:
       - port: 7600:80
 
@@ -223,7 +232,7 @@ dev:
   # node code. We leverage the `restartHelper` and `onUpload.restartContainer` to
   # restart the node container (with multiple nodes) when the code changes.
   vantage6-node:
-    imageSelector: ${NODE_IMAGE}:${NODE_IMAGE_TAG}
+    imageSelector: ${NODE_IMAGE}
     sync:
     - path: ./vantage6/:/vantage6/vantage6/
       disableDownload: true

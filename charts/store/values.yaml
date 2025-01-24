@@ -9,9 +9,7 @@ store:
     algorithmView: public
     allowLocalhost: 'True'
 
-  image:
-    repository: harbor2.vantage6.ai/infrastructure/store
-    tag: v5
+  image: harbor2.vantage6.ai/infrastructure/store:latest
 
   internal:
     port: 7602

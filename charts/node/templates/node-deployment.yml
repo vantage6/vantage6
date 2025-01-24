@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: vantage6-node
-        image: "{{ .Values.node.image.repository }}:{{ .Values.node.image.tag }}"
+        image: {{ .Values.node.image }}
         env:
         - name: PROXY_SERVER_PORT
           value: "{{ .Values.node.proxyPort }}"
@@ -52,4 +52,4 @@ spec:
           type: File
       - name: config-volume
         configMap:
-          name: vantage6-node-config
+          name: {{ .Release.Name }}-node-configmap

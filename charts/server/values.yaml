@@ -14,9 +14,7 @@ server:
   replications: 1
 
   # The image of the server
-  image:
-    repository: harbor2.vantage6.ai/infrastructure/server
-    tag: 5.0.0a0
+  image: harbor2.vantage6.ai/infrastructure/server:latest
 
   logging:
     level: INFO
@@ -57,9 +55,7 @@ database:
 ui:
 
   # The image of the UI
-  image:
-    repository: harbor2.vantage6.ai/infrastructure/ui
-    tag: 5.0.0a0
+  image: harbor2.vantage6.ai/infrastructure/ui:latest
 
 
 

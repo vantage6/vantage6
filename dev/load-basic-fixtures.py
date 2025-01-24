@@ -49,6 +49,7 @@ else:
         password="Password123!",
         email="user_1@one.org",
         organization=org_1["id"],
+        roles=[1],
     )
 
 if collab_1 := next(

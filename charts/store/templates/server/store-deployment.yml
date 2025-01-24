@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: vantage6-store-backend
-        image: "{{ .Values.store.image.repository }}:{{ .Values.store.image.tag }}"
+        image: {{ .Values.store.image }}
         ports:
         - containerPort: {{ .Values.store.internal.port }}
         command: [

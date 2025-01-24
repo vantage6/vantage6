@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: vantage6-server-frontend
-        image: "{{ .Values.ui.image.repository }}:{{ .Values.ui.image.tag }}"
+        image: {{ .Values.ui.image }}
         ports:
         - containerPort: 80
         env:

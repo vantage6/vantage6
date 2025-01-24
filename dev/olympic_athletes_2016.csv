@@ -1,0 +1,2425 @@
+Sex,Age,Height,Weight,Country,Sport,Medal
+M,21,198,90,ITA,Rowing,Bronze
+F,21,165,49,AZE,Taekwondo,Bronze
+M,31,182,86,FRA,Handball,Gold
+M,26,170,80,IRI,Wrestling,Bronze
+F,24,160,62,CAN,Diving,Bronze
+M,24,161,62,RUS,Gymnastics,Bronze
+M,30,197,92,AUS,Swimming,Bronze
+M,25,188,87,EGY,Fencing,Silver
+M,23,198,93,ESP,Basketball,Bronze
+M,35,180,68,FRA,Cycling,Gold
+M,20,178,68,JOR,Taekwondo,Gold
+F,31,172,72,NED,Rowing,Bronze
+F,33,164,51,GBR,Boxing,Gold
+F,26,188,81,USA,Volleyball,Bronze
+F,31,193,120,NZL,Athletics,Gold
+F,29,187,65,BRA,Volleyball,Gold
+M,27,198,100,USA,Swimming,Gold
+F,37,170,65,BRA,Basketball,Bronze
+M,28,175,75,RSA,Rugby Sevens,Bronze
+M,27,193,104,RSA,Rugby Sevens,Bronze
+M,35,187,93,ITA,Rowing,Bronze
+F,23,164,66,FRA,Judo,Silver
+M,24,202,90,FRA,Swimming,Gold
+F,31,170,67,ESP,Handball,Bronze
+F,23,167,50,ESP,Rhythmic Gymnastics,Silver
+F,21,147,47,INA,Weightlifting,Silver
+M,41,189,80,GER,Equestrianism,Bronze
+M,29,179,72,INA,Badminton,Gold
+M,30,192,102,ITA,Water Polo,Silver
+F,27,172,74,ITA,Water Polo,Silver
+M,27,183,75,GER,Canoeing,Bronze
+M,20,172,79,NGR,Football,Bronze
+M,20,180,62,CAN,Athletics,Bronze
+M,25,192,125,TUR,Wrestling,Gold
+M,21,165,56,UZB,Boxing,Bronze
+M,28,187,79,RUS,Fencing,Gold
+F,22,163,61,USA,Athletics,Gold
+F,28,191,79,USA,Volleyball,Silver
+M,30,187,80,NGR,Football,Bronze
+F,26,183,74,USA,Fencing,Bronze
+M,45,178,82,QAT,Shooting,Bronze
+M,49,178,95,IOA,Shooting,Bronze
+M,52,183,83,IOA,Shooting,Bronze
+F,30,164,55,ESP,Sailing,Gold
+F,33,179,90,ESP,Handball,Bronze
+M,27,165,66,RUS,Wrestling,Gold
+M,31,184,75,ESP,Hockey,Silver
+F,30,171,58,NZL,Sailing,Gold
+M,24,190,98,ARM,Wrestling,Bronze
+M,30,193,96,SRB,Water Polo,Bronze
+M,21,207,90,NIG,Taekwondo,Silver
+F,41,163,56,SWE,Equestrianism,Silver
+F,27,170,65,USA,Athletics,Silver
+M,40,175,80,RUS,Shooting,Gold
+M,30,203,106,BRA,Beach Volleyball,Silver
+F,18,185,57,IRI,Taekwondo,Bronze
+M,27,164,52,RUS,Boxing,Bronze
+F,38,180,64,SWE,Swimming,Silver
+F,31,172,60,NOR,Handball,Gold
+M,25,173,60,CUB,Boxing,Bronze
+F,30,176,70,COL,Judo,Bronze
+M,22,179,60,BOT,Athletics,Silver
+F,27,160,58,TUN,Wrestling,Bronze
+M,20,171,85,NGR,Football,Bronze
+M,22,169,66,KOR,Judo,Silver
+F,28,170,97,FRA,Judo,Gold
+F,23,183,86,DEN,Rowing,Bronze
+F,24,178,68,USA,Swimming,Silver
+M,29,202,100,USA,Volleyball,Bronze
+F,23,167,61,SWE,Football,Silver
+M,33,200,105,SWE,Handball,Silver
+M,38,186,95,SWE,Handball,Silver
+M,29,181,97,UKR,Wrestling,Silver
+M,28,192,95,RUS,Canoeing,Bronze
+F,24,176,73,GBR,Hockey,Gold
+M,32,203,109,USA,Basketball,Bronze
+M,28,198,88,ITA,Volleyball,Silver
+M,34,184,120,TUR,Athletics,Bronze
+F,26,168,65,SWE,Football,Silver
+M,28,180,62,JPN,Athletics,Bronze
+F,32,186,78,JPN,Volleyball,Bronze
+F,34,167,60,BRA,Boxing,Bronze
+F,22,178,70,GBR,Cycling,Gold
+M,19,152,49,CUB,Boxing,Bronze
+M,37,186,78,BRA,Volleyball,Gold
+F,27,168,55,GBR,Cycling,Silver
+F,42,173,58,USA,Cycling,Gold
+F,22,183,78,NOR,Handball,Bronze
+M,27,166,67,ARM,Wrestling,Silver
+F,32,160,49,LTU,Modern Pentathlon,Gold
+F,20,164,55,GBR,Athletics,Bronze
+M,26,183,77,JAM,Athletics,Gold
+F,23,173,64,AUS,Swimming,Silver
+F,27,166,56,SWE,Football,Silver
+F,28,167,52,ETH,Athletics,Bronze
+F,29,170,57,GER,Equestrianism,Bronze
+F,32,183,74,USA,Basketball,Gold
+M,27,178,72,ITA,Fencing,Gold
+M,28,166,69,MAS,Cycling,Bronze
+M,22,194,88,DEN,Badminton,Bronze
+F,24,166,47,ETH,Athletics,Bronze
+F,31,180,66,FRA,Handball,Silver
+M,34,186,90,USA,Water Polo,Silver
+M,27,178,71,FRA,Rowing,Gold
+M,19,170,68,NGR,Football,Bronze
+M,28,178,76,NED,Hockey,Silver
+M,31,199,86,CZE,Athletics,Bronze
+F,23,176,66,ESP,Water Polo,Silver
+F,33,175,85,ITA,Shooting,Gold
+F,27,170,62,SUI,Tennis,Silver
+M,30,190,93,CAN,Rowing,Bronze
+M,24,193,84,JAM,Athletics,Gold
+F,19,173,68,USA,Swimming,Silver
+M,21,178,90,JPN,Judo,Gold
+F,24,172,89,NZL,Rugby Sevens,Silver
+M,27,188,82,NED,Hockey,Silver
+M,21,195,85,KAZ,Swimming,Gold
+M,30,175,70,ITA,Fencing,Gold
+F,29,180,67,FRA,Swimming,Bronze
+F,27,178,70,USA,Volleyball,Bronze
+F,26,185,75,GER,Rowing,Silver
+F,29,178,67,BRA,Beach Volleyball,Silver
+F,28,171,71,BRA,Football,Silver
+F,29,180,74,MNE,Handball,Silver
+F,21,168,56,GBR,Cycling,Gold
+M,24,203,102,USA,Basketball,Gold
+M,29,163,49,IRL,Boxing,Bronze
+M,28,183,70,FRA,Rowing,Bronze
+F,27,171,59,AUS,Swimming,Gold
+F,29,166,53,USA,Athletics,Bronze
+F,32,171,58,ARG,Hockey,Bronze
+M,25,178,60,GUA,Athletics,Silver
+M,25,190,65,QAT,Athletics,Bronze
+M,27,188,73,DEN,Rowing,Bronze
+F,31,170,55,SVK,Shooting,Bronze
+M,32,178,72,GBR,Rowing,Silver
+F,33,170,60,GER,Football,Gold
+F,41,172,52,SWE,Equestrianism,Silver
+F,25,173,67,RUS,Taekwondo,Bronze
+M,29,181,80,FRA,Athletics,Bronze
+M,21,160,66,ITA,Judo,Gold
+F,19,162,60,RUS,Shooting,Silver
+M,29,190,91,ITA,Rowing,Silver
+M,27,185,81,FRA,Boxing,Bronze
+M,21,183,76,GER,Football,Silver
+M,31,181,100,FRA,Cycling,Silver
+M,29,160,59,AZE,Wrestling,Silver
+F,29,180,78,AUS,Water Polo,Bronze
+M,34,191,94,FRA,Canoeing,Silver
+F,28,168,66,AUS,Rugby Sevens,Gold
+F,21,173,63,CAN,Football,Bronze
+F,33,182,70,BRA,Beach Volleyball,Silver
+M,52,190,85,GER,Equestrianism,Gold
+F,25,183,73,NZL,Rowing,Silver
+F,30,172,71,GER,Football,Bronze
+M,25,197,80,AZE,Taekwondo,Bronze
+F,23,168,68,USA,Swimming,Bronze
+F,37,191,72,ESP,Athletics,Gold
+F,38,172,62,GRE,Sailing,Gold
+F,30,163,63,CAN,Football,Bronze
+M,33,173,62,AUS,Sailing,Gold
+F,31,175,72,NED,Rowing,Bronze
+M,25,178,85,UKR,Wrestling,Silver
+F,25,170,59,ESP,Swimming,Silver
+M,26,187,90,AUS,Rowing,Silver
+F,22,169,60,RUS,Water Polo,Bronze
+F,23,173,60,RUS,Boxing,Bronze
+M,24,165,55,RUS,Gymnastics,Silver
+M,27,184,80,GER,Football,Silver
+M,27,185,80,GER,Football,Silver
+F,27,155,48,CAN,Diving,Bronze
+M,54,171,67,SWE,Equestrianism,Silver
+F,27,165,68,CAN,Rugby Sevens,Bronze
+F,27,179,75,GBR,Rowing,Silver
+M,23,183,89,GBR,Rugby Sevens,Silver
+M,27,207,100,GBR,Rowing,Gold
+M,20,196,84,USA,Swimming,Gold
+M,28,196,83,SVK,Canoeing,Silver
+F,23,186,75,ROU,Rowing,Bronze
+M,33,167,60,NOR,Wrestling,Bronze
+F,27,171,64,SWE,Football,Silver
+F,25,170,66,NED,Rowing,Silver
+F,23,169,62,CAN,Cycling,Bronze
+F,27,176,76,ITA,Water Polo,Silver
+M,25,176,86,GBR,Rugby Sevens,Silver
+F,33,184,84,BLR,Rowing,Bronze
+F,40,173,75,GBR,Equestrianism,Silver
+M,25,201,85,CRO,Water Polo,Silver
+F,19,143,47,USA,Gymnastics,Gold
+M,33,173,70,IND,Shooting,Gold
+M,35,202,95,ITA,Volleyball,Bronze
+M,26,210,104,SRB,Basketball,Silver
+F,35,175,66,USA,Basketball,Gold
+M,24,187,72,AUS,Athletics,Bronze
+F,18,168,47,RUS,Rhythmic Gymnastics,Gold
+F,20,173,69,SWE,Football,Silver
+M,26,180,80,JAM,Athletics,Silver
+M,28,180,88,TTO,Athletics,Gold
+F,29,182,68,RUS,Handball,Silver
+F,22,173,51,RUS,Rhythmic Gymnastics,Gold
+F,22,170,58,DEN,Swimming,Gold
+M,27,180,65,AUS,Cycling,Silver
+F,28,180,72,RUS,Handball,Gold
+M,24,186,79,BEL,Hockey,Silver
+M,39,192,89,HUN,Fencing,Silver
+M,29,192,102,ITA,Water Polo,Bronze
+M,36,185,75,DEN,Badminton,Silver
+F,34,162,57,POL,Shooting,Silver
+M,23,197,99,SRB,Basketball,Silver
+F,18,172,52,SRB,Taekwondo,Silver
+F,24,186,78,ROU,Rowing,Bronze
+M,22,170,66,GEO,Wrestling,Bronze
+M,35,181,74,GER,Table Tennis,Silver
+M,29,196,95,JAM,Athletics,Gold
+M,30,189,89,NZL,Rowing,Gold
+M,26,198,77,UKR,Athletics,Bronze
+M,31,181,105,POL,Weightlifting,Bronze
+F,21,175,64,FRA,Swimming,Bronze
+M,26,184,81,BEL,Hockey,Silver
+M,25,190,93,AUS,Rowing,Silver
+M,26,193,84,NOR,Rowing,Bronze
+M,27,197,100,FRA,Fencing,Gold
+M,27,199,99,BRA,Volleyball,Gold
+F,19,184,95,RUS,Water Polo,Bronze
+F,30,172,57,BEL,Athletics,Silver
+M,24,160,59,CUB,Wrestling,Gold
+M,32,190,85,NED,Cycling,Silver
+F,28,181,69,NED,Hockey,Silver
+F,19,193,82,SRB,Volleyball,Silver
+M,50,176,80,FRA,Equestrianism,Gold
+F,27,167,56,TUN,Fencing,Bronze
+M,27,175,73,USA,Diving,Gold
+M,35,188,86,FRA,Swimming,Silver
+F,31,184,72,NED,Rowing,Bronze
+F,28,177,68,NED,Sailing,Silver
+M,33,196,74,TTO,Swimming,Bronze
+F,25,175,58,USA,Athletics,Silver
+M,51,176,95,PER,Shooting,Silver
+F,28,196,82,SRB,Volleyball,Silver
+M,20,183,83,GER,Football,Silver
+F,31,175,64,ROU,Fencing,Silver
+F,26,164,58,GBR,Hockey,Gold
+M,22,183,75,BRA,Athletics,Gold
+F,26,171,70,NZL,Rugby Sevens,Silver
+M,28,192,92,GER,Canoeing,Gold
+M,33,200,97,NZL,Rowing,Bronze
+M,28,172,71,BEL,Hockey,Silver
+F,35,171,63,GER,Shooting,Bronze
+M,25,187,94,RSA,Rowing,Silver
+F,36,168,59,USA,Equestrianism,Bronze
+F,29,168,54,GER,Equestrianism,Silver
+F,20,174,70,NZL,Rugby Sevens,Silver
+M,26,198,88,NED,Beach Volleyball,Bronze
+M,24,198,79,CAN,Athletics,Bronze
+M,37,178,75,BAH,Athletics,Bronze
+M,29,182,92,RSA,Rugby Sevens,Bronze
+F,29,167,61,CAN,Cycling,Bronze
+M,28,184,70,GBR,Triathlon,Gold
+M,26,181,70,GBR,Triathlon,Bronze
+M,28,175,70,NOR,Rowing,Bronze
+M,30,179,79,ARG,Hockey,Gold
+F,25,170,59,ITA,Swimming,Silver
+M,30,190,76,BRA,Volleyball,Silver
+F,26,173,63,UKR,Athletics,Bronze
+M,23,185,81,GBR,Boxing,Bronze
+F,20,170,65,CAN,Football,Bronze
+M,23,188,90,NED,Cycling,Silver
+M,22,195,90,CRO,Water Polo,Silver
+F,29,174,75,RUS,Wrestling,Bronze
+F,29,175,67,MNE,Handball,Silver
+F,31,186,71,MNE,Handball,Silver
+F,24,172,65,FRA,Handball,Silver
+M,28,180,92,GBR,Rugby Sevens,Silver
+M,35,205,115,CRO,Water Polo,Gold
+M,28,183,78,GBR,Cycling,Bronze
+M,25,186,82,NZL,Sailing,Silver
+M,29,165,68,CAN,Trampolining,Silver
+M,28,171,79,USA,Wrestling,Gold
+M,34,180,70,AUS,Equestrianism,Bronze
+M,26,180,81,AUS,Sailing,Gold
+F,22,187,74,SRB,Volleyball,Silver
+M,30,200,115,CRO,Water Polo,Gold
+M,32,206,100,ITA,Volleyball,Silver
+M,26,201,99,USA,Basketball,Gold
+M,29,186,83,GER,Hockey,Bronze
+F,30,175,65,SRB,Basketball,Bronze
+F,26,175,70,CUB,Athletics,Bronze
+M,29,185,78,FRA,Fencing,Silver
+F,31,160,54,ITA,Diving,Bronze
+M,25,175,55,CHN,Athletics,Silver
+F,38,171,81,ITA,Shooting,Gold
+M,29,168,60,ARG,Sailing,Bronze
+M,34,191,90,ESP,Basketball,Silver
+F,25,173,61,CAN,Swimming,Bronze
+M,32,189,86,TTO,Athletics,Gold
+M,30,183,77,ARG,Hockey,Gold
+F,25,176,57,ESP,Taekwondo,Silver
+F,24,203,98,AUS,Basketball,Bronze
+M,23,179,74,JPN,Athletics,Silver
+M,34,180,90,BRA,Judo,Silver
+M,33,191,96,GBR,Rowing,Bronze
+F,22,179,58,AUS,Swimming,Gold
+F,24,186,67,AUS,Swimming,Bronze
+F,34,168,58,JAM,Athletics,Silver
+M,28,177,80,ITA,Shooting,Silver
+M,35,186,81,SUI,Cycling,Silver
+M,21,160,42,CHN,Diving,Gold
+M,34,180,73,CHN,Modern Pentathlon,Silver
+F,30,161,57,ROU,Judo,Silver
+F,26,174,54,ESP,Synchronized Swimming,Silver
+F,25,175,57,GBR,Swimming,Silver
+F,25,181,73,GBR,Rowing,Silver
+F,29,164,63,ARG,Sailing,Gold
+F,27,168,63,NZL,Canoeing,Gold
+F,30,176,136,USA,Athletics,Gold
+F,21,172,65,AUS,Rugby Sevens,Gold
+M,32,193,93,ITA,Fencing,Bronze
+M,30,188,86,ITA,Rowing,Bronze
+F,30,174,78,CUB,Judo,Silver
+F,28,170,60,USA,Athletics,Bronze
+F,37,185,77,USA,Basketball,Gold
+F,20,168,63,USA,Cycling,Silver
+F,26,163,58,ARG,Hockey,Silver
+M,31,175,70,GBR,Cycling,Silver
+F,27,178,72,SRB,Basketball,Bronze
+M,26,176,65,USA,Athletics,Gold
+M,33,186,90,CRO,Shooting,Gold
+M,23,174,85,RUS,Wrestling,Gold
+M,18,193,90,AUS,Swimming,Gold
+M,26,186,72,GBR,Rowing,Silver
+M,31,183,74,GBR,Rowing,Silver
+M,24,172,65,ITA,Wrestling,Bronze
+M,26,193,80,USA,Fencing,Bronze
+M,28,175,68,MAS,Badminton,Silver
+F,29,158,50,KOR,Archery,Gold
+F,27,160,56,CAN,Football,Bronze
+M,33,195,90,FRA,Rowing,Bronze
+F,27,193,88,USA,Basketball,Gold
+M,28,181,81,BEL,Hockey,Silver
+M,30,185,93,UKR,Canoeing,Bronze
+M,25,175,57,USA,Athletics,Silver
+M,20,168,60,CHN,Diving,Gold
+M,23,175,62,CHN,Athletics,Gold
+M,27,188,81,CHN,Badminton,Bronze
+F,27,172,63,CHN,Sailing,Silver
+F,23,160,47,CHN,Diving,Gold
+F,34,149,47,TPE,Weightlifting,Bronze
+F,38,164,67,CHN,Shooting,Gold
+M,25,185,90,CHN,Judo,Bronze
+F,26,150,48,MAS,Diving,Silver
+M,31,183,75,RUS,Fencing,Gold
+F,23,168,70,AUS,Rugby Sevens,Gold
+F,32,153,40,KEN,Athletics,Silver
+F,21,162,46,RUS,Synchronized Swimming,Gold
+F,29,170,60,GBR,Athletics,Bronze
+F,22,159,63,PRK,Weightlifting,Silver
+F,30,169,59,KOR,Fencing,Silver
+F,26,174,59,KOR,Fencing,Silver
+F,20,168,53,KOR,Archery,Gold
+F,33,161,55,ESP,Canoeing,Bronze
+M,23,198,86,USA,Volleyball,Bronze
+M,30,197,93,DEN,Handball,Gold
+M,19,187,84,GER,Football,Silver
+M,19,188,71,RUS,Swimming,Bronze
+F,41,153,43,UZB,Gymnastics,Gold
+F,24,182,74,POL,Rowing,Bronze
+M,30,182,83,AUS,Hockey,Bronze
+M,22,186,80,CIV,Taekwondo,Gold
+M,25,179,69,FRA,Boxing,Bronze
+M,31,185,79,GBR,Cycling,Gold
+F,26,188,72,USA,Water Polo,Gold
+F,36,176,68,GBR,Sailing,Silver
+M,23,182,76,GBR,Canoeing,Gold
+M,27,206,107,ESP,Basketball,Silver
+M,25,181,72,USA,Athletics,Bronze
+M,31,185,86,AUS,Canoeing,Gold
+M,30,188,86,USA,Athletics,Silver
+M,25,180,74,USA,Athletics,Gold
+F,27,182,69,FRA,Modern Pentathlon,Silver
+F,25,173,54,USA,Athletics,Bronze
+M,27,192,80,CAN,Swimming,Bronze
+F,29,173,70,USA,Shooting,Bronze
+F,29,180,72,ROU,Rowing,Bronze
+F,27,186,75,ROU,Rowing,Bronze
+M,31,180,75,ITA,Volleyball,Silver
+M,24,187,70,FRA,Rowing,Bronze
+M,30,194,90,USA,Rowing,Bronze
+M,34,171,65,ESP,Cycling,Bronze
+M,27,171,57,BRA,Boxing,Gold
+M,21,193,80,USA,Swimming,Gold
+M,24,170,56,IRL,Boxing,Bronze
+F,29,167,70,GBR,Judo,Bronze
+F,17,170,61,AUS,Swimming,Silver
+F,25,172,58,GBR,Rowing,Gold
+M,29,191,85,TUR,Athletics,Bronze
+M,22,196,88,USA,Swimming,Gold
+F,37,168,55,NED,Equestrianism,Silver
+M,33,181,80,ESP,Hockey,Silver
+M,25,174,70,BEL,Hockey,Silver
+F,27,167,65,ITA,Water Polo,Silver
+M,25,210,122,USA,Basketball,Gold
+F,28,176,69,AUS,Swimming,Gold
+F,32,176,64,ZIM,Swimming,Silver
+M,21,180,86,USA,Wrestling,Bronze
+F,29,181,88,USA,Water Polo,Silver
+M,31,192,98,ESP,Canoeing,Gold
+F,31,176,69,BRA,Football,Silver
+M,23,191,103,GBR,Rugby Sevens,Silver
+M,29,195,95,CAN,Rowing,Silver
+M,23,201,125,USA,Athletics,Gold
+F,30,188,74,AUS,Rowing,Bronze
+F,29,176,60,ESP,Basketball,Silver
+F,36,159,63,CUB,Shooting,Bronze
+F,20,187,76,SRB,Basketball,Bronze
+M,30,188,83,HUN,Swimming,Bronze
+F,29,160,51,HUN,Judo,Bronze
+F,26,176,78,HUN,Canoeing,Gold
+M,25,191,91,SRB,Water Polo,Gold
+F,30,182,74,GBR,Hockey,Bronze
+M,32,200,82,PUR,Athletics,Bronze
+M,35,190,75,GBR,Cycling,Silver
+M,25,171,66,AZE,Wrestling,Bronze
+M,30,178,78,CRO,Handball,Bronze
+M,28,176,80,FRA,Cycling,Silver
+F,23,173,71,CAN,Football,Bronze
+F,25,177,78,BRA,Judo,Bronze
+M,29,203,160,BRA,Judo,Bronze
+F,26,183,70,SRB,Basketball,Bronze
+F,34,173,63,SRB,Basketball,Bronze
+F,21,171,59,GER,Football,Gold
+M,50,185,95,SWE,Shooting,Silver
+F,43,173,64,NOR,Cycling,Gold
+F,29,173,66,SWE,Football,Silver
+M,22,190,105,FIJ,Rugby Sevens,Gold
+M,22,177,74,GBR,Diving,Bronze
+M,36,206,93,USA,Beach Volleyball,Gold
+F,30,163,57,ITA,Diving,Silver
+F,23,180,72,AUS,Rugby Sevens,Gold
+F,28,169,60,FRA,Handball,Silver
+M,22,174,88,NGR,Football,Bronze
+F,31,167,56,GBR,Hockey,Bronze
+F,20,174,72,CAN,Rugby Sevens,Bronze
+F,24,168,65,AUS,Sailing,Silver
+F,20,169,57,RUS,Archery,Silver
+M,25,181,98,GBR,Rugby Sevens,Silver
+F,23,165,55,USA,Equestrianism,Silver
+M,27,185,93,NZL,Cycling,Silver
+F,29,168,51,JAM,Athletics,Bronze
+M,29,182,85,BRA,Athletics,Bronze
+F,27,170,61,NED,Hockey,Gold
+M,21,176,70,CAN,Athletics,Bronze
+M,32,180,91,CAN,Canoeing,Bronze
+M,28,175,87,RSA,Rugby Sevens,Bronze
+M,39,181,74,ARG,Sailing,Bronze
+F,29,172,58,GBR,Rowing,Silver
+M,27,183,80,NED,Hockey,Silver
+F,20,163,55,NED,Hockey,Silver
+M,26,183,78,NED,Hockey,Silver
+M,32,185,77,AUS,Hockey,Bronze
+F,29,179,66,FRA,Sailing,Bronze
+F,30,183,67,NED,Swimming,Bronze
+M,26,190,97,ITA,Water Polo,Bronze
+M,27,198,97,ARG,Tennis,Bronze
+M,33,196,95,ARG,Basketball,Gold
+F,26,195,86,USA,Basketball,Gold
+F,30,166,58,USA,Athletics,Bronze
+F,30,172,64,FRA,Handball,Silver
+F,26,180,58,BUL,Athletics,Silver
+M,25,170,74,TUR,Wrestling,Bronze
+M,35,180,71,GBR,Sailing,Bronze
+M,32,193,93,AZE,Canoeing,Silver
+M,26,190,85,BEL,Hockey,Silver
+M,24,163,58,CHN,Gymnastics,Bronze
+F,23,159,63,CHN,Weightlifting,Gold
+M,22,185,68,RUS,Taekwondo,Bronze
+M,26,182,72,AUS,Cycling,Silver
+F,31,165,52,AUS,Triathlon,Bronze
+F,26,173,61,RUS,Fencing,Silver
+M,21,184,79,ITA,Swimming,Bronze
+M,34,190,76,GER,Equestrianism,Bronze
+F,26,176,64,BEL,Cycling,Bronze
+M,24,184,87,ITA,Rowing,Bronze
+F,33,177,65,ITA,Fencing,Gold
+M,22,190,88,ITA,Water Polo,Bronze
+F,37,168,62,ITA,Water Polo,Gold
+F,25,173,58,GBR,Athletics,Bronze
+F,25,149,53,PHI,Weightlifting,Silver
+F,25,168,52,ETH,Athletics,Silver
+F,26,156,45,ETH,Athletics,Bronze
+F,31,166,50,ETH,Athletics,Bronze
+M,25,172,94,LTU,Weightlifting,Bronze
+F,47,168,93,SUI,Shooting,Bronze
+F,28,172,68,GER,Canoeing,Gold
+F,26,171,63,CHN,Table Tennis,Silver
+F,26,180,67,CHN,Volleyball,Gold
+F,32,168,60,ROU,Fencing,Gold
+M,28,202,105,FRA,Handball,Silver
+F,23,175,65,USA,Swimming,Gold
+F,29,170,56,NED,Hockey,Gold
+M,24,203,105,GER,Handball,Bronze
+M,30,177,90,RUS,Cycling,Bronze
+F,20,178,74,RUS,Handball,Gold
+M,26,175,74,BEL,Hockey,Silver
+M,43,186,86,BRA,Equestrianism,Bronze
+M,28,174,69,BEL,Hockey,Silver
+M,28,179,79,ROU,Fencing,Silver
+F,29,167,64,ESP,Basketball,Silver
+M,27,192,98,FIJ,Rugby Sevens,Gold
+M,39,189,83,ITA,Athletics,Bronze
+M,27,180,74,CHN,Athletics,Bronze
+M,27,168,57,CHN,Trampolining,Bronze
+M,28,170,60,MGL,Boxing,Bronze
+F,25,160,59,MGL,Judo,Silver
+M,24,175,77,USA,Diving,Silver
+F,21,159,69,JPN,Wrestling,Gold
+M,23,202,115,CZE,Canoeing,Bronze
+F,34,174,68,HUN,Canoeing,Gold
+F,20,157,50,USA,Gymnastics,Gold
+M,22,173,69,BRA,Football,Gold
+M,23,181,73,GBR,Cycling,Gold
+M,29,188,80,SRB,Tennis,Bronze
+M,35,163,64,ROU,Gymnastics,Bronze
+M,27,200,102,GER,Rowing,Silver
+M,19,191,86,USA,Swimming,Gold
+M,26,196,83,CAN,Athletics,Bronze
+F,25,150,50,ROU,Rowing,Bronze
+M,21,192,106,GER,Handball,Bronze
+M,37,200,102,NZL,Rowing,Bronze
+F,34,170,55,CHN,Shooting,Gold
+F,27,180,76,CHN,Rowing,Bronze
+M,43,185,85,NED,Equestrianism,Gold
+F,31,170,57,GBR,Equestrianism,Gold
+M,25,186,70,NED,Cycling,Silver
+M,24,174,64,RUS,Boxing,Bronze
+M,23,195,79,JAM,Athletics,Silver
+M,27,194,98,AUS,Rowing,Silver
+M,27,206,105,USA,Basketball,Gold
+M,28,196,96,GBR,Rowing,Gold
+M,23,156,49,UZB,Boxing,Gold
+M,33,168,65,IND,Wrestling,Bronze
+M,52,168,68,USA,Equestrianism,Gold
+M,28,198,100,CRO,Handball,Bronze
+M,27,196,89,USA,Swimming,Gold
+M,37,172,68,AUS,Hockey,Gold
+F,28,167,53,RUS,Fencing,Gold
+M,25,205,91,KAZ,Boxing,Bronze
+F,19,176,66,USA,Cycling,Silver
+M,28,186,81,USA,Athletics,Gold
+M,26,170,66,JPN,Judo,Bronze
+M,43,180,76,ESP,Sailing,Gold
+F,32,174,70,ESP,Sailing,Gold
+F,31,178,75,GBR,Rowing,Silver
+M,32,205,107,BRA,Volleyball,Gold
+M,22,184,76,AUS,Cycling,Silver
+F,24,171,65,AUS,Cycling,Bronze
+F,27,182,76,FRA,Handball,Silver
+M,23,172,59,JPN,Swimming,Bronze
+F,19,170,59,RUS,Sailing,Bronze
+M,34,188,82,USA,Shooting,Gold
+M,26,175,80,GBR,Badminton,Bronze
+F,23,183,65,USA,Athletics,Gold
+M,27,181,86,USA,Archery,Silver
+F,25,180,80,USA,Rowing,Gold
+F,22,179,73,AUS,Swimming,Gold
+F,32,180,78,ESP,Handball,Bronze
+F,34,162,70,FRA,Judo,Bronze
+F,24,171,67,ITA,Water Polo,Silver
+M,35,175,84,USA,Shooting,Gold
+M,29,165,77,GER,Cycling,Bronze
+M,37,198,104,EST,Rowing,Silver
+F,30,165,57,GBR,Athletics,Gold
+M,28,174,69,ESP,Hockey,Silver
+F,32,178,88,FRA,Taekwondo,Bronze
+F,31,184,79,DEN,Rowing,Silver
+F,28,172,55,BRA,Football,Silver
+F,22,172,66,SWE,Football,Silver
+F,28,180,68,ITA,Fencing,Silver
+M,35,191,80,USA,Swimming,Gold
+M,40,184,78,BRA,Volleyball,Gold
+F,23,180,66,ESP,Water Polo,Silver
+M,31,178,86,PUR,Wrestling,Silver
+F,30,156,48,MEX,Diving,Bronze
+F,28,173,70,MEX,Taekwondo,Gold
+F,24,168,55,AUS,Modern Pentathlon,Gold
+F,26,170,58,ESP,Water Polo,Silver
+M,20,172,71,NGR,Football,Bronze
+F,29,169,66,AUS,Rugby Sevens,Gold
+M,31,192,120,SWE,Wrestling,Bronze
+F,25,175,65,AUS,Swimming,Silver
+M,32,183,76,POR,Athletics,Gold
+M,22,171,80,NGR,Football,Bronze
+M,38,177,110,ITA,Shooting,Silver
+F,26,161,56,BRA,Football,Silver
+F,31,193,76,BRA,Volleyball,Gold
+M,20,198,100,FRA,Handball,Silver
+F,31,162,53,JAM,Athletics,Silver
+F,16,148,37,CHN,Gymnastics,Bronze
+M,30,183,67,CRO,Sailing,Gold
+M,33,175,58,GBR,Athletics,Gold
+F,24,173,73,CAN,Rugby Sevens,Bronze
+M,35,173,66,USA,Equestrianism,Silver
+M,26,199,97,GER,Handball,Bronze
+F,22,173,65,USA,Water Polo,Gold
+F,36,172,64,HUN,Canoeing,Gold
+M,26,196,98,USA,Swimming,Silver
+M,23,178,66,BRA,Football,Gold
+F,30,168,56,USA,Athletics,Silver
+F,26,170,85,CHN,Golf,Bronze
+F,29,163,55,SGP,Table Tennis,Silver
+M,31,196,84,ESP,Basketball,Silver
+F,50,176,58,ESP,Equestrianism,Bronze
+F,25,167,50,ITA,Fencing,Silver
+M,22,180,74,ITA,Fencing,Silver
+M,23,183,88,USA,Cycling,Gold
+M,32,191,98,ITA,Water Polo,Silver
+M,33,159,62,COL,Weightlifting,Silver
+F,29,152,52,CAN,Diving,Bronze
+M,29,196,101,SRB,Water Polo,Bronze
+M,19,168,52,VEN,Boxing,Bronze
+F,17,183,78,USA,Water Polo,Gold
+F,19,186,74,USA,Water Polo,Gold
+F,32,176,68,SWE,Football,Silver
+F,21,168,75,NZL,Rugby Sevens,Silver
+F,35,166,47,USA,Athletics,Silver
+F,18,164,55,CAN,Football,Bronze
+M,33,188,76,GBR,Canoeing,Silver
+M,33,169,57,UZB,Gymnastics,Bronze
+M,23,191,82,DEN,Cycling,Bronze
+M,22,190,96,ITA,Water Polo,Bronze
+M,31,172,68,ITA,Cycling,Bronze
+F,28,180,75,NED,Boxing,Silver
+F,20,160,55,JAM,Athletics,Silver
+F,38,162,53,BRA,Football,Silver
+M,36,191,88,AUS,Rowing,Bronze
+F,30,198,90,USA,Basketball,Gold
+F,22,166,60,AUS,Canoeing,Silver
+M,47,196,80,GBR,Equestrianism,Silver
+F,30,182,78,NOR,Handball,Gold
+M,21,183,68,JAM,Athletics,Silver
+F,24,180,72,USA,Athletics,Gold
+F,23,167,57,AUT,Sailing,Bronze
+F,21,188,77,USA,Swimming,Bronze
+F,29,169,73,SWE,Wrestling,Bronze
+F,29,160,57,JAM,Athletics,Gold
+F,30,178,75,ITA,Water Polo,Silver
+M,44,189,80,SWE,Equestrianism,Silver
+F,28,184,74,DEN,Swimming,Bronze
+M,31,185,69,GBR,Cycling,Bronze
+M,32,181,78,CHN,Badminton,Silver
+F,20,179,63,CHN,Swimming,Bronze
+M,24,185,74,GER,Hockey,Gold
+M,31,183,69,DEN,Cycling,Silver
+M,31,184,82,JPN,Swimming,Bronze
+F,27,156,48,JPN,Table Tennis,Silver
+F,29,173,70,POL,Rowing,Bronze
+F,47,168,68,GBR,Equestrianism,Silver
+M,31,190,89,GER,Hockey,Gold
+M,31,174,89,JPN,Archery,Silver
+M,19,178,68,BRA,Football,Gold
+M,19,175,68,BRA,Football,Gold
+M,46,182,72,NED,Equestrianism,Bronze
+F,24,170,63,KAZ,Judo,Bronze
+M,33,178,98,ITA,Archery,Gold
+M,31,192,95,ITA,Water Polo,Silver
+F,20,178,80,USA,Taekwondo,Bronze
+M,26,176,91,BLR,Wrestling,Bronze
+M,24,170,64,CHN,Trampolining,Bronze
+F,30,181,75,BRA,Volleyball,Gold
+M,22,165,55,MEX,Diving,Silver
+F,25,188,90,ESP,Water Polo,Silver
+M,32,198,92,CRO,Water Polo,Silver
+M,20,193,94,BAH,Athletics,Bronze
+F,24,168,55,USA,Athletics,Gold
+M,29,181,76,FRA,Canoeing,Gold
+F,26,169,64,ITA,Water Polo,Silver
+M,23,177,65,ITA,Fencing,Gold
+M,27,190,70,ITA,Fencing,Silver
+M,21,178,64,USA,Archery,Silver
+M,36,215,115,ESP,Basketball,Silver
+M,25,181,71,NZL,Cycling,Bronze
+M,34,186,80,USA,Athletics,Gold
+F,22,169,55,ESP,Rhythmic Gymnastics,Silver
+F,27,169,56,RUS,Fencing,Gold
+M,25,169,64,UZB,Boxing,Gold
+F,22,176,65,CIV,Taekwondo,Bronze
+M,26,180,58,ETH,Athletics,Silver
+M,22,171,56,ETH,Athletics,Bronze
+M,22,175,78,RSA,Rugby Sevens,Bronze
+M,29,173,74,RUS,Wrestling,Silver
+M,29,188,88,GER,Handball,Bronze
+M,26,206,99,USA,Basketball,Gold
+M,29,189,100,FRA,Handball,Silver
+F,30,175,60,BLR,Swimming,Silver
+F,27,169,63,ISR,Judo,Bronze
+M,28,186,115,IRI,Wrestling,Bronze
+F,31,170,58,ROU,Fencing,Gold
+F,32,174,51,TUN,Athletics,Silver
+M,19,198,92,ITA,Volleyball,Silver
+M,36,185,78,GRE,Swimming,Silver
+M,30,195,101,CAN,Rowing,Silver
+F,24,191,78,ESP,Basketball,Silver
+M,34,186,91,ARG,Hockey,Gold
+F,24,176,77,USA,Water Polo,Gold
+M,32,193,85,FRA,Swimming,Silver
+M,39,198,91,ARG,Basketball,Gold
+M,22,190,88,GER,Football,Silver
+M,28,190,92,AUS,Rowing,Silver
+M,29,190,90,ITA,Water Polo,Silver
+F,21,160,52,ITA,Judo,Silver
+M,23,174,69,UZB,Boxing,Silver
+F,24,167,58,CAN,Cycling,Bronze
+M,33,178,82,CRO,Shooting,Gold
+F,28,183,72,USA,Volleyball,Bronze
+F,22,178,65,FRA,Handball,Silver
+F,30,177,67,GBR,Rowing,Gold
+F,28,175,68,RUS,Water Polo,Bronze
+M,21,173,74,GER,Football,Silver
+F,25,164,52,FRA,Judo,Bronze
+F,25,185,82,USA,Rowing,Gold
+F,29,156,53,FRA,Shooting,Silver
+M,33,193,93,SRB,Water Polo,Bronze
+F,30,171,56,GER,Football,Gold
+F,27,166,56,MAS,Badminton,Silver
+M,27,180,70,MAS,Badminton,Silver
+M,26,180,80,AUS,Hockey,Bronze
+M,30,203,112,CRO,Handball,Bronze
+M,20,173,66,BLR,Trampolining,Gold
+F,29,165,65,CHN,Cycling,Silver
+F,27,175,105,CHN,Athletics,Bronze
+F,19,186,72,CHN,Volleyball,Gold
+M,26,179,90,CUB,Judo,Silver
+M,26,185,68,ESP,Taekwondo,Gold
+F,27,162,47,MEX,Athletics,Silver
+M,19,167,58,GBR,Diving,Bronze
+F,21,168,65,JAM,Athletics,Silver
+M,27,179,83,TTO,Athletics,Bronze
+M,21,189,79,GER,Football,Silver
+F,23,160,63,KAZ,Weightlifting,Bronze
+F,25,180,73,ITA,Water Polo,Silver
+F,19,173,74,CAN,Swimming,Bronze
+F,23,176,73,NZL,Rugby Sevens,Silver
+M,27,195,95,GBR,Rowing,Gold
+M,25,187,84,BEL,Hockey,Silver
+M,28,191,81,GBR,Athletics,Bronze
+F,25,168,62,BRA,Sailing,Gold
+F,40,183,78,GBR,Rowing,Silver
+M,23,177,74,GER,Hockey,Bronze
+M,20,185,85,GER,Hockey,Bronze
+M,31,195,96,RUS,Volleyball,Bronze
+F,29,173,55,USA,Equestrianism,Bronze
+M,24,198,100,FRA,Handball,Silver
+M,28,199,99,RUS,Swimming,Bronze
+M,26,200,104,USA,Basketball,Gold
+F,23,172,75,AUS,Rugby Sevens,Gold
+M,32,198,97,GBR,Rowing,Gold
+F,33,179,71,GBR,Rowing,Silver
+M,44,171,73,AUS,Equestrianism,Bronze
+M,24,179,88,RUS,Shooting,Bronze
+M,40,182,90,DEN,Shooting,Silver
+F,31,180,80,NOR,Handball,Gold
+F,25,203,94,USA,Basketball,Gold
+F,28,185,87,RUS,Water Polo,Bronze
+M,30,190,92,LTU,Rowing,Silver
+M,31,190,100,NED,Judo,Bronze
+M,26,182,85,GER,Canoeing,Gold
+F,21,179,66,AUS,Swimming,Silver
+F,29,193,83,FRA,Basketball,Silver
+M,27,193,92,GER,Rowing,Gold
+M,32,188,83,FRA,Fencing,Bronze
+M,27,182,70,KOR,Fencing,Gold
+F,23,174,60,CHN,Synchronized Swimming,Silver
+F,31,160,55,ITA,Cycling,Bronze
+M,34,182,70,SUI,Equestrianism,Bronze
+M,34,207,106,BRA,Volleyball,Gold
+M,34,179,79,FRA,Handball,Gold
+F,23,167,54,CHN,Synchronized Swimming,Silver
+F,32,168,60,CHN,Shooting,Gold
+M,20,187,83,GBR,Swimming,Silver
+M,24,183,90,KOR,Judo,Bronze
+M,31,187,76,SUI,Rowing,Gold
+M,27,185,77,HUN,Swimming,Silver
+M,19,196,84,USA,Swimming,Gold
+F,22,161,47,ARG,Hockey,Silver
+M,39,196,101,GER,Rowing,Bronze
+M,31,192,120,IRI,Athletics,Silver
+M,27,192,95,GER,Handball,Bronze
+M,25,186,100,JPN,Judo,Bronze
+M,21,177,71,JPN,Swimming,Bronze
+F,26,155,58,GER,Hockey,Bronze
+F,25,176,65,JPN,Synchronized Swimming,Bronze
+M,22,183,75,USA,Athletics,Gold
+M,28,164,62,GER,Gymnastics,Bronze
+F,22,172,65,SWE,Football,Silver
+F,32,171,65,USA,Cycling,Silver
+M,27,173,80,USA,Shooting,Gold
+M,29,175,70,JPN,Canoeing,Bronze
+M,27,184,83,GER,Hockey,Gold
+M,18,176,58,THA,Taekwondo,Silver
+M,29,200,105,DEN,Handball,Gold
+F,27,166,60,DEN,Sailing,Bronze
+M,24,180,73,DEN,Cycling,Gold
+M,28,196,98,DEN,Handball,Gold
+M,31,200,105,DEN,Handball,Gold
+F,28,176,66,CHN,Fencing,Silver
+M,24,191,125,JPN,Judo,Silver
+F,29,188,79,USA,Volleyball,Silver
+F,26,173,74,USA,Judo,Gold
+M,26,207,120,GER,Athletics,Gold
+M,31,201,126,GER,Athletics,Gold
+F,33,174,65,RSA,Canoeing,Bronze
+M,25,172,64,GER,Boxing,Bronze
+F,30,173,68,USA,Athletics,Gold
+F,26,172,63,GER,Hockey,Bronze
+M,28,183,81,GER,Hockey,Gold
+M,27,180,77,GER,Diving,Silver
+M,24,178,79,CZE,Canoeing,Bronze
+M,24,170,73,CAN,Athletics,Bronze
+F,27,160,50,CHN,Trampolining,Gold
+F,25,159,51,CHN,Diving,Silver
+F,32,173,59,NED,Rowing,Gold
+M,31,182,81,GBR,Canoeing,Bronze
+F,28,168,59,USA,Football,Gold
+F,28,180,68,NED,Swimming,Gold
+F,32,175,85,GER,Athletics,Bronze
+M,26,185,80,GER,Sailing,Bronze
+M,31,194,99,GER,Handball,Bronze
+F,29,173,63,CZE,Athletics,Bronze
+M,27,183,86,USA,Athletics,Gold
+M,28,197,95,NED,Rowing,Bronze
+F,26,175,68,GER,Football,Gold
+F,20,171,64,GBR,Athletics,Bronze
+M,24,186,77,AUS,Cycling,Silver
+F,24,167,70,GER,Canoeing,Silver
+M,37,172,67,ESP,Cycling,Silver
+M,26,178,64,MEX,Modern Pentathlon,Bronze
+F,16,152,49,USA,Gymnastics,Gold
+M,20,165,49,USA,Boxing,Bronze
+F,25,165,65,VEN,Cycling,Bronze
+M,22,210,115,ESP,Basketball,Bronze
+F,29,167,57,NOR,Handball,Gold
+M,34,193,88,ESP,Beach Volleyball,Silver
+M,19,180,76,GER,Hockey,Bronze
+M,49,182,86,GBR,Equestrianism,Gold
+M,20,163,63,JPN,Wrestling,Silver
+M,23,194,92,AUS,Rowing,Silver
+F,26,193,72,USA,Volleyball,Bronze
+M,37,172,55,GBR,Rowing,Bronze
+F,24,183,89,USA,Water Polo,Gold
+F,27,168,62,GBR,Hockey,Gold
+M,23,178,82,GBR,Cycling,Gold
+F,35,170,59,SUI,Tennis,Silver
+F,25,170,75,GBR,Athletics,Bronze
+M,22,173,68,USA,Diving,Silver
+F,29,175,60,CZE,Tennis,Silver
+M,41,175,75,VIE,Shooting,Gold
+M,33,197,95,GER,Canoeing,Bronze
+M,29,184,79,NED,Hockey,Silver
+F,30,168,56,GBR,Triathlon,Bronze
+M,29,208,90,USA,Volleyball,Bronze
+M,26,183,78,GER,Athletics,Bronze
+M,26,173,74,USA,Fencing,Silver
+F,27,156,47,PRK,Gymnastics,Gold
+F,30,164,54,NED,Hockey,Gold
+F,20,179,80,FRA,Handball,Silver
+F,35,183,74,AUS,Rowing,Bronze
+M,23,191,76,GER,Football,Silver
+M,20,190,88,AUS,Swimming,Gold
+M,31,179,86,CRO,Handball,Bronze
+F,25,164,56,JPN,Swimming,Bronze
+M,32,196,101,HUN,Water Polo,Gold
+F,27,175,65,HUN,Swimming,Gold
+F,24,168,69,FRA,Handball,Silver
+M,28,179,93,RSA,Rugby Sevens,Bronze
+F,35,193,80,GBR,Rowing,Silver
+M,22,182,74,FRA,Rowing,Gold
+M,34,183,78,GBR,Canoeing,Silver
+M,35,186,102,DEN,Sailing,Silver
+F,31,177,72,CZE,Tennis,Silver
+M,24,198,101,CRO,Boxing,Bronze
+F,25,160,53,TPE,Weightlifting,Silver
+M,26,170,74,AZE,Wrestling,Bronze
+M,38,180,75,CHN,Shooting,Bronze
+M,23,168,52,CHN,Boxing,Bronze
+F,25,178,63,CHN,Rowing,Silver
+F,26,175,61,CHN,Synchronized Swimming,Bronze
+F,25,192,78,CHN,Volleyball,Gold
+F,25,173,80,USA,Fencing,Bronze
+F,28,175,75,USA,Fencing,Bronze
+F,25,163,54,GER,Football,Gold
+M,30,170,68,BRA,Gymnastics,Silver
+F,32,185,70,COL,Athletics,Silver
+M,23,175,75,ARG,Hockey,Gold
+M,30,174,75,ARG,Hockey,Gold
+M,31,183,97,UZB,Wrestling,Bronze
+F,32,166,61,JPN,Wrestling,Gold
+M,27,177,64,CUB,Boxing,Bronze
+M,29,173,57,MAR,Athletics,Bronze
+M,26,165,77,EGY,Weightlifting,Bronze
+M,25,185,80,JPN,Athletics,Silver
+M,30,180,98,TUR,Wrestling,Bronze
+M,29,179,90,GRE,Judo,Gold
+F,25,174,60,RUS,Handball,Gold
+M,23,185,75,USA,Fencing,Bronze
+M,41,184,75,HUN,Fencing,Bronze
+M,37,170,97,ITA,Shooting,Silver
+F,25,169,55,JPN,Synchronized Swimming,Bronze
+M,23,170,73,USA,Diving,Bronze
+M,27,154,62,INA,Weightlifting,Bronze
+M,26,178,64,JPN,Swimming,Bronze
+M,24,190,87,USA,Basketball,Gold
+M,46,178,83,RUS,Shooting,Bronze
+M,26,200,93,AZE,Taekwondo,Gold
+F,30,177,60,RUS,Synchronized Swimming,Gold
+F,23,158,51,JPN,Table Tennis,Silver
+F,27,164,55,GER,Football,Gold
+M,24,173,69,TUR,Weightlifting,Silver
+F,15,150,45,JPN,Table Tennis,Bronze
+F,29,176,68,RUS,Water Polo,Bronze
+M,24,192,90,RUS,Swimming,Silver
+M,29,190,91,KOR,Taekwondo,Gold
+F,22,173,61,JAM,Athletics,Bronze
+M,29,193,95,GER,Hockey,Bronze
+M,25,185,77,USA,Swimming,Silver
+M,22,198,91,USA,Volleyball,Bronze
+M,27,188,65,USA,Athletics,Silver
+M,29,195,98,SWE,Handball,Silver
+F,26,174,62,SWE,Football,Silver
+M,23,194,93,GER,Rowing,Silver
+M,19,197,89,SRB,Water Polo,Gold
+F,24,171,66,GBR,Cycling,Silver
+M,23,180,66,GRN,Athletics,Gold
+M,34,184,90,EST,Rowing,Bronze
+F,27,182,74,NED,Rowing,Silver
+F,32,186,71,BRA,Volleyball,Gold
+F,24,186,77,AUS,Basketball,Bronze
+F,19,162,51,BRN,Athletics,Gold
+F,34,165,59,CAN,Rowing,Silver
+M,31,197,102,DEN,Handball,Gold
+M,28,186,80,AUS,Sailing,Gold
+F,32,169,60,KOR,Fencing,Bronze
+F,25,153,51,KOR,Judo,Silver
+F,26,172,59,KOR,Badminton,Bronze
+M,32,185,83,KOR,Fencing,Bronze
+M,25,189,84,FRA,Fencing,Gold
+M,36,175,78,KOR,Shooting,Silver
+M,28,193,100,GER,Rowing,Gold
+F,32,168,54,SWE,Cycling,Silver
+F,21,186,81,USA,Water Polo,Gold
+M,20,188,80,USA,Diving,Silver
+M,26,188,86,USA,Tennis,Bronze
+F,26,165,61,USA,Diving,Silver
+M,21,209,115,SRB,Basketball,Silver
+M,33,188,102,MNE,Water Polo,Silver
+M,28,203,95,CRO,Water Polo,Gold
+F,23,156,57,GBR,Taekwondo,Gold
+F,27,172,68,NZL,Canoeing,Silver
+F,26,159,59,NED,Hockey,Gold
+M,33,176,68,GER,Fencing,Bronze
+M,28,211,120,USA,Basketball,Gold
+F,30,178,59,USA,Triathlon,Gold
+F,30,182,71,MNE,Handball,Silver
+F,26,179,72,SRB,Basketball,Bronze
+M,25,196,94,SRB,Basketball,Silver
+M,30,197,108,GBR,Boxing,Silver
+F,20,169,70,DEN,Canoeing,Silver
+M,31,183,73,DEN,Rowing,Gold
+M,36,180,67,KOR,Table Tennis,Silver
+M,30,200,85,ITA,Volleyball,Silver
+F,32,183,71,DEN,Badminton,Silver
+M,29,166,76,ARM,Wrestling,Silver
+M,34,168,70,GER,Equestrianism,Gold
+M,28,179,80,GER,Shooting,Gold
+M,32,184,74,GRE,Sailing,Bronze
+F,38,155,45,RUS,Cycling,Bronze
+M,24,202,102,SRB,Basketball,Silver
+F,27,183,74,RUS,Handball,Gold
+M,22,193,86,USA,Swimming,Silver
+F,32,178,72,USA,Rowing,Bronze
+F,25,170,53,BUL,Rhythmic Gymnastics,Bronze
+M,28,178,73,RUS,Shooting,Silver
+M,27,178,70,USA,Archery,Silver
+F,27,175,64,JPN,Swimming,Gold
+M,37,196,125,EST,Athletics,Gold
+F,23,168,54,HUN,Swimming,Bronze
+M,28,202,108,FRA,Handball,Silver
+M,32,194,104,FRA,Handball,Gold
+F,22,166,62,RUS,Water Polo,Bronze
+M,35,196,104,SWE,Handball,Silver
+F,22,173,61,RUS,Water Polo,Bronze
+F,33,158,55,GER,Shooting,Silver
+M,22,162,54,JPN,Gymnastics,Silver
+M,32,177,70,SLO,Canoeing,Silver
+M,31,182,75,AUS,Hockey,Bronze
+F,21,160,61,JPN,Wrestling,Gold
+F,25,159,51,JPN,Archery,Bronze
+M,26,182,130,TUR,Wrestling,Bronze
+F,20,177,56,BUL,Rhythmic Gymnastics,Bronze
+M,29,196,94,RSA,Rowing,Silver
+F,20,167,62,AUS,Diving,Bronze
+F,23,172,66,NED,Hockey,Silver
+M,41,166,56,USA,Athletics,Silver
+F,36,193,92,BRA,Basketball,Bronze
+F,25,162,52,KOS,Judo,Gold
+M,34,167,52,KEN,Athletics,Gold
+F,24,169,56,GER,Football,Gold
+M,26,186,76,NED,Hockey,Silver
+M,19,186,74,HUN,Swimming,Bronze
+M,23,185,80,USA,Athletics,Bronze
+M,28,178,81,GBR,Cycling,Silver
+F,28,173,68,GER,Tennis,Silver
+F,28,167,57,GER,Football,Gold
+M,30,190,100,ARM,Wrestling,Bronze
+M,22,182,81,RUS,Judo,Gold
+M,25,160,62,KAZ,Weightlifting,Bronze
+F,25,172,68,UKR,Fencing,Gold
+M,32,182,100,RUS,Judo,Gold
+F,34,163,51,UZB,Trampolining,Bronze
+M,25,170,57,GEO,Wrestling,Silver
+F,44,185,80,BLR,Rowing,Bronze
+F,24,178,78,BLR,Canoeing,Bronze
+F,28,167,57,KOR,Archery,Gold
+F,22,157,43,KEN,Athletics,Gold
+M,27,173,80,KOR,Wrestling,Gold
+F,23,160,53,KOR,Shooting,Gold
+M,32,178,66,KOR,Fencing,Gold
+F,28,165,56,KOR,Fencing,Gold
+M,31,170,73,KOR,Shooting,Silver
+M,39,166,67,PRK,Shooting,Bronze
+F,23,170,100,PRK,Weightlifting,Silver
+F,27,169,62,KOR,Handball,Bronze
+F,22,164,50,KOR,Taekwondo,Gold
+M,30,167,75,PRK,Shooting,Bronze
+F,21,161,55,PRK,Table Tennis,Bronze
+M,21,182,59,KOR,Taekwondo,Bronze
+M,24,180,95,KOR,Archery,Gold
+F,29,185,65,JPN,Volleyball,Bronze
+F,19,175,70,USA,Swimming,Gold
+M,31,167,57,KEN,Athletics,Bronze
+M,27,190,63,KEN,Athletics,Gold
+M,27,172,56,UGA,Athletics,Gold
+M,31,175,55,KEN,Athletics,Silver
+M,21,167,58,KEN,Athletics,Gold
+M,48,190,86,UKR,Equestrianism,Gold
+F,32,155,49,BRN,Athletics,Silver
+M,20,175,68,JPN,Athletics,Silver
+M,33,194,115,HUN,Water Polo,Gold
+F,28,172,73,CAN,Rugby Sevens,Bronze
+M,27,164,60,BRA,Judo,Bronze
+F,24,162,42,KEN,Athletics,Silver
+M,28,171,65,FRA,Canoeing,Bronze
+M,30,173,71,GER,Diving,Silver
+F,48,172,58,GER,Equestrianism,Gold
+M,20,189,83,GER,Football,Silver
+M,30,191,85,GER,Cycling,Silver
+F,26,177,71,MNE,Handball,Silver
+M,31,183,74,AUS,Hockey,Gold
+F,30,182,88,AUS,Water Polo,Bronze
+M,22,183,77,JPN,Swimming,Bronze
+F,25,177,68,POL,Rowing,Bronze
+F,28,168,58,RUS,Fencing,Bronze
+F,19,157,46,USA,Gymnastics,Gold
+M,23,180,91,RSA,Rugby Sevens,Bronze
+F,21,170,74,CRO,Athletics,Gold
+M,22,179,89,RSA,Rugby Sevens,Bronze
+F,22,171,53,RUS,Synchronized Swimming,Gold
+M,30,174,90,FIJ,Rugby Sevens,Gold
+F,25,176,64,RUS,Fencing,Bronze
+F,23,169,75,UKR,Fencing,Silver
+F,21,156,48,JPN,Judo,Bronze
+M,26,183,82,CYP,Sailing,Silver
+M,30,210,112,CRO,Handball,Bronze
+F,20,175,65,GRE,Shooting,Bronze
+M,41,190,93,CZE,Shooting,Gold
+F,31,160,52,UKR,Shooting,Gold
+M,27,183,134,USA,Athletics,Silver
+M,37,204,132,HUN,Athletics,Silver
+M,29,177,74,RUS,Fencing,Bronze
+F,29,168,63,HUN,Canoeing,Silver
+F,30,186,75,UKR,Rowing,Gold
+F,31,173,61,GER,Football,Bronze
+F,27,168,65,GER,Equestrianism,Silver
+M,27,194,103,CRO,Water Polo,Silver
+F,24,176,66,UKR,Fencing,Silver
+M,27,195,95,DEN,Handball,Gold
+F,23,178,70,GER,Canoeing,Silver
+F,26,175,68,NOR,Handball,Bronze
+F,25,193,83,SRB,Basketball,Bronze
+F,25,180,72,NED,Swimming,Gold
+M,25,197,105,CZE,Judo,Gold
+M,20,159,56,THA,Weightlifting,Bronze
+F,27,173,67,GER,Hockey,Bronze
+M,23,181,84,KOR,Archery,Gold
+M,38,193,86,USA,Golf,Bronze
+M,21,184,90,GER,Wrestling,Bronze
+F,18,170,47,RUS,Rhythmic Gymnastics,Silver
+M,29,196,94,GER,Rowing,Gold
+M,23,198,110,GER,Handball,Bronze
+M,27,172,65,RUS,Gymnastics,Silver
+M,31,188,77,CZE,Cycling,Gold
+M,23,176,64,UKR,Shooting,Silver
+M,25,192,98,FIJ,Rugby Sevens,Gold
+F,25,172,68,BRA,Sailing,Gold
+F,22,157,58,TPE,Weightlifting,Bronze
+F,25,175,71,NOR,Handball,Gold
+M,31,174,72,RUS,Canoeing,Bronze
+M,26,170,64,RUS,Diving,Silver
+F,29,168,60,RUS,Handball,Gold
+F,27,160,52,RUS,Judo,Bronze
+M,28,176,73,UKR,Diving,Bronze
+F,26,183,70,CZE,Tennis,Bronze
+M,25,194,89,USA,Athletics,Silver
+M,26,182,81,CUB,Boxing,Gold
+F,29,178,53,CAN,Football,Bronze
+F,29,177,73,FRA,Handball,Silver
+M,41,173,58,USA,Athletics,Bronze
+M,40,177,70,FRA,Equestrianism,Gold
+M,48,170,65,CAN,Equestrianism,Gold
+M,27,201,102,DEN,Handball,Gold
+F,30,174,67,FRA,Handball,Silver
+F,28,163,65,CAN,Rugby Sevens,Bronze
+M,54,184,73,ARG,Sailing,Bronze
+M,33,194,93,GBR,Rowing,Silver
+M,30,178,89,LTU,Canoeing,Bronze
+M,25,198,98,ITA,Volleyball,Silver
+M,30,185,84,RUS,Canoeing,Bronze
+F,22,158,63,KAZ,Wrestling,Bronze
+F,34,174,68,BRA,Beach Volleyball,Bronze
+M,23,187,72,AUS,Swimming,Silver
+M,28,182,73,DEN,Rowing,Silver
+M,24,188,106,DEN,Handball,Gold
+M,19,180,74,DEN,Cycling,Bronze
+F,29,188,75,USA,Volleyball,Silver
+F,30,175,56,GER,Football,Bronze
+M,21,166,65,GBR,Diving,Silver
+M,29,177,71,FRA,Athletics,Gold
+F,21,163,59,CAN,Football,Bronze
+F,28,173,65,CAN,Cycling,Bronze
+F,24,178,72,MNE,Handball,Silver
+F,26,165,69,TPE,Archery,Bronze
+M,24,190,83,RSA,Swimming,Silver
+M,27,186,72,FRA,Sailing,Bronze
+M,34,171,65,FRA,Fencing,Silver
+F,33,162,72,GER,Shooting,Gold
+F,31,159,56,FRA,Sailing,Bronze
+F,19,183,73,USA,Swimming,Gold
+M,33,170,68,MAS,Badminton,Silver
+M,24,183,70,KOR,Taekwondo,Silver
+M,34,203,105,USA,Volleyball,Gold
+M,21,174,80,KOR,Archery,Gold
+F,29,165,62,HKG,Cycling,Bronze
+M,27,180,74,KOR,Badminton,Gold
+F,30,176,70,GBR,Rowing,Silver
+M,24,190,80,FRA,Fencing,Silver
+M,32,193,77,CHN,Fencing,Gold
+M,26,190,74,FRA,Athletics,Bronze
+M,24,210,115,GER,Handball,Bronze
+M,32,176,70,FRA,Equestrianism,Gold
+M,23,179,75,TTO,Athletics,Bronze
+F,36,175,55,FRA,Equestrianism,Gold
+M,28,185,74,RUS,Modern Pentathlon,Gold
+F,27,183,75,POL,Rowing,Bronze
+F,22,173,52,GER,Football,Gold
+F,21,173,67,NED,Hockey,Silver
+F,31,176,63,RUS,Handball,Gold
+M,28,185,91,KAZ,Boxing,Silver
+M,29,182,87,GER,Cycling,Bronze
+F,30,178,64,FRA,Handball,Silver
+M,24,170,68,USA,Gymnastics,Bronze
+F,27,155,47,CHN,Trampolining,Bronze
+F,29,168,63,CHN,Hockey,Silver
+F,26,180,75,CHN,Boxing,Bronze
+F,23,167,51,CHN,Synchronized Swimming,Silver
+F,28,174,65,CHN,Table Tennis,Gold
+F,25,175,65,CHN,Badminton,Gold
+M,26,173,71,CHN,Shooting,Bronze
+F,22,171,60,CHN,Synchronized Swimming,Silver
+M,23,189,89,GER,Canoeing,Gold
+F,24,183,78,GER,Rowing,Gold
+F,22,185,90,NED,Cycling,Gold
+M,26,175,67,ETH,Athletics,Silver
+M,31,175,75,VEN,Fencing,Gold
+M,20,163,60,CHN,Gymnastics,Bronze
+M,32,177,70,CHN,Badminton,Gold
+F,24,171,70,CHN,Volleyball,Gold
+F,23,160,65,TPE,Archery,Bronze
+M,25,163,53,CHN,Diving,Gold
+F,28,183,82,AUS,Water Polo,Bronze
+F,33,179,74,SWE,Football,Silver
+M,25,180,83,GBR,Rugby Sevens,Silver
+M,33,180,80,GBR,Shooting,Bronze
+M,21,199,95,SVK,Canoeing,Silver
+F,31,183,71,BRA,Volleyball,Gold
+M,27,187,94,GEO,Judo,Silver
+F,29,160,50,CHN,Athletics,Gold
+F,18,157,48,CHN,Diving,Gold
+F,25,160,54,CHN,Table Tennis,Gold
+F,26,188,70,CHN,Volleyball,Gold
+M,21,162,61,CHN,Gymnastics,Bronze
+M,25,168,65,AZE,Wrestling,Bronze
+F,34,170,64,USA,Football,Gold
+F,26,180,75,USA,Volleyball,Bronze
+M,28,192,91,ESP,Basketball,Silver
+M,31,195,100,FRA,Sailing,Bronze
+M,27,193,85,RUS,Swimming,Silver
+M,32,188,88,USA,Swimming,Gold
+M,28,191,88,AUS,Rowing,Silver
+M,21,196,90,ITA,Rowing,Bronze
+F,28,188,86,USA,Rowing,Gold
+F,36,174,62,RUS,Fencing,Gold
+M,29,195,106,CRO,Water Polo,Silver
+M,25,150,56,CHN,Weightlifting,Gold
+F,24,170,59,ITA,Cycling,Bronze
+M,23,178,75,CUB,Boxing,Gold
+F,21,169,56,ESP,Rhythmic Gymnastics,Silver
+M,31,178,74,ARG,Hockey,Gold
+F,28,171,65,ESP,Water Polo,Silver
+M,34,170,74,CUB,Wrestling,Bronze
+M,34,175,71,ESP,Tennis,Gold
+F,26,168,64,ESP,Handball,Bronze
+M,33,198,130,CUB,Wrestling,Gold
+M,37,191,83,USA,Taekwondo,Gold
+F,19,170,69,GER,Hockey,Bronze
+M,29,172,75,HUN,Wrestling,Silver
+M,24,190,92,GBR,Rowing,Bronze
+F,23,193,82,USA,Volleyball,Bronze
+M,30,183,93,USA,Basketball,Gold
+F,33,173,68,NOR,Handball,Gold
+M,32,172,77,CHN,Weightlifting,Gold
+F,22,160,45,CHN,Athletics,Bronze
+F,27,175,65,CHN,Swimming,Silver
+M,23,180,71,BRA,Football,Gold
+M,23,183,79,BRA,Football,Gold
+M,24,195,79,BRA,Volleyball,Gold
+M,38,186,78,FRA,Fencing,Gold
+M,31,199,95,NED,Rowing,Bronze
+F,30,181,70,GER,Beach Volleyball,Gold
+M,26,190,98,CUB,Wrestling,Silver
+M,32,196,89,BRA,Volleyball,Gold
+F,24,170,58,CAN,Rugby Sevens,Bronze
+F,36,181,67,NOR,Handball,Gold
+M,25,183,77,ITA,Beach Volleyball,Silver
+M,24,181,78,BEL,Hockey,Silver
+F,28,167,58,CHN,Badminton,Silver
+M,27,175,72,CHN,Table Tennis,Gold
+M,23,196,109,CRO,Water Polo,Silver
+F,22,172,70,CAN,Swimming,Bronze
+F,27,158,54,CAN,Trampolining,Gold
+F,32,172,67,GBR,Hockey,Bronze
+M,26,205,107,SRB,Basketball,Silver
+F,28,175,68,POL,Rowing,Gold
+F,52,168,63,USA,Equestrianism,Gold
+F,30,168,58,USA,Athletics,Gold
+M,18,187,73,DEN,Cycling,Bronze
+M,31,177,80,DEN,Wrestling,Silver
+M,20,171,79,NGR,Football,Bronze
+F,25,172,54,BUL,Rhythmic Gymnastics,Bronze
+M,34,188,80,ITA,Swimming,Bronze
+M,25,198,94,AUS,Swimming,Silver
+M,25,186,83,FRA,Handball,Silver
+M,33,183,68,GBR,Equestrianism,Gold
+F,23,163,62,GER,Football,Gold
+F,24,173,65,CAN,Swimming,Bronze
+M,34,204,142,POL,Athletics,Gold
+M,26,173,61,POL,Cycling,Bronze
+F,28,176,65,RUS,Tennis,Gold
+F,45,169,63,FIN,Shooting,Gold
+M,28,170,67,ALG,Athletics,Gold
+M,28,200,125,RUS,Wrestling,Bronze
+F,25,170,50,RUS,Rhythmic Gymnastics,Gold
+F,26,161,51,SRB,Shooting,Silver
+F,23,174,57,EGY,Taekwondo,Bronze
+F,25,185,78,SRB,Volleyball,Silver
+F,23,162,58,IND,Wrestling,Bronze
+M,32,196,84,FRA,Swimming,Silver
+F,30,161,58,USA,Judo,Bronze
+F,24,158,56,NZL,Sailing,Silver
+F,23,163,65,BLR,Wrestling,Silver
+F,20,170,50,RUS,Rhythmic Gymnastics,Gold
+M,25,199,99,FRA,Swimming,Gold
+M,22,202,105,SRB,Water Polo,Bronze
+F,24,180,72,SRB,Taekwondo,Gold
+M,27,171,64,ITA,Boxing,Bronze
+F,33,170,75,ESP,Handball,Bronze
+M,34,180,65,GRE,Sailing,Bronze
+F,29,166,65,NZL,Rugby Sevens,Silver
+F,20,178,73,USA,Swimming,Silver
+F,38,174,75,KAZ,Wrestling,Silver
+F,16,151,35,CHN,Gymnastics,Bronze
+F,23,170,72,GBR,Cycling,Bronze
+M,30,173,70,CRO,Sailing,Gold
+F,34,176,70,RUS,Handball,Silver
+M,28,189,108,FRA,Judo,Bronze
+F,24,173,65,USA,Swimming,Gold
+M,22,169,65,BRA,Gymnastics,Bronze
+F,23,172,65,ESP,Badminton,Gold
+M,48,178,88,AUS,Canoeing,Bronze
+M,28,199,96,SRB,Basketball,Silver
+M,32,181,75,HUN,Modern Pentathlon,Bronze
+F,24,163,57,USA,Wrestling,Gold
+F,24,171,68,GER,Football,Gold
+F,32,166,55,BRA,Modern Pentathlon,Bronze
+M,22,185,75,BRA,Football,Gold
+F,30,162,58,BRA,Football,Silver
+F,28,186,77,USA,Rowing,Bronze
+F,28,172,72,ESP,Handball,Bronze
+M,28,189,97,CRO,Rowing,Silver
+M,31,186,75,GER,Cycling,Silver
+M,24,165,49,COL,Boxing,Silver
+M,19,181,105,ARM,Weightlifting,Silver
+F,27,172,95,HUN,Athletics,Bronze
+F,24,160,50,JPN,Synchronized Swimming,Bronze
+M,21,171,73,RUS,Shooting,Bronze
+F,20,173,61,CAN,Swimming,Bronze
+F,31,178,57,GBR,Athletics,Bronze
+M,22,188,81,USA,Fencing,Silver
+M,22,186,82,ARG,Hockey,Gold
+F,27,178,75,CAN,Rowing,Silver
+M,24,196,106,FIJ,Rugby Sevens,Gold
+F,32,153,54,CAN,Football,Bronze
+F,29,171,69,USA,Water Polo,Gold
+M,32,178,76,BAH,Athletics,Silver
+M,32,184,84,JPN,Swimming,Bronze
+F,28,163,57,JPN,Judo,Gold
+F,31,168,66,USA,Tennis,Gold
+M,26,188,84,JAM,Athletics,Silver
+F,26,164,56,SWE,Wrestling,Bronze
+F,25,170,67,GER,Hockey,Bronze
+M,22,177,76,GER,Football,Silver
+M,24,186,77,FRA,Athletics,Silver
+M,27,173,77,ARG,Hockey,Gold
+M,33,193,130,POL,Athletics,Silver
+F,27,169,70,NZL,Rugby Sevens,Silver
+M,25,205,100,CAN,Rowing,Silver
+F,24,165,69,GBR,Hockey,Gold
+F,19,179,66,NZL,Athletics,Bronze
+M,24,190,93,GBR,Rugby Sevens,Silver
+F,27,171,68,USA,Athletics,Gold
+F,29,185,70,USA,Basketball,Gold
+M,23,175,81,JAM,Athletics,Silver
+M,22,185,70,AUS,Swimming,Bronze
+F,22,180,60,AUS,Swimming,Bronze
+F,21,178,65,AUS,Swimming,Silver
+F,30,170,65,JAM,Athletics,Silver
+F,25,173,65,USA,Taekwondo,Bronze
+F,27,173,57,JAM,Athletics,Silver
+M,26,181,72,USA,Athletics,Silver
+M,29,193,93,AUS,Rowing,Bronze
+M,29,190,91,AZE,Boxing,Bronze
+F,32,165,70,AUS,Cycling,Bronze
+M,23,172,70,GBR,Diving,Gold
+F,34,169,59,ESP,Tennis,Silver
+F,23,178,74,NZL,Sailing,Silver
+M,25,183,81,NZL,Sailing,Bronze
+M,28,207,92,NED,Beach Volleyball,Bronze
+F,26,170,67,MNE,Handball,Silver
+F,25,170,61,USA,Swimming,Bronze
+F,19,176,75,LTU,Swimming,Gold
+M,26,183,80,USA,Fencing,Bronze
+M,31,190,75,FRA,Athletics,Silver
+M,20,177,75,UZB,Boxing,Silver
+M,32,192,84,TUN,Swimming,Gold
+F,16,151,44,RUS,Gymnastics,Silver
+F,26,154,48,BRA,Judo,Gold
+F,27,173,123,CHN,Weightlifting,Gold
+F,39,173,54,ESP,Synchronized Swimming,Silver
+M,24,182,76,ARG,Hockey,Gold
+M,31,180,76,ROU,Tennis,Silver
+F,26,169,59,ARG,Hockey,Silver
+M,30,191,86,USA,Athletics,Gold
+M,24,190,90,FRA,Swimming,Silver
+M,20,173,60,GER,Football,Silver
+M,32,195,93,NED,Rowing,Bronze
+M,29,190,85,FRA,Swimming,Silver
+F,46,162,51,GER,Equestrianism,Bronze
+F,36,167,63,POL,Wrestling,Bronze
+M,23,187,75,FRA,Swimming,Silver
+F,25,190,83,SRB,Volleyball,Silver
+M,29,179,86,NGR,Football,Bronze
+M,28,202,103,RUS,Volleyball,Bronze
+F,30,170,68,POL,Canoeing,Silver
+M,48,180,90,UKR,Shooting,Gold
+M,48,178,84,USA,Shooting,Silver
+F,28,157,60,MNE,Handball,Silver
+M,24,180,80,USA,Swimming,Bronze
+F,22,185,69,BAH,Athletics,Gold
+F,28,157,50,GBR,Sailing,Silver
+M,22,185,76,GBR,Swimming,Silver
+F,27,190,84,SRB,Basketball,Bronze
+F,52,158,64,AUS,Shooting,Bronze
+M,21,180,140,ARM,Weightlifting,Silver
+M,42,190,75,NED,Equestrianism,Silver
+M,21,178,85,JAM,Athletics,Gold
+M,39,196,90,BLR,Tennis,Gold
+M,25,208,100,ESP,Basketball,Bronze
+M,21,187,85,UKR,Canoeing,Bronze
+M,25,180,83,NZL,Cycling,Silver
+M,27,178,85,GBR,Rugby Sevens,Silver
+M,31,201,100,SRB,Water Polo,Gold
+M,28,195,91,SRB,Water Polo,Bronze
+F,22,168,57,JPN,Synchronized Swimming,Bronze
+F,31,168,58,GER,Football,Bronze
+F,30,145,48,JPN,Weightlifting,Silver
+F,28,188,87,FRA,Basketball,Silver
+M,27,172,63,JPN,Table Tennis,Bronze
+M,23,196,91,AZE,Boxing,Bronze
+F,31,171,57,AUS,Triathlon,Bronze
+M,33,188,75,DEN,Badminton,Silver
+F,21,173,53,ESP,Rhythmic Gymnastics,Silver
+M,31,190,76,RSA,Athletics,Silver
+M,33,173,73,ROU,Shooting,Gold
+F,25,159,65,CAN,Rugby Sevens,Bronze
+F,25,178,73,NOR,Handball,Bronze
+M,37,184,82,ITA,Fencing,Gold
+F,30,161,57,POR,Judo,Bronze
+M,30,189,97,ITA,Rowing,Bronze
+F,27,183,79,USA,Basketball,Gold
+M,27,170,97,IRI,Weightlifting,Gold
+F,27,173,62,USA,Football,Gold
+M,33,191,90,AUS,Rowing,Bronze
+M,22,184,82,AUS,Swimming,Bronze
+M,24,180,73,RUS,Swimming,Bronze
+F,24,173,62,USA,Athletics,Silver
+M,32,195,90,FRA,Rowing,Bronze
+M,26,190,88,DEN,Handball,Gold
+M,38,191,97,USA,Water Polo,Silver
+M,44,180,82,RUS,Shooting,Bronze
+M,21,165,64,COL,Weightlifting,Bronze
+F,23,168,60,FRA,Boxing,Gold
+F,25,168,63,NOR,Handball,Bronze
+M,30,166,60,RUS,Judo,Gold
+F,26,173,55,USA,Athletics,Gold
+F,30,170,68,USA,Fencing,Bronze
+M,25,191,80,GBR,Taekwondo,Bronze
+M,22,169,78,NGR,Football,Bronze
+F,29,170,61,NED,Sailing,Silver
+F,30,170,71,GER,Hockey,Bronze
+M,24,187,80,GER,Hockey,Bronze
+F,29,175,69,GER,Hockey,Bronze
+M,23,178,58,COL,Taekwondo,Bronze
+M,28,195,96,GER,Rowing,Silver
+F,26,184,72,IRL,Sailing,Silver
+M,21,180,68,USA,Athletics,Bronze
+F,26,188,77,USA,Volleyball,Bronze
+M,21,191,91,USA,Swimming,Gold
+M,29,190,83,GBR,Tennis,Gold
+M,34,195,98,NZL,Rowing,Gold
+F,26,174,60,GBR,Modern Pentathlon,Silver
+F,33,183,73,USA,Rowing,Gold
+F,18,181,65,USA,Water Polo,Gold
+F,21,162,48,RUS,Gymnastics,Bronze
+F,31,171,68,ARG,Hockey,Silver
+M,20,189,90,SVK,Canoeing,Silver
+M,31,193,116,EST,Wrestling,Silver
+M,30,185,80,ESP,Tennis,Gold
+M,25,170,70,USA,Gymnastics,Bronze
+M,22,181,81,JPN,Judo,Bronze
+M,19,166,67,RUS,Gymnastics,Silver
+M,32,178,104,MGL,Judo,Gold
+F,26,165,63,POL,Canoeing,Bronze
+F,24,167,58,JPN,Synchronized Swimming,Bronze
+F,27,163,56,JPN,Synchronized Swimming,Bronze
+F,27,157,52,JPN,Judo,Bronze
+M,28,198,109,FIJ,Rugby Sevens,Gold
+F,34,155,46,KOR,Fencing,Silver
+M,33,180,115,IND,Shooting,Bronze
+M,36,189,93,FRA,Handball,Gold
+M,26,195,96,GBR,Rowing,Bronze
+F,27,184,76,BRA,Volleyball,Gold
+F,22,163,58,NZL,Rugby Sevens,Silver
+F,30,169,62,INA,Badminton,Silver
+F,20,165,76,BLR,Weightlifting,Silver
+M,36,193,82,ESP,Basketball,Silver
+F,37,169,62,ESP,Handball,Bronze
+M,27,165,65,UZB,Wrestling,Bronze
+F,22,168,49,BUL,Rhythmic Gymnastics,Bronze
+M,34,187,120,TJK,Athletics,Gold
+F,21,195,68,ESP,Basketball,Silver
+F,21,178,75,USA,Swimming,Bronze
+F,21,173,66,AUS,Swimming,Silver
+M,25,191,90,SRB,Basketball,Silver
+F,26,167,65,IND,Badminton,Bronze
+F,19,172,61,GBR,Athletics,Bronze
+M,28,181,78,ITA,Archery,Silver
+M,43,191,87,CAN,Tennis,Gold
+F,23,173,65,USA,Water Polo,Gold
+M,21,191,82,BAH,Athletics,Bronze
+M,24,174,64,BRA,Football,Silver
+M,23,186,105,FRA,Handball,Silver
+M,28,165,55,GER,Gymnastics,Silver
+F,23,176,66,FRA,Taekwondo,Silver
+F,27,190,90,ESP,Basketball,Silver
+M,27,203,91,ITA,Beach Volleyball,Silver
+M,27,180,70,FRA,Equestrianism,Silver
+M,37,188,78,DEN,Badminton,Bronze
+M,26,192,92,DEN,Handball,Gold
+F,19,184,67,DEN,Swimming,Bronze
+M,31,180,71,SUI,Rowing,Gold
+M,33,197,106,SRB,Water Polo,Silver
+M,26,165,56,RUS,Boxing,Bronze
+F,34,194,79,SRB,Volleyball,Silver
+M,26,197,114,SWE,Handball,Silver
+F,26,172,69,FRA,Handball,Silver
+M,26,178,74,JPN,Tennis,Bronze
+M,21,162,51,JPN,Table Tennis,Silver
+M,27,180,81,KAZ,Boxing,Silver
+F,23,166,60,BDI,Athletics,Silver
+M,36,201,102,ARG,Basketball,Gold
+M,29,191,85,ITA,Water Polo,Bronze
+F,31,176,60,SWE,Triathlon,Silver
+M,30,175,70,IRI,Wrestling,Gold
+M,28,180,85,GBR,Rugby Sevens,Silver
+F,25,180,60,POL,Modern Pentathlon,Bronze
+M,27,196,128,POL,Athletics,Bronze
+M,35,199,100,DEN,Handball,Gold
+M,35,173,67,DEN,Sailing,Bronze
+M,24,183,109,UZB,Weightlifting,Gold
+M,30,189,86,FRA,Handball,Silver
+F,24,178,67,FRA,Handball,Silver
+M,27,190,97,GAB,Taekwondo,Silver
+F,24,165,60,CAN,Rowing,Silver
+F,34,175,79,GER,Athletics,Bronze
+F,26,160,50,KEN,Athletics,Silver
+F,20,173,60,GBR,Swimming,Silver
+M,35,180,76,ITA,Fencing,Bronze
+M,30,194,95,USA,Rowing,Bronze
+M,25,191,93,GER,Rowing,Silver
+M,29,180,73,AUS,Hockey,Bronze
+M,23,172,70,IRL,Rowing,Silver
+M,22,177,70,IRL,Rowing,Silver
+F,24,168,65,NOR,Handball,Bronze
+F,31,183,67,SRB,Volleyball,Silver
+F,27,165,58,USA,Football,Gold
+F,28,182,69,KOR,Taekwondo,Gold
+F,43,171,73,KOR,Handball,Silver
+F,32,172,70,GBR,Athletics,Gold
+F,27,181,71,NGR,Athletics,Bronze
+F,33,165,52,BRA,Swimming,Bronze
+F,22,173,59,USA,Athletics,Gold
+F,21,156,51,JPN,Badminton,Bronze
+M,33,186,94,CAN,Canoeing,Bronze
+F,24,166,55,GER,Hockey,Bronze
+F,16,185,68,CAN,Swimming,Gold
+M,27,180,78,ESP,Hockey,Silver
+F,35,161,54,BRA,Sailing,Bronze
+M,20,183,64,FRA,Swimming,Bronze
+M,31,184,95,DEN,Handball,Gold
+M,24,151,56,PRK,Weightlifting,Gold
+F,20,160,48,JPN,Synchronized Swimming,Bronze
+M,39,192,93,FRA,Handball,Gold
+M,24,170,73,JPN,Judo,Gold
+F,31,178,76,GBR,Athletics,Bronze
+F,22,186,75,ROU,Rowing,Bronze
+M,34,191,85,ROU,Athletics,Silver
+M,28,186,85,COL,Cycling,Bronze
+M,30,186,82,AUS,Hockey,Bronze
+F,19,156,47,MEX,Diving,Silver
+M,25,182,77,ESP,Athletics,Silver
+F,26,180,95,CUB,Judo,Bronze
+M,29,180,76,ARG,Hockey,Gold
+F,25,174,67,ESP,Water Polo,Silver
+M,24,179,73,AZE,Judo,Silver
+F,19,172,60,GER,Hockey,Bronze
+M,21,186,87,GER,Hockey,Bronze
+M,27,180,76,AUS,Cycling,Silver
+F,27,162,65,NGR,Athletics,Bronze
+F,33,166,63,AZE,Canoeing,Bronze
+M,22,165,65,JPN,Wrestling,Silver
+M,30,171,69,JPN,Fencing,Silver
+F,38,168,63,MGL,Shooting,Silver
+F,29,170,63,GER,Hockey,Bronze
+F,28,178,70,DEN,Swimming,Bronze
+M,20,199,80,TUN,Taekwondo,Bronze
+M,21,174,60,FRA,Boxing,Silver
+F,34,158,51,FRA,Boxing,Silver
+M,30,179,75,AUS,Sailing,Gold
+F,18,170,55,CAN,Swimming,Bronze
+M,27,186,78,GER,Table Tennis,Silver
+F,21,170,70,GBR,Hockey,Gold
+M,22,195,68,AUS,Swimming,Bronze
+M,43,178,77,IND,Tennis,Bronze
+F,25,172,60,GBR,Trampolining,Silver
+F,29,188,77,SRB,Basketball,Bronze
+F,25,175,58,ITA,Rhythmic Gymnastics,Bronze
+M,25,191,98,USA,Sailing,Bronze
+M,34,170,60,AUT,Judo,Silver
+F,24,158,50,COL,Cycling,Gold
+F,36,181,69,ESP,Basketball,Silver
+M,21,191,72,ITA,Swimming,Gold
+F,27,173,57,CHN,Rowing,Bronze
+M,30,178,77,CHN,Shooting,Gold
+F,26,175,64,RUS,Water Polo,Bronze
+F,29,172,70,CAN,Rugby Sevens,Bronze
+M,34,176,74,ARG,Hockey,Gold
+F,30,150,48,ARG,Judo,Bronze
+F,28,168,65,KOR,Golf,Gold
+M,20,177,73,KOR,Fencing,Gold
+M,26,183,73,KOR,Swimming,Silver
+F,26,170,70,AUS,Rugby Sevens,Gold
+M,34,188,116,HUN,Athletics,Gold
+F,33,196,93,ESP,Basketball,Silver
+F,21,161,48,RUS,Gymnastics,Silver
+M,29,167,59,GBR,Sailing,Silver
+F,27,169,69,RUS,Synchronized Swimming,Gold
+F,23,174,57,NED,Rowing,Gold
+F,30,176,66,NED,Hockey,Gold
+F,27,171,57,FRA,Judo,Bronze
+M,34,195,90,CRO,Water Polo,Gold
+F,28,177,66,GBR,Swimming,Silver
+M,21,191,86,GBR,Swimming,Gold
+M,28,175,75,FRA,Canoeing,Bronze
+F,30,178,68,DEN,Badminton,Bronze
+F,27,174,61,DEN,Swimming,Bronze
+M,23,177,82,ARG,Hockey,Gold
+F,34,170,75,CRO,Shooting,Bronze
+M,25,203,103,GER,Handball,Bronze
+F,21,169,67,AUS,Rugby Sevens,Gold
+F,27,177,65,ITA,Swimming,Silver
+M,46,173,93,ITA,Shooting,Bronze
+F,30,174,63,ESP,Water Polo,Silver
+F,35,166,50,CAN,Cycling,Bronze
+M,32,179,73,MEX,Football,Gold
+M,30,187,83,BRA,Swimming,Silver
+F,26,183,85,CRO,Athletics,Gold
+F,27,169,77,RUS,Archery,Silver
+F,28,163,59,USA,Equestrianism,Bronze
+M,31,180,88,FRA,Cycling,Bronze
+M,25,183,82,RUS,Canoeing,Bronze
+F,32,169,60,FIN,Sailing,Silver
+F,28,172,64,GER,Football,Bronze
+M,51,173,68,USA,Equestrianism,Bronze
+M,32,188,80,SWE,Handball,Silver
+M,27,188,80,GER,Football,Silver
+M,30,190,90,CRO,Water Polo,Silver
+M,24,164,60,LTU,Boxing,Bronze
+M,22,198,125,GEO,Wrestling,Bronze
+F,25,190,74,ROU,Rowing,Bronze
+M,25,164,62,GRE,Gymnastics,Gold
+F,34,178,71,RUS,Handball,Gold
+F,27,188,77,SRB,Basketball,Bronze
+M,31,193,91,USA,Swimming,Bronze
+F,25,164,67,GBR,Athletics,Bronze
+F,31,173,70,AUS,Basketball,Silver
+M,25,208,102,ITA,Volleyball,Silver
+F,31,169,57,FRA,Sailing,Gold
+M,22,183,57,DOM,Taekwondo,Bronze
+F,21,166,56,GER,Hockey,Bronze
+M,20,188,86,USA,Swimming,Gold
+M,31,197,97,SRB,Water Polo,Bronze
+M,32,194,92,SRB,Water Polo,Bronze
+M,26,178,81,POR,Canoeing,Silver
+M,27,178,70,BAH,Athletics,Gold
+F,27,181,66,FRA,Handball,Silver
+F,35,175,68,ESP,Handball,Bronze
+M,33,195,94,FIN,Athletics,Bronze
+M,33,180,70,ITA,Fencing,Silver
+M,44,184,80,SRB,Shooting,Bronze
+M,28,181,80,GER,Sailing,Bronze
+M,30,191,95,USA,Swimming,Bronze
+F,30,180,84,USA,Rowing,Gold
+F,28,178,68,BLR,Canoeing,Bronze
+F,23,174,76,ITA,Water Polo,Silver
+F,28,160,47,ROU,Gymnastics,Gold
+F,33,157,50,GBR,Cycling,Silver
+F,27,178,62,ROU,Fencing,Gold
+F,20,185,72,ROU,Rowing,Bronze
+F,27,172,67,BLR,Canoeing,Bronze
+F,36,188,86,MNE,Handball,Silver
+F,30,178,65,SRB,Volleyball,Silver
+F,25,174,65,GER,Football,Gold
+M,25,190,92,FRA,Handball,Silver
+F,25,158,58,USA,Cycling,Silver
+M,54,175,73,AUS,Shooting,Bronze
+F,35,165,60,FIN,Boxing,Bronze
+M,20,185,77,AUS,Archery,Bronze
+M,27,188,92,DEN,Canoeing,Silver
+F,28,167,63,UKR,Athletics,Bronze
+M,33,191,93,JAM,Athletics,Gold
+F,28,173,70,NZL,Sailing,Gold
+M,23,180,76,USA,Swimming,Silver
+M,33,184,87,ITA,Water Polo,Silver
+M,22,189,93,ITA,Water Polo,Bronze
+M,38,194,89,USA,Volleyball,Gold
+F,21,163,65,CAN,Football,Bronze
+M,29,200,106,SRB,Water Polo,Bronze
+F,25,176,70,RUS,Water Polo,Bronze
+F,22,171,54,RUS,Synchronized Swimming,Gold
+M,21,182,78,GER,Football,Silver
+F,22,165,52,FRA,Handball,Silver
+M,23,173,69,CZE,Canoeing,Bronze
+F,22,170,64,PUR,Tennis,Gold
+M,39,168,78,CUB,Shooting,Gold
+M,25,188,100,AZE,Judo,Silver
+M,33,180,97,AZE,Wrestling,Bronze
+F,25,160,45,CHN,Athletics,Bronze
+M,30,170,65,CHN,Diving,Bronze
+M,23,165,58,CHN,Diving,Silver
+M,26,187,78,DEN,Cycling,Bronze
+F,25,168,61,ITA,Water Polo,Silver
+M,22,175,85,BRA,Canoeing,Bronze
+F,27,169,62,GBR,Hockey,Gold
+F,24,175,55,ESP,Rhythmic Gymnastics,Silver
+F,20,185,74,ESP,Basketball,Silver
+F,20,176,66,CAN,Football,Bronze
+M,20,189,85,FRA,Shooting,Silver
+F,24,173,64,AUS,Rugby Sevens,Gold
+M,36,173,72,DEN,Rowing,Bronze
+M,23,180,69,MAR,Boxing,Bronze
+F,27,170,70,ITA,Water Polo,Silver
+F,29,170,68,MNE,Handball,Silver
+M,23,167,67,UKR,Gymnastics,Bronze
+F,28,170,60,SRB,Basketball,Bronze
+M,28,213,130,SRB,Basketball,Silver
+M,23,172,65,BRA,Football,Gold
+M,27,165,62,IRI,Wrestling,Bronze
+M,30,187,71,FRA,Rowing,Bronze
+F,22,157,52,USA,Gymnastics,Gold
+M,33,190,95,EST,Rowing,Bronze
+M,22,176,77,KAZ,Weightlifting,Gold
+F,27,178,68,AUS,Water Polo,Bronze
+M,32,193,84,USA,Tennis,Silver
+M,30,184,90,LTU,Canoeing,Bronze
+M,22,178,65,COL,Cycling,Bronze
+M,22,165,56,CUB,Boxing,Gold
+M,25,170,65,RUS,Wrestling,Gold
+M,30,198,101,GBR,Rowing,Bronze
+M,23,193,98,SRB,Water Polo,Gold
+F,31,168,60,USA,Football,Gold
+F,25,191,72,SRB,Volleyball,Silver
+F,22,187,79,DEN,Rowing,Bronze
+M,34,183,75,DEN,Rowing,Bronze
+F,31,162,58,AZE,Wrestling,Bronze
+M,34,179,82,GER,Canoeing,Bronze
+M,26,171,81,FIJ,Rugby Sevens,Gold
+M,24,189,105,FIJ,Rugby Sevens,Gold
+M,21,172,78,FRA,Shooting,Bronze
+F,31,163,55,ARG,Hockey,Bronze
+M,32,193,83,HUN,Fencing,Bronze
+M,35,197,100,GBR,Rowing,Gold
+F,29,173,61,USA,Athletics,Gold
+F,28,188,81,USA,Rowing,Gold
+M,28,188,87,GER,Handball,Bronze
+M,27,195,98,GER,Rowing,Gold
+M,29,183,93,GER,Shooting,Bronze
+F,28,167,51,CHN,Boxing,Silver
+F,15,162,49,CHN,Diving,Gold
+M,28,186,90,BRA,Football,Gold
+M,22,186,90,GER,Canoeing,Gold
+F,30,167,58,COL,Wrestling,Bronze
+M,28,184,80,GBR,Swimming,Silver
+M,33,177,74,ARG,Hockey,Gold
+M,31,178,72,ARG,Hockey,Gold
+M,36,205,109,ESP,Basketball,Silver
+F,32,181,71,GER,Hockey,Bronze
+M,30,185,100,IRI,Wrestling,Gold
+F,37,163,82,USA,Shooting,Gold
+M,31,155,54,PRK,Gymnastics,Gold
+F,35,162,57,NZL,Equestrianism,Bronze
+F,34,165,55,GBR,Hockey,Bronze
+F,36,171,66,GBR,Hockey,Bronze
+M,35,182,69,SUI,Triathlon,Bronze
+F,32,175,66,NOR,Handball,Gold
+F,29,171,61,UKR,Athletics,Bronze
+F,36,168,53,ITA,Athletics,Bronze
+F,23,162,75,PRK,Weightlifting,Gold
+F,25,170,68,DEN,Sailing,Bronze
+M,27,203,139,FRA,Judo,Bronze
+F,23,159,55,MAS,Diving,Bronze
+F,22,165,55,SWE,Cycling,Gold
+F,30,173,72,HUN,Swimming,Gold
+M,27,202,110,LTU,Rowing,Silver
+F,23,173,49,UKR,Rhythmic Gymnastics,Bronze
+F,37,180,85,FRA,Athletics,Silver
+M,27,188,82,USA,Athletics,Gold
+M,25,194,90,AUS,Swimming,Bronze
+M,31,189,96,GBR,Rugby Sevens,Silver
+F,24,188,70,USA,Volleyball,Bronze
+F,28,178,141,USA,Weightlifting,Bronze
+M,24,195,80,CAN,Athletics,Bronze
+M,22,182,70,BRA,Football,Gold
+M,22,186,79,BRA,Football,Gold
+M,49,183,86,CUB,Shooting,Bronze
+F,24,180,72,ESP,Basketball,Silver
+M,22,178,75,MEX,Boxing,Bronze
+M,30,191,80,ESP,Basketball,Silver
+M,31,195,105,GBR,Rugby Sevens,Silver
+M,27,195,100,NED,Rowing,Bronze
+M,24,192,92,GER,Athletics,Gold
+F,20,192,72,VEN,Athletics,Silver
+F,22,178,74,SWE,Football,Silver
+F,24,165,59,USA,Athletics,Gold
+F,28,169,64,MEX,Archery,Silver
+F,26,173,57,RUS,Synchronized Swimming,Gold
+F,21,177,62,ESP,Basketball,Silver
+M,29,198,81,GBR,Athletics,Bronze
+F,28,181,95,NZL,Shooting,Silver
+F,17,160,62,CAN,Football,Bronze
+M,43,181,80,AUS,Equestrianism,Silver
+F,34,185,75,USA,Beach Volleyball,Silver
+M,21,176,65,ITA,Shooting,Gold
+F,24,168,59,ITA,Shooting,Gold
+M,31,188,88,ARG,Hockey,Gold
+M,30,185,82,ITA,Volleyball,Silver
+M,25,177,85,IRI,Weightlifting,Bronze
+M,21,193,73,GER,Equestrianism,Gold
+F,27,180,69,GBR,Cycling,Gold
+M,53,173,63,FRA,Equestrianism,Gold
+M,35,178,70,UKR,Archery,Bronze
+F,23,166,59,SWE,Football,Silver
+M,25,193,82,ESP,Basketball,Silver
+F,16,180,60,CAN,Swimming,Bronze
+M,27,190,76,KEN,Athletics,Gold
+M,22,180,77,GER,Hockey,Bronze
+M,28,196,97,USA,Rowing,Bronze
+F,20,193,85,USA,Swimming,Gold
+M,30,181,61,USA,Athletics,Silver
+M,23,206,93,USA,Volleyball,Bronze
+M,24,174,68,BAH,Athletics,Bronze
+F,29,178,83,CAN,Rugby Sevens,Bronze
+M,34,181,91,ITA,Boxing,Silver
+M,29,188,92,GBR,Athletics,Gold
+M,32,189,86,FIN,Athletics,Bronze
+M,27,193,75,AUS,Sailing,Silver
+M,19,184,69,RUS,Swimming,Bronze
+F,31,183,62,KAZ,Athletics,Gold
+M,30,209,101,BRA,Volleyball,Silver
+M,20,177,86,RUS,Wrestling,Gold
+F,29,177,65,CZE,Tennis,Bronze
+M,23,182,82,RUS,Fencing,Bronze
+M,24,188,96,RSA,Rugby Sevens,Bronze
+M,23,180,75,AZE,Boxing,Bronze
+M,31,180,125,BLR,Wrestling,Bronze
+M,21,181,77,JPN,Swimming,Silver
+F,28,175,63,JPN,Volleyball,Bronze
+M,28,174,73,ARG,Hockey,Gold
+F,33,176,57,UKR,Athletics,Bronze
+M,26,192,160,IRI,Weightlifting,Gold
+M,21,170,51,NGR,Football,Bronze
+M,27,197,98,SWE,Sailing,Gold
+F,21,173,70,DEN,Sailing,Bronze
+F,47,168,58,GEO,Shooting,Silver
+F,18,155,58,EGY,Weightlifting,Bronze
+F,24,166,59,SWE,Football,Silver
+M,24,165,50,MEX,Diving,Silver
+F,28,157,54,ARG,Hockey,Silver
+M,24,193,86,USA,Volleyball,Bronze
+M,34,191,82,BAH,Athletics,Bronze
+M,23,184,76,ITA,Fencing,Silver
+M,22,173,58,DOM,Athletics,Silver
+M,31,188,100,ROU,Wrestling,Bronze
+M,25,193,120,ISR,Judo,Bronze
+M,27,198,100,GBR,Rowing,Bronze
+M,33,169,55,GER,Rowing,Gold
+F,31,170,64,USA,Football,Gold
+F,23,167,54,CAN,Swimming,Bronze
+M,26,192,91,CUB,Boxing,Bronze
+M,28,202,110,GBR,Rowing,Bronze
+F,19,167,56,GER,Gymnastics,Bronze
+M,43,188,76,BRA,Sailing,Gold
+F,32,179,64,SWE,Football,Silver
+F,24,179,70,NED,Athletics,Silver
+F,28,180,77,USA,Rowing,Gold
+F,25,173,76,GER,Rowing,Gold
+M,29,185,87,BRA,Beach Volleyball,Gold
+M,29,191,87,GER,Rowing,Gold
+F,28,172,71,CAN,Football,Bronze
+F,26,185,75,USA,Swimming,Bronze
+F,47,169,63,GER,Equestrianism,Silver
+M,24,170,59,RSA,Triathlon,Bronze
+M,31,182,80,GBR,Canoeing,Bronze
+F,30,179,60,GER,Modern Pentathlon,Gold
+M,25,195,98,GER,Rowing,Gold
+M,21,184,74,SGP,Swimming,Gold
+F,25,172,60,SWE,Football,Silver
+F,21,170,58,GER,Hockey,Bronze
+F,25,180,71,GER,Football,Gold
+M,28,190,100,GER,Rowing,Gold
+M,25,186,75,SUI,Rowing,Gold
+M,30,173,68,SUI,Cycling,Bronze
+F,19,172,61,GER,Hockey,Bronze
+M,36,206,108,ARG,Basketball,Gold
+M,19,184,77,AUS,Cycling,Silver
+F,29,160,62,CAN,Football,Bronze
+M,19,190,72,GBR,Swimming,Silver
+M,29,197,95,GBR,Sailing,Gold
+M,31,172,84,GBR,Shooting,Bronze
+F,32,178,70,NZL,Rowing,Bronze
+F,32,184,74,RUS,Handball,Gold
+F,24,180,70,AUS,Swimming,Gold
+F,31,176,62,SWE,Football,Silver
+F,26,183,104,USA,Water Polo,Gold
+M,21,192,82,GER,Football,Silver
+F,29,175,67,SWE,Football,Silver
+F,25,178,70,RSA,Athletics,Silver
+M,20,187,130,RUS,Wrestling,Bronze
+F,25,186,81,RUS,Handball,Gold
+M,23,177,82,RSA,Rugby Sevens,Bronze
+M,31,183,82,INA,Badminton,Gold
+M,30,186,87,CRO,Water Polo,Silver
+M,22,174,72,JPN,Swimming,Bronze
+M,23,170,65,AZE,Wrestling,Gold
+F,27,172,75,KAZ,Boxing,Bronze
+F,33,165,54,GER,Table Tennis,Silver
+F,30,173,63,RUS,Fencing,Gold
+F,20,143,34,CHN,Gymnastics,Bronze
+M,24,170,75,GEO,Judo,Gold
+F,33,166,60,GBR,Sailing,Bronze
+M,23,170,72,NGR,Football,Bronze
+F,33,185,65,BRA,Volleyball,Gold
+F,30,168,60,UKR,Fencing,Gold
+F,23,175,68,CHN,Swimming,Bronze
+F,24,159,52,CHN,Diving,Gold
+M,22,168,70,CHN,Weightlifting,Gold
+F,21,175,75,USA,Boxing,Gold
+M,25,193,86,USA,Swimming,Gold
+F,21,173,70,KOR,Badminton,Bronze
+M,19,162,51,JPN,Gymnastics,Gold
+F,27,170,54,RUS,Synchronized Swimming,Gold
+F,21,164,64,RUS,Cycling,Silver
+M,26,183,73,USA,Volleyball,Bronze
+M,28,191,88,USA,Volleyball,Bronze
+M,29,185,95,RUS,Canoeing,Bronze
+F,21,164,48,RUS,Synchronized Swimming,Gold
+F,33,177,64,RUS,Fencing,Bronze
+F,17,164,57,CHN,Diving,Silver
+M,29,197,100,NED,Rowing,Bronze
+M,30,186,87,POR,Canoeing,Silver
+M,25,175,78,BRA,Canoeing,Silver
+F,24,169,57,BRA,Judo,Gold
+F,29,161,61,CUB,Athletics,Silver
+F,21,174,69,RUS,Water Polo,Bronze
+F,27,172,67,CAN,Alpine Skiing,Bronze
+F,27,183,82,USA,Rowing,Gold
+M,30,203,96,SRB,Basketball,Silver
+F,29,168,56,KOR,Fencing,Silver
+M,18,170,77,NGR,Football,Bronze
+F,33,176,75,CAN,Football,Bronze
+F,21,179,65,IND,Badminton,Silver
+F,31,160,58,AZE,Wrestling,Bronze
+M,26,188,95,CRO,Rowing,Silver
+M,28,187,93,CRO,Rowing,Silver
+M,23,190,90,BRA,Taekwondo,Bronze
+F,26,152,58,THA,Weightlifting,Silver
+F,22,182,76,SWE,Swimming,Bronze
+M,33,189,80,SVK,Canoeing,Gold
+M,34,182,78,SVK,Canoeing,Gold
+M,58,175,76,GBR,Equestrianism,Gold
+M,23,187,93,GBR,Cycling,Silver
+F,26,172,80,AUS,Shooting,Gold
+F,29,171,57,DEN,Athletics,Silver
+M,29,190,89,LAT,Beach Volleyball,Bronze
+M,23,167,60,KAZ,Judo,Silver
+F,23,168,55,AUS,Diving,Bronze
+M,21,206,90,USA,Swimming,Gold
+M,31,201,86,USA,Volleyball,Bronze
+M,33,194,105,USA,Water Polo,Silver
+M,26,192,72,RSA,Rowing,Gold
+M,23,180,90,RSA,Rugby Sevens,Bronze
+F,21,178,67,USA,Swimming,Bronze
+M,27,184,76,GBR,Gymnastics,Bronze
+F,21,188,72,USA,Swimming,Gold
+F,22,170,73,NED,Cycling,Bronze
+F,28,163,50,USA,Rowing,Gold
+M,20,180,102,USA,Wrestling,Gold
+M,29,188,95,RSA,Rugby Sevens,Bronze
+M,29,168,66,UZB,Judo,Bronze
+F,27,180,75,RUS,Water Polo,Bronze
+M,23,191,84,USA,Tennis,Gold
+F,26,178,70,NOR,Handball,Bronze
+M,31,184,70,FRA,Rowing,Bronze
+F,22,168,67,GER,Table Tennis,Silver
+F,35,175,69,USA,Football,Gold
+M,30,165,73,TTO,Athletics,Bronze
+F,25,179,64,NED,Hockey,Gold
+M,36,188,85,HUN,Fencing,Bronze
+F,31,167,67,KOR,Handball,Bronze
+F,30,174,69,CHN,Hockey,Silver
+M,32,192,110,FRA,Handball,Gold
+M,37,196,100,BRA,Water Polo,Bronze
+F,26,170,67,MGL,Wrestling,Bronze
+M,31,185,64,AZE,Boxing,Silver
+M,36,186,73,ITA,Volleyball,Silver
+M,30,167,64,IRI,Wrestling,Gold
+F,23,188,82,AUS,Water Polo,Bronze
+M,20,199,75,BRA,Volleyball,Gold
+M,27,209,93,BRA,Volleyball,Gold
+M,35,195,95,DEN,Handball,Gold
+F,26,176,65,SRB,Athletics,Bronze
+M,27,174,81,RSA,Rugby Sevens,Bronze
+F,23,178,59,USA,Athletics,Bronze
+F,18,156,45,RUS,Gymnastics,Silver
+F,34,166,54,SUI,Triathlon,Gold
+F,44,167,60,GER,Cycling,Bronze
+F,35,182,80,CZE,Athletics,Gold
+F,25,174,69,POL,Rowing,Bronze
+F,20,173,61,GER,Hockey,Bronze
+F,21,155,58,THA,Weightlifting,Gold
+M,27,180,97,AZE,Wrestling,Gold
+M,27,192,130,AZE,Wrestling,Bronze
+F,28,157,48,AZE,Wrestling,Bronze
+F,30,176,79,GER,Athletics,Bronze
+F,21,195,73,SRB,Basketball,Bronze
+F,31,181,72,GBR,Rowing,Gold
+F,21,168,68,GER,Hockey,Bronze
+M,35,182,70,FRA,Equestrianism,Gold
+F,29,158,64,CAN,Rugby Sevens,Bronze
+M,30,170,66,SRB,Wrestling,Gold
+F,26,173,59,GRE,Athletics,Gold
+F,23,173,74,USA,Water Polo,Gold
+M,35,170,65,GER,Table Tennis,Bronze
+F,22,160,56,SUI,Gymnastics,Bronze
+M,40,188,86,SWE,Golf,Silver
+M,37,186,79,CZE,Tennis,Bronze
+F,26,176,63,RUS,Archery,Silver
+M,35,183,85,CZE,Canoeing,Bronze
+F,24,192,72,SRB,Volleyball,Silver
+M,30,181,80,USA,Judo,Silver
+M,19,173,56,USA,Boxing,Silver
+F,21,193,79,USA,Basketball,Gold
+M,30,186,86,AUS,Canoeing,Gold
+M,28,211,112,SRB,Basketball,Silver
+M,30,178,81,CRO,Sailing,Silver
+M,22,189,88,BEL,Hockey,Silver
+M,32,193,80,NED,Hockey,Silver
+F,31,183,71,USA,Rowing,Silver
+M,26,198,117,GER,Athletics,Silver
+M,27,181,69,NOR,Rowing,Bronze
+M,28,190,86,FRA,Swimming,Gold
+M,30,170,94,BLR,Weightlifting,Silver
+M,19,170,59,RUS,Gymnastics,Silver
+M,27,182,82,CRO,Handball,Bronze
+M,30,189,90,GER,Handball,Bronze
+M,29,186,90,LAT,Cycling,Gold
+F,27,180,77,ROU,Rowing,Bronze
+F,30,164,60,CZE,Tennis,Bronze
+F,34,183,66,USA,Athletics,Silver
+F,28,168,60,UKR,Athletics,Bronze
+M,28,181,68,CUB,Athletics,Bronze
+F,30,177,72,ARG,Hockey,Bronze
+F,27,165,66,RUS,Handball,Gold
+M,28,196,93,RUS,Swimming,Silver
+M,26,200,93,CRO,Water Polo,Gold
+M,20,195,95,GER,Football,Silver
+F,31,160,45,KEN,Athletics,Gold
+F,32,190,78,AUS,Basketball,Silver
+F,26,170,58,CHN,Synchronized Swimming,Silver
+F,23,161,51,CHN,Wrestling,Bronze
+M,24,198,89,CHN,Swimming,Silver
+F,24,177,63,CHN,Fencing,Bronze
+F,23,185,78,CHN,Fencing,Bronze
+F,25,168,62,JPN,Swimming,Bronze
+M,32,185,85,DEN,Handball,Gold
+M,26,176,68,SWE,Shooting,Silver
+M,31,183,76,CZE,Modern Pentathlon,Gold
+F,32,181,69,BRA,Sailing,Bronze
+M,27,170,64,AUS,Hockey,Bronze
+F,28,185,76,GBR,Rowing,Silver
+F,29,171,60,CZE,Shooting,Bronze
+M,33,199,105,CZE,Rowing,Silver
+F,24,172,69,KAZ,Wrestling,Bronze
+F,29,170,62,HUN,Canoeing,Silver
+F,33,176,71,HUN,Fencing,Gold
+M,26,180,78,HUN,Fencing,Gold
+F,21,176,72,ITA,Water Polo,Silver
+F,26,168,70,JPN,Judo,Gold
+M,34,160,54,ERI,Athletics,Bronze
+M,29,194,95,EST,Rowing,Bronze
+F,26,165,60,JPN,Badminton,Gold
+M,23,160,60,JPN,Judo,Bronze
+M,22,197,160,GEO,Weightlifting,Gold
+M,23,186,87,FIJ,Rugby Sevens,Gold
+M,31,178,58,AUS,Athletics,Bronze
+M,27,176,80,AUS,Canoeing,Bronze
+F,19,148,36,CHN,Gymnastics,Bronze
+M,27,177,77,MAS,Badminton,Silver
+F,22,158,53,TPE,Archery,Bronze
+M,26,166,58,JPN,Gymnastics,Silver
+F,21,154,48,THA,Weightlifting,Gold
+F,34,177,73,CAN,Football,Bronze
+F,22,169,59,CHN,Synchronized Swimming,Silver
+F,23,178,70,CHN,Swimming,Bronze
+M,35,190,132,UZB,Judo,Silver
+M,25,168,47,KEN,Athletics,Silver
+M,37,190,88,SVK,Canoeing,Silver
+F,23,171,62,ESP,Water Polo,Silver
+M,26,179,79,GER,Canoeing,Silver
+M,24,160,59,UZB,Wrestling,Bronze
+F,23,173,67,TUR,Taekwondo,Silver
+F,19,165,44,RUS,Rhythmic Gymnastics,Gold
+F,34,183,70,USA,Basketball,Gold
+M,26,188,81,USA,Athletics,Gold
+F,30,165,60,IRL,Boxing,Gold
+F,35,185,72,AUS,Basketball,Silver
+M,32,189,70,NZL,Rowing,Bronze
+M,27,180,68,TUR,Taekwondo,Bronze
+F,26,177,78,FRA,Judo,Bronze
+F,19,165,67,NZL,Rugby Sevens,Silver
+F,25,175,75,ITA,Water Polo,Silver
+M,31,192,90,ROU,Tennis,Silver
+M,37,205,100,ITA,Water Polo,Silver
+M,29,195,90,SRB,Basketball,Silver
+M,31,170,69,FRA,Shooting,Bronze
+F,25,168,56,GER,Hockey,Bronze
+M,40,197,89,RUS,Volleyball,Silver
+F,29,196,75,BRA,Volleyball,Gold
+F,27,175,64,CAN,Athletics,Bronze
+M,19,178,64,BRA,Football,Gold
+F,21,184,69,BEL,Athletics,Gold
+F,31,173,68,GER,Rowing,Silver
+M,30,183,70,GBR,Cycling,Gold
+M,27,180,79,GBR,Gymnastics,Bronze
+F,31,170,66,USA,Volleyball,Silver
+F,24,167,57,JAM,Athletics,Gold
+M,29,182,70,RSA,Rowing,Gold
+M,26,200,97,USA,Basketball,Gold
+M,31,188,80,TTO,Athletics,Silver
+F,56,160,50,CAN,Rowing,Silver
+F,28,193,76,GBR,Rowing,Silver
+F,19,155,55,USA,Shooting,Gold
+M,22,172,85,CHN,Weightlifting,Silver
+M,40,186,110,BLR,Athletics,Bronze
+M,28,200,89,BEL,Swimming,Silver
+F,29,178,86,RUS,Water Polo,Bronze
+F,16,152,47,GBR,Gymnastics,Bronze
+M,51,180,71,AUS,Equestrianism,Gold
+M,32,186,74,USA,Athletics,Silver
+M,25,196,91,RUS,Boxing,Gold
+F,24,181,67,BLR,Canoeing,Bronze
+M,60,190,78,NZL,Equestrianism,Gold
+F,21,173,52,BUL,Rhythmic Gymnastics,Bronze
+M,24,181,59,ETH,Athletics,Bronze
+M,26,175,60,CUB,Boxing,Bronze
+M,21,182,72,GER,Football,Silver
+F,18,176,53,RUS,Rhythmic Gymnastics,Gold
+M,29,180,81,UAE,Judo,Bronze
+M,26,174,80,SRB,Canoeing,Silver
+F,21,165,63,AUS,Rugby Sevens,Gold
+M,26,177,77,FRA,Fencing,Silver
+F,22,175,56,RUS,Synchronized Swimming,Gold
+F,35,181,72,CZE,Rowing,Gold
+M,24,188,90,ESP,Canoeing,Gold
+F,26,195,80,ESP,Basketball,Silver
+F,22,152,48,JPN,Wrestling,Gold
+M,33,185,73,SVK,Athletics,Gold
+F,27,168,61,GBR,Hockey,Gold
+M,26,183,75,SUI,Rowing,Gold
+M,27,187,90,CZE,Canoeing,Bronze
+M,37,192,97,GBR,Rowing,Gold
+M,28,161,77,INA,Weightlifting,Bronze
+M,20,180,76,GER,Hockey,Bronze
+M,22,175,74,NGR,Football,Bronze
+F,24,164,56,GBR,Cycling,Gold
+M,27,203,107,USA,Volleyball,Bronze
+F,25,162,65,SLO,Judo,Gold
+M,28,178,70,BEL,Hockey,Silver
+M,31,188,91,FRA,Tennis,Silver
+M,40,193,94,NOR,Rowing,Silver
+F,24,177,71,NZL,Rugby Sevens,Silver
+M,22,180,108,FIJ,Rugby Sevens,Gold
+M,27,181,78,NZL,Sailing,Silver
+M,24,186,91,UZB,Boxing,Bronze
+M,24,175,72,KEN,Athletics,Silver
+M,31,182,130,GEO,Weightlifting,Bronze
+F,32,168,64,AUS,Rugby Sevens,Gold
+M,32,179,82,AUS,Hockey,Bronze
+F,17,146,43,RUS,Gymnastics,Silver
+M,27,174,81,FIJ,Rugby Sevens,Gold
+F,25,170,62,GBR,Hockey,Bronze
+M,25,186,102,AUS,Archery,Bronze
+M,29,192,78,UKR,Modern Pentathlon,Silver
+M,27,160,54,JPN,Gymnastics,Silver
+M,30,170,68,CRO,Gymnastics,Silver
+M,17,173,78,NGR,Football,Bronze
+M,26,199,93,NED,Rowing,Bronze
+M,22,175,85,KAZ,Weightlifting,Bronze
+M,21,172,72,NGR,Football,Bronze
+M,19,172,75,NGR,Football,Bronze
+M,35,176,76,HUN,Judo,Silver
+F,28,180,68,GER,Archery,Silver
+F,28,157,55,GBR,Hockey,Bronze
+M,29,171,53,COL,Cycling,Silver
+M,22,172,60,UZB,Judo,Bronze
+M,27,177,64,RUS,Trampolining,Silver
+F,27,177,70,RUS,Water Polo,Bronze
+F,22,176,66,LTU,Rowing,Bronze
+F,27,160,50,COL,Boxing,Bronze
+F,21,176,74,USA,Cycling,Silver
+F,31,169,75,ESP,Weightlifting,Bronze
+M,27,180,83,FRA,Archery,Silver
+M,42,171,60,FRA,Equestrianism,Gold
+M,26,190,81,CAN,Judo,Bronze
+F,30,172,70,BEL,Sailing,Bronze
+F,33,179,63,NED,Hockey,Gold
+M,24,178,73,BEL,Hockey,Silver
+M,31,181,74,BEL,Cycling,Gold
+F,26,167,56,NED,Cycling,Gold
+M,28,185,85,RSA,Swimming,Gold
+M,31,179,74,NED,Hockey,Silver
+M,28,170,60,NED,Equestrianism,Silver
+M,27,178,83,NED,Hockey,Silver
+M,21,178,74,BEL,Hockey,Silver
+F,29,169,63,NED,Judo,Bronze
+F,26,172,63,NED,Hockey,Gold
+M,25,187,93,NED,Cycling,Silver
+M,34,182,85,CAN,Canoeing,Gold
+F,22,180,77,CAN,Swimming,Bronze
+F,27,180,69,NED,Hockey,Gold
+F,28,170,63,NED,Hockey,Gold
+M,24,183,70,RSA,Athletics,Gold
+F,28,167,63,NED,Speed Skating,Bronze
+M,27,189,75,NED,Sailing,Gold
+F,22,173,65,NED,Swimming,Gold
+F,25,157,48,BEL,Judo,Bronze
+M,28,185,75,BEL,Hockey,Silver
+M,32,173,73,BEL,Judo,Bronze
+M,28,180,78,BEL,Hockey,Silver
+M,24,188,88,GER,Canoeing,Gold
+M,32,201,96,HUN,Water Polo,Gold
+M,29,193,96,HUN,Water Polo,Gold
+F,26,173,70,GER,Judo,Bronze
+F,25,178,78,SLO,Judo,Bronze
+F,31,175,70,RUS,Fencing,Silver
+F,26,190,76,SRB,Volleyball,Silver
+M,45,178,92,AUS,Shooting,Bronze
+M,21,186,85,ITA,Water Polo,Bronze
+M,31,196,94,ITA,Rowing,Silver
+M,34,183,79,RUS,Volleyball,Bronze
+M,25,173,70,USA,Athletics,Gold
+M,28,195,98,FIJ,Rugby Sevens,Gold
+M,26,180,87,NED,Hockey,Silver
+M,22,161,55,UKR,Gymnastics,Silver
+F,22,164,58,NED,Hockey,Silver
+M,29,197,95,NED,Rowing,Bronze
+F,30,180,60,RUS,Tennis,Gold
+M,25,200,95,ITA,Volleyball,Silver
+M,24,188,83,FRA,Athletics,Bronze
+M,23,195,95,ITA,Rowing,Bronze
+M,29,172,75,ARG,Hockey,Gold
+F,32,170,72,RSA,Athletics,Silver
+M,28,186,88,FIJ,Rugby Sevens,Gold
+F,27,170,62,LTU,Rowing,Bronze
+M,37,180,80,ARG,Hockey,Gold
+M,27,177,70,ITA,Cycling,Gold
+F,32,193,71,CRO,Athletics,Silver
+M,25,175,75,RUS,Wrestling,Gold
+M,34,189,89,SVK,Canoeing,Bronze
+F,25,160,66,GER,Cycling,Gold
+M,31,210,90,RUS,Volleyball,Bronze
+F,28,185,68,USA,Swimming,Gold
+F,33,172,63,LTU,Sailing,Silver
+F,25,174,69,RUS,Wrestling,Gold
+F,26,165,65,UKR,Fencing,Silver
+F,29,169,59,NED,Cycling,Gold
+F,23,162,62,RUS,Cycling,Silver
+M,47,186,81,NED,Equestrianism,Silver
+F,22,175,70,MNE,Handball,Silver
+F,21,168,63,RUS,Handball,Gold
+M,21,188,75,BRA,Football,Gold
+M,23,183,90,TTO,Athletics,Gold
+F,29,165,63,POL,Canoeing,Silver
+F,24,182,74,GBR,Taekwondo,Bronze
+F,25,184,75,GER,Beach Volleyball,Gold
+M,26,184,84,GBR,Swimming,Silver
+M,29,198,87,BRA,Volleyball,Silver
+M,23,188,80,GBR,Swimming,Silver
+M,33,190,90,AUS,Canoeing,Gold
+M,24,185,120,NZL,Athletics,Bronze
+F,37,191,73,USA,Volleyball,Gold
+M,21,184,82,ESP,Canoeing,Gold
+M,22,191,74,CHN,Swimming,Bronze
+F,16,140,33,CHN,Gymnastics,Bronze
+F,28,178,65,CHN,Badminton,Silver
+M,24,180,62,CHN,Athletics,Bronze
+M,28,178,77,CHN,Shooting,Bronze
+M,40,176,70,USA,Equestrianism,Gold
+M,26,185,83,CAN,Athletics,Bronze
+M,37,181,77,DEN,Sailing,Gold
+F,33,167,64,GER,Canoeing,Gold
+F,24,170,67,CAN,Rugby Sevens,Bronze
+M,24,185,75,AUS,Sailing,Silver
+M,25,177,88,GBR,Rugby Sevens,Silver
+F,25,165,65,GBR,Hockey,Gold
+F,27,176,70,GER,Canoeing,Gold
+F,28,178,80,AUS,Water Polo,Bronze
+M,25,183,80,NZL,Cycling,Silver
+M,24,189,86,NED,Swimming,Gold
+F,33,167,60,CHN,Shooting,Silver
+F,27,182,65,CHN,Volleyball,Bronze
+M,26,184,72,CAN,Swimming,Bronze
+M,30,191,94,GER,Handball,Bronze
+F,30,188,77,USA,Swimming,Silver
+F,19,178,68,USA,Swimming,Silver
+M,21,185,77,GER,Hockey,Bronze
+M,20,179,82,AUS,Cycling,Silver
+F,29,171,67,GER,Cycling,Gold
+F,26,170,64,NED,Hockey,Gold
+M,31,199,90,GER,Rowing,Gold
+F,47,169,66,GER,Equestrianism,Silver
+M,29,192,88,GER,Hockey,Gold
+F,24,156,46,NED,Gymnastics,Gold
+M,28,189,86,BRA,Football,Gold
+F,34,175,72,USA,Basketball,Gold
+M,60,171,70,GBR,Equestrianism,Silver
+M,56,172,69,GBR,Equestrianism,Silver
+F,28,172,65,GBR,Hockey,Bronze
+M,23,167,56,GBR,Gymnastics,Bronze
+F,36,166,67,CAN,Cycling,Bronze
+F,27,175,75,CAN,Wrestling,Gold
+M,22,194,94,GER,Handball,Bronze
+M,27,200,110,GER,Handball,Bronze
+M,31,173,55,NED,Rowing,Bronze
+F,33,175,69,POL,Wrestling,Bronze
+M,22,201,102,NED,Rowing,Bronze
+M,36,190,82,GBR,Cycling,Bronze
+F,26,180,75,CAN,Rowing,Silver
+F,34,166,66,CAN,Football,Bronze
+M,21,176,65,BRA,Football,Gold
+F,19,162,68,CAN,Rugby Sevens,Bronze
+F,21,165,63,JAM,Athletics,Silver
+F,25,175,67,CAN,Swimming,Bronze
+F,28,173,74,NZL,Rugby Sevens,Silver
+F,34,175,70,USA,Tennis,Gold
+F,28,167,79,AUS,Rugby Sevens,Gold
+F,36,185,75,USA,Tennis,Gold
+F,34,168,57,JAM,Athletics,Bronze
+M,33,183,68,NZL,Athletics,Silver
+M,24,173,87,AUS,Cycling,Silver
+F,22,179,61,AUS,Swimming,Gold
+F,32,184,75,GBR,Rowing,Silver
+M,20,166,60,GBR,Gymnastics,Bronze
+M,43,183,83,GBR,Equestrianism,Silver
+M,31,182,73,DEN,Rowing,Bronze
+F,30,178,95,POL,Athletics,Silver
+F,32,170,54,POL,Cycling,Silver
+M,25,198,110,GER,Handball,Bronze
+F,18,173,49,THA,Taekwondo,Bronze
+F,25,169,74,NZL,Rugby Sevens,Silver
+F,22,180,75,USA,Swimming,Gold
+M,25,174,60,AUS,Archery,Bronze
+F,28,173,81,USA,Fencing,Bronze
+M,24,169,69,BRA,Shooting,Silver
+F,29,167,51,CHN,Taekwondo,Gold
+F,24,152,50,AUS,Diving,Silver
+F,30,167,52,CHN,Diving,Silver
+F,38,171,58,KOR,Handball,Silver
+F,25,180,71,ESP,Basketball,Silver
+F,24,163,69,CHN,Weightlifting,Gold
+F,24,182,76,CHN,Fencing,Gold
+M,31,188,82,CHN,Badminton,Silver
+M,20,187,78,CHN,Swimming,Silver
+F,28,176,60,CHN,Sailing,Bronze
+M,26,180,67,CHN,Table Tennis,Gold
+F,29,195,75,CHN,Volleyball,Bronze
+F,30,190,104,FRA,Basketball,Silver
+M,32,184,80,RUS,Fencing,Bronze
+F,25,172,108,JPN,Judo,Bronze
+M,24,177,70,JPN,Athletics,Silver
+F,33,176,62,JPN,Volleyball,Bronze
+M,27,159,58,JPN,Gymnastics,Silver
+F,29,192,74,CHN,Volleyball,Gold
+M,23,184,75,UKR,Canoeing,Bronze
+F,21,190,71,CHN,Volleyball,Gold
+M,26,158,57,PRK,Wrestling,Bronze
+F,21,151,48,BUL,Wrestling,Bronze
+M,26,179,86,TUR,Wrestling,Silver
+M,21,181,74,IRI,Wrestling,Gold
+F,20,173,64,CHN,Swimming,Gold
+F,24,178,64,RUS,Swimming,Bronze
+M,27,175,94,KEN,Athletics,Silver
+F,22,175,64,RUS,Fencing,Gold
+M,25,178,64,KAZ,Boxing,Gold
+F,31,185,73,RUS,Handball,Gold
+F,27,165,51,CHN,Shooting,Gold
+F,21,170,58,CHN,Synchronized Swimming,Silver
+F,25,167,60,CHN,Boxing,Silver
+M,24,200,105,FRA,Boxing,Gold
+F,29,158,53,KOR,Weightlifting,Silver
+F,24,167,57,JPN,Synchronized Swimming,Bronze
+F,33,157,55,JPN,Wrestling,Gold
+M,23,177,61,JPN,Table Tennis,Silver
+M,24,162,60,CHN,Gymnastics,Bronze
+F,29,182,128,CHN,Judo,Bronze
+M,32,165,59,KOR,Gymnastics,Silver
+F,30,166,62,CHN,Badminton,Bronze
+F,19,201,78,CHN,Volleyball,Gold
+F,23,171,66,FRA,Handball,Silver
+F,36,175,61,RUS,Cycling,Bronze
+F,23,172,67,CAN,Football,Bronze
+F,25,174,72,AUS,Water Polo,Bronze
+F,31,173,72,USA,Fencing,Gold
+M,30,180,77,AUT,Sailing,Bronze
+M,25,177,70,RUS,Diving,Gold
+M,29,174,69,RUS,Boxing,Bronze
+M,26,156,61,BRA,Gymnastics,Gold
+F,29,170,52,CRO,Taekwondo,Bronze
+M,23,180,105,KAZ,Weightlifting,Bronze
+M,27,204,100,ITA,Volleyball,Bronze
+M,40,189,98,SLO,Sailing,Bronze
+M,22,170,69,BRA,Football,Gold
+F,22,170,61,CHN,Synchronized Swimming,Silver
+F,27,164,55,CHN,Shooting,Silver
+F,20,193,79,CHN,Volleyball,Gold
+M,27,173,65,CHN,Gymnastics,Gold
+F,26,172,77,CHN,Wrestling,Bronze
+M,28,178,70,CHN,Table Tennis,Gold
+F,25,162,70,CHN,Shooting,Gold
+M,26,183,75,CHN,Badminton,Gold
+F,30,183,105,CHN,Athletics,Bronze
+M,20,188,63,CHN,Taekwondo,Gold
+F,27,174,68,CHN,Hockey,Silver
+F,29,173,60,CHN,Badminton,Gold
+F,22,155,69,KAZ,Weightlifting,Silver
+F,22,188,75,CHN,Taekwondo,Gold
+F,27,188,80,RUS,Handball,Gold
+F,23,164,58,RUS,Wrestling,Silver
+F,25,168,62,CHN,Cycling,Gold
+M,31,183,75,CHN,Shooting,Gold
+F,21,198,78,CHN,Volleyball,Gold
+F,28,186,72,SRB,Volleyball,Silver
+M,23,169,52,UZB,Boxing,Gold
+M,30,173,69,NED,Gymnastics,Gold
+M,27,179,73,SRB,Canoeing,Silver
+M,29,177,68,ISR,Sailing,Bronze
+F,26,182,71,RUS,Swimming,Silver
+M,29,175,64,GER,Hockey,Bronze
