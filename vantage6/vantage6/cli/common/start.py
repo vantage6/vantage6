@@ -241,7 +241,7 @@ def mount_database(
     # try to mount database
     uri = ctx.config["uri"]
     url = make_url(uri)
-    environment_vars = None
+    environment_vars = {}
     mount = None
 
     # If host is None, we're dealing with a file-based DB, like SQLite
@@ -275,6 +275,10 @@ def mount_database(
             "is reachable from the Docker container"
         )
         info("Consider using the docker-compose method to start a server")
+
+    # TODO remove this when we're sure we have sqlalchemy 2.0 support
+    environment_vars["SQLALCHEMY_WARN_20"] = 1
+    environment_vars["PYTHONWARNINGS"] = "always::DeprecationWarning"
 
     return mount, environment_vars
 
