@@ -4,27 +4,44 @@ name: vantage6git
 vars:
   SERVER_IMAGE: harbor2.vantage6.ai/infrastructure/server
   SERVER_IMAGE_TAG: 5.0.0a0
-  NODE_IMAGE:
-    default: harbor2.vantage6.ai/infrastructure/node:5.0.0a0
-  NODE_CONFIG_FILE: null
+  NODE_IMAGE: harbor2.vantage6.ai/infrastructure/node
+  NODE_IMAGE_TAG: 5.0.0a0
+  STORE_IMAGE: harbor2.vantage6.ai/infrastructure/algorithm-store
+  STORE_IMAGE_TAG: 5.0.0a0
+  UI_IMAGE: harbor2.vantage6.ai/infrastructure/ui
+  UI_IMAGE_TAG: 5.0.0a0
+  KUBE_CONFIG:
+    question: "Where is your kube config located?"
+    default: "/Users/frankmartin/.kube/config"
 
-
-
-# This is a list of `pipelines` that DevSpace can execute (you can define your own)
 pipelines:
-  # This is the pipeline for the main command: `devspace dev` (or `devspace run-pipeline dev`)
+
+  # Main entrypoint for development (`devspace dev`). This starts all server components
+  # and the nodes. Make sure that you have run `devspace run-pipeline init` before.
   dev:
     run: |-
       run_dependencies --all
-      run_pipelines server node --sequential
+      run_pipelines \
+        server \
+        node \
+        --sequential
 
+  # Initialize a development vantage6 network. This will create the necessary
+  # entities at the server (e.g. organizations, nodes, etc.), generate the node
+  # configuration files (stores these in the `dev/.data` directory) and finally
+  # connects the local store to the server.
+  # TODO register the diagnostics image in the algorithm store
   init:
     run: |-
       run_dependencies --all
       ensure_pull_secrets --all
-      create_deployments vantage6-server
-      create_deployments vantage6-store # vantage6-ui
-      start_dev init vantage6-store
+      create_deployments \
+        vantage6-server
+      create_deployments \
+        vantage6-store
+      start_dev \
+        vantage6-server-init \
+        vantage6-store-init
       # TODO replace this with a retry mechanism
       echo "Waiting for server to start... (30 seconds)"
       sleep 30
@@ -35,32 +52,52 @@ pipelines:
 
   server:
     run: |-
-      run_dependencies --all      # 1. Deploy any projects this project needs (see "dependencies")
-      ensure_pull_secrets --all   # 2. Ensure pull secrets
-      create_deployments vantage6-server # vantage6-ui # vantage6-store     # 3. Deploy Helm charts and manifests specfied as "deployments"
-      start_dev vantage6-server vantage6-ui vantage6-store
+      run_dependencies --all
+      ensure_pull_secrets --all
+      create_deployments \
+        vantage6-server \
+        vantage6-store
+      start_dev \
+        vantage6-server \
+        vantage6-ui \
+        vantage6-store
 
   node:
     run: |-
-      create_deployments vantage6-node
-      start_dev vantage6-node
+      create_deployments \
+        vantage6-node
+      start_dev \
+        vantage6-node
 
-# This is a list of `images` that DevSpace can build for this project
-# We recommend to skip image building during development (devspace dev) as much as possible
+# This is a list of `images` that DevSpace can build for this project. These can be
+# build with `devspace build` or when running `devspace dev -b`.
 images:
-  vantage6-server:
-    image: ${SERVER_IMAGE}
+  server:
+    image: "${SERVER_IMAGE}:${SERVER_IMAGE_TAG}"
     dockerfile: docker/node-and-server.Dockerfile
     context: .
 
   node:
-    image: harbor2.vantage6.ai/infrastructure/node:v5
+    image: "${NODE_IMAGE}:${NODE_IMAGE_TAG}"
     dockerfile: docker/node-and-server.Dockerfile
+    context: .
+
+  store:
+    image: "${STORE_IMAGE}:${STORE_IMAGE_TAG}"
+    dockerfile: docker/algorithm-store.Dockerfile
+    context: .
+
+  ui:
+    image: "${UI_IMAGE}:${UI_IMAGE_TAG}"
+    dockerfile: docker/ui.Dockerfile
     context: .
 
 # This is a list of `deployments` that DevSpace can create for this project
 deployments:
 
+  # The server deployment contains the server, database, rabbit mq and the UI. The
+  # store is deployed separately as it can have an many-to-many relationship with the
+  # server (This is also why they are in separate Helm charts).
   vantage6-server:
     helm:
       chart:
@@ -76,17 +113,16 @@ deployments:
         database:
           volumePath: /mnt/data
 
+  # The store deployment contains the store and the database.
   vantage6-store:
     helm:
       chart:
         name: ./charts/store
       values:
-
         store:
-
           image:
-            repository: harbor2.vantage6.ai/infrastructure/algorithm-store
-            tag: 5.0.0a0
+            repository: ${STORE_IMAGE}
+            tag: ${STORE_IMAGE_TAG}
           logging:
             level: DEBUG
           vantage6Server:
@@ -94,20 +130,47 @@ deployments:
           policies:
             allowLocalhost: 'True'
 
+        # This is the location of the database on the host system. Depending on the
+        # system that you use in combination with Docker Desktop, you should put a
+        # different path here.
+        #
+        # WSL
+        #   volumePath: /run/desktop/mnt/host/wsl/[SOME_PATH]
+        # MacOS
+        #   volumePath: ???
+        # Linux
+        #  users can probably use the same path as in the example below. Or any other
+        #  path that is accessible by the Docker daemon.
         database:
           volumePath: /mnt/data
 
-  # vantage6-ui:
-  #   kubectl:
-  #     manifests:
-  #       - kube/server-namespace.yml
-  #       - kube/ui/.
-
+  # The node deployment should not be 'deployed' only, it should only be deployed in
+  # combination with the `dev` container. This is because the node deployment requires
+  # the configuration files that are generated by the `dev` container. These are then
+  # mounted into the node container. The node starts then in development mode using
+  # the `dev_start.py` script. This allows us to run multiple nodes in a single
+  # container. The good part about this is that all nodes receive hot-reloaded code :)
   vantage6-node:
-    kubectl:
-      manifests:
-        - kube/node/namespace.yml
-        - kube/node/.
+    helm:
+      chart:
+        name: ./charts/node
+      values:
+        node:
+          image:
+            repository: ${NODE_IMAGE}
+            tag: ${NODE_IMAGE_TAG}
+          logging:
+            level: DEBUG
+          databases:
+            fileBased:
+            - name: default
+              uri: /mnt/data/default.csv
+              type: csv
+            # serviceBased:
+            # - name: postgres
+            #   uri: postgres://vantage6:vantage6@vantage6-vantage6-postgres:5432/vantage6
+            #   type: other
+          kubeConfig: ${KUBE_CONFIG}
 
 
 # This is a list of `dev` containers that are based on the containers created by your deployments
@@ -115,18 +178,23 @@ dev:
 
   # we use this to populate the database with some basic data. We need a port to talk
   # to as the ingress is not deployed yet.
-  init:
-    imageSelector: ${SERVER_IMAGE}
-    namespace: vantage6-server
+  vantage6-server-init:
+    imageSelector: ${SERVER_IMAGE}:${SERVER_IMAGE_TAG}
     ports:
       - port: 7601:7601
 
+  # We use this to enable the server and the store to be coupled. We need a port to talk
+  # to as the ingress is not deployed yet.
+  vantage6-store-init:
+    imageSelector: ${STORE_IMAGE}:${STORE_IMAGE_TAG}
+    ports:
+      - port: 7602:7602
+
+  # This puts the server container in development mode. It syncs the local files with
+  # the container and starts the server in development mode. Code changes will be
+  # hot-reloaded and a port forward is created to access the server.
   vantage6-server:
-
-    # Search for the container that runs this image
     imageSelector: ${SERVER_IMAGE}:${SERVER_IMAGE_TAG}
-    namespace: vantage6-server
-
     sync:
     - path: ./vantage6/:/vantage6/vantage6/
       disableDownload: true
@@ -135,47 +203,27 @@ dev:
     - path: ./vantage6-server/:/vantage6/vantage6-server/
       disableDownload: true
       startContainer: true
-    # - path: ./dev/:/dev/
-    #   # Make sure the container starts after syncing, this allows for modification of
-    #   # the start scripts
-    #   startContainer: true
-
     command: ["/bin/sh", "/vantage6/vantage6-server/dev_server.sh"]
-
-    # Make the following commands from my local machine available inside the dev container
     proxyCommands:
       - command: devspace
       - command: kubectl
-
-    #   - command: helm
-    #   - gitCredentials: true
-    # Forward the following ports to be able access your application via localhost
     ports:
       - port: 7601:7601
-
-    # # Open the following URLs once they return an HTTP status code other than 502 or 503
-
     logs:
       enabled: true
 
-  vantage6-store:
-
-    imageSelector: harbor2.vantage6.ai/infrastructure/algorithm-store:5.0.0a0
-    ports:
-      - port: 7602:7602
-
+  # This puts the store container in development mode.
+  # TODO sync and hot-reload
   vantage6-ui:
-
-    imageSelector: harbor2.vantage6.ai/infrastructure/ui:5.0.0a0
-
+    imageSelector: ${UI_IMAGE}:${UI_IMAGE_TAG}
     ports:
       - port: 7600:80
 
+  # Where as we could hot-reload the server code using wsgi, we cannot do this with the
+  # node code. We leverage the `restartHelper` and `onUpload.restartContainer` to
+  # restart the node container (with multiple nodes) when the code changes.
   vantage6-node:
-
-    imageSelector: ${NODE_IMAGE}
-    namespace: vantage6-node
-
+    imageSelector: ${NODE_IMAGE}:${NODE_IMAGE_TAG}
     sync:
     - path: ./vantage6/:/vantage6/vantage6/
       disableDownload: true
@@ -189,17 +237,13 @@ dev:
       disableDownload: true
       onUpload:
         restartContainer: true
+    # It is possible to manually add nodes. You need to put the configuration files in
+    # the `dev/.data` directory. The `dev_start.py` script will then start the nodes.
     - path: ./dev/.data/:/mnt/config/
       disableDownload: true
       startContainer: true
       onUpload:
         restartContainer: true
-    # - path: /Users/frankmartin/.kube/config:/app/.kube/config
-    #   disableDownload: true
-    #   startContainer: true
-    #   onUpload:
-    #     restartContainer: true
-
 
     restartHelper:
       inject: true
@@ -218,17 +262,9 @@ commands:
     command: devspace reset pods
   purge:
     command: devspace purge
+  rebuild:
+    command: devspace build
 
-  # load-basic-fixtures:
-  #   command: "python dev/load-basic-fixtures.py"
-  # delete-basic-fixtures:
-  #   command: "python dev/delete-basic-fixtures.py"
-  # start-nodes:
-  #   command: devspace run-pipeline node
-  # start-nodes-2:
-  #   command: v6 node start -c dev/.data/node_org_1.yaml --image ${NODE_IMAGE}
-  # stop-nodes:
-  #   command: v6 node stop --all
 
 # Define dependencies to other projects with a devspace.yaml
 # dependencies:
