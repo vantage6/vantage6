@@ -1,7 +1,6 @@
 import logging
 import json
 import uuid
-
 from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 
@@ -1139,6 +1138,7 @@ class TestResources(TestResourceBase):
 
     def test_patch_user_permissions(self):
         org = Organization()
+        org.save()
         user = User(
             firstname="Firstname",
             lastname="Lastname",
@@ -1364,6 +1364,7 @@ class TestResources(TestResourceBase):
         other_org_role = Role(
             name="somename", rules=[not_owning_rule], organization=Organization()
         )
+        other_org_role.save()
         headers = self.get_user_auth_header(rules=[rule, not_owning_rule])
         result = self.app.patch(
             f"/api/user/{user.id}", headers=headers, json={"roles": [other_org_role.id]}
@@ -2921,21 +2922,19 @@ class TestResources(TestResourceBase):
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
     def test_create_task_permission_as_user(self):
-        # non existent collaboration
         user = self.create_user()
         headers = self.login(user.username)
 
         input_ = bytes_to_base64s(serialize({"method": "dummy"}))
 
-        # organizations outside of collaboration
         org = Organization()
         org.save()
         col = Collaboration(organizations=[org], encrypted=False)
         col.save()
-
         session = Session(name="test_session", user_id=user.id, collaboration=col)
         session.save()
 
+        # test non-existing collaboration
         task_json = {
             "collaboration_id": 9999,
             "organizations": [{"id": 9999, "input": input_}],
@@ -2954,15 +2953,16 @@ class TestResources(TestResourceBase):
         # node is used implicitly as in further checks, can only create task
         # if node has been created
         node = Node(organization=org, collaboration=col)
-
+        node.save()
         org2 = Organization()
         org2.save()
 
+        # test user outside the collaboration
         task_json["organizations"] = [{"id": org2.id, "input": input_}]
         results = self.app.post("/api/task", headers=headers, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
 
-        # user without any permissions
+        # user in the collaboration but still without any permissions
         task_json["organizations"] = [{"id": org.id, "input": input_}]
         results = self.app.post("/api/task", headers=headers, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
@@ -3188,6 +3188,7 @@ class TestResources(TestResourceBase):
         task = Task(collaboration=col, init_org=org)
         # NB: node is used implicitly in task/{id}/result schema
         node = Node(organization=org, collaboration=col)
+        node.save()
         res = Run(task=task, organization=org)
         res.save()
 
@@ -3770,6 +3771,7 @@ class TestResources(TestResourceBase):
 
         # create new study as both have been deleted
         study = Study(collaboration=col, organizations=[org], name="study-1")
+        study.save()
 
         # check deleting with global permission succeeds
         rule = Rule.get_by_("study", Scope.GLOBAL, Operation.DELETE)

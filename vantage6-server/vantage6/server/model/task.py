@@ -149,7 +149,7 @@ class Task(Base):
         str
             Action that needs to be taken by the algorithm container
         """
-        return self.runs[-1].action
+        return self.runs[-1].action if self.runs else None
 
     @action.expression
     def action(cls):

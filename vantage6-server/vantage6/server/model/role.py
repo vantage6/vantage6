@@ -2,6 +2,8 @@ from __future__ import annotations
 from sqlalchemy import Column, Text, Integer, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.future import select
+
 
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
@@ -61,7 +63,8 @@ class Role(Base):
         """
         session = DatabaseSessionManager.get_session()
         try:
-            result = session.query(cls).filter_by(name=name).first()
+            stmt = select(cls).filter_by(name=name)
+            result = session.execute(stmt).scalars().first()
             session.commit()
             return result
         except NoResultFound:

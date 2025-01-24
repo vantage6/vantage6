@@ -45,7 +45,7 @@ class Dataframe(Base):
     # fields
     handle = Column(String)
     session_id = Column(Integer, ForeignKey("session.id"))
-    last_session_task_id = Column(Integer, ForeignKey("task.id"))
+    last_session_task_id = Column(Integer, ForeignKey("task.id", use_alter=True))
 
     # relationships
     session = relationship("Session", back_populates="dataframes")

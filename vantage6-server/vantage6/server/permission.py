@@ -259,6 +259,7 @@ class PermissionManager(PermissionManagerBase):
             role = Role(
                 name=fixedrole, description=f"{fixedrole} role", is_default_role=True
             )
+            role.save()
 
         rule = Rule.get_by_(name=resource, scope=scope, operation=operation)
         rule_params = f"{resource},{scope},{operation}"
