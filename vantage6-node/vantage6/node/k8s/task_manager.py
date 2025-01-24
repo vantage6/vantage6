@@ -30,10 +30,10 @@ from vantage6.common.enum import RunStatus, AlgorithmStepType
 from vantage6.node import NodeClient
 from vantage6.node.util import get_parent_id
 from vantage6.node.globals import ALPINE_IMAGE, ENV_VARS_NOT_SETTABLE_BY_NODE
-from vantage6.node.docker.vpn_manager import VPNManager
-from vantage6.node.docker.squid import Squid
-from vantage6.node.docker.docker_base import DockerBaseManager
-from vantage6.node.docker.exceptions import (
+from vantage6.node.k8s.vpn_manager import VPNManager
+from vantage6.node.k8s.squid import Squid
+from vantage6.node.k8s.docker_base import DockerBaseManager
+from vantage6.node.k8s.exceptions import (
     UnknownAlgorithmStartFail,
     PermanentAlgorithmStartFail,
     AlgorithmContainerNotFound,

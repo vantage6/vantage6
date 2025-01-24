@@ -22,8 +22,8 @@ from vantage6.common.docker.addons import (
     remove_container_if_exists,
     pull_image,
 )
-from vantage6.node.docker.docker_base import DockerBaseManager
-from vantage6.node.docker.docker_manager import NetworkManager
+from vantage6.node.k8s.docker_base import DockerBaseManager
+from vantage6.node.k8s.docker_manager import NetworkManager
 from vantage6.node.globals import SQUID_IMAGE, PACKAGE_FOLDER
 from vantage6.node._version import major_minor
 

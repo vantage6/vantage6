@@ -24,7 +24,7 @@ from vantage6.node.globals import (
     ALPINE_IMAGE,
 )
 from vantage6.common.client.node_client import NodeClient
-from vantage6.node.docker.docker_base import DockerBaseManager
+from vantage6.node.k8s.docker_base import DockerBaseManager
 from vantage6.node._version import major_minor
 
 

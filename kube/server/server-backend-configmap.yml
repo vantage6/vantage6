@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vantage6-server-config
+  namespace: vantage6-server
+data:
+  config.yaml: |
+    algorithm_stores: []
+    allow_drop_all: 'True'
+    api_path: /api
+    description: Vantage6 server version 5
+    ip: 0.0.0.0
+    jwt_secret_key: 90251a41-f4c1-441c-8e62-a2d51bd47de9
+    logging:
+      backup_count: 5
+      datefmt: '%Y-%m-%d %H:%M:%S'
+      file: five.log
+      format: '%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s'
+      level: DEBUG
+      loggers:
+      - level: warning
+        name: urllib3
+      - level: warning
+        name: socketIO-client
+      - level: warning
+        name: socketio.server
+      - level: warning
+        name: engineio.server
+      - level: warning
+        name: sqlalchemy.engine
+      - level: warning
+        name: requests_oauthlib.oauth2_session
+      max_size: 1024
+      use_console: true
+    port: '7601'
+    server_url: http://localhost/api
+    uri: postgresql://vantage6user:vantage6password@postgres-service:5432/vantage6
+    rabbitmq:
+      uri: amqp://rabbitmquser:rabbitmquserpassword@rabbitmq-service:5672//vantage6
+      start_with_server: false

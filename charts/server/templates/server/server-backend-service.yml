@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-vantage6-server-service
+  namespace: {{ .Release.Namespace | quote }}
+spec:
+  selector:
+{{ include "vantage6.matchLabels" . | indent 4 }}
+    component: vantage6-server
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: {{ .Values.server.internal.port }}
+      name: vantage6-server-backend
+  type: ClusterIP
+  {{- if gt (int .Values.server.replications) 1 }}
+  sessionAffinity: ClientIP # does not work in wsl
+  {{- end }}

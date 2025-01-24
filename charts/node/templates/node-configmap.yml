@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-node-configmap
+  namespace: {{ .Release.Namespace | quote }}
+data:
+  config.yml: |
+    api_key: {{ .Values.node.apiKey }}
+    server_url: {{ .Values.node.server.url }}
+    api_path: {{ .Values.node.server.path }}
+    port: {{ .Values.node.server.port }}
+    {{- range .Values.node.databases.fileBased -}}
+    databases:
+    - label: {{ .name }}
+      uri: "/app/.databases/{{ .name }}.{{ .type }}"
+      type: {{ .type }}
+    {{- end -}}
+    {{- range .Values.node.databases.serviceBased -}}
+    - label: {{ .name }}
+      uri: {{ .uri }}
+      type: {{ .type }}
+    {{- end -}}
+    encryption:
+      enabled: false
+      private_key: null
+    logging:
+      backup_count: 5
+      datefmt: '%Y-%m-%d %H:%M:%S'
+      file: five_node_1.log
+      format: '%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s'
+      level: {{ .Values.node.logging.level }}
+      max_size: 1024
+      use_console: true
+      loggers:
+      - level: warning
+        name: urllib3
+      - level: warning
+        name: requests
+      - level: warning
+        name: engineio.client
+      - level: warning
+        name: docker.utils.config
+      - level: warning
+        name: docker.auth
+    task_dir: /tmp/task
