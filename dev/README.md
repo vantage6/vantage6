@@ -5,6 +5,26 @@ vantage6 algorithms.
 
 ~~It's meant to be cloned into the `dev` directory of the vantage6 repository.~~
 
+> [!NOTE]
+> As long as this code is not part of the offical vantage6 images and python cli
+> tool, you need to adjust the following:
+>
+> Build the node-and-server image locally with:
+> ```bash
+> make TAG=devtestdebug REGISTRY=localhost:5050 PLATFORMS=linux/amd64 image
+> ```
+> This image should be referenced in the `docker-compose.yaml` for the server
+> and the node yaml config file. There shouldn't be a need to push this image
+> to a localhost:5050 registry.
+>
+> If you are using the `v6` cli tool for an algorithm repo, you need to use
+> this branch's version, by doing something like:
+> ```bash
+> python3 -m venv dev/venv
+> source dev/venv/bin/activate
+> make install-cli-dev
+> ```
+
 ### Debugging vantage6 code
 
 Our setup here uses debugpy. While in theory this will work with any client that
@@ -272,7 +292,7 @@ debugger_algorithm:
   # (entrypoint)
   debug_dir: ../../debugger
   # command to execute as entrypoint (working dir will be debug_dir)
-  cmd: ./algorithm-debug-python.sh
+  launcher: ./algorithm-debug-python.sh
   # top of the algorithm source directory
   algo_source_dir: ../../../..
   # source will be mounted on /app on the container

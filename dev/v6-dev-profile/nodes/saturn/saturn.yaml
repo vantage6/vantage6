@@ -20,12 +20,12 @@ databases:
     type: csv
     uri_path_relative: true
 
-encryption:
-  enabled: false
-
 policies:
   allowed_algorithms:
     - ^harbor2\.vantage6\.ai/demo/average$
+
+encryption:
+  enabled: false
 
 logging:
   level:        DEBUG
@@ -58,6 +58,6 @@ debug:
   # into debug mode
   proxy_server: true
 
-# vantage6 node images are temporarily hosted on medicaldataworks/vantage6/
+# PR#1653 work-in-progress: build locally first
 images:
-  node: medicaldataworks/vantage6-devtestdebug-node:latest
+  node: localhost:5050/infrastructure/node:devtestdebug

@@ -58,8 +58,8 @@ debug:
   # into debug mode
   proxy_server: true
 
-# vantage6 node images are temporarily hosted on medicaldataworks/vantage6/
+# PR#1653 work-in-progress: build locally first
 images:
-  node: medicaldataworks/vantage6-devtestdebug-node:latest
+  node: localhost:5050/infrastructure/node:devtestdebug
 
 
