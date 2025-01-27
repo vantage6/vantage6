@@ -1,5 +1,6 @@
 import click
 
+
 from vantage6.cli.server.attach import cli_server_attach
 from vantage6.cli.server.files import cli_server_files
 from vantage6.cli.server.import_ import cli_server_import
@@ -26,6 +27,8 @@ from vantage6.cli.dev.create import create_demo_network
 from vantage6.cli.dev.remove import remove_demo_network
 from vantage6.cli.dev.start import start_demo_network
 from vantage6.cli.dev.stop import stop_demo_network
+from vantage6.cli.dev.profile import profile
+from vantage6.cli.dev.wait_for_debug import wait_for_debug
 from vantage6.cli.algorithm.create import cli_algorithm_create
 from vantage6.cli.algorithm.update import cli_algorithm_update
 from vantage6.cli.test.client_script import cli_test_client_script
@@ -38,7 +41,6 @@ from vantage6.cli.algostore.stop import cli_algo_store_stop
 from vantage6.cli.algostore.files import cli_algo_store_files
 from vantage6.cli.algostore.list import cli_algo_store_configuration_list
 from vantage6.cli.algostore.remove import cli_algo_store_remove
-from vantage6.cli.dev.profile import profile
 
 # Define the server group
 @click.group(name="server")
@@ -100,7 +102,7 @@ cli_dev.add_command(remove_demo_network, name="remove-demo-network")
 cli_dev.add_command(start_demo_network, name="start-demo-network")
 cli_dev.add_command(stop_demo_network, name="stop-demo-network")
 cli_dev.add_command(profile, name="profile")
-
+cli_dev.add_command(wait_for_debug, name="wait-for-debug")
 
 # Define the algorithm group
 @click.group(name="algorithm")
