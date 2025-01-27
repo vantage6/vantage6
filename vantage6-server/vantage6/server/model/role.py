@@ -6,6 +6,7 @@ from sqlalchemy.future import select
 
 
 from vantage6.server.model.base import Base, DatabaseSessionManager
+from vantage6.server.model.rule import Rule
 
 
 class Role(Base):

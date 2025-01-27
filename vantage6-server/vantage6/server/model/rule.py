@@ -4,6 +4,7 @@ from enum import Enum as Enumerate
 from sqlalchemy import Column, Text, String, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.future import select
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
@@ -103,12 +104,8 @@ class Rule(Base):
         """
         session = DatabaseSessionManager.get_session()
         try:
-            result = (
-                session.query(cls)
-                .filter_by(name=name, operation=operation, scope=scope)
-                .first()
-            )
-            session.commit()
+            stmt = select(cls).filter_by(name=name, scope=scope, operation=operation)
+            result = session.scalars(stmt).first()
             return result
         except NoResultFound:
             return None

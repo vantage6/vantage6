@@ -5,15 +5,18 @@ import inspect as class_inspect
 from typing import Any
 from time import sleep
 from flask.globals import g
-from sqlalchemy.exc import OperationalError
-from sqlalchemy import Column, Integer, inspect, Table, exists
-from sqlalchemy.orm.session import Session
-from sqlalchemy.ext.declarative import declared_attr, DeclarativeMeta
-from sqlalchemy.orm.clsregistry import _ModuleMarker
-from sqlalchemy import create_engine
+
+from sqlalchemy import Column, Integer, inspect, Table, exists, create_engine, text
 from sqlalchemy.engine.url import make_url
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.ext.declarative import declared_attr, DeclarativeMeta
+
 from sqlalchemy.orm import scoped_session, sessionmaker, RelationshipProperty
+from sqlalchemy.orm.clsregistry import _ModuleMarker
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.session import Session
+from sqlalchemy.future import select
+
 from vantage6.common import logger_name
 from vantage6.backend.common import session
 from vantage6.backend.common.globals import (
@@ -110,13 +113,13 @@ class BaseDatabase:
         # Try connecting to the Db MAX_ATTEMPT times if not error occur
         for attempt in range(MAX_NUMBER_OF_ATTEMPTS):
             try:
-                self.engine = create_engine(uri, pool_pre_ping=True)
+                self.engine = create_engine(uri, pool_pre_ping=True, future=True)
                 # we can call Session() to create a session, if a session already
                 # exists it will return the same session (!). implicit access to the
                 # Session (without calling it first). The scoped session is scoped to
                 # the local thread the process is running in.
                 self.session_a = scoped_session(
-                    sessionmaker(autocommit=False, autoflush=False)
+                    sessionmaker(autocommit=False, autoflush=False, future=True)
                 )
                 self.session_a.configure(bind=self.engine)
 
@@ -129,7 +132,7 @@ class BaseDatabase:
                 # `post request`. If we would use the same session for other tasks, the
                 # session can be terminated unexpectedly.
                 self.session_b = scoped_session(
-                    sessionmaker(autocommit=False, autoflush=False)
+                    sessionmaker(autocommit=False, autoflush=False, future=True)
                 )
                 self.session_b.configure(bind=self.engine)
 
@@ -231,14 +234,21 @@ class BaseDatabase:
         col_name = column.key
         col_type = column.type.compile(self.engine.dialect)
         tab_name = table_cls.__tablename__
-        log.warn(
+        log.warning(
             "Adding column '%s' to table '%s' as it did not exist yet",
             col_name,
             tab_name,
         )
-        self.engine.execute(
-            'ALTER TABLE "%s" ADD COLUMN %s %s' % (tab_name, col_name, col_type)
-        )
+        with self.engine.connect() as conn:
+            # TODO It would be better not to pass text - may not work with all
+            # database types
+            with conn.begin():
+                conn.execute(
+                    text(
+                        'ALTER TABLE "%s" ADD COLUMN %s %s'
+                        % (tab_name, col_name, col_type)
+                    )
+                )
 
     @staticmethod
     def is_column_missing(
@@ -394,11 +404,13 @@ class BaseModelBase:
 
         result = None
 
+        stmt = select(cls)
         if id_ is None:
-            result = session_.query(cls).all()
+            result = session_.scalars(stmt).all()
         else:
             try:
-                result = session_.query(cls).filter_by(id=id_).one()
+                stmt = stmt.where(cls.id == id_)
+                result = session_.scalars(stmt).one()
             except NoResultFound:
                 result = None
 

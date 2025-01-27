@@ -156,23 +156,6 @@ class User(Base):
         session.commit()
         return result
 
-    @classmethod
-    def username_exists(cls, username) -> bool:
-        """
-        Check if a user with the given username exists
-
-        Parameters
-        ----------
-        username: str
-            Username to check
-
-        Returns
-        -------
-        bool
-            Whether or not a user with the given username exists
-        """
-        return cls.exists(field="username", value=username)
-
     def is_reviewer(self) -> bool:
         """
         Check if user is allowed to review algorithms
