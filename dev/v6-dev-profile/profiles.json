@@ -23,6 +23,26 @@
                 "service": "ui-planets"
             }
         },
+        "debug-server-with-node": {
+            "server": {
+                "compose": "server/docker-compose.yaml",
+                "service": "server-planets-debug"
+            },
+            "ui": {
+                "compose": "server/docker-compose.yaml",
+                "service": "ui-planets"
+            },
+            "nodes": [
+                {
+                    "name": "mars",
+                    "config": "nodes/mars/mars.yaml",
+                    "options": {
+                        "skip_debugger": true,
+                        "attach": true
+                    }
+                }
+            ]
+        },
         "run-node-mars": {
             "server": {
                 "compose": "server/docker-compose.yaml",
