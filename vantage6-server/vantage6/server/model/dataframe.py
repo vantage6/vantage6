@@ -1,12 +1,11 @@
-import vantage6.server.model as models
-
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Column, Integer, ForeignKey, String
+from sqlalchemy import Column, Integer, ForeignKey, String, select
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
 from vantage6.common.enum import RunStatus, TaskStatus
+import vantage6.server.model as models
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
 if TYPE_CHECKING:
@@ -90,15 +89,14 @@ class Dataframe(Base):
         """
         # TODO FM 26-07-2024: The compute should be coming from an enum
         db_session = DatabaseSessionManager.get_session()
-        active_compute_tasks = (
-            db_session.query(models.Task)
+        active_compute_tasks = db_session.scalars(
+            select(models.Task)
             .join(models.TaskDatabase)
             .filter(models.Task.action == "compute")
             .filter(models.Task.status == TaskStatus.WAITING.value)
             .filter(models.TaskDatabase.database == self.handle)
             .filter(models.Task.session_id == self.session_id)
-            .all()
-        )
+        ).all()
         db_session.commit()
         return active_compute_tasks
 
@@ -120,11 +118,9 @@ class Dataframe(Base):
             Dataframe that corresponds to the given session and handle
         """
         db_session = DatabaseSessionManager.get_session()
-        dataframe = (
-            db_session.query(cls)
-            .filter_by(session_id=session.id, handle=handle)
-            .first()
-        )
+        dataframe = db_session.scalars(
+            select(cls).filter_by(session_id=session.id, handle=handle)
+        ).first()
         db_session.commit()
         return dataframe
 

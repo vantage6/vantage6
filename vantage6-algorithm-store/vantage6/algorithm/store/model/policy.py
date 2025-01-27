@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, select
 
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
 from vantage6.algorithm.store.model.user import User
@@ -32,7 +32,7 @@ class Policy(Base):
             Dictionary of policies
         """
         session = DatabaseSessionManager.get_session()
-        result = session.query(cls).all()
+        result = session.scalars(select(cls)).all()
         session.commit()
         return {r.key: r.value for r in result}
 
@@ -47,7 +47,9 @@ class Policy(Base):
             List of servers that are allowed to be whitelisted
         """
         session = DatabaseSessionManager.get_session()
-        result = session.query(cls).filter_by(key=StorePolicies.ALLOWED_SERVERS).all()
+        result = session.scalars(
+            select(cls).filter_by(key=StorePolicies.ALLOWED_SERVERS)
+        ).all()
         session.commit()
         return [r.value for r in result]
 
@@ -62,11 +64,9 @@ class Policy(Base):
             True if localhost is allowed to be whitelisted, False otherwise
         """
         session = DatabaseSessionManager.get_session()
-        result = (
-            session.query(cls)
-            .filter_by(key=StorePolicies.ALLOW_LOCALHOST)
-            .one_or_none()
-        )
+        result = session.scalars(
+            select(cls).filter_by(key=StorePolicies.ALLOW_LOCALHOST)
+        ).one_or_none()
         session.commit()
         if result is None:
             return False
@@ -83,7 +83,9 @@ class Policy(Base):
             List of servers that have edit permission
         """
         session = DatabaseSessionManager.get_session()
-        result = session.query(cls).filter_by(key=StorePolicies.ALLOWED_SERVERS).all()
+        result = session.scalars(
+            select(cls).filter_by(key=StorePolicies.ALLOWED_SERVERS)
+        ).all()
         session.commit()
         return [r.value for r in result]
 
@@ -98,9 +100,9 @@ class Policy(Base):
             Minimum number of reviewers
         """
         session = DatabaseSessionManager.get_session()
-        result = (
-            session.query(cls).filter_by(key=StorePolicies.MIN_REVIEWERS).one_or_none()
-        )
+        result = session.scalars(
+            select(cls).filter_by(key=StorePolicies.MIN_REVIEWERS)
+        ).one_or_none()
         session.commit()
         if result is None:
             return DefaultStorePolicies.MIN_REVIEWERS.value
@@ -118,11 +120,9 @@ class Policy(Base):
             False otherwise
         """
         session = DatabaseSessionManager.get_session()
-        result = (
-            session.query(cls)
-            .filter_by(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM)
-            .one_or_none()
-        )
+        result = session.scalars(
+            select(cls).filter_by(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM)
+        ).one_or_none()
         session.commit()
         if result is None:
             return DefaultStorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value
@@ -139,11 +139,9 @@ class Policy(Base):
             Minimum number of reviewers
         """
         session = DatabaseSessionManager.get_session()
-        result = (
-            session.query(cls)
-            .filter_by(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS)
-            .one_or_none()
-        )
+        result = session.scalars(
+            select(cls).filter_by(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS)
+        ).one_or_none()
         session.commit()
         if result is None:
             return DefaultStorePolicies.MIN_REVIEWING_ORGANIZATIONS.value
@@ -169,7 +167,7 @@ class Policy(Base):
         """
 
         session = DatabaseSessionManager.get_session()
-        result = session.query(cls).filter_by(key=policy).all()
+        result = session.scalars(select(cls).filter_by(key=policy)).all()
         session.commit()
 
         if result is None or result == []:

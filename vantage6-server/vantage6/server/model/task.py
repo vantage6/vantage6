@@ -229,7 +229,7 @@ class Task(Base):
             Next available run id
         """
         session = DatabaseSessionManager.get_session()
-        max_job_id = session.query(sql.func.max(cls.job_id)).scalar()
+        max_job_id = session.scalar(select(sql.func.max(cls.job_id)))
         session.commit()
         if max_job_id:
             return max_job_id + 1

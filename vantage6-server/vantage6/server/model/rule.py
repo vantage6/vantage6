@@ -1,10 +1,9 @@
 from __future__ import annotations
 from enum import Enum as Enumerate
 
-from sqlalchemy import Column, Text, String, Enum
+from sqlalchemy import Column, Text, String, Enum, select
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.future import select
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
@@ -106,6 +105,7 @@ class Rule(Base):
         try:
             stmt = select(cls).filter_by(name=name, scope=scope, operation=operation)
             result = session.scalars(stmt).first()
+            session.commit()
             return result
         except NoResultFound:
             return None

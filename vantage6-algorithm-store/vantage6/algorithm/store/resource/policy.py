@@ -4,6 +4,7 @@ from http import HTTPStatus
 from flask.globals import request
 from flask import g
 from flask_restful import Api
+from sqlalchemy import select
 
 from vantage6.common import logger_name
 from vantage6.common.enum import StorePolicies
@@ -169,7 +170,7 @@ class PrivatePoliciesAPI(PoliciesBase):
 
         tags: ["Policy"]
         """
-        q = g.session.query(db.Policy)
+        q = select(db.Policy)
 
         args = request.args
 
@@ -183,7 +184,7 @@ class PrivatePoliciesAPI(PoliciesBase):
                 }, HTTPStatus.BAD_REQUEST
 
         policies_dict = self.policies_to_dict(
-            q.all(), include_defaults=True, include_private=True
+            g.session.scalars(q).all(), include_defaults=True, include_private=True
         )
 
         return policies_dict, HTTPStatus.OK
@@ -215,7 +216,7 @@ class PublicPoliciesAPI(PoliciesBase):
 
         tags: ["Policy"]
         """
-        q = g.session.query(db.Policy).filter(
+        q = select(db.Policy).filter(
             db.Policy.key.in_([p.value for p in PublicPolicies])
         )
 
@@ -236,7 +237,7 @@ class PublicPoliciesAPI(PoliciesBase):
                 }, HTTPStatus.UNAUTHORIZED
 
         policies_dict = self.policies_to_dict(
-            q.all(), include_defaults=True, include_private=False
+            g.session.scalars(q).all(), include_defaults=True, include_private=False
         )
 
         return policies_dict, HTTPStatus.OK

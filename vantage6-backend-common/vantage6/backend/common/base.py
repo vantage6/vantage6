@@ -15,7 +15,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker, RelationshipProperty
 from sqlalchemy.orm.clsregistry import _ModuleMarker
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm.session import Session
-from sqlalchemy.future import select
+from sqlalchemy import select
 
 from vantage6.common import logger_name
 from vantage6.backend.common import session
@@ -113,13 +113,13 @@ class BaseDatabase:
         # Try connecting to the Db MAX_ATTEMPT times if not error occur
         for attempt in range(MAX_NUMBER_OF_ATTEMPTS):
             try:
-                self.engine = create_engine(uri, pool_pre_ping=True, future=True)
+                self.engine = create_engine(uri, pool_pre_ping=True)
                 # we can call Session() to create a session, if a session already
                 # exists it will return the same session (!). implicit access to the
                 # Session (without calling it first). The scoped session is scoped to
                 # the local thread the process is running in.
                 self.session_a = scoped_session(
-                    sessionmaker(autocommit=False, autoflush=False, future=True)
+                    sessionmaker(autocommit=False, autoflush=False)
                 )
                 self.session_a.configure(bind=self.engine)
 
@@ -132,7 +132,7 @@ class BaseDatabase:
                 # `post request`. If we would use the same session for other tasks, the
                 # session can be terminated unexpectedly.
                 self.session_b = scoped_session(
-                    sessionmaker(autocommit=False, autoflush=False, future=True)
+                    sessionmaker(autocommit=False, autoflush=False)
                 )
                 self.session_b.configure(bind=self.engine)
 
@@ -475,7 +475,7 @@ class BaseModelBase:
             True if the value exists, False otherwise
         """
         session_ = db_session_mgr.get_session()
-        result = session_.query(exists().where(getattr(cls, field) == value)).scalar()
+        result = session_.scalar(exists().where(getattr(cls, field) == value))
         session_.commit()
         return result
 

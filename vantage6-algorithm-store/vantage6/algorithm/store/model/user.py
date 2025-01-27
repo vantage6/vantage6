@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy import Column, String, Integer, ForeignKey, select
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
@@ -123,11 +123,9 @@ class User(Base):
             If no user with the given username exists
         """
         session = DatabaseSessionManager.get_session()
-        result = (
-            session.query(cls)
-            .filter_by(username=username, v6_server_id=v6_server_id)
-            .one_or_none()
-        )
+        result = session.scalars(
+            select(cls).filter_by(username=username, v6_server_id=v6_server_id)
+        ).one_or_none()
         session.commit()
         return result
 
@@ -152,7 +150,7 @@ class User(Base):
             If no user with the given username exists
         """
         session = DatabaseSessionManager.get_session()
-        result = session.query(cls).filter_by(username=username).one()
+        result = session.scalars(select(cls).filter_by(username=username)).one()
         session.commit()
         return result
 

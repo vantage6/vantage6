@@ -2,7 +2,7 @@ from __future__ import annotations
 import bcrypt
 
 from sqlalchemy.orm import relationship, validates
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, select
 
 from vantage6.common.globals import AuthStatus
 from vantage6.server.model.base import DatabaseSessionManager
@@ -116,7 +116,7 @@ class Node(Authenticatable):
         """
         session = DatabaseSessionManager.get_session()
 
-        nodes = session.query(cls).all()
+        nodes = session.scalars(select(cls)).all()
         session.commit()
         for node in nodes:
             is_correct_key = node.check_key(api_key)
@@ -137,7 +137,9 @@ class Node(Authenticatable):
         """
         session = DatabaseSessionManager.get_session()
 
-        result = session.query(cls).filter_by(status=AuthStatus.ONLINE.value).all()
+        result = session.scalars(
+            select(cls).filter_by(status=AuthStatus.ONLINE.value)
+        ).all()
         session.commit()
         return result
 
@@ -160,12 +162,10 @@ class Node(Authenticatable):
             False otherwise.
         """
         session = DatabaseSessionManager.get_session()
-        result = (
-            session.query(cls)
-            .filter_by(
+        result = session.scalar(
+            select(cls).filter_by(
                 organization_id=organization_id, collaboration_id=collaboration_id
             )
-            .scalar()
         )
         session.commit()
         return result
