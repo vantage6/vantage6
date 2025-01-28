@@ -5,7 +5,7 @@ from http import HTTPStatus
 from flask.globals import request
 from flask import g
 from flask_restful import Api
-from sqlalchemy import or_
+from sqlalchemy import or_, select
 
 from vantage6.algorithm.store.resource import with_permission
 from vantage6.common import logger_name
@@ -145,7 +145,7 @@ class Roles(AlgorithmStoreResources):
 
         tags: ["Role"]
         """
-        q = g.session.query(db.Role)
+        q = select(db.Role)
 
         args = request.args
 

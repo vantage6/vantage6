@@ -1,7 +1,7 @@
 from __future__ import annotations
 import base64
 
-from sqlalchemy import Column, String, LargeBinary
+from sqlalchemy import Column, String, LargeBinary, select
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm.exc import NoResultFound
@@ -92,7 +92,7 @@ class Organization(Base):
         """
         session = DatabaseSessionManager.get_session()
         try:
-            result = session.query(cls).filter_by(name=name).first()
+            result = session.scalars(select(cls).filter_by(name=name)).first()
             session.commit()
             return result
         except NoResultFound:

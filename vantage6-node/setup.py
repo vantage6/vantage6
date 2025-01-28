@@ -46,7 +46,7 @@ setup(
         "dev": [
             "coverage==6.4.4",
             "python-coveralls==2.9.3",
-            "SQLAlchemy==1.4.46",
+            "sqlalchemy==2.0.37",
             "schema==0.7.5",
             "appdirs==1.4.4",
             "flask==2.2.5",

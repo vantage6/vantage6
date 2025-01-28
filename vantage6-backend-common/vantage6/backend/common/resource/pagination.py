@@ -4,9 +4,11 @@ import math
 import logging
 from urllib.parse import urlencode
 import flask
+from flask import g
 import sqlalchemy
+from sqlalchemy import func, desc, select
 from sqlalchemy.orm.decl_api import DeclarativeMeta
-
+from sqlalchemy.sql.selectable import Select
 
 from vantage6.common import logger_name
 from vantage6.backend.common.globals import DEFAULT_PAGE, DEFAULT_PAGE_SIZE
@@ -168,7 +170,7 @@ class Pagination:
     @classmethod
     def from_query(
         cls,
-        query: sqlalchemy.orm.query,
+        query: Select,
         request: flask.Request,
         resource_model: DeclarativeMeta,
         paginate: bool = True,
@@ -178,7 +180,7 @@ class Pagination:
 
         Parameters
         ----------
-        query : sqlalchemy.orm.query
+        query : sqlalchemy.sql.selectable.Select
             Query to paginate
         request : flask.Request
             Request object
@@ -196,7 +198,11 @@ class Pagination:
         # getting a count and might have performance implications as discussed
         # on this Flask-SqlAlchemy issue
         # https://github.com/mitsuhiko/flask-sqlalchemy/issues/100
-        total = query.distinct().order_by(None).count()
+        # pylint: disable=not-callable
+        count_query = select(func.count()).select_from(
+            query.distinct().order_by(None).subquery()
+        )
+        total = g.session.scalar(count_query)
 
         # check if pagination is desired, else return all records
         if paginate:
@@ -216,7 +222,9 @@ class Pagination:
         if request.args.get("sort", False):
             query = cls._add_sorting(query, request.args.get("sort"), resource_model)
 
-        items = query.distinct().limit(per_page).offset((page_id - 1) * per_page).all()
+        items = g.session.scalars(
+            query.distinct().limit(per_page).offset((page_id - 1) * per_page)
+        ).all()
 
         return cls(items, page_id, per_page, total, request)
 
@@ -278,14 +286,14 @@ class Pagination:
 
     @staticmethod
     def _add_sorting(
-        query: sqlalchemy.orm.query, sort_string: str, resource_model: DeclarativeMeta
-    ) -> sqlalchemy.orm.query:
+        query: Select, sort_string: str, resource_model: DeclarativeMeta
+    ) -> Select:
         """
         Add sorting to a query.
 
         Parameters
         ----------
-        query : sqlalchemy.orm.query
+        query : sqlalchemy.sql.selectable.Select
             The query to add sorting to.
         sort : str
             The sorting to add. This can be a comma separated list of fields to
@@ -311,5 +319,5 @@ class Pagination:
             if sort_asc:
                 query = query.order_by(sorter)
             else:
-                query = query.order_by(sqlalchemy.desc(sorter))
+                query = query.order_by(desc(sorter))
         return query

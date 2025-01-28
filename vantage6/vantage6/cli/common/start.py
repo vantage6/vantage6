@@ -241,7 +241,7 @@ def mount_database(
     # try to mount database
     uri = ctx.config["uri"]
     url = make_url(uri)
-    environment_vars = None
+    environment_vars = {}
     mount = None
 
     # If host is None, we're dealing with a file-based DB, like SQLite

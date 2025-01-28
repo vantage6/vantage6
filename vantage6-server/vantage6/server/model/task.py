@@ -149,7 +149,7 @@ class Task(Base):
         str
             Action that needs to be taken by the algorithm container
         """
-        return self.runs[-1].action
+        return self.runs[-1].action if self.runs else None
 
     @action.expression
     def action(cls):
@@ -229,8 +229,7 @@ class Task(Base):
             Next available run id
         """
         session = DatabaseSessionManager.get_session()
-        max_job_id = session.query(sql.func.max(cls.job_id)).scalar()
-        session.commit()
+        max_job_id = session.scalar(select(sql.func.max(cls.job_id)))
         if max_job_id:
             return max_job_id + 1
         else:

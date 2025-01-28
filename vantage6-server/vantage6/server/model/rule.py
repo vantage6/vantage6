@@ -1,7 +1,7 @@
 from __future__ import annotations
 from enum import Enum as Enumerate
 
-from sqlalchemy import Column, Text, String, Enum
+from sqlalchemy import Column, Text, String, Enum, select
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 from vantage6.server.model.base import Base, DatabaseSessionManager
@@ -103,11 +103,8 @@ class Rule(Base):
         """
         session = DatabaseSessionManager.get_session()
         try:
-            result = (
-                session.query(cls)
-                .filter_by(name=name, operation=operation, scope=scope)
-                .first()
-            )
+            stmt = select(cls).filter_by(name=name, scope=scope, operation=operation)
+            result = session.scalars(stmt).first()
             session.commit()
             return result
         except NoResultFound:

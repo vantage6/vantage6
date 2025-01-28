@@ -428,7 +428,7 @@ class TaskInputSchema(_NameValidationSchema):
     store_id = fields.Integer(validate=Range(min=1))
     server_url = fields.Url()
     depends_on_ids = fields.List(
-        fields.Integer(validate=Range(min=1), required=False), missing=[]
+        fields.Integer(validate=Range(min=1), required=False), load_default=[]
     )
     organizations = fields.List(fields.Dict(), required=True)
     databases = fields.List(fields.Dict(), allow_none=True)
@@ -658,7 +658,7 @@ class SessionInputSchema(Schema):
     collaboration_id = fields.Integer(required=True, validate=Range(min=1))
     study_id = fields.Integer(validate=Range(min=1), allow_none=True)
     scope = fields.String(
-        required=True, validate=OneOf(Scope.list()), default=Scope.OWN.value
+        required=True, validate=OneOf(Scope.list()), dump_default=Scope.OWN.value
     )
 
 

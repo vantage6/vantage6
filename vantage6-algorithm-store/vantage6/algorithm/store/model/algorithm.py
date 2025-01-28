@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import Column, String, DateTime, Integer, ForeignKey
+from sqlalchemy import Column, String, DateTime, Integer, ForeignKey, select
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
@@ -130,7 +130,9 @@ class Algorithm(Base):
             Algorithms with the given image that are not invalidated
         """
         session = DatabaseSessionManager.get_session()
-        result = session.query(cls).filter_by(image=image, invalidated_at=None).all()
+        result = session.scalars(
+            select(cls).filter_by(image=image, invalidated_at=None)
+        ).all()
         session.commit()
         return result
 
@@ -152,15 +154,14 @@ class Algorithm(Base):
             Algorithms with one of the given statuses
         """
         session = DatabaseSessionManager.get_session()
-        result = (
-            session.query(cls)
-            .filter(
+        result = session.scalars(
+            select(cls)
+            .where(
                 cls.status.in_(state)
                 if isinstance(state, list)
                 else cls.status == state
             )
             .order_by(cls.id)
-            .all()
-        )
+        ).all()
         session.commit()
         return result

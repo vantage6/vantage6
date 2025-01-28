@@ -4,7 +4,7 @@ from http import HTTPStatus
 from flask.globals import request
 from flask import g
 from flask_restful import Api
-from sqlalchemy import or_
+from sqlalchemy import or_, select
 
 from vantage6.server import db
 from vantage6.server.resource import (
@@ -248,7 +248,7 @@ class Roles(RoleBase):
 
         tags: ["Role"]
         """
-        q = g.session.query(db.Role)
+        q = select(db.Role)
 
         auth_org = self.obtain_auth_organization()
         args = request.args

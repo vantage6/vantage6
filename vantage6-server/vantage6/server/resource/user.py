@@ -4,6 +4,7 @@ import sqlalchemy.exc
 from http import HTTPStatus
 from flask import g, request
 from flask_restful import Api
+from sqlalchemy import select
 
 from vantage6.common import logger_name
 from vantage6.server import db
@@ -227,7 +228,7 @@ class Users(UserBase):
         tags: ["User"]
         """
         args = request.args
-        q = g.session.query(db.User)
+        q = select(db.User)
 
         # filter by any field of this endpoint
         for param in ["username", "firstname", "lastname", "email"]:

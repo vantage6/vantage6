@@ -3,6 +3,7 @@ import logging
 from flask import g, request
 from flask_restful import Api
 from http import HTTPStatus
+from sqlalchemy import select
 
 from vantage6.common import logger_name
 from vantage6.server.permission import PermissionManager, Scope as S, Operation as P
@@ -146,7 +147,7 @@ class Ports(PortBase):
         # The only entity that is allowed to algorithm ports is the node where
         # those algorithms are running.
         run_id = data["run_id"]
-        linked_run = g.session.query(Run).filter(Run.id == run_id).one()
+        linked_run = g.session.scalars(select(Run).filter(Run.id == run_id)).one()
         if g.node.id != linked_run.node.id:
             return {
                 "msg": "You lack the permissions to do that!"
@@ -203,14 +204,16 @@ class Ports(PortBase):
         # The only entity that is allowed to delete algorithm ports is the node
         # where those algorithms are running.
         run_id = args["run_id"]
-        linked_run = g.session.query(Run).filter(Run.id == run_id).one()
+        linked_run = g.session.scalars(select(Run).filter(Run.id == run_id)).one()
         if g.node.id != linked_run.node.id:
             return {
                 "msg": "You lack the permissions to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
         # all checks passed: delete the port entries
-        g.session.query(AlgorithmPort).filter(AlgorithmPort.run_id == run_id).delete()
+        g.session.execute(
+            select(AlgorithmPort).filter(AlgorithmPort.run_id == run_id)
+        ).delete()
         g.session.commit()
 
         return {"msg": "Ports removed from the database."}, HTTPStatus.OK
@@ -331,9 +334,9 @@ class VPNAddress(ServicesResources):
 
         # include child tasks if requested
         if include_children or only_children:
-            subtasks = (
-                g.session.query(db.Task).filter(db.Task.parent_id == task_id).all()
-            )
+            subtasks = g.session.scalars(
+                select(db.Task).filter(db.Task.parent_id == task_id)
+            ).all()
             if only_children:
                 task_ids = [t.id for t in subtasks]
             else:
@@ -341,11 +344,9 @@ class VPNAddress(ServicesResources):
 
         # include parent task if requested
         if include_parent or only_parent:
-            parent = (
-                g.session.query(db.Task)
-                .filter(db.Task.id == task.parent_id)
-                .one_or_none()
-            )
+            parent = g.session.scalars(
+                select(db.Task).filter(db.Task.id == task.parent_id)
+            ).one_or_none()
             if parent:
                 if only_parent:
                     task_ids = [parent.id]
@@ -357,7 +358,7 @@ class VPNAddress(ServicesResources):
             task_ids = [task_id]
 
         # get all ports for the tasks requested
-        q = g.session.query(AlgorithmPort).join(Run).filter(Run.task_id.in_(task_ids))
+        q = select(AlgorithmPort).join(Run).filter(Run.task_id.in_(task_ids))
 
         # apply sibling and self filters
         org_id = g.container["organization_id"]
@@ -371,7 +372,7 @@ class VPNAddress(ServicesResources):
         if filter_label:
             q = q.filter(AlgorithmPort.label == filter_label)
 
-        ports = q.all()
+        ports = g.session.scalars(q).all()
 
         # combine data from ports and nodes
         addresses = []

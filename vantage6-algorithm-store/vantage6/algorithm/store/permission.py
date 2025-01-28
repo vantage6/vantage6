@@ -57,6 +57,7 @@ class PermissionManager(PermissionManagerBase):
         if not role:
             log.warning(f"{fixedrole} role not found, creating it now!")
             role = Role(name=fixedrole, description=f"{fixedrole} role")
+            role.save()
 
         rule = Rule.get_by_(name=resource, operation=operation)
         rule_params = f"{resource},{operation}"
@@ -66,6 +67,7 @@ class PermissionManager(PermissionManagerBase):
 
         if rule not in role.rules:
             role.rules.append(rule)
+            role.save()
             log.info(f"Rule ({rule_params}) added to " f"{fixedrole} role!")
 
     def register_rule(

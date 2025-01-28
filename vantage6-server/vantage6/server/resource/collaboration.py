@@ -3,6 +3,7 @@ import logging
 from flask import request, g
 from flask_restful import Api
 from http import HTTPStatus
+from sqlalchemy import select
 
 from vantage6.server import db
 from vantage6.backend.common.resource.pagination import Pagination
@@ -239,7 +240,7 @@ class Collaborations(CollaborationBase):
 
         # obtain organization from authenticated
         auth_org_id = self.obtain_organization_id()
-        q = g.session.query(db.Collaboration)
+        q = select(db.Collaboration)
         args = request.args
 
         # filter by a field of this endpoint
