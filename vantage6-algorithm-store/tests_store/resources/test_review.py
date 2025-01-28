@@ -6,7 +6,6 @@ from tests_store.base.unittest_base import MockResponse, TestResources
 from vantage6.algorithm.store.model import Policy
 from vantage6.common.enum import StorePolicies
 from vantage6.common.globals import Ports
-from vantage6.backend.common import session as db_session
 from vantage6.algorithm.store.model.algorithm import Algorithm
 from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
 from vantage6.algorithm.store.model.review import Review
