@@ -276,10 +276,6 @@ def mount_database(
         )
         info("Consider using the docker-compose method to start a server")
 
-    # TODO remove this when we're sure we have sqlalchemy 2.0 support
-    environment_vars["SQLALCHEMY_WARN_20"] = 1
-    environment_vars["PYTHONWARNINGS"] = "always::DeprecationWarning"
-
     return mount, environment_vars
 
 
