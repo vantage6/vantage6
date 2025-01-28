@@ -132,7 +132,7 @@ class Vantage6Servers(AlgorithmStoreResources):
         if "url" in args:
             q = q.filter(db_Vantage6Server.url.like(args["url"]))
 
-        servers = q.all()
+        servers = g.session.scalars(q).all()
         return v6_server_output_schema.dump(servers, many=True), HTTPStatus.OK
 
     # Note: this endpoint is not authenticated, because it is used by the

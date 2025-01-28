@@ -92,7 +92,7 @@ class Organization(Base):
         """
         session = DatabaseSessionManager.get_session()
         try:
-            result = session.scalars(cls).filter_by(name=name).first()
+            result = session.scalars(select(cls).filter_by(name=name)).first()
             session.commit()
             return result
         except NoResultFound:

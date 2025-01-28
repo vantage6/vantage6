@@ -475,7 +475,7 @@ class BaseModelBase:
             True if the value exists, False otherwise
         """
         session_ = db_session_mgr.get_session()
-        result = session_.scalar(exists().where(getattr(cls, field) == value))
+        result = session_.scalar(select(exists().where(getattr(cls, field) == value)))
         session_.commit()
         return result
 

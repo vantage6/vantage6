@@ -230,7 +230,6 @@ class Task(Base):
         """
         session = DatabaseSessionManager.get_session()
         max_job_id = session.scalar(select(sql.func.max(cls.job_id)))
-        session.commit()
         if max_job_id:
             return max_job_id + 1
         else:

@@ -892,6 +892,8 @@ class Tasks(TaskBase):
             log.debug(f"New job_id {task.job_id}")
         elif g.container:
             task.parent_id = g.container["task_id"]
+            # save task after changing it before using session to get another task
+            task.save()
             parent = db.Task.get(g.container["task_id"])
             task.job_id = parent.job_id
             task.init_user_id = parent.init_user_id

@@ -6,6 +6,7 @@ from tests_store.base.unittest_base import MockResponse, TestResources
 from vantage6.algorithm.store.model import Policy
 from vantage6.common.enum import StorePolicies
 from vantage6.common.globals import Ports
+from vantage6.backend.common import session as db_session
 from vantage6.algorithm.store.model.algorithm import Algorithm
 from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
 from vantage6.algorithm.store.model.review import Review
@@ -240,6 +241,7 @@ class TestReviewResources(TestResources):
         algorithm = Algorithm(
             status=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT,
         )
+        algorithm.save()
         review = Review(status=ReviewStatus.UNDER_REVIEW, algorithm=algorithm)
         review.save()
 
@@ -288,6 +290,7 @@ class TestReviewResources(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         algorithm = Algorithm.get(algorithm.id)
         self.assertEqual(algorithm.status, AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT)
+        review = None  # update deleted sqlalchemy object to prevent warnings
 
         # set policy to require one review and one organization
         Policy(key=StorePolicies.MIN_REVIEWERS, value=1).save()

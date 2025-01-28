@@ -3,7 +3,7 @@ import logging
 
 from http import HTTPStatus
 
-from sqlalchemy import select,
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from flask import request, g
 from flask_restful import Api

@@ -269,6 +269,7 @@ class PermissionManager(PermissionManagerBase):
 
         if rule not in role.rules:
             role.rules.append(rule)
+            role.save()
             log.info(f"Rule ({rule_params}) added to " f"{fixedrole} role!")
 
     def get_new_collection(self, name: str) -> RuleCollection:

@@ -8,7 +8,7 @@ from vantage6.common import logger_name
 from vantage6.common.enum import RunStatus
 from vantage6.common.serialization import serialize
 from vantage6.common import bytes_to_base64s
-from vantage6.backend.common import session
+from vantage6.backend.common import session as db_session
 from vantage6.server.model import (
     Rule,
     Role,
@@ -361,7 +361,7 @@ class TestResources(TestResourceBase):
             json={"current_password": "Password1!", "new_password": "A_new_password1"},
         )
         self.assertEqual(result.status_code, 200)
-        session.session.refresh(user)
+        db_session.session.refresh(user)
         self.assertTrue(user.check_password("A_new_password1"))
 
     def test_view_rules(self):
@@ -644,7 +644,7 @@ class TestResources(TestResourceBase):
             },
         )
 
-        session.session.refresh(role)
+        db_session.session.refresh(role)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual(role.name, "a-different-role-name")
         self.assertEqual(role.description, "some description of this role...")
@@ -911,7 +911,7 @@ class TestResources(TestResourceBase):
         result = self.app.delete(f"/api/role/{role.id}/rule/{rule.id}", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
 
-        role.rules.append(rule)
+        role.rules = [rule]
         role.save()
 
         # lets try that again
@@ -921,7 +921,8 @@ class TestResources(TestResourceBase):
         result = self.app.delete(f"/api/role/{role.id}/rule/{rule.id}", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
 
-        role.rules.append(rule)
+        # add rule back again
+        role.rules = [rule]
         role.save()
 
         # power users can edit other organization rules
@@ -954,6 +955,7 @@ class TestResources(TestResourceBase):
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # cleanup
+        db_session.session.refresh(role)
         role.delete()
         role2.delete()
         org.delete()
@@ -1198,7 +1200,7 @@ class TestResources(TestResourceBase):
         result = self.app.patch(
             f"/api/user/{user.id}", headers=headers, json={"firstname": "yeah"}
         )
-        session.session.refresh(user)
+        db_session.session.refresh(user)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual("yeah", user.firstname)
 
@@ -1210,7 +1212,7 @@ class TestResources(TestResourceBase):
         result = self.app.patch(
             f"/api/user/{user.id}", headers=headers, json={"firstname": "whatever"}
         )
-        session.session.refresh(user)
+        db_session.session.refresh(user)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual("whatever", user.firstname)
 
@@ -1231,7 +1233,7 @@ class TestResources(TestResourceBase):
                 "lastname": "and again",
             },
         )
-        session.session.refresh(user)
+        db_session.session.refresh(user)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual("again", user.firstname)
         self.assertEqual("and again", user.lastname)
@@ -1316,11 +1318,13 @@ class TestResources(TestResourceBase):
         # test that you CAN change the rules. To do so, a user is generated
         # that has same rules as current user, but also rule to edit other
         # users and another one current user does not possess
-        assigning_user_rules = user.rules
+        # get rules not by copying object to prevent invalid DB state
+        assigning_user_rules = [Rule.get(rule.id) for rule in user.rules]
         assigning_user_rules.append(
             Rule.get_by_("user", Scope.GLOBAL, Operation.EDIT),
         )
         assigning_user_rules.append(not_owning_rule)
+
         headers = self.get_user_auth_header(rules=assigning_user_rules)
         result = self.app.patch(
             f"/api/user/{user.id}",
@@ -2586,7 +2590,6 @@ class TestResources(TestResourceBase):
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # cleanup
-        node.delete()
         org.delete()
         org2.delete()
         org3.delete()
@@ -3186,6 +3189,7 @@ class TestResources(TestResourceBase):
         col = Collaboration(organizations=[org, org2])
         col.save()
         task = Task(collaboration=col, init_org=org)
+        task.save()
         # NB: node is used implicitly in task/{id}/result schema
         node = Node(organization=org, collaboration=col)
         node.save()
