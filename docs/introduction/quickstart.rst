@@ -33,15 +33,24 @@ Then, install the vantage6 command line interface (CLI) by running:
 Start a local vantage6 network
 ------------------------------
 
-You can easily set up a local vantage6 network by running the following command:
+Before starting a local vantage6 network, make sure Docker is running. Then, in the
+Python environment where you installed the vantage6 CLI, you can easily set up a local
+vantage6 network by running the following command:
 
 .. code-block:: bash
 
     v6 dev create-demo-network
 
-This will start an interactive dialog that will help you to easily configure your server
-and nodes. Note that you can also do ``v6 dev create-demo-network --help`` to view
-which custom options are available.
+This will start an interactive dialog that will ask you to provide a name for the
+network. Note that default settings are used - you can view custom options with
+``v6 dev create-demo-network --help``.
+
+.. note::
+
+    If you are using Linux without Docker Desktop, you should set the default Docker
+    host URL. You can do this by running
+    ``v6 dev create-demo-network --server-url http://172.17.0.1``. By default, the
+    host URL is assumed to be ``http://host.docker.internal`` (Docker desktop's default).
 
 Next, you can start the network by running:
 
