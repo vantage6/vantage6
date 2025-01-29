@@ -4,3 +4,6 @@
 - v6 dev profile restart
 - update https://github.com/mdw-nl/v6-average-py/pull/1 (@lsago working on this)
   to match new pytest fixtures integrated into v6
+- refactor dev profile
+  - perhaps take v6 node start code out of clicker, so it can be used nicely in dev profile (no subcommand)
+  - keep in mind ultimate goal would be to use docker-compose for node and server, so calibrate effort

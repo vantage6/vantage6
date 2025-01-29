@@ -17,13 +17,31 @@ vantage6 algorithms.
 > and the node yaml config file. There shouldn't be a need to push this image
 > to a localhost:5050 registry.
 >
-> If you are using the `v6` cli tool for an algorithm repo, you need to use
-> this branch's version, by doing something like:
+> If you are using the `v6` cli tool for an algorithm development, you need to
+> use this branch's version. You can do that by doing something like the
+> following on your algorithm repository root:
 > ```bash
-> python3 -m venv dev/venv
-> source dev/venv/bin/activate
+> python3 -m venv venv
+> source venv/bin/activate
+> git clone -b devtestdebug https://github.com/vantage6/vantage6.git venv/vantage6
+> cd /this/branch/checked/out/venv/vantage6
 > make install-cli-dev
 > ```
+> For vscode to play nice, you may need:
+> ```json
+> {
+>     "python.analysis.extraPaths": [
+>         "/this/branch/checked/out/vantage6/vantage6",
+>         "/this/branch/checked/out/vantage6/vantage6-algorithm-tools",
+>         "/this/branch/checked/out/vantage6/vantage6-algorithm-store",
+>         "/this/branch/checked/out/vantage6/vantage6-backend-common",
+>         "/this/branch/checked/out/vantage6/vantage6-client",
+>         "/this/branch/checked/out/vantage6/vantage6-common",
+>         "/this/branch/checked/out/vantage6/vantage6-node",
+>         "/this/branch/checked/out/vantage6/vantage6-server"
+>     ],
+> }
+>
 
 ### Debugging vantage6 code
 
