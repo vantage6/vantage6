@@ -404,7 +404,8 @@
       "title": "Pending algorithms developed by me",
       "no-algorithms": "No algorithms that you have developed are pending review."
     },
-    "algorithm-name": "Algorithm name"
+    "algorithm-name": "Algorithm name",
+    "add-algorithm": "Add a new algorithm"
   },
   "algorithm-assign-review": {
     "title": "Assign reviewers",
