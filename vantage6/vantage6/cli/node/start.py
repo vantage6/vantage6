@@ -243,6 +243,14 @@ def cli_node_start(
             # we catch all exceptions here.
             file_based = False
 
+        if db_type in ["folder", "csv", "parquet", "excel"] and not file_based:
+            error(
+                f"Database {Fore.RED}{uri}{Style.RESET_ALL} not found. Databases of "
+                f"type '{db_type}' must be present on the harddrive. Please update "
+                "your node configuration file."
+            )
+            exit(1)
+
         if not file_based and not force_db_mount:
             debug("  - non file-based database added")
             env[f"{label_capitals}_DATABASE_URI"] = uri
