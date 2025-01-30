@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
@@ -22,7 +23,8 @@ import { TaskService } from 'src/app/services/task.service';
 enum TableRows {
   ID = 'id',
   Name = 'name',
-  Status = 'status'
+  Status = 'status',
+  CreatedDate = 'created_date'
 }
 
 @Component({
@@ -53,7 +55,8 @@ export class TaskListComponent implements OnInit, OnDestroy {
     private taskService: TaskService,
     private chosenCollaborationService: ChosenCollaborationService,
     private permissionService: PermissionService,
-    private socketioConnectService: SocketioConnectService
+    private socketioConnectService: SocketioConnectService,
+    private datePipe: DatePipe
   ) {}
 
   async ngOnInit() {
@@ -75,19 +78,18 @@ export class TaskListComponent implements OnInit, OnDestroy {
   async handlePageEvent(e: PageEvent) {
     this.currentPage = e.pageIndex + 1;
     const parameters: GetTaskParameters = { sort: TaskSortProperties.ID, is_user_created: 1 };
-    if(this.currentSearchInput?.length){
+    if (this.currentSearchInput?.length) {
       delete parameters.is_user_created;
       parameters.name = this.currentSearchInput;
     }
     await this.getTasks(this.currentPage, parameters);
   }
-  
+
   handleSearchChanged(searchRequests: SearchRequest[]) {
-    this.isLoading = true
+    this.isLoading = true;
     const parameters: GetTaskParameters = getApiSearchParameters<GetTaskParameters>(searchRequests);
     this.currentSearchInput = parameters?.name ?? '';
-    if(!parameters?.name?.length)
-      parameters.is_user_created = 1;
+    if (!parameters?.name?.length) parameters.is_user_created = 1;
     this.paginator?.firstPage();
     this.initData(1, parameters);
   }
@@ -143,6 +145,11 @@ export class TaskListComponent implements OnInit, OnDestroy {
           filterEnabled: true,
           isChip: true,
           chipTypeProperty: 'statusType'
+        },
+        {
+          id: TableRows.CreatedDate,
+          label: this.translateService.instant('task.created-at'),
+          filterEnabled: false
         }
       ],
       rows: this.tasks.map((_) => ({
@@ -151,7 +158,8 @@ export class TaskListComponent implements OnInit, OnDestroy {
           id: _.id.toString(),
           name: _.name,
           status: this.getTaskStatusTranslation(_.status),
-          statusType: this.getChipTypeForStatus(_.status)
+          statusType: this.getChipTypeForStatus(_.status),
+          created_date: this.datePipe.transform(_.created_at, 'yyyy-MM-dd HH:mm')
         }
       }))
     };
@@ -169,14 +177,16 @@ export class TaskListComponent implements OnInit, OnDestroy {
     // collaboration have to be initialized
     const permissionInit = this.permissionService.isInitialized();
     const chosenCollab = this.chosenCollaborationService.collaboration$.asObservable();
-    combineLatest([permissionInit, chosenCollab]).pipe(takeUntil(this.destroy$)).subscribe(([initialized, collab]) => {
-      if (initialized && collab !== null) {
-        this.canCreate = this.permissionService.isAllowedForCollab(
-          ResourceType.TASK,
-          OperationType.CREATE,
-          this.chosenCollaborationService.collaboration$.value
-        );
-      }
-    });
+    combineLatest([permissionInit, chosenCollab])
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(([initialized, collab]) => {
+        if (initialized && collab !== null) {
+          this.canCreate = this.permissionService.isAllowedForCollab(
+            ResourceType.TASK,
+            OperationType.CREATE,
+            this.chosenCollaborationService.collaboration$.value
+          );
+        }
+      });
   }
 }
