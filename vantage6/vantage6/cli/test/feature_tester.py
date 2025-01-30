@@ -5,7 +5,6 @@ from vantage6.common.globals import Ports
 from vantage6.client import UserClient
 from vantage6.cli.utils import error
 from vantage6.cli.test.common.diagnostic_runner import DiagnosticRunner
-import questionary as q
 
 
 @click.command()
