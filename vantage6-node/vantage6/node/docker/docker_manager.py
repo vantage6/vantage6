@@ -221,7 +221,11 @@ class DockerManager(DockerBaseManager):
                 uri = self.__tasks_dir / os.path.basename(uri)
 
             if db_is_dir:
-                self.log.debug("Well waddaya know! We gots ourselves a folder!")
+                self.log.info(
+                    "Database folder from '%s' mounted at /mnt/%s",
+                    db_config["uri"],
+                    uri,
+                )
                 # Ignore all previouscomments about file locations: folders
                 # need to be mounted from the host.
                 uri = db_config["uri"]
