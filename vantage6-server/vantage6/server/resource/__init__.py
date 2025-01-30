@@ -210,7 +210,7 @@ def get_and_update_authenticatable_info(auth_id: int) -> db.Authenticatable:
         User or node database model
     """
     auth = db.Authenticatable.get(auth_id)
-    auth.last_seen = datetime.datetime.utcnow()
+    auth.last_seen = datetime.datetime.now(datetime.timezone.utc)
     auth.save()
     return auth
 

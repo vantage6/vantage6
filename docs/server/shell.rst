@@ -332,7 +332,7 @@ run from each organization.
            input=input_,
            organization=org,
            task=task,
-           assigned_at=datetime.datetime.now()
+           assigned_at=datetime.datetime.now(datetime.timezone.utc)
        )
        res.save()
 

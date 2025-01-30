@@ -286,7 +286,12 @@ class NodeClient(ClientBase):
         id_ : int
             ID of the task.
         """
-        self.run.patch(id_, data={"started_at": datetime.datetime.now().isoformat()})
+        self.run.patch(
+            id_,
+            data={
+                "started_at": datetime.datetime.now(datetime.timezone.utc).isoformat()
+            },
+        )
 
     def get_vpn_config(self) -> tuple[bool, str]:
         """
