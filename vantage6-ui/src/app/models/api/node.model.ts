@@ -76,7 +76,7 @@ export interface NodeEdit {
 }
 
 export interface ApiKeyExport {
-  organization: string;
+  entityName: string;
   api_key: string;
 }
 

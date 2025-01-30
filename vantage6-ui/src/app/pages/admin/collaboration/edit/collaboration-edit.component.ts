@@ -70,7 +70,7 @@ export class CollaborationEditComponent implements OnInit {
             const node = await this.nodeService.createNode(this.collaboration, organization.id);
             if (node?.api_key) {
               new_api_keys.push({
-                organization: organization.name,
+                entityName: organization.name,
                 api_key: node.api_key
               });
             }
@@ -107,7 +107,7 @@ export class CollaborationEditComponent implements OnInit {
   // TODO refactor this component - following is duplicate from collaboration-create.component.ts
   private downloadApiKeys(api_keys: ApiKeyExport[], collaboration_name: string): void {
     const filename = `API_keys_${collaboration_name}.txt`;
-    const text = api_keys.map((api_key) => `${api_key.organization}: ${api_key.api_key}`).join('\n');
+    const text = api_keys.map((api_key) => `${api_key.entityName}: ${api_key.api_key}`).join('\n');
     this.fileService.downloadTxtFile(text, filename);
   }
 
