@@ -31,6 +31,7 @@
   "resources": {
     "collaboration": "Collaboration",
     "collaborations": "Collaborations",
+    "organization": "Organization",
     "organizations": "Organizations",
     "study": "Study",
     "roles": "Roles",
@@ -681,7 +682,8 @@
     "permissions": "Permissions"
   },
   "user-list": {
-    "title": "Users"
+    "title": "Users",
+    "filter-placeholder": "Filter by organization"
   },
   "user-create": {
     "title": "Create user"
