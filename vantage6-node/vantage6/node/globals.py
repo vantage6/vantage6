@@ -53,4 +53,4 @@ SQUID_IMAGE = "harbor2.vantage6.ai/infrastructure/squid"
 ENV_VARS_NOT_SETTABLE_BY_NODE = ["PKG_NAME"]
 
 # default policies
-DEFAULT_REQUIRE_ALGO_IMAGE_PULL = False
+DEFAULT_REQUIRE_ALGO_IMAGE_PULL = True
