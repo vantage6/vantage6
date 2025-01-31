@@ -104,6 +104,17 @@ install-cli-dev:
 	cd vantage6-client && pip install -e .
 	cd vantage6 && pip install -e .[dev]
 
+# useful when switcihing between versions and mounting and not-mounting
+# /vantage6
+clean-dev:
+	rm -rf vantage6-common/vantage6_common.egg-info
+	rm -rf vantage6-client/vantage6_client.egg-info
+	rm -rf vantage6/vantage6.egg-info
+	rm -rf vantage6-node/vantage6_node.egg-info
+	rm -rf vantage6-backend-common/vantage6_backend_common.egg-info
+	rm -rf vantage6-server/vantage6_server.egg-info
+	rm -rf vantage6-algorithm-store/vantage6_algorithm_store.egg-info
+
 base-image:
 	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:${TAG}"
 	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:latest"
