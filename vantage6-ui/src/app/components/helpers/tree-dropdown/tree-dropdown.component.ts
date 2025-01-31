@@ -4,6 +4,7 @@ import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree'
 import { ParentTreeControl } from './parent-tree-control';
 import { ConnectionPositionPair } from '@angular/cdk/overlay';
 import { MatFormField } from '@angular/material/form-field';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface ITreeInputSearchConfig {
   searchActive: boolean;
@@ -47,6 +48,7 @@ export class TreeDropdownComponent implements OnInit, OnChanges {
   @Input() isMultiSelect = false;
   @Input() nodes: ITreeInputNode[] = [];
   @Input() selectedTreeNodes: ITreeSelectedValue[] = [];
+  @Input() filterPlaceholder: string = '';
   @Output() valueChanged: EventEmitter<ITreeSelectedValue[]> = new EventEmitter();
   @ViewChild('searchInput')
   searchInput?: ElementRef<HTMLInputElement>;
@@ -110,10 +112,13 @@ export class TreeDropdownComponent implements OnInit, OnChanges {
   ];
   public overlayWidth: string = '100%';
 
-  constructor() {}
+  constructor(private translateService: TranslateService) {}
 
   public ngOnInit(): void {
     this.setTreeNodes();
+    if (!this.filterPlaceholder) {
+      this.filterPlaceholder = this.translateService.instant('general.filter');
+    }
   }
 
   public ngOnChanges(changes: SimpleChanges): void {

@@ -4,9 +4,11 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs';
 import { BaseListComponent } from 'src/app/components/admin-base/base-list/base-list.component';
+import { ITreeInputNode, ITreeSelectedValue } from 'src/app/components/helpers/tree-dropdown/tree-dropdown.component';
 import { unlikeApiParameter } from 'src/app/helpers/general.helper';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { GetUserParameters, UserSortProperties } from 'src/app/models/api/user.model';
+import { OrganizationService } from 'src/app/services/organization.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { UserService } from 'src/app/services/user.service';
 
@@ -17,10 +19,14 @@ import { UserService } from 'src/app/services/user.service';
 export class UserListComponent extends BaseListComponent implements OnInit, OnDestroy {
   getUserParameters: GetUserParameters = {};
 
+  filterOptions: ITreeInputNode[] = [];
+  selectedFilterOptions: ITreeSelectedValue[] = [];
+
   constructor(
     private router: Router,
     private translateService: TranslateService,
     private userService: UserService,
+    private organizationService: OrganizationService,
     private permissionService: PermissionService
   ) {
     super();
@@ -32,23 +38,42 @@ export class UserListComponent extends BaseListComponent implements OnInit, OnDe
   }
 
   async handlePageEvent(e: PageEvent) {
-    await this.getUsers(e.pageIndex + 1, this.getUserParameters);
+    this.currentPage = e.pageIndex + 1;
+    await this.getUsers();
   }
 
   handleTableClick(id: string) {
     this.router.navigate([this.routes.user, id]);
   }
 
+  async handleFilterSelectionChange(newSelected: ITreeSelectedValue[]): Promise<void> {
+    // Tree-dropdown component supports multiselect, but the API call for retrieving paginated nodes does not (yet) support multiple filter parameters. For now, the first value is selected.
+    this.selectedFilterOptions = newSelected.length ? [newSelected[0]] : [];
+    await this.getUsers(newSelected[0]);
+  }
+
+  getFilterPlaceholder(): string {
+    return this.translateService.instant('user-list.filter-placeholder');
+  }
+
   protected async initData(page: number, parameters: GetUserParameters) {
     this.isLoading = true;
     this.currentPage = page;
     this.getUserParameters = parameters;
-    await this.getUsers(page, parameters);
+    await this.getUsers();
+    await this.getFilterOptions();
     this.isLoading = false;
   }
 
-  private async getUsers(page: number, getUserParameters: GetUserParameters) {
-    const result = await this.userService.getPaginatedUsers(page, { ...getUserParameters, sort: UserSortProperties.Username });
+  private async getUsers(selectedFilterOption: ITreeSelectedValue | null = null) {
+    const getUserParameters = { ...this.getUserParameters };
+    if (selectedFilterOption) {
+      getUserParameters.organization_id = selectedFilterOption.code.toString();
+    }
+    const result = await this.userService.getPaginatedUsers(this.currentPage, {
+      ...getUserParameters,
+      sort: UserSortProperties.Username
+    });
     this.table = {
       columns: [
         { id: 'id', label: this.translateService.instant('general.id') },
@@ -56,25 +81,25 @@ export class UserListComponent extends BaseListComponent implements OnInit, OnDe
           id: 'username',
           label: this.translateService.instant('user.username'),
           searchEnabled: true,
-          initSearchString: unlikeApiParameter(getUserParameters.username)
+          initSearchString: unlikeApiParameter(this.getUserParameters.username)
         },
         {
           id: 'firstname',
           label: this.translateService.instant('user.first-name'),
           searchEnabled: true,
-          initSearchString: unlikeApiParameter(getUserParameters.firstname)
+          initSearchString: unlikeApiParameter(this.getUserParameters.firstname)
         },
         {
           id: 'lastname',
           label: this.translateService.instant('user.last-name'),
           searchEnabled: true,
-          initSearchString: unlikeApiParameter(getUserParameters.lastname)
+          initSearchString: unlikeApiParameter(this.getUserParameters.lastname)
         },
         {
           id: 'email',
           label: this.translateService.instant('user.email'),
           searchEnabled: true,
-          initSearchString: unlikeApiParameter(getUserParameters.email)
+          initSearchString: unlikeApiParameter(this.getUserParameters.email)
         }
       ],
       rows: result.data.map((_) => ({
@@ -100,5 +125,19 @@ export class UserListComponent extends BaseListComponent implements OnInit, OnDe
           this.canCreate = this.permissionService.isAllowed(ScopeType.ANY, ResourceType.USER, OperationType.CREATE);
         }
       });
+  }
+
+  private async getFilterOptions() {
+    const organizations = await this.organizationService.getOrganizations();
+
+    this.filterOptions = organizations.map((organization) => {
+      return {
+        isFolder: false,
+        children: [],
+        label: organization.name,
+        code: organization.id,
+        parentCode: this.translateService.instant('resources.organization').toLowerCase()
+      };
+    });
   }
 }

@@ -2,8 +2,14 @@
   <button actions mat-flat-button color="primary" *ngIf="canCreate" [routerLink]="routes.userCreate">
     <mat-icon>add</mat-icon>{{ "user-create.title" | translate }}
   </button>
-  <!-- TODO: Add organization filter -->
 </app-page-header>
+<app-tree-dropdown
+  [selectedTreeNodes]="selectedFilterOptions"
+  [isMultiSelect]="false"
+  [nodes]="filterOptions"
+  [filterPlaceholder]="getFilterPlaceholder()"
+  (valueChanged)="handleFilterSelectionChange($event)"
+></app-tree-dropdown>
 <mat-card>
   <mat-card-content>
     <app-table
