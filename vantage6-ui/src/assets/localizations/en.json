@@ -466,7 +466,8 @@
       "title": "Collaborations"
     },
     "card-nodes": {
-      "title": "Nodes"
+      "title": "Nodes",
+      "alert-missing-nodes": "Nodes are missing for collaborations: {{collaborations}}. Please ensure that they are registered and online."
     },
     "delete-dialog": {
       "title": "Are you sure you want to delete the organization '{{name}}'?",
