@@ -50,7 +50,7 @@ from vantage6.cli import __version__
 )
 @click.option(
     "--mount-src",
-    default="",
+    default=None,
     help="Override vantage6 source code in container with the source"
     " code in this path",
 )
@@ -360,6 +360,7 @@ def cli_node_start(
     )
 
     info("Running Docker container")
+    debug(f"  - node image: {image}")
     container = docker_client.containers.run(
         image,
         command=cmd,
