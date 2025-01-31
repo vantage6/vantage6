@@ -413,6 +413,7 @@
     "no-reviewers": "No reviewers are available to assign to this algorithm. Please contact your store manager."
   },
   "algorithm-review": {
+    "breadcrumb-title": "Algorithm reviews",
     "title": "Reviews of algorithm '{{name}}'",
     "card-per-review": {
       "title": "Review by {{reviewer}}",
