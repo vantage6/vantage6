@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -287,7 +288,8 @@ export function HttpLoaderFactory(http: HttpClient) {
       provide: MAT_DATE_LOCALE,
       useValue: enCA
     },
-    provideHttpClient(withInterceptorsFromDi())
+    provideHttpClient(withInterceptorsFromDi()),
+    DatePipe
   ]
 })
-export class AppModule { }
+export class AppModule {}
