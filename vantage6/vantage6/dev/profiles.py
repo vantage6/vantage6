@@ -1,7 +1,6 @@
 """
-PoC: ideally replaced by docker compose files, less ideally: make calls to v6
-cli code directly (no subprocess), even less ideally: do what it does now.
-We'll see if the concept is useful and if so what do we refactor
+**PoC**: ideally replaced by docker compose files. We'll see if the concept is
+useful and if so what do we refactor. Clearly plenty to refactor below!
 
 Allows for loading different predefined (profiles.json) vantage6 networks. For
 example a server with two nodes, one of the nodes ready for debugging.
@@ -28,6 +27,8 @@ import logging
 import subprocess
 from pathlib import Path
 
+from vantage6.cli.node.start import cli_node_start
+from vantage6.cli.node.stop import cli_node_stop
 from vantage6.common import logger_name
 
 module_name = logger_name(__name__)
@@ -162,19 +163,25 @@ class Profile:
         )
 
     def _start_node(self, node):
-        node_command = ["v6", "node", "start", "--config", node["config"]]
-        skip_debug = node.get("options", {}).get("skip_debugger", False)
-        if skip_debug:
-            node_command.append("--no-debugger")
-        if node.get("options", {}).get("attach", False):
-            node_command.append("--attach")
-        skip_mount_src = node.get("options", {}).get("skip_mount_src", False)
-        if self.settings.get("mount_src_path") and not skip_mount_src:
-            node_command.extend(["--mount-src", self.settings["mount_src_path"]])
+        """Starts a node using cli"""
+        options = node.get("options", {})
+        args = ["--config", node["config"]]
+
+        if options.get("skip_debugger", False):
+            args.append("--no-debugger")
+
+        if options.get("attach", False):
+            args.append("--attach")
+
+        if self.settings.get("mount_src_path") and not options.get("skip_mount_src", False):
+            args.extend(["--mount-src", self.settings["mount_src_path"]])
 
         log.debug("Starting node: %s with config %s", node["name"], node["config"])
-        subprocess.run(node_command, check=True)
+        cli_node_start(args)
+
 
     def _stop_node(self, node):
+        """Stops a node using cli"""
         log.debug("Stopping node: %s with config %s", node['name'], node['config'])
-        subprocess.run(["v6", "node", "stop", "--config", node["config"]], check=True)
+        cli_node_stop(["--config", node["config"]])
+
