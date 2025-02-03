@@ -7,3 +7,6 @@
 - refactor dev profile
   - perhaps take v6 node start code out of clicker, so it can be used nicely in dev profile (no subcommand)
   - keep in mind ultimate goal would be to use docker-compose for node and server, so calibrate effort
+- remove skip_debugger option
+  - not worth extra complexity. Either just don't do --wait-for-client, or have
+    two different node config yamls with debug/no-debug

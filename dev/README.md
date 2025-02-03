@@ -11,11 +11,20 @@ vantage6 algorithms.
 >
 > Build the node-and-server image locally with:
 > ```bash
-> make TAG=devtestdebug REGISTRY=localhost:5050 PLATFORMS=linux/amd64 image
+> make TAG=devtestdebug REGISTRY=localhost:5050 PLATFORMS=linux/amd64 BASE=devtestdebug base-image image
 > ```
 > This image should be referenced in the `docker-compose.yaml` for the server
 > and the node yaml config file. There shouldn't be a need to push this image
 > to a localhost:5050 registry.
+> If you are going to mount the vantage6 source code, you need to install all
+> the vantage6 packages locally on your host's vantage6 python venv:
+> ```bash
+> make install-dev
+> ```
+> This is because the metadata of the packages is expected by the node
+> container. So, the container has:
+> /vantage6/vantage6-common/vantage6_common.egg-info, etc. If you mount this
+> repo onto /vatage6 (done by --mount-src), you need that metadata in there.
 >
 > If you are using the `v6` cli tool for an algorithm development, you need to
 > use this branch's version. You can do that by doing something like the
