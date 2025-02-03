@@ -91,7 +91,7 @@ def cli_node_start(
     suffix = "system" if system_folders else "user"
     for node in running_nodes:
         if node.name == ctx.docker_container_name:
-            error(f"Node {Fore.GREEN}{name}{Style.RESET_ALL} is already running")
+            info(f"Node {Fore.GREEN}{name}{Style.RESET_ALL} is already running")
             exit(0)
 
     # make sure the (host)-task and -log dir exists
