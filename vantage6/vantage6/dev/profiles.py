@@ -141,6 +141,7 @@ class Profile:
         if "nodes" in self.profile_data:
             for node in self.profile_data["nodes"]:
                 self._stop_node(node)
+
         # server last, potential dev network defined in server's docker-compose
         if "server" in self.profile_data:
             self._stop_service(
@@ -177,11 +178,11 @@ class Profile:
             args.extend(["--mount-src", self.settings["mount_src_path"]])
 
         log.debug("Starting node: %s with config %s", node["name"], node["config"])
-        cli_node_start(args)
+        cli_node_start(args, standalone_mode=False)
 
 
     def _stop_node(self, node):
         """Stops a node using cli"""
         log.debug("Stopping node: %s with config %s", node['name'], node['config'])
-        cli_node_stop(["--config", node["config"]])
+        cli_node_stop(["--config", node["config"]], standalone_mode=False)
 
