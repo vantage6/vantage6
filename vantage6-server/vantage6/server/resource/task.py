@@ -926,11 +926,13 @@ class Tasks(TaskBase):
             # point
             if isinstance(input_, dict):
                 input_ = json.dumps(input_).encode(STRING_ENCODING)
+            algorithm_method = data.get("method")
             # Create run
             run = db.Run(
                 task=task,
                 organization=organization,
                 input=input_,
+                method=algorithm_method,
                 status=RunStatus.PENDING,
                 action=action,
             )

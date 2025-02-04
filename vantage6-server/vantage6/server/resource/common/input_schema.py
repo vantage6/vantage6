@@ -423,6 +423,7 @@ class TaskInputSchema(_NameValidationSchema):
     name = fields.String()
     description = fields.String(validate=Length(max=_MAX_LEN_STR_LONG))
     image = fields.String(required=True, validate=Length(min=1))
+    method = fields.String(required=True, validate=Length(min=1))
     collaboration_id = fields.Integer(validate=Range(min=1))
     study_id = fields.Integer(validate=Range(min=1))
     store_id = fields.Integer(validate=Range(min=1))

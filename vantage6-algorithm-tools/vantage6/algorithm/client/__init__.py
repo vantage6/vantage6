@@ -339,7 +339,8 @@ class AlgorithmClient(ClientBase):
 
         def create(
             self,
-            input_: dict,
+            method: str,
+            input_: dict | None = None,
             organizations: list[int] = None,
             name: str = "subtask",
             description: str = None,
@@ -353,9 +354,11 @@ class AlgorithmClient(ClientBase):
 
             Parameters
             ----------
+            method: str
+                Function to call on the algorithm
             input_ : dict
-                Input to the task. This dictionary usually contains the algorithm method
-                to call and the arguments to pass to the method.
+                Input to the task. This dictionary usually contains the arguments to
+                pass to the method.
             organizations : list[int]
                 List of organization IDs that should execute the task.
             name: str, optional
@@ -378,6 +381,8 @@ class AlgorithmClient(ClientBase):
 
             # serializing input. Note that the input is not encrypted here, but
             # in the proxy server (self.parent.request())
+            if input_ is None:
+                input_ = {}
             serialized_input = bytes_to_base64s(serialize(input_))
             organization_json_list = []
             for org_id in organizations:
@@ -385,6 +390,7 @@ class AlgorithmClient(ClientBase):
 
             json_body = {
                 "name": name,
+                "method": method,
                 "image": self.parent.image,
                 "collaboration_id": self.parent.collaboration_id,
                 "description": description,

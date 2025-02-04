@@ -1794,7 +1794,8 @@ class UserClient(ClientBase):
             name: str,
             image: str,
             description: str,
-            input_: dict,
+            method: str,
+            input_: dict | None = None,
             session: int | None = None,
             collaboration: int | None = None,
             study: int | None = None,
@@ -1815,8 +1816,10 @@ class UserClient(ClientBase):
                 Docker image name which contains the algorithm
             description : str
                 Human readable description
+            method : str
+                The algorithm method to be executed
             input_ : dict
-                Algorithm input
+                Algorithm input. Should contain the input parameters for the method.
             session : int, optional
                 ID of the session to which this task belongs. If not set, the
                 session id of the client needs to be set. Default is None.
@@ -1872,6 +1875,9 @@ class UserClient(ClientBase):
                     "assigning it to at least one organization."
                 )
 
+            if input_ is None:
+                input_ = {}
+
             if store is None:
                 store = self.parent.store.store_id
                 if store is not None:
@@ -1906,6 +1912,7 @@ class UserClient(ClientBase):
             params = {
                 "name": name,
                 "image": image,
+                "method": method,
                 "description": description,
                 "organizations": organization_json_list,
                 "databases": databases,

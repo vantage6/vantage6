@@ -57,6 +57,7 @@ class Run(Base):
 
     # fields
     input = Column(Text)
+    method = Column(Text)
     task_id = Column(Integer, ForeignKey("task.id"))
     organization_id = Column(Integer, ForeignKey("organization.id"))
     result = Column(Text)

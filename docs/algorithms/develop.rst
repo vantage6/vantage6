@@ -153,9 +153,9 @@ Central function
    def main(client: AlgorithmClient, *args, **kwargs):
       # Run partial function.
       task = client.task.create(
-         {
-            # Method name should match the name of the partial function used/created
-            "method": "my_partial_function",
+         # Method name should match the name of the partial function used/created
+         method="my_partial_function",
+         input_={
             "args": args,
             "kwargs": kwargs
          },
