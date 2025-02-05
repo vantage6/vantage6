@@ -142,10 +142,13 @@ export class AlgorithmService {
           delete arg.conditional_operator;
           delete arg.conditional_value;
         }
-        if (arg.conditional_value || arg.conditional_value === false) {
+        if (arg.conditionalValueNull === true) {
+          arg.conditional_value = undefined;
+        } else if (arg.conditional_value || arg.conditional_value === false) {
           // cast to string as it is stored as string in the database
           arg.conditional_value = arg.conditional_value.toString();
         }
+        delete arg.conditionalValueNull;
       });
     });
     return algorithmForm;

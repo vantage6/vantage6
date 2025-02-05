@@ -25,7 +25,7 @@
       <form class="form" [formGroup]="form" (ngSubmit)="handleSubmit()">
         <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ "algorithm.submission-comments" | translate }}</mat-label>
-          <textarea matInput type="text" formControlName="submission_comments" ></textarea>
+          <textarea matInput type="text" formControlName="submission_comments"></textarea>
         </mat-form-field>
         <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ "general.name" | translate }}</mat-label>
@@ -93,10 +93,8 @@
                     </mat-option>
                   </mat-select>
                 </mat-form-field>
-                <mat-checkbox 
-                  matTooltip="{{ 'algorithm.function.standalone_tooltip' | translate }}"
-                  formControlName="standalone">
-                  {{"algorithm.function.standalone" | translate}}
+                <mat-checkbox matTooltip="{{ 'algorithm.function.standalone_tooltip' | translate }}" formControlName="standalone">
+                  {{ "algorithm.function.standalone" | translate }}
                 </mat-checkbox>
                 <!-- Accordion per parameter -->
                 <mat-accordion class="card-accordion" [multi]="true">
@@ -206,18 +204,25 @@
                                 </mat-option>
                               </mat-select>
                             </mat-form-field>
-                            <mat-form-field
-                              *ngIf="!isConditionalArgBoolean(functionFormGroup, parameterFormGroup)"
-                              subscriptSizing="dynamic"
-                            >
-                              <mat-label>{{ "algorithm.function.argument.condition.value" | translate }}</mat-label>
-                              <input
-                                matInput
-                                appNumberOnly
-                                [type]="getConditionalParamInputType(functionFormGroup, parameterFormGroup)"
-                                formControlName="conditional_value"
-                              />
-                            </mat-form-field>
+                            <div *ngIf="!isConditionalArgBoolean(functionFormGroup, parameterFormGroup)">
+                              <mat-radio-group formControlName="conditionalValueNull">
+                                <mat-label>{{ "algorithm.function.argument.condition.conditional-value-null" | translate }}</mat-label>
+                                <mat-radio-button [value]="true" color="primary">{{ "general.yes" | translate }}</mat-radio-button>
+                                <mat-radio-button [value]="false" color="primary">{{ "general.no" | translate }}</mat-radio-button>
+                              </mat-radio-group>
+                              <mat-form-field
+                                *ngIf="!isTruthy(parameterFormGroup.controls['conditionalValueNull'].value)"
+                                subscriptSizing="dynamic"
+                              >
+                                <mat-label>{{ "algorithm.function.argument.condition.value" | translate }}</mat-label>
+                                <input
+                                  matInput
+                                  appNumberOnly
+                                  [type]="getConditionalParamInputType(functionFormGroup, parameterFormGroup)"
+                                  formControlName="conditional_value"
+                                />
+                              </mat-form-field>
+                            </div>
                             <mat-radio-group
                               *ngIf="isConditionalArgBoolean(functionFormGroup, parameterFormGroup)"
                               formControlName="conditional_value"
