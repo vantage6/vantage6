@@ -58,7 +58,12 @@ def create_node_data_files(num_nodes: int, server_name: str) -> list[Path]:
 
 
 def create_node_config_file(
-    server_url: str, port: int, config: dict, server_name: str, datafile: Path
+    server_url: str,
+    port: int,
+    config: dict,
+    server_name: str,
+    datafile: Path,
+    extra_datasets: list[tuple[str, Path]] = (),
 ) -> None:
     """Create a node configuration file (YAML).
 
@@ -79,6 +84,8 @@ def create_node_config_file(
         Configuration name of the dummy server.
     datafile : Path
         Path to the data file for the node to use.
+    extra_datasets : list[tuple[str, Path]]
+        List of tuples containing the labels and the paths to extra datasets
     """
     environment = Environment(
         loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
@@ -102,10 +109,13 @@ def create_node_config_file(
         error(f"Node configuration file already exists: {full_path}")
         exit(1)
 
+    databases = [{dataset[0]: dataset[1]} for dataset in extra_datasets]
+    databases.append({"default": datafile})
+
     node_config = template.render(
         {
             "api_key": config["api_key"],
-            "databases": {"default": datafile},
+            "databases": databases,
             "logging": {"file": f"{node_name}.log"},
             "port": port,
             "server_url": server_url,
@@ -122,8 +132,7 @@ def create_node_config_file(
         exit(1)
 
     info(
-        f"Spawned node for organization {Fore.GREEN}{config['org_id']}"
-        f"{Style.RESET_ALL}"
+        f"Spawned node for organization {Fore.GREEN}{config['org_id']}{Style.RESET_ALL}"
     )
 
 
@@ -154,6 +163,7 @@ def generate_node_configs(
     port: int,
     server_name: str,
     extra_node_config: Path | None,
+    extra_datasets: list[tuple[str, Path]],
 ) -> list[dict]:
     """Generates ``num_nodes`` node configuration files.
 
@@ -169,6 +179,8 @@ def generate_node_configs(
         Configuration name of the dummy server.
     extra_node_config : Path | None
         Path to file with additional node configuration.
+    extra_datasets : list[tuple[str, Path]]
+        List of tuples containing the labels and the paths to extra datasets
 
     Returns
     -------
@@ -186,7 +198,7 @@ def generate_node_configs(
             "user_defined_config": extra_config,
         }
         create_node_config_file(
-            server_url, port, config, server_name, node_data_files[i]
+            server_url, port, config, server_name, node_data_files[i], extra_datasets
         )
         configs.append(config)
 
@@ -420,6 +432,7 @@ def demo_network(
     ui_image: str,
     ui_port: int,
     algorithm_store_port: int,
+    extra_datasets: list[tuple[str, Path]],
 ) -> tuple[list[dict], Path, Path]:
     """Generates the demo network.
 
@@ -446,6 +459,8 @@ def demo_network(
         Port to run the UI on.
     algorithm_store_port : int
         Port to run the algorithm store on.
+    extra_datasets : list[tuple[str, Path]]
+        List of tuples containing the labels and the paths to extra datasets
 
     Returns
     -------
@@ -453,7 +468,12 @@ def demo_network(
         Tuple containing node, server import and server configurations.
     """
     node_configs = generate_node_configs(
-        num_nodes, server_url, server_port, server_name, extra_node_config
+        num_nodes,
+        server_url,
+        server_port,
+        server_name,
+        extra_node_config,
+        extra_datasets,
     )
     server_import_config = create_vserver_import_config(node_configs, server_name)
     server_config = create_vserver_config(
@@ -547,6 +567,14 @@ def demo_network(
     help="YAML File with additional algorithm store configuration. This will be"
     " appended to the algorithm store configuration file",
 )
+@click.option(
+    "--add-dataset",
+    type=(str, click.Path()),
+    default=[],
+    multiple=True,
+    help="Add a dataset to the nodes. The first argument is the label of the database, "
+    "the second is the path to the dataset file.",
+)
 @click.pass_context
 def create_demo_network(
     click_ctx: click.Context,
@@ -561,6 +589,7 @@ def create_demo_network(
     extra_server_config: Path = None,
     extra_node_config: Path = None,
     extra_store_config: Path = None,
+    extra_datasets: list[tuple[str, Path]] = (),
 ) -> dict:
     """Creates a demo network.
 
@@ -582,6 +611,7 @@ def create_demo_network(
             ui_image,
             ui_port,
             algorithm_store_port,
+            extra_datasets,
         )
         info(
             f"Created {Fore.GREEN}{len(demo[0])}{Style.RESET_ALL} node "
