@@ -154,6 +154,15 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
 
     //Tasks
     const submenus: NavigationLink[] = [];
+    if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.SESSION, OperationType.VIEW)) {
+      submenus.push({
+        route: routePaths.sessions,
+        label: this.translateService.instant('resources.sessions'),
+        icon: 'history_toggle_off',
+        // history_toggle_off donut_large
+        linkType: NavigationLinkType.Analyze
+      });
+    }
     if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.VIEW)) {
       submenus.push({
         route: routePaths.tasks,

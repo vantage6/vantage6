@@ -40,6 +40,8 @@ import { LayoutLoginComponent } from './layouts/layout-login/layout-login.compon
 import { HomeComponent } from './pages/home/home.component';
 import { LayoutDefaultComponent } from './layouts/layout-default/layout-default.component';
 import { OrganizationReadComponent } from './pages/admin/organization/read/organization-read.component';
+import { SessionCreateComponent } from './pages/analyze/sessions/create/session-create.component';
+import { SessionListComponent } from './pages/analyze/sessions/list/session-list.component';
 import { TaskCreateComponent } from './pages/analyze/task/create/task-create.component';
 import { ChooseCollaborationComponent } from './pages/analyze/choose-collaboration/choose-collaboration';
 import { TaskListComponent } from './pages/analyze/task/list/task-list.component';
@@ -142,6 +144,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     OrganizationListComponent,
     OrganizationCreateComponent,
     OrganizationReadComponent,
+    SessionCreateComponent,
+    SessionListComponent,
     TaskCreateComponent,
     ChooseCollaborationComponent,
     TaskListComponent,

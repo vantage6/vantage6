@@ -4,6 +4,7 @@ export enum ResourceType {
   COLLABORATION = 'collaboration',
   ROLE = 'role',
   NODE = 'node',
+  SESSION = 'session',
   TASK = 'task',
   RUN = 'run',
   RESULT = 'result',

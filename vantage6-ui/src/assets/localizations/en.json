@@ -33,6 +33,7 @@
     "roles": "Roles",
     "users": "Users",
     "nodes": "Nodes",
+    "sessions": "Sessions",
     "tasks": "Tasks",
     "algorithms": "Algorithms",
     "algorithm": "Algorithm",
@@ -76,6 +77,18 @@
   },
   "table": {
     "search-placeholder": "Search"
+  },
+  "session-list": {
+    "title": "Sessions"
+  },
+  "session-create": {
+    "title": "Create session",
+    "session-form": {
+      "name": "Name",
+      "scope": "Select scope",
+      "study": "Select study",
+      "entire-collab": "Entire collaboration"
+    }
   },
   "task": {
     "algorithm": "Algorithm",

@@ -61,6 +61,8 @@ import { ReviewReadComponent } from './pages/store/algorithms-in-review/review-r
 import { ReviewSubmitComponent } from './pages/store/algorithms-in-review/review-submit/review-submit.component';
 import { MyPendingAlgorithmsComponent } from './pages/store/algorithms-in-review/my-pending-algorithms/my-pending-algorithms.component';
 import { OldAlgorithmListComponent } from './pages/store/algorithm/old-list/old-algorithm-list.component';
+import { SessionListComponent } from './pages/analyze/sessions/list/session-list.component';
+import { SessionCreateComponent } from './pages/analyze/sessions/create/session-create.component';
 
 const routes: Routes = [
   {
@@ -132,6 +134,22 @@ const routes: Routes = [
         path: routerConfig.keyUpload,
         component: UploadPrivateKeyComponent,
         canActivate: [authenticationGuard()]
+      },
+      {
+        path: routerConfig.sessions,
+        component: SessionListComponent,
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        data: {
+          crumbs: [['session-list.title']]
+        }
+      },
+      {
+        path: routerConfig.sessionCreate,
+        component: SessionCreateComponent,
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        data: {
+          crumbs: [['session-list.title', routePaths.sessions], ['session-create.title']]
+        }
       },
       {
         path: routerConfig.tasks,
