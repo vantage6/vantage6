@@ -45,9 +45,13 @@ def cli_node_attach(name: str, system_folders: bool) -> None:
         return
 
     if not name:
-        name = q.select(
-            "Select the node you wish to attach:", choices=running_node_names
-        ).ask()
+        try:
+            name = q.select(
+                "Select the node you wish to attach:", choices=running_node_names
+            ).unsafe_ask()
+        except KeyboardInterrupt:
+            error("Aborted by user!")
+            return
     else:
         post_fix = "system" if system_folders else "user"
         name = f"{APPNAME}-{name}-{post_fix}"

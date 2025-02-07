@@ -92,9 +92,13 @@ def cli_node_restart(
         ]
     else:
         if not name:
-            container_name = q.select(
-                "Select the node you wish to restart:", choices=running_node_names
-            ).ask()
+            try:
+                container_name = q.select(
+                    "Select the node you wish to restart:", choices=running_node_names
+                ).unsafe_ask()
+            except KeyboardInterrupt:
+                error("Aborted by user!")
+                return
             names = [get_name_from_container_name(container_name)]
         else:
             names = [name]

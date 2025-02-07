@@ -30,10 +30,14 @@ def cli_algo_store_attach(name: str, system_folders: bool) -> None:
     running_server_names = [container.name for container in running_servers]
 
     if not name:
-        name = q.select(
-            "Select the algorithm store you wish to attach:",
-            choices=running_server_names,
-        ).ask()
+        try:
+            name = q.select(
+                "Select the algorithm store you wish to attach:",
+                choices=running_server_names,
+            ).unsafe_ask()
+        except KeyboardInterrupt:
+            error("Aborted by user!")
+            return
     else:
         post_fix = "system" if system_folders else "user"
         name = f"{APPNAME}-{name}-{post_fix}-{InstanceType.ALGORITHM_STORE}"

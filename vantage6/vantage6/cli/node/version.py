@@ -42,9 +42,13 @@ def cli_node_version(name: str, system_folders: bool) -> None:
                 "nodes that are running"
             )
             exit(1)
-        name = q.select(
-            "Select the node you wish to inspect:", choices=running_node_names
-        ).ask()
+        try:
+            name = q.select(
+                "Select the node you wish to inspect:", choices=running_node_names
+            ).unsafe_ask()
+        except KeyboardInterrupt:
+            error("Aborted by user!")
+            return
     else:
         post_fix = "system" if system_folders else "user"
         name = f"{APPNAME}-{name}-{post_fix}"

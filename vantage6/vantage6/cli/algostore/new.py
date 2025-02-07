@@ -45,7 +45,13 @@ def cli_algo_store_new(name: str, system_folders: bool) -> None:
         exit(1)
 
     # create config in ctx location
-    cfg_file = configuration_wizard(InstanceType.ALGORITHM_STORE, name, system_folders)
+    try:
+        cfg_file = configuration_wizard(
+            InstanceType.ALGORITHM_STORE, name, system_folders
+        )
+    except KeyboardInterrupt:
+        error("Configuration creation aborted.")
+        exit(1)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
 
     flag = "" if system_folders else "--user"

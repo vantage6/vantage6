@@ -33,14 +33,11 @@ def cli_algorithm_create(name: str, directory: str) -> dict:
     can be used to build an appropriate Docker image that can be used as a
     vantage6 algorithm.
     """
-    if not name:
-        name = q.text("Name of your new algorithm:").ask()
-
-    if not directory:
-        default_dir = str(Path(os.getcwd()) / name)
-        directory = q.text(
-            "Directory to put the algorithm in:", default=default_dir
-        ).ask()
+    try:
+        name, directory = _get_user_input(name, directory)
+    except KeyboardInterrupt:
+        info("Aborted by user!")
+        return
 
     # Create the template. The `unsafe` flag is used to allow running a Python script
     # after creating the template that cleans up some things.
@@ -49,3 +46,24 @@ def cli_algorithm_create(name: str, directory: str) -> dict:
     )
     info("Template created!")
     info(f"You can find your new algorithm in: {directory}")
+
+
+def _get_user_input(name: str, directory: str) -> None:
+    """Get user input for the algorithm creation
+
+    Parameters
+    ----------
+    name : str
+        Name for the new algorithm
+    directory : str
+        Directory to put the algorithm into
+    """
+    if not name:
+        name = q.text("Name of your new algorithm:").unsafe_ask()
+
+    if not directory:
+        default_dir = str(Path(os.getcwd()) / name)
+        directory = q.text(
+            "Directory to put the algorithm in:", default=default_dir
+        ).unsafe_ask()
+    return name, directory

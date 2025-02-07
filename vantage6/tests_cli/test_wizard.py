@@ -33,8 +33,8 @@ class WizardTest(unittest.TestCase):
         """An error is printed when docker is not running"""
 
         with patch(f"{module_path}.q") as q:
-            q.prompt.side_effect = self.prompts
-            q.confirm.return_value.ask.side_effect = [
+            q.unsafe_prompt.side_effect = self.prompts
+            q.confirm.return_value.unsafe_ask.side_effect = [
                 True,  # add a database
                 False,  # don't enable two-factor authentication
                 True,  # add VPN server
@@ -79,8 +79,8 @@ class WizardTest(unittest.TestCase):
 
     def test_server_wizard(self):
         with patch(f"{module_path}.q") as q:
-            q.prompt.side_effect = self.prompts
-            q.confirm.return_value.ask.side_effect = [
+            q.unsafe_prompt.side_effect = self.prompts
+            q.confirm.return_value.unsafe_ask.side_effect = [
                 True,
                 True,
                 True,
@@ -134,7 +134,7 @@ class WizardTest(unittest.TestCase):
         available_configurations.return_value = [[config], []]
 
         with patch(f"{module_path}.q") as q:
-            q.select.return_value.ask.return_value = "vtg6"
+            q.select.return_value.unsafe_ask.return_value = "vtg6"
             name = select_configuration_questionaire(InstanceType.NODE, True)
 
         self.assertEqual(name, "vtg6")

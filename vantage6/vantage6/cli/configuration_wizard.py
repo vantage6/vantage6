@@ -1,6 +1,6 @@
-import questionary as q
-
 from pathlib import Path
+
+import questionary as q
 
 from vantage6.common import generate_apikey
 from vantage6.common.globals import (
@@ -36,7 +36,7 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
     dict
         Dictionary with the new node configuration
     """
-    config = q.prompt(
+    config = q.unsafe_prompt(
         [
             {"type": "text", "name": "api_key", "message": "Enter given api-key:"},
             {
@@ -57,7 +57,7 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
         else str(Ports.DEV_SERVER.value)
     )
 
-    config = config | q.prompt(
+    config = config | q.unsafe_prompt(
         [
             {
                 "type": "text",
@@ -81,8 +81,8 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
     )
 
     config["databases"] = list()
-    while q.confirm("Do you want to add a database?").ask():
-        db_label = q.prompt(
+    while q.confirm("Do you want to add a database?").unsafe_ask():
+        db_label = q.unsafe_prompt(
             [
                 {
                     "type": "text",
@@ -92,10 +92,10 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
                 }
             ]
         )
-        db_path = q.prompt(
+        db_path = q.unsafe_prompt(
             [{"type": "text", "name": "uri", "message": "Database URI:"}]
         )
-        db_type = q.select("Database type:", choices=DATABASE_TYPES).ask()
+        db_type = q.select("Database type:", choices=DATABASE_TYPES).unsafe_ask()
 
         config["databases"].append(
             {"label": db_label.get("label"), "uri": db_path.get("uri"), "type": db_type}
@@ -103,18 +103,18 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
 
     is_add_vpn = q.confirm(
         "Do you want to connect to a VPN server?", default=False
-    ).ask()
+    ).unsafe_ask()
     if is_add_vpn:
         config["vpn_subnet"] = q.text(
             message="Subnet of the VPN server you want to connect to:",
             default="10.76.0.0/16",
-        ).ask()
+        ).unsafe_ask()
 
     is_policies = q.confirm(
         "Do you want to limit the algorithms allowed to run on your node? This "
         "should always be done for production scenarios.",
         default=True,
-    ).ask()
+    ).unsafe_ask()
     policies = {}
     if is_policies:
         info(
@@ -124,12 +124,12 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
         )
         ask_single_algorithms = q.confirm(
             "Do you want to enter a list of allowed algorithms?"
-        ).ask()
+        ).unsafe_ask()
         if ask_single_algorithms:
             policies[NodePolicy.ALLOWED_ALGORITHMS.value] = _get_allowed_algorithms()
         ask_algorithm_stores = q.confirm(
             "Do you want to allow algorithms from specific algorithm stores?"
-        ).ask()
+        ).unsafe_ask()
         if ask_algorithm_stores:
             policies[NodePolicy.ALLOWED_ALGORITHM_STORES.value] = (
                 _get_allowed_algorithm_stores()
@@ -141,7 +141,7 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
                 "stores? If not, algorithms will be allowed if they are in either the "
                 "list of allowed algorithms or one of the allowed algorithm stores.",
                 default=True,
-            ).ask()
+            ).unsafe_ask()
             policies["allow_either_whitelist_or_store"] = not require_both_whitelists
     if policies:
         config["policies"] = policies
@@ -149,7 +149,7 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
     res = q.select(
         "Which level of logging would you like?",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", "NOTSET"],
-    ).ask()
+    ).unsafe_ask()
 
     config["logging"] = {
         "level": res,
@@ -178,7 +178,7 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
             "If you continue, you should provide your collaboration "
             "settings manually."
         )
-        if q.confirm("Do you want to abort?", default=True).ask():
+        if q.confirm("Do you want to abort?", default=True).unsafe_ask():
             exit(0)
 
     if client.whoami is not None:
@@ -190,11 +190,13 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
             f"Encryption is {'enabled' if encryption else 'disabled'}"
             f" for this collaboration. Accept?",
             default=True,
-        ).ask()
+        ).unsafe_ask()
     else:
-        encryption = q.confirm("Enable encryption?", default=True).ask()
+        encryption = q.confirm("Enable encryption?", default=True).unsafe_ask()
 
-    private_key = "" if not encryption else q.text("Path to private key file:").ask()
+    private_key = (
+        "" if not encryption else q.text("Path to private key file:").unsafe_ask()
+    )
 
     config["encryption"] = {
         "enabled": encryption is True or encryption == "true",
@@ -230,11 +232,11 @@ def _get_allowed_algorithms() -> list[str]:
     )
     allowed_algorithms = []
     while True:
-        algo = q.text(message="Enter your algorithm expression:").ask()
+        algo = q.text(message="Enter your algorithm expression:").unsafe_ask()
         allowed_algorithms.append(algo)
         if not q.confirm(
             "Do you want to add another algorithm expression?", default=True
-        ).ask():
+        ).unsafe_ask():
             break
     return allowed_algorithms
 
@@ -264,11 +266,11 @@ def _get_allowed_algorithm_stores() -> list[str]:
     )
     allowed_algorithm_stores = []
     while True:
-        store = q.text(message="Enter the URL of the algorithm store:").ask()
+        store = q.text(message="Enter the URL of the algorithm store:").unsafe_ask()
         allowed_algorithm_stores.append(store)
         if not q.confirm(
             "Do you want to add another algorithm store?", default=True
-        ).ask():
+        ).unsafe_ask():
             break
     return allowed_algorithm_stores
 
@@ -290,7 +292,7 @@ def _get_common_server_config(instance_type: InstanceType, instance_name: str) -
     dict
         Dictionary with new (partial) server configuration
     """
-    config = q.prompt(
+    config = q.unsafe_prompt(
         [
             {
                 "type": "text",
@@ -313,7 +315,7 @@ def _get_common_server_config(instance_type: InstanceType, instance_name: str) -
     )
 
     config.update(
-        q.prompt(
+        q.unsafe_prompt(
             [
                 {
                     "type": "text",
@@ -334,7 +336,7 @@ def _get_common_server_config(instance_type: InstanceType, instance_name: str) -
     res = q.select(
         "Which level of logging would you like?",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", "NOTSET"],
-    ).ask()
+    ).unsafe_ask()
 
     config["logging"] = {
         "level": res,
@@ -376,11 +378,11 @@ def server_configuration_questionaire(instance_name: str) -> dict:
 
     config = _get_common_server_config(InstanceType.SERVER, instance_name)
 
-    constant_jwt_secret = q.confirm("Do you want a constant JWT secret?").ask()
+    constant_jwt_secret = q.confirm("Do you want a constant JWT secret?").unsafe_ask()
     if constant_jwt_secret:
         config["jwt_secret_key"] = generate_apikey()
 
-    is_mfa = q.confirm("Do you want to enforce two-factor authentication?").ask()
+    is_mfa = q.confirm("Do you want to enforce two-factor authentication?").unsafe_ask()
     if is_mfa:
         config["two_factor_auth"] = is_mfa
 
@@ -391,11 +393,13 @@ def server_configuration_questionaire(instance_name: str) -> dict:
         "server url. If you are running a production server, this is the "
         "url that users will connect to.",
         default=current_server_url,
-    ).ask()
+    ).unsafe_ask()
 
-    is_add_vpn = q.confirm("Do you want to add a VPN server?", default=False).ask()
+    is_add_vpn = q.confirm(
+        "Do you want to add a VPN server?", default=False
+    ).unsafe_ask()
     if is_add_vpn:
-        vpn_config = q.prompt(
+        vpn_config = q.unsafe_prompt(
             [
                 {
                     "type": "text",
@@ -432,12 +436,14 @@ def server_configuration_questionaire(instance_name: str) -> dict:
         )
         config["vpn_server"] = vpn_config
 
-    is_add_rabbitmq = q.confirm("Do you want to add a RabbitMQ message queue?").ask()
+    is_add_rabbitmq = q.confirm(
+        "Do you want to add a RabbitMQ message queue?"
+    ).unsafe_ask()
     if is_add_rabbitmq:
-        rabbit_uri = q.text(message="Enter the URI for your RabbitMQ:").ask()
+        rabbit_uri = q.text(message="Enter the URI for your RabbitMQ:").unsafe_ask()
         run_rabbit_locally = q.confirm(
             "Do you want to run RabbitMQ locally? (Use only for testing)"
-        ).ask()
+        ).unsafe_ask()
         config["rabbitmq"] = {
             "uri": rabbit_uri,
             "start_with_server": run_rabbit_locally,
@@ -447,7 +453,7 @@ def server_configuration_questionaire(instance_name: str) -> dict:
     is_add_community_store = q.confirm(
         "Do you want to make the algorithms from the community algorithm store "
         "available to your users?"
-    ).ask()
+    ).unsafe_ask()
     algorithm_stores = []
     if is_add_community_store:
         algorithm_stores.append(
@@ -455,14 +461,14 @@ def server_configuration_questionaire(instance_name: str) -> dict:
         )
     add_more_stores = q.confirm(
         "Do you want to add more algorithm stores?", default=False
-    ).ask()
+    ).unsafe_ask()
     while add_more_stores:
-        store_name = q.text(message="Enter the name of the store:").ask()
-        store_url = q.text(message="Enter the URL of the store:").ask()
+        store_name = q.text(message="Enter the name of the store:").unsafe_ask()
+        store_url = q.text(message="Enter the URL of the store:").unsafe_ask()
         algorithm_stores.append({"name": store_name, "url": store_url})
         add_more_stores = q.confirm(
             "Do you want to add more algorithm stores?", default=False
-        ).ask()
+        ).unsafe_ask()
     config["algorithm_stores"] = algorithm_stores
 
     return config
@@ -494,12 +500,12 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
         "What is the Vantage6 server linked to the algorithm store? "
         "Provide the link to the server endpoint.",
         default=default_v6_server_uri,
-    ).ask()
+    ).unsafe_ask()
 
     root_username = q.text(
         "What is the username of the root user?",
         default=default_root_username,
-    ).ask()
+    ).unsafe_ask()
 
     config["root_user"] = {
         "v6_server_uri": v6_server_uri,
@@ -512,7 +518,7 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
         "Do you want to open the algorithm store to the public? This will allow anyone "
         "to view the algorithms, but they cannot modify them.",
         default=False,
-    ).ask()
+    ).unsafe_ask()
     if is_open:
         open_algos_policy = "public"
     else:
@@ -521,7 +527,7 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
             "the algorithms in the store? If not allowing this, you will have to assign"
             " the appropriate permissions to each user individually.",
             default=True,
-        ).ask()
+        ).unsafe_ask()
         open_algos_policy = "whitelisted" if is_open_to_whitelist else "private"
     config["policies"]["algorithm_view"] = open_algos_policy
 
@@ -610,4 +616,10 @@ def select_configuration_questionaire(type_: InstanceType, system_folders: bool)
         raise Exception("No configurations could be found!")
 
     # pop the question
-    return q.select("Select the configuration you want to use:", choices=choices).ask()
+    try:
+        return q.select(
+            "Select the configuration you want to use:", choices=choices
+        ).unsafe_ask()
+    except KeyboardInterrupt:
+        error("Aborted by user!")
+        exit(1)

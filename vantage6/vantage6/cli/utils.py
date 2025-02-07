@@ -90,7 +90,11 @@ def prompt_config_name(name: str | None) -> None:
         The name of the configuration
     """
     if not name:
-        name = q.text("Please enter a configuration-name:").ask()
+        try:
+            name = q.text("Please enter a configuration-name:").unsafe_ask()
+        except KeyboardInterrupt:
+            error("Aborted by user!")
+            exit(1)
         if name.count(" ") > 0:
             name = name.replace(" ", "-")
             info(f"Replaced spaces from configuration name: {name}")
