@@ -39,6 +39,7 @@ export class MyPendingAlgorithmsComponent implements OnInit, OnDestroy {
 
   algorithmsInReviewProcess: Algorithm[] = [];
   canAssignReviewers: boolean = false;
+  canAddAlgorithm = false;
 
   myPendingAlgorithms: Algorithm[] = [];
   myAlgorithmsTable?: TableData;
@@ -81,6 +82,7 @@ export class MyPendingAlgorithmsComponent implements OnInit, OnDestroy {
     if (!this.store) return;
 
     this.canAssignReviewers = this.storePermissionService.isAllowed(StoreResourceType.REVIEW, OperationType.CREATE);
+    this.canAddAlgorithm = this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.CREATE);
 
     await this.setLoggedInStoreUser();
 

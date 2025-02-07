@@ -34,6 +34,7 @@ export class ReviewReadComponent implements OnInit, OnDestroy {
   algorithm: Algorithm | null = null;
   reviews: StoreReview[] = [];
   reviewers: StoreUser[] = [];
+  developer: StoreUser | null = null;
   loggedInUser: BaseUser | null = null;
   store: AlgorithmStore | null = null;
 
@@ -71,6 +72,7 @@ export class ReviewReadComponent implements OnInit, OnDestroy {
       return;
     }
     this.algorithm = await this.algorithmService.getAlgorithm(this.store.url, this.algoID);
+    this.developer = await this.storeUserService.getUser(this.store.url, String(this.algorithm.developer_id));
     this.reviewers = await this.storeUserService.getUsers(this.store.url, { can_review: true });
     this.reviews = await this.reviewService.getReviews(this.store.url, { algorithm_id: this.algoID });
 

@@ -45,6 +45,16 @@
   <mat-card>
     <mat-card-header>
       <mat-card-title>{{ "algorithm-store-read.card-algorithms.title" | translate }}</mat-card-title>
+      <button
+        actions
+        mat-flat-button
+        class="right-aligned-button"
+        color="primary"
+        *ngIf="canAddAlgorithm"
+        [routerLink]="routePaths.algorithmCreate"
+      >
+        <mat-icon>add</mat-icon>{{ "algorithm-create.short-title" | translate }}
+      </button>
     </mat-card-header>
     <mat-card-content>
       <div *ngIf="algorithms">

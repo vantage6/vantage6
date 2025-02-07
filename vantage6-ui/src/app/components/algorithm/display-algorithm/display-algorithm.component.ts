@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input } from '@angular/core';
 import { Subject } from 'rxjs';
 import { printDate } from 'src/app/helpers/general.helper';
-import { Algorithm, AlgorithmFunction, Argument } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmFunction, AlgorithmStatus, Argument } from 'src/app/models/api/algorithm.model';
 import { Visualization } from 'src/app/models/api/visualization.model';
 import { routePaths } from 'src/app/routes';
 import { FileService } from 'src/app/services/file.service';
@@ -20,6 +20,8 @@ export class DisplayAlgorithmComponent {
   constructor(private fileService: FileService) {}
 
   routes = routePaths;
+
+  algorithmStatus = AlgorithmStatus;
 
   selectedFunction?: AlgorithmFunction;
 
@@ -81,6 +83,7 @@ export class DisplayAlgorithmComponent {
     delete cleanedAlgorithmRepresentation.submitted_at;
     delete cleanedAlgorithmRepresentation.approved_at;
     delete cleanedAlgorithmRepresentation.invalidated_at;
+    delete cleanedAlgorithmRepresentation.submission_comments;
 
     const text = JSON.stringify(cleanedAlgorithmRepresentation, null, 2);
     this.fileService.downloadTxtFile(text, filename);

@@ -16,13 +16,13 @@ from vantage6.cli.test.common.diagnostic_runner import DiagnosticRunner
 @click.option(
     "--username",
     type=str,
-    default="root",
+    default="dev_admin",
     help="Username of vantage6 user account to create the task with",
 )
 @click.option(
     "--password",
     type=str,
-    default="root",
+    default="password",
     help="Password of vantage6 user account to create the task with",
 )
 @click.option(
@@ -56,6 +56,12 @@ from vantage6.cli.test.common.diagnostic_runner import DiagnosticRunner
     default=None,
     help="Path to the private key for end-to-end encryption",
 )
+@click.option(
+    "--mfa-code",
+    type=str,
+    help="Multi-factor authentication code. Use this if MFA is enabled on the "
+    "server.",
+)
 def cli_test_features(
     host: str,
     port: int,
@@ -68,6 +74,7 @@ def cli_test_features(
     online_only: bool,
     no_vpn: bool,
     private_key: str | None,
+    mfa_code: str | None,
 ) -> list[dict]:
     """
     Run diagnostic checks on an existing vantage6 network.
@@ -83,7 +90,7 @@ def cli_test_features(
         organizations = None
 
     client = UserClient(host=host, port=port, path=api_path, log_level="critical")
-    client.authenticate(username=username, password=password)
+    client.authenticate(username=username, password=password, mfa_code=mfa_code)
     client.setup_encryption(private_key)
     diagnose = DiagnosticRunner(client, collaboration, organizations, online_only)
     res = diagnose(base=True, vpn=not no_vpn)

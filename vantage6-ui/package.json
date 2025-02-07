@@ -30,6 +30,7 @@
     "chart.js": "^4.4.3",
     "crypto-js": "^4.2.0",
     "file-saver": "^2.0.5",
+    "ngx-markdown": "^18.0.0",
     "rxjs": "~7.8.1",
     "socket.io-client": "^4.7.5",
     "tslib": "^2.6.3",

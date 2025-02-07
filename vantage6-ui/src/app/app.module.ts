@@ -1,10 +1,12 @@
 import { NgModule } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { QRCodeModule } from 'angularx-qrcode';
 
+import { MarkdownModule } from 'ngx-markdown';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -132,6 +134,7 @@ import { ReviewSubmitComponent } from './pages/store/algorithms-in-review/review
 import { MyPendingAlgorithmsComponent } from './pages/store/algorithms-in-review/my-pending-algorithms/my-pending-algorithms.component';
 import { OldAlgorithmListComponent } from './pages/store/algorithm/old-list/old-algorithm-list.component';
 import { NodeAdminCardComponent } from './components/helpers/node-admin-card/node-admin-card.component';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -250,6 +253,7 @@ export function HttpLoaderFactory(http: HttpClient) {
       },
       defaultLanguage: 'en'
     }),
+    MarkdownModule.forRoot(),
     MatDateFnsModule,
     MatButtonModule,
     MatCardModule,
@@ -275,6 +279,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     MatToolbarModule,
     MatTreeModule,
     MatRadioModule,
+    MatTooltipModule,
     QRCodeModule,
     OverlayModule
   ],
@@ -283,7 +288,8 @@ export function HttpLoaderFactory(http: HttpClient) {
       provide: MAT_DATE_LOCALE,
       useValue: enCA
     },
-    provideHttpClient(withInterceptorsFromDi())
+    provideHttpClient(withInterceptorsFromDi()),
+    DatePipe
   ]
 })
-export class AppModule { }
+export class AppModule {}

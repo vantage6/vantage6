@@ -65,8 +65,25 @@
   <mat-card>
     <mat-card-header>
       <mat-card-title>{{ "organization-read.card-nodes.title" | translate }}</mat-card-title>
+      <button
+        actions
+        mat-flat-button
+        class="right-aligned-button"
+        color="primary"
+        *ngIf="canCreateNodes && isMissingNodes()"
+        (click)="onRegisterMissingNodes()"
+      >
+        <mat-icon>add</mat-icon>{{ "collaboration-read.card-nodes.add" | translate }}
+      </button>
     </mat-card-header>
     <mat-card-content>
+      <app-alert
+        *ngIf="isMissingNodes()"
+        class="node-alert"
+        label="{{
+          'organization-read.card-nodes.alert-missing-nodes' | translate: { collaborations: getCollaborationsWithMissingNodeNames() }
+        }}"
+      ></app-alert>
       <div *ngIf="organization.nodes.length > 0; else noNodes" class="chip-container">
         <app-chip
           *ngFor="let node of organization.nodes"

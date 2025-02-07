@@ -14,7 +14,7 @@ import { BaseCollaboration, Collaboration } from 'src/app/models/api/collaborati
 import { OrganizationService } from './organization.service';
 import { Pagination } from 'src/app/models/api/pagination.model';
 import { getLazyProperties } from 'src/app/helpers/api.helper';
-import { BaseOrganization } from 'src/app/models/api/organization.model';
+import { BaseOrganization, Organization } from 'src/app/models/api/organization.model';
 import { FileService } from './file.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
@@ -78,26 +78,37 @@ export class NodeService {
     return await this.apiService.postForApi<APIKey>(`/recover/node`, { id: nodeID });
   }
 
-  async registerNodes(collaboration: BaseCollaboration | Collaboration, organizations: BaseOrganization[]): Promise<void> {
+  async registerNodes(
+    collaborations: BaseCollaboration[] | Collaboration[],
+    organizations: BaseOrganization[] | Organization[],
+    fromCollabFirstPerspective: boolean
+  ): Promise<void> {
     const apiKeys: ApiKeyExport[] = [];
-    await Promise.all(
-      organizations.map(async (organization: BaseOrganization) => {
-        const node = await this.createNode(collaboration, organization.id);
-        if (node?.api_key) {
-          apiKeys.push({
-            organization: organization.name,
-            api_key: node.api_key
-          });
-        }
-      })
-    );
-    this.downloadApiKeys(apiKeys, collaboration.name);
+    const promises: Promise<void>[] = [];
+
+    for (const collaboration of collaborations) {
+      for (const organization of organizations) {
+        const promise = this.createNode(collaboration, organization.id).then((node) => {
+          if (node?.api_key) {
+            apiKeys.push({
+              entityName: fromCollabFirstPerspective ? organization.name : collaboration.name,
+              api_key: node.api_key
+            });
+          }
+        });
+        promises.push(promise);
+      }
+    }
+
+    await Promise.all(promises);
+    const entityNameInFile = fromCollabFirstPerspective ? collaborations[0].name : organizations[0].name;
+    this.downloadApiKeys(apiKeys, entityNameInFile);
     this.alertApiKeyDownload();
   }
 
   private downloadApiKeys(api_keys: ApiKeyExport[], collaboration_name: string): void {
     const filename = `API_keys_${collaboration_name}.txt`;
-    const text = api_keys.map((api_key) => `${api_key.organization}: ${api_key.api_key}`).join('\n');
+    const text = api_keys.map((api_key) => `${api_key.entityName}: ${api_key.api_key}`).join('\n');
     this.fileService.downloadTxtFile(text, filename);
   }
 

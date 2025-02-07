@@ -18,8 +18,7 @@ export class CollaborationCreateComponent {
   constructor(
     private router: Router,
     private collaborationService: CollaborationService,
-    private nodeService: NodeService,
-
+    private nodeService: NodeService
   ) {}
 
   async handleSubmit(collaborationForm: CollaborationForm) {
@@ -34,7 +33,7 @@ export class CollaborationCreateComponent {
     const collaboration = await this.collaborationService.createCollaboration(collaborationCreate);
     if (collaboration?.id) {
       if (collaborationForm.registerNodes && collaborationForm.organizations) {
-        this.nodeService.registerNodes(collaboration, collaborationForm.organizations);
+        this.nodeService.registerNodes([collaboration], collaborationForm.organizations, true);
       }
       this.router.navigate([routePaths.collaborations]);
     } else {
@@ -45,5 +44,4 @@ export class CollaborationCreateComponent {
   handleCancel(): void {
     this.router.navigate([routePaths.collaborations]);
   }
-
 }

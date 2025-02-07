@@ -230,8 +230,11 @@
     "submitted-at": "Submitted at",
     "approved-at": "Approved at",
     "invalidated-at": "Invalidated at",
+    "submission-comments": "Submission comments",
     "function": {
       "type": "Type of function",
+      "standalone": "Standalone function",
+      "standalone_tooltip": "Whether this function produces useful results when running it by itself. Disabling this option will hide the function when creating tasks in this UI.",
       "argument": {
         "title": "Parameters",
         "type": "Type of argument",
@@ -401,7 +404,8 @@
       "title": "Pending algorithms developed by me",
       "no-algorithms": "No algorithms that you have developed are pending review."
     },
-    "algorithm-name": "Algorithm name"
+    "algorithm-name": "Algorithm name",
+    "add-algorithm": "Add a new algorithm"
   },
   "algorithm-assign-review": {
     "title": "Assign reviewers",
@@ -410,6 +414,7 @@
     "no-reviewers": "No reviewers are available to assign to this algorithm. Please contact your store manager."
   },
   "algorithm-review": {
+    "breadcrumb-title": "Algorithm reviews",
     "title": "Reviews of algorithm '{{name}}'",
     "card-per-review": {
       "title": "Review by {{reviewer}}",
@@ -422,7 +427,8 @@
       "content": "If other reviews are present and have been approved, the algorithm will be approved. If no other reviews are present, the algorithm will have to be assigned reviewers again."
     },
     "add-new-review": "Add another review",
-    "button-details": "View algorithm details"
+    "button-details": "View algorithm details",
+    "submission-comments": "Comments from algorithm developer {{developer}}"
   },
   "review-submit": {
     "title": "Submit review for algorithm '{{name}}'",
@@ -460,7 +466,8 @@
       "title": "Collaborations"
     },
     "card-nodes": {
-      "title": "Nodes"
+      "title": "Nodes",
+      "alert-missing-nodes": "Nodes are missing for collaborations: {{collaborations}}. Please ensure that they are registered and online."
     },
     "delete-dialog": {
       "title": "Are you sure you want to delete the organization '{{name}}'?",

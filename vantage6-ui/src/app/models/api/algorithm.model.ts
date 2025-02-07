@@ -92,6 +92,7 @@ export interface Algorithm {
   developer_id?: number;
   developer?: StoreUser;
   reviewer?: StoreUser;
+  submission_comments?: string;
 }
 
 export interface AlgorithmFunction {
@@ -100,6 +101,7 @@ export interface AlgorithmFunction {
   display_name?: string;
   description: string;
   type: FunctionType;
+  standalone?: boolean;
   arguments: Argument[];
   databases: FunctionDatabase[];
   ui_visualizations: Visualization[];
@@ -177,6 +179,7 @@ export interface FunctionForm extends NameDescription {
   databases: NameDescription[];
   ui_visualizations: VisualizationForm[];
   type: string;
+  standalone?: boolean;
 }
 
 export interface AlgorithmForm {
@@ -187,5 +190,6 @@ export interface AlgorithmForm {
   vantage6_version: string;
   code_url: string;
   documentation_url?: string;
+  submission_comments?: string;
   functions: FunctionForm[];
 }

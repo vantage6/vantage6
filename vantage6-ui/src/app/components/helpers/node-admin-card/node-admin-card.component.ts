@@ -72,7 +72,7 @@ export class NodeAdminCardComponent implements OnInit, OnDestroy {
         (organization) => organization.id === this.permissionService.activeUser?.organization.id
       );
     }
-    await this.nodeService.registerNodes(this.collaboration, missingOrganizations);
+    await this.nodeService.registerNodes([this.collaboration], missingOrganizations, true);
     // refresh the collaboration
     this.nodesUpdated.emit();
   }

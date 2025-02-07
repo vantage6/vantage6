@@ -62,12 +62,14 @@ export class AlgorithmEditComponent implements OnInit, OnDestroy {
       vantage6_version: this.algorithm.vantage6_version,
       code_url: this.algorithm.code_url,
       documentation_url: this.algorithm.documentation_url,
+      submission_comments: this.algorithm.submission_comments,
       functions: this.algorithm.functions.map((func) => {
         return {
           name: func.name,
           display_name: func.display_name,
           description: func.description,
           type: func.type,
+          standalone: func.standalone,
           arguments: func.arguments.map((arg) => {
             const conditionalArgName =
               arg.conditional_on_id === undefined ? undefined : func.arguments.find((a) => a.id === arg.conditional_on_id)?.name;

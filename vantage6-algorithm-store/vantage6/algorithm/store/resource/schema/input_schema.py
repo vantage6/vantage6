@@ -39,6 +39,7 @@ class AlgorithmInputSchema(_NameDescriptionSchema):
     vantage6_version = fields.String(required=True)
     code_url = fields.String(required=True)
     documentation_url = fields.String()
+    submission_comments = fields.String()
     functions = fields.Nested("FunctionInputSchema", many=True, required=True)
 
     @validates("partitioning")
@@ -68,6 +69,7 @@ class FunctionInputSchema(_NameDescriptionSchema):
 
     type_ = fields.String(required=True, data_key="type")
     display_name = fields.String(required=False)
+    standalone = fields.Boolean(required=False)
     databases = fields.Nested("DatabaseInputSchema", many=True)
     arguments = fields.Nested("ArgumentInputSchema", many=True)
     ui_visualizations = fields.Nested("UIVisualizationInputSchema", many=True)
