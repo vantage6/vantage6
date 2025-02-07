@@ -219,7 +219,7 @@ class CollaborationInputSchema(_NameValidationSchema):
 
     organization_ids = fields.List(fields.Integer(), required=True)
     encrypted = fields.Boolean(required=True)
-    session_restrict_to_same_image = fields.Boolean(load_default=False)
+    session_restrict_to_same_image = fields.Boolean(load_default=0)
 
     @validates("organization_ids")
     def validate_organization_ids(self, organization_ids):
