@@ -28,7 +28,12 @@ import { Subject, Subscription, takeUntil, timer } from 'rxjs';
 import { FileService } from 'src/app/services/file.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
-import { THRESHOLD_LONG_TEXT, THRESHOLD_PRINTABLE_TEXT, THRESHOLD_SMALL_TILES } from 'src/app/models/constants/thresholds';
+import {
+  THRESHOLD_LONG_PARAMETER_TEXT,
+  THRESHOLD_LONG_TEXT,
+  THRESHOLD_PRINTABLE_TEXT,
+  THRESHOLD_SMALL_TILES
+} from 'src/app/models/constants/thresholds';
 import { WAIT_200_MILLISECONDS } from 'src/app/models/constants/wait';
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { printDate } from 'src/app/helpers/general.helper';
@@ -291,12 +296,13 @@ export class TaskReadComponent implements OnInit, OnDestroy {
 
   getParameterValueAsString(parameter: TaskParameter): string {
     const argument: Argument | undefined = this.function?.arguments.find((_) => _.name === parameter.label);
-    // check if value is an object
-    if (argument?.type === ArgumentType.Json) {
-      return JSON.stringify(parameter.value);
-    } else {
-      return parameter.value;
+    let parameter_str = argument?.type !== ArgumentType.Json ? parameter.value : JSON.stringify(parameter.value);
+    if (parameter_str.length > THRESHOLD_LONG_PARAMETER_TEXT) {
+      const len_not_displayed = parameter_str.length - THRESHOLD_LONG_PARAMETER_TEXT;
+      parameter_str = parameter_str.substring(0, THRESHOLD_LONG_PARAMETER_TEXT) + '... (' + len_not_displayed + ' more characters)';
     }
+
+    return parameter_str;
   }
 
   downloadInput(run: TaskRun): void {

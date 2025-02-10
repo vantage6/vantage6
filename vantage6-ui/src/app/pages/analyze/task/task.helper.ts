@@ -36,6 +36,7 @@ export const addParameterFormControlsForFunction = (func: AlgorithmFunctionExten
     }
     if (argument.type === ArgumentType.Json) {
       form.addControl(argument.name, new FormControl(null, [...requiredValidators, jsonValidator()]));
+      form.addControl(`${argument.name}_jsonFileName`, new FormControl(null));
     }
     if (argument.type === ArgumentType.Boolean) {
       form.addControl(argument.name, new FormControl(false, requiredValidators));
