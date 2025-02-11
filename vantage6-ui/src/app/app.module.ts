@@ -134,6 +134,7 @@ import { MyPendingAlgorithmsComponent } from './pages/store/algorithms-in-review
 import { OldAlgorithmListComponent } from './pages/store/algorithm/old-list/old-algorithm-list.component';
 import { NodeAdminCardComponent } from './components/helpers/node-admin-card/node-admin-card.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatChipFormComponent } from './components/forms/mat-chip-form/mat-chip-form.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -235,7 +236,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     ReviewSubmitComponent,
     MyPendingAlgorithmsComponent,
     OldAlgorithmListComponent,
-    NodeAdminCardComponent
+    NodeAdminCardComponent,
+    MatChipFormComponent
   ],
   bootstrap: [AppComponent],
   imports: [

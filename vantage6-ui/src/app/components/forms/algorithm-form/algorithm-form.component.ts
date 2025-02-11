@@ -16,7 +16,7 @@ import { MessageDialogComponent } from 'src/app/components/dialogs/message-dialo
 import { MatDialog } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { isTruthy } from 'src/app/helpers/utils.helper';
-import { isListTypeArgument } from 'src/app/helpers/algorithm.helper';
+import { isArgumentWithAllowedValues, isListTypeArgument } from 'src/app/helpers/algorithm.helper';
 
 @Component({
   selector: 'app-algorithm-form',
@@ -33,6 +33,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   argumentType = ArgumentType;
   isTruthy = isTruthy;
   isListTypeArgument = isListTypeArgument;
+  isArgumentWithAllowedValues = isArgumentWithAllowedValues;
 
   isEdit: boolean = false;
   isLoading: boolean = true;
@@ -67,7 +68,8 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       conditional_on: [''],
       conditional_operator: [''],
       conditional_value: [''],
-      is_frontend_only: [false]
+      is_frontend_only: [false],
+      allowed_values: [[]]
     },
     { validators: this.conditionalFieldsValidator.bind(this) }
   );
@@ -282,6 +284,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
           argumentFormGroup.controls['display_name'].setValue(arg.display_name);
           argumentFormGroup.controls['description'].setValue(arg.description);
           argumentFormGroup.controls['type'].setValue(arg.type);
+          argumentFormGroup.controls['allowed_values'].setValue(arg.allowed_values);
           argumentFormGroup.controls['is_frontend_only'].setValue(arg.is_frontend_only);
           argumentFormGroup.controls['has_default_value'].setValue(arg.has_default_value);
           argumentFormGroup.controls['is_default_value_null'].setValue(arg.default_value === null);
@@ -449,7 +452,8 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
         conditional_on: [''],
         conditional_operator: [''],
         conditional_value: [''],
-        is_frontend_only: [false]
+        is_frontend_only: [false],
+        allowed_values: [[]]
       },
       { validators: this.conditionalFieldsValidator.bind(this) }
     );

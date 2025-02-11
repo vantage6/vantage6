@@ -52,7 +52,16 @@ export class AlgorithmService {
   }
 
   async getAlgorithm(algorithm_store_url: string, id: string): Promise<Algorithm> {
-    const result = await this.apiService.getForAlgorithmApi<Algorithm>(algorithm_store_url, `/algorithm/${id}`);
+    let result = await this.apiService.getForAlgorithmApi<Algorithm>(algorithm_store_url, `/algorithm/${id}`);
+
+    result.functions.forEach((func) => {
+      func.arguments.forEach((arg) => {
+        arg.allowed_values = arg.allowed_values?.map((value) => {
+          return (value as any).value;
+        });
+      });
+    });
+
     return result;
   }
 

@@ -77,6 +77,7 @@ export class AlgorithmEditComponent implements OnInit, OnDestroy {
               name: arg.name,
               display_name: arg.display_name,
               type: arg.type,
+              allowed_values: arg.allowed_values,
               description: arg.description,
               has_default_value: arg.has_default_value,
               default_value: arg.default_value || null,
@@ -105,7 +106,6 @@ export class AlgorithmEditComponent implements OnInit, OnDestroy {
         };
       })
     };
-
     this.isLoading = false;
   }
 

@@ -8,6 +8,7 @@ from vantage6.algorithm.store.model.algorithm import Algorithm
 from vantage6.algorithm.store.model.argument import Argument
 from vantage6.algorithm.store.model.database import Database
 from vantage6.algorithm.store.model.function import Function
+from vantage6.algorithm.store.model.allowed_argument_value import AllowedArgumentValue
 from vantage6.algorithm.store.model.role import Role
 from vantage6.algorithm.store.model.rule import Rule
 from vantage6.algorithm.store.model.ui_visualization import UIVisualization
@@ -82,6 +83,16 @@ class ArgumentOutputSchema(HATEOASModelSchema):
 
     type_ = fields.String(data_key="type")
     conditional_on_id = fields.Integer()
+    allowed_values = fields.Nested(
+        "AllowedArgumentValueSchema", many=True, exclude=["id"]
+    )
+
+
+class AllowedArgumentValueSchema(HATEOASModelSchema):
+    """Marshmallow output schema to serialize the AllowedArgumentValue model"""
+
+    class Meta:
+        model = AllowedArgumentValue
 
 
 class UIVisualizationOutputSchema(HATEOASModelSchema):

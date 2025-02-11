@@ -254,6 +254,7 @@ class ArgumentInputSchema(_NameDescriptionSchema):
 
     display_name = fields.String()
     type_ = fields.String(required=True, data_key="type")
+    allowed_values = fields.List(fields.String)
     has_default_value = fields.Boolean()
     default_value = fields.String()
     conditional_on = fields.String()

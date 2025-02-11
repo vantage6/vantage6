@@ -135,6 +135,13 @@
                             </mat-option>
                           </mat-select>
                         </mat-form-field>
+                        <div *ngIf="isArgumentWithAllowedValues(parameterFormGroup.controls['type'].value)">
+                          <app-mat-chip-form 
+                            [label]="'algorithm.function.argument.allowed_values' | translate"
+                            [placeholder]="'algorithm.function.argument.allowed_values_placeholder' | translate"
+                            [formcontrol]="parameterFormGroup.controls.allowed_values"
+                            [initalValues]="parameterFormGroup.controls.allowed_values.value"></app-mat-chip-form>
+                        </div>
                         <mat-radio-group formControlName="has_default_value">
                           <mat-label>{{ "algorithm.function.argument.has_default" | translate }}</mat-label>
                           <mat-radio-button [value]="true" color="primary">{{ "general.yes" | translate }}</mat-radio-button>

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from sqlalchemy import Column, String, ForeignKey, Integer, Boolean
+from sqlalchemy import Column, String, ForeignKey, Integer, Boolean, ARRAY
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
@@ -24,6 +24,8 @@ class Argument(Base):
         ID of the algorithm that this function belongs to
     type_ : str
         Type of the argument
+    allowed_values : list[:class:`~.model.allowed_argument_value.AllowedArgumentValue`]
+        List of allowed argument values. Applicable if the argument is of type 'int', 'string' or 'float'
     has_default_value : bool
         Whether the argument has a default value
     default_value : str
@@ -65,6 +67,8 @@ class Argument(Base):
         backref="dependent_arguments",
         remote_side="Argument.id",
     )
+
+    allowed_values = relationship("AllowedArgumentValue", back_populates="argument")
 
     @classmethod
     def get_by_name(cls, name: str, function_id: int) -> Argument | None:
