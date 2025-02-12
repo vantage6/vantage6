@@ -1,4 +1,5 @@
 import { NameDescription } from './base.model';
+import { StoreReview } from './review.model';
 import { StoreUser } from './store-user.model';
 import { Visualization, VisualizationForm } from './visualization.model';
 
@@ -93,6 +94,7 @@ export interface Algorithm {
   developer?: StoreUser;
   reviewer?: StoreUser;
   submission_comments?: string;
+  reviews?: StoreReview[];
 }
 
 export interface AlgorithmFunction {
@@ -192,4 +194,8 @@ export interface AlgorithmForm {
   documentation_url?: string;
   submission_comments?: string;
   functions: FunctionForm[];
+}
+
+export enum AlgorithmLazyProperties {
+  Reviews = 'reviews'
 }

@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
-import { Algorithm, AlgorithmFunction, AlgorithmStatus } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmFunction, AlgorithmLazyProperties, AlgorithmStatus } from 'src/app/models/api/algorithm.model';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { OperationType, StoreResourceType } from 'src/app/models/api/rule.model';
 import { routePaths } from 'src/app/routes';
@@ -57,11 +57,19 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
     this.destroy$.next();
   }
 
+  getLabelForAssignReviewers(): string {
+    const commonText = this.translateService.instant('algorithm-read.alert.assign-review.common-content');
+    if (this.algorithm?.reviews && this.algorithm?.reviews?.length > 0) {
+      return `${commonText} ${this.translateService.instant('algorithm-read.alert.assign-review.content-insufficient-reviewers', { current_num_reviews: this.algorithm.reviews.length })}`;
+    }
+    return commonText;
+  }
+
   private async initData(): Promise<void> {
     const chosenStore = this.chosenStoreService.store$.value;
     if (!chosenStore) return;
 
-    this.algorithm = await this.algorithmService.getAlgorithm(chosenStore.url, this.id);
+    this.algorithm = await this.algorithmService.getAlgorithm(chosenStore.url, this.id, [AlgorithmLazyProperties.Reviews]);
 
     this.canEdit = this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.EDIT);
     this.canDelete = this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.DELETE);
