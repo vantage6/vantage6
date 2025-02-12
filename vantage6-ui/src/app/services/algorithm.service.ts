@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { Algorithm, AlgorithmForm, ArgumentType } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmForm, AlgorithmLazyProperties, ArgumentType } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from './chosen-collaboration.service';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { Pagination } from 'src/app/models/api/pagination.model';
 import { ChosenStoreService } from './chosen-store.service';
 import { isListTypeArgument } from '../helpers/algorithm.helper';
+import { getLazyProperties } from '../helpers/api.helper';
+import { algo } from 'crypto-js';
 
 @Injectable({
   providedIn: 'root'
@@ -51,9 +53,13 @@ export class AlgorithmService {
     return result;
   }
 
-  async getAlgorithm(algorithm_store_url: string, id: string): Promise<Algorithm> {
+  async getAlgorithm(algorithm_store_url: string, id: string, lazyProperties: AlgorithmLazyProperties[] = []): Promise<Algorithm> {
     const result = await this.apiService.getForAlgorithmApi<Algorithm>(algorithm_store_url, `/algorithm/${id}`);
-    return result;
+
+    const algorithm: Algorithm = { ...result, reviews: [] };
+    await getLazyProperties(result, algorithm, lazyProperties, this.apiService, algorithm_store_url);
+
+    return algorithm;
   }
 
   async getAlgorithmByUrl(imageUrl: string, store: AlgorithmStore): Promise<Algorithm | null> {

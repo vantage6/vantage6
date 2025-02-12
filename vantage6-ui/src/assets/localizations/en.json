@@ -309,7 +309,8 @@
     },
     "alert": {
       "assign-review": {
-        "content": "This algorithm is awaiting review assignment. It is not available for use in tasks.",
+        "common-content": "This algorithm is awaiting review assignment. It is not available for use in tasks until the algorithm is reviewed and approved.",
+        "content-insufficient-reviewers": "Note that this store requires more than the {{current_num_reviews}} review(s) currently assigned to approve the algorithm.",
         "assign": "Assign reviewers"
       },
       "under-review": {
