@@ -7,7 +7,6 @@ import { Pagination } from 'src/app/models/api/pagination.model';
 import { ChosenStoreService } from './chosen-store.service';
 import { isListTypeArgument } from '../helpers/algorithm.helper';
 import { getLazyProperties } from '../helpers/api.helper';
-import { algo } from 'crypto-js';
 
 @Injectable({
   providedIn: 'root'
