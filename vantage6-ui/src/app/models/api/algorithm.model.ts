@@ -173,6 +173,7 @@ export interface ArgumentForm extends NameDescription {
   conditional_on?: string;
   conditional_operator?: string;
   conditional_value?: string | number | boolean;
+  conditionalValueNull?: boolean | string;
   is_frontend_only: boolean | string;
 }
 export interface FunctionForm extends NameDescription {

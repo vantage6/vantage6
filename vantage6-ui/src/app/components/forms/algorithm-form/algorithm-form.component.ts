@@ -67,6 +67,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       conditional_on: [''],
       conditional_operator: [''],
       conditional_value: [''],
+      conditionalValueNull: [false],
       is_frontend_only: [false]
     },
     { validators: this.conditionalFieldsValidator.bind(this) }
@@ -315,8 +316,10 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
           if (arg.conditional_on) {
             const conditionalArg = func.arguments.find((other_arg: ArgumentForm) => other_arg.name === arg.conditional_on);
             if (conditionalArg?.type === ArgumentType.Boolean) {
+              argumentFormGroup.controls['conditionalValueNull'].setValue(false);
               argumentFormGroup.controls['conditional_value'].setValue(isTruthy(arg.conditional_value));
             } else {
+              argumentFormGroup.controls['conditionalValueNull'].setValue(arg.conditional_value === null);
               argumentFormGroup.controls['conditional_value'].setValue(arg.conditional_value);
             }
           }
@@ -449,6 +452,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
         conditional_on: [''],
         conditional_operator: [''],
         conditional_value: [''],
+        conditionalValueNull: [false],
         is_frontend_only: [false]
       },
       { validators: this.conditionalFieldsValidator.bind(this) }
@@ -487,10 +491,12 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     const conditionalOn = control.get('conditional_on')?.value;
     const conditionalOperator = control.get('conditional_operator')?.value;
     const conditionalValue = control.get('conditional_value')?.value;
+    const conditionalValueNull = control.get('conditionalValueNull')?.value;
 
     // note that the check whether conditionalValue is set, is different from check whether the
     // other fields are set. This is because the conditionalValue may be set to 'false'.
-    const isConditionalValueSet = conditionalValue !== null && conditionalValue !== undefined && conditionalValue !== '';
+    const isConditionalValueSet =
+      conditionalValueNull || (conditionalValue !== null && conditionalValue !== undefined && conditionalValue !== '');
 
     const allFieldsFilled = conditionalOn && conditionalOperator && isConditionalValueSet;
     const allFieldsEmpty = !conditionalOn && !conditionalOperator && !isConditionalValueSet;

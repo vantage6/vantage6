@@ -256,7 +256,8 @@
             "<": "Less than",
             ">=": "Greater than or equals",
             "<=": "Less than or equals"
-          }
+          },
+          "conditional-value-null": "Conditional value is empty (null/none):"
         },
         "frontend_only": {
           "toggle_explain": "This argument is only used in the UI and will not be passed to the algorithm.",
