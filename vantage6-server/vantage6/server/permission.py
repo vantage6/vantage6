@@ -17,7 +17,7 @@ class RuleCollection(RuleCollectionBase):
     permissions of the vantage6 server.
     """
 
-    def can_for_org(self, operation: Operation, subject_org_id: int | str) -> bool:
+    def allowed_for_org(self, operation: Operation, subject_org_id: int | str) -> bool:
         """
         Check if an operation is allowed on a certain organization
 

@@ -5,36 +5,16 @@ import re
 from marshmallow import Schema, fields, ValidationError, validates, validates_schema
 from marshmallow.validate import Length, Range, OneOf
 
+from vantage6.backend.common.input_schema import (
+    MAX_LEN_NAME,
+    MAX_LEN_STR_LONG,
+    validate_name,
+)
 from vantage6.common.task_status import TaskStatus
-from vantage6.server.default_roles import DefaultRole
 from vantage6.server.model.common.utils import validate_password
 
 _MAX_LEN_STR_SHORT = 128
-_MAX_LEN_STR_LONG = 1024
 _MAX_LEN_PW = 128
-_MAX_LEN_NAME = 128
-
-
-def _validate_name(name: str) -> None:
-    """
-    Validate a name field in the request input.
-
-    Parameters
-    ----------
-    name : str
-        Name to validate.
-
-    Raises
-    ------
-    ValidationError
-        If the name is empty, too long or numerical
-    """
-    if not len(name):
-        raise ValidationError("Name cannot be empty")
-    if name.isnumeric():
-        raise ValidationError("Name cannot a number")
-    if len(name) > _MAX_LEN_NAME:
-        raise ValidationError(f"Name cannot be longer than {_MAX_LEN_NAME} characters")
 
 
 def _validate_username(username: str) -> None:
@@ -51,7 +31,7 @@ def _validate_username(username: str) -> None:
     ValidationError
         If the username is empty, too long or numerical
     """
-    _validate_name(username)
+    validate_name(username)
     username_regex = r"^[a-zA-Z][a-zA-Z0-9._-]+$"
     if re.match(username_regex, username) is None:
         raise ValidationError(
@@ -128,7 +108,7 @@ class _NameValidationSchema(Schema):
         ValidationError
             If the name is empty, too long or numerical
         """
-        _validate_name(name)
+        validate_name(name)
 
 
 class _PasswordValidationSchema(Schema):
@@ -183,7 +163,7 @@ class ChangePasswordInputSchema(Schema):
 class BasicAuthInputSchema(Schema):
     """Schema for validating input for basic authentication using a username and password."""
 
-    username = fields.String(required=True, validate=Length(min=1, max=_MAX_LEN_NAME))
+    username = fields.String(required=True, validate=Length(min=1, max=MAX_LEN_NAME))
     # Note that we don't inherit from _PasswordValidationSchema here and
     # don't validate password in case the password does not fulfill the
     # password policy. This is e.g. the case with the default root user created
@@ -313,7 +293,7 @@ class RecoverPasswordInputSchema(Schema):
     """Schema for validating input for recovering a password."""
 
     email = fields.Email()
-    username = fields.String(validate=Length(max=_MAX_LEN_NAME))
+    username = fields.String(validate=Length(max=MAX_LEN_NAME))
 
     @validates_schema
     def validate_email_or_username(self, data: dict, **kwargs) -> None:
@@ -337,7 +317,7 @@ class RecoverPasswordInputSchema(Schema):
 class ResetPasswordInputSchema(_PasswordValidationSchema):
     """Schema for validating input for resetting a password."""
 
-    reset_token = fields.String(required=True, validate=Length(max=_MAX_LEN_STR_LONG))
+    reset_token = fields.String(required=True, validate=Length(max=MAX_LEN_STR_LONG))
 
 
 class Recover2FAInputSchema(BasicAuthInputSchema):
@@ -347,39 +327,13 @@ class Recover2FAInputSchema(BasicAuthInputSchema):
 class Reset2FAInputSchema(Schema):
     """Schema for validating input for resetting 2FA."""
 
-    reset_token = fields.String(required=True, validate=Length(max=_MAX_LEN_STR_LONG))
+    reset_token = fields.String(required=True, validate=Length(max=MAX_LEN_STR_LONG))
 
 
 class ResetAPIKeyInputSchema(_OnlyIdSchema):
     """Schema for validating input for resetting an API key."""
 
     pass
-
-
-class RoleInputSchema(_NameValidationSchema):
-    """Schema for validating input for creating a role."""
-
-    description = fields.String(validate=Length(max=_MAX_LEN_STR_LONG))
-    rules = fields.List(fields.Integer(validate=Range(min=1)), required=True)
-    organization_id = fields.Integer(validate=Range(min=1))
-
-    @validates("name")
-    def validate_name(self, name: str):
-        """
-        Validate that role name is not one of the default roles.
-
-        Parameters
-        ----------
-        name : str
-            Role name to validate.
-
-        Raises
-        ------
-        ValidationError
-            If the role name is one of the default roles.
-        """
-        if name in [role for role in DefaultRole]:
-            raise ValidationError("Role name cannot be one of the default roles")
 
 
 class RunInputSchema(Schema):
@@ -397,7 +351,7 @@ class TaskInputSchema(_NameValidationSchema):
 
     # overwrite name attr as it is not required for a task
     name = fields.String(required=False)
-    description = fields.String(validate=Length(max=_MAX_LEN_STR_LONG))
+    description = fields.String(validate=Length(max=MAX_LEN_STR_LONG))
     image = fields.String(required=True, validate=Length(min=1))
     collaboration_id = fields.Integer(validate=Range(min=1))
     study_id = fields.Integer(validate=Range(min=1))
@@ -553,7 +507,7 @@ class TokenAlgorithmInputSchema(Schema):
 class UserInputSchema(_PasswordValidationSchema):
     """Schema for validating input for creating a user."""
 
-    username = fields.String(required=True, validate=Length(min=3, max=_MAX_LEN_NAME))
+    username = fields.String(required=True, validate=Length(min=3, max=MAX_LEN_NAME))
     email = fields.Email(required=True)
     firstname = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
     lastname = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))

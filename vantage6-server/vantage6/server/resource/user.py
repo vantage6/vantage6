@@ -234,7 +234,7 @@ class Users(UserBase):
             if param in args:
                 q = q.filter(getattr(db.User, param).like(args[param]))
         if "organization_id" in args:
-            if not self.r.can_for_org(P.VIEW, args["organization_id"]):
+            if not self.r.allowed_for_org(P.VIEW, args["organization_id"]):
                 return {
                     "msg": "You lack the permission view users from the "
                     f'organization with id {args["organization_id"]}!'
@@ -255,7 +255,7 @@ class Users(UserBase):
             # note: We check if role has organization to ensure that users
             # with limited permissions can still see who have default roles
             elif (
-                not self.r.can_for_org(P.VIEW, role.organization_id)
+                not self.r.allowed_for_org(P.VIEW, role.organization_id)
                 and role.organization
             ):
                 return {
@@ -423,7 +423,7 @@ class Users(UserBase):
             organization_id = data["organization_id"]
 
         # check that user is allowed to create users
-        if not self.r.can_for_org(P.CREATE, organization_id):
+        if not self.r.allowed_for_org(P.CREATE, organization_id):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
@@ -544,7 +544,7 @@ class User(UserBase):
         # that organization or if the user is the same as the authenticated
         # user.
         same_user = g.user.id == user.id
-        if same_user or self.r.can_for_org(P.VIEW, user.organization_id):
+        if same_user or self.r.allowed_for_org(P.VIEW, user.organization_id):
             return schema.dump(user, many=False), HTTPStatus.OK
         else:
             return {
@@ -639,7 +639,7 @@ class User(UserBase):
             }, HTTPStatus.BAD_REQUEST
 
         # check permissions
-        if not (self.r.e_own.can() and user == g.user) and not self.r.can_for_org(
+        if not (self.r.e_own.can() and user == g.user) and not self.r.allowed_for_org(
             P.EDIT, user.organization_id
         ):
             return {
@@ -818,7 +818,7 @@ class User(UserBase):
         if not user:
             return {"msg": f"user id={id} not found"}, HTTPStatus.NOT_FOUND
 
-        if not (self.r.d_own.can() and user == g.user) and not self.r.can_for_org(
+        if not (self.r.d_own.can() and user == g.user) and not self.r.allowed_for_org(
             P.DELETE, user.organization_id
         ):
             return {

@@ -7,7 +7,9 @@ from flask import g
 from flask_restful import Api
 from sqlalchemy import or_
 
+from vantage6.algorithm.store.default_roles import DefaultRole
 from vantage6.algorithm.store.resource import with_permission
+from vantage6.backend.common.input_schema import RoleInputSchema
 from vantage6.common import logger_name
 from vantage6.algorithm.store.permission import PermissionManager
 from vantage6.algorithm.store.model.rule import Operation
@@ -85,7 +87,7 @@ def permissions(permissions: PermissionManager) -> None:
 # -----------------------------------------------------------------------------
 role_output_schema = RoleOutputSchema()
 # rule_schema = RuleSchema()
-# role_input_schema = RoleInputSchema()
+role_input_schema = RoleInputSchema(default_roles=[role for role in DefaultRole])
 
 
 class Roles(AlgorithmStoreResources):
@@ -175,6 +177,25 @@ class Roles(AlgorithmStoreResources):
             return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
 
         return self.response(page, role_output_schema)
+
+    @with_permission(module_name, Operation.CREATE)
+    def post(self):
+        data = request.get_json()
+        errors = role_input_schema.validate(data)
+        if errors:
+            return {
+                "msg": "Request body is incorrect",
+                "errors": errors,
+            }, HTTPStatus.BAD_REQUEST
+        rules = []
+        if data["rules"]:
+            for rule_id in data["rules"]:
+                rule = db.Rule.get(rule_id)
+                if not rule:
+                    return {
+                        "msg": f"Rule id={rule_id} not found."
+                    }, HTTPStatus.NOT_FOUND
+                rules.append(rule)
 
 
 class Role(AlgorithmStoreResources):
