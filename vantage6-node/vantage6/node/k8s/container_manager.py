@@ -134,9 +134,14 @@ class ContainerManager:
                 "POD or a host"
             )
 
-        self.data_dir = (
+        # The `local_data_dir` refers to the location where this node can write files
+        # to. When this node instance needs to create a volume mount for a container,
+        # it needs to refer to the location where the file is stored on the host system,
+        # for this we use the `host_data_dir`.
+        self.local_data_dir = (
             TASK_FILES_ROOT if self.running_on_pod else self.ctx.config["task_dir"]
         )
+        self.host_data_dir = self.ctx.config["task_dir"]
 
         self.databases = self._set_database(self.ctx.config["databases"])
 
@@ -208,8 +213,7 @@ class ContainerManager:
             # need it when we are creating new volume mounts for the algorithm
             # containers
             local_uri = uri
-            filename = os.path.basename(uri)
-            tmp_uri = Path(V6_NODE_DATABASE_BASE_PATH) / filename
+            tmp_uri = Path(V6_NODE_DATABASE_BASE_PATH) / f"{label}.{db_config['type']}"
 
             if self.running_on_pod:
                 db_is_file = tmp_uri.exists() and tmp_uri.is_file()
@@ -284,7 +288,12 @@ class ContainerManager:
 
         dataframe_handle = df_details.get("handle") if df_details else None
         run_io = RunIO(
-            run_id, session_id, action, self.client, dataframe_handle, self.data_dir
+            run_id,
+            session_id,
+            action,
+            self.client,
+            dataframe_handle,
+            self.local_data_dir,
         )
 
         # Verify that an allowed image is used
@@ -505,6 +514,7 @@ class ContainerManager:
         """
         volume = k8s_client.V1Volume(
             name=volume_name,
+            # type="File"
             host_path=k8s_client.V1HostPathVolumeSource(path=host_path),
         )
 
@@ -569,8 +579,8 @@ class ContainerManager:
 
         # Create algorithm's input and token files before creating volume mounts with
         # them (relative to the node's file system: POD or host)
-        _host_input_file_path, _host_output_file_path, _host_token_file_path = (
-            run_io.create_files(docker_input, b"", token.encode("ascii"))
+        input_file_path, output_file_path, token_file_path = run_io.create_files(
+            docker_input, b"", token.encode("ascii")
         )
 
         # Create the volumes and corresponding volume mounts for the input, output and
@@ -578,26 +588,26 @@ class ContainerManager:
         # a pod. A mount is a reference to a volume that is mounted to a specific path.
         output_volume, output_mount = self._create_run_mount(
             volume_name=run_io.output_volume_name,
-            host_path=_host_output_file_path,
+            host_path=os.path.join(self.host_data_dir, output_file_path),
             mount_path=JOB_POD_OUTPUT_PATH,
             read_only=False,
         )
 
         input_volume, input_mount = self._create_run_mount(
             volume_name=run_io.input_volume_name,
-            host_path=_host_input_file_path,
+            host_path=os.path.join(self.host_data_dir, input_file_path),
             mount_path=JOB_POD_INPUT_PATH,
         )
 
         token_volume, token_mount = self._create_run_mount(
             volume_name=run_io.token_volume_name,
-            host_path=_host_token_file_path,
+            host_path=os.path.join(self.host_data_dir, token_file_path),
             mount_path=JOB_POD_TOKEN_PATH,
         )
 
         session_volume, session_mount = self._create_run_mount(
             volume_name=run_io.session_name,
-            host_path=run_io.session_folder,
+            host_path=os.path.join(self.host_data_dir, run_io.session_folder),
             mount_path=JOB_POD_SESSION_FOLDER_PATH,
         )
 
@@ -635,7 +645,7 @@ class ContainerManager:
             if db["is_file"] or db["is_dir"]:
 
                 db_volume, db_mount = self._create_run_mount(
-                    volume_name=f"task-{run_io.run_id}-input-{source_database['label']}",
+                    volume_name=f"task-{run_io.run_id}-db-{source_database['label']}",
                     host_path=db["uri"],
                     mount_path=db["local_uri"],
                     read_only=True,
@@ -730,7 +740,7 @@ class ContainerManager:
         # we are about to start the task.
         requested_handles = {db["label"] for db in databases_to_use}
         available_handles = {
-            file_.stem for file_ in Path(run_io.session_folder).glob("*.parquet")
+            file_.stem for file_ in Path(run_io.local_session_folder).glob("*.parquet")
         }
         # check that requested handles is a subset of available handles
         if not requested_handles.issubset(available_handles):
@@ -1038,7 +1048,7 @@ class ContainerManager:
 
                 # Create helper object to process the output of the job
                 run_io = RunIO.from_dict(
-                    job.metadata.annotations, self.client, self.data_dir
+                    job.metadata.annotations, self.client, self.local_data_dir
                 )
                 results, status = (
                     run_io.process_output()
@@ -1061,6 +1071,7 @@ class ContainerManager:
                     f"and task_id={job.metadata.annotations['task_id']} back to the "
                     "server"
                 )
+
                 result = Result(
                     run_id=run_io.run_id,
                     task_id=job.metadata.annotations["task_id"],
@@ -1071,7 +1082,7 @@ class ContainerManager:
                 )
 
                 # destroy job and related POD(s)
-                self.__delete_job_related_pods(run_io=run_io, namespace="vantage6-node")
+                # self.__delete_job_related_pods(run_io=run_io, namespace="vantage6-node")
                 completed_job = True
 
         return result

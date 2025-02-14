@@ -47,10 +47,11 @@ class RunIO:
         self.session_name = f"session{self.session_id:09d}"
         self.session_state_file_name = "session_state.parquet"
 
-        self.session_folder = os.path.join(self.dir, "sessions", self.session_name)
-        os.makedirs(self.session_folder, exist_ok=True)
+        self.session_folder = os.path.join("sessions", self.session_name)
+        self.local_session_folder = os.path.join(self.dir, self.session_folder)
+        os.makedirs(self.local_session_folder, exist_ok=True)
         self.session_state_file = os.path.join(
-            self.session_folder, self.session_state_file_name
+            self.local_session_folder, self.session_state_file_name
         )
 
         if not Path(self.session_state_file).exists():
@@ -131,13 +132,15 @@ class RunIO:
             Content that is going to be written to the file
         """
         self.log.debug(f"Creating file {filename} for run {self.run_id}")
-        file_path = os.path.join(self.dir, str(self.run_id), filename)
+        relative_path = os.path.join(str(self.run_id), filename)
+        file_path = os.path.join(self.dir, relative_path)
+
         file_dir = Path(file_path).parent
         file_dir.mkdir(parents=True, exist_ok=True)
         with open(file_path, "wb") as file_:
             file_.write(content)
 
-        return file_path
+        return relative_path
 
     def _create_session_state_file(self, session_id: int) -> str:
         """
@@ -241,7 +244,9 @@ class RunIO:
             # Create or overwrite the parquet data frame with the algorithm result
             pq.write_table(
                 table,
-                os.path.join(self.session_folder, f"{self.dataframe_handle}.parquet"),
+                os.path.join(
+                    self.local_session_folder, f"{self.dataframe_handle}.parquet"
+                ),
             )
         except Exception:
             self.log.exception("Error writing data frame to parquet file")

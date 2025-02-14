@@ -421,7 +421,7 @@ class Node:
                 # just store the task_id when retrieving the task the first
                 # time?
                 response = self.client.request(f"run/{results.run_id}")
-                task_id = response.get("task").get("id")
+                task_id = response.get("task", {}).get("id")
 
                 if not task_id:
                     self.log.error(
