@@ -548,7 +548,7 @@ class Algorithms(AlgorithmBaseResource):
                 name=function["name"],
                 display_name=function.get("display_name", ""),
                 description=function.get("description", ""),
-                type_=function["type"],
+                type_=function["type_"],
                 algorithm_id=algorithm.id,
             )
             func.save()
@@ -559,7 +559,7 @@ class Algorithms(AlgorithmBaseResource):
                     name=argument["name"],
                     display_name=argument.get("display_name", ""),
                     description=argument.get("description", ""),
-                    type_=argument["type"],
+                    type_=argument["type_"],
                     has_default_value=argument.get("has_default_value", False),
                     default_value=argument.get("default_value", None),
                     conditional_operator=argument.get("conditional_operator", None),
@@ -591,7 +591,7 @@ class Algorithms(AlgorithmBaseResource):
                 vis = UIVisualization(
                     name=visualization["name"],
                     description=visualization.get("description", ""),
-                    type_=visualization["type"],
+                    type_=visualization["type_"],
                     schema=visualization.get("schema", {}),
                     function_id=func.id,
                 )
