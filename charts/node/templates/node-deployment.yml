@@ -44,7 +44,7 @@ spec:
       {{- end }}
       - name: task-files-root
         hostPath:
-          path: /tmp/v6-tasks
+          path: /private/tmp/v6-tasks
           type: DirectoryOrCreate
       - name: kube-config-file
         hostPath:
