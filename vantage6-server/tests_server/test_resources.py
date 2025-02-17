@@ -91,8 +91,11 @@ class TestResources(TestResourceBase):
 
     def test_collaboration(self):
         org = Organization()
-        rule = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.VIEW)
-        headers = self.get_user_auth_header(organization=org, rules=[rule])
+        rule_view = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.VIEW)
+        rule_create = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.CREATE)
+        headers = self.get_user_auth_header(
+            organization=org, rules=[rule_view, rule_create]
+        )
 
         collaborations = self.app.get("/api/collaboration", headers=headers)
         self.assertEqual(collaborations.status_code, HTTPStatus.OK)
