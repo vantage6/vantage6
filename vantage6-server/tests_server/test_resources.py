@@ -113,7 +113,7 @@ class TestResources(TestResourceBase):
         response = self.app.post(
             "/api/collaboration", json=col_details, headers=headers
         )
-        self.assertEqual(response.status_code, HTTPStatus.CREATED)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_node_without_id(self):
         # GET
