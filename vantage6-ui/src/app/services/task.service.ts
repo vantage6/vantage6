@@ -13,8 +13,6 @@ import {
 } from 'src/app/models/api/task.models';
 import { Pagination } from 'src/app/models/api/pagination.model';
 import { getLazyProperties } from 'src/app/helpers/api.helper';
-// import { mockDataCrossTabTemplateTask, mockDataQualityTemplateTask } from 'src/app/pages/analyze/template-task/create/mock';
-// import { TemplateTask } from 'src/app/models/api/templateTask.models';
 import { isTaskFinished } from 'src/app/helpers/task.helper';
 import { SnackbarService } from './snackbar.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -52,12 +50,7 @@ export class TaskService {
     //Handle base64 input
     if (Array.isArray(task.runs) && task.runs.length > 0) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let input: any = undefined;
-      try {
-        input = this.getDecodedInput(task.runs[0].input);
-      } catch (e) {
-        this.snackBarService.showMessage(this.translateService.instant('task.alert-failed-read-input'));
-      }
+      const input: any = this.getDecodedInput(task.runs[0].input);
       // TODO this may not always true: what if different runs have different inputs?
       if (input) {
         task.input = {
@@ -76,12 +69,8 @@ export class TaskService {
     if (Array.isArray(task.results) && task.results.length > 0) {
       for (const result of task.results) {
         if (result.result) {
-          // often, the parsed result is a stringified JSON object
-          try {
-            result.decoded_result = this.getDecodedResult(result);
-          } catch (e) {
-            this.snackBarService.showMessage(this.translateService.instant('task.alert-failed-read-result'));
-          }
+          const decodedResult = this.getDecodedResult(result);
+          if (decodedResult) result.decoded_result = decodedResult;
         }
       }
     }
@@ -123,31 +112,43 @@ export class TaskService {
 
   private getDecodedResult(taskResult: TaskResult): object | undefined {
     if (!taskResult.result) return undefined;
+    const isEncrypted = this.chosenCollaborationService.isEncrypted();
+    const errorTranslationCode = isEncrypted ? 'task.alert-failed-read-encrypted-result' : 'task.alert-failed-read-result';
     // decrypt result
-    let decryptedResult: string;
-    if (this.chosenCollaborationService.isEncrypted()) {
-      decryptedResult = this.encryptionService.decryptData(taskResult.result);
-    } else {
-      // if not decrypted, just decode it
-      decryptedResult = atob(taskResult.result);
+    let decryptedResult = taskResult.result;
+    try {
+      decryptedResult = isEncrypted ? this.encryptionService.decryptData(taskResult.result) : atob(taskResult.result);
+    } catch (error) {
+      this.snackBarService.showMessage(this.translateService.instant(errorTranslationCode));
+      return;
     }
     // decode result
-    const decodedResult = JSON.parse(decryptedResult);
-    if (typeof decodedResult === 'string') {
-      return JSON.parse(decodedResult);
+    let decodedResult;
+    try {
+      decodedResult = JSON.parse(decryptedResult);
+    } catch (error) {
+      this.snackBarService.showMessage(this.translateService.instant(errorTranslationCode));
     }
     return decodedResult;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private getDecodedInput(taskRunInput: string): any {
-    let decryptedInput: string;
-    if (this.chosenCollaborationService.isEncrypted()) {
-      decryptedInput = this.encryptionService.decryptData(taskRunInput);
-    } else {
-      decryptedInput = atob(taskRunInput);
+    let decryptedInput = '';
+    const isEncrypted = this.chosenCollaborationService.isEncrypted();
+    try {
+      decryptedInput = isEncrypted ? this.encryptionService.decryptData(taskRunInput) : atob(taskRunInput);
+    } catch (error) {
+      this.snackBarService.showMessage(this.translateService.instant('task.alert-failed-read-input'));
+      return;
     }
     // decode input
-    return JSON.parse(decryptedInput);
+    let decodedInput;
+    try {
+      decodedInput = JSON.parse(decryptedInput);
+    } catch (error) {
+      this.snackBarService.showMessage(this.translateService.instant('task.alert-failed-read-input'));
+    }
+    return decodedInput;
   }
 }

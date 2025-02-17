@@ -13,3 +13,8 @@ mat-card {
   // font-style: italic;
   margin-bottom: $spacing-px-2;
 }
+
+// make sure each mat-radio-group is on a new line
+mat-radio-group {
+  display: block;
+}

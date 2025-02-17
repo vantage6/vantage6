@@ -1,4 +1,5 @@
 from pathlib import Path
+from enum import Enum
 
 from vantage6.common.globals import APPNAME
 
@@ -25,3 +26,14 @@ RESOURCES = [
 
 # Where the resources modules have to be loaded from
 RESOURCES_PATH = "vantage6.algorithm.store.resource"
+
+
+class ConditionalArgComparator(str, Enum):
+    """Enum containing allowed comparators for conditional arguments"""
+
+    EQUALS = "=="
+    NOT_EQUALS = "!="
+    GREATER_THAN = ">"
+    LESS_THAN = "<"
+    GREATER_THAN_EQUALS = ">="
+    LESS_THAN_EQUALS = "<="

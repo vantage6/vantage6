@@ -487,7 +487,9 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
     """
     config = _get_common_server_config(InstanceType.ALGORITHM_STORE, instance_name)
 
-    default_v6_server_uri = f"http://localhost:{Ports.DEV_SERVER.value}/api"
+    default_v6_server_uri = (
+        f"http://localhost:{Ports.DEV_SERVER.value}{DEFAULT_API_PATH}"
+    )
     default_root_username = "root"
 
     v6_server_uri = q.text(
