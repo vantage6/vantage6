@@ -1207,52 +1207,57 @@ class ContainerManager:
             encoded_environment_variables[key] = _encode(str(val))
         return encoded_environment_variables
 
-        # def cleanup_tasks(self) -> list[KilledRun]:
-        """
-        Stop all active tasks
+    # def cleanup_tasks(self) -> list[KilledRun]:
+    #     """
+    #     Stop all active tasks
 
-        Returns
-        -------
-        list[KilledRun]:
-            List of information on tasks that have been killed
-        """
+    #     Returns
+    #     -------
+    #     list[KilledRun]:
+    #         List of information on tasks that have been killed
+    #     """
+    #     pass
 
-        # def cleanup(self) -> None:
-        """
-        Stop all active tasks and delete the isolated network
+    # def cleanup(self) -> None:
+    #     """
+    #     Stop all active tasks and delete the isolated network
 
-        Note: the temporary docker volumes are kept as they may still be used
-        by a parent container
-        """
-        # note: the function `cleanup_tasks` returns a list of tasks that were
-        # killed, but we don't register them as killed so they will be run
-        # again when the node is restarted
+    #     Note: the temporary docker volumes are kept as they may still be used
+    #     by a parent container
+    #     """
+    #     # note: the function `cleanup_tasks` returns a list of tasks that were
+    #     # killed, but we don't register them as killed so they will be run
+    #     # again when the node is restarted
+    #     pass
 
-        # def login_to_registries(self, registries: list = []) -> None:
-        """
-        Login to the docker registries
+    # def login_to_registries(self, registries: list = []) -> None:
+    #     """
+    #     Login to the docker registries
 
-        Parameters
-        ----------
-        registries: list
-            list of registries to login to
-        """
+    #     Parameters
+    #     ----------
+    #     registries: list
+    #         list of registries to login to
+    #     """
+    #     pass
 
-        # def link_container_to_network(self, container_name: str, config_alias: str) -> None:
-        """
-        Link a docker container to the isolated docker network
+    # def link_container_to_network(self, container_name: str, config_alias: str) -> None:
+    #     """
+    #     Link a docker container to the isolated docker network
 
-        Parameters
-        ----------
-        container_name: str
-            Name of the docker container to be linked to the network
-        config_alias: str
-            Alias of the docker container defined in the config file
-        """
+    #     Parameters
+    #     ----------
+    #     container_name: str
+    #         Name of the docker container to be linked to the network
+    #     config_alias: str
+    #         Alias of the docker container defined in the config file
+    #     """
+    #     pass
 
     # def kill_selected_tasks(
     #    self, org_id: int, kill_list: list[ToBeKilled] = None
     # ) -> list[KilledRun]:
+    #   pass
 
     def kill_tasks(
         self, org_id: int, kill_list: list[ToBeKilled] = None
@@ -1273,7 +1278,7 @@ class ContainerManager:
         list[KilledRun]
             List of dictionaries with information on killed tasks
         """
-        """
+
         if kill_list:
             killed_runs = self.kill_selected_tasks(org_id=org_id, kill_list=kill_list)
         else:
@@ -1291,77 +1296,75 @@ class ContainerManager:
             else:
                 self.log.warn("Instructed to kill tasks but none were running")
         return killed_runs
-        """
 
-    def kill_selected_tasks(
-        self, org_id: int, kill_list: list[ToBeKilled] = None
-    ) -> list[KilledRun]:
-        """
-        Kill tasks specified by a kill list, if they are currently running on
-        this node
+    # def kill_selected_tasks(
+    #     self, org_id: int, kill_list: list[ToBeKilled] = None
+    # ) -> list[KilledRun]:
+    #     """
+    #     Kill tasks specified by a kill list, if they are currently running on
+    #     this node
 
-        Parameters
-        ----------
-        org_id: int
-            The organization id of this node
-        kill_list: list[ToBeKilled]
-            A list of info about tasks that should be killed.
+    #     Parameters
+    #     ----------
+    #     org_id: int
+    #         The organization id of this node
+    #     kill_list: list[ToBeKilled]
+    #         A list of info about tasks that should be killed.
 
-        Returns
-        -------
-        list[KilledRun]
-            List with information on killed tasks
-        """
-        """
-        killed_list = []
-        for container_to_kill in kill_list:
-            if container_to_kill["organization_id"] != org_id:
-                continue  # this run is on another node
-            # find the task
-            task = next(
-                (
-                    t
-                    for t in self.active_tasks
-                    if t.run_id == container_to_kill["run_id"]
-                ),
-                None,
-            )
-            if task:
-                self.log.info(f"Killing containers for run_id={task.run_id}")
-                self.active_tasks.remove(task)
-                task.cleanup()
-                killed_list.append(
-                    KilledRun(
-                        run_id=task.run_id,
-                        task_id=task.task_id,
-                        parent_id=task.parent_id,
-                    )
-                )
-            else:
-                self.log.warn(
-                    "Received instruction to kill run_id="
-                    f"{container_to_kill['run_id']}, but it was not "
-                    "found running on this node."
-                )
-        return killed_list
-        """
+    #     Returns
+    #     -------
+    #     list[KilledRun]
+    #         List with information on killed tasks
+    #     """
+    #     killed_list = []
+    #     for container_to_kill in kill_list:
+    #         if container_to_kill["organization_id"] != org_id:
+    #             continue  # this run is on another node
+    #         # find the task
+    #         task = next(
+    #             (
+    #                 t
+    #                 for t in self.active_tasks
+    #                 if t.run_id == container_to_kill["run_id"]
+    #             ),
+    #             None,
+    #         )
+    #         if task:
+    #             self.log.info(f"Killing containers for run_id={task.run_id}")
+    #             self.active_tasks.remove(task)
+    #             task.cleanup()
+    #             killed_list.append(
+    #                 KilledRun(
+    #                     run_id=task.run_id,
+    #                     task_id=task.task_id,
+    #                     parent_id=task.parent_id,
+    #                 )
+    #             )
+    #         else:
+    #             self.log.warn(
+    #                 "Received instruction to kill run_id="
+    #                 f"{container_to_kill['run_id']}, but it was not "
+    #                 "found running on this node."
+    #             )
+    #     return killed_list
 
-        # def get_column_names(self, label: str, type_: str) -> list[str]:
-        """
-        Get column names from a node database
+    # def get_column_names(self, label: str, type_: str) -> list[str]:
+    #     """
+    #     Get column names from a node database
 
-        Parameters
-        ----------
-        label: str
-            Label of the database
-        type_: str
-            Type of the database
+    #     Parameters
+    #     ----------
+    #     label: str
+    #         Label of the database
+    #     type_: str
+    #         Type of the database
 
-        Returns
-        -------
-        list[str]
-            List of column names
-        """
+    #     Returns
+    #     -------
+    #     list[str]
+    #         List of column names
+    #     """
+    #     pass
 
 
 # TODO we need this code when we move to k8s clusters

@@ -11,7 +11,7 @@ existing_stores = client.store.list().get("data", [])
 existing_urls = [store["url"] for store in existing_stores]
 
 # TODO make the path settable
-local_store_url = f"http://localhost:7602/store"
+local_store_url = "http://localhost:7602/store"
 if not local_store_url in existing_urls:
     client.store.create(
         algorithm_store_url=local_store_url,

@@ -86,7 +86,7 @@ else:
         {
             "api_key": response_1["api_key"],
             "databases": {"default": "/app/databases/default.csv"},
-            "logging": {"file": f"node_1.log"},
+            "logging": {"file": "node_1.log"},
             "port": 7601,
             "server_url": "http://host.docker.internal",
             "task_dir": "/tasks",
@@ -108,7 +108,7 @@ else:
         {
             "api_key": response_2["api_key"],
             "databases": {"default": "/app/databases/default.csv"},
-            "logging": {"file": f"node_2.log"},
+            "logging": {"file": "node_2.log"},
             "port": 7601,
             "server_url": "http://host.docker.internal",
             "task_dir": "/tasks",

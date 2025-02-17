@@ -205,7 +205,7 @@ class RunIO:
                 self._update_session_state(
                     AlgorithmStepType.COMPUTE.value,
                     None,
-                    f"Algorithm completed successfully.",
+                    "Algorithm completed successfully.",
                 )
                 return result, RunStatus.COMPLETED
 
