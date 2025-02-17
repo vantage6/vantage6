@@ -298,7 +298,7 @@ class TestAlgorithmResources(TestResources):
             json={
                 "name": "test_algorithm",
                 "description": "test_description",
-                "partitioning": Partitioning.HORIZONTAL,
+                "partitioning": Partitioning.HORIZONTAL.value,
                 "code_url": "https://my-url.com",
                 "vantage6_version": "6.6.6",
                 "image": "some-image",
