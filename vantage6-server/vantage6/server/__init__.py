@@ -790,7 +790,7 @@ class ServerApp:
         while True:
             # Send ping event
             try:
-                before_wait = dt.datetime.utcnow()
+                before_wait = dt.datetime.now(dt.timezone.utc)
 
                 # Wait a while to give nodes opportunity to pong. This interval
                 # is a bit longer than the interval at which the nodes ping,
