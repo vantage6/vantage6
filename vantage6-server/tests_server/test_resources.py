@@ -107,7 +107,10 @@ class TestResources(TestResourceBase):
             "session_restrict_to_same_image": True,
         }
 
-        self.app.post("/api/collaboration", json=col_details, headers=headers)
+        response = self.app.post(
+            "/api/collaboration", json=col_details, headers=headers
+        )
+        self.assertEqual(response.status_code, HTTPStatus.CREATED)
 
     def test_node_without_id(self):
         # GET
