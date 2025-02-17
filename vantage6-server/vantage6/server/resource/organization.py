@@ -454,10 +454,10 @@ class Organization(OrganizationBase):
         data = request.get_json(silent=True)
         try:
             data = org_input_schema.load(data, partial=True)
-        except:
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": "Invalid data",
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         organization = db.Organization.get(id)
