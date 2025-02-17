@@ -14,7 +14,9 @@ from vantage6.common.globals import Ports
 
 
 @click.command()
-@click.option("--script", type=str, help="Path of the script to test the algorithm")
+@click.option(
+    "--script", type=str, required=True, help="Path of the script to test the algorithm"
+)
 @click.option(
     "--algorithm-image", type=str, default=None, help="Algorithm Docker image to use"
 )
@@ -48,6 +50,14 @@ from vantage6.common.globals import Ports
     default=False,
     help="Keep the dev network after finishing the test",
 )
+@click.option(
+    "--add-dataset",
+    type=(str, click.Path()),
+    default=[],
+    multiple=True,
+    help="Add a dataset to the nodes. The first argument is the label of the database, "
+    "the second is the path to the dataset file.",
+)
 @click.pass_context
 def cli_test_client_script(
     click_ctx: click.Context,
@@ -59,6 +69,7 @@ def cli_test_client_script(
     start_dev_network: bool,
     image: str,
     keep: bool,
+    add_dataset: list[tuple[str, Path]] = (),
 ) -> None:
     """
     Run a client script on the server.
@@ -77,10 +88,11 @@ def cli_test_client_script(
             image=image,
             extra_server_config=None,
             extra_node_config=None,
+            add_dataset=add_dataset,
         )
 
     # start the server and nodes
-    if start_dev_network:
+    if create_dev_network or start_dev_network:
         click_ctx.invoke(
             start_demo_network,
             name=name,
@@ -91,7 +103,7 @@ def cli_test_client_script(
     client = Client("http://localhost", Ports.DEV_SERVER.value, "/api")
     client.authenticate("dev_admin", "password")
 
-    script_module = SourceFileLoader("test_sctipt", script).load_module()
+    script_module = SourceFileLoader("test_script", script).load_module()
 
     result = script_module.test(client, algorithm_image)
 
@@ -104,8 +116,8 @@ def cli_test_client_script(
     console.print(msg)
 
     # clean up the test resources
-    click_ctx.invoke(stop_demo_network, name=name)
     if not keep:
+        click_ctx.invoke(stop_demo_network, name=name)
         click_ctx.invoke(remove_demo_network, name=name)
 
     return result

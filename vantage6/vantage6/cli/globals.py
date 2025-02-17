@@ -43,6 +43,14 @@ DIAGNOSTICS_IMAGE = "harbor2.vantage6.ai/algorithms/diagnostic"
 COMMUNITY_STORE = "https://store.cotopaxi.vantage6.ai/api"
 
 
+# datasets included in the nodes of the dev network
+class DefaultDatasets(str, Enum):
+    """Enum containing default datasets"""
+
+    DEFAULT = "olympic_athletes_2016.csv"
+    KM_DATASET = "km_dataset.csv"
+
+
 class ServerType(str, Enum):
     """Enum containing server types"""
 

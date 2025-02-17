@@ -12,7 +12,7 @@ from vantage6.common import info, error, generate_apikey
 
 import vantage6.cli.dev.data as data_dir
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
-from vantage6.cli.globals import PACKAGE_FOLDER
+from vantage6.cli.globals import PACKAGE_FOLDER, DefaultDatasets
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.server.common import get_server_context
@@ -20,7 +20,9 @@ from vantage6.cli.server.import_ import cli_server_import
 from vantage6.cli.utils import prompt_config_name
 
 
-def create_node_data_files(num_nodes: int, server_name: str) -> list[Path]:
+def create_node_data_files(
+    num_nodes: int, server_name: str, dataset: tuple[str, Path]
+) -> list[tuple[str, Path]]:
     """Create data files for nodes.
 
     Parameters
@@ -29,15 +31,16 @@ def create_node_data_files(num_nodes: int, server_name: str) -> list[Path]:
         Number of nodes to create data files for.
     server_name : str
         Name of the server.
-
+    dataset : tuple[str, Path]
+        Tuple containing the name and the path to the dataset.
     Returns
     -------
-    list[Path]
-        List of paths to the created data files.
+    list[tuple[str, Path]]
+        List of the label and paths to the created data files.
     """
     info(f"Creating data files for {num_nodes} nodes.")
     data_files = []
-    full_df = pd.read_csv(impresources.files(data_dir) / "olympic_athletes_2016.csv")
+    full_df = pd.read_csv(dataset[1])
     length_df = len(full_df)
     for i in range(num_nodes):
         node_name = f"{server_name}_node_{i + 1}"
@@ -49,11 +52,11 @@ def create_node_data_files(num_nodes: int, server_name: str) -> list[Path]:
         start = i * length_df // num_nodes
         end = (i + 1) * length_df // num_nodes
         data = full_df[start:end]
-        data_file = data_folder / f"df_{node_name}.csv"
+        data_file = data_folder / f"df_{dataset[0]}_{node_name}.csv"
 
         # write data to file
         data.to_csv(data_file, index=False)
-        data_files.append(data_file)
+        data_files.append((dataset[0], data_file))
     return data_files
 
 
@@ -62,8 +65,7 @@ def create_node_config_file(
     port: int,
     config: dict,
     server_name: str,
-    datafile: Path,
-    extra_datasets: list[tuple[str, Path]] = (),
+    datasets: list[tuple[str, Path]] = (),
 ) -> None:
     """Create a node configuration file (YAML).
 
@@ -82,10 +84,8 @@ def create_node_config_file(
         additional user_defined_config.
     server_name : str
         Configuration name of the dummy server.
-    datafile : Path
-        Path to the data file for the node to use.
-    extra_datasets : list[tuple[str, Path]]
-        List of tuples containing the labels and the paths to extra datasets
+    datasets : list[tuple[str, Path]]
+        List of tuples containing the labels and the paths to the datasets
     """
     environment = Environment(
         loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
@@ -109,8 +109,7 @@ def create_node_config_file(
         error(f"Node configuration file already exists: {full_path}")
         exit(1)
 
-    databases = [{dataset[0]: dataset[1]} for dataset in extra_datasets]
-    databases.append({"default": datafile})
+    databases = [{dataset[0]: dataset[1]} for dataset in datasets]
 
     node_config = template.render(
         {
@@ -188,8 +187,21 @@ def generate_node_configs(
         List of dictionaries containing node configurations.
     """
     configs = []
+    node_data_files = []
     extra_config = _read_extra_config_file(extra_node_config)
-    node_data_files = create_node_data_files(num_nodes, server_name)
+
+    data_directory = impresources.files(data_dir)
+
+    # Add default datasets to the list of dataset provided
+    for default_dataset in DefaultDatasets:
+        extra_datasets.append(
+            (default_dataset.name.lower(), data_directory / default_dataset.value)
+        )
+
+    # create the data files for the nodes and get the path and label for each dataset
+    for dataset in extra_datasets:
+        node_data_files.append(create_node_data_files(num_nodes, server_name, dataset))
+
     for i in range(num_nodes):
         config = {
             "org_id": i + 1,
@@ -198,7 +210,11 @@ def generate_node_configs(
             "user_defined_config": extra_config,
         }
         create_node_config_file(
-            server_url, port, config, server_name, node_data_files[i], extra_datasets
+            server_url,
+            port,
+            config,
+            server_name,
+            [files[i] for files in node_data_files],
         )
         configs.append(config)
 
@@ -570,7 +586,7 @@ def demo_network(
 @click.option(
     "--add-dataset",
     type=(str, click.Path()),
-    default=[],
+    default=(),
     multiple=True,
     help="Add a dataset to the nodes. The first argument is the label of the database, "
     "the second is the path to the dataset file.",
@@ -589,7 +605,7 @@ def create_demo_network(
     extra_server_config: Path = None,
     extra_node_config: Path = None,
     extra_store_config: Path = None,
-    extra_datasets: list[tuple[str, Path]] = (),
+    add_dataset: list[tuple[str, Path]] = (),
 ) -> dict:
     """Creates a demo network.
 
@@ -611,7 +627,7 @@ def create_demo_network(
             ui_image,
             ui_port,
             algorithm_store_port,
-            extra_datasets,
+            list(add_dataset),
         )
         info(
             f"Created {Fore.GREEN}{len(demo[0])}{Style.RESET_ALL} node "
