@@ -177,7 +177,7 @@ def cli_node_start(
         if Path(fullpath).exists():
             mounts.append(("/mnt/private_key.pem", str(fullpath)))
         else:
-            warning(f"private key file provided {fullpath}, " "but does not exists")
+            warning(f"Private key file is provided {fullpath}, but does not exist")
 
     # Mount private keys for ssh tunnels
     ssh_tunnels = ctx.config.get("ssh-tunnels", [])

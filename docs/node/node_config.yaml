@@ -1,4 +1,7 @@
-# API key used to authenticate at the server.
+# API key used to authenticate the node at the server. The API key is generated when
+# the node is registered at the server. If you lost the API key you can generate a new
+# one (if you have sufficient permissions), in the UI under Administration -> Node
+# -> Reset API key, or by using the API endpoint POST /recover/node.
 api_key: ***
 
 # URL of the vantage6 server
@@ -55,9 +58,9 @@ node_extra_hosts:
 images:
   node: harbor2.vantage6.ai/infrastructure/node:cotopaxi
   alpine: harbor2.vantage6.ai/infrastructure/alpine
-  vpn_client: harbor2.vantage6.ai/infrastructure/vpn_client
-  network_config: harbor2.vantage6.ai/infrastructure/vpn_network
-  ssh_tunnel: harbor2.vantage6.ai/infrastructure/ssh_tunnel
+  vpn_client: harbor2.vantage6.ai/infrastructure/vpn-client
+  network_config: harbor2.vantage6.ai/infrastructure/vpn-configurator
+  ssh_tunnel: harbor2.vantage6.ai/infrastructure/ssh-tunnel
   squid: harbor2.vantage6.ai/infrastructure/squid
 
 # path or endpoint to the local data source. The client can request a

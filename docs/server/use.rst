@@ -136,14 +136,17 @@ You can download this file :download:`here <yaml/batch_import.yaml>`.
     background info refer to this
     `issue <https://github.com/vantage6/vantage6/issues/71>`__.
 
+.. _local-test:
 
 Testing
 """""""
 
 You can test the infrastructure via the ``v6 dev`` and ``v6 test`` commands. The purpose of
-``v6 dev`` is to easily setup and run a test server accompanied by `N` nodes
-locally. For example, if you have `N = 10` datasets to test a particular
-algorithm on, then you can spawn a server and 10 nodes with a single command.
+``v6 dev`` is to easily setup and run a test server accompanied by `N` nodes locally
+(default is 3 nodes). For example, if you have `N = 10` datasets to test a particular
+algorithm on, then you can spawn a server and 10 nodes with a single command. By default,
+the nodes are given access to a test dataset of olympic medal winners, containing data
+on e.g. their age, height, length, weight, medal type and sport.
 
 The ``v6 test`` command is used to run the `v6-diagnostics algorithm <https://github.com/vantage6/v6-diagnostics>`_.
 You can run it on an existing network or create a ``v6 dev`` network and run the test on that in one

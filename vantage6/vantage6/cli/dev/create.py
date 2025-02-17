@@ -485,8 +485,9 @@ def demo_network(
     "--server-url",
     type=str,
     default="http://host.docker.internal",
-    help="Server URL to point to. If you are using Docker Desktop, "
-    "the default http://host.docker.internal should not be changed.",
+    help="Server URL to point to. If you are using Docker Desktop, the default "
+    "http://host.docker.internal should not be changed. If you are using Linux without"
+    " Docker Desktop, you should set this to http://172.17.0.1",
 )
 @click.option(
     "-p",

@@ -174,7 +174,7 @@ class UserToken(ServicesResources):
                     # note: this is not treated as error, but simply guide
                     # user to also fill in second factor
                     return {
-                        "msg": "Please include your two-factor " "authentication code"
+                        "msg": "Please include your two-factor authentication code"
                     }, HTTPStatus.OK
                 elif not self.validate_2fa_token(user, mfa_code):
                     return {
@@ -425,6 +425,7 @@ class ValidateToken(ServicesResources):
             "user_id": g.user.id,
             "username": g.user.username,
             "email": g.user.email,
+            "organization_id": g.user.organization_id,
         }, HTTPStatus.OK
 
 

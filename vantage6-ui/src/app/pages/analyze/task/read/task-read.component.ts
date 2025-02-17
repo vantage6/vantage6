@@ -28,6 +28,8 @@ import { Subject, Subscription, takeUntil, timer } from 'rxjs';
 import { FileService } from 'src/app/services/file.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
+import { THRESHOLD_LONG_TEXT, THRESHOLD_PRINTABLE_TEXT, THRESHOLD_SMALL_TILES } from 'src/app/models/constants/thresholds';
+import { WAIT_200_MILLISECONDS } from 'src/app/models/constants/wait';
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { printDate } from 'src/app/helpers/general.helper';
 import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
@@ -62,6 +64,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   canCreate = false;
   canKill = false;
   algorithmNotFoundInStore = false;
+  showAllChildTasks = false;
 
   private nodeStatusUpdateSubscription?: Subscription;
   private taskStatusUpdateSubscription?: Subscription;
@@ -126,13 +129,13 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     if (!this.task || sync_tasks) {
       this.task = await this.getMainTask();
       this.childTasks = await this.getChildTasks();
-      if(this.task.study)
-        this.study = await this.studyService.getStudy(this.task.study.id.toString())
+      if (this.task.study) this.study = await this.studyService.getStudy(this.task.study.id.toString());
     }
     try {
       if (this.task.algorithm_store) {
         const store = await this.algorithmStoreService.getAlgorithmStore(this.task.algorithm_store?.id.toString());
         this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image, store);
+        // Please note, the function cannot be set if the input cannot be decoded. This will result in NO visualization and information about the function.
         this.function = this.algorithm?.functions.find((_) => _.name === this.task?.input?.method) || null;
         if (!this.selectedVisualization) {
           // by checking in if statement whether visualization was already set, we prevent
@@ -176,6 +179,11 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     if (this.task.results?.some((result) => result.result === null)) return false;
     if (this.task.runs.every((run) => run.status === TaskStatus.Completed)) return true;
     return false;
+  }
+
+  isSmallTileView(): boolean {
+    const runs = this.childTasks.flatMap((tasks) => tasks.runs) ?? [];
+    return runs.length > THRESHOLD_SMALL_TILES;
   }
 
   isFailedRun(status: TaskStatus): boolean {
@@ -266,8 +274,8 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   displayTextResult(result: object | undefined): string {
     if (result === undefined) return '';
     const textResult = JSON.stringify(result);
-    if (textResult.length > 100) {
-      return textResult.substring(0, 100) + '...';
+    if (textResult.length > THRESHOLD_LONG_TEXT) {
+      return textResult.substring(0, THRESHOLD_LONG_TEXT) + '...';
     }
     return textResult;
   }
@@ -275,7 +283,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   getParameterDisplayName(parameter: TaskParameter): string {
     const argument: Argument | undefined = this.function?.arguments.find((_) => _.name === parameter.label);
     if (argument) {
-      return argument.display_name ?? argument.name
+      return argument.display_name ?? argument.name;
     } else {
       return parameter.label;
     }
@@ -291,16 +299,26 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     }
   }
 
+  downloadInput(run: TaskRun): void {
+    const filename = `vantage6_input_${run.id}.txt`;
+    const textInput = run.input || '';
+    this.fileService.downloadTxtFile(textInput, filename);
+  }
+
   downloadResult(result: TaskResult): void {
     const filename = `vantage6_result_${result.id}.txt`;
-    const textResult = JSON.stringify(result.decoded_result);
+    let textResult = '';
+    if (result.decoded_result === undefined) {
+      textResult = result.result || '';
+    } else {
+      textResult = JSON.stringify(result.decoded_result);
+    }
     this.fileService.downloadTxtFile(textResult, filename);
   }
 
   getPrintableTaskName(task: Task): string {
-    // print only max 30 characters
-    if (task.name.length > 30) {
-      return task.name.substring(0, 30) + '...';
+    if (task.name.length > THRESHOLD_PRINTABLE_TEXT) {
+      return task.name.substring(0, THRESHOLD_PRINTABLE_TEXT) + '...';
     } else {
       return task.name;
     }
@@ -308,7 +326,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
 
   private async waitUntilInitialized(): Promise<void> {
     while (this.isLoading) {
-      await new Promise((f) => setTimeout(f, 200));
+      await new Promise((f) => setTimeout(f, WAIT_200_MILLISECONDS));
     }
   }
 

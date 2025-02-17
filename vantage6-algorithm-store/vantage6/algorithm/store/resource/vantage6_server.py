@@ -238,12 +238,15 @@ class Vantage6Servers(AlgorithmStoreResources):
         # request.
         username = user_validate_response.json()["username"]
         email = user_validate_response.json()["email"]
-        self._assign_server_manager_role_to_auth_user(server, username, email)
+        organization_id = user_validate_response.json()["organization_id"]
+        self._assign_server_manager_role_to_auth_user(
+            server, username, email, organization_id
+        )
 
         return v6_server_output_schema.dump(server, many=False), HTTPStatus.CREATED
 
     def _assign_server_manager_role_to_auth_user(
-        self, server: db_Vantage6Server, username: str, email: str
+        self, server: db_Vantage6Server, username: str, email: str, organization_id: int
     ) -> None:
         """
         Assign the server manager role to the user that is currently authenticated.
@@ -256,6 +259,8 @@ class Vantage6Servers(AlgorithmStoreResources):
             The username of the user that is whitelisting the server
         email : str
             The email of the user that is whitelisting the server
+        organization_id : int
+            The organization id of the user that is whitelisting the server
         """
         # then find if the user already exists
         user = User.get_by_server(username, server.id)
@@ -265,6 +270,7 @@ class Vantage6Servers(AlgorithmStoreResources):
             user = User(
                 username=username,
                 email=email,
+                organization_id=organization_id,
                 v6_server_id=server.id,
                 roles=[server_manager_role],
             )

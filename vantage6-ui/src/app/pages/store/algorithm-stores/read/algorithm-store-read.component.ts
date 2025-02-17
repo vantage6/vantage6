@@ -1,6 +1,6 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject, takeUntil } from 'rxjs';
+import { combineLatest, Subject, takeUntil } from 'rxjs';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
 import { AlgorithmStore, AvailableStorePolicies, StorePolicies } from 'src/app/models/api/algorithmStore.model';
 // import { AlgorithmStore, AvailableStorePolicies, DefaultStorePolicies } from 'src/app/models/api/algorithmStore.model';
@@ -37,11 +37,15 @@ export class AlgorithmStoreReadComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    this.chosenStoreService.isInitialized$.pipe(takeUntil(this.destroy$)).subscribe((initialized) => {
-      if (initialized) {
-        this.initData();
-      }
-    });
+    const chosenStore = this.chosenStoreService.getCurrentStore();
+    const storePermissionInit = this.storePermissionService.isInitialized();
+    combineLatest([chosenStore, storePermissionInit])
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(([isChosenStoreInitialized, isStorePermissionInitialized]) => {
+        if (isChosenStoreInitialized && isStorePermissionInitialized) {
+          this.initData();
+        }
+      });
   }
 
   ngOnDestroy(): void {
@@ -118,8 +122,10 @@ export class AlgorithmStoreReadComponent implements OnInit, OnDestroy {
   private translatePolicyValue(key: string, value: string | string[] | boolean): string {
     if (key === AvailableStorePolicies.ALGORITHM_VIEW) {
       return this.translateService.instant(`store-policies.${key}-values.${value}`);
-    } else if (key === AvailableStorePolicies.ALLOW_LOCALHOST) {
+    } else if (key === AvailableStorePolicies.ALLOW_LOCALHOST || key === AvailableStorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM) {
       return value ? this.translateService.instant('general.yes') : this.translateService.instant('general.no');
+    } else if (key === AvailableStorePolicies.ALLOWED_REVIEWERS || key === AvailableStorePolicies.ALLOWED_REVIEW_ASSIGNERS) {
+      return value === null ? this.translateService.instant('store-policies.not-defined') : value;
     } else if (Array.isArray(value)) {
       return value.join(', ');
     } else {

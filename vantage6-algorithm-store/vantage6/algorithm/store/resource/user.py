@@ -321,6 +321,7 @@ class Users(AlgorithmStoreResources):
                 "msg": f"User '{data['username']}' not found in the Vantage6 server."
             }, HTTPStatus.BAD_REQUEST
         user_email = server_response.json()["data"][0].get("email")
+        user_org = server_response.json()["data"][0]["organization"]["id"]
 
         # process the required roles. It is only possible to assign roles with
         # rules that you already have permission to. This way we ensure you can
@@ -339,6 +340,7 @@ class Users(AlgorithmStoreResources):
         user = db.User(
             username=data["username"],
             email=user_email,
+            organization_id=user_org,
             v6_server_id=server.id,
             roles=roles,
         )
@@ -411,6 +413,9 @@ class User(AlgorithmStoreResources):
                     description: Whether to update the email address by using the value
                       from the vantage6 server. Do not combine this option with the
                       email option to manually set the email address.
+                  organization_id:
+                    type: integer
+                    description: User's organization id. Can be written only if empty.
 
         parameters:
           - in: path
@@ -471,6 +476,8 @@ class User(AlgorithmStoreResources):
                     "No email address found for user '%s' in the Vantage6 server.",
                     user.username,
                 )
+        if organization_id := data.get("organization_id") and not user.organization_id:
+            user.organization_id = organization_id
 
         if "roles" in data:
             # validate that these roles exist

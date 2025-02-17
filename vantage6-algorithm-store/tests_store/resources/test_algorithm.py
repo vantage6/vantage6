@@ -292,18 +292,34 @@ class TestAlgorithmResources(TestResources):
         rv = self.app.post("/api/algorithm", json={}, headers=HEADERS)
         self.assertEqual(rv.status_code, 400)
 
+        json_data = {
+            "name": "test_algorithm",
+            "description": "test_description",
+            "partitioning": Partitioning.HORIZONTAL,
+            "code_url": "https://my-url.com",
+            "vantage6_version": "6.6.6",
+            "image": "some-image",
+            "functions": [
+                {
+                    "name": "test_function",
+                    "type": "central",
+                    "databases": [
+                        {"name": "test_database", "description": "test_description"}
+                    ],
+                    "arguments": [
+                        {"name": "test_argument", "type": ArgumentType.STRING}
+                    ],
+                    "ui_visualizations": [
+                        {"name": "test_visualization", "type": "table"}
+                    ],
+                }
+            ],
+        }
+
         # test if the endpoint is accessible
         rv = self.app.post(
             "/api/algorithm",
-            json={
-                "name": "test_algorithm",
-                "description": "test_description",
-                "partitioning": Partitioning.HORIZONTAL.value,
-                "code_url": "https://my-url.com",
-                "vantage6_version": "6.6.6",
-                "image": "some-image",
-                "functions": [],
-            },
+            json=json_data,
             headers=HEADERS,
         )
         self.assertEqual(rv.status_code, 201)
@@ -313,7 +329,32 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(rv.json["code_url"], "https://my-url.com")
         self.assertEqual(rv.json["vantage6_version"], "6.6.6")
         self.assertEqual(rv.json["image"], "some-image")
-        self.assertEqual(rv.json["functions"], [])
+        self.assertEqual(len(rv.json["functions"]), 1)
+        self.assertEqual(rv.json["functions"][0]["name"], "test_function")
+        self.assertEqual(rv.json["functions"][0]["type"], "central")
+        self.assertEqual(len(rv.json["functions"][0]["databases"]), 1)
+        self.assertEqual(
+            rv.json["functions"][0]["databases"][0]["name"], "test_database"
+        )
+        self.assertEqual(
+            rv.json["functions"][0]["databases"][0]["description"], "test_description"
+        )
+        self.assertEqual(len(rv.json["functions"][0]["arguments"]), 1)
+        self.assertEqual(
+            rv.json["functions"][0]["arguments"][0]["name"], "test_argument"
+        )
+        self.assertEqual(
+            rv.json["functions"][0]["arguments"][0]["type"], ArgumentType.STRING
+        )
+        self.assertEqual(len(rv.json["functions"][0]["ui_visualizations"]), 1)
+        self.assertEqual(
+            rv.json["functions"][0]["ui_visualizations"][0]["name"],
+            "test_visualization",
+        )
+        self.assertEqual(
+            rv.json["functions"][0]["ui_visualizations"][0]["type"], "table"
+        )
+
         self.assertEqual(rv.json["digest"], "some-digest")
         self.assertEqual(
             rv.json["status"], AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
@@ -322,6 +363,100 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(rv.json["invalidated_at"], None)
         self.assertNotEqual(rv.json["submitted_at"], None)
         self.assertEqual(rv.json["developer_id"], user.id)
+
+        # test default values - first with wrong default value type
+        json_data["functions"][0]["arguments"] = [
+            {
+                "name": "test_argument",
+                "type": ArgumentType.STRING,
+                "has_default_value": True,
+                "default_value": 1,
+            }
+        ]
+        rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
+        self.assertEqual(rv.status_code, 400)
+
+        # test default values - now with correct default value type
+        json_data["functions"][0]["arguments"][0]["default_value"] = "test"
+        rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
+        self.assertEqual(rv.status_code, 201)
+        self.assertEqual(
+            rv.json["functions"][0]["arguments"][0]["default_value"], "test"
+        )
+
+        # also check that default value can be null
+        del json_data["functions"][0]["arguments"][0]["default_value"]
+        rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
+        self.assertEqual(rv.status_code, 201)
+        self.assertEqual(rv.json["functions"][0]["arguments"][0]["default_value"], None)
+
+        # test that arguments cannot have the same name
+        json_data["functions"][0]["arguments"] = [
+            {
+                "name": "test",
+                "type": ArgumentType.STRING,
+            },
+            {
+                "name": "test",
+                "type": ArgumentType.FLOAT,
+            },
+        ]
+        rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
+        self.assertEqual(rv.status_code, 400)
+
+        # test that conditional arguments are correctly created
+        json_data["functions"][0]["arguments"] = [
+            {
+                "name": "dependent",
+                "type": ArgumentType.STRING,
+                "has_default_value": True,
+                "conditional_on": "conditional",
+                "conditional_operator": "==",
+                "conditional_value": "test",
+            },
+            {
+                "name": "conditional",
+                "type": ArgumentType.STRING,
+            },
+        ]
+        rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
+        self.assertEqual(rv.status_code, 201)
+        self.assertEqual(
+            rv.json["functions"][0]["arguments"][0]["conditional_on_id"],
+            rv.json["functions"][0]["arguments"][1]["id"],
+        )
+        self.assertEqual(
+            rv.json["functions"][0]["arguments"][0]["conditional_operator"], "=="
+        )
+        self.assertEqual(
+            rv.json["functions"][0]["arguments"][0]["conditional_value"], "test"
+        )
+
+        # test that there is an error if argument with conditional does not have a
+        # default value
+        json_data["functions"][0]["arguments"][0]["has_default_value"] = False
+        rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
+        self.assertEqual(rv.status_code, 400)
+
+        # test that we get an error if conditions are circular
+        json_data["functions"][0]["arguments"] = [
+            {
+                "name": "dependent",
+                "type": ArgumentType.STRING,
+                "conditional_on": "conditional",
+                "conditional_operator": "==",
+                "conditional_value": "test",
+            },
+            {
+                "name": "conditional",
+                "type": ArgumentType.STRING,
+                "conditional_on": "dependent",
+                "conditional_operator": "==",
+                "conditional_value": "test",
+            },
+        ]
+        rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
+        self.assertEqual(rv.status_code, 400)
 
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     @patch(
