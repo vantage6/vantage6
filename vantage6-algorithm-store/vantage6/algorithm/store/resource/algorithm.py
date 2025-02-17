@@ -7,6 +7,7 @@ from flask import g, render_template, request, current_app, Flask
 from flask_mail import Mail
 from flask_restful import Api
 from sqlalchemy import or_
+from marshmallow import ValidationError
 
 from vantage6.common import logger_name
 from vantage6.backend.common.globals import (
@@ -484,14 +485,15 @@ class Algorithms(AlgorithmBaseResource):
 
         tags: ["Algorithm"]
         """
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
         # validate the request body
-        errors = algorithm_input_post_schema.validate(data)
-        if errors:
+        try:
+            data = algorithm_input_post_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # validate that the algorithm image exists and retrieve the digest
@@ -891,14 +893,15 @@ class Algorithm(AlgorithmBaseResource):
         if not algorithm:
             return {"msg": "Algorithm not found"}, HTTPStatus.NOT_FOUND
 
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
         # validate the request body
-        errors = algorithm_input_patch_schema.validate(data, partial=True)
-        if errors:
+        try:
+            data = algorithm_input_patch_schema.load(data, partial=True)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # algorithms can no longer be edited if they are in the review process or have

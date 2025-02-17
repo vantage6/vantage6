@@ -3,6 +3,7 @@ import logging
 from http import HTTPStatus
 from flask import g, request
 from flask_restful import Api
+from marshmallow import ValidationError
 
 from vantage6.common import generate_apikey
 from vantage6.common.globals import AuthStatus
@@ -372,13 +373,14 @@ class Nodes(NodeBase):
 
         tags: ["Node"]
         """
-        data = request.get_json()
+        data = request.get_json(silent=True)
         # validate request body
-        errors = node_input_schema.validate(data)
-        if errors:
+        try:
+            data = node_input_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # check that the collaboration exists
@@ -622,14 +624,16 @@ class Node(NodeBase):
 
         tags: ["Node"]
         """
-        data = request.get_json()
+        data = request.get_json(silent=True)
         # validate request body
-        errors = node_input_schema.validate(data, partial=True)
-        if errors:
+        try:
+            data = node_input_schema.load(data, partial=True)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
+
         # for patching, organization_id and collaboration_id are not allowed fields
         if "organization_id" in data:
             return {"msg": "Organization id cannot be updated!"}, HTTPStatus.BAD_REQUEST

@@ -5,6 +5,7 @@ from flask.globals import request
 from flask import g
 from flask_restful import Api
 from sqlalchemy import or_
+from marshmallow import ValidationError
 
 from vantage6.server import db
 from vantage6.server.resource import (
@@ -425,13 +426,14 @@ class Roles(RoleBase):
 
         tags: ["Role"]
         """
-        data = request.get_json()
+        data = request.get_json(silent=True)
         # validate request body
-        errors = role_input_schema.validate(data)
-        if errors:
+        try:
+            data = role_input_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # obtain the requested rules from the DB.
@@ -601,15 +603,17 @@ class Role(RoleBase):
 
         tags: ["Role"]
         """
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
         # validate request body
-        errors = role_input_schema.validate(data, partial=True)
-        if errors:
+        try:
+            data = role_input_schema.load(data, partial=True)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
+
         # organization_id cannot be changed in PATCH, only defined in POST
         if "organization_id" in data:
             return {

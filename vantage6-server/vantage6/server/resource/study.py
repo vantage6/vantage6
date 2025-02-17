@@ -3,6 +3,7 @@ import logging
 from flask import request, g
 from flask_restful import Api
 from http import HTTPStatus
+from marshmallow import ValidationError
 
 from vantage6.server import db
 from vantage6.backend.common.resource.pagination import Pagination
@@ -388,13 +389,14 @@ class Studies(StudyBase):
 
         tags: ["Collaboration"]
         """
-        data = request.get_json()
+        data = request.get_json(silent=True)
         # validate request body
-        errors = study_input_schema.validate(data)
-        if errors:
+        try:
+            data = study_input_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         name = data["name"]
@@ -588,13 +590,14 @@ class Study(StudyBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        data = request.get_json()
+        data = request.get_json(silent=True)
         # validate request body
-        errors = study_input_schema.validate(data, partial=True)
-        if errors:
+        try:
+            data = study_input_schema.load(data, partial=True)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # only update fields that are provided
@@ -779,12 +782,13 @@ class StudyOrganization(ServicesResources):
             }, HTTPStatus.UNAUTHORIZED
 
         # validate request body
-        data = request.get_json()
-        errors = study_change_org_schema.validate(data)
-        if errors:
+        data = request.get_json(silent=True)
+        try:
+            data = study_change_org_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # get the organization
@@ -857,12 +861,13 @@ class StudyOrganization(ServicesResources):
             return {"msg": f"Study with id={id} can not be found"}, HTTPStatus.NOT_FOUND
 
         # validate requst body
-        data = request.get_json()
-        errors = study_change_org_schema.validate(data)
-        if errors:
+        data = request.get_json(silent=True)
+        try:
+            data = study_change_org_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # get organization which should be deleted

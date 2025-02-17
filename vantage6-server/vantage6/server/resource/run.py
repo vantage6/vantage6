@@ -6,6 +6,7 @@ from flask import g, request
 from flask_restful import Api
 from http import HTTPStatus
 from sqlalchemy import desc, or_, and_
+from marshmallow import ValidationError
 
 from vantage6.common import logger_name
 from vantage6.common.enum import RunStatus, TaskStatusQueryOptions, AlgorithmStepType
@@ -688,17 +689,18 @@ class Run(SingleRunBase):
         if not run:
             return {"msg": f"Run id={id} not found!"}, HTTPStatus.NOT_FOUND
 
-        data = request.get_json()
+        data = request.get_json(silent=True)
         # validate request body
-        errors = run_input_schema.validate(data, partial=True)
-        if errors:
+        try:
+            data = run_input_schema.load(data, partial=True)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         if run.organization_id != g.node.organization_id:
-            log.warn(
+            log.warning(
                 f"{g.node.name} tries to update a run that does not belong "
                 f"to them ({run.organization_id}/{g.node.organization_id})."
             )

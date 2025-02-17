@@ -537,13 +537,14 @@ class Collaboration(CollaborationBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        data = request.get_json()
+        data = request.get_json(silent=True)
         # validate request body
-        errors = collaboration_input_schema.validate(data, partial=True)
-        if errors:
+        try:
+            data = collaboration_input_schema.load(data, partial=True)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # only update fields that are provided
@@ -734,12 +735,13 @@ class CollaborationOrganization(ServicesResources):
             }, HTTPStatus.UNAUTHORIZED
 
         # validate request body
-        data = request.get_json()
-        errors = collaboration_change_org_schema.validate(data)
-        if errors:
+        data = request.get_json(silent=True)
+        try:
+            data = collaboration_change_org_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # get the organization
@@ -806,13 +808,14 @@ class CollaborationOrganization(ServicesResources):
                 "msg": f"Collaboration with collaboration_id={id} can " "not be found"
             }, HTTPStatus.NOT_FOUND
 
-        # validate requst body
-        data = request.get_json()
-        errors = collaboration_change_org_schema.validate(data)
-        if errors:
+        # validate request body
+        data = request.get_json(silent=True)
+        try:
+            data = collaboration_change_org_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # get organization which should be deleted
@@ -903,12 +906,13 @@ class CollaborationNode(ServicesResources):
             }, HTTPStatus.UNAUTHORIZED
 
         # validate request body
-        data = request.get_json()
-        errors = collaboration_add_node_schema.validate(data)
-        if errors:
+        data = request.get_json(silent=True)
+        try:
+            data = collaboration_add_node_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         node = db.Node.get(data["id"])

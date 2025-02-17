@@ -5,6 +5,7 @@ import datetime
 from flask import g, request, url_for
 from flask_restful import Api
 from flask_socketio import SocketIO
+from marshmallow import ValidationError
 from http import HTTPStatus
 from sqlalchemy import desc
 from sqlalchemy.sql import visitors
@@ -614,11 +615,12 @@ class Tasks(TaskBase):
             Action to performed by the task
         """
         # validate request body
-        errors = task_input_schema.validate(data)
-        if errors:
+        try:
+            data = task_input_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # A task always belongs to a session

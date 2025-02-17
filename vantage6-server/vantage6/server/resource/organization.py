@@ -3,6 +3,7 @@ import logging
 from flask import request, g
 from flask_restful import Api
 from http import HTTPStatus
+from marshmallow import ValidationError
 
 from vantage6.common import logger_name
 from vantage6.server import db
@@ -316,12 +317,13 @@ class Organizations(OrganizationBase):
             }, HTTPStatus.UNAUTHORIZED
 
         # validate request body
-        data = request.get_json()
-        errors = org_input_schema.validate(data)
-        if errors:
+        data = request.get_json(silent=True)
+        try:
+            data = org_input_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         name = data.get("name")
@@ -449,12 +451,13 @@ class Organization(OrganizationBase):
         tags: ["Organization"]
         """
         # validate request body
-        data = request.get_json()
-        errors = org_input_schema.validate(data, partial=True)
-        if errors:
+        data = request.get_json(silent=True)
+        try:
+            data = org_input_schema.load(data, partial=True)
+        except:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": "Invalid data",
             }, HTTPStatus.BAD_REQUEST
 
         organization = db.Organization.get(id)

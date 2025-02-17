@@ -3,6 +3,7 @@ import logging
 from flask import g, request
 from flask_restful import Api
 from http import HTTPStatus
+from marshmallow import ValidationError
 
 from vantage6.common import logger_name
 from vantage6.server.permission import PermissionManager, Scope as S, Operation as P
@@ -134,13 +135,14 @@ class Ports(PortBase):
 
         tags: ["VPN"]
         """
-        data = request.get_json()
+        data = request.get_json(silent=True)
         # validate request body
-        errors = port_input_schema.validate(data)
-        if errors:
+        try:
+            data = port_input_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # The only entity that is allowed to algorithm ports is the node where

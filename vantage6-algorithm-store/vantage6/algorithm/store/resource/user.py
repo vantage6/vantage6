@@ -6,7 +6,7 @@ from http import HTTPStatus
 import sqlalchemy
 from flask import request, g
 from flask_restful import Api
-
+from marshmallow import ValidationError
 
 from vantage6.common import logger_name
 from vantage6.backend.common.resource.pagination import Pagination
@@ -281,15 +281,16 @@ class Users(AlgorithmStoreResources):
 
         tags: ["User"]
         """
-        data = request.get_json()
+        data = request.get_json(silent=True)
         # the assumption is that it is possible to create only users linked to your own server
         server = Vantage6Server.get_by_url(request.headers["Server-Url"])
         # validate request body
-        errors = user_input_schema.validate(data)
-        if errors:
+        try:
+            data = user_input_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # check unique constraints
@@ -439,13 +440,14 @@ class User(AlgorithmStoreResources):
         if not user:
             return {"msg": f"user id={id} not found"}, HTTPStatus.NOT_FOUND
 
-        data = request.get_json()
+        data = request.get_json(silent=True)
         # validate request body
-        errors = user_patch_input_schema.validate(data)
-        if errors:
+        try:
+            data = user_patch_input_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         if email := data.get("email"):
