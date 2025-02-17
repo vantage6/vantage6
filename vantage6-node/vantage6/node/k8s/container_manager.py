@@ -1081,8 +1081,7 @@ class ContainerManager:
                     parent_id=job.metadata.annotations["task_parent_id"],
                 )
 
-                # destroy job and related POD(s)
-                # self.__delete_job_related_pods(run_io=run_io, namespace="vantage6-node")
+                self.__delete_job_related_pods(run_io=run_io, namespace="vantage6-node")
                 completed_job = True
 
         return result

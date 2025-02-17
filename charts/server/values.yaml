@@ -19,6 +19,9 @@ server:
   logging:
     level: INFO
 
+  # jwt:
+  #   secret: secret
+
 rabbitmq:
   # The image of the RabbitMQ server
   image:

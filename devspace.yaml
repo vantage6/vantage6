@@ -108,6 +108,8 @@ deployments:
           image: ${SERVER_IMAGE}
           logging:
             level: DEBUG
+          jwt:
+            secret: development-constant-secret!
 
         database:
           volumePath: /mnt/data

@@ -698,7 +698,7 @@ class Run(SingleRunBase):
             }, HTTPStatus.BAD_REQUEST
 
         if run.organization_id != g.node.organization_id:
-            log.warn(
+            log.warning(
                 f"{g.node.name} tries to update a run that does not belong "
                 f"to them ({run.organization_id}/{g.node.organization_id})."
             )
