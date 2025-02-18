@@ -6,6 +6,7 @@ from flask import g, request
 from flask_restful import Api
 
 from vantage6.common import logger_name
+from vantage6.backend.common.resource.role import handle_exceptions
 from vantage6.server import db
 from vantage6.server.permission import (
     Scope as S,
@@ -325,6 +326,7 @@ class Users(UserBase):
         return self.response(page, user_schema)
 
     @with_user
+    @handle_exceptions
     def post(self):
         """Create user
         ---
@@ -437,9 +439,7 @@ class Users(UserBase):
             for role in potential_roles:
                 role_ = db.Role.get(role)
                 if role_:
-                    denied = self.permissions.check_user_rules(role_.rules)
-                    if denied:
-                        return denied, HTTPStatus.UNAUTHORIZED
+                    self.permissions.check_user_rules(role_.rules)
                     roles.append(role_)
 
                     # validate that the assigned role is either a general role
@@ -457,9 +457,7 @@ class Users(UserBase):
         rules = []
         if potential_rules:
             rules = [db.Rule.get(rule) for rule in potential_rules if db.Rule.get(rule)]
-            denied = self.permissions.check_user_rules(rules)
-            if denied:
-                return denied, HTTPStatus.UNAUTHORIZED
+            self.permissions.check_user_rules(rules)
 
         # Ok, looks like we got most of the security hazards out of the way
         user = db.User(
@@ -552,6 +550,7 @@ class User(UserBase):
             }, HTTPStatus.UNAUTHORIZED
 
     @with_user
+    @handle_exceptions
     def patch(self, id):
         """Update user
         ---
@@ -689,9 +688,7 @@ class User(UserBase):
 
             # validate that user can assign these
             for role in roles:
-                denied = self.permissions.check_user_rules(role.rules)
-                if denied:
-                    return denied, HTTPStatus.UNAUTHORIZED
+                self.permissions.check_user_rules(role.rules)
 
                 # validate that the assigned role is either a general role or a
                 # role pertaining to that organization
@@ -707,17 +704,7 @@ class User(UserBase):
             # e.g. an organization admin is not allowed to delete a root role
             deleted_roles = [r for r in user.roles if r not in roles]
             for role in deleted_roles:
-                denied = self.permissions.check_user_rules(role.rules)
-                if denied:
-                    return {
-                        "msg": (
-                            f"You are trying to delete the role {role.name} from "
-                            "this user but that is not allowed because they have "
-                            f"permissions you don't have: {denied['msg']} (and "
-                            "they do!)"
-                        )
-                    }, HTTPStatus.UNAUTHORIZED
-
+                self.permissions.check_user_rules(role.rules)
             user.roles = roles
 
         if "rules" in data:
@@ -738,21 +725,12 @@ class User(UserBase):
                 }, HTTPStatus.UNAUTHORIZED
 
             # validate that user can assign these
-            denied = self.permissions.check_user_rules(rules)
-            if denied:
-                return denied, HTTPStatus.UNAUTHORIZED
+            self.permissions.check_user_rules(rules)
 
             # validate that user is not deleting rules they do not have
             # themselves
             deleted_rules = [r for r in user.rules if r not in rules]
-            denied = self.permissions.check_user_rules(deleted_rules)
-            if denied:
-                return {
-                    "msg": (
-                        f"{denied['msg']}. You can't delete permissions for "
-                        "another user that you don't have yourself!"
-                    )
-                }, HTTPStatus.UNAUTHORIZED
+            self.permissions.check_user_rules(deleted_rules)
 
             user.rules = rules
 

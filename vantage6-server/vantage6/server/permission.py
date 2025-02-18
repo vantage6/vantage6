@@ -1,6 +1,7 @@
 import logging
 
 from vantage6.backend.common.permission import RuleCollectionBase, PermissionManagerBase
+from vantage6.backend.common.resource.role import UnauthorizedError
 from vantage6.server.model.base import Base
 from vantage6.server.model.role import Role
 from vantage6.server.model.rule import Rule, Operation, Scope
@@ -345,7 +346,7 @@ class PermissionManager(PermissionManagerBase):
 
         self.collection(resource).add(rule.operation, rule.scope)
 
-    def check_user_rules(self, rules: list[Rule]) -> dict | None:
+    def check_user_rules(self, rules: list[Rule]) -> None:
         """
         Check if a user, node or container has all the `rules` in a list
 
@@ -353,19 +354,13 @@ class PermissionManager(PermissionManagerBase):
         ----------
         rules: list[:class:`~vantage6.server.model.rule.Rule`]
             List of rules that user is checked to have
-
-        Returns
-        -------
-        dict | None
-            Dict with a message which rule is missing, else None
         """
         for rule in rules:
             if not self.collections[rule.name].has_at_least_scope(
                 rule.scope, rule.operation
             ):
-                return {
-                    "msg": f"You don't have the rule ({rule.name}, "
+                raise UnauthorizedError(
+                    f"You don't have the rule ({rule.name}, "
                     f"{rule.scope.name.lower()}, "
                     f"{rule.operation.name.lower()})"
-                }
-        return None
+                )
