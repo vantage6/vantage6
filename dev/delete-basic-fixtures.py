@@ -15,15 +15,12 @@ dev_dir.mkdir(exist_ok=True)
 client = Client("http://localhost", 7601, "/api", log_level="error")
 client.authenticate("root", "root")
 
-print("=> Deleting tasks")
-for task in (tasks := client.task.list(per_page=999)["data"]):
-    client.task.delete(task["id"])
-print("==> Deleted", len(tasks), "tasks")
-
-print("=> Deleting nodes")
-for node in (nodes := client.node.list(per_page=999)["data"]):
-    client.node.delete(node["id"])
-print("==> Deleted", len(nodes), "nodes")
+for client_subclass_name in ("task", "node"):
+    client_subclass = getattr(client, client_subclass_name)
+    print(f"=> Deleting {client_subclass_name}s")
+    for entity in (entities := client_subclass.list(per_page=999)["data"]):
+        client_subclass.delete(entity["id"])
+    print(f"==> Deleted", len(entities), f"{client_subclass_name}s")
 
 print("=> Deleting collaborations")
 for collab in (
