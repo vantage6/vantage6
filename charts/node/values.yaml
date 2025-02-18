@@ -1,8 +1,5 @@
 node:
 
-  # TODO: networking
-  # TODO: encryption
-
   apiKey: put-your-api-key-here
 
   server:
