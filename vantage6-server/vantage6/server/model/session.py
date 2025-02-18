@@ -150,9 +150,6 @@ class Session(Base):
         results.
         """
 
-        session = DatabaseSessionManager.get_session()
-        session.add(self)
-
         for dataframe in self.dataframes:
             dataframe.delete()
 
@@ -176,8 +173,8 @@ class Session(Base):
         return (
             "<Session "
             f"{self.id}: '{self.name}', "
-            f"owner_id={self.owner.username}, "
-            f"collaboration={self.collaboration.name}, "
+            f"owner_id={self.owner.username if self.owner else None}, "
+            f"collaboration={self.collaboration.name if self.collaboration else None}, "
             f"{number_of_tasks} task(s)"
             ">"
         )

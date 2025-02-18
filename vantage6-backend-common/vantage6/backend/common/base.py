@@ -5,15 +5,18 @@ import inspect as class_inspect
 from typing import Any
 from time import sleep
 from flask.globals import g
-from sqlalchemy.exc import OperationalError
-from sqlalchemy import Column, Integer, inspect, Table, exists
-from sqlalchemy.orm.session import Session
-from sqlalchemy.ext.declarative import declared_attr, DeclarativeMeta
-from sqlalchemy.orm.clsregistry import _ModuleMarker
-from sqlalchemy import create_engine
+
+from sqlalchemy import Column, Integer, inspect, Table, exists, create_engine, text
 from sqlalchemy.engine.url import make_url
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.ext.declarative import declared_attr, DeclarativeMeta
+
 from sqlalchemy.orm import scoped_session, sessionmaker, RelationshipProperty
+from sqlalchemy.orm.clsregistry import _ModuleMarker
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.session import Session
+from sqlalchemy import select
+
 from vantage6.common import logger_name
 from vantage6.backend.common import session
 from vantage6.backend.common.globals import (
@@ -231,14 +234,19 @@ class BaseDatabase:
         col_name = column.key
         col_type = column.type.compile(self.engine.dialect)
         tab_name = table_cls.__tablename__
-        log.warn(
+        log.warning(
             "Adding column '%s' to table '%s' as it did not exist yet",
             col_name,
             tab_name,
         )
-        self.engine.execute(
-            'ALTER TABLE "%s" ADD COLUMN %s %s' % (tab_name, col_name, col_type)
-        )
+        with self.engine.connect() as conn:
+            with conn.begin():
+                conn.execute(
+                    text(
+                        'ALTER TABLE "%s" ADD COLUMN %s %s'
+                        % (tab_name, col_name, col_type)
+                    )
+                )
 
     @staticmethod
     def is_column_missing(
@@ -394,11 +402,13 @@ class BaseModelBase:
 
         result = None
 
+        stmt = select(cls)
         if id_ is None:
-            result = session_.query(cls).all()
+            result = session_.scalars(stmt).all()
         else:
             try:
-                result = session_.query(cls).filter_by(id=id_).one()
+                stmt = stmt.where(cls.id == id_)
+                result = session_.scalars(stmt).one()
             except NoResultFound:
                 result = None
 
@@ -463,7 +473,7 @@ class BaseModelBase:
             True if the value exists, False otherwise
         """
         session_ = db_session_mgr.get_session()
-        result = session_.query(exists().where(getattr(cls, field) == value)).scalar()
+        result = session_.scalar(select(exists().where(getattr(cls, field) == value)))
         session_.commit()
         return result
 

@@ -240,6 +240,7 @@ class TestReviewResources(TestResources):
         algorithm = Algorithm(
             status=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT,
         )
+        algorithm.save()
         review = Review(status=ReviewStatus.UNDER_REVIEW, algorithm=algorithm)
         review.save()
 
@@ -288,6 +289,7 @@ class TestReviewResources(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         algorithm = Algorithm.get(algorithm.id)
         self.assertEqual(algorithm.status, AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT)
+        review = None  # update deleted sqlalchemy object to prevent warnings
 
         # set policy to require one review and one organization
         Policy(key=StorePolicies.MIN_REVIEWERS, value=1).save()

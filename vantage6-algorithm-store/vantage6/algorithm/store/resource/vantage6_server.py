@@ -3,6 +3,7 @@ import logging
 from flask import g, request
 from flask_restful import Api
 from http import HTTPStatus
+from sqlalchemy import select
 
 from vantage6.common import logger_name
 from vantage6.algorithm.store.permission import PermissionManager, Operation as P
@@ -126,12 +127,12 @@ class Vantage6Servers(AlgorithmStoreResources):
         # TODO add pagination
         # TODO extend filtering
         args = request.args
-        q = g.session.query(db_Vantage6Server)
+        q = select(db_Vantage6Server)
 
         if "url" in args:
             q = q.filter(db_Vantage6Server.url.like(args["url"]))
 
-        servers = q.all()
+        servers = g.session.scalars(q).all()
         return v6_server_output_schema.dump(servers, many=True), HTTPStatus.OK
 
     # Note: this endpoint is not authenticated, because it is used by the
