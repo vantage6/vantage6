@@ -3,7 +3,7 @@ node:
   # TODO: networking
   # TODO: encryption
 
-  apiKey: 33364053-dc41-4be9-b011-0c8035dba93f
+  apiKey: put-your-api-key-here
 
   server:
     url: http://host.docker.internal
