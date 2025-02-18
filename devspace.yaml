@@ -9,7 +9,6 @@ vars:
   UI_IMAGE: harbor2.vantage6.ai/infrastructure/ui
   NODE_TEST_DATABASE_FILE:
     question: "Where is your test data for the node located?"
-    default: /Users/frankmartin/Repositories/vantage6/dev/olympic_athletes_2016.csv
 
   KUBE_CONFIG:
     question: "Where is your kube config from k8s located?"
