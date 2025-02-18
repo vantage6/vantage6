@@ -268,14 +268,29 @@ dev:
 
 # Use the `commands` section to define repeatable dev workflows for this project
 commands:
+  # This command will spin up a server and store temporary to fill it with some
+  # basic data.
   populate-server:
     command: devspace run-pipeline init
+
+  # This will put all components in development mode. This is the main entrypoint
+  # for development.
   start-dev:
     command: devspace dev
+
+  # This will stop all components from the development mode. Note that the deployments
+  # are not deleted.
   stop-dev:
     command: devspace reset pods
+
+  # This will delete all deployments and services. This is useful when you want to
+  # start from scratch.
   purge:
     command: devspace purge
+
+  # This will build all images for this project. This is probably the first command
+  # you want to run. In case you do not run it, it will pull the latest images from
+  # our harbor registry (which potentially has outdated dependencies).
   rebuild:
     command: devspace build
 
