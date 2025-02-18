@@ -7,7 +7,7 @@ data:
   config.yaml: |
     algorithm_stores: []
     allow_drop_all: 'True'
-    api_path: /api
+    api_path: {{ .Values.server.apiPath }}
     description: Vantage6 server version 5
     ip: 0.0.0.0
     {{- if .Values.server.jwt.secret }}
@@ -35,7 +35,7 @@ data:
       max_size: 1024
       use_console: true
     port: {{ .Values.server.internal.port }}
-    server_url: {{ .Values.server.url }}
+    server_url: {{ .Values.server.baseUrl }}{{ .Values.server.apiPath }}
     uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-postgres-service:5432/{{ .Values.database.name }}
     rabbitmq:
       uri: amqp://{{ .Values.rabbitmq.username }}:{{ .Values.rabbitmq.password }}@{{ .Release.Name }}-rabbitmq-service:5672/{{ .Values.rabbitmq.vhost }}

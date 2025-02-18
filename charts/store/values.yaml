@@ -2,7 +2,7 @@ store:
   replications: 1
 
   vantage6Server:
-    uri: http://host.docker.internal:7601/api
+    uri: http://host.docker.internal:7601/server
     rootUser: root
 
   policies:

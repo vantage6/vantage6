@@ -4,8 +4,8 @@ nameOverride: vantage6-server
 server:
 
   # The external URL of the server
-  url: http://localhost:7601/api
   baseUrl: http://localhost:7601
+  apiPath: /server
 
   internal:
     port: 7601

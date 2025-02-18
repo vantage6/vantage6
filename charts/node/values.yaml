@@ -5,7 +5,7 @@ node:
   server:
     url: http://host.docker.internal
     port: 7601
-    path: /api
+    path: /server
 
   image: harbor2.vantage6.ai/infrastructure/node:latest
 
