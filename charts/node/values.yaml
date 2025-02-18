@@ -12,6 +12,8 @@ node:
   logging:
     level: INFO
 
+  taskDir: /tmp/tasks
+
   proxyPort: 7654
 
   # TODO the way databases are mounted and named can lead to possible naming conflicts

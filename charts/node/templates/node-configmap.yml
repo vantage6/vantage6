@@ -42,4 +42,4 @@ data:
         name: docker.utils.config
       - level: warning
         name: docker.auth
-    task_dir: /tmp/task
+    task_dir: {{ .Values.node.taskDir }}
