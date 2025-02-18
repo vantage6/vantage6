@@ -28,10 +28,3 @@ spec:
           value: {{ .Values.server.baseUrl | quote }}
         - name: API_PATH
           value: /api
-        # resources:
-        #   limits:
-        #     memory: "512Mi"
-        #     cpu: "500m"
-        #   requests:
-        #     memory: "256Mi"
-        #     cpu: "250m"
