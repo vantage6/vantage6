@@ -5,7 +5,7 @@ import re
 from marshmallow import Schema, fields, ValidationError, validates, validates_schema
 from marshmallow.validate import Length, Range, OneOf
 
-from vantage6.backend.common.input_schema import (
+from vantage6.backend.common.resource.input_schema import (
     MAX_LEN_NAME,
     MAX_LEN_STR_LONG,
     validate_name,

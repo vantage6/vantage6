@@ -9,7 +9,7 @@ from sqlalchemy import or_
 
 from vantage6.algorithm.store.default_roles import DefaultRole
 from vantage6.algorithm.store.resource import with_permission
-from vantage6.backend.common.input_schema import RoleInputSchema
+from vantage6.backend.common.resource.input_schema import RoleInputSchema
 from vantage6.common import logger_name
 from vantage6.algorithm.store.permission import PermissionManager
 from vantage6.algorithm.store.model.rule import Operation

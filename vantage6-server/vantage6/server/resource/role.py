@@ -6,7 +6,7 @@ from flask import g
 from flask_restful import Api
 from sqlalchemy import or_
 
-from vantage6.backend.common.input_schema import RoleInputSchema
+from vantage6.backend.common.resource.input_schema import RoleInputSchema
 from vantage6.backend.common.resource.role import get_rules
 from vantage6.server import db
 from vantage6.server.resource import (

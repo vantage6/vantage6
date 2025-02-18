@@ -1,7 +1,6 @@
-from dataclasses import fields
 from typing import List
 from jsonschema import ValidationError
-from marshmallow import Schema, validates
+from marshmallow import Schema, fields, validates
 from marshmallow.validate import Length, Range
 
 MAX_LEN_NAME = 128
