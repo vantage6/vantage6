@@ -12,7 +12,6 @@ vars:
 
   KUBE_CONFIG:
     question: "Where is your kube config from k8s located?"
-    default: "/Users/frankmartin/.kube/config.k8s"
 
 pipelines:
 
