@@ -1,3 +1,10 @@
+"""
+Development script to delete all entities from the server
+
+The `devspace` commands use this script to clean all tasks, nodes,
+collaborations, etc. from the server.
+"""
+
 from pathlib import Path
 
 from vantage6.client import Client

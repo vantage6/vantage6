@@ -1,3 +1,10 @@
+"""
+Development script to populate the server
+
+The `devspace` commands use this script to populate the server with basic
+fixtures.
+"""
+
 from vantage6.client import Client
 from pathlib import Path
 

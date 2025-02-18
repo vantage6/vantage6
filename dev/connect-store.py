@@ -1,3 +1,10 @@
+"""
+Development script to configure the server
+
+The `devspace` commands use this script to connect the server to the local
+store.
+"""
+
 from vantage6.client import Client
 from pathlib import Path
 
