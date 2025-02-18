@@ -240,8 +240,6 @@ class BaseDatabase:
             tab_name,
         )
         with self.engine.connect() as conn:
-            # TODO It would be better not to pass text - may not work with all
-            # database types
             with conn.begin():
                 conn.execute(
                     text(
