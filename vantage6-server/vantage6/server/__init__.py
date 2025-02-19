@@ -830,8 +830,9 @@ class ServerApp:
                     self.ctx.config.get("runs_data_cleanup_days"),
                     include_input=include_input,
                 )
-            except:
+            except Exception as e:
                 log.error("Results cleanup failed. Will try again in one hour.")
+                log.exception(e)
             # simple for now: check every hour
             time.sleep(3600)
 
