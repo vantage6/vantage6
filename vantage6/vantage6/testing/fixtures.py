@@ -4,6 +4,7 @@ import logging
 import time
 import random
 import string
+import requests
 
 from pathlib import Path
 
@@ -106,21 +107,67 @@ def run_profile():
     return _run_profile
 
 
-def wait_for_nodes():
-    """
-    Ensure the specified nodes are online.
+# def wait_for_nodes():
+#     """
+#     Ensure the specified nodes are online.
 
-    Parameters
-    ----------
-    client : Client
-        The Vantage6 client instance.
+#     Parameters
+#     ----------
+#     client : Client
+#         The Vantage6 client instance.
 
-    Returns
-    -------
-    callable
-        A function to wait for nodes to come online.
-    """
-    def _wait_for_nodes(client, node_names, timeout=20, poll_interval=1):
+#     Returns
+#     -------
+#     callable
+#         A function to wait for nodes to come online.
+#     """
+#     def _wait_for_nodes(client, node_names, timeout=20, poll_interval=1):
+#         """
+#         Wait for the specified nodes to come online within a timeout.
+
+#         Parameters
+#         ----------
+#         client : Client
+#             The Vantage6 client instance.
+#         node_names : list
+#             List of node names to wait for
+#         timeout : int
+#             Maximum time to wait for nodes to be online, in seconds.
+#         poll_interval : int
+#             Time between checks, in seconds.
+
+#         Returns
+#         -------
+#         bool
+#             True if all specified nodes are online within the timeout.
+#         """
+#         target_nodes = set(node_names)
+#         start_time = time.time()
+#         while time.time() - start_time < timeout:
+#             response = client.node.list(is_online=True)
+#             # FIXME: Ignoring pagination here
+#             nodes = response.get("data", [])
+#             online_node_names = {node.get("name") for node in nodes}
+
+#             missing_nodes = target_nodes - online_node_names
+#             if not missing_nodes:
+#                 return True
+
+#             # Wait and retry
+#             time.sleep(poll_interval)
+
+#         # Timeout reached
+#         return False
+
+#     return _wait_for_nodes
+
+
+# @pytest.fixture(scope="session")
+# def docker_client():
+#     """Fixture to create a Docker client."""
+#     log.info("Creating Docker client...")
+#     return docker.from_env()
+def wait_for_nodes(client, node_names, timeout=20, poll_interval=1):
         """
         Wait for the specified nodes to come online within a timeout.
 
@@ -158,11 +205,40 @@ def wait_for_nodes():
         # Timeout reached
         return False
 
-    return _wait_for_nodes
 
+def wait_for_server(server_url, server_port=80, server_api="/api", timeout=60):
+    """
+    Wait for the server to respond with a JSON containing a "version" key.
 
-# @pytest.fixture(scope="session")
-# def docker_client():
-#     """Fixture to create a Docker client."""
-#     log.info("Creating Docker client...")
-#     return docker.from_env()
+    Parameters
+    ----------
+    server_url : str
+        The server's base URL (e.g., "http://127.0.6.1").
+    server_port : int, optional
+        The server's port number (default: 80).
+    server_api : str, optional
+        The API endpoint path (default: "/api").
+    timeout : int, optional
+        Maximum time to wait for a valid response, in seconds (default: 60).
+
+    Returns
+    -------
+    dict or None
+        The response JSON if it contains "version", otherwise None.
+    """
+    url = f"{server_url}:{server_port}{server_api}"
+    start_time = time.time()
+
+    while time.time() - start_time < timeout:
+        try:
+            response = requests.get(url, timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                if "version" in data:
+                    return True
+        except requests.RequestException:
+            pass
+
+        time.sleep(1)
+
+    return False

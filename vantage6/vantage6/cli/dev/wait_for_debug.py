@@ -7,7 +7,7 @@ from vantage6.cli.utils import wait_debug_dap_ready
 @click.option("--host", required=True, type=str, help="Host to connect to.")
 @click.option("--port", required=True, type=int, help="Port to connect to.")
 @click.option(
-    "--timeout", default=20, type=int, show_default=True, help="Maximum time to wait (in seconds)."
+    "--timeout", default=90, type=int, show_default=True, help="Maximum time to wait (in seconds)."
 )
 def wait_for_debug(host: str, port: int, timeout: int) -> None:
     """
