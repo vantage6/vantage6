@@ -177,13 +177,6 @@ class RunIO:
         bytes
             Content of the output file
         """
-        self.log.debug(AlgorithmStepType.DATA_EXTRACTION)
-        self.log.debug(self.action)
-
-        self.log.debug(AlgorithmStepType.DATA_EXTRACTION == self.action)
-
-        self.log.debug(type(self.action))
-        self.log.debug(type(AlgorithmStepType.DATA_EXTRACTION))
 
         match self.action:
 
