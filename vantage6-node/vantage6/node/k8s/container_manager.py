@@ -59,47 +59,27 @@ class ContainerManager:
         ctx: NodeContext
             Context object from which some settings are obtained
         """
-        self.log = logging.getLogger(logger_name(__name__))
         self.log.debug("Initializing ContainerManager")
 
+        self.log = logging.getLogger(logger_name(__name__))
         self.ctx = ctx
-
-        self.running_on_pod: bool
-
         self.client = client
 
-        # minik8s config, by default in the user's home directory root
-        home_dir = os.path.expanduser("~")
-        kube_config_file_path = os.path.join(home_dir, ".kube", "config")
-
-        # The Node can be running on a regular host or within a POD. The K8S
-        # configuration file is loaded from different locations depending on
-        # the context.
-        if os.path.exists(kube_config_file_path):
-            self.running_on_pod = False
-            # default microk8s config
-            config.load_kube_config(kube_config_file_path)
-            self.log.info("Node running on a regular host")
-
         # Instanced within a pod
-        elif os.path.exists(KUBE_CONFIG_FILE_PATH):
-            self.running_on_pod = True
-            # Default mount location defined on POD configuration
-            config.load_kube_config(KUBE_CONFIG_FILE_PATH)
-            self.log.info("Node running within a POD")
-        else:
+        if not os.path.exists(KUBE_CONFIG_FILE_PATH):
             raise ValueError(
-                "K8S configuration could not be found. Node must be running within a "
-                "POD or a host"
+                "Kubernetes configuration file not found at ",
+                KUBE_CONFIG_FILE_PATH,
             )
+
+        # Default mount location defined on POD configuration
+        config.load_kube_config(KUBE_CONFIG_FILE_PATH)
 
         # The `local_data_dir` refers to the location where this node can write files
         # to. When this node instance needs to create a volume mount for a container,
         # it needs to refer to the location where the file is stored on the host system,
         # for this we use the `host_data_dir`.
-        self.local_data_dir = (
-            TASK_FILES_ROOT if self.running_on_pod else self.ctx.config["task_dir"]
-        )
+        self.local_data_dir = TASK_FILES_ROOT
         self.host_data_dir = self.ctx.config["task_dir"]
 
         self.databases = self._set_database(self.ctx.config["databases"])
@@ -174,15 +154,11 @@ class ContainerManager:
             local_uri = uri
             tmp_uri = Path(DATABASE_BASE_PATH) / f"{label}.{db_config['type']}"
 
-            if self.running_on_pod:
-                db_is_file = tmp_uri.exists() and tmp_uri.is_file()
-                db_is_dir = tmp_uri.exists() and tmp_uri.is_dir()
+            db_is_file = tmp_uri.exists() and tmp_uri.is_file()
+            db_is_dir = tmp_uri.exists() and tmp_uri.is_dir()
 
-                if db_is_file or db_is_dir:
-                    local_uri = str(tmp_uri)
-            else:
-                db_is_file = Path(uri).exists() and Path(uri).is_file()
-                db_is_dir = Path(uri).exists() and Path(tmp_uri).is_dir()
+            if db_is_file or db_is_dir:
+                local_uri = str(tmp_uri)
 
             databases[label] = {
                 "uri": uri,
