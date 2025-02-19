@@ -10,7 +10,7 @@ module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
 
 
-def cleanup_results(days: int, include_input: bool = False):
+def cleanup_runs_data(days: int, include_input: bool = False):
     """
     Clear the `result` and (optionally) `input` field for `Run` instances older
     than the specified number of days.

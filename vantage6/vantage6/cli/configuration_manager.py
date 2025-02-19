@@ -29,7 +29,7 @@ class ServerConfiguration(Configuration):
         "allow_drop_all": Use(bool),
         "logging": {**LOGGING_VALIDATORS, "file": Use(str)},
         Optional("server_name"): str,
-        Optional("results_cleanup_days"): Use(int),
+        Optional("runs_data_cleanup_days"): Use(int),
     }
 
 

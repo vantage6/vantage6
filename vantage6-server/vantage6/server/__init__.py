@@ -171,12 +171,12 @@ class ServerApp:
         # set the server version
         self.__version__ = __version__
 
-        if self.ctx.config.get("results_cleanup_days"):
+        if self.ctx.config.get("runs_data_cleanup_days"):
             log.info(
                 "Results older than %s days will be removed",
-                self.ctx.config.get("results_cleanup_days"),
+                self.ctx.config.get("runs_data_cleanup_days"),
             )
-            t_cleanup = Thread(target=self.__results_cleanup_worker, daemon=True)
+            t_cleanup = Thread(target=self.__runs_data_cleanup_worker, daemon=True)
             t_cleanup.start()
 
         # set up socket ping/pong
@@ -818,13 +818,13 @@ class ServerApp:
                 log.exception("Node-status thread had an exception")
                 time.sleep(PING_INTERVAL_SECONDS)
 
-    def __results_cleanup_worker(self):
-        """Start a background thread to clean up old tasks."""
-        include_input = self.ctx.config.get("results_cleanup_include_input", False)
+    def __runs_data_cleanup_worker(self):
+        """Start a background thread to clean up data from old Runs."""
+        include_input = self.ctx.config.get("runs_data_cleanup_include_input", False)
         while True:
             try:
-                cleanup.cleanup_results(
-                    self.ctx.config.get("results_cleanup_days"),
+                cleanup.cleanup_runs_data(
+                    self.ctx.config.get("runs_data_cleanup_days"),
                     include_input=include_input,
                 )
             except:
