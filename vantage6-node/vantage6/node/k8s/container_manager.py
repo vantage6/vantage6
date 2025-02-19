@@ -210,12 +210,6 @@ class ContainerManager:
         -------
         RunStatus
             Returns the status of the run
-
-        Notes
-        -----
-        stackoverflow.com/questions/57563359/how-to-properly-update-the-status-of-a-job
-        kubernetes.io/docs/concepts/workloads/controllers/job/#pod-backoff-failure-
-            policy
         """
 
         # In case we are dealing with a data-extraction or prediction task, we need to
@@ -359,6 +353,9 @@ class ContainerManager:
         #      the dataframe requested by the user was available. We should re-implement
         #      these checks here.
 
+        # stackoverflow.com/questions/57563359/how-to-properly-update-the-status-of-a-job
+        # kubernetes.io/docs/concepts/workloads/controllers/job/#pod-backoff-failure-
+        # policy
         while True:
 
             pods = self.core_api.list_namespaced_pod(
