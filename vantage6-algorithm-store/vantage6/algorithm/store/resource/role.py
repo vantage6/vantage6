@@ -10,6 +10,14 @@ from sqlalchemy import or_
 from vantage6.algorithm.store.default_roles import DefaultRole
 from vantage6.algorithm.store.resource import with_permission
 from vantage6.backend.common.resource.input_schema import RoleInputSchema
+from vantage6.backend.common.resource.role import (
+    apply_user_filter,
+    filter_by_name_or_description,
+    get_rules,
+    handle_exceptions,
+    validate_request_body,
+    validate_user_exists,
+)
 from vantage6.common import logger_name
 from vantage6.algorithm.store.permission import PermissionManager
 from vantage6.algorithm.store.model.rule import Operation
@@ -42,8 +50,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         Roles,
         path,
         endpoint="role_without_id",
-        methods=("GET",),
-        # methods=("GET", "POST"),
+        methods=("GET", "POST"),
         resource_class_kwargs=services,
     )
     api.add_resource(
@@ -92,6 +99,7 @@ role_input_schema = RoleInputSchema(default_roles=[role for role in DefaultRole]
 
 class Roles(AlgorithmStoreResources):
     @with_permission(module_name, Operation.VIEW)
+    @handle_exceptions
     def get(self):
         """Returns a list of roles
         ---
@@ -147,55 +155,33 @@ class Roles(AlgorithmStoreResources):
 
         tags: ["Role"]
         """
-        q = g.session.query(db.Role)
+        query = g.session.query(db.Role)
 
         args = request.args
 
-        # filter by one or more names or descriptions
-        for param in ["name", "description"]:
-            filters = args.getlist(param)
-            if filters:
-                q = q.filter(or_(*[getattr(db.Role, param).like(f) for f in filters]))
+        query = filter_by_name_or_description(db, query, args)
 
         if "user_id" in args:
-            user = db.User.get(args["user_id"])
-            if not user:
-                return {
-                    "msg": f'User with id={args["user_id"]} does not ' "exist!"
-                }, HTTPStatus.BAD_REQUEST
+            validate_user_exists(db, args["user_id"])
+            apply_user_filter(db, query, args["user_id"])
 
-            q = (
-                q.join(db.Permission)
-                .join(db.User)
-                .filter(db.User.id == args["user_id"])
-            )
-
-        # paginate results
-        try:
-            page = Pagination.from_query(q, request, db.Role)
-        except (ValueError, AttributeError) as e:
-            return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
+        page = Pagination.from_query(query, request, db.Role)
 
         return self.response(page, role_output_schema)
 
     @with_permission(module_name, Operation.CREATE)
+    @handle_exceptions
     def post(self):
         data = request.get_json()
-        errors = role_input_schema.validate(data)
-        if errors:
-            return {
-                "msg": "Request body is incorrect",
-                "errors": errors,
-            }, HTTPStatus.BAD_REQUEST
-        rules = []
-        if data["rules"]:
-            for rule_id in data["rules"]:
-                rule = db.Rule.get(rule_id)
-                if not rule:
-                    return {
-                        "msg": f"Rule id={rule_id} not found."
-                    }, HTTPStatus.NOT_FOUND
-                rules.append(rule)
+        validate_request_body(role_input_schema, data)
+        rules = get_rules(data, db)
+        self.permissions.check_user_rules(rules)
+        role = db.Role(
+            name=data.get("name"), description=data.get("description"), rules=rules
+        )
+        role.save()
+
+        return role_output_schema.dump(role, many=False), HTTPStatus.CREATED
 
 
 class Role(AlgorithmStoreResources):

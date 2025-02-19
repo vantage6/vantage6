@@ -8,11 +8,15 @@ from sqlalchemy import or_
 
 from vantage6.backend.common.resource.input_schema import RoleInputSchema
 from vantage6.backend.common.resource.role import (
+    apply_user_filter,
+    filter_by_name_or_description,
     get_rules,
     handle_exceptions,
     UnauthorizedError,
     NotFoundError,
     BadRequestError,
+    validate_request_body,
+    validate_user_exists,
 )
 from vantage6.server import db
 from vantage6.server.resource import (
@@ -149,16 +153,6 @@ rule_schema = RuleSchema()
 role_input_schema = RoleInputSchema(default_roles=[role for role in DefaultRole])
 
 
-def validate_request_body(schema, data, partial=False):
-    errors = schema.validate(data, partial=partial)
-    if errors:
-        return {
-            "msg": "Request body is incorrect",
-            "errors": errors,
-        }, HTTPStatus.BAD_REQUEST
-    return None
-
-
 class RoleBase(ServicesResources):
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
@@ -230,15 +224,6 @@ class Roles(RoleBase):
             )
         return query
 
-    def _filter_by_name_or_description(self, query, args):
-        for param in ["name", "description"]:
-            filters = args.getlist(param)
-            if filters:
-                query = query.filter(
-                    or_(*[getattr(db.Role, param).like(f) for f in filters])
-                )
-        return query
-
     def _filter_by_rule(self, query, args):
         if "rule_id" in args:
             self._get_rule(args["rule_id"])
@@ -251,21 +236,15 @@ class Roles(RoleBase):
 
     def _filter_by_user(self, query, args):
         if "user_id" in args:
-            user = db.User.get(args["user_id"])
-            if not user:
-                raise BadRequestError(f'User with id={args["user_id"]} does not exist!')
-            elif (
+            user = validate_user_exists(db, args["user_id"])
+            if (
                 not self.rule_collection.allowed_for_org(P.VIEW, user.organization_id)
                 and not g.user.id == user.id
             ):
                 raise UnauthorizedError(
                     f"You lack the permission to view roles from the organization that user id={user.id} belongs to!"
                 )
-            query = (
-                query.join(db.Permission)
-                .join(db.User)
-                .filter(db.User.id == args["user_id"])
-            )
+            query = apply_user_filter(db, query, args["user_id"])
         return query
 
     def _filter_by_user_permissions(self, query, auth_org):
@@ -401,7 +380,7 @@ class Roles(RoleBase):
 
         q = self._filter_by_organization(q, request.args)
         q = self._filter_by_collaboration(q, request.args)
-        q = self._filter_by_name_or_description(q, request.args)
+        q = filter_by_name_or_description(db, q, request.args)
         q = self._filter_by_rule(q, request.args)
         q = self._filter_by_user(q, request.args)
 
@@ -470,9 +449,7 @@ class Roles(RoleBase):
         tags: ["Role"]
         """
         data = request.get_json()
-        validation_error = validate_request_body(role_input_schema, data)
-        if validation_error:
-            return validation_error
+        validate_request_body(role_input_schema, data)
 
         rules = get_rules(data, db)
         self.permissions.check_user_rules(rules)
@@ -637,9 +614,8 @@ class Role(RoleBase):
         """
         data = request.get_json()
 
-        validation_error = validate_request_body(role_input_schema, data, partial=True)
-        if validation_error:
-            return validation_error
+        validate_request_body(role_input_schema, data, partial=True)
+
         if "organization_id" in data:
             raise BadRequestError("Organization id cannot be changed.")
 

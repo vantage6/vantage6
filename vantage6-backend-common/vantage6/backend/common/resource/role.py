@@ -2,6 +2,7 @@ import logging
 from functools import wraps
 from http import HTTPStatus
 from typing import Any, List
+from sqlalchemy import or_
 
 from requests import Session
 
@@ -47,6 +48,13 @@ def handle_exceptions(func):
     return wrapper
 
 
+def validate_request_body(schema, data, partial=False):
+    errors = schema.validate(data, partial=partial)
+    if errors:
+        raise BadRequestError(errors)
+    return None
+
+
 def get_rules(data: Any, db: Session) -> List:
     rules = []
     if data["rules"]:
@@ -56,3 +64,24 @@ def get_rules(data: Any, db: Session) -> List:
                 raise NotFoundError(f"Rule with id {rule_id} not found")
             rules.append(rule)
     return rules
+
+
+def filter_by_name_or_description(db, query, args):
+    for param in ["name", "description"]:
+        filters = args.getlist(param)
+        if filters:
+            query = query.filter(
+                or_(*[getattr(db.Role, param).like(f) for f in filters])
+            )
+    return query
+
+
+def validate_user_exists(db, user_id):
+    user = db.User.get(user_id)
+    if not user:
+        raise BadRequestError(f"User with id={user_id} does not exist!")
+    return user
+
+
+def apply_user_filter(db, query, user_id):
+    return query.join(db.Permission).join(db.User).filter(db.User.id == user_id)
