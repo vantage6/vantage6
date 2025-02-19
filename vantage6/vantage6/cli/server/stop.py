@@ -53,9 +53,13 @@ def cli_server_stop(name: str, system_folders: bool, all_servers: bool):
 
     # make sure we have a configuration name to work with
     if not name:
-        container_name = q.select(
-            "Select the server you wish to stop:", choices=running_server_names
-        ).ask()
+        try:
+            container_name = q.select(
+                "Select the server you wish to stop:", choices=running_server_names
+            ).unsafe_ask()
+        except KeyboardInterrupt:
+            error("Aborted by user!")
+            return
     else:
         post_fix = "system" if system_folders else "user"
         container_name = f"{APPNAME}-{name}-{post_fix}-{InstanceType.SERVER}"
