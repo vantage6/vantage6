@@ -522,7 +522,6 @@ class AppContext(metaclass=Singleton):
         log_config = self.config["logging"]
 
         format_ = self.LOGGER_PREFIX + log_config["format"]
-        print(format_)
         datefmt = log_config.get("datefmt", "")
 
         # make sure the log-file exists
