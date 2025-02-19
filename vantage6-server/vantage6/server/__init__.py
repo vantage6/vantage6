@@ -820,6 +820,9 @@ class ServerApp:
 
     def __runs_data_cleanup_worker(self):
         """Start a background thread to clean up data from old Runs."""
+        # NOTE/TODO: this is a very simple implementation, horizonal scaling is
+        # not being taken into account. We'd probably only need one worker per
+        # database, not per server instance (for example).
         include_input = self.ctx.config.get("runs_data_cleanup_include_input", False)
         while True:
             try:
