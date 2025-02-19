@@ -37,6 +37,7 @@ from vantage6.node.globals import (
     JOB_POD_TOKEN_PATH,
     JOB_POD_SESSION_FOLDER_PATH,
     TASK_START_RETRIES,
+    TASK_START_TIMEOUT_SECONDS,
 )
 from vantage6.node.util import get_parent_id
 from vantage6.node.k8s.run_io import RunIO
@@ -342,11 +343,10 @@ class ContainerManager:
         #                     \
         #                      - Unknown
         #
+
         # Kubernetes will automatically retry the job ``backoff_limit`` times. According
         # to the Pod's backoff failure policy, it will have a failed status only after
         # the last failed retry.
-        interval = 1
-        timeout = 60
         start_time = time.time()
 
         # Wait until the POD is running. This method is blocking until the POD is
@@ -356,7 +356,8 @@ class ContainerManager:
         #     and checking their status in a separate thread
         # TODO in the previous `DockerTaskManager` a few checks where performed to
         #      tackle any issues with the prerequisites. For example it checked wether
-        #      the dataframe requested by the user was available. We should implement
+        #      the dataframe requested by the user was available. We should re-implement
+        #      these checks here.
 
         while True:
 
@@ -381,14 +382,14 @@ class ContainerManager:
 
                 return status
 
-            elif time.time() - start_time > timeout:
+            elif time.time() - start_time > TASK_START_TIMEOUT_SECONDS:
                 self.log.error(
                     "Time out while waiting Job POD with label "
                     f"app={run_io.container_name} to report any state."
                 )
                 return RunStatus.UNKNOWN_ERROR
 
-            time.sleep(interval)
+            time.sleep(1)
 
     def __wait_until_pod_running(self, label: str) -> RunStatus:
         """

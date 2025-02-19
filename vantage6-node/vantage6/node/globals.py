@@ -26,6 +26,11 @@ TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET = 60
 # constants for retrying task start due to a temporary error
 TASK_START_RETRIES = 3
 
+# The time that a k8s needs to report any state. In case of a timeout, the
+# task is considered failed. Note that the Job will try to restart the container
+# at most `TASK_START_RETRIES` times (within this timeout).
+TASK_START_TIMEOUT_SECONDS = 60 * 5  # 5 minutes
+
 # Environment variables that should be set in the Dockerfile and that may not
 # be overwritten by the user.
 ENV_VARS_NOT_SETTABLE_BY_NODE = ["PKG_NAME"]
