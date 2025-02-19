@@ -1039,13 +1039,14 @@ class ContainerManager:
                 time.sleep(1)
                 continue
 
-            # Check if any of the jobs is completed
-            for job in jobs.items:
+            # Create a list of failed or succeeded jobs
+            finished_jobs = [
+                job for job in jobs.items if job.status.succeeded or job.status.failed
+            ]
 
-                if not job.status.succeeded and not job.status.failed:
-                    # If the job is not completed or failed, continue to check the
-                    # next job
-                    continue
+            if not finished_jobs:
+                time.sleep(1)
+                continue
 
                 # Create helper object to process the output of the job
                 run_io = RunIO.from_dict(
