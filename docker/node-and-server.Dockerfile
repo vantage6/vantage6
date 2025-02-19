@@ -53,8 +53,6 @@ RUN CFLAGS="-I/usr/local/opt/openssl/include" \
 
 RUN chmod +x /vantage6/vantage6-server/server.sh
 
-RUN pip install jinja2==3.1.5
-
 # expose the proxy server port
 ARG port=80
 EXPOSE ${port}
