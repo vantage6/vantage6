@@ -29,14 +29,15 @@ from vantage6.common.client.node_client import NodeClient
 from vantage6.node.globals import (
     ENV_VARS_NOT_SETTABLE_BY_NODE,
     KUBE_CONFIG_FILE_PATH,
-    V6_NODE_FQDN,
-    V6_NODE_PROXY_PORT,
-    V6_NODE_DATABASE_BASE_PATH,
+    PROXY_SERVER_HOST,
+    PROXY_SERVER_PORT,
+    DATABASE_BASE_PATH,
     TASK_FILES_ROOT,
     JOB_POD_OUTPUT_PATH,
     JOB_POD_INPUT_PATH,
     JOB_POD_TOKEN_PATH,
     JOB_POD_SESSION_FOLDER_PATH,
+    TASK_START_RETRIES,
 )
 from vantage6.node.util import get_parent_id
 from vantage6.node.k8s.run_io import RunIO
@@ -213,7 +214,7 @@ class ContainerManager:
             # need it when we are creating new volume mounts for the algorithm
             # containers
             local_uri = uri
-            tmp_uri = Path(V6_NODE_DATABASE_BASE_PATH) / f"{label}.{db_config['type']}"
+            tmp_uri = Path(DATABASE_BASE_PATH) / f"{label}.{db_config['type']}"
 
             if self.running_on_pod:
                 db_is_file = tmp_uri.exists() and tmp_uri.is_file()
@@ -331,10 +332,10 @@ class ContainerManager:
         # Set environment variables for the algorithm client. This client is used
         # to communicate from the algorithm to the vantage6 server through the proxy.
         env_vars[ContainerEnvNames.HOST.value] = os.environ.get(
-            "PROXY_SERVER_HOST", V6_NODE_FQDN
+            "PROXY_SERVER_HOST", PROXY_SERVER_HOST
         )
         env_vars[ContainerEnvNames.PORT.value] = os.environ.get(
-            "PROXY_SERVER_PORT", str(V6_NODE_PROXY_PORT)
+            "PROXY_SERVER_PORT", str(PROXY_SERVER_PORT)
         )
         env_vars[ContainerEnvNames.API_PATH.value] = ("",)
 
@@ -389,7 +390,7 @@ class ContainerManager:
                         restart_policy="Never",
                     ),
                 ),
-                backoff_limit=3,
+                backoff_limit=TASK_START_RETRIES,
             ),
         )
 

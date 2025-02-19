@@ -52,8 +52,8 @@ from vantage6.node.globals import (
     SLEEP_BTWN_NODE_LOGIN_TRIES,
     TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET,
     TIME_LIMIT_RETRY_CONNECT_NODE,
-    V6_NODE_FQDN,
-    V6_NODE_PROXY_PORT,
+    PROXY_SERVER_HOST,
+    PROXY_SERVER_PORT,
 )
 from vantage6.node.k8s.container_manager import ContainerManager
 from vantage6.node.socket import NodeTaskNamespace
@@ -137,14 +137,14 @@ class Node:
         A proxy for communication between algorithms and central
         server.
         """
-        default_proxy_host = V6_NODE_FQDN
+        default_proxy_host = PROXY_SERVER_HOST
 
         # If PROXY_SERVER_HOST was set in the environment, it overrides our
         # value.
         proxy_host = os.environ.get("PROXY_SERVER_HOST", default_proxy_host)
         os.environ["PROXY_SERVER_HOST"] = proxy_host
 
-        proxy_port = int(os.environ.get("PROXY_SERVER_PORT", V6_NODE_PROXY_PORT))
+        proxy_port = int(os.environ.get("PROXY_SERVER_PORT", PROXY_SERVER_PORT))
 
         # 'app' is defined in vantage6.node.proxy_server
         debug_mode = self.debug.get("proxy_server", False)
