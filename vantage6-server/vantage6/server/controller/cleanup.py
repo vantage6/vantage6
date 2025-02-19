@@ -1,7 +1,10 @@
+import logging
+
+from datetime import datetime, timedelta, timezone
+
+from vantage6.common.task_status import TaskStatus
 from vantage6.server.model import Run
 from vantage6.server.model.base import DatabaseSessionManager
-from datetime import datetime, timedelta, timezone
-import logging
 
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
@@ -28,7 +31,11 @@ def cleanup_results(days: int, include_input: bool = False):
         with session.begin():
             runs = (
                 session.query(Run)
-                .filter(Run.finished_at < threshold_date, Run.cleanup_at == None)
+                .filter(
+                    Run.finished_at < threshold_date,
+                    Run.cleanup_at == None,
+                    Run.status == TaskStatus.COMPLETED,
+                )
                 .all()
             )
             for run in runs:
