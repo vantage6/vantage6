@@ -4,9 +4,12 @@ from shutil import rmtree
 from pathlib import Path
 
 import click
+import docker
+from colorama import Fore, Style
 
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
-from vantage6.common import info
+from vantage6.common import info, error
+from vantage6.common.globals import APPNAME
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.server.remove import cli_server_remove
@@ -33,6 +36,20 @@ def remove_demo_network(
     to it.
     """
     ctx = get_dev_server_context(config, name)
+
+    # check that the server is not running
+    client = docker.from_env()
+    running_servers = client.containers.list(
+        filters={"label": f"{APPNAME}-type={InstanceType.SERVER}"}
+    )
+    running_server_names = [server.name for server in running_servers]
+    container_name = f"{APPNAME}-{name}-user-{InstanceType.SERVER}"
+    if container_name in running_server_names:
+        error(
+            f"Server {Fore.RED}{name}{Style.RESET_ALL} is still running! First stop "
+            "the network with 'v6 dev stop-demo-network'."
+        )
+        return
 
     # remove the server
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
