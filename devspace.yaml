@@ -12,6 +12,7 @@ vars:
     default: ./dev/olympic_atheletes_2016.csv
   KUBE_CONFIG:
     question: "Where is your kube config from k8s located?"
+    default: ~/.kube/config
 
 pipelines:
 
