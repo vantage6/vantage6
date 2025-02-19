@@ -736,4 +736,3 @@ class Node:
 def run(ctx):
     """Start the node."""
     node = Node(ctx)
-    # node.start_processing_threads()
