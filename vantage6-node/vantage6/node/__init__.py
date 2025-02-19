@@ -379,28 +379,6 @@ class Node:
             namespace="/tasks",
         )
 
-    # TODO double-check that this worker can be removed
-    # def __listening_worker(self) -> None:
-    #     """
-    #     Listen for incoming (websocket) messages from the server.
-
-    #     Runs in a separate thread. Received events are handled by the
-    #     appropriate action handler.
-    #     """
-    #     self.log.debug("Listening for incoming messages")
-
-    #     # FIXME: while True in combination with a wait() call that never exits
-    #     #   makes joining the tread (to terminate) difficult?
-    #     while True:
-    #         # incoming messages are handled by the action_handler instance
-    #         # which is attached when the socket connection was made. wait()
-    #         # is blocks forever (if no time is specified).
-    #         try:
-    #             self.socketIO.wait()
-    #         except Exception as e:
-    #             self.log.error("Listening thread had an exception")
-    #             self.log.exception(e)
-
     def __poll_task_results(self) -> None:
         """
         Sending messages to central server.
@@ -451,7 +429,8 @@ class Node:
                     init_org_id=init_org.get("id"),
                 )
 
-                # notify other nodes about algorithm status change
+                # notify other nodes, server and clients about algorithm status
+                # change
                 self.socketIO.emit(
                     "algorithm_status_change",
                     data={
