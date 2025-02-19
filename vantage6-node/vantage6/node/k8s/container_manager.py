@@ -4,9 +4,8 @@ import time
 import re
 import base64
 
-from typing import List, NamedTuple, Tuple
+from typing import List, Tuple
 from pathlib import Path
-
 
 from kubernetes import client as k8s_client, config, watch
 from kubernetes.client import V1EnvVar
@@ -45,48 +44,7 @@ from vantage6.node.k8s.exceptions import (
     PermanentAlgorithmStartFail,
     DataFrameNotFound,
 )
-
-
-class Result(NamedTuple):
-    """
-    Data class to store the result of the docker image.
-
-    Attributes
-    ----------
-    run_id: int
-        ID of the current algorithm run
-    logs: str
-        Logs attached to current algorithm run
-    data: str
-        Output data of the algorithm
-    status_code: int
-        Status code of the algorithm run
-    """
-
-    run_id: int
-    task_id: int
-    logs: str
-    data: str
-    status: str
-    parent_id: int | None
-
-
-# Taken from docker_manager.py
-class ToBeKilled(NamedTuple):
-    """Data class to store which tasks should be killed"""
-
-    task_id: int
-    run_id: int
-    organization_id: int
-
-
-# Taken from docker_manager.py
-class KilledRun(NamedTuple):
-    """Data class to store which algorithms have been killed"""
-
-    run_id: int
-    task_id: int
-    parent_id: int
+from vantage6.node.k8s.data_classes import Result, ToBeKilled, KilledRun
 
 
 class ContainerManager:
@@ -1047,6 +1005,9 @@ class ContainerManager:
             if not finished_jobs:
                 time.sleep(1)
                 continue
+
+            # Check if any of the jobs is completed
+            for job in finished_jobs:
 
                 # Create helper object to process the output of the job
                 run_io = RunIO.from_dict(
