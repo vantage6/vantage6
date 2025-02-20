@@ -35,7 +35,6 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTreeModule } from '@angular/material/tree';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { QRCodeModule } from 'angularx-qrcode';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { AppComponent } from './app/app.component';
 import { importProvidersFrom } from '@angular/core';
@@ -82,7 +81,6 @@ bootstrapApplication(AppComponent, {
       MatTreeModule,
       MatRadioModule,
       MatTooltipModule,
-      QRCodeModule,
       OverlayModule
     ),
     { provide: MAT_DATE_LOCALE, useValue: enCA },
