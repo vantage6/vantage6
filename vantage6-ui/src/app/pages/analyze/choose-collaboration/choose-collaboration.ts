@@ -15,24 +15,23 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-choose-collaboration',
-  templateUrl: './choose-collaboration.component.html',
-  styleUrls: ['./choose-collaboration.scss'],
-  standalone: true,
-  imports: [
-    PageHeaderComponent,
-    NgIf,
-    NgFor,
-    MatButton,
-    MatCard,
-    MatCardContent,
-    MatCardHeader,
-    MatCardTitle,
-    RouterLink,
-    MatProgressSpinner,
-    AsyncPipe,
-    TranslateModule
-  ]
+    selector: 'app-choose-collaboration',
+    templateUrl: './choose-collaboration.component.html',
+    styleUrls: ['./choose-collaboration.scss'],
+    imports: [
+        PageHeaderComponent,
+        NgIf,
+        NgFor,
+        MatButton,
+        MatCard,
+        MatCardContent,
+        MatCardHeader,
+        MatCardTitle,
+        RouterLink,
+        MatProgressSpinner,
+        AsyncPipe,
+        TranslateModule
+    ]
 })
 export class ChooseCollaborationComponent implements OnInit {
   @HostBinding('class') class = 'card-container';

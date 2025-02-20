@@ -13,11 +13,10 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-study-create',
-  templateUrl: './study-create.component.html',
-  styleUrls: ['./study-create.component.scss'],
-  standalone: true,
-  imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, StudyFormComponent, MatProgressSpinner, TranslateModule]
+    selector: 'app-study-create',
+    templateUrl: './study-create.component.html',
+    styleUrls: ['./study-create.component.scss'],
+    imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, StudyFormComponent, MatProgressSpinner, TranslateModule]
 })
 export class StudyCreateComponent {
   routes = routePaths;

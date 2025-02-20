@@ -11,10 +11,9 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-organization-create',
-  templateUrl: './organization-create.component.html',
-  standalone: true,
-  imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, OrganizationFormComponent, MatProgressSpinner, TranslateModule]
+    selector: 'app-organization-create',
+    templateUrl: './organization-create.component.html',
+    imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, OrganizationFormComponent, MatProgressSpinner, TranslateModule]
 })
 export class OrganizationCreateComponent {
   @HostBinding('class') class = 'card-container';

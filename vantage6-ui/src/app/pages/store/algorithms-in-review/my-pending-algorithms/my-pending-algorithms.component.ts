@@ -31,24 +31,23 @@ enum TableRows {
 }
 
 @Component({
-  selector: 'app-my-pending-algorithms',
-  templateUrl: './my-pending-algorithms.component.html',
-  styleUrl: './my-pending-algorithms.component.scss',
-  standalone: true,
-  imports: [
-    PageHeaderComponent,
-    MatCard,
-    MatCardContent,
-    MatButton,
-    RouterLink,
-    NgIf,
-    MatIcon,
-    MatCardHeader,
-    MatCardTitle,
-    TableComponent,
-    MatPaginator,
-    TranslateModule
-  ]
+    selector: 'app-my-pending-algorithms',
+    templateUrl: './my-pending-algorithms.component.html',
+    styleUrl: './my-pending-algorithms.component.scss',
+    imports: [
+        PageHeaderComponent,
+        MatCard,
+        MatCardContent,
+        MatButton,
+        RouterLink,
+        NgIf,
+        MatIcon,
+        MatCardHeader,
+        MatCardTitle,
+        TableComponent,
+        MatPaginator,
+        TranslateModule
+    ]
 })
 export class MyPendingAlgorithmsComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

@@ -14,23 +14,22 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-study-form',
-  templateUrl: './study-form.component.html',
-  styleUrls: ['./study-form.component.scss'],
-  standalone: true,
-  imports: [
-    NgIf,
-    ReactiveFormsModule,
-    MatFormField,
-    MatLabel,
-    MatInput,
-    MatSelect,
-    NgFor,
-    MatOption,
-    MatButton,
-    MatProgressSpinner,
-    TranslateModule
-  ]
+    selector: 'app-study-form',
+    templateUrl: './study-form.component.html',
+    styleUrls: ['./study-form.component.scss'],
+    imports: [
+        NgIf,
+        ReactiveFormsModule,
+        MatFormField,
+        MatLabel,
+        MatInput,
+        MatSelect,
+        NgFor,
+        MatOption,
+        MatButton,
+        MatProgressSpinner,
+        TranslateModule
+    ]
 })
 export class StudyFormComponent implements OnInit {
   @Input() study?: Study;

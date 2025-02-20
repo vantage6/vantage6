@@ -21,29 +21,28 @@ import { PermissionsMatrixStoreComponent } from '../../../../components/permissi
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-store-user-read',
-  templateUrl: './store-user-read.component.html',
-  styleUrl: './store-user-read.component.scss',
-  standalone: true,
-  imports: [
-    NgIf,
-    PageHeaderComponent,
-    MatIconButton,
-    MatMenuTrigger,
-    MatIcon,
-    MatMenu,
-    MatMenuItem,
-    RouterLink,
-    MatCard,
-    MatCardHeader,
-    MatCardTitle,
-    MatCardContent,
-    NgFor,
-    ChipComponent,
-    PermissionsMatrixStoreComponent,
-    MatProgressSpinner,
-    TranslateModule
-  ]
+    selector: 'app-store-user-read',
+    templateUrl: './store-user-read.component.html',
+    styleUrl: './store-user-read.component.scss',
+    imports: [
+        NgIf,
+        PageHeaderComponent,
+        MatIconButton,
+        MatMenuTrigger,
+        MatIcon,
+        MatMenu,
+        MatMenuItem,
+        RouterLink,
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        MatCardContent,
+        NgFor,
+        ChipComponent,
+        PermissionsMatrixStoreComponent,
+        MatProgressSpinner,
+        TranslateModule
+    ]
 })
 export class StoreUserReadComponent extends BaseReadComponent implements OnInit, OnDestroy {
   user: StoreUser | null = null;

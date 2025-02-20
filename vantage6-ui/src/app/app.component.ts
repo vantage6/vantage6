@@ -3,10 +3,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { RouterOutlet } from '@angular/router';
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  standalone: true,
-  imports: [RouterOutlet]
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    imports: [RouterOutlet]
 })
 export class AppComponent {
   constructor(translate: TranslateService) {

@@ -22,22 +22,21 @@ import { MatCard, MatCardContent } from '@angular/material/card';
 import { TableComponent } from '../../../../components/table/table.component';
 
 @Component({
-  selector: 'app-role-list',
-  templateUrl: './role-list.component.html',
-  styleUrls: ['./role-list.component.scss'],
-  standalone: true,
-  imports: [
-    PageHeaderComponent,
-    NgIf,
-    MatButton,
-    RouterLink,
-    MatIcon,
-    MatCard,
-    MatCardContent,
-    TableComponent,
-    MatPaginator,
-    TranslateModule
-  ]
+    selector: 'app-role-list',
+    templateUrl: './role-list.component.html',
+    styleUrls: ['./role-list.component.scss'],
+    imports: [
+        PageHeaderComponent,
+        NgIf,
+        MatButton,
+        RouterLink,
+        MatIcon,
+        MatCard,
+        MatCardContent,
+        TableComponent,
+        MatPaginator,
+        TranslateModule
+    ]
 })
 export class RoleListComponent extends BaseListComponent implements OnInit, OnDestroy {
   getRoleParameters: GetRoleParameters = {};

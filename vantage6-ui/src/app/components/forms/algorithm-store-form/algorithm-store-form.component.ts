@@ -13,11 +13,10 @@ import { MatButton } from '@angular/material/button';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-algorithm-store-form',
-  templateUrl: './algorithm-store-form.component.html',
-  styleUrls: ['./algorithm-store-form.component.scss'],
-  standalone: true,
-  imports: [ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatHint, NgIf, MatCheckbox, MatButton, TranslateModule]
+    selector: 'app-algorithm-store-form',
+    templateUrl: './algorithm-store-form.component.html',
+    styleUrls: ['./algorithm-store-form.component.scss'],
+    imports: [ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatHint, NgIf, MatCheckbox, MatButton, TranslateModule]
 })
 export class AlgorithmStoreFormComponent implements OnInit, OnDestroy {
   @Input() algorithmStore?: AlgorithmStore;

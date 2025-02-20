@@ -9,11 +9,10 @@ export interface DialogData {
 }
 
 @Component({
-  selector: 'app-log-dialog',
-  templateUrl: 'log-dialog.component.html',
-  styleUrls: ['./log-dialog.component.scss'],
-  standalone: true,
-  imports: [MatDialogTitle, CdkScrollable, MatDialogContent, MatDialogActions, MatButton, MatDialogClose, TranslateModule]
+    selector: 'app-log-dialog',
+    templateUrl: 'log-dialog.component.html',
+    styleUrls: ['./log-dialog.component.scss'],
+    imports: [MatDialogTitle, CdkScrollable, MatDialogContent, MatDialogActions, MatButton, MatDialogClose, TranslateModule]
 })
 export class LogDialogComponent {
   constructor(@Inject(MAT_DIALOG_DATA) public data: DialogData) {}

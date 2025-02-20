@@ -14,20 +14,19 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-old-algorithm-list',
-  templateUrl: './old-algorithm-list.component.html',
-  styleUrl: './old-algorithm-list.component.scss',
-  standalone: true,
-  imports: [
-    PageHeaderComponent,
-    NgIf,
-    AlertComponent,
-    DisplayAlgorithmsComponent,
-    MatCard,
-    MatCardContent,
-    MatProgressSpinner,
-    TranslateModule
-  ]
+    selector: 'app-old-algorithm-list',
+    templateUrl: './old-algorithm-list.component.html',
+    styleUrl: './old-algorithm-list.component.scss',
+    imports: [
+        PageHeaderComponent,
+        NgIf,
+        AlertComponent,
+        DisplayAlgorithmsComponent,
+        MatCard,
+        MatCardContent,
+        MatProgressSpinner,
+        TranslateModule
+    ]
 })
 export class OldAlgorithmListComponent extends BaseListComponent implements OnInit, OnDestroy {
   oldAlgorithms: Algorithm[] = [];

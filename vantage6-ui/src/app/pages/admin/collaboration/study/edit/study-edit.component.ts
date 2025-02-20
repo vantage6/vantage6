@@ -12,11 +12,10 @@ import { StudyFormComponent } from '../../../../../components/forms/study-form/s
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-study-edit',
-  templateUrl: './study-edit.component.html',
-  styleUrls: ['./study-edit.component.scss'],
-  standalone: true,
-  imports: [NgIf, PageHeaderComponent, MatCard, MatCardContent, StudyFormComponent, MatProgressSpinner]
+    selector: 'app-study-edit',
+    templateUrl: './study-edit.component.html',
+    styleUrls: ['./study-edit.component.scss'],
+    imports: [NgIf, PageHeaderComponent, MatCard, MatCardContent, StudyFormComponent, MatProgressSpinner]
 })
 export class StudyEditComponent implements OnInit {
   @HostBinding('class') class = 'card-container';

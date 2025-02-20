@@ -24,27 +24,26 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-algorithm-assign-review',
-  templateUrl: './algorithm-assign-review.component.html',
-  styleUrl: './algorithm-assign-review.component.scss',
-  standalone: true,
-  imports: [
-    PageHeaderComponent,
-    NgIf,
-    MatCard,
-    MatCardHeader,
-    MatCardTitle,
-    MatCardContent,
-    ReactiveFormsModule,
-    MatFormField,
-    MatLabel,
-    MatSelect,
-    NgFor,
-    MatOption,
-    MatButton,
-    MatProgressSpinner,
-    TranslateModule
-  ]
+    selector: 'app-algorithm-assign-review',
+    templateUrl: './algorithm-assign-review.component.html',
+    styleUrl: './algorithm-assign-review.component.scss',
+    imports: [
+        PageHeaderComponent,
+        NgIf,
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        MatCardContent,
+        ReactiveFormsModule,
+        MatFormField,
+        MatLabel,
+        MatSelect,
+        NgFor,
+        MatOption,
+        MatButton,
+        MatProgressSpinner,
+        TranslateModule
+    ]
 })
 export class AlgorithmAssignReviewComponent extends BaseCreateComponent implements OnInit, OnDestroy {
   @Input() algoID: string = '';

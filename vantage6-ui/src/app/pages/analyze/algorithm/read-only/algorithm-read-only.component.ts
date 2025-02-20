@@ -16,11 +16,10 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-algorithm-read-only',
-  templateUrl: './algorithm-read-only.component.html',
-  styleUrl: './algorithm-read-only.component.scss',
-  standalone: true,
-  imports: [NgIf, PageHeaderComponent, MatButton, DisplayAlgorithmComponent, MatCard, MatCardContent, MatProgressSpinner, TranslateModule]
+    selector: 'app-algorithm-read-only',
+    templateUrl: './algorithm-read-only.component.html',
+    styleUrl: './algorithm-read-only.component.scss',
+    imports: [NgIf, PageHeaderComponent, MatButton, DisplayAlgorithmComponent, MatCard, MatCardContent, MatProgressSpinner, TranslateModule]
 })
 export class AlgorithmReadOnlyComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

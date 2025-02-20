@@ -17,21 +17,20 @@ import { MatCard, MatCardContent } from '@angular/material/card';
 import { TableComponent } from '../../../../components/table/table.component';
 
 @Component({
-  selector: 'app-user-list',
-  templateUrl: './user-list.component.html',
-  standalone: true,
-  imports: [
-    PageHeaderComponent,
-    NgIf,
-    MatButton,
-    RouterLink,
-    MatIcon,
-    MatCard,
-    MatCardContent,
-    TableComponent,
-    MatPaginator,
-    TranslateModule
-  ]
+    selector: 'app-user-list',
+    templateUrl: './user-list.component.html',
+    imports: [
+        PageHeaderComponent,
+        NgIf,
+        MatButton,
+        RouterLink,
+        MatIcon,
+        MatCard,
+        MatCardContent,
+        TableComponent,
+        MatPaginator,
+        TranslateModule
+    ]
 })
 export class UserListComponent extends BaseListComponent implements OnInit, OnDestroy {
   getUserParameters: GetUserParameters = {};

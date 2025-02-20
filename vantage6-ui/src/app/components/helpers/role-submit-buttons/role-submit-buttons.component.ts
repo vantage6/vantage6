@@ -5,11 +5,10 @@ import { MatIcon } from '@angular/material/icon';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-role-submit-buttons',
-  templateUrl: './role-submit-buttons.component.html',
-  styleUrls: ['./role-submit-buttons.component.scss'],
-  standalone: true,
-  imports: [MatButton, NgIf, MatIcon, TranslateModule]
+    selector: 'app-role-submit-buttons',
+    templateUrl: './role-submit-buttons.component.html',
+    styleUrls: ['./role-submit-buttons.component.scss'],
+    imports: [MatButton, NgIf, MatIcon, TranslateModule]
 })
 export class RoleSubmitButtonsComponent {
   @Input() submitDisabled: boolean = false;

@@ -29,31 +29,30 @@ export interface SearchRequest {
 }
 
 @Component({
-  selector: 'app-table',
-  styleUrls: ['./table.component.scss'],
-  templateUrl: './table.component.html',
-  standalone: true,
-  imports: [
-    NgClass,
-    ReactiveFormsModule,
-    NgIf,
-    MatTable,
-    NgFor,
-    MatColumnDef,
-    MatHeaderCellDef,
-    MatHeaderCell,
-    MatFormField,
-    MatInput,
-    MatCellDef,
-    MatCell,
-    ChipComponent,
-    MatHeaderRowDef,
-    MatHeaderRow,
-    MatRowDef,
-    MatRow,
-    MatProgressSpinner,
-    HighlightedTextPipe
-  ]
+    selector: 'app-table',
+    styleUrls: ['./table.component.scss'],
+    templateUrl: './table.component.html',
+    imports: [
+        NgClass,
+        ReactiveFormsModule,
+        NgIf,
+        MatTable,
+        NgFor,
+        MatColumnDef,
+        MatHeaderCellDef,
+        MatHeaderCell,
+        MatFormField,
+        MatInput,
+        MatCellDef,
+        MatCell,
+        ChipComponent,
+        MatHeaderRowDef,
+        MatHeaderRow,
+        MatRowDef,
+        MatRow,
+        MatProgressSpinner,
+        HighlightedTextPipe
+    ]
 })
 export class TableComponent implements OnChanges {
   @Input() data?: TableData;

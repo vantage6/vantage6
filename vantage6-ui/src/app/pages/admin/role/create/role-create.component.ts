@@ -15,11 +15,10 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-role-create',
-  templateUrl: './role-create.component.html',
-  styleUrls: ['./role-create.component.scss'],
-  standalone: true,
-  imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, RoleFormComponent, MatProgressSpinner, TranslateModule]
+    selector: 'app-role-create',
+    templateUrl: './role-create.component.html',
+    styleUrls: ['./role-create.component.scss'],
+    imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, RoleFormComponent, MatProgressSpinner, TranslateModule]
 })
 export class RoleCreateComponent implements OnInit {
   @HostBinding('class') class = 'card-container';

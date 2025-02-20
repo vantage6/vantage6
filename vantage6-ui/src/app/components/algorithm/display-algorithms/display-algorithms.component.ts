@@ -6,11 +6,10 @@ import { NgFor } from '@angular/common';
 import { MatButton } from '@angular/material/button';
 
 @Component({
-  selector: 'app-display-algorithms',
-  templateUrl: './display-algorithms.component.html',
-  styleUrl: './display-algorithms.component.scss',
-  standalone: true,
-  imports: [NgFor, MatButton]
+    selector: 'app-display-algorithms',
+    templateUrl: './display-algorithms.component.html',
+    styleUrl: './display-algorithms.component.scss',
+    imports: [NgFor, MatButton]
 })
 export class DisplayAlgorithmsComponent {
   @Input() algorithms: Algorithm[] = [];

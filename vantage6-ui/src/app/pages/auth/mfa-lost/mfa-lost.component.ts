@@ -11,22 +11,21 @@ import { AlertComponent } from '../../../components/alerts/alert/alert.component
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-mfa-lost',
-  templateUrl: './mfa-lost.component.html',
-  styleUrls: ['./mfa-lost.component.scss'],
-  standalone: true,
-  imports: [
-    MatCard,
-    MatCardHeader,
-    MatCardTitle,
-    MatCardContent,
-    MatButton,
-    NgIf,
-    AlertWithButtonComponent,
-    RouterLink,
-    AlertComponent,
-    TranslateModule
-  ]
+    selector: 'app-mfa-lost',
+    templateUrl: './mfa-lost.component.html',
+    styleUrls: ['./mfa-lost.component.scss'],
+    imports: [
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        MatCardContent,
+        MatButton,
+        NgIf,
+        AlertWithButtonComponent,
+        RouterLink,
+        AlertComponent,
+        TranslateModule
+    ]
 })
 export class MfaLostComponent implements OnInit {
   executed_request = false;

@@ -13,10 +13,9 @@ export interface DialogData {
 }
 
 @Component({
-  selector: 'app-message-dialog',
-  templateUrl: './message-dialog.component.html',
-  standalone: true,
-  imports: [MatDialogTitle, CdkScrollable, MatDialogContent, NgFor, MatDialogActions, MatButton, MatDialogClose, TranslateModule]
+    selector: 'app-message-dialog',
+    templateUrl: './message-dialog.component.html',
+    imports: [MatDialogTitle, CdkScrollable, MatDialogContent, NgFor, MatDialogActions, MatButton, MatDialogClose, TranslateModule]
 })
 export class MessageDialogComponent {
   constructor(@Inject(MAT_DIALOG_DATA) public data: DialogData) {}

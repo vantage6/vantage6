@@ -14,11 +14,10 @@ import { MatIcon } from '@angular/material/icon';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-permissions-matrix-server',
-  templateUrl: './permissions-matrix-server.component.html',
-  styleUrl: '../base/permissions-matrix.component.scss',
-  standalone: true,
-  imports: [NgFor, NgClass, NgIf, MatCheckbox, MatIcon, TranslateModule]
+    selector: 'app-permissions-matrix-server',
+    templateUrl: './permissions-matrix-server.component.html',
+    styleUrl: '../base/permissions-matrix.component.scss',
+    imports: [NgFor, NgClass, NgIf, MatCheckbox, MatIcon, TranslateModule]
 })
 export class PermissionsMatrixServerComponent extends BasePermissionsMatrixComponent {
   allResources = Object.values(ResourceType).filter(

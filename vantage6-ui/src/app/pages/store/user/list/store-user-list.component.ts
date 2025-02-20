@@ -18,22 +18,21 @@ import { MatCard, MatCardContent } from '@angular/material/card';
 import { TableComponent } from '../../../../components/table/table.component';
 
 @Component({
-  selector: 'app-store-user-list',
-  templateUrl: './store-user-list.component.html',
-  styleUrl: './store-user-list.component.scss',
-  standalone: true,
-  imports: [
-    PageHeaderComponent,
-    NgIf,
-    MatButton,
-    RouterLink,
-    MatIcon,
-    MatCard,
-    MatCardContent,
-    TableComponent,
-    MatPaginator,
-    TranslateModule
-  ]
+    selector: 'app-store-user-list',
+    templateUrl: './store-user-list.component.html',
+    styleUrl: './store-user-list.component.scss',
+    imports: [
+        PageHeaderComponent,
+        NgIf,
+        MatButton,
+        RouterLink,
+        MatIcon,
+        MatCard,
+        MatCardContent,
+        TableComponent,
+        MatPaginator,
+        TranslateModule
+    ]
 })
 export class StoreUserListComponent extends BaseListComponent implements OnInit, OnDestroy {
   getUserParameters: GetStoreUserParameters = {};

@@ -9,10 +9,9 @@ import { MatButton } from '@angular/material/button';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-organization-form',
-  templateUrl: './organization-form.component.html',
-  standalone: true,
-  imports: [ReactiveFormsModule, MatFormField, MatLabel, MatInput, NgIf, MatButton, MatSuffix, TranslateModule]
+    selector: 'app-organization-form',
+    templateUrl: './organization-form.component.html',
+    imports: [ReactiveFormsModule, MatFormField, MatLabel, MatInput, NgIf, MatButton, MatSuffix, TranslateModule]
 })
 export class OrganizationFormComponent implements OnInit {
   @Input() organization?: Organization;

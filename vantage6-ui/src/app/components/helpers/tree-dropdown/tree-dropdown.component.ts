@@ -49,35 +49,34 @@ export interface ITreeSelectedValue {
 }
 
 @Component({
-  selector: 'app-tree-dropdown',
-  templateUrl: './tree-dropdown.component.html',
-  styleUrls: ['./tree-dropdown.component.scss'],
-  standalone: true,
-  imports: [
-    CdkOverlayOrigin,
-    MatFormField,
-    MatLabel,
-    MatChipGrid,
-    MatChipRow,
-    MatChipRemove,
-    MatIcon,
-    MatInput,
-    MatChipInput,
-    ReactiveFormsModule,
-    FormsModule,
-    CdkConnectedOverlay,
-    NgIf,
-    MatIconButton,
-    MatTree,
-    NgClass,
-    MatTreeNodeDef,
-    MatTreeNode,
-    MatTreeNodePadding,
-    MatCheckbox,
-    MatRadioButton,
-    TranslateModule,
-    HighlightedTextPipe
-  ]
+    selector: 'app-tree-dropdown',
+    templateUrl: './tree-dropdown.component.html',
+    styleUrls: ['./tree-dropdown.component.scss'],
+    imports: [
+        CdkOverlayOrigin,
+        MatFormField,
+        MatLabel,
+        MatChipGrid,
+        MatChipRow,
+        MatChipRemove,
+        MatIcon,
+        MatInput,
+        MatChipInput,
+        ReactiveFormsModule,
+        FormsModule,
+        CdkConnectedOverlay,
+        NgIf,
+        MatIconButton,
+        MatTree,
+        NgClass,
+        MatTreeNodeDef,
+        MatTreeNode,
+        MatTreeNodePadding,
+        MatCheckbox,
+        MatRadioButton,
+        TranslateModule,
+        HighlightedTextPipe
+    ]
 })
 export class TreeDropdownComponent implements OnInit, OnChanges {
   @Input() isMultiSelect = false;

@@ -13,21 +13,20 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-algorithm-list',
-  templateUrl: './algorithm-list-read-only.component.html',
-  styleUrl: './algorithm-list-read-only.component.scss',
-  standalone: true,
-  imports: [
-    PageHeaderComponent,
-    MatButton,
-    RouterLink,
-    NgIf,
-    DisplayAlgorithmsComponent,
-    MatCard,
-    MatCardContent,
-    MatProgressSpinner,
-    TranslateModule
-  ]
+    selector: 'app-algorithm-list',
+    templateUrl: './algorithm-list-read-only.component.html',
+    styleUrl: './algorithm-list-read-only.component.scss',
+    imports: [
+        PageHeaderComponent,
+        MatButton,
+        RouterLink,
+        NgIf,
+        DisplayAlgorithmsComponent,
+        MatCard,
+        MatCardContent,
+        MatProgressSpinner,
+        TranslateModule
+    ]
 })
 export class AlgorithmListReadOnlyComponent implements OnInit {
   @HostBinding('class') class = 'card-container';

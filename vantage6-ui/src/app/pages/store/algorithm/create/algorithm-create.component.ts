@@ -11,11 +11,10 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-algorithm-create',
-  templateUrl: './algorithm-create.component.html',
-  styleUrl: './algorithm-create.component.scss',
-  standalone: true,
-  imports: [PageHeaderComponent, NgIf, AlgorithmFormComponent, MatCard, MatCardContent, MatProgressSpinner, TranslateModule]
+    selector: 'app-algorithm-create',
+    templateUrl: './algorithm-create.component.html',
+    styleUrl: './algorithm-create.component.scss',
+    imports: [PageHeaderComponent, NgIf, AlgorithmFormComponent, MatCard, MatCardContent, MatProgressSpinner, TranslateModule]
 })
 export class AlgorithmCreateComponent {
   @HostBinding('class') class = 'card-container';

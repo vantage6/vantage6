@@ -23,36 +23,35 @@ import { BreadcrumbsComponent } from '../../components/breadcrumbs/breadcrumbs.c
 import { MatCard, MatCardContent } from '@angular/material/card';
 
 @Component({
-  selector: 'app-layout-default',
-  templateUrl: './layout-default.component.html',
-  styleUrls: ['./layout-default.component.scss'],
-  standalone: true,
-  imports: [
-    MatToolbar,
-    NgIf,
-    MatIconButton,
-    MatIcon,
-    MatButton,
-    MatMenuTrigger,
-    MatMenu,
-    MatMenuItem,
-    RouterLink,
-    MatSidenavContainer,
-    MatSidenav,
-    MatNavList,
-    NgFor,
-    MatListItem,
-    MatListItemIcon,
-    NgClass,
-    RouterLinkActive,
-    MatSidenavContent,
-    BreadcrumbsComponent,
-    MatCard,
-    MatCardContent,
-    RouterOutlet,
-    AsyncPipe,
-    TranslateModule
-  ]
+    selector: 'app-layout-default',
+    templateUrl: './layout-default.component.html',
+    styleUrls: ['./layout-default.component.scss'],
+    imports: [
+        MatToolbar,
+        NgIf,
+        MatIconButton,
+        MatIcon,
+        MatButton,
+        MatMenuTrigger,
+        MatMenu,
+        MatMenuItem,
+        RouterLink,
+        MatSidenavContainer,
+        MatSidenav,
+        MatNavList,
+        NgFor,
+        MatListItem,
+        MatListItemIcon,
+        NgClass,
+        RouterLinkActive,
+        MatSidenavContent,
+        BreadcrumbsComponent,
+        MatCard,
+        MatCardContent,
+        RouterOutlet,
+        AsyncPipe,
+        TranslateModule
+    ]
 })
 export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
   destroy$ = new Subject();

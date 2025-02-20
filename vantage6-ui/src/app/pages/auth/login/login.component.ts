@@ -15,25 +15,24 @@ import { AlertComponent } from '../../../components/alerts/alert/alert.component
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-login',
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss'],
-  standalone: true,
-  imports: [
-    MatCard,
-    MatCardHeader,
-    MatCardTitle,
-    MatCardContent,
-    ReactiveFormsModule,
-    MatFormField,
-    MatLabel,
-    MatInput,
-    MatButton,
-    RouterLink,
-    NgIf,
-    AlertComponent,
-    TranslateModule
-  ]
+    selector: 'app-login',
+    templateUrl: './login.component.html',
+    styleUrls: ['./login.component.scss'],
+    imports: [
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        MatCardContent,
+        ReactiveFormsModule,
+        MatFormField,
+        MatLabel,
+        MatInput,
+        MatButton,
+        RouterLink,
+        NgIf,
+        AlertComponent,
+        TranslateModule
+    ]
 })
 export class LoginComponent {
   loginForm = this.fb.nonNullable.group({

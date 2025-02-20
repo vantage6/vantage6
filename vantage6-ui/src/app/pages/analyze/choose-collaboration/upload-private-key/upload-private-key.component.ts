@@ -16,22 +16,21 @@ import { TranslateModule } from '@ngx-translate/core';
 // import * as JSEncrypt from 'jsencrypt';
 
 @Component({
-  selector: 'app-upload-private-key',
-  templateUrl: './upload-private-key.component.html',
-  styleUrl: './upload-private-key.component.scss',
-  standalone: true,
-  imports: [
-    PageHeaderComponent,
-    MatCard,
-    MatCardContent,
-    ReactiveFormsModule,
-    MatFormField,
-    MatLabel,
-    MatInput,
-    MatButton,
-    MatSuffix,
-    TranslateModule
-  ]
+    selector: 'app-upload-private-key',
+    templateUrl: './upload-private-key.component.html',
+    styleUrl: './upload-private-key.component.scss',
+    imports: [
+        PageHeaderComponent,
+        MatCard,
+        MatCardContent,
+        ReactiveFormsModule,
+        MatFormField,
+        MatLabel,
+        MatInput,
+        MatButton,
+        MatSuffix,
+        TranslateModule
+    ]
 })
 export class UploadPrivateKeyComponent {
   @HostBinding('class') class = 'card-container';

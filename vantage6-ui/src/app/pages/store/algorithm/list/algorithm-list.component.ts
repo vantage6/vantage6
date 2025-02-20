@@ -17,22 +17,21 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-algorithm-list',
-  templateUrl: './algorithm-list.component.html',
-  styleUrl: './algorithm-list.component.scss',
-  standalone: true,
-  imports: [
-    PageHeaderComponent,
-    NgIf,
-    MatButton,
-    RouterLink,
-    MatIcon,
-    DisplayAlgorithmsComponent,
-    MatCard,
-    MatCardContent,
-    MatProgressSpinner,
-    TranslateModule
-  ]
+    selector: 'app-algorithm-list',
+    templateUrl: './algorithm-list.component.html',
+    styleUrl: './algorithm-list.component.scss',
+    imports: [
+        PageHeaderComponent,
+        NgIf,
+        MatButton,
+        RouterLink,
+        MatIcon,
+        DisplayAlgorithmsComponent,
+        MatCard,
+        MatCardContent,
+        MatProgressSpinner,
+        TranslateModule
+    ]
 })
 export class AlgorithmListComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

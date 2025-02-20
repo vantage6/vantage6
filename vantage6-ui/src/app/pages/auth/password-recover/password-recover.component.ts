@@ -15,25 +15,24 @@ import { AlertComponent } from '../../../components/alerts/alert/alert.component
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-password-recover',
-  templateUrl: './password-recover.component.html',
-  styleUrls: ['./password-recover.component.scss'],
-  standalone: true,
-  imports: [
-    MatCard,
-    MatCardHeader,
-    MatCardTitle,
-    MatCardContent,
-    ReactiveFormsModule,
-    MatFormField,
-    MatLabel,
-    MatInput,
-    NgIf,
-    MatError,
-    MatButton,
-    AlertComponent,
-    TranslateModule
-  ]
+    selector: 'app-password-recover',
+    templateUrl: './password-recover.component.html',
+    styleUrls: ['./password-recover.component.scss'],
+    imports: [
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        MatCardContent,
+        ReactiveFormsModule,
+        MatFormField,
+        MatLabel,
+        MatInput,
+        NgIf,
+        MatError,
+        MatButton,
+        AlertComponent,
+        TranslateModule
+    ]
 })
 export class PasswordRecoverComponent implements OnInit {
   recoverForm = this.fb.nonNullable.group(

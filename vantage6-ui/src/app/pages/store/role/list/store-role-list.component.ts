@@ -18,22 +18,21 @@ import { MatCard, MatCardContent } from '@angular/material/card';
 import { TableComponent } from '../../../../components/table/table.component';
 
 @Component({
-  selector: 'app-store-role-list',
-  templateUrl: './store-role-list.component.html',
-  styleUrl: './store-role-list.component.scss',
-  standalone: true,
-  imports: [
-    PageHeaderComponent,
-    NgIf,
-    MatButton,
-    RouterLink,
-    MatIcon,
-    MatCard,
-    MatCardContent,
-    TableComponent,
-    MatPaginator,
-    TranslateModule
-  ]
+    selector: 'app-store-role-list',
+    templateUrl: './store-role-list.component.html',
+    styleUrl: './store-role-list.component.scss',
+    imports: [
+        PageHeaderComponent,
+        NgIf,
+        MatButton,
+        RouterLink,
+        MatIcon,
+        MatCard,
+        MatCardContent,
+        TableComponent,
+        MatPaginator,
+        TranslateModule
+    ]
 })
 export class StoreRoleListComponent extends BaseListComponent implements OnInit {
   getRoleParameters: GetStoreRoleParameters = {};

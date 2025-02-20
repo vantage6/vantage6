@@ -18,23 +18,22 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-collaboration-form',
-  templateUrl: './collaboration-form.component.html',
-  standalone: true,
-  imports: [
-    NgIf,
-    ReactiveFormsModule,
-    MatFormField,
-    MatLabel,
-    MatInput,
-    MatCheckbox,
-    MatSelect,
-    NgFor,
-    MatOption,
-    MatButton,
-    MatProgressSpinner,
-    TranslateModule
-  ]
+    selector: 'app-collaboration-form',
+    templateUrl: './collaboration-form.component.html',
+    imports: [
+        NgIf,
+        ReactiveFormsModule,
+        MatFormField,
+        MatLabel,
+        MatInput,
+        MatCheckbox,
+        MatSelect,
+        NgFor,
+        MatOption,
+        MatButton,
+        MatProgressSpinner,
+        TranslateModule
+    ]
 })
 export class CollaborationFormComponent implements OnInit {
   @Input() collaboration?: Collaboration;

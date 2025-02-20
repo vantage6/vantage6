@@ -21,22 +21,21 @@ import { MatButton } from '@angular/material/button';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-review-submit',
-  templateUrl: './review-submit.component.html',
-  styleUrl: './review-submit.component.scss',
-  standalone: true,
-  imports: [
-    NgIf,
-    PageHeaderComponent,
-    MatCard,
-    MatCardContent,
-    ReactiveFormsModule,
-    MatRadioGroup,
-    MatRadioButton,
-    MatButton,
-    MatProgressSpinner,
-    TranslateModule
-  ]
+    selector: 'app-review-submit',
+    templateUrl: './review-submit.component.html',
+    styleUrl: './review-submit.component.scss',
+    imports: [
+        NgIf,
+        PageHeaderComponent,
+        MatCard,
+        MatCardContent,
+        ReactiveFormsModule,
+        MatRadioGroup,
+        MatRadioButton,
+        MatButton,
+        MatProgressSpinner,
+        TranslateModule
+    ]
 })
 // extends BaseEditComponent
 export class ReviewSubmitComponent extends BaseEditComponent implements OnInit, OnDestroy {

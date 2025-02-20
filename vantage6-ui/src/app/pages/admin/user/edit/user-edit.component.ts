@@ -12,10 +12,9 @@ import { UserFormComponent } from '../../../../components/forms/user-form/user-f
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-user-edit',
-  templateUrl: './user-edit.component.html',
-  standalone: true,
-  imports: [NgIf, PageHeaderComponent, MatCard, MatCardContent, UserFormComponent, MatProgressSpinner]
+    selector: 'app-user-edit',
+    templateUrl: './user-edit.component.html',
+    imports: [NgIf, PageHeaderComponent, MatCard, MatCardContent, UserFormComponent, MatProgressSpinner]
 })
 export class UserEditComponent extends BaseEditComponent implements OnInit {
   user?: User;

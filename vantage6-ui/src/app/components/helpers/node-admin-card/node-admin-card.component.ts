@@ -18,23 +18,22 @@ import { AlertComponent } from '../../alerts/alert/alert.component';
 import { ChipComponent } from '../chip/chip.component';
 
 @Component({
-  selector: 'app-node-admin-card',
-  templateUrl: './node-admin-card.component.html',
-  styleUrl: './node-admin-card.component.scss',
-  standalone: true,
-  imports: [
-    MatCard,
-    MatCardHeader,
-    MatCardTitle,
-    NgIf,
-    MatButton,
-    MatIcon,
-    MatCardContent,
-    AlertComponent,
-    NgFor,
-    ChipComponent,
-    TranslateModule
-  ]
+    selector: 'app-node-admin-card',
+    templateUrl: './node-admin-card.component.html',
+    styleUrl: './node-admin-card.component.scss',
+    imports: [
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        NgIf,
+        MatButton,
+        MatIcon,
+        MatCardContent,
+        AlertComponent,
+        NgFor,
+        ChipComponent,
+        TranslateModule
+    ]
 })
 export class NodeAdminCardComponent implements OnInit, OnDestroy {
   @Input() nodes?: BaseNode[];

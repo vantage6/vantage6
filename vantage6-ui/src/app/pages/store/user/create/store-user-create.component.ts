@@ -15,11 +15,10 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-store-user-create',
-  templateUrl: './store-user-create.component.html',
-  styleUrl: './store-user-create.component.scss',
-  standalone: true,
-  imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, StoreUserFormComponent, MatProgressSpinner, TranslateModule]
+    selector: 'app-store-user-create',
+    templateUrl: './store-user-create.component.html',
+    styleUrl: './store-user-create.component.scss',
+    imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, StoreUserFormComponent, MatProgressSpinner, TranslateModule]
 })
 export class StoreUserCreateComponent extends BaseCreateComponent implements OnInit {
   destroy$ = new Subject();

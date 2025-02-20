@@ -6,11 +6,10 @@ import { MatIcon } from '@angular/material/icon';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-breadcrumbs',
-  templateUrl: './breadcrumbs.component.html',
-  styleUrls: ['./breadcrumbs.component.scss'],
-  standalone: true,
-  imports: [NgIf, RouterLink, MatIcon, NgFor, TranslateModule]
+    selector: 'app-breadcrumbs',
+    templateUrl: './breadcrumbs.component.html',
+    styleUrls: ['./breadcrumbs.component.scss'],
+    imports: [NgIf, RouterLink, MatIcon, NgFor, TranslateModule]
 })
 export class BreadcrumbsComponent implements OnDestroy {
   destroy$ = new Subject();

@@ -23,23 +23,22 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-store-user-form',
-  templateUrl: './store-user-form.component.html',
-  styleUrl: './store-user-form.component.scss',
-  standalone: true,
-  imports: [
-    NgIf,
-    ReactiveFormsModule,
-    MatFormField,
-    MatLabel,
-    MatSelect,
-    NgFor,
-    MatOption,
-    PermissionsMatrixStoreComponent,
-    MatButton,
-    MatProgressSpinner,
-    TranslateModule
-  ]
+    selector: 'app-store-user-form',
+    templateUrl: './store-user-form.component.html',
+    styleUrl: './store-user-form.component.scss',
+    imports: [
+        NgIf,
+        ReactiveFormsModule,
+        MatFormField,
+        MatLabel,
+        MatSelect,
+        NgFor,
+        MatOption,
+        PermissionsMatrixStoreComponent,
+        MatButton,
+        MatProgressSpinner,
+        TranslateModule
+    ]
 })
 export class StoreUserFormComponent extends BaseFormComponent implements OnInit {
   @Input() user?: StoreUser;

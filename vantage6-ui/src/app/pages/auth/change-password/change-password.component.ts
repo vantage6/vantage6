@@ -22,23 +22,22 @@ import { MatButton } from '@angular/material/button';
 import { AlertComponent } from '../../../components/alerts/alert/alert.component';
 
 @Component({
-  selector: 'app-change-password',
-  templateUrl: './change-password.component.html',
-  standalone: true,
-  imports: [
-    PageHeaderComponent,
-    MatCard,
-    MatCardContent,
-    ReactiveFormsModule,
-    MatFormField,
-    MatLabel,
-    MatInput,
-    NgIf,
-    MatError,
-    MatButton,
-    AlertComponent,
-    TranslateModule
-  ]
+    selector: 'app-change-password',
+    templateUrl: './change-password.component.html',
+    imports: [
+        PageHeaderComponent,
+        MatCard,
+        MatCardContent,
+        ReactiveFormsModule,
+        MatFormField,
+        MatLabel,
+        MatInput,
+        NgIf,
+        MatError,
+        MatButton,
+        AlertComponent,
+        TranslateModule
+    ]
 })
 export class ChangePasswordComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

@@ -15,11 +15,10 @@ import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-algorithm-edit',
-  templateUrl: './algorithm-edit.component.html',
-  styleUrl: './algorithm-edit.component.scss',
-  standalone: true,
-  imports: [NgIf, PageHeaderComponent, AlgorithmFormComponent, MatCard, MatCardContent, MatProgressSpinner]
+    selector: 'app-algorithm-edit',
+    templateUrl: './algorithm-edit.component.html',
+    styleUrl: './algorithm-edit.component.scss',
+    imports: [NgIf, PageHeaderComponent, AlgorithmFormComponent, MatCard, MatCardContent, MatProgressSpinner]
 })
 export class AlgorithmEditComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

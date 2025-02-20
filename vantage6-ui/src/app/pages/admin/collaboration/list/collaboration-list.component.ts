@@ -21,21 +21,20 @@ import { MatCard, MatCardContent } from '@angular/material/card';
 import { TableComponent } from '../../../../components/table/table.component';
 
 @Component({
-  selector: 'app-collaboration-list',
-  templateUrl: './collaboration-list.component.html',
-  standalone: true,
-  imports: [
-    PageHeaderComponent,
-    NgIf,
-    MatButton,
-    RouterLink,
-    MatIcon,
-    MatCard,
-    MatCardContent,
-    TableComponent,
-    MatPaginator,
-    TranslateModule
-  ]
+    selector: 'app-collaboration-list',
+    templateUrl: './collaboration-list.component.html',
+    imports: [
+        PageHeaderComponent,
+        NgIf,
+        MatButton,
+        RouterLink,
+        MatIcon,
+        MatCard,
+        MatCardContent,
+        TableComponent,
+        MatPaginator,
+        TranslateModule
+    ]
 })
 export class CollaborationListComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

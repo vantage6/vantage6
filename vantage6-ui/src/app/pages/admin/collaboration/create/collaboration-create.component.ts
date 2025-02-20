@@ -13,10 +13,9 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-collaboration-create',
-  templateUrl: './collaboration-create.component.html',
-  standalone: true,
-  imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, CollaborationFormComponent, MatProgressSpinner, TranslateModule]
+    selector: 'app-collaboration-create',
+    templateUrl: './collaboration-create.component.html',
+    imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, CollaborationFormComponent, MatProgressSpinner, TranslateModule]
 })
 export class CollaborationCreateComponent {
   @HostBinding('class') class = 'card-container';

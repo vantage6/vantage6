@@ -37,32 +37,31 @@ import { ChipComponent } from '../../../../components/helpers/chip/chip.componen
 import { MatButton } from '@angular/material/button';
 
 @Component({
-  selector: 'app-node-read',
-  templateUrl: './node-read.component.html',
-  styleUrls: ['./node-read.component.scss'],
-  standalone: true,
-  imports: [
-    PageHeaderComponent,
-    TreeDropdownComponent,
-    NgIf,
-    MatCard,
-    MatCardContent,
-    MatAccordion,
-    NgFor,
-    MatExpansionPanel,
-    MatExpansionPanelHeader,
-    MatExpansionPanelTitle,
-    MatExpansionPanelContent,
-    MatProgressSpinner,
-    MatFormField,
-    MatLabel,
-    MatInput,
-    ReactiveFormsModule,
-    ChipComponent,
-    MatButton,
-    MatPaginator,
-    TranslateModule
-  ]
+    selector: 'app-node-read',
+    templateUrl: './node-read.component.html',
+    styleUrls: ['./node-read.component.scss'],
+    imports: [
+        PageHeaderComponent,
+        TreeDropdownComponent,
+        NgIf,
+        MatCard,
+        MatCardContent,
+        MatAccordion,
+        NgFor,
+        MatExpansionPanel,
+        MatExpansionPanelHeader,
+        MatExpansionPanelTitle,
+        MatExpansionPanelContent,
+        MatProgressSpinner,
+        MatFormField,
+        MatLabel,
+        MatInput,
+        ReactiveFormsModule,
+        ChipComponent,
+        MatButton,
+        MatPaginator,
+        TranslateModule
+    ]
 })
 export class NodeReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

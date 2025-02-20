@@ -20,22 +20,21 @@ import { TableComponent } from '../../../../components/table/table.component';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-store-role-read',
-  templateUrl: './store-role-read.component.html',
-  styleUrl: './store-role-read.component.scss',
-  standalone: true,
-  imports: [
-    NgIf,
-    PageHeaderComponent,
-    MatCard,
-    MatCardContent,
-    MatTabGroup,
-    MatTab,
-    PermissionsMatrixStoreComponent,
-    TableComponent,
-    MatProgressSpinner,
-    TranslateModule
-  ]
+    selector: 'app-store-role-read',
+    templateUrl: './store-role-read.component.html',
+    styleUrl: './store-role-read.component.scss',
+    imports: [
+        NgIf,
+        PageHeaderComponent,
+        MatCard,
+        MatCardContent,
+        MatTabGroup,
+        MatTab,
+        PermissionsMatrixStoreComponent,
+        TableComponent,
+        MatProgressSpinner,
+        TranslateModule
+    ]
 })
 export class StoreRoleReadComponent extends BaseReadComponent implements OnInit, OnDestroy {
   isEditing: boolean = false;

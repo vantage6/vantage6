@@ -20,25 +20,24 @@ import { NgFor } from '@angular/common';
 import { MatButton } from '@angular/material/button';
 
 @Component({
-  selector: 'app-visualize-table',
-  templateUrl: './visualize-table.component.html',
-  styleUrls: ['./visualize-table.component.scss'],
-  standalone: true,
-  imports: [
-    MatTable,
-    NgFor,
-    MatColumnDef,
-    MatHeaderCellDef,
-    MatHeaderCell,
-    MatCellDef,
-    MatCell,
-    MatHeaderRowDef,
-    MatHeaderRow,
-    MatRowDef,
-    MatRow,
-    MatButton,
-    TranslateModule
-  ]
+    selector: 'app-visualize-table',
+    templateUrl: './visualize-table.component.html',
+    styleUrls: ['./visualize-table.component.scss'],
+    imports: [
+        MatTable,
+        NgFor,
+        MatColumnDef,
+        MatHeaderCellDef,
+        MatHeaderCell,
+        MatCellDef,
+        MatCell,
+        MatHeaderRowDef,
+        MatHeaderRow,
+        MatRowDef,
+        MatRow,
+        MatButton,
+        TranslateModule
+    ]
 })
 export class VisualizeTableComponent implements OnChanges {
   @Input() visualization?: Visualization | null;

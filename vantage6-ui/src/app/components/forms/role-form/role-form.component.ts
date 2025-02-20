@@ -14,23 +14,22 @@ import { TranslateModule } from '@ngx-translate/core';
 import { OrderByPipe } from '../../../pipes/order-by.pipe';
 
 @Component({
-  selector: 'app-role-form',
-  templateUrl: './role-form.component.html',
-  styleUrls: ['./role-form.component.scss'],
-  standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    MatFormField,
-    MatLabel,
-    MatInput,
-    MatSelect,
-    NgFor,
-    MatOption,
-    PermissionsMatrixServerComponent,
-    RoleSubmitButtonsComponent,
-    TranslateModule,
-    OrderByPipe
-  ]
+    selector: 'app-role-form',
+    templateUrl: './role-form.component.html',
+    styleUrls: ['./role-form.component.scss'],
+    imports: [
+        ReactiveFormsModule,
+        MatFormField,
+        MatLabel,
+        MatInput,
+        MatSelect,
+        NgFor,
+        MatOption,
+        PermissionsMatrixServerComponent,
+        RoleSubmitButtonsComponent,
+        TranslateModule,
+        OrderByPipe
+    ]
 })
 export class RoleFormComponent {
   @Input() selectableRules: Rule[] = [];

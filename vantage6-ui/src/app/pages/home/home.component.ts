@@ -6,11 +6,10 @@ import packageJson from 'package.json';
 import { MatCard, MatCardContent } from '@angular/material/card';
 
 @Component({
-  selector: 'app-home',
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss'],
-  standalone: true,
-  imports: [MatCard, MatCardContent]
+    selector: 'app-home',
+    templateUrl: './home.component.html',
+    styleUrls: ['./home.component.scss'],
+    imports: [MatCard, MatCardContent]
 })
 export class HomeComponent implements OnInit {
   serverUrl = environment.server_url;

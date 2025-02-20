@@ -9,11 +9,10 @@ interface BackgroundImage {
 }
 
 @Component({
-  selector: 'app-layout-login',
-  templateUrl: './layout-login.component.html',
-  styleUrls: ['./layout-login.component.scss'],
-  standalone: true,
-  imports: [NgStyle, RouterOutlet, NgIf]
+    selector: 'app-layout-login',
+    templateUrl: './layout-login.component.html',
+    styleUrls: ['./layout-login.component.scss'],
+    imports: [NgStyle, RouterOutlet, NgIf]
 })
 export class LayoutLoginComponent implements OnInit {
   backgroundImage: BackgroundImage | null = null;

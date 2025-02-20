@@ -24,36 +24,35 @@ import { TranslateModule } from '@ngx-translate/core';
 
 // TODO this component is highly similar to the PreprocessingStepComponent. Consider refactoring.
 @Component({
-  selector: 'app-filter-step',
-  templateUrl: './filter-step.component.html',
-  styleUrls: ['./filter-step.component.scss'],
-  standalone: true,
-  imports: [
-    MatAccordion,
-    NgFor,
-    MatExpansionPanel,
-    MatExpansionPanelHeader,
-    MatExpansionPanelTitle,
-    NgIf,
-    MatExpansionPanelDescription,
-    MatIconButton,
-    MatIcon,
-    ReactiveFormsModule,
-    MatFormField,
-    MatLabel,
-    MatSelect,
-    MatOption,
-    MatHint,
-    MatInput,
-    NumberOnlyDirective,
-    MatDatepickerInput,
-    MatDatepickerToggle,
-    MatSuffix,
-    MatDatepicker,
-    MatCheckbox,
-    MatButton,
-    TranslateModule
-  ]
+    selector: 'app-filter-step',
+    templateUrl: './filter-step.component.html',
+    styleUrls: ['./filter-step.component.scss'],
+    imports: [
+        MatAccordion,
+        NgFor,
+        MatExpansionPanel,
+        MatExpansionPanelHeader,
+        MatExpansionPanelTitle,
+        NgIf,
+        MatExpansionPanelDescription,
+        MatIconButton,
+        MatIcon,
+        ReactiveFormsModule,
+        MatFormField,
+        MatLabel,
+        MatSelect,
+        MatOption,
+        MatHint,
+        MatInput,
+        NumberOnlyDirective,
+        MatDatepickerInput,
+        MatDatepickerToggle,
+        MatSuffix,
+        MatDatepicker,
+        MatCheckbox,
+        MatButton,
+        TranslateModule
+    ]
 })
 export class FilterStepComponent {
   filterParameterType = FilterParameterType;

@@ -10,10 +10,9 @@ import { OrganizationFormComponent } from '../../../../components/forms/organiza
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-organization-edit',
-  templateUrl: './organization-edit.component.html',
-  standalone: true,
-  imports: [NgIf, PageHeaderComponent, MatCard, MatCardContent, OrganizationFormComponent, MatProgressSpinner]
+    selector: 'app-organization-edit',
+    templateUrl: './organization-edit.component.html',
+    imports: [NgIf, PageHeaderComponent, MatCard, MatCardContent, OrganizationFormComponent, MatProgressSpinner]
 })
 export class OrganizationEditComponent implements OnInit {
   @HostBinding('class') class = 'card-container';

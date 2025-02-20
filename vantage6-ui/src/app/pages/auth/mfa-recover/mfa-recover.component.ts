@@ -14,24 +14,23 @@ import { AlertComponent } from '../../../components/alerts/alert/alert.component
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-mfa-recover',
-  templateUrl: './mfa-recover.component.html',
-  styleUrls: ['./mfa-recover.component.scss'],
-  standalone: true,
-  imports: [
-    MatCard,
-    MatCardHeader,
-    MatCardTitle,
-    MatCardContent,
-    ReactiveFormsModule,
-    MatFormField,
-    MatLabel,
-    MatInput,
-    MatButton,
-    NgIf,
-    AlertComponent,
-    TranslateModule
-  ]
+    selector: 'app-mfa-recover',
+    templateUrl: './mfa-recover.component.html',
+    styleUrls: ['./mfa-recover.component.scss'],
+    imports: [
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        MatCardContent,
+        ReactiveFormsModule,
+        MatFormField,
+        MatLabel,
+        MatInput,
+        MatButton,
+        NgIf,
+        AlertComponent,
+        TranslateModule
+    ]
 })
 export class MfaRecoverComponent implements OnInit {
   recoverForm = this.fb.nonNullable.group({

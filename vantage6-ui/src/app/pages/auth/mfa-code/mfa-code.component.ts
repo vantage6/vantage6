@@ -15,25 +15,24 @@ import { AlertComponent } from '../../../components/alerts/alert/alert.component
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-mfa-code',
-  templateUrl: './mfa-code.component.html',
-  styleUrls: ['./mfa-code.component.scss'],
-  standalone: true,
-  imports: [
-    MatCard,
-    MatCardHeader,
-    MatCardTitle,
-    MatCardContent,
-    ReactiveFormsModule,
-    MatFormField,
-    MatLabel,
-    MatInput,
-    MatButton,
-    RouterLink,
-    NgIf,
-    AlertComponent,
-    TranslateModule
-  ]
+    selector: 'app-mfa-code',
+    templateUrl: './mfa-code.component.html',
+    styleUrls: ['./mfa-code.component.scss'],
+    imports: [
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        MatCardContent,
+        ReactiveFormsModule,
+        MatFormField,
+        MatLabel,
+        MatInput,
+        MatButton,
+        RouterLink,
+        NgIf,
+        AlertComponent,
+        TranslateModule
+    ]
 })
 export class MfaCodeComponent implements OnInit {
   loginForm = this.fb.nonNullable.group({

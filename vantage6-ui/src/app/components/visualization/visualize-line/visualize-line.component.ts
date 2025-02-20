@@ -11,11 +11,10 @@ import { TranslateModule } from '@ngx-translate/core';
 Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale);
 
 @Component({
-  selector: 'app-visualize-line',
-  templateUrl: './visualize-line.component.html',
-  styleUrl: './visualize-line.component.scss',
-  standalone: true,
-  imports: [MatButton, TranslateModule]
+    selector: 'app-visualize-line',
+    templateUrl: './visualize-line.component.html',
+    styleUrl: './visualize-line.component.scss',
+    imports: [MatButton, TranslateModule]
 })
 export class VisualizeLineComponent implements OnChanges {
   @Input() visualization?: Visualization | null;

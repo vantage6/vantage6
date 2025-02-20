@@ -11,10 +11,9 @@ import { VisualizeLineComponent } from '../visualize-line/visualize-line.compone
 // }
 
 @Component({
-  selector: 'app-visualize-result',
-  templateUrl: './visualize-result.component.html',
-  standalone: true,
-  imports: [NgIf, VisualizeTableComponent, VisualizeLineComponent]
+    selector: 'app-visualize-result',
+    templateUrl: './visualize-result.component.html',
+    imports: [NgIf, VisualizeTableComponent, VisualizeLineComponent]
 })
 export class VisualizeResultComponent implements OnChanges {
   visualizationType = VisualizationType;

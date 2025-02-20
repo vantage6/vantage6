@@ -22,29 +22,28 @@ import { TranslateModule } from '@ngx-translate/core';
 import { OrderByPipe } from '../../../pipes/order-by.pipe';
 
 @Component({
-  selector: 'app-display-algorithm',
-  templateUrl: './display-algorithm.component.html',
-  styleUrl: './display-algorithm.component.scss',
-  standalone: true,
-  imports: [
-    MatCard,
-    MatCardHeader,
-    MatCardTitle,
-    MatCardContent,
-    NgIf,
-    MarkdownComponent,
-    MatAccordion,
-    NgFor,
-    MatExpansionPanel,
-    MatExpansionPanelHeader,
-    MatExpansionPanelTitle,
-    MatExpansionPanelContent,
-    MatProgressSpinner,
-    MatButton,
-    MatIcon,
-    TranslateModule,
-    OrderByPipe
-  ]
+    selector: 'app-display-algorithm',
+    templateUrl: './display-algorithm.component.html',
+    styleUrl: './display-algorithm.component.scss',
+    imports: [
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        MatCardContent,
+        NgIf,
+        MarkdownComponent,
+        MatAccordion,
+        NgFor,
+        MatExpansionPanel,
+        MatExpansionPanelHeader,
+        MatExpansionPanelTitle,
+        MatExpansionPanelContent,
+        MatProgressSpinner,
+        MatButton,
+        MatIcon,
+        TranslateModule,
+        OrderByPipe
+    ]
 })
 export class DisplayAlgorithmComponent {
   @HostBinding('class') class = 'card-container';

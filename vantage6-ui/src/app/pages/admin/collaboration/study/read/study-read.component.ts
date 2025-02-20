@@ -25,29 +25,28 @@ import { NodeAdminCardComponent } from '../../../../../components/helpers/node-a
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-study-read',
-  templateUrl: './study-read.component.html',
-  styleUrls: ['./study-read.component.scss'],
-  standalone: true,
-  imports: [
-    NgIf,
-    PageHeaderComponent,
-    MatIconButton,
-    MatMenuTrigger,
-    MatIcon,
-    MatMenu,
-    MatMenuItem,
-    RouterLink,
-    MatCard,
-    MatCardHeader,
-    MatCardTitle,
-    MatCardContent,
-    ChipComponent,
-    NgFor,
-    NodeAdminCardComponent,
-    MatProgressSpinner,
-    TranslateModule
-  ]
+    selector: 'app-study-read',
+    templateUrl: './study-read.component.html',
+    styleUrls: ['./study-read.component.scss'],
+    imports: [
+        NgIf,
+        PageHeaderComponent,
+        MatIconButton,
+        MatMenuTrigger,
+        MatIcon,
+        MatMenu,
+        MatMenuItem,
+        RouterLink,
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        MatCardContent,
+        ChipComponent,
+        NgFor,
+        NodeAdminCardComponent,
+        MatProgressSpinner,
+        TranslateModule
+    ]
 })
 export class StudyReadComponent implements OnInit, OnDestroy {
   destroy$ = new Subject();

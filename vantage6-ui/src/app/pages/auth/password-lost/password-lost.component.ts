@@ -14,26 +14,25 @@ import { AlertComponent } from '../../../components/alerts/alert/alert.component
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-password-lost',
-  templateUrl: './password-lost.component.html',
-  styleUrls: ['./password-lost.component.scss'],
-  standalone: true,
-  imports: [
-    MatCard,
-    MatCardHeader,
-    MatCardTitle,
-    MatCardContent,
-    ReactiveFormsModule,
-    MatFormField,
-    MatLabel,
-    MatInput,
-    MatButton,
-    NgIf,
-    AlertWithButtonComponent,
-    RouterLink,
-    AlertComponent,
-    TranslateModule
-  ]
+    selector: 'app-password-lost',
+    templateUrl: './password-lost.component.html',
+    styleUrls: ['./password-lost.component.scss'],
+    imports: [
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        MatCardContent,
+        ReactiveFormsModule,
+        MatFormField,
+        MatLabel,
+        MatInput,
+        MatButton,
+        NgIf,
+        AlertWithButtonComponent,
+        RouterLink,
+        AlertComponent,
+        TranslateModule
+    ]
 })
 export class PasswordLostComponent implements OnInit {
   forgotPasswordForm = new FormGroup({

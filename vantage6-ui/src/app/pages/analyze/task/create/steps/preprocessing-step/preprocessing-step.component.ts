@@ -23,36 +23,35 @@ import { MatCheckbox } from '@angular/material/checkbox';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-preprocessing-step',
-  templateUrl: './preprocessing-step.component.html',
-  styleUrls: ['./preprocessing-step.component.scss'],
-  standalone: true,
-  imports: [
-    MatAccordion,
-    NgFor,
-    MatExpansionPanel,
-    MatExpansionPanelHeader,
-    MatExpansionPanelTitle,
-    NgIf,
-    MatExpansionPanelDescription,
-    MatIconButton,
-    MatIcon,
-    ReactiveFormsModule,
-    MatFormField,
-    MatLabel,
-    MatSelect,
-    MatOption,
-    MatHint,
-    MatInput,
-    NumberOnlyDirective,
-    MatDatepickerInput,
-    MatDatepickerToggle,
-    MatSuffix,
-    MatDatepicker,
-    MatCheckbox,
-    MatButton,
-    TranslateModule
-  ]
+    selector: 'app-preprocessing-step',
+    templateUrl: './preprocessing-step.component.html',
+    styleUrls: ['./preprocessing-step.component.scss'],
+    imports: [
+        MatAccordion,
+        NgFor,
+        MatExpansionPanel,
+        MatExpansionPanelHeader,
+        MatExpansionPanelTitle,
+        NgIf,
+        MatExpansionPanelDescription,
+        MatIconButton,
+        MatIcon,
+        ReactiveFormsModule,
+        MatFormField,
+        MatLabel,
+        MatSelect,
+        MatOption,
+        MatHint,
+        MatInput,
+        NumberOnlyDirective,
+        MatDatepickerInput,
+        MatDatepickerToggle,
+        MatSuffix,
+        MatDatepicker,
+        MatCheckbox,
+        MatButton,
+        TranslateModule
+    ]
 })
 export class PreprocessingStepComponent {
   selectParameterType = SelectParameterType;

@@ -18,10 +18,9 @@ import { CollaborationFormComponent } from '../../../../components/forms/collabo
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-collaboration-edit',
-  templateUrl: './collaboration-edit.component.html',
-  standalone: true,
-  imports: [NgIf, PageHeaderComponent, MatCard, MatCardContent, CollaborationFormComponent, MatProgressSpinner]
+    selector: 'app-collaboration-edit',
+    templateUrl: './collaboration-edit.component.html',
+    imports: [NgIf, PageHeaderComponent, MatCard, MatCardContent, CollaborationFormComponent, MatProgressSpinner]
 })
 export class CollaborationEditComponent implements OnInit {
   @HostBinding('class') class = 'card-container';

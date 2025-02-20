@@ -30,35 +30,34 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-template-task-create',
-  templateUrl: './template-task-create.component.html',
-  styleUrls: ['./template-task-create.component.scss'],
-  standalone: true,
-  imports: [
-    PageHeaderComponent,
-    MatFormField,
-    MatLabel,
-    MatSelect,
-    ReactiveFormsModule,
-    NgFor,
-    MatOption,
-    NgIf,
-    MatCard,
-    MatCardContent,
-    MatStepper,
-    MatStepperIcon,
-    MatIcon,
-    MatStep,
-    MatStepLabel,
-    MatInput,
-    MatButton,
-    MatStepperNext,
-    DatabaseStepComponent_1,
-    MatStepperPrevious,
-    MatProgressSpinner,
-    AsyncPipe,
-    TranslateModule
-  ]
+    selector: 'app-template-task-create',
+    templateUrl: './template-task-create.component.html',
+    styleUrls: ['./template-task-create.component.scss'],
+    imports: [
+        PageHeaderComponent,
+        MatFormField,
+        MatLabel,
+        MatSelect,
+        ReactiveFormsModule,
+        NgFor,
+        MatOption,
+        NgIf,
+        MatCard,
+        MatCardContent,
+        MatStepper,
+        MatStepperIcon,
+        MatIcon,
+        MatStep,
+        MatStepLabel,
+        MatInput,
+        MatButton,
+        MatStepperNext,
+        DatabaseStepComponent_1,
+        MatStepperPrevious,
+        MatProgressSpinner,
+        AsyncPipe,
+        TranslateModule
+    ]
 })
 export class TemplateTaskCreateComponent implements OnInit {
   @HostBinding('class') class = 'card-container';

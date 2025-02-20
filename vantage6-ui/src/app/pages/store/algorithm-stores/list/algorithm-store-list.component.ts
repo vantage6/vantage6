@@ -12,11 +12,10 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-algorithm-store-list',
-  templateUrl: './algorithm-store-list.component.html',
-  styleUrl: './algorithm-store-list.component.scss',
-  standalone: true,
-  imports: [PageHeaderComponent, NgIf, NgFor, MatButton, MatCard, MatCardContent, MatProgressSpinner, TranslateModule]
+    selector: 'app-algorithm-store-list',
+    templateUrl: './algorithm-store-list.component.html',
+    styleUrl: './algorithm-store-list.component.scss',
+    imports: [PageHeaderComponent, NgIf, NgFor, MatButton, MatCard, MatCardContent, MatProgressSpinner, TranslateModule]
 })
 export class AlgorithmStoreListComponent implements OnInit {
   @HostBinding('class') class = 'card-container';

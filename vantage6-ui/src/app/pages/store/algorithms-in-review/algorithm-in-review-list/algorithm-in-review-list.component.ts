@@ -27,11 +27,10 @@ enum TableRows {
 }
 
 @Component({
-  selector: 'app-algorithm-in-review-list',
-  templateUrl: './algorithm-in-review-list.component.html',
-  styleUrl: './algorithm-in-review-list.component.scss',
-  standalone: true,
-  imports: [PageHeaderComponent, MatCard, MatCardHeader, MatCardTitle, MatCardContent, NgIf, TableComponent, MatPaginator, TranslateModule]
+    selector: 'app-algorithm-in-review-list',
+    templateUrl: './algorithm-in-review-list.component.html',
+    styleUrl: './algorithm-in-review-list.component.scss',
+    imports: [PageHeaderComponent, MatCard, MatCardHeader, MatCardTitle, MatCardContent, NgIf, TableComponent, MatPaginator, TranslateModule]
 })
 export class AlgorithmInReviewListComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

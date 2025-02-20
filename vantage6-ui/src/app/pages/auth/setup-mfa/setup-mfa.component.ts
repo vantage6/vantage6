@@ -13,22 +13,21 @@ import { NgIf } from '@angular/common';
 import { AlertComponent } from '../../../components/alerts/alert/alert.component';
 
 @Component({
-  selector: 'app-setup-mfa',
-  templateUrl: './setup-mfa.component.html',
-  styleUrls: ['./setup-mfa.component.scss'],
-  standalone: true,
-  imports: [
-    MatCard,
-    MatCardHeader,
-    MatCardTitle,
-    MatCardContent,
-    QRCodeModule,
-    MatButton,
-    RouterLink,
-    NgIf,
-    AlertComponent,
-    TranslateModule
-  ]
+    selector: 'app-setup-mfa',
+    templateUrl: './setup-mfa.component.html',
+    styleUrls: ['./setup-mfa.component.scss'],
+    imports: [
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        MatCardContent,
+        QRCodeModule,
+        MatButton,
+        RouterLink,
+        NgIf,
+        AlertComponent,
+        TranslateModule
+    ]
 })
 export class SetupMfaComponent implements OnInit {
   routes = routePaths;

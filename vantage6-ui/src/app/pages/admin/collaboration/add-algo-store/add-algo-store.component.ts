@@ -16,11 +16,10 @@ import { AlgorithmStoreFormComponent } from '../../../../components/forms/algori
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-add-algo-store',
-  templateUrl: './add-algo-store.component.html',
-  styleUrls: ['./add-algo-store.component.scss'],
-  standalone: true,
-  imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, AlgorithmStoreFormComponent, MatProgressSpinner, TranslateModule]
+    selector: 'app-add-algo-store',
+    templateUrl: './add-algo-store.component.html',
+    styleUrls: ['./add-algo-store.component.scss'],
+    imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, AlgorithmStoreFormComponent, MatProgressSpinner, TranslateModule]
 })
 export class AddAlgoStoreComponent implements OnInit {
   id = '';

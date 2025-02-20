@@ -28,31 +28,30 @@ import { ChipComponent } from '../../../../components/helpers/chip/chip.componen
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-organization-read',
-  templateUrl: './organization-read.component.html',
-  styleUrls: ['./organization-read.component.scss'],
-  standalone: true,
-  imports: [
-    NgIf,
-    PageHeaderComponent,
-    MatIconButton,
-    MatMenuTrigger,
-    MatIcon,
-    MatMenu,
-    MatMenuItem,
-    RouterLink,
-    MatCard,
-    MatCardHeader,
-    MatCardTitle,
-    MatCardContent,
-    MatButton,
-    TableComponent,
-    AlertComponent,
-    NgFor,
-    ChipComponent,
-    MatProgressSpinner,
-    TranslateModule
-  ]
+    selector: 'app-organization-read',
+    templateUrl: './organization-read.component.html',
+    styleUrls: ['./organization-read.component.scss'],
+    imports: [
+        NgIf,
+        PageHeaderComponent,
+        MatIconButton,
+        MatMenuTrigger,
+        MatIcon,
+        MatMenu,
+        MatMenuItem,
+        RouterLink,
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        MatCardContent,
+        MatButton,
+        TableComponent,
+        AlertComponent,
+        NgFor,
+        ChipComponent,
+        MatProgressSpinner,
+        TranslateModule
+    ]
 })
 export class OrganizationReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

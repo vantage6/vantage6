@@ -22,25 +22,24 @@ import { DisplayAlgorithmsComponent } from '../../../../components/algorithm/dis
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-algorithm-store-read',
-  templateUrl: './algorithm-store-read.component.html',
-  styleUrl: './algorithm-store-read.component.scss',
-  standalone: true,
-  imports: [
-    NgIf,
-    PageHeaderComponent,
-    MatCard,
-    MatCardHeader,
-    MatCardTitle,
-    MatCardContent,
-    TableComponent,
-    MatButton,
-    RouterLink,
-    MatIcon,
-    DisplayAlgorithmsComponent,
-    MatProgressSpinner,
-    TranslateModule
-  ]
+    selector: 'app-algorithm-store-read',
+    templateUrl: './algorithm-store-read.component.html',
+    styleUrl: './algorithm-store-read.component.scss',
+    imports: [
+        NgIf,
+        PageHeaderComponent,
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        MatCardContent,
+        TableComponent,
+        MatButton,
+        RouterLink,
+        MatIcon,
+        DisplayAlgorithmsComponent,
+        MatProgressSpinner,
+        TranslateModule
+    ]
 })
 export class AlgorithmStoreReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
