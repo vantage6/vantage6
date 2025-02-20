@@ -60,7 +60,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         Role,
         path + "/<int:id>",
         endpoint="role_with_id",
-        methods=("GET",),
+        methods=("GET", "PATCH"),
         # methods=('GET', 'PATCH', 'DELETE'),
         resource_class_kwargs=services,
     )
