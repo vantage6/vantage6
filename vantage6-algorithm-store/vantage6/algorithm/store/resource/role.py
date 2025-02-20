@@ -12,9 +12,12 @@ from vantage6.algorithm.store.resource import with_permission
 from vantage6.backend.common.resource.input_schema import RoleInputSchema
 from vantage6.backend.common.resource.role import (
     apply_user_filter,
+    check_default_role,
     filter_by_name_or_description,
+    get_role,
     get_rules,
     handle_exceptions,
+    update_role,
     validate_request_body,
     validate_user_exists,
 )
@@ -172,6 +175,44 @@ class Roles(AlgorithmStoreResources):
     @with_permission(module_name, Operation.CREATE)
     @handle_exceptions
     def post(self):
+        """Creates a new role.
+        ---
+        description: >-
+          Create a new role. You can only assign rules that you own. You need
+          permission to create roles.\n
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  name:
+                    type: string
+                    description: Human readable name for role
+                  description:
+                    type: string
+                    description: Human readable description of the role
+                  rules:
+                    type: array
+                    items:
+                      type: integer
+                      description: Rule id's to assign to role
+
+        responses:
+          201:
+            description: Created
+          400:
+            description: Non-allowed role name
+          401:
+            description: Unauthorized
+          404:
+            description: Rule was not found
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Role"]
+        """
         data = request.get_json()
         validate_request_body(role_input_schema, data)
         rules = get_rules(data, db)
@@ -188,6 +229,7 @@ class Role(AlgorithmStoreResources):
     """Role/:id resource"""
 
     @with_permission(module_name, Operation.VIEW)
+    @handle_exceptions
     def get(self, id: int):
         """Returns a role
         ---
@@ -216,8 +258,62 @@ class Role(AlgorithmStoreResources):
 
         tags: ["Role"]
         """
-        role = db.Role.get(id)
-        if not role:
-            return {"msg": f"Role id={id} not found"}, HTTPStatus.NOT_FOUND
+        role = get_role(db, id)
+        return role_output_schema.dump(role, many=False), HTTPStatus.OK
 
+    @with_permission(module_name, Operation.EDIT)
+    @handle_exceptions
+    def patch(self, id: int):
+        """Updates a role
+        ---
+        description: >-
+          Update a role. You can only assign rules that you own. You need
+          permission to edit roles.\n
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            required: true
+            description: Role id
+
+        requestBody:
+          content:
+            application/json:
+              schema:
+                properties:
+                  name:
+                    type: string
+                    description: Human readable name for role
+                  description:
+                    type: string
+                    description: Human readable description of the role
+                  rules:
+                    type: array
+                    items:
+                      type: integer
+                      description: Rule id's to assign to role
+
+        responses:
+          200:
+            description: Ok
+          400:
+            description: Non-allowed role name
+          401:
+            description: Unauthorized
+          404:
+            description: Rule was not found
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Role"]
+        """
+        data = request.get_json()
+        validate_request_body(role_input_schema, data, partial=True)
+        role = get_role(db, id)
+        check_default_role(role, DefaultRole.list())
+        role = update_role(role, data, db, self.permissions)
+        role.save()
         return role_output_schema.dump(role, many=False), HTTPStatus.OK

@@ -9,12 +9,16 @@ from sqlalchemy import or_
 from vantage6.backend.common.resource.input_schema import ServerRoleInputSchema
 from vantage6.backend.common.resource.role import (
     apply_user_filter,
+    check_default_role,
     filter_by_name_or_description,
+    get_role,
+    get_rule,
     get_rules,
     handle_exceptions,
     UnauthorizedError,
     NotFoundError,
     BadRequestError,
+    update_role,
     validate_request_body,
     validate_user_exists,
 )
@@ -150,25 +154,13 @@ def permissions(permissions: PermissionManager) -> None:
 # -----------------------------------------------------------------------------
 role_schema = RoleSchema()
 rule_schema = RuleSchema()
-role_input_schema = ServerRoleInputSchema(default_roles=[role for role in DefaultRole])
+role_input_schema = ServerRoleInputSchema(default_roles=DefaultRole.list())
 
 
 class RoleBase(ServicesResources):
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
         self.rule_collection: RuleCollection = getattr(self.permissions, module_name)
-
-    def _get_role(self, role_id):
-        role = db.Role.get(role_id)
-        if not role:
-            raise NotFoundError(f"Role with id={role_id} not found.")
-        return role
-
-    def _get_rule(self, rule_id):
-        rule = db.Rule.get(rule_id)
-        if not rule:
-            raise NotFoundError(f"Rule with id={rule_id} not found.")
-        return rule
 
     def _get_organization_id(self, data):
         return data.get("organization_id", g.user.organization_id)
@@ -181,12 +173,6 @@ class RoleBase(ServicesResources):
         if not self.rule_collection.allowed_for_org(operation, organization_id):
             raise UnauthorizedError(
                 f"You lack the permission to {operation} roles for organization {organization_id}!"
-            )
-
-    def _is_default_role(self, role):
-        if role.name in [role for role in DefaultRole]:
-            raise BadRequestError(
-                f"Role {role.name} is a default role and cannot be edited or deleted."
             )
 
 
@@ -226,7 +212,7 @@ class Roles(RoleBase):
 
     def _filter_by_rule(self, query, args):
         if "rule_id" in args:
-            self._get_rule(args["rule_id"])
+            get_rule(db, args["rule_id"])
             query = (
                 query.join(db.role_rule_association)
                 .join(db.Rule)
@@ -479,23 +465,6 @@ class Role(RoleBase):
             )
         )
 
-    def update_role(self, role, data):
-        if "name" in data:
-            role.name = data["name"]
-        if "description" in data:
-            role.description = data["description"]
-        if "rules" in data:
-            rules = self.get_rules_from_ids(data["rules"])
-            self.permissions.check_user_rules(rules)
-            role.rules = rules
-
-    def get_rules_from_ids(self, rule_ids):
-        rules = []
-        for rule_id in rule_ids:
-            rule = self._get_rule(rule_id)
-            rules.append(rule)
-        return rules
-
     def can_delete_dependents(self):
         params = request.args
         if not params.get("delete_dependents", False):
@@ -545,7 +514,7 @@ class Role(RoleBase):
 
         tags: ["Role"]
         """
-        role = self._get_role(id)
+        role = get_role(db, id)
 
         if not self.has_permission_to_view(role):
             raise UnauthorizedError("You do not have permission to view this.")
@@ -613,16 +582,15 @@ class Role(RoleBase):
         tags: ["Role"]
         """
         data = request.get_json()
-
         validate_request_body(role_input_schema, data, partial=True)
 
         if "organization_id" in data:
             raise BadRequestError("Organization id cannot be changed.")
 
-        role = self._get_role(id)
-        self._is_default_role(role)
+        role = get_role(db, id)
+        check_default_role(role, DefaultRole.list())
         self._validate_user_permission(P.EDIT, role.organization_id)
-        self.update_role(role, data)
+        role = update_role(role, data, db, self.permissions)
         role.save()
 
         return role_schema.dump(role, many=False), HTTPStatus.OK
@@ -677,8 +645,8 @@ class Role(RoleBase):
 
         tags: ["Role"]
         """
-        role = self._get_role(id)
-        self._is_default_role(role)
+        role = get_role(db, id)
+        check_default_role(role, DefaultRole.list())
         self._validate_user_permission(P.DELETE, role.organization_id)
         if role.users and not self.can_delete_dependents():
             raise BadRequestError(
@@ -736,8 +704,8 @@ class RoleRules(RoleBase):
 
         tags: ["Role"]
         """
-        role = self._get_role(id)
-        rule = self._get_rule(rule_id)
+        role = get_role(db, id)
+        rule = get_rule(db, rule_id)
         self._validate_user_permission(P.EDIT, role.organization_id)
         self.permissions.check_user_rules([rule])
         role.rules.append(rule)
@@ -789,8 +757,8 @@ class RoleRules(RoleBase):
 
         tags: ["Role"]
         """
-        role = self._get_role(id)
-        rule = self._get_rule(rule_id)
+        role = get_role(db, id)
+        rule = get_rule(db, rule_id)
         self._validate_user_permission(P.EDIT, role.organization_id)
         self.permissions.check_user_rules([rule])
         if rule not in role.rules:

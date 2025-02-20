@@ -6,6 +6,7 @@ from sqlalchemy import or_
 
 from requests import Session
 
+from vantage6.backend.common.permission import PermissionManagerBase
 from vantage6.common import logger_name
 
 module_name = logger_name(__name__)
@@ -85,3 +86,44 @@ def validate_user_exists(db, user_id):
 
 def apply_user_filter(db, query, user_id):
     return query.join(db.Permission).join(db.User).filter(db.User.id == user_id)
+
+
+def get_role(db, role_id):
+    role = db.Role.get(role_id)
+    if not role:
+        raise NotFoundError(f"Role with id={role_id} not found.")
+    return role
+
+
+def check_default_role(role, default_roles):
+    if role.name in [role for role in default_roles]:
+        raise BadRequestError(
+            f"Role {role.name} is a default role and cannot be edited or deleted."
+        )
+
+
+def get_rule(db, rule_id):
+    rule = db.Rule.get(rule_id)
+    if not rule:
+        raise NotFoundError(f"Rule with id={rule_id} not found.")
+    return rule
+
+
+def get_rules_from_ids(rule_ids, db):
+    rules = []
+    for rule_id in rule_ids:
+        rule = get_rule(db, rule_id)
+        rules.append(rule)
+    return rules
+
+
+def update_role(role, data, db, permissions: PermissionManagerBase):
+    if "name" in data:
+        role.name = data["name"]
+    if "description" in data:
+        role.description = data["description"]
+    if "rules" in data:
+        rules = get_rules_from_ids(data["rules"], db)
+        permissions.check_user_rules(rules)
+        role.rules = rules
+    return role

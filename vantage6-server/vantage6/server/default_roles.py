@@ -14,6 +14,10 @@ class DefaultRole(str, Enum):
     ORG_ADMIN = "Organization Admin"
     COL_ADMIN = "Collaboration Admin"
 
+    @classmethod
+    def list(cls):
+        return list(map(lambda c: c.value, cls))
+
 
 # TODO BvB 22-06-07: we now have to pass this 'db' module as argument to a
 # function because that module has a connection to the database. This should
