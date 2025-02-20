@@ -7,11 +7,17 @@ import {
 } from '../base/permissions-matrix.component';
 import { OperationType, ScopeType, StoreResourceType, StoreRule } from 'src/app/models/api/rule.model';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
+import { NgFor, NgClass, NgIf } from '@angular/common';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatIcon } from '@angular/material/icon';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-permissions-matrix-store',
   templateUrl: './permissions-matrix-store.component.html',
-  styleUrl: '../base/permissions-matrix.component.scss'
+  styleUrl: '../base/permissions-matrix.component.scss',
+  standalone: true,
+  imports: [NgFor, NgClass, NgIf, MatCheckbox, MatIcon, TranslateModule]
 })
 export class PermissionsMatrixStoreComponent extends BasePermissionsMatrixComponent {
   allResources = Object.values(StoreResourceType).filter((resource) => ![StoreResourceType.ANY].includes(resource));

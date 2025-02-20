@@ -5,11 +5,19 @@ import { StudyCreate, StudyForm } from 'src/app/models/api/study.model';
 import { routePaths } from 'src/app/routes';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { StudyService } from 'src/app/services/study.service';
+import { PageHeaderComponent } from '../../../../../components/page-header/page-header.component';
+import { NgIf } from '@angular/common';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { StudyFormComponent } from '../../../../../components/forms/study-form/study-form.component';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-study-create',
   templateUrl: './study-create.component.html',
-  styleUrls: ['./study-create.component.scss']
+  styleUrls: ['./study-create.component.scss'],
+  standalone: true,
+  imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, StudyFormComponent, MatProgressSpinner, TranslateModule]
 })
 export class StudyCreateComponent {
   routes = routePaths;

@@ -1,9 +1,19 @@
 import { Component, Input, OnInit, OnChanges, ElementRef, ViewChild, Output, EventEmitter, SimpleChanges } from '@angular/core';
 import { SelectionModel } from '@angular/cdk/collections';
-import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree';
+import { MatTreeFlatDataSource, MatTreeFlattener, MatTree, MatTreeNodeDef, MatTreeNode, MatTreeNodePadding } from '@angular/material/tree';
 import { ParentTreeControl } from './parent-tree-control';
-import { ConnectionPositionPair } from '@angular/cdk/overlay';
-import { MatFormField } from '@angular/material/form-field';
+import { ConnectionPositionPair, CdkOverlayOrigin, CdkConnectedOverlay } from '@angular/cdk/overlay';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatChipGrid, MatChipRow, MatChipRemove, MatChipInput } from '@angular/material/chips';
+import { MatIcon } from '@angular/material/icon';
+import { MatInput } from '@angular/material/input';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { NgIf, NgClass } from '@angular/common';
+import { MatIconButton } from '@angular/material/button';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatRadioButton } from '@angular/material/radio';
+import { TranslateModule } from '@ngx-translate/core';
+import { HighlightedTextPipe } from '../../../pipes/highlighted-text.pipe';
 
 export interface ITreeInputSearchConfig {
   searchActive: boolean;
@@ -41,7 +51,33 @@ export interface ITreeSelectedValue {
 @Component({
   selector: 'app-tree-dropdown',
   templateUrl: './tree-dropdown.component.html',
-  styleUrls: ['./tree-dropdown.component.scss']
+  styleUrls: ['./tree-dropdown.component.scss'],
+  standalone: true,
+  imports: [
+    CdkOverlayOrigin,
+    MatFormField,
+    MatLabel,
+    MatChipGrid,
+    MatChipRow,
+    MatChipRemove,
+    MatIcon,
+    MatInput,
+    MatChipInput,
+    ReactiveFormsModule,
+    FormsModule,
+    CdkConnectedOverlay,
+    NgIf,
+    MatIconButton,
+    MatTree,
+    NgClass,
+    MatTreeNodeDef,
+    MatTreeNode,
+    MatTreeNodePadding,
+    MatCheckbox,
+    MatRadioButton,
+    TranslateModule,
+    HighlightedTextPipe
+  ]
 })
 export class TreeDropdownComponent implements OnInit, OnChanges {
   @Input() isMultiSelect = false;

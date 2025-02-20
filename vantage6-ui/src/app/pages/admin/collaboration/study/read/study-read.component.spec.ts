@@ -8,7 +8,7 @@ describe('StudyReadComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [StudyReadComponent]
+      imports: [StudyReadComponent]
     });
     fixture = TestBed.createComponent(StudyReadComponent);
     component = fixture.componentInstance;

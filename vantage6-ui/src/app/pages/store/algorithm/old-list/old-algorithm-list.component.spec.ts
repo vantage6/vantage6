@@ -8,10 +8,9 @@ describe('OldAlgorithmListComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [OldAlgorithmListComponent]
-    })
-    .compileComponents();
-    
+      imports: [OldAlgorithmListComponent]
+    }).compileComponents();
+
     fixture = TestBed.createComponent(OldAlgorithmListComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

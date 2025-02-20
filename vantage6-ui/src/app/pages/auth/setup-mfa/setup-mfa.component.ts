@@ -1,16 +1,34 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { Router, RouterLink } from '@angular/router';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { MessageDialogComponent } from 'src/app/components/dialogs/message-dialog/message-dialog.component';
 import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
 import { LoginErrorService } from 'src/app/services/login-error.service';
+import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
+import { QRCodeModule } from 'angularx-qrcode';
+import { MatButton } from '@angular/material/button';
+import { NgIf } from '@angular/common';
+import { AlertComponent } from '../../../components/alerts/alert/alert.component';
 
 @Component({
   selector: 'app-setup-mfa',
   templateUrl: './setup-mfa.component.html',
-  styleUrls: ['./setup-mfa.component.scss']
+  styleUrls: ['./setup-mfa.component.scss'],
+  standalone: true,
+  imports: [
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardContent,
+    QRCodeModule,
+    MatButton,
+    RouterLink,
+    NgIf,
+    AlertComponent,
+    TranslateModule
+  ]
 })
 export class SetupMfaComponent implements OnInit {
   routes = routePaths;

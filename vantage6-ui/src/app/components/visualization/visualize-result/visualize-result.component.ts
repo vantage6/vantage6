@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, Input, OnChanges } from '@angular/core';
 import { Visualization, VisualizationType } from 'src/app/models/api/visualization.model';
+import { NgIf } from '@angular/common';
+import { VisualizeTableComponent } from '../visualize-table/visualize-table.component';
+import { VisualizeLineComponent } from '../visualize-line/visualize-line.component';
 
 // interface VisualizeResult {
 //   visualization: Visualization;
@@ -9,7 +12,9 @@ import { Visualization, VisualizationType } from 'src/app/models/api/visualizati
 
 @Component({
   selector: 'app-visualize-result',
-  templateUrl: './visualize-result.component.html'
+  templateUrl: './visualize-result.component.html',
+  standalone: true,
+  imports: [NgIf, VisualizeTableComponent, VisualizeLineComponent]
 })
 export class VisualizeResultComponent implements OnChanges {
   visualizationType = VisualizationType;

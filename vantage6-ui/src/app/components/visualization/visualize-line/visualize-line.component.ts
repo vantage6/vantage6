@@ -5,13 +5,17 @@ import { FileService } from 'src/app/services/file.service';
 import { Chart, LineController, LineElement, PointElement, LinearScale, CategoryScale } from 'chart.js';
 import { COLOR_VANTAGE6_PRIMARY } from 'src/app/models/constants/style';
 import { isNested } from 'src/app/helpers/utils.helper';
+import { MatButton } from '@angular/material/button';
+import { TranslateModule } from '@ngx-translate/core';
 
 Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale);
 
 @Component({
   selector: 'app-visualize-line',
   templateUrl: './visualize-line.component.html',
-  styleUrl: './visualize-line.component.scss'
+  styleUrl: './visualize-line.component.scss',
+  standalone: true,
+  imports: [MatButton, TranslateModule]
 })
 export class VisualizeLineComponent implements OnChanges {
   @Input() visualization?: Visualization | null;

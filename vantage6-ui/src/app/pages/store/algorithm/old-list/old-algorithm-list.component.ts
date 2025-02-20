@@ -5,11 +5,29 @@ import { Algorithm } from 'src/app/models/api/algorithm.model';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { NgIf } from '@angular/common';
+import { AlertComponent } from '../../../../components/alerts/alert/alert.component';
+import { DisplayAlgorithmsComponent } from '../../../../components/algorithm/display-algorithms/display-algorithms.component';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-old-algorithm-list',
   templateUrl: './old-algorithm-list.component.html',
-  styleUrl: './old-algorithm-list.component.scss'
+  styleUrl: './old-algorithm-list.component.scss',
+  standalone: true,
+  imports: [
+    PageHeaderComponent,
+    NgIf,
+    AlertComponent,
+    DisplayAlgorithmsComponent,
+    MatCard,
+    MatCardContent,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 export class OldAlgorithmListComponent extends BaseListComponent implements OnInit, OnDestroy {
   oldAlgorithms: Algorithm[] = [];

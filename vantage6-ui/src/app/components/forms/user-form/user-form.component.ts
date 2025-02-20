@@ -1,5 +1,5 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { takeUntil } from 'rxjs';
 import { BaseOrganization, Organization } from 'src/app/models/api/organization.model';
 import { Role } from 'src/app/models/api/role.model';
@@ -12,11 +12,39 @@ import { OperationType, ResourceType, Rule, Rule_ } from 'src/app/models/api/rul
 import { RoleService } from 'src/app/services/role.service';
 import { BaseFormComponent } from '../../admin-base/base-form/base-form.component';
 import { PermissionService } from 'src/app/services/permission.service';
+import { NgIf, NgFor } from '@angular/common';
+import { MatFormField, MatLabel, MatError, MatHint } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { MatSelect } from '@angular/material/select';
+import { MatOption } from '@angular/material/core';
+import { PermissionsMatrixServerComponent } from '../../permissions-matrix/server/permissions-matrix-server.component';
+import { AlertComponent } from '../../alerts/alert/alert.component';
+import { MatButton } from '@angular/material/button';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-user-form',
   templateUrl: './user-form.component.html',
-  styleUrls: ['./user-form.component.scss']
+  styleUrls: ['./user-form.component.scss'],
+  standalone: true,
+  imports: [
+    NgIf,
+    ReactiveFormsModule,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatError,
+    MatSelect,
+    NgFor,
+    MatOption,
+    MatHint,
+    PermissionsMatrixServerComponent,
+    AlertComponent,
+    MatButton,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 export class UserFormComponent extends BaseFormComponent implements OnInit, OnDestroy {
   @Input() user?: User;

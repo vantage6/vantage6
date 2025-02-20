@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { PageEvent } from '@angular/material/paginator';
-import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { PageEvent, MatPaginator } from '@angular/material/paginator';
+import { Router, RouterLink } from '@angular/router';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs';
 import { BaseListComponent } from 'src/app/components/admin-base/base-list/base-list.component';
 import { unlikeApiParameter } from 'src/app/helpers/general.helper';
@@ -10,11 +10,30 @@ import { GetStoreRoleParameters, StoreRole } from 'src/app/models/api/store-role
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 import { StoreRoleService } from 'src/app/services/store-role.service';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { NgIf } from '@angular/common';
+import { MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { TableComponent } from '../../../../components/table/table.component';
 
 @Component({
   selector: 'app-store-role-list',
   templateUrl: './store-role-list.component.html',
-  styleUrl: './store-role-list.component.scss'
+  styleUrl: './store-role-list.component.scss',
+  standalone: true,
+  imports: [
+    PageHeaderComponent,
+    NgIf,
+    MatButton,
+    RouterLink,
+    MatIcon,
+    MatCard,
+    MatCardContent,
+    TableComponent,
+    MatPaginator,
+    TranslateModule
+  ]
 })
 export class StoreRoleListComponent extends BaseListComponent implements OnInit {
   getRoleParameters: GetStoreRoleParameters = {};

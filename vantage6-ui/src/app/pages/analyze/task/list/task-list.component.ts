@@ -1,8 +1,8 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgIf } from '@angular/common';
 import { Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
-import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { Router, RouterLink } from '@angular/router';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { Subject, Subscription, combineLatest, takeUntil } from 'rxjs';
 import { SearchRequest } from 'src/app/components/table/table.component';
 import { getApiSearchParameters } from 'src/app/helpers/api.helper';
@@ -19,6 +19,11 @@ import { ChosenCollaborationService } from 'src/app/services/chosen-collaboratio
 import { PermissionService } from 'src/app/services/permission.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { TaskService } from 'src/app/services/task.service';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { TableComponent } from '../../../../components/table/table.component';
 
 enum TableRows {
   ID = 'id',
@@ -29,7 +34,20 @@ enum TableRows {
 
 @Component({
   selector: 'app-task-list',
-  templateUrl: './task-list.component.html'
+  templateUrl: './task-list.component.html',
+  standalone: true,
+  imports: [
+    PageHeaderComponent,
+    NgIf,
+    MatButton,
+    RouterLink,
+    MatIcon,
+    MatCard,
+    MatCardContent,
+    TableComponent,
+    MatPaginator,
+    TranslateModule
+  ]
 })
 export class TaskListComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs';
 import { BaseReadComponent } from 'src/app/components/admin-base/base-read/base-read.component';
 import { OperationType, StoreResourceType, StoreRule } from 'src/app/models/api/rule.model';
@@ -11,11 +11,31 @@ import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dial
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 import { StoreRoleService } from 'src/app/services/store-role.service';
 import { StoreRuleService } from 'src/app/services/store-rule.service';
+import { NgIf } from '@angular/common';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { MatTabGroup, MatTab } from '@angular/material/tabs';
+import { PermissionsMatrixStoreComponent } from '../../../../components/permissions-matrix/store/permissions-matrix-store.component';
+import { TableComponent } from '../../../../components/table/table.component';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-store-role-read',
   templateUrl: './store-role-read.component.html',
-  styleUrl: './store-role-read.component.scss'
+  styleUrl: './store-role-read.component.scss',
+  standalone: true,
+  imports: [
+    NgIf,
+    PageHeaderComponent,
+    MatCard,
+    MatCardContent,
+    MatTabGroup,
+    MatTab,
+    PermissionsMatrixStoreComponent,
+    TableComponent,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 export class StoreRoleReadComponent extends BaseReadComponent implements OnInit, OnDestroy {
   isEditing: boolean = false;

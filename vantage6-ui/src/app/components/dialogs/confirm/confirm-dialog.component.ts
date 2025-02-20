@@ -1,5 +1,8 @@
 import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { MatButton } from '@angular/material/button';
+import { TranslateModule } from '@ngx-translate/core';
 
 export interface DialogData {
   title: string;
@@ -12,7 +15,9 @@ export interface DialogData {
 @Component({
   selector: 'app-confirm-dialog',
   templateUrl: 'confirm-dialog.component.html',
-  styleUrls: ['./confirm-dialog.component.scss']
+  styleUrls: ['./confirm-dialog.component.scss'],
+  standalone: true,
+  imports: [MatDialogTitle, CdkScrollable, MatDialogContent, MatDialogActions, MatButton, MatDialogClose, TranslateModule]
 })
 export class ConfirmDialogComponent {
   constructor(@Inject(MAT_DIALOG_DATA) public data: DialogData) {}

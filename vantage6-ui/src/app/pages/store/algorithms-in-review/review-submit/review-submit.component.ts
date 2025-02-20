@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { BaseEditComponent } from 'src/app/components/admin-base/base-edit/base-edit.component';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
@@ -13,11 +13,30 @@ import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dialog.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 import { StoreReviewService } from 'src/app/services/store-review.service';
+import { NgIf } from '@angular/common';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { MatRadioGroup, MatRadioButton } from '@angular/material/radio';
+import { MatButton } from '@angular/material/button';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-review-submit',
   templateUrl: './review-submit.component.html',
-  styleUrl: './review-submit.component.scss'
+  styleUrl: './review-submit.component.scss',
+  standalone: true,
+  imports: [
+    NgIf,
+    PageHeaderComponent,
+    MatCard,
+    MatCardContent,
+    ReactiveFormsModule,
+    MatRadioGroup,
+    MatRadioButton,
+    MatButton,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 // extends BaseEditComponent
 export class ReviewSubmitComponent extends BaseEditComponent implements OnInit, OnDestroy {

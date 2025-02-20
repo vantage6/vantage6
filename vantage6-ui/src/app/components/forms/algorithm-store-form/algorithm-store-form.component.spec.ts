@@ -8,7 +8,7 @@ describe('AlgorithmStoreFormComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [AlgorithmStoreFormComponent]
+      imports: [AlgorithmStoreFormComponent]
     });
     fixture = TestBed.createComponent(AlgorithmStoreFormComponent);
     component = fixture.componentInstance;

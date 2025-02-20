@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { AddAlgorithmStore, AlgorithmStoreForm } from 'src/app/models/api/algorithmStore.model';
 import { routePaths } from 'src/app/routes';
@@ -9,11 +9,18 @@ import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service'
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { SnackbarService } from 'src/app/services/snackbar.service';
 import { environment } from 'src/environments/environment';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { NgIf } from '@angular/common';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { AlgorithmStoreFormComponent } from '../../../../components/forms/algorithm-store-form/algorithm-store-form.component';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-add-algo-store',
   templateUrl: './add-algo-store.component.html',
-  styleUrls: ['./add-algo-store.component.scss']
+  styleUrls: ['./add-algo-store.component.scss'],
+  standalone: true,
+  imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, AlgorithmStoreFormComponent, MatProgressSpinner, TranslateModule]
 })
 export class AddAlgoStoreComponent implements OnInit {
   id = '';

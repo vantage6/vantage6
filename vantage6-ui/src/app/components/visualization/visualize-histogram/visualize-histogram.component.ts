@@ -6,7 +6,8 @@ import { Visualization } from 'src/app/models/api/visualization.model';
 @Component({
   selector: 'app-visualize-histogram',
   templateUrl: './visualize-histogram.component.html',
-  styleUrls: ['./visualize-histogram.component.scss']
+  styleUrls: ['./visualize-histogram.component.scss'],
+  standalone: true
 })
 export class VisualizeHistogramComponent implements OnChanges, AfterViewInit {
   @ViewChild('histogram') container?: ElementRef;

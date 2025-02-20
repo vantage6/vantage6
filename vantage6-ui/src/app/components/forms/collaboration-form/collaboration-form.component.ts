@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
-import { MatSelectChange } from '@angular/material/select';
+import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
+import { MatSelectChange, MatSelect } from '@angular/material/select';
 import { Subject, takeUntil } from 'rxjs';
 import { compareObjIDs } from 'src/app/helpers/general.helper';
 import { Collaboration, CollaborationForm } from 'src/app/models/api/collaboration.model';
@@ -8,10 +8,33 @@ import { BaseOrganization, OrganizationSortProperties } from 'src/app/models/api
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { PermissionService } from 'src/app/services/permission.service';
+import { NgIf, NgFor } from '@angular/common';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatOption } from '@angular/material/core';
+import { MatButton } from '@angular/material/button';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-collaboration-form',
-  templateUrl: './collaboration-form.component.html'
+  templateUrl: './collaboration-form.component.html',
+  standalone: true,
+  imports: [
+    NgIf,
+    ReactiveFormsModule,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatCheckbox,
+    MatSelect,
+    NgFor,
+    MatOption,
+    MatButton,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 export class CollaborationFormComponent implements OnInit {
   @Input() collaboration?: Collaboration;

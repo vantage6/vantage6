@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { Router, RouterLink } from '@angular/router';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { Algorithm, AlgorithmFunction, AlgorithmStatus } from 'src/app/models/api/algorithm.model';
@@ -12,11 +12,42 @@ import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dialog.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
+import { NgIf } from '@angular/common';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { MatIconButton, MatButton } from '@angular/material/button';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { MatIcon } from '@angular/material/icon';
+import { AlertWithButtonComponent } from '../../../../components/alerts/alert-with-button/alert-with-button.component';
+import { AlertComponent } from '../../../../components/alerts/alert/alert.component';
+import { DisplayAlgorithmComponent } from '../../../../components/algorithm/display-algorithm/display-algorithm.component';
+import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-algorithm-read',
   templateUrl: './algorithm-read.component.html',
-  styleUrl: './algorithm-read.component.scss'
+  styleUrl: './algorithm-read.component.scss',
+  standalone: true,
+  imports: [
+    NgIf,
+    PageHeaderComponent,
+    MatIconButton,
+    MatMenuTrigger,
+    MatIcon,
+    MatMenu,
+    MatMenuItem,
+    RouterLink,
+    AlertWithButtonComponent,
+    AlertComponent,
+    DisplayAlgorithmComponent,
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardContent,
+    MatButton,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 export class AlgorithmReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

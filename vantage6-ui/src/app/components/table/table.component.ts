@@ -1,9 +1,27 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription, debounceTime } from 'rxjs';
 import { Column, TableData } from 'src/app/models/application/table.model';
 import { WAIT_TABLE_SEARCH_TIME_MS } from 'src/app/models/constants/table';
+import { NgClass, NgIf, NgFor } from '@angular/common';
+import {
+  MatTable,
+  MatColumnDef,
+  MatHeaderCellDef,
+  MatHeaderCell,
+  MatCellDef,
+  MatCell,
+  MatHeaderRowDef,
+  MatHeaderRow,
+  MatRowDef,
+  MatRow
+} from '@angular/material/table';
+import { MatFormField } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { ChipComponent } from '../helpers/chip/chip.component';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { HighlightedTextPipe } from '../../pipes/highlighted-text.pipe';
 
 export interface SearchRequest {
   columnId: string;
@@ -13,7 +31,29 @@ export interface SearchRequest {
 @Component({
   selector: 'app-table',
   styleUrls: ['./table.component.scss'],
-  templateUrl: './table.component.html'
+  templateUrl: './table.component.html',
+  standalone: true,
+  imports: [
+    NgClass,
+    ReactiveFormsModule,
+    NgIf,
+    MatTable,
+    NgFor,
+    MatColumnDef,
+    MatHeaderCellDef,
+    MatHeaderCell,
+    MatFormField,
+    MatInput,
+    MatCellDef,
+    MatCell,
+    ChipComponent,
+    MatHeaderRowDef,
+    MatHeaderRow,
+    MatRowDef,
+    MatRow,
+    MatProgressSpinner,
+    HighlightedTextPipe
+  ]
 })
 export class TableComponent implements OnChanges {
   @Input() data?: TableData;

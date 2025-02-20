@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { getChipTypeForStatus, getStatusType, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
 import { Algorithm, AlgorithmFunction, Argument, ArgumentType, FunctionType } from 'src/app/models/api/algorithm.model';
 import { Visualization } from 'src/app/models/api/visualization.model';
@@ -19,9 +19,9 @@ import { TaskService } from 'src/app/services/task.service';
 import { LogDialogComponent } from 'src/app/components/dialogs/log/log-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
-import { FormControl } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { Subject, Subscription, takeUntil, timer } from 'rxjs';
@@ -35,11 +35,72 @@ import { printDate } from 'src/app/helpers/general.helper';
 import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
 import { StudyService } from 'src/app/services/study.service';
 import { Study } from 'src/app/models/api/study.model';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { NgIf, NgClass, NgFor, SlicePipe } from '@angular/common';
+import { MatIconButton, MatButton } from '@angular/material/button';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { MatIcon } from '@angular/material/icon';
+import { AlertComponent } from '../../../../components/alerts/alert/alert.component';
+import { MatCard, MatCardActions, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
+import {
+  MatExpansionPanel,
+  MatExpansionPanelHeader,
+  MatExpansionPanelTitle,
+  MatAccordion,
+  MatExpansionPanelDescription
+} from '@angular/material/expansion';
+import { StatusInfoComponent } from '../../../../components/helpers/status-info/status-info.component';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatSelect } from '@angular/material/select';
+import { MatOption } from '@angular/material/core';
+import { VisualizeResultComponent } from '../../../../components/visualization/visualize-result/visualize-result.component';
+import { ChipComponent } from '../../../../components/helpers/chip/chip.component';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { OrderByPipe } from '../../../../pipes/order-by.pipe';
+import { OrderByTaskStatusPipe } from '../../../../pipes/order-by-status.pipe';
 
 @Component({
   selector: 'app-task-read',
   templateUrl: './task-read.component.html',
-  styleUrls: ['./task-read.component.scss']
+  styleUrls: ['./task-read.component.scss'],
+  standalone: true,
+  imports: [
+    PageHeaderComponent,
+    NgIf,
+    MatIconButton,
+    MatMenuTrigger,
+    MatIcon,
+    MatMenu,
+    MatMenuItem,
+    AlertComponent,
+    MatCard,
+    MatExpansionPanel,
+    MatExpansionPanelHeader,
+    MatExpansionPanelTitle,
+    NgClass,
+    NgFor,
+    StatusInfoComponent,
+    MatButton,
+    MatCardActions,
+    MatCardHeader,
+    MatCardTitle,
+    MatFormField,
+    MatLabel,
+    MatSelect,
+    ReactiveFormsModule,
+    MatOption,
+    MatCardContent,
+    VisualizeResultComponent,
+    ChipComponent,
+    RouterLink,
+    MatAccordion,
+    MatExpansionPanelDescription,
+    MatProgressSpinner,
+    SlicePipe,
+    TranslateModule,
+    OrderByPipe,
+    OrderByTaskStatusPipe
+  ]
 })
 export class TaskReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

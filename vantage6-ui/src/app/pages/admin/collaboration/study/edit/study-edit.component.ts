@@ -5,11 +5,18 @@ import { Study, StudyCreate, StudyForm, StudyLazyProperties } from 'src/app/mode
 import { routePaths } from 'src/app/routes';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { StudyService } from 'src/app/services/study.service';
+import { NgIf } from '@angular/common';
+import { PageHeaderComponent } from '../../../../../components/page-header/page-header.component';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { StudyFormComponent } from '../../../../../components/forms/study-form/study-form.component';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-study-edit',
   templateUrl: './study-edit.component.html',
-  styleUrls: ['./study-edit.component.scss']
+  styleUrls: ['./study-edit.component.scss'],
+  standalone: true,
+  imports: [NgIf, PageHeaderComponent, MatCard, MatCardContent, StudyFormComponent, MatProgressSpinner]
 })
 export class StudyEditComponent implements OnInit {
   @HostBinding('class') class = 'card-container';

@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs';
 import { BaseReadComponent } from 'src/app/components/admin-base/base-read/base-read.component';
 import { Organization } from 'src/app/models/api/organization.model';
@@ -14,11 +14,37 @@ import { OrganizationService } from 'src/app/services/organization.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { RoleService } from 'src/app/services/role.service';
 import { RuleService } from 'src/app/services/rule.service';
+import { NgIf } from '@angular/common';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { MatTabGroup, MatTab } from '@angular/material/tabs';
+import { MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { PermissionsMatrixServerComponent } from '../../../../components/permissions-matrix/server/permissions-matrix-server.component';
+import { RoleSubmitButtonsComponent } from '../../../../components/helpers/role-submit-buttons/role-submit-buttons.component';
+import { TableComponent } from '../../../../components/table/table.component';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-role-read',
   templateUrl: './role-read.component.html',
-  styleUrls: ['./role-read.component.scss']
+  styleUrls: ['./role-read.component.scss'],
+  standalone: true,
+  imports: [
+    NgIf,
+    PageHeaderComponent,
+    MatCard,
+    MatCardContent,
+    MatTabGroup,
+    MatTab,
+    MatButton,
+    MatIcon,
+    PermissionsMatrixServerComponent,
+    RoleSubmitButtonsComponent,
+    TableComponent,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 export class RoleReadComponent extends BaseReadComponent implements OnInit, OnDestroy {
   isEditing: boolean = false;

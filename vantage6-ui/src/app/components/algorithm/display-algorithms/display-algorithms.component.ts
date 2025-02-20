@@ -2,11 +2,15 @@ import { Component, Input } from '@angular/core';
 import { Router } from '@angular/router';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
 import { routePaths } from 'src/app/routes';
+import { NgFor } from '@angular/common';
+import { MatButton } from '@angular/material/button';
 
 @Component({
   selector: 'app-display-algorithms',
   templateUrl: './display-algorithms.component.html',
-  styleUrl: './display-algorithms.component.scss'
+  styleUrl: './display-algorithms.component.scss',
+  standalone: true,
+  imports: [NgFor, MatButton]
 })
 export class DisplayAlgorithmsComponent {
   @Input() algorithms: Algorithm[] = [];
