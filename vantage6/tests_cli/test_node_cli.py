@@ -244,9 +244,15 @@ class NodeCLITest(unittest.TestCase):
 
         runner = CliRunner()
 
+        # Should fail when starting node with non-existing database CSV file
         with runner.isolated_filesystem():
             result = runner.invoke(cli_node_start, ["--name", "some-name"])
+        self.assertEqual(result.exit_code, 1)
 
+        # now do it with a SQL database which doesn't have to be an existing file
+        ctx.databases = [{"label": "some_label", "uri": "data.db", "type": "sql"}]
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli_node_start, ["--name", "some-name"])
         self.assertEqual(result.exit_code, 0)
 
     def _setup_stop_test(self, containers):

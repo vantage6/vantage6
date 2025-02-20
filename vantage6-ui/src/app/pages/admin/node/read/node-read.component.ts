@@ -186,7 +186,7 @@ export class NodeReadComponent implements OnInit, OnDestroy {
     this.isLoading = true;
 
     const loadOrganizations = this.organizationService.getOrganizations({ sort: OrganizationSortProperties.Name });
-    const loadCollaborations = await this.collaborationService.getCollaborations({ sort: CollaborationSortProperties.Name });
+    const loadCollaborations = this.collaborationService.getCollaborations({ sort: CollaborationSortProperties.Name });
     await Promise.all([loadOrganizations, loadCollaborations, this.getNodes()]).then((values) => {
       this.treeNodes = [
         {

@@ -91,6 +91,7 @@ export class AlgorithmEditComponent implements OnInit, OnDestroy {
               conditional_on: conditionalArgName,
               conditional_operator: arg.conditional_operator,
               conditional_value: arg.conditional_value,
+              conditionalValueNull: arg.conditional_value === null ? 'true' : 'false',
               is_frontend_only: arg.is_frontend_only
             };
           }),

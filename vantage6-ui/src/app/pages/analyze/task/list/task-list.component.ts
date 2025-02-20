@@ -96,7 +96,6 @@ export class TaskListComponent implements OnInit, OnDestroy {
     this.currentPage = e.pageIndex + 1;
     const parameters: GetTaskParameters = { sort: TaskSortProperties.ID, is_user_created: 1 };
     if (this.currentSearchInput?.length) {
-      delete parameters.is_user_created;
       parameters.name = this.currentSearchInput;
     }
     await this.getTasks(this.currentPage, parameters);
@@ -106,8 +105,8 @@ export class TaskListComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     const parameters: GetTaskParameters = getApiSearchParameters<GetTaskParameters>(searchRequests);
     this.currentSearchInput = parameters?.name ?? '';
-    if (!parameters?.name?.length) parameters.is_user_created = 1;
     this.paginator?.firstPage();
+    parameters.is_user_created = 1;
     this.initData(1, parameters);
   }
 

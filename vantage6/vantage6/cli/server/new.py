@@ -45,7 +45,11 @@ def cli_server_new(name: str, system_folders: bool) -> None:
         exit(1)
 
     # create config in ctx location
-    cfg_file = configuration_wizard(InstanceType.SERVER, name, system_folders)
+    try:
+        cfg_file = configuration_wizard(InstanceType.SERVER, name, system_folders)
+    except KeyboardInterrupt:
+        error("Configuration creation aborted.")
+        exit(1)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
 
     # info(f"root user created.")

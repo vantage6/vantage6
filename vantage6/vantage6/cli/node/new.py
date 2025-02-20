@@ -47,7 +47,11 @@ def cli_node_new_configuration(name: str, system_folders: bool) -> None:
 
     # create config in ctx location
     flag = "--system" if system_folders else ""
-    cfg_file = configuration_wizard(InstanceType.NODE, name, system_folders)
+    try:
+        cfg_file = configuration_wizard(InstanceType.NODE, name, system_folders)
+    except KeyboardInterrupt:
+        error("Configuration creation aborted.")
+        exit(1)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
     info(
         f"You can start the node by running "

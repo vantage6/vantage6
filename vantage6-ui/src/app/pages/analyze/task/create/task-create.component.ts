@@ -23,6 +23,7 @@ import {
   getTaskDatabaseFromForm,
   getDatabaseTypesFromForm
 } from 'src/app/pages/analyze/task/task.helper';
+import { readFile } from 'src/app/helpers/file.helper';
 import { DatabaseStepComponent } from './steps/database-step/database-step.component';
 import { FilterStepComponent } from './steps/filter-step/filter-step.component';
 import { NodeService } from 'src/app/services/node.service';
@@ -512,12 +513,17 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     return (
       !this.shouldShowColumnDropdown(argument) &&
       !this.shouldShowOrganizationDropdown(argument) &&
-      !this.shouldShowParameterBooleanInput(argument)
+      !this.shouldShowParameterBooleanInput(argument) &&
+      !this.shouldShowParameterJsonInput(argument)
     );
   }
 
   shouldIncludeFormField(argument: Argument): boolean {
-    return !this.shouldShowParameterBooleanInput(argument) && !this.shouldShowMultipleInput(argument);
+    return (
+      !this.shouldShowParameterBooleanInput(argument) &&
+      !this.shouldShowMultipleInput(argument) &&
+      !this.shouldShowParameterJsonInput(argument)
+    );
   }
 
   shouldShowMultipleInput(argument: Argument): boolean {
@@ -527,6 +533,10 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       argument.type === this.argumentType.StringList ||
       (argument.type === this.argumentType.ColumnList && this.columns.length === 0 && this.hasLoadedColumns)
     );
+  }
+
+  shouldShowParameterJsonInput(argument: Argument): boolean {
+    return argument.type === this.argumentType.Json;
   }
 
   shouldShowParameterBooleanInput(argument: Argument): boolean {
@@ -609,6 +619,20 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       }
     }
     return arguments_;
+  }
+
+  async selectedJsonFile(event: Event, argument: Argument): Promise<void> {
+    const selectedFile = (event.target as HTMLInputElement).files?.item(0) || null;
+
+    if (!selectedFile) return;
+    const fileData = await readFile(selectedFile);
+
+    this.parameterForm.controls[`${argument.name}`].setValue(fileData || '');
+    this.parameterForm.controls[`${argument.name}_jsonFileName`].setValue(selectedFile.name || '');
+  }
+
+  getJsonFileName(argument: Argument): string {
+    return this.parameterForm.controls[`${argument.name}_jsonFileName`].value;
   }
 
   compareStudyOrCollabForSelection(val1: number | string, val2: number | string): boolean {
