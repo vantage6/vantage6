@@ -1,6 +1,3 @@
-import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
-
-import { HttpLoaderFactory } from './app/app.module';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { enCA } from 'date-fns/locale';
 import { provideHttpClient, withInterceptorsFromDi, HttpClient } from '@angular/common/http';
@@ -43,6 +40,10 @@ import { OverlayModule } from '@angular/cdk/overlay';
 import { AppComponent } from './app/app.component';
 import { importProvidersFrom } from '@angular/core';
 
+export function HttpLoaderFactory(http: HttpClient) {
+  return new TranslateHttpLoader(http, './assets/localizations/');
+}
+
 bootstrapApplication(AppComponent, {
   providers: [
     importProvidersFrom(
@@ -51,11 +52,7 @@ bootstrapApplication(AppComponent, {
       ReactiveFormsModule,
       FormsModule,
       TranslateModule.forRoot({
-        loader: {
-          provide: TranslateLoader,
-          useFactory: HttpLoaderFactory,
-          deps: [HttpClient]
-        },
+        loader: { provide: TranslateLoader, useFactory: HttpLoaderFactory, deps: [HttpClient] },
         defaultLanguage: 'en'
       }),
       MarkdownModule.forRoot(),
@@ -88,10 +85,7 @@ bootstrapApplication(AppComponent, {
       QRCodeModule,
       OverlayModule
     ),
-    {
-      provide: MAT_DATE_LOCALE,
-      useValue: enCA
-    },
+    { provide: MAT_DATE_LOCALE, useValue: enCA },
     provideHttpClient(withInterceptorsFromDi()),
     DatePipe,
     provideAnimations()
