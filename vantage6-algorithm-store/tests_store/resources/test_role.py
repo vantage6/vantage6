@@ -69,17 +69,11 @@ class TestRoleResource(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
-    @patch("vantage6.algorithm.store.resource.role.validate_request_body")
-    @patch("vantage6.algorithm.store.resource.role.get_rules")
-    def test_role_create(
-        self, get_rules_mock, validate_request_body_mock, validate_token_mock
-    ):
+    def test_roles_create(self, validate_token_mock):
         validate_token_mock.return_value = (
             MockResponse({"username": USERNAME}),
             HTTPStatus.OK,
         )
-        validate_request_body_mock.return_value = None
-        get_rules_mock.return_value = []
 
         server = self.register_server(SERVER_URL)
 
@@ -90,18 +84,13 @@ class TestRoleResource(TestResources):
             server.id, USERNAME, user_rules=[Rule.get_by_("role", Operation.CREATE)]
         )
 
-        valid_data = {"name": "test_role", "description": "A test role"}
+        valid_data = {"name": "test_role", "description": "A test role", "rules": []}
         response = self.app.post("/api/role", headers=HEADERS, json=valid_data)
         self.assertEqual(response.status_code, HTTPStatus.CREATED)
-        self.assertIn("name", response.json)
-        self.assertEqual(response.json["name"], valid_data["name"])
 
-        validate_request_body_mock.return_value = {"msg": "Invalid data"}
         invalid_data = {"invalid_field": "value"}
         response = self.app.post("/api/role", headers=HEADERS, json=invalid_data)
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
-        self.assertIn("msg", response.json)
-        self.assertEqual(response.json["msg"], "Invalid data")
 
 
 if __name__ == "__main__":

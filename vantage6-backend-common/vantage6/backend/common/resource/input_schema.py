@@ -61,7 +61,6 @@ class RoleInputSchema(_NameValidationSchema):
 
     description = fields.String(validate=Length(max=MAX_LEN_STR_LONG))
     rules = fields.List(fields.Integer(validate=Range(min=1)), required=True)
-    organization_id = fields.Integer(validate=Range(min=1))
 
     @validates("name")
     def validate_name(self, name: str):
@@ -80,3 +79,9 @@ class RoleInputSchema(_NameValidationSchema):
         """
         if name in self.default_roles:
             raise ValidationError("Role name cannot be one of the default roles")
+
+
+class ServerRoleInputSchema(RoleInputSchema):
+    """Schema for validating input for creating a server role."""
+
+    organization_id = fields.Integer(validate=Range(min=1))

@@ -6,7 +6,7 @@ from flask import g
 from flask_restful import Api
 from sqlalchemy import or_
 
-from vantage6.backend.common.resource.input_schema import RoleInputSchema
+from vantage6.backend.common.resource.input_schema import ServerRoleInputSchema
 from vantage6.backend.common.resource.role import (
     apply_user_filter,
     filter_by_name_or_description,
@@ -150,7 +150,7 @@ def permissions(permissions: PermissionManager) -> None:
 # -----------------------------------------------------------------------------
 role_schema = RoleSchema()
 rule_schema = RuleSchema()
-role_input_schema = RoleInputSchema(default_roles=[role for role in DefaultRole])
+role_input_schema = ServerRoleInputSchema(default_roles=[role for role in DefaultRole])
 
 
 class RoleBase(ServicesResources):
