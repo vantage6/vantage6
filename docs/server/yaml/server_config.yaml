@@ -119,6 +119,15 @@ email_token_validity_minutes: 60
 token_expires_hours: 6
 refresh_token_expires_hours: 48
 
+# a worker will run every hour and delete results from completed runs that are
+# older than the number of days specified here. Disabled by default.
+# Careful! Make sure you have regular backups of your database before enabling
+# this feature, as a wrong configuration could lead to data loss.
+runs_data_cleanup_days: 30
+# the cleanup worker will also delete the input of the runs if this is set to
+# true. False by default.
+runs_data_cleanup_include_input: false
+
 # If you have a server with a high workload, it is recommended to use
 # multiple server instances (horizontal scaling). If you do so, you also
 # need to set up a RabbitMQ message service to ensure that the communication
