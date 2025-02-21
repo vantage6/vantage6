@@ -8,7 +8,7 @@ describe('AddAlgoStoreComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [AddAlgoStoreComponent]
+      imports: [AddAlgoStoreComponent]
     });
     fixture = TestBed.createComponent(AddAlgoStoreComponent);
     component = fixture.componentInstance;

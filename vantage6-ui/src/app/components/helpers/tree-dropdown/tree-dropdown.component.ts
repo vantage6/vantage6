@@ -1,9 +1,19 @@
 import { Component, Input, OnInit, OnChanges, ElementRef, ViewChild, Output, EventEmitter, SimpleChanges } from '@angular/core';
 import { SelectionModel } from '@angular/cdk/collections';
-import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree';
+import { MatTreeFlatDataSource, MatTreeFlattener, MatTree, MatTreeNodeDef, MatTreeNode, MatTreeNodePadding } from '@angular/material/tree';
 import { ParentTreeControl } from './parent-tree-control';
-import { ConnectionPositionPair } from '@angular/cdk/overlay';
-import { MatFormField } from '@angular/material/form-field';
+import { ConnectionPositionPair, CdkOverlayOrigin, CdkConnectedOverlay } from '@angular/cdk/overlay';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatChipGrid, MatChipRow, MatChipRemove, MatChipInput } from '@angular/material/chips';
+import { MatIcon } from '@angular/material/icon';
+import { MatInput } from '@angular/material/input';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { NgIf, NgClass } from '@angular/common';
+import { MatIconButton } from '@angular/material/button';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatRadioButton } from '@angular/material/radio';
+import { TranslateModule } from '@ngx-translate/core';
+import { HighlightedTextPipe } from '../../../pipes/highlighted-text.pipe';
 import { TranslateService } from '@ngx-translate/core';
 
 export interface ITreeInputSearchConfig {
@@ -42,7 +52,32 @@ export interface ITreeSelectedValue {
 @Component({
   selector: 'app-tree-dropdown',
   templateUrl: './tree-dropdown.component.html',
-  styleUrls: ['./tree-dropdown.component.scss']
+  styleUrls: ['./tree-dropdown.component.scss'],
+  imports: [
+    CdkOverlayOrigin,
+    MatFormField,
+    MatLabel,
+    MatChipGrid,
+    MatChipRow,
+    MatChipRemove,
+    MatIcon,
+    MatInput,
+    MatChipInput,
+    ReactiveFormsModule,
+    FormsModule,
+    CdkConnectedOverlay,
+    NgIf,
+    MatIconButton,
+    MatTree,
+    NgClass,
+    MatTreeNodeDef,
+    MatTreeNode,
+    MatTreeNodePadding,
+    MatCheckbox,
+    MatRadioButton,
+    TranslateModule,
+    HighlightedTextPipe
+  ]
 })
 export class TreeDropdownComponent implements OnInit, OnChanges {
   @Input() isMultiSelect = false;
@@ -88,27 +123,11 @@ export class TreeDropdownComponent implements OnInit, OnChanges {
   );
   public checklistSelection: SelectionModel<ITreeInputNodeFlat> = new SelectionModel();
   public hasChild = (_: number, _nodeData: ITreeInputNodeFlat) => _nodeData.expandable;
-  public treeSearch: ITreeInputSearch = {
-    value: '',
-    config: {
-      searchActive: false,
-      searchInput: ''
-    }
-  };
+  public treeSearch: ITreeInputSearch = { value: '', config: { searchActive: false, searchInput: '' } };
   public isOverlayOpen = false;
   public overlayPosition: ConnectionPositionPair[] = [
-    {
-      originX: 'start',
-      originY: 'bottom',
-      overlayX: 'start',
-      overlayY: 'top'
-    },
-    {
-      originX: 'start',
-      originY: 'top',
-      overlayX: 'start',
-      overlayY: 'bottom'
-    }
+    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top' },
+    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom' }
   ];
   public overlayWidth: string = '100%';
 
@@ -160,11 +179,7 @@ export class TreeDropdownComponent implements OnInit, OnChanges {
       if (treeNode.children && treeNode.children.length > 0) {
         treeNode.children = this.formatTreeNodes(treeNode.children, treeNode.code.toString(), pathLabelFormatted);
       }
-      return {
-        ...treeNode,
-        pathLabel: pathLabelFormatted,
-        parentCode: parentCodeFormatted
-      };
+      return { ...treeNode, pathLabel: pathLabelFormatted, parentCode: parentCodeFormatted };
     });
     return formattedTree;
   }
@@ -243,13 +258,7 @@ export class TreeDropdownComponent implements OnInit, OnChanges {
     if (!searchActive && this.treeSearch.config.searchActive) {
       this.resetTree();
     }
-    this.treeSearch = {
-      value: curSearchInput,
-      config: {
-        searchActive,
-        searchInput: curSearchInput
-      }
-    };
+    this.treeSearch = { value: curSearchInput, config: { searchActive, searchInput: curSearchInput } };
 
     if (searchActive) {
       this.filterTreeNodesByName(curSearchInput);
@@ -261,12 +270,7 @@ export class TreeDropdownComponent implements OnInit, OnChanges {
     const selectedValues =
       values && values.length !== 0
         ? values.map((item) => {
-            return {
-              code: item.code,
-              label: item.label,
-              parentCode: item.parentCode,
-              pathLabel: item.pathLabel
-            };
+            return { code: item.code, label: item.label, parentCode: item.parentCode, pathLabel: item.pathLabel };
           })
         : [];
     if (this.isOverlayOpen) {

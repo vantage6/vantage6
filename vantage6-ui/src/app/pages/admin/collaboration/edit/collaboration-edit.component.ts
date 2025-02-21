@@ -11,10 +11,16 @@ import { ChosenCollaborationService } from 'src/app/services/chosen-collaboratio
 import { CollaborationService } from 'src/app/services/collaboration.service';
 import { FileService } from 'src/app/services/file.service';
 import { NodeService } from 'src/app/services/node.service';
+import { NgIf } from '@angular/common';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { CollaborationFormComponent } from '../../../../components/forms/collaboration-form/collaboration-form.component';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-collaboration-edit',
-  templateUrl: './collaboration-edit.component.html'
+    selector: 'app-collaboration-edit',
+    templateUrl: './collaboration-edit.component.html',
+    imports: [NgIf, PageHeaderComponent, MatCard, MatCardContent, CollaborationFormComponent, MatProgressSpinner]
 })
 export class CollaborationEditComponent implements OnInit {
   @HostBinding('class') class = 'card-container';

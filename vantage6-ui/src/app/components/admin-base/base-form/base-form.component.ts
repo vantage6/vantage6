@@ -4,9 +4,10 @@ import { Subject } from 'rxjs';
 import { ResourceForm } from 'src/app/models/api/resource.model';
 
 @Component({
-  selector: 'app-base-form',
-  templateUrl: './base-form.component.html',
-  styleUrl: './base-form.component.scss'
+    selector: 'app-base-form',
+    templateUrl: './base-form.component.html',
+    styleUrl: './base-form.component.scss',
+    standalone: false
 })
 export abstract class BaseFormComponent implements OnDestroy {
   @Output() cancelled: EventEmitter<void> = new EventEmitter();

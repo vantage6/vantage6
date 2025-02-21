@@ -8,7 +8,7 @@ describe('PasswordRecoverComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [PasswordRecoverComponent]
+      imports: [PasswordRecoverComponent]
     });
     fixture = TestBed.createComponent(PasswordRecoverComponent);
     component = fixture.componentInstance;

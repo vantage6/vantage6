@@ -1,20 +1,43 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { PageEvent } from '@angular/material/paginator';
-import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { PageEvent, MatPaginator } from '@angular/material/paginator';
+import { Router, RouterLink } from '@angular/router';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs';
 import { BaseListComponent } from 'src/app/components/admin-base/base-list/base-list.component';
-import { ITreeInputNode, ITreeSelectedValue } from 'src/app/components/helpers/tree-dropdown/tree-dropdown.component';
+import {
+  ITreeInputNode,
+  ITreeSelectedValue,
+  TreeDropdownComponent
+} from 'src/app/components/helpers/tree-dropdown/tree-dropdown.component';
 import { unlikeApiParameter } from 'src/app/helpers/general.helper';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { GetUserParameters, UserSortProperties } from 'src/app/models/api/user.model';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { UserService } from 'src/app/services/user.service';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { NgIf } from '@angular/common';
+import { MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { TableComponent } from '../../../../components/table/table.component';
 
 @Component({
   selector: 'app-user-list',
-  templateUrl: './user-list.component.html'
+  templateUrl: './user-list.component.html',
+  imports: [
+    PageHeaderComponent,
+    NgIf,
+    MatButton,
+    RouterLink,
+    MatIcon,
+    MatCard,
+    MatCardContent,
+    TableComponent,
+    MatPaginator,
+    TranslateModule,
+    TreeDropdownComponent
+  ]
 })
 export class UserListComponent extends BaseListComponent implements OnInit, OnDestroy {
   getUserParameters: GetUserParameters = {};
@@ -70,10 +93,7 @@ export class UserListComponent extends BaseListComponent implements OnInit, OnDe
     if (selectedFilterOption) {
       getUserParameters.organization_id = selectedFilterOption.code.toString();
     }
-    const result = await this.userService.getPaginatedUsers(this.currentPage, {
-      ...getUserParameters,
-      sort: UserSortProperties.Username
-    });
+    const result = await this.userService.getPaginatedUsers(this.currentPage, { ...getUserParameters, sort: UserSortProperties.Username });
     this.table = {
       columns: [
         { id: 'id', label: this.translateService.instant('general.id') },
@@ -104,13 +124,7 @@ export class UserListComponent extends BaseListComponent implements OnInit, OnDe
       ],
       rows: result.data.map((_) => ({
         id: _.id.toString(),
-        columnData: {
-          id: _.id,
-          username: _.username,
-          firstname: _.firstname,
-          lastname: _.lastname,
-          email: _.email
-        }
+        columnData: { id: _.id, username: _.username, firstname: _.firstname, lastname: _.lastname, email: _.email }
       }))
     };
     this.pagination = result.links;

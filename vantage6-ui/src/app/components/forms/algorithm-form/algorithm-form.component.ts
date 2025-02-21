@@ -1,6 +1,12 @@
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChildren } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
-import { MatExpansionPanel } from '@angular/material/expansion';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, ValidationErrors, Validators, ReactiveFormsModule } from '@angular/forms';
+import {
+  MatExpansionPanel,
+  MatAccordion,
+  MatExpansionPanelHeader,
+  MatExpansionPanelTitle,
+  MatExpansionPanelContent
+} from '@angular/material/expansion';
 import { readFile } from 'src/app/helpers/file.helper';
 import {
   AlgorithmForm,
@@ -14,14 +20,58 @@ import {
 import { VisualizationType, getVisualizationSchema } from 'src/app/models/api/visualization.model';
 import { MessageDialogComponent } from 'src/app/components/dialogs/message-dialog/message-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { isTruthy } from 'src/app/helpers/utils.helper';
 import { isListTypeArgument } from 'src/app/helpers/algorithm.helper';
+import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
+import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { MatButton } from '@angular/material/button';
+import { NgIf, NgFor, TitleCasePipe, KeyValuePipe } from '@angular/common';
+import { MatSelect } from '@angular/material/select';
+import { MatOption } from '@angular/material/core';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatRadioGroup, MatRadioButton } from '@angular/material/radio';
+import { AlertComponent } from '../../alerts/alert/alert.component';
+import { NumberOnlyDirective } from '../../../directives/numberOnly.directive';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-algorithm-form',
-  templateUrl: './algorithm-form.component.html',
-  styleUrl: './algorithm-form.component.scss'
+    selector: 'app-algorithm-form',
+    templateUrl: './algorithm-form.component.html',
+    styleUrl: './algorithm-form.component.scss',
+    imports: [
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        MatCardContent,
+        ReactiveFormsModule,
+        MatFormField,
+        MatLabel,
+        MatInput,
+        MatButton,
+        MatSuffix,
+        NgIf,
+        MatSelect,
+        NgFor,
+        MatOption,
+        MatAccordion,
+        MatExpansionPanel,
+        MatExpansionPanelHeader,
+        MatExpansionPanelTitle,
+        MatExpansionPanelContent,
+        MatCheckbox,
+        MatTooltip,
+        MatRadioGroup,
+        MatRadioButton,
+        AlertComponent,
+        NumberOnlyDirective,
+        MatProgressSpinner,
+        TitleCasePipe,
+        KeyValuePipe,
+        TranslateModule
+    ]
 })
 export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   @Input() algorithm?: AlgorithmForm;

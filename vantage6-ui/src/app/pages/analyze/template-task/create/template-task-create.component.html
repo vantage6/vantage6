@@ -43,17 +43,17 @@
           </div>
           <form class="form variable-form" [formGroup]="functionForm">
             <!-- Name -->
-            <mat-form-field *ngIf="this.templateTask?.variable?.includes('name')" subscriptSizing="dynamic">
+            <mat-form-field *ngIf="templateTask?.variable?.includes('name')" subscriptSizing="dynamic">
               <mat-label>{{ "task.name" | translate }}</mat-label>
               <input matInput type="text" formControlName="name" />
             </mat-form-field>
             <!-- Description -->
-            <mat-form-field *ngIf="this.templateTask?.variable?.includes('description')" subscriptSizing="dynamic">
+            <mat-form-field *ngIf="templateTask?.variable?.includes('description')" subscriptSizing="dynamic">
               <mat-label>{{ "task.description" | translate }}</mat-label>
               <input matInput type="text" formControlName="description" />
             </mat-form-field>
             <!-- Organizations -->
-            <mat-form-field *ngIf="this.templateTask?.variable?.includes('organizations') && function" subscriptSizing="dynamic">
+            <mat-form-field *ngIf="templateTask?.variable?.includes('organizations') && function" subscriptSizing="dynamic">
               <mat-label>{{ "task.organization" | translate }}</mat-label>
               <mat-select *ngIf="function.type === functionType.Central" formControlName="organizationIDs">
                 <mat-option

@@ -7,9 +7,10 @@ import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dial
 import { Subject } from 'rxjs';
 
 @Component({
-  selector: 'app-base-read',
-  templateUrl: './base-read.component.html',
-  styleUrl: './base-read.component.scss'
+    selector: 'app-base-read',
+    templateUrl: './base-read.component.html',
+    styleUrl: './base-read.component.scss',
+    standalone: false
 })
 export abstract class BaseReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

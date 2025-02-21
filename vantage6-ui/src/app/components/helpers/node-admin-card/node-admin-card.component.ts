@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { printDate } from 'src/app/helpers/general.helper';
 import { Collaboration } from 'src/app/models/api/collaboration.model';
@@ -10,11 +10,30 @@ import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
 import { NodeService } from 'src/app/services/node.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
+import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
+import { NgIf, NgFor } from '@angular/common';
+import { MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { AlertComponent } from '../../alerts/alert/alert.component';
+import { ChipComponent } from '../chip/chip.component';
 
 @Component({
-  selector: 'app-node-admin-card',
-  templateUrl: './node-admin-card.component.html',
-  styleUrl: './node-admin-card.component.scss'
+    selector: 'app-node-admin-card',
+    templateUrl: './node-admin-card.component.html',
+    styleUrl: './node-admin-card.component.scss',
+    imports: [
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        NgIf,
+        MatButton,
+        MatIcon,
+        MatCardContent,
+        AlertComponent,
+        NgFor,
+        ChipComponent,
+        TranslateModule
+    ]
 })
 export class NodeAdminCardComponent implements OnInit, OnDestroy {
   @Input() nodes?: BaseNode[];

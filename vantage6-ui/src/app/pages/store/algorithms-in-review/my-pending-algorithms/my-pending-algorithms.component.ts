@@ -1,7 +1,7 @@
 import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
-import { PageEvent } from '@angular/material/paginator';
-import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { PageEvent, MatPaginator } from '@angular/material/paginator';
+import { Router, RouterLink } from '@angular/router';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
@@ -17,6 +17,12 @@ import { StoreUserService } from 'src/app/services/store-user.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { StoreReview } from 'src/app/models/api/review.model';
 import { StoreReviewService } from 'src/app/services/store-review.service';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
+import { MatButton } from '@angular/material/button';
+import { NgIf } from '@angular/common';
+import { MatIcon } from '@angular/material/icon';
+import { TableComponent } from '../../../../components/table/table.component';
 
 enum TableRows {
   ID = 'id',
@@ -25,9 +31,23 @@ enum TableRows {
 }
 
 @Component({
-  selector: 'app-my-pending-algorithms',
-  templateUrl: './my-pending-algorithms.component.html',
-  styleUrl: './my-pending-algorithms.component.scss'
+    selector: 'app-my-pending-algorithms',
+    templateUrl: './my-pending-algorithms.component.html',
+    styleUrl: './my-pending-algorithms.component.scss',
+    imports: [
+        PageHeaderComponent,
+        MatCard,
+        MatCardContent,
+        MatButton,
+        RouterLink,
+        NgIf,
+        MatIcon,
+        MatCardHeader,
+        MatCardTitle,
+        TableComponent,
+        MatPaginator,
+        TranslateModule
+    ]
 })
 export class MyPendingAlgorithmsComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
