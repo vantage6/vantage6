@@ -23,6 +23,10 @@ _condition_push :=
 ifeq ($(PUSH_REG), true)
 	_condition_push := not_empty_so_true
 endif
+_condition_tag_latest :=
+ifeq ($(TAG_LATEST), true)
+	_condition_tag_latest := not_empty_so_true
+endif
 
 # Use `make devdocs FUNCTIONDOCS=true` to build the function documentation
 FUNCTIONDOCS ?= false
@@ -100,7 +104,7 @@ base-image:
 	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:latest"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/infrastructure-base:${TAG} \
-		--tag ${REGISTRY}/infrastructure/infrastructure-base:latest \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/infrastructure-base:latest) \
 		--platform ${PLATFORMS} \
 		-f ./docker/infrastructure-base.Dockerfile \
 		$(if ${_condition_push},--push .,.)
@@ -109,7 +113,7 @@ algorithm-base-image:
 	@echo "Building ${REGISTRY}/algorithms/algorithm-base:${TAG}"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/algorithm-base:${TAG} \
-		--tag ${REGISTRY}/infrastructure/algorithm-base:latest \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/algorithm-base:latest) \
 		--platform ${PLATFORMS} \
 		--build-arg TAG=${TAG} \
 		-f ./docker/algorithm-base.Dockerfile \
@@ -121,7 +125,7 @@ algorithm-omop-base-image:
 	@echo "Building ${REGISTRY}/algorithms/algorithm-ohdsi-base:${TAG}"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/algorithm-ohdsi-base:${TAG} \
-		--tag ${REGISTRY}/infrastructure/algorithm-ohdsi-base:latest \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/algorithm-ohdsi-base:latest) \
 		--build-arg BASE=${BASE} \
 		--build-arg TAG=${TAG} \
 		--platform linux/amd64 \
@@ -141,7 +145,7 @@ support-squid-image:
 	@echo "Building ${REGISTRY}/infrastructure/squid:${TAG}"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/squid:${TAG} \
-		--tag ${REGISTRY}/infrastructure/squid:latest \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/squid:latest) \
 		--platform ${PLATFORMS} \
 		-f ./docker/squid.Dockerfile \
 		$(if ${_condition_push},--push .,.)
@@ -150,7 +154,7 @@ support-alpine-image:
 	@echo "Building ${REGISTRY}/infrastructure/alpine:${TAG}"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/alpine:${TAG} \
-		--tag ${REGISTRY}/infrastructure/alpine:latest \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/alpine:latest) \
 		--platform ${PLATFORMS} \
 		-f ./docker/alpine.Dockerfile \
 		$(if ${_condition_push},--push .,.)
@@ -159,7 +163,7 @@ support-vpn-client-image:
 	@echo "Building ${REGISTRY}/infrastructure/vpn-client:${TAG}"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/vpn-client:${TAG} \
-		--tag ${REGISTRY}/infrastructure/vpn-client:latest \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/vpn-client:latest) \
 		--platform ${PLATFORMS} \
 		-f ./docker/vpn-client.Dockerfile \
 		$(if ${_condition_push},--push .,.)
@@ -168,7 +172,7 @@ support-vpn-configurator-image:
 	@echo "Building ${REGISTRY}/infrastructure/vpn-configurator:${TAG}"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/vpn-configurator:${TAG} \
-		--tag ${REGISTRY}/infrastructure/vpn-configurator:latest \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/vpn-configurator:latest) \
 		--platform ${PLATFORMS} \
 		-f ./docker/vpn-configurator.Dockerfile \
 		$(if ${_condition_push},--push .,.)
@@ -177,7 +181,7 @@ support-ssh-tunnel-image:
 	@echo "Building ${REGISTRY}/infrastructure/ssh-tunnel:${TAG}"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/ssh-tunnel:${TAG} \
-		--tag ${REGISTRY}/infrastructure/ssh-tunnel:latest \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/ssh-tunnel:latest) \
 		--platform ${PLATFORMS} \
 		-f ./docker/ssh-tunnel.Dockerfile \
 		$(if ${_condition_push},--push .,.)
@@ -188,6 +192,8 @@ image:
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/node:${TAG} \
 		--tag ${REGISTRY}/infrastructure/server:${TAG} \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/node:latest) \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/server:latest) \
 		--build-arg TAG=${TAG} \
 		--build-arg BASE=${BASE} \
 		--platform ${PLATFORMS} \
@@ -198,7 +204,7 @@ algorithm-store-image:
 	@echo "Building ${REGISTRY}/infrastructure/algorithm-store:${TAG}"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/algorithm-store:${TAG} \
-		--tag ${REGISTRY}/infrastructure/algorithm-store:latest \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/algorithm-store:latest) \
 		--build-arg TAG=${TAG} \
 		--build-arg BASE=${BASE} \
 		--platform ${PLATFORMS} \
@@ -209,7 +215,7 @@ ui-image:
 	@echo "Building ${REGISTRY}/infrastructure/ui:${TAG}"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/ui:${TAG} \
-		--tag ${REGISTRY}/infrastructure/ui:latest \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/ui:latest) \
 		--build-arg TAG=${TAG} \
 		--build-arg BASE=${BASE} \
 		--platform ${PLATFORMS} \
