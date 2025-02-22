@@ -8,7 +8,7 @@ from jinja2 import Environment, FileSystemLoader
 from colorama import Fore, Style
 
 from vantage6.common.globals import APPNAME, InstanceType, Ports
-from vantage6.common import info, error, generate_apikey
+from vantage6.common import ensure_config_dir_writable, info, error, generate_apikey
 
 import vantage6.cli.dev.data as data_dir
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
@@ -114,12 +114,14 @@ def create_node_config_file(
         }
     )
 
-    try:
-        with open(full_path, "x") as f:
-            f.write(node_config)
-    except Exception as e:
-        error(f"Could not write node configuration file: {e}")
+    # Check that we can write the node config
+    if not ensure_config_dir_writable():
+        error("Cannot write configuration file. Exiting...")
         exit(1)
+
+    Path(full_path).parent.mkdir(parents=True, exist_ok=True)
+    with open(full_path, "x", encoding="utf-8") as f:
+        f.write(node_config)
 
     info(
         f"Spawned node for organization {Fore.GREEN}{config['org_id']}"
