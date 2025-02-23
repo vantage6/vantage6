@@ -50,6 +50,7 @@ export interface BaseTask {
   name: string;
   description: string;
   status: TaskStatus;
+  session: BaseLink;
   image: string;
   init_org: BaseLink;
   init_user: BaseLink;
@@ -67,6 +68,7 @@ export interface Task {
   name: string;
   description: string;
   status: TaskStatus;
+  session: BaseLink;
   image: string;
   input?: TaskInput;
   init_org?: BaseOrganization;
@@ -133,6 +135,7 @@ export interface CreateTask {
   name: string;
   description: string;
   image: string;
+  session_id: number;
   collaboration_id: number;
   study_id?: number;
   store_id: number;
@@ -145,7 +148,7 @@ export interface KillTask {
   id: number;
 }
 
-interface CreateTaskOrganization {
+export interface CreateTaskOrganization {
   id: number;
   input: string;
 }

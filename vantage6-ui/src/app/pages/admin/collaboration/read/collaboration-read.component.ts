@@ -3,23 +3,19 @@ import { FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject, Subscription, takeUntil } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { AlgorithmStore, EditAlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { Collaboration, CollaborationLazyProperties } from 'src/app/models/api/collaboration.model';
 import { Study } from 'src/app/models/api/study.model';
-import { BaseNode, NodeStatus } from 'src/app/models/api/node.model';
+import { NodeStatus } from 'src/app/models/api/node.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { TableData } from 'src/app/models/application/table.model';
-import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
 import { CollaborationService } from 'src/app/services/collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
-import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
-import { NodeService } from 'src/app/services/node.service';
-import { printDate } from 'src/app/helpers/general.helper';
 
 @Component({
   selector: 'app-collaboration-read',

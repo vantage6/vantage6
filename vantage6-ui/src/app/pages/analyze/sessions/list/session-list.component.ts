@@ -51,7 +51,7 @@ export class SessionListComponent implements OnInit, OnDestroy {
 
   async ngOnInit() {
     this.setPermissions();
-    await this.initData(this.currentPage, { sort: SessionSortProperties.ID, is_user_created: 1 });
+    await this.initData(this.currentPage, { sort: SessionSortProperties.ID });
   }
 
   ngOnDestroy(): void {
@@ -60,9 +60,8 @@ export class SessionListComponent implements OnInit, OnDestroy {
 
   async handlePageEvent(e: PageEvent) {
     this.currentPage = e.pageIndex + 1;
-    const parameters: GetSessionParameters = { sort: SessionSortProperties.ID, is_user_created: 1 };
+    const parameters: GetSessionParameters = { sort: SessionSortProperties.ID };
     if (this.currentSearchInput?.length) {
-      delete parameters.is_user_created;
       parameters.name = this.currentSearchInput;
     }
     await this.getSessions(this.currentPage, parameters);
@@ -72,7 +71,6 @@ export class SessionListComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     const parameters: GetSessionParameters = getApiSearchParameters<GetSessionParameters>(searchRequests);
     this.currentSearchInput = parameters?.name ?? '';
-    if (!parameters?.name?.length) parameters.is_user_created = 1;
     this.paginator?.firstPage();
     this.initData(1, parameters);
   }
@@ -99,7 +97,6 @@ export class SessionListComponent implements OnInit, OnDestroy {
 
     parameters = { ...parameters, collaboration_id: collaborationID };
     const sessionData = await this.sessionService.getPaginatedSessions(page, parameters);
-    console.log(sessionData);
     this.sessions = sessionData.data;
     this.pagination = sessionData.links;
 
@@ -111,7 +108,7 @@ export class SessionListComponent implements OnInit, OnDestroy {
         },
         {
           id: TableRows.Name,
-          label: this.translateService.instant('session.name'),
+          label: this.translateService.instant('general.name'),
           searchEnabled: true,
           initSearchString: unlikeApiParameter(parameters.name)
         }

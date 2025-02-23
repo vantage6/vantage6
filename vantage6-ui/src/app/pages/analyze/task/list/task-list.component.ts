@@ -16,12 +16,14 @@ import { AlgorithmStatusChangeMsg } from 'src/app/models/socket-messages.model';
 import { routePaths } from 'src/app/routes';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
+import { SessionService } from 'src/app/services/session.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { TaskService } from 'src/app/services/task.service';
 
 enum TableRows {
   ID = 'id',
   Name = 'name',
+  Session = 'session',
   Status = 'status'
 }
 
@@ -37,6 +39,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
   destroy$ = new Subject();
 
   tasks: BaseTask[] = [];
+  sessionIDNameMap: Map<number, string> = new Map<number, string>();
   table?: TableData;
   displayedColumns: string[] = [TableRows.ID, TableRows.Name, TableRows.Status];
   isLoading: boolean = true;
@@ -51,6 +54,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
     private router: Router,
     private translateService: TranslateService,
     private taskService: TaskService,
+    private sessionService: SessionService,
     private chosenCollaborationService: ChosenCollaborationService,
     private permissionService: PermissionService,
     private socketioConnectService: SocketioConnectService
@@ -75,19 +79,18 @@ export class TaskListComponent implements OnInit, OnDestroy {
   async handlePageEvent(e: PageEvent) {
     this.currentPage = e.pageIndex + 1;
     const parameters: GetTaskParameters = { sort: TaskSortProperties.ID, is_user_created: 1 };
-    if(this.currentSearchInput?.length){
+    if (this.currentSearchInput?.length) {
       delete parameters.is_user_created;
       parameters.name = this.currentSearchInput;
     }
     await this.getTasks(this.currentPage, parameters);
   }
-  
+
   handleSearchChanged(searchRequests: SearchRequest[]) {
-    this.isLoading = true
+    this.isLoading = true;
     const parameters: GetTaskParameters = getApiSearchParameters<GetTaskParameters>(searchRequests);
     this.currentSearchInput = parameters?.name ?? '';
-    if(!parameters?.name?.length)
-      parameters.is_user_created = 1;
+    if (!parameters?.name?.length) parameters.is_user_created = 1;
     this.paginator?.firstPage();
     this.initData(1, parameters);
   }
@@ -125,6 +128,13 @@ export class TaskListComponent implements OnInit, OnDestroy {
     this.tasks = taskData.data;
     this.pagination = taskData.links;
 
+    const uniqSessionIDs = (tasks: BaseTask[], track = new Set()) =>
+      tasks.filter(({ session }) => (!session || track.has(session) ? false : track.add(session)));
+    for (const task of uniqSessionIDs(taskData.data)) {
+      const session = await this.sessionService.getSession(task.session.id);
+      this.sessionIDNameMap.set(task.session.id, session.name);
+    }
+
     this.table = {
       columns: [
         {
@@ -136,6 +146,10 @@ export class TaskListComponent implements OnInit, OnDestroy {
           label: this.translateService.instant('task.name'),
           searchEnabled: true,
           initSearchString: unlikeApiParameter(parameters.name)
+        },
+        {
+          id: TableRows.Session,
+          label: this.translateService.instant('task.session')
         },
         {
           id: TableRows.Status,
@@ -150,6 +164,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
         columnData: {
           id: _.id.toString(),
           name: _.name,
+          session: this.sessionIDNameMap.get(_.id) ?? '-',
           status: this.getTaskStatusTranslation(_.status),
           statusType: this.getChipTypeForStatus(_.status)
         }
@@ -169,14 +184,16 @@ export class TaskListComponent implements OnInit, OnDestroy {
     // collaboration have to be initialized
     const permissionInit = this.permissionService.isInitialized();
     const chosenCollab = this.chosenCollaborationService.collaboration$.asObservable();
-    combineLatest([permissionInit, chosenCollab]).pipe(takeUntil(this.destroy$)).subscribe(([initialized, collab]) => {
-      if (initialized && collab !== null) {
-        this.canCreate = this.permissionService.isAllowedForCollab(
-          ResourceType.TASK,
-          OperationType.CREATE,
-          this.chosenCollaborationService.collaboration$.value
-        );
-      }
-    });
+    combineLatest([permissionInit, chosenCollab])
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(([initialized, collab]) => {
+        if (initialized && collab !== null) {
+          this.canCreate = this.permissionService.isAllowedForCollab(
+            ResourceType.TASK,
+            OperationType.CREATE,
+            this.chosenCollaborationService.collaboration$.value
+          );
+        }
+      });
   }
 }

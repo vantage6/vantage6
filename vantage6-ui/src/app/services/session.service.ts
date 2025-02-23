@@ -5,6 +5,7 @@ import {
   ColumnRetrievalInput,
   ColumnRetrievalResult,
   CreateSession,
+  Dataframe,
   GetSessionParameters,
   Session,
   SessionLazyProperties
@@ -30,17 +31,42 @@ export class SessionService {
 
   async getSession(id: number, lazyProperties: SessionLazyProperties[] = []): Promise<Session> {
     const result = await this.apiService.getForApi<BaseSession>(`/session/${id}`);
-    const session: Session = { ...result, init_org: undefined, init_user: undefined };
+    const session: Session = { ...result, owner: undefined };
     await getLazyProperties(result, session, lazyProperties, this.apiService);
     return session;
+  }
+
+  async getDataframes(sessionId: number): Promise<Dataframe[]> {
+    const result = await this.apiService.getForApi<Pagination<Dataframe>>(`/session/${sessionId}/dataframe`, { per_page: 9999 });
+    return result.data;
+  }
+
+  async getPaginatedDataframes(sessionId: number, currentPage: number): Promise<Pagination<Dataframe>> {
+    return await this.apiService.getForApiWithPagination<any>(`/session/${sessionId}/dataframe`, currentPage);
+  }
+
+  async getDataframe(sessionId: number, dataframeHandle: string): Promise<Dataframe> {
+    return await this.apiService.getForApi<Dataframe>(`/session/${sessionId}/dataframe/${dataframeHandle}`);
   }
 
   async createSession(createSession: CreateSession): Promise<BaseSession> {
     return await this.apiService.postForApi<BaseSession>('/session', createSession);
   }
 
+  async createDataframe(session_id: number, createDataframe: any): Promise<Dataframe> {
+    return await this.apiService.postForApi<any>(`/session/${session_id}/dataframe`, createDataframe);
+  }
+
+  async editSession(sessionId: string, newValue: any): Promise<Session> {
+    return await this.apiService.patchForApi<Session>(`/session/${sessionId}`, newValue);
+  }
+
   async deleteSession(id: number): Promise<void> {
     return await this.apiService.deleteForApi(`/session/${id}`);
+  }
+
+  async deleteDataframe(session_id: number, handle: string): Promise<void> {
+    return await this.apiService.deleteForApi(`/session/${session_id}/dataframe/${handle}`);
   }
 
   async getColumnNames(columnRetrieve: ColumnRetrievalInput): Promise<ColumnRetrievalResult> {

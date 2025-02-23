@@ -7,7 +7,7 @@ import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { addParameterFormControlsForFunction, getTaskDatabaseFromForm } from 'src/app/pages/analyze/task/task.helper';
 import { BaseNode } from 'src/app/models/api/node.model';
 import { Subject, takeUntil } from 'rxjs';
-import { DatabaseStepComponent } from 'src/app/pages/analyze/task/create/steps/database-step/database-step.component';
+import { DatabaseStepComponent } from 'src/app/components/forms/compute-form/steps/database-step/database-step.component';
 import { CreateTask, CreateTaskInput, TaskDatabase } from 'src/app/models/api/task.models';
 import { routePaths } from 'src/app/routes';
 import { TaskService } from 'src/app/services/task.service';
@@ -194,6 +194,7 @@ export class TemplateTaskCreateComponent implements OnInit {
         ? this.templateTask.fixed.description
         : this.packageForm.get('description')?.value || '',
       image: this.algorithm?.image || '',
+      session_id: this.templateTask?.fixed?.session_id || -1,
       collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
       store_id: this.algorithm?.algorithm_store_id || -1,
       server_url: environment.server_url,

@@ -33,6 +33,8 @@ import { printDate } from 'src/app/helpers/general.helper';
 import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
 import { StudyService } from 'src/app/services/study.service';
 import { Study } from 'src/app/models/api/study.model';
+import { Session } from 'src/app/models/api/session.models';
+import { SessionService } from 'src/app/services/session.service';
 
 @Component({
   selector: 'app-task-read',
@@ -52,6 +54,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   visualization = new FormControl(0);
 
   task: Task | null = null;
+  session: Session | null = null;
   childTasks: BaseTask[] = [];
   study: Study | null = null;
   algorithm: Algorithm | null = null;
@@ -73,6 +76,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     private activatedRoute: ActivatedRoute,
     private translateService: TranslateService,
     private taskService: TaskService,
+    private sessionService: SessionService,
     private studyService: StudyService,
     private algorithmService: AlgorithmService,
     private algorithmStoreService: AlgorithmStoreService,
@@ -126,8 +130,8 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     if (!this.task || sync_tasks) {
       this.task = await this.getMainTask();
       this.childTasks = await this.getChildTasks();
-      if(this.task.study)
-        this.study = await this.studyService.getStudy(this.task.study.id.toString())
+      if (this.task.session) this.session = await this.sessionService.getSession(this.task.session.id);
+      if (this.task.study) this.study = await this.studyService.getStudy(this.task.study.id.toString());
     }
     try {
       if (this.task.algorithm_store) {
@@ -275,7 +279,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   getParameterDisplayName(parameter: TaskParameter): string {
     const argument: Argument | undefined = this.function?.arguments.find((_) => _.name === parameter.label);
     if (argument) {
-      return argument.display_name ?? argument.name
+      return argument.display_name ?? argument.name;
     } else {
       return parameter.label;
     }
