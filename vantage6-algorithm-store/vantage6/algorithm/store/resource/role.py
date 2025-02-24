@@ -268,7 +268,7 @@ class Role(AlgorithmStoreResources):
 
     @with_permission(module_name, Operation.EDIT)
     @handle_exceptions
-    def patch(self, role_id: int):
+    def patch(self, id: int):
         """Updates a role
         ---
         description: >-
@@ -317,7 +317,7 @@ class Role(AlgorithmStoreResources):
         """
         data = request.get_json()
         validate_request_body(role_input_schema, data, partial=True)
-        role = get_role(db, role_id)
+        role = get_role(db, id)
         check_default_role(role, DefaultRole.list())
         role = update_role(role, data, db, self.permissions)
         role.save()
