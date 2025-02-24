@@ -59,7 +59,7 @@ class ContainerManager:
         ----------
         ctx: NodeContext
             Context object from which some settings are obtained
-        """        
+        """
         self.log = logging.getLogger(logger_name(__name__))
         self.log.debug("Initializing ContainerManager")
         self.ctx = ctx
