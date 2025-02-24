@@ -268,6 +268,15 @@ Verifying local code changes
 
 While working on a new feature, it can be useful to run a server and/or nodes
 locally with your code changes to verify that it does what you expect it to do.
+
+.. note::
+
+    Since version 5 the local development requires Devspace, this replaces the old
+    way where you had to specify `--mount-src` and `--image` options.
+
+
+
+
 This can be done by using the commands ``v6 server`` and ``v6 node`` in
 combination with the options ``--mount-src`` and optionally ``--image``.
 

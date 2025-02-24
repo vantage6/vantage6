@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-rabbitmq-deployment
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+{{ include "vantage6.labels" . | indent 4 }}
+    component: rabbitmq
+spec:
+  selector:
+    matchLabels:
+{{ include "vantage6.matchLabels" . | indent 6 }}
+      component: rabbitmq
+
+  template:
+    metadata:
+      labels:
+{{ include "vantage6.labels" . | indent 8 }}
+        component: rabbitmq
+    spec:
+      containers:
+      - name: rabbitmq
+        image: "{{ .Values.rabbitmq.image.repository }}:{{ .Values.rabbitmq.image.tag }}"
+        ports:
+        - containerPort: 5672
+        - containerPort: 15672
+        env:
+        - name: RABBITMQ_DEFAULT_USER
+          value: {{ .Values.rabbitmq.username }}
+        - name: RABBITMQ_DEFAULT_PASS
+          value: {{ .Values.rabbitmq.password }}
+        - name: RABBITMQ_DEFAULT_VHOST
+          value: {{ .Values.rabbitmq.vhost }}

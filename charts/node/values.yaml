@@ -1,0 +1,32 @@
+node:
+
+  apiKey: put-your-api-key-here
+
+  server:
+    url: http://host.docker.internal
+    port: 7601
+    path: /server
+
+  image: harbor2.vantage6.ai/infrastructure/node:latest
+
+  logging:
+    level: INFO
+
+  taskDir: /tmp/tasks
+
+  proxyPort: 7654
+
+  # TODO the way databases are mounted and named can lead to possible naming conflicts
+  databases:
+    fileBased:
+    - name: default
+      # /run/desktop/
+      uri: /mnt/data/default.csv
+      type: csv
+    serviceBased:
+    - name: postgres
+      uri: postgres://vantage6:vantage6@vantage6-vantage6-postgres:5432/vantage6
+      type: other
+
+  kubeConfig: /root/.kube/config
+

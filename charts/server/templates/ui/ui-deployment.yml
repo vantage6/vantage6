@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-vantage6-frontend-deployment
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+{{ include "vantage6.labels" . | indent 4 }}
+    component: ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+{{ include "vantage6.matchLabels" . | indent 6 }}
+      component: ui
+  template:
+    metadata:
+      labels:
+{{ include "vantage6.labels" . | indent 8 }}
+        component: ui
+    spec:
+      containers:
+      - name: vantage6-server-frontend
+        image: {{ .Values.ui.image }}
+        ports:
+        - containerPort: 80
+        env:
+        - name: SERVER_URL
+          value: {{ .Values.server.baseUrl | quote }}
+        - name: API_PATH
+          value: /server

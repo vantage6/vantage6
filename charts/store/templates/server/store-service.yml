@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-store-service
+  namespace: {{ .Release.Namespace | quote }}
+spec:
+  selector:
+{{ include "store.matchLabels" . | indent 4 }}
+    component: store-server
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: {{ .Values.store.internal.port }}
+      name: store-backend
+  type: ClusterIP

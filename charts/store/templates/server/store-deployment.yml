@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-store-deployment
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+{{ include "store.labels" . | indent 4 }}
+    component: store-server
+spec:
+  replicas: {{ .Values.store.replications }}
+  selector:
+    matchLabels:
+{{ include "store.matchLabels" . | indent 6 }}
+      component: store-server
+  template:
+    metadata:
+      labels:
+{{ include "store.labels" . | indent 8 }}
+        component: store-server
+    spec:
+      containers:
+      - name: vantage6-store-backend
+        image: {{ .Values.store.image }}
+        ports:
+        - containerPort: {{ .Values.store.internal.port }}
+        command: [
+          "uwsgi", "--http", ":{{ .Values.store.internal.port }}", "--gevent", "1000", "--http-websockets",
+          "--master", "--callable", "app", "--disable-logging", "--wsgi-file",
+          "/vantage6/vantage6-algorithm-store/vantage6/algorithm/store/wsgi.py",
+          "--pyargv", "/mnt/config.yaml",
+        ]
+        volumeMounts:
+        - name: config-file
+          mountPath: /mnt/config.yaml
+          subPath: config.yaml
+
+      volumes:
+      - name: config-file
+        configMap:
+          name: {{ .Release.Name }}-store-configmap

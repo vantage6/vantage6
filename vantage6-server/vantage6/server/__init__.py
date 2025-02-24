@@ -723,7 +723,8 @@ class ServerApp:
             pass
 
         log.debug("Creating organization for root user")
-        org = db.Organization(name="root")
+        if not (org := db.Organization.get_by_name("root")):
+            org = db.Organization(name="root")
 
         # TODO use constant instead of 'Root' literal
         root = db.Role.get_by_name("Root")
