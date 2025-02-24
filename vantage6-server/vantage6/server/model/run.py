@@ -1,7 +1,7 @@
 import datetime
 import logging
 
-from sqlalchemy import Column, Text, DateTime, Integer, ForeignKey
+from sqlalchemy import Column, Text, DateTime, Integer, ForeignKey, select
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
@@ -60,7 +60,7 @@ class Run(Base):
     task_id = Column(Integer, ForeignKey("task.id"))
     organization_id = Column(Integer, ForeignKey("organization.id"))
     result = Column(Text)
-    assigned_at = Column(DateTime, default=datetime.datetime.utcnow)
+    assigned_at = Column(DateTime, default=datetime.datetime.now(datetime.timezone.utc))
     started_at = Column(DateTime)
     finished_at = Column(DateTime)
     status = Column(Text)
@@ -108,8 +108,8 @@ class Run(Base):
         """
         session = DatabaseSessionManager.get_session()
         try:
-            node = (
-                session.query(Node)
+            node = session.scalars(
+                select(Node)
                 .join(Collaboration)
                 .join(Organization)
                 .join(Run)
@@ -117,8 +117,7 @@ class Run(Base):
                 .filter(Run.id == self.id)
                 .filter(self.organization_id == Node.organization_id)
                 .filter(Task.collaboration_id == Node.collaboration_id)
-                .one()
-            )
+            ).one()
             session.commit()
         # FIXME 2022-03-03 BvB: the following errors are not currently
         # forwarded to the user as request response. Make that happen.

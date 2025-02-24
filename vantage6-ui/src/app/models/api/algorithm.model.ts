@@ -1,4 +1,5 @@
 import { NameDescription } from './base.model';
+import { StoreReview } from './review.model';
 import { StoreUser } from './store-user.model';
 import { Visualization, VisualizationForm } from './visualization.model';
 
@@ -92,6 +93,8 @@ export interface Algorithm {
   developer_id?: number;
   developer?: StoreUser;
   reviewer?: StoreUser;
+  submission_comments?: string;
+  reviews?: StoreReview[];
 }
 
 export interface AlgorithmFunction {
@@ -100,6 +103,7 @@ export interface AlgorithmFunction {
   display_name?: string;
   description: string;
   type: FunctionType;
+  standalone?: boolean;
   arguments: Argument[];
   databases: FunctionDatabase[];
   ui_visualizations: Visualization[];
@@ -169,6 +173,7 @@ export interface ArgumentForm extends NameDescription {
   conditional_on?: string;
   conditional_operator?: string;
   conditional_value?: string | number | boolean;
+  conditionalValueNull?: boolean | string;
   is_frontend_only: boolean | string;
 }
 export interface FunctionForm extends NameDescription {
@@ -177,6 +182,7 @@ export interface FunctionForm extends NameDescription {
   databases: NameDescription[];
   ui_visualizations: VisualizationForm[];
   type: string;
+  standalone?: boolean;
 }
 
 export interface AlgorithmForm {
@@ -187,5 +193,10 @@ export interface AlgorithmForm {
   vantage6_version: string;
   code_url: string;
   documentation_url?: string;
+  submission_comments?: string;
   functions: FunctionForm[];
+}
+
+export enum AlgorithmLazyProperties {
+  Reviews = 'reviews'
 }

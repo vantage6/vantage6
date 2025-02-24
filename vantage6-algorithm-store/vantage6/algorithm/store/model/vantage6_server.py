@@ -1,5 +1,5 @@
 from __future__ import annotations
-from sqlalchemy import Column, String, or_
+from sqlalchemy import Column, String, or_, select
 from sqlalchemy.orm import relationship
 
 from vantage6.common.globals import Ports
@@ -43,7 +43,7 @@ class Vantage6Server(Base):
         """
 
         def _get_by_url(url):
-            return session.query(Vantage6Server).filter_by(url=url).first()
+            return session.scalars(select(Vantage6Server).filter_by(url=url)).first()
 
         session = DatabaseSessionManager.get_session()
         server = _get_by_url(url)
@@ -67,14 +67,12 @@ class Vantage6Server(Base):
             List of Vantage6Server objects
         """
         session = DatabaseSessionManager.get_session()
-        servers = (
-            session.query(Vantage6Server)
-            .filter(
+        servers = session.scalars(
+            select(Vantage6Server).filter(
                 or_(
                     Vantage6Server.url.like("http://localhost%"),
                     Vantage6Server.url.like("http://127.0.0.1%"),
                 )
             )
-            .all()
-        )
+        ).all()
         return servers

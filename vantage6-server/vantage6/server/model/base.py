@@ -10,7 +10,7 @@ import logging
 from typing import Any
 
 from sqlalchemy.orm.session import Session
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 from vantage6.common import logger_name, Singleton
 from vantage6.backend.common.base import (

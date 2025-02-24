@@ -334,7 +334,9 @@ class Node:
             # set finished_at to now, so that the task is not picked up again
             # (as the task is not started at all, unlike other crashes, it will
             # never finish and hence not be set to finished)
-            update["finished_at"] = datetime.datetime.now().isoformat()
+            update["finished_at"] = datetime.datetime.now(
+                datetime.timezone.utc
+            ).isoformat()
         self.client.run.patch(id_=task_id, data=update)
 
         # send socket event to alert everyone of task status change. In case the

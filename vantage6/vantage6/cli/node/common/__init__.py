@@ -58,9 +58,11 @@ def create_client_and_authenticate(
     """
     client = create_client(ctx)
 
-    username = q.text("Username:").ask()
-    password = q.password("Password:").ask()
-    mfa_code = q.text("MFA code:").ask() if ask_mfa else None
+    try:
+        username, password, mfa_code = _get_auth_data()
+    except KeyboardInterrupt:
+        error("Authentication aborted.")
+        exit(1)
 
     try:
         client.authenticate(username, password, mfa_code=mfa_code)
@@ -71,6 +73,21 @@ def create_client_and_authenticate(
         exit(1)
 
     return client
+
+
+def _get_auth_data() -> tuple[str, str, str]:
+    """
+    Get authentication data from the user.
+
+    Returns
+    -------
+    tuple[str, str, str]
+        Tuple containing username, password and MFA code
+    """
+    username = q.text("Username:").unsafe_ask()
+    password = q.password("Password:").unsafe_ask()
+    mfa_code = q.text("MFA code:").unsafe_ask()
+    return username, password, mfa_code
 
 
 def select_node(name: str, system_folders: bool) -> tuple[str, str]:

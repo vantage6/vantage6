@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { Router, RouterLink } from '@angular/router';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs';
-import { PageEvent } from '@angular/material/paginator';
+import { PageEvent, MatPaginator } from '@angular/material/paginator';
 import { BaseListComponent } from 'src/app/components/admin-base/base-list/base-list.component';
 import { unlikeApiParameter } from 'src/app/helpers/general.helper';
 import { OperationType, StoreResourceType } from 'src/app/models/api/rule.model';
@@ -10,11 +10,29 @@ import { StoreUser, GetStoreUserParameters } from 'src/app/models/api/store-user
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 import { StoreUserService } from 'src/app/services/store-user.service';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { NgIf } from '@angular/common';
+import { MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { TableComponent } from '../../../../components/table/table.component';
 
 @Component({
-  selector: 'app-store-user-list',
-  templateUrl: './store-user-list.component.html',
-  styleUrl: './store-user-list.component.scss'
+    selector: 'app-store-user-list',
+    templateUrl: './store-user-list.component.html',
+    styleUrl: './store-user-list.component.scss',
+    imports: [
+        PageHeaderComponent,
+        NgIf,
+        MatButton,
+        RouterLink,
+        MatIcon,
+        MatCard,
+        MatCardContent,
+        TableComponent,
+        MatPaginator,
+        TranslateModule
+    ]
 })
 export class StoreUserListComponent extends BaseListComponent implements OnInit, OnDestroy {
   getUserParameters: GetStoreUserParameters = {};

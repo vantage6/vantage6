@@ -4,7 +4,8 @@ import { routePaths } from 'src/app/routes';
 @Component({
   selector: 'app-base-create',
   templateUrl: './base-create.component.html',
-  styleUrl: './base-create.component.scss'
+  styleUrl: './base-create.component.scss',
+  standalone: true
 })
 export class BaseCreateComponent {
   @HostBinding('class') class = 'card-container';

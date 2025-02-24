@@ -7,6 +7,9 @@
     <button mat-flat-button color="primary" [routerLink]="[routes.algorithmReviews]">
       <span>{{ "my-pending-algorithms.card-all-pending.button" | translate }}</span>
     </button>
+    <button actions mat-flat-button class="space-left" color="primary" *ngIf="canAddAlgorithm" [routerLink]="routes.algorithmCreate">
+      <mat-icon>add</mat-icon>{{ "my-pending-algorithms.add-algorithm" | translate }}
+    </button>
   </mat-card-content>
 </mat-card>
 <mat-card>

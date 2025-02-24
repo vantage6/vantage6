@@ -1,10 +1,14 @@
 import { Component, Input } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
+import { NgClass, NgIf } from '@angular/common';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatIcon } from '@angular/material/icon';
 
 @Component({
   selector: 'app-status-info',
   templateUrl: './status-info.component.html',
-  styleUrls: ['./status-info.component.scss']
+  styleUrls: ['./status-info.component.scss'],
+  imports: [NgClass, NgIf, MatProgressSpinner, MatIcon, TranslateModule]
 })
 export class StatusInfoComponent {
   @Input() taskName: string = '';

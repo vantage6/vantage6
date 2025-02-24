@@ -36,8 +36,7 @@ TASK_START_TIMEOUT_SECONDS = 60 * 5  # 5 minutes
 ENV_VARS_NOT_SETTABLE_BY_NODE = ["PKG_NAME"]
 
 # default policies
-DEFAULT_REQUIRE_ALGO_IMAGE_PULL = False
-
+DEFAULT_REQUIRE_ALGO_IMAGE_PULL = True
 
 # Mount paths within the algorithm containers. Algorithms containers are run as
 # jobs in the Kubernetes cluster.

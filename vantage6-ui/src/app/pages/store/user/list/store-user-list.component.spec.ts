@@ -8,10 +8,9 @@ describe('StoreUserListComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [StoreUserListComponent]
-    })
-    .compileComponents();
-    
+      imports: [StoreUserListComponent]
+    }).compileComponents();
+
     fixture = TestBed.createComponent(StoreUserListComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

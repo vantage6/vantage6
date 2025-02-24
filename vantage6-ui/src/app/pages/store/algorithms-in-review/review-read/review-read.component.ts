@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { Router, RouterLink } from '@angular/router';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
@@ -17,11 +17,33 @@ import { PermissionService } from 'src/app/services/permission.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 import { StoreReviewService } from 'src/app/services/store-review.service';
 import { StoreUserService } from 'src/app/services/store-user.service';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { NgIf, NgFor } from '@angular/common';
+import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
+import { MarkdownComponent } from 'ngx-markdown';
+import { MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-review-read',
-  templateUrl: './review-read.component.html',
-  styleUrl: './review-read.component.scss'
+    selector: 'app-review-read',
+    templateUrl: './review-read.component.html',
+    styleUrl: './review-read.component.scss',
+    imports: [
+        PageHeaderComponent,
+        NgIf,
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        MatCardContent,
+        MarkdownComponent,
+        NgFor,
+        MatButton,
+        RouterLink,
+        MatIcon,
+        MatProgressSpinner,
+        TranslateModule
+    ]
 })
 export class ReviewReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
@@ -34,6 +56,7 @@ export class ReviewReadComponent implements OnInit, OnDestroy {
   algorithm: Algorithm | null = null;
   reviews: StoreReview[] = [];
   reviewers: StoreUser[] = [];
+  developer: StoreUser | null = null;
   loggedInUser: BaseUser | null = null;
   store: AlgorithmStore | null = null;
 
@@ -71,6 +94,7 @@ export class ReviewReadComponent implements OnInit, OnDestroy {
       return;
     }
     this.algorithm = await this.algorithmService.getAlgorithm(this.store.url, this.algoID);
+    this.developer = await this.storeUserService.getUser(this.store.url, String(this.algorithm.developer_id));
     this.reviewers = await this.storeUserService.getUsers(this.store.url, { can_review: true });
     this.reviews = await this.reviewService.getReviews(this.store.url, { algorithm_id: this.algoID });
 

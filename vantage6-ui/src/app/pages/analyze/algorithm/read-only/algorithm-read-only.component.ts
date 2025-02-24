@@ -7,11 +7,19 @@ import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
+import { NgIf } from '@angular/common';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { MatButton } from '@angular/material/button';
+import { DisplayAlgorithmComponent } from '../../../../components/algorithm/display-algorithm/display-algorithm.component';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-algorithm-read-only',
-  templateUrl: './algorithm-read-only.component.html',
-  styleUrl: './algorithm-read-only.component.scss'
+    selector: 'app-algorithm-read-only',
+    templateUrl: './algorithm-read-only.component.html',
+    styleUrl: './algorithm-read-only.component.scss',
+    imports: [NgIf, PageHeaderComponent, MatButton, DisplayAlgorithmComponent, MatCard, MatCardContent, MatProgressSpinner, TranslateModule]
 })
 export class AlgorithmReadOnlyComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

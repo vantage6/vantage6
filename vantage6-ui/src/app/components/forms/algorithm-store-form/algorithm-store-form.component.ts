@@ -1,15 +1,22 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { AlgorithmStore, AlgorithmStoreForm } from 'src/app/models/api/algorithmStore.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { PermissionService } from 'src/app/services/permission.service';
+import { MatFormField, MatLabel, MatHint } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { NgIf } from '@angular/common';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatButton } from '@angular/material/button';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-algorithm-store-form',
-  templateUrl: './algorithm-store-form.component.html',
-  styleUrls: ['./algorithm-store-form.component.scss']
+    selector: 'app-algorithm-store-form',
+    templateUrl: './algorithm-store-form.component.html',
+    styleUrls: ['./algorithm-store-form.component.scss'],
+    imports: [ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatHint, NgIf, MatCheckbox, MatButton, TranslateModule]
 })
 export class AlgorithmStoreFormComponent implements OnInit, OnDestroy {
   @Input() algorithmStore?: AlgorithmStore;
