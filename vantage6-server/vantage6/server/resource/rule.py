@@ -2,9 +2,8 @@ import logging
 
 from http import HTTPStatus
 from flask.globals import request
-from flask import g
 from flask_restful import Api
-from sqlalchemy import or_
+from sqlalchemy import or_, select
 
 from vantage6.server.resource import with_user, ServicesResources
 from vantage6.common import logger_name
@@ -127,7 +126,7 @@ class Rules(ServicesResources):
 
         tags: ["Rule"]
         """
-        q = g.session.query(db.Rule)
+        q = select(db.Rule)
 
         args = request.args
 

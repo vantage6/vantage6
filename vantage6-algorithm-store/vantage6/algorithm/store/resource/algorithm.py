@@ -6,7 +6,7 @@ from threading import Thread
 from flask import g, render_template, request, current_app, Flask
 from flask_mail import Mail
 from flask_restful import Api
-from sqlalchemy import or_
+from sqlalchemy import or_, select
 
 from vantage6.common import logger_name
 from vantage6.backend.common.globals import (
@@ -264,7 +264,7 @@ class Algorithms(AlgorithmBaseResource):
 
         tags: ["Algorithm"]
         """
-        q = g.session.query(db_Algorithm)
+        q = select(db_Algorithm)
 
         # filter on properties
         for field in [
@@ -330,9 +330,9 @@ class Algorithms(AlgorithmBaseResource):
             # if image with that digest does not exist, check if another image with
             # different digest but same name exists. If it does, throw
             # more specific error
-            if q_with_digest.first():
+            if g.session.scalars(q_with_digest).first():
                 q = q_with_digest
-            elif q.first():
+            elif g.session.scalars(q).first():
                 return {
                     "msg": f"The image '{image}' that you provided has digest "
                     f"'{digest}'. This algorithm version is not approved by the "
