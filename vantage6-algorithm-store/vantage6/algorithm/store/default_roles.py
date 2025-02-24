@@ -14,6 +14,10 @@ class DefaultRole(str, Enum):
     VIEWER = "Viewer"
     SERVER_MANAGER = "Server Manager"
 
+    @classmethod
+    def list(cls):
+        return list(map(lambda c: c.value, cls))
+
 
 def get_default_roles() -> list[dict]:
     """
