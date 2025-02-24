@@ -13,7 +13,15 @@ import {
 } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
-import { Algorithm, ArgumentType, AlgorithmFunction, Argument, FunctionType } from 'src/app/models/api/algorithm.model';
+import {
+  Algorithm,
+  ArgumentType,
+  AlgorithmFunction,
+  Argument,
+  FunctionType,
+  AlgorithmFunctionExtended,
+  ConditionalArgComparatorType
+} from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { BaseNode, NodeStatus } from 'src/app/models/api/node.model';
@@ -57,6 +65,8 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { NgFor, NgIf } from '@angular/common';
 import { MatInput } from '@angular/material/input';
 import { MatButton } from '@angular/material/button';
+import { isTruthy } from 'src/app/helpers/utils.helper';
+import { HighlightedTextPipe } from 'src/app/pipes/highlighted-text.pipe';
 
 @Component({
   selector: 'app-create-form',
@@ -86,7 +96,8 @@ import { MatButton } from '@angular/material/button';
     RouterLink,
     ReactiveFormsModule,
     NgIf,
-    NgFor
+    NgFor,
+    HighlightedTextPipe
   ]
 })
 export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -132,7 +143,9 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   algorithm: Algorithm | null = null;
   collaboration?: Collaboration | null = null;
   organizations: BaseOrganization[] = [];
-  function: AlgorithmFunction | null = null;
+  functions: AlgorithmFunctionExtended[] = [];
+  filteredFunctions: AlgorithmFunctionExtended[] = [];
+  function: AlgorithmFunctionExtended | null = null;
   dataframes: Dataframe[] = [];
   node: BaseNode | null = null;
   columns: string[] = [];
@@ -152,14 +165,12 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   studyForm = this.fb.nonNullable.group({
     studyOrCollabID: [{ value: '', disabled: false }, Validators.required]
   });
-  packageForm = this.fb.nonNullable.group({
-    algorithmSpec: ['', Validators.required],
-    name: ['', Validators.required],
-    description: ''
-  });
   functionForm = this.fb.nonNullable.group({
+    algorithmFunctionSpec: ['', Validators.required],
+    algorithmFunctionSearch: '',
     functionName: ['', Validators.required],
-    organizationIDs: [[''], Validators.required]
+    organizationIDs: [[''], Validators.required],
+    description: ''
   });
   databaseForm = this.fb.nonNullable.group({});
   dataframeForm = this.fb.nonNullable.group({
@@ -266,21 +277,29 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     // set algorithm step
-    this.packageForm.controls.name.setValue(this.repeatedTask.name);
-    this.packageForm.controls.description.setValue(this.repeatedTask.description);
+    this.functionForm.controls.functionName.setValue(this.repeatedTask.name);
+    this.functionForm.controls.description.setValue(this.repeatedTask.description);
     let algorithm = this.algorithms.find((_) => _.image === this.repeatedTask?.image);
     if (!algorithm && this.repeatedTask?.image.includes('@sha256:')) {
       // get algorithm including digest
       algorithm = this.algorithms.find((_) => `${_.image}@${_.digest}` === this.repeatedTask?.image);
     }
     if (!algorithm || !algorithm.algorithm_store_id) return;
-    const algoSpec = this.getAlgoSpec(algorithm);
-    this.packageForm.controls.algorithmSpec.setValue(algoSpec);
+
     await this.handleAlgorithmChange(algorithm.id, algorithm.algorithm_store_id);
     // set function step
     if (!this.repeatedTask.input) return;
     this.functionForm.controls.functionName.setValue(this.repeatedTask?.input?.method);
-    await this.handleFunctionChange(this.repeatedTask.input?.method);
+    const func =
+      this.functions.find(
+        (_) =>
+          _.name === this.repeatedTask?.input?.method &&
+          _.algorithm_id == algorithm.id &&
+          _.algorithm_store_id == algorithm.algorithm_store_id
+      ) || null;
+    if (!func) return;
+    this.functionForm.controls.algorithmFunctionSpec.setValue(this.getAlgorithmFunctionSpec(func));
+    await this.handleFunctionChange(this.repeatedTask.input?.method, algorithm.id, algorithm.algorithm_store_id);
     if (!this.function) return;
     const organizationIDs = this.repeatedTask.runs.map((_) => _.organization?.id?.toString() ?? '').filter((value) => value);
     this.functionForm.controls.organizationIDs.setValue(organizationIDs);
@@ -333,8 +352,30 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  getAlgoSpec(algorithm: Algorithm): string {
-    return `${algorithm.id}_${algorithm.algorithm_store_id}`;
+  search() {
+    const value = this.functionForm.controls.algorithmFunctionSearch.value;
+    this.filteredFunctions = this.functions.filter((func) => {
+      const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
+      const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
+      return [func.algorithm_name, func.type, storeName, func.display_name, func.name].some((val) =>
+        val?.toLowerCase()?.includes(value.toLowerCase())
+      );
+    });
+  }
+
+  clearFunctionSearchInput() {
+    this.functionForm.controls.algorithmFunctionSearch.setValue('');
+    this.search();
+  }
+
+  getFunctionOptionLabel(func: AlgorithmFunctionExtended): string {
+    const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
+    const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
+    return `${this.getDisplayName(func)} <div class="detail-txt"> | ${func.algorithm_name}, ${storeName}, ${func.type}</div>`;
+  }
+
+  getAlgorithmFunctionSpec(func: AlgorithmFunctionExtended): string {
+    return `${func.name}__${func.algorithm_id}__${func.algorithm_store_id}`;
   }
 
   async handleDatabaseStepInitialized(): Promise<void> {
@@ -363,7 +404,6 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     return (
       (this.availableSteps.session && this.sessionForm.invalid) ||
       (this.availableSteps.study && this.studyForm.invalid) ||
-      (this.availableSteps.package && this.packageForm.invalid) ||
       (this.availableSteps.function && this.functionForm.invalid) ||
       (this.availableSteps.database && this.databaseForm.invalid) ||
       (this.availableSteps.preprocessing && this.preprocessingForm.invalid) ||
@@ -393,7 +433,7 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       Object.keys(this.parameterForm.controls).forEach((control) => {
         if (control === arg.name) {
           const value = this.parameterForm.get(control)?.value;
-          if (arg.has_default_value && value === null) {
+          if (arg.is_frontend_only || (arg.has_default_value && value === null)) {
             return; // note that within .forEach, return is like continue
           } else if (arg.type === ArgumentType.Json) {
             kwargs[arg.name] = JSON.parse(value);
@@ -433,8 +473,8 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     const formCreateOutput: FormCreateOutput = {
-      name: this.packageForm.controls.name.value,
-      description: this.packageForm.controls.description.value,
+      name: this.functionForm.controls.functionName.value,
+      description: this.functionForm.controls.description.value,
       image: image,
       session_id: Number.parseInt(this.sessionForm.controls.sessionID.value),
       collaboration_id: this.collaboration?.id || -1,
@@ -458,6 +498,26 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
   handleCancel(): void {
     this.onCancel.emit();
+  }
+
+  sortArgumentsForDisplay(arguments_: Argument[] | undefined) {
+    if (!arguments_) return undefined;
+    // first order by ID
+    arguments_ = arguments_.sort((a, b) => a.id - b.id);
+    // Sort the parameters of the function such that parameters that are conditional on
+    // others are just behind those
+    for (let idx = 0; idx < arguments_.length; idx++) {
+      const arg = arguments_[idx];
+      if (arg?.conditional_on_id) {
+        // Find the idx in the list of the one it is conditional on
+        const conditionalIdx = arguments_.findIndex((condArg) => condArg.id === arg.conditional_on_id);
+        if (conditionalIdx > idx) {
+          [arguments_[idx], arguments_[conditionalIdx]] = [arguments_[conditionalIdx], arguments_[idx]];
+          idx = -1;
+        }
+      }
+    }
+    return arguments_;
   }
 
   async retrieveColumns(): Promise<void> {
@@ -566,7 +626,8 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
   getFormArrayControls(argument: Argument) {
     if ((this.parameterForm.get(argument.name) as FormArray).controls === undefined) {
-      this.parameterForm.setControl(argument.name, this.fb.array([this.getNewControlForInputList(argument)]));
+      const initialControl = argument.has_default_value ? [] : [this.getNewControlForInputList(argument)];
+      this.parameterForm.setControl(argument.name, this.fb.array(initialControl));
     }
     return (this.parameterForm.get(argument.name) as FormArray).controls;
   }
@@ -623,16 +684,74 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.collaboration?.algorithm_stores && this.collaboration.algorithm_stores.length > 1) {
       const store_name = this.collaboration.algorithm_stores.find((_) => _.url === algorithm.algorithm_store_url)?.name;
       if (store_name) {
-        return `(${store_name})`;
+        return store_name;
       }
     }
     return '';
   }
 
+  getDisplayName(obj: AlgorithmFunction | Argument): string {
+    return obj.display_name && obj.display_name != '' ? obj.display_name : obj.name;
+  }
+
+  shouldDisplayArgument(function_: AlgorithmFunction | null, argument: Argument): boolean {
+    // argument should not be displayed if it is conditional on another and the
+    // condition is not fulfilled
+    if (!argument.conditional_on_id) {
+      return true;
+    }
+    const conditionalArg = function_?.arguments.find((arg: Argument) => arg.id === argument.conditional_on_id);
+    if (!conditionalArg) {
+      return true;
+    }
+    let curConditionalValue = this.parameterForm.get(conditionalArg.name)?.value;
+    // cast the values (if necessary)
+    let conditionDatabaseValue: string | number | boolean | undefined;
+    if (conditionalArg.type === ArgumentType.Boolean) {
+      conditionDatabaseValue = isTruthy(argument.conditional_value);
+      curConditionalValue = isTruthy(curConditionalValue);
+    } else if (conditionalArg.type === ArgumentType.Float || conditionalArg.type === ArgumentType.Integer) {
+      conditionDatabaseValue = Number(argument.conditional_value);
+      curConditionalValue = Number(curConditionalValue);
+    } else {
+      conditionDatabaseValue = argument.conditional_value;
+    }
+    // evaluate the condition
+    if (argument.conditional_operator === ConditionalArgComparatorType.Equal) {
+      return conditionDatabaseValue === curConditionalValue;
+    } else if (argument.conditional_operator === ConditionalArgComparatorType.NotEqual) {
+      return conditionDatabaseValue !== curConditionalValue;
+    } else if (conditionDatabaseValue) {
+      if (argument.conditional_operator === ConditionalArgComparatorType.GreaterThan) {
+        return conditionDatabaseValue > curConditionalValue;
+      } else if (argument.conditional_operator === ConditionalArgComparatorType.GreaterThanOrEqual) {
+        return conditionDatabaseValue >= curConditionalValue;
+      } else if (argument.conditional_operator === ConditionalArgComparatorType.LessThan) {
+        return conditionDatabaseValue < curConditionalValue;
+      } else if (argument.conditional_operator === ConditionalArgComparatorType.LessThanOrEqual) {
+        return conditionDatabaseValue <= curConditionalValue;
+      }
+    }
+    // fallback - just display it, but should never get here
+    return true;
+  }
+
   private async initData(): Promise<void> {
     this.collaboration = this.chosenCollaborationService.collaboration$.value;
     this.sessions = await this.sessionService.getSessions();
-    this.algorithms = await this.algorithmService.getAlgorithms();
+    const algorithmsObj = await this.algorithmService.getAlgorithms();
+    this.algorithms = algorithmsObj;
+    this.functions = algorithmsObj.flatMap((curAlgorithm) => {
+      return curAlgorithm.functions.map((func) => {
+        return {
+          ...func,
+          algorithm_id: curAlgorithm.id,
+          algorithm_name: curAlgorithm.name,
+          algorithm_store_id: curAlgorithm.algorithm_store_id
+        };
+      });
+    });
+    this.filteredFunctions = this.functions;
     this.node = await this.getOnlineNode();
 
     this.sessionForm.controls['sessionID'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (sessionID) => {
@@ -655,14 +774,12 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       if (studyID) this.isStudyCompleted = true;
     });
 
-    this.packageForm.controls.algorithmSpec.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (algorithmSpec) => {
-      const [algorithmID, algorithmStoreID] = algorithmSpec.split('_');
-      this.handleAlgorithmChange(Number(algorithmID), Number(algorithmStoreID));
-    });
-
-    this.functionForm.controls.functionName.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (functionName) => {
-      this.handleFunctionChange(functionName);
-    });
+    this.functionForm.controls.algorithmFunctionSpec.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(async (algorithmFunctionSpec) => {
+        const [functionName, algorithmID, algorithmStoreID] = algorithmFunctionSpec.split('__');
+        this.handleFunctionChange(String(functionName), Number(algorithmID), Number(algorithmStoreID));
+      });
 
     this.nodeStatusUpdateSubscription = this.socketioConnectService
       .getNodeStatusUpdates()
@@ -725,7 +842,7 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     this.algorithm = this.algorithms.find((_) => _.id === algorithmID && _.algorithm_store_id == algoStoreID) || null;
   }
 
-  private handleFunctionChange(functionName: string): void {
+  private handleFunctionChange(functionName: string, algorithmID: number, algoStoreID: number): void {
     //Clear form
     this.clearFunctionStep(); //Also clear function step, so user needs to reselect organization
     this.clearDatabaseStep();
@@ -734,14 +851,17 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     this.clearParameterStep();
 
     //Get selected function
-    const selectedFunction = this.algorithm?.functions.find((_) => _.name === functionName) || null;
+    this.algorithm = this.algorithms.find((_) => _.id === algorithmID && _.algorithm_store_id == algoStoreID) || null;
+    // Get selected function
+    const selectedFunction =
+      this.functions.find((_) => _.name === functionName && _.algorithm_id == algorithmID && _.algorithm_store_id == algoStoreID) || null;
 
     if (selectedFunction) {
-      //Add form controls for parameters for selected function
+      // Add form controls for parameters for selected function
       addParameterFormControlsForFunction(selectedFunction, this.parameterForm);
     }
 
-    //Delay setting function, so that form controls are added
+    // Delay setting function, so that form controls are added
     this.function = selectedFunction;
   }
 

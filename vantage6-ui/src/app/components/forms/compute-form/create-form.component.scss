@@ -13,6 +13,42 @@
   margin-bottom: $spacing-px-4;
 }
 
+.select-form-field {
+  .mat-mdc-select-arrow-wrapper,
+  .mat-form-field-appearance-fill .mat-mdc-select-arrow-wrapper {
+    margin-right: 16px !important;
+  }
+}
+
+.search-form-field {
+  position: sticky;
+  top: -8px;
+  z-index: 999;
+  width: calc(100% - 16px);
+  padding: 0 8px;
+  background-color: white;
+
+  .mat-mdc-form-field-subscript-wrapper {
+    height: 0;
+  }
+
+  .mat-mdc-icon-button {
+    padding-left: 0;
+  }
+}
+
+.function-select-option {
+  display: inline-block !important;
+  width: calc(100% - 32px) !important;
+  padding: 4px 8px !important;
+  margin: 0 8px !important;
+  min-height: fit-content !important;
+
+  @media only screen and (min-width: 960px) {
+    padding: 8px 8px !important;
+  }
+}
+
 .detail-txt {
   font-size: small;
   color: grey;
