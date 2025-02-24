@@ -97,6 +97,7 @@ else:
             "port": 7601,
             "server_url": "http://host.docker.internal",
             "task_dir": "/tasks",
+            "api_path": "/server",
             # TODO user defined config
         }
     )
@@ -119,6 +120,7 @@ else:
             "port": 7601,
             "server_url": "http://host.docker.internal",
             "task_dir": "/tasks",
+            "api_path": "/server",
             # TODO user defined config
         }
     )
