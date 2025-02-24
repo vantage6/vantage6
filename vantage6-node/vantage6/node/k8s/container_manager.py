@@ -571,7 +571,8 @@ class ContainerManager:
             # additional volume mount for the database file. In case it is an URI the
             # URI should be reachable from the container.
             self._validate_source_database(databases_to_use)
-
+            # A always has 1 source database to use in the extraction step. This
+            # is validated in the previous method.
             source_database = databases_to_use[0]
             db = self.databases[source_database["label"]]
             if db["is_file"] or db["is_dir"]:
@@ -707,6 +708,10 @@ class ContainerManager:
         ok = True
         if len(databases_to_use) > 1:
             self.log.error("Only one database can be used in the data extraction step.")
+            ok = False
+
+        if len(databases_to_use) == 0:
+            self.log.error("No database is provided for the data extraction step.")
             ok = False
 
         source_database = databases_to_use[0]
