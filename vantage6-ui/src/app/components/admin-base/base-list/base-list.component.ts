@@ -8,9 +8,10 @@ import { getApiSearchParameters } from 'src/app/helpers/api.helper';
 import { ResourceGetParameters } from 'src/app/models/api/resource.model';
 
 @Component({
-  selector: 'app-base-list',
-  templateUrl: './base-list.component.html',
-  styleUrl: './base-list.component.scss'
+    selector: 'app-base-list',
+    templateUrl: './base-list.component.html',
+    styleUrl: './base-list.component.scss',
+    standalone: false
 })
 export abstract class BaseListComponent implements OnDestroy {
   @HostBinding('class') class = 'card-container';

@@ -6,7 +6,7 @@ from threading import Thread
 from flask import g, render_template, request, current_app, Flask
 from flask_mail import Mail
 from flask_restful import Api
-from sqlalchemy import or_
+from sqlalchemy import or_, select
 from marshmallow import ValidationError
 
 from vantage6.common import logger_name
@@ -265,7 +265,7 @@ class Algorithms(AlgorithmBaseResource):
 
         tags: ["Algorithm"]
         """
-        q = g.session.query(db_Algorithm)
+        q = select(db_Algorithm)
 
         # filter on properties
         for field in [
@@ -331,9 +331,9 @@ class Algorithms(AlgorithmBaseResource):
             # if image with that digest does not exist, check if another image with
             # different digest but same name exists. If it does, throw
             # more specific error
-            if q_with_digest.first():
+            if g.session.scalars(q_with_digest).first():
                 q = q_with_digest
-            elif q.first():
+            elif g.session.scalars(q).first():
                 return {
                     "msg": f"The image '{image}' that you provided has digest "
                     f"'{digest}'. This algorithm version is not approved by the "
@@ -388,6 +388,9 @@ class Algorithms(AlgorithmBaseResource):
                   documentation_url:
                     type: string
                     description: URL to the algorithm documentation
+                  submission_comments:
+                    type: string
+                    description: Comments done by the developer to the submission
                   functions:
                     type: array
                     description: List of functions that are available in the
@@ -407,6 +410,9 @@ class Algorithms(AlgorithmBaseResource):
                           type: string
                           description: Type of function. Can be 'central' or
                             'federated'
+                        standalone:
+                          type: boolean
+                          description: Whether this function produces useful results when running it by itself
                         databases:
                           type: array
                           description: List of databases that this function
@@ -532,6 +538,7 @@ class Algorithms(AlgorithmBaseResource):
             documentation_url=data.get("documentation_url", None),
             digest=digest,
             developer=g.user,
+            submission_comments=data.get("submission_comments", None),
         )
         algorithm.save()
 
@@ -549,6 +556,7 @@ class Algorithms(AlgorithmBaseResource):
                 display_name=function.get("display_name", ""),
                 description=function.get("description", ""),
                 type_=function["type_"],
+                standalone=function.get("standalone", True),
                 algorithm_id=algorithm.id,
             )
             func.save()
@@ -817,6 +825,9 @@ class Algorithm(AlgorithmBaseResource):
                   documentation_url:
                     type: string
                     description: URL to the algorithm documentation
+                  submission_comments:
+                    type: string
+                    description: Comments done by the developer to the submission
                   functions:
                     type: array
                     description: List of functions that are available in the algorithm.
@@ -837,6 +848,9 @@ class Algorithm(AlgorithmBaseResource):
                           type: string
                           description: Type of function. Can be 'central' or
                             'federated'
+                        standalone:
+                          type: boolean
+                          description: Whether this function produces useful results when running it by itself
                         databases:
                           type: array
                           description: List of databases that this function
@@ -983,6 +997,7 @@ class Algorithm(AlgorithmBaseResource):
             "vantage6_version",
             "code_url",
             "documentation_url",
+            "submission_comments",
         ]
         for field in fields:
             if field in data and data.get(field) is not None:
@@ -1015,6 +1030,7 @@ class Algorithm(AlgorithmBaseResource):
                     name=new_function["name"],
                     description=new_function.get("description", ""),
                     type_=new_function["type"],
+                    standalone=new_function.get("standalone", True),
                     algorithm_id=id,
                 )
                 func.save()

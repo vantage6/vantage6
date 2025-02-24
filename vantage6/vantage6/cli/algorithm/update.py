@@ -34,7 +34,11 @@ def cli_algorithm_update(directory: str, change_answers: bool) -> dict:
     """
     if not directory:
         default_dir = str(Path(os.getcwd()))
-        directory = q.text("Algorithm directory:", default=default_dir).ask()
+        try:
+            directory = q.text("Algorithm directory:", default=default_dir).unsafe_ask()
+        except KeyboardInterrupt:
+            info("Aborted by user!")
+            return
 
     info("Updating template...")
     try:

@@ -5,8 +5,9 @@ import sqlalchemy as sa
 from flask import g, request
 from flask_restful import Api
 from http import HTTPStatus
-from sqlalchemy import desc, or_, and_
 from marshmallow import ValidationError
+from sqlalchemy import desc, or_, and_, select
+from sqlalchemy.sql.selectable import Select
 
 from vantage6.common import logger_name
 from vantage6.common.enum import RunStatus, TaskStatusQueryOptions, AlgorithmStepType
@@ -140,13 +141,13 @@ class RunBase(ServicesResources):
 class MultiRunBase(RunBase):
     """Base class for resources that return multiple runs or results"""
 
-    def get_query_multiple_runs(self) -> sa.orm.query.Query | tuple:
+    def get_query_multiple_runs(self) -> Select | tuple:
         """
-        Returns a query object that can be used to retrieve runs.
+        Returns a sqlalchemy selection object that can be used to retrieve runs.
 
         Returns
         -------
-        sa.orm.query.Query or tuple
+        sqlalchemy.sql.selectable.Select or tuple
             A query object to retrieve a single algorithm run, or a tuple with
             a message and HTTP error code if the query could not be set up
         """
@@ -154,7 +155,7 @@ class MultiRunBase(RunBase):
         args = request.args
         log.debug(f"Querying runs with args: {args}")
 
-        q = g.session.query(db_Run)
+        q = select(db_Run)
 
         if "organization_id" in args:
             if not self.r.can_for_org(P.VIEW, args["organization_id"]):
@@ -397,7 +398,7 @@ class Runs(MultiRunBase):
         query = self.get_query_multiple_runs()
 
         # If no query is returned, we should return message and error code
-        if not isinstance(query, sa.orm.query.Query):
+        if not isinstance(query, Select):
             return query
 
         try:
@@ -526,7 +527,7 @@ class Results(MultiRunBase):
         query = self.get_query_multiple_runs()
 
         # If no query is returned, we should return message and error code
-        if not isinstance(query, sa.orm.query.Query):
+        if not isinstance(query, Select):
             return query
 
         try:

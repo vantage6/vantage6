@@ -34,7 +34,7 @@ jsonschema==4.17.3
 kombu==5.2.4
 MarkupSafe==2.1.2
 marshmallow==3.20.2
-marshmallow-sqlalchemy==0.15.0
+marshmallow-sqlalchemy==1.4.0
 mistune==2.0.4
 names_generator==0.2.0
 numpy==1.24.2
@@ -65,7 +65,7 @@ rich==13.5.2
 schema==0.7.5
 six==1.16.0
 SPARQLWrapper==2.0.0
-SQLAlchemy==1.4.46
+sqlalchemy==2.0.37
 traitlets==5.8.1
 urllib3==1.26.19
 wcwidth==0.2.6

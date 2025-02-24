@@ -5,10 +5,17 @@ import { ResourceForm } from 'src/app/models/api/resource.model';
 import { UserCreate, UserForm } from 'src/app/models/api/user.model';
 import { routePaths } from 'src/app/routes';
 import { UserService } from 'src/app/services/user.service';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { NgIf } from '@angular/common';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { UserFormComponent } from '../../../../components/forms/user-form/user-form.component';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-user-create',
-  templateUrl: './user-create.component.html'
+    selector: 'app-user-create',
+    templateUrl: './user-create.component.html',
+    imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, UserFormComponent, MatProgressSpinner, TranslateModule]
 })
 export class UserCreateComponent extends BaseCreateComponent {
   constructor(

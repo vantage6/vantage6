@@ -8,10 +8,9 @@ describe('StoreRoleReadComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [StoreRoleReadComponent]
-    })
-    .compileComponents();
-    
+      imports: [StoreRoleReadComponent]
+    }).compileComponents();
+
     fixture = TestBed.createComponent(StoreRoleReadComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

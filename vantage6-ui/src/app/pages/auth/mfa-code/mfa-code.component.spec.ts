@@ -8,7 +8,7 @@ describe('MfaCodeComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [MfaCodeComponent]
+      imports: [MfaCodeComponent]
     });
     fixture = TestBed.createComponent(MfaCodeComponent);
     component = fixture.componentInstance;

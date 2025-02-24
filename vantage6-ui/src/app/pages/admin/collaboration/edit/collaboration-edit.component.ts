@@ -11,10 +11,16 @@ import { ChosenCollaborationService } from 'src/app/services/chosen-collaboratio
 import { CollaborationService } from 'src/app/services/collaboration.service';
 import { FileService } from 'src/app/services/file.service';
 import { NodeService } from 'src/app/services/node.service';
+import { NgIf } from '@angular/common';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { CollaborationFormComponent } from '../../../../components/forms/collaboration-form/collaboration-form.component';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-collaboration-edit',
-  templateUrl: './collaboration-edit.component.html'
+    selector: 'app-collaboration-edit',
+    templateUrl: './collaboration-edit.component.html',
+    imports: [NgIf, PageHeaderComponent, MatCard, MatCardContent, CollaborationFormComponent, MatProgressSpinner]
 })
 export class CollaborationEditComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
@@ -70,7 +76,7 @@ export class CollaborationEditComponent implements OnInit {
             const node = await this.nodeService.createNode(this.collaboration, organization.id);
             if (node?.api_key) {
               new_api_keys.push({
-                organization: organization.name,
+                entityName: organization.name,
                 api_key: node.api_key
               });
             }
@@ -107,7 +113,7 @@ export class CollaborationEditComponent implements OnInit {
   // TODO refactor this component - following is duplicate from collaboration-create.component.ts
   private downloadApiKeys(api_keys: ApiKeyExport[], collaboration_name: string): void {
     const filename = `API_keys_${collaboration_name}.txt`;
-    const text = api_keys.map((api_key) => `${api_key.organization}: ${api_key.api_key}`).join('\n');
+    const text = api_keys.map((api_key) => `${api_key.entityName}: ${api_key.api_key}`).join('\n');
     this.fileService.downloadTxtFile(text, filename);
   }
 

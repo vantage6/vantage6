@@ -8,6 +8,7 @@ from flask import request, g, render_template, Flask, current_app
 from flask_mail import Mail
 from flask_restful import Api
 from marshmallow import ValidationError
+from sqlalchemy import select
 
 from vantage6.common import logger_name
 from vantage6.common.enum import StorePolicies
@@ -224,7 +225,7 @@ class Reviews(ReviewBase):
 
         tags: ["Review"]
         """
-        q = g.session.query(db.Review)
+        q = select(db.Review)
 
         # filter by simple filters
         if algorithm_id := request.args.get("algorithm_id"):
@@ -372,14 +373,12 @@ class Reviews(ReviewBase):
                     "their own algorithm!"
                 )
             }, HTTPStatus.BAD_REQUEST
-        if (
-            g.session.query(db.Review)
-            .filter(
+        if g.session.scalars(
+            select(db.Review).filter(
                 db.Review.algorithm_id == data["algorithm_id"],
                 db.Review.reviewer_id == data["reviewer_id"],
             )
-            .first()
-        ):
+        ).first():
             return {
                 "msg": "Reviewer has already reviewed this algorithm!"
             }, HTTPStatus.BAD_REQUEST

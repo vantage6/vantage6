@@ -4,6 +4,7 @@ from http import HTTPStatus
 from flask import g, request
 from flask_restful import Api
 from marshmallow import ValidationError
+from sqlalchemy import select
 
 from vantage6.common import generate_apikey
 from vantage6.common.globals import AuthStatus
@@ -239,7 +240,7 @@ class Nodes(NodeBase):
 
         tags: ["Node"]
         """
-        q = g.session.query(db.Node)
+        q = select(db.Node)
         auth_org_id = self.obtain_organization_id()
         args = request.args
 

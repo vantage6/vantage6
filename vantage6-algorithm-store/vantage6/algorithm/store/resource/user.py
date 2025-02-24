@@ -3,7 +3,8 @@ import logging
 
 from http import HTTPStatus
 
-import sqlalchemy
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from flask import request, g
 from flask_restful import Api
 from marshmallow import ValidationError
@@ -169,7 +170,7 @@ class Users(AlgorithmStoreResources):
         tags: ["User"]
         """
         args = request.args
-        q = g.session.query(db_User)
+        q = select(db_User)
 
         # filter by any field of this endpoint
         for param in ["username"]:
@@ -520,7 +521,7 @@ class User(AlgorithmStoreResources):
 
         try:
             user.save()
-        except sqlalchemy.exc.IntegrityError as e:
+        except IntegrityError as e:
             log.error(e)
             user.session.rollback()
             return {

@@ -7,7 +7,7 @@ from flask_restful import Api
 from flask_socketio import SocketIO
 from marshmallow import ValidationError
 from http import HTTPStatus
-from sqlalchemy import desc
+from sqlalchemy import desc, select
 from sqlalchemy.sql import visitors
 
 from vantage6.common.globals import STRING_ENCODING, NodePolicy
@@ -327,7 +327,7 @@ class Tasks(TaskBase):
 
         tags: ["Task"]
         """
-        q = g.session.query(db.Task)
+        q = select(db.Task)
         args = request.args
 
         auth_org_id = self.obtain_organization_id()
@@ -436,9 +436,9 @@ class Tasks(TaskBase):
 
         if "job_id" in args:
             job_id = int(args["job_id"])
-            task_in_job = (
-                q.session.query(db.Task).filter(db.Task.job_id == job_id).first()
-            )
+            task_in_job = g.session.scalars(
+                select(db.Task).filter(db.Task.job_id == job_id)
+            ).first()
             if not task_in_job:
                 return {
                     "msg": f'Job id={args["job_id"]} does not exist!'
@@ -692,12 +692,11 @@ class Tasks(TaskBase):
                 }, HTTPStatus.BAD_REQUEST
 
         # check if all the organizations have a registered node
-        nodes = (
-            g.session.query(db.Node)
+        nodes = g.session.scalars(
+            select(db.Node)
             .filter(db.Node.organization_id.in_(org_ids))
             .filter(db.Node.collaboration_id == collaboration_id)
-            .all()
-        )
+        ).all()
         if len(nodes) < len(org_ids):
             present_nodes = [node.organization_id for node in nodes]
             missing = [str(id) for id in org_ids if id not in present_nodes]
@@ -895,6 +894,8 @@ class Tasks(TaskBase):
             log.debug(f"New job_id {task.job_id}")
         elif g.container:
             task.parent_id = g.container["task_id"]
+            # save task after changing it before using session to get another task
+            task.save()
             parent = db.Task.get(g.container["task_id"])
             task.job_id = parent.job_id
             task.init_user_id = parent.init_user_id

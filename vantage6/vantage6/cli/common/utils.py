@@ -38,10 +38,14 @@ def get_server_name(
                 f"{instance_type}s that are running"
             )
             exit(1)
-        name = q.select(
-            f"Select the {instance_type} you wish to inspect:",
-            choices=running_server_names,
-        ).ask()
+        try:
+            name = q.select(
+                f"Select the {instance_type} you wish to inspect:",
+                choices=running_server_names,
+            ).unsafe_ask()
+        except KeyboardInterrupt:
+            error("Aborted by user!")
+            exit(1)
     else:
         post_fix = "system" if system_folders else "user"
         name = f"{APPNAME}-{name}-{post_fix}"

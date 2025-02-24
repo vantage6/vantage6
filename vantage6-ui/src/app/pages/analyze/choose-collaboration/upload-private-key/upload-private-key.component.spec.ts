@@ -8,10 +8,9 @@ describe('UploadPrivateKeyComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [UploadPrivateKeyComponent]
-    })
-    .compileComponents();
-    
+      imports: [UploadPrivateKeyComponent]
+    }).compileComponents();
+
     fixture = TestBed.createComponent(UploadPrivateKeyComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

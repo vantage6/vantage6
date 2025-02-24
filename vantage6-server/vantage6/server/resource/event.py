@@ -326,7 +326,7 @@ def kill_task(task: db.Task, socket: SocketIO) -> None:
             if RunStatus.has_finished(run.status):
                 continue  # don't overwrite status if run is already finished
             run.status = RunStatus.KILLED
-            run.finished_at = dt.datetime.now()
+            run.finished_at = dt.datetime.now(dt.timezone.utc)
             run.save()
 
     set_killed(task)

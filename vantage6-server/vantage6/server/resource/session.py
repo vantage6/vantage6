@@ -3,7 +3,7 @@ import logging
 from flask import request, g
 from flask_restful import Api
 from http import HTTPStatus
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, select
 from names_generator import generate_name
 from marshmallow import ValidationError
 
@@ -481,8 +481,7 @@ class Sessions(SessionBase):
         auth_org = self.obtain_auth_organization()
         args = request.args
 
-        q = g.session.query(db.Session)
-        g.session.commit()
+        q = select(db.Session)
 
         # filter by a field of this endpoint
         if "name" in args:
@@ -974,7 +973,7 @@ class SessionDataframes(SessionBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        q = g.session.query(db.Dataframe).filter_by(session_id=session_id)
+        q = select(db.Dataframe).filter_by(session_id=session_id)
 
         # check if pagination is disabled
         paginate = not (
