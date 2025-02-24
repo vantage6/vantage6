@@ -27,4 +27,4 @@ spec:
         - name: SERVER_URL
           value: {{ .Values.server.baseUrl | quote }}
         - name: API_PATH
-          value: /api
+          value: /server

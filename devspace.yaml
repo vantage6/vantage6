@@ -13,6 +13,8 @@ vars:
   KUBE_CONFIG:
     question: "Where is your kube config from k8s located?"
     default: ~/.kube/config
+  #set to 0.0.0.0 to make the dev environment (ui, api) accessible from outside
+  PORTS_BIND_ADDRESS: "127.0.0.1" 
 
 pipelines:
 
@@ -124,7 +126,7 @@ deployments:
           logging:
             level: DEBUG
           vantage6Server:
-            uri: http://host.docker.internal:7601/api
+            uri: http://host.docker.internal:7601/server
           policies:
             allowLocalhost: 'True'
 
@@ -179,6 +181,7 @@ dev:
     imageSelector: ${SERVER_IMAGE}
     ports:
       - port: 7601:7601
+        bindAddress: ${PORTS_BIND_ADDRESS}
 
   # We use this to enable the server and the store to be coupled. We need a port to talk
   # to as the ingress is not deployed yet.
@@ -186,11 +189,13 @@ dev:
     imageSelector: ${STORE_IMAGE}
     ports:
       - port: 7602:7602
+        bindAddress: ${PORTS_BIND_ADDRESS}
 
   vantage6-store:
     imageSelector: ${STORE_IMAGE}
     ports:
       - port: 7602:7602
+        bindAddress: ${PORTS_BIND_ADDRESS}
 
     sync:
     - path: ./vantage6/:/vantage6/vantage6/
@@ -224,6 +229,7 @@ dev:
       - command: kubectl
     ports:
       - port: 7601:7601
+        bindAddress: ${PORTS_BIND_ADDRESS}
     logs:
       enabled: true
 
@@ -233,6 +239,7 @@ dev:
     imageSelector: ${UI_IMAGE}
     ports:
       - port: 7600:80
+        bindAddress: ${PORTS_BIND_ADDRESS}
 
   # Where as we could hot-reload the server code using wsgi, we cannot do this with the
   # node code. We leverage the `restartHelper` and `onUpload.restartContainer` to
