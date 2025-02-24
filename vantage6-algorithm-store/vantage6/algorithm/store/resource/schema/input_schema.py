@@ -39,6 +39,7 @@ class AlgorithmInputSchema(_NameDescriptionSchema):
     vantage6_version = fields.String(required=True)
     code_url = fields.String(required=True)
     documentation_url = fields.String()
+    submission_comments = fields.String()
     functions = fields.Nested("FunctionInputSchema", many=True, required=True)
 
     @validates("partitioning")
@@ -68,6 +69,7 @@ class FunctionInputSchema(_NameDescriptionSchema):
 
     type_ = fields.String(required=True, data_key="type")
     display_name = fields.String(required=False)
+    standalone = fields.Boolean(required=False)
     databases = fields.Nested("DatabaseInputSchema", many=True)
     arguments = fields.Nested("ArgumentInputSchema", many=True)
     ui_visualizations = fields.Nested("UIVisualizationInputSchema", many=True)
@@ -167,10 +169,14 @@ class FunctionInputSchema(_NameDescriptionSchema):
                     raise ValidationError(
                         f"Type of conditional argument '{conditional_on}' is not set"
                     )
-                if conditional_type == ArgumentType.INTEGER.value:
+                if not conditional_value:
+                    # conditional value is null - this is allowed and does not need to
+                    # be checked further
+                    continue
+                elif conditional_type == ArgumentType.INTEGER.value:
                     try:
                         int(conditional_value)
-                    except ValueError as exc:
+                    except (ValueError, TypeError) as exc:
                         raise ValidationError(
                             f"Conditional value '{conditional_value}' is not a valid "
                             f"integer, while the conditional argument '{conditional_on}' "
@@ -179,7 +185,7 @@ class FunctionInputSchema(_NameDescriptionSchema):
                 elif conditional_type == ArgumentType.FLOAT.value:
                     try:
                         float(conditional_value)
-                    except ValueError as exc:
+                    except (ValueError, TypeError) as exc:
                         raise ValidationError(
                             f"Conditional value '{conditional_value}' is not a valid "
                             f"float, while the conditional argument '{conditional_on}' "
@@ -300,11 +306,11 @@ class ArgumentInputSchema(_NameDescriptionSchema):
                 "Variable cannot be conditional on another variable if it has no "
                 "default: arguments without defaults must always be specified"
             )
-        # Check that either all conditional fields are specified or none
+        # Check that all required conditional fields are specified or none. Note that
+        # the conditional_value is optional, as it may be null.
         conditional_fields = [
             "conditional_on",
             "conditional_operator",
-            "conditional_value",
         ]
         specified_conditionals = [
             field for field in conditional_fields if data.get(field)

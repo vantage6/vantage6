@@ -15,7 +15,8 @@ export enum RunStatus {
 }
 
 @Pipe({
-  name: 'orderByTaskStatus'
+  name: 'orderByTaskStatus',
+  standalone: true
 })
 export class OrderByTaskStatusPipe implements PipeTransform {
   transform(list: unknown, property: string, direction?: 'asc' | 'desc'): any[] {

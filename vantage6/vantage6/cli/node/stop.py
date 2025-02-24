@@ -69,9 +69,13 @@ def cli_node_stop(
             _stop_node(client, container_name, force, system_folders)
     else:
         if not name:
-            container_name = q.select(
-                "Select the node you wish to stop:", choices=running_node_names
-            ).ask()
+            try:
+                container_name = q.select(
+                    "Select the node you wish to stop:", choices=running_node_names
+                ).unsafe_ask()
+            except KeyboardInterrupt:
+                error("Aborted by user!")
+                return
         else:
             post_fix = "system" if system_folders else "user"
             container_name = f"{APPNAME}-{name}-{post_fix}"

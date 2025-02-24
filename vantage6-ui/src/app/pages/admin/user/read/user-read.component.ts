@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatSlideToggleChange } from '@angular/material/slide-toggle';
-import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { Router, RouterLink } from '@angular/router';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs';
 import { BaseReadComponent } from 'src/app/components/admin-base/base-read/base-read.component';
 import { OperationType, ResourceType, Rule, ScopeType } from 'src/app/models/api/rule.model';
@@ -11,11 +11,39 @@ import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dial
 import { PermissionService } from 'src/app/services/permission.service';
 import { RuleService } from 'src/app/services/rule.service';
 import { UserService } from 'src/app/services/user.service';
+import { NgIf, NgFor } from '@angular/common';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { MatIconButton } from '@angular/material/button';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { MatIcon } from '@angular/material/icon';
+import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
+import { ChipComponent } from '../../../../components/helpers/chip/chip.component';
+import { PermissionsMatrixServerComponent } from '../../../../components/permissions-matrix/server/permissions-matrix-server.component';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-user-read',
-  styleUrls: ['./user-read.component.scss'],
-  templateUrl: './user-read.component.html'
+    selector: 'app-user-read',
+    styleUrls: ['./user-read.component.scss'],
+    templateUrl: './user-read.component.html',
+    imports: [
+        NgIf,
+        PageHeaderComponent,
+        MatIconButton,
+        MatMenuTrigger,
+        MatIcon,
+        MatMenu,
+        MatMenuItem,
+        RouterLink,
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        MatCardContent,
+        ChipComponent,
+        NgFor,
+        PermissionsMatrixServerComponent,
+        MatProgressSpinner,
+        TranslateModule
+    ]
 })
 export class UserReadComponent extends BaseReadComponent implements OnInit, OnDestroy {
   showUserSpecificRulesOnly: boolean = false;

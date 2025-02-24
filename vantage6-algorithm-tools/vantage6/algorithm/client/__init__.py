@@ -627,23 +627,6 @@ class AlgorithmClient(ClientBase):
             """
             return self.parent.request(f"collaboration/{self.parent.collaboration_id}")
 
-    class Node(ClientBase.SubClient):
-        """
-        Get information about the node.
-        """
-
-        def get(self) -> dict:
-            """
-            Get the node data.
-
-            Returns
-            -------
-            dict
-                Dictionary containing data on the node this algorithm is
-                running on.
-            """
-            return self.parent.request(f"node/{self.parent.node_id}")
-
     class Study(ClientBase.SubClient):
         """
         Get information about the study or studies.

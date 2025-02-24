@@ -26,8 +26,12 @@ def cli_node_clean() -> None:
             msg += volume.name + ","
     info(msg)
 
-    confirm = q.confirm("Are you sure?")
-    if confirm.ask():
+    try:
+        confirm = q.confirm("Are you sure?").unsafe_ask()
+    except KeyboardInterrupt:
+        confirm = False
+
+    if confirm:
         for volume in candidates:
             try:
                 volume.remove()

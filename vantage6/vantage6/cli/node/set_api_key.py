@@ -38,7 +38,11 @@ def cli_node_set_api_key(name: str, api_key: str, system_folders: bool) -> None:
         exit(1)
 
     if not api_key:
-        api_key = q.text("Please enter your new API key:").ask()
+        try:
+            api_key = q.text("Please enter your new API key:").unsafe_ask()
+        except KeyboardInterrupt:
+            error("API key input aborted.")
+            exit(1)
 
     # get configuration manager
     ctx = NodeContext(name, system_folders=system_folders)

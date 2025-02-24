@@ -2,7 +2,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-  name: 'highlight'
+  name: 'highlight',
+  standalone: true
 })
 export class HighlightedTextPipe implements PipeTransform {
   transform(value: any, args: any, enabled: boolean): unknown {

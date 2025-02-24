@@ -1,14 +1,57 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
-import { MatSelectChange } from '@angular/material/select';
+import { FormArray, FormBuilder, FormControl, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { MatSelectChange, MatSelect } from '@angular/material/select';
 import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 import { Select, SelectParameterType } from 'src/app/models/api/algorithm.model';
 import { format, parse } from 'date-fns';
+import {
+  MatAccordion,
+  MatExpansionPanel,
+  MatExpansionPanelHeader,
+  MatExpansionPanelTitle,
+  MatExpansionPanelDescription
+} from '@angular/material/expansion';
+import { NgFor, NgIf } from '@angular/common';
+import { MatIconButton, MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatFormField, MatLabel, MatHint, MatSuffix } from '@angular/material/form-field';
+import { MatOption } from '@angular/material/core';
+import { MatInput } from '@angular/material/input';
+import { NumberOnlyDirective } from '../../../../../../directives/numberOnly.directive';
+import { MatDatepickerInput, MatDatepickerToggle, MatDatepicker } from '@angular/material/datepicker';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-preprocessing-step',
-  templateUrl: './preprocessing-step.component.html',
-  styleUrls: ['./preprocessing-step.component.scss']
+    selector: 'app-preprocessing-step',
+    templateUrl: './preprocessing-step.component.html',
+    styleUrls: ['./preprocessing-step.component.scss'],
+    imports: [
+        MatAccordion,
+        NgFor,
+        MatExpansionPanel,
+        MatExpansionPanelHeader,
+        MatExpansionPanelTitle,
+        NgIf,
+        MatExpansionPanelDescription,
+        MatIconButton,
+        MatIcon,
+        ReactiveFormsModule,
+        MatFormField,
+        MatLabel,
+        MatSelect,
+        MatOption,
+        MatHint,
+        MatInput,
+        NumberOnlyDirective,
+        MatDatepickerInput,
+        MatDatepickerToggle,
+        MatSuffix,
+        MatDatepicker,
+        MatCheckbox,
+        MatButton,
+        TranslateModule
+    ]
 })
 export class PreprocessingStepComponent {
   selectParameterType = SelectParameterType;

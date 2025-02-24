@@ -1,10 +1,10 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { Router, RouterLink } from '@angular/router';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
-import { Algorithm, AlgorithmFunction, AlgorithmStatus } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmFunction, AlgorithmLazyProperties, AlgorithmStatus } from 'src/app/models/api/algorithm.model';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { OperationType, StoreResourceType } from 'src/app/models/api/rule.model';
 import { routePaths } from 'src/app/routes';
@@ -12,11 +12,41 @@ import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dialog.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
+import { NgIf } from '@angular/common';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { MatIconButton, MatButton } from '@angular/material/button';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { MatIcon } from '@angular/material/icon';
+import { AlertWithButtonComponent } from '../../../../components/alerts/alert-with-button/alert-with-button.component';
+import { AlertComponent } from '../../../../components/alerts/alert/alert.component';
+import { DisplayAlgorithmComponent } from '../../../../components/algorithm/display-algorithm/display-algorithm.component';
+import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-algorithm-read',
-  templateUrl: './algorithm-read.component.html',
-  styleUrl: './algorithm-read.component.scss'
+    selector: 'app-algorithm-read',
+    templateUrl: './algorithm-read.component.html',
+    styleUrl: './algorithm-read.component.scss',
+    imports: [
+        NgIf,
+        PageHeaderComponent,
+        MatIconButton,
+        MatMenuTrigger,
+        MatIcon,
+        MatMenu,
+        MatMenuItem,
+        RouterLink,
+        AlertWithButtonComponent,
+        AlertComponent,
+        DisplayAlgorithmComponent,
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        MatCardContent,
+        MatButton,
+        MatProgressSpinner,
+        TranslateModule
+    ]
 })
 export class AlgorithmReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
@@ -57,11 +87,19 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
     this.destroy$.next();
   }
 
+  getLabelForAssignReviewers(): string {
+    const commonText = this.translateService.instant('algorithm-read.alert.assign-review.common-content');
+    if (this.algorithm?.reviews && this.algorithm?.reviews?.length > 0) {
+      return `${commonText} ${this.translateService.instant('algorithm-read.alert.assign-review.content-insufficient-reviewers', { current_num_reviews: this.algorithm.reviews.length })}`;
+    }
+    return commonText;
+  }
+
   private async initData(): Promise<void> {
     const chosenStore = this.chosenStoreService.store$.value;
     if (!chosenStore) return;
 
-    this.algorithm = await this.algorithmService.getAlgorithm(chosenStore.url, this.id);
+    this.algorithm = await this.algorithmService.getAlgorithm(chosenStore.url, this.id, [AlgorithmLazyProperties.Reviews]);
 
     this.canEdit = this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.EDIT);
     this.canDelete = this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.DELETE);

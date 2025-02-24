@@ -3,7 +3,8 @@
 import { Directive, HostListener } from '@angular/core';
 
 @Directive({
-  selector: '[appNumberOnly]'
+  selector: '[appNumberOnly]',
+  standalone: true
 })
 export class NumberOnlyDirective {
   @HostListener('keydown', ['$event'])

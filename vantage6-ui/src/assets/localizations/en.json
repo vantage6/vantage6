@@ -31,6 +31,7 @@
   "resources": {
     "collaboration": "Collaboration",
     "collaborations": "Collaborations",
+    "organization": "Organization",
     "organizations": "Organizations",
     "study": "Study",
     "roles": "Roles",
@@ -163,7 +164,8 @@
     "step-parameters": {
       "title": "Define parameters",
       "description": "Provide parameter values for the selected algorithm function",
-      "valid-json": "Please provide valid JSON input."
+      "valid-json": "Please provide valid JSON input.",
+      "upload-or-fill-in-json": "Upload a JSON file or fill in the JSON input field"
     },
     "alert-no-online-nodes": "You cannot create a task right now because no nodes are online in your collaboration. Online nodes are required to collect information on available databases and columns. Please try again later or contact your collaboration manager.",
     "alert-no-stores": "You cannot create a task because no algorithm stores are available to your collaboration. These are required to obtain the available algorithms from. Please contact your collaboration manager.",
@@ -230,8 +232,11 @@
     "submitted-at": "Submitted at",
     "approved-at": "Approved at",
     "invalidated-at": "Invalidated at",
+    "submission-comments": "Submission comments",
     "function": {
       "type": "Type of function",
+      "standalone": "Standalone function",
+      "standalone_tooltip": "Whether this function produces useful results when running it by itself. Disabling this option will hide the function when creating tasks in this UI.",
       "argument": {
         "title": "Parameters",
         "type": "Type of argument",
@@ -252,7 +257,8 @@
             "<": "Less than",
             ">=": "Greater than or equals",
             "<=": "Less than or equals"
-          }
+          },
+          "conditional-value-null": "Conditional value is empty (null/none):"
         },
         "frontend_only": {
           "toggle_explain": "This argument is only used in the UI and will not be passed to the algorithm.",
@@ -306,7 +312,8 @@
     },
     "alert": {
       "assign-review": {
-        "content": "This algorithm is awaiting review assignment. It is not available for use in tasks.",
+        "common-content": "This algorithm is awaiting review assignment. It is not available for use in tasks until the algorithm is reviewed and approved.",
+        "content-insufficient-reviewers": "Note that this store requires more than the {{current_num_reviews}} review(s) currently assigned to approve the algorithm.",
         "assign": "Assign reviewers"
       },
       "under-review": {
@@ -401,7 +408,8 @@
       "title": "Pending algorithms developed by me",
       "no-algorithms": "No algorithms that you have developed are pending review."
     },
-    "algorithm-name": "Algorithm name"
+    "algorithm-name": "Algorithm name",
+    "add-algorithm": "Add a new algorithm"
   },
   "algorithm-assign-review": {
     "title": "Assign reviewers",
@@ -410,6 +418,7 @@
     "no-reviewers": "No reviewers are available to assign to this algorithm. Please contact your store manager."
   },
   "algorithm-review": {
+    "breadcrumb-title": "Algorithm reviews",
     "title": "Reviews of algorithm '{{name}}'",
     "card-per-review": {
       "title": "Review by {{reviewer}}",
@@ -422,7 +431,8 @@
       "content": "If other reviews are present and have been approved, the algorithm will be approved. If no other reviews are present, the algorithm will have to be assigned reviewers again."
     },
     "add-new-review": "Add another review",
-    "button-details": "View algorithm details"
+    "button-details": "View algorithm details",
+    "submission-comments": "Comments from algorithm developer {{developer}}"
   },
   "review-submit": {
     "title": "Submit review for algorithm '{{name}}'",
@@ -460,7 +470,8 @@
       "title": "Collaborations"
     },
     "card-nodes": {
-      "title": "Nodes"
+      "title": "Nodes",
+      "alert-missing-nodes": "Nodes are missing for collaborations: {{collaborations}}. Please ensure that they are registered and online."
     },
     "delete-dialog": {
       "title": "Are you sure you want to delete the organization '{{name}}'?",
@@ -677,7 +688,8 @@
     "permissions": "Permissions"
   },
   "user-list": {
-    "title": "Users"
+    "title": "Users",
+    "filter-placeholder": "Filter by organization"
   },
   "user-create": {
     "title": "Create user"
