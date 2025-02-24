@@ -40,8 +40,11 @@ import { LayoutLoginComponent } from './layouts/layout-login/layout-login.compon
 import { HomeComponent } from './pages/home/home.component';
 import { LayoutDefaultComponent } from './layouts/layout-default/layout-default.component';
 import { OrganizationReadComponent } from './pages/admin/organization/read/organization-read.component';
+import { FormCreateComponent } from '././components/forms/compute-form/create-form.component';
+import { DataframeCreateComponent } from './pages/analyze/sessions/create/dataframe-create.component';
 import { SessionCreateComponent } from './pages/analyze/sessions/create/session-create.component';
 import { SessionListComponent } from './pages/analyze/sessions/list/session-list.component';
+import { SessionReadComponent } from './pages/analyze/sessions/read/session-read.component';
 import { TaskCreateComponent } from './pages/analyze/task/create/task-create.component';
 import { ChooseCollaborationComponent } from './pages/analyze/choose-collaboration/choose-collaboration';
 import { TaskListComponent } from './pages/analyze/task/list/task-list.component';
@@ -71,14 +74,14 @@ import { CollaborationEditComponent } from './pages/admin/collaboration/edit/col
 import { UserFormComponent } from './components/forms/user-form/user-form.component';
 import { UserEditComponent } from './pages/admin/user/edit/user-edit.component';
 import { VisualizeHistogramComponent } from './components/visualization/visualize-histogram/visualize-histogram.component';
-import { PreprocessingStepComponent } from './pages/analyze/task/create/steps/preprocessing-step/preprocessing-step.component';
+import { PreprocessingStepComponent } from './components/forms/compute-form/steps/preprocessing-step/preprocessing-step.component';
 import { ChangePasswordComponent } from './pages/auth/change-password/change-password.component';
 import { MessageDialogComponent } from './components/dialogs/message-dialog/message-dialog.component';
-import { FilterStepComponent } from './pages/analyze/task/create/steps/filter-step/filter-step.component';
+import { FilterStepComponent } from './components/forms/compute-form/steps/filter-step/filter-step.component';
 import { NumberOnlyDirective } from './directives/numberOnly.directive';
 import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
 import { TemplateTaskCreateComponent } from './pages/analyze/template-task/create/template-task-create.component';
-import { DatabaseStepComponent } from './pages/analyze/task/create/steps/database-step/database-step.component';
+import { DatabaseStepComponent } from './components/forms/compute-form/steps/database-step/database-step.component';
 import { RoleListComponent } from './pages/admin/role/list/role-list.component';
 import { RoleReadComponent } from './pages/admin/role/read/role-read.component';
 import { RoleCreateComponent } from './pages/admin/role/create/role-create.component';
@@ -144,8 +147,11 @@ export function HttpLoaderFactory(http: HttpClient) {
     OrganizationListComponent,
     OrganizationCreateComponent,
     OrganizationReadComponent,
+    FormCreateComponent,
+    DataframeCreateComponent,
     SessionCreateComponent,
     SessionListComponent,
+    SessionReadComponent,
     TaskCreateComponent,
     ChooseCollaborationComponent,
     TaskListComponent,

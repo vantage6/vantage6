@@ -96,10 +96,6 @@ export class TaskService {
   //   return [mockDataQualityTemplateTask, mockDataCrossTabTemplateTask];
   // }
 
-  async getColumnNames(columnRetrieve: ColumnRetrievalInput): Promise<ColumnRetrievalResult> {
-    return await this.apiService.postForApi<ColumnRetrievalResult>(`/column`, columnRetrieve);
-  }
-
   async waitForResults(id: number): Promise<Task> {
     let task = await this.getTask(id);
     while (!isTaskFinished(task)) {
@@ -150,5 +146,10 @@ export class TaskService {
       this.snackBarService.showMessage(this.translateService.instant('task.alert-failed-read-input'));
     }
     return decodedInput;
+  }
+
+  // TODO(BART/RIAN) RIAN: getColumnNames should post to /session/{session_id}/dataframe/{dataframe_handle}/column, right?
+  async getColumnNames(columnRetrieve: ColumnRetrievalInput): Promise<ColumnRetrievalResult> {
+    return await this.apiService.postForApi<ColumnRetrievalResult>(`/column`, columnRetrieve);
   }
 }

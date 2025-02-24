@@ -7,7 +7,7 @@ import { FormBuilder, FormControl, Validators, ReactiveFormsModule } from '@angu
 import { addParameterFormControlsForFunction, getTaskDatabaseFromForm } from 'src/app/pages/analyze/task/task.helper';
 import { BaseNode } from 'src/app/models/api/node.model';
 import { Subject, takeUntil } from 'rxjs';
-import { DatabaseStepComponent } from 'src/app/pages/analyze/task/create/steps/database-step/database-step.component';
+import { DatabaseStepComponent } from 'src/app/components/forms/compute-form/steps/database-step/database-step.component';
 import { CreateTask, CreateTaskInput, TaskDatabase } from 'src/app/models/api/task.models';
 import { routePaths } from 'src/app/routes';
 import { TaskService } from 'src/app/services/task.service';
@@ -25,39 +25,38 @@ import { MatStepper, MatStepperIcon, MatStep, MatStepLabel, MatStepperNext, MatS
 import { MatIcon } from '@angular/material/icon';
 import { MatInput } from '@angular/material/input';
 import { MatButton } from '@angular/material/button';
-import { DatabaseStepComponent as DatabaseStepComponent_1 } from '../../task/create/steps/database-step/database-step.component';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-    selector: 'app-template-task-create',
-    templateUrl: './template-task-create.component.html',
-    styleUrls: ['./template-task-create.component.scss'],
-    imports: [
-        PageHeaderComponent,
-        MatFormField,
-        MatLabel,
-        MatSelect,
-        ReactiveFormsModule,
-        NgFor,
-        MatOption,
-        NgIf,
-        MatCard,
-        MatCardContent,
-        MatStepper,
-        MatStepperIcon,
-        MatIcon,
-        MatStep,
-        MatStepLabel,
-        MatInput,
-        MatButton,
-        MatStepperNext,
-        DatabaseStepComponent_1,
-        MatStepperPrevious,
-        MatProgressSpinner,
-        AsyncPipe,
-        TranslateModule
-    ]
+  selector: 'app-template-task-create',
+  templateUrl: './template-task-create.component.html',
+  styleUrls: ['./template-task-create.component.scss'],
+  imports: [
+    PageHeaderComponent,
+    DatabaseStepComponent,
+    MatFormField,
+    MatLabel,
+    MatSelect,
+    ReactiveFormsModule,
+    NgFor,
+    MatOption,
+    NgIf,
+    MatCard,
+    MatCardContent,
+    MatStepper,
+    MatStepperIcon,
+    MatIcon,
+    MatStep,
+    MatStepLabel,
+    MatInput,
+    MatButton,
+    MatStepperNext,
+    MatStepperPrevious,
+    MatProgressSpinner,
+    AsyncPipe,
+    TranslateModule
+  ]
 })
 export class TemplateTaskCreateComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
@@ -231,6 +230,7 @@ export class TemplateTaskCreateComponent implements OnInit {
         ? this.templateTask.fixed.description
         : this.functionForm.get('description')?.value || '',
       image: this.algorithm?.image || '',
+      session_id: this.templateTask?.fixed?.session_id || -1,
       collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
       store_id: this.algorithm?.algorithm_store_id || -1,
       server_url: environment.server_url,

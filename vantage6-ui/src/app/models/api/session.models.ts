@@ -1,10 +1,8 @@
 import { BaseLink } from './base.model';
-import { BaseOrganization } from './organization.model';
 import { BaseUser } from './user.model';
 
 export enum SessionLazyProperties {
-  InitOrg = 'init_org',
-  InitUser = 'init_user'
+  Owner = 'owner'
 }
 
 export enum SessionSortProperties {
@@ -24,40 +22,38 @@ export interface GetSessionParameters {
   name?: string;
   init_user_id?: string;
   sort?: SessionSortProperties;
-  parent_id?: number;
   include?: string;
-  is_user_created?: number;
 }
 
 export interface BaseSession {
   id: number;
   name: string;
-  description: string;
   scope: SessionScope;
-  image: string;
-  init_org: BaseLink;
-  init_user: BaseLink;
-  algorithm_store?: BaseLink;
+  ready: boolean;
   created_at: string;
-  parent?: BaseLink;
+  last_used_at: string;
+  owner: BaseLink;
   study?: BaseLink;
   collaboration?: BaseLink;
+  dataframes: string[];
+  tasks: string[];
 }
 
 export interface Session {
   id: number;
   name: string;
-  description: string;
   scope: SessionScope;
-  image: string;
-  init_org?: BaseOrganization;
-  init_user?: BaseUser;
+  ready: boolean;
   created_at: string;
-  parent?: BaseLink;
+  last_used_at: string;
+  owner?: BaseUser;
   study?: BaseLink;
   collaboration?: BaseLink;
-  algorithm_store?: BaseLink;
+  dataframes: string[];
+  tasks: string[];
 }
+// TODO(BART/RIAN) RIAN: Only the user who initiated the session will be displayed. Consider including more information and looking at the scope of
+// what should be displayed. For example: scope = organization, then show the initiating organization.
 
 export interface CreateSession {
   name: string;
@@ -75,4 +71,21 @@ export interface ColumnRetrievalInput {
 
 export interface ColumnRetrievalResult extends BaseSession {
   columns?: string[];
+}
+
+export interface Dataframe {
+  // Frank: Dataframe => source database inituser status description algorithm function parameters runs => looks like taks
+  // Actual response:
+  // columns: []
+  // handle: "TestDFnogeens"
+  // id: 2
+  // last_session_task: {image: 'harbor2.vantage6.ai/demo/average@sha256:ce3ebaacac…de7c552ebc86f9bf2252f18fee0b67965ed94d0bd78e5174c', id: 3, depends_on: Array(0), study: {…}, children: '/api/task?parent_id=3', …}
+  // ready: true
+  // session: {id: 2, link: '/api/session/2', methods: Array(3)}
+  // tasks: "/api/task?dataframe_id=2"
+  //
+  // TODO(BART/RIAN) RIAN: Customize the request and response of dataframes in the backend and process this information in the UI.
+  handle: string;
+  id: number;
+  tasks: string;
 }

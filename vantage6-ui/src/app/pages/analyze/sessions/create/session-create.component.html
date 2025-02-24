@@ -1,4 +1,4 @@
-<app-page-header title="{{ 'session-create.title' | translate }}"> </app-page-header>
+<app-page-header [title]="title"> </app-page-header>
 <mat-card>
   <mat-card-content>
     <form class="form" [formGroup]="form" (ngSubmit)="handleSubmit()">
@@ -6,13 +6,13 @@
         <mat-label>{{ "session-create.session-form.name" | translate }}</mat-label>
         <input matInput type="text" formControlName="name" />
       </mat-form-field>
-      <mat-form-field subscriptSizing="dynamic">
+      <mat-form-field subscriptSizing="dynamic" *ngIf="!session">
         <mat-label>{{ "session-create.session-form.scope" | translate }}</mat-label>
         <mat-select formControlName="scope" multiple="false">
           <mat-option *ngFor="let scope of scopeKeys" [value]="scope">{{ scope }}</mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field subscriptSizing="dynamic" *ngIf="studies?.length && isScopeCollab()">
+      <mat-form-field subscriptSizing="dynamic" *ngIf="!session && studies?.length && isScopeCollab()">
         <mat-label>{{ "session-create.session-form.study" | translate }}</mat-label>
         <mat-select formControlName="study" multiple="false">
           <mat-option [value]="''">{{ "session-create.session-form.entire-collab" | translate }}</mat-option>

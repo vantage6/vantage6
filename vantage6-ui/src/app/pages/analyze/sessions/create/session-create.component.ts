@@ -1,8 +1,8 @@
 import { Component, HostBinding, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { routePaths } from 'src/app/routes';
-import { CreateSession, SessionScope } from 'src/app/models/api/session.models';
+import { CreateSession, Session, SessionScope } from 'src/app/models/api/session.models';
 import { SessionService } from 'src/app/services/session.service';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { BaseStudy } from 'src/app/models/api/study.model';
@@ -16,6 +16,9 @@ import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatSelect } from '@angular/material/select';
 import { MatOption } from '@angular/material/core';
+import { Subject, takeUntil } from 'rxjs';
+import { StudyService } from 'src/app/services/study.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-session-create',
@@ -38,6 +41,10 @@ import { MatOption } from '@angular/material/core';
 export class SessionCreateComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
 
+  destroy$ = new Subject();
+
+  public title: string = '';
+  public session?: Session;
   public scopeKeys = Object.keys(SessionScope);
   public collaboration: Collaboration | null = this.chosenCollaborationService.collaboration$.value;
   public studies: BaseStudy[] | null = this.collaboration?.studies || null;
@@ -49,14 +56,37 @@ export class SessionCreateComponent implements OnInit {
 
   constructor(
     public sessionService: SessionService,
+    public studyService: StudyService,
     public chosenCollaborationService: ChosenCollaborationService,
+    private translateService: TranslateService,
     private fb: FormBuilder,
-    private router: Router
+    private router: Router,
+    private activatedRoute: ActivatedRoute
   ) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.activatedRoute.params.pipe(takeUntil(this.destroy$)).subscribe(async (params) => {
+      const curSessionId = params['id'];
+      if (curSessionId) {
+        this.title = this.translateService.instant('session-create.edit-title');
+        this.session = await this.sessionService.getSession(curSessionId);
+        this.form.controls['name'].setValue(this.session.name);
+        //TODO(BART/RIAN) RIAN: You also need to be able to edit the scope (and the study)
+      } else {
+        this.title = this.translateService.instant('session-create.create-title');
+      }
+    });
+  }
 
   async handleSubmit(): Promise<void> {
+    if (this.session && this.form.controls.name.value !== this.session.name) {
+      const editTask = await this.sessionService.editSession(this.session.id.toString(), { name: this.form.controls.name.value });
+      if (editTask) {
+        this.router.navigate([routePaths.session, this.session.id]);
+      }
+      return;
+    }
+
     if (this.form.valid) {
       const scope = SessionScope[this.form.controls.scope.value as keyof typeof SessionScope];
       const createSession: CreateSession = {
@@ -64,7 +94,7 @@ export class SessionCreateComponent implements OnInit {
         scope: scope,
         collaboration_id: this.collaboration?.id || -1
       };
-      if (this.form.controls['study'].value.length > 0 && this.isScopeCollab()) {
+      if (this.form.controls['study'].value && this.isScopeCollab()) {
         createSession.study_id = Number(this.form.controls['study'].value);
       }
       const newTask = await this.sessionService.createSession(createSession);
@@ -79,10 +109,6 @@ export class SessionCreateComponent implements OnInit {
   }
 
   handleCancel(): void {
-    this.goToPreviousPage();
-  }
-
-  private goToPreviousPage(): void {
-    this.router.navigate([routePaths.sessions]);
+    this.session ? this.router.navigate([routePaths.session, this.session.id]) : this.router.navigate([routePaths.sessions]);
   }
 }

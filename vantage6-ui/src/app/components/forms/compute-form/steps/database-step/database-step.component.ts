@@ -10,14 +10,14 @@ import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatSelect } from '@angular/material/select';
 import { MatOption } from '@angular/material/core';
 import { MatInput } from '@angular/material/input';
-import { AlertComponent } from '../../../../../../components/alerts/alert/alert.component';
 import { TranslateModule } from '@ngx-translate/core';
+import { AlertComponent } from 'src/app/components/alerts/alert/alert.component';
 
 @Component({
-    selector: 'app-database-step',
-    styleUrls: ['./database-step.component.scss'],
-    templateUrl: './database-step.component.html',
-    imports: [ReactiveFormsModule, NgFor, NgIf, MatFormField, MatLabel, MatSelect, MatOption, MatInput, AlertComponent, TranslateModule]
+  selector: 'app-database-step',
+  styleUrls: ['./database-step.component.scss'],
+  templateUrl: './database-step.component.html',
+  imports: [AlertComponent, ReactiveFormsModule, NgFor, NgIf, MatFormField, MatLabel, MatSelect, MatOption, MatInput, TranslateModule]
 })
 export class DatabaseStepComponent implements OnDestroy, OnChanges {
   destroy$ = new Subject();

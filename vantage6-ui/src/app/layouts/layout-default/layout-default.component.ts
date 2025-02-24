@@ -193,14 +193,22 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
         route: routePaths.sessions,
         label: this.translateService.instant('resources.sessions'),
         icon: 'history_toggle_off',
-        // history_toggle_off donut_large
+        //TODO(BART) RIAN: Choose which icon fits the subject. (maybe history_toggle_off or donut_large)
+        linkType: NavigationLinkType.Analyze
+      });
+    }
+    if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.CREATE)) {
+      submenus.push({
+        route: routePaths.taskCreate,
+        label: this.translateService.instant('resources.new-analysis'),
+        icon: 'science',
         linkType: NavigationLinkType.Analyze
       });
     }
     if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.VIEW)) {
       submenus.push({
         route: routePaths.tasks,
-        label: this.translateService.instant('resources.tasks'),
+        label: this.translateService.instant('resources.history'),
         icon: 'science',
         linkType: NavigationLinkType.Analyze
       });

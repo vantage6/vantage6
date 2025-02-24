@@ -1,0 +1,310 @@
+<app-page-header [title]="formTitle"></app-page-header>
+<ng-container *ngIf="!isLoading; else loading">
+  <mat-card>
+    <mat-card-content *ngIf="isDataInitialized && hasOnlineNode() && hasAlgorithmStores() && hasAlgorithms(); else cannotCreateAlgorithm">
+      <mat-stepper [linear]="true" orientation="vertical" #stepper>
+        <!-- by default, completed steps get an 'edit' icon to indicate they are completed but still editable.
+          We change this to a check mark to show clearly which steps have been filled in -->
+        <ng-template matStepperIcon="edit">
+          <mat-icon>check</mat-icon>
+        </ng-template>
+        <mat-step [stepControl]="sessionForm" *ngIf="availableSteps.session">
+          <form class="form" [formGroup]="sessionForm">
+            <ng-template matStepLabel>{{ "task-create.step-session" | translate }}</ng-template>
+            <div *ngIf="sessions.length < 1" class="margin-bottom-4">
+              <app-alert label="{{ 'task-create.alert-no-sessions-found' | translate }}"> </app-alert>
+            </div>
+            <div class="margin-bottom-4">
+              <button actions mat-flat-button color="primary" [routerLink]="routes.sessionCreate">
+                <mat-icon>add</mat-icon>{{ "session-create.create-title" | translate }}
+              </button>
+            </div>
+            <mat-form-field *ngIf="sessions.length > 0" subscriptSizing="dynamic">
+              <mat-label>{{ "task.session" | translate }}</mat-label>
+              <mat-select formControlName="sessionID">
+                <mat-option *ngFor="let session of sessions" [value]="session.id.toString()">
+                  {{ session.name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <div>
+              <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+            </div>
+          </form>
+        </mat-step>
+        <mat-step *ngIf="shouldShowStudyStep && availableSteps.study" [completed]="isStudyCompleted" [stepControl]="studyForm">
+          <form class="form" [formGroup]="studyForm">
+            <ng-template matStepLabel>{{ "task-create.step-study.title" | translate }}</ng-template>
+            <div class="field-description">{{ "task-create.step-study.explanation" | translate }}</div>
+            <div class="field-description">{{ "task-create.step-study.description" | translate }}</div>
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ "resources.study" | translate }}</mat-label>
+              <mat-select formControlName="studyOrCollabID" [compareWith]="compareStudyOrCollabForSelection">
+                <mat-option [value]="studyOrCollab.Collaboration + collaboration?.id">
+                  {{ "task-create.step-study.select-full-collaboration" | translate }}
+                </mat-option>
+                <mat-option *ngFor="let study of collaboration?.studies" [value]="studyOrCollab.Study + study.id">
+                  {{ study.name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <div>
+              <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+              <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+            </div>
+          </form>
+        </mat-step>
+        <mat-step [stepControl]="packageForm" *ngIf="availableSteps.package">
+          <form class="form" [formGroup]="packageForm">
+            <ng-template matStepLabel>{{ "task-create.step-package.title" | translate }}</ng-template>
+            <div class="field-description">{{ "task-create.step-package.description.algorithm" | translate }}</div>
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ "task.algorithm" | translate }}</mat-label>
+              <mat-select formControlName="algorithmSpec">
+                <mat-option *ngFor="let algorithm of algorithms" [value]="getAlgoSpec(algorithm)">
+                  {{ algorithm.name }}
+                  <div class="detail-txt">{{ getAlgorithmStoreName(algorithm) }}</div>
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <div class="field-description">{{ "task-create.step-package.description.name" | translate }}</div>
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ "task.name" | translate }}</mat-label>
+              <input matInput type="text" formControlName="name" />
+            </mat-form-field>
+            <div class="field-description">{{ "task-create.step-package.description.description" | translate }}</div>
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ "task.description" | translate }}</mat-label>
+              <input matInput type="text" formControlName="description" />
+            </mat-form-field>
+            <div>
+              <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+              <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+            </div>
+          </form>
+        </mat-step>
+        <mat-step
+          [stepControl]="functionForm"
+          *ngIf="availableSteps.function && algorithm && algorithm?.functions && algorithm.functions.length > 0"
+        >
+          <form class="form" [formGroup]="functionForm">
+            <ng-template matStepLabel>{{ "task-create.step-function.title" | translate }}</ng-template>
+            <div class="field-description">{{ "task-create.step-function.description.function" | translate }}</div>
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ "task.function" | translate }}</mat-label>
+              <mat-select formControlName="functionName">
+                <mat-option *ngFor="let function of algorithm?.functions" [value]="function.name">
+                  {{ function.display_name ?? function.name }} <span class="detail-txt">({{ function.type }})</span>
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <div *ngIf="function">
+              <div class="field-description" *ngIf="function.type === functionType.Central">
+                {{ "task-create.step-function.description.organization-central" | translate }}
+              </div>
+              <div class="field-description" *ngIf="function.type === functionType.Federated">
+                {{ "task-create.step-function.description.organization-partial" | translate }}
+              </div>
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ "task-create.step-function.organization" | translate }}</mat-label>
+                <!--
+                This ugly if-else is required because the 'multiple' property of mat-select
+                cannot be changed after initialization (see e.g.
+                https://stackoverflow.com/questions/51204450/error-cannot-change-multiple-mode-of-select-after-initialization)
+                -->
+                <div *ngIf="function.type === functionType.Central; else partialOrgDropdown">
+                  <mat-select formControlName="organizationIDs" [compareWith]="compareIDsForSelection" [multiple]="false">
+                    <mat-option *ngFor="let organization of organizations" [value]="organization.id.toString()">
+                      {{ organization.name }}
+                    </mat-option>
+                  </mat-select>
+                </div>
+                <ng-template #partialOrgDropdown>
+                  <mat-select formControlName="organizationIDs" [compareWith]="compareIDsForSelection" [multiple]="true">
+                    <mat-option *ngFor="let organization of organizations" [value]="organization.id.toString()">
+                      {{ organization.name }}
+                    </mat-option>
+                  </mat-select>
+                </ng-template>
+                <!-- End ugly if-else -->
+              </mat-form-field>
+            </div>
+            <app-alert
+              class="node-alert"
+              *ngIf="node && node?.status !== 'online'"
+              label="{{ 'task.alert-node-offline' | translate: { name: node.name } }}"
+            ></app-alert>
+            <div>
+              <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+              <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+            </div>
+          </form>
+        </mat-step>
+        <mat-step [stepControl]="databaseForm" *ngIf="shouldShowDatabaseStep && availableSteps.database">
+          <ng-template matStepLabel>{{ "task-create.step-database.title" | translate }}</ng-template>
+          <div class="field-description">{{ "task-create.step-database.description.database" | translate }}</div>
+          <app-database-step
+            [form]="databaseForm"
+            [functionDatabases]="function?.databases || []"
+            [node]="node"
+            (isReady)="handleDatabaseStepInitialized()"
+          ></app-database-step>
+          <div>
+            <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+            <button mat-button matStepperNext (click)="retrieveColumns()">{{ "general.next" | translate }}</button>
+          </div>
+        </mat-step>
+        <mat-step [stepControl]="dataframeForm" *ngIf="shouldShowDataframeStep && availableSteps.dataframe">
+          <form class="form" [formGroup]="dataframeForm">
+            <ng-template matStepLabel>{{ "task-create.step-dataframe.title" | translate }}</ng-template>
+            <mat-form-field *ngIf="dataframes.length > 0" subscriptSizing="dynamic">
+              <mat-label>{{ "task.dataframe" | translate }}</mat-label>
+              <mat-select formControlName="dataframeHandle">
+                <mat-option *ngFor="let dataframe of dataframes" [value]="dataframe.handle">
+                  {{ dataframe.handle }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <div>
+              <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+              <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+            </div>
+          </form>
+        </mat-step>
+
+        <mat-step *ngIf="shouldShowPreprocessorStep && availableSteps.preprocessing" [stepControl]="preprocessingForm">
+          <ng-template matStepLabel>{{ "task-create.step-preprocessing.title" | translate }}</ng-template>
+          <ng-container *ngIf="!isLoadingColumns; else loadingColumns">
+            <!-- TODO probably should remove calls to retrieve columns below as they are already obtained above -->
+            <app-preprocessing-step
+              [form]="preprocessingForm"
+              [functions]="algorithm?.select || []"
+              [columns]="columns"
+              (handleFirstPreprocessor)="retrieveColumns()"
+            ></app-preprocessing-step>
+            <div>
+              <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+              <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+            </div>
+          </ng-container>
+        </mat-step>
+        <mat-step *ngIf="shouldShowFilterStep && availableSteps.filter" [stepControl]="filterForm">
+          <ng-template matStepLabel>{{ "task-create.step-filter.title" | translate }}</ng-template>
+          <ng-container *ngIf="!isLoadingColumns; else loadingColumns">
+            <app-filter-step
+              [form]="filterForm"
+              [filters]="algorithm?.filter || []"
+              [columns]="columns"
+              (handleFirstPreprocessor)="retrieveColumns()"
+            ></app-filter-step>
+            <div>
+              <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+              <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+            </div>
+          </ng-container>
+        </mat-step>
+        <mat-step *ngIf="shouldShowParameterStep && availableSteps.parameter" [stepControl]="parameterForm">
+          <form class="form" [formGroup]="parameterForm">
+            <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
+            <ng-container *ngIf="!containsColumnArguments() || !isLoadingColumns; else loadingColumns">
+              <div class="field-description">{{ "task-create.step-parameters.description" | translate }}</div>
+              <ng-container *ngFor="let argument of function?.arguments">
+                <b>{{ argument.description }}</b>
+                <p *ngIf="argument.type === argumentType.Json">{{ "task-create.step-parameters.valid-json" | translate }}</p>
+                <!-- Show form field for dropdowns or single input fields (float, int, string) -->
+                <mat-form-field *ngIf="shouldIncludeFormField(argument)" subscriptSizing="dynamic">
+                  <mat-label>{{ argument.display_name ?? argument.name }}</mat-label>
+                  <mat-select
+                    *ngIf="shouldShowColumnDropdown(argument)"
+                    [formControlName]="argument.name"
+                    [multiple]="argument.type === argumentType.ColumnList"
+                  >
+                    <mat-option *ngFor="let column of columns" [value]="column">{{ column }}</mat-option>
+                  </mat-select>
+                  <mat-select
+                    *ngIf="shouldShowOrganizationDropdown(argument)"
+                    [formControlName]="argument.name"
+                    [compareWith]="compareIDsForSelection"
+                    [multiple]="argument.type === argumentType.OrganizationList"
+                  >
+                    <mat-option *ngFor="let organization of organizations" [value]="organization.id">
+                      {{ organization.name }}
+                    </mat-option>
+                  </mat-select>
+                  <input
+                    *ngIf="shouldShowParameterSimpleInput(argument)"
+                    matInput
+                    appNumberOnly
+                    [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
+                    [formControlName]="argument.name"
+                  />
+                </mat-form-field>
+                <!-- Show checkbox for boolean parameters -->
+                <mat-checkbox
+                  class="newLineCheckbox"
+                  *ngIf="shouldShowParameterBooleanInput(argument)"
+                  [formControlName]="argument.name"
+                  [checked]="false"
+                >
+                  {{ argument.name }}
+                </mat-checkbox>
+                <!-- Show expandable list for multiple inputs (list of str, int, or float) -->
+                <div *ngIf="shouldShowMultipleInput(argument)">
+                  <div formArrayName="{{ argument.name }}" *ngFor="let input of getFormArrayControls(argument); let idx = index">
+                    <div style="display: flex; align-items: center">
+                      <mat-form-field subscriptSizing="dynamic">
+                        <mat-label>{{ argument.name }} {{ idx + 1 }}</mat-label>
+                        <input
+                          matInput
+                          appNumberOnly
+                          [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
+                          [formControlName]="idx"
+                        />
+                      </mat-form-field>
+                      <button mat-raised-button color="warn" (click)="removeInputFieldForArg(argument, idx)">Delete</button>
+                    </div>
+                  </div>
+                  <button mat-raised-button color="primary" (click)="addInputFieldForArg(argument)">Add More</button>
+                </div>
+              </ng-container>
+            </ng-container>
+            <div>
+              <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+            </div>
+          </form>
+        </mat-step>
+      </mat-stepper>
+      <button mat-flat-button color="primary" [disabled]="isFormInvalid()" (click)="handleSubmit()">
+        {{ "general.submit" | translate }}
+      </button>
+      <button mat-flat-button color="secondary" (click)="handleCancel()">
+        {{ "general.cancel" | translate }}
+      </button>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
+<ng-template #loading>
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-template>
+<ng-template #loadingColumnsPreprocessing>
+  <ng-template [ngTemplateOutlet]="loadingColumns"></ng-template>
+</ng-template>
+<ng-template #loadingColumns>
+  <div class="loading-container">
+    <mat-spinner diameter="48"></mat-spinner>
+    <div>{{ "task-create.step-preprocessing.get-columns" | translate }}</div>
+  </div>
+</ng-template>
+<ng-template #cannotCreateAlgorithm>
+  <app-alert *ngIf="!hasOnlineNode()" class="node-alert" label="{{ 'task-create.alert-no-online-nodes' | translate }}"></app-alert>
+  <app-alert *ngIf="!hasAlgorithmStores()" class="node-alert" label="{{ 'task-create.alert-no-stores' | translate }}"></app-alert>
+  <app-alert
+    *ngIf="hasAlgorithmStores() && !hasAlgorithms()"
+    class="node-alert"
+    label="{{ 'task-create.alert-no-algorithms' | translate }}"
+  ></app-alert>
+</ng-template>

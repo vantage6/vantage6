@@ -3,23 +3,19 @@ import { FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
-import { Subject, Subscription, takeUntil } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { AlgorithmStore, EditAlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { Collaboration, CollaborationLazyProperties } from 'src/app/models/api/collaboration.model';
 import { Study } from 'src/app/models/api/study.model';
-import { BaseNode, NodeStatus } from 'src/app/models/api/node.model';
+import { NodeStatus } from 'src/app/models/api/node.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { TableData } from 'src/app/models/application/table.model';
-import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
 import { CollaborationService } from 'src/app/services/collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
-import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
-import { NodeService } from 'src/app/services/node.service';
-import { printDate } from 'src/app/helpers/general.helper';
 import { NgIf, NgFor } from '@angular/common';
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
 import { MatIconButton, MatButton } from '@angular/material/button';
@@ -41,39 +37,39 @@ import { MatInput } from '@angular/material/input';
 import { TableComponent } from '../../../../components/table/table.component';
 
 @Component({
-    selector: 'app-collaboration-read',
-    templateUrl: './collaboration-read.component.html',
-    styleUrls: ['./collaboration-read.component.scss'],
-    imports: [
-        NgIf,
-        PageHeaderComponent,
-        MatIconButton,
-        MatMenuTrigger,
-        MatIcon,
-        MatMenu,
-        MatMenuItem,
-        RouterLink,
-        MatCard,
-        MatCardHeader,
-        MatCardTitle,
-        MatCardContent,
-        NgFor,
-        ChipComponent,
-        NodeAdminCardComponent,
-        MatButton,
-        MatAccordion,
-        MatExpansionPanel,
-        MatExpansionPanelHeader,
-        MatExpansionPanelTitle,
-        MatExpansionPanelContent,
-        MatProgressSpinner,
-        MatFormField,
-        MatLabel,
-        MatInput,
-        ReactiveFormsModule,
-        TableComponent,
-        TranslateModule
-    ]
+  selector: 'app-collaboration-read',
+  templateUrl: './collaboration-read.component.html',
+  styleUrls: ['./collaboration-read.component.scss'],
+  imports: [
+    NgIf,
+    PageHeaderComponent,
+    MatIconButton,
+    MatMenuTrigger,
+    MatIcon,
+    MatMenu,
+    MatMenuItem,
+    RouterLink,
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardContent,
+    NgFor,
+    ChipComponent,
+    NodeAdminCardComponent,
+    MatButton,
+    MatAccordion,
+    MatExpansionPanel,
+    MatExpansionPanelHeader,
+    MatExpansionPanelTitle,
+    MatExpansionPanelContent,
+    MatProgressSpinner,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    ReactiveFormsModule,
+    TableComponent,
+    TranslateModule
+  ]
 })
 export class CollaborationReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

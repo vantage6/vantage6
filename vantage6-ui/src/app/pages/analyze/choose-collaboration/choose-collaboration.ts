@@ -55,8 +55,8 @@ export class ChooseCollaborationComponent implements OnInit {
   async handleCollaborationClick(collaboration: BaseCollaboration) {
     this.isLoading = true;
     await this.chosenCollaborationService.setCollaboration(collaboration.id.toString());
-    if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.VIEW)) {
-      this.router.navigate([routePaths.tasks]);
+    if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.SESSION, OperationType.VIEW)) {
+      this.router.navigate([routePaths.sessions]);
     } else {
       this.router.navigate([routePaths.analyzeHome]);
     }

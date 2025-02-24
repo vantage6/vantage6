@@ -17,6 +17,7 @@ import { AlgorithmStatusChangeMsg } from 'src/app/models/socket-messages.model';
 import { routePaths } from 'src/app/routes';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
+import { SessionService } from 'src/app/services/session.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { TaskService } from 'src/app/services/task.service';
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
@@ -29,24 +30,25 @@ enum TableRows {
   ID = 'id',
   Name = 'name',
   Status = 'status',
+  Session = 'session',
   CreatedDate = 'created_date'
 }
 
 @Component({
-    selector: 'app-task-list',
-    templateUrl: './task-list.component.html',
-    imports: [
-        PageHeaderComponent,
-        NgIf,
-        MatButton,
-        RouterLink,
-        MatIcon,
-        MatCard,
-        MatCardContent,
-        TableComponent,
-        MatPaginator,
-        TranslateModule
-    ]
+  selector: 'app-task-list',
+  templateUrl: './task-list.component.html',
+  imports: [
+    PageHeaderComponent,
+    NgIf,
+    MatButton,
+    RouterLink,
+    MatIcon,
+    MatCard,
+    MatCardContent,
+    TableComponent,
+    MatPaginator,
+    TranslateModule
+  ]
 })
 export class TaskListComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
@@ -56,6 +58,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
   destroy$ = new Subject();
 
   tasks: BaseTask[] = [];
+  sessionIDNameMap: Map<number, string> = new Map<number, string>();
   table?: TableData;
   displayedColumns: string[] = [TableRows.ID, TableRows.Name, TableRows.Status];
   isLoading: boolean = true;
@@ -70,6 +73,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
     private router: Router,
     private translateService: TranslateService,
     private taskService: TaskService,
+    private sessionService: SessionService,
     private chosenCollaborationService: ChosenCollaborationService,
     private permissionService: PermissionService,
     private socketioConnectService: SocketioConnectService,
@@ -143,6 +147,13 @@ export class TaskListComponent implements OnInit, OnDestroy {
     this.tasks = taskData.data;
     this.pagination = taskData.links;
 
+    const uniqSessionIDs = (tasks: BaseTask[], track = new Set()) =>
+      tasks.filter(({ session }) => (!session || track.has(session) ? false : track.add(session)));
+    for (const task of uniqSessionIDs(taskData.data)) {
+      const session = await this.sessionService.getSession(task.session.id);
+      this.sessionIDNameMap.set(task.session.id, session.name);
+    }
+
     this.table = {
       columns: [
         {
@@ -154,6 +165,10 @@ export class TaskListComponent implements OnInit, OnDestroy {
           label: this.translateService.instant('task.name'),
           searchEnabled: true,
           initSearchString: unlikeApiParameter(parameters.name)
+        },
+        {
+          id: TableRows.Session,
+          label: this.translateService.instant('task.session')
         },
         {
           id: TableRows.Status,
@@ -173,6 +188,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
         columnData: {
           id: _.id.toString(),
           name: _.name,
+          session: this.sessionIDNameMap.get(_.id) ?? '-',
           status: this.getTaskStatusTranslation(_.status),
           statusType: this.getChipTypeForStatus(_.status),
           created_date: this.datePipe.transform(_.created_at, 'yyyy-MM-dd HH:mm')
