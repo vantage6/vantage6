@@ -67,6 +67,7 @@ import { MatInput } from '@angular/material/input';
 import { MatButton } from '@angular/material/button';
 import { isTruthy } from 'src/app/helpers/utils.helper';
 import { HighlightedTextPipe } from 'src/app/pipes/highlighted-text.pipe';
+import { readFile } from 'src/app/helpers/file.helper';
 
 @Component({
   selector: 'app-create-form',
@@ -576,12 +577,17 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     return (
       !this.shouldShowColumnDropdown(argument) &&
       !this.shouldShowOrganizationDropdown(argument) &&
-      !this.shouldShowParameterBooleanInput(argument)
+      !this.shouldShowParameterBooleanInput(argument) &&
+      !this.shouldShowParameterJsonInput(argument)
     );
   }
 
   shouldIncludeFormField(argument: Argument): boolean {
-    return !this.shouldShowParameterBooleanInput(argument) && !this.shouldShowMultipleInput(argument);
+    return (
+      !this.shouldShowParameterBooleanInput(argument) &&
+      !this.shouldShowMultipleInput(argument) &&
+      !this.shouldShowParameterJsonInput(argument)
+    );
   }
 
   shouldShowMultipleInput(argument: Argument): boolean {
@@ -595,6 +601,10 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
   shouldShowParameterBooleanInput(argument: Argument): boolean {
     return argument.type === this.argumentType.Boolean;
+  }
+
+  shouldShowParameterJsonInput(argument: Argument): boolean {
+    return argument.type === this.argumentType.Json;
   }
 
   shouldShowOrganizationDropdown(argument: Argument): boolean {
@@ -614,6 +624,20 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
   shouldShowColumnDropdownForAnyArg(): boolean {
     return this.containsColumnArguments();
+  }
+
+  async selectedJsonFile(event: Event, argument: Argument): Promise<void> {
+    const selectedFile = (event.target as HTMLInputElement).files?.item(0) || null;
+
+    if (!selectedFile) return;
+    const fileData = await readFile(selectedFile);
+
+    this.parameterForm.controls[`${argument.name}`].setValue(fileData || '');
+    this.parameterForm.controls[`${argument.name}_jsonFileName`].setValue(selectedFile.name || '');
+  }
+
+  getJsonFileName(argument: Argument): string {
+    return this.parameterForm.controls[`${argument.name}_jsonFileName`].value;
   }
 
   addInputFieldForArg(argument: Argument): void {
@@ -742,14 +766,19 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     const algorithmsObj = await this.algorithmService.getAlgorithms();
     this.algorithms = algorithmsObj;
     this.functions = algorithmsObj.flatMap((curAlgorithm) => {
-      return curAlgorithm.functions.map((func) => {
-        return {
-          ...func,
-          algorithm_id: curAlgorithm.id,
-          algorithm_name: curAlgorithm.name,
-          algorithm_store_id: curAlgorithm.algorithm_store_id
-        };
-      });
+      return (
+        curAlgorithm.functions
+          // TODO v5+ remove the func.standalone === undefined check. After v5+ the standalone property should be set for all functions
+          .filter((func) => func.standalone || func.standalone === undefined)
+          .map((func) => {
+            return {
+              ...func,
+              algorithm_id: curAlgorithm.id,
+              algorithm_name: curAlgorithm.name,
+              algorithm_store_id: curAlgorithm.algorithm_store_id
+            };
+          })
+      );
     });
     this.filteredFunctions = this.functions;
     this.node = await this.getOnlineNode();

@@ -86,7 +86,6 @@
                     <mat-icon>search</mat-icon>
                   </button>
                 </mat-form-field>
-
                 <mat-option
                   *ngFor="let function of filteredFunctions"
                   class="function-select-option"
@@ -249,6 +248,23 @@
                       [formControlName]="argument.name"
                     />
                   </mat-form-field>
+                  <!-- Show form field for json input -->
+                  <div *ngIf="shouldShowParameterJsonInput(argument)">
+                    <p>{{ "task-create.step-parameters.upload-or-fill-in-json" | translate }}</p>
+                    <mat-form-field subscriptSizing="dynamic">
+                      <mat-label>{{ "algorithm-create.card-from-json.file-label" | translate }}</mat-label>
+                      <input matInput value="{{ getJsonFileName(argument) }}" disabled />
+                      <input hidden (change)="selectedJsonFile($event, argument)" #fileInput type="file" id="file" />
+                      <button mat-flat-button type="button" matSuffix color="primary" (click)="fileInput.click()">
+                        {{ "general.file-select" | translate }}
+                      </button>
+                    </mat-form-field>
+                    <p>{{ "task-create.step-parameters.valid-json" | translate }}</p>
+                    <mat-form-field subscriptSizing="dynamic">
+                      <mat-label>{{ argument.name }}</mat-label>
+                      <textarea matInput [formControlName]="argument.name"></textarea>
+                    </mat-form-field>
+                  </div>
                   <!-- Show checkbox for boolean parameters -->
                   <mat-checkbox
                     class="newLineCheckbox"
