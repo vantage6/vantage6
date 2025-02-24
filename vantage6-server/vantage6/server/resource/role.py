@@ -9,6 +9,7 @@ from sqlalchemy import or_
 from vantage6.backend.common.resource.input_schema import ServerRoleInputSchema
 from vantage6.backend.common.resource.role import (
     apply_user_filter,
+    can_delete_dependents,
     check_default_role,
     filter_by_name_or_description,
     get_role,
@@ -465,15 +466,6 @@ class Role(RoleBase):
             )
         )
 
-    def can_delete_dependents(self):
-        params = request.args
-        if not params.get("delete_dependents", False):
-            return False
-        log.warn(
-            f"Role {id} deleted even though it was assigned to users. This may result in missing permissions."
-        )
-        return True
-
     @with_user
     @handle_exceptions
     def get(self, id):
@@ -648,11 +640,9 @@ class Role(RoleBase):
         role = get_role(db, id)
         check_default_role(role, DefaultRole.list())
         self._validate_user_permission(P.DELETE, role.organization_id)
-        if role.users and not self.can_delete_dependents():
-            raise BadRequestError(
-                "Role is assigned to users. Please remove the role from the users first, or set the 'delete_dependents' parameter to delete the role anyway."
-            )
+        can_delete_dependents(role, request.args.get("delete_dependents", False))
         role.delete()
+
         return {"msg": "Role removed from the database."}, HTTPStatus.OK
 
 

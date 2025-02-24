@@ -11,10 +11,13 @@ from vantage6.algorithm.store.default_roles import DefaultRole
 from vantage6.algorithm.store.resource import with_permission
 from vantage6.backend.common.resource.input_schema import RoleInputSchema
 from vantage6.backend.common.resource.role import (
+    NotFoundError,
     apply_user_filter,
+    can_delete_dependents,
     check_default_role,
     filter_by_name_or_description,
     get_role,
+    get_rule,
     get_rules,
     handle_exceptions,
     update_role,
@@ -24,7 +27,10 @@ from vantage6.backend.common.resource.role import (
 from vantage6.common import logger_name
 from vantage6.algorithm.store.permission import PermissionManager
 from vantage6.algorithm.store.model.rule import Operation
-from vantage6.algorithm.store.resource.schema.output_schema import RoleOutputSchema
+from vantage6.algorithm.store.resource.schema.output_schema import (
+    RoleOutputSchema,
+    RuleOutputSchema,
+)
 from vantage6.algorithm.store import db
 from vantage6.algorithm.store.resource import AlgorithmStoreResources
 from vantage6.backend.common.resource.pagination import Pagination
@@ -60,17 +66,16 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         Role,
         path + "/<int:id>",
         endpoint="role_with_id",
-        methods=("GET", "PATCH"),
-        # methods=('GET', 'PATCH', 'DELETE'),
+        methods=("GET", "PATCH", "DELETE"),
         resource_class_kwargs=services,
     )
-    # api.add_resource(
-    #     RoleRules,
-    #     path + '/<int:id>/rule/<int:rule_id>',
-    #     endpoint='role_rule_with_id',
-    #     methods=('DELETE', 'POST'),
-    #     resource_class_kwargs=services
-    # )
+    api.add_resource(
+        RoleRules,
+        path + "/<int:id>/rule/<int:rule_id>",
+        endpoint="role_rule_with_id",
+        methods=("DELETE", "POST"),
+        resource_class_kwargs=services,
+    )
 
 
 # -----------------------------------------------------------------------------
@@ -96,7 +101,7 @@ def permissions(permissions: PermissionManager) -> None:
 # Resources / API's
 # -----------------------------------------------------------------------------
 role_output_schema = RoleOutputSchema()
-# rule_schema = RuleSchema()
+rule_schema = RuleOutputSchema()
 role_input_schema = RoleInputSchema(default_roles=[role for role in DefaultRole])
 
 
@@ -263,7 +268,7 @@ class Role(AlgorithmStoreResources):
 
     @with_permission(module_name, Operation.EDIT)
     @handle_exceptions
-    def patch(self, id: int):
+    def patch(self, role_id: int):
         """Updates a role
         ---
         description: >-
@@ -312,8 +317,136 @@ class Role(AlgorithmStoreResources):
         """
         data = request.get_json()
         validate_request_body(role_input_schema, data, partial=True)
-        role = get_role(db, id)
+        role = get_role(db, role_id)
         check_default_role(role, DefaultRole.list())
         role = update_role(role, data, db, self.permissions)
         role.save()
         return role_output_schema.dump(role, many=False), HTTPStatus.OK
+
+    @with_permission(module_name, Operation.DELETE)
+    @handle_exceptions
+    def delete(self, id: int):
+        """Deletes a role
+        ---
+
+        description: >-
+            Deletes a role.
+
+        parameters:
+            - in: path
+              name: id
+              schema:
+                type: integer
+              required: true
+              description: Role id
+
+        responses:
+          204:
+            description: No content
+          401:
+            description: Unauthorized
+          404:
+            description: Role not found
+
+        security:
+            - bearerAuth: []
+
+        tags: ["Role"]
+        """
+        role = get_role(db, id)
+        check_default_role(role, DefaultRole.list())
+        can_delete_dependents(role, request.args.get("delete_dependents", False))
+        role.delete()
+        return {"msg": "Role removed from the database."}, HTTPStatus.OK
+
+
+class RoleRules(AlgorithmStoreResources):
+    @with_permission(module_name, Operation.EDIT)
+    @handle_exceptions
+    def post(self, id: int, rule_id: int):
+        """Assign rule to role
+        ---
+
+        description: >-
+            Assign rule to role.
+
+        parameters:
+            - in: path
+              name: id
+              schema:
+                type: integer
+              required: true
+              description: Role id
+            - in: path
+              name: rule_id
+              schema:
+                type: integer
+              required: true
+              description: Rule id
+
+        responses:
+          201:
+            description: Created
+          401:
+            description: Unauthorized
+          404:
+            description: Role or rule not found
+
+        security:
+            - bearerAuth: []
+
+        tags: ["Role"]
+        """
+        role = get_role(db, id)
+        rule = get_rule(db, rule_id)
+        self.permissions.check_user_rules([rule])
+        role.rules.append(rule)
+        role.save()
+        return rule_schema.dump(role.rules, many=True), HTTPStatus.CREATED
+
+    @with_permission(module_name, Operation.EDIT)
+    @handle_exceptions
+    def delete(self, id: int, rule_id: int):
+        """Remove rule from role
+        ---
+
+        description: >-
+            Remove rule from role.
+
+        parameters:
+            - in: path
+              name: id
+              schema:
+                type: integer
+              required: true
+              description: Role id
+            - in: path
+              name: rule_id
+              schema:
+                type: integer
+              required: true
+              description: Rule id
+
+        responses:
+          204:
+            description: No content
+          401:
+            description: Unauthorized
+          404:
+            description: Role or rule not found
+
+        security:
+            - bearerAuth: []
+
+        tags: ["Role"]
+        """
+        role = get_role(db, id)
+        rule = get_rule(db, rule_id)
+        self.permissions.check_user_rules([rule])
+        if rule not in role.rules:
+            raise NotFoundError(
+                f"Rule with id={rule_id} is not part of role with id={id}"
+            )
+        role.rules.remove(rule)
+        role.save()
+        return rule_schema.dump(role.rules, many=True), HTTPStatus.OK

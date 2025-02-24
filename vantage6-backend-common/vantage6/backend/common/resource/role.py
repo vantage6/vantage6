@@ -127,3 +127,15 @@ def update_role(role, data, db, permissions: PermissionManagerBase):
         permissions.check_user_rules(rules)
         role.rules = rules
     return role
+
+
+def can_delete_dependents(role, delete_dependents):
+    if role.users:
+        if delete_dependents:
+            log.warn(
+                f"Role {id} will be deleted even though it was assigned to users. This may result in missing permissions."
+            )
+        else:
+            raise BadRequestError(
+                f"Role {role.name} is assigned to users and cannot be deleted."
+            )
