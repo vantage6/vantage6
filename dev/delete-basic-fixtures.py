@@ -20,7 +20,7 @@ for client_subclass_name in ("task", "node"):
     print(f"=> Deleting {client_subclass_name}s")
     for entity in (entities := client_subclass.list(per_page=999)["data"]):
         client_subclass.delete(entity["id"])
-    print(f"==> Deleted", len(entities), f"{client_subclass_name}s")
+    print("==> Deleted", len(entities), f"{client_subclass_name}s")
 
 print("=> Deleting collaborations")
 for collab in (
