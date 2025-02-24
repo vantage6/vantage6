@@ -8,10 +8,9 @@ describe('DisplayAlgorithmComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [DisplayAlgorithmComponent]
-    })
-    .compileComponents();
-    
+      imports: [DisplayAlgorithmComponent]
+    }).compileComponents();
+
     fixture = TestBed.createComponent(DisplayAlgorithmComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

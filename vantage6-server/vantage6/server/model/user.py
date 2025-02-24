@@ -197,7 +197,7 @@ class User(Authenticatable):
         """
         td_max_blocked = dt.timedelta(minutes=inactivation_in_minutes)
         td_last_login = (
-            dt.datetime.now() - self.last_login_attempt
+            dt.datetime.now(dt.timezone.utc) - self.last_login_attempt
             if self.last_login_attempt
             else None
         )

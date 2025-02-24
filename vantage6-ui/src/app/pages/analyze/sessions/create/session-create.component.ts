@@ -1,6 +1,5 @@
 import { Component, HostBinding, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { Subject } from 'rxjs';
 import { Router } from '@angular/router';
 import { routePaths } from 'src/app/routes';
 import { CreateSession, SessionScope } from 'src/app/models/api/session.models';
@@ -8,10 +7,33 @@ import { SessionService } from 'src/app/services/session.service';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { BaseStudy } from 'src/app/models/api/study.model';
 import { Collaboration } from 'src/app/models/api/collaboration.model';
+import { TranslateModule } from '@ngx-translate/core';
+import { ReactiveFormsModule } from '@angular/forms';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { NgIf, NgFor } from '@angular/common';
+import { MatButton } from '@angular/material/button';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatSelect } from '@angular/material/select';
+import { MatOption } from '@angular/material/core';
 
 @Component({
   selector: 'app-session-create',
-  templateUrl: './session-create.component.html'
+  templateUrl: './session-create.component.html',
+  imports: [
+    PageHeaderComponent,
+    NgIf,
+    MatCard,
+    NgFor,
+    MatButton,
+    MatFormField,
+    MatLabel,
+    MatSelect,
+    ReactiveFormsModule,
+    MatOption,
+    MatCardContent,
+    TranslateModule
+  ]
 })
 export class SessionCreateComponent implements OnInit {
   @HostBinding('class') class = 'card-container';

@@ -1,15 +1,49 @@
 import { Component, HostBinding, Input } from '@angular/core';
 import { Subject } from 'rxjs';
 import { printDate } from 'src/app/helpers/general.helper';
-import { Algorithm, AlgorithmFunction } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmFunction, AlgorithmStatus, Argument } from 'src/app/models/api/algorithm.model';
 import { Visualization } from 'src/app/models/api/visualization.model';
 import { routePaths } from 'src/app/routes';
 import { FileService } from 'src/app/services/file.service';
+import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
+import { NgIf, NgFor } from '@angular/common';
+import { MarkdownComponent } from 'ngx-markdown';
+import {
+  MatAccordion,
+  MatExpansionPanel,
+  MatExpansionPanelHeader,
+  MatExpansionPanelTitle,
+  MatExpansionPanelContent
+} from '@angular/material/expansion';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { TranslateModule } from '@ngx-translate/core';
+import { OrderByPipe } from '../../../pipes/order-by.pipe';
 
 @Component({
-  selector: 'app-display-algorithm',
-  templateUrl: './display-algorithm.component.html',
-  styleUrl: './display-algorithm.component.scss'
+    selector: 'app-display-algorithm',
+    templateUrl: './display-algorithm.component.html',
+    styleUrl: './display-algorithm.component.scss',
+    imports: [
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        MatCardContent,
+        NgIf,
+        MarkdownComponent,
+        MatAccordion,
+        NgFor,
+        MatExpansionPanel,
+        MatExpansionPanelHeader,
+        MatExpansionPanelTitle,
+        MatExpansionPanelContent,
+        MatProgressSpinner,
+        MatButton,
+        MatIcon,
+        TranslateModule,
+        OrderByPipe
+    ]
 })
 export class DisplayAlgorithmComponent {
   @HostBinding('class') class = 'card-container';
@@ -21,6 +55,8 @@ export class DisplayAlgorithmComponent {
 
   routes = routePaths;
 
+  algorithmStatus = AlgorithmStatus;
+
   selectedFunction?: AlgorithmFunction;
 
   selectFunction(functionId: number): void {
@@ -31,13 +67,35 @@ export class DisplayAlgorithmComponent {
     return JSON.stringify(vis.schema);
   }
 
+  getDisplayName(obj: AlgorithmFunction | Argument) {
+    return obj.display_name && obj.display_name != '' ? obj.display_name : obj.name;
+  }
+
+  getArgName(argID: number, function_: AlgorithmFunction | undefined = undefined) {
+    if (!function_) {
+      function_ = this.selectedFunction;
+    }
+    return function_?.arguments.find((arg) => arg.id === argID)?.name;
+  }
+
   downloadAlgorithmJson(): void {
     if (!this.algorithm) return;
     const filename = `${this.algorithm.name}.json`;
 
+    const cleanedAlgorithmRepresentation: any = { ...this.algorithm };
+
+    // add conditional argument names and remove the conditional_on_id
+    for (const func of cleanedAlgorithmRepresentation.functions) {
+      for (const arg of func.arguments) {
+        if (arg.conditional_on_id) {
+          arg.conditional_on = this.getArgName(arg.conditional_on_id, func);
+        }
+        delete arg.conditional_on_id;
+      }
+    }
+
     // remove all nested ID fields as they should not be included in the download
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const cleanedAlgorithmRepresentation: any = { ...this.algorithm };
     delete cleanedAlgorithmRepresentation.id;
     for (const func of cleanedAlgorithmRepresentation.functions) {
       delete func.id;
@@ -59,6 +117,7 @@ export class DisplayAlgorithmComponent {
     delete cleanedAlgorithmRepresentation.submitted_at;
     delete cleanedAlgorithmRepresentation.approved_at;
     delete cleanedAlgorithmRepresentation.invalidated_at;
+    delete cleanedAlgorithmRepresentation.submission_comments;
 
     const text = JSON.stringify(cleanedAlgorithmRepresentation, null, 2);
     this.fileService.downloadTxtFile(text, filename);

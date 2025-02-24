@@ -8,10 +8,9 @@ describe('AlgorithmReadComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [AlgorithmReadComponent]
-    })
-    .compileComponents();
-    
+      imports: [AlgorithmReadComponent]
+    }).compileComponents();
+
     fixture = TestBed.createComponent(AlgorithmReadComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

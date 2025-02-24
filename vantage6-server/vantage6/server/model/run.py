@@ -60,7 +60,7 @@ class Run(Base):
     task_id = Column(Integer, ForeignKey("task.id"))
     organization_id = Column(Integer, ForeignKey("organization.id"))
     result = Column(Text)
-    assigned_at = Column(DateTime, default=datetime.datetime.utcnow)
+    assigned_at = Column(DateTime, default=datetime.datetime.now(datetime.timezone.utc))
     started_at = Column(DateTime)
     finished_at = Column(DateTime)
     status = Column(Text)

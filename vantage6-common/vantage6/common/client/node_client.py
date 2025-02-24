@@ -80,8 +80,20 @@ class NodeClient(ClientBase):
                 "exp"
             ]
             time_until_expiry = expiry_time - time.time()
-            if time_until_expiry < NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS:
-                self.refresh_token()
+            if time_until_expiry < 0:
+                self.log.error(
+                    "Token and refresh token have expired. Please restart the node!"
+                )
+                return
+            elif time_until_expiry < NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS:
+                try:
+                    self.refresh_token()
+                except Exception as e:
+                    self.log.error("Refreshing token failed: %s", e)
+                    # sleep for a bit and then try again. The server might be
+                    # unreachable or internet connection down. We sleep so long that
+                    # we should have about 20 attempts before the token expires.
+                    time.sleep(NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS / 20)
             else:
                 time.sleep(
                     int(
@@ -276,7 +288,12 @@ class NodeClient(ClientBase):
         id_ : int
             ID of the task.
         """
-        self.run.patch(id_, data={"started_at": datetime.datetime.now().isoformat()})
+        self.run.patch(
+            id_,
+            data={
+                "started_at": datetime.datetime.now(datetime.timezone.utc).isoformat()
+            },
+        )
 
     def get_vpn_config(self) -> tuple[bool, str]:
         """

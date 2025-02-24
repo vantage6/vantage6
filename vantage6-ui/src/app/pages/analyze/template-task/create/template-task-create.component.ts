@@ -3,7 +3,7 @@ import { TemplateTask } from 'src/app/models/api/templateTask.models';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { Algorithm, AlgorithmFunction, ArgumentType, FunctionType } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
-import { FormBuilder, FormControl, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
 import { addParameterFormControlsForFunction, getTaskDatabaseFromForm } from 'src/app/pages/analyze/task/task.helper';
 import { BaseNode } from 'src/app/models/api/node.model';
 import { Subject, takeUntil } from 'rxjs';
@@ -12,15 +12,52 @@ import { CreateTask, CreateTaskInput, TaskDatabase } from 'src/app/models/api/ta
 import { routePaths } from 'src/app/routes';
 import { TaskService } from 'src/app/services/task.service';
 import { Router } from '@angular/router';
-import { MatSelectChange } from '@angular/material/select';
+import { MatSelectChange, MatSelect } from '@angular/material/select';
 import { SnackbarService } from 'src/app/services/snackbar.service';
 import { NodeService } from 'src/app/services/node.service';
 import { environment } from 'src/environments/environment';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { NgFor, NgIf, AsyncPipe } from '@angular/common';
+import { MatOption } from '@angular/material/core';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { MatStepper, MatStepperIcon, MatStep, MatStepLabel, MatStepperNext, MatStepperPrevious } from '@angular/material/stepper';
+import { MatIcon } from '@angular/material/icon';
+import { MatInput } from '@angular/material/input';
+import { MatButton } from '@angular/material/button';
+import { DatabaseStepComponent as DatabaseStepComponent_1 } from '../../task/create/steps/database-step/database-step.component';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-template-task-create',
-  templateUrl: './template-task-create.component.html',
-  styleUrls: ['./template-task-create.component.scss']
+    selector: 'app-template-task-create',
+    templateUrl: './template-task-create.component.html',
+    styleUrls: ['./template-task-create.component.scss'],
+    imports: [
+        PageHeaderComponent,
+        MatFormField,
+        MatLabel,
+        MatSelect,
+        ReactiveFormsModule,
+        NgFor,
+        MatOption,
+        NgIf,
+        MatCard,
+        MatCardContent,
+        MatStepper,
+        MatStepperIcon,
+        MatIcon,
+        MatStep,
+        MatStepLabel,
+        MatInput,
+        MatButton,
+        MatStepperNext,
+        DatabaseStepComponent_1,
+        MatStepperPrevious,
+        MatProgressSpinner,
+        AsyncPipe,
+        TranslateModule
+    ]
 })
 export class TemplateTaskCreateComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
@@ -40,7 +77,7 @@ export class TemplateTaskCreateComponent implements OnInit {
   node: BaseNode | null = null;
 
   templateID = this.fb.nonNullable.control('', [Validators.required]);
-  packageForm = this.fb.nonNullable.group({});
+  functionForm = this.fb.nonNullable.group({});
   databaseForm = this.fb.nonNullable.group({});
   parameterForm = this.fb.nonNullable.group({});
 
@@ -56,7 +93,7 @@ export class TemplateTaskCreateComponent implements OnInit {
 
   get isFormValid(): boolean {
     return (
-      this.packageForm.invalid ||
+      this.functionForm.invalid ||
       (this.shouldShowDatabaseStep && this.databaseForm.invalid) ||
       (this.shouldShowParameterStep && this.parameterForm.invalid)
     );
@@ -139,12 +176,12 @@ export class TemplateTaskCreateComponent implements OnInit {
     this.templateTask.variable?.forEach((variable) => {
       if (typeof variable === 'string') {
         if (variable === 'name') {
-          this.packageForm.addControl('name', new FormControl('', [Validators.required]));
+          this.functionForm.addControl('name', new FormControl('', [Validators.required]));
         } else if (variable === 'description') {
-          this.packageForm.addControl('description', new FormControl(''));
+          this.functionForm.addControl('description', new FormControl(''));
         } else if (variable === 'organizations') {
-          this.packageForm.addControl('organizationIDs', new FormControl('', [Validators.required]));
-          this.packageForm
+          this.functionForm.addControl('organizationIDs', new FormControl('', [Validators.required]));
+          this.functionForm
             .get('organizationIDs')
             ?.valueChanges.pipe(takeUntil(this.destroy$))
             .subscribe(async (organizationID) => {
@@ -166,7 +203,7 @@ export class TemplateTaskCreateComponent implements OnInit {
     }
 
     let selectedOrganizations: string[] = [];
-    const organizationIDsControl = this.packageForm.get('organizationIDs');
+    const organizationIDsControl = this.functionForm.get('organizationIDs');
     if (this.templateTask?.fixed?.organizations) {
       selectedOrganizations = this.templateTask?.fixed.organizations;
     } else if (organizationIDsControl) {
@@ -189,10 +226,10 @@ export class TemplateTaskCreateComponent implements OnInit {
     };
 
     const createTask: CreateTask = {
-      name: this.templateTask?.fixed?.name ? this.templateTask.fixed.name : this.packageForm.get('name')?.value || '',
+      name: this.templateTask?.fixed?.name ? this.templateTask.fixed.name : this.functionForm.get('name')?.value || '',
       description: this.templateTask?.fixed?.description
         ? this.templateTask.fixed.description
-        : this.packageForm.get('description')?.value || '',
+        : this.functionForm.get('description')?.value || '',
       image: this.algorithm?.image || '',
       collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
       store_id: this.algorithm?.algorithm_store_id || -1,
@@ -242,7 +279,7 @@ export class TemplateTaskCreateComponent implements OnInit {
     this.algorithm = null;
     this.function = null;
     this.node = null;
-    this.packageForm = this.fb.nonNullable.group({});
+    this.functionForm = this.fb.nonNullable.group({});
     this.clearDatabaseStep();
     this.parameterForm = this.fb.nonNullable.group({});
   }

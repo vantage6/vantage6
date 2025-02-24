@@ -8,10 +8,9 @@ describe('PermissionsMatrixStoreComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [PermissionsMatrixStoreComponent]
-    })
-    .compileComponents();
-    
+      imports: [PermissionsMatrixStoreComponent]
+    }).compileComponents();
+
     fixture = TestBed.createComponent(PermissionsMatrixStoreComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

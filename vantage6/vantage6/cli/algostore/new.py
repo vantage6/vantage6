@@ -1,7 +1,7 @@
 import click
 from colorama import Fore, Style
 
-from vantage6.common import info, error, check_config_writeable
+from vantage6.common import info, error, ensure_config_dir_writable
 from vantage6.common.globals import InstanceType
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
@@ -36,7 +36,7 @@ def cli_algo_store_new(name: str, system_folders: bool) -> None:
         exit(1)
 
     # Check that we can write in this folder
-    if not check_config_writeable(system_folders):
+    if not ensure_config_dir_writable(system_folders):
         error("Your user does not have write access to all folders. Exiting")
         info(
             f"Create a new server using '{Fore.GREEN}v6 algorithm-store new "
@@ -45,7 +45,13 @@ def cli_algo_store_new(name: str, system_folders: bool) -> None:
         exit(1)
 
     # create config in ctx location
-    cfg_file = configuration_wizard(InstanceType.ALGORITHM_STORE, name, system_folders)
+    try:
+        cfg_file = configuration_wizard(
+            InstanceType.ALGORITHM_STORE, name, system_folders
+        )
+    except KeyboardInterrupt:
+        error("Configuration creation aborted.")
+        exit(1)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
 
     flag = "" if system_folders else "--user"

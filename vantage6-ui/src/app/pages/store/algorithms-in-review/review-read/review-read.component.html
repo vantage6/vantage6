@@ -1,5 +1,15 @@
 <app-page-header title="{{ 'algorithm-review.title' | translate: { name: algorithm?.name || '' } }}"> </app-page-header>
 <ng-container *ngIf="!isLoading; else loading">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ "algorithm-review.submission-comments" | translate: { developer: developer?.username || "" } }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="data-list__item">
+        <markdown class="variable-binding" [data]="algorithm?.submission_comments || 'No comments provided.'"></markdown>
+      </div>
+    </mat-card-content>
+  </mat-card>
   <mat-card *ngFor="let review of reviews">
     <mat-card-header>
       <mat-card-title>{{

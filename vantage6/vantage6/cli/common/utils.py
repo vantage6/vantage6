@@ -38,10 +38,14 @@ def get_server_name(
                 f"{instance_type}s that are running"
             )
             exit(1)
-        name = q.select(
-            f"Select the {instance_type} you wish to inspect:",
-            choices=running_server_names,
-        ).ask()
+        try:
+            name = q.select(
+                f"Select the {instance_type} you wish to inspect:",
+                choices=running_server_names,
+            ).unsafe_ask()
+        except KeyboardInterrupt:
+            error("Aborted by user!")
+            exit(1)
     else:
         post_fix = "system" if system_folders else "user"
         name = f"{APPNAME}-{name}-{post_fix}"
@@ -135,3 +139,22 @@ def print_log_worker(logs_stream: Iterable[bytes]) -> None:
                 "the container."
             )
             print(log)
+
+
+def get_name_from_container_name(container_name: str) -> str:
+    """
+    Get the node/server/store name from a container name.
+
+    Parameters
+    ----------
+    container_name : str
+        The name of the container
+
+    Returns
+    -------
+    str
+        The name of the node/server/store
+    """
+    # Container name is structured as: f"{APPNAME}-{name}-{post_fix}"
+    # Take into account that name can contain '-'
+    return "-".join(container_name.split("-")[1:-1])

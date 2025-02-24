@@ -1,4 +1,5 @@
 import { NameDescription } from './base.model';
+import { StoreReview } from './review.model';
 import { StoreUser } from './store-user.model';
 import { Visualization, VisualizationForm } from './visualization.model';
 
@@ -60,6 +61,15 @@ export enum AlgorithmStatus {
   Removed = 'removed'
 }
 
+export enum ConditionalArgComparatorType {
+  Equal = '==',
+  NotEqual = '!=',
+  GreaterThan = '>',
+  GreaterThanOrEqual = '>=',
+  LessThan = '<',
+  LessThanOrEqual = '<='
+}
+
 // TODO this interface must be updated to match the API
 export interface Algorithm {
   id: number;
@@ -83,6 +93,8 @@ export interface Algorithm {
   developer_id?: number;
   developer?: StoreUser;
   reviewer?: StoreUser;
+  submission_comments?: string;
+  reviews?: StoreReview[];
 }
 
 export interface AlgorithmFunction {
@@ -91,9 +103,16 @@ export interface AlgorithmFunction {
   display_name?: string;
   description: string;
   type: FunctionType;
+  standalone?: boolean;
   arguments: Argument[];
   databases: FunctionDatabase[];
   ui_visualizations: Visualization[];
+}
+
+export interface AlgorithmFunctionExtended extends AlgorithmFunction {
+  algorithm_id?: number;
+  algorithm_name?: string;
+  algorithm_store_id?: number;
 }
 
 export interface Select {
@@ -132,6 +151,10 @@ export interface Argument {
   description?: string;
   has_default_value: boolean;
   default_value?: string | number | boolean | null;
+  conditional_on_id?: number;
+  conditional_operator?: string;
+  conditional_value?: string | number | boolean;
+  is_frontend_only: boolean;
 }
 
 export interface FunctionDatabase {
@@ -140,12 +163,18 @@ export interface FunctionDatabase {
   description?: string;
 }
 
-interface ArgumentForm extends NameDescription {
+export interface ArgumentForm extends NameDescription {
   display_name?: string;
   type: string;
   has_default_value: boolean | string;
   is_default_value_null?: boolean | string;
   default_value?: string | number | boolean | null | string[] | number[] | boolean[];
+  hasCondition?: boolean | string;
+  conditional_on?: string;
+  conditional_operator?: string;
+  conditional_value?: string | number | boolean;
+  conditionalValueNull?: boolean | string;
+  is_frontend_only: boolean | string;
 }
 export interface FunctionForm extends NameDescription {
   display_name?: string;
@@ -153,6 +182,7 @@ export interface FunctionForm extends NameDescription {
   databases: NameDescription[];
   ui_visualizations: VisualizationForm[];
   type: string;
+  standalone?: boolean;
 }
 
 export interface AlgorithmForm {
@@ -163,5 +193,10 @@ export interface AlgorithmForm {
   vantage6_version: string;
   code_url: string;
   documentation_url?: string;
+  submission_comments?: string;
   functions: FunctionForm[];
+}
+
+export enum AlgorithmLazyProperties {
+  Reviews = 'reviews'
 }

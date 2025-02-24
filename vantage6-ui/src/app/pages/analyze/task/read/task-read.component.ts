@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { getChipTypeForStatus, getStatusType, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
 import { Algorithm, AlgorithmFunction, Argument, ArgumentType, FunctionType } from 'src/app/models/api/algorithm.model';
 import { Visualization } from 'src/app/models/api/visualization.model';
@@ -19,25 +19,92 @@ import { TaskService } from 'src/app/services/task.service';
 import { LogDialogComponent } from 'src/app/components/dialogs/log/log-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
-import { FormControl } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { Subject, Subscription, takeUntil, timer } from 'rxjs';
 import { FileService } from 'src/app/services/file.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
+import {
+  THRESHOLD_LONG_PARAMETER_TEXT,
+  THRESHOLD_LONG_TEXT,
+  THRESHOLD_PRINTABLE_TEXT,
+  THRESHOLD_SMALL_TILES
+} from 'src/app/models/constants/thresholds';
+import { WAIT_200_MILLISECONDS } from 'src/app/models/constants/wait';
 import { NodeStatus } from 'src/app/models/api/node.model';
 import { printDate } from 'src/app/helpers/general.helper';
 import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
 import { StudyService } from 'src/app/services/study.service';
 import { Study } from 'src/app/models/api/study.model';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { NgIf, NgClass, NgFor, SlicePipe } from '@angular/common';
+import { MatIconButton, MatButton } from '@angular/material/button';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { MatIcon } from '@angular/material/icon';
+import { AlertComponent } from '../../../../components/alerts/alert/alert.component';
+import { MatCard, MatCardActions, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
+import {
+  MatExpansionPanel,
+  MatExpansionPanelHeader,
+  MatExpansionPanelTitle,
+  MatAccordion,
+  MatExpansionPanelDescription
+} from '@angular/material/expansion';
+import { StatusInfoComponent } from '../../../../components/helpers/status-info/status-info.component';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatSelect } from '@angular/material/select';
+import { MatOption } from '@angular/material/core';
+import { VisualizeResultComponent } from '../../../../components/visualization/visualize-result/visualize-result.component';
+import { ChipComponent } from '../../../../components/helpers/chip/chip.component';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { OrderByPipe } from '../../../../pipes/order-by.pipe';
+import { OrderByTaskStatusPipe } from '../../../../pipes/order-by-status.pipe';
 
 @Component({
-  selector: 'app-task-read',
-  templateUrl: './task-read.component.html',
-  styleUrls: ['./task-read.component.scss']
+    selector: 'app-task-read',
+    templateUrl: './task-read.component.html',
+    styleUrls: ['./task-read.component.scss'],
+    imports: [
+        PageHeaderComponent,
+        NgIf,
+        MatIconButton,
+        MatMenuTrigger,
+        MatIcon,
+        MatMenu,
+        MatMenuItem,
+        AlertComponent,
+        MatCard,
+        MatExpansionPanel,
+        MatExpansionPanelHeader,
+        MatExpansionPanelTitle,
+        NgClass,
+        NgFor,
+        StatusInfoComponent,
+        MatButton,
+        MatCardActions,
+        MatCardHeader,
+        MatCardTitle,
+        MatFormField,
+        MatLabel,
+        MatSelect,
+        ReactiveFormsModule,
+        MatOption,
+        MatCardContent,
+        VisualizeResultComponent,
+        ChipComponent,
+        RouterLink,
+        MatAccordion,
+        MatExpansionPanelDescription,
+        MatProgressSpinner,
+        SlicePipe,
+        TranslateModule,
+        OrderByPipe,
+        OrderByTaskStatusPipe
+    ]
 })
 export class TaskReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
@@ -62,6 +129,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   canCreate = false;
   canKill = false;
   algorithmNotFoundInStore = false;
+  showAllChildTasks = false;
 
   private nodeStatusUpdateSubscription?: Subscription;
   private taskStatusUpdateSubscription?: Subscription;
@@ -126,13 +194,13 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     if (!this.task || sync_tasks) {
       this.task = await this.getMainTask();
       this.childTasks = await this.getChildTasks();
-      if(this.task.study)
-        this.study = await this.studyService.getStudy(this.task.study.id.toString())
+      if (this.task.study) this.study = await this.studyService.getStudy(this.task.study.id.toString());
     }
     try {
       if (this.task.algorithm_store) {
         const store = await this.algorithmStoreService.getAlgorithmStore(this.task.algorithm_store?.id.toString());
         this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image, store);
+        // Please note, the function cannot be set if the input cannot be decoded. This will result in NO visualization and information about the function.
         this.function = this.algorithm?.functions.find((_) => _.name === this.task?.input?.method) || null;
         if (!this.selectedVisualization) {
           // by checking in if statement whether visualization was already set, we prevent
@@ -176,6 +244,11 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     if (this.task.results?.some((result) => result.result === null)) return false;
     if (this.task.runs.every((run) => run.status === TaskStatus.Completed)) return true;
     return false;
+  }
+
+  isSmallTileView(): boolean {
+    const runs = this.childTasks.flatMap((tasks) => tasks.runs) ?? [];
+    return runs.length > THRESHOLD_SMALL_TILES;
   }
 
   isFailedRun(status: TaskStatus): boolean {
@@ -266,8 +339,8 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   displayTextResult(result: object | undefined): string {
     if (result === undefined) return '';
     const textResult = JSON.stringify(result);
-    if (textResult.length > 100) {
-      return textResult.substring(0, 100) + '...';
+    if (textResult.length > THRESHOLD_LONG_TEXT) {
+      return textResult.substring(0, THRESHOLD_LONG_TEXT) + '...';
     }
     return textResult;
   }
@@ -275,7 +348,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   getParameterDisplayName(parameter: TaskParameter): string {
     const argument: Argument | undefined = this.function?.arguments.find((_) => _.name === parameter.label);
     if (argument) {
-      return argument.display_name ?? argument.name
+      return argument.display_name ?? argument.name;
     } else {
       return parameter.label;
     }
@@ -283,24 +356,35 @@ export class TaskReadComponent implements OnInit, OnDestroy {
 
   getParameterValueAsString(parameter: TaskParameter): string {
     const argument: Argument | undefined = this.function?.arguments.find((_) => _.name === parameter.label);
-    // check if value is an object
-    if (argument?.type === ArgumentType.Json) {
-      return JSON.stringify(parameter.value);
-    } else {
-      return parameter.value;
+    let parameter_str = argument?.type !== ArgumentType.Json ? parameter.value : JSON.stringify(parameter.value);
+    if (parameter_str.length > THRESHOLD_LONG_PARAMETER_TEXT) {
+      const len_not_displayed = parameter_str.length - THRESHOLD_LONG_PARAMETER_TEXT;
+      parameter_str = parameter_str.substring(0, THRESHOLD_LONG_PARAMETER_TEXT) + '... (' + len_not_displayed + ' more characters)';
     }
+
+    return parameter_str;
+  }
+
+  downloadInput(run: TaskRun): void {
+    const filename = `vantage6_input_${run.id}.txt`;
+    const textInput = run.input || '';
+    this.fileService.downloadTxtFile(textInput, filename);
   }
 
   downloadResult(result: TaskResult): void {
     const filename = `vantage6_result_${result.id}.txt`;
-    const textResult = JSON.stringify(result.decoded_result);
+    let textResult = '';
+    if (result.decoded_result === undefined) {
+      textResult = result.result || '';
+    } else {
+      textResult = JSON.stringify(result.decoded_result);
+    }
     this.fileService.downloadTxtFile(textResult, filename);
   }
 
   getPrintableTaskName(task: Task): string {
-    // print only max 30 characters
-    if (task.name.length > 30) {
-      return task.name.substring(0, 30) + '...';
+    if (task.name.length > THRESHOLD_PRINTABLE_TEXT) {
+      return task.name.substring(0, THRESHOLD_PRINTABLE_TEXT) + '...';
     } else {
       return task.name;
     }
@@ -308,7 +392,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
 
   private async waitUntilInitialized(): Promise<void> {
     while (this.isLoading) {
-      await new Promise((f) => setTimeout(f, 200));
+      await new Promise((f) => setTimeout(f, WAIT_200_MILLISECONDS));
     }
   }
 

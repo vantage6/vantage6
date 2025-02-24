@@ -24,6 +24,10 @@
     <ng-container *ngIf="!isLoading; else loading">
       <form class="form" [formGroup]="form" (ngSubmit)="handleSubmit()">
         <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ "algorithm.submission-comments" | translate }}</mat-label>
+          <textarea matInput type="text" formControlName="submission_comments"></textarea>
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ "general.name" | translate }}</mat-label>
           <input matInput type="text" formControlName="name" />
         </mat-form-field>
@@ -89,6 +93,9 @@
                     </mat-option>
                   </mat-select>
                 </mat-form-field>
+                <mat-checkbox matTooltip="{{ 'algorithm.function.standalone_tooltip' | translate }}" formControlName="standalone">
+                  {{ "algorithm.function.standalone" | translate }}
+                </mat-checkbox>
                 <!-- Accordion per parameter -->
                 <mat-accordion class="card-accordion" [multi]="true">
                   <mat-expansion-panel
@@ -169,7 +176,72 @@
                               />
                             </mat-form-field>
                           </div>
+                          <mat-radio-group formControlName="hasCondition">
+                            <mat-label>{{ "algorithm.function.argument.condition.has_condition" | translate }}</mat-label>
+                            <mat-radio-button [value]="true" color="primary">{{ "general.yes" | translate }}</mat-radio-button>
+                            <mat-radio-button [value]="false" color="primary">{{ "general.no" | translate }}</mat-radio-button>
+                          </mat-radio-group>
+                          <div *ngIf="isTruthy(parameterFormGroup.controls['hasCondition'].value)">
+                            <p>
+                              <b>{{ "algorithm.function.argument.condition.explanation" | translate }}</b>
+                            </p>
+                            <mat-form-field subscriptSizing="dynamic">
+                              <mat-label>{{ "algorithm.function.argument.condition.conditional_on" | translate }}</mat-label>
+                              <mat-select formControlName="conditional_on">
+                                <mat-option *ngFor="let arg of getAvailableConditionalArguments(functionFormGroup, paramIdx)" [value]="arg">
+                                  {{ arg }}
+                                </mat-option>
+                              </mat-select>
+                            </mat-form-field>
+                            <mat-form-field subscriptSizing="dynamic">
+                              <mat-label>{{ "algorithm.function.argument.condition.operator" | translate }}</mat-label>
+                              <mat-select formControlName="conditional_operator">
+                                <mat-option
+                                  *ngFor="let arg of getAvailableComparators(functionFormGroup, parameterFormGroup)"
+                                  [value]="arg"
+                                >
+                                  {{ "algorithm.function.argument.condition.operators." + arg | translate }}
+                                </mat-option>
+                              </mat-select>
+                            </mat-form-field>
+                            <div *ngIf="!isConditionalArgBoolean(functionFormGroup, parameterFormGroup)">
+                              <mat-radio-group formControlName="conditionalValueNull">
+                                <mat-label>{{ "algorithm.function.argument.condition.conditional-value-null" | translate }}</mat-label>
+                                <mat-radio-button [value]="true" color="primary">{{ "general.yes" | translate }}</mat-radio-button>
+                                <mat-radio-button [value]="false" color="primary">{{ "general.no" | translate }}</mat-radio-button>
+                              </mat-radio-group>
+                              <mat-form-field
+                                *ngIf="!isTruthy(parameterFormGroup.controls['conditionalValueNull'].value)"
+                                subscriptSizing="dynamic"
+                              >
+                                <mat-label>{{ "algorithm.function.argument.condition.value" | translate }}</mat-label>
+                                <input
+                                  matInput
+                                  appNumberOnly
+                                  [type]="getConditionalParamInputType(functionFormGroup, parameterFormGroup)"
+                                  formControlName="conditional_value"
+                                />
+                              </mat-form-field>
+                            </div>
+                            <mat-radio-group
+                              *ngIf="isConditionalArgBoolean(functionFormGroup, parameterFormGroup)"
+                              formControlName="conditional_value"
+                            >
+                              <mat-label>{{ "algorithm.function.argument.condition.value" | translate }}:</mat-label>
+                              <mat-radio-button [value]="true" color="primary">{{ "general.true" | translate }}</mat-radio-button>
+                              <mat-radio-button [value]="false" color="primary">{{ "general.false" | translate }}</mat-radio-button>
+                            </mat-radio-group>
+                            <!-- TODO add error text like this for all errors -->
+                            <!-- <div *ngIf="parameterFormGroup.errors?.['conditionalFields']" class="error">
+                            {{ parameterFormGroup.errors?.["conditionalFields"] }}
+                          </div> -->
+                          </div>
                         </div>
+                        <mat-radio-group formControlName="is_frontend_only">
+                          <mat-label>{{ "algorithm.function.argument.frontend_only.toggle_explain" | translate }}</mat-label>
+                          <mat-radio-button [value]="true" color="primary">{{ "general.yes" | translate }}</mat-radio-button>
+                          <mat-radio-button [value]="false" color="primary">{{ "general.no" | translate }}</mat-radio-button>
+                        </mat-radio-group>
                         <div class="button-container button-container-separate">
                           <button mat-flat-button color="warn" (click)="deleteParameter(functionFormGroup, paramIdx)">
                             {{ "algorithm-create.function.parameter.delete" | translate }}

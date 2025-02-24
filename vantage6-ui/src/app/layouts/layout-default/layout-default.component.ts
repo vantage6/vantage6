@@ -1,23 +1,57 @@
 import { AfterViewInit, Component, OnDestroy, ViewChild } from '@angular/core';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { MatSidenav } from '@angular/material/sidenav';
+import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { Subject, combineLatest, delay, filter, takeUntil } from 'rxjs';
 import { routePaths } from 'src/app/routes';
 import { NavigationLink, NavigationLinkType } from 'src/app/models/application/navigation-link.model';
 import { OperationType, ResourceType, ScopeType, StoreResourceType } from 'src/app/models/api/rule.model';
 import { AuthService } from 'src/app/services/auth.service';
-import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { TokenStorageService } from 'src/app/services/token-storage.service';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
+import { MatToolbar } from '@angular/material/toolbar';
+import { NgIf, NgFor, NgClass, AsyncPipe } from '@angular/common';
+import { MatIconButton, MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { MatNavList, MatListItem, MatListItemIcon } from '@angular/material/list';
+import { BreadcrumbsComponent } from '../../components/breadcrumbs/breadcrumbs.component';
+import { MatCard, MatCardContent } from '@angular/material/card';
 
 @Component({
-  selector: 'app-layout-default',
-  templateUrl: './layout-default.component.html',
-  styleUrls: ['./layout-default.component.scss']
+    selector: 'app-layout-default',
+    templateUrl: './layout-default.component.html',
+    styleUrls: ['./layout-default.component.scss'],
+    imports: [
+        MatToolbar,
+        NgIf,
+        MatIconButton,
+        MatIcon,
+        MatButton,
+        MatMenuTrigger,
+        MatMenu,
+        MatMenuItem,
+        RouterLink,
+        MatSidenavContainer,
+        MatSidenav,
+        MatNavList,
+        NgFor,
+        MatListItem,
+        MatListItemIcon,
+        NgClass,
+        RouterLinkActive,
+        MatSidenavContent,
+        BreadcrumbsComponent,
+        MatCard,
+        MatCardContent,
+        RouterOutlet,
+        AsyncPipe,
+        TranslateModule
+    ]
 })
 export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
   destroy$ = new Subject();

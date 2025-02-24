@@ -8,11 +8,17 @@ import { Algorithm, AlgorithmForm } from 'src/app/models/api/algorithm.model';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
+import { NgIf } from '@angular/common';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { AlgorithmFormComponent } from '../../../../components/forms/algorithm-form/algorithm-form.component';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-algorithm-edit',
-  templateUrl: './algorithm-edit.component.html',
-  styleUrl: './algorithm-edit.component.scss'
+    selector: 'app-algorithm-edit',
+    templateUrl: './algorithm-edit.component.html',
+    styleUrl: './algorithm-edit.component.scss',
+    imports: [NgIf, PageHeaderComponent, AlgorithmFormComponent, MatCard, MatCardContent, MatProgressSpinner]
 })
 export class AlgorithmEditComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
@@ -62,13 +68,17 @@ export class AlgorithmEditComponent implements OnInit, OnDestroy {
       vantage6_version: this.algorithm.vantage6_version,
       code_url: this.algorithm.code_url,
       documentation_url: this.algorithm.documentation_url,
+      submission_comments: this.algorithm.submission_comments,
       functions: this.algorithm.functions.map((func) => {
         return {
           name: func.name,
           display_name: func.display_name,
           description: func.description,
           type: func.type,
+          standalone: func.standalone,
           arguments: func.arguments.map((arg) => {
+            const conditionalArgName =
+              arg.conditional_on_id === undefined ? undefined : func.arguments.find((a) => a.id === arg.conditional_on_id)?.name;
             return {
               name: arg.name,
               display_name: arg.display_name,
@@ -76,7 +86,13 @@ export class AlgorithmEditComponent implements OnInit, OnDestroy {
               description: arg.description,
               has_default_value: arg.has_default_value,
               default_value: arg.default_value || null,
-              is_default_value_null: arg.default_value === null ? 'true' : 'false'
+              is_default_value_null: arg.default_value === null ? 'true' : 'false',
+              hasCondition: arg.conditional_on_id !== null,
+              conditional_on: conditionalArgName,
+              conditional_operator: arg.conditional_operator,
+              conditional_value: arg.conditional_value,
+              conditionalValueNull: arg.conditional_value === null ? 'true' : 'false',
+              is_frontend_only: arg.is_frontend_only
             };
           }),
           databases: func.databases.map((db) => {

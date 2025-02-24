@@ -17,6 +17,7 @@ from vantage6.cli.node.list import cli_node_list
 from vantage6.cli.node.new import cli_node_new_configuration
 from vantage6.cli.node.files import cli_node_files
 from vantage6.cli.node.start import cli_node_start
+from vantage6.cli.node.restart import cli_node_restart
 from vantage6.cli.node.stop import cli_node_stop
 from vantage6.cli.node.attach import cli_node_attach
 from vantage6.cli.node.create_private_key import cli_node_create_private_key
@@ -85,7 +86,7 @@ class NodeCLITest(unittest.TestCase):
         )
 
     @patch("vantage6.cli.node.new.configuration_wizard")
-    @patch("vantage6.cli.node.new.check_config_writeable")
+    @patch("vantage6.cli.node.new.ensure_config_dir_writable")
     @patch("vantage6.cli.node.common.NodeContext")
     def test_new_config(self, context, permissions, wizard):
         """No error produced when creating new configuration."""
@@ -147,7 +148,7 @@ class NodeCLITest(unittest.TestCase):
         # check non-zero exit code
         self.assertEqual(result.exit_code, 1)
 
-    @patch("vantage6.cli.node.new.check_config_writeable")
+    @patch("vantage6.cli.node.new.ensure_config_dir_writable")
     @patch("vantage6.cli.node.common.NodeContext")
     def test_new_write_permissions(self, context, permissions):
         """User needs write permissions."""
@@ -243,19 +244,28 @@ class NodeCLITest(unittest.TestCase):
 
         runner = CliRunner()
 
+        # Should fail when starting node with non-existing database CSV file
         with runner.isolated_filesystem():
             result = runner.invoke(cli_node_start, ["--name", "some-name"])
+        self.assertEqual(result.exit_code, 1)
 
+        # now do it with a SQL database which doesn't have to be an existing file
+        ctx.databases = [{"label": "some_label", "uri": "data.db", "type": "sql"}]
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli_node_start, ["--name", "some-name"])
         self.assertEqual(result.exit_code, 0)
+
+    def _setup_stop_test(self, containers):
+        container1 = MagicMock()
+        container1.name = f"{APPNAME}-iknl-user"
+        containers.list.return_value = [container1]
 
     @patch("docker.DockerClient.containers")
     @patch("vantage6.cli.node.stop.check_docker_running", return_value=True)
     @patch("vantage6.cli.node.stop.NodeContext")
     @patch("vantage6.cli.node.stop.delete_volume_if_exists")
     def test_stop(self, delete_volume, node_context, check_docker, containers):
-        container1 = MagicMock()
-        container1.name = f"{APPNAME}-iknl-user"
-        containers.list.return_value = [container1]
+        self._setup_stop_test(containers)
 
         runner = CliRunner()
 
@@ -265,6 +275,24 @@ class NodeCLITest(unittest.TestCase):
             result.output, "[info ] - Stopped the vantage6-iknl-user Node.\n"
         )
 
+        self.assertEqual(result.exit_code, 0)
+
+    @patch("docker.DockerClient.containers")
+    @patch("vantage6.cli.node.stop.check_docker_running", return_value=True)
+    @patch("vantage6.cli.node.stop.NodeContext")
+    @patch("vantage6.cli.node.stop.delete_volume_if_exists")
+    @patch("vantage6.cli.node.restart.subprocess.run")
+    def test_restart(
+        self, subprocess_run, delete_volume, node_context, check_docker, containers
+    ):
+        """Restart a node without errors."""
+        self._setup_stop_test(containers)
+        # The subprocess.run() function is called with the command to start the node.
+        # Unfortunately it is hard to test this, so we just return a successful run
+        subprocess_run.return_value = MagicMock(returncode=0)
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli_node_restart, ["--name", "iknl"])
         self.assertEqual(result.exit_code, 0)
 
     @patch("vantage6.cli.node.attach.time")

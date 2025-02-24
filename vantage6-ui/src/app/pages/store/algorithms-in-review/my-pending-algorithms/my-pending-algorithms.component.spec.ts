@@ -8,10 +8,9 @@ describe('MyPendingAlgorithmsComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [MyPendingAlgorithmsComponent]
-    })
-    .compileComponents();
-    
+      imports: [MyPendingAlgorithmsComponent]
+    }).compileComponents();
+
     fixture = TestBed.createComponent(MyPendingAlgorithmsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

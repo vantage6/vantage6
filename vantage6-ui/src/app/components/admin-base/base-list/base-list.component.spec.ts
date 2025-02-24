@@ -8,7 +8,7 @@ describe('BaseListComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [BaseListComponent]
+      imports: [BaseListComponent]
     }).compileComponents();
 
     fixture = TestBed.createComponent(BaseListComponent);

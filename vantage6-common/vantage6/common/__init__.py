@@ -254,7 +254,7 @@ class ClickLogger:
         debug(msg)
 
 
-def check_config_writeable(system_folders: bool = False) -> bool:
+def ensure_config_dir_writable(system_folders: bool = False) -> bool:
     """
     Check if the user has write permissions to create the configuration file.
 
@@ -274,9 +274,15 @@ def check_config_writeable(system_folders: bool = False) -> bool:
     w_ok = True
     if not os.path.isdir(config_dir):
         warning(
-            f"Target directory '{config_dir}' for configuration file does " "not exist."
+            f"Target directory '{config_dir}' for configuration file does not exist."
+            " Attempting to create it."
         )
-        w_ok = False
+        try:
+            os.makedirs(config_dir)
+            w_ok = True
+        except Exception as e:
+            error(f"Could not create directory '{config_dir}': {e}")
+            w_ok = False
     elif not os.access(config_dir, os.W_OK):
         warning(f"No write permissions at '{config_dir}'.")
         w_ok = False

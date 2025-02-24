@@ -1,6 +1,94 @@
 Release notes
 =============
 
+4.9.1
+-----
+
+*24 January 2025*
+
+- **Bugfix**
+
+  - Prevent crash of thread that refreshes the node token, thereby improving node
+    stability (`Issue#1669 <https://github.com/vantage6/vantage6/issues/1669>`_,
+    `PR#1694 <https://github.com/vantage6/vantage6/pull/1694>`_).
+  - Improve recognizing text-based 'true' values for policies in the algorithm store (
+    `PR#1687 <https://github.com/vantage6/vantage6/pull/1687>`_).
+  - For default list of str/float/int arguments, don't create superfluous form control
+    in the UI when creating a task (`PR#1688 <https://github.com/vantage6/vantage6/pull/1688>`_).
+
+4.9.0
+-----
+
+*15 January 2025*
+
+- **Feature**
+
+  - New policies for algorithm store reviews, such as how many reviews are needed
+    (`Issue#1365 <https://github.com/vantage6/vantage6/issues/1365>`_,
+    `PR#1634 <https://github.com/vantage6/vantage6/pull/1634>`_).
+  - Conditional function parameters can now be set in the algorithm store. For instance,
+    only if a parameter use_binning=True is set, then the parameter bin_size can be set
+    in the UI (`Issue#1535 <https://github.com/vantage6/vantage6/issues/1535>`_,
+    `PR#1645 <https://github.com/vantage6/vantage6/pull/1645>`_).
+  - Set 'UI-only' arguments in the algorithm store. This is for instance useful if
+    algorithm functions need either argument A to be specified: then a frontend-only
+    boolean argument 'choose_A' can be set so that A is shown if that is flagged, and
+    otherwise B is shown (`PR#1655 <https://github.com/vantage6/vantage6/pull/1655>`_).
+  - Added 'v6 node restart' command
+    (`Issue#1367 <https://github.com/vantage6/vantage6/issues/1367>`_,
+    `PR#1627 <https://github.com/vantage6/vantage6/pull/1627>`_).
+  - Combine algorithm and function selection when creating task in the UI
+    (`Issue#1338 <https://github.com/vantage6/vantage6/issues/1338>`_,
+    `PR#1635 <https://github.com/vantage6/vantage6/pull/1635>`_).
+  - Always show the 'show logs' button in the UI, also for runs that completed
+    successfully
+    (`Issue#1542 <https://github.com/vantage6/vantage6/issues/1542>`_,
+    `PR#1608 <https://github.com/vantage6/vantage6/pull/1608>`_).
+  - Allow using MFA in v6 node create-private-key
+    (`Issue#1628 <https://github.com/vantage6/vantage6/issues/1628>`_,
+    `PR#1629 <https://github.com/vantage6/vantage6/pull/1629>`_).
+  - Add option to set CORS settings in the algorithm store configuration
+    (`PR#1639 <https://github.com/vantage6/vantage6/pull/1639>`_).
+  - Better filter options in the UI, e.g. to filter the nodes by collaboration and
+    organization (`Issue#1550 <https://github.com/vantage6/vantage6/issues/1550>`_,
+    `PR#1586 <https://github.com/vantage6/vantage6/pull/1586>`_).
+  - Show algorithm image digest on the algorithm's detail page in the UI
+    (`Issue#1536 <https://github.com/vantage6/vantage6/issues/1536>`_,
+    `PR#1595 <https://github.com/vantage6/vantage6/pull/1595>`_).
+  - Decreased size of task tiles in the task status page in the UI
+    (`Issue#1543 <https://github.com/vantage6/vantage6/issues/1543>`_,
+    `PR#1608 <https://github.com/vantage6/vantage6/pull/1608>`_).
+  - Added option in Python client to filter studies on the collaboration ID
+    (`Issue#1521 <https://github.com/vantage6/vantage6/issues/1521>`_,
+    `PR#1596 <https://github.com/vantage6/vantage6/pull/1596>`_).
+
+- **Change**
+
+  - Ensure function parameters are listed always in the same order in the UI when
+    creating a task
+    (`Issue#1543 <https://github.com/vantage6/vantage6/issues/1543>`_,
+    `PR#1608 <https://github.com/vantage6/vantage6/pull/1608>`_).
+  - Button to download results also shown if results could not be parsed
+    (`Issue#1598 <https://github.com/vantage6/vantage6/issues/1598>`_,
+    `PR#1642 <https://github.com/vantage6/vantage6/pull/1642>`_).
+  - Disable building function docs locally by default, to prevent slowing down
+    documentation development
+    (`PR#1587 <https://github.com/vantage6/vantage6/pull/1587>`_).
+
+- **Bugfix**
+
+  - Prevent error with v6 server new if config file directory does not exist by creating
+    it (`Issue#938 <https://github.com/vantage6/vantage6/issues/938>`_,
+    `PR#1631 <https://github.com/vantage6/vantage6/pull/1631>`_).
+  - Only shows stores that are running in v6 algorithm-store attach
+    (`Issue#1397 <https://github.com/vantage6/vantage6/issues/1397>`_,
+    `PR#1626 <https://github.com/vantage6/vantage6/pull/1626>`_).
+  - For dangling subtasks, prevent that they are picked up again every time the node is
+    restarted (`Issue#1371 <https://github.com/vantage6/vantage6/issues/1371>`_,
+    `PR#1621 <https://github.com/vantage6/vantage6/pull/1621>`_).
+  - Fix loading lazy-loaded resources in algorithm store, which were not loaded because
+    API path was duplicated (`PR#1657 <https://github.com/vantage6/vantage6/pull/1657>`_).
+
 4.8.2
 -----
 
@@ -9,7 +97,7 @@ Release notes
 - **Change**
 
   - Modify filename of PyPI packages to conform to PEP625
-   (`PR#1625 <https://github.com/vantage6/vantage6/pull/1625>`_).
+    (`PR#1625 <https://github.com/vantage6/vantage6/pull/1625>`_).
 
 - **Bugfix**
 

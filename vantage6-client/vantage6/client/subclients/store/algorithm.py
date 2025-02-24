@@ -163,6 +163,8 @@ class AlgorithmSubClient(ClientBase.SubClient):
                 Description of the function
             - type: string
                 Type of the function (central or federated)
+            - standalone: bool
+                Whether this function produces useful results when running it by itself
             - databases: list[dict]
                 List of databases of the function. Each database is a dict with
                 the following keys:
@@ -188,6 +190,16 @@ class AlgorithmSubClient(ClientBase.SubClient):
                     Default value of the argument. Only required if 'has_default_value'
                     is true. The type should match the 'type' field, e.g. if 'type' is
                     'integer', 'default_value' should be an integer.
+                - conditional_on: str, optional
+                    Name of the argument that this argument is conditional on.
+                - conditional_comparator: str, optional
+                    Comparator to use for the conditional argument. Can be '==', '!=',
+                    '>', '<', '>=', or '<='.
+                - conditional_value: str | int | float | boolean, optional
+                    Value to compare the conditional argument to.
+                - is_frontend_only: bool, optional
+                    Whether the argument should should only be shown in the UI form, or
+                    also be passed to the algorithm. Default is False.
             - ui_visualizations: list[dict]
                 List of UI visualizations of the function. Each visualization
                 is a dict with the following keys:
@@ -332,6 +344,8 @@ class AlgorithmSubClient(ClientBase.SubClient):
                 Description of the function
             - type: string
                 Type of the function (central or federated)
+            - standalone: bool
+                Whether this function produces useful results when running it by itself
             - databases: list[dict]
                 List of databases of the function. Each database is a dict with
                 the following keys:
@@ -357,6 +371,16 @@ class AlgorithmSubClient(ClientBase.SubClient):
                     Default value of the argument. Only required if 'has_default_value'
                     is true. The type should match the 'type' field, e.g. if 'type' is
                     'integer', 'default_value' should be an integer.
+                - conditional_on: str, optional
+                    Name of the argument that this argument is conditional on.
+                - conditional_comparator: str, optional
+                    Comparator to use for the conditional argument. Can be '==', '!=',
+                    '>', '<', '>=', or '<='.
+                - conditional_value: str | int | float | boolean, optional
+                    Value to compare the conditional argument to.
+                - is_frontend_only: bool, optional
+                    Whether the argument should should only be shown in the UI form, or
+                    also be passed to the algorithm. Default is False.
             - ui_visualizations: list[dict]
                 List of UI visualizations of the function. Each visualization
                 is a dict with the following keys:

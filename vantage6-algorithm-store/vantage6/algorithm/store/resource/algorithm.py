@@ -387,6 +387,9 @@ class Algorithms(AlgorithmBaseResource):
                   documentation_url:
                     type: string
                     description: URL to the algorithm documentation
+                  submission_comments:
+                    type: string
+                    description: Comments done by the developer to the submission
                   functions:
                     type: array
                     description: List of functions that are available in the
@@ -406,6 +409,9 @@ class Algorithms(AlgorithmBaseResource):
                           type: string
                           description: Type of function. Can be 'central' or
                             'federated'
+                        standalone:
+                          type: boolean
+                          description: Whether this function produces useful results when running it by itself
                         databases:
                           type: array
                           description: List of databases that this function
@@ -452,6 +458,24 @@ class Algorithms(AlgorithmBaseResource):
                                   should match the 'type' field, e.g. if 'type' is
                                   'integer', 'default_value' should be an integer.
                                   To set an empty (null) default value, use None.
+                              conditional_on:
+                                type: string
+                                description: Name of the argument that this argument
+                                  is conditional on.
+                              conditional_operator:
+                                type: string
+                                description: Comparator used for the conditional
+                                  argument. Can be one of '==', '!=', '>', '<', '>=',
+                                  '<='.
+                              conditional_value:
+                                type: string
+                                description: Value that the argument should be compared
+                                  to.
+                              is_frontend_only:
+                                type: boolean
+                                description: Frontend-only arguments are displayed in
+                                  the UI, but are not passed to the algorithm. Default
+                                  is false.
                         ui_visualizations:
                           type: array
                           description: List of visualizations that are available in
@@ -512,6 +536,7 @@ class Algorithms(AlgorithmBaseResource):
             documentation_url=data.get("documentation_url", None),
             digest=digest,
             developer=g.user,
+            submission_comments=data.get("submission_comments", None),
         )
         algorithm.save()
 
@@ -529,10 +554,12 @@ class Algorithms(AlgorithmBaseResource):
                 display_name=function.get("display_name", ""),
                 description=function.get("description", ""),
                 type_=function["type"],
+                standalone=function.get("standalone", True),
                 algorithm_id=algorithm.id,
             )
             func.save()
-            # create the arguments
+            # create the arguments. Note that the field `conditional_on_id` is skipped
+            # because it might not exist yet (depending on the order of the arguments)
             for argument in function.get("arguments", []):
                 arg = Argument(
                     name=argument["name"],
@@ -541,9 +568,22 @@ class Algorithms(AlgorithmBaseResource):
                     type_=argument["type"],
                     has_default_value=argument.get("has_default_value", False),
                     default_value=argument.get("default_value", None),
+                    conditional_operator=argument.get("conditional_operator", None),
+                    conditional_value=argument.get("conditional_value", None),
+                    is_frontend_only=argument.get("is_frontend_only", False),
                     function_id=func.id,
                 )
                 arg.save()
+            # after creating the arguments, all have had their IDs assigned so we can
+            # now set the column `conditional_on_id`
+            for argument in function.get("arguments", []):
+                arg = Argument.get_by_name(argument["name"], func.id)
+                if argument.get("conditional_on"):
+                    conditional_on = Argument.get_by_name(
+                        argument["conditional_on"], func.id
+                    )
+                    arg.conditional_on_id = conditional_on.id
+                    arg.save()
             # create the databases
             for database in function.get("databases", []):
                 db_ = Database(
@@ -783,6 +823,9 @@ class Algorithm(AlgorithmBaseResource):
                   documentation_url:
                     type: string
                     description: URL to the algorithm documentation
+                  submission_comments:
+                    type: string
+                    description: Comments done by the developer to the submission
                   functions:
                     type: array
                     description: List of functions that are available in the algorithm.
@@ -803,6 +846,9 @@ class Algorithm(AlgorithmBaseResource):
                           type: string
                           description: Type of function. Can be 'central' or
                             'federated'
+                        standalone:
+                          type: boolean
+                          description: Whether this function produces useful results when running it by itself
                         databases:
                           type: array
                           description: List of databases that this function
@@ -848,6 +894,24 @@ class Algorithm(AlgorithmBaseResource):
                                   should match the 'type' field, e.g. if 'type' is
                                   'integer', 'default_value' should be an integer.
                                   To set an empty (null) default value, use None.
+                              conditional_on:
+                                type: string
+                                description: Name of the argument that this argument
+                                  is conditional on.
+                              conditional_operator:
+                                type: string
+                                description: Comparator used for the conditional
+                                  argument. Can be one of '==', '!=', '>', '<', '>=',
+                                  '<='.
+                              conditional_value:
+                                type: string
+                                description: Value that the argument should be compared
+                                  to.
+                              is_frontend_only:
+                                type: boolean
+                                description: Frontend-only arguments are displayed in
+                                  the UI, but are not passed to the algorithm. Default
+                                  is false.
                         ui_visualizations:
                           type: array
                           description: List of visualizations that are available in
@@ -930,6 +994,7 @@ class Algorithm(AlgorithmBaseResource):
             "vantage6_version",
             "code_url",
             "documentation_url",
+            "submission_comments",
         ]
         for field in fields:
             if field in data and data.get(field) is not None:
@@ -962,10 +1027,14 @@ class Algorithm(AlgorithmBaseResource):
                     name=new_function["name"],
                     description=new_function.get("description", ""),
                     type_=new_function["type"],
+                    standalone=new_function.get("standalone", True),
                     algorithm_id=id,
                 )
                 func.save()
 
+                # create arguments. Note that the field `conditional_on_id` is skipped
+                # because it might not exist yet (depending on the order of the
+                # arguments)
                 for argument in new_function.get("arguments", []):
                     arg = Argument(
                         name=argument["name"],
@@ -974,9 +1043,23 @@ class Algorithm(AlgorithmBaseResource):
                         type_=argument["type"],
                         has_default_value=argument.get("has_default_value", False),
                         default_value=argument.get("default_value", None),
+                        conditional_operator=argument.get("conditional_operator", None),
+                        conditional_value=argument.get("conditional_value", None),
+                        is_frontend_only=argument.get("is_frontend_only", False),
                         function_id=func.id,
                     )
                     arg.save()
+                # after creating the arguments, all have had their IDs assigned so we
+                # can now set the column `conditional_on_id`
+                for argument in function.get("arguments", []):
+                    arg = Argument.get_by_name(argument["name"], func.id)
+                    if argument.get("conditional_on"):
+                        conditional_on = Argument.get_by_name(
+                            argument["conditional_on"], func.id
+                        )
+                        arg.conditional_on_id = conditional_on.id
+                        arg.save()
+                # Create databases and visualizations
                 for database in new_function.get("databases", []):
                     db = Database(
                         name=database["name"],

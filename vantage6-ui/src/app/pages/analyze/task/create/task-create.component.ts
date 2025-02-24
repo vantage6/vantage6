@@ -1,7 +1,15 @@
-import { AfterViewInit, ChangeDetectorRef, Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AfterViewInit, ChangeDetectorRef, Component, HostBinding, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
-import { Algorithm, ArgumentType, AlgorithmFunction, Argument, FunctionType } from 'src/app/models/api/algorithm.model';
+import {
+  Algorithm,
+  ArgumentType,
+  AlgorithmFunction,
+  Argument,
+  FunctionType,
+  AlgorithmFunctionExtended,
+  ConditionalArgComparatorType
+} from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { BaseNode, NodeStatus } from 'src/app/models/api/node.model';
@@ -15,14 +23,15 @@ import {
   getTaskDatabaseFromForm,
   getDatabaseTypesFromForm
 } from 'src/app/pages/analyze/task/task.helper';
+import { readFile } from 'src/app/helpers/file.helper';
 import { DatabaseStepComponent } from './steps/database-step/database-step.component';
 import { FilterStepComponent } from './steps/filter-step/filter-step.component';
 import { NodeService } from 'src/app/services/node.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
-import { MatStepper } from '@angular/material/stepper';
+import { MatStepper, MatStepperIcon, MatStep, MatStepLabel, MatStepperNext, MatStepperPrevious } from '@angular/material/stepper';
 import { SnackbarService } from 'src/app/services/snackbar.service';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { Collaboration } from 'src/app/models/api/collaboration.model';
 import { BaseStudy, StudyOrCollab } from 'src/app/models/api/study.model';
 import { BaseOrganization } from 'src/app/models/api/organization.model';
@@ -31,11 +40,60 @@ import { MAX_ATTEMPTS_RENEW_NODE, SECONDS_BETWEEN_ATTEMPTS_RENEW_NODE } from 'sr
 import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 import { EncryptionService } from 'src/app/services/encryption.service';
 import { environment } from 'src/environments/environment';
+import { isTruthy } from 'src/app/helpers/utils.helper';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { NgIf, NgFor, NgTemplateOutlet } from '@angular/common';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { MatIcon } from '@angular/material/icon';
+import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
+import { MatSelect } from '@angular/material/select';
+import { MatOption } from '@angular/material/core';
+import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatInput } from '@angular/material/input';
+import { AlertComponent } from '../../../../components/alerts/alert/alert.component';
+import { NumberOnlyDirective } from '../../../../directives/numberOnly.directive';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { HighlightedTextPipe } from '../../../../pipes/highlighted-text.pipe';
 
 @Component({
-  selector: 'app-task-create',
-  templateUrl: './task-create.component.html',
-  styleUrls: ['./task-create.component.scss']
+    selector: 'app-task-create',
+    templateUrl: './task-create.component.html',
+    styleUrls: ['./task-create.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    imports: [
+        PageHeaderComponent,
+        NgIf,
+        MatCard,
+        MatCardContent,
+        MatStepper,
+        MatStepperIcon,
+        MatIcon,
+        MatStep,
+        ReactiveFormsModule,
+        MatStepLabel,
+        MatFormField,
+        MatLabel,
+        MatSelect,
+        MatOption,
+        NgFor,
+        MatButton,
+        MatStepperNext,
+        MatInput,
+        MatIconButton,
+        MatSuffix,
+        AlertComponent,
+        MatStepperPrevious,
+        DatabaseStepComponent,
+        PreprocessingStepComponent,
+        FilterStepComponent,
+        NumberOnlyDirective,
+        MatCheckbox,
+        MatProgressSpinner,
+        NgTemplateOutlet,
+        TranslateModule,
+        HighlightedTextPipe
+    ]
 })
 export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   @HostBinding('class') class = 'card-container';
@@ -59,7 +117,9 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   algorithm: Algorithm | null = null;
   collaboration?: Collaboration | null = null;
   organizations: BaseOrganization[] = [];
-  function: AlgorithmFunction | null = null;
+  functions: AlgorithmFunctionExtended[] = [];
+  filteredFunctions: AlgorithmFunctionExtended[] = [];
+  function: AlgorithmFunctionExtended | null = null;
   node: BaseNode | null = null;
   columns: string[] = [];
   isLoading: boolean = true;
@@ -74,14 +134,12 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   studyForm = this.fb.nonNullable.group({
     studyOrCollabID: ['', Validators.required]
   });
-  packageForm = this.fb.nonNullable.group({
-    algorithmSpec: ['', Validators.required],
+  functionForm = this.fb.nonNullable.group({
+    algorithmFunctionSpec: ['', Validators.required],
+    algorithmFunctionSearch: '',
+    organizationIDs: ['', Validators.required],
     name: ['', Validators.required],
     description: ''
-  });
-  functionForm = this.fb.nonNullable.group({
-    functionName: ['', Validators.required],
-    organizationIDs: ['', Validators.required]
   });
   databaseForm = this.fb.nonNullable.group({});
   preprocessingForm = this.fb.array([]);
@@ -178,21 +236,28 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     // set algorithm step
-    this.packageForm.controls.name.setValue(this.repeatedTask.name);
-    this.packageForm.controls.description.setValue(this.repeatedTask.description);
+    this.functionForm.controls.name.setValue(this.repeatedTask.name);
+    this.functionForm.controls.description.setValue(this.repeatedTask.description);
     let algorithm = this.algorithms.find((_) => _.image === this.repeatedTask?.image);
     if (!algorithm && this.repeatedTask?.image.includes('@sha256:')) {
       // get algorithm including digest
       algorithm = this.algorithms.find((_) => `${_.image}@${_.digest}` === this.repeatedTask?.image);
     }
     if (!algorithm || !algorithm.algorithm_store_id) return;
-    const algoSpec = this.getAlgoSpec(algorithm);
-    this.packageForm.controls.algorithmSpec.setValue(algoSpec);
     await this.handleAlgorithmChange(algorithm.id, algorithm.algorithm_store_id);
     // set function step
     if (!this.repeatedTask.input) return;
-    this.functionForm.controls.functionName.setValue(this.repeatedTask?.input?.method);
-    await this.handleFunctionChange(this.repeatedTask.input?.method);
+
+    const func =
+      this.functions.find(
+        (_) =>
+          _.name === this.repeatedTask?.input?.method &&
+          _.algorithm_id == algorithm.id &&
+          _.algorithm_store_id == algorithm.algorithm_store_id
+      ) || null;
+    if (!func) return;
+    this.functionForm.controls.algorithmFunctionSpec.setValue(this.getAlgorithmFunctionSpec(func));
+    await this.handleFunctionChange(this.repeatedTask.input?.method, algorithm.id, algorithm.algorithm_store_id);
     if (!this.function) return;
     const organizationIDs = this.repeatedTask.runs.map((_) => _.organization?.id).toString();
     this.functionForm.controls.organizationIDs.setValue(organizationIDs);
@@ -245,8 +310,30 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  getAlgoSpec(algorithm: Algorithm): string {
-    return `${algorithm.id}_${algorithm.algorithm_store_id}`;
+  search() {
+    const value = this.functionForm.controls.algorithmFunctionSearch.value;
+    this.filteredFunctions = this.functions.filter((func) => {
+      const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
+      const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
+      return [func.algorithm_name, func.type, storeName, func.display_name, func.name].some((val) =>
+        val?.toLowerCase()?.includes(value.toLowerCase())
+      );
+    });
+  }
+
+  clearFunctionSearchInput() {
+    this.functionForm.controls.algorithmFunctionSearch.setValue('');
+    this.search();
+  }
+
+  getFunctionOptionLabel(func: AlgorithmFunctionExtended): string {
+    const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
+    const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
+    return `${this.getDisplayName(func)} <div class="detail-txt"> | ${func.algorithm_name}, ${storeName}, ${func.type}</div>`;
+  }
+
+  getAlgorithmFunctionSpec(func: AlgorithmFunctionExtended): string {
+    return `${func.name}__${func.algorithm_id}__${func.algorithm_store_id}`;
   }
 
   async handleDatabaseStepInitialized(): Promise<void> {
@@ -284,7 +371,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   async submitTask(): Promise<void> {
     if (
       this.studyForm.invalid ||
-      this.packageForm.invalid ||
       this.functionForm.invalid ||
       this.databaseForm.invalid ||
       this.preprocessingForm.invalid ||
@@ -307,7 +393,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       Object.keys(this.parameterForm.controls).forEach((control) => {
         if (control === arg.name) {
           const value = this.parameterForm.get(control)?.value;
-          if (arg.has_default_value && value === null) {
+          if (arg.is_frontend_only || (arg.has_default_value && value === null)) {
             return; // note that within .forEach, return is like continue
           } else if (arg.type === ArgumentType.Json) {
             kwargs[arg.name] = JSON.parse(value);
@@ -343,8 +429,8 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     const createTask: CreateTask = {
-      name: this.packageForm.controls.name.value,
-      description: this.packageForm.controls.description.value,
+      name: this.functionForm.controls.name.value,
+      description: this.functionForm.controls.description.value,
       image: image,
       collaboration_id: this.collaboration?.id || -1,
       databases: taskDatabases,
@@ -427,12 +513,17 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     return (
       !this.shouldShowColumnDropdown(argument) &&
       !this.shouldShowOrganizationDropdown(argument) &&
-      !this.shouldShowParameterBooleanInput(argument)
+      !this.shouldShowParameterBooleanInput(argument) &&
+      !this.shouldShowParameterJsonInput(argument)
     );
   }
 
   shouldIncludeFormField(argument: Argument): boolean {
-    return !this.shouldShowParameterBooleanInput(argument) && !this.shouldShowMultipleInput(argument);
+    return (
+      !this.shouldShowParameterBooleanInput(argument) &&
+      !this.shouldShowMultipleInput(argument) &&
+      !this.shouldShowParameterJsonInput(argument)
+    );
   }
 
   shouldShowMultipleInput(argument: Argument): boolean {
@@ -442,6 +533,10 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       argument.type === this.argumentType.StringList ||
       (argument.type === this.argumentType.ColumnList && this.columns.length === 0 && this.hasLoadedColumns)
     );
+  }
+
+  shouldShowParameterJsonInput(argument: Argument): boolean {
+    return argument.type === this.argumentType.Json;
   }
 
   shouldShowParameterBooleanInput(argument: Argument): boolean {
@@ -477,7 +572,8 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
   getFormArrayControls(argument: Argument) {
     if ((this.parameterForm.get(argument.name) as FormArray).controls === undefined) {
-      this.parameterForm.setControl(argument.name, this.fb.array([this.getNewControlForInputList(argument)]));
+      const initialControl = argument.has_default_value ? [] : [this.getNewControlForInputList(argument)];
+      this.parameterForm.setControl(argument.name, this.fb.array(initialControl));
     }
     return (this.parameterForm.get(argument.name) as FormArray).controls;
   }
@@ -503,6 +599,40 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       id2 = id2.toString();
     }
     return id1 === id2;
+  }
+
+  sortArgumentsForDisplay(arguments_: Argument[] | undefined) {
+    if (!arguments_) return undefined;
+    // first order by ID
+    arguments_ = arguments_.sort((a, b) => a.id - b.id);
+    // Sort the parameters of the function such that parameters that are conditional on
+    // others are just behind those
+    for (let idx = 0; idx < arguments_.length; idx++) {
+      const arg = arguments_[idx];
+      if (arg?.conditional_on_id) {
+        // Find the idx in the list of the one it is conditional on
+        const conditionalIdx = arguments_.findIndex((condArg) => condArg.id === arg.conditional_on_id);
+        if (conditionalIdx > idx) {
+          [arguments_[idx], arguments_[conditionalIdx]] = [arguments_[conditionalIdx], arguments_[idx]];
+          idx = -1;
+        }
+      }
+    }
+    return arguments_;
+  }
+
+  async selectedJsonFile(event: Event, argument: Argument): Promise<void> {
+    const selectedFile = (event.target as HTMLInputElement).files?.item(0) || null;
+
+    if (!selectedFile) return;
+    const fileData = await readFile(selectedFile);
+
+    this.parameterForm.controls[`${argument.name}`].setValue(fileData || '');
+    this.parameterForm.controls[`${argument.name}_jsonFileName`].setValue(selectedFile.name || '');
+  }
+
+  getJsonFileName(argument: Argument): string {
+    return this.parameterForm.controls[`${argument.name}_jsonFileName`].value;
   }
 
   compareStudyOrCollabForSelection(val1: number | string, val2: number | string): boolean {
@@ -535,15 +665,78 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.collaboration?.algorithm_stores && this.collaboration.algorithm_stores.length > 1) {
       const store_name = this.collaboration.algorithm_stores.find((_) => _.url === algorithm.algorithm_store_url)?.name;
       if (store_name) {
-        return `(${store_name})`;
+        return `${store_name}`;
       }
     }
     return '';
   }
 
+  getDisplayName(obj: AlgorithmFunction | Argument): string {
+    return obj.display_name && obj.display_name != '' ? obj.display_name : obj.name;
+  }
+
+  shouldDisplayArgument(function_: AlgorithmFunction | null, argument: Argument): boolean {
+    // argument should not be displayed if it is conditional on another and the
+    // condition is not fulfilled
+    if (!argument.conditional_on_id) {
+      return true;
+    }
+    const conditionalArg = function_?.arguments.find((arg: Argument) => arg.id === argument.conditional_on_id);
+    if (!conditionalArg) {
+      return true;
+    }
+    let curConditionalValue = this.parameterForm.get(conditionalArg.name)?.value;
+    // cast the values (if necessary)
+    let conditionDatabaseValue: string | number | boolean | undefined;
+    if (conditionalArg.type === ArgumentType.Boolean) {
+      conditionDatabaseValue = isTruthy(argument.conditional_value);
+      curConditionalValue = isTruthy(curConditionalValue);
+    } else if (conditionalArg.type === ArgumentType.Float || conditionalArg.type === ArgumentType.Integer) {
+      conditionDatabaseValue = Number(argument.conditional_value);
+      curConditionalValue = Number(curConditionalValue);
+    } else {
+      conditionDatabaseValue = argument.conditional_value;
+    }
+    // evaluate the condition
+    if (argument.conditional_operator === ConditionalArgComparatorType.Equal) {
+      return conditionDatabaseValue === curConditionalValue;
+    } else if (argument.conditional_operator === ConditionalArgComparatorType.NotEqual) {
+      return conditionDatabaseValue !== curConditionalValue;
+    } else if (conditionDatabaseValue) {
+      if (argument.conditional_operator === ConditionalArgComparatorType.GreaterThan) {
+        return conditionDatabaseValue > curConditionalValue;
+      } else if (argument.conditional_operator === ConditionalArgComparatorType.GreaterThanOrEqual) {
+        return conditionDatabaseValue >= curConditionalValue;
+      } else if (argument.conditional_operator === ConditionalArgComparatorType.LessThan) {
+        return conditionDatabaseValue < curConditionalValue;
+      } else if (argument.conditional_operator === ConditionalArgComparatorType.LessThanOrEqual) {
+        return conditionDatabaseValue <= curConditionalValue;
+      }
+    }
+    // fallback - just display it, but should never get here
+    return true;
+  }
+
   private async initData(): Promise<void> {
     this.collaboration = this.chosenCollaborationService.collaboration$.value;
-    this.algorithms = await this.algorithmService.getAlgorithms();
+    const algorithmsObj = await this.algorithmService.getAlgorithms();
+    this.algorithms = algorithmsObj;
+    this.functions = algorithmsObj.flatMap((curAlgorithm) => {
+      return (
+        curAlgorithm.functions
+          // TODO v5+ remove the func.standalone === undefined check. After v5+ the standalone property should be set for all functions
+          .filter((func) => func.standalone || func.standalone === undefined)
+          .map((func) => {
+            return {
+              ...func,
+              algorithm_id: curAlgorithm.id,
+              algorithm_name: curAlgorithm.name,
+              algorithm_store_id: curAlgorithm.algorithm_store_id
+            };
+          })
+      );
+    });
+    this.filteredFunctions = this.functions;
     this.node = await this.getOnlineNode();
 
     // set default for study step: full collaboration (this is not visible but required
@@ -557,14 +750,12 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       }
     });
 
-    this.packageForm.controls.algorithmSpec.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (algorithmSpec) => {
-      const [algorithmID, algorithmStoreID] = algorithmSpec.split('_');
-      this.handleAlgorithmChange(Number(algorithmID), Number(algorithmStoreID));
-    });
-
-    this.functionForm.controls.functionName.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (functionName) => {
-      this.handleFunctionChange(functionName);
-    });
+    this.functionForm.controls.algorithmFunctionSpec.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(async (algorithmFunctionSpec) => {
+        const [functionName, algorithmID, algorithmStoreID] = algorithmFunctionSpec.split('__');
+        this.handleFunctionChange(String(functionName), Number(algorithmID), Number(algorithmStoreID));
+      });
 
     this.nodeStatusUpdateSubscription = this.socketioConnectService
       .getNodeStatusUpdates()
@@ -605,23 +796,25 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     this.algorithm = this.algorithms.find((_) => _.id === algorithmID && _.algorithm_store_id == algoStoreID) || null;
   }
 
-  private handleFunctionChange(functionName: string): void {
-    //Clear form
+  private handleFunctionChange(functionName: string, algorithmID: number, algoStoreID: number): void {
+    // Clear form
     this.clearFunctionStep(); //Also clear function step, so user needs to reselect organization
     this.clearDatabaseStep();
     this.clearPreprocessingStep(); // this depends on the database, so it should be cleared
     this.clearFilterStep();
     this.clearParameterStep();
 
-    //Get selected function
-    const selectedFunction = this.algorithm?.functions.find((_) => _.name === functionName) || null;
+    this.algorithm = this.algorithms.find((_) => _.id === algorithmID && _.algorithm_store_id == algoStoreID) || null;
+    // Get selected function
+    const selectedFunction =
+      this.functions.find((_) => _.name === functionName && _.algorithm_id == algorithmID && _.algorithm_store_id == algoStoreID) || null;
 
     if (selectedFunction) {
-      //Add form controls for parameters for selected function
+      // Add form controls for parameters for selected function
       addParameterFormControlsForFunction(selectedFunction, this.parameterForm);
     }
 
-    //Delay setting function, so that form controls are added
+    // Delay setting function, so that form controls are added
     this.function = selectedFunction;
   }
 

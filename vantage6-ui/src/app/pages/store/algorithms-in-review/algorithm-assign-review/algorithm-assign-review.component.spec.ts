@@ -8,10 +8,9 @@ describe('AlgorithmAssignReviewComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [AlgorithmAssignReviewComponent]
-    })
-    .compileComponents();
-    
+      imports: [AlgorithmAssignReviewComponent]
+    }).compileComponents();
+
     fixture = TestBed.createComponent(AlgorithmAssignReviewComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

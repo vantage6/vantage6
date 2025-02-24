@@ -1,9 +1,12 @@
 import { Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { MatIcon } from '@angular/material/icon';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
-import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { Router, RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Subject, combineLatest, takeUntil } from 'rxjs';
-import { SearchRequest } from 'src/app/components/table/table.component';
+import { PageHeaderComponent } from 'src/app/components/page-header/page-header.component';
+import { SearchRequest, TableComponent } from 'src/app/components/table/table.component';
 import { getApiSearchParameters } from 'src/app/helpers/api.helper';
 import { unlikeApiParameter } from 'src/app/helpers/general.helper';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
@@ -23,7 +26,8 @@ enum TableRows {
 
 @Component({
   selector: 'app-session-list',
-  templateUrl: './session-list.component.html'
+  templateUrl: './session-list.component.html',
+  imports: [PageHeaderComponent, TableComponent, MatCard, MatCardContent, MatIcon, TranslateModule, MatPaginator, RouterLink]
 })
 export class SessionListComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

@@ -8,9 +8,8 @@ describe('NodeAdminCardComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [NodeAdminCardComponent]
-    })
-    .compileComponents();
+      imports: [NodeAdminCardComponent]
+    }).compileComponents();
 
     fixture = TestBed.createComponent(NodeAdminCardComponent);
     component = fixture.componentInstance;

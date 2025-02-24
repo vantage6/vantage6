@@ -164,7 +164,7 @@ def _handle_password_recovery(
 
     # check that email has not already been sent recently
     email_sent_recently = user.last_email_recover_password_sent and (
-        dt.datetime.now()
+        dt.datetime.now(dt.timezone.utc)
         < user.last_email_recover_password_sent
         + dt.timedelta(minutes=minutes_between_password_reset_emails)
     )
@@ -198,7 +198,7 @@ def _handle_password_recovery(
         )
 
     # Update last password reset email sent date
-    user.last_email_recover_password_sent = dt.datetime.now()
+    user.last_email_recover_password_sent = dt.datetime.now(dt.timezone.utc)
     user.save()
 
 

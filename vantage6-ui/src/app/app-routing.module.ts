@@ -519,7 +519,7 @@ const routes: Routes = [
         component: ReviewReadComponent,
         canActivate: [authenticationGuard(), chosenStoreGuard()],
         data: {
-          crumbs: [['algorithm-in-review.title'], routePaths.algorithmReviews, ['algorithm-review.title']]
+          crumbs: [['algorithm-in-review.title'], routePaths.algorithmReviews, ['algorithm-review.breadcrumb-title']]
         }
       },
       {
@@ -527,7 +527,7 @@ const routes: Routes = [
         component: ReviewSubmitComponent,
         canActivate: [authenticationGuard(), chosenStoreGuard()],
         data: {
-          crumbs: [['algorithm-in-review.title'], routePaths.algorithmReviews, ['algorithm-review.title']]
+          crumbs: [['algorithm-in-review.title'], routePaths.algorithmReviews, ['algorithm-review.breadcrumb-title']]
         }
       },
       {
