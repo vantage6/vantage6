@@ -376,10 +376,12 @@ class AlgorithmStoreApp:
                 log.warning("Policy '%s' is not a valid policy, skipping", policy)
                 continue
             elif isinstance(policy_value, list):
+                log.debug("Setting multiple policies for %s:", policy)
+                log.debug(", ".join(policy_value))
                 for value in policy_value:
-                    log.debug("Setting policy %s to %s", policy, value)
                     db.Policy(key=policy, value=value).save()
             else:
+                log.debug("Setting policy %s to %s", policy, policy_value)
                 db.Policy(key=policy, value=policy_value).save()
 
         # if the 'allow_localhost' policy is set to false, remove any whitelisted
