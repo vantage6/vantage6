@@ -5,6 +5,7 @@ from http import HTTPStatus
 from socket import SocketIO
 from flask import request, g
 from flask_restful import Api
+from marshmallow import ValidationError
 
 from vantage6.common import logger_name
 from vantage6.common.enum import RunStatus
@@ -152,14 +153,15 @@ class KillTask(ServicesResources):
 
         tags: ["Task"]
         """
-        body = request.get_json()
+        body = request.get_json(silent=True)
 
         # validate request body
-        errors = kill_task_schema.validate(body)
-        if errors:
+        try:
+            body = kill_task_schema.load(body)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         id_ = body.get("id")
@@ -240,13 +242,14 @@ class KillNodeTasks(ServicesResources):
 
         tags: ["Task"]
         """
-        body = request.get_json()
+        body = request.get_json(silent=True)
         # validate request body
-        errors = kill_node_tasks_schema.validate(body)
-        if errors:
+        try:
+            body = kill_node_tasks_schema.load(body)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         id_ = body.get("id")

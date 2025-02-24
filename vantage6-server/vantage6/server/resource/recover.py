@@ -7,6 +7,7 @@ from flask import request, render_template, g, current_app, Flask
 from flask_jwt_extended import create_access_token, decode_token
 from flask_restful import Api
 from flask_mail import Mail
+from marshmallow import ValidationError
 from jwt.exceptions import DecodeError
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -234,13 +235,14 @@ class ResetPassword(ServicesResources):
 
         tags: ["Account recovery"]
         """
-        body = request.get_json()
+        body = request.get_json(silent=True)
         # validate request body
-        errors = reset_pw_schema.validate(body)
-        if errors:
+        try:
+            body = reset_pw_schema.load(body)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         reset_token = body.get("reset_token")
@@ -305,14 +307,15 @@ class RecoverPassword(ServicesResources):
             "msg": "If the username or email is in our database you "
             "will soon receive an email."
         }
-        body = request.get_json()
+        body = request.get_json(silent=True)
 
         # validate request body
-        errors = recover_pw_schema.validate(body)
-        if errors:
+        try:
+            body = recover_pw_schema.load(body)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # obtain username/email from request
@@ -364,14 +367,15 @@ class ResetTwoFactorSecret(ServicesResources):
         tags: ["Account recovery"]
         """
         # retrieve user based on email or username
-        body = request.get_json()
+        body = request.get_json(silent=True)
 
         # validate request body
-        errors = reset_2fa_schema.validate(body)
-        if errors:
+        try:
+            body = reset_2fa_schema.load(body)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # obtain user
@@ -419,14 +423,15 @@ class RecoverTwoFactorSecret(ServicesResources):
         tags: ["Account recovery"]
         """
         # obtain parameters from request
-        body = request.get_json()
+        body = request.get_json(silent=True)
 
         # validate request body
-        errors = recover_2fa_schema.validate(body)
-        if errors:
+        try:
+            body = recover_2fa_schema.load(body)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         username = body.get("username")
@@ -517,13 +522,14 @@ class ChangePassword(ServicesResources):
 
         tags: ["Account recovery"]
         """
-        body = request.get_json()
+        body = request.get_json(silent=True)
         # validate request body
-        errors = change_pw_schema.validate(body)
-        if errors:
+        try:
+            body = change_pw_schema.load(body)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         old_password = body.get("current_password")
@@ -604,14 +610,15 @@ class ResetAPIKey(ServicesResources):
 
         tags: ["Account recovery"]
         """
-        body = request.get_json()
+        body = request.get_json(silent=True)
 
         # validate request body
-        errors = reset_api_key_schema.validate(body)
-        if errors:
+        try:
+            body = reset_api_key_schema.load(body)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         id_ = body["id"]

@@ -4,6 +4,7 @@ import sqlalchemy.exc
 from http import HTTPStatus
 from flask import g, request
 from flask_restful import Api
+from marshmallow import ValidationError
 from sqlalchemy import select
 
 from vantage6.common import logger_name
@@ -393,13 +394,14 @@ class Users(UserBase):
 
         tags: ["User"]
         """
-        data = request.get_json()
+        data = request.get_json(silent=True)
         # validate request body
-        errors = user_input_schema.validate(data)
-        if errors:
+        try:
+            data = user_input_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # check unique constraints
@@ -626,14 +628,16 @@ class User(UserBase):
         if not user:
             return {"msg": f"user id={id} not found"}, HTTPStatus.NOT_FOUND
 
-        data = request.get_json()
+        data = request.get_json(silent=True)
         # validate request body
-        errors = user_input_schema.validate(data, partial=True)
-        if errors:
+        try:
+            data = user_input_schema.load(data, partial=True)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
+
         if data.get("password"):
             return {
                 "msg": "You cannot change your password here!"
