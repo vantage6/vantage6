@@ -40,7 +40,7 @@ import { FilterStepComponent } from './steps/filter-step/filter-step.component';
 import { NodeService } from 'src/app/services/node.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
-import { MatStep, MatStepper } from '@angular/material/stepper';
+import { MatStepper, MatStepperIcon, MatStep, MatStepLabel, MatStepperNext, MatStepperPrevious } from '@angular/material/stepper';
 import { SnackbarService } from 'src/app/services/snackbar.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Collaboration } from 'src/app/models/api/collaboration.model';
@@ -58,16 +58,17 @@ import { PageHeaderComponent } from '../../page-header/page-header.component';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatIcon } from '@angular/material/icon';
 import { AlertComponent } from '../../alerts/alert/alert.component';
-import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
-import { NgFor, NgIf } from '@angular/common';
+import { NgFor, NgIf, NgTemplateOutlet } from '@angular/common';
 import { MatInput } from '@angular/material/input';
-import { MatButton } from '@angular/material/button';
+import { MatButton, MatIconButton } from '@angular/material/button';
 import { isTruthy } from 'src/app/helpers/utils.helper';
 import { HighlightedTextPipe } from 'src/app/pipes/highlighted-text.pipe';
 import { readFile } from 'src/app/helpers/file.helper';
+import { NumberOnlyDirective } from 'src/app/directives/numberOnly.directive';
 
 @Component({
   selector: 'app-create-form',
@@ -81,9 +82,13 @@ import { readFile } from 'src/app/helpers/file.helper';
     FilterStepComponent,
     MatCard,
     MatCardContent,
-    MatStepper,
     MatIcon,
     MatStep,
+    MatStepper,
+    MatStepperIcon,
+    MatStepperNext,
+    MatStepperPrevious,
+    MatStepLabel,
     MatFormField,
     MatLabel,
     MatSelect,
@@ -98,6 +103,10 @@ import { readFile } from 'src/app/helpers/file.helper';
     ReactiveFormsModule,
     NgIf,
     NgFor,
+    MatIconButton,
+    MatSuffix,
+    NumberOnlyDirective,
+    NgTemplateOutlet,
     HighlightedTextPipe
   ]
 })
