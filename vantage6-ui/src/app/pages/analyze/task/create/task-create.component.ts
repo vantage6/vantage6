@@ -13,7 +13,7 @@ import { FormCreateComponent } from 'src/app/components/forms/compute-form/creat
 @Component({
   selector: 'app-task-create',
   templateUrl: './task-create.component.html',
-  styleUrls: ['./task-create.component.scss'],
+  styleUrls: ['../../../../components/forms/compute-form/create-form.component.scss'],
   encapsulation: ViewEncapsulation.None,
   imports: [ReactiveFormsModule, TranslateModule, FormCreateComponent]
 })

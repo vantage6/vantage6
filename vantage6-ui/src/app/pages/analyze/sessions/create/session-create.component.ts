@@ -19,6 +19,7 @@ import { MatOption } from '@angular/material/core';
 import { Subject, takeUntil } from 'rxjs';
 import { StudyService } from 'src/app/services/study.service';
 import { TranslateService } from '@ngx-translate/core';
+import { MatInput } from '@angular/material/input';
 
 @Component({
   selector: 'app-session-create',
@@ -35,6 +36,8 @@ import { TranslateService } from '@ngx-translate/core';
     ReactiveFormsModule,
     MatOption,
     MatCardContent,
+    MatInput,
+    MatSelect,
     TranslateModule
   ]
 })

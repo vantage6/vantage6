@@ -1,4 +1,6 @@
+import { NgIf } from '@angular/common';
 import { Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { MatButton } from '@angular/material/button';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatIcon } from '@angular/material/icon';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
@@ -27,7 +29,18 @@ enum TableRows {
 @Component({
   selector: 'app-session-list',
   templateUrl: './session-list.component.html',
-  imports: [PageHeaderComponent, TableComponent, MatCard, MatCardContent, MatIcon, TranslateModule, MatPaginator, RouterLink]
+  imports: [
+    PageHeaderComponent,
+    TableComponent,
+    MatCard,
+    MatCardContent,
+    MatIcon,
+    TranslateModule,
+    MatPaginator,
+    RouterLink,
+    NgIf,
+    MatButton
+  ]
 })
 export class SessionListComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

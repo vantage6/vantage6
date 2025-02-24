@@ -53,8 +53,10 @@ import { AlertComponent } from '../../alerts/alert/alert.component';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { MatCheckbox } from '@angular/material/checkbox';
-import { MatSpinner } from '@angular/material/progress-spinner';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { NgFor, NgIf } from '@angular/common';
+import { MatInput } from '@angular/material/input';
+import { MatButton } from '@angular/material/button';
 
 @Component({
   selector: 'app-create-form',
@@ -76,7 +78,10 @@ import { NgFor, NgIf } from '@angular/common';
     MatSelect,
     MatOption,
     MatCheckbox,
-    MatSpinner,
+    MatProgressSpinner,
+    MatInput,
+    MatSelect,
+    MatButton,
     TranslateModule,
     RouterLink,
     ReactiveFormsModule,

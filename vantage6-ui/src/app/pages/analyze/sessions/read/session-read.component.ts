@@ -3,11 +3,11 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { routePaths } from 'src/app/routes';
 import { MatDialog } from '@angular/material/dialog';
 import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
-import { Subject, Subscription, takeUntil, timer } from 'rxjs';
+import { Subject, Subscription, takeUntil } from 'rxjs';
 import { printDate } from 'src/app/helpers/general.helper';
 import { StudyService } from 'src/app/services/study.service';
 import { Study } from 'src/app/models/api/study.model';
@@ -18,12 +18,13 @@ import { UserService } from 'src/app/services/user.service';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { PageHeaderComponent } from 'src/app/components/page-header/page-header.component';
-import { MatMenu, matMenuAnimations, MatMenuTrigger } from '@angular/material/menu';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatIcon } from '@angular/material/icon';
 import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
 import { MatAccordion, MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelTitle } from '@angular/material/expansion';
-import { MatSpinner } from '@angular/material/progress-spinner';
-import { NgIf } from '@angular/common';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { NgFor, NgIf } from '@angular/common';
+import { MatButton, MatIconButton } from '@angular/material/button';
 
 @Component({
   selector: 'app-session-read',
@@ -43,9 +44,14 @@ import { NgIf } from '@angular/common';
     MatAccordion,
     MatExpansionPanelHeader,
     MatExpansionPanelTitle,
-    MatSpinner,
+    MatProgressSpinner,
     MatPaginator,
-    NgIf
+    NgIf,
+    NgFor,
+    PageHeaderComponent,
+    MatIconButton,
+    MatMenuItem,
+    MatButton
   ]
 })
 export class SessionReadComponent implements OnInit, OnDestroy {
