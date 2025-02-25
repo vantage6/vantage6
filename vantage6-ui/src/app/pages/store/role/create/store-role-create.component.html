@@ -1,0 +1,19 @@
+<app-page-header title="{{ 'store-role-create.title' | translate }}"></app-page-header>
+<ng-container *ngIf="!isSubmitting; else loading">
+  <mat-card>
+    <mat-card-content>
+      <app-store-role-form
+        [selectableRules]="selectableRules"
+        (submitted)="handleSubmit($event)"
+        (cancelled)="handleCancel()"
+      ></app-store-role-form>
+    </mat-card-content>
+  </mat-card>
+</ng-container>
+<ng-template #loading>
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-template>

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { GetStoreRoleParameters, StoreRole, StoreRoleLazyProperties } from '../models/api/store-role.model';
+import { GetStoreRoleParameters, StoreRole, StoreRoleCreate, StoreRoleForm, StoreRoleLazyProperties } from '../models/api/store-role.model';
 import { Pagination } from '../models/api/pagination.model';
 import { getLazyProperties } from '../helpers/api.helper';
 
@@ -30,4 +30,11 @@ export class StoreRoleService {
 
     return role;
   }
+
+  async createRole(store_url: string, roleForm: StoreRoleForm): Promise<StoreRole> {
+      const roleCreate: StoreRoleCreate = {
+        ...roleForm
+      };
+      return await this.apiService.postForAlgorithmApi<StoreRole>(store_url, `/role`, roleCreate);
+    }
 }

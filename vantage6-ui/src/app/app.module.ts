@@ -125,6 +125,7 @@ import { StoreUserFormComponent } from './components/forms/store-user-form/store
 import { BaseCreateComponent } from './components/admin-base/base-create/base-create.component';
 import { StoreRoleListComponent } from './pages/store/role/list/store-role-list.component';
 import { StoreRoleReadComponent } from './pages/store/role/read/store-role-read.component';
+import { StoreRoleCreateComponent } from './pages/store/role/create/store-role-create.component';
 import { AlgorithmInReviewListComponent } from './pages/store/algorithms-in-review/algorithm-in-review-list/algorithm-in-review-list.component';
 import { AlgorithmAssignReviewComponent } from './pages/store/algorithms-in-review/algorithm-assign-review/algorithm-assign-review.component';
 import { ReviewReadComponent } from './pages/store/algorithms-in-review/review-read/review-read.component';
@@ -132,6 +133,7 @@ import { ReviewSubmitComponent } from './pages/store/algorithms-in-review/review
 import { MyPendingAlgorithmsComponent } from './pages/store/algorithms-in-review/my-pending-algorithms/my-pending-algorithms.component';
 import { OldAlgorithmListComponent } from './pages/store/algorithm/old-list/old-algorithm-list.component';
 import { NodeAdminCardComponent } from './components/helpers/node-admin-card/node-admin-card.component';
+import { StoreRoleFormComponent } from './components/forms/store-role-form/store-role-form.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -224,9 +226,11 @@ export function HttpLoaderFactory(http: HttpClient) {
     PermissionsMatrixServerComponent,
     PermissionsMatrixStoreComponent,
     StoreUserFormComponent,
+    StoreRoleFormComponent,
     BaseCreateComponent,
     StoreRoleListComponent,
     StoreRoleReadComponent,
+    StoreRoleCreateComponent,
     AlgorithmInReviewListComponent,
     AlgorithmAssignReviewComponent,
     ReviewReadComponent,
