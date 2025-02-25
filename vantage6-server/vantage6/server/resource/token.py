@@ -14,6 +14,7 @@ from flask_jwt_extended import (
     get_jwt_identity,
 )
 from flask_restful import Api
+from marshmallow import ValidationError
 from http import HTTPStatus
 
 from vantage6 import server
@@ -139,13 +140,14 @@ class UserToken(ServicesResources):
         """
         log.debug("Authenticate user using username and password")
 
-        body = request.get_json()
+        body = request.get_json(silent=True)
         # validate request body
-        errors = user_token_input_schema.validate(body)
-        if errors:
+        try:
+            body = user_token_input_schema.load(body)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # Check JSON body
@@ -234,13 +236,14 @@ class NodeToken(ServicesResources):
         """
         log.debug("Authenticate Node using api key")
 
-        body = request.get_json()
+        body = request.get_json(silent=True)
         # validate request body
-        errors = node_token_input_schema.validate(body)
-        if errors:
+        try:
+            body = node_token_input_schema.load(body)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # Check JSON body
@@ -284,13 +287,14 @@ class ContainerToken(ServicesResources):
         """
         log.debug("Creating a token for a container running on a node")
 
-        body = request.get_json()
+        body = request.get_json(silent=True)
         # validate request body
-        errors = algorithm_token_input_schema.validate(body)
-        if errors:
+        try:
+            body = algorithm_token_input_schema.load(body)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         task_id = body.get("task_id")

@@ -1,7 +1,9 @@
 import logging
 
+from http import HTTPStatus
 from flask import g, request
 from flask_restful import Api
+from marshmallow import ValidationError
 from http import HTTPStatus
 from sqlalchemy import select
 
@@ -171,14 +173,15 @@ class Vantage6Servers(AlgorithmStoreResources):
 
         tags: ["Vantage6 Server"]
         """
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
         # validate the request body
-        errors = v6_server_input_schema.validate(data)
-        if errors:
+        try:
+            data = v6_server_input_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # Check with the policies if the server is allowed to be whitelisted
