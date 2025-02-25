@@ -91,6 +91,29 @@ jobs:
           cd vantage6-ui/
           npm version --no-git-tag-version --allow-same-version $version
 
+      - name: Update Helm charts version
+        env:
+          version: ${{ steps.split.outputs.version }}
+        run: |
+          # Update common chart
+          sed -i "s/appVersion: \"0.0.0\"/appVersion: \"${version}\"/" charts/common/Chart.yaml
+          sed -i "s/version: 0.0.0/version: ${version}/" charts/common/Chart.yaml
+
+          # Update node chart and its dependency
+          sed -i "s/appVersion: \"0.0.0\"/appVersion: \"${version}\"/" charts/node/Chart.yaml
+          sed -i "s/version: 0.0.0/version: ${version}/" charts/node/Chart.yaml
+          sed -i "/name: common/,/repository:/ s/version: .*/version: \"${version}\"/" charts/node/Chart.yaml
+
+          # Update store chart and its dependency
+          sed -i "s/appVersion: \"0.0.0\"/appVersion: \"${version}\"/" charts/store/Chart.yaml
+          sed -i "s/version: 0.0.0/version: ${version}/" charts/store/Chart.yaml
+          sed -i "/name: common/,/repository:/ s/version: .*/version: \"${version}\"/" charts/store/Chart.yaml
+
+          # Update server chart and its dependency
+          sed -i "s/appVersion: \"0.0.0\"/appVersion: \"${version}\"/" charts/server/Chart.yaml
+          sed -i "s/version: 0.0.0/version: ${version}/" charts/server/Chart.yaml
+          sed -i "/name: common/,/repository:/ s/version: .*/version: \"${version}\"/" charts/server/Chart.yaml
+
       - name: commit
         env:
           version: ${{ steps.split.outputs.version }}
@@ -128,6 +151,38 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           prerelease: ${{ env.stage != '' }}
+
+  # Build and push Helm charts
+  helm-charts:
+    runs-on: ubuntu-latest
+    needs: version
+    env:
+      branch: ${{ needs.version.outputs.branch }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.branch }}
+
+      - name: Login to harbor2.vantage6.ai
+        env:
+          USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          PASSWORD: ${{ secrets.DOCKER_TOKEN }}
+        run: docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
+
+      - name: Build Helm charts
+        run: |
+          helm package charts/common
+          helm package charts/node
+          helm package charts/store
+          helm package charts/server
+
+      - name: Push Helm charts
+        run: |
+          helm push charts/common harbor2.vantage6.ai/infrastructure/common
+          helm push charts/node harbor2.vantage6.ai/infrastructure/node
+          helm push charts/store harbor2.vantage6.ai/infrastructure/store
+          helm push charts/server harbor2.vantage6.ai/infrastructure/server
 
   support-images:
     name: Build support images
