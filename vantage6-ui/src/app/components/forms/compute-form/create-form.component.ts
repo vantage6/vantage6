@@ -24,7 +24,7 @@ import {
 } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, Subscription, takeUntil } from 'rxjs';
-import { BaseNode, NodeStatus } from 'src/app/models/api/node.model';
+import { BaseNode, Database, NodeStatus } from 'src/app/models/api/node.model';
 import { ColumnRetrievalInput, CreateTask, CreateTaskInput, Task, TaskDatabase } from 'src/app/models/api/task.models';
 import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
@@ -35,7 +35,6 @@ import {
   getTaskDatabaseFromForm,
   getDatabaseTypesFromForm
 } from 'src/app/pages/analyze/task/task.helper';
-import { DatabaseStepComponent } from './steps/database-step/database-step.component';
 import { FilterStepComponent } from './steps/filter-step/filter-step.component';
 import { NodeService } from 'src/app/services/node.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
@@ -69,6 +68,7 @@ import { isTruthy } from 'src/app/helpers/utils.helper';
 import { HighlightedTextPipe } from 'src/app/pipes/highlighted-text.pipe';
 import { readFile } from 'src/app/helpers/file.helper';
 import { NumberOnlyDirective } from 'src/app/directives/numberOnly.directive';
+import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
 
 @Component({
   selector: 'app-create-form',
@@ -77,7 +77,6 @@ import { NumberOnlyDirective } from 'src/app/directives/numberOnly.directive';
   imports: [
     PageHeaderComponent,
     AlertComponent,
-    DatabaseStepComponent,
     PreprocessingStepComponent,
     FilterStepComponent,
     MatCard,
@@ -120,7 +119,6 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   @Input() availableSteps: AvailableSteps = {
     session: false,
     study: false,
-    package: false,
     function: false,
     database: false,
     dataframe: false,
@@ -136,8 +134,6 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   preprocessingStep?: PreprocessingStepComponent;
   @ViewChild(FilterStepComponent)
   filterStep?: FilterStepComponent;
-  @ViewChild(DatabaseStepComponent)
-  databaseStepComponent?: DatabaseStepComponent;
   @ViewChild('stepper') private myStepper: MatStepper | null = null;
 
   destroy$ = new Subject();
@@ -158,6 +154,8 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   function: AlgorithmFunctionExtended | null = null;
   dataframes: Dataframe[] = [];
   node: BaseNode | null = null;
+  availableDatabases: Database[] = [];
+
   columns: string[] = [];
   isStudyCompleted: boolean = false;
   isLoading: boolean = true;
@@ -182,7 +180,9 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     organizationIDs: [[''], Validators.required],
     description: ''
   });
-  databaseForm = this.fb.nonNullable.group({});
+  databaseForm = this.fb.nonNullable.group({
+    database: ['', Validators.required]
+  });
   dataframeForm = this.fb.nonNullable.group({
     dataframeHandle: ['', Validators.required]
   });
@@ -389,19 +389,12 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   async handleDatabaseStepInitialized(): Promise<void> {
+    // TODO get rid of this function
     if (!this.repeatedTask || !this.function) return;
     // This function is run when the database child component is initialized,
     // but it may still be null when we get here. If it is null, we wait a bit
     // and then (recursively) try again.
-    if (!this.databaseStepComponent) {
-      await new Promise((f) => setTimeout(f, 200));
-      this.handleDatabaseStepInitialized();
-      return;
-    }
-
-    // Now, setup the database step
-    // set database step for task repeat
-    this.databaseStepComponent?.setDatabasesFromPreviousTask(this.repeatedTask?.databases, this.function?.databases);
+    // TODO setup database step for repeating extraction task
 
     // retrieve column names as we dont go through the HTML steppers manually
     // (where this is otherwise triggered)
@@ -727,6 +720,10 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     return obj.display_name && obj.display_name != '' ? obj.display_name : obj.name;
   }
 
+  nodeConfigContainsDatabases(): boolean {
+    return this.node?.config.find((_) => _.key === 'database_labels') !== undefined;
+  }
+
   shouldDisplayArgument(function_: AlgorithmFunction | null, argument: Argument): boolean {
     // argument should not be displayed if it is conditional on another and the
     // condition is not fulfilled
@@ -791,6 +788,7 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     });
     this.filteredFunctions = this.functions;
     this.node = await this.getOnlineNode();
+    this.availableDatabases = getDatabasesFromNode(this.node);
 
     this.sessionForm.controls['sessionID'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (sessionID) => {
       this.handleSessionChange(sessionID);
@@ -931,9 +929,8 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  private clearDatabaseStep(): void {
-    this.databaseStepComponent?.reset();
-  }
+  // TODO this function might be removed
+  private clearDatabaseStep(): void {}
 
   private clearPreprocessingStep(): void {
     this.preprocessingStep?.clear();

@@ -17,7 +17,6 @@ export interface FormCreateOutput {
 export interface AvailableSteps {
   session: boolean;
   study: boolean;
-  package: boolean;
   function: boolean;
   database: boolean;
   dataframe: boolean;

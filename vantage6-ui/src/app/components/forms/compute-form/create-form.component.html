@@ -151,12 +151,19 @@
         <mat-step [stepControl]="databaseForm" *ngIf="shouldShowDatabaseStep && availableSteps.database">
           <ng-template matStepLabel>{{ "task-create.step-database.title" | translate }}</ng-template>
           <div class="field-description">{{ "task-create.step-database.description.database" | translate }}</div>
-          <app-database-step
-            [form]="databaseForm"
-            [functionDatabases]="function?.databases || []"
-            [node]="node"
-            (isReady)="handleDatabaseStepInitialized()"
-          ></app-database-step>
+          <form class="form" [formGroup]="databaseForm">
+            <div *ngIf="availableDatabases.length > 0; else noDatabasesBlock">
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ "task.database" | translate }}</mat-label>
+                <mat-select formControlName="database">
+                  <mat-option *ngFor="let availableDatabase of availableDatabases" [value]="availableDatabase.name">
+                    {{ availableDatabase.name }}
+                    <div class="detail-txt">({{ availableDatabase.type }})</div>
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </form>
           <div>
             <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
             <button mat-button matStepperNext (click)="retrieveColumns()">{{ "general.next" | translate }}</button>
@@ -389,5 +396,17 @@
     *ngIf="hasAlgorithmStores() && !hasAlgorithms()"
     class="node-alert"
     label="{{ 'task-create.alert-no-algorithms' | translate }}"
+  ></app-alert>
+</ng-template>
+<ng-template #noDatabasesBlock>
+  <app-alert
+    class="node-alert"
+    *ngIf="node && node.config.length === 0"
+    label="{{ 'task-create.alert-no-node-config' | translate: { name: node.name } }}"
+  ></app-alert>
+  <app-alert
+    class="node-alert"
+    *ngIf="node && node.config.length > 0 && !nodeConfigContainsDatabases()"
+    label="{{ 'task-create.alert-no-databases' | translate: { name: node.name } }}"
   ></app-alert>
 </ng-template>

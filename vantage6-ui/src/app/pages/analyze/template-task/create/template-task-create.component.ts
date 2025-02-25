@@ -7,7 +7,6 @@ import { FormBuilder, FormControl, Validators, ReactiveFormsModule } from '@angu
 import { addParameterFormControlsForFunction, getTaskDatabaseFromForm } from 'src/app/pages/analyze/task/task.helper';
 import { BaseNode } from 'src/app/models/api/node.model';
 import { Subject, takeUntil } from 'rxjs';
-import { DatabaseStepComponent } from 'src/app/components/forms/compute-form/steps/database-step/database-step.component';
 import { CreateTask, CreateTaskInput, TaskDatabase } from 'src/app/models/api/task.models';
 import { routePaths } from 'src/app/routes';
 import { TaskService } from 'src/app/services/task.service';
@@ -34,7 +33,6 @@ import { TranslateModule } from '@ngx-translate/core';
   styleUrls: ['./template-task-create.component.scss'],
   imports: [
     PageHeaderComponent,
-    DatabaseStepComponent,
     MatFormField,
     MatLabel,
     MatSelect,
@@ -60,9 +58,6 @@ import { TranslateModule } from '@ngx-translate/core';
 })
 export class TemplateTaskCreateComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
-
-  @ViewChild(DatabaseStepComponent)
-  databaseStepComponent?: DatabaseStepComponent;
 
   argumentType = ArgumentType;
   functionType = FunctionType;
@@ -284,7 +279,5 @@ export class TemplateTaskCreateComponent implements OnInit {
     this.parameterForm = this.fb.nonNullable.group({});
   }
 
-  private clearDatabaseStep(): void {
-    this.databaseStepComponent?.reset();
-  }
+  private clearDatabaseStep(): void {}
 }

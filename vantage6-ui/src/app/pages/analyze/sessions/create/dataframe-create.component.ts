@@ -26,7 +26,6 @@ export class DataframeCreateComponent implements OnInit, OnDestroy {
   availableSteps: AvailableSteps = {
     session: false,
     study: false,
-    package: true,
     function: true,
     database: true,
     dataframe: false,

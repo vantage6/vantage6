@@ -27,7 +27,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   availableSteps: AvailableSteps = {
     session: true,
     study: true,
-    package: true,
     function: true,
     database: false,
     dataframe: true,
