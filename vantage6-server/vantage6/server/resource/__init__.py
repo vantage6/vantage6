@@ -244,7 +244,10 @@ def parse_datetime(dt: str = None, default: datetime = None) -> datetime:
         Datetime object
     """
     if dt:
-        return datetime.datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S.%f")
+        converter = "%Y-%m-%dT%H:%M:%S.%f"
+        if dt.endswith("+00:00"):
+            converter += "%z"  # parse timezone
+        return datetime.datetime.strptime(dt, converter)
     return default
 
 

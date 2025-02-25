@@ -802,7 +802,7 @@ class ServerApp:
                 # Otherwise set them to offline.
                 online_status_nodes = db.Node.get_online_nodes()
                 for node in online_status_nodes:
-                    if node.last_seen < before_wait:
+                    if node.last_seen.replace(tzinfo=dt.timezone.utc) < before_wait:
                         node.status = AuthStatus.OFFLINE.value
                         node.save()
             except Exception:
