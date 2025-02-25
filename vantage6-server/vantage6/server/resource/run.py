@@ -698,9 +698,11 @@ class Run(SingleRunBase):
             }, HTTPStatus.BAD_REQUEST
 
         if run.organization_id != g.node.organization_id:
-            log.warn(
-                f"{g.node.name} tries to update a run that does not belong "
-                f"to them ({run.organization_id}/{g.node.organization_id})."
+            log.warning(
+                "%s tries to update a run that does not belong to them (%s/%s).",
+                g.node.name,
+                run.organization_id,
+                g.node.organization_id,
             )
             return {
                 "msg": "This is not your algorithm run to PATCH!"

@@ -1,13 +1,13 @@
-import { Component, HostBinding, OnInit, ViewChild } from '@angular/core';
+import { Component, HostBinding, OnInit } from '@angular/core';
 import { TemplateTask } from 'src/app/models/api/templateTask.models';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { Algorithm, AlgorithmFunction, ArgumentType, FunctionType } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { FormBuilder, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
-import { addParameterFormControlsForFunction, getTaskDatabaseFromForm } from 'src/app/pages/analyze/task/task.helper';
+import { addParameterFormControlsForFunction } from 'src/app/pages/analyze/task/task.helper';
 import { BaseNode } from 'src/app/models/api/node.model';
 import { Subject, takeUntil } from 'rxjs';
-import { CreateTask, CreateTaskInput, TaskDatabase } from 'src/app/models/api/task.models';
+import { CreateTask, CreateTaskInput } from 'src/app/models/api/task.models';
 import { routePaths } from 'src/app/routes';
 import { TaskService } from 'src/app/services/task.service';
 import { Router } from '@angular/router';
@@ -204,15 +204,15 @@ export class TemplateTaskCreateComponent implements OnInit {
       selectedOrganizations = Array.isArray(organizationIDsControl.value) ? organizationIDsControl.value : [organizationIDsControl.value];
     }
 
-    let taskDatabases: TaskDatabase[] = [];
-    if (this.templateTask?.fixed?.databases) {
-      this.templateTask.fixed.databases.forEach((fixedDatabase) => {
-        const taskDatabase: TaskDatabase = { label: fixedDatabase.name, query: fixedDatabase.query, sheet_name: fixedDatabase.sheet };
-        taskDatabases.push(taskDatabase);
-      });
-    } else {
-      taskDatabases = getTaskDatabaseFromForm(this.function, this.databaseForm);
-    }
+    // let taskDatabases: TaskDatabase[] = [];
+    // if (this.templateTask?.fixed?.databases) {
+    //   this.templateTask.fixed.databases.forEach((fixedDatabase) => {
+    //     const taskDatabase: TaskDatabase = { label: fixedDatabase.name, query: fixedDatabase.query, sheet_name: fixedDatabase.sheet };
+    //     taskDatabases.push(taskDatabase);
+    //   });
+    // } else {
+    //   // taskDatabases = getTaskDatabaseFromForm(this.function, this.databaseForm);
+    // }
 
     const input: CreateTaskInput = {
       method: this.function?.name || '',
@@ -229,7 +229,6 @@ export class TemplateTaskCreateComponent implements OnInit {
       collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
       store_id: this.algorithm?.algorithm_store_id || -1,
       server_url: environment.server_url,
-      databases: taskDatabases,
       organizations: selectedOrganizations.map((organizationID) => {
         return { id: Number.parseInt(organizationID), input: btoa(JSON.stringify(input)) || '' };
       })

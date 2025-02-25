@@ -125,12 +125,6 @@ export interface TaskResult {
   decoded_result?: object;
 }
 
-export interface TaskDatabase {
-  label: string;
-  query?: string;
-  sheet_name?: string;
-}
-
 export interface CreateTask {
   name: string;
   description: string;
@@ -140,7 +134,6 @@ export interface CreateTask {
   study_id?: number;
   store_id: number;
   server_url: string;
-  databases: TaskDatabase[];
   organizations: CreateTaskOrganization[];
 }
 

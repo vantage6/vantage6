@@ -1,4 +1,4 @@
-import { CreateTaskOrganization, TaskDatabase } from '../api/task.models';
+import { CreateTaskOrganization } from '../api/task.models';
 
 export interface FormCreateOutput {
   name: string;
@@ -9,7 +9,7 @@ export interface FormCreateOutput {
   study_id?: number;
   store_id?: number;
   server_url?: string;
-  databases?: TaskDatabase[];
+  database?: string;
   dataframes?: any[];
   organizations?: CreateTaskOrganization[];
 }

@@ -864,9 +864,12 @@ class DockerTaskManager(DockerBaseManager):
             )
             ok = False
 
-        if source_database["label"] not in self.databases:
+        if source_database["label"] not in self.databases.keys():
             self.log.error(
-                "The database used in the data extraction step does not exist."
+                "The database '%s' used in the data extraction step does not exist. "
+                "Available databases are: %s",
+                source_database["label"],
+                self.databases.keys(),
             )
             ok = False
 

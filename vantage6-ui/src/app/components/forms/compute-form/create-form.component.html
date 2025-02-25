@@ -48,16 +48,15 @@
                 </mat-option>
               </mat-select>
             </mat-form-field>
+            <!-- TODO only show back buttons if there actually IS a step before it (which depends on the type of action)
+                Also check other steps -->
             <div>
               <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
               <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
             </div>
           </form>
         </mat-step>
-        <mat-step
-          [stepControl]="functionForm"
-          *ngIf="availableSteps.function && algorithm && algorithm?.functions && algorithm.functions.length > 0"
-        >
+        <mat-step [stepControl]="functionForm" *ngIf="availableSteps.function">
           <form class="form" [formGroup]="functionForm">
             <ng-template matStepLabel>{{ "task-create.step-function.title" | translate }}</ng-template>
             <div class="field-description">{{ "task-create.step-function.description.function" | translate }}</div>
@@ -129,7 +128,7 @@
               <div class="field-description">{{ "task-create.step-package.description.name" | translate }}</div>
               <mat-form-field subscriptSizing="dynamic">
                 <mat-label>{{ "task.name" | translate }}</mat-label>
-                <input matInput type="text" formControlName="name" />
+                <input matInput type="text" formControlName="taskName" />
               </mat-form-field>
               <div class="field-description">{{ "task-create.step-package.description.description" | translate }}</div>
               <mat-form-field subscriptSizing="dynamic">

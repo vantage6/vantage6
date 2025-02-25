@@ -60,7 +60,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
       collaboration_id: _.collaboration_id || -1,
       store_id: _.store_id || -1,
       server_url: _.server_url || '-',
-      databases: _.databases || [],
       organizations: _.organizations || []
       //TODO: Add preprocessing and filtering when backend is ready
     };

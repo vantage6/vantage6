@@ -29,9 +29,9 @@ export class DataframeCreateComponent implements OnInit, OnDestroy {
     function: true,
     database: true,
     dataframe: false,
-    preprocessing: true,
-    filter: true,
-    parameter: false
+    preprocessing: false,
+    filter: false,
+    parameter: true
   };
 
   destroy$ = new Subject();
@@ -94,7 +94,7 @@ export class DataframeCreateComponent implements OnInit, OnDestroy {
     let session_id: number = Number(this.sessionId);
     const dataframeInput: any = {
       handle: formCreateOutput?.name || '',
-      label: formCreateOutput?.name || '',
+      label: formCreateOutput?.database || '',
       //TODO(BART/RIAN) RIAN: Add component parameters for conditional 'Name', 'Label', 'Description' etc and process this in form-create.component
       // description: '',
       task: {

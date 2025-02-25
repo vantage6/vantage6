@@ -5,11 +5,11 @@ import {
   EventEmitter,
   HostBinding,
   Input,
-  input,
   OnDestroy,
   OnInit,
   Output,
-  ViewChild
+  ViewChild,
+  ViewEncapsulation
 } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
@@ -25,16 +25,12 @@ import {
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { BaseNode, Database, NodeStatus } from 'src/app/models/api/node.model';
-import { ColumnRetrievalInput, CreateTask, CreateTaskInput, Task, TaskDatabase } from 'src/app/models/api/task.models';
+import { CreateTaskInput, Task } from 'src/app/models/api/task.models';
 import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
 import { Router, RouterLink } from '@angular/router';
 import { PreprocessingStepComponent } from './steps/preprocessing-step/preprocessing-step.component';
-import {
-  addParameterFormControlsForFunction,
-  getTaskDatabaseFromForm,
-  getDatabaseTypesFromForm
-} from 'src/app/pages/analyze/task/task.helper';
+import { addParameterFormControlsForFunction } from 'src/app/pages/analyze/task/task.helper';
 import { FilterStepComponent } from './steps/filter-step/filter-step.component';
 import { NodeService } from 'src/app/services/node.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
@@ -74,6 +70,7 @@ import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
   selector: 'app-create-form',
   templateUrl: './create-form.component.html',
   styleUrls: ['./create-form.component.scss'],
+  encapsulation: ViewEncapsulation.None,
   imports: [
     PageHeaderComponent,
     AlertComponent,
@@ -176,8 +173,8 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   functionForm = this.fb.nonNullable.group({
     algorithmFunctionSpec: ['', Validators.required],
     algorithmFunctionSearch: '',
-    functionName: ['', Validators.required],
     organizationIDs: [[''], Validators.required],
+    taskName: ['', Validators.required],
     description: ''
   });
   databaseForm = this.fb.nonNullable.group({
@@ -287,7 +284,7 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     // set algorithm step
-    this.functionForm.controls.functionName.setValue(this.repeatedTask.name);
+    this.functionForm.controls.taskName.setValue(this.repeatedTask.name);
     this.functionForm.controls.description.setValue(this.repeatedTask.description);
     let algorithm = this.algorithms.find((_) => _.image === this.repeatedTask?.image);
     if (!algorithm && this.repeatedTask?.image.includes('@sha256:')) {
@@ -299,7 +296,6 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     await this.handleAlgorithmChange(algorithm.id, algorithm.algorithm_store_id);
     // set function step
     if (!this.repeatedTask.input) return;
-    this.functionForm.controls.functionName.setValue(this.repeatedTask?.input?.method);
     const func =
       this.functions.find(
         (_) =>
@@ -427,8 +423,6 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   async submitTask(): Promise<void> {
-    const taskDatabases: TaskDatabase[] = getTaskDatabaseFromForm(this.function, this.databaseForm);
-
     // setup input for task. Parse string to JSON if needed
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const kwargs: any = {};
@@ -476,12 +470,12 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     const formCreateOutput: FormCreateOutput = {
-      name: this.functionForm.controls.functionName.value,
+      name: this.functionForm.controls.taskName.value,
       description: this.functionForm.controls.description.value,
       image: image,
       session_id: Number.parseInt(this.sessionForm.controls.sessionID.value),
       collaboration_id: this.collaboration?.id || -1,
-      databases: taskDatabases,
+      database: this.databaseForm.controls.database.value,
       store_id: this.algorithm?.algorithm_store_id || -1,
       server_url: environment.server_url,
       organizations: selectedOrganizations.map((organizationID) => {
