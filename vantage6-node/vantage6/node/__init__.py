@@ -188,11 +188,6 @@ class Node:
                 self.log.info("Error during attempt %s", try_number)
                 self.log.info("%s: %s", type(e), e)
 
-                # TODO use error codes to refine exception handling in this method
-                #
-                #   48 is platform dependent
-                # if e.errno == 48:
-
                 proxy_port = random.randint(2048, 16384)
                 self.log.warning("Retrying with a different port: %s", proxy_port)
                 os.environ["PROXY_SERVER_PORT"] = str(proxy_port)
@@ -203,15 +198,13 @@ class Node:
                 )
                 self.log.exception(e)
                 # After a non-os related exception there shouldn't be more retries
-                raise
+                exit(1)
 
         if not port_assigned:
             self.log.error(
                 f"Unable to assing a port for the node proxy after {try_number} attempts"
             )
-            raise OSError(
-                f"Unable to assing a port for the node proxy after {try_number} attempts"
-            )
+            exit(1)
 
     def sync_task_queue_with_server(self) -> None:
         """Get all unprocessed tasks from the server for this node."""
