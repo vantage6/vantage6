@@ -1,10 +1,10 @@
 <form class="form store-role-form" [formGroup]="form" (ngSubmit)="handleSubmit()">
   <mat-form-field subscriptSizing="dynamic">
-    <mat-label>{{ "store-role-create.formlabels.name" | translate }}</mat-label>
+    <mat-label>{{ "role-create.formlabels.name" | translate }}</mat-label>
     <input matInput type="text" formControlName="name" />
   </mat-form-field>
   <mat-form-field subscriptSizing="dynamic">
-    <mat-label>{{ "store-role-create.formlabels.description" | translate }}</mat-label>
+    <mat-label>{{ "role-create.formlabels.description" | translate }}</mat-label>
     <input matInput type="text" formControlName="description" />
   </mat-form-field>
   <app-permissions-matrix-store
