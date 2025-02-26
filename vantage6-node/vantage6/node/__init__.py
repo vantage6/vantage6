@@ -691,7 +691,7 @@ class Node:
         encryption_config = self.config.get("encryption")
         if encryption_config:
             if encryption_config.get("enabled") is not None:
-                config_to_share["encryption"] = encryption_config.get("enabled")
+                config_to_share["encryption"] = str(encryption_config.get("enabled"))
 
         # share node policies (e.g. who can run which algorithms)
         policies = self.config.get("policies", {})
