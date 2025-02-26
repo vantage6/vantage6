@@ -3,18 +3,42 @@ from http import HTTPStatus
 
 
 class UnauthorizedError(Exception):
+    """
+    Exception raised for unauthorized access errors.
+
+    Attributes:
+        message (str): Explanation of the error.
+        status_code (HTTPStatus): HTTP status code for the error.
+    """
+
     def __init__(self, message):
         self.message = message
         self.status_code = HTTPStatus.UNAUTHORIZED
 
 
 class NotFoundError(Exception):
+    """
+    Exception raised for not found errors.
+
+    Attributes:
+        message (str): Explanation of the error.
+        status_code (HTTPStatus): HTTP status code for the error.
+    """
+
     def __init__(self, message):
         self.message = message
         self.status_code = HTTPStatus.NOT_FOUND
 
 
 class BadRequestError(Exception):
+    """
+    Exception raised for bad request errors.
+
+    Attributes:
+        message (str): Explanation of the error.
+        status_code (HTTPStatus): HTTP status code for the error.
+    """
+
     def __init__(self, message):
         self.message = message
         self.status_code = HTTPStatus.BAD_REQUEST
