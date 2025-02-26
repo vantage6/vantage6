@@ -370,7 +370,7 @@ class Tasks(TaskBase):
 
         if "init_org_id" in args:
             init_org_id = int(args["init_org_id"])
-            if not self.r.can_for_org(P.VIEW, init_org_id):
+            if not self.r.allowed_for_org(P.VIEW, init_org_id):
                 return {
                     "msg": "You lack the permission to view tasks "
                     f"from organization id={init_org_id}!"
@@ -384,7 +384,7 @@ class Tasks(TaskBase):
                 return {
                     "msg": f"User id={init_user_id} does not " "exist!"
                 }, HTTPStatus.BAD_REQUEST
-            elif not self.r.can_for_org(P.VIEW, init_user.organization_id) and not (
+            elif not self.r.allowed_for_org(P.VIEW, init_user.organization_id) and not (
                 self.r.v_own.can() and g.user and init_user.id == g.user.id
             ):
                 return {
@@ -1112,7 +1112,7 @@ class Task(TaskBase):
         schema = self._select_schema()
 
         # check permissions
-        if not self.r.can_for_org(P.VIEW, task.init_org_id) and not (
+        if not self.r.allowed_for_org(P.VIEW, task.init_org_id) and not (
             self.r.v_own.can() and g.user and task.init_user_id == g.user.id
         ):
             return {
@@ -1121,7 +1121,7 @@ class Task(TaskBase):
         # if results are included, check permissions for results
         if (
             self.is_included("results")
-            and not self.r_run.can_for_org(P.VIEW, task.init_org_id)
+            and not self.r_run.allowed_for_org(P.VIEW, task.init_org_id)
             and not (self.r.v_own.can() and g.user and task.init_user_id == g.user.id)
         ):
             return {
@@ -1177,7 +1177,7 @@ class Task(TaskBase):
             return {"msg": f"Task id={id} not found"}, HTTPStatus.NOT_FOUND
 
         # validate permissions
-        if not self.r.can_for_org(P.DELETE, task.init_org_id) and not (
+        if not self.r.allowed_for_org(P.DELETE, task.init_org_id) and not (
             self.r.d_own.can() and task.init_user_id == g.user.id
         ):
             return {
