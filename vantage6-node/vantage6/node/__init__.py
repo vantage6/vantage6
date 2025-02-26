@@ -179,22 +179,36 @@ class Node:
 
             try:
                 http_server.serve_forever()
+                port_assinged = True
 
             except OSError as e:
                 self.log.info("Error during attempt %s", try_number)
                 self.log.info("%s: %s", type(e), e)
 
-                if e.errno == 48:
-                    proxy_port = random.randint(2048, 16384)
-                    self.log.warning("Retrying with a different port: %s", proxy_port)
-                    os.environ["PROXY_SERVER_PORT"] = str(proxy_port)
+                # TODO use error codes to refine exception handling in this method
+                #
+                #   48 is platform dependent
+                # if e.errno == 48:
 
-                else:
-                    raise
+                proxy_port = random.randint(2048, 16384)
+                self.log.warning("Retrying with a different port: %s", proxy_port)
+                os.environ["PROXY_SERVER_PORT"] = str(proxy_port)
 
             except Exception as e:
-                self.log.error("Proxyserver could not be started or crashed!")
+                self.log.error(
+                    "Proxyserver could not be started due to an unexpected error!"
+                )
                 self.log.exception(e)
+                # After a non-os related exception there shouldn't be more retries
+                raise
+
+        if not port_assinged:
+            self.log.error(
+                f"Unable to assing a port for the node proxy after {try_number} attempts"
+            )
+            raise OSError(
+                f"Unable to assing a port for the node proxy after {try_number} attempts"
+            )
 
     def sync_task_queue_with_server(self) -> None:
         """Get all unprocessed tasks from the server for this node."""
