@@ -172,7 +172,7 @@ class Node:
 
         # this is where we try to find a port for the proxyserver
 
-        port_assinged = False
+        port_assigned = False
 
         for try_number in range(5):
             self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)
@@ -182,7 +182,7 @@ class Node:
 
             try:
                 http_server.serve_forever()
-                port_assinged = True
+                port_assigned = True
 
             except OSError as e:
                 self.log.info("Error during attempt %s", try_number)
@@ -205,7 +205,7 @@ class Node:
                 # After a non-os related exception there shouldn't be more retries
                 raise
 
-        if not port_assinged:
+        if not port_assigned:
             self.log.error(
                 f"Unable to assing a port for the node proxy after {try_number} attempts"
             )
