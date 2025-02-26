@@ -587,7 +587,8 @@ class UserClient(ClientBase):
                 by default False
             session_restrict_to_same_image: bool, optional
                 Whenever the collaboration should restrict sessions to use the same
-                image for data-extraction, pre-processing and compute tasks
+                image for data-extraction, pre-processing and compute tasks, by 
+                default False
             field: str, optional
                 Which data field to keep in the result. For instance, "field='name'"
                 will only return the name of the collaboration. Default is None.
