@@ -37,4 +37,17 @@ export class StoreRoleService {
       };
       return await this.apiService.postForAlgorithmApi<StoreRole>(store_url, `/role`, roleCreate);
     }
+
+  async patchRole(store_url: string, role: StoreRole): Promise<StoreRole | null> {
+    try {
+          const requestBody: StoreRoleForm = {
+            name: role.name,
+            description: role.description,
+            rules: role.rules.map((rule) => rule.id)
+          };
+          return await this.apiService.patchForAlgorithmApi<StoreRole>(store_url, `/role/${role.id}`, requestBody);
+        } catch {
+          return null;
+        }
+  }
 }

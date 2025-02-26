@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs';
 import { BaseReadComponent } from 'src/app/components/admin-base/base-read/base-read.component';
-import { OperationType, StoreResourceType, StoreRule } from 'src/app/models/api/rule.model';
+import { OperationType, Rule_, StoreResourceType, StoreRule } from 'src/app/models/api/rule.model';
 import { StoreRole, StoreRoleLazyProperties } from 'src/app/models/api/store-role.model';
 import { TableData } from 'src/app/models/application/table.model';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
@@ -21,11 +21,18 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
   isEditing: boolean = false;
   role: StoreRole | null = null;
   roleRules: StoreRule[] = [];
+  allRules: StoreRule[] = [];
   userTable?: TableData;
+
+  /* Bound variables to permission matrix. */
+  preselectedRules: StoreRule[] = [];
+  selectableRules: StoreRule[] = [];
+  fixedSelectedRules: StoreRule[] = [];
+
+  changedRules?: StoreRule[];
 
   constructor(
     protected override handleConfirmDialogService: HandleConfirmDialogService,
-    private router: Router,
     private storeRoleService: StoreRoleService,
     private storeRuleService: StoreRuleService,
     protected override translateService: TranslateService,
@@ -50,11 +57,33 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
     const store = this.chosenStoreService.store$.value;
     if (!store) return;
     this.role = await this.storeRoleService.getRole(store?.url, this.id, [StoreRoleLazyProperties.Users]);
-    this.roleRules = await this.storeRuleService.getRules(store?.url, { role_id: this.id });
+    this.allRules = await this.storeRuleService.getRules(store?.url);
+    this.roleRules = await this.storeRuleService.getRules(store?.url, {role_id: this.id});
     this.setPermissions();
     this.setUpUserTable();
-
+    this.enterEditMode(false);
     this.isLoading = false;
+  }
+
+  private enterEditMode(edit: boolean): void {
+    this.isEditing = edit;
+    if (edit) {
+      this.preselectedRules = this.roleRules;
+      this.fixedSelectedRules = [];
+      this.selectableRules = this.allRules;
+    } else {
+      this.preselectedRules = [];
+      this.fixedSelectedRules = this.roleRules;
+      this.selectableRules = this.roleRules;
+    }
+  }
+
+  public handleEnterEditMode(): void {
+    this.enterEditMode(true);
+  }
+
+  public handleCancelEdit(): void {
+    this.enterEditMode(false);
   }
 
   private setPermissions(): void {
@@ -69,6 +98,24 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
   public get showUserTable(): boolean {
     return this.userTable != undefined && this.userTable.rows.length > 0;
   }
+
+  public handleChangedSelection(rules: Rule_[]): void {
+    console.log('handleChangedSelection called with rules:', rules);
+    this.changedRules = rules as StoreRule[];
+    console.log('changedRules updated to:', this.changedRules);
+  }
+
+  public async handleSubmitEdit(): Promise<void> {
+      if (!this.role || !this.changedRules) return;
+      console.log('handleSubmitEdit called with role:', this.role, 'and changedRules:', this.changedRules);
+      const store = this.chosenStoreService.store$.value;
+      if (!store) return;
+      this.isLoading = true;
+      const role: StoreRole = { ...this.role, rules: this.changedRules };
+      await this.storeRoleService.patchRole(store.url, role);
+      this.changedRules = [];
+      this.initData();
+    }
 
   private setUpUserTable(): void {
     if (!this.role || !this.role.users) return;
@@ -85,5 +132,14 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
         }
       }))
     };
+  }
+
+  public get editEnabled(): boolean {
+    return this.canEdit && !this.role?.is_default_role;
+  }
+
+  getDefaultRoleLabel(): string {
+    if (!this.role) return '';
+    return this.role.is_default_role ? this.translateService.instant('general.yes') : this.translateService.instant('general.no');
   }
 }

@@ -13,6 +13,7 @@ export interface StoreRole {
   name: string;
   rules: StoreRule[];
   users?: StoreUser[];
+  is_default_role: boolean;
 }
 
 export interface GetStoreRoleParameters {
