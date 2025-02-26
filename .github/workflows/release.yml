@@ -141,13 +141,16 @@ jobs:
         with:
           ref: ${{ env.branch }}
 
+      - name: Set up Helm
+        uses: azure/setup-helm@v1
+
       - name: Login to harbor2.vantage6.ai
         env:
           USERNAME: ${{ secrets.DOCKER_USERNAME }}
           PASSWORD: ${{ secrets.DOCKER_TOKEN }}
-        run: docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
+        run: helm registry login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
 
-      - name: Build Helm charts
+      - name: Package Helm charts
         run: |
           helm package charts/common
           helm package charts/node
@@ -156,10 +159,10 @@ jobs:
 
       - name: Push Helm charts
         run: |
-          helm push charts/common harbor2.vantage6.ai/infrastructure/common
-          helm push charts/node harbor2.vantage6.ai/infrastructure/node
-          helm push charts/store harbor2.vantage6.ai/infrastructure/store
-          helm push charts/server harbor2.vantage6.ai/infrastructure/server
+          helm push charts/common oci://harbor2.vantage6.ai/infrastructure
+          helm push charts/node oci://harbor2.vantage6.ai/infrastructure
+          helm push charts/store oci://harbor2.vantage6.ai/infrastructure
+          helm push charts/server oci://harbor2.vantage6.ai/infrastructure
 
   support-images:
     name: Build support images
