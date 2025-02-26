@@ -7,6 +7,8 @@ fixtures.
 
 from vantage6.client import Client
 from pathlib import Path
+from vantage6.cli.globals import PACKAGE_FOLDER, APPNAME
+from jinja2 import Environment, FileSystemLoader
 
 
 dev_dir = Path("dev") / ".data"
@@ -15,114 +17,120 @@ dev_dir.mkdir(exist_ok=True)
 client = Client("http://localhost", 7601, "/server", log_level="error")
 client.authenticate("root", "root")
 
+NUMBER_OF_NODES = 2
+
+
+def create_organization(index):
+    name = f"org_{index}"
+    if org := next(iter(client.organization.list(name=name)["data"]), None):
+        print(f"==> organization `{name}` already exists")
+        return org
+    else:
+        print(f"==> Creating `{name}`")
+        org = client.organization.create(
+            name=name,
+            address1=f"address 1 {index}",
+            address2=f"address 2 {index}",
+            zipcode=f"1234AB {index}",
+            country="NL",
+            domain=f"org{index}.org",
+        )
+        return org
+
+
+def create_user(index, organization):
+    username = f"user_{index}"
+    if user := next(iter(client.user.list(username=username)["data"]), None):
+        print(f"==> user `{username}` already exists")
+        return user
+    else:
+        print(f"==> Creating `{username}`")
+        user = client.user.create(
+            username=username,
+            firstname=f"user {index}",
+            lastname=f"one {index}",
+            password="Password123!",
+            email=f"user_{index}@one.org",
+            organization=organization["id"],
+            roles=[1],  # TODO assign proper roles
+        )
+        print(f"===> Password for `{username}` is `Password123!`")
+        return user
+
+
+def create_node(index, collaboration, organization):
+    name = f"node_{index}"
+    if next(iter(client.node.list(name=name)["data"]), None):
+        print(f"==> node `{name}` already exists")
+        return
+
+    print(f"==> Creating node `{name}`")
+    print("===> Registering node at the server")
+    try:
+        node = client.node.create(
+            collaboration=collaboration["id"],
+            organization=organization["id"],
+            name=name,
+        )
+
+        print("===> Generating node configuration")
+        environment = Environment(
+            loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
+            trim_blocks=True,
+            lstrip_blocks=True,
+            autoescape=True,
+        )
+        template = environment.get_template("node_config.j2")
+
+        node_config = template.render(
+            {
+                "api_key": node["api_key"],  # Use the API key from node creation
+                "databases": {"default": "/app/databases/default.csv"},
+                "logging": {"file": f"node_{index}.log"},  # Use index in log file name
+                "port": 7601,
+                "server_url": "http://host.docker.internal",
+                "task_dir": "/tasks",
+                "api_path": "/server",
+                # TODO user defined config
+            }
+        )
+        config_file = (
+            dev_dir / f"node_org_{index}.yaml"
+        )  # Use index in config file name
+        with open(config_file, "w") as f:
+            f.write(node_config)
+
+        print(f"===> Node configuration saved to `{config_file.name}`")
+    except Exception as e:
+        print(f"Error creating node {name}: {str(e)}")
+
+
 print("=> creating organizations")
+organizations = []
+for i in range(NUMBER_OF_NODES):
+    organizations.append(create_organization(i))
 
-if org_1 := next(iter(client.organization.list(name="org 1")["data"]), None):
-    print("==> `org 1` already exists")
-else:
-    print("==> Creating `org 1`")
-    org_1 = client.organization.create(
-        name="org 1",
-        address1="address 1",
-        address2="address 2",
-        zipcode="1234AB",
-        country="NL",
-        domain="one.org",
-    )
-
-if org_2 := next(iter(client.organization.list(name="org 2")["data"]), None):
-    print("==> `org 2` already exists")
-else:
-    print("==> Creating `org 2`")
-    org_2 = client.organization.create(
-        name="org 2",
-        address1="address 1",
-        address2="address 2",
-        zipcode="1234AB",
-        country="NL",
-        domain="two.org",
-    )
 
 print("=> Creating users")
-# TODO assign proper roles
-if client.user.list(username="user1")["data"]:
-    print("==> `user1` already exists")
-else:
-    print("==> Creating `user1`")
-    user1 = client.user.create(
-        username="user1",
-        firstname="user",
-        lastname="one",
-        password="Password123!",
-        email="user_1@one.org",
-        organization=org_1["id"],
-        roles=[1],
-    )
+users = []
+for i in range(NUMBER_OF_NODES):
+    users.append(create_user(i, organizations[i]))
 
-if collab_1 := next(
+print("=> Creating collaboration")
+
+if col_1 := next(
     iter(client.collaboration.list(scope="global", name="collab 1")["data"]), None
 ):
     print("==> `collab 1` already exists")
 else:
     print("==> Creating `collab 1`")
-    collab_1 = client.collaboration.create(
+    col_1 = client.collaboration.create(
         name="collab 1",
-        organizations=[org_1["id"], org_2["id"]],
+        organizations=[org["id"] for org in organizations],
         encrypted=False,
     )
 
-from vantage6.cli.globals import PACKAGE_FOLDER, APPNAME
-from jinja2 import Environment, FileSystemLoader
 
-environment = Environment(
-    loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
-    trim_blocks=True,
-    lstrip_blocks=True,
-    autoescape=True,
-)
-template = environment.get_template("node_config.j2")
-
-if client.node.list(name="node org 1")["data"]:
-    print("==> `node org 1` already exists")
-else:
-    print("==> Registering node for `org 1`")
-    response_1 = client.node.create(
-        collaboration=collab_1["id"], organization=org_1["id"], name="node org 1"
-    )
-    node_config_1 = template.render(
-        {
-            "api_key": response_1["api_key"],
-            "databases": {"default": "/app/databases/default.csv"},
-            "logging": {"file": "node_1.log"},
-            "port": 7601,
-            "server_url": "http://host.docker.internal",
-            "task_dir": "/tasks",
-            "api_path": "/server",
-            # TODO user defined config
-        }
-    )
-    with open(dev_dir / "node_org_1.yaml", "w") as f:
-        f.write(node_config_1)
-
-
-if client.node.list(name="node org 2")["data"]:
-    print("==> `node org 2` already exists")
-else:
-    print("==> Registering node for `org 2`")
-    response_2 = client.node.create(
-        collaboration=collab_1["id"], organization=org_2["id"], name="node org 2"
-    )
-    node_config_2 = template.render(
-        {
-            "api_key": response_2["api_key"],
-            "databases": {"default": "/app/databases/default.csv"},
-            "logging": {"file": "node_2.log"},
-            "port": 7601,
-            "server_url": "http://host.docker.internal",
-            "task_dir": "/tasks",
-            "api_path": "/server",
-            # TODO user defined config
-        }
-    )
-    with open(dev_dir / "node_org_2.yaml", "w") as f:
-        f.write(node_config_2)
+print("=> Creating nodes")
+for i in range(NUMBER_OF_NODES):
+    create_node(i, col_1, organizations[i])
