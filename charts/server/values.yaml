@@ -53,7 +53,7 @@ database:
   name: vantage6
 
   #hostpath of the database mount
-  volumePath: /mnt/data
+  volumePath: /mnt/data_server
 
 ui:
 

@@ -113,7 +113,7 @@ deployments:
             secret: development-constant-secret!
 
         database:
-          volumePath: /mnt/data
+          volumePath: /mnt/data_server
 
   # The store deployment contains the store and the database.
   vantage6-store:
@@ -142,7 +142,7 @@ deployments:
         #  users can probably use the same path as in the example below. Or any other
         #  path that is accessible by the Docker daemon.
         database:
-          volumePath: /mnt/data
+          volumePath: /mnt/data_store
 
   # The node deployment should not be 'deployed' only, it should only be deployed in
   # combination with the `dev` container (The node container that is started by the
