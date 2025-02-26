@@ -130,6 +130,7 @@ export class SessionReadComponent implements OnInit, OnDestroy {
     // TODO(BART/RIAN) RIAN: When the backend response is customized the additional information about the dataframe needs to be processed here and in the template.
     this.selectedDataframe = undefined;
     this.selectedDataframe = await this.sessionService.getDataframe(Number.parseInt(this.id), handle);
+    console.log(this.selectedDataframe);
   }
 
   async addDataframe() {

@@ -9,7 +9,7 @@ export function parseDefaultPandasFormat(
   }
   const indices = Object.keys(Object.values(df)[0]);
   const rows: any = [];
-  // If the indices of the Pandas data frame are simply numbers starting at zero, do not
+  // If the indices of the Pandas dataframe are simply numbers starting at zero, do not
   // add them as first column. Indices as 0, 1, 2... are the default indices, and are
   // not interesting to display. However, if the indices are something like 'sum',
   // 'mean', 'std', etc., then they are interesting and should be displayed as a column.
