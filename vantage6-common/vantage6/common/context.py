@@ -29,6 +29,7 @@ class AppContext(metaclass=Singleton):
     #        I think the same applies to LOGGING_ENABLED
     INST_CONFIG_MANAGER = ConfigurationManager
     LOGGING_ENABLED = True
+    LOGGER_PREFIX = ""
 
     def __init__(
         self,
@@ -37,6 +38,7 @@ class AppContext(metaclass=Singleton):
         system_folders: bool = False,
         config_file: Path | str = None,
         print_log_header: bool = True,
+        logger_prefix: str = "",
     ) -> None:
         """
         Create a new AppContext instance.
@@ -56,6 +58,7 @@ class AppContext(metaclass=Singleton):
         print_log_header: bool
             Print a banner to the log file.
         """
+        self.LOGGER_PREFIX = logger_prefix
         self.initialize(
             instance_type, instance_name, system_folders, config_file, print_log_header
         )
@@ -518,7 +521,7 @@ class AppContext(metaclass=Singleton):
         # loggers in vantage6.common.log
         log_config = self.config["logging"]
 
-        format_ = log_config["format"]
+        format_ = self.LOGGER_PREFIX + log_config["format"]
         datefmt = log_config.get("datefmt", "")
 
         # make sure the log-file exists

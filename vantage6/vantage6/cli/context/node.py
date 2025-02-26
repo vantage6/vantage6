@@ -39,6 +39,7 @@ class NodeContext(AppContext):
         system_folders: bool = N_FOL,
         config_file: str = None,
         print_log_header: bool = True,
+        logger_prefix: str = "",
     ):
         super().__init__(
             InstanceType.NODE,
@@ -46,6 +47,7 @@ class NodeContext(AppContext):
             system_folders,
             config_file,
             print_log_header,
+            logger_prefix,
         )
         if print_log_header:
             self.log.info("vantage6 version '%s'", __version__)

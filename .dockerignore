@@ -1,0 +1,41 @@
+__pycache__/
+*.py[cod]
+*.ipynb_checkpoints/
+*.egg-info/
+*.egg/
+*.dist-info/
+*.ipynb
+
+# Ignore vscode files
+.vscode/
+
+# Ignore Devspave files
+devspace.yaml
+.devspace/
+dev/
+
+# Ignore Helm chart files
+charts/
+
+# Ignore Kubernetes files
+kube/
+
+# Ignore Docs
+docs/
+
+# Ignore tools
+tools/
+
+# Ignore Git files
+.git/
+.gitignore
+
+# Ignore Docker files
+docker/
+docker-compose.yml
+.dockerignore
+
+# Ignore other files
+.readthedocs.yml
+.pre-commit-config.yaml
+CITATION.cff

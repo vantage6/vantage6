@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-vantage6-server-deployment
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+{{ include "vantage6.labels" . | indent 4 }}
+    component: vantage6-server
+spec:
+  replicas: {{ .Values.server.replications }}
+  selector:
+    matchLabels:
+{{ include "vantage6.matchLabels" . | indent 6 }}
+      component: vantage6-server
+  template:
+    metadata:
+      labels:
+{{ include "vantage6.labels" . | indent 8 }}
+        component: vantage6-server
+    spec:
+      containers:
+      - name: vantage6-server
+        image: {{ .Values.server.image }}
+        ports:
+        - containerPort: {{ .Values.server.internal.port }}
+        command: [
+          "uwsgi", "--http", ":{{ .Values.server.internal.port }}", "--gevent", "1000", "--http-websockets",
+          "--master", "--callable", "app", "--disable-logging", "--wsgi-file",
+          "/vantage6/vantage6-server/vantage6/server/wsgi.py", "--pyargv",
+          "/mnt/config.yaml",
+        ]
+        volumeMounts:
+        - name: config-file
+          mountPath: /mnt/config.yaml
+          subPath: config.yaml
+
+      volumes:
+      - name: config-file
+        configMap:
+          name: {{ .Release.Name }}-vantage6-server-config

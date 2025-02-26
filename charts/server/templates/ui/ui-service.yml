@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-vantage6-frontend-service
+  namespace: {{ .Release.Namespace | quote }}
+spec:
+  selector:
+{{ include "vantage6.matchLabels" . | indent 4 }}
+    component: ui
+  ports:
+    - protocol: TCP
+      port: 80          # External port for the UI
+      targetPort: 80    # Container port for the UI
+      name: vantage6-server-frontend
+  type: ClusterIP

@@ -1,0 +1,36 @@
+store:
+  replications: 1
+
+  vantage6Server:
+    uri: http://host.docker.internal:7601/server
+    rootUser: root
+
+  policies:
+    algorithmView: public
+    allowLocalhost: 'True'
+
+  image: harbor2.vantage6.ai/infrastructure/store:latest
+
+  internal:
+    port: 7602
+
+  logging:
+    level: INFO
+
+database:
+  # The image of the database
+  image:
+    repository: postgres
+    tag: 13
+
+  # The username of the database
+  username: vantage6
+
+  # The password of the database
+  password: vantage6
+
+  # The name of the database
+  name: store
+
+  #hostpath of the database mount
+  volumePath: /mnt/data

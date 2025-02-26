@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-vantage6-postgres-deployment
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+{{ include "vantage6.labels" . | indent 4 }}
+    component: postgres
+spec:
+  selector:
+    matchLabels:
+{{ include "vantage6.matchLabels" . | indent 6 }}
+      component: postgres
+  template:
+    metadata:
+      labels:
+{{ include "vantage6.labels" . | indent 8 }}
+        component: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: "{{ .Values.database.image.repository }}:{{ .Values.database.image.tag }}"
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: {{ .Values.database.name }}
+        - name: POSTGRES_USER
+          value: {{ .Values.database.username }}
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.database.password }}
+
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+          subPath: postgres
+
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-vantage6-postgres-pvc
