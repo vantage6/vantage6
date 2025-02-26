@@ -31,7 +31,9 @@ def handle_exceptions(func):
             return {"msg": e.message}, e.status_code
         except BadRequestError as e:
             return {"msg": e.message}, e.status_code
-        except (ValueError, AttributeError) as e:
-            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
+        except Exception as e:
+            return {
+                "msg": "An unexpected error occurred: " + str(e)
+            }, HTTPStatus.INTERNAL_SERVER_ERROR
 
     return wrapper
