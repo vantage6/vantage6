@@ -67,7 +67,7 @@ jobs:
           ref: ${{ env.branch }}
           token: ${{ secrets.COMMIT_PAT }}
 
-      - name: Update version in Python packages
+      - name: Update version in Python packages and Helm charts
         id: set_versions
         env:
           build: ${{ steps.split.outputs.build }}
@@ -90,29 +90,6 @@ jobs:
         run: |
           cd vantage6-ui/
           npm version --no-git-tag-version --allow-same-version $version
-
-      - name: Update Helm charts version
-        env:
-          version: ${{ steps.split.outputs.version }}
-        run: |
-          # Update common chart
-          sed -i "s/appVersion: \"0.0.0\"/appVersion: \"${version}\"/" charts/common/Chart.yaml
-          sed -i "s/version: 0.0.0/version: ${version}/" charts/common/Chart.yaml
-
-          # Update node chart and its dependency
-          sed -i "s/appVersion: \"0.0.0\"/appVersion: \"${version}\"/" charts/node/Chart.yaml
-          sed -i "s/version: 0.0.0/version: ${version}/" charts/node/Chart.yaml
-          sed -i "/name: common/,/repository:/ s/version: .*/version: \"${version}\"/" charts/node/Chart.yaml
-
-          # Update store chart and its dependency
-          sed -i "s/appVersion: \"0.0.0\"/appVersion: \"${version}\"/" charts/store/Chart.yaml
-          sed -i "s/version: 0.0.0/version: ${version}/" charts/store/Chart.yaml
-          sed -i "/name: common/,/repository:/ s/version: .*/version: \"${version}\"/" charts/store/Chart.yaml
-
-          # Update server chart and its dependency
-          sed -i "s/appVersion: \"0.0.0\"/appVersion: \"${version}\"/" charts/server/Chart.yaml
-          sed -i "s/version: 0.0.0/version: ${version}/" charts/server/Chart.yaml
-          sed -i "/name: common/,/repository:/ s/version: .*/version: \"${version}\"/" charts/server/Chart.yaml
 
       - name: commit
         env:
