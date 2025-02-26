@@ -5,10 +5,13 @@ The `devspace` commands use this script to populate the server with basic
 fixtures.
 """
 
-from vantage6.client import Client
+import argparse
+
 from pathlib import Path
-from vantage6.cli.globals import PACKAGE_FOLDER, APPNAME
 from jinja2 import Environment, FileSystemLoader
+
+from vantage6.cli.globals import PACKAGE_FOLDER, APPNAME
+from vantage6.client import Client
 
 
 dev_dir = Path("dev") / ".data"
@@ -17,7 +20,15 @@ dev_dir.mkdir(exist_ok=True)
 client = Client("http://localhost", 7601, "/server", log_level="error")
 client.authenticate("root", "root")
 
-NUMBER_OF_NODES = 2
+parser = argparse.ArgumentParser(
+    description="Load basic fixtures for a given number of nodes"
+)
+parser.add_argument(
+    "--number-of-nodes", type=int, default=2, help="Number of nodes to create"
+)
+args = parser.parse_args()
+
+number_of_nodes = args.number_of_nodes
 
 
 def create_organization(index):
@@ -107,13 +118,13 @@ def create_node(index, collaboration, organization):
 
 print("=> creating organizations")
 organizations = []
-for i in range(NUMBER_OF_NODES):
+for i in range(number_of_nodes):
     organizations.append(create_organization(i))
 
 
 print("=> Creating users")
 users = []
-for i in range(NUMBER_OF_NODES):
+for i in range(number_of_nodes):
     users.append(create_user(i, organizations[i]))
 
 print("=> Creating collaboration")
@@ -132,5 +143,5 @@ else:
 
 
 print("=> Creating nodes")
-for i in range(NUMBER_OF_NODES):
+for i in range(number_of_nodes):
     create_node(i, col_1, organizations[i])

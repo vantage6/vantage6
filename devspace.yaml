@@ -14,7 +14,10 @@ vars:
     question: "Where is your kube config from k8s located?"
     default: ~/.kube/config
   #set to 0.0.0.0 to make the dev environment (ui, api) accessible from outside
-  PORTS_BIND_ADDRESS: "127.0.0.1" 
+  PORTS_BIND_ADDRESS: "127.0.0.1"
+  NUMBER_OF_NODES:
+    question: "How many nodes do you want to create for your development environment?"
+    default: 2
 
 pipelines:
 
@@ -48,7 +51,7 @@ pipelines:
       echo "Waiting for server to start... (30 seconds)"
       sleep 30
       python dev/delete-basic-fixtures.py
-      python dev/load-basic-fixtures.py
+      python dev/load-basic-fixtures.py --number-of-nodes $NUMBER_OF_NODES
       python dev/connect-store.py
       stop_dev --all
 
@@ -279,27 +282,32 @@ commands:
   # This command will spin up a server and store temporary to fill it with some
   # basic data.
   populate-server:
+    description: "Populate the server with fixtures for a given number of nodes"
     command: devspace run-pipeline init
 
   # This will put all components in development mode. This is the main entrypoint
   # for development.
   start-dev:
+    description: "Start the development environment"
     command: devspace dev
 
   # This will stop all components from the development mode. Note that the deployments
   # are not deleted.
   stop-dev:
+    description: "Stop the development environment"
     command: devspace reset pods
 
   # This will delete all deployments and services. This is useful when you want to
   # start from scratch.
   purge:
+    description: "Purge the development environment"
     command: devspace purge
 
   # This will build all images for this project. This is probably the first command
   # you want to run. In case you do not run it, it will pull the latest images from
   # our harbor registry (which potentially has outdated dependencies).
   rebuild:
+    description: "Rebuild all images for this project"
     command: devspace build
 
 
