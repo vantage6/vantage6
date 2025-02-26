@@ -64,14 +64,14 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     )
     api.add_resource(
         Role,
-        path + "/<int:id>",
+        path + "/<int:role_id>",
         endpoint="role_with_id",
         methods=("GET", "PATCH", "DELETE"),
         resource_class_kwargs=services,
     )
     api.add_resource(
         RoleRules,
-        path + "/<int:id>/rule/<int:rule_id>",
+        path + "/<int:role_id>/rule/<int:rule_id>",
         endpoint="role_rule_with_id",
         methods=("DELETE", "POST"),
         resource_class_kwargs=services,
@@ -235,7 +235,7 @@ class Role(AlgorithmStoreResources):
 
     @with_permission(module_name, Operation.VIEW)
     @handle_exceptions
-    def get(self, id: int):
+    def get(self, role_id: int):
         """Returns a role
         ---
 
@@ -263,12 +263,12 @@ class Role(AlgorithmStoreResources):
 
         tags: ["Role"]
         """
-        role = get_role(db, id)
+        role = get_role(db, role_id)
         return role_output_schema.dump(role, many=False), HTTPStatus.OK
 
     @with_permission(module_name, Operation.EDIT)
     @handle_exceptions
-    def patch(self, id: int):
+    def patch(self, role_id: int):
         """Updates a role
         ---
         description: >-
@@ -317,7 +317,7 @@ class Role(AlgorithmStoreResources):
         """
         data = request.get_json()
         validate_request_body(role_input_schema, data, partial=True)
-        role = get_role(db, id)
+        role = get_role(db, role_id)
         check_default_role(role, DefaultRole.list())
         role = update_role(role, data, db, self.permissions)
         role.save()
@@ -325,7 +325,7 @@ class Role(AlgorithmStoreResources):
 
     @with_permission(module_name, Operation.DELETE)
     @handle_exceptions
-    def delete(self, id: int):
+    def delete(self, role_id: int):
         """Deletes a role
         ---
 
@@ -353,7 +353,7 @@ class Role(AlgorithmStoreResources):
 
         tags: ["Role"]
         """
-        role = get_role(db, id)
+        role = get_role(db, role_id)
         check_default_role(role, DefaultRole.list())
         can_delete_dependents(role, request.args.get("delete_dependents", False))
         role.delete()
@@ -363,7 +363,7 @@ class Role(AlgorithmStoreResources):
 class RoleRules(AlgorithmStoreResources):
     @with_permission(module_name, Operation.EDIT)
     @handle_exceptions
-    def post(self, id: int, rule_id: int):
+    def post(self, role_id: int, rule_id: int):
         """Assign rule to role
         ---
 
@@ -397,7 +397,7 @@ class RoleRules(AlgorithmStoreResources):
 
         tags: ["Role"]
         """
-        role = get_role(db, id)
+        role = get_role(db, role_id)
         rule = get_rule(db, rule_id)
         self.permissions.check_user_rules([rule])
         role.rules.append(rule)
@@ -406,7 +406,7 @@ class RoleRules(AlgorithmStoreResources):
 
     @with_permission(module_name, Operation.EDIT)
     @handle_exceptions
-    def delete(self, id: int, rule_id: int):
+    def delete(self, role_id: int, rule_id: int):
         """Remove rule from role
         ---
 
@@ -440,12 +440,12 @@ class RoleRules(AlgorithmStoreResources):
 
         tags: ["Role"]
         """
-        role = get_role(db, id)
+        role = get_role(db, role_id)
         rule = get_rule(db, rule_id)
         self.permissions.check_user_rules([rule])
         if rule not in role.rules:
             raise NotFoundError(
-                f"Rule with id={rule_id} is not part of role with id={id}"
+                f"Rule with id={rule_id} is not part of role with id={role_id}"
             )
         role.rules.remove(rule)
         role.save()
