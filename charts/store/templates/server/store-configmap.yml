@@ -34,7 +34,7 @@ data:
       algorithm_view: {{ .Values.store.policies.algorithmView }}
       allow_localhost: "True"
       allowed_servers:
-      - "http://localhost:7601/api"
+      - "http://localhost:7601/server"
     dev:
       host_uri: host.docker.internal
     port: {{ .Values.store.internal.port }}
