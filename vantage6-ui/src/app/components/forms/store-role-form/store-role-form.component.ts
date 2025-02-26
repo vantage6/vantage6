@@ -1,9 +1,7 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs';
-import { StoreRoleService } from 'src/app/services/store-role.service';
 import { BaseFormComponent } from '../../admin-base/base-form/base-form.component';
-import { StoreRole } from 'src/app/models/api/store-role.model';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { Rule_, StoreRule } from 'src/app/models/api/rule.model';
