@@ -1,0 +1,37 @@
+from functools import wraps
+from http import HTTPStatus
+
+
+class UnauthorizedError(Exception):
+    def __init__(self, message):
+        self.message = message
+        self.status_code = HTTPStatus.UNAUTHORIZED
+
+
+class NotFoundError(Exception):
+    def __init__(self, message):
+        self.message = message
+        self.status_code = HTTPStatus.NOT_FOUND
+
+
+class BadRequestError(Exception):
+    def __init__(self, message):
+        self.message = message
+        self.status_code = HTTPStatus.BAD_REQUEST
+
+
+def handle_exceptions(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except UnauthorizedError as e:
+            return {"msg": e.message}, e.status_code
+        except NotFoundError as e:
+            return {"msg": e.message}, e.status_code
+        except BadRequestError as e:
+            return {"msg": e.message}, e.status_code
+        except (ValueError, AttributeError) as e:
+            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
+
+    return wrapper

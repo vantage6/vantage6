@@ -6,7 +6,7 @@ from flask import g, request
 from flask_restful import Api
 
 from vantage6.common import logger_name
-from vantage6.backend.common.resource.role import handle_exceptions
+from vantage6.backend.common.resource.error_handling import handle_exceptions
 from vantage6.server import db
 from vantage6.server.permission import (
     Scope as S,

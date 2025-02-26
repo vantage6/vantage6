@@ -9,9 +9,12 @@ from sqlalchemy import or_
 
 from vantage6.algorithm.store.default_roles import DefaultRole
 from vantage6.algorithm.store.resource import with_permission
+from vantage6.backend.common.resource.error_handling import (
+    NotFoundError,
+    handle_exceptions,
+)
 from vantage6.backend.common.resource.input_schema import RoleInputSchema
 from vantage6.backend.common.resource.role import (
-    NotFoundError,
     apply_user_filter,
     can_delete_dependents,
     check_default_role,
@@ -19,7 +22,6 @@ from vantage6.backend.common.resource.role import (
     get_role,
     get_rule,
     get_rules,
-    handle_exceptions,
     update_role,
     validate_request_body,
     validate_user_exists,

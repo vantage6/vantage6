@@ -1,52 +1,18 @@
 import logging
-from functools import wraps
-from http import HTTPStatus
 from typing import Any, List
 from sqlalchemy import or_
 
 from requests import Session
 
 from vantage6.backend.common.permission import PermissionManagerBase
+from vantage6.backend.common.resource.error_handling import (
+    BadRequestError,
+    NotFoundError,
+)
 from vantage6.common import logger_name
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
-
-
-class UnauthorizedError(Exception):
-    def __init__(self, message):
-        self.message = message
-        self.status_code = HTTPStatus.UNAUTHORIZED
-
-
-class NotFoundError(Exception):
-    def __init__(self, message):
-        self.message = message
-        self.status_code = HTTPStatus.NOT_FOUND
-
-
-class BadRequestError(Exception):
-    def __init__(self, message):
-        self.message = message
-        self.status_code = HTTPStatus.BAD_REQUEST
-
-
-def handle_exceptions(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        log.debug(f"Handling exceptions for {func.__name__}")
-        try:
-            return func(*args, **kwargs)
-        except UnauthorizedError as e:
-            return {"msg": e.message}, e.status_code
-        except NotFoundError as e:
-            return {"msg": e.message}, e.status_code
-        except BadRequestError as e:
-            return {"msg": e.message}, e.status_code
-        except (ValueError, AttributeError) as e:
-            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
-
-    return wrapper
 
 
 def validate_request_body(schema, data, partial=False):

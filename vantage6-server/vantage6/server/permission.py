@@ -1,7 +1,7 @@
 import logging
 
 from vantage6.backend.common.permission import RuleCollectionBase, PermissionManagerBase
-from vantage6.backend.common.resource.role import UnauthorizedError
+from vantage6.backend.common.resource.error_handling import UnauthorizedError
 from vantage6.server.model.base import Base
 from vantage6.server.model.role import Role
 from vantage6.server.model.rule import Rule, Operation, Scope

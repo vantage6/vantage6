@@ -6,6 +6,12 @@ from flask import g
 from flask_restful import Api
 from sqlalchemy import or_
 
+from vantage6.backend.common.resource.error_handling import (
+    BadRequestError,
+    NotFoundError,
+    UnauthorizedError,
+    handle_exceptions,
+)
 from vantage6.backend.common.resource.input_schema import ServerRoleInputSchema
 from vantage6.backend.common.resource.role import (
     apply_user_filter,
@@ -15,10 +21,6 @@ from vantage6.backend.common.resource.role import (
     get_role,
     get_rule,
     get_rules,
-    handle_exceptions,
-    UnauthorizedError,
-    NotFoundError,
-    BadRequestError,
     update_role,
     validate_request_body,
     validate_user_exists,
