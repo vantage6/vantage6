@@ -171,6 +171,9 @@ class Node:
         )
 
         # this is where we try to find a port for the proxyserver
+
+        port_assinged = False
+
         for try_number in range(5):
             self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)
             http_server = WSGIServer(
