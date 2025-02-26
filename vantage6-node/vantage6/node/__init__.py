@@ -171,6 +171,9 @@ class Node:
         )
 
         # this is where we try to find a port for the proxyserver
+
+        port_assigned = False
+
         for try_number in range(5):
             self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)
             http_server = WSGIServer(
@@ -179,22 +182,29 @@ class Node:
 
             try:
                 http_server.serve_forever()
+                port_assigned = True
 
             except OSError as e:
                 self.log.info("Error during attempt %s", try_number)
                 self.log.info("%s: %s", type(e), e)
 
-                if e.errno == 48:
-                    proxy_port = random.randint(2048, 16384)
-                    self.log.warning("Retrying with a different port: %s", proxy_port)
-                    os.environ["PROXY_SERVER_PORT"] = str(proxy_port)
-
-                else:
-                    raise
+                proxy_port = random.randint(2048, 16384)
+                self.log.warning("Retrying with a different port: %s", proxy_port)
+                os.environ["PROXY_SERVER_PORT"] = str(proxy_port)
 
             except Exception as e:
-                self.log.error("Proxyserver could not be started or crashed!")
+                self.log.error(
+                    "Proxyserver could not be started due to an unexpected error!"
+                )
                 self.log.exception(e)
+                # After a non-os related exception there shouldn't be more retries
+                exit(1)
+
+        if not port_assigned:
+            self.log.error(
+                f"Unable to assing a port for the node proxy after {try_number} attempts"
+            )
+            exit(1)
 
     def sync_task_queue_with_server(self) -> None:
         """Get all unprocessed tasks from the server for this node."""
@@ -691,7 +701,7 @@ class Node:
         encryption_config = self.config.get("encryption")
         if encryption_config:
             if encryption_config.get("enabled") is not None:
-                config_to_share["encryption"] = encryption_config.get("enabled")
+                config_to_share["encryption"] = str(encryption_config.get("enabled"))
 
         # share node policies (e.g. who can run which algorithms)
         policies = self.config.get("policies", {})
