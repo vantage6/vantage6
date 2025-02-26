@@ -3,9 +3,11 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs';
 import { BaseReadComponent } from 'src/app/components/admin-base/base-read/base-read.component';
+import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { OperationType, Rule_, StoreResourceType, StoreRule } from 'src/app/models/api/rule.model';
 import { StoreRole, StoreRoleLazyProperties } from 'src/app/models/api/store-role.model';
 import { TableData } from 'src/app/models/application/table.model';
+import { routePaths } from 'src/app/routes';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dialog.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
@@ -30,9 +32,11 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
   fixedSelectedRules: StoreRule[] = [];
 
   changedRules?: StoreRule[];
+  store: AlgorithmStore | null = null;
 
   constructor(
     protected override handleConfirmDialogService: HandleConfirmDialogService,
+    private router: Router,
     private storeRoleService: StoreRoleService,
     private storeRuleService: StoreRuleService,
     protected override translateService: TranslateService,
@@ -43,6 +47,7 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
   }
 
   override async ngOnInit(): Promise<void> {
+    this.store = this.chosenStoreService.store$.value;
     this.storePermissionService
       .isInitialized()
       .pipe(takeUntil(this.destroy$))
@@ -54,11 +59,10 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
   }
 
   protected async initData(): Promise<void> {
-    const store = this.chosenStoreService.store$.value;
-    if (!store) return;
-    this.role = await this.storeRoleService.getRole(store?.url, this.id, [StoreRoleLazyProperties.Users]);
-    this.allRules = await this.storeRuleService.getRules(store?.url);
-    this.roleRules = await this.storeRuleService.getRules(store?.url, {role_id: this.id});
+    if (!this.store) return;
+    this.role = await this.storeRoleService.getRole(this.store?.url, this.id, [StoreRoleLazyProperties.Users]);
+    this.allRules = await this.storeRuleService.getRules(this.store?.url);
+    this.roleRules = await this.storeRuleService.getRules(this.store?.url, {role_id: this.id});
     this.setPermissions();
     this.setUpUserTable();
     this.enterEditMode(false);
@@ -77,6 +81,21 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
       this.selectableRules = this.roleRules;
     }
   }
+
+  public handleDeleteRole(): void {
+      this.handleDeleteBase(
+        this.role,
+        this.translateService.instant('role-read.delete-dialog.title', { name: this.role?.name }),
+        this.translateService.instant('role-read.delete-dialog.content'),
+        async () => {
+          if (!this.role) return;
+          if (!this.store) return;
+          this.isLoading = true;
+          await this.storeRoleService.deleteRole(this.store?.url, this.role.id);
+          this.router.navigate([routePaths.storeRoles]);
+        }
+      );
+    }
 
   public handleEnterEditMode(): void {
     this.enterEditMode(true);
@@ -136,6 +155,10 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
 
   public get editEnabled(): boolean {
     return this.canEdit && !this.role?.is_default_role;
+  }
+
+  public get deleteEnabled(): boolean {
+    return this.canDelete && !this.role?.is_default_role;
   }
 
   getDefaultRoleLabel(): string {

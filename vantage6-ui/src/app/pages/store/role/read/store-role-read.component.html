@@ -24,6 +24,10 @@
                 <mat-icon>edit</mat-icon>
                 <span>{{ "role-read.edit-permissions" | translate }}</span>
               </button>
+              <button *ngIf="deleteEnabled" mat-flat-button color="warn" (click)="handleDeleteRole()">
+                <mat-icon>delete</mat-icon>
+                <span>{{ "general.delete" | translate }}</span>
+              </button>
             </div>
             <div class="role-read__buttons"></div>
             <app-permissions-matrix-store 
