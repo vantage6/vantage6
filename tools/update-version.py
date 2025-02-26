@@ -175,6 +175,44 @@ def update_version_docker_files(version: str) -> None:
             f.write(new_content)
 
 
+def update_helm_charts(version: str) -> None:
+    """
+    Update version in Helm charts
+
+    Parameters
+    ----------
+    version : str
+        The new version to which to update.
+    """
+    chart_files = [
+        Path("../charts/common/Chart.yaml"),
+        Path("../charts/node/Chart.yaml"),
+        Path("../charts/store/Chart.yaml"),
+        Path("../charts/server/Chart.yaml"),
+    ]
+
+    for chart_file in chart_files:
+        info(f"Updating version in {chart_file}")
+        with open(chart_file, "r") as f:
+            content = f.read()
+
+            # Update appVersion
+            content = re.sub(
+                r'appVersion: "[\d.]+"', f'appVersion: "{version}"', content
+            )
+
+            # Update version
+            content = re.sub(r"version: [\d.]+", f"version: {version}", content)
+
+            # Update common dependency version if it exists
+            content = re.sub(
+                r'(name: common\n\s+version: )"[\d.]+"', f'\\1"{version}"', content
+            )
+
+        with open(chart_file, "w") as f:
+            f.write(content)
+
+
 @click.command()
 @click.option("--spec", default="final", help="final, candidate, beta, alpha")
 @click.option("--version", default="0.0.0", help="major.minor.patch")
@@ -209,6 +247,9 @@ def set_version(spec: str, version: str, build: int, post: int) -> None:
 
     update_version_docker_files(version)
     info("Docker files updated")
+
+    update_helm_charts(version)
+    info("Helm charts updated")
 
 
 if __name__ == "__main__":
