@@ -94,8 +94,10 @@ else:
             "api_key": response_1["api_key"],
             "databases": {"default": "/app/databases/default.csv"},
             "logging": {"file": "node_1.log"},
-            "port": 7601,
-            "server_url": "http://host.docker.internal",
+            # Using k8s DNS, based on helm chart /server/templates/server/server-backend-service.yml
+            "port": 80,
+            "server_url": "http://vantage6-server-vantage6-server-service",
+            
             "task_dir": "/tasks",
             "api_path": "/server",
             # TODO user defined config
@@ -117,8 +119,11 @@ else:
             "api_key": response_2["api_key"],
             "databases": {"default": "/app/databases/default.csv"},
             "logging": {"file": "node_2.log"},
-            "port": 7601,
-            "server_url": "http://host.docker.internal",
+
+            # Using k8s DNS, based on helm chart /server/templates/server/server-backend-service.yml
+            "port": 80,
+            "server_url": "http://vantage6-server-vantage6-server-service",
+
             "task_dir": "/tasks",
             "api_path": "/server",
             # TODO user defined config
