@@ -62,6 +62,6 @@ class Column(Base):
         return (
             f"<Column {self.name}, "
             f"dtype: {self.dtype}, "
-            f"dataframe: {self.dataframe.handle}, "
+            f"dataframe: {self.dataframe.name}, "
             f"node: {self.node.name}>"
         )

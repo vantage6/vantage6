@@ -36,13 +36,13 @@ def rich_dataframe_schema_table(
     dataframe_metadata: dict, print_table: bool = True
 ) -> None | Table:
     """
-    Print the schema of a data frame in a rich table. The schema includes the
+    Print the schema of a dataframe in a rich table. The schema includes the
     column name, data type, and the nodes that have this column.
 
     Parameters
     ----------
     dataframe_metadata : dict
-        Metadata of the data frame. This is the output of `client.dataframe.get()`.
+        Metadata of the dataframe. This is the output of `client.dataframe.get()`.
     print_table : bool, optional
         If True, the table will be printed. If False, the table object will be
         returned. Default is True.
@@ -54,7 +54,7 @@ def rich_dataframe_schema_table(
 
     Examples
     --------
-    This will print a rich table with the schema of a data frame.
+    This will print a rich table with the schema of a dataframe.
 
     ```python
     dataframe_metadata = {

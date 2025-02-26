@@ -436,7 +436,7 @@ class TaskInputSchema(_NameValidationSchema):
     dataframe_id = fields.Integer(validate=Range(min=1))
 
     @validates_schema
-    def validate_collaboration_or_study(self, data: dict, **kwargs) -> None:
+    def validate_schema(self, data: dict, **kwargs) -> None:
         """
         Validate the input, which should contain a collaboration_id or a study_id. The
         input may also contain both.
@@ -477,10 +477,12 @@ class TaskInputSchema(_NameValidationSchema):
         if databases is None:
             return  # some algorithms don't use any database
         for database in databases:
-            if "label" not in database:
-                raise ValidationError("Database label is required for each database")
+            if "label" not in database and "dataframe_id" not in database:
+                raise ValidationError(
+                    "Either label or dataframe_id is required for each database"
+                )
 
-            allowed_keys = {"label", "type"}
+            allowed_keys = {"label", "type", "dataframe_id"}
             if not set(database.keys()).issubset(set(allowed_keys)):
                 raise ValidationError(
                     f"Database {database} contains unknown keys. Allowed keys "
@@ -668,8 +670,8 @@ class DataframeInitInputSchema(Schema):
     # Databse label that is specified in the node configuration file
     label = fields.String(required=True)
 
-    # handle that can be used in within the session
-    handle = fields.String()
+    # Name that can be used in within the session
+    name = fields.String()
 
     # Task metadata that is executed on the node for session initialization, which is
     # the data extraction task

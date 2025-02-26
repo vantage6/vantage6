@@ -273,7 +273,7 @@ class DockerTaskManager(DockerBaseManager):
             return
 
         try:
-            # Create or overwrite the parquet data frame with the algorithm result
+            # Create or overwrite the parquet dataframe with the algorithm result
             pq.write_table(
                 table,
                 os.path.join(
@@ -281,7 +281,7 @@ class DockerTaskManager(DockerBaseManager):
                 ),
             )
         except Exception:
-            self.log.exception("Error writing data frame to parquet file")
+            self.log.exception("Error writing dataframe to parquet file")
             self.status = RunStatus.FAILED
             return
 

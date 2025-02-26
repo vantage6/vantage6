@@ -159,7 +159,7 @@ class SessionSubClient(ClientBase.SubClient):
             collaboration ID of the client is used. When neither is set, the study ID
             needs to be provided.
         study: int, optional
-            The study ID of the session. In case this is set, the data frames in this
+            The study ID of the session. In case this is set, the dataframes in this
             session will be scoped to the study.
         scope: str
             The scope of the session. Possible values are ``global``, ``collaboration``,

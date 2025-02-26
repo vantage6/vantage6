@@ -17,7 +17,7 @@ def _get_user_database_labels() -> list[str]:
         List of database labels
     """
     # read the labels that the user requested, which is a comma-separated str of labels.
-    labels = os.environ[ContainerEnvNames.USER_REQUESTED_DATAFRAME_HANDLES.value]
+    labels = os.environ[ContainerEnvNames.USER_REQUESTED_DATAFRAMES.value]
     return labels.split(",")
 
 
@@ -119,7 +119,7 @@ def data(number_of_databases: int = 1) -> callable:
 
                 label = labels[i]
                 # read the data from the database
-                info("Reading data frame")
+                info("Reading dataframe")
                 data_ = _get_data_from_handle(label)
 
                 # add the data to the arguments

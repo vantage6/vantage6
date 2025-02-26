@@ -90,8 +90,8 @@ their relationships.
 -  The permissions of the user are defined by the assigned **rules**.
 -  It is possible to collect multiple rules into a **role**, which can also be assigned
    to a user.
--  A **session** can contain several **data frames**. A data frame is a collection of
-   data retrieved from the original source database. A data frame can be modified by
+-  A **session** can contain several **dataframes**. A dataframe is a collection of
+   data retrieved from the original source database. A dataframe can be modified by
    additional user defined pre-processing steps and can be used as input for **tasks**.
 -  Users can create **tasks** for one or more organizations within a collaboration and
    session. Tasks lead to the execution of the algorithms.

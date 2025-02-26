@@ -14,8 +14,8 @@ the session can be used to perform as many computations on the data as you wish.
 also possible to pre-process the data further after computation tasks have been executed.
 
 Data that is extracted from a node database is added to the session as a dataframe. Each
-session contains one or more data frames. These data frames can be used for computation
-tasks. Some computation tasks may use all data frames in the session, while others may
+session contains one or more dataframes. These dataframes can be used for computation
+tasks. Some computation tasks may use all dataframes in the session, while others may
 just use one.
 
 Sessions are related to the other entities in the following way:
@@ -43,32 +43,32 @@ Sessions are related to the other entities in the following way:
     Task "n" -- "1" Session
     Task "0" - "1" DataFrame
 
-Data frames are the representation of the data that will eventually be used in the most
-important tasks - computation tasks that produces the research results. Data frames
+Dataframes are the representation of the data that will eventually be used in the most
+important tasks - computation tasks that produces the research results. Dataframes
 provide the following features:
 
-- The data is loaded in the data frames once and can then be used multiple times. This
+- The data is loaded in the dataframes once and can then be used multiple times. This
   saves the time of having to load the data from the source every time a new task
   is executed. This is especially useful when the database is large and retrieving the
   data is slow.
-- Data frames can be modified using pre-processing tasks. These can, for example, add or
-  remove columns, or filter rows. The latest version of the data frame is used in the
-  computation tasks. The data frame keeps track of the last task that modified it.
-- Data frames can have different permission scopes. You can create data frames that are
+- Dataframes can be modified using pre-processing tasks. These can, for example, add or
+  remove columns, or filter rows. The latest version of the dataframe is used in the
+  computation tasks. The dataframe keeps track of the last task that modified it.
+- Dataframes can have different permission scopes. You can create dataframes that are
   scoped to you, but you can also share them with other users in your organization or
   with the entire collaboration. Users with the organization or collaboration permission
-  scope can also see, modify and delete data frames that are scoped to you within the
-  organization or collaboration. In other words, scoping a data frame to yourself is
-  not a way to keep the data frame private. If you scoped a data frame to your
+  scope can also see, modify and delete dataframes that are scoped to you within the
+  organization or collaboration. In other words, scoping a dataframe to yourself is
+  not a way to keep the dataframe private. If you scoped a dataframe to your
   organization or collaboration, any user in the organization or collaboration can see
-  the data frame.
-- Data frames provide a standardized way to store data. This makes it easier to write
+  the dataframe.
+- Dataframes provide a standardized way to store data. This makes it easier to write
   algorithms that can be used across different collaborations.
 - Data extraction, pre-processing and computation on the data are separated processes.
   This makes it easier to share algorithms with other projects. It even allows for the
   different steps to be written in different programming languages. Finally, it is also
   more secure, as the compute tasks no longer have access to the source data.
-- Data frames have standardized metadata that they can share. This allows the
+- Dataframes have standardized metadata that they can share. This allows the
   infrastructure to provide the researchers with information about the data, such as
   which columns are available, and what the data types of those columns are.
 
@@ -79,9 +79,9 @@ Every algorithm function that is being executed in a vantage6 network is one of 
 following actions:
 
 - ``data-extraction``: function to retrieve the data from the source, and store it in
-  a data frame.
-- ``pre-processing``: function to modify the data frame.
-- ``compute``: function to use the data frame to answer a research question. This can be
+  a dataframe.
+- ``pre-processing``: function to modify the dataframe.
+- ``compute``: function to use the dataframe to answer a research question. This can be
   a machine learning model, a statistical analysis, or any other type of computation.
 
 These actions are managed by the infrastructure. For example, the infrastructure ensures
@@ -103,7 +103,7 @@ endpoints are used. In the Python client this is done by calling the
         used to compute the research results. Note that in this schema, the first
         compute task is done after the first pre-processing step - not after ``n``
         steps. At any point in the pre-processing steps, it is possible to send a task
-        to the current data frame. It is thus also possible to execute a compute task
+        to the current dataframe. It is thus also possible to execute a compute task
         directly after data extraction.
     !theme superhero-outline
     skinparam linetype ortho
@@ -140,9 +140,9 @@ endpoints are used. In the Python client this is done by calling the
 Dependent tasks
 ^^^^^^^^^^^^^^^
 
-As described above, there are tasks that modify the data frame (``data extraction`` and
-``pre-processing``) and tasks that compute on the data frame (``compute``). In order to
-ensure that the data frame is not modified while another task is using it to compute
+As described above, there are tasks that modify the dataframe (``data extraction`` and
+``pre-processing``) and tasks that compute on the dataframe (``compute``). In order to
+ensure that the dataframe is not modified while another task is using it to compute
 analysis results, the infrastructure ensures that such tasks are executed in the
 proper order. This is done by making the tasks dependent on each other.
 
@@ -190,8 +190,8 @@ There are three senarions:
 Session storage
 ^^^^^^^^^^^^^^^
 When a new session is created, each node creates a new session folder. In this folder,
-the data frames and session log are stored. This log keeps track on which action was
-performed on the data frame. You can inspect the log on the node by using the command
+the dataframes and session log are stored. This log keeps track on which action was
+performed on the dataframe. You can inspect the log on the node by using the command
 ``parquet-tools show state.parquet``.
 
 The session folder can also be used to share data between different tasks that are not

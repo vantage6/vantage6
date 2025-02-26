@@ -6,7 +6,7 @@ from sqlalchemy import Column, Integer, ForeignKey, String
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
-from vantage6.common.enum import RunStatus, TaskStatus
+from vantage6.common.enum import RunStatus, TaskStatus, AlgorithmStepType
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
 if TYPE_CHECKING:
@@ -17,12 +17,14 @@ class Dataframe(Base):
     """
     Table to store session configuration by key-value pairs.
 
-    This information includes e.g. which database handles are available to use.
+    This information includes e.g. which database names are available to use.
 
     Attributes
     ----------
-    handle : str
-        User handle to reference this dataframe
+    name : str
+        Dataframe name
+    db_label: str
+        Label of the database used to generate this dataframe
     session_id : int
         ID of the session that this dataframe belongs to
     last_session_task_id : int
@@ -34,7 +36,7 @@ class Dataframe(Base):
     session : :class:`~.model.Session.Session`
         Session that this configuration belongs to
     tasks : list of :class:`~.model.Task.Task`
-        Tasks that build the session data frame. This implies that ``compute`` tasks
+        Tasks that build the session dataframe. This implies that ``compute`` tasks
         executed in the session are not included.
     columns : list of :class:`~.model.Column.Column`
         Columns that are part of this dataframe
@@ -43,7 +45,8 @@ class Dataframe(Base):
     """
 
     # fields
-    handle = Column(String)
+    name = Column(String)
+    db_label = Column(String)
     session_id = Column(Integer, ForeignKey("session.id"))
     last_session_task_id = Column(Integer, ForeignKey("task.id"))
 
@@ -54,6 +57,7 @@ class Dataframe(Base):
     )
     columns = relationship("Column", back_populates="dataframe")
     last_session_task = relationship("Task", foreign_keys=[last_session_task_id])
+    task_databases = relationship("TaskDatabase", back_populates="dataframe")
 
     def ready(self) -> bool:
         """
@@ -88,45 +92,21 @@ class Dataframe(Base):
         list[:class:`~.model.Task.Task`]
             List of compute tasks that are currently active on this dataframe
         """
-        # TODO FM 26-07-2024: The compute should be coming from an enum
         db_session = DatabaseSessionManager.get_session()
         active_compute_tasks = (
             db_session.query(models.Task)
             .join(models.TaskDatabase)
-            .filter(models.Task.action == "compute")
+            .filter(models.Task.action == AlgorithmStepType.COMPUTE.value)
             .filter(models.Task.status == TaskStatus.WAITING.value)
-            .filter(models.TaskDatabase.database == self.handle)
+            .filter(models.TaskDatabase.database == self.db_label)
             .filter(models.Task.session_id == self.session_id)
             .all()
         )
         db_session.commit()
         return active_compute_tasks
 
-    @classmethod
-    def select(cls, session: "Session", handle: str) -> "Dataframe":
-        """
-        Select a dataframe by session and handle.
-
-        Parameters
-        ----------
-        session : :class:`~.model.Session.Session`
-            Session to which the dataframe belongs
-        handle : str
-            Handle of the dataframe
-
-        Returns
-        -------
-        :class:`~.model.Dataframe.Dataframe` | None
-            Dataframe that corresponds to the given session and handle
-        """
-        db_session = DatabaseSessionManager.get_session()
-        dataframe = (
-            db_session.query(cls)
-            .filter_by(session_id=session.id, handle=handle)
-            .first()
-        )
-        db_session.commit()
-        return dataframe
-
     def __repr__(self):
-        return f"<Dataframe {self.handle}, " f"session: {self.session.name}>"
+        return (
+            f"<Dataframe {self.name}, session: {self.session.name}, "
+            f"db: {self.db_label}>"
+        )

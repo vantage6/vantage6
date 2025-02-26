@@ -5,28 +5,28 @@ from vantage6.client.rich.table import rich_dataframe_table, rich_dataframe_sche
 
 
 class DataFrameSubClient(ClientBase.SubClient):
-    """Sub client data frames."""
+    """Sub client dataframes."""
 
     @post_filtering(iterable=False)
     def get(self, handle: str = None, session: int = None, display=False) -> dict:
         """
-        Get a data frame by its ID or by supplying the handle and session ID.
+        Get a dataframe by its ID or by supplying the handle and session ID.
 
         Parameters
         ----------
         handle : str
-            The name of the data frame
+            The name of the dataframe
         session : int, optional
-            The session ID in which the data frame is located. When not provided, the
+            The session ID in which the dataframe is located. When not provided, the
             session ID of the client is used when it is set. In case the session ID is
             not set, an error is printed.
         display : bool, optional
-            Whether to print the data frame details. By default False.
+            Whether to print the dataframe details. By default False.
 
         Returns
         -------
         dict
-            The data frame details.
+            The dataframe details.
         """
         session_id = session or self.parent.session_id
         if not session_id:
@@ -45,21 +45,21 @@ class DataFrameSubClient(ClientBase.SubClient):
     @post_filtering()
     def list(self, session: int = None, display=False) -> dict:
         """
-        List all data frames.
+        List all dataframes.
 
         Parameters
         ----------
         session : int, optional
-            The session ID in which the data frame is located. When not provided, the
+            The session ID in which the dataframe is located. When not provided, the
             session ID of the client is used when it is set. In case the session ID is
             not set, an error is printed.
         display : bool, optional
-            Whether to print the list of data frame details. By default False.
+            Whether to print the list of dataframe details. By default False.
 
         Returns
         -------
         dict
-            List of data frame details.
+            List of dataframe details.
         """
         session_id = session or self.parent.session_id
 
@@ -85,7 +85,7 @@ class DataFrameSubClient(ClientBase.SubClient):
         display=False,
     ) -> dict:
         """
-        Create a new data frame in a session.
+        Create a new dataframe in a session.
 
         Parameters
         ----------
@@ -96,18 +96,18 @@ class DataFrameSubClient(ClientBase.SubClient):
             The name of the image that will be used to retrieve the data from the
             source database.
         input_: dict
-            The input for the data frame creation.
+            The input for the dataframe creation.
         session : int, optional
-            The session ID in which the data frame is located. When not provided, the
+            The session ID in which the dataframe is located. When not provided, the
             session ID of the client is used when it is set. In case the session ID is
             not set, an error is printed.
         display : bool, optional
-            Whether to print the data frame details. By default False.
+            Whether to print the dataframe details. By default False.
 
         Returns
         -------
         dict
-            The data frame details.
+            The dataframe details.
         """
 
         session_id = session or self.parent.session_id
@@ -173,33 +173,33 @@ class DataFrameSubClient(ClientBase.SubClient):
         self, handle: str, image: str, input_: dict, session: int = None
     ) -> dict:
         """
-        Modify a data frame in a session.
+        Modify a dataframe in a session.
 
-        Data frames can be modified by preprocessing them. Preprocessing is handled in
+        Dataframes can be modified by preprocessing them. Preprocessing is handled in
         a sequential manner. In other words, you can add many preprocessing steps to a
-        data frame, and they will be executed one after the other in order of creation.
+        dataframe, and they will be executed one after the other in order of creation.
 
         The modification will be done after all computation tasks have been executed.
-        This is to avoid that a data frame is modified while it is being used in a
+        This is to avoid that a dataframe is modified while it is being used in a
         computation task.
 
         Parameters
         ----------
         handle : str
-            The name of the data frame.
+            The name of the dataframe.
         image : str
-            The name of the image that will be used to preprocess the data frame.
+            The name of the image that will be used to preprocess the dataframe.
         input_: dict
-            The input for the data frame preprocessing.
+            The input for the dataframe preprocessing.
         session : int, optional
-            The session ID in which the data frame is located. When not provided, the
+            The session ID in which the dataframe is located. When not provided, the
             session ID of the client is used when it is set. In case the session ID is
             not set, an error is printed.
 
         Returns
         -------
         dict
-            The data frame details.
+            The dataframe details.
         """
 
         session_id = session or self.parent.session_id
@@ -256,14 +256,14 @@ class DataFrameSubClient(ClientBase.SubClient):
     @post_filtering(iterable=False)
     def delete(self, handle: str, session: int = None) -> dict:
         """
-        Delete a data frame.
+        Delete a dataframe.
 
         Parameters
         ----------
         handle : str
-            The name of the data frame.
+            The name of the dataframe.
         session : int, optional
-            The session ID in which the data frame is located. When not provided, the
+            The session ID in which the dataframe is located. When not provided, the
             session ID of the client is used when it is set. In case the session ID is
             not set, an error is printed.
         """
