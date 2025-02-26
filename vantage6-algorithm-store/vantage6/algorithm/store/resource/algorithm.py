@@ -6,7 +6,8 @@ from threading import Thread
 from flask import g, render_template, request, current_app, Flask
 from flask_mail import Mail
 from flask_restful import Api
-from sqlalchemy import or_
+from sqlalchemy import or_, select
+from marshmallow import ValidationError
 
 from vantage6.common import logger_name
 from vantage6.backend.common.globals import (
@@ -264,7 +265,7 @@ class Algorithms(AlgorithmBaseResource):
 
         tags: ["Algorithm"]
         """
-        q = g.session.query(db_Algorithm)
+        q = select(db_Algorithm)
 
         # filter on properties
         for field in [
@@ -330,9 +331,9 @@ class Algorithms(AlgorithmBaseResource):
             # if image with that digest does not exist, check if another image with
             # different digest but same name exists. If it does, throw
             # more specific error
-            if q_with_digest.first():
+            if g.session.scalars(q_with_digest).first():
                 q = q_with_digest
-            elif q.first():
+            elif g.session.scalars(q).first():
                 return {
                     "msg": f"The image '{image}' that you provided has digest "
                     f"'{digest}'. This algorithm version is not approved by the "
@@ -508,14 +509,15 @@ class Algorithms(AlgorithmBaseResource):
 
         tags: ["Algorithm"]
         """
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
         # validate the request body
-        errors = algorithm_input_post_schema.validate(data)
-        if errors:
+        try:
+            data = algorithm_input_post_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # validate that the algorithm image exists and retrieve the digest
@@ -553,7 +555,7 @@ class Algorithms(AlgorithmBaseResource):
                 name=function["name"],
                 display_name=function.get("display_name", ""),
                 description=function.get("description", ""),
-                type_=function["type"],
+                type_=function["type_"],
                 standalone=function.get("standalone", True),
                 algorithm_id=algorithm.id,
             )
@@ -565,7 +567,7 @@ class Algorithms(AlgorithmBaseResource):
                     name=argument["name"],
                     display_name=argument.get("display_name", ""),
                     description=argument.get("description", ""),
-                    type_=argument["type"],
+                    type_=argument["type_"],
                     has_default_value=argument.get("has_default_value", False),
                     default_value=argument.get("default_value", None),
                     conditional_operator=argument.get("conditional_operator", None),
@@ -597,7 +599,7 @@ class Algorithms(AlgorithmBaseResource):
                 vis = UIVisualization(
                     name=visualization["name"],
                     description=visualization.get("description", ""),
-                    type_=visualization["type"],
+                    type_=visualization["type_"],
                     schema=visualization.get("schema", {}),
                     function_id=func.id,
                 )
@@ -955,14 +957,15 @@ class Algorithm(AlgorithmBaseResource):
         if not algorithm:
             return {"msg": "Algorithm not found"}, HTTPStatus.NOT_FOUND
 
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
         # validate the request body
-        errors = algorithm_input_patch_schema.validate(data, partial=True)
-        if errors:
+        try:
+            data = algorithm_input_patch_schema.load(data, partial=True)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # algorithms can no longer be edited if they are in the review process or have

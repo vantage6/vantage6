@@ -7,6 +7,8 @@ from threading import Thread
 from flask import request, g, render_template, Flask, current_app
 from flask_mail import Mail
 from flask_restful import Api
+from marshmallow import ValidationError
+from sqlalchemy import select
 
 from vantage6.common import logger_name
 from vantage6.common.enum import StorePolicies
@@ -223,7 +225,7 @@ class Reviews(ReviewBase):
 
         tags: ["Review"]
         """
-        q = g.session.query(db.Review)
+        q = select(db.Review)
 
         # filter by simple filters
         if algorithm_id := request.args.get("algorithm_id"):
@@ -300,12 +302,16 @@ class Reviews(ReviewBase):
 
         tags: ["Review"]
         """
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
         # validate request body
-        errors = review_create_schema.validate(data)
-        if errors:
-            return {"msg": "Invalid input", "errors": errors}, HTTPStatus.BAD_REQUEST
+        try:
+            data = review_create_schema.load(data)
+        except ValidationError as e:
+            return {
+                "msg": "Invalid input",
+                "errors": e.messages,
+            }, HTTPStatus.BAD_REQUEST
 
         # check that the algorithm exists and has reviewable status
         algorithm: db.Algorithm = db.Algorithm.get(data["algorithm_id"])
@@ -367,14 +373,12 @@ class Reviews(ReviewBase):
                     "their own algorithm!"
                 )
             }, HTTPStatus.BAD_REQUEST
-        if (
-            g.session.query(db.Review)
-            .filter(
+        if g.session.scalars(
+            select(db.Review).filter(
                 db.Review.algorithm_id == data["algorithm_id"],
                 db.Review.reviewer_id == data["reviewer_id"],
             )
-            .first()
-        ):
+        ).first():
             return {
                 "msg": "Reviewer has already reviewed this algorithm!"
             }, HTTPStatus.BAD_REQUEST
@@ -709,12 +713,16 @@ class ReviewApprove(ReviewUpdateResources):
 
         tags: ["Review"]
         """
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
         # validate input
-        errors = review_update_schema.validate(data)
-        if errors:
-            return {"msg": "Invalid input", "errors": errors}, HTTPStatus.BAD_REQUEST
+        try:
+            data = review_update_schema.load(data)
+        except ValidationError as e:
+            return {
+                "msg": "Invalid input",
+                "errors": e.messages,
+            }, HTTPStatus.BAD_REQUEST
 
         review = db.Review.get(id)
         if not review:
@@ -799,12 +807,16 @@ class ReviewReject(ReviewUpdateResources):
 
         tags: ["Review"]
         """
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
         # validate input
-        errors = review_update_schema.validate(request.get_json())
-        if errors:
-            return {"msg": "Invalid input", "errors": errors}, HTTPStatus.BAD_REQUEST
+        try:
+            data = review_update_schema.load(data)
+        except ValidationError as e:
+            return {
+                "msg": "Invalid input",
+                "errors": e.messages,
+            }, HTTPStatus.BAD_REQUEST
 
         review: db.Review = db.Review.get(id)
         if not review:

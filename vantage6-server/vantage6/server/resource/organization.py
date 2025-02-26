@@ -3,6 +3,8 @@ import logging
 from flask import request, g
 from flask_restful import Api
 from http import HTTPStatus
+from marshmallow import ValidationError
+from sqlalchemy import select
 
 from vantage6.common import logger_name
 from vantage6.server import db
@@ -200,10 +202,7 @@ class Organizations(OrganizationBase):
         # Obtain the organization of the requester
         auth_org = self.obtain_auth_organization()
         args = request.args
-
-        # query
-        q = g.session.query(db.Organization)
-        g.session.commit()
+        q = select(db.Organization)
 
         # filter by a field of this endpoint
         if "name" in args:
@@ -243,11 +242,11 @@ class Organizations(OrganizationBase):
             pass  # don't apply filters
         elif self.r.v_col.can():
             # obtain collaborations your organization participates in
-            collabs = (
-                g.session.query(db.Collaboration)
-                .filter(db.Collaboration.organizations.any(id=auth_org.id))
-                .all()
-            )
+            collabs = g.session.scalars(
+                select(db.Collaboration).filter(
+                    db.Collaboration.organizations.any(id=auth_org.id)
+                )
+            ).all()
             g.session.commit()
 
             # filter orgs in own collaborations, and add own organization in
@@ -316,12 +315,13 @@ class Organizations(OrganizationBase):
             }, HTTPStatus.UNAUTHORIZED
 
         # validate request body
-        data = request.get_json()
-        errors = org_input_schema.validate(data)
-        if errors:
+        data = request.get_json(silent=True)
+        try:
+            data = org_input_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         name = data.get("name")
@@ -449,12 +449,13 @@ class Organization(OrganizationBase):
         tags: ["Organization"]
         """
         # validate request body
-        data = request.get_json()
-        errors = org_input_schema.validate(data, partial=True)
-        if errors:
+        data = request.get_json(silent=True)
+        try:
+            data = org_input_schema.load(data, partial=True)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         organization = db.Organization.get(id)

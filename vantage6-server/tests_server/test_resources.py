@@ -1,7 +1,6 @@
 import logging
 import json
 import uuid
-
 from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 
@@ -9,7 +8,7 @@ from vantage6.common import logger_name
 from vantage6.common.enum import RunStatus
 from vantage6.common.serialization import serialize
 from vantage6.common import bytes_to_base64s
-from vantage6.backend.common import session
+from vantage6.backend.common import session as db_session
 from vantage6.server.model import (
     Rule,
     Role,
@@ -91,13 +90,29 @@ class TestResources(TestResourceBase):
 
     def test_collaboration(self):
         org = Organization()
-        rule = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.VIEW)
-        headers = self.get_user_auth_header(organization=org, rules=[rule])
+        rule_view = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.VIEW)
+        rule_create = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.CREATE)
+        headers = self.get_user_auth_header(
+            organization=org, rules=[rule_view, rule_create]
+        )
 
         collaborations = self.app.get("/api/collaboration", headers=headers)
         self.assertEqual(collaborations.status_code, HTTPStatus.OK)
         db_cols = Collaboration.get()
         self.assertEqual(len(collaborations.json["data"]), len(db_cols))
+
+        # Create a new collaboration
+        col_details = {
+            "name": "New Collaboration",
+            "organization_ids": [org.id],
+            "encrypted": True,
+            "session_restrict_to_same_image": True,
+        }
+
+        response = self.app.post(
+            "/api/collaboration", json=col_details, headers=headers
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_node_without_id(self):
         # GET
@@ -362,7 +377,7 @@ class TestResources(TestResourceBase):
             json={"current_password": "Password1!", "new_password": "A_new_password1"},
         )
         self.assertEqual(result.status_code, 200)
-        session.session.refresh(user)
+        db_session.session.refresh(user)
         self.assertTrue(user.check_password("A_new_password1"))
 
     def test_view_rules(self):
@@ -645,7 +660,7 @@ class TestResources(TestResourceBase):
             },
         )
 
-        session.session.refresh(role)
+        db_session.session.refresh(role)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual(role.name, "a-different-role-name")
         self.assertEqual(role.description, "some description of this role...")
@@ -912,7 +927,7 @@ class TestResources(TestResourceBase):
         result = self.app.delete(f"/api/role/{role.id}/rule/{rule.id}", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
 
-        role.rules.append(rule)
+        role.rules = [rule]
         role.save()
 
         # lets try that again
@@ -922,7 +937,8 @@ class TestResources(TestResourceBase):
         result = self.app.delete(f"/api/role/{role.id}/rule/{rule.id}", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
 
-        role.rules.append(rule)
+        # add rule back again
+        role.rules = [rule]
         role.save()
 
         # power users can edit other organization rules
@@ -955,6 +971,7 @@ class TestResources(TestResourceBase):
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # cleanup
+        db_session.session.refresh(role)
         role.delete()
         role2.delete()
         org.delete()
@@ -1139,6 +1156,7 @@ class TestResources(TestResourceBase):
 
     def test_patch_user_permissions(self):
         org = Organization()
+        org.save()
         user = User(
             firstname="Firstname",
             lastname="Lastname",
@@ -1198,7 +1216,7 @@ class TestResources(TestResourceBase):
         result = self.app.patch(
             f"/api/user/{user.id}", headers=headers, json={"firstname": "yeah"}
         )
-        session.session.refresh(user)
+        db_session.session.refresh(user)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual("yeah", user.firstname)
 
@@ -1210,7 +1228,7 @@ class TestResources(TestResourceBase):
         result = self.app.patch(
             f"/api/user/{user.id}", headers=headers, json={"firstname": "whatever"}
         )
-        session.session.refresh(user)
+        db_session.session.refresh(user)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual("whatever", user.firstname)
 
@@ -1231,7 +1249,7 @@ class TestResources(TestResourceBase):
                 "lastname": "and again",
             },
         )
-        session.session.refresh(user)
+        db_session.session.refresh(user)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual("again", user.firstname)
         self.assertEqual("and again", user.lastname)
@@ -1316,11 +1334,13 @@ class TestResources(TestResourceBase):
         # test that you CAN change the rules. To do so, a user is generated
         # that has same rules as current user, but also rule to edit other
         # users and another one current user does not possess
-        assigning_user_rules = user.rules
+        # get rules not by copying object to prevent invalid DB state
+        assigning_user_rules = [Rule.get(rule.id) for rule in user.rules]
         assigning_user_rules.append(
             Rule.get_by_("user", Scope.GLOBAL, Operation.EDIT),
         )
         assigning_user_rules.append(not_owning_rule)
+
         headers = self.get_user_auth_header(rules=assigning_user_rules)
         result = self.app.patch(
             f"/api/user/{user.id}",
@@ -1364,6 +1384,7 @@ class TestResources(TestResourceBase):
         other_org_role = Role(
             name="somename", rules=[not_owning_rule], organization=Organization()
         )
+        other_org_role.save()
         headers = self.get_user_auth_header(rules=[rule, not_owning_rule])
         result = self.app.patch(
             f"/api/user/{user.id}", headers=headers, json={"roles": [other_org_role.id]}
@@ -2585,7 +2606,6 @@ class TestResources(TestResourceBase):
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # cleanup
-        node.delete()
         org.delete()
         org2.delete()
         org3.delete()
@@ -2921,21 +2941,19 @@ class TestResources(TestResourceBase):
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
     def test_create_task_permission_as_user(self):
-        # non existent collaboration
         user = self.create_user()
         headers = self.login(user.username)
 
         input_ = bytes_to_base64s(serialize({"method": "dummy"}))
 
-        # organizations outside of collaboration
         org = Organization()
         org.save()
         col = Collaboration(organizations=[org], encrypted=False)
         col.save()
-
         session = Session(name="test_session", user_id=user.id, collaboration=col)
         session.save()
 
+        # test non-existing collaboration
         task_json = {
             "collaboration_id": 9999,
             "organizations": [{"id": 9999, "input": input_}],
@@ -2954,15 +2972,16 @@ class TestResources(TestResourceBase):
         # node is used implicitly as in further checks, can only create task
         # if node has been created
         node = Node(organization=org, collaboration=col)
-
+        node.save()
         org2 = Organization()
         org2.save()
 
+        # test user outside the collaboration
         task_json["organizations"] = [{"id": org2.id, "input": input_}]
         results = self.app.post("/api/task", headers=headers, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
 
-        # user without any permissions
+        # user in the collaboration but still without any permissions
         task_json["organizations"] = [{"id": org.id, "input": input_}]
         results = self.app.post("/api/task", headers=headers, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
@@ -3186,8 +3205,10 @@ class TestResources(TestResourceBase):
         col = Collaboration(organizations=[org, org2])
         col.save()
         task = Task(collaboration=col, init_org=org)
+        task.save()
         # NB: node is used implicitly in task/{id}/result schema
         node = Node(organization=org, collaboration=col)
+        node.save()
         res = Run(task=task, organization=org)
         res.save()
 
@@ -3770,6 +3791,7 @@ class TestResources(TestResourceBase):
 
         # create new study as both have been deleted
         study = Study(collaboration=col, organizations=[org], name="study-1")
+        study.save()
 
         # check deleting with global permission succeeds
         rule = Rule.get_by_("study", Scope.GLOBAL, Operation.DELETE)

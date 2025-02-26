@@ -1,5 +1,5 @@
 from __future__ import annotations
-from sqlalchemy import Column, String, Boolean
+from sqlalchemy import Column, String, Boolean, select
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -139,7 +139,7 @@ class Collaboration(Base):
         """
         session = DatabaseSessionManager.get_session()
         try:
-            result = session.query(cls).filter_by(name=name).first()
+            result = session.scalars(select(cls).filter_by(name=name)).first()
             session.commit()
             return result
         except NoResultFound:

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy import Column, String, Integer, ForeignKey, select
 from sqlalchemy.orm import relationship
 
 from vantage6.server.model.base import Base, DatabaseSessionManager
@@ -54,7 +54,9 @@ class AlgorithmStore(Base):
             List of algorithm store records with that URL
         """
         session = DatabaseSessionManager.get_session()
-        return session.query(AlgorithmStore).filter_by(url=url).all()
+        results = session.scalars(select(AlgorithmStore).filter_by(url=url)).all()
+        session.commit()
+        return results
 
     def is_for_all_collaborations(self) -> bool:
         """

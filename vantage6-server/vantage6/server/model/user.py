@@ -2,7 +2,7 @@ from __future__ import annotations
 import bcrypt
 import datetime as dt
 
-from sqlalchemy import Column, String, Integer, ForeignKey, DateTime
+from sqlalchemy import Column, String, Integer, ForeignKey, DateTime, select
 from sqlalchemy.orm import relationship, validates
 
 from vantage6.server.model.base import DatabaseSessionManager
@@ -233,7 +233,7 @@ class User(Authenticatable):
             If no user with the given username exists
         """
         session = DatabaseSessionManager.get_session()
-        result = session.query(cls).filter_by(username=username).one()
+        result = session.scalars(select(cls).filter_by(username=username)).one()
         session.commit()
         return result
 
@@ -251,7 +251,7 @@ class User(Authenticatable):
             A random user that is in the database
         """
         session = DatabaseSessionManager.get_session()
-        result = session.query(cls).order_by(cls.id).first()
+        result = session.scalars(select(cls).order_by(cls.id)).first()
         session.commit()
         return result
 
@@ -276,7 +276,7 @@ class User(Authenticatable):
             If no user with the given email exists
         """
         session = DatabaseSessionManager.get_session()
-        result = session.query(cls).filter_by(email=email).one()
+        result = session.scalars(select(cls).filter_by(email=email)).one()
         session.commit()
         return result
 

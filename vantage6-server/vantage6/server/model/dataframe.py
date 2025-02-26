@@ -1,12 +1,11 @@
-import vantage6.server.model as models
-
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Column, Integer, ForeignKey, String
+from sqlalchemy import Column, Integer, ForeignKey, String, select
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
 from vantage6.common.enum import RunStatus, TaskStatus, AlgorithmStepType
+import vantage6.server.model as models
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
 if TYPE_CHECKING:
@@ -48,7 +47,7 @@ class Dataframe(Base):
     name = Column(String)
     db_label = Column(String)
     session_id = Column(Integer, ForeignKey("session.id"))
-    last_session_task_id = Column(Integer, ForeignKey("task.id"))
+    last_session_task_id = Column(Integer, ForeignKey("task.id", use_alter=True))
 
     # relationships
     session = relationship("Session", back_populates="dataframes")
@@ -93,15 +92,14 @@ class Dataframe(Base):
             List of compute tasks that are currently active on this dataframe
         """
         db_session = DatabaseSessionManager.get_session()
-        active_compute_tasks = (
-            db_session.query(models.Task)
+        active_compute_tasks = db_session.scalars(
+            select(models.Task)
             .join(models.TaskDatabase)
             .filter(models.Task.action == AlgorithmStepType.COMPUTE.value)
             .filter(models.Task.status == TaskStatus.WAITING.value)
             .filter(models.TaskDatabase.database == self.db_label)
             .filter(models.Task.session_id == self.session_id)
-            .all()
-        )
+        ).all()
         db_session.commit()
         return active_compute_tasks
 

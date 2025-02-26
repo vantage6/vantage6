@@ -3,7 +3,8 @@ import logging
 from http import HTTPStatus
 from flask import request, g
 from flask_restful import Api
-from sqlalchemy import or_
+from sqlalchemy import or_, select
+from marshmallow import ValidationError
 
 from vantage6.server import db
 from vantage6.backend.common.resource.pagination import Pagination
@@ -168,7 +169,7 @@ class AlgorithmStores(AlgorithmStoreBase):
 
         # obtain organization from authenticated
         auth_org = self.obtain_auth_organization()
-        q = g.session.query(db.AlgorithmStore)
+        q = select(db.AlgorithmStore)
         args = request.args
 
         # filter by a field of this endpoint
@@ -282,13 +283,14 @@ class AlgorithmStores(AlgorithmStoreBase):
 
         tags: ["Collaboration"]
         """
-        data = request.get_json()
+        data = request.get_json(silent=True)
         # validate request body
-        errors = algorithm_store_input_schema.validate(data)
-        if errors:
+        try:
+            data = algorithm_store_input_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # check if collaboration exists
@@ -463,12 +465,13 @@ class AlgorithmStore(AlgorithmStoreBase):
             }, HTTPStatus.NOT_FOUND  # 404
 
         # validate request body
-        data = request.get_json()
-        errors = algorithm_store_input_schema.validate(data, partial=True)
-        if errors:
+        data = request.get_json(silent=True)
+        try:
+            data = algorithm_store_input_schema.load(data, partial=True)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # verify permissions - check permission for old collaboration

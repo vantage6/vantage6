@@ -3,8 +3,9 @@ import logging
 from flask import request, g
 from flask_restful import Api
 from http import HTTPStatus
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, select
 from names_generator import generate_name
+from marshmallow import ValidationError
 
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmStepType, TaskDatabaseType
@@ -480,8 +481,7 @@ class Sessions(SessionBase):
         auth_org = self.obtain_auth_organization()
         args = request.args
 
-        q = g.session.query(db.Session)
-        g.session.commit()
+        q = select(db.Session)
 
         # filter by a field of this endpoint
         if "name" in args:
@@ -593,13 +593,13 @@ class Sessions(SessionBase):
 
         tags: ["Session"]
         """
-        data = request.get_json()
-        errors = session_input_schema.validate(data)
-
-        if errors:
+        data = request.get_json(silent=True)
+        try:
+            data = session_input_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # Check if the user has the permission to create a session for the scope
@@ -779,12 +779,13 @@ class Session(SessionBase):
 
         tags: ["Session"]
         """
-        data = request.get_json()
-        errors = session_input_schema.validate(data, partial=True)
-        if errors:
+        data = request.get_json(silent=True)
+        try:
+            data = session_input_schema.load(data, partial=True)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         session: db.Session = db.Session.get(id)
@@ -972,7 +973,7 @@ class SessionDataframes(SessionBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        q = g.session.query(db.Dataframe).filter_by(session_id=session_id)
+        q = select(db.Dataframe).filter_by(session_id=session_id)
 
         # check if pagination is disabled
         paginate = not (
@@ -1046,12 +1047,13 @@ class SessionDataframes(SessionBase):
         # A dataframe is a list of tasks that need to be executed in order to initialize
         # the session. A single session can have multiple dataframes, each with a
         # different database or different user inputs.
-        data = request.get_json()
-        errors = dataframe_init_input_schema.validate(data)
-        if errors:
+        data = request.get_json(silent=True)
+        try:
+            data = dataframe_init_input_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         collaboration = session.collaboration
@@ -1309,12 +1311,13 @@ class DataframePreprocessing(SessionBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        dataframe_step = request.get_json()
-        errors = dataframe_step_input_schema.validate(dataframe_step)
-        if errors:
+        dataframe_step = request.get_json(silent=True)
+        try:
+            dataframe_step = dataframe_step_input_schema.load(dataframe_step)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         session = dataframe.session
@@ -1413,20 +1416,20 @@ class DataframeColumns(SessionBase):
           404:
             description: Session or DataFrame not found
           400:
-            decription: Incorrect request body, see message for details
+            description: Incorrect request body, see message for details
 
         security:
         - bearerAuth: []
 
         tags: ["Session"]
         """
-
-        data = request.get_json()
-        errors = dataframe_node_update_schema.validate(data, many=True)
-        if errors:
+        data = request.get_json(silent=True)
+        try:
+            data = dataframe_node_update_schema.load(data, many=True)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         dataframe: db.Dataframe = db.Dataframe.get(id)

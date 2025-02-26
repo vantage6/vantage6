@@ -1,8 +1,11 @@
 import logging
 
+from http import HTTPStatus
 from flask import g, request
 from flask_restful import Api
+from marshmallow import ValidationError
 from http import HTTPStatus
+from sqlalchemy import select
 
 from vantage6.common import logger_name
 from vantage6.algorithm.store.permission import PermissionManager, Operation as P
@@ -126,12 +129,12 @@ class Vantage6Servers(AlgorithmStoreResources):
         # TODO add pagination
         # TODO extend filtering
         args = request.args
-        q = g.session.query(db_Vantage6Server)
+        q = select(db_Vantage6Server)
 
         if "url" in args:
             q = q.filter(db_Vantage6Server.url.like(args["url"]))
 
-        servers = q.all()
+        servers = g.session.scalars(q).all()
         return v6_server_output_schema.dump(servers, many=True), HTTPStatus.OK
 
     # Note: this endpoint is not authenticated, because it is used by the
@@ -170,14 +173,15 @@ class Vantage6Servers(AlgorithmStoreResources):
 
         tags: ["Vantage6 Server"]
         """
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
         # validate the request body
-        errors = v6_server_input_schema.validate(data)
-        if errors:
+        try:
+            data = v6_server_input_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # Check with the policies if the server is allowed to be whitelisted
