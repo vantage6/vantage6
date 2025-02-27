@@ -1,5 +1,5 @@
 from pathlib import Path
-from enum import Enum
+
 from vantage6.common.globals import APPNAME
 
 #
@@ -16,10 +16,6 @@ NODE_PROXY_SERVER_HOSTNAME = "proxyserver"
 
 DATA_FOLDER = PACKAGE_FOLDER / APPNAME / "_data"
 
-# with open(Path(PACKAGE_FOLDER) / APPNAME / "node" / "VERSION") as f:
-#     VERSION = f.read()
-
-
 # constants for retrying node login
 SLEEP_BTWN_NODE_LOGIN_TRIES = 10  # retry every 10s
 TIME_LIMIT_RETRY_CONNECT_NODE = 60 * 60 * 24 * 7  # i.e. 1 week
@@ -30,29 +26,10 @@ TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET = 60
 # constants for retrying task start due to a temporary error
 TASK_START_RETRIES = 3
 
-# constant for waiting between task start retries
-TASK_START_RETRY_SLEEP = 10
-
-#
-#    VPN CONFIGURATION RELATED CONSTANTS
-#
-# TODO move part of these constants elsewhere?! Or make context?
-VPN_CLIENT_IMAGE = "harbor2.vantage6.ai/infrastructure/vpn-client"
-NETWORK_CONFIG_IMAGE = "harbor2.vantage6.ai/infrastructure/vpn-configurator"
-ALPINE_IMAGE = "harbor2.vantage6.ai/infrastructure/alpine"
-MAX_CHECK_VPN_ATTEMPTS = 60  # max attempts to obtain VPN IP (1 second apart)
-FREE_PORT_RANGE = range(49152, 65535)
-DEFAULT_ALGO_VPN_PORT = "8888"  # default VPN port for algorithm container
-
-#
-#   SSH TUNNEL RELATED CONSTANTS
-#
-SSH_TUNNEL_IMAGE = "harbor2.vantage6.ai/infrastructure/ssh-tunnel"
-
-#
-#   SQUID RELATED CONSTANTS
-#
-SQUID_IMAGE = "harbor2.vantage6.ai/infrastructure/squid"
+# The time that a k8s needs to report any state. In case of a timeout, the
+# task is considered failed. Note that the Job will try to restart the container
+# at most `TASK_START_RETRIES` times (within this timeout).
+TASK_START_TIMEOUT_SECONDS = 60 * 5  # 5 minutes
 
 # Environment variables that should be set in the Dockerfile and that may not
 # be overwritten by the user.
@@ -60,3 +37,20 @@ ENV_VARS_NOT_SETTABLE_BY_NODE = ["PKG_NAME"]
 
 # default policies
 DEFAULT_REQUIRE_ALGO_IMAGE_PULL = True
+
+# Mount paths within the algorithm containers. Algorithms containers are run as
+# jobs in the Kubernetes cluster.
+JOB_POD_INPUT_PATH = "/app/output"
+JOB_POD_OUTPUT_PATH = "/app/input"
+JOB_POD_TOKEN_PATH = "/app/token"
+JOB_POD_SESSION_FOLDER_PATH = "/app/session"
+
+# The mount location of the tasks files, databases and kube config in the node
+# container.
+TASK_FILES_ROOT = "/app/tasks"
+DATABASE_BASE_PATH = "/app/databases/"
+KUBE_CONFIG_FILE_PATH = "/app/.kube/config"
+
+# Must be consistent with node pod configuration
+PROXY_SERVER_HOST = "http://v6proxy-subdomain.vantage6-node.svc.cluster.local"
+PROXY_SERVER_PORT = 4567
