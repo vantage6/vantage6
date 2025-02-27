@@ -18,7 +18,7 @@ spec:
         component: node
     spec:
 
-      hostAliases:      
+      hostAliases:
       - ip: "172.17.0.1" # Default bridge network gateway for docker/k8s
         hostnames:
         - "host.docker.internal" # Defining it explicitly for environments where Docker is not installed
@@ -32,7 +32,7 @@ spec:
         command: ["vnode-local", "start", "-c", "/app/config/config.yml", "--dockerized"]
         volumeMounts:
         - name: task-files-root
-          mountPath: /app/tasks
+          mountPath: {{ .Values.node.taskDir }}
         - name: kube-config-file
           mountPath: /app/.kube/config
         - name: config-volume
@@ -50,7 +50,7 @@ spec:
       {{- end }}
       - name: task-files-root
         hostPath:
-          path: /private/tmp/v6-tasks
+          path: {{ .Values.node.taskDirHost }}
           type: DirectoryOrCreate
       - name: kube-config-file
         hostPath:

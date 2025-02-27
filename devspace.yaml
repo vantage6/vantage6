@@ -13,6 +13,9 @@ vars:
   KUBE_CONFIG:
     question: "Where is your kube config from k8s located?"
     default: ${DEVSPACE_USER_HOME}/.kube/config
+  TASK_DIRECTORY:
+    question: "Where is your task directory located on the host machine?"
+    default: ${PWD}/.tasks
   #set to 0.0.0.0 to make the dev environment (ui, api) accessible from outside
   PORTS_BIND_ADDRESS: "127.0.0.1"
   NUMBER_OF_NODES:
@@ -160,6 +163,7 @@ deployments:
         name: ./charts/node
       values:
         node:
+          taskDirHost: ${TASK_DIRECTORY}
           image: ${NODE_IMAGE}
           logging:
             level: DEBUG
