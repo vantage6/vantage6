@@ -409,6 +409,39 @@ class DefaultSocketNamespace(Namespace):
                 room=room,
             )
 
+    def on_algorithm_log(self, data: dict) -> None:
+        """
+        Handle log messages from algorithm containers and log them in the server logs.
+
+        Parameters
+        ----------
+        data: Dict
+            Dictionary containing log message details.
+            It should look as follows:
+
+            .. code:: python
+
+                {
+                    "run_id": 1,
+                    "task_id": 1,
+                    "log": "Log message"
+                }
+        """
+        # only allow nodes to send this event
+        if session.type != "node":
+            self.log.warn(
+                "Only nodes can send algorithm logs! "
+                f"{session.type} {session.auth_id} is not allowed."
+            )
+            return
+
+        run_id = data.get("run_id")
+        task_id = data.get("task_id")
+        log_message = data.get("log")
+
+        # log the message in the server logs
+        self.log.info(f"Log from run_id={run_id}, task_id={task_id}: {log_message}")
+
     @staticmethod
     def __is_identified_client() -> bool:
         """
