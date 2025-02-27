@@ -9,13 +9,13 @@ vars:
   UI_IMAGE: harbor2.vantage6.ai/infrastructure/ui
   NODE_TEST_DATABASE_FILE:
     question: "Where is your test data for the node located?"
-    default: ./dev/olympic_atheletes_2016.csv
+    default: ${PWD}/dev/olympic_athletes_2016.csv
   KUBE_CONFIG:
     question: "Where is your kube config from k8s located?"
-    default: ~/.kube/config
+    default: ${HOME}/.kube/config
   TASK_DIRECTORY:
-    question: "Where is your task directory located?"
-    default: ./.tasks
+    question: "Where is your task directory located on the host machine?"
+    default: ${PWD}/.tasks
   #set to 0.0.0.0 to make the dev environment (ui, api) accessible from outside
   PORTS_BIND_ADDRESS: "127.0.0.1"
 
