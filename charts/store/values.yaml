@@ -33,4 +33,4 @@ database:
   name: store
 
   #hostpath of the database mount
-  volumePath: /mnt/data
+  volumePath: /mnt/data_store
