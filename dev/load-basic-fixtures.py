@@ -98,8 +98,8 @@ def create_node(index, collaboration, organization):
                 "api_key": node["api_key"],  # Use the API key from node creation
                 "databases": {"default": "/app/databases/default.csv"},
                 "logging": {"file": f"node_{index}.log"},  # Use index in log file name
-                "port": 7601,
-                "server_url": "http://host.docker.internal",
+                "port": 80,
+                "server_url": "http://vantage6-server-vantage6-server-service",
                 "task_dir": "/tasks",
                 "api_path": "/server",
                 # TODO user defined config
@@ -140,7 +140,6 @@ else:
         organizations=[org["id"] for org in organizations],
         encrypted=False,
     )
-
 
 print("=> Creating nodes")
 for i in range(number_of_nodes):

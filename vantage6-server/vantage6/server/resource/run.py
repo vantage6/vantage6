@@ -5,6 +5,7 @@ import sqlalchemy as sa
 from flask import g, request
 from flask_restful import Api
 from http import HTTPStatus
+from marshmallow import ValidationError
 from sqlalchemy import desc, or_, and_, select
 from sqlalchemy.sql.selectable import Select
 
@@ -689,13 +690,14 @@ class Run(SingleRunBase):
         if not run:
             return {"msg": f"Run id={id} not found!"}, HTTPStatus.NOT_FOUND
 
-        data = request.get_json()
+        data = request.get_json(silent=True)
         # validate request body
-        errors = run_input_schema.validate(data, partial=True)
-        if errors:
+        try:
+            data = run_input_schema.load(data, partial=True)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         if run.organization_id != g.node.organization_id:

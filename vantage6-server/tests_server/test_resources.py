@@ -90,13 +90,29 @@ class TestResources(TestResourceBase):
 
     def test_collaboration(self):
         org = Organization()
-        rule = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.VIEW)
-        headers = self.get_user_auth_header(organization=org, rules=[rule])
+        rule_view = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.VIEW)
+        rule_create = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.CREATE)
+        headers = self.get_user_auth_header(
+            organization=org, rules=[rule_view, rule_create]
+        )
 
         collaborations = self.app.get("/api/collaboration", headers=headers)
         self.assertEqual(collaborations.status_code, HTTPStatus.OK)
         db_cols = Collaboration.get()
         self.assertEqual(len(collaborations.json["data"]), len(db_cols))
+
+        # Create a new collaboration
+        col_details = {
+            "name": "New Collaboration",
+            "organization_ids": [org.id],
+            "encrypted": True,
+            "session_restrict_to_same_image": True,
+        }
+
+        response = self.app.post(
+            "/api/collaboration", json=col_details, headers=headers
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_node_without_id(self):
         # GET

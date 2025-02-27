@@ -3,8 +3,9 @@ node:
   apiKey: put-your-api-key-here
 
   server:
-    url: http://host.docker.internal
-    port: 7601
+    # TODO set the url/port directly on node-configmap.yaml using {{ .Release.Name }}-vantage6-server-service
+    url: http://vantage6-server-vantage6-server-service
+    port: 80
     path: /server
 
   image: harbor2.vantage6.ai/infrastructure/node:latest
