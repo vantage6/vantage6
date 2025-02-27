@@ -372,6 +372,7 @@ class Node:
             tmp_vol_name=vol_name,
             token=token,
             databases_to_use=task.get("databases", []),
+            socketIO=self.socketIO,
         )
 
         # save task status to the server

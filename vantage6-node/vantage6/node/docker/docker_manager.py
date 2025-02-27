@@ -8,6 +8,7 @@ results from finished containers.
 """
 
 import os
+from socket import SocketIO
 import time
 import logging
 import docker
@@ -584,6 +585,7 @@ class DockerManager(DockerBaseManager):
         tmp_vol_name: str,
         token: str,
         databases_to_use: list[str],
+        socketIO: SocketIO,
     ) -> tuple[TaskStatus, list[dict] | None]:
         """
         Checks if docker task is running. If not, creates DockerTaskManager to
@@ -658,6 +660,8 @@ class DockerManager(DockerBaseManager):
                     algorithm_env=self.algorithm_env,
                     databases_to_use=databases_to_use,
                 )
+
+                task.stream_logs(socketIO, run_id, task_info["id"])
 
             except UnknownAlgorithmStartFail:
                 self.log.exception(
