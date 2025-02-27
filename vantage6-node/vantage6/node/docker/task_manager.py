@@ -2,6 +2,7 @@
 # to be cleaned at some point.
 import logging
 import os
+import threading
 import docker.errors
 import json
 import base64
@@ -693,3 +694,27 @@ class DockerTaskManager(DockerBaseManager):
         for key, val in environment_variables.items():
             encoded_environment_variables[key] = _encode(str(val))
         return encoded_environment_variables
+
+    def stream_logs(self, socketIO, run_id, task_id):
+        """
+        Stream logs from the running container.
+        """
+        if not self.container:
+            self.log.error("No container to stream logs from.")
+            return
+
+        def log_stream():
+            for log in self.container.logs(stream=True):
+                decoded_log = log.decode("utf-8")
+                socketIO.emit(
+                    "algorithm_log",
+                    data={
+                        "run_id": run_id,
+                        "task_id": task_id,
+                        "log": decoded_log,
+                    },
+                    namespace="/tasks",
+                )
+
+        log_thread = threading.Thread(target=log_stream)
+        log_thread.start()
