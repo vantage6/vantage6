@@ -328,7 +328,7 @@ class SessionSubClient(ClientBase.SubClient):
                 info_box(
                     "Dataframe",
                     (
-                        f"[green]{task['dataframe']['handle']}[/green]"
+                        f"[green]{task['dataframe']['name']}[/green]"
                         if task["dataframe"]
                         else "[gray35]None[/gray35]"
                     ),
@@ -366,7 +366,7 @@ class SessionSubClient(ClientBase.SubClient):
                     color(dep_task["status"]),
                     "session-builder" if dep_task["dataframe"] else "compute",
                     (
-                        dep_task["dataframe"]["handle"]
+                        dep_task["dataframe"]["name"]
                         if dep_task["dataframe"]
                         else "None"
                     ),

@@ -22,18 +22,36 @@ class RunIO:
         session_id: int,
         action: AlgorithmStepType,
         client: NodeClient,
-        dataframe_handle: str = None,
+        dataframe_details: dict = None,
         host_data_dir: str = TASK_FILES_ROOT,
     ):
         """
         Responsible for the IO files between the node and the algorithm.
+
+        Parameters
+        ----------
+        run_id: int
+            ID of the run
+        session_id: int
+            ID of the session
+        action: AlgorithmStepType
+            Type of action that is being performed
+        client: NodeClient
+            Client to communicate with the server
+        dataframe_details: dict, optional
+            Details of the dataframe that is being used in the run. Required for
+            actions that update the session state.
+        host_data_dir: str, optional
+            Directory where the data is stored
         """
 
         self.log = logging.getLogger(logger_name(__name__))
         self.run_id = run_id
         self.session_id = session_id
         self.action = action
-        self.dataframe_handle = dataframe_handle
+        self.df_name = dataframe_details['name'] if dataframe_details else None
+        self.df_id = dataframe_details['id'] if dataframe_details else None
+        self.db_label = dataframe_details['db_label'] if dataframe_details else
         self.client = client
 
         # The directory where the data is stored
@@ -67,7 +85,7 @@ class RunIO:
             run_id=int(data["run_id"]),
             session_id=int(data["session_id"]),
             action=AlgorithmStepType(data["action"]),
-            dataframe_handle=data["dataframe_handle"],
+            dataframe_details=data["dataframe_details"],
             host_data_dir=host_data_dir,
             client=client,
         )
@@ -221,24 +239,24 @@ class RunIO:
         RunStatus
             Status of the run
         """
-        self.log.debug(
-            f"Updating session {self.session_id} for handle {self.dataframe_handle}."
-        )
 
-        if not self.dataframe_handle:
-            self.log.error("No dataframe handle found.")
-            self.log.debug(
-                "A session task was started but had no dataframe handle. The session ID "
-                f"is {self.session_id} and the task ID is {self.task_id}.",
+        if not self.df_name:
+            self.log.error(
+                "A session task was started without a dataframe. The session ID "
+                f"is {self.session_id} and the run ID is {self.run_id}.",
             )
             return RunStatus.FAILED
+
+        self.log.debug(
+            "Updating session %s for df %s.", self.session_id, self.df_name
+        )
 
         try:
             # Create or overwrite the parquet data frame with the algorithm result
             pq.write_table(
                 table,
                 os.path.join(
-                    self.local_session_folder, f"{self.dataframe_handle}.parquet"
+                    self.local_session_folder, f"{self.df_name}.parquet"
                 ),
             )
         except Exception:
@@ -247,9 +265,9 @@ class RunIO:
 
         self._update_session_state(
             self.action.value,
-            f"{self.dataframe_handle}.parquet",
+            f"{self.df_name}.parquet",
             "Session updated.",
-            self.dataframe_handle,
+            self.df_name,
         )
 
         # Each node reports the column names for this dataframe in the session. In the
@@ -258,7 +276,7 @@ class RunIO:
             {"name": field.name, "dtype": str(field.type)} for field in table.schema
         ]
         self.client.request(
-            f"/session/{self.session_id}/dataframe/{self.dataframe_handle}/column",
+            f"/session/{self.session_id}/dataframe/{self.df_id}",
             method="post",
             json=columns_info,
         )
@@ -266,7 +284,7 @@ class RunIO:
         return RunStatus.COMPLETED
 
     def _update_session_state(
-        self, action: str, filename: str, message: str, dataframe: str = ""
+        self, action: str, filename: str, message: str, df_name: str = ""
     ) -> None:
         """
         Update the session state file with the current action, file and message
@@ -279,14 +297,14 @@ class RunIO:
             File resulting from the action
         message: str
             Message to be added to the state file
-        dataframe: str, optional
-            Dataframe handle that was updated. Some actions on the session are not
+        df_name: str, optional
+            Dataframe name that was updated. Some actions on the session are not
             related to a specific dataframe, so this parameter is optional.
         """
         self.log.debug(
             "Update session state file for action '%s' on dataframe '%s' ",
             action,
-            dataframe,
+            df_name,
         )
         state = pq.read_table(self.session_state_file).to_pandas()
         new_row = pd.DataFrame(
@@ -296,7 +314,7 @@ class RunIO:
                     "file": filename,
                     "timestamp": datetime.datetime.now(),
                     "message": message,
-                    "dataframe": dataframe,
+                    "dataframe": df_name,
                 }
             ]
         )

@@ -171,7 +171,7 @@ def rich_session_table(
 def rich_dataframe_table(dataframes: dict, print_table: bool = True) -> None | Table:
     """
     Print a rich table with the metadata of a dataframe. The metadata includes
-    the dataframe ID, handle, session ID, last session task ID, number of columns,
+    the dataframe ID, name, session ID, last session task ID, number of columns,
     and ready status.
 
     Parameters
@@ -195,7 +195,7 @@ def rich_dataframe_table(dataframes: dict, print_table: bool = True) -> None | T
     dataframes = [
         {
             "id": 1,
-            "handle": "dataframe_handle",
+            "name": "dataframe_name",
             "session": {"id": 1},
             "last_session_task": {"id": 1},
             "columns": [{"name": "column_name", "dtype": "int", "node_id": 1}],
@@ -207,7 +207,7 @@ def rich_dataframe_table(dataframes: dict, print_table: bool = True) -> None | T
     """
     table = Table()
     table.add_column("ID")
-    table.add_column("Handle")
+    table.add_column("Name")
     table.add_column("Session ID")
     table.add_column("Last Session Task ID")
     table.add_column("No. Columns")
@@ -220,7 +220,7 @@ def rich_dataframe_table(dataframes: dict, print_table: bool = True) -> None | T
         try:
             table.add_row(
                 str(dataframe["id"]),
-                dataframe["handle"],
+                dataframe["name"],
                 str(dataframe["session"]["id"]),
                 str(dataframe["last_session_task"]["id"]),
                 str(len(dataframe["columns"])),
@@ -242,7 +242,7 @@ def rich_dataframe_table(dataframes: dict, print_table: bool = True) -> None | T
 def rich_task_table(tasks, print_table=True):
     """
     Print a rich table with the metadata of a task. The metadata includes the
-    task ID, name, status, type, and dataframe handle.
+    task ID, name, status, type, and dataframe name.
 
     Parameters
     ----------
@@ -267,7 +267,7 @@ def rich_task_table(tasks, print_table=True):
             "id": 1,
             "name": "task_name",
             "status": "completed",
-            "dataframe": {"handle": "dataframe_handle"}
+            "dataframe": {"name": "dataframe_name"}
         }
     ]
     rich_task_table(tasks)
@@ -291,7 +291,7 @@ def rich_task_table(tasks, print_table=True):
             task["name"],
             color(task["status"]),
             "session-builder" if task["dataframe"] else "compute",
-            task["dataframe"]["handle"] if task["dataframe"] else "None",
+            task["dataframe"]["name"] if task["dataframe"] else "None",
         )
 
     out = Panel("No tasks found") if table.row_count == 0 else table

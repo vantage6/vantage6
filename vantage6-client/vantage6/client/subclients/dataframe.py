@@ -8,18 +8,14 @@ class DataFrameSubClient(ClientBase.SubClient):
     """Sub client dataframes."""
 
     @post_filtering(iterable=False)
-    def get(self, handle: str = None, session: int = None, display=False) -> dict:
+    def get(self, id_: int, display=False) -> dict:
         """
-        Get a dataframe by its ID or by supplying the handle and session ID.
+        Get a dataframe by its ID.
 
         Parameters
         ----------
-        handle : str
-            The name of the dataframe
-        session : int, optional
-            The session ID in which the dataframe is located. When not provided, the
-            session ID of the client is used when it is set. In case the session ID is
-            not set, an error is printed.
+        id_ : int
+            The ID of the dataframe.
         display : bool, optional
             Whether to print the dataframe details. By default False.
 
@@ -28,14 +24,7 @@ class DataFrameSubClient(ClientBase.SubClient):
         dict
             The dataframe details.
         """
-        session_id = session or self.parent.session_id
-        if not session_id:
-            self.parent.log.error(
-                "No session ID provided and no session ID set in the client."
-            )
-            return
-
-        df = self.parent.request(f"session/{session_id}/dataframe/{handle}")
+        df = self.parent.request(f"session/dataframe/{id_}")
         if display:
             rich_dataframe_table(df)
             rich_dataframe_schema_table(df)
@@ -169,9 +158,7 @@ class DataFrameSubClient(ClientBase.SubClient):
         return df
 
     @post_filtering(iterable=False)
-    def preprocess(
-        self, handle: str, image: str, input_: dict, session: int = None
-    ) -> dict:
+    def preprocess(self, id_: int, image: str, input_: dict) -> dict:
         """
         Modify a dataframe in a session.
 
@@ -185,16 +172,12 @@ class DataFrameSubClient(ClientBase.SubClient):
 
         Parameters
         ----------
-        handle : str
-            The name of the dataframe.
+        id_: int
+            The ID of the dataframe.
         image : str
             The name of the image that will be used to preprocess the dataframe.
         input_: dict
             The input for the dataframe preprocessing.
-        session : int, optional
-            The session ID in which the dataframe is located. When not provided, the
-            session ID of the client is used when it is set. In case the session ID is
-            not set, an error is printed.
 
         Returns
         -------
@@ -202,21 +185,13 @@ class DataFrameSubClient(ClientBase.SubClient):
             The dataframe details.
         """
 
-        session_id = session or self.parent.session_id
-        if not session_id:
-            self.parent.log.error(
-                "No session ID provided and no session ID set in the client."
-            )
-            return
-
         # Get the organizations that are part of the session.
-        session = self.parent.request(f"session/{session_id}")
-        if not session:
-            self.parent.log.error(
-                f"An error occurred while fetching session {session_id}"
-            )
+        dataframe = self.parent.request(f"session/{id_}")
+        if not dataframe:
+            self.parent.log.error(f"An error occurred while fetching dataframe {id_}")
             return
 
+        session = dataframe.get("session", {})
         if session.get("study"):
             study_id = session["study"]["id"]
             params = {"study": study_id}
@@ -243,7 +218,7 @@ class DataFrameSubClient(ClientBase.SubClient):
             )
 
         return self.parent.request(
-            f"session/{session_id}/dataframe/{handle}/preprocess",
+            f"session/dataframe/{id_}/preprocess",
             method="POST",
             json={
                 "task": {
@@ -254,29 +229,16 @@ class DataFrameSubClient(ClientBase.SubClient):
         )
 
     @post_filtering(iterable=False)
-    def delete(self, handle: str, session: int = None) -> dict:
+    def delete(self, id_: int) -> dict:
         """
         Delete a dataframe.
 
         Parameters
         ----------
-        handle : str
-            The name of the dataframe.
-        session : int, optional
-            The session ID in which the dataframe is located. When not provided, the
-            session ID of the client is used when it is set. In case the session ID is
-            not set, an error is printed.
+        id_: int
+            The ID of the dataframe.
         """
 
-        session_id = session or self.parent.session_id
-        if not session_id:
-            self.parent.log.error(
-                "No session ID provided and no session ID set in the client."
-            )
-            return
-
-        res = self.parent.request(
-            f"session/{session_id}/dataframe/{handle}", method="DELETE"
-        )
+        res = self.parent.request(f"session/dataframe/{id_}", method="DELETE")
 
         self.parent.log.info(f"--> {res.get('msg')}")
