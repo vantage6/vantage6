@@ -223,10 +223,10 @@ helm-charts:
 	helm package charts/store -d charts/
 	helm package charts/server -d charts/
 	$(if ${_condition_push},\
-		helm push charts/common-*.tgz oci://harbor2.vantage6.ai/infrastructure && \
-		helm push charts/node-*.tgz oci://harbor2.vantage6.ai/infrastructure && \
-		helm push charts/store-*.tgz oci://harbor2.vantage6.ai/infrastructure && \
-		helm push charts/server-*.tgz oci://harbor2.vantage6.ai/infrastructure,\
+		helm push charts/common-*.tgz oci://harbor2.vantage6.ai/infra-charts && \
+		helm push charts/node-*.tgz oci://harbor2.vantage6.ai/infra-charts && \
+		helm push charts/store-*.tgz oci://harbor2.vantage6.ai/infra-charts && \
+		helm push charts/server-*.tgz oci://harbor2.vantage6.ai/infra-charts,\
 		@echo "Skipping push to registry")
 
 rebuild:
