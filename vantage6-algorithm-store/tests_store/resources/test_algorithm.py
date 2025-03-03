@@ -29,7 +29,6 @@ USERNAME = "test_user"
 
 
 class TestAlgorithmResources(TestResources):
-
     def test_view_algorithm_decorator_open(self):
         """
         Test the @with_permission_to_view_algorithms decorator when the policy is set to
