@@ -7,9 +7,9 @@ data:
   config.yaml: |
     algorithm_stores: []
     {{- if .Values.server.allow_drop_all }}
-      allow_drop_all: {{ .Values.server.allow_drop_all }}
+    allow_drop_all: {{ .Values.server.allow_drop_all }}
     {{- else }}
-      allow_drop_all: False
+    allow_drop_all: False
     {{- end }}
     api_path: {{ .Values.server.apiPath }}
     description: {{ .Values.server.description }}
@@ -19,12 +19,12 @@ data:
     {{- end }}
     logging:
       backup_count: {{ .Values.server.logging.backup_count }}
-      datefmt: {{ .Values.server.logging.datefmt }}
+      datefmt: {{ .Values.server.logging.datefmt | quote }}
       file: {{ .Values.server.logging.file }}
-      format: {{ .Values.server.logging.format }}
+      format: {{ .Values.server.logging.format | quote }}
       level: {{ .Values.server.logging.level }}
       loggers:
-      {{- range .Values.logging.loggers }}
+      {{- range .Values.server.logging.loggers }}
       - level: {{ .level }}
         name: {{ .name }}
       {{- end }}
@@ -33,11 +33,11 @@ data:
     port: {{ .Values.server.internal.port }}
     server_url: {{ .Values.server.baseUrl }}{{ .Values.server.apiPath }}
     {{- if .Values.server.database_uri }}
-      uri: {{ .Values.server.database_uri }}
+    uri: {{ .Values.server.database_uri }}
     {{- else if .Values.database.username }}
-      uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-postgres-service:5432/{{ .Values.database.name }}
+    uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-postgres-service:5432/{{ .Values.database.name }}
     {{- else }}
-      uri: ""
+    uri: ""
     {{- end }}
     rabbitmq:
     {{- if .Values.server.rabbitmq_uri }}
@@ -48,7 +48,7 @@ data:
       uri: ""
     {{- end }}
       start_with_server: false
-    {{- if .Values.dev.host_uri }}
+    {{- if .Values.server.dev.host_uri }}
     dev:
-      host_uri: {{ .Values.dev.host_uri }}
+      host_uri: {{ .Values.server.dev.host_uri }}
     {{- end }}
