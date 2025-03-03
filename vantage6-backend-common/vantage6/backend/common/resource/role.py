@@ -33,8 +33,8 @@ def get_rules(data: Any, db: Session) -> List:
     return rules
 
 
-def filter_by_name_or_description(db, query, args):
-    for param in ["name", "description"]:
+def filter_by_attribute(db, params: list, query, args):
+    for param in params:
         filters = args.getlist(param)
         if filters:
             query = query.filter(

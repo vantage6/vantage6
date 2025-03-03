@@ -18,7 +18,7 @@ from vantage6.backend.common.resource.role import (
     apply_user_filter,
     can_delete_dependents,
     check_default_role,
-    filter_by_name_or_description,
+    filter_by_attribute,
     get_role,
     get_rule,
     get_rules,
@@ -169,7 +169,7 @@ class Roles(AlgorithmStoreResources):
 
         args = request.args
 
-        query = filter_by_name_or_description(db, query, args)
+        query = filter_by_attribute(db, ["name", "description"], query, args)
 
         if "user_id" in args:
             validate_user_exists(db, args["user_id"])
