@@ -1,5 +1,4 @@
-""" Common functionality for the vantage6 server and algorithm store.
-"""
+"""Common functionality for the vantage6 server and algorithm store."""
 
 from vantage6.common.globals import DEFAULT_API_PATH
 

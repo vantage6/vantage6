@@ -7,7 +7,6 @@ from ..base.unittest_base import TestResources
 
 
 class TestAlgorithmResources(TestResources):
-
     def test_version(self):
         rv = self.app.get("/api/version")
         r = json.loads(rv.data)

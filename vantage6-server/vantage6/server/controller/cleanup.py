@@ -24,7 +24,9 @@ def cleanup_runs_data(days: int, include_input: bool = False):
     session = DatabaseSessionManager.get_session()
 
     if not days or days < 1:
-        log.warning("Invalid number of days '%s' specified. No cleanup will be performed.", days)
+        log.warning(
+            "Invalid number of days '%s' specified. No cleanup will be performed.", days
+        )
         return
 
     try:
