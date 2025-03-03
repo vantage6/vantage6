@@ -6,39 +6,49 @@ metadata:
 data:
   config.yaml: |
     algorithm_stores: []
-    allow_drop_all: 'True'
+    {{- if .Values.server.allow_drop_all }}
+      allow_drop_all: {{ .Values.server.allow_drop_all }}
+    {{- else }}
+      allow_drop_all: False
+    {{- end }}
     api_path: {{ .Values.server.apiPath }}
-    description: Vantage6 server version 5
-    ip: 0.0.0.0
+    description: {{ .Values.server.description }}
+    ip: {{ .Values.server.ip }}
     {{- if .Values.server.jwt.secret }}
     jwt_secret_key: {{ .Values.server.jwt.secret }}
     {{- end }}
     logging:
-      backup_count: 5
-      datefmt: '%Y-%m-%d %H:%M:%S'
-      file: five.log
-      format: '%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s'
+      backup_count: {{ .Values.server.logging.backup_count }}
+      datefmt: {{ .Values.server.logging.datefmt }}
+      file: {{ .Values.server.logging.file }}
+      format: {{ .Values.server.logging.format }}
       level: {{ .Values.server.logging.level }}
       loggers:
-      - level: warning
-        name: urllib3
-      - level: warning
-        name: socketIO-client
-      - level: warning
-        name: socketio.server
-      - level: warning
-        name: engineio.server
-      - level: warning
-        name: sqlalchemy.engine
-      - level: warning
-        name: requests_oauthlib.oauth2_session
-      max_size: 1024
-      use_console: true
+      {{- range .Values.logging.loggers }}
+      - level: {{ .level }}
+        name: {{ .name }}
+      {{- end }}
+      max_size: {{ .Values.server.logging.max_size }}
+      use_console: {{ .Values.server.logging.use_console }}
     port: {{ .Values.server.internal.port }}
     server_url: {{ .Values.server.baseUrl }}{{ .Values.server.apiPath }}
-    uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-postgres-service:5432/{{ .Values.database.name }}
+    {{- if .Values.server.database_uri }}
+      uri: {{ .Values.server.database_uri }}
+    {{- else if .Values.database.username }}
+      uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-postgres-service:5432/{{ .Values.database.name }}
+    {{- else }}
+      uri: ""
+    {{- end }}
     rabbitmq:
+    {{- if .Values.server.rabbitmq_uri }}
+      uri: {{ .Values.server.rabbitmq_uri }}
+    {{- else if .Values.rabbitmq.username }}
       uri: amqp://{{ .Values.rabbitmq.username }}:{{ .Values.rabbitmq.password }}@{{ .Release.Name }}-rabbitmq-service:5672/{{ .Values.rabbitmq.vhost }}
+    {{- else }}
+      uri: ""
+    {{- end }}
       start_with_server: false
+    {{- if .Values.dev.host_uri }}
     dev:
-      host_uri: host.docker.internal
+      host_uri: {{ .Values.dev.host_uri }}
+    {{- end }}

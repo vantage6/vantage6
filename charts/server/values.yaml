@@ -2,6 +2,11 @@
 nameOverride: vantage6-server
 
 server:
+  # The description of the server
+  description: Vantage6 server version 5
+
+  # The IP address of the server
+  ip: 0.0.0.0
 
   # The external URL of the server
   baseUrl: http://localhost:7601
@@ -13,14 +18,50 @@ server:
   # The number of replicas of the server
   replications: 1
 
+  # In production it is recommended to use an external database (outside of k8s).
+  # By default, a postgres database is created inside the k8s cluster.
+  # If you want to use an external database, you can set the database_uri here.
+  # database_uri: postgresql://user:password@localhost:5432/mydatabase
+
+  # In production it is recommended to use an external RabbitMQ server (outside
+  # of k8s). By default, a RabbitMQ server is created inside the k8s cluster.
+  # If you want to use an external RabbitMQ server, you can set the rabbitmq_uri
+  # here.
+  # rabbitmq_uri: amqp://user:password@localhost:5672/myvhost
+
   # The image of the server
   image: harbor2.vantage6.ai/infrastructure/server:latest
 
   logging:
     level: INFO
+    file: server.log
+    max_size: 1024
+    use_console: true
+    datefmt: '%Y-%m-%d %H:%M:%S'
+    format: '%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s'
+    backup_count: 5
+    loggers:
+    - level: warning
+      name: urllib3
+    - level: warning
+      name: socketIO-client
+    - level: warning
+      name: socketio.server
+    - level: warning
+      name: engineio.server
+    - level: warning
+      name: sqlalchemy.engine
+    - level: warning
+      name: requests_oauthlib.oauth2_session
 
-  # jwt:
-  #   secret: secret
+  # In case you want to use a static secret key for the JWT token. Setting this is not
+  # recommended for production environments.
+  jwt:
+    secret: {{ .Values.secret | default (randAlphaNum 32) }}
+
+  dev:
+    host_uri: host.docker.internal
+    drop_all: 'True'
 
 rabbitmq:
   # The image of the RabbitMQ server
