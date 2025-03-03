@@ -1,4 +1,4 @@
-""" Algorithm tools to support the development of algorithms for the vantage6 platform.
+"""Algorithm tools to support the development of algorithms for the vantage6 platform.
 """
 
 # make sure the version is available

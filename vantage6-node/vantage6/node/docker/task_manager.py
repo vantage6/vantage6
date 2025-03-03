@@ -563,9 +563,9 @@ class DockerTaskManager(DockerBaseManager):
 
             uri_var_name = f"{label.upper()}_DATABASE_URI"
             if db["is_file"]:
-                environment_variables[
-                    uri_var_name
-                ] = f"{self.data_folder}/{os.path.basename(db['uri'])}"
+                environment_variables[uri_var_name] = (
+                    f"{self.data_folder}/{os.path.basename(db['uri'])}"
+                )
             elif db["is_dir"]:
                 environment_variables[uri_var_name] = f"/mnt/{label}"
             else:
