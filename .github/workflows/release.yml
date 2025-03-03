@@ -67,7 +67,7 @@ jobs:
           ref: ${{ env.branch }}
           token: ${{ secrets.COMMIT_PAT }}
 
-      - name: Update version in Python packages
+      - name: Update version in Python packages and Helm charts
         id: set_versions
         env:
           build: ${{ steps.split.outputs.build }}
@@ -128,6 +128,41 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           prerelease: ${{ env.stage != '' }}
+
+  # Build and push Helm charts
+  helm-charts:
+    runs-on: ubuntu-latest
+    needs: version
+    env:
+      branch: ${{ needs.version.outputs.branch }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.branch }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v1
+
+      - name: Login to harbor2.vantage6.ai
+        env:
+          USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          PASSWORD: ${{ secrets.DOCKER_TOKEN }}
+        run: helm registry login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
+
+      - name: Package Helm charts
+        run: |
+          helm package charts/common
+          helm package charts/node
+          helm package charts/store
+          helm package charts/server
+
+      - name: Push Helm charts
+        run: |
+          helm push charts/common oci://harbor2.vantage6.ai/infrastructure
+          helm push charts/node oci://harbor2.vantage6.ai/infrastructure
+          helm push charts/store oci://harbor2.vantage6.ai/infrastructure
+          helm push charts/server oci://harbor2.vantage6.ai/infrastructure
 
   support-images:
     name: Build support images
