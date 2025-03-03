@@ -17,12 +17,10 @@ spec:
 {{ include "node.labels" . | indent 8 }}
         component: node
     spec:
-
-      hostAliases:
-      - ip: "172.17.0.1" # Default bridge network gateway for docker/k8s
-        hostnames:
-        - "host.docker.internal" # Defining it explicitly for environments where Docker is not installed
-
+    #   hostAliases:
+    #   - ip: "172.17.0.1" # Default bridge network gateway for docker/k8s
+    #     hostnames:
+    #     - "host.docker.internal" # Defining it explicitly for environments where Docker is not installed
       containers:
       - name: vantage6-node
         image: {{ .Values.node.image }}
