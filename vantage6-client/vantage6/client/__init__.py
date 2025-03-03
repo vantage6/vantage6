@@ -1,4 +1,4 @@
-"""Python client for user to communicate with the vantage6 server """
+"""Python client for user to communicate with the vantage6 server"""
 
 from __future__ import annotations
 
