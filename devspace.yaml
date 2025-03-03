@@ -13,6 +13,9 @@ vars:
   KUBE_CONFIG:
     question: "Where is your kube config from k8s located?"
     default: ${DEVSPACE_USER_HOME}/.kube/config
+  TASK_DIRECTORY:
+    question: "Where is your task directory located on the host machine?"
+    default: ${PWD}/.tasks
   #set to 0.0.0.0 to make the dev environment (ui, api) accessible from outside
   # PORTS_BIND_ADDRESS: "127.0.0.1"
   NUMBER_OF_NODES:
@@ -116,7 +119,7 @@ deployments:
             secret: development-constant-secret!
 
         database:
-          volumePath: /mnt/data
+          volumePath: /mnt/data_server
 
   # The store deployment contains the store and the database.
   vantage6-store:
@@ -145,7 +148,7 @@ deployments:
         #  users can probably use the same path as in the example below. Or any other
         #  path that is accessible by the Docker daemon.
         database:
-          volumePath: /mnt/data
+          volumePath: /mnt/data_store
 
   # The node deployment should not be 'deployed' only, it should only be deployed in
   # combination with the `dev` container (The node container that is started by the
@@ -160,6 +163,7 @@ deployments:
         name: ./charts/node
       values:
         node:
+          taskDirHost: ${TASK_DIRECTORY}
           image: ${NODE_IMAGE}
           logging:
             level: DEBUG
