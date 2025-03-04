@@ -214,6 +214,7 @@ dev:
     - path: ./vantage6-algorithm-store/:/vantage6/vantage6-algorithm-store/
       disableDownload: true
       startContainer: true
+    command: ["/bin/sh", "/vantage6/vantage6-algorithm-store/dev_store.sh"]
 
   # This puts the server container in development mode. It syncs the local files with
   # the container and starts the server in development mode. Code changes will be
