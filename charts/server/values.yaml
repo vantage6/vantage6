@@ -53,8 +53,8 @@ server:
 
   # In case you want to use a static secret key for the JWT token. Setting this is not
   # recommended for production environments.
-  jwt:
-    secret: "super-secret-key-that-you-shouldnt-use-in-production"
+  # jwt:
+  #   secret: "super-secret-key-that-you-shouldnt-use-in-production"
 
   dev:
     host_uri: host.docker.internal
