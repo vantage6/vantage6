@@ -101,7 +101,7 @@ algorithm_token_input_schema = TokenAlgorithmInputSchema()
 # Resources / API's
 # ------------------------------------------------------------------------------
 class UserToken(ServicesResources):
-    """resource for api/token"""
+    """resource for /token"""
 
     def post(self):
         """Login user
@@ -395,7 +395,7 @@ class RefreshToken(ServicesResources):
 
 
 class ValidateToken(ServicesResources):
-    """Resource for api/token/user/validate"""
+    """Resource for /token/user/validate"""
 
     @with_user
     def post(self):
