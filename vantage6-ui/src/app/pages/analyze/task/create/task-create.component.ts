@@ -1,5 +1,5 @@
 import { AfterViewInit, ChangeDetectorRef, Component, HostBinding, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import {
   Algorithm,
@@ -23,14 +23,15 @@ import {
   getTaskDatabaseFromForm,
   getDatabaseTypesFromForm
 } from 'src/app/pages/analyze/task/task.helper';
+import { readFile } from 'src/app/helpers/file.helper';
 import { DatabaseStepComponent } from './steps/database-step/database-step.component';
 import { FilterStepComponent } from './steps/filter-step/filter-step.component';
 import { NodeService } from 'src/app/services/node.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
-import { MatStepper } from '@angular/material/stepper';
+import { MatStepper, MatStepperIcon, MatStep, MatStepLabel, MatStepperNext, MatStepperPrevious } from '@angular/material/stepper';
 import { SnackbarService } from 'src/app/services/snackbar.service';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { Collaboration } from 'src/app/models/api/collaboration.model';
 import { BaseStudy, StudyOrCollab } from 'src/app/models/api/study.model';
 import { BaseOrganization } from 'src/app/models/api/organization.model';
@@ -40,12 +41,59 @@ import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 import { EncryptionService } from 'src/app/services/encryption.service';
 import { environment } from 'src/environments/environment';
 import { isTruthy } from 'src/app/helpers/utils.helper';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { NgIf, NgFor, NgTemplateOutlet } from '@angular/common';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { MatIcon } from '@angular/material/icon';
+import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
+import { MatSelect } from '@angular/material/select';
+import { MatOption } from '@angular/material/core';
+import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatInput } from '@angular/material/input';
+import { AlertComponent } from '../../../../components/alerts/alert/alert.component';
+import { NumberOnlyDirective } from '../../../../directives/numberOnly.directive';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { HighlightedTextPipe } from '../../../../pipes/highlighted-text.pipe';
 
 @Component({
-  selector: 'app-task-create',
-  templateUrl: './task-create.component.html',
-  styleUrls: ['./task-create.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'app-task-create',
+    templateUrl: './task-create.component.html',
+    styleUrls: ['./task-create.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    imports: [
+        PageHeaderComponent,
+        NgIf,
+        MatCard,
+        MatCardContent,
+        MatStepper,
+        MatStepperIcon,
+        MatIcon,
+        MatStep,
+        ReactiveFormsModule,
+        MatStepLabel,
+        MatFormField,
+        MatLabel,
+        MatSelect,
+        MatOption,
+        NgFor,
+        MatButton,
+        MatStepperNext,
+        MatInput,
+        MatIconButton,
+        MatSuffix,
+        AlertComponent,
+        MatStepperPrevious,
+        DatabaseStepComponent,
+        PreprocessingStepComponent,
+        FilterStepComponent,
+        NumberOnlyDirective,
+        MatCheckbox,
+        MatProgressSpinner,
+        NgTemplateOutlet,
+        TranslateModule,
+        HighlightedTextPipe
+    ]
 })
 export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   @HostBinding('class') class = 'card-container';
@@ -465,12 +513,17 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     return (
       !this.shouldShowColumnDropdown(argument) &&
       !this.shouldShowOrganizationDropdown(argument) &&
-      !this.shouldShowParameterBooleanInput(argument)
+      !this.shouldShowParameterBooleanInput(argument) &&
+      !this.shouldShowParameterJsonInput(argument)
     );
   }
 
   shouldIncludeFormField(argument: Argument): boolean {
-    return !this.shouldShowParameterBooleanInput(argument) && !this.shouldShowMultipleInput(argument);
+    return (
+      !this.shouldShowParameterBooleanInput(argument) &&
+      !this.shouldShowMultipleInput(argument) &&
+      !this.shouldShowParameterJsonInput(argument)
+    );
   }
 
   shouldShowMultipleInput(argument: Argument): boolean {
@@ -480,6 +533,10 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       argument.type === this.argumentType.StringList ||
       (argument.type === this.argumentType.ColumnList && this.columns.length === 0 && this.hasLoadedColumns)
     );
+  }
+
+  shouldShowParameterJsonInput(argument: Argument): boolean {
+    return argument.type === this.argumentType.Json;
   }
 
   shouldShowParameterBooleanInput(argument: Argument): boolean {
@@ -515,7 +572,8 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
 
   getFormArrayControls(argument: Argument) {
     if ((this.parameterForm.get(argument.name) as FormArray).controls === undefined) {
-      this.parameterForm.setControl(argument.name, this.fb.array([this.getNewControlForInputList(argument)]));
+      const initialControl = argument.has_default_value ? [] : [this.getNewControlForInputList(argument)];
+      this.parameterForm.setControl(argument.name, this.fb.array(initialControl));
     }
     return (this.parameterForm.get(argument.name) as FormArray).controls;
   }
@@ -561,6 +619,20 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       }
     }
     return arguments_;
+  }
+
+  async selectedJsonFile(event: Event, argument: Argument): Promise<void> {
+    const selectedFile = (event.target as HTMLInputElement).files?.item(0) || null;
+
+    if (!selectedFile) return;
+    const fileData = await readFile(selectedFile);
+
+    this.parameterForm.controls[`${argument.name}`].setValue(fileData || '');
+    this.parameterForm.controls[`${argument.name}_jsonFileName`].setValue(selectedFile.name || '');
+  }
+
+  getJsonFileName(argument: Argument): string {
+    return this.parameterForm.controls[`${argument.name}_jsonFileName`].value;
   }
 
   compareStudyOrCollabForSelection(val1: number | string, val2: number | string): boolean {
@@ -650,17 +722,19 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     const algorithmsObj = await this.algorithmService.getAlgorithms();
     this.algorithms = algorithmsObj;
     this.functions = algorithmsObj.flatMap((curAlgorithm) => {
-      return curAlgorithm.functions
-      // TODO v5+ remove the func.standalone === undefined check. After v5+ the standalone property should be set for all functions
-      .filter((func) => func.standalone || func.standalone === undefined)
-      .map((func) => {
-        return {
-          ...func,
-          algorithm_id: curAlgorithm.id,
-          algorithm_name: curAlgorithm.name,
-          algorithm_store_id: curAlgorithm.algorithm_store_id
-        };
-      });
+      return (
+        curAlgorithm.functions
+          // TODO v5+ remove the func.standalone === undefined check. After v5+ the standalone property should be set for all functions
+          .filter((func) => func.standalone || func.standalone === undefined)
+          .map((func) => {
+            return {
+              ...func,
+              algorithm_id: curAlgorithm.id,
+              algorithm_name: curAlgorithm.name,
+              algorithm_store_id: curAlgorithm.algorithm_store_id
+            };
+          })
+      );
     });
     this.filteredFunctions = this.functions;
     this.node = await this.getOnlineNode();

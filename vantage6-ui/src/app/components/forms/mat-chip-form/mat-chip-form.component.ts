@@ -1,11 +1,14 @@
 import { Component, Input, signal } from '@angular/core';
-import { FormControl } from '@angular/forms';
-import { MatChipInputEvent } from '@angular/material/chips';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRow } from '@angular/material/chips';
+import { MatFormFieldModule, MatLabel } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
 
 @Component({
   selector: 'app-mat-chip-form',
   templateUrl: './mat-chip-form.component.html',
-  styleUrl: './mat-chip-form.component.scss'
+  styleUrl: './mat-chip-form.component.scss',
+  imports: [MatFormFieldModule, MatLabel, MatChipRow, MatIcon, MatChipGrid, MatChipInput, ReactiveFormsModule]
 })
 export class MatChipFormComponent {
   @Input() initalValues!: string[];
@@ -20,7 +23,7 @@ export class MatChipFormComponent {
   }
 
   removeTemplateKeyword(keyword: string) {
-    this.values.update(keywords => {
+    this.values.update((keywords) => {
       const index = keywords.indexOf(keyword);
       if (index < 0) {
         return keywords;
@@ -35,7 +38,7 @@ export class MatChipFormComponent {
     const value = (event.value || '').trim();
 
     if (value) {
-      this.values.update(keywords => [...keywords, value]);
+      this.values.update((keywords) => [...keywords, value]);
     }
 
     event.chipInput!.clear();

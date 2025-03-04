@@ -235,15 +235,23 @@ def cli_node_start(
         label_capitals = label.upper()
 
         try:
-            file_based = Path(uri).exists()
+            db_file_exists = Path(uri).exists()
         except Exception:
             # If the database uri cannot be parsed, it is definitely not a
             # file. In case of http servers or sql servers, checking the path
             # of the the uri will lead to an OS-dependent error, which is why
             # we catch all exceptions here.
-            file_based = False
+            db_file_exists = False
 
-        if not file_based and not force_db_mount:
+        if db_type in ["folder", "csv", "parquet", "excel"] and not db_file_exists:
+            error(
+                f"Database {Fore.RED}{uri}{Style.RESET_ALL} not found. Databases of "
+                f"type '{db_type}' must be present on the harddrive. Please update "
+                "your node configuration file."
+            )
+            exit(1)
+
+        if not db_file_exists and not force_db_mount:
             debug("  - non file-based database added")
             env[f"{label_capitals}_DATABASE_URI"] = uri
         else:

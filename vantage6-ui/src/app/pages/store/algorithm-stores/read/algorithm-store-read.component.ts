@@ -1,8 +1,9 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { combineLatest, Subject, takeUntil } from 'rxjs';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
 import { AlgorithmStore, AvailableStorePolicies, StorePolicies } from 'src/app/models/api/algorithmStore.model';
+import { OperationType, StoreResourceType } from 'src/app/models/api/rule.model';
 // import { AlgorithmStore, AvailableStorePolicies, DefaultStorePolicies } from 'src/app/models/api/algorithmStore.model';
 import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
@@ -10,11 +11,35 @@ import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service'
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
+import { NgIf } from '@angular/common';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
+import { TableComponent } from '../../../../components/table/table.component';
+import { MatButton } from '@angular/material/button';
+import { RouterLink } from '@angular/router';
+import { MatIcon } from '@angular/material/icon';
+import { DisplayAlgorithmsComponent } from '../../../../components/algorithm/display-algorithms/display-algorithms.component';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-algorithm-store-read',
-  templateUrl: './algorithm-store-read.component.html',
-  styleUrl: './algorithm-store-read.component.scss'
+    selector: 'app-algorithm-store-read',
+    templateUrl: './algorithm-store-read.component.html',
+    styleUrl: './algorithm-store-read.component.scss',
+    imports: [
+        NgIf,
+        PageHeaderComponent,
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        MatCardContent,
+        TableComponent,
+        MatButton,
+        RouterLink,
+        MatIcon,
+        DisplayAlgorithmsComponent,
+        MatProgressSpinner,
+        TranslateModule
+    ]
 })
 export class AlgorithmStoreReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
@@ -27,6 +52,7 @@ export class AlgorithmStoreReadComponent implements OnInit, OnDestroy {
   policyTable?: TableData;
   isLoading = true;
   collaborationTable?: TableData;
+  canAddAlgorithm = false;
 
   constructor(
     private algorithmService: AlgorithmService,
@@ -63,6 +89,7 @@ export class AlgorithmStoreReadComponent implements OnInit, OnDestroy {
     this.algorithmStore = this.chosenStoreService.store$.value;
     if (!this.algorithmStore) return;
 
+    this.canAddAlgorithm = this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.CREATE);
     if (this.algorithmStore.collaborations) {
       this.collaborationTable = {
         columns: [{ id: 'name', label: this.translateService.instant('general.name') }],

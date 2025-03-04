@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { Algorithm, AlgorithmForm, ArgumentType } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmForm, AlgorithmLazyProperties, ArgumentType } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from './chosen-collaboration.service';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { Pagination } from 'src/app/models/api/pagination.model';
 import { ChosenStoreService } from './chosen-store.service';
 import { isListTypeArgument } from '../helpers/algorithm.helper';
+import { getLazyProperties } from '../helpers/api.helper';
 
 @Injectable({
   providedIn: 'root'
@@ -51,8 +52,8 @@ export class AlgorithmService {
     return result;
   }
 
-  async getAlgorithm(algorithm_store_url: string, id: string): Promise<Algorithm> {
-    let result = await this.apiService.getForAlgorithmApi<Algorithm>(algorithm_store_url, `/algorithm/${id}`);
+  async getAlgorithm(algorithm_store_url: string, id: string, lazyProperties: AlgorithmLazyProperties[] = []): Promise<Algorithm> {
+    const result = await this.apiService.getForAlgorithmApi<Algorithm>(algorithm_store_url, `/algorithm/${id}`);
 
     result.functions.forEach((func) => {
       func.arguments.forEach((arg) => {
@@ -62,7 +63,10 @@ export class AlgorithmService {
       });
     });
 
-    return result;
+    const algorithm: Algorithm = { ...result, reviews: [] };
+    await getLazyProperties(result, algorithm, lazyProperties, this.apiService, algorithm_store_url);
+
+    return algorithm;
   }
 
   async getAlgorithmByUrl(imageUrl: string, store: AlgorithmStore): Promise<Algorithm | null> {
@@ -151,10 +155,13 @@ export class AlgorithmService {
           delete arg.conditional_operator;
           delete arg.conditional_value;
         }
-        if (arg.conditional_value || arg.conditional_value === false) {
+        if (arg.conditionalValueNull === true) {
+          arg.conditional_value = undefined;
+        } else if (arg.conditional_value || arg.conditional_value === false) {
           // cast to string as it is stored as string in the database
           arg.conditional_value = arg.conditional_value.toString();
         }
+        delete arg.conditionalValueNull;
       });
     });
     return algorithmForm;

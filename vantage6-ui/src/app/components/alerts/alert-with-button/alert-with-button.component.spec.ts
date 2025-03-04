@@ -8,7 +8,7 @@ describe('AlertWithButtonComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [AlertWithButtonComponent]
+      imports: [AlertWithButtonComponent]
     });
     fixture = TestBed.createComponent(AlertWithButtonComponent);
     component = fixture.componentInstance;

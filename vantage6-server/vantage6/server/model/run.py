@@ -37,6 +37,8 @@ class Run(Base):
         Time when the task was started
     finished_at : datetime
         Time when the task was finished
+    cleanup_at : datetime
+        Time when the results were deleted as part of a cleanup
     status : str
         Status of the task
     log : str
@@ -54,11 +56,12 @@ class Run(Base):
     task_id = Column(Integer, ForeignKey("task.id"))
     organization_id = Column(Integer, ForeignKey("organization.id"))
     result = Column(Text)
-    assigned_at = Column(DateTime, default=datetime.datetime.utcnow)
+    assigned_at = Column(DateTime, default=datetime.datetime.now(datetime.timezone.utc))
     started_at = Column(DateTime)
     finished_at = Column(DateTime)
     status = Column(Text)
     log = Column(Text)
+    cleanup_at = Column(DateTime, nullable=True)
 
     # relationships
     task = relationship("Task", back_populates="runs")

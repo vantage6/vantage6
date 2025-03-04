@@ -7,11 +7,18 @@ import { routePaths } from 'src/app/routes';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { RoleService } from 'src/app/services/role.service';
 import { RuleService } from 'src/app/services/rule.service';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { NgIf } from '@angular/common';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { RoleFormComponent } from '../../../../components/forms/role-form/role-form.component';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-role-create',
-  templateUrl: './role-create.component.html',
-  styleUrls: ['./role-create.component.scss']
+    selector: 'app-role-create',
+    templateUrl: './role-create.component.html',
+    styleUrls: ['./role-create.component.scss'],
+    imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, RoleFormComponent, MatProgressSpinner, TranslateModule]
 })
 export class RoleCreateComponent implements OnInit {
   @HostBinding('class') class = 'card-container';

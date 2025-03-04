@@ -164,7 +164,7 @@ def __handle_failed_login(
         user.failed_login_attempts = 1
     else:
         user.failed_login_attempts += 1
-    user.last_login_attempt = dt.datetime.now()
+    user.last_login_attempt = dt.datetime.now(dt.timezone.utc)
     user.save()
     sys.exit()
 
@@ -203,7 +203,7 @@ def __notify_user_blocked(
         DEFAULT_BETWEEN_USER_EMAILS_MINUTES,
     )
     email_sent_recently = user.last_email_failed_login_sent and (
-        dt.datetime.now()
+        dt.datetime.now(dt.timezone.utc)
         < user.last_email_failed_login_sent
         + dt.timedelta(minutes=minutes_between_blocked_emails)
     )
@@ -237,7 +237,7 @@ def __notify_user_blocked(
         )
 
     # Update latest email sent timestamp
-    user.last_email_failed_login_sent = dt.datetime.now()
+    user.last_email_failed_login_sent = dt.datetime.now(dt.timezone.utc)
     user.save()
 
 

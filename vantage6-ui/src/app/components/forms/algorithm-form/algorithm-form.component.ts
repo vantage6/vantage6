@@ -1,6 +1,12 @@
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChildren } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
-import { MatExpansionPanel } from '@angular/material/expansion';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, ValidationErrors, Validators, ReactiveFormsModule } from '@angular/forms';
+import {
+  MatExpansionPanel,
+  MatAccordion,
+  MatExpansionPanelHeader,
+  MatExpansionPanelTitle,
+  MatExpansionPanelContent
+} from '@angular/material/expansion';
 import { readFile } from 'src/app/helpers/file.helper';
 import {
   AlgorithmForm,
@@ -14,14 +20,60 @@ import {
 import { VisualizationType, getVisualizationSchema } from 'src/app/models/api/visualization.model';
 import { MessageDialogComponent } from 'src/app/components/dialogs/message-dialog/message-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { isTruthy } from 'src/app/helpers/utils.helper';
 import { isArgumentWithAllowedValues, isListTypeArgument } from 'src/app/helpers/algorithm.helper';
+import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
+import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { MatButton } from '@angular/material/button';
+import { NgIf, NgFor, TitleCasePipe, KeyValuePipe } from '@angular/common';
+import { MatSelect } from '@angular/material/select';
+import { MatOption } from '@angular/material/core';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatRadioGroup, MatRadioButton } from '@angular/material/radio';
+import { AlertComponent } from '../../alerts/alert/alert.component';
+import { NumberOnlyDirective } from '../../../directives/numberOnly.directive';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatChipFormComponent } from '../mat-chip-form/mat-chip-form.component';
 
 @Component({
   selector: 'app-algorithm-form',
   templateUrl: './algorithm-form.component.html',
-  styleUrl: './algorithm-form.component.scss'
+  styleUrl: './algorithm-form.component.scss',
+  imports: [
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardContent,
+    ReactiveFormsModule,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatButton,
+    MatSuffix,
+    NgIf,
+    MatSelect,
+    NgFor,
+    MatOption,
+    MatAccordion,
+    MatExpansionPanel,
+    MatExpansionPanelHeader,
+    MatExpansionPanelTitle,
+    MatExpansionPanelContent,
+    MatCheckbox,
+    MatTooltip,
+    MatRadioGroup,
+    MatRadioButton,
+    AlertComponent,
+    NumberOnlyDirective,
+    MatProgressSpinner,
+    TitleCasePipe,
+    KeyValuePipe,
+    TranslateModule,
+    MatChipFormComponent
+  ]
 })
 export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   @Input() algorithm?: AlgorithmForm;
@@ -68,6 +120,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       conditional_on: [''],
       conditional_operator: [''],
       conditional_value: [''],
+      conditionalValueNull: [false],
       is_frontend_only: [false],
       allowed_values: [[]]
     },
@@ -318,8 +371,10 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
           if (arg.conditional_on) {
             const conditionalArg = func.arguments.find((other_arg: ArgumentForm) => other_arg.name === arg.conditional_on);
             if (conditionalArg?.type === ArgumentType.Boolean) {
+              argumentFormGroup.controls['conditionalValueNull'].setValue(false);
               argumentFormGroup.controls['conditional_value'].setValue(isTruthy(arg.conditional_value));
             } else {
+              argumentFormGroup.controls['conditionalValueNull'].setValue(arg.conditional_value === null);
               argumentFormGroup.controls['conditional_value'].setValue(arg.conditional_value);
             }
           }
@@ -452,6 +507,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
         conditional_on: [''],
         conditional_operator: [''],
         conditional_value: [''],
+        conditionalValueNull: [false],
         is_frontend_only: [false],
         allowed_values: [[]]
       },
@@ -491,10 +547,12 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     const conditionalOn = control.get('conditional_on')?.value;
     const conditionalOperator = control.get('conditional_operator')?.value;
     const conditionalValue = control.get('conditional_value')?.value;
+    const conditionalValueNull = control.get('conditionalValueNull')?.value;
 
     // note that the check whether conditionalValue is set, is different from check whether the
     // other fields are set. This is because the conditionalValue may be set to 'false'.
-    const isConditionalValueSet = conditionalValue !== null && conditionalValue !== undefined && conditionalValue !== '';
+    const isConditionalValueSet =
+      conditionalValueNull || (conditionalValue !== null && conditionalValue !== undefined && conditionalValue !== '');
 
     const allFieldsFilled = conditionalOn && conditionalOperator && isConditionalValueSet;
     const allFieldsEmpty = !conditionalOn && !conditionalOperator && !isConditionalValueSet;

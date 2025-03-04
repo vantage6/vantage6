@@ -8,10 +8,9 @@ describe('ReviewReadComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ReviewReadComponent]
-    })
-    .compileComponents();
-    
+      imports: [ReviewReadComponent]
+    }).compileComponents();
+
     fixture = TestBed.createComponent(ReviewReadComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

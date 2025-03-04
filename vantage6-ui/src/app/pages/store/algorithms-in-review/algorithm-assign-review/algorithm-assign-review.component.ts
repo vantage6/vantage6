@@ -1,5 +1,5 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { BaseCreateComponent } from 'src/app/components/admin-base/base-create/base-create.component';
@@ -13,11 +13,37 @@ import { PermissionService } from 'src/app/services/permission.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 import { StoreReviewService } from 'src/app/services/store-review.service';
 import { StoreUserService } from 'src/app/services/store-user.service';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { NgIf, NgFor } from '@angular/common';
+import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatSelect } from '@angular/material/select';
+import { MatOption } from '@angular/material/core';
+import { MatButton } from '@angular/material/button';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-algorithm-assign-review',
-  templateUrl: './algorithm-assign-review.component.html',
-  styleUrl: './algorithm-assign-review.component.scss'
+    selector: 'app-algorithm-assign-review',
+    templateUrl: './algorithm-assign-review.component.html',
+    styleUrl: './algorithm-assign-review.component.scss',
+    imports: [
+        PageHeaderComponent,
+        NgIf,
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        MatCardContent,
+        ReactiveFormsModule,
+        MatFormField,
+        MatLabel,
+        MatSelect,
+        NgFor,
+        MatOption,
+        MatButton,
+        MatProgressSpinner,
+        TranslateModule
+    ]
 })
 export class AlgorithmAssignReviewComponent extends BaseCreateComponent implements OnInit, OnDestroy {
   @Input() algoID: string = '';

@@ -7,9 +7,8 @@ describe('TreeDropdownComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [TreeDropdownComponent]
-    })
-    .compileComponents();
+      imports: [TreeDropdownComponent]
+    }).compileComponents();
 
     fixture = TestBed.createComponent(TreeDropdownComponent);
     component = fixture.componentInstance;

@@ -72,6 +72,7 @@ from vantage6.server.resource.common.swagger_templates import swagger_template
 from vantage6.server.websockets import DefaultSocketNamespace
 from vantage6.server.default_roles import get_default_roles, DefaultRole
 from vantage6.server.hashedpassword import HashedPassword
+from vantage6.server.controller import cleanup
 
 # make sure the version is available
 from vantage6.server._version import __version__  # noqa: F401
@@ -169,6 +170,14 @@ class ServerApp:
 
         # set the server version
         self.__version__ = __version__
+
+        if self.ctx.config.get("runs_data_cleanup_days"):
+            log.info(
+                "Results older than %s days will be removed",
+                self.ctx.config.get("runs_data_cleanup_days"),
+            )
+            t_cleanup = Thread(target=self.__runs_data_cleanup_worker, daemon=True)
+            t_cleanup.start()
 
         # set up socket ping/pong
         log.debug("Starting thread to set node status")
@@ -790,7 +799,7 @@ class ServerApp:
         while True:
             # Send ping event
             try:
-                before_wait = dt.datetime.utcnow()
+                before_wait = dt.datetime.now(dt.timezone.utc)
 
                 # Wait a while to give nodes opportunity to pong. This interval
                 # is a bit longer than the interval at which the nodes ping,
@@ -802,12 +811,30 @@ class ServerApp:
                 # Otherwise set them to offline.
                 online_status_nodes = db.Node.get_online_nodes()
                 for node in online_status_nodes:
-                    if node.last_seen < before_wait:
+                    if node.last_seen.replace(tzinfo=dt.timezone.utc) < before_wait:
                         node.status = AuthStatus.OFFLINE.value
                         node.save()
             except Exception:
                 log.exception("Node-status thread had an exception")
                 time.sleep(PING_INTERVAL_SECONDS)
+
+    def __runs_data_cleanup_worker(self):
+        """Start a background thread to clean up data from old Runs."""
+        # NOTE/TODO: this is a very simple implementation, horizonal scaling is
+        # not being taken into account. We'd probably only need one worker per
+        # database, not per server instance (for example).
+        include_input = self.ctx.config.get("runs_data_cleanup_include_input", False)
+        while True:
+            try:
+                cleanup.cleanup_runs_data(
+                    self.ctx.config.get("runs_data_cleanup_days"),
+                    include_input=include_input,
+                )
+            except Exception as e:
+                log.error("Results cleanup failed. Will try again in one hour.")
+                log.exception(e)
+            # simple for now: check every hour
+            time.sleep(3600)
 
     # TODO this functionality is temporarily disabled since it requires a user token
     # to couple the algorithm stores. It may be nice to find a way later to offer this

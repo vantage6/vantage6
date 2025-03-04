@@ -210,7 +210,7 @@ def get_and_update_authenticatable_info(auth_id: int) -> db.Authenticatable:
         User or node database model
     """
     auth = db.Authenticatable.get(auth_id)
-    auth.last_seen = datetime.datetime.utcnow()
+    auth.last_seen = datetime.datetime.now(datetime.timezone.utc)
     auth.save()
     return auth
 
@@ -244,7 +244,10 @@ def parse_datetime(dt: str = None, default: datetime = None) -> datetime:
         Datetime object
     """
     if dt:
-        return datetime.datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S.%f")
+        converter = "%Y-%m-%dT%H:%M:%S.%f"
+        if dt.endswith("+00:00"):
+            converter += "%z"  # parse timezone
+        return datetime.datetime.strptime(dt, converter)
     return default
 
 

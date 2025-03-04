@@ -8,7 +8,7 @@ describe('RoleListComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [RoleListComponent]
+      imports: [RoleListComponent]
     });
     fixture = TestBed.createComponent(RoleListComponent);
     component = fixture.componentInstance;
