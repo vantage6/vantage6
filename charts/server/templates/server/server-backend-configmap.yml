@@ -13,7 +13,7 @@ data:
     {{- end }}
     api_path: {{ .Values.server.apiPath }}
     description: {{ .Values.server.description }}
-    ip: {{ .Values.server.ip }}
+    ip: 0.0.0.0
     {{- if .Values.server.jwt.secret }}
     jwt_secret_key: {{ .Values.server.jwt.secret }}
     {{- end }}

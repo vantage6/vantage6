@@ -5,9 +5,6 @@ server:
   # The description of the server
   description: Vantage6 server version 5
 
-  # The IP address of the server
-  ip: 0.0.0.0
-
   # The external URL of the server
   baseUrl: http://localhost:7601
   apiPath: /server
