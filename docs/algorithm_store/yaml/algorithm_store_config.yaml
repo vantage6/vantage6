@@ -22,7 +22,7 @@ uri: sqlite:///test.sqlite
 # This should be set to false in production as this allows to completely
 # wipe the database in a single command. Useful to set to true when
 # testing/developing.
-allow_drop_all: True
+allow_drop_all: true
 
 # Settings for the logger
 logging:
@@ -34,7 +34,7 @@ logging:
   file: test.log
 
   # Whether the output is shown in the console or not
-  use_console: True
+  use_console: true
 
   # The number of log files that are kept, used by RotatingFileHandler
   backup_count: 5
