@@ -97,7 +97,7 @@ images:
 
   ui:
     image: "${UI_IMAGE}"
-    dockerfile: docker/ui.Dockerfile
+    dockerfile: docker/ui_dev.Dockerfile
     context: .
 
 # This is a list of `deployments` that DevSpace can create for this project
@@ -242,9 +242,11 @@ dev:
       enabled: true
 
   # This puts the store container in development mode.
-  # TODO sync and hot-reload
   vantage6-ui:
     imageSelector: ${UI_IMAGE}
+    sync:
+    - path: ./vantage6-ui/:/app/
+      disableDownload: true
     ports:
       - port: 7600:80
         # bindAddress: ${PORTS_BIND_ADDRESS}
