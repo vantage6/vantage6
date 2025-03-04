@@ -49,9 +49,9 @@ class RunIO:
         self.run_id = run_id
         self.session_id = session_id
         self.action = action
-        self.df_name = dataframe_details['name'] if dataframe_details else None
-        self.df_id = dataframe_details['id'] if dataframe_details else None
-        self.db_label = dataframe_details['db_label'] if dataframe_details else
+        self.df_name = dataframe_details["name"] if dataframe_details else None
+        self.df_id = dataframe_details["id"] if dataframe_details else None
+        self.db_label = dataframe_details["db_label"] if dataframe_details else None
         self.client = client
 
         # The directory where the data is stored
@@ -247,17 +247,13 @@ class RunIO:
             )
             return RunStatus.FAILED
 
-        self.log.debug(
-            "Updating session %s for df %s.", self.session_id, self.df_name
-        )
+        self.log.debug("Updating session %s for df %s.", self.session_id, self.df_name)
 
         try:
             # Create or overwrite the parquet data frame with the algorithm result
             pq.write_table(
                 table,
-                os.path.join(
-                    self.local_session_folder, f"{self.df_name}.parquet"
-                ),
+                os.path.join(self.local_session_folder, f"{self.df_name}.parquet"),
             )
         except Exception:
             self.log.exception("Error writing data frame to parquet file")
