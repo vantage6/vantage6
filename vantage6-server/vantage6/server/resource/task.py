@@ -367,9 +367,8 @@ class Tasks(TaskBase):
                     f"from collaboration {collaboration_id}!"
                 }, HTTPStatus.UNAUTHORIZED
             # dont join collaboration table if it is already joined
-            # FIXME refactor this after moving to SQLAlchemy 2.0
             has_already_joined_collab = False
-            for visitor in visitors.iterate(q.statement):
+            for visitor in visitors.iterate(q):
                 if (
                     visitor.__visit_name__ == "table"
                     and visitor.name == "collaboration"
