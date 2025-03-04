@@ -25,7 +25,7 @@ def cli_algo_store_attach(name: str, system_folders: bool) -> None:
     client = docker.from_env()
 
     running_servers = client.containers.list(
-        filters={"label": f"{APPNAME}-type={InstanceType.ALGORITHM_STORE}"}
+        filters={"label": f"{APPNAME}-type={InstanceType.ALGORITHM_STORE.value}"}
     )
     running_server_names = [container.name for container in running_servers]
 
@@ -40,7 +40,7 @@ def cli_algo_store_attach(name: str, system_folders: bool) -> None:
             return
     else:
         post_fix = "system" if system_folders else "user"
-        name = f"{APPNAME}-{name}-{post_fix}-{InstanceType.ALGORITHM_STORE}"
+        name = f"{APPNAME}-{name}-{post_fix}-{InstanceType.ALGORITHM_STORE.value}"
 
     if name in running_server_names:
         container = client.containers.get(name)
