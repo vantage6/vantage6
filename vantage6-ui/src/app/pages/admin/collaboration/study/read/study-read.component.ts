@@ -1,6 +1,6 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { Router, RouterLink } from '@angular/router';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { Study, StudyLazyProperties } from 'src/app/models/api/study.model';
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
@@ -14,11 +14,39 @@ import { BaseNode } from 'src/app/models/api/node.model';
 import { NodeService } from 'src/app/services/node.service';
 import { Collaboration, CollaborationLazyProperties } from 'src/app/models/api/collaboration.model';
 import { CollaborationService } from 'src/app/services/collaboration.service';
+import { NgIf, NgFor } from '@angular/common';
+import { PageHeaderComponent } from '../../../../../components/page-header/page-header.component';
+import { MatIconButton } from '@angular/material/button';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { MatIcon } from '@angular/material/icon';
+import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
+import { ChipComponent } from '../../../../../components/helpers/chip/chip.component';
+import { NodeAdminCardComponent } from '../../../../../components/helpers/node-admin-card/node-admin-card.component';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-study-read',
-  templateUrl: './study-read.component.html',
-  styleUrls: ['./study-read.component.scss']
+    selector: 'app-study-read',
+    templateUrl: './study-read.component.html',
+    styleUrls: ['./study-read.component.scss'],
+    imports: [
+        NgIf,
+        PageHeaderComponent,
+        MatIconButton,
+        MatMenuTrigger,
+        MatIcon,
+        MatMenu,
+        MatMenuItem,
+        RouterLink,
+        MatCard,
+        MatCardHeader,
+        MatCardTitle,
+        MatCardContent,
+        ChipComponent,
+        NgFor,
+        NodeAdminCardComponent,
+        MatProgressSpinner,
+        TranslateModule
+    ]
 })
 export class StudyReadComponent implements OnInit, OnDestroy {
   destroy$ = new Subject();

@@ -8,7 +8,7 @@ describe('MfaLostComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [MfaLostComponent]
+      imports: [MfaLostComponent]
     });
     fixture = TestBed.createComponent(MfaLostComponent);
     component = fixture.componentInstance;

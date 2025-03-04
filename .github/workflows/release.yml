@@ -36,8 +36,10 @@ jobs:
           echo "major=${MAJOR}" >> $GITHUB_OUTPUT
           echo "minor=${PARTS[1]}" >> $GITHUB_OUTPUT
           PARTS2=( $(grep -Eo '[[:digit:]]+|[^[:digit:]]+' <<< ${PARTS[2]} ) )
-          echo "patch=${PARTS2[0]}" >> $GITHUB_OUTPUT
-          echo "stage=${PARTS2[1]}" >> $GITHUB_OUTPUT
+          PATCH=${PARTS2[0]}
+          echo "patch=${PATCH}" >> $GITHUB_OUTPUT
+          STAGE=${PARTS2[1]}
+          echo "stage=${STAGE}" >> $GITHUB_OUTPUT
           echo "build=${PARTS2[2]}" >> $GITHUB_OUTPUT
           MAJOR_NAME=''
           if [[ $MAJOR == '4' ]]; then MAJOR_NAME="cotopaxi"; fi
@@ -46,6 +48,11 @@ jobs:
           if [[ $MAJOR == '1' ]]; then MAJOR_NAME="trolltunga"; fi
           echo "major_name=${MAJOR_NAME}" >> $GITHUB_OUTPUT
 
+          # define boolean whether or not to give images the 'latest' tag. Only set to
+          # true if the stage is empty, meaning it is a final release.
+          TAG_LATEST=false
+          if [[ "$STAGE" == "" ]]; then TAG_LATEST=true; fi
+          echo "tag_latest=${TAG_LATEST}" >> $GITHUB_OUTPUT
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
@@ -111,6 +118,7 @@ jobs:
       build: ${{ steps.split.outputs.build }}
       major_name: ${{ steps.split.outputs.major_name }}
       branch: ${{ steps.branchname.outputs.branch }}
+      tag_latest: ${{ steps.split.outputs.tag_latest }}
 
   # Create Github release which can be used DOI generation
   github-release:
@@ -136,7 +144,9 @@ jobs:
     env:
       version: ${{ needs.version.outputs.version }}
       branch: ${{ needs.version.outputs.branch }}
-
+      patch: ${{ needs.version.outputs.patch }}
+      stage: ${{ needs.version.outputs.stage }}
+      tag_latest: ${{ needs.version.outputs.tag_latest }}
     steps:
       - name: Login to harbor2.vantage6.ai
         env:
@@ -159,7 +169,8 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build and push support images
-        run: make support-image TAG=$version PUSH_REG=true
+        if: ${{ env.stage == '' || env.patch == 0 }}
+        run: make support-image TAG=$version PUSH_REG=true TAG_LATEST=$tag_latest
 
   infrastructure-images:
     name: Build infrastructure images
@@ -172,7 +183,7 @@ jobs:
       patch: ${{ needs.version.outputs.patch }}
       stage: ${{ needs.version.outputs.stage }}
       branch: ${{ needs.version.outputs.branch }}
-
+      tag_latest: ${{ needs.version.outputs.tag_latest }}
     steps:
       - name: Login to harbor2.vantage6.ai
         env:
@@ -197,19 +208,19 @@ jobs:
       - # we only release a new base image if it is a major or minor release
         name: Build and push Docker base image
         if: ${{ env.patch == 0 }}
-        run: make base-image TAG=${major}.${minor} PUSH_REG=true
+        run: make base-image TAG=${major}.${minor} PUSH_REG=true TAG_LATEST=$tag_latest
 
       - # build the actual infrastructure images
         name: Build and push Docker image
-        run: make image TAG=$version BASE=${major}.${minor} PUSH_REG=true
+        run: make image TAG=$version BASE=${major}.${minor} PUSH_REG=true TAG_LATEST=$tag_latest
 
       - # build the algorithm store image
         name: Build and push Docker algorithm store image
-        run: make algorithm-store-image TAG=$version BASE=${major}.${minor} PUSH_REG=true
+        run: make algorithm-store-image TAG=$version BASE=${major}.${minor} PUSH_REG=true TAG_LATEST=$tag_latest
 
       - # build the UI image
         name: Build and push UI image
-        run: make ui-image TAG=$version BASE=${major}.${minor} PUSH_REG=true
+        run: make ui-image TAG=$version BASE=${major}.${minor} PUSH_REG=true TAG_LATEST=$tag_latest
 
   algorithm-base-image:
     name: Build algorithm base image
@@ -219,6 +230,9 @@ jobs:
       major: ${{ needs.version.outputs.major }}
       minor: ${{ needs.version.outputs.minor }}
       branch: ${{ needs.version.outputs.branch }}
+      patch: ${{ needs.version.outputs.patch }}
+      stage: ${{ needs.version.outputs.stage }}
+      tag_latest: ${{ needs.version.outputs.tag_latest }}
 
     steps:
       - name: Login to harbor2.vantage6.ai
@@ -242,16 +256,18 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build and push Algorithm base image
-        run: make algorithm-base-image TAG=${major}.${minor} PUSH_REG=true
+        if: ${{ env.stage == '' || env.patch == 0 }}
+        run: make algorithm-base-image TAG=${major}.${minor} PUSH_REG=true TAG_LATEST=$tag_latest
 
       - name: Build and push Algorithm OMOP base image
-        run: make algorithm-omop-base-image BASE=${major}.${minor} TAG=${major}.${minor} PUSH_REG=true
+        if: ${{ env.stage == '' || env.patch == 0 }}
+        run: make algorithm-omop-base-image BASE=${major}.${minor} TAG=${major}.${minor} PUSH_REG=true TAG_LATEST=$tag_latest
 
   # Update the server and node images on harbor2 for this major version,
   # including the 'live' tag that triggers a redeployment of the IKNL deployment
   deploy:
     runs-on: ubuntu-latest
-    needs: [version, infrastructure-images]
+    needs: [version, infrastructure-images, support-images]
     env:
       version: ${{ needs.version.outputs.version }}
       major: ${{ needs.version.outputs.major }}

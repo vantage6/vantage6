@@ -151,8 +151,9 @@ look something like this if you want to use `secrets in docker compose
         environment:
           # Set the path to the file containing the hashed password
           V6_INIT_SUPER_PASS_HASHED_FILE: /run/secrets/super-pass-hashed
-          # Alternatively, you can also set the hashed password directly
-          #V6_INIT_SUPER_PASS_HASHED: $2b$12$...
+          # Alternatively, you can also set the hashed password directly. Note that $s
+          # must be escaped with another $.
+          #V6_INIT_SUPER_PASS_HASHED: $$2b$$12$$...
         volumes:
         - /path/to/my/server.yaml:/mnt/config.yaml
         command: ["/bin/bash", "-c", "/vantage6/vantage6-server/server.sh"]

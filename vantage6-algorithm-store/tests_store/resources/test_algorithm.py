@@ -29,7 +29,6 @@ USERNAME = "test_user"
 
 
 class TestAlgorithmResources(TestResources):
-
     def test_view_algorithm_decorator_open(self):
         """
         Test the @with_permission_to_view_algorithms decorator when the policy is set to
@@ -244,6 +243,7 @@ class TestAlgorithmResources(TestResources):
             vantage6_version="1.0",
             code_url="https://github.com/test_algorithm",
             documentation_url="https://docs.test_algorithm.com",
+            submission_comments="test_comments",
         )
         algorithm.save()
 
@@ -259,6 +259,7 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(
             response.json["documentation_url"], "https://docs.test_algorithm.com"
         )
+        self.assertEqual(response.json["submission_comments"], "test_comments")
 
         # Cleanup
         algorithm.delete()
@@ -299,6 +300,7 @@ class TestAlgorithmResources(TestResources):
             "code_url": "https://my-url.com",
             "vantage6_version": "6.6.6",
             "image": "some-image",
+            "submission_comments": "test_comments",
             "functions": [
                 {
                     "name": "test_function",
@@ -363,6 +365,7 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(rv.json["invalidated_at"], None)
         self.assertNotEqual(rv.json["submitted_at"], None)
         self.assertEqual(rv.json["developer_id"], user.id)
+        self.assertEqual(rv.json["submission_comments"], "test_comments")
 
         # test default values - first with wrong default value type
         json_data["functions"][0]["arguments"] = [
@@ -497,6 +500,7 @@ class TestAlgorithmResources(TestResources):
             vantage6_version="6.6.6",
             image="some-image",
             developer_id=user.id,
+            submission_comments="test_comments",
         )
         algorithm.save()
 
@@ -519,7 +523,7 @@ class TestAlgorithmResources(TestResources):
 
         # check that algorithm cannot be updated if it is approved
         algorithm.status = AlgorithmStatus.APPROVED
-        algorithm.approved_at = datetime.datetime.now()
+        algorithm.approved_at = datetime.datetime.now(datetime.timezone.utc)
         algorithm.save()
         response = self.app.patch(
             f"/api/algorithm/{algorithm.id}",
@@ -529,7 +533,7 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(response.status_code, 403)
 
         # check that algorithm cannot be updated if it is invalidated
-        algorithm.invalidated_at = datetime.datetime.now()
+        algorithm.invalidated_at = datetime.datetime.now(datetime.timezone.utc)
         algorithm.save()
         response = self.app.patch(
             f"/api/algorithm/{algorithm.id}",

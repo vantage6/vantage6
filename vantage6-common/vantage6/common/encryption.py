@@ -1,4 +1,4 @@
-""" Encryption between organizations
+"""Encryption between organizations
 
 Module to provide async encrpytion between organizations. All input and
 result fields should be encrypted when communicating to the central

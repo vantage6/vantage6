@@ -8,10 +8,9 @@ describe('AlgorithmListComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [AlgorithmListComponent]
-    })
-    .compileComponents();
-    
+      imports: [AlgorithmListComponent]
+    }).compileComponents();
+
     fixture = TestBed.createComponent(AlgorithmListComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

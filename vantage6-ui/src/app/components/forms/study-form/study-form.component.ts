@@ -1,15 +1,35 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
-import { MatSelectChange } from '@angular/material/select';
+import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
+import { MatSelectChange, MatSelect } from '@angular/material/select';
 import { compareObjIDs } from 'src/app/helpers/general.helper';
 import { BaseOrganization, OrganizationSortProperties } from 'src/app/models/api/organization.model';
 import { Study, StudyForm } from 'src/app/models/api/study.model';
 import { OrganizationService } from 'src/app/services/organization.service';
+import { NgIf, NgFor } from '@angular/common';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { MatOption } from '@angular/material/core';
+import { MatButton } from '@angular/material/button';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-study-form',
-  templateUrl: './study-form.component.html',
-  styleUrls: ['./study-form.component.scss']
+    selector: 'app-study-form',
+    templateUrl: './study-form.component.html',
+    styleUrls: ['./study-form.component.scss'],
+    imports: [
+        NgIf,
+        ReactiveFormsModule,
+        MatFormField,
+        MatLabel,
+        MatInput,
+        MatSelect,
+        NgFor,
+        MatOption,
+        MatButton,
+        MatProgressSpinner,
+        TranslateModule
+    ]
 })
 export class StudyFormComponent implements OnInit {
   @Input() study?: Study;

@@ -8,10 +8,9 @@ describe('BaseReadComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [BaseReadComponent]
-    })
-    .compileComponents();
-    
+      imports: [BaseReadComponent]
+    }).compileComponents();
+
     fixture = TestBed.createComponent(BaseReadComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

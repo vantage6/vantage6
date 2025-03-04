@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs';
 import { BaseReadComponent } from 'src/app/components/admin-base/base-read/base-read.component';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
@@ -13,11 +13,34 @@ import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dial
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 import { StoreRoleService } from 'src/app/services/store-role.service';
 import { StoreRuleService } from 'src/app/services/store-rule.service';
+import { NgIf } from '@angular/common';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { MatTabGroup, MatTab } from '@angular/material/tabs';
+import { PermissionsMatrixStoreComponent } from '../../../../components/permissions-matrix/store/permissions-matrix-store.component';
+import { TableComponent } from '../../../../components/table/table.component';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { RoleSubmitButtonsComponent } from 'src/app/components/helpers/role-submit-buttons/role-submit-buttons.component';
+import { MatIcon } from '@angular/material/icon';
 
 @Component({
   selector: 'app-store-role-read',
   templateUrl: './store-role-read.component.html',
-  styleUrl: './store-role-read.component.scss'
+  styleUrl: './store-role-read.component.scss',
+  imports: [
+    NgIf,
+    PageHeaderComponent,
+    MatCard,
+    MatCardContent,
+    MatTabGroup,
+    MatTab,
+    PermissionsMatrixStoreComponent,
+    TableComponent,
+    MatProgressSpinner,
+    TranslateModule,
+    RoleSubmitButtonsComponent,
+    MatIcon
+  ]
 })
 export class StoreRoleReadComponent extends BaseReadComponent implements OnInit, OnDestroy {
   isEditing: boolean = false;
@@ -62,7 +85,7 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
     if (!this.store) return;
     this.role = await this.storeRoleService.getRole(this.store?.url, this.id, [StoreRoleLazyProperties.Users]);
     this.allRules = await this.storeRuleService.getRules(this.store?.url);
-    this.roleRules = await this.storeRuleService.getRules(this.store?.url, {role_id: this.id});
+    this.roleRules = await this.storeRuleService.getRules(this.store?.url, { role_id: this.id });
     this.setPermissions();
     this.setUpUserTable();
     this.enterEditMode(false);
@@ -83,19 +106,19 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
   }
 
   public handleDeleteRole(): void {
-      this.handleDeleteBase(
-        this.role,
-        this.translateService.instant('role-read.delete-dialog.title', { name: this.role?.name }),
-        this.translateService.instant('role-read.delete-dialog.content'),
-        async () => {
-          if (!this.role) return;
-          if (!this.store) return;
-          this.isLoading = true;
-          await this.storeRoleService.deleteRole(this.store?.url, this.role.id);
-          this.router.navigate([routePaths.storeRoles]);
-        }
-      );
-    }
+    this.handleDeleteBase(
+      this.role,
+      this.translateService.instant('role-read.delete-dialog.title', { name: this.role?.name }),
+      this.translateService.instant('role-read.delete-dialog.content'),
+      async () => {
+        if (!this.role) return;
+        if (!this.store) return;
+        this.isLoading = true;
+        await this.storeRoleService.deleteRole(this.store?.url, this.role.id);
+        this.router.navigate([routePaths.storeRoles]);
+      }
+    );
+  }
 
   public handleEnterEditMode(): void {
     this.enterEditMode(true);
@@ -125,16 +148,16 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
   }
 
   public async handleSubmitEdit(): Promise<void> {
-      if (!this.role || !this.changedRules) return;
-      console.log('handleSubmitEdit called with role:', this.role, 'and changedRules:', this.changedRules);
-      const store = this.chosenStoreService.store$.value;
-      if (!store) return;
-      this.isLoading = true;
-      const role: StoreRole = { ...this.role, rules: this.changedRules };
-      await this.storeRoleService.patchRole(store.url, role);
-      this.changedRules = [];
-      this.initData();
-    }
+    if (!this.role || !this.changedRules) return;
+    console.log('handleSubmitEdit called with role:', this.role, 'and changedRules:', this.changedRules);
+    const store = this.chosenStoreService.store$.value;
+    if (!store) return;
+    this.isLoading = true;
+    const role: StoreRole = { ...this.role, rules: this.changedRules };
+    await this.storeRoleService.patchRole(store.url, role);
+    this.changedRules = [];
+    this.initData();
+  }
 
   private setUpUserTable(): void {
     if (!this.role || !this.role.users) return;

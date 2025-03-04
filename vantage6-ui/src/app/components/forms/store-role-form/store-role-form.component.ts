@@ -1,22 +1,29 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs';
 import { BaseFormComponent } from '../../admin-base/base-form/base-form.component';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { Rule_, StoreRule } from 'src/app/models/api/rule.model';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { PermissionsMatrixStoreComponent } from '../../permissions-matrix/store/permissions-matrix-store.component';
+import { RoleSubmitButtonsComponent } from '../../helpers/role-submit-buttons/role-submit-buttons.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-store-role-form',
   templateUrl: './store-role-form.component.html',
-  styleUrl: './store-role-form.component.scss'
+  styleUrl: './store-role-form.component.scss',
+  imports: [ReactiveFormsModule, MatFormField, MatLabel, PermissionsMatrixStoreComponent, RoleSubmitButtonsComponent, TranslateModule]
 })
 export class StoreRoleFormComponent extends BaseFormComponent implements OnInit {
   @Input() selectableRules: StoreRule[] = [];
   store: AlgorithmStore | null = null;
-  
 
-  constructor(private fb: FormBuilder, private chosenStoreService: ChosenStoreService) {
+  constructor(
+    private fb: FormBuilder,
+    private chosenStoreService: ChosenStoreService
+  ) {
     super();
   }
   async ngOnInit(): Promise<void> {
@@ -36,7 +43,7 @@ export class StoreRoleFormComponent extends BaseFormComponent implements OnInit 
 
   form = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
-    description: '',
+    description: ''
   });
 
   selectedRules: number[] = [];

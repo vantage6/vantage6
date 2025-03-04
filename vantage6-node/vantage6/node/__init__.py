@@ -380,7 +380,9 @@ class Node:
             # set finished_at to now, so that the task is not picked up again
             # (as the task is not started at all, unlike other crashes, it will
             # never finish and hence not be set to finished)
-            update["finished_at"] = datetime.datetime.now().isoformat()
+            update["finished_at"] = datetime.datetime.now(
+                datetime.timezone.utc
+            ).isoformat()
         self.client.run.patch(id_=task_incl_run["id"], data=update)
 
         # ensure that the /tasks namespace is connected. This may take a while
@@ -502,7 +504,9 @@ class Node:
                         "result": results.data,
                         "log": results.logs,
                         "status": results.status,
-                        "finished_at": datetime.datetime.now().isoformat(),
+                        "finished_at": datetime.datetime.now(
+                            datetime.timezone.utc
+                        ).isoformat(),
                     },
                     init_org_id=init_org.get("id"),
                 )
