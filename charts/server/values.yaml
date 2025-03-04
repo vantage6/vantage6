@@ -15,8 +15,8 @@ server:
   # The number of replicas of the server
   replications: 1
 
-  # In production it is recommended to use an external database (outside of k8s).
-  # By default, a postgres database is created inside the k8s cluster.
+  # In production it is recommended to use a database that is not inside the k8s
+  # cluster. By default, a postgres database is created inside the k8s cluster.
   # If you want to use an external database, you can set the database_uri here.
   # database_uri: postgresql://user:password@localhost:5432/mydatabase
 
