@@ -25,13 +25,13 @@ Create chart name and version as used by the chart label.
 Common labels
 */}}
 {{- define "node.labels" -}}
-{{- include "common.labels" (dict "Chart" .Chart "Release" .Release "Component" "node") -}}
+{{- include "common.labels" (dict "Chart" .Chart "Release" .Release "Values" .Values "Component" "node") -}}
 {{- end }}
 
 {{/*
 Match labels
 */}}
 {{- define "node.matchLabels" -}}
-{{- include "common.matchLabels" (dict "Chart" .Chart "Release" .Release "Component" "node") -}}
+{{- include "common.matchLabels" (dict "Chart" .Chart "Release" .Release "Values" .Values "Component" "node") -}}
 {{- end }}
 

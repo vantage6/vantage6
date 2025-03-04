@@ -25,12 +25,12 @@ Create chart name and version as used by the chart label.
 Common labels
 */}}
 {{- define "vantage6.labels" -}}
-{{- include "common.labels" (dict "Chart" .Chart "Release" .Release "Component" "server") -}}
+{{- include "common.labels" (dict "Chart" .Chart "Release" .Release "Values" .Values "Component" "server") -}}
 {{- end }}
 
 {{/*
 Match labels
 */}}
 {{- define "vantage6.matchLabels" -}}
-{{- include "common.matchLabels" (dict "Chart" .Chart "Release" .Release "Component" "server") -}}
+{{- include "common.matchLabels" (dict "Chart" .Chart "Release" .Release "Values" .Values "Component" "server") -}}
 {{- end }}
