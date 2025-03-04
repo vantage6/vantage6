@@ -122,7 +122,7 @@ class TestRoleResource(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
-    def test_rule_post(self, validate_token_mock):
+    def test_add_rule_to_role(self, validate_token_mock):
         server = self.setup_mock_and_server(validate_token_mock)
         role = Role(name="test_role")
         role.save()
@@ -139,7 +139,7 @@ class TestRoleResource(TestResources):
         self.assertEqual(len(role.rules), 1)
 
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
-    def test_rule_delete(self, validate_token_mock):
+    def test_delete_rule_from_role(self, validate_token_mock):
         server = self.setup_mock_and_server(validate_token_mock)
         rule = Rule.get()[0]
         role = Role(name="test_role", rules=[rule])

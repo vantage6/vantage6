@@ -17,7 +17,7 @@ from vantage6.backend.common.resource.role import (
     apply_user_filter,
     can_delete_dependents,
     check_default_role,
-    filter_by_name_or_description,
+    filter_by_attribute,
     get_role,
     get_rule,
     get_rules,
@@ -369,7 +369,7 @@ class Roles(RoleBase):
 
         q = self._filter_by_organization(q, request.args)
         q = self._filter_by_collaboration(q, request.args)
-        q = filter_by_name_or_description(db, q, request.args)
+        q = filter_by_attribute(db, ["name", "description"], q, request.args)
         q = self._filter_by_rule(q, request.args)
         q = self._filter_by_user(q, request.args)
 
