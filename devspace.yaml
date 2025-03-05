@@ -132,9 +132,12 @@ deployments:
           logging:
             level: DEBUG
           vantage6Server:
-            uri: http://host.docker.internal:7601/server
+            uri: http://localhost:7601/server
           policies:
-            allowLocalhost: 'True'
+            allowLocalhost: true
+            disable_review: true
+            review_own_algorithm: true
+            assignReviewOwnAlgorithm: true
 
         # This is the location of the database on the host system. Depending on the
         # system that you use in combination with Docker Desktop, you should put a
