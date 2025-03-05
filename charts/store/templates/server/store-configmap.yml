@@ -32,11 +32,16 @@ data:
       use_console: true
     policies:
       algorithm_view: {{ .Values.store.policies.algorithmView }}
-      allow_localhost: "True"
+      allow_localhost: {{ .Values.store.policies.allowLocalhost }}
       allowed_servers:
       - "http://localhost:7601/server"
+      min_reviewers: {{ .Values.store.policies.minReviewers }}
+      min_reviewing_organizations: {{ .Values.store.policies.minReviewingOrganizations }}
+      assign_review_own_algorithm: {{ .Values.store.policies.assignReviewOwnAlgorithm }}
     dev:
       host_uri: host.docker.internal
+      disable_review: {{ .Values.store.policies.dev.disable_review }}
+      review_own_algorithm: {{ .Values.store.policies.dev.review_own_algorithm }}
     port: {{ .Values.store.internal.port }}
     root_user:
       username: {{ .Values.store.vantage6Server.rootUser }}
