@@ -641,6 +641,7 @@ class SessionTaskInputSchema(Schema):
     """Schema for validating input for creating a session task."""
 
     image = fields.String(required=True)
+    store_id = fields.Integer(validate=Range(min=1))
 
     # This is a list of dictionaries, where each dictionary contains the
     # organization id and the organization's data extraction input (optional).

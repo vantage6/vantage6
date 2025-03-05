@@ -909,7 +909,7 @@ class Tasks(TaskBase):
             # db.Task.get()). Task.id should be updated explicitly instead.
             task_db = db.TaskDatabase(
                 task_id=task.id,
-                database=database["label"],
+                label=database["label"],
                 type_=database["type"],
             )
             task_db.save()
