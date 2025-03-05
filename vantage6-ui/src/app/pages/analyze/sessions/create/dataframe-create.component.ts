@@ -7,7 +7,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { StudyService } from 'src/app/services/study.service';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
-import { Session } from 'src/app/models/api/session.models';
+import { CreateDataframe, Session } from 'src/app/models/api/session.models';
 import { Collaboration } from 'src/app/models/api/collaboration.model';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { AvailableSteps, FormCreateOutput } from 'src/app/models/forms/create-form.model';
@@ -79,7 +79,7 @@ export class DataframeCreateComponent implements OnInit, OnDestroy {
     // TODO(BART/RIAN) RIAN: Change the create dataframe api parameters and modify the code below. Also add extra UI components to sessions / read to display the extra dataframe information.
     //
     // const newDataframe: CreateTask = {
-    //   handle: formCreateOutput?.name || '',
+    //   name: formCreateOutput?.name || '',
     //   label: '#! add label info',
     //   description: '',
     //   image: formCreateOutput.image || '',
@@ -92,13 +92,14 @@ export class DataframeCreateComponent implements OnInit, OnDestroy {
     //   //TODO: Add preprocessing and filtering when backend is ready
     // };
     let session_id: number = Number(this.sessionId);
-    const dataframeInput: any = {
-      handle: formCreateOutput?.name || '',
+    const dataframeInput: CreateDataframe = {
+      name: formCreateOutput?.name || '',
       label: formCreateOutput?.database || '',
       //TODO(BART/RIAN) RIAN: Add component parameters for conditional 'Name', 'Label', 'Description' etc and process this in form-create.component
       // description: '',
       task: {
         image: formCreateOutput.image || '',
+        store_id: formCreateOutput.store_id || -1,
         organizations: formCreateOutput.organizations || []
       }
     };

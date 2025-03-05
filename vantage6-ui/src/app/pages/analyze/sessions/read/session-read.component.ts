@@ -126,19 +126,18 @@ export class SessionReadComponent implements OnInit, OnDestroy {
     this.dataframePaginagion = this.dataframePaginagion;
   }
 
-  async handleDataframeChange(handle: string): Promise<void> {
+  async handleDataframeChange(dfID: number): Promise<void> {
     // TODO(BART/RIAN) RIAN: When the backend response is customized the additional information about the dataframe needs to be processed here and in the template.
     this.selectedDataframe = undefined;
-    this.selectedDataframe = await this.sessionService.getDataframe(Number.parseInt(this.id), handle);
+    this.selectedDataframe = await this.sessionService.getDataframe(dfID);
   }
 
   async addDataframe() {
     this.router.navigate([routePaths.dataframeCreate, this.id]);
   }
 
-  async deleteDataframe(dataframe_handle: string | undefined) {
-    if (!dataframe_handle) return;
-    this.sessionService.deleteDataframe(Number.parseInt(this.id), dataframe_handle);
+  async deleteDataframe(dfID: number) {
+    this.sessionService.deleteDataframe(dfID);
     this.getDataframes();
   }
 

@@ -4,6 +4,7 @@ import {
   BaseSession,
   ColumnRetrievalInput,
   ColumnRetrievalResult,
+  CreateDataframe,
   CreateSession,
   Dataframe,
   GetSessionParameters,
@@ -45,15 +46,15 @@ export class SessionService {
     return await this.apiService.getForApiWithPagination<any>(`/session/${sessionId}/dataframe`, currentPage);
   }
 
-  async getDataframe(sessionId: number, dataframeHandle: string): Promise<Dataframe> {
-    return await this.apiService.getForApi<Dataframe>(`/session/${sessionId}/dataframe/${dataframeHandle}`);
+  async getDataframe(dataframeID: number): Promise<Dataframe> {
+    return await this.apiService.getForApi<Dataframe>(`/session/dataframe/${dataframeID}`);
   }
 
   async createSession(createSession: CreateSession): Promise<BaseSession> {
     return await this.apiService.postForApi<BaseSession>('/session', createSession);
   }
 
-  async createDataframe(session_id: number, createDataframe: any): Promise<Dataframe> {
+  async createDataframe(session_id: number, createDataframe: CreateDataframe): Promise<Dataframe> {
     return await this.apiService.postForApi<any>(`/session/${session_id}/dataframe`, createDataframe);
   }
 
@@ -65,8 +66,8 @@ export class SessionService {
     return await this.apiService.deleteForApi(`/session/${id}`);
   }
 
-  async deleteDataframe(session_id: number, handle: string): Promise<void> {
-    return await this.apiService.deleteForApi(`/session/${session_id}/dataframe/${handle}`);
+  async deleteDataframe(dataframeID: number): Promise<void> {
+    return await this.apiService.deleteForApi(`/session/dataframe/${dataframeID}`);
   }
 
   async getColumnNames(columnRetrieve: ColumnRetrievalInput): Promise<ColumnRetrievalResult> {

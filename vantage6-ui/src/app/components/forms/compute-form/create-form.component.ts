@@ -181,7 +181,7 @@ export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     database: ['', Validators.required]
   });
   dataframeForm = this.fb.nonNullable.group({
-    dataframeHandle: ['', Validators.required]
+    dataframeName: ['', Validators.required]
   });
   preprocessingForm = this.fb.array([]);
   filterForm = this.fb.array([]);

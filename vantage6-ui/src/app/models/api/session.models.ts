@@ -1,4 +1,5 @@
 import { BaseLink } from './base.model';
+import { CreateTaskOrganization } from './task.models';
 import { BaseUser } from './user.model';
 
 export enum SessionLazyProperties {
@@ -77,7 +78,7 @@ export interface Dataframe {
   // Frank: Dataframe => source database inituser status description algorithm function parameters runs => looks like taks
   // Actual response:
   // columns: []
-  // handle: "TestDFnogeens"
+  // name: "TestDFnogeens"
   // id: 2
   // last_session_task: {image: 'harbor2.vantage6.ai/demo/average@sha256:ce3ebaacac…de7c552ebc86f9bf2252f18fee0b67965ed94d0bd78e5174c', id: 3, depends_on: Array(0), study: {…}, children: '/api/task?parent_id=3', …}
   // ready: true
@@ -85,7 +86,20 @@ export interface Dataframe {
   // tasks: "/api/task?dataframe_id=2"
   //
   // TODO(BART/RIAN) RIAN: Customize the request and response of dataframes in the backend and process this information in the UI.
-  handle: string;
+  name: string;
+  db_label: string;
   id: number;
   tasks: string;
+}
+
+export interface CreateDataframe {
+  name: string;
+  label: string;
+  task: CreateDataframeTask;
+}
+
+interface CreateDataframeTask {
+  image: string;
+  organizations: CreateTaskOrganization[];
+  store_id?: number;
 }

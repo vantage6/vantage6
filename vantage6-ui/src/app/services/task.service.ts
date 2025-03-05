@@ -148,8 +148,4 @@ export class TaskService {
     return decodedInput;
   }
 
-  // TODO(BART/RIAN) RIAN: getColumnNames should post to /session/{session_id}/dataframe/{dataframe_handle}/column, right?
-  async getColumnNames(columnRetrieve: ColumnRetrievalInput): Promise<ColumnRetrievalResult> {
-    return await this.apiService.postForApi<ColumnRetrievalResult>(`/column`, columnRetrieve);
-  }
 }
