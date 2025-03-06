@@ -511,7 +511,7 @@ class Role(RoleBase):
         role = get_role(db, id)
 
         if not self.has_permission_to_view(role):
-            raise UnauthorizedError("You do not have permission to view this.")
+            raise UnauthorizedError("You do not have permission to view this role.")
 
         return role_schema.dump(role, many=False), HTTPStatus.OK
 
@@ -579,7 +579,7 @@ class Role(RoleBase):
         validate_request_body(role_input_schema, data, partial=True)
 
         if "organization_id" in data:
-            raise BadRequestError("Organization id cannot be changed.")
+            raise BadRequestError("Cannot change role's organization")
 
         role = get_role(db, id)
         check_default_role(role, DefaultRole.list())
