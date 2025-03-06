@@ -65,6 +65,7 @@ class StoreRoleSubClient(ClientBase.SubClient):
             params=params,
         )
 
+    @post_filtering(iterable=False)
     def create(self, name: str, description: str, rules: List[int]) -> Dict[str, Any]:
         """
         Create a new role
@@ -96,6 +97,7 @@ class StoreRoleSubClient(ClientBase.SubClient):
             json=data,
         )
 
+    @post_filtering(iterable=False)
     def edit(
         self,
         role_id: int,
@@ -116,6 +118,9 @@ class StoreRoleSubClient(ClientBase.SubClient):
             New description of the role.
         rules : list[int], optional
             New list of rule IDs associated with the role.
+            CAUTION! This will not *add* rules but replace them. If
+            you remove rules from your own role you lose access. By
+            default None
 
         Returns
         -------
