@@ -5,7 +5,9 @@ from vantage6.backend.common.permission import RuleCollectionBase, PermissionMan
 from vantage6.common import logger_name
 from vantage6.algorithm.store.model.role import Role
 
-from vantage6.backend.common.resource.error_handling import ForbiddenError
+from vantage6.backend.common.resource.error_handling import (
+    UnauthorizedError,
+)
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -118,11 +120,11 @@ class PermissionManager(PermissionManagerBase):
 
         Raises
         -------
-        ForbiddenError
+        UnauthorizedError
         """
         for rule in rules:
             if not self.collections[rule.name].has_permission(rule.operation):
-                raise ForbiddenError(
+                raise UnauthorizedError(
                     f"You don't have the rule ({rule.name}, {rule.operation})"
                 )
 

@@ -81,7 +81,7 @@ class TestRoleResource(TestResources):
             "rules": [4],
         }
         response = self.app.post("/api/role", headers=HEADERS, json=invalid_rule)
-        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     def test_role_patch(self, validate_token_mock):
@@ -112,7 +112,7 @@ class TestRoleResource(TestResources):
         response = self.app.patch(
             f"/api/role/{role.id}", headers=HEADERS, json=invalid_rule
         )
-        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     def test_role_delete(self, validate_token_mock):
@@ -162,7 +162,7 @@ class TestRoleResource(TestResources):
         response = self.app.post(
             f"/api/role/{role.id}/rule/{invalid_rule.id}", headers=HEADERS
         )
-        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     def test_delete_rule_from_role(self, validate_token_mock):

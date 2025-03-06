@@ -354,6 +354,10 @@ class PermissionManager(PermissionManagerBase):
         ----------
         rules: list[:class:`~vantage6.server.model.rule.Rule`]
             List of rules that user is checked to have
+
+        Raises
+        ---------
+        UnauthorizedError
         """
         for rule in rules:
             if not self.collections[rule.name].has_at_least_scope(

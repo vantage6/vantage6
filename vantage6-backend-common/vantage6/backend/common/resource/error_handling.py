@@ -44,20 +44,6 @@ class BadRequestError(Exception):
         self.status_code = HTTPStatus.BAD_REQUEST
 
 
-class ForbiddenError(Exception):
-    """
-    Exception raised for forbidden request errors.
-
-    Attributes:
-        message (str): Explanation of the error.
-        status_code (HTTPStatus): HTTP status code for the error.
-    """
-
-    def __init__(self, message):
-        self.message = message
-        self.status_code = HTTPStatus.FORBIDDEN
-
-
 def handle_exceptions(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -68,8 +54,6 @@ def handle_exceptions(func):
         except NotFoundError as e:
             return {"msg": e.message}, e.status_code
         except BadRequestError as e:
-            return {"msg": e.message}, e.status_code
-        except ForbiddenError as e:
             return {"msg": e.message}, e.status_code
         except Exception as e:
             return {
