@@ -1,4 +1,4 @@
-from typing import List
+from typing import Any, Dict, List
 from vantage6.client.filter import post_filtering
 from vantage6.common.client.client_base import ClientBase
 
@@ -63,4 +63,97 @@ class StoreRoleSubClient(ClientBase.SubClient):
             is_for_algorithm_store=True,
             headers=self.parent.util._get_server_url_header(),
             params=params,
+        )
+
+    def create(self, name: str, description: str, rules: List[int]) -> Dict[str, Any]:
+        """
+        Create a new role
+
+        Parameters
+        ----------
+        name : str
+            Name of the role.
+        description : str
+            Description of the role.
+        rules : list[int]
+            List of rule IDs associated with the role.
+
+        Returns
+        -------
+        dict
+            The created role.
+        """
+        data = {
+            "name": name,
+            "description": description,
+            "rules": rules,
+        }
+        return self.parent.request(
+            "role",
+            method="post",
+            is_for_algorithm_store=True,
+            headers=self.parent.util._get_server_url_header(),
+            json=data,
+        )
+
+    def edit(
+        self,
+        role_id: int,
+        name: str = None,
+        description: str = None,
+        rules: List[int] = None,
+    ) -> Dict[str, Any]:
+        """
+        Edit an existing role
+
+        Parameters
+        ----------
+        role_id : int
+            ID of the role to edit.
+        name : str, optional
+            New name of the role.
+        description : str, optional
+            New description of the role.
+        rules : list[int], optional
+            New list of rule IDs associated with the role.
+
+        Returns
+        -------
+        dict
+            The updated role.
+        """
+        data = {}
+        if name is not None:
+            data["name"] = name
+        if description is not None:
+            data["description"] = description
+        if rules is not None:
+            data["rules"] = rules
+
+        return self.parent.request(
+            f"role/{role_id}",
+            method="patch",
+            is_for_algorithm_store=True,
+            headers=self.parent.util._get_server_url_header(),
+            json=data,
+        )
+
+    def delete(self, role_id: int) -> None:
+        """
+        Delete an existing role
+
+        Parameters
+        ----------
+        role_id : int
+            ID of the role to delete.
+
+        Returns
+        -------
+        None
+        """
+        self.parent.request(
+            f"role/{role_id}",
+            method="delete",
+            is_for_algorithm_store=True,
+            headers=self.parent.util._get_server_url_header(),
         )
