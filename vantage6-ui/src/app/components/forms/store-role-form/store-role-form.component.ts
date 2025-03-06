@@ -19,6 +19,11 @@ import { TranslateModule } from '@ngx-translate/core';
 export class StoreRoleFormComponent extends BaseFormComponent implements OnInit {
   @Input() selectableRules: StoreRule[] = [];
   store: AlgorithmStore | null = null;
+  form = this.fb.nonNullable.group({
+    name: ['', [Validators.required]],
+    description: ''
+  });
+  selectedRules: number[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -40,13 +45,6 @@ export class StoreRoleFormComponent extends BaseFormComponent implements OnInit 
     this.store = this.chosenStoreService.store$.value;
     this.isLoading = false;
   }
-
-  form = this.fb.nonNullable.group({
-    name: ['', [Validators.required]],
-    description: ''
-  });
-
-  selectedRules: number[] = [];
 
   override handleSubmit() {
     if (this.form.valid) {
