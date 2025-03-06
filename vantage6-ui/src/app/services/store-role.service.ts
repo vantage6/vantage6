@@ -52,6 +52,6 @@ export class StoreRoleService {
   }
 
   async deleteRole(store_url: string, roleID: number): Promise<void> {
-    await this.apiService.deleteForAlgorithmApi(store_url, `/role/${roleID}`);
+    await this.apiService.deleteForAlgorithmApi(store_url, `/role/${roleID}?delete_dependents=true`);
   }
 }

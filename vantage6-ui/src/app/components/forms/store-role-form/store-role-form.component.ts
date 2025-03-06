@@ -9,12 +9,13 @@ import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { PermissionsMatrixStoreComponent } from '../../permissions-matrix/store/permissions-matrix-store.component';
 import { RoleSubmitButtonsComponent } from '../../helpers/role-submit-buttons/role-submit-buttons.component';
 import { TranslateModule } from '@ngx-translate/core';
+import { MatInput } from '@angular/material/input';
 
 @Component({
   selector: 'app-store-role-form',
   templateUrl: './store-role-form.component.html',
   styleUrl: './store-role-form.component.scss',
-  imports: [ReactiveFormsModule, MatFormField, MatLabel, PermissionsMatrixStoreComponent, RoleSubmitButtonsComponent, TranslateModule]
+  imports: [ReactiveFormsModule, MatFormField, MatLabel, MatInput, PermissionsMatrixStoreComponent, RoleSubmitButtonsComponent, TranslateModule]
 })
 export class StoreRoleFormComponent extends BaseFormComponent implements OnInit {
   @Input() selectableRules: StoreRule[] = [];
