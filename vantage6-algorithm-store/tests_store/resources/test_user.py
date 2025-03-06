@@ -136,7 +136,7 @@ class TestUserResource(TestResources):
             "roles": [role.id],
         }
         response = self.app.post("/api/user", headers=HEADERS, json=body_)
-        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         # if there are policies precluding users from certain server to be created, user
         # from that server should not be created. Note that before, no policies were
@@ -194,7 +194,7 @@ class TestUserResource(TestResources):
         response = self.app.patch(
             f"/api/user/{user.id}", headers=HEADERS, json={"roles": [role.id]}
         )
-        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         # check that you cannot delete roles from someone if you don't have the
         # permissions from that role yourself
@@ -203,7 +203,7 @@ class TestUserResource(TestResources):
         response = self.app.patch(
             f"/api/user/{user.id}", headers=HEADERS, json={"roles": []}
         )
-        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         # check that you can't change your own roles
         response = self.app.patch(

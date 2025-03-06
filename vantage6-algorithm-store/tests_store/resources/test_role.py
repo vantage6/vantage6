@@ -75,6 +75,14 @@ class TestRoleResource(TestResources):
         response = self.app.post("/api/role", headers=HEADERS, json=invalid_data)
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
+        invalid_rule = {
+            "name": "test_role",
+            "description": "A test role",
+            "rules": [4],
+        }
+        response = self.app.post("/api/role", headers=HEADERS, json=invalid_rule)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     def test_role_patch(self, validate_token_mock):
         server = self.setup_mock_and_server(validate_token_mock)
@@ -95,6 +103,16 @@ class TestRoleResource(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(role.name, valid_data["name"])
         self.assertEqual(role.description, valid_data["description"])
+
+        invalid_rule = {
+            "name": "test_role",
+            "description": "A test role",
+            "rules": [4],
+        }
+        response = self.app.patch(
+            f"/api/role/{role.id}", headers=HEADERS, json=invalid_rule
+        )
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     def test_role_delete(self, validate_token_mock):
@@ -124,31 +142,41 @@ class TestRoleResource(TestResources):
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     def test_add_rule_to_role(self, validate_token_mock):
         server = self.setup_mock_and_server(validate_token_mock)
-        role = Role(name="test_role")
-        role.save()
+        rule = Rule.get_by_("role", Operation.EDIT)
+        role = self.create_role(rules=[rule])
 
         self.check_unauthorized(self.app.post, f"/api/role/{role.id}/rule/9999")
 
         self.register_user(
-            server.id, USERNAME, user_rules=[Rule.get_by_("role", Operation.EDIT)]
+            server.id,
+            USERNAME,
+            user_rules=[Rule.get_by_("role", Operation.EDIT)],
+            user_roles=[role],
         )
 
-        rule = Rule.get()[0]
         response = self.app.post(f"/api/role/{role.id}/rule/{rule.id}", headers=HEADERS)
         self.assertEqual(response.status_code, HTTPStatus.CREATED)
         self.assertEqual(len(role.rules), 1)
 
+        invalid_rule = Rule.get_by_("role", Operation.CREATE)
+        response = self.app.post(
+            f"/api/role/{role.id}/rule/{invalid_rule.id}", headers=HEADERS
+        )
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     def test_delete_rule_from_role(self, validate_token_mock):
         server = self.setup_mock_and_server(validate_token_mock)
-        rule = Rule.get()[0]
-        role = Role(name="test_role", rules=[rule])
-        role.save()
+        rule = Rule.get_by_("role", Operation.EDIT)
+        role = self.create_role(rules=[rule])
 
         self.check_unauthorized(self.app.delete, f"/api/role/{role.id}/rule/{rule.id}")
 
         self.register_user(
-            server.id, USERNAME, user_rules=[Rule.get_by_("role", Operation.EDIT)]
+            server.id,
+            USERNAME,
+            user_rules=[Rule.get_by_("role", Operation.EDIT)],
+            user_roles=[role],
         )
 
         response = self.app.delete(
