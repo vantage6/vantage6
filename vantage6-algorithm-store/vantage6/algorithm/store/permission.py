@@ -5,6 +5,10 @@ from vantage6.backend.common.permission import RuleCollectionBase, PermissionMan
 from vantage6.common import logger_name
 from vantage6.algorithm.store.model.role import Role
 
+from vantage6.backend.common.resource.error_handling import (
+    UnauthorizedError,
+)
+
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
@@ -105,7 +109,7 @@ class PermissionManager(PermissionManagerBase):
 
         self.collection(resource).add(rule.operation)
 
-    def check_user_rules(self, rules: list[Rule]) -> dict | None:
+    def check_user_rules(self, rules: list[Rule]):
         """
         Check if a user, node or container has all the `rules` in a list
 
@@ -114,18 +118,15 @@ class PermissionManager(PermissionManagerBase):
         rules: list[:class:`~vantage6.algorithm.store.model.rule.Rule`]
             List of rules that user is checked to have
 
-        Returns
+        Raises
         -------
-        dict | None
-            Dict with a message which rule is missing, else None
+        UnauthorizedError
         """
         for rule in rules:
             if not self.collections[rule.name].has_permission(rule.operation):
-                return {
-                    "msg": f"You don't have the rule ({rule.name}, "
-                    f"{rule.operation})"
-                }
-        return None
+                raise UnauthorizedError(
+                    f"You don't have the rule ({rule.name}, {rule.operation})"
+                )
 
     def get_new_collection(self, name: str) -> RuleCollection:
         """

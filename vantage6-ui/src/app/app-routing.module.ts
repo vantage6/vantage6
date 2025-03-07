@@ -61,6 +61,7 @@ import { ReviewReadComponent } from './pages/store/algorithms-in-review/review-r
 import { ReviewSubmitComponent } from './pages/store/algorithms-in-review/review-submit/review-submit.component';
 import { MyPendingAlgorithmsComponent } from './pages/store/algorithms-in-review/my-pending-algorithms/my-pending-algorithms.component';
 import { OldAlgorithmListComponent } from './pages/store/algorithm/old-list/old-algorithm-list.component';
+import { StoreRoleCreateComponent } from './pages/store/role/create/store-role-create.component';
 
 const routes: Routes = [
   {
@@ -470,6 +471,14 @@ const routes: Routes = [
         canActivate: [authenticationGuard(), chosenStoreGuard()],
         data: {
           crumbs: [['role-list.title']]
+        }
+      },
+      {
+        path: routerConfig.storeRoleCreate,
+        component: StoreRoleCreateComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['role-list.title', routePaths.storeRoles], ['role-create.title']]
         }
       },
       {
