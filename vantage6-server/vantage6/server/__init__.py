@@ -685,7 +685,7 @@ class ServerApp:
                     name=role["name"],
                     description=role["description"],
                     rules=role["rules"],
-                    is_default_role=role["is_default_role"],
+                    is_default_role=True,
                 )
                 new_role.save()
             else:
