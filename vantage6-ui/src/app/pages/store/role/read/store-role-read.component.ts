@@ -70,12 +70,12 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
   }
 
   override async ngOnInit(): Promise<void> {
-    this.store = this.chosenStoreService.store$.value;
     this.storePermissionService
       .isInitialized()
       .pipe(takeUntil(this.destroy$))
       .subscribe((isInitialized) => {
         if (isInitialized) {
+          this.store = this.chosenStoreService.store$.value;
           this.initData();
         }
       });
