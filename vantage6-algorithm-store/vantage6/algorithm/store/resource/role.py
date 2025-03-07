@@ -173,7 +173,7 @@ class Roles(AlgorithmStoreResources):
 
         if "user_id" in args:
             validate_user_exists(db, args["user_id"])
-            apply_user_filter(db, query, args["user_id"])
+            query = apply_user_filter(db, query, args["user_id"])
 
         page = Pagination.from_query(query, request, db.Role)
 
