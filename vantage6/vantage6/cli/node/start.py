@@ -78,7 +78,7 @@ def cli_node_start(
 
     # check that this node is not already running
     running_nodes = docker_client.containers.list(
-        filters={"label": f"{APPNAME}-type={InstanceType.NODE}"}
+        filters={"label": f"{APPNAME}-type={InstanceType.NODE.value}"}
     )
 
     suffix = "system" if system_folders else "user"
@@ -306,7 +306,7 @@ def cli_node_start(
         volumes=volumes,
         detach=True,
         labels={
-            f"{APPNAME}-type": InstanceType.NODE,
+            f"{APPNAME}-type": InstanceType.NODE.value,
             "system": str(system_folders),
             "name": ctx.config_file_name,
         },

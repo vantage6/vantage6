@@ -132,7 +132,7 @@ class ServerCLITest(unittest.TestCase):
         """Stop server without errors."""
 
         container1 = MagicMock()
-        container1.name = f"{APPNAME}-iknl-system-{InstanceType.SERVER}"
+        container1.name = f"{APPNAME}-iknl-system-{InstanceType.SERVER.value}"
         containers.containers.list.return_value = [container1]
 
         runner = CliRunner()
@@ -146,7 +146,7 @@ class ServerCLITest(unittest.TestCase):
     def test_attach(self, containers, sleep):
         """Attach log to the console without errors."""
         container1 = MagicMock()
-        container1.name = f"{APPNAME}-iknl-system-{InstanceType.SERVER}"
+        container1.name = f"{APPNAME}-iknl-system-{InstanceType.SERVER.value}"
         containers.list.return_value = [container1]
 
         sleep.side_effect = KeyboardInterrupt("Boom!")
