@@ -542,51 +542,6 @@ class MockAlgorithmClient:
                 "organizations": f"/api/organization?collaboration_id={collab_id}",
             }
 
-    class Node(SubClient):
-        """
-        Node subclient for the MockAlgorithmClient
-        """
-
-        def get(self, is_online: bool = True) -> dict:
-            """
-            Get mocked node
-
-            Parameters
-            ----------
-            is_online : bool
-                Whether the node is online or not. Default True.
-
-            Returns
-            -------
-            dict
-                A mocked node.
-            """
-            node_id = self.parent.node_id
-            collab_id = self.parent.collaboration_id
-            return {
-                "id": node_id,
-                "name": "mock-node",
-                "status": (
-                    AuthStatus.ONLINE.value if is_online else AuthStatus.OFFLINE.value
-                ),
-                "ip": "1.2.3.4",
-                "config": {
-                    "key": "value",
-                },
-                "collaboration": {
-                    "id": collab_id,
-                    "link": f"/api/collaboration/{collab_id}",
-                    "methods": ["DELETE", "PATCH", "GET"],
-                },
-                "last_seen": "2021-01-01T00:00:00.000000",
-                "type": "node",
-                "organization": {
-                    "id": node_id,
-                    "link": f"/api/organization/{node_id}",
-                    "methods": ["GET", "PATCH"],
-                },
-            }
-
     # TODO implement the get_addresses method before using this part
     # class VPN(SubClient):
     #     """

@@ -1,15 +1,23 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
 import { FunctionDatabase } from 'src/app/models/api/algorithm.model';
 import { BaseNode, Database, DatabaseType } from 'src/app/models/api/node.model';
 import { TaskDBOutput } from 'src/app/models/api/task.models';
+import { NgFor, NgIf } from '@angular/common';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatSelect } from '@angular/material/select';
+import { MatOption } from '@angular/material/core';
+import { MatInput } from '@angular/material/input';
+import { AlertComponent } from '../../../../../../components/alerts/alert/alert.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-database-step',
-  styleUrls: ['./database-step.component.scss'],
-  templateUrl: './database-step.component.html'
+    selector: 'app-database-step',
+    styleUrls: ['./database-step.component.scss'],
+    templateUrl: './database-step.component.html',
+    imports: [ReactiveFormsModule, NgFor, NgIf, MatFormField, MatLabel, MatSelect, MatOption, MatInput, AlertComponent, TranslateModule]
 })
 export class DatabaseStepComponent implements OnDestroy, OnChanges {
   destroy$ = new Subject();

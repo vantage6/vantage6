@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { NgStyle, NgIf } from '@angular/common';
+import { RouterOutlet } from '@angular/router';
 
 interface BackgroundImage {
   image: string;
@@ -7,9 +9,10 @@ interface BackgroundImage {
 }
 
 @Component({
-  selector: 'app-layout-login',
-  templateUrl: './layout-login.component.html',
-  styleUrls: ['./layout-login.component.scss']
+    selector: 'app-layout-login',
+    templateUrl: './layout-login.component.html',
+    styleUrls: ['./layout-login.component.scss'],
+    imports: [NgStyle, RouterOutlet, NgIf]
 })
 export class LayoutLoginComponent implements OnInit {
   backgroundImage: BackgroundImage | null = null;

@@ -21,15 +21,12 @@
   <div *ngIf="algorithm?.status === algorithmStatus.AwaitingReviewerAssignment">
     <app-alert-with-button
       *ngIf="canAssignReviewers"
-      label="{{ 'algorithm-read.alert.assign-review.content' | translate }}"
+      label="{{ getLabelForAssignReviewers() }}"
       buttonLink="{{ getButtonLink(routes.algorithmReviewAssign, algorithm.id) }}"
       buttonText="{{ 'algorithm-read.alert.assign-review.assign' | translate }}"
       [isSuccessAlert]="false"
     ></app-alert-with-button>
-    <app-alert-with-button
-      *ngIf="!canAssignReviewers"
-      label="{{ 'algorithm-read.alert.assign-review.content' | translate }}"
-    ></app-alert-with-button>
+    <app-alert-with-button *ngIf="!canAssignReviewers" label="{{ getLabelForAssignReviewers() }}"></app-alert-with-button>
   </div>
   <div *ngIf="algorithm?.status === algorithmStatus.UnderReview">
     <app-alert-with-button

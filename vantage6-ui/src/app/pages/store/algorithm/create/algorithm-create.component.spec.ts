@@ -8,10 +8,9 @@ describe('AlgorithmCreateComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [AlgorithmCreateComponent]
-    })
-    .compileComponents();
-    
+      imports: [AlgorithmCreateComponent]
+    }).compileComponents();
+
     fixture = TestBed.createComponent(AlgorithmCreateComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

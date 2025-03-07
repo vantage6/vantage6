@@ -83,7 +83,7 @@ def cli_server_start(
     Start the server.
     """
     info("Starting server...")
-    docker_client = check_for_start(ctx, InstanceType.SERVER)
+    docker_client = check_for_start(ctx, InstanceType.SERVER.value)
 
     image = get_image(image, ctx, "server", DEFAULT_SERVER_IMAGE)
 
@@ -131,7 +131,7 @@ def cli_server_start(
         )
     else:
         warning(
-            "Message queue disabled! This means that the vantage6 server "
+            "Message queue is not set up! This means that the vantage6 server "
             "cannot be scaled horizontally!"
         )
 
@@ -157,7 +157,10 @@ def cli_server_start(
         command=cmd,
         mounts=mounts,
         detach=True,
-        labels={f"{APPNAME}-type": InstanceType.SERVER, "name": ctx.config_file_name},
+        labels={
+            f"{APPNAME}-type": InstanceType.SERVER.value,
+            "name": ctx.config_file_name,
+        },
         environment=environment_vars,
         ports={f"{internal_port}/tcp": (ip, port_)},
         name=ctx.docker_container_name,

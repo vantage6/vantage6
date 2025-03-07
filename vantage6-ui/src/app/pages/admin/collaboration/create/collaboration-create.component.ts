@@ -5,10 +5,17 @@ import { BaseOrganization } from 'src/app/models/api/organization.model';
 import { routePaths } from 'src/app/routes';
 import { CollaborationService } from 'src/app/services/collaboration.service';
 import { NodeService } from 'src/app/services/node.service';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { NgIf } from '@angular/common';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { CollaborationFormComponent } from '../../../../components/forms/collaboration-form/collaboration-form.component';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-collaboration-create',
-  templateUrl: './collaboration-create.component.html'
+    selector: 'app-collaboration-create',
+    templateUrl: './collaboration-create.component.html',
+    imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, CollaborationFormComponent, MatProgressSpinner, TranslateModule]
 })
 export class CollaborationCreateComponent {
   @HostBinding('class') class = 'card-container';
@@ -18,8 +25,7 @@ export class CollaborationCreateComponent {
   constructor(
     private router: Router,
     private collaborationService: CollaborationService,
-    private nodeService: NodeService,
-
+    private nodeService: NodeService
   ) {}
 
   async handleSubmit(collaborationForm: CollaborationForm) {
@@ -34,7 +40,7 @@ export class CollaborationCreateComponent {
     const collaboration = await this.collaborationService.createCollaboration(collaborationCreate);
     if (collaboration?.id) {
       if (collaborationForm.registerNodes && collaborationForm.organizations) {
-        this.nodeService.registerNodes(collaboration, collaborationForm.organizations);
+        this.nodeService.registerNodes([collaboration], collaborationForm.organizations, true);
       }
       this.router.navigate([routePaths.collaborations]);
     } else {
@@ -45,5 +51,4 @@ export class CollaborationCreateComponent {
   handleCancel(): void {
     this.router.navigate([routePaths.collaborations]);
   }
-
 }

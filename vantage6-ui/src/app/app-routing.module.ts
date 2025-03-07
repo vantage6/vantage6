@@ -61,6 +61,7 @@ import { ReviewReadComponent } from './pages/store/algorithms-in-review/review-r
 import { ReviewSubmitComponent } from './pages/store/algorithms-in-review/review-submit/review-submit.component';
 import { MyPendingAlgorithmsComponent } from './pages/store/algorithms-in-review/my-pending-algorithms/my-pending-algorithms.component';
 import { OldAlgorithmListComponent } from './pages/store/algorithm/old-list/old-algorithm-list.component';
+import { StoreRoleCreateComponent } from './pages/store/role/create/store-role-create.component';
 
 const routes: Routes = [
   {
@@ -473,6 +474,14 @@ const routes: Routes = [
         }
       },
       {
+        path: routerConfig.storeRoleCreate,
+        component: StoreRoleCreateComponent,
+        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        data: {
+          crumbs: [['role-list.title', routePaths.storeRoles], ['role-create.title']]
+        }
+      },
+      {
         path: routerConfig.storeRole,
         component: StoreRoleReadComponent,
         canActivate: [authenticationGuard(), chosenStoreGuard()],
@@ -501,7 +510,7 @@ const routes: Routes = [
         component: ReviewReadComponent,
         canActivate: [authenticationGuard(), chosenStoreGuard()],
         data: {
-          crumbs: [['algorithm-in-review.title'], routePaths.algorithmReviews, ['algorithm-review.title']]
+          crumbs: [['algorithm-in-review.title'], routePaths.algorithmReviews, ['algorithm-review.breadcrumb-title']]
         }
       },
       {
@@ -509,7 +518,7 @@ const routes: Routes = [
         component: ReviewSubmitComponent,
         canActivate: [authenticationGuard(), chosenStoreGuard()],
         data: {
-          crumbs: [['algorithm-in-review.title'], routePaths.algorithmReviews, ['algorithm-review.title']]
+          crumbs: [['algorithm-in-review.title'], routePaths.algorithmReviews, ['algorithm-review.breadcrumb-title']]
         }
       },
       {

@@ -1,11 +1,17 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { readFile } from 'src/app/helpers/file.helper';
 import { Organization, OrganizationCreate } from 'src/app/models/api/organization.model';
+import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { NgIf } from '@angular/common';
+import { MatButton } from '@angular/material/button';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-organization-form',
-  templateUrl: './organization-form.component.html'
+    selector: 'app-organization-form',
+    templateUrl: './organization-form.component.html',
+    imports: [ReactiveFormsModule, MatFormField, MatLabel, MatInput, NgIf, MatButton, MatSuffix, TranslateModule]
 })
 export class OrganizationFormComponent implements OnInit {
   @Input() organization?: Organization;

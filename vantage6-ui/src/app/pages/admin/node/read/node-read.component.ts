@@ -5,25 +5,63 @@ import { OrganizationSortProperties } from 'src/app/models/api/organization.mode
 import { OrganizationService } from 'src/app/services/organization.service';
 import { CollaborationService } from 'src/app/services/collaboration.service';
 import { CollaborationSortProperties } from 'src/app/models/api/collaboration.model';
-import { FormControl, Validators } from '@angular/forms';
+import { FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
 import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
 import { Pagination, PaginationLinks } from 'src/app/models/api/pagination.model';
-import { PageEvent } from '@angular/material/paginator';
+import { PageEvent, MatPaginator } from '@angular/material/paginator';
 import { PermissionService } from 'src/app/services/permission.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
 import { Subscription } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { MessageDialogComponent } from 'src/app/components/dialogs/message-dialog/message-dialog.component';
 import { FileService } from 'src/app/services/file.service';
 import { printDate } from 'src/app/helpers/general.helper';
 import { ITreeInputNode, ITreeSelectedValue } from 'src/app/components/helpers/tree-dropdown/tree-dropdown.component';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { TreeDropdownComponent } from '../../../../components/helpers/tree-dropdown/tree-dropdown.component';
+import { NgIf, NgFor } from '@angular/common';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import {
+  MatAccordion,
+  MatExpansionPanel,
+  MatExpansionPanelHeader,
+  MatExpansionPanelTitle,
+  MatExpansionPanelContent
+} from '@angular/material/expansion';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { ChipComponent } from '../../../../components/helpers/chip/chip.component';
+import { MatButton } from '@angular/material/button';
 
 @Component({
-  selector: 'app-node-read',
-  templateUrl: './node-read.component.html',
-  styleUrls: ['./node-read.component.scss']
+    selector: 'app-node-read',
+    templateUrl: './node-read.component.html',
+    styleUrls: ['./node-read.component.scss'],
+    imports: [
+        PageHeaderComponent,
+        TreeDropdownComponent,
+        NgIf,
+        MatCard,
+        MatCardContent,
+        MatAccordion,
+        NgFor,
+        MatExpansionPanel,
+        MatExpansionPanelHeader,
+        MatExpansionPanelTitle,
+        MatExpansionPanelContent,
+        MatProgressSpinner,
+        MatFormField,
+        MatLabel,
+        MatInput,
+        ReactiveFormsModule,
+        ChipComponent,
+        MatButton,
+        MatPaginator,
+        TranslateModule
+    ]
 })
 export class NodeReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
@@ -148,7 +186,7 @@ export class NodeReadComponent implements OnInit, OnDestroy {
     this.isLoading = true;
 
     const loadOrganizations = this.organizationService.getOrganizations({ sort: OrganizationSortProperties.Name });
-    const loadCollaborations = await this.collaborationService.getCollaborations({ sort: CollaborationSortProperties.Name });
+    const loadCollaborations = this.collaborationService.getCollaborations({ sort: CollaborationSortProperties.Name });
     await Promise.all([loadOrganizations, loadCollaborations, this.getNodes()]).then((values) => {
       this.treeNodes = [
         {

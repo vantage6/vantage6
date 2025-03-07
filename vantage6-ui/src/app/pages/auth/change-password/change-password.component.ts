@@ -1,22 +1,43 @@
 import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 
 import { PASSWORD_VALIDATORS } from 'src/app/validators/passwordValidators';
 import { createCompareValidator } from 'src/app/validators/compare.validator';
 import { MessageDialogComponent } from 'src/app/components/dialogs/message-dialog/message-dialog.component';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { routePaths } from 'src/app/routes';
 import { AuthService } from 'src/app/services/auth.service';
 import { createUnEqualValidator } from 'src/app/validators/unequal.validator';
 import { LoginErrorService } from 'src/app/services/login-error.service';
 import { TokenStorageService } from 'src/app/services/token-storage.service';
+import { PageHeaderComponent } from '../../../components/page-header/page-header.component';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { MatFormField, MatLabel, MatError } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { NgIf } from '@angular/common';
+import { MatButton } from '@angular/material/button';
+import { AlertComponent } from '../../../components/alerts/alert/alert.component';
 
 @Component({
-  selector: 'app-change-password',
-  templateUrl: './change-password.component.html'
+    selector: 'app-change-password',
+    templateUrl: './change-password.component.html',
+    imports: [
+        PageHeaderComponent,
+        MatCard,
+        MatCardContent,
+        ReactiveFormsModule,
+        MatFormField,
+        MatLabel,
+        MatInput,
+        NgIf,
+        MatError,
+        MatButton,
+        AlertComponent,
+        TranslateModule
+    ]
 })
 export class ChangePasswordComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

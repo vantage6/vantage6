@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import logging
 
 from functools import wraps
@@ -210,7 +210,7 @@ def get_and_update_authenticatable_info(auth_id: int) -> db.Authenticatable:
         User or node database model
     """
     auth = db.Authenticatable.get(auth_id)
-    auth.last_seen = datetime.datetime.utcnow()
+    auth.last_seen = dt.datetime.now(dt.timezone.utc)
     auth.save()
     return auth
 
@@ -227,24 +227,33 @@ with_node = only_for(("node",))
 with_container = only_for(("container",))
 
 
-def parse_datetime(dt: str = None, default: datetime = None) -> datetime:
+def parse_datetime(
+    date: str | dt.datetime = None, default: dt.datetime = None
+) -> dt.datetime:
     """
     Utility function to parse a datetime string.
 
     Parameters
     ----------
-    dt : str
+    date : str | datetime.datetime, optional
         Datetime string
-    default : datetime
+    default : datetime.datetime, optional
         Default datetime to return if `dt` is None
 
     Returns
     -------
-    datetime
+    datetime.datetime
         Datetime object
     """
-    if dt:
-        return datetime.datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S.%f")
+    if date:
+        if isinstance(date, str):
+            converter = "%Y-%m-%dT%H:%M:%S.%f"
+            if date.endswith("+00:00"):
+                converter += "%z"  # parse timezone
+            return dt.datetime.strptime(date, converter)
+        else:
+            # convert datetime to UTC
+            return date.astimezone(dt.timezone.utc)
     return default
 
 

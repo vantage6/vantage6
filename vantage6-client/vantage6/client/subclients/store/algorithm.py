@@ -163,6 +163,8 @@ class AlgorithmSubClient(ClientBase.SubClient):
                 Description of the function
             - type: string
                 Type of the function (central or federated)
+            - standalone: bool
+                Whether this function produces useful results when running it by itself
             - databases: list[dict]
                 List of databases of the function. Each database is a dict with
                 the following keys:
@@ -342,6 +344,8 @@ class AlgorithmSubClient(ClientBase.SubClient):
                 Description of the function
             - type: string
                 Type of the function (central or federated)
+            - standalone: bool
+                Whether this function produces useful results when running it by itself
             - databases: list[dict]
                 List of databases of the function. Each database is a dict with
                 the following keys:

@@ -132,7 +132,10 @@ def cli_server_import(
         command=cmd,
         mounts=mounts,
         detach=True,
-        labels={f"{APPNAME}-type": InstanceType.SERVER, "name": ctx.config_file_name},
+        labels={
+            f"{APPNAME}-type": InstanceType.SERVER.value,
+            "name": ctx.config_file_name,
+        },
         environment=environment_vars,
         auto_remove=not keep,
         tty=True,

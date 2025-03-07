@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { Router, RouterLink } from '@angular/router';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs';
 import { BaseReadComponent } from 'src/app/components/admin-base/base-read/base-read.component';
 import { OperationType, StoreResourceType, StoreRule } from 'src/app/models/api/rule.model';
@@ -10,11 +10,39 @@ import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dial
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 import { StoreRuleService } from 'src/app/services/store-rule.service';
 import { StoreUserService } from 'src/app/services/store-user.service';
+import { NgIf, NgFor } from '@angular/common';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { MatIconButton } from '@angular/material/button';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { MatIcon } from '@angular/material/icon';
+import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
+import { ChipComponent } from '../../../../components/helpers/chip/chip.component';
+import { PermissionsMatrixStoreComponent } from '../../../../components/permissions-matrix/store/permissions-matrix-store.component';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-store-user-read',
   templateUrl: './store-user-read.component.html',
-  styleUrl: './store-user-read.component.scss'
+  styleUrl: './store-user-read.component.scss',
+  imports: [
+    NgIf,
+    PageHeaderComponent,
+    MatIconButton,
+    MatMenuTrigger,
+    MatIcon,
+    MatMenu,
+    MatMenuItem,
+    RouterLink,
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardContent,
+    NgFor,
+    ChipComponent,
+    PermissionsMatrixStoreComponent,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 export class StoreUserReadComponent extends BaseReadComponent implements OnInit, OnDestroy {
   user: StoreUser | null = null;
