@@ -29,13 +29,12 @@
                 <span>{{ "general.delete" | translate }}</span>
               </button>
             </div>
-            <div class="role-read__buttons"></div>
-            <app-permissions-matrix-store 
+            <app-permissions-matrix-store
               [fixedSelectedPrimary]="fixedSelectedRules"
               [preselected]="preselectedRules"
               [selectable]="selectableRules"
               (changed)="handleChangedSelection($event)"
-            > 
+            >
             </app-permissions-matrix-store>
 
             <app-role-submit-buttons
