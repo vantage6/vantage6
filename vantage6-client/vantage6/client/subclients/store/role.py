@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, List
 from vantage6.client.filter import post_filtering
 from vantage6.common.client.client_base import ClientBase
 
@@ -66,7 +66,7 @@ class StoreRoleSubClient(ClientBase.SubClient):
         )
 
     @post_filtering(iterable=False)
-    def create(self, name: str, description: str, rules: List[int]) -> Dict[str, Any]:
+    def create(self, name: str, description: str, rules: List[int]) -> dict[str, Any]:
         """
         Create a new role
 
@@ -104,7 +104,7 @@ class StoreRoleSubClient(ClientBase.SubClient):
         name: str = None,
         description: str = None,
         rules: List[int] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Edit an existing role
 
