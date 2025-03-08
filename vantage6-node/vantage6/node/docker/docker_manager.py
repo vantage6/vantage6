@@ -649,6 +649,7 @@ class DockerManager(DockerBaseManager):
             requires_pull=self._policies.get(
                 NodePolicy.REQUIRE_ALGORITHM_PULL, DEFAULT_REQUIRE_ALGO_IMAGE_PULL
             ),
+            socketIO=socketIO,
         )
 
         # attempt to kick of the task. If it fails do to unknown reasons we try
@@ -664,8 +665,6 @@ class DockerManager(DockerBaseManager):
                     algorithm_env=self.algorithm_env,
                     databases_to_use=databases_to_use,
                 )
-
-                task.stream_logs(socketIO, run_id, task_info["id"])
 
             except UnknownAlgorithmStartFail:
                 self.log.exception(

@@ -2,6 +2,7 @@
 # to be cleaned at some point.
 import logging
 import os
+from socket import SocketIO
 import threading
 import docker.errors
 import json
@@ -52,6 +53,7 @@ class DockerTaskManager(DockerBaseManager):
         isolated_network_mgr: NetworkManager,
         databases: dict,
         docker_volume_name: str,
+        socketIO: SocketIO,
         alpine_image: str | None = None,
         proxy: Squid | None = None,
         device_requests: list | None = None,
@@ -132,6 +134,8 @@ class DockerTaskManager(DockerBaseManager):
         self.device_requests = []
         if device_requests:
             self.device_requests = device_requests
+
+        self.socket = socketIO
 
     def is_finished(self) -> bool:
         """
@@ -357,6 +361,9 @@ class DockerTaskManager(DockerBaseManager):
                 name=container_name,
                 labels=self.labels,
                 device_requests=self.device_requests,
+            )
+            self._stream_logs(
+                socketIO=self.socket, run_id=self.run_id, task_id=self.task_id
             )
 
         except Exception as e:
@@ -695,7 +702,7 @@ class DockerTaskManager(DockerBaseManager):
             encoded_environment_variables[key] = _encode(str(val))
         return encoded_environment_variables
 
-    def stream_logs(self, socketIO, run_id, task_id):
+    def _stream_logs(self, socketIO, run_id, task_id):
         """
         Stream logs from the running container.
         """
