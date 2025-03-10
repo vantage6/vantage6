@@ -14,10 +14,11 @@ node:
     level: INFO
 
   # Task directory within the node container
-  taskDir: /tmp/tasks
+  taskDir: /app/tasks
 
   # Task directory on the host machine
-  taskDirHost: /private/tmp/v6-tasks
+  # taskDirHost: /home/bart/test
+  taskDirHost: /run/desktop/mnt/host/wsl/v6data/task_data
 
   proxyPort: 7654
 

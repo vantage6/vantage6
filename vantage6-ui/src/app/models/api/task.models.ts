@@ -24,7 +24,8 @@ export enum TaskStatus {
   NoDockerImage = 'non-existing Docker image',
   NotAllowed = 'not allowed',
   Crashed = 'crashed',
-  Killed = 'killed by user'
+  Killed = 'killed by user',
+  Unknown = 'unknown error'
 }
 
 export enum TaskStatusGroup {

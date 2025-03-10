@@ -27,6 +27,7 @@ from vantage6.common.docker.addons import (
 from vantage6.common.client.node_client import NodeClient
 from vantage6.node.globals import (
     ENV_VARS_NOT_SETTABLE_BY_NODE,
+    JOB_POD_DATA_DIR,
     KUBE_CONFIG_FILE_PATH,
     PROXY_SERVER_HOST,
     PROXY_SERVER_PORT,
@@ -210,7 +211,7 @@ class ContainerManager:
         RunStatus
             Returns the status of the run
         """
-
+        self.log.debug("Setting up algorithm run %s", run_id)
         # In case we are dealing with a data-extraction or prediction task, we need to
         # know the dataframe that is being created or modified by the algorithm.
         df_details = task_info.get("dataframe", {})
@@ -422,7 +423,11 @@ class ContainerManager:
         return RunStatus.UNKNOWN_ERROR
 
     def _create_run_mount(
-        self, volume_name: str, host_path: str, mount_path: str, read_only: bool = False
+        self,
+        volume_name: str,
+        host_path: str | Path,
+        mount_path: str,
+        read_only: bool = False,
     ) -> Tuple[k8s_client.V1Volume, k8s_client.V1VolumeMount]:
         """
         Create a volume and its corresponding volume mount
@@ -431,7 +436,7 @@ class ContainerManager:
         ----------
         volume_name: str
             Name of the volume
-        host_path: str
+        host_path: str | Path
             Path to the host, could be a file or a folder
         mount_path: str
             Path where the ``host_path`` is going to be mounted
@@ -443,15 +448,48 @@ class ContainerManager:
         V1Volume, V1VolumeMount
             Tuple with the volume and volume mount
         """
+        host_path = str(host_path)
+        # if the mount_path is a file, we need to extract the directory, as k8s only
+        # accepts directories as host paths
+
+        input_file = None
+        if host_path.endswith("input"):
+            self.log.debug("")
+            self.log.debug("INPUT FILE!!!!")
+            self.log.debug("Creating volume mount for %s", host_path)
+            self.log.debug("mount path %s", mount_path)
+            self.log.debug("read only %s", read_only)
+            self.log.debug("volume name%s", volume_name)
+            self.log.debug("")
+            input_file = host_path
+
+        # file_path = None
+        # if Path(host_path).is_file():
+        #     file_path = Path(host_path).name
+        #     host_path = Path(host_path).parent
+
+        # if input_file:
+        #     self.log.debug("INPUT FILE!!!!")
+        self.log.debug("")
+        self.log.debug("Host path %s", host_path)
+        if Path(host_path).is_dir():
+            self.log.debug("Contents %s", os.listdir(host_path))
+        # self.log.debug("File path %s", file_path)
+        self.log.debug("Mount path %s", mount_path)
+        self.log.debug("   ")
+
         volume = k8s_client.V1Volume(
             name=volume_name,
             # type="File"
-            host_path=k8s_client.V1HostPathVolumeSource(path=host_path),
+            host_path=k8s_client.V1HostPathVolumeSource(
+                path=host_path, type="Directory"
+            ),
         )
 
         vol_mount = k8s_client.V1VolumeMount(
             name=volume_name,
             mount_path=mount_path,
+            # sub_path=file_path,
             read_only=read_only,
         )
 
@@ -517,33 +555,43 @@ class ContainerManager:
         # Create the volumes and corresponding volume mounts for the input, output and
         # token files. A volume is a directory that is accessible to the containers in
         # a pod. A mount is a reference to a volume that is mounted to a specific path.
-        output_volume, output_mount = self._create_run_mount(
-            volume_name=run_io.output_volume_name,
-            host_path=os.path.join(self.host_data_dir, output_file_path),
-            mount_path=JOB_POD_OUTPUT_PATH,
+        io_dir = Path(input_file_path).parent
+        io_volume, io_mount = self._create_run_mount(
+            volume_name=run_io.io_volume_name,
+            host_path=Path(self.host_data_dir) / io_dir,
+            mount_path=JOB_POD_DATA_DIR,
+            # TODO consider if we need input/token to be readonly
             read_only=False,
         )
+        # output_volume, output_mount = self._create_run_mount(
+        #     volume_name=run_io.output_volume_name,
+        #     host_path=Path(self.host_data_dir) / output_file_path,
+        #     mount_path=JOB_POD_OUTPUT_PATH,
+        #     read_only=False,
+        # )
 
-        input_volume, input_mount = self._create_run_mount(
-            volume_name=run_io.input_volume_name,
-            host_path=os.path.join(self.host_data_dir, input_file_path),
-            mount_path=JOB_POD_INPUT_PATH,
-        )
+        # input_volume, input_mount = self._create_run_mount(
+        #     volume_name=run_io.input_volume_name,
+        #     host_path=Path(self.host_data_dir) / input_file_path,
+        #     mount_path=JOB_POD_INPUT_PATH,
+        # )
 
-        token_volume, token_mount = self._create_run_mount(
-            volume_name=run_io.token_volume_name,
-            host_path=os.path.join(self.host_data_dir, token_file_path),
-            mount_path=JOB_POD_TOKEN_PATH,
-        )
+        # token_volume, token_mount = self._create_run_mount(
+        #     volume_name=run_io.token_volume_name,
+        #     host_path=Path(self.host_data_dir) / token_file_path,
+        #     mount_path=JOB_POD_TOKEN_PATH,
+        # )
 
         session_volume, session_mount = self._create_run_mount(
             volume_name=run_io.session_name,
-            host_path=os.path.join(self.host_data_dir, run_io.session_folder),
+            host_path=Path(self.host_data_dir) / run_io.session_folder,
             mount_path=JOB_POD_SESSION_FOLDER_PATH,
         )
 
-        volumes.extend([output_volume, input_volume, token_volume, session_volume])
-        vol_mounts.extend([output_mount, input_mount, token_mount, session_mount])
+        volumes.extend([io_volume, session_volume])
+        vol_mounts.extend([io_mount, session_mount])
+        # volumes.extend([output_volume, input_volume, token_volume, session_volume])
+        # vol_mounts.extend([output_mount, input_mount, token_mount, session_mount])
 
         # The environment variables are expected by the algorithm containers in order
         # to access the input, output and token files.
@@ -563,8 +611,9 @@ class ContainerManager:
         # TODO include only the ones given in the 'databases_to_use parameter
         # TODO distinguish between the different actions
         if run_io.action == AlgorithmStepType.DATA_EXTRACTION:
+            self.log.debug(databases_to_use)
             environment_variables[ContainerEnvNames.USER_REQUESTED_DATABASES.value] = (
-                ",".join([db["name"] for db in databases_to_use]),
+                ",".join([db["label"] for db in databases_to_use]),
             )
             # In case we are dealing with a file based database, we need to create an
             # additional volume mount for the database file. In case it is an URI the
@@ -572,6 +621,8 @@ class ContainerManager:
             self._validate_source_database(databases_to_use)
             # A always has 1 source database to use in the extraction step. This
             # is validated in the previous method.
+            # TODO v5+ if the validate function above raises error, this is somehow
+            # still reached?!
             source_database = databases_to_use[0]
             db = self.databases[source_database["label"]]
             if db["is_file"] or db["is_dir"]:
@@ -599,7 +650,7 @@ class ContainerManager:
 
         else:
             environment_variables[ContainerEnvNames.USER_REQUESTED_DATAFRAMES.value] = (
-                ",".join([db["label"] for db in databases_to_use])
+                ",".join([db["name"] for db in databases_to_use])
             )
             # In the other cases (preprocessing, compute, ...) we are dealing with a
             # dataframe in a session. So we only need to validate that the dataframe is
@@ -1072,34 +1123,55 @@ class ContainerManager:
         Deletes all the PODs created by a Kubernetes job in a given namespace
         """
         self.log.info(
-            f"Cleaning up kubernetes Job {run_io.container_name} (job id = "
-            f"{run_io.container_name}) and related PODs"
+            "Cleaning up kubernetes Job %s (run_id = %s) and related PODs",
+            run_io.container_name,
+            run_io.run_id,
         )
 
-        self.batch_api.delete_namespaced_job(
-            name=run_io.container_name, namespace="vantage6-node"
-        )
+        self.__delete_job(run_io.container_name, namespace)
 
         job_selector = f"job-name={run_io.container_name}"
         job_pods_list = self.core_api.list_namespaced_pod(
             namespace, label_selector=job_selector
         )
         for job_pod in job_pods_list.items:
-            try:
-                self.log.info(
-                    f"Deleting pod {job_pod.metadata.name} of job "
-                    f"{run_io.container_name}"
-                )
-                self.core_api.delete_namespaced_pod(job_pod.metadata.name, namespace)
-                self.log.info(
-                    f"Pod {job_pod.metadata.name} of job {run_io.container_name} "
-                    "deleted."
-                )
-            except ApiException:
+            self.__delete_job(job_pod.metadata.name, namespace)
+
+    def __delete_job(self, job_name: str, namespace: str = "vantage6-node") -> None:
+        """
+        Deletes a job in a given namespace
+
+        Parameters
+        ----------
+        job_name: str
+            Name of the job
+        namespace: str
+            Namespace where the job is located
+        """
+        self.log.info(
+            "Cleaning up kubernetes Job %s and related PODs",
+            job_name,
+        )
+        try:
+            # Check if the job exists before attempting to delete it
+            job = self.batch_api.read_namespaced_job(name=job_name, namespace=namespace)
+            if job:
+                self.batch_api.delete_namespaced_job(name=job_name, namespace=namespace)
+            else:
                 self.log.warning(
-                    f"Warning: POD {job_pod.metadata.name} of job "
-                    f"{run_io.container_name} couldn't be deleted."
+                    "Job %s not found in namespace %s, skipping deletion",
+                    job_name,
+                    namespace,
                 )
+        except ApiException as exc:
+            if exc.status == 404:
+                self.log.warning(
+                    "Job %s not found in namespace %s, skipping deletion",
+                    job_name,
+                    namespace,
+                )
+            else:
+                self.log.error("Exception when deleting namespaced job: %s", exc)
 
     def _encode_environment_variables(self, environment_variables: dict) -> dict:
         """

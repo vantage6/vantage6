@@ -40,9 +40,10 @@ DEFAULT_REQUIRE_ALGO_IMAGE_PULL = True
 
 # Mount paths within the algorithm containers. Algorithms containers are run as
 # jobs in the Kubernetes cluster.
-JOB_POD_INPUT_PATH = "/app/output"
-JOB_POD_OUTPUT_PATH = "/app/input"
-JOB_POD_TOKEN_PATH = "/app/token"
+JOB_POD_DATA_DIR = "/app/io"
+JOB_POD_INPUT_PATH = "/app/io/input"
+JOB_POD_OUTPUT_PATH = "/app/io/output"
+JOB_POD_TOKEN_PATH = "/app/io/token"
 JOB_POD_SESSION_FOLDER_PATH = "/app/session"
 
 # The mount location of the tasks files, databases and kube config in the node

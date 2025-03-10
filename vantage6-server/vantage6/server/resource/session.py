@@ -328,7 +328,7 @@ class SessionBase(ServicesResources):
         session: db.Session,
         image: str,
         organizations: dict,
-        database: list[dict],
+        databases: list[dict],
         action: AlgorithmStepType,
         dataframe: db.Dataframe,
         description="",
@@ -347,7 +347,7 @@ class SessionBase(ServicesResources):
             Docker image to use for the task
         organizations : dict
             Organizations that need to execute the task
-        database : list[dict]
+        databases : list[dict]
             Databases used for the task
         action : AlgorithmStepType
             Action to perform (e.g. data extraction, preprocessing, etc)
@@ -379,7 +379,7 @@ class SessionBase(ServicesResources):
             "description": description,
             "image": image,
             "organizations": organizations,
-            "databases": database,
+            "databases": databases,
             "depends_on_ids": depends_on_ids,
             "dataframe_id": dataframe.id,
             "store_id": store_id,
@@ -1092,7 +1092,7 @@ class SessionDataframes(SessionBase):
                 image=extraction_details["image"],
                 organizations=extraction_details["organizations"],
                 # TODO FM 10-7-2024: we should make a custom type for this
-                database=[{"label": source_db_label, "type": "source"}],
+                databases=[{"label": source_db_label, "type": "source"}],
                 description=description,
                 action=AlgorithmStepType.DATA_EXTRACTION,
                 dataframe=dataframe,
@@ -1353,7 +1353,7 @@ class DataframePreprocessing(SessionBase):
 
         response, status_code = self.create_session_task(
             session=session,
-            database=[
+            databases=[
                 {"label": dataframe.db_label, "type": TaskDatabaseType.DATAFRAME}
             ],
             description=description,

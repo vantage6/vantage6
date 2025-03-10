@@ -883,6 +883,7 @@ class Tasks(TaskBase):
             depends_on=dependent_tasks,
             dataframe_id=data.get("dataframe_id"),
         )
+        task.save()
 
         # create job_id. Users can only create top-level -tasks (they will not
         # have sub-tasks). Therefore, always create a new job_id. Tasks created

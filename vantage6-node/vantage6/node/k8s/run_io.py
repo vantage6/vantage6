@@ -85,22 +85,28 @@ class RunIO:
             run_id=int(data["run_id"]),
             session_id=int(data["session_id"]),
             action=AlgorithmStepType(data["action"]),
-            dataframe_details=data["dataframe_details"],
+            dataframe_details=(
+                data["dataframe_details"] if "dataframe_details" in data else None
+            ),
             host_data_dir=host_data_dir,
             client=client,
         )
 
     @property
-    def input_volume_name(self) -> str:
-        return f"task-{self.run_id}-input"
+    def io_volume_name(self) -> str:
+        return f"run-{self.run_id}-io"
 
-    @property
-    def token_volume_name(self) -> str:
-        return f"token-{self.run_id}-input"
+    # @property
+    # def input_volume_name(self) -> str:
+    #     return f"task-{self.run_id}-input"
 
-    @property
-    def output_volume_name(self) -> str:
-        return f"task-{self.run_id}-output"
+    # @property
+    # def token_volume_name(self) -> str:
+    #     return f"token-{self.run_id}-input"
+
+    # @property
+    # def output_volume_name(self) -> str:
+    #     return f"task-{self.run_id}-output"
 
     @property
     def session_volume_name(self) -> str:
@@ -148,17 +154,22 @@ class RunIO:
             Path to the file that is going to be created
         content: bytes
             Content that is going to be written to the file
+
+        Returns
+        -------
+        str
+            Path to the created file
         """
         self.log.debug(f"Creating file {filename} for run {self.run_id}")
-        relative_path = os.path.join(str(self.run_id), filename)
-        file_path = os.path.join(self.dir, relative_path)
+        relative_path = Path(str(self.run_id)) / filename
+        file_path = Path(self.dir) / relative_path
 
         file_dir = Path(file_path).parent
         file_dir.mkdir(parents=True, exist_ok=True)
         with open(file_path, "wb") as file_:
             file_.write(content)
 
-        return relative_path
+        return str(file_path)
 
     def _create_session_state_file(self, session_id: int) -> str:
         """
