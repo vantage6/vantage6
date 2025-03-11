@@ -31,6 +31,14 @@ class DefaultSocketNamespace(Namespace):
 
     log = logging.getLogger(logger_name(__name__))
 
+    def _is_node(self) -> bool:
+        if session.type != "node":
+            self.log.warn(
+                "Only nodes can send algorithm updates! "
+                f"{session.type} {session.auth_id} is not allowed."
+            )
+        return session.type == "node"
+
     def on_connect(self) -> None:
         """
         A new incoming connection request from a client.
@@ -235,12 +243,7 @@ class DefaultSocketNamespace(Namespace):
                     "collaboration_id": 1
                 }
         """
-        # only allow nodes to send this event
-        if session.type != "node":
-            self.log.warn(
-                "Only nodes can send algorithm status changes! "
-                f"{session.type} {session.auth_id} is not allowed."
-            )
+        if not self._is_node():
             return
 
         run_id = data.get("run_id")
@@ -427,22 +430,24 @@ class DefaultSocketNamespace(Namespace):
                     "log": "Log message"
                 }
         """
-        # only allow nodes to send this event
-        if session.type != "node":
-            self.log.warn(
-                "Only nodes can send algorithm logs! "
-                f"{session.type} {session.auth_id} is not allowed."
-            )
+        if not self._is_node():
             return
 
         run_id = data.get("run_id")
         task_id = data.get("task_id")
         log_message = data.get("log")
 
-        # log the message in the server logs
         self.log.info(f"Log from run_id={run_id}, task_id={task_id}: {log_message}")
+        run = db.Run.get(run_id)
+        if run.log:
+            run.log += f"\n{log_message}"
+        else:
+            run.log = log_message
+
         for room in session.rooms:
             emit("algorithm_log", data, room=room)
+
+        self.__cleanup()
 
     @staticmethod
     def __is_identified_client() -> bool:

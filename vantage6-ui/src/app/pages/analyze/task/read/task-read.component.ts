@@ -224,10 +224,10 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   }
 
   private onLogUpdate(logMsg: AlgorithmLogMsg): void {
-    if (!this.logs[logMsg.run_id]) {
-      this.logs[logMsg.run_id] = [];
+    const run = this.task?.runs.find((run) => run.id === logMsg.run_id);
+    if (run) {
+      run.log += logMsg.log;
     }
-    this.logs[logMsg.run_id].push(logMsg.log);
   }
 
   async getMainTask(): Promise<Task> {
@@ -277,22 +277,21 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     return status === TaskStatus.Pending || status === TaskStatus.Initializing || status === TaskStatus.Active;
   }
 
-  openLog(runId: number): void {
-    console.log(`Opening log for run ${runId}`);
+  openLog(run: TaskRun): void {
     const dialogRef = this.dialog.open(LogDialogComponent, {
       width: '80vw',
       data: {
-        log: this.logs[runId]?.join('\n') || 'No logs available'
+        log: run.log || 'No logs available'
       }
     });
   
     const logSubscription = this.socketioConnectService.getAlgorithmLogUpdates().subscribe((logMsg: AlgorithmLogMsg | null) => {
-      if (logMsg && logMsg.run_id === runId) {
-        if (!this.logs[runId]) {
-          this.logs[runId] = [];
+      if (logMsg && logMsg.run_id === run.id) {
+        if (!run.log) {
+          run.log = '';
         }
-        this.logs[runId].push(logMsg.log);
-        dialogRef.componentInstance.data.log = this.logs[runId].join('\n');
+        run.log += logMsg.log;
+        dialogRef.componentInstance.data.log = run.log;
       }
     });
   

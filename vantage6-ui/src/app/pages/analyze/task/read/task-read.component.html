@@ -29,7 +29,7 @@
           nodeName="{{ run.node.name }}"
           [status]="getTaskStatusTranslation(run.status)"
         >
-          <button actions mat-raised-button (click)="openLog(run.id)">
+          <button actions mat-raised-button (click)="openLog(run)">
             {{ "task-run.show-log" | translate }}
           </button>
           <span actionText *ngIf="run.node.status !== 'online' && isActive(run.status)">{{
@@ -54,7 +54,7 @@
             nodeName="{{ run.node.name }}"
             [status]="getTaskStatusTranslation(run.status)"
           >
-            <button actions mat-raised-button (click)="openLog(run.id)">
+            <button actions mat-raised-button (click)="openLog(run)">
               {{ "task-run.show-log" | translate }}
             </button>
             <span actionText *ngIf="run.node.status !== 'online' && isActive(run.status)">{{
@@ -249,7 +249,7 @@
             </div>
           </div>
           <div class="run__actions">
-            <button actions mat-raised-button (click)="openLog(run.id)">
+            <button actions mat-raised-button (click)="openLog(run)">
               {{ "task-run.show-log" | translate }}
             </button>
           </div>
