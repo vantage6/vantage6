@@ -427,6 +427,7 @@ class ContainerManager:
         volume_name: str,
         host_path: str | Path,
         mount_path: str,
+        type_: str | None = None,
         read_only: bool = False,
     ) -> Tuple[k8s_client.V1Volume, k8s_client.V1VolumeMount]:
         """
@@ -440,6 +441,8 @@ class ContainerManager:
             Path to the host, could be a file or a folder
         mount_path: str
             Path where the ``host_path`` is going to be mounted
+        type_: str, optional
+            Type of the volume
         read_only: bool
             Whether the volume is read-only or not in the mount
 
@@ -449,47 +452,15 @@ class ContainerManager:
             Tuple with the volume and volume mount
         """
         host_path = str(host_path)
-        # if the mount_path is a file, we need to extract the directory, as k8s only
-        # accepts directories as host paths
-
-        input_file = None
-        if host_path.endswith("input"):
-            self.log.debug("")
-            self.log.debug("INPUT FILE!!!!")
-            self.log.debug("Creating volume mount for %s", host_path)
-            self.log.debug("mount path %s", mount_path)
-            self.log.debug("read only %s", read_only)
-            self.log.debug("volume name%s", volume_name)
-            self.log.debug("")
-            input_file = host_path
-
-        # file_path = None
-        # if Path(host_path).is_file():
-        #     file_path = Path(host_path).name
-        #     host_path = Path(host_path).parent
-
-        # if input_file:
-        #     self.log.debug("INPUT FILE!!!!")
-        self.log.debug("")
-        self.log.debug("Host path %s", host_path)
-        if Path(host_path).is_dir():
-            self.log.debug("Contents %s", os.listdir(host_path))
-        # self.log.debug("File path %s", file_path)
-        self.log.debug("Mount path %s", mount_path)
-        self.log.debug("   ")
 
         volume = k8s_client.V1Volume(
             name=volume_name,
-            # type="File"
-            host_path=k8s_client.V1HostPathVolumeSource(
-                path=host_path, type="Directory"
-            ),
+            host_path=k8s_client.V1HostPathVolumeSource(path=host_path, type=type_),
         )
 
         vol_mount = k8s_client.V1VolumeMount(
             name=volume_name,
             mount_path=mount_path,
-            # sub_path=file_path,
             read_only=read_only,
         )
 
@@ -553,45 +524,38 @@ class ContainerManager:
         )
 
         # Create the volumes and corresponding volume mounts for the input, output and
-        # token files. A volume is a directory that is accessible to the containers in
-        # a pod. A mount is a reference to a volume that is mounted to a specific path.
-        io_dir = Path(input_file_path).parent
-        io_volume, io_mount = self._create_run_mount(
-            volume_name=run_io.io_volume_name,
-            host_path=Path(self.host_data_dir) / io_dir,
-            mount_path=JOB_POD_DATA_DIR,
-            # TODO consider if we need input/token to be readonly
+        # token files.
+        output_volume, output_mount = self._create_run_mount(
+            volume_name=run_io.output_volume_name,
+            host_path=Path(self.host_data_dir) / output_file_path,
+            mount_path=JOB_POD_OUTPUT_PATH,
+            type_="File",
             read_only=False,
         )
-        # output_volume, output_mount = self._create_run_mount(
-        #     volume_name=run_io.output_volume_name,
-        #     host_path=Path(self.host_data_dir) / output_file_path,
-        #     mount_path=JOB_POD_OUTPUT_PATH,
-        #     read_only=False,
-        # )
 
-        # input_volume, input_mount = self._create_run_mount(
-        #     volume_name=run_io.input_volume_name,
-        #     host_path=Path(self.host_data_dir) / input_file_path,
-        #     mount_path=JOB_POD_INPUT_PATH,
-        # )
+        input_volume, input_mount = self._create_run_mount(
+            volume_name=run_io.input_volume_name,
+            host_path=Path(self.host_data_dir) / input_file_path,
+            type_="File",
+            mount_path=JOB_POD_INPUT_PATH,
+        )
 
-        # token_volume, token_mount = self._create_run_mount(
-        #     volume_name=run_io.token_volume_name,
-        #     host_path=Path(self.host_data_dir) / token_file_path,
-        #     mount_path=JOB_POD_TOKEN_PATH,
-        # )
+        token_volume, token_mount = self._create_run_mount(
+            volume_name=run_io.token_volume_name,
+            host_path=Path(self.host_data_dir) / token_file_path,
+            type_="File",
+            mount_path=JOB_POD_TOKEN_PATH,
+        )
 
         session_volume, session_mount = self._create_run_mount(
             volume_name=run_io.session_name,
             host_path=Path(self.host_data_dir) / run_io.session_folder,
+            type_="Directory",
             mount_path=JOB_POD_SESSION_FOLDER_PATH,
         )
 
-        volumes.extend([io_volume, session_volume])
-        vol_mounts.extend([io_mount, session_mount])
-        # volumes.extend([output_volume, input_volume, token_volume, session_volume])
-        # vol_mounts.extend([output_mount, input_mount, token_mount, session_mount])
+        volumes.extend([output_volume, input_volume, token_volume, session_volume])
+        vol_mounts.extend([output_mount, input_mount, token_mount, session_mount])
 
         # The environment variables are expected by the algorithm containers in order
         # to access the input, output and token files.
@@ -626,11 +590,13 @@ class ContainerManager:
             source_database = databases_to_use[0]
             db = self.databases[source_database["label"]]
             if db["is_file"] or db["is_dir"]:
-
                 db_volume, db_mount = self._create_run_mount(
                     volume_name=f"task-{run_io.run_id}-db-{source_database['label']}",
                     host_path=db["uri"],
                     mount_path=db["local_uri"],
+                    # TODO can we provide type (File/Directory) here? Should be doable
+                    # based on db["type"]
+                    type_=None,
                     read_only=True,
                 )
                 volumes.append(db_volume)

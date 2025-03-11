@@ -93,20 +93,16 @@ class RunIO:
         )
 
     @property
-    def io_volume_name(self) -> str:
-        return f"run-{self.run_id}-io"
+    def input_volume_name(self) -> str:
+        return f"run-{self.run_id}-input"
 
-    # @property
-    # def input_volume_name(self) -> str:
-    #     return f"task-{self.run_id}-input"
+    @property
+    def token_volume_name(self) -> str:
+        return f"run-{self.run_id}-token"
 
-    # @property
-    # def token_volume_name(self) -> str:
-    #     return f"token-{self.run_id}-input"
-
-    # @property
-    # def output_volume_name(self) -> str:
-    #     return f"task-{self.run_id}-output"
+    @property
+    def output_volume_name(self) -> str:
+        return f"run-{self.run_id}-output"
 
     @property
     def session_volume_name(self) -> str:
@@ -169,7 +165,7 @@ class RunIO:
         with open(file_path, "wb") as file_:
             file_.write(content)
 
-        return str(file_path)
+        return str(relative_path)
 
     def _create_session_state_file(self, session_id: int) -> str:
         """

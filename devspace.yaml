@@ -54,7 +54,10 @@ pipelines:
       echo "Waiting for server to start... (30 seconds)"
       sleep 30
       python dev/delete-basic-fixtures.py
-      python dev/load-basic-fixtures.py --number-of-nodes $NUMBER_OF_NODES
+      python dev/load-basic-fixtures.py \
+        --number-of-nodes $NUMBER_OF_NODES \
+        --task-directory $TASK_DIRECTORY \
+        --node-test-database-file $NODE_TEST_DATABASE_FILE
       python dev/connect-store.py
       stop_dev --all
 

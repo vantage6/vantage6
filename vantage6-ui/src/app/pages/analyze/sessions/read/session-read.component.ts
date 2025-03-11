@@ -21,7 +21,7 @@ import { PageHeaderComponent } from 'src/app/components/page-header/page-header.
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatIcon } from '@angular/material/icon';
 import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
-import { MatAccordion, MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelTitle } from '@angular/material/expansion';
+import { MatAccordion, MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelTitle, MatExpansionPanelContent } from '@angular/material/expansion';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { NgFor, NgIf } from '@angular/common';
 import { MatButton, MatIconButton } from '@angular/material/button';
@@ -44,6 +44,7 @@ import { MatButton, MatIconButton } from '@angular/material/button';
     MatAccordion,
     MatExpansionPanelHeader,
     MatExpansionPanelTitle,
+    MatExpansionPanelContent,
     MatProgressSpinner,
     MatPaginator,
     NgIf,
@@ -128,7 +129,6 @@ export class SessionReadComponent implements OnInit, OnDestroy {
 
   async handleDataframeChange(dfID: number): Promise<void> {
     // TODO(BART/RIAN) RIAN: When the backend response is customized the additional information about the dataframe needs to be processed here and in the template.
-    this.selectedDataframe = undefined;
     this.selectedDataframe = await this.sessionService.getDataframe(dfID);
   }
 
@@ -137,6 +137,8 @@ export class SessionReadComponent implements OnInit, OnDestroy {
   }
 
   async deleteDataframe(dfID: number) {
+    // TODO (BART/RIAN) RIAN: Implement deleteDataframe dialog to confirm deletion
+    // TODO (BART/RIAN) RIAN: update view when deleting DF
     this.sessionService.deleteDataframe(dfID);
     this.getDataframes();
   }

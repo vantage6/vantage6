@@ -14,6 +14,7 @@ node:
     level: INFO
 
   # Task directory within the node container
+  # TODO if this remains a variable, sync it with load-basic-fixtures
   taskDir: /app/tasks
 
   # Task directory on the host machine

@@ -23,12 +23,18 @@ client.authenticate("root", "root")
 parser = argparse.ArgumentParser(
     description="Load basic fixtures for a given number of nodes"
 )
+parser.add_argument("--task-directory", type=str, help="Directory to store tasks")
+parser.add_argument(
+    "--node-test-database-file", type=str, help="Path to the test database file"
+)
 parser.add_argument(
     "--number-of-nodes", type=int, default=2, help="Number of nodes to create"
 )
 args = parser.parse_args()
 
 number_of_nodes = args.number_of_nodes
+task_directory = args.task_directory
+node_test_database_file = args.node_test_database_file
 
 
 def create_organization(index):
@@ -96,11 +102,11 @@ def create_node(index, collaboration, organization):
         node_config = template.render(
             {
                 "api_key": node["api_key"],  # Use the API key from node creation
-                "databases": {"default": "/app/databases/default.csv"},
+                "databases": {"default": node_test_database_file},
                 "logging": {"file": f"node_{index}.log"},  # Use index in log file name
                 "port": 80,
                 "server_url": "http://vantage6-server-vantage6-server-service",
-                "task_dir": "/tasks",
+                "task_dir": task_directory,
                 "api_path": "/server",
                 # TODO user defined config
             }
