@@ -27,7 +27,7 @@ import { PermissionService } from 'src/app/services/permission.service';
 import { Subject, Subscription, takeUntil, timer } from 'rxjs';
 import { FileService } from 'src/app/services/file.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
-import { AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
+import { AlgorithmLogMsg, AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
 import {
   THRESHOLD_LONG_PARAMETER_TEXT,
   THRESHOLD_LONG_TEXT,
@@ -130,6 +130,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   canKill = false;
   algorithmNotFoundInStore = false;
   showAllChildTasks = false;
+  logs: { [runId: number]: string[] } = {};
 
   private nodeStatusUpdateSubscription?: Subscription;
   private taskStatusUpdateSubscription?: Subscription;
@@ -180,6 +181,10 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       .subscribe((nodeStatus: NodeOnlineStatusMsg | null) => {
         if (nodeStatus) this.onNodeStatusUpdate(nodeStatus);
       });
+
+    this.socketioConnectService.getAlgorithmLogUpdates().subscribe((logMsg: AlgorithmLogMsg | null) => {
+      if (logMsg) this.onLogUpdate(logMsg);
+    });
   }
 
   ngOnDestroy(): void {
@@ -216,6 +221,13 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       this.algorithmNotFoundInStore = true;
     }
     this.isLoading = false;
+  }
+
+  private onLogUpdate(logMsg: AlgorithmLogMsg): void {
+    if (!this.logs[logMsg.run_id]) {
+      this.logs[logMsg.run_id] = [];
+    }
+    this.logs[logMsg.run_id].push(logMsg.log);
   }
 
   async getMainTask(): Promise<Task> {
@@ -265,12 +277,27 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     return status === TaskStatus.Pending || status === TaskStatus.Initializing || status === TaskStatus.Active;
   }
 
-  openLog(log: string): void {
-    this.dialog.open(LogDialogComponent, {
+  openLog(runId: number): void {
+    console.log(`Opening log for run ${runId}`);
+    const dialogRef = this.dialog.open(LogDialogComponent, {
       width: '80vw',
       data: {
-        log: log
+        log: this.logs[runId]?.join('\n') || 'No logs available'
       }
+    });
+  
+    const logSubscription = this.socketioConnectService.getAlgorithmLogUpdates().subscribe((logMsg: AlgorithmLogMsg | null) => {
+      if (logMsg && logMsg.run_id === runId) {
+        if (!this.logs[runId]) {
+          this.logs[runId] = [];
+        }
+        this.logs[runId].push(logMsg.log);
+        dialogRef.componentInstance.data.log = this.logs[runId].join('\n');
+      }
+    });
+  
+    dialogRef.afterClosed().subscribe(() => {
+      logSubscription.unsubscribe();
     });
   }
 

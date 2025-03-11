@@ -441,6 +441,8 @@ class DefaultSocketNamespace(Namespace):
 
         # log the message in the server logs
         self.log.info(f"Log from run_id={run_id}, task_id={task_id}: {log_message}")
+        for room in session.rooms:
+            emit("algorithm_log", data, room=room)
 
     @staticmethod
     def __is_identified_client() -> bool:
