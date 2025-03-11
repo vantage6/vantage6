@@ -97,7 +97,7 @@ class Dataframe(Base):
             .join(models.TaskDatabase)
             .filter(models.Task.action == AlgorithmStepType.COMPUTE.value)
             .filter(models.Task.status == TaskStatus.WAITING.value)
-            .filter(models.TaskDatabase.database == self.db_label)
+            .filter(models.TaskDatabase.dataframe_id == self.id)
             .filter(models.Task.session_id == self.session_id)
         ).all()
         db_session.commit()

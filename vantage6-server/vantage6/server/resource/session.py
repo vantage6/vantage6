@@ -1064,6 +1064,7 @@ class SessionDataframes(SessionBase):
         source_db_label = data["label"]
 
         # Create the dataframe
+        # TODO guarantee that the name is unique (there is an issue for this)
         df_name = data.get("name", generate_name())
         dataframe = db.Dataframe(
             session=session,

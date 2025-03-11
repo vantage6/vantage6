@@ -9,14 +9,13 @@ from vantage6.algorithm.tools.util import info, error, warn
 
 def _get_user_dataframes() -> list[str]:
     """
-    Get the database labels from the environment
+    Get the database names that the user requested from the environment
 
     Returns
     -------
     list[str]
-        List of database labels
+        List of database names
     """
-    # read the labels that the user requested, which is a comma-separated str of labels.
     dfs = os.environ[ContainerEnvNames.USER_REQUESTED_DATAFRAMES.value]
     return dfs.split(",")
 
@@ -39,10 +38,10 @@ def _read_df_from_disk(df_name: str) -> pd.DataFrame:
     # in the session folder, which is set by the vantage6 node. The label is the name of
     # the dataframe file, which is set by the user when creating the task.
     dataframe_folder = os.environ[ContainerEnvNames.SESSION_FOLDER.value]
-    dataframe_uri = os.path.join(dataframe_folder, f"{df_name}.parquet")
-    info(f"Using '{dataframe_uri}' with label '{df_name}' as database")
+    dataframe_file = os.path.join(dataframe_folder, f"{df_name}.parquet")
+    info(f"Using '{dataframe_file}' with dataframe name '{df_name}' as database")
 
-    return pd.read_parquet(dataframe_uri)
+    return pd.read_parquet(dataframe_file)
 
 
 def data(number_of_databases: int = 1) -> callable:

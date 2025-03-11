@@ -58,16 +58,6 @@ def wrap_algorithm(log_traceback: bool = True) -> None:
     # read input from the mounted input file.
     input_file = os.environ[ContainerEnvNames.INPUT_FILE.value]
 
-    from pathlib import Path
-    if_ = Path(input_file)
-    input_file_dir = if_.parent
-    info("Input file directory: " + str(input_file_dir))
-    info("Exists? " + str(input_file_dir.exists()))
-    info("Is dir? " + str(input_file_dir.is_dir()))
-    info("Files in dir: " + str(list(input_file_dir.iterdir())))
-    info("Input file: " + str(if_))
-    info("Exists? " + str(if_.exists()))
-
     info(f"Reading input file {input_file}")
     input_data = load_input(input_file)
 

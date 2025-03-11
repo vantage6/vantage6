@@ -27,7 +27,6 @@ from vantage6.common.docker.addons import (
 from vantage6.common.client.node_client import NodeClient
 from vantage6.node.globals import (
     ENV_VARS_NOT_SETTABLE_BY_NODE,
-    JOB_POD_DATA_DIR,
     KUBE_CONFIG_FILE_PATH,
     PROXY_SERVER_HOST,
     PROXY_SERVER_PORT,
@@ -575,7 +574,6 @@ class ContainerManager:
         # TODO include only the ones given in the 'databases_to_use parameter
         # TODO distinguish between the different actions
         if run_io.action == AlgorithmStepType.DATA_EXTRACTION:
-            self.log.debug(databases_to_use)
             environment_variables[ContainerEnvNames.USER_REQUESTED_DATABASES.value] = (
                 ",".join([db["label"] for db in databases_to_use]),
             )
@@ -615,16 +613,13 @@ class ContainerManager:
                     environment_variables[env_key] = db["env"][key]
 
         else:
-            environment_variables[ContainerEnvNames.USER_REQUESTED_DATAFRAMES.value] = (
-                ",".join([db["name"] for db in databases_to_use])
-            )
             # In the other cases (preprocessing, compute, ...) we are dealing with a
             # dataframe in a session. So we only need to validate that the dataframe is
             # available in the session.
             self._validate_dataframes(databases_to_use, run_io)
 
             environment_variables[ContainerEnvNames.USER_REQUESTED_DATAFRAMES.value] = (
-                ",".join([db["label"] for db in databases_to_use])
+                ",".join([db["name"] for db in databases_to_use])
             )
 
         return volumes, vol_mounts, environment_variables
