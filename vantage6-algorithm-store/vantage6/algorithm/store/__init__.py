@@ -444,9 +444,10 @@ class AlgorithmStoreApp:
                     v6_server.save()
 
                 # if the user does not exist already, add it
-                if not db.User.get_by_server(
+                root_user = db.User.get_by_server(
                     username=root_username, v6_server_id=v6_server.id
-                ):
+                )
+                if not root_user:
                     log.warning(
                         "Creating root user. Please note that it cannot be verified at "
                         "this point that the user exists at the given vantage6 server."
@@ -462,6 +463,10 @@ class AlgorithmStoreApp:
                         roles=[root],
                     )
                     user.save()
+                elif len(root_user.rules) != len(db.Rule.get()):
+                    log.warning("Existing root user has outdated rules, updating them.")
+                    root_user.rules = db.Rule.get()
+                    root_user.save()
                 else:
                     log.info(
                         "The root user given in the configuration already exists -"

@@ -22,11 +22,12 @@ local_store_url = "http://localhost:7602/store"
 if not local_store_url in existing_urls:
     client.store.create(
         algorithm_store_url=local_store_url,
-        name="local store",
+        name="Local store",
         all_collaborations=True,
         force=True,  # required to link localhost store
     )
 
+# TODO v5+ add community store of v5
 
 # client.algorithm.create(
 #     name="session basic example",
