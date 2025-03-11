@@ -273,7 +273,7 @@ class ServerApp:
 
         return socketio
 
-    def configure_flask(self, api_path) -> None:
+    def configure_flask(self, api_path: str) -> None:
         """
         Configure the Flask settings of the vantage6 server.
 
