@@ -650,6 +650,7 @@ class DockerManager(DockerBaseManager):
                 NodePolicy.REQUIRE_ALGORITHM_PULL, DEFAULT_REQUIRE_ALGO_IMAGE_PULL
             ),
             socketIO=socketIO,
+            collaboration_id=self.client.collaboration_id,
         )
 
         # attempt to kick of the task. If it fails do to unknown reasons we try

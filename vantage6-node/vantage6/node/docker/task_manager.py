@@ -54,6 +54,7 @@ class DockerTaskManager(DockerBaseManager):
         databases: dict,
         docker_volume_name: str,
         socketIO: SocketIO,
+        collaboration_id: int,
         alpine_image: str | None = None,
         proxy: Squid | None = None,
         device_requests: list | None = None,
@@ -136,6 +137,7 @@ class DockerTaskManager(DockerBaseManager):
             self.device_requests = device_requests
 
         self.socket = socketIO
+        self.collaboration_id = collaboration_id
 
     def is_finished(self) -> bool:
         """
@@ -363,7 +365,10 @@ class DockerTaskManager(DockerBaseManager):
                 device_requests=self.device_requests,
             )
             self._stream_logs(
-                socketIO=self.socket, run_id=self.run_id, task_id=self.task_id
+                socketIO=self.socket,
+                run_id=self.run_id,
+                task_id=self.task_id,
+                collaboration_id=self.collaboration_id,
             )
 
         except Exception as e:
@@ -702,7 +707,7 @@ class DockerTaskManager(DockerBaseManager):
             encoded_environment_variables[key] = _encode(str(val))
         return encoded_environment_variables
 
-    def _stream_logs(self, socketIO, run_id, task_id):
+    def _stream_logs(self, socketIO, run_id, task_id, collaboration_id):
         """
         Stream logs from the running container.
         """
@@ -716,6 +721,7 @@ class DockerTaskManager(DockerBaseManager):
                 socketIO.emit(
                     "algorithm_log",
                     data={
+                        "collaboration_id": collaboration_id,
                         "run_id": run_id,
                         "task_id": task_id,
                         "log": decoded_log,

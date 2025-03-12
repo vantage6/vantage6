@@ -425,6 +425,7 @@ class DefaultSocketNamespace(Namespace):
             .. code:: python
 
                 {
+                    "collaboration_id": 1,
                     "run_id": 1,
                     "task_id": 1,
                     "log": "Log message"
@@ -433,6 +434,7 @@ class DefaultSocketNamespace(Namespace):
         if not self._is_node():
             return
 
+        collaboration_id = data.get("collaboration_id")
         run_id = data.get("run_id")
         task_id = data.get("task_id")
         log_message = data.get("log")
@@ -444,8 +446,11 @@ class DefaultSocketNamespace(Namespace):
         else:
             run.log = log_message
 
-        for room in session.rooms:
-            emit("algorithm_log", data, room=room)
+        emit(
+            "algorithm_log",
+            {"run_id": run_id, "task_id": task_id, "log": log_message},
+            room=f"collaboration_{collaboration_id}",
+        )
 
         self.__cleanup()
 
