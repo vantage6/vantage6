@@ -191,7 +191,13 @@ class DataFrameSubClient(ClientBase.SubClient):
             self.parent.log.error(f"An error occurred while fetching dataframe {id_}")
             return
 
-        session = dataframe.get("session", {})
+        session = dataframe.get("session")
+        if not session:
+            self.parent.log.error(
+                f"Could not fetch session {dataframe['session_id']} from dataframe"
+            )
+            return
+
         if session.get("study"):
             study_id = session["study"]["id"]
             params = {"study": study_id}

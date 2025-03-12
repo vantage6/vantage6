@@ -13,7 +13,7 @@ class TaskDatabase(Base):
     or multiple databases assigned to it.
 
     Typically *data extraction* tasks will have a database label, while
-    *pre-processing* and *compute* tasks will have one or mroe linked dataframes.
+    *pre-processing* and *compute* tasks will have one or more linked dataframes.
 
     Attributes
     ----------
