@@ -13,10 +13,6 @@ node:
   logging:
     level: INFO
 
-  # Task directory within the node container
-  # TODO if this remains a variable, sync it with load-basic-fixtures
-  taskDir: /app/tasks
-
   # Task directory on the host machine
   # taskDirHost: /home/bart/test
   taskDirHost: /run/desktop/mnt/host/wsl/v6data/task_data
