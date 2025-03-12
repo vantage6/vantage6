@@ -181,9 +181,11 @@ class User(Authenticatable):
         int | None
             How many minutes user is still blocked for
         """
+        from vantage6.server.resource import parse_datetime
+
         td_max_blocked = dt.timedelta(minutes=inactivation_in_minutes)
         td_last_login = (
-            dt.datetime.now(dt.timezone.utc) - self.last_login_attempt
+            dt.datetime.now(dt.timezone.utc) - parse_datetime(self.last_login_attempt)
             if self.last_login_attempt
             else None
         )
