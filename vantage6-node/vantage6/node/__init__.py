@@ -105,6 +105,14 @@ class Node:
 
         self.k8s_container_manager = ContainerManager(self.ctx, self.client)
 
+        # ensure that the namespace to create tasks in is set up correctly or try to
+        # create it
+        self.log.debug("Ensuring that the task namespace is properly configured")
+        namespace_created = self.k8s_container_manager.ensure_task_namespace()
+        if not namespace_created:
+            self.log.error("Could not create the task namespace. Exiting.")
+            exit(1)
+
         self.log.info(f"Connecting server: {self.client.base_path}")
 
         # Authenticate with the server, obtaining a JSON Web Token.
