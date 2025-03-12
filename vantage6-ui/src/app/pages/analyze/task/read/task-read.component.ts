@@ -226,7 +226,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   private onLogUpdate(logMsg: AlgorithmLogMsg): void {
     const run = this.task?.runs.find((run) => run.id === logMsg.run_id);
     if (run) {
-      run.log += logMsg.log;
+      run.log += `\n${logMsg.log}`;
     }
   }
 
@@ -290,7 +290,6 @@ export class TaskReadComponent implements OnInit, OnDestroy {
         if (!run.log) {
           run.log = '';
         }
-        run.log += logMsg.log;
         dialogRef.componentInstance.data.log = run.log;
       }
     });

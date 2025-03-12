@@ -445,6 +445,7 @@ class DefaultSocketNamespace(Namespace):
             run.log += f"\n{log_message}"
         else:
             run.log = log_message
+        run.save()
 
         emit(
             "algorithm_log",
