@@ -57,6 +57,7 @@ def wrap_algorithm(log_traceback: bool = True) -> None:
 
     # read input from the mounted input file.
     input_file = os.environ[ContainerEnvNames.INPUT_FILE.value]
+
     info(f"Reading input file {input_file}")
     input_data = load_input(input_file)
 

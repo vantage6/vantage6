@@ -19,7 +19,7 @@ from vantage6.common.globals import (
     STRING_ENCODING,
     ENV_VAR_EQUALS_REPLACEMENT,
 )
-from vantage6.common.enum import AlgorithmStepType, RunStatus
+from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskDatabaseType
 from vantage6.common.docker.addons import (
     get_digest,
     get_image_name_wo_tag,
@@ -152,6 +152,10 @@ class ContainerManager:
             # need it when we are creating new volume mounts for the algorithm
             # containers
             local_uri = uri
+            # TODO v5+ we should ensure that DATABASE_BASE_PATH is also used in the CLI
+            # so that we can be sure this file exists. From the type we could then
+            # derive if it's a file or directory, and it may be entirely unneccesary in
+            # that case to mount the database files/dirs into the node container.
             tmp_uri = Path(DATABASE_BASE_PATH) / f"{label}.{db_config['type']}"
 
             db_is_file = tmp_uri.exists() and tmp_uri.is_file()
@@ -210,18 +214,17 @@ class ContainerManager:
         RunStatus
             Returns the status of the run
         """
-
+        self.log.debug("Setting up algorithm run %s", run_id)
         # In case we are dealing with a data-extraction or prediction task, we need to
-        # know the dataframe handle that is being created or modified by the algorithm.
+        # know the dataframe that is being created or modified by the algorithm.
         df_details = task_info.get("dataframe", {})
 
-        dataframe_handle = df_details.get("handle") if df_details else None
         run_io = RunIO(
             run_id,
             session_id,
             action,
             self.client,
-            dataframe_handle,
+            df_details,
             self.local_data_dir,
         )
 
@@ -298,7 +301,7 @@ class ContainerManager:
                 "task_parent_id": str(parent_task_id),
                 "action": str(action.value),
                 "session_id": str(session_id),
-                "dataframe_handle": dataframe_handle if dataframe_handle else "",
+                "df_name": df_details.get("name") if df_details else "",
             },
         )
 
@@ -423,7 +426,12 @@ class ContainerManager:
         return RunStatus.UNKNOWN_ERROR
 
     def _create_run_mount(
-        self, volume_name: str, host_path: str, mount_path: str, read_only: bool = False
+        self,
+        volume_name: str,
+        host_path: str | Path,
+        mount_path: str,
+        type_: str | None = None,
+        read_only: bool = False,
     ) -> Tuple[k8s_client.V1Volume, k8s_client.V1VolumeMount]:
         """
         Create a volume and its corresponding volume mount
@@ -432,10 +440,12 @@ class ContainerManager:
         ----------
         volume_name: str
             Name of the volume
-        host_path: str
+        host_path: str | Path
             Path to the host, could be a file or a folder
         mount_path: str
             Path where the ``host_path`` is going to be mounted
+        type_: str, optional
+            Type of the volume
         read_only: bool
             Whether the volume is read-only or not in the mount
 
@@ -444,10 +454,11 @@ class ContainerManager:
         V1Volume, V1VolumeMount
             Tuple with the volume and volume mount
         """
+        host_path = str(host_path)
+
         volume = k8s_client.V1Volume(
             name=volume_name,
-            # type="File"
-            host_path=k8s_client.V1HostPathVolumeSource(path=host_path),
+            host_path=k8s_client.V1HostPathVolumeSource(path=host_path, type=type_),
         )
 
         vol_mount = k8s_client.V1VolumeMount(
@@ -516,30 +527,33 @@ class ContainerManager:
         )
 
         # Create the volumes and corresponding volume mounts for the input, output and
-        # token files. A volume is a directory that is accessible to the containers in
-        # a pod. A mount is a reference to a volume that is mounted to a specific path.
+        # token files.
         output_volume, output_mount = self._create_run_mount(
             volume_name=run_io.output_volume_name,
-            host_path=os.path.join(self.host_data_dir, output_file_path),
+            host_path=Path(self.host_data_dir) / output_file_path,
             mount_path=JOB_POD_OUTPUT_PATH,
+            type_="File",
             read_only=False,
         )
 
         input_volume, input_mount = self._create_run_mount(
             volume_name=run_io.input_volume_name,
-            host_path=os.path.join(self.host_data_dir, input_file_path),
+            host_path=Path(self.host_data_dir) / input_file_path,
+            type_="File",
             mount_path=JOB_POD_INPUT_PATH,
         )
 
         token_volume, token_mount = self._create_run_mount(
             volume_name=run_io.token_volume_name,
-            host_path=os.path.join(self.host_data_dir, token_file_path),
+            host_path=Path(self.host_data_dir) / token_file_path,
+            type_="File",
             mount_path=JOB_POD_TOKEN_PATH,
         )
 
         session_volume, session_mount = self._create_run_mount(
             volume_name=run_io.session_name,
-            host_path=os.path.join(self.host_data_dir, run_io.session_folder),
+            host_path=Path(self.host_data_dir) / run_io.session_folder,
+            type_="Directory",
             mount_path=JOB_POD_SESSION_FOLDER_PATH,
         )
 
@@ -553,9 +567,6 @@ class ContainerManager:
             ContainerEnvNames.INPUT_FILE.value: JOB_POD_INPUT_PATH,
             ContainerEnvNames.TOKEN_FILE.value: JOB_POD_TOKEN_PATH,
             # TODO we only do not need to pass this when the action is `data extraction`
-            ContainerEnvNames.USER_REQUESTED_DATAFRAME_HANDLES.value: ",".join(
-                [db["label"] for db in databases_to_use]
-            ),
             ContainerEnvNames.SESSION_FOLDER.value: JOB_POD_SESSION_FOLDER_PATH,
             ContainerEnvNames.SESSION_FILE.value: os.path.join(
                 JOB_POD_SESSION_FOLDER_PATH, run_io.session_state_file_name
@@ -567,20 +578,25 @@ class ContainerManager:
         # TODO include only the ones given in the 'databases_to_use parameter
         # TODO distinguish between the different actions
         if run_io.action == AlgorithmStepType.DATA_EXTRACTION:
+            environment_variables[ContainerEnvNames.USER_REQUESTED_DATABASES.value] = (
+                ",".join([db["label"] for db in databases_to_use]),
+            )
             # In case we are dealing with a file based database, we need to create an
             # additional volume mount for the database file. In case it is an URI the
             # URI should be reachable from the container.
             self._validate_source_database(databases_to_use)
             # A always has 1 source database to use in the extraction step. This
             # is validated in the previous method.
+            # TODO v5+ if the validate function above raises error, this is somehow
+            # still reached?!
             source_database = databases_to_use[0]
             db = self.databases[source_database["label"]]
             if db["is_file"] or db["is_dir"]:
-
                 db_volume, db_mount = self._create_run_mount(
                     volume_name=f"task-{run_io.run_id}-db-{source_database['label']}",
                     host_path=db["uri"],
                     mount_path=db["local_uri"],
+                    type_="File" if db["is_file"] else "Directory",
                     read_only=True,
                 )
                 volumes.append(db_volume)
@@ -602,11 +618,11 @@ class ContainerManager:
             # In the other cases (preprocessing, compute, ...) we are dealing with a
             # dataframe in a session. So we only need to validate that the dataframe is
             # available in the session.
-            self._validate_dataframe_names(databases_to_use, run_io)
+            self._validate_dataframes(databases_to_use, run_io)
 
-            environment_variables[
-                ContainerEnvNames.USER_REQUESTED_DATAFRAME_HANDLES.value
-            ] = ",".join([db["label"] for db in databases_to_use])
+            environment_variables[ContainerEnvNames.USER_REQUESTED_DATAFRAMES.value] = (
+                ",".join([db["name"] for db in databases_to_use])
+            )
 
         return volumes, vol_mounts, environment_variables
 
@@ -642,48 +658,50 @@ class ContainerManager:
             if msg:
                 raise PermanentAlgorithmStartFail(msg)
 
-    def _validate_dataframe_names(
-        self, databases_to_use: list[str], run_io: RunIO
-    ) -> None:
+    def _validate_dataframes(self, databases_to_use: list[dict], run_io: RunIO) -> None:
         """
-        Validates that all provided databases are of type 'handle' and that the
-        requested handles exist in the session folder.
+        Validates that all provided databases are of type 'dataframe' and that the
+        requested names exist in the session folder.
 
         Parameters
         ----------
-        databases_to_use: list[str]
+        databases_to_use: list[dict]
             A list of dictionaries where each dictionary represents a database
             with a 'type' and 'label'.
+        run_io: RunIO
+            RunIO object that contains information about the run
 
         Raises
         ------
         PermanentAlgorithmStartFail:
-            If any database is not of type 'handle'.
+            If any database is not of type 'dataframe'.
         DataFrameNotFound:
-            If any requested handle is not found in the session folder.
+            If any requested df name is not found in the session folder.
         """
 
-        if not all(df["type"] == "handle" for df in databases_to_use):
+        if not all(df["type"] == TaskDatabaseType.DATAFRAME for df in databases_to_use):
             self.log.error(
-                "All databases used in the algorithm must be of type 'handle'."
+                "All databases used in the algorithm must be of type '%s'.",
+                TaskDatabaseType.DATAFRAME.value,
             )
             raise PermanentAlgorithmStartFail()
 
-        # Validate that the requested handles exist. At this point they need to as
+        # Validate that the requested dataframes exist. At this point they need to as
         # we are about to start the task.
-        requested_handles = {db["label"] for db in databases_to_use}
-        available_handles = {
+        requested_dataframes = {db["label"] for db in databases_to_use}
+        available_dataframes = {
             file_.stem for file_ in Path(run_io.local_session_folder).glob("*.parquet")
         }
-        # check that requested handles is a subset of available handles
-        if not requested_handles.issubset(available_handles):
-            self.log.error("Requested dataframe handle(s) not found in session folder.")
-            self.log.debug(f"Requested dataframe handles: {requested_handles}")
-            self.log.debug(f"Available dataframe handles: {available_handles}")
-            problematic_handles = requested_handles - available_handles
+        # check that requested dataframes are a subset of available dataframes
+        if not requested_dataframes.issubset(available_dataframes):
+            self.log.error("Requested dataframe(s) not found in session folder.")
+            self.log.debug("Requested dataframes: %s", requested_dataframes)
+            self.log.debug("Available dataframes: %s", available_dataframes)
+            problematic_dfs = requested_dataframes - available_dataframes
             raise DataFrameNotFound(
-                f"User requested {problematic_handles} that are not available in the "
-                f"session folder. Available handles are {available_handles}."
+                f"User requested dataframes '{problematic_dfs}' which are not available"
+                " in the session folder. Available dataframes are: "
+                f"{available_dataframes}."
             )
 
     def _validate_source_database(self, databases_to_use: list[dict]) -> None:
@@ -818,6 +836,7 @@ class ContainerManager:
                         # Note that by comparing the digests, we also take into account
                         # the situation where e.g. the allowed image has a tag, but the
                         # evaluated image has a sha256.
+                        # TODO fix v5+, the self.docker is no longer available
                         digest_evaluated_image = get_digest(
                             evaluated_img, client=self.docker
                         )
@@ -1067,34 +1086,55 @@ class ContainerManager:
         Deletes all the PODs created by a Kubernetes job in a given namespace
         """
         self.log.info(
-            f"Cleaning up kubernetes Job {run_io.container_name} (job id = "
-            f"{run_io.container_name}) and related PODs"
+            "Cleaning up kubernetes Job %s (run_id = %s) and related PODs",
+            run_io.container_name,
+            run_io.run_id,
         )
 
-        self.batch_api.delete_namespaced_job(
-            name=run_io.container_name, namespace="vantage6-node"
-        )
+        self.__delete_job(run_io.container_name, namespace)
 
         job_selector = f"job-name={run_io.container_name}"
         job_pods_list = self.core_api.list_namespaced_pod(
             namespace, label_selector=job_selector
         )
         for job_pod in job_pods_list.items:
-            try:
-                self.log.info(
-                    f"Deleting pod {job_pod.metadata.name} of job "
-                    f"{run_io.container_name}"
-                )
-                self.core_api.delete_namespaced_pod(job_pod.metadata.name, namespace)
-                self.log.info(
-                    f"Pod {job_pod.metadata.name} of job {run_io.container_name} "
-                    "deleted."
-                )
-            except ApiException:
+            self.__delete_job(job_pod.metadata.name, namespace)
+
+    def __delete_job(self, job_name: str, namespace: str = "vantage6-node") -> None:
+        """
+        Deletes a job in a given namespace
+
+        Parameters
+        ----------
+        job_name: str
+            Name of the job
+        namespace: str
+            Namespace where the job is located
+        """
+        self.log.info(
+            "Cleaning up kubernetes Job %s and related PODs",
+            job_name,
+        )
+        try:
+            # Check if the job exists before attempting to delete it
+            job = self.batch_api.read_namespaced_job(name=job_name, namespace=namespace)
+            if job:
+                self.batch_api.delete_namespaced_job(name=job_name, namespace=namespace)
+            else:
                 self.log.warning(
-                    f"Warning: POD {job_pod.metadata.name} of job "
-                    f"{run_io.container_name} couldn't be deleted."
+                    "Job %s not found in namespace %s, skipping deletion",
+                    job_name,
+                    namespace,
                 )
+        except ApiException as exc:
+            if exc.status == 404:
+                self.log.warning(
+                    "Job %s not found in namespace %s, skipping deletion",
+                    job_name,
+                    namespace,
+                )
+            else:
+                self.log.error("Exception when deleting namespaced job: %s", exc)
 
     def _encode_environment_variables(self, environment_variables: dict) -> dict:
         """

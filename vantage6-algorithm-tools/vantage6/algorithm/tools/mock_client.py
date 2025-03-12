@@ -104,9 +104,9 @@ class MockAlgorithmClient:
             self.organizations_with_data.append(org_id)
             org_data = []
             for dataset in org_datasets:
-                db_handle = dataset.get("database")
-                if isinstance(db_handle, pd.DataFrame):
-                    df = db_handle
+                db = dataset.get("database")
+                if isinstance(db, pd.DataFrame):
+                    df = db
                 else:
                     df = load_data(
                         database_uri=dataset.get("database"),

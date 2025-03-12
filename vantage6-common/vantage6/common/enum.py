@@ -47,6 +47,13 @@ class AlgorithmStepType(EnumBase):
     POST_PROCESSING = "post processing"
 
 
+class TaskDatabaseType(EnumBase):
+    """Enum to represent the type of database used by a task"""
+
+    SOURCE = "source"
+    DATAFRAME = "dataframe"
+
+
 class TaskStatus(EnumBase):
     """Enum to represent the status of a task"""
 

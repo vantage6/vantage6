@@ -159,7 +159,7 @@ class SessionSubClient(ClientBase.SubClient):
             collaboration ID of the client is used. When neither is set, the study ID
             needs to be provided.
         study: int, optional
-            The study ID of the session. In case this is set, the data frames in this
+            The study ID of the session. In case this is set, the dataframes in this
             session will be scoped to the study.
         scope: str
             The scope of the session. Possible values are ``global``, ``collaboration``,
@@ -328,7 +328,7 @@ class SessionSubClient(ClientBase.SubClient):
                 info_box(
                     "Dataframe",
                     (
-                        f"[green]{task['dataframe']['handle']}[/green]"
+                        f"[green]{task['dataframe']['name']}[/green]"
                         if task["dataframe"]
                         else "[gray35]None[/gray35]"
                     ),
@@ -366,7 +366,7 @@ class SessionSubClient(ClientBase.SubClient):
                     color(dep_task["status"]),
                     "session-builder" if dep_task["dataframe"] else "compute",
                     (
-                        dep_task["dataframe"]["handle"]
+                        dep_task["dataframe"]["name"]
                         if dep_task["dataframe"]
                         else "None"
                     ),

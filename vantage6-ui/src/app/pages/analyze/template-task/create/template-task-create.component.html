@@ -82,12 +82,6 @@
         </mat-step>
         <mat-step [stepControl]="databaseForm" *ngIf="shouldShowDatabaseStep">
           <ng-template matStepLabel>{{ "task-create.step-database.title" | translate }}</ng-template>
-          <app-database-step
-            *ngIf="node"
-            [form]="databaseForm"
-            [functionDatabases]="function?.databases || []"
-            [node]="node"
-          ></app-database-step>
           <div>
             <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
             <button mat-button matStepperNext *ngIf="shouldShowParameterStep">{{ "general.next" | translate }}</button>

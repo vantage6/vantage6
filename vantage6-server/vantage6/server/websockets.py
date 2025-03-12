@@ -309,9 +309,10 @@ class DefaultSocketNamespace(Namespace):
         """
         # only allow nodes to send this event
         if session.type != "node":
-            self.log.warn(
-                "Only nodes can send node configuration updates! "
-                f"{session.type} {session.auth_id} is not allowed."
+            self.log.warning(
+                "Only nodes can send node configuration updates! %s %s is not allowed.",
+                session.type,
+                session.auth_id,
             )
             return
 

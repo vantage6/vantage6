@@ -1,4 +1,4 @@
-<app-page-header title="Task">
+<app-page-header title="{{ 'resources.task' | translate }}">
   <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="task && (canDelete || canCreate)">
     <mat-icon>more_vert</mat-icon>
   </button>
@@ -154,6 +154,14 @@
           <b>{{ "task.created-at" | translate }}</b>
           <span>{{ printDate(task.created_at) }}</span>
         </div>
+        <div class="data-list__item">
+          <b>{{ "task.session" | translate }}</b>
+          <span>{{ session?.name ?? "-" }}</span>
+        </div>
+        <div class="data-list__item" *ngIf="study">
+          <b>{{ "resources.study" | translate }}</b>
+          <span>{{ study.name }}</span>
+        </div>
         <div class="data-list__item" *ngIf="task.parent">
           <b>{{ "task.parent" | translate }}</b>
           <app-chip
@@ -174,10 +182,6 @@
               [routerLink]="[routes.task, childTask.id]"
             ></app-chip>
           </div>
-        </div>
-        <div class="data-list__item" *ngIf="study">
-          <b>{{ "resources.study" | translate }}</b>
-          <span>{{ study.name }}</span>
         </div>
       </div>
     </mat-card-content>

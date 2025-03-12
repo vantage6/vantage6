@@ -61,6 +61,10 @@ import { ReviewReadComponent } from './pages/store/algorithms-in-review/review-r
 import { ReviewSubmitComponent } from './pages/store/algorithms-in-review/review-submit/review-submit.component';
 import { MyPendingAlgorithmsComponent } from './pages/store/algorithms-in-review/my-pending-algorithms/my-pending-algorithms.component';
 import { OldAlgorithmListComponent } from './pages/store/algorithm/old-list/old-algorithm-list.component';
+import { SessionListComponent } from './pages/analyze/sessions/list/session-list.component';
+import { SessionCreateComponent } from './pages/analyze/sessions/create/session-create.component';
+import { SessionReadComponent } from './pages/analyze/sessions/read/session-read.component';
+import { DataframeCreateComponent } from './pages/analyze/sessions/create/dataframe-create.component';
 
 const routes: Routes = [
   {
@@ -134,6 +138,46 @@ const routes: Routes = [
         canActivate: [authenticationGuard()]
       },
       {
+        path: routerConfig.dataframeCreate,
+        component: DataframeCreateComponent,
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        data: {
+          crumbs: [['session-list.title', routePaths.sessions], ['session.dataframes.add']]
+        }
+      },
+      {
+        path: routerConfig.sessions,
+        component: SessionListComponent,
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        data: {
+          crumbs: [['session-list.title']]
+        }
+      },
+      {
+        path: routerConfig.sessionCreate,
+        component: SessionCreateComponent,
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        data: {
+          crumbs: [['session-list.title', routePaths.sessions], ['session-create.create-title']]
+        }
+      },
+      {
+        path: routerConfig.sessionEdit,
+        component: SessionCreateComponent,
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        data: {
+          crumbs: [['session-list.title', routePaths.sessions], ['session-create.edit-title']]
+        }
+      },
+      {
+        path: routerConfig.session,
+        component: SessionReadComponent,
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        data: {
+          crumbs: [['session-list.title', routePaths.sessions], ['resources.session']]
+        }
+      },
+      {
         path: routerConfig.tasks,
         component: TaskListComponent,
         canActivate: [authenticationGuard(), chosenCollaborationGuard()],
@@ -147,6 +191,14 @@ const routes: Routes = [
         canActivate: [authenticationGuard(), chosenCollaborationGuard()],
         data: {
           crumbs: [['task-list.title', routePaths.tasks], ['task-create.title']]
+        }
+      },
+      {
+        path: routerConfig.sessionTaskCreate,
+        component: TaskCreateComponent,
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        data: {
+          crumbs: [['session-list.title', routePaths.sessions], ['task-create.title']]
         }
       },
       {
@@ -272,6 +324,7 @@ const routes: Routes = [
             // TODO this crumb is not complete: it should include the collaboration for which
             // the algorithm store is being added, but not sure how to get its ID here
             // ['collaboration-read.title', Router().url.split('/').pop() || ''],
+            // TODO(BART/RIAN) RIAN: It would be great to work together on this. Maybe we can implement (url)searchparams
             ['algorithm-store-add.title']
           ]
         }

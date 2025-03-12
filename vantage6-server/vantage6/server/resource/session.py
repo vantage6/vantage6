@@ -8,7 +8,7 @@ from names_generator import generate_name
 from marshmallow import ValidationError
 
 from vantage6.common import logger_name
-from vantage6.common.enum import AlgorithmStepType
+from vantage6.common.enum import AlgorithmStepType, TaskDatabaseType
 from vantage6.server import db
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.permission import (
@@ -74,21 +74,21 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     )
     api.add_resource(
         SessionDataframe,
-        path + "/<int:session_id>/dataframe/<string:dataframe_handle>",
+        path + "/dataframe/<int:id>",
         endpoint="session_dataframe_with_id",
         methods=("GET", "PATCH", "DELETE"),
         resource_class_kwargs=services,
     )
     api.add_resource(
         DataframePreprocessing,
-        path + "/<int:session_id>/dataframe/<string:dataframe_handle>/preprocess",
+        path + "/dataframe/<int:id>/preprocess",
         endpoint="session_dataframe_preprocessing",
         methods=("POST",),
         resource_class_kwargs=services,
     )
     api.add_resource(
         DataframeColumns,
-        path + "/<int:session_id>/dataframe/<string:dataframe_handle>/column",
+        path + "/dataframe/<int:id>/column",
         endpoint="session_dataframe_column",
         methods=("POST",),
         resource_class_kwargs=services,
@@ -153,22 +153,22 @@ def permissions(permissions: PermissionManager) -> None:
     add(
         scope=S.OWN,
         operation=P.DELETE,
-        description="delete your own session and data frames",
+        description="delete your own session and dataframes",
     )
     add(
         scope=S.ORGANIZATION,
         operation=P.DELETE,
-        description="delete any session or data frame initiated from your organization",
+        description="delete any session or dataframe initiated from your organization",
     )
     add(
         scope=S.COLLABORATION,
         operation=P.DELETE,
-        description="delete any session or data frame within your collaborations",
+        description="delete any session or dataframe within your collaborations",
     )
     add(
         scope=S.GLOBAL,
         operation=P.DELETE,
-        description="delete any session or data frame",
+        description="delete any session or dataframe",
     )
 
 
@@ -328,7 +328,7 @@ class SessionBase(ServicesResources):
         session: db.Session,
         image: str,
         organizations: dict,
-        database: list[dict],
+        databases: list[dict],
         action: AlgorithmStepType,
         dataframe: db.Dataframe,
         description="",
@@ -347,7 +347,7 @@ class SessionBase(ServicesResources):
             Docker image to use for the task
         organizations : dict
             Organizations that need to execute the task
-        database : list[dict]
+        databases : list[dict]
             Databases used for the task
         action : AlgorithmStepType
             Action to perform (e.g. data extraction, preprocessing, etc)
@@ -379,7 +379,7 @@ class SessionBase(ServicesResources):
             "description": description,
             "image": image,
             "organizations": organizations,
-            "databases": database,
+            "databases": databases,
             "depends_on_ids": depends_on_ids,
             "dataframe_id": dataframe.id,
             "store_id": store_id,
@@ -550,8 +550,8 @@ class Sessions(SessionBase):
           collaboration or global permissions can view all sessions within the
           that scope.
 
-          A session is a container for data frames and tasks. A session can have
-          multiple data frames, each extracted from the same or a different database.
+          A session is a container for dataframes and tasks. A session can have
+          multiple dataframes, each extracted from the same or a different database.
 
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
@@ -835,7 +835,7 @@ class Session(SessionBase):
         ---
         description: >-
           Deletes the session specified by the ID. When the `delete_dependents` option
-          is set to `true` also all associated data frames and tasks are deleted. \n
+          is set to `true` also all associated dataframes and tasks are deleted. \n
 
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
@@ -862,7 +862,7 @@ class Session(SessionBase):
             schema:
                 type: boolean
             description: >-
-                Delete all dependents of the session. This includes data frames and
+                Delete all dependents of the session. This includes dataframes and
                 tasks that are part of the
 
         responses:
@@ -907,7 +907,7 @@ class SessionDataframes(SessionBase):
 
     @only_for(("user", "node"))
     def get(self, session_id):
-        """view all data frames in a session
+        """view all dataframes in a session
         ---
         description: >-
           ### Permission Table\n
@@ -915,11 +915,11 @@ class SessionDataframes(SessionBase):
           Description|\n
           |--|--|--|--|--|--|\n
           |Session|Global|View|❌|❌|View any session|\n
-          |Session|Collaboration|View|✅|❌|View all data frames within the session|\n
-          |Session|Organization|View|❌|❌|View any data frame that has been
+          |Session|Collaboration|View|✅|❌|View all dataframes within the session|\n
+          |Session|Organization|View|❌|❌|View any dataframe that has been
           initiated from your organization or shared with your organization within the
           session|\n
-          |Session|Own|View|❌|❌|View any data frame you created or that is shared
+          |Session|Own|View|❌|❌|View any dataframe you created or that is shared
           with you within the session|\n
 
           Accessible to users and nodes.
@@ -990,26 +990,23 @@ class SessionDataframes(SessionBase):
 
     @with_user
     def post(self, session_id):
-        """Create a new data frame in a session
+        """Create a new dataframe in a session
         ---
         description: >-
-          Create a new data frame in a session. The first step in creating the data
+          Create a new dataframe in a session. The first step in creating the data
           frame is to extract the data from the source database. This is done by
-          creating a task that extracts the data from the source database.
-
-          This endpoints returns a handle that can be used to identify the data frame
-          in the future. This handle can be used to add preprocessing steps to the
-          data frame. It can also be used to add compute steps to the data frame.
+          creating a task that extracts the data from the source database. The task
+          should therefore also be defined in the request body.
 
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Session|Collaboration|Edit|❌|❌|Create data frame in any session in your
+          |Session|Collaboration|Edit|❌|❌|Create dataframe in any session in your
           collaboration|\n
-          |Session|Organization|Edit|❌|❌|Create data frame in any session from your
+          |Session|Organization|Edit|❌|❌|Create dataframe in any session from your
           organization|\n
-          |Session|Own|Edit|❌|❌|Create data frame in a session owned by you|\n
+          |Session|Own|Edit|❌|❌|Create dataframe in a session owned by you|\n
 
           Only accessible to users.
 
@@ -1049,8 +1046,7 @@ class SessionDataframes(SessionBase):
 
         # A dataframe is a list of tasks that need to be executed in order to initialize
         # the session. A single session can have multiple dataframes, each with a
-        # different database or different user inputs. Each dataframe can be identified
-        # using a unique handle.
+        # different database or different user inputs.
         data = request.get_json(silent=True)
         try:
             data = dataframe_init_input_schema.load(data)
@@ -1067,19 +1063,13 @@ class SessionDataframes(SessionBase):
         # databases.
         source_db_label = data["label"]
 
-        # Multiple datasets can be created in a single session. This handle can be
-        # used by the `preprocessing` and `compute` to identify the different
-        # datasets that are send after the data extraction task. The handle can be
-        # provided by the user, if not a unique handle is generated.
-        if "handle" not in data:
-            while (handle := generate_name()) and db.Dataframe.select(session, handle):
-                pass
-        else:
-            handle = data["handle"]
-
+        # Create the dataframe
+        # TODO guarantee that the name is unique (there is an issue for this)
+        df_name = data.get("name", generate_name())
         dataframe = db.Dataframe(
             session=session,
-            handle=handle,
+            name=df_name,
+            db_label=source_db_label,
         )
         dataframe.save()
 
@@ -1092,9 +1082,9 @@ class SessionDataframes(SessionBase):
         else:
             description = (
                 f"Data extraction step for session {session.name} ({session.id})."
-                f"This session is in the {collaboration.name} collaboration. This "
-                f"data extraction step uses the {source_db_label} database. And "
-                f"will initialize the dataframe with the handle {handle}."
+                f"This session is in the {collaboration.name} collaboration. Data "
+                f"extraction is done on the {source_db_label} database, and the "
+                f"dataframe name will be {df_name}."
             )
 
         try:
@@ -1103,7 +1093,7 @@ class SessionDataframes(SessionBase):
                 image=extraction_details["image"],
                 organizations=extraction_details["organizations"],
                 # TODO FM 10-7-2024: we should make a custom type for this
-                database=[{"label": source_db_label, "type": "source"}],
+                databases=[{"label": source_db_label, "type": "source"}],
                 description=description,
                 action=AlgorithmStepType.DATA_EXTRACTION,
                 dataframe=dataframe,
@@ -1127,8 +1117,8 @@ class SessionDataframes(SessionBase):
 class SessionDataframe(SessionBase):
 
     @with_user
-    def get(self, session_id, dataframe_handle):
-        """View specific data frame
+    def get(self, id):
+        """View specific dataframe
         ---
         description: >-
           ### Permission Table\n
@@ -1136,8 +1126,8 @@ class SessionDataframe(SessionBase):
           Description|\n
           |--|--|--|--|--|--|\n
           |Session|Global|View|❌|❌|View any session|\n
-          |Session|Collaboration|View|✅|❌|View any data frame within the session|\n
-          |Session|Organization|View|❌|❌|View any data frame that has been
+          |Session|Collaboration|View|✅|❌|View any dataframe within the session|\n
+          |Session|Organization|View|❌|❌|View any dataframe that has been
           initiated from your organization or shared with your organization within the
           session|\n
           |Session|Own|View|❌|❌|View any session you created or that is shared
@@ -1150,13 +1140,7 @@ class SessionDataframe(SessionBase):
             name: id
             schema:
               type: integer
-            description: Session ID
-            required: true
-          - in: path
-            name: dataframe_handle
-            schema:
-                type: string
-            description: Handle of the data frame
+            description: Dataframe ID
             required: true
 
         responses:
@@ -1173,58 +1157,44 @@ class SessionDataframe(SessionBase):
         tags: ["Session"]
         """
 
-        session = db.Session.get(session_id)
-        if not session:
-            return {
-                "msg": f"Session with id={session_id} not found"
-            }, HTTPStatus.NOT_FOUND
+        dataframe: db.Dataframe = db.Dataframe.get(id)
+        if not dataframe:
+            return {"msg": f"Dataframe with id={id} not found"}, HTTPStatus.NOT_FOUND
 
-        if not self.can_view_session(session):
+        if not self.can_view_session(dataframe.session):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        dataframe = db.Dataframe.select(session, dataframe_handle)
-        if not dataframe:
-            return {
-                "msg": f"Data frame with handle={dataframe_handle} not found"
-            }, HTTPStatus.NOT_FOUND
-
         return dataframe_schema.dump(dataframe, many=False), HTTPStatus.OK
 
     @with_user
-    def delete(self, session_id, dataframe_handle):
-        """Delete data frame
+    def delete(self, id):
+        """Delete dataframe
         ---
         description: >-
-          Delete the data frame specified by the handle. When the `delete_dependents`
-          option is set to `true` also all associated columns are deleted. \n
+          Delete the dataframe. When the `delete_dependents` option is set to `true`,
+          also all associated columns are deleted. \n
 
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Session|Global|Delete|❌|❌|Delete any data frame|\n
-          |Session|Collaboration|Delete|❌|❌|Delete any data frame within the
+          |Session|Global|Delete|❌|❌|Delete any dataframe|\n
+          |Session|Collaboration|Delete|❌|❌|Delete any dataframe within the
           collaboration the user is part of|\n
-          |Session|Organization|Delete|❌|❌|Delete any data frame that is initiated
+          |Session|Organization|Delete|❌|❌|Delete any dataframe that is initiated
           from your organization|\n
-          |Session|Own|Delete|❌|❌|Delete any data frame you created|\n
+          |Session|Own|Delete|❌|❌|Delete any dataframe you created|\n
 
           Accessible to users.
 
         parameters:
           - in: path
-            name: session_id
+            name: id
             schema:
               type: integer
-            description: Session ID
-            required: true
-          - in: path
-            name: dataframe_handle
-            schema:
-                type: string
-            description: Handle of the data frame
+            description: Dataframe ID
             required: true
 
         responses:
@@ -1240,22 +1210,17 @@ class SessionDataframe(SessionBase):
 
         tags: ["Session"]
         """
-        session: db.Session = db.Session.get(session_id)
-        if not session:
-            return {
-                "msg": f"Session with id={session_id} not found"
-            }, HTTPStatus.NOT_FOUND
+        dataframe: db.Dataframe = db.Dataframe.get(id)
+        if not dataframe:
+            return {"msg": f"Dataframe with id={id} not found"}, HTTPStatus.NOT_FOUND
 
-        if not self.can_delete_session(session):
+        if not self.can_delete_session(dataframe.session):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        dataframe = db.Dataframe.select(session, dataframe_handle)
-        if not dataframe:
-            return {
-                "msg": f"Data frame with handle={dataframe_handle} not found"
-            }, HTTPStatus.NOT_FOUND
+        df_name = dataframe.name
+        session_id = dataframe.session_id
 
         # Delete alls that are part of this dataframe
         for column in dataframe.columns:
@@ -1264,38 +1229,46 @@ class SessionDataframe(SessionBase):
         # Delete the dataframe itself from the server
         dataframe.delete()
 
-        # TODO instruct nodes to delete the data frame, consider the traceability of the
-        # data frame. Simply deleting the data frame is not good, we should track it in
+        # TODO instruct nodes to delete the dataframe, consider the traceability of the
+        # dataframe. Simply deleting the dataframe is not good, we should track it in
         # the session log or something.
         # https://github.com/vantage6/vantage6/issues/1567
 
         return {
-            "msg": f"Successfully deleted data frame with handle={dataframe_handle}"
+            "msg": f"Successfully deleted dataframe {df_name} from session {session_id}"
         }, HTTPStatus.OK
 
 
 class DataframePreprocessing(SessionBase):
 
     @with_user
-    def post(self, session_id, dataframe_handle):
-        """Add a preprocessing step to a data frame
+    def post(self, id):
+        """Add a preprocessing step to a dataframe
         ---
         description: >-
-          Add a preprocessing step to a data frame. A preprocessing step is a task that
-          modifies the data in the data frame. This can be used to clean the data, to
+          Add a preprocessing step to a dataframe. A preprocessing step is a task that
+          modifies the data in the dataframe. This can be used to clean the data, to
           normalize the data, to remove outliers, etc.
 
           ### Permission Table\n
           |Rule name|Scope|Operation|Assigned to node|Assigned to container|
           Description|\n
           |--|--|--|--|--|--|\n
-          |Session|Collaboration|Edit|❌|❌|Modify data frame in any session in your
+          |Session|Collaboration|Edit|❌|❌|Modify dataframe in any session in your
           collaboration|\n
-          |Session|Organization|Edit|❌|❌|Modify data frame in any session from your
+          |Session|Organization|Edit|❌|❌|Modify dataframe in any session from your
           organization|\n
-          |Session|Own|Edit|❌|❌|Modify data frame in a session owned by you|\n
+          |Session|Own|Edit|❌|❌|Modify dataframe in a session owned by you|\n
 
           Only accessible to users.
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: Dataframe ID
+            required: true
 
         requestBody:
           content:
@@ -1330,14 +1303,11 @@ class DataframePreprocessing(SessionBase):
 
         tags: ["Session"]
         """
+        dataframe: db.Dataframe = db.Dataframe.get(id)
+        if not dataframe:
+            return {"msg": f"Dataframe with id={id} not found"}, HTTPStatus.NOT_FOUND
 
-        session: db.Session = db.Session.get(session_id)
-        if not session:
-            return {
-                "msg": f"Session with id={session_id} not found"
-            }, HTTPStatus.NOT_FOUND
-
-        if not self.can_edit_session(session):
+        if not self.can_edit_session(dataframe.session):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
@@ -1351,20 +1321,13 @@ class DataframePreprocessing(SessionBase):
                 "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
-        dataframe = db.Dataframe.select(session, dataframe_handle)
-        if not dataframe:
-            return {
-                "msg": (
-                    f"Data frame with handle={dataframe_handle} in session={session.name} "
-                    "not found!"
-                )
-            }, HTTPStatus.NOT_FOUND
-
+        session = dataframe.session
         if not dataframe.last_session_task:
             return {
                 "msg": (
-                    f"Data frame with handle={dataframe_handle} in session={session.name} "
-                    "has no last task! Session is not properly initialized!"
+                    f"Dataframe {dataframe.name} (id={dataframe.id}) in "
+                    f"session={session.name} has no last task! Session is not properly "
+                    "initialized!"
                 )
             }, HTTPStatus.INTERNAL_SERVER_ERROR
 
@@ -1386,13 +1349,14 @@ class DataframePreprocessing(SessionBase):
             description = (
                 f"Preprocessing step for session {session.name} ({session.id})."
                 f"This session is in the {session.collaboration.name} collaboration. "
-                f"This preprocessing step will modify the dataframe with the handle "
-                f"{dataframe_handle}."
+                f"This preprocessing step will modify dataframe {dataframe.id} "
             )
 
         response, status_code = self.create_session_task(
             session=session,
-            database=[{"label": dataframe_handle, "type": "handle"}],
+            databases=[
+                {"label": dataframe.db_label, "type": TaskDatabaseType.DATAFRAME}
+            ],
             description=description,
             depends_on_ids=[rt.id for rt in requires_tasks],
             action=AlgorithmStepType.PREPROCESSING,
@@ -1416,11 +1380,11 @@ class DataframePreprocessing(SessionBase):
 class DataframeColumns(SessionBase):
 
     @with_node
-    def post(self, session_id, dataframe_handle):
+    def post(self, id):
         """Nodes report their column names
         ---
         description: >-
-          Endpoints used by nodes to report data frame metadata.\n
+          Endpoints used by nodes to report dataframe metadata.\n
 
           Only accessible by nodes.
 
@@ -1429,13 +1393,7 @@ class DataframeColumns(SessionBase):
             name: id
             schema:
               type: integer
-            description: Session ID
-            required: true
-          - in: path
-            name: dataframe_handle
-            schema:
-                type: string
-            description: Handle of the dataframe
+            description: Dataframe ID
             required: true
 
         requestBody:
@@ -1475,20 +1433,12 @@ class DataframeColumns(SessionBase):
                 "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
-        session: db.Session = db.Session.get(session_id)
-        if not session:
-            return {
-                "msg": f"Session with id={session_id} not found"
-            }, HTTPStatus.NOT_FOUND
-
-        dataframe = db.Dataframe.select(session, dataframe_handle)
+        dataframe: db.Dataframe = db.Dataframe.get(id)
         if not dataframe:
-            return {
-                "msg": f"Data frame with handle={dataframe_handle} not found"
-            }, HTTPStatus.NOT_FOUND
+            return {"msg": f"Dataframe with id={id} not found"}, HTTPStatus.NOT_FOUND
 
         # Validate that this node is part of the session
-        if not session.collaboration_id == g.node.collaboration_id:
+        if not dataframe.session.collaboration_id == g.node.collaboration_id:
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED

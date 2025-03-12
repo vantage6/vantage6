@@ -12,9 +12,9 @@ data:
     {{- range .Values.node.databases.fileBased -}}
     databases:
     - label: {{ .name }}
-      uri: "/app/.databases/{{ .name }}.{{ .type }}"
+      uri: {{ .uri }}
       type: {{ .type }}
-    {{- end -}}
+    {{- end }}
     {{- range .Values.node.databases.serviceBased -}}
     - label: {{ .name }}
       uri: {{ .uri }}
@@ -42,4 +42,4 @@ data:
         name: docker.utils.config
       - level: warning
         name: docker.auth
-    task_dir: {{ .Values.node.taskDir }}
+    task_dir: {{ .Values.node.taskDirHost }}

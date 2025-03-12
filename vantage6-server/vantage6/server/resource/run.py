@@ -702,9 +702,11 @@ class Run(SingleRunBase):
 
         if run.organization_id != g.node.organization_id:
             log.warning(
-                f"{g.node.name} tries to update a run that does not belong "
-                f"to them ({run.organization_id}/{g.node.organization_id})."
+                "Node %s tries to update a run that does not belong to them.",
+                g.node.name,
             )
+            log.warning("    Run organization: %s", run.organization_id)
+            log.warning("    Node organization: %s", g.node.organization)
             return {
                 "msg": "This is not your algorithm run to PATCH!"
             }, HTTPStatus.UNAUTHORIZED

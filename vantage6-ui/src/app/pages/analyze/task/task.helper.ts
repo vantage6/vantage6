@@ -1,7 +1,6 @@
 import { AbstractControl, FormControl, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { floatListRegex, floatRegex, intListRegex, integerRegex, stringListRegex } from 'src/app/helpers/regex.helper';
 import { AlgorithmFunction, AlgorithmFunctionExtended, ArgumentType } from 'src/app/models/api/algorithm.model';
-import { TaskDatabase } from 'src/app/models/api/task.models';
 import { Database } from 'src/app/models/api/node.model';
 import { isListTypeArgument } from 'src/app/helpers/algorithm.helper';
 import { isTruthy } from 'src/app/helpers/utils.helper';
@@ -72,24 +71,6 @@ export const addParameterFormControlsForFunction = (func: AlgorithmFunctionExten
       }
     }
   });
-};
-
-export const getTaskDatabaseFromForm = (func: AlgorithmFunction | null, form: FormGroup): TaskDatabase[] => {
-  const taskDatabases: TaskDatabase[] = [];
-  func?.databases.forEach((functionDatabase) => {
-    const selected_database = form.get(`${functionDatabase.name}_name`)?.value || '';
-    const taskDatabase: TaskDatabase = { label: selected_database };
-    const query = form.get(`${functionDatabase.name}_query`)?.value || '';
-    if (query) {
-      taskDatabase.query = query;
-    }
-    const sheet = form.get(`${functionDatabase.name}_sheet`)?.value || '';
-    if (sheet) {
-      taskDatabase.sheet_name = sheet;
-    }
-    taskDatabases.push(taskDatabase);
-  });
-  return taskDatabases;
 };
 
 export const getDatabaseTypesFromForm = (func: AlgorithmFunction | null, form: FormGroup, availableDatabases: Database[]): Database[] => {

@@ -11,7 +11,7 @@ from sqlalchemy import desc, select
 from sqlalchemy.sql import visitors
 
 from vantage6.common.globals import STRING_ENCODING, NodePolicy
-from vantage6.common.enum import RunStatus, AlgorithmStepType
+from vantage6.common.enum import RunStatus, AlgorithmStepType, TaskDatabaseType
 from vantage6.common.encryption import DummyCryptor
 from vantage6.backend.common import get_server_url
 from vantage6.server import db
@@ -823,7 +823,7 @@ class Tasks(TaskBase):
                     }, HTTPStatus.BAD_REQUEST
 
             # add last modification task to dependent tasks
-            if database["type"] == "handle":
+            if database["type"] == TaskDatabaseType.DATAFRAME:
                 df = db.Dataframe.select(session, database["label"])
                 if not df:
                     return {
@@ -883,6 +883,7 @@ class Tasks(TaskBase):
             depends_on=dependent_tasks,
             dataframe_id=data.get("dataframe_id"),
         )
+        task.save()
 
         # create job_id. Users can only create top-level -tasks (they will not
         # have sub-tasks). Therefore, always create a new job_id. Tasks created
@@ -909,7 +910,7 @@ class Tasks(TaskBase):
             # db.Task.get()). Task.id should be updated explicitly instead.
             task_db = db.TaskDatabase(
                 task_id=task.id,
-                database=database["label"],
+                label=database["label"],
                 type_=database["type"],
             )
             task_db.save()

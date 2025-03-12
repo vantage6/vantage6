@@ -7,27 +7,26 @@ from vantage6.common.globals import ContainerEnvNames
 from vantage6.algorithm.tools.util import info, error, warn
 
 
-def _get_user_database_labels() -> list[str]:
+def _get_user_dataframes() -> list[str]:
     """
-    Get the database labels from the environment
+    Get the database names that the user requested from the environment
 
     Returns
     -------
     list[str]
-        List of database labels
+        List of database names
     """
-    # read the labels that the user requested, which is a comma-separated str of labels.
-    labels = os.environ[ContainerEnvNames.USER_REQUESTED_DATAFRAME_HANDLES.value]
-    return labels.split(",")
+    dfs = os.environ[ContainerEnvNames.USER_REQUESTED_DATAFRAMES.value]
+    return dfs.split(",")
 
 
-def _get_data_from_handle(label: str) -> pd.DataFrame:
+def _read_df_from_disk(df_name: str) -> pd.DataFrame:
     """
-    Load data from a database based on the label
+    Load data from a dataframe file
 
     Parameters
     ----------
-    label : str
+    df_name : str
         Label of the database to load
 
     Returns
@@ -35,14 +34,14 @@ def _get_data_from_handle(label: str) -> pd.DataFrame:
     pd.DataFrame
         Data from the database
     """
-    # Load the dataframe by the user specified handle. The dataframes are always stored
+    # Load the dataframe by the user specified df name. The dataframes are always stored
     # in the session folder, which is set by the vantage6 node. The label is the name of
     # the dataframe file, which is set by the user when creating the task.
     dataframe_folder = os.environ[ContainerEnvNames.SESSION_FOLDER.value]
-    dataframe_uri = os.path.join(dataframe_folder, f"{label}.parquet")
-    info(f"Using '{dataframe_uri}' with label '{label}' as database")
+    dataframe_file = os.path.join(dataframe_folder, f"{df_name}.parquet")
+    info(f"Using '{dataframe_file}' with dataframe name '{df_name}' as database")
 
-    return pd.read_parquet(dataframe_uri)
+    return pd.read_parquet(dataframe_file)
 
 
 def data(number_of_databases: int = 1) -> callable:
@@ -97,30 +96,30 @@ def data(number_of_databases: int = 1) -> callable:
             if mock_data is not None:
                 return func(*mock_data, *args, **kwargs)
 
-            # read the labels that the user requested
-            labels = _get_user_database_labels()
+            # get the dataframe names that the user requested
+            dataframes = _get_user_dataframes()
 
             # check if user provided enough databases
-            if len(labels) < number_of_databases:
+            if len(dataframes) < number_of_databases:
                 error(
                     f"Algorithm requires {number_of_databases} databases "
-                    f"but only {len(labels)} were provided. "
+                    f"but only {len(dataframes)} were provided. "
                     "Exiting..."
                 )
                 exit(1)
-            elif len(labels) > number_of_databases:
+            elif len(dataframes) > number_of_databases:
                 warn(
                     f"Algorithm requires only {number_of_databases} databases"
-                    f", but {len(labels)} were provided. Using the "
+                    f", but {len(dataframes)} were provided. Using the "
                     f"first {number_of_databases} databases."
                 )
 
             for i in range(number_of_databases):
 
-                label = labels[i]
+                dataframe_name = dataframes[i]
                 # read the data from the database
-                info("Reading data frame")
-                data_ = _get_data_from_handle(label)
+                info("Reading dataframe")
+                data_ = _read_df_from_disk(dataframe_name)
 
                 # add the data to the arguments
                 args = (data_, *args)

@@ -67,7 +67,7 @@ def _convert_to_parquet(data: Any) -> pa.Table:
     SessionError
         If the DataFrame cannot be converted to a Parquet Table.
     DataTypeError
-        If the data extraction function returns an unsupported data frame type.
+        If the data extraction function returns an unsupported dataframe type.
     """
     info("Converting algorithm output to a Parquet Table.")
     match type(data):

@@ -1,14 +1,13 @@
-import { Component, HostBinding, OnInit, ViewChild } from '@angular/core';
+import { Component, HostBinding, OnInit } from '@angular/core';
 import { TemplateTask } from 'src/app/models/api/templateTask.models';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { Algorithm, AlgorithmFunction, ArgumentType, FunctionType } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { FormBuilder, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
-import { addParameterFormControlsForFunction, getTaskDatabaseFromForm } from 'src/app/pages/analyze/task/task.helper';
+import { addParameterFormControlsForFunction } from 'src/app/pages/analyze/task/task.helper';
 import { BaseNode } from 'src/app/models/api/node.model';
 import { Subject, takeUntil } from 'rxjs';
-import { DatabaseStepComponent } from 'src/app/pages/analyze/task/create/steps/database-step/database-step.component';
-import { CreateTask, CreateTaskInput, TaskDatabase } from 'src/app/models/api/task.models';
+import { CreateTask, CreateTaskInput } from 'src/app/models/api/task.models';
 import { routePaths } from 'src/app/routes';
 import { TaskService } from 'src/app/services/task.service';
 import { Router } from '@angular/router';
@@ -25,45 +24,40 @@ import { MatStepper, MatStepperIcon, MatStep, MatStepLabel, MatStepperNext, MatS
 import { MatIcon } from '@angular/material/icon';
 import { MatInput } from '@angular/material/input';
 import { MatButton } from '@angular/material/button';
-import { DatabaseStepComponent as DatabaseStepComponent_1 } from '../../task/create/steps/database-step/database-step.component';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-    selector: 'app-template-task-create',
-    templateUrl: './template-task-create.component.html',
-    styleUrls: ['./template-task-create.component.scss'],
-    imports: [
-        PageHeaderComponent,
-        MatFormField,
-        MatLabel,
-        MatSelect,
-        ReactiveFormsModule,
-        NgFor,
-        MatOption,
-        NgIf,
-        MatCard,
-        MatCardContent,
-        MatStepper,
-        MatStepperIcon,
-        MatIcon,
-        MatStep,
-        MatStepLabel,
-        MatInput,
-        MatButton,
-        MatStepperNext,
-        DatabaseStepComponent_1,
-        MatStepperPrevious,
-        MatProgressSpinner,
-        AsyncPipe,
-        TranslateModule
-    ]
+  selector: 'app-template-task-create',
+  templateUrl: './template-task-create.component.html',
+  styleUrls: ['./template-task-create.component.scss'],
+  imports: [
+    PageHeaderComponent,
+    MatFormField,
+    MatLabel,
+    MatSelect,
+    ReactiveFormsModule,
+    NgFor,
+    MatOption,
+    NgIf,
+    MatCard,
+    MatCardContent,
+    MatStepper,
+    MatStepperIcon,
+    MatIcon,
+    MatStep,
+    MatStepLabel,
+    MatInput,
+    MatButton,
+    MatStepperNext,
+    MatStepperPrevious,
+    MatProgressSpinner,
+    AsyncPipe,
+    TranslateModule
+  ]
 })
 export class TemplateTaskCreateComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
-
-  @ViewChild(DatabaseStepComponent)
-  databaseStepComponent?: DatabaseStepComponent;
 
   argumentType = ArgumentType;
   functionType = FunctionType;
@@ -210,15 +204,15 @@ export class TemplateTaskCreateComponent implements OnInit {
       selectedOrganizations = Array.isArray(organizationIDsControl.value) ? organizationIDsControl.value : [organizationIDsControl.value];
     }
 
-    let taskDatabases: TaskDatabase[] = [];
-    if (this.templateTask?.fixed?.databases) {
-      this.templateTask.fixed.databases.forEach((fixedDatabase) => {
-        const taskDatabase: TaskDatabase = { label: fixedDatabase.name, query: fixedDatabase.query, sheet_name: fixedDatabase.sheet };
-        taskDatabases.push(taskDatabase);
-      });
-    } else {
-      taskDatabases = getTaskDatabaseFromForm(this.function, this.databaseForm);
-    }
+    // let taskDatabases: TaskDatabase[] = [];
+    // if (this.templateTask?.fixed?.databases) {
+    //   this.templateTask.fixed.databases.forEach((fixedDatabase) => {
+    //     const taskDatabase: TaskDatabase = { label: fixedDatabase.name, query: fixedDatabase.query, sheet_name: fixedDatabase.sheet };
+    //     taskDatabases.push(taskDatabase);
+    //   });
+    // } else {
+    //   // taskDatabases = getTaskDatabaseFromForm(this.function, this.databaseForm);
+    // }
 
     const input: CreateTaskInput = {
       method: this.function?.name || '',
@@ -231,10 +225,10 @@ export class TemplateTaskCreateComponent implements OnInit {
         ? this.templateTask.fixed.description
         : this.functionForm.get('description')?.value || '',
       image: this.algorithm?.image || '',
+      session_id: this.templateTask?.fixed?.session_id || -1,
       collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
       store_id: this.algorithm?.algorithm_store_id || -1,
       server_url: environment.server_url,
-      databases: taskDatabases,
       organizations: selectedOrganizations.map((organizationID) => {
         return { id: Number.parseInt(organizationID), input: btoa(JSON.stringify(input)) || '' };
       })
@@ -284,7 +278,5 @@ export class TemplateTaskCreateComponent implements OnInit {
     this.parameterForm = this.fb.nonNullable.group({});
   }
 
-  private clearDatabaseStep(): void {
-    this.databaseStepComponent?.reset();
-  }
+  private clearDatabaseStep(): void {}
 }

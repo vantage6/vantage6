@@ -24,7 +24,8 @@ export enum TaskStatus {
   NoDockerImage = 'non-existing Docker image',
   NotAllowed = 'not allowed',
   Crashed = 'crashed',
-  Killed = 'killed by user'
+  Killed = 'killed by user',
+  Unknown = 'unknown error'
 }
 
 export enum TaskStatusGroup {
@@ -50,6 +51,7 @@ export interface BaseTask {
   name: string;
   description: string;
   status: TaskStatus;
+  session: BaseLink;
   image: string;
   init_org: BaseLink;
   init_user: BaseLink;
@@ -67,6 +69,7 @@ export interface Task {
   name: string;
   description: string;
   status: TaskStatus;
+  session: BaseLink;
   image: string;
   input?: TaskInput;
   init_org?: BaseOrganization;
@@ -123,21 +126,15 @@ export interface TaskResult {
   decoded_result?: object;
 }
 
-export interface TaskDatabase {
-  label: string;
-  query?: string;
-  sheet_name?: string;
-}
-
 export interface CreateTask {
   name: string;
   description: string;
   image: string;
+  session_id: number;
   collaboration_id: number;
   study_id?: number;
   store_id: number;
   server_url: string;
-  databases: TaskDatabase[];
   organizations: CreateTaskOrganization[];
 }
 
@@ -145,7 +142,7 @@ export interface KillTask {
   id: number;
 }
 
-interface CreateTaskOrganization {
+export interface CreateTaskOrganization {
   id: number;
   input: string;
 }

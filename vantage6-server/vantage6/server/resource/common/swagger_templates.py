@@ -145,9 +145,9 @@ swagger_template = {
                         "type": "string",
                         "description": "Label of the source database",
                     },
-                    "handle": {
+                    "name": {
                         "type": "string",
-                        "description": "Handle of the DataFrame",
+                        "description": "Name of the DataFrame",
                     },
                     "task": {
                         "type": "object",
@@ -156,7 +156,7 @@ swagger_template = {
                 },
                 "example": {
                     "label": "database-label",
-                    "handle": "my-data-frame",
+                    "name": "my-data-frame",
                     "task": {
                         "image": "hello-world",
                         "organizations": [

@@ -30,7 +30,7 @@ spec:
         command: ["vnode-local", "start", "-c", "/app/config/config.yml", "--dockerized"]
         volumeMounts:
         - name: task-files-root
-          mountPath: {{ .Values.node.taskDir }}
+          mountPath: /app/tasks
         - name: kube-config-file
           mountPath: /app/.kube/config
         - name: config-volume

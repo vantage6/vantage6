@@ -46,6 +46,7 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
     ]
 })
 export class RoleReadComponent extends BaseReadComponent implements OnInit, OnDestroy {
+  // TODO(BART/RIAN) RIAN: When needed implement permissions/rules for sessions, nothing has been implemented for this yet.
   isEditing: boolean = false;
 
   role: Role | null = null;

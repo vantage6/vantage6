@@ -63,48 +63,50 @@ import { ChipComponent } from '../../../../components/helpers/chip/chip.componen
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { OrderByPipe } from '../../../../pipes/order-by.pipe';
 import { OrderByTaskStatusPipe } from '../../../../pipes/order-by-status.pipe';
+import { Session } from 'src/app/models/api/session.models';
+import { SessionService } from 'src/app/services/session.service';
 
 @Component({
-    selector: 'app-task-read',
-    templateUrl: './task-read.component.html',
-    styleUrls: ['./task-read.component.scss'],
-    imports: [
-        PageHeaderComponent,
-        NgIf,
-        MatIconButton,
-        MatMenuTrigger,
-        MatIcon,
-        MatMenu,
-        MatMenuItem,
-        AlertComponent,
-        MatCard,
-        MatExpansionPanel,
-        MatExpansionPanelHeader,
-        MatExpansionPanelTitle,
-        NgClass,
-        NgFor,
-        StatusInfoComponent,
-        MatButton,
-        MatCardActions,
-        MatCardHeader,
-        MatCardTitle,
-        MatFormField,
-        MatLabel,
-        MatSelect,
-        ReactiveFormsModule,
-        MatOption,
-        MatCardContent,
-        VisualizeResultComponent,
-        ChipComponent,
-        RouterLink,
-        MatAccordion,
-        MatExpansionPanelDescription,
-        MatProgressSpinner,
-        SlicePipe,
-        TranslateModule,
-        OrderByPipe,
-        OrderByTaskStatusPipe
-    ]
+  selector: 'app-task-read',
+  templateUrl: './task-read.component.html',
+  styleUrls: ['./task-read.component.scss'],
+  imports: [
+    PageHeaderComponent,
+    NgIf,
+    MatIconButton,
+    MatMenuTrigger,
+    MatIcon,
+    MatMenu,
+    MatMenuItem,
+    AlertComponent,
+    MatCard,
+    MatExpansionPanel,
+    MatExpansionPanelHeader,
+    MatExpansionPanelTitle,
+    NgClass,
+    NgFor,
+    StatusInfoComponent,
+    MatButton,
+    MatCardActions,
+    MatCardHeader,
+    MatCardTitle,
+    MatFormField,
+    MatLabel,
+    MatSelect,
+    ReactiveFormsModule,
+    MatOption,
+    MatCardContent,
+    VisualizeResultComponent,
+    ChipComponent,
+    RouterLink,
+    MatAccordion,
+    MatExpansionPanelDescription,
+    MatProgressSpinner,
+    SlicePipe,
+    TranslateModule,
+    OrderByPipe,
+    OrderByTaskStatusPipe
+  ]
 })
 export class TaskReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
@@ -119,6 +121,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   visualization = new FormControl(0);
 
   task: Task | null = null;
+  session: Session | null = null;
   childTasks: BaseTask[] = [];
   study: Study | null = null;
   algorithm: Algorithm | null = null;
@@ -141,6 +144,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     private activatedRoute: ActivatedRoute,
     private translateService: TranslateService,
     private taskService: TaskService,
+    private sessionService: SessionService,
     private studyService: StudyService,
     private algorithmService: AlgorithmService,
     private algorithmStoreService: AlgorithmStoreService,
@@ -194,6 +198,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     if (!this.task || sync_tasks) {
       this.task = await this.getMainTask();
       this.childTasks = await this.getChildTasks();
+      if (this.task.session) this.session = await this.sessionService.getSession(this.task.session.id);
       if (this.task.study) this.study = await this.studyService.getStudy(this.task.study.id.toString());
     }
     try {

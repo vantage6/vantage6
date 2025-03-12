@@ -1,5 +1,9 @@
 @import "src/app/styles/config.scss";
 
+.margin-bottom-4 {
+  margin-bottom: $spacing-px-4;
+}
+
 .node-alert {
   display: block;
   margin-bottom: $spacing-px-2;

@@ -1,5 +1,6 @@
 {
   "general": {
+    "general": "General",
     "back": "Back",
     "next": "Next",
     "filter": "Filter",
@@ -37,7 +38,10 @@
     "roles": "Roles",
     "users": "Users",
     "nodes": "Nodes",
+    "sessions": "Sessions",
+    "session": "Session",
     "tasks": "Tasks",
+    "task": "Task",
     "algorithms": "Algorithms",
     "algorithm": "Algorithm",
     "stores": "Algorithm stores"
@@ -46,6 +50,8 @@
     "admin": "Administration",
     "home": "Home",
     "analyze": "Analyze",
+    "new-analysis": "New analysis",
+    "history": "Analysis history",
     "stores": "Algorithm store",
     "algorithms-approved": "Approved algorithms",
     "pending-algorithms": "Pending algorithms",
@@ -82,9 +88,35 @@
   "table": {
     "search-placeholder": "Search"
   },
+  "session-list": {
+    "title": "Sessions"
+  },
+  "session-create": {
+    "create-title": "Create session",
+    "edit-title": "Edit session",
+    "session-form": {
+      "name": "Name",
+      "scope": "Select scope",
+      "study": "Select study",
+      "entire-collab": "Entire collaboration"
+    }
+  },
+  "session": {
+    "delete-title": "Are you sure you want to delete session '{{name}}'?",
+    "delete-content": "This operation cannot be undone.",
+    "name": "Name",
+    "user": "Initiating user",
+    "created-at": "Created",
+    "dataframes": {
+      "title": "Dataframes",
+      "add": "Create dataframe"
+    }
+  },
   "task": {
+    "session": "Session",
     "algorithm": "Algorithm",
     "database": "Database",
+    "dataframe": "Dataframe",
     "description": "Description",
     "function": "Function",
     "parameters": "Parameters",
@@ -114,18 +146,27 @@
     "finished-at": "Finished",
     "node": "Assigned node",
     "show-log": "Show logs",
-    "alert-node-offline": "Task can't start, node is offline."
+    "alert-node-offline": "Algorithm run can't start, node is offline."
   },
   "task-list": {
-    "title": "Tasks"
+    "title": "History"
   },
   "task-create": {
-    "title": "Create task",
+    "title": "Create analysis",
+    "step-session": "Select session",
     "step-study": {
       "title": "Select study",
-      "explanation": "Your collaboration defines studies, which allows you to quickly select a set of organizations to run a certain type of task for.",
-      "description": "Select the study you want to run a task for. If you want to run the task for the entire collaboration, select that option.",
+      "explanation": "Your collaboration defines studies, which allows you to quickly select a set of organizations to run a certain type of analysis for.",
+      "description": "Select the study you want to run an analysis for. If you want to run the analysis for the entire collaboration, select that option.",
       "select-full-collaboration": "Entire collaboration"
+    },
+    "step-package": {
+      "title": "Select algorithm",
+      "description": {
+        "algorithm": "Select which algorithm you want to run",
+        "name": "Provide a suitable name for your task",
+        "description": "Optionally, describe your task so you can find it back later"
+      }
     },
     "step-function": {
       "title": "Select algorithm function",
@@ -148,6 +189,9 @@
       },
       "error-db-update": "Could not retrieve node configuration. The database step will not be available. Please try again later."
     },
+    "step-dataframe": {
+      "title": "Select dataframe"
+    },
     "step-preprocessing": {
       "title": "Extend data",
       "get-columns": "Obtaining columns from data stations...",
@@ -167,14 +211,15 @@
       "valid-json": "Please provide valid JSON input.",
       "upload-or-fill-in-json": "Upload a JSON file or fill in the JSON input field"
     },
-    "alert-no-online-nodes": "You cannot create a task right now because no nodes are online in your collaboration. Online nodes are required to collect information on available databases and columns. Please try again later or contact your collaboration manager.",
-    "alert-no-stores": "You cannot create a task because no algorithm stores are available to your collaboration. These are required to obtain the available algorithms from. Please contact your collaboration manager.",
-    "alert-no-algorithms": "You cannot create a task because no algorithms can be retrieved from the algorithm stores that are linked to your collaboration. Please contact your collaboration manager.",
+    "alert-no-online-nodes": "You cannot create an analysis right now because no nodes are online in your collaboration. Online nodes are required to collect information on available databases and columns. Please try again later or contact your collaboration manager.",
+    "alert-no-sessions-found": "No sessions found. To compute you must first create a session.",
+    "alert-no-stores": "You cannot create an analysis because no algorithm stores are available to your collaboration. These are required to obtain the available algorithms from. Please contact your collaboration manager.",
+    "alert-no-algorithms": "You cannot create an analysis because no algorithms can be retrieved from the algorithm stores that are linked to your collaboration. Please contact your collaboration manager.",
     "alert-no-node-config": "The node '{{name}}' does not share its configuration, nor does any other node that is online. This is required to determine the available databases. Please contact the node administrator.",
     "alert-no-databases": "The node '{{name}}' configuration does not contain any databases, while this algorithm requires one or more. Please contact the node administrator so that they might add them."
   },
   "task-read": {
-    "title": "Task",
+    "title": "Analysis",
     "card-general": {
       "title": "General"
     },
@@ -212,13 +257,13 @@
       "title": "Are you sure you want to kill the task '{{name}}'?",
       "content": "Note, this will also kill all subtasks.\nThis operation cannot be undone."
     },
-    "repeat": "Repeat task",
-    "alert-algorithm-not-found": "The algorithm used in this task could not be retrieved from the algorithm store. This limits the displayed information. This may happen if a task is created in the Python client or if the algorithm is no longer approved."
+    "repeat": "Repeat analysis",
+    "alert-algorithm-not-found": "The algorithm used in this analysis could not be retrieved from the algorithm store. This limits the displayed information. This may happen if an analysis is created in the Python client or if the algorithm is no longer approved."
   },
   "template-task-create": {
-    "title": "Quick task",
+    "title": "Quick analysis",
     "actions": {
-      "select": "Select quick task"
+      "select": "Select quick analysis"
     }
   },
   "algorithm": {
@@ -281,7 +326,7 @@
   },
   "algorithm-old-list": {
     "title": "Invalidated algorithms",
-    "alert": "The following algorithms are not available for use in tasks. They have been replaced by newer versions or have been rejected by reviewers.",
+    "alert": "The following algorithms are not available for use in analyses any more. They have been replaced by newer versions or have been rejected by reviewers.",
     "no-algorithms": "No old algorithms are available for your collaboration!"
   },
   "algorithm-read": {
@@ -298,7 +343,7 @@
     },
     "manage": "Manage algorithm",
     "invalidate-dialog": {
-      "title": "Are you sure you want to invalidate the algorithm '{{name}}'? It will no longer be available for use in tasks.",
+      "title": "Are you sure you want to invalidate the algorithm '{{name}}'? It will no longer be available for use in analyses.",
       "content": "This operation cannot be undone."
     },
     "delete-dialog": {
@@ -317,10 +362,10 @@
         "assign": "Assign reviewers"
       },
       "under-review": {
-        "content": "This algorithm is under review. It is not available for use in tasks.",
+        "content": "This algorithm is under review. It is not available for use in analyses.",
         "view": "View reviews"
       },
-      "invalidated": "This algorithm is {{ status }}. It is not available for use in tasks."
+      "invalidated": "This algorithm is {{ status }}. It is not available for use in analyses."
     },
     "invalidate": "Invalidate",
     "card-reviews": {
@@ -495,7 +540,7 @@
       },
       "delete-dialog": {
         "title": "Are you sure you want to remove the algorithm store '{{name}}' from the collaboration '{{collaboration}}'?",
-        "content": "Users will no longer be able to create tasks in this collaboration with the algorithms in this store.\nThe algorithm store can be added back to the collaboration at any time."
+        "content": "Users will no longer be able to create analyses in this collaboration with the algorithms in this store.\nThe algorithm store can be added back to the collaboration at any time."
       }
     }
   },
@@ -538,7 +583,7 @@
       "title": "Are you sure you want to delete the collaboration '{{name}}'?",
       "content": "Note, this will also delete all nodes and tasks related to this collaboration.\nThis operation cannot be undone."
     },
-    "alert-missing-nodes": "Not all organizations have registered nodes for this collaboration. Please ensure that they are registered and active before sending tasks."
+    "alert-missing-nodes": "Not all organizations have registered nodes for this collaboration. Please ensure that they are registered and active before sending analyses."
   },
   "study-read": {
     "title": "Study",
@@ -547,7 +592,7 @@
     },
     "delete-dialog": {
       "title": "Are you sure you want to delete the study '{{name}}'?",
-      "content": "Note, this will also delete all tasks related to this study.\nThis operation cannot be undone."
+      "content": "Note, this will also delete all analyses related to this study.\nThis operation cannot be undone."
     }
   },
   "study-create": {
@@ -701,7 +746,7 @@
     },
     "delete-dialog": {
       "title": "Are you sure you want to delete the user '{{name}}'?",
-      "content": "Note, this will also delete all tasks this user created.\nThis operation cannot be undone."
+      "content": "Note, this will also delete all analyses this user created.\nThis operation cannot be undone."
     }
   },
   "user-edit": {

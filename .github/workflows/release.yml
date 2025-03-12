@@ -244,7 +244,7 @@ jobs:
 
       - # build the UI image
         name: Build and push UI image
-        run: make ui-image TAG=$version BASE=${major}.${minor} PUSH_REG=true
+        run: make ui-image TAG=$version PUSH_REG=true
 
   algorithm-base-image:
     name: Build algorithm base image
