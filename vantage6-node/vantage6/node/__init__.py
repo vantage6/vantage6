@@ -222,7 +222,6 @@ class Node:
         task_results = self.client.run.list(
             state=TaskStatusQueryOptions.OPEN.value, include_task=True
         )
-        self.log.debug("task_results: %s", task_results)
 
         # add the tasks to the queue
         self.__add_tasks_to_queue(task_results)
@@ -442,7 +441,8 @@ class Node:
                     data={
                         "result": results.data,
                         # TODO (HC) check if only logs[0] are enough
-                        "log": results.logs[0],
+                        # TODO include logs
+                        # "log": results.logs[0],
                         "status": results.status,
                         "finished_at": datetime.datetime.now().isoformat(),
                     },

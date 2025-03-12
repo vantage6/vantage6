@@ -377,6 +377,8 @@ class ContainerManager:
                 "action": str(action.value),
                 "session_id": str(session_id),
                 "df_name": df_details.get("name") if df_details else "",
+                "df_id": str(df_details.get("id")) if df_details else "",
+                "df_label": df_details.get("label") if df_details else "",
             },
         )
 
@@ -826,7 +828,6 @@ class ContainerManager:
             )
             ok = False
 
-        self.log.debug(self.databases.keys())
         if source_database["label"] not in self.databases.keys():
             self.log.error(
                 "The database used in the data extraction step does not exist."
@@ -1076,7 +1077,6 @@ class ContainerManager:
 
             # Get all jobs from the task namespace for this node
             jobs = self.batch_api.list_namespaced_job(self.task_namespace)
-            self.log.debug(jobs)
             if not jobs.items:
                 time.sleep(10)
                 continue
