@@ -35,8 +35,6 @@ spec:
           mountPath: /app/.kube/config
         - name: config-volume
           mountPath: /app/config
-        # TODO do we need to mount databases in the node container? They are mounting
-        # the host path to the algorithm containers right?
         {{- range .Values.node.databases.fileBased }}
         - name: database-volume-{{ .name }}
           mountPath: /app/databases/{{ .name }}.{{ .type }}

@@ -152,6 +152,10 @@ class ContainerManager:
             # need it when we are creating new volume mounts for the algorithm
             # containers
             local_uri = uri
+            # TODO v5+ we should ensure that DATABASE_BASE_PATH is also used in the CLI
+            # so that we can be sure this file exists. From the type we could then
+            # derive if it's a file or directory, and it may be entirely unneccesary in
+            # that case to mount the database files/dirs into the node container.
             tmp_uri = Path(DATABASE_BASE_PATH) / f"{label}.{db_config['type']}"
 
             db_is_file = tmp_uri.exists() and tmp_uri.is_file()
@@ -592,9 +596,7 @@ class ContainerManager:
                     volume_name=f"task-{run_io.run_id}-db-{source_database['label']}",
                     host_path=db["uri"],
                     mount_path=db["local_uri"],
-                    # TODO can we provide type (File/Directory) here? Should be doable
-                    # based on db["type"]
-                    type_=None,
+                    type_="File" if db["is_file"] else "Directory",
                     read_only=True,
                 )
                 volumes.append(db_volume)
