@@ -10,6 +10,7 @@ from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.model.rule import Operation, Rule, Scope
 from vantage6.server.model.common.utils import validate_password
 from vantage6.server.hashedpassword import HashedPassword
+from vantage6.server.utils import parse_datetime
 
 
 class User(Authenticatable):
@@ -181,8 +182,6 @@ class User(Authenticatable):
         int | None
             How many minutes user is still blocked for
         """
-        from vantage6.server.resource import parse_datetime
-
         td_max_blocked = dt.timedelta(minutes=inactivation_in_minutes)
         td_last_login = (
             dt.datetime.now(dt.timezone.utc) - parse_datetime(self.last_login_attempt)
