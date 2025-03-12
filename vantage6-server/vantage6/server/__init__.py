@@ -103,7 +103,7 @@ class ServerApp:
             static_folder=Path(__file__).parent / "static",
         )
         self.debug: dict = self.ctx.config.get("debug", {})
-        self.configure_flask()
+        self.configure_flask(self.ctx.config.get("api_path"))
 
         # Setup SQLAlchemy and Marshmallow for marshalling/serializing
         self.ma = Marshmallow(self.app)
@@ -273,14 +273,23 @@ class ServerApp:
 
         return socketio
 
-    def configure_flask(self) -> None:
-        """Configure the Flask settings of the vantage6 server."""
+    def configure_flask(self, api_path: str) -> None:
+        """
+        Configure the Flask settings of the vantage6 server.
+
+        Parameters
+        ----------
+        api_path: str
+            The base path of the API
+        """
 
         # let us handle exceptions
         self.app.config["PROPAGATE_EXCEPTIONS"] = True
 
         # patch where to obtain token
-        self.app.config["JWT_AUTH_URL_RULE"] = "/api/token"
+        # TODO is this still used? It was set to /api/token for a long time and not
+        # noticed anything not working because it was not set properly
+        self.app.config["JWT_AUTH_URL_RULE"] = f"/{api_path}/token"
 
         # If no secret is set in the config file, one is generated. This
         # implies that all (even refresh) tokens will be invalidated on restart
