@@ -65,46 +65,46 @@ import { OrderByPipe } from '../../../../pipes/order-by.pipe';
 import { OrderByTaskStatusPipe } from '../../../../pipes/order-by-status.pipe';
 
 @Component({
-    selector: 'app-task-read',
-    templateUrl: './task-read.component.html',
-    styleUrls: ['./task-read.component.scss'],
-    imports: [
-        PageHeaderComponent,
-        NgIf,
-        MatIconButton,
-        MatMenuTrigger,
-        MatIcon,
-        MatMenu,
-        MatMenuItem,
-        AlertComponent,
-        MatCard,
-        MatExpansionPanel,
-        MatExpansionPanelHeader,
-        MatExpansionPanelTitle,
-        NgClass,
-        NgFor,
-        StatusInfoComponent,
-        MatButton,
-        MatCardActions,
-        MatCardHeader,
-        MatCardTitle,
-        MatFormField,
-        MatLabel,
-        MatSelect,
-        ReactiveFormsModule,
-        MatOption,
-        MatCardContent,
-        VisualizeResultComponent,
-        ChipComponent,
-        RouterLink,
-        MatAccordion,
-        MatExpansionPanelDescription,
-        MatProgressSpinner,
-        SlicePipe,
-        TranslateModule,
-        OrderByPipe,
-        OrderByTaskStatusPipe
-    ]
+  selector: 'app-task-read',
+  templateUrl: './task-read.component.html',
+  styleUrls: ['./task-read.component.scss'],
+  imports: [
+    PageHeaderComponent,
+    NgIf,
+    MatIconButton,
+    MatMenuTrigger,
+    MatIcon,
+    MatMenu,
+    MatMenuItem,
+    AlertComponent,
+    MatCard,
+    MatExpansionPanel,
+    MatExpansionPanelHeader,
+    MatExpansionPanelTitle,
+    NgClass,
+    NgFor,
+    StatusInfoComponent,
+    MatButton,
+    MatCardActions,
+    MatCardHeader,
+    MatCardTitle,
+    MatFormField,
+    MatLabel,
+    MatSelect,
+    ReactiveFormsModule,
+    MatOption,
+    MatCardContent,
+    VisualizeResultComponent,
+    ChipComponent,
+    RouterLink,
+    MatAccordion,
+    MatExpansionPanelDescription,
+    MatProgressSpinner,
+    SlicePipe,
+    TranslateModule,
+    OrderByPipe,
+    OrderByTaskStatusPipe
+  ]
 })
 export class TaskReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
@@ -224,10 +224,19 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   }
 
   private onLogUpdate(logMsg: AlgorithmLogMsg): void {
-    const run = this.task?.runs.find((run) => run.id === logMsg.run_id);
-    if (run) {
-      run.log += `\n${logMsg.log}`;
-    }
+    // update logs of main and child task runs
+    [this.task, ...this.childTasks].forEach((task: Task | BaseTask | null) => {
+      if (!task) return;
+      const run = task.runs.find((run) => run.id === logMsg.run_id);
+      if (run) {
+        if (!run.log) {
+          run.log = '';
+        } else if (!run.log.endsWith('\n')) {
+          run.log += '\n';
+        }
+        run.log += `${logMsg.log}`;
+      }
+    });
   }
 
   async getMainTask(): Promise<Task> {
@@ -284,7 +293,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
         log: run.log || 'No logs available'
       }
     });
-  
+
     const logSubscription = this.socketioConnectService.getAlgorithmLogUpdates().subscribe((logMsg: AlgorithmLogMsg | null) => {
       if (logMsg && logMsg.run_id === run.id) {
         if (!run.log) {
@@ -293,7 +302,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
         dialogRef.componentInstance.data.log = run.log;
       }
     });
-  
+
     dialogRef.afterClosed().subscribe(() => {
       logSubscription.unsubscribe();
     });

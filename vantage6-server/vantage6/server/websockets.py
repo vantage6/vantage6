@@ -442,7 +442,9 @@ class DefaultSocketNamespace(Namespace):
         self.log.info(f"Log from run_id={run_id}, task_id={task_id}: {log_message}")
         run = db.Run.get(run_id)
         if run.log:
-            run.log += f"\n{log_message}"
+            if not run.log.endswith("\n"):
+                run.log += "\n"
+            run.log += log_message
         else:
             run.log = log_message
         run.save()
