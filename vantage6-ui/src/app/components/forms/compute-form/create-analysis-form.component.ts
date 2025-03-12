@@ -385,16 +385,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   }
 
   async handleDatabaseStepInitialized(): Promise<void> {
-    // TODO get rid of this function
+    // TODO get rid of this function?
     if (!this.repeatedTask || !this.function) return;
     // This function is run when the database child component is initialized,
     // but it may still be null when we get here. If it is null, we wait a bit
     // and then (recursively) try again.
     // TODO setup database step for repeating extraction task
-
-    // retrieve column names as we dont go through the HTML steppers manually
-    // (where this is otherwise triggered)
-    this.retrieveColumns();
 
     // TODO repeat preprocessing and filtering when backend is ready
   }
@@ -515,58 +511,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       }
     }
     return arguments_;
-  }
-
-  async retrieveColumns(): Promise<void> {
-    // TODO(BART/RIAN) RIAN: Wanneer er een dataframe is kunnen de colums pas worden opgehaald.
-    //
-    //
-    //
-    // this.isLoadingColumns = true;
-    // if (!this.node) return;
-    // // collect data to collect columns from database
-    // const taskDatabases = getTaskDatabaseFromForm(this.function, this.databaseForm);
-    // const databases = getDatabaseTypesFromForm(this.function, this.databaseForm, this.databaseStepComponent?.availableDatabases || []);
-    // // the other and omop database types do not make use of the wrapper to load their
-    // // data, so we cannot process them in this way. This will be improved when sessions
-    // // are implemented
-    // const database = databases[0];
-    // if (database.type == 'other' || database.type == 'omop') {
-    //   this.isLoadingColumns = false;
-    //   return;
-    // }
-    // // TODO modify when choosing database for preprocessing is implemented
-    // const taskDatabase = taskDatabases[0];
-    // const input = { method: 'column_headers' };
-    // const columnRetrieveData: ColumnRetrievalInput = {
-    //   collaboration_id: this.collaboration?.id || -1,
-    //   db_label: taskDatabase.label,
-    //   organizations: [
-    //     {
-    //       id: this.node.organization.id,
-    //       input: btoa(JSON.stringify(input)) || ''
-    //     }
-    //   ]
-    // };
-    // if (taskDatabase.query) {
-    //   columnRetrieveData.query = taskDatabase.query;
-    // }
-    // if (taskDatabase.sheet_name) {
-    //   columnRetrieveData.sheet_name = taskDatabase.sheet_name;
-    // }
-    // // call /column endpoint. This returns either a list of columns or a task
-    // // that will retrieve the columns
-    // // TODO enable user to exit requesting column names if it takes too long
-    // const columnsOrTask = await this.taskService.getColumnNames(columnRetrieveData);
-    // if (columnsOrTask.columns) {
-    //   this.columns = columnsOrTask.columns;
-    // } else {
-    //   // a task has been started to retrieve the columns
-    //   const task = await this.taskService.waitForResults(columnsOrTask.id);
-    //   this.columns = task.results?.[0].decoded_result || JSON.parse('');
-    // }
-    // this.isLoadingColumns = false;
-    // this.hasLoadedColumns = true;
   }
 
   shouldShowParameterSimpleInput(argument: Argument): boolean {

@@ -69,8 +69,4 @@ export class SessionService {
   async deleteDataframe(dataframeID: number): Promise<void> {
     return await this.apiService.deleteForApi(`/session/dataframe/${dataframeID}`);
   }
-
-  async getColumnNames(columnRetrieve: ColumnRetrievalInput): Promise<ColumnRetrievalResult> {
-    return await this.apiService.postForApi<ColumnRetrievalResult>(`/column`, columnRetrieve);
-  }
 }

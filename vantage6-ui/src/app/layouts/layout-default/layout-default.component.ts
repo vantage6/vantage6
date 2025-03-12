@@ -200,7 +200,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
     if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.CREATE)) {
       submenus.push({
         route: routePaths.taskCreate,
-        label: this.translateService.instant('resources.new-analysis'),
+        label: this.translateService.instant('links.new-analysis'),
         icon: 'science',
         linkType: NavigationLinkType.Analyze
       });
@@ -208,7 +208,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
     if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.VIEW)) {
       submenus.push({
         route: routePaths.tasks,
-        label: this.translateService.instant('resources.history'),
+        label: this.translateService.instant('links.history'),
         icon: 'science',
         linkType: NavigationLinkType.Analyze
       });

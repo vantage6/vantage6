@@ -40,10 +40,8 @@
     "nodes": "Nodes",
     "sessions": "Sessions",
     "session": "Session",
-    "tasks": "Analyses",
-    "task": "Analysis",
-    "new-analysis": "New analysis",
-    "history": "History",
+    "tasks": "Tasks",
+    "task": "Task",
     "algorithms": "Algorithms",
     "algorithm": "Algorithm",
     "stores": "Algorithm stores"
@@ -52,6 +50,8 @@
     "admin": "Administration",
     "home": "Home",
     "analyze": "Analyze",
+    "new-analysis": "New analysis",
+    "history": "Analysis history",
     "stores": "Algorithm store",
     "algorithms-approved": "Approved algorithms",
     "pending-algorithms": "Pending algorithms",
@@ -123,8 +123,8 @@
     "organization": "Initiating organization",
     "name": "Name",
     "created-at": "Created",
-    "parent": "Parent analysis",
-    "children": "Child analyses",
+    "parent": "Parent task",
+    "children": "Child tasks",
     "query": "Query",
     "sheet": "Sheet name",
     "status": "Status",
@@ -146,7 +146,7 @@
     "finished-at": "Finished",
     "node": "Assigned node",
     "show-log": "Show logs",
-    "alert-node-offline": "Analysis can't start, node is offline."
+    "alert-node-offline": "Algorithm run can't start, node is offline."
   },
   "task-list": {
     "title": "History"
@@ -164,8 +164,8 @@
       "title": "Select algorithm",
       "description": {
         "algorithm": "Select which algorithm you want to run",
-        "name": "Provide a suitable name for your analysis",
-        "description": "Optionally, describe your analysis so you can find it back later"
+        "name": "Provide a suitable name for your task",
+        "description": "Optionally, describe your task so you can find it back later"
       }
     },
     "step-function": {
@@ -230,7 +230,7 @@
       "task-name": "Name:",
       "node-name": "Node:",
       "actions": {
-        "kill": "Kill analysis"
+        "kill": "Kill task"
       }
     },
     "card-results": {
@@ -250,12 +250,12 @@
       "title": "Runs"
     },
     "delete-dialog": {
-      "title": "Are you sure you want to delete the analysis '{{name}}'?",
-      "content": "Note, this will also delete all subanalyses and results.\nThis operation cannot be undone."
+      "title": "Are you sure you want to delete the task '{{name}}'?",
+      "content": "Note, this will also delete all subtasks and results.\nThis operation cannot be undone."
     },
     "kill-dialog": {
-      "title": "Are you sure you want to kill the analysis '{{name}}'?",
-      "content": "Note, this will also kill all subanalyses.\nThis operation cannot be undone."
+      "title": "Are you sure you want to kill the task '{{name}}'?",
+      "content": "Note, this will also kill all subtasks.\nThis operation cannot be undone."
     },
     "repeat": "Repeat analysis",
     "alert-algorithm-not-found": "The algorithm used in this analysis could not be retrieved from the algorithm store. This limits the displayed information. This may happen if an analysis is created in the Python client or if the algorithm is no longer approved."
@@ -326,7 +326,7 @@
   },
   "algorithm-old-list": {
     "title": "Invalidated algorithms",
-    "alert": "The following algorithms are not available for use in analyses. They have been replaced by newer versions or have been rejected by reviewers.",
+    "alert": "The following algorithms are not available for use in analyses any more. They have been replaced by newer versions or have been rejected by reviewers.",
     "no-algorithms": "No old algorithms are available for your collaboration!"
   },
   "algorithm-read": {
@@ -520,7 +520,7 @@
     },
     "delete-dialog": {
       "title": "Are you sure you want to delete the organization '{{name}}'?",
-      "content": "Note, this will also delete all users, nodes, analyses, algorithm runs and nodes related to this organization.\nThis operation cannot be undone."
+      "content": "Note, this will also delete all users, nodes, tasks, algorithm runs and nodes related to this organization.\nThis operation cannot be undone."
     },
     "no-collaborations": "No collaborations are available for this organization yet.",
     "no-nodes": "No nodes are available for this organization yet."
@@ -581,7 +581,7 @@
     },
     "delete-dialog": {
       "title": "Are you sure you want to delete the collaboration '{{name}}'?",
-      "content": "Note, this will also delete all nodes and analyses related to this collaboration.\nThis operation cannot be undone."
+      "content": "Note, this will also delete all nodes and tasks related to this collaboration.\nThis operation cannot be undone."
     },
     "alert-missing-nodes": "Not all organizations have registered nodes for this collaboration. Please ensure that they are registered and active before sending analyses."
   },
@@ -694,7 +694,7 @@
       "collaboration": "Collaboration",
       "role": "Role",
       "node": "Node",
-      "task": "Analysis",
+      "task": "Task",
       "user": "User",
       "run": "Run",
       "event": "Event",
