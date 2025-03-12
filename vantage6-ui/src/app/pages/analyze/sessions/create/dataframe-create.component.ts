@@ -12,12 +12,12 @@ import { Collaboration } from 'src/app/models/api/collaboration.model';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { AvailableSteps, FormCreateOutput } from 'src/app/models/forms/create-form.model';
 import { TranslateService } from '@ngx-translate/core';
-import { FormCreateComponent } from 'src/app/components/forms/compute-form/create-form.component';
+import { CreateAnalysisFormComponent } from 'src/app/components/forms/compute-form/create-analysis-form.component';
 
 @Component({
   selector: 'app-dataframe-create',
   templateUrl: './dataframe-create.component.html',
-  imports: [FormCreateComponent]
+  imports: [CreateAnalysisFormComponent]
 })
 export class DataframeCreateComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

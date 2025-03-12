@@ -68,8 +68,8 @@ import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
 
 @Component({
   selector: 'app-create-form',
-  templateUrl: './create-form.component.html',
-  styleUrls: ['./create-form.component.scss'],
+  templateUrl: './create-analysis-form.component.html',
+  styleUrls: ['./create-analysis-form.component.scss'],
   encapsulation: ViewEncapsulation.None,
   imports: [
     PageHeaderComponent,
@@ -106,7 +106,7 @@ import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
     HighlightedTextPipe
   ]
 })
-export class FormCreateComponent implements OnInit, OnDestroy, AfterViewInit {
+export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterViewInit {
   @HostBinding('class') class = 'card-container';
 
   @Input() formTitle: string = '';

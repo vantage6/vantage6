@@ -8,14 +8,14 @@ import { Subject, takeUntil } from 'rxjs';
 import { AvailableSteps, FormCreateOutput } from 'src/app/models/forms/create-form.model';
 import { TaskService } from 'src/app/services/task.service';
 import { CreateTask } from 'src/app/models/api/task.models';
-import { FormCreateComponent } from 'src/app/components/forms/compute-form/create-form.component';
+import { CreateAnalysisFormComponent } from 'src/app/components/forms/compute-form/create-analysis-form.component';
 
 @Component({
   selector: 'app-task-create',
   templateUrl: './task-create.component.html',
-  styleUrls: ['../../../../components/forms/compute-form/create-form.component.scss'],
+  styleUrls: ['../../../../components/forms/compute-form/create-analysis-form.component.scss'],
   encapsulation: ViewEncapsulation.None,
-  imports: [ReactiveFormsModule, TranslateModule, FormCreateComponent]
+  imports: [ReactiveFormsModule, TranslateModule, CreateAnalysisFormComponent]
 })
 export class TaskCreateComponent implements OnInit, OnDestroy {
   title: string = '';
