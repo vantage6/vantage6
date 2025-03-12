@@ -23,7 +23,7 @@ client.authenticate("root", "root")
 parser = argparse.ArgumentParser(
     description="Load basic fixtures for a given number of nodes"
 )
-parser.add_argument("--task-directory", type=str, help="Directory to store tasks")
+parser.add_argument("--task-directory", type=str, help="Directory to store tasks on the host")
 parser.add_argument(
     "--node-test-database-file", type=str, help="Path to the test database file"
 )
