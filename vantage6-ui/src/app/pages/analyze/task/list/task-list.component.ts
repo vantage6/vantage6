@@ -151,7 +151,11 @@ export class TaskListComponent implements OnInit, OnDestroy {
       tasks.filter(({ session }) => (!session || track.has(session) ? false : track.add(session)));
     for (const task of uniqSessionIDs(taskData.data)) {
       const session = await this.sessionService.getSession(task.session.id);
-      this.sessionIDNameMap.set(task.session.id, session.name);
+      this.tasks.map((t) => {
+        if (t.id === task.id) {
+          this.sessionIDNameMap.set(t.id, session.name);
+        }
+      });
     }
 
     this.table = {
