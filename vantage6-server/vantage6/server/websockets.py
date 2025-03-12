@@ -439,7 +439,6 @@ class DefaultSocketNamespace(Namespace):
         task_id = data.get("task_id")
         log_message = data.get("log")
 
-        self.log.info(f"Log from run_id={run_id}, task_id={task_id}: {log_message}")
         run = db.Run.get(run_id)
         self._append_log(log_message, run)
         run.save()
