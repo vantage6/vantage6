@@ -105,6 +105,7 @@ Index
    self
    introduction/introduction
    introduction/architecture
+   introduction/quickstart
 
 .. toctree::
    :numbered: 3
