@@ -22,6 +22,8 @@ DEFAULT_UI_IMAGE = f"infrastructure/ui:{MAIN_VERSION_NAME}"
 
 DEFAULT_ALGO_STORE_IMAGE = f"infrastructure/algorithm-store:{MAIN_VERSION_NAME}"
 
+DEFAULT_ALPINE_IMAGE = f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/alpine:latest"
+
 #
 #   COMMON GLOBALS
 #
