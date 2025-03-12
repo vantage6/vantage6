@@ -228,8 +228,19 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     [this.task, ...this.childTasks].forEach((task: Task | BaseTask | null) => {
       if (!task) return;
       const run = task.runs.find((run) => run.id === logMsg.run_id);
-      appendLog(run, logMsg);
+      this.appendLog(run, logMsg);
     });
+  }
+
+  private appendLog(run: TaskRun | undefined, logMsg: AlgorithmLogMsg) {
+    if (run) {
+      if (!run.log) {
+        run.log = '';
+      } else if (!run.log.endsWith('\n')) {
+        run.log += '\n';
+      }
+      run.log += `${logMsg.log}`;
+    }
   }
 
   async getMainTask(): Promise<Task> {
@@ -547,16 +558,5 @@ export class TaskReadComponent implements OnInit, OnDestroy {
           );
         }
       });
-  }
-}
-
-function appendLog(run: TaskRun | undefined, logMsg: AlgorithmLogMsg) {
-  if (run) {
-    if (!run.log) {
-      run.log = '';
-    } else if (!run.log.endsWith('\n')) {
-      run.log += '\n';
-    }
-    run.log += `${logMsg.log}`;
   }
 }
