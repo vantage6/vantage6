@@ -14,8 +14,7 @@ node:
     level: INFO
 
   # Task directory on the host machine
-  # taskDirHost: /home/bart/test
-  taskDirHost: /run/desktop/mnt/host/wsl/v6data/task_data
+  taskDirHost: /tmp/vantage6/tasks
 
   proxyPort: 7654
 
