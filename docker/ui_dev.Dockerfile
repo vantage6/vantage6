@@ -4,7 +4,6 @@
 # reloading of the UI code when developing, which is not possible after the compilation
 # that is done for production.
 ARG TAG=latest
-ARG BASE=4.3
 FROM node:alpine
 
 LABEL version=${TAG}

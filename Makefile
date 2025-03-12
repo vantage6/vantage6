@@ -212,7 +212,6 @@ ui-image:
 		--tag ${REGISTRY}/infrastructure/ui:${TAG} \
 		--tag ${REGISTRY}/infrastructure/ui:latest \
 		--build-arg TAG=${TAG} \
-		--build-arg BASE=${BASE} \
 		--platform ${PLATFORMS} \
 		-f ./docker/ui.Dockerfile \
 		$(if ${_condition_push},--push .,.)
