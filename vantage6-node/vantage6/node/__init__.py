@@ -32,6 +32,8 @@ import queue
 import json
 import shutil
 import requests.exceptions
+import psutil
+import pynvml
 
 from pathlib import Path
 from threading import Thread
@@ -197,7 +199,80 @@ class Node:
         t = Thread(target=self.__listening_worker, daemon=True)
         t.start()
 
+        self.log.debug("Start thread for sending system metadata")
+        t = Thread(target=self.__metadata_worker, daemon=True)
+        t.start()
+
         self.log.info("Init complete")
+
+    def __metadata_worker(self) -> None:
+        """
+        Periodically send system metadata to the server.
+        """
+        while True:
+            try:
+                metadata = self.__gather_system_metadata()
+                self.socketIO.emit("node_metadata_update", metadata, namespace="/tasks")
+            except Exception:
+                self.log.exception("Metadata thread had an exception")
+            time.sleep(PING_INTERVAL_SECONDS)
+
+    def __gather_system_metadata(self) -> dict:
+        """
+        Gather system metadata such as CPU, memory, OS, and GPU information.
+
+        Returns
+        -------
+        dict
+            Dictionary containing system metadata.
+        """
+        metadata = {
+            "cpu_percent": psutil.cpu_percent(interval=1),
+            "memory_percent": psutil.virtual_memory().percent,
+            "num_algorithm_containers": len(self.__docker.active_tasks),
+            "os": os.name,
+            "platform": sys.platform,
+            "cpu_count": psutil.cpu_count(),
+            "memory_total": psutil.virtual_memory().total,
+            "memory_available": psutil.virtual_memory().available,
+        }
+
+        metadata["gpu"] = self.__gather_gpu_metadata()
+
+        return metadata
+
+    def __gather_gpu_metadata(self) -> list:
+        """
+        Gather GPU metadata such as GPU name, load, memory usage, and temperature.
+
+        Returns
+        -------
+        list
+            List of dictionaries containing GPU metadata for each available GPU.
+        """
+        gpu_metadata = []
+        try:
+            pynvml.nvmlInit()
+            gpu_count = pynvml.nvmlDeviceGetCount()
+            for i in range(gpu_count):
+                handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+                gpu_info = {
+                    "id": i,
+                    "name": pynvml.nvmlDeviceGetName(handle).decode("utf-8"),
+                    "load": pynvml.nvmlDeviceGetUtilizationRates(handle).gpu,
+                    "memory_total": pynvml.nvmlDeviceGetMemoryInfo(handle).total,
+                    "memory_used": pynvml.nvmlDeviceGetMemoryInfo(handle).used,
+                    "memory_free": pynvml.nvmlDeviceGetMemoryInfo(handle).free,
+                    "temperature": pynvml.nvmlDeviceGetTemperature(
+                        handle, pynvml.NVML_TEMPERATURE_GPU
+                    ),
+                }
+                gpu_metadata.append(gpu_info)
+            pynvml.nvmlShutdown()
+        except pynvml.NVMLError as e:
+            gpu_metadata = [f"NVML Error: {str(e)}"]
+
+        return gpu_metadata
 
     def __proxy_server_worker(self) -> None:
         """
