@@ -1,6 +1,31 @@
 Release notes
 =============
 
+4.10.1
+-----
+
+*12 March 2025*
+
+- **Security**
+
+  - Updates of cryptography and prismjs
+    (`PR#1803 <https://github.com/vantage6/vantage6/pull/1803>`_,
+    `PR#1800 <https://github.com/vantage6/vantage6/pull/1800>`_).
+
+- **Feature**
+
+  - Algorithms now have live updates of the logging
+    (`Issue#1090 <https://github.com/vantage6/vantage6/issues/1090>`_).
+
+- **Bugfix**
+
+  - Fix bug in comparing UTC time with non-UTC time
+    (`PR#1807 <https://github.com/vantage6/vantage6/pull/1807>`_).
+  - Show functions with standalone field set to ``null`` in the UI
+    (`PR#1810 <https://github.com/vantage6/vantage6/pull/1810>`_).
+  - Fix pipeline to ensure RC support images are always built
+    (`PR#1810 <https://github.com/vantage6/vantage6/pull/1811>`_).
+
 4.10.0
 -----
 

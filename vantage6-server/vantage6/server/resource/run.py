@@ -18,10 +18,10 @@ from vantage6.server.permission import (
 from vantage6.server.resource import (
     with_node,
     only_for,
-    parse_datetime,
     ServicesResources,
 )
 from vantage6.server.resource.common.input_schema import RunInputSchema
+from vantage6.server.utils import parse_datetime
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource.common.output_schema import (
     RunSchema,
