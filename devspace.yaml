@@ -285,6 +285,8 @@ dev:
       startContainer: true
       onUpload:
         restartContainer: true
+    logs:
+      enabled: true
 
     restartHelper:
       inject: true
