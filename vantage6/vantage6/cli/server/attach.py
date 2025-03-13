@@ -12,8 +12,13 @@ def cli_server_attach() -> None:
     info("Attaching to server logs...")
 
     command = [
-        "devspace", "logs", "--follow", "--label-selector", "app=vantage6-server",
-        "--label-selector", "component=vantage6-server"
+        "devspace",
+        "logs",
+        "--follow",
+        "--label-selector",
+        "app=vantage6-server",
+        "--label-selector",
+        "component=vantage6-server",
     ]
     process = Popen(command, stdout=None, stderr=None)
     process.wait()
