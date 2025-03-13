@@ -1057,7 +1057,7 @@ class ContainerManager:
         """
         pods = self.core_api.list_namespaced_pod(
             namespace=self.task_namespace,
-            label_selector=label,
+            label_selector=f"app={label}",
         )
         return True if pods.items else False
 
