@@ -11,6 +11,8 @@ def cli_node_attach() -> None:
     """
     info("Attaching to node logs...")
 
-    command = ["devspace", "logs", "--follow", "--label-selector", "app=node"]
-    process = Popen(command, stdout=None, stderr=None)  # Redirecting output to the terminal
-    process.wait()  # Wait for the process to complete
+    command = [
+        "devspace", "logs", "--follow", "--label-selector", "app=node"
+    ]
+    process = Popen(command, stdout=None, stderr=None)
+    process.wait()
