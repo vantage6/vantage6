@@ -10,7 +10,7 @@ from colorama import Fore, Style
 from vantage6.common.globals import APPNAME, InstanceType, Ports
 from vantage6.common import info, error, generate_apikey
 
-import vantage6.cli.dev.data as data_dir
+# import vantage6.cli.dev.data as data_dir
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.globals import PACKAGE_FOLDER
 from vantage6.cli.context.server import ServerContext
