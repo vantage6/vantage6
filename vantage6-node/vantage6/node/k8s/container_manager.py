@@ -16,6 +16,7 @@ from vantage6.cli.context.node import NodeContext
 from vantage6.common import logger_name, get_database_config
 from vantage6.common.globals import (
     DEFAULT_ALPINE_IMAGE,
+    DEFAULT_DOCKER_REGISTRY,
     NodePolicy,
     ContainerEnvNames,
     STRING_ENCODING,
@@ -149,7 +150,9 @@ class ContainerManager:
                                 # TODO ensure image is an image that can always be
                                 # pulled by the node
                                 name="test-container",
-                                image=DEFAULT_ALPINE_IMAGE,
+                                image=(
+                                    f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_ALPINE_IMAGE}"
+                                ),
                             )
                         ]
                     ),
@@ -1078,7 +1081,7 @@ class ContainerManager:
             # Get all jobs from the task namespace for this node
             jobs = self.batch_api.list_namespaced_job(self.task_namespace)
             if not jobs.items:
-                time.sleep(10)
+                time.sleep(1)
                 continue
 
             # Create a list of failed or succeeded jobs
