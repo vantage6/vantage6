@@ -43,3 +43,4 @@ data:
       - level: warning
         name: docker.auth
     task_dir: {{ .Values.node.taskDirHost }}
+    task_namespace: {{ .Values.node.taskNamespace }}

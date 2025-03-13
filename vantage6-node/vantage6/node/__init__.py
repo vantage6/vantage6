@@ -105,6 +105,14 @@ class Node:
 
         self.k8s_container_manager = ContainerManager(self.ctx, self.client)
 
+        # ensure that the namespace to create tasks in is set up correctly or try to
+        # create it
+        self.log.debug("Ensuring that the task namespace is properly configured")
+        namespace_created = self.k8s_container_manager.ensure_task_namespace()
+        if not namespace_created:
+            self.log.error("Could not create the task namespace. Exiting.")
+            exit(1)
+
         self.log.info(f"Connecting server: {self.client.base_path}")
 
         # Authenticate with the server, obtaining a JSON Web Token.
@@ -214,7 +222,6 @@ class Node:
         task_results = self.client.run.list(
             state=TaskStatusQueryOptions.OPEN.value, include_task=True
         )
-        self.log.debug("task_results: %s", task_results)
 
         # add the tasks to the queue
         self.__add_tasks_to_queue(task_results)
@@ -433,8 +440,7 @@ class Node:
                     id_=results.run_id,
                     data={
                         "result": results.data,
-                        # TODO (HC) check if only logs[0] are enough
-                        "log": results.logs[0],
+                        "log": results.logs,
                         "status": results.status,
                         "finished_at": datetime.datetime.now().isoformat(),
                     },

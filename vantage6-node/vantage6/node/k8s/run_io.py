@@ -49,9 +49,9 @@ class RunIO:
         self.run_id = run_id
         self.session_id = session_id
         self.action = action
-        self.df_name = dataframe_details["name"] if dataframe_details else None
-        self.df_id = dataframe_details["id"] if dataframe_details else None
-        self.db_label = dataframe_details["db_label"] if dataframe_details else None
+        self.df_name = dataframe_details.get("name") if dataframe_details else None
+        self.df_id = dataframe_details.get("id") if dataframe_details else None
+        self.db_label = dataframe_details.get("db_label") if dataframe_details else None
         self.client = client
 
         # The directory where the data is stored
@@ -85,9 +85,11 @@ class RunIO:
             run_id=int(data["run_id"]),
             session_id=int(data["session_id"]),
             action=AlgorithmStepType(data["action"]),
-            dataframe_details=(
-                data["dataframe_details"] if "dataframe_details" in data else None
-            ),
+            dataframe_details={
+                "name": data.get("df_name"),
+                "id": data.get("df_id"),
+                "db_label": data.get("df_label"),
+            },
             host_data_dir=host_data_dir,
             client=client,
         )
@@ -250,7 +252,9 @@ class RunIO:
         if not self.df_name:
             self.log.error(
                 "A session task was started without a dataframe. The session ID "
-                f"is {self.session_id} and the run ID is {self.run_id}.",
+                "is %s and the run ID is %s.",
+                self.session_id,
+                self.run_id,
             )
             return RunStatus.FAILED
 
@@ -279,7 +283,7 @@ class RunIO:
             {"name": field.name, "dtype": str(field.type)} for field in table.schema
         ]
         self.client.request(
-            f"/session/{self.session_id}/dataframe/{self.df_id}",
+            f"/session/dataframe/{self.df_id}",
             method="post",
             json=columns_info,
         )
