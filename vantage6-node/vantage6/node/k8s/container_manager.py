@@ -97,6 +97,12 @@ class ContainerManager:
         # namespace to run the tasks in
         self.task_namespace = self.ctx.config["task_namespace"]
 
+        # labels to identify the task jobs of this node
+        self.task_job_labels = {"node_id": self.ctx.identifier}
+        self.task_job_label_selector = ",".join(
+            [f"{k}={v}" for k, v in self.task_job_labels.items()]
+        )
+
     def ensure_task_namespace(self) -> bool:
         """
         Ensure that the namespace for the task exists and jobs can be created in it.
@@ -383,6 +389,7 @@ class ContainerManager:
                 "df_id": str(df_details.get("id")) if df_details else "",
                 "df_label": df_details.get("label") if df_details else "",
             },
+            labels=self.task_job_labels,
         )
 
         # Define the job
@@ -393,10 +400,7 @@ class ContainerManager:
             spec=k8s_client.V1JobSpec(
                 template=k8s_client.V1PodTemplateSpec(
                     metadata=k8s_client.V1ObjectMeta(
-                        labels={
-                            "app": run_io.container_name,
-                            "node_name": self.ctx.name,
-                        }
+                        labels={"app": run_io.container_name}
                     ),
                     spec=k8s_client.V1PodSpec(
                         containers=[container],
@@ -409,7 +413,7 @@ class ContainerManager:
         )
 
         self.log.info(
-            f"Creating namespaced K8S job for task_id={task_id} and run_id={run_id}."
+            "Creating namespaced K8S job for task_id=%s and run_id=%s.", task_id, run_id
         )
         self.batch_api.create_namespaced_job(namespace=self.task_namespace, body=job)
 
@@ -445,7 +449,7 @@ class ContainerManager:
 
             pods = self.core_api.list_namespaced_pod(
                 namespace=self.task_namespace,
-                label_selector=f"app={run_io.container_name},node_name={self.ctx.name}",
+                label_selector=f"app={run_io.container_name}",
             )
 
             if pods.items:
@@ -453,26 +457,24 @@ class ContainerManager:
                 # The container was created and has at least the `pending` state. Wait
                 # until it reports either an `active` or `failed` state.
                 self.log.info(
-                    "Job POD with %s items and label app=%s created successfully in %s "
+                    "Job POD (label %s) with %s items created successfully in %s "
                     "namespace. Waiting until it is running...",
-                    len(pods.items),
                     run_io.container_name,
+                    len(pods.items),
                     self.task_namespace,
                 )
                 status = self.__wait_until_pod_running(
-                    f"app={run_io.container_name},node_name={self.ctx.name}"
+                    label=f"app={run_io.container_name}"
                 )
                 self.log.info(
-                    "Job POD with label app=%s is now running!",
-                    run_io.container_name,
+                    "Job POD (label %s) is now running!", run_io.container_name
                 )
 
                 return status
 
             elif time.time() - start_time > TASK_START_TIMEOUT_SECONDS:
                 self.log.error(
-                    "Time out while waiting Job POD with label app=%s to report any "
-                    "state.",
+                    "Time out waiting for Job POD (label %s) to start.",
                     run_io.container_name,
                 )
                 return RunStatus.UNKNOWN_ERROR
@@ -1055,7 +1057,7 @@ class ContainerManager:
         """
         pods = self.core_api.list_namespaced_pod(
             namespace=self.task_namespace,
-            label_selector=f"app={label},node_name={self.ctx.name}",
+            label_selector=label,
         )
         return True if pods.items else False
 
@@ -1079,7 +1081,9 @@ class ContainerManager:
         while not completed_job:
 
             # Get all jobs from the task namespace for this node
-            jobs = self.batch_api.list_namespaced_job(self.task_namespace)
+            jobs = self.batch_api.list_namespaced_job(
+                self.task_namespace, label_selector=self.task_job_label_selector
+            )
             if not jobs.items:
                 time.sleep(1)
                 continue
