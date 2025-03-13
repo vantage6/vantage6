@@ -57,43 +57,43 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { HighlightedTextPipe } from '../../../../pipes/highlighted-text.pipe';
 
 @Component({
-    selector: 'app-task-create',
-    templateUrl: './task-create.component.html',
-    styleUrls: ['./task-create.component.scss'],
-    encapsulation: ViewEncapsulation.None,
-    imports: [
-        PageHeaderComponent,
-        NgIf,
-        MatCard,
-        MatCardContent,
-        MatStepper,
-        MatStepperIcon,
-        MatIcon,
-        MatStep,
-        ReactiveFormsModule,
-        MatStepLabel,
-        MatFormField,
-        MatLabel,
-        MatSelect,
-        MatOption,
-        NgFor,
-        MatButton,
-        MatStepperNext,
-        MatInput,
-        MatIconButton,
-        MatSuffix,
-        AlertComponent,
-        MatStepperPrevious,
-        DatabaseStepComponent,
-        PreprocessingStepComponent,
-        FilterStepComponent,
-        NumberOnlyDirective,
-        MatCheckbox,
-        MatProgressSpinner,
-        NgTemplateOutlet,
-        TranslateModule,
-        HighlightedTextPipe
-    ]
+  selector: 'app-task-create',
+  templateUrl: './task-create.component.html',
+  styleUrls: ['./task-create.component.scss'],
+  encapsulation: ViewEncapsulation.None,
+  imports: [
+    PageHeaderComponent,
+    NgIf,
+    MatCard,
+    MatCardContent,
+    MatStepper,
+    MatStepperIcon,
+    MatIcon,
+    MatStep,
+    ReactiveFormsModule,
+    MatStepLabel,
+    MatFormField,
+    MatLabel,
+    MatSelect,
+    MatOption,
+    NgFor,
+    MatButton,
+    MatStepperNext,
+    MatInput,
+    MatIconButton,
+    MatSuffix,
+    AlertComponent,
+    MatStepperPrevious,
+    DatabaseStepComponent,
+    PreprocessingStepComponent,
+    FilterStepComponent,
+    NumberOnlyDirective,
+    MatCheckbox,
+    MatProgressSpinner,
+    NgTemplateOutlet,
+    TranslateModule,
+    HighlightedTextPipe
+  ]
 })
 export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   @HostBinding('class') class = 'card-container';
@@ -724,8 +724,8 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     this.functions = algorithmsObj.flatMap((curAlgorithm) => {
       return (
         curAlgorithm.functions
-          // TODO v5+ remove the func.standalone === undefined check. After v5+ the standalone property should be set for all functions
-          .filter((func) => func.standalone || func.standalone === undefined)
+          // TODO v5+ remove the func.standalone === undefined | null check. After v5+ the standalone property should be set for all functions
+          .filter((func) => func.standalone || func.standalone === undefined || func.standalone === null)
           .map((func) => {
             return {
               ...func,
