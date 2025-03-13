@@ -440,9 +440,7 @@ class Node:
                     id_=results.run_id,
                     data={
                         "result": results.data,
-                        # TODO (HC) check if only logs[0] are enough
-                        # TODO include logs
-                        # "log": results.logs[0],
+                        "log": results.logs,
                         "status": results.status,
                         "finished_at": datetime.datetime.now().isoformat(),
                     },

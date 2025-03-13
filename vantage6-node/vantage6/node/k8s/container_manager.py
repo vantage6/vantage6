@@ -1113,10 +1113,13 @@ class ContainerManager:
                     )
                     logs = ["error while getting logs"]
 
+                # logs are saved as string instead of list[str]
+                logs = "\n".join(logs)
+
                 self.log.info(
-                    f"Sending results of run_id={run_io.run_id} "
-                    f"and task_id={job.metadata.annotations['task_id']} back to the "
-                    "server"
+                    "Sending results of run_id=%s and task_id=%s back to the server",
+                    run_io.run_id,
+                    job.metadata.annotations["task_id"],
                 )
 
                 result = Result(
