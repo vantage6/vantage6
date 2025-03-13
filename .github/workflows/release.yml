@@ -169,7 +169,6 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build and push support images
-        if: ${{ env.stage == '' || env.patch == 0 }}
         run: make support-image TAG=$version PUSH_REG=true TAG_LATEST=$tag_latest
 
   infrastructure-images:
