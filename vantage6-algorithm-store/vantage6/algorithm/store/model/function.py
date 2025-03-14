@@ -19,8 +19,8 @@ class Function(Base):
         Display name of the function
     description : str
         Description of the function
-    type_ : str
-        Type of function
+    execution_type : str
+        Type of function (central, federated)
     standalone : bool
         Whether this function produces useful results when running it by itself
     algorithm_id : int
@@ -39,7 +39,7 @@ class Function(Base):
     name = Column(String)
     display_name = Column(String)
     description = Column(String)
-    type_ = Column("type", String)
+    execution_type = Column("type", String)
     algorithm_id = Column(Integer, ForeignKey("algorithm.id"))
     standalone = Column(Boolean, default=True)
 

@@ -555,7 +555,7 @@ class Algorithms(AlgorithmBaseResource):
                 name=function["name"],
                 display_name=function.get("display_name", ""),
                 description=function.get("description", ""),
-                type_=function["type_"],
+                execution_type=function["execution_type"],
                 standalone=function.get("standalone", True),
                 algorithm_id=algorithm.id,
             )
@@ -567,7 +567,7 @@ class Algorithms(AlgorithmBaseResource):
                     name=argument["name"],
                     display_name=argument.get("display_name", ""),
                     description=argument.get("description", ""),
-                    type_=argument["type_"],
+                    execution_type=argument["execution_type"],
                     has_default_value=argument.get("has_default_value", False),
                     default_value=argument.get("default_value", None),
                     conditional_operator=argument.get("conditional_operator", None),
@@ -1029,7 +1029,7 @@ class Algorithm(AlgorithmBaseResource):
                 func = Function(
                     name=new_function["name"],
                     description=new_function.get("description", ""),
-                    type_=new_function["type"],
+                    execution_type=new_function["execution_type"],
                     standalone=new_function.get("standalone", True),
                     algorithm_id=id,
                 )

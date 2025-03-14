@@ -10,7 +10,7 @@ from jsonschema import validate as json_validate
 from vantage6.common.enum import AlgorithmViewPolicies
 from vantage6.algorithm.store.model.common.enums import (
     Partitioning,
-    FunctionType,
+    FunctionExecutionType,
     ArgumentType,
     VisualizationType,
 )
@@ -67,19 +67,19 @@ class FunctionInputSchema(_NameDescriptionSchema):
     Schema for the input of a function.
     """
 
-    type_ = fields.String(required=True, data_key="type")
+    execution_type = fields.String(required=True)
     display_name = fields.String(required=False)
     standalone = fields.Boolean(required=False)
     databases = fields.Nested("DatabaseInputSchema", many=True)
     arguments = fields.Nested("ArgumentInputSchema", many=True)
     ui_visualizations = fields.Nested("UIVisualizationInputSchema", many=True)
 
-    @validates("type_")
+    @validates("execution_type")
     def validate_type(self, value):
         """
         Validate that the type is one of the allowed values.
         """
-        types = [f.value for f in FunctionType]
+        types = [f.value for f in FunctionExecutionType]
         if value not in types:
             raise ValidationError(
                 f"Function type '{value}' is not one of the allowed values {types}"
