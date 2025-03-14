@@ -30,5 +30,7 @@ node:
       uri: postgres://vantage6:vantage6@vantage6-vantage6-postgres:5432/vantage6
       type: other
 
+  # Kubernetes configuration
   kubeConfig: /root/.kube/config
+  taskNamespace: vantage6-tasks
 
