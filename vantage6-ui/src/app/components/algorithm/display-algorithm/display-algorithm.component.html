@@ -92,8 +92,12 @@
                 <span>{{ selectedFunction.display_name || "-" }}</span>
               </div>
               <div class="data-list__item">
-                <b>{{ "algorithm.function.type" | translate }}</b>
-                <span>{{ selectedFunction.type || "-" }}</span>
+                <b>{{ "algorithm.function.execution-type" | translate }}</b>
+                <span>{{ selectedFunction.execution_type || "-" }}</span>
+              </div>
+              <div class="data-list__item">
+                <b>{{ "algorithm.function.step-type" | translate }}</b>
+                <span>{{ selectedFunction.step_type || "-" }}</span>
               </div>
               <div class="data-list__item data-list__item--big">
                 <b>{{ "general.description" | translate }}</b>

@@ -96,10 +96,10 @@
               </mat-select>
             </mat-form-field>
             <div *ngIf="function">
-              <div class="field-description" *ngIf="function.type === functionType.Central">
+              <div class="field-description" *ngIf="function.execution_type === functionType.Central">
                 {{ "task-create.step-function.description.organization-central" | translate }}
               </div>
-              <div class="field-description" *ngIf="function.type === functionType.Federated">
+              <div class="field-description" *ngIf="function.execution_type === functionType.Federated">
                 {{ "task-create.step-function.description.organization-partial" | translate }}
               </div>
               <mat-form-field subscriptSizing="dynamic">
@@ -109,7 +109,7 @@
                 cannot be changed after initialization (see e.g.
                 https://stackoverflow.com/questions/51204450/error-cannot-change-multiple-mode-of-select-after-initialization)
                 -->
-                <div *ngIf="function.type === functionType.Central; else partialOrgDropdown">
+                <div *ngIf="function.execution_type === functionType.Central; else partialOrgDropdown">
                   <mat-select formControlName="organizationIDs" [compareWith]="compareIDsForSelection" [multiple]="false">
                     <mat-option *ngFor="let organization of organizations" [value]="organization.id.toString()">
                       {{ organization.name }}

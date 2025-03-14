@@ -18,6 +18,13 @@ export enum SessionScope {
   Own = 'own'
 }
 
+export enum AlgorithmStepType {
+  Preprocessing = 'preprocessing',
+  DataExtraction = 'data extraction',
+  Compute = 'compute',
+  Postprocessing = 'postprocessing'
+}
+
 export interface GetSessionParameters {
   collaboration_id?: string;
   name?: string;

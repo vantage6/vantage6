@@ -86,10 +86,18 @@
                   <input matInput type="text" formControlName="description" />
                 </mat-form-field>
                 <mat-form-field subscriptSizing="dynamic">
-                  <mat-label>{{ "algorithm.function.type" | translate }}</mat-label>
-                  <mat-select formControlName="type">
-                    <mat-option *ngFor="let functionType of functionTypes" [value]="functionType">
+                  <mat-label>{{ "algorithm.function.execution-type" | translate }}</mat-label>
+                  <mat-select formControlName="execution_type">
+                    <mat-option *ngFor="let functionType of functionExecutionTypes" [value]="functionType">
                       {{ functionType | titlecase }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field subscriptSizing="dynamic">
+                  <mat-label>{{ "algorithm.function.step-type" | translate }}</mat-label>
+                  <mat-select formControlName="step_type">
+                    <mat-option *ngFor="let functionStepType of functionStepTypes" [value]="functionStepType">
+                      {{ functionStepType | titlecase }}
                     </mat-option>
                   </mat-select>
                 </mat-form-field>

@@ -44,7 +44,7 @@ class AlgorithmStepType(EnumBase):
     DATA_EXTRACTION = "data extraction"
     PREPROCESSING = "preprocessing"
     COMPUTE = "compute"
-    POST_PROCESSING = "post processing"
+    POST_PROCESSING = "postprocessing"
 
 
 class TaskDatabaseType(EnumBase):

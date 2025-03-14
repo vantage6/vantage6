@@ -1,5 +1,6 @@
 import { NameDescription } from './base.model';
 import { StoreReview } from './review.model';
+import { AlgorithmStepType } from './session.models';
 import { StoreUser } from './store-user.model';
 import { Visualization, VisualizationForm } from './visualization.model';
 
@@ -46,7 +47,7 @@ export enum PartitioningType {
   Vertical = 'vertical'
 }
 
-export enum FunctionType {
+export enum FunctionExecutionType {
   Central = 'central',
   Federated = 'federated'
 }
@@ -102,7 +103,8 @@ export interface AlgorithmFunction {
   name: string;
   display_name?: string;
   description: string;
-  type: FunctionType;
+  execution_type: FunctionExecutionType;
+  step_type: AlgorithmStepType;
   standalone?: boolean;
   arguments: Argument[];
   databases: FunctionDatabase[];
@@ -181,7 +183,8 @@ export interface FunctionForm extends NameDescription {
   arguments: ArgumentForm[];
   databases: NameDescription[];
   ui_visualizations: VisualizationForm[];
-  type: string;
+  execution_type: string;
+  step_type: string;
   standalone?: boolean;
 }
 

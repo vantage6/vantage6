@@ -279,7 +279,8 @@
     "invalidated-at": "Invalidated at",
     "submission-comments": "Submission comments",
     "function": {
-      "type": "Type of function",
+      "execution-type": "Type of function",
+      "step-type": "Type of session step",
       "standalone": "Standalone function",
       "standalone_tooltip": "Whether this function produces useful results when running it by itself. Disabling this option will hide the function when creating tasks in this UI.",
       "argument": {
