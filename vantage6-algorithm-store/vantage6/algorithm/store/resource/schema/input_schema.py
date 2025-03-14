@@ -78,7 +78,7 @@ class FunctionInputSchema(_NameDescriptionSchema):
     @validates("execution_type")
     def validate_execution_type(self, value: str) -> None:
         """
-        Validate that the type is one of the allowed values.
+        Validate that the type is one of the allowed values (e.g. federated).
         """
         types = [f.value for f in FunctionExecutionType]
         if value not in types:

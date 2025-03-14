@@ -567,13 +567,13 @@ class Algorithms(AlgorithmBaseResource):
             )
             func.save()
             # create the arguments. Note that the field `conditional_on_id` is skipped
-            # because it might not exist yet (depending on the order of the arguments)
+            # because it might not exist yet (dependings on the order of the arguments)
             for argument in function.get("arguments", []):
                 arg = Argument(
                     name=argument["name"],
                     display_name=argument.get("display_name", ""),
                     description=argument.get("description", ""),
-                    execution_type=argument["execution_type"],
+                    type_=argument["type_"],
                     has_default_value=argument.get("has_default_value", False),
                     default_value=argument.get("default_value", None),
                     conditional_operator=argument.get("conditional_operator", None),
@@ -1055,7 +1055,7 @@ class Algorithm(AlgorithmBaseResource):
                         name=argument["name"],
                         display_name=argument.get("display_name", ""),
                         description=argument.get("description", ""),
-                        type_=argument["type"],
+                        type_=argument["type_"],
                         has_default_value=argument.get("has_default_value", False),
                         default_value=argument.get("default_value", None),
                         conditional_operator=argument.get("conditional_operator", None),
