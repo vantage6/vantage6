@@ -93,7 +93,7 @@
     <mat-card-content>
       <div *ngFor="let result of task.results">
         <ng-container *ngIf="result.decoded_result && task.input; else resultDownload">
-          <b *ngIf="function?.type === functionType.Federated">{{ getRunForResult(result.id)?.node?.name }}</b>
+          <b *ngIf="function?.execution_type === functionType.Federated">{{ getRunForResult(result.id)?.node?.name }}</b>
           <app-visualize-result
             [result]="result.decoded_result"
             [visualization]="selectedVisualization"
