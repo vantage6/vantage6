@@ -168,7 +168,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     sessionID: ['', Validators.required]
   });
   studyForm = this.fb.nonNullable.group({
-    studyOrCollabID: [{ value: '', disabled: false }, Validators.required]
+    studyOrCollabID: [{ value: '', disabled: false }]
   });
   functionForm = this.fb.nonNullable.group({
     algorithmFunctionSpec: ['', Validators.required],
@@ -739,6 +739,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     // set default for study step: full collaboration (this is not visible but required
     // if there are no studies defined to have a valid form)
     this.studyForm.controls['studyOrCollabID'].setValue(StudyOrCollab.Collaboration + this.collaboration?.id.toString());
+    this.updateStudyFormValidation();
     this.setOrganizations();
 
     this.studyForm.controls['studyOrCollabID'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (studyID) => {
@@ -777,12 +778,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
         this.studyForm.get('studyOrCollabID')?.disable();
         this.studyForm.controls['studyOrCollabID'].setValue(StudyOrCollab.Study + this.session.study.id.toString());
         this.handleStudyChange(this.session.study.id);
-      } else {
+      } else if (this.shouldShowStudyStep) {
         this.studyForm.get('studyOrCollabID')?.enable();
       }
       this.dataframes = await this.sessionService.getDataframes(this.session.id);
     }
-    this.dataframes;
+    this.updateStudyFormValidation();
     this.clearFunctionStep();
     this.clearDatabaseStep();
     this.clearPreprocessingStep();
@@ -913,5 +914,15 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
         this.snackBarService.showMessage(this.translateService.instant('task-create.step-database.error-db-update'));
       }
     }
+  }
+
+  private updateStudyFormValidation(): void {
+    const studyOrCollabControl = this.studyForm.get('studyOrCollabID');
+    if (this.shouldShowStudyStep) {
+      studyOrCollabControl?.setValidators(Validators.required);
+    } else {
+      studyOrCollabControl?.clearValidators();
+    }
+    studyOrCollabControl?.updateValueAndValidity();
   }
 }
