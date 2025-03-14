@@ -231,7 +231,8 @@ export class TemplateTaskCreateComponent implements OnInit {
       server_url: environment.server_url,
       organizations: selectedOrganizations.map((organizationID) => {
         return { id: Number.parseInt(organizationID), input: btoa(JSON.stringify(input)) || '' };
-      })
+      }),
+      databases: []
       //TODO: Add preprocessing and filtering when backend is ready
     };
 

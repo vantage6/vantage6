@@ -136,6 +136,7 @@ export interface CreateTask {
   store_id: number;
   server_url: string;
   organizations: CreateTaskOrganization[];
+  databases: any[];
 }
 
 export interface KillTask {

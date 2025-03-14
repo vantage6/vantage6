@@ -181,7 +181,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     database: ['', Validators.required]
   });
   dataframeForm = this.fb.nonNullable.group({
-    dataframeName: ['', Validators.required]
+    dataframeId: ['', Validators.required]
   });
   preprocessingForm = this.fb.array([]);
   filterForm = this.fb.array([]);
@@ -401,6 +401,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       (this.availableSteps.study && this.studyForm.invalid) ||
       (this.availableSteps.function && this.functionForm.invalid) ||
       (this.availableSteps.database && this.databaseForm.invalid) ||
+      (this.availableSteps.dataframe && this.dataframeForm.invalid) ||
       (this.availableSteps.preprocessing && this.preprocessingForm.invalid) ||
       (this.availableSteps.filter && this.filterForm.invalid) ||
       (this.availableSteps.parameter && this.parameterForm.invalid)
@@ -484,6 +485,15 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
     if (this.studyForm.controls['studyOrCollabID'].value.startsWith(StudyOrCollab.Study)) {
       formCreateOutput.study_id = Number(this.studyForm.controls['studyOrCollabID'].value.substring(StudyOrCollab.Study.length));
+    }
+
+    if (this.shouldShowDatabaseStep) {
+      formCreateOutput.database = this.databaseForm.controls.database.value;
+    }
+
+    // TODO get this to work for algorithms that use multiple dataframes
+    if (this.shouldShowDataframeStep) {
+      formCreateOutput.dataframes = [{'dataframe_id': this.dataframeForm.controls.dataframeId.value}];
     }
 
     this.onSubmit.next(formCreateOutput);
