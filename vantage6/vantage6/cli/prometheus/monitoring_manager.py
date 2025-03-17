@@ -1,0 +1,113 @@
+import docker
+from pathlib import Path
+from vantage6.common import info, error
+import yaml
+
+DEFAULT_PROMETHEUS_IMAGE = "prom/prometheus"
+PROMETHEUS_CONFIG = "prometheus.yml"
+PROMETHEUS_DIR = "prometheus"
+
+
+class PrometheusServer:
+    """
+    Manages the Prometheus Docker container
+    """
+
+    def __init__(self, ctx, network_mgr, image=None):
+        self.ctx = ctx
+        self.network_mgr = network_mgr
+        self.docker = docker.from_env()
+        self.image = image if image else DEFAULT_PROMETHEUS_IMAGE
+        self.config_file = Path(self.ctx.data_dir / PROMETHEUS_CONFIG)
+        self.data_dir = Path(self.ctx.data_dir / PROMETHEUS_DIR)
+
+    def start(self):
+        """
+        Start a Docker container running Prometheus
+        """
+        self._prepare_config()
+
+        volumes = {
+            str(self.config_file): {
+                "bind": "/etc/prometheus/prometheus.yml",
+                "mode": "ro",
+            },
+            str(self.data_dir): {"bind": "/prometheus", "mode": "rw"},
+        }
+        ports = {"9090/tcp": 9090}
+
+        container = self._get_container()
+        if container:
+            info("Prometheus is already running!")
+            return
+
+        self.docker.containers.run(
+            name="prometheus",
+            image=self.image,
+            volumes=volumes,
+            ports=ports,
+            detach=True,
+            restart_policy={"Name": "unless-stopped"},
+            network=self.network_mgr.network_name,
+        )
+        info("Prometheus container started successfully!")
+
+    def _prepare_config(self):
+        """
+        Prepare the Prometheus configuration and data directories
+        """
+        if not self.config_file.exists():
+            error(f"Prometheus configuration file {self.config_file} not found!")
+            raise FileNotFoundError(f"{self.config_file} not found!")
+
+        if not self.data_dir.exists():
+            self.data_dir.mkdir(parents=True, exist_ok=True)
+
+        self._update_prometheus_config()
+
+    def _update_prometheus_config(self):
+        """
+        Update the Prometheus configuration file with the server address.
+        """
+        server_host = self.ctx.config.get("host", "localhost")
+        server_port = self.ctx.config.get("port", 5000)
+        server_address = f"{server_host}:{server_port}"
+
+        try:
+            with open(self.config_file, "r") as f:
+                config = yaml.safe_load(f)
+
+            job_name = "vantage6_server_metrics"
+            job_exists = any(
+                job.get("job_name") == job_name
+                for job in config.get("scrape_configs", [])
+            )
+
+            if not job_exists:
+                new_job = {
+                    "job_name": job_name,
+                    "static_configs": [{"targets": [server_address]}],
+                }
+                config.setdefault("scrape_configs", []).append(new_job)
+            else:
+                for job in config["scrape_configs"]:
+                    if job.get("job_name") == job_name:
+                        job["static_configs"] = [{"targets": [server_address]}]
+
+            with open(self.config_file, "w") as f:
+                yaml.dump(config, f)
+
+            info(f"Prometheus configuration updated with target: {server_address}")
+
+        except Exception as e:
+            error(f"Failed to update Prometheus configuration: {e}")
+            raise
+
+    def _get_container(self):
+        """
+        Check if a Prometheus container is already running
+        """
+        try:
+            return self.docker.containers.get("prometheus")
+        except docker.errors.NotFound:
+            return None
