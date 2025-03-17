@@ -46,7 +46,7 @@ import { MAX_ATTEMPTS_RENEW_NODE, SECONDS_BETWEEN_ATTEMPTS_RENEW_NODE } from 'sr
 import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 import { EncryptionService } from 'src/app/services/encryption.service';
 import { environment } from 'src/environments/environment';
-import { BaseSession, Dataframe } from 'src/app/models/api/session.models';
+import { BaseSession, Dataframe, TaskDatabaseType } from 'src/app/models/api/session.models';
 import { SessionService } from 'src/app/services/session.service';
 import { AvailableSteps, FormCreateOutput } from 'src/app/models/forms/create-form.model';
 import { PageHeaderComponent } from '../../page-header/page-header.component';
@@ -493,7 +493,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
     // TODO get this to work for algorithms that use multiple dataframes
     if (this.shouldShowDataframeStep) {
-      formCreateOutput.dataframes = [{'dataframe_id': this.dataframeForm.controls.dataframeId.value}];
+      formCreateOutput.dataframes = [{ dataframe_id: this.dataframeForm.controls.dataframeId.value, type: TaskDatabaseType.Dataframe }];
     }
 
     this.onSubmit.next(formCreateOutput);

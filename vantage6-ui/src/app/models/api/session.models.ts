@@ -18,6 +18,12 @@ export enum SessionScope {
   Own = 'own'
 }
 
+
+export enum TaskDatabaseType {
+  Dataframe = 'dataframe',
+  Source = 'source'
+}
+
 export interface GetSessionParameters {
   collaboration_id?: string;
   name?: string;
