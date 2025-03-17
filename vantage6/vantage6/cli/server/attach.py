@@ -16,9 +16,7 @@ def cli_server_attach() -> None:
         "logs",
         "--follow",
         "--label-selector",
-        "app=vantage6-server",
-        "--label-selector",
-        "component=vantage6-server",
+        "app=vantage6-server, component=vantage6-server",
     ]
     process = Popen(command, stdout=None, stderr=None)
     process.wait()
