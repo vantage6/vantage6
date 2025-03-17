@@ -8,6 +8,7 @@ authenticated nodes and users via the socketIO server that is run here.
 
 import os
 from gevent import monkey
+from vantage6.backend.common.metrics import start_prometheus_exporter
 
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
@@ -183,6 +184,8 @@ class ServerApp:
         log.debug("Starting thread to set node status")
         t = Thread(target=self.__node_status_worker, daemon=True)
         t.start()
+
+        start_prometheus_exporter(port=9100)
 
         log.info("Initialization done")
 

@@ -212,7 +212,7 @@ class Node:
         while True:
             try:
                 metadata = self.__gather_system_metadata()
-                self.socketIO.emit("node_metadata_update", metadata, namespace="/tasks")
+                self.socketIO.emit("node_metrics_update", metadata, namespace="/tasks")
             except Exception:
                 self.log.exception("Metadata thread had an exception")
             time.sleep(PING_INTERVAL_SECONDS)

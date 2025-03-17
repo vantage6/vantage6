@@ -6,6 +6,11 @@ from flask import request, session
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from flask_socketio import Namespace, emit, join_room, leave_room
 
+from vantage6.backend.common.metrics import (
+    NODE_CPU_PERCENT,
+    NODE_MEMORY_PERCENT,
+    NODE_NUM_CONTAINERS,
+)
 from vantage6.common import logger_name
 from vantage6.common.globals import AuthStatus
 from vantage6.common.task_status import has_task_failed
@@ -458,6 +463,33 @@ class DefaultSocketNamespace(Namespace):
             run.log += log_message
         else:
             run.log = log_message
+
+    def on_node_metrics_update(self, data: dict) -> None:
+        """
+        Handle metrics sent by nodes and update Prometheus metrics.
+
+        Parameters
+        ----------
+        data: dict
+            Dictionary containing node metrics.
+        """
+        if session.type != "node":
+            self.log.warn(
+                "Only nodes can send metrics updates! "
+                f"{session.type} {session.auth_id} is not allowed."
+            )
+            return
+
+        node_id = session.auth_id
+
+        # Update Prometheus metrics
+        NODE_CPU_PERCENT.labels(node_id=node_id).set(data.get("cpu_percent", 0))
+        NODE_MEMORY_PERCENT.labels(node_id=node_id).set(data.get("memory_percent", 0))
+        NODE_NUM_CONTAINERS.labels(node_id=node_id).set(
+            data.get("num_algorithm_containers", 0)
+        )
+
+        self.log.info(f"Updated metrics for node {node_id}")
 
     @staticmethod
     def __is_identified_client() -> bool:
