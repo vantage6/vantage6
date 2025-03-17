@@ -1,22 +1,13 @@
 import click
 
-from subprocess import Popen, PIPE
 from vantage6.common import info
+from vantage6.cli.common.utils import attach_logs
 
 
 @click.command()
-def cli_server_attach() -> None:
+def cli_algo_store_attach() -> None:
     """
     Show the store logs in the current console.
     """
     info("Attaching to store logs...")
-
-    command = [
-        "devspace",
-        "logs",
-        "--follow",
-        "--label-selector",
-        "app=store, component=store-server",
-    ]
-    process = Popen(command, stdout=None, stderr=None)
-    process.wait()
+    attach_logs("app=store", "component=store-server")
