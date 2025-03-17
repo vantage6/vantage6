@@ -10,7 +10,6 @@ from jsonschema import validate as json_validate
 from vantage6.common.enum import AlgorithmStepType, AlgorithmViewPolicies
 from vantage6.algorithm.store.model.common.enums import (
     Partitioning,
-    FunctionExecutionType,
     ArgumentType,
     VisualizationType,
 )
@@ -67,25 +66,12 @@ class FunctionInputSchema(_NameDescriptionSchema):
     Schema for the input of a function.
     """
 
-    execution_type = fields.String(required=True)
     step_type = fields.String(required=True)
     display_name = fields.String(required=False)
     standalone = fields.Boolean(required=False)
     databases = fields.Nested("DatabaseInputSchema", many=True)
     arguments = fields.Nested("ArgumentInputSchema", many=True)
     ui_visualizations = fields.Nested("UIVisualizationInputSchema", many=True)
-
-    @validates("execution_type")
-    def validate_execution_type(self, value: str) -> None:
-        """
-        Validate that the type is one of the allowed values (e.g. federated).
-        """
-        types = [f.value for f in FunctionExecutionType]
-        if value not in types:
-            raise ValidationError(
-                f"Function execution type '{value}' is not one of the allowed values "
-                f"{types}"
-            )
 
     @validates("step_type")
     def validate_step_type(self, value: str) -> None:

@@ -62,7 +62,10 @@
         <b>{{ "algorithm.invalidated-at" | translate }}</b>
         <span>{{ printDate(algorithm?.invalidated_at) }}</span>
       </div>
-      <div *ngIf="algorithm?.status === algorithmStatus.AwaitingReviewerAssignment || algorithm?.status === algorithmStatus.UnderReview" class="data-list__item data-list__item--big">
+      <div
+        *ngIf="algorithm?.status === algorithmStatus.AwaitingReviewerAssignment || algorithm?.status === algorithmStatus.UnderReview"
+        class="data-list__item data-list__item--big"
+      >
         <b>{{ "algorithm.submission-comments" | translate }}</b>
         <markdown class="variable-binding" [data]="algorithm?.submission_comments || '-'"></markdown>
       </div>
@@ -90,10 +93,6 @@
               <div class="data-list__item">
                 <b>{{ "general.display_name" | translate }}</b>
                 <span>{{ selectedFunction.display_name || "-" }}</span>
-              </div>
-              <div class="data-list__item">
-                <b>{{ "algorithm.function.execution-type" | translate }}</b>
-                <span>{{ selectedFunction.execution_type || "-" }}</span>
               </div>
               <div class="data-list__item">
                 <b>{{ "algorithm.function.step-type" | translate }}</b>

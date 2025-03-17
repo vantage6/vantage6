@@ -215,13 +215,13 @@ class RunIO:
 
                 return b"", self._update_session(table)
 
-            case AlgorithmStepType.COMPUTE:
+            case AlgorithmStepType.is_compute(self.action):
 
                 with open(self.output_file, "rb") as fp:
                     result = fp.read()
 
                 self._update_session_state(
-                    AlgorithmStepType.COMPUTE.value,
+                    self.action.value,
                     None,
                     "Algorithm completed successfully.",
                 )

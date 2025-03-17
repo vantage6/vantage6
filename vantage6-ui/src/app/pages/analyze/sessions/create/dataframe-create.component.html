@@ -1,6 +1,6 @@
 <app-create-form
   [formTitle]="title"
-  [taskType]="algorithmStepType.DataExtraction"
+  [allowedTaskTypes]="[algorithmStepType.DataExtraction]"
   [sessionId]="sessionId"
   [availableSteps]="availableSteps"
   (onCancel)="onCancelHandler()"

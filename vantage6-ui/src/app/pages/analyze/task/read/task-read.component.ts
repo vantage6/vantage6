@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { getChipTypeForStatus, getStatusType, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
-import { Algorithm, AlgorithmFunction, Argument, ArgumentType, FunctionExecutionType } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmFunction, Argument, ArgumentType } from 'src/app/models/api/algorithm.model';
 import { Visualization } from 'src/app/models/api/visualization.model';
 import {
   Task,
@@ -63,7 +63,7 @@ import { ChipComponent } from '../../../../components/helpers/chip/chip.componen
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { OrderByPipe } from '../../../../pipes/order-by.pipe';
 import { OrderByTaskStatusPipe } from '../../../../pipes/order-by-status.pipe';
-import { Session } from 'src/app/models/api/session.models';
+import { AlgorithmStepType, Session } from 'src/app/models/api/session.models';
 import { SessionService } from 'src/app/services/session.service';
 
 @Component({
@@ -111,7 +111,7 @@ import { SessionService } from 'src/app/services/session.service';
 export class TaskReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   @Input() id = '';
-  functionType = FunctionExecutionType;
+  algorithmStepType = AlgorithmStepType;
   printDate = printDate;
 
   destroy$ = new Subject();

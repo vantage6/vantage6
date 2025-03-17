@@ -47,11 +47,6 @@ export enum PartitioningType {
   Vertical = 'vertical'
 }
 
-export enum FunctionExecutionType {
-  Central = 'central',
-  Federated = 'federated'
-}
-
 export enum AlgorithmStatus {
   // note that this is very similar to ReviewStatus but algorithms contain a few extra statuses
   AwaitingReviewerAssignment = 'awaiting reviewer assignment',
@@ -103,7 +98,6 @@ export interface AlgorithmFunction {
   name: string;
   display_name?: string;
   description: string;
-  execution_type: FunctionExecutionType;
   step_type: AlgorithmStepType;
   standalone?: boolean;
   arguments: Argument[];
@@ -183,7 +177,6 @@ export interface FunctionForm extends NameDescription {
   arguments: ArgumentForm[];
   databases: NameDescription[];
   ui_visualizations: VisualizationForm[];
-  execution_type: string;
   step_type: string;
   standalone?: boolean;
 }

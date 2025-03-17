@@ -14,7 +14,6 @@ import {
   ArgumentType,
   ConditionalArgComparatorType,
   FunctionForm,
-  FunctionExecutionType,
   PartitioningType
 } from 'src/app/models/api/algorithm.model';
 import { VisualizationType, getVisualizationSchema } from 'src/app/models/api/visualization.model';
@@ -39,40 +38,40 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { AlgorithmStepType } from 'src/app/models/api/session.models';
 
 @Component({
-    selector: 'app-algorithm-form',
-    templateUrl: './algorithm-form.component.html',
-    styleUrl: './algorithm-form.component.scss',
-    imports: [
-        MatCard,
-        MatCardHeader,
-        MatCardTitle,
-        MatCardContent,
-        ReactiveFormsModule,
-        MatFormField,
-        MatLabel,
-        MatInput,
-        MatButton,
-        MatSuffix,
-        NgIf,
-        MatSelect,
-        NgFor,
-        MatOption,
-        MatAccordion,
-        MatExpansionPanel,
-        MatExpansionPanelHeader,
-        MatExpansionPanelTitle,
-        MatExpansionPanelContent,
-        MatCheckbox,
-        MatTooltip,
-        MatRadioGroup,
-        MatRadioButton,
-        AlertComponent,
-        NumberOnlyDirective,
-        MatProgressSpinner,
-        TitleCasePipe,
-        KeyValuePipe,
-        TranslateModule
-    ]
+  selector: 'app-algorithm-form',
+  templateUrl: './algorithm-form.component.html',
+  styleUrl: './algorithm-form.component.scss',
+  imports: [
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardContent,
+    ReactiveFormsModule,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatButton,
+    MatSuffix,
+    NgIf,
+    MatSelect,
+    NgFor,
+    MatOption,
+    MatAccordion,
+    MatExpansionPanel,
+    MatExpansionPanelHeader,
+    MatExpansionPanelTitle,
+    MatExpansionPanelContent,
+    MatCheckbox,
+    MatTooltip,
+    MatRadioGroup,
+    MatRadioButton,
+    AlertComponent,
+    NumberOnlyDirective,
+    MatProgressSpinner,
+    TitleCasePipe,
+    KeyValuePipe,
+    TranslateModule
+  ]
 })
 export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   @Input() algorithm?: AlgorithmForm;
@@ -88,7 +87,6 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   isEdit: boolean = false;
   isLoading: boolean = true;
   partitionTypes = Object.values(PartitioningType);
-  functionExecutionTypes = Object.values(FunctionExecutionType);
   functionStepTypes = Object.values(AlgorithmStepType);
   paramTypes = Object.values(ArgumentType);
   visualizationTypes = Object.values(VisualizationType);
@@ -135,7 +133,6 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     name: ['', [Validators.required]],
     display_name: [''],
     description: [''],
-    execution_type: ['', [Validators.required]],
     step_type: ['', [Validators.required]],
     hidden: [false],
     arguments: this.fb.nonNullable.array([this.argumentForm]),
@@ -327,7 +324,6 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       functionFormGroup.controls['name'].setValue(func.name);
       functionFormGroup.controls['display_name'].setValue(func.display_name);
       functionFormGroup.controls['description'].setValue(func.description);
-      functionFormGroup.controls['execution_type'].setValue(func.execution_type);
       functionFormGroup.controls['step_type'].setValue(func.step_type);
       functionFormGroup.controls['standalone'].setValue(func.standalone);
       if (func.arguments) {
@@ -484,7 +480,6 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       name: ['', [Validators.required]],
       display_name: [''],
       description: [''],
-      execution_type: ['', [Validators.required]],
       step_type: ['', [Validators.required]],
       standalone: [true],
       arguments: this.fb.array([]),

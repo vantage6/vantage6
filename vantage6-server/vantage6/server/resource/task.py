@@ -585,7 +585,6 @@ class Tasks(TaskBase):
             self.socketio,
             self.r,
             self.config,
-            AlgorithmStepType.COMPUTE,
         )
 
     # TODO this function should be refactored to make it more readable
@@ -595,7 +594,7 @@ class Tasks(TaskBase):
         socketio: SocketIO,
         rules: RuleCollection,
         config: dict,
-        action: AlgorithmStepType,
+        action: AlgorithmStepType | None = None,
     ):
         """
         Create new task and algorithm runs. Send the task to the nodes.
@@ -768,12 +767,14 @@ class Tasks(TaskBase):
                     }, HTTPStatus.FORBIDDEN
                 # get the algorithm from the algorithm store
                 try:
-                    image, digest = Tasks._get_image_and_hash_from_store(
+                    algorithm = Tasks._get_algorithm_from_store(
                         store=store,
                         image=image,
                         config=config,
                         server_url_from_request=data.get("server_url"),
                     )
+                    image = algorithm["image"]
+                    digest = algorithm["digest"]
                 except Exception as e:
                     log.exception("Error while getting image from store: %s", e)
                     return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
@@ -795,6 +796,9 @@ class Tasks(TaskBase):
 
         # Obtain the user requested database or dataframes
         databases = data.get("databases", [])
+
+        # check the action of the task
+        action = Tasks.__check_action(data, action, algorithm)
 
         # A task can be dependent on one or more other task(s). There are three cases:
         #
@@ -1092,12 +1096,12 @@ class Tasks(TaskBase):
         return True, ""
 
     @staticmethod
-    def _get_image_and_hash_from_store(
+    def _get_algorithm_from_store(
         store: db.AlgorithmStore,
         image: str,
         config: dict,
         server_url_from_request: str | None = None,
-    ) -> tuple[str, str]:
+    ) -> dict:
         """
         Determine the image and hash from the algorithm store.
 
@@ -1114,8 +1118,8 @@ class Tasks(TaskBase):
 
         Returns
         -------
-        tuple[str, str]
-            Image url and image hash digest.
+        dict
+            Algorithm object from algorithm store.
 
         Raises
         ------
@@ -1145,18 +1149,50 @@ class Tasks(TaskBase):
         except Exception as e:
             raise Exception("Algorithm not found in store!") from e
 
-        image = algorithm["image"]
-        digest = algorithm["digest"]
-        # TODO v5+ remove this check? The digest should always be present for an
-        # algorithm from stores started in v4.6 and higher
-        if image and not digest:
-            log.warning(
-                "Algorithm image %s does not have a digest in the algorithm store. Will"
-                " use it without digest.",
-                image,
+        return algorithm
+
+    @staticmethod
+    def __check_action(
+        data: dict, action: AlgorithmStepType | None, algorithm: dict
+    ) -> AlgorithmStepType:
+        """
+        Check the action of the task.
+
+        Parameters
+        ----------
+        data : dict
+            Data dictionary for the task request.
+        action : AlgorithmStepType | None
+            Action to be performed.
+        algorithm : dict
+            Algorithm object from algorithm store.
+
+        Raises
+        ------
+        Exception
+            If the action is not valid or does not match the action type in the
+            algorithm store.
+        """
+        # note that input validation ensures that method is present
+        print(data["organizations"][0])
+        print(data["organizations"][0].get("input", {}))
+        algorithm_method = data["organizations"][0].get("input", {}).get("method")
+        try:
+            store_action = algorithm["functions"][algorithm_method]["step_type"]
+        except KeyError:
+            # we just use the action provided by the user
+            pass
+
+        if action and store_action and action != store_action:
+            raise Exception(
+                f"Action {action} does not match the action type in the "
+                f"algorithm store: {store_action}"
             )
-            return image, None
-        return image, digest
+
+        if not action:
+            action = store_action
+
+        return action
 
 
 class Task(TaskBase):

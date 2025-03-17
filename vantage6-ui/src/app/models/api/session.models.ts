@@ -21,7 +21,8 @@ export enum SessionScope {
 export enum AlgorithmStepType {
   Preprocessing = 'preprocessing',
   DataExtraction = 'data extraction',
-  Compute = 'compute',
+  FederatedCompute = 'federated compute',
+  CentralCompute = 'central compute',
   Postprocessing = 'postprocessing'
 }
 

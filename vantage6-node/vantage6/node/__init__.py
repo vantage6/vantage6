@@ -299,7 +299,7 @@ class Node:
         # Only compute containers need a token as they are the only ones that should
         # create subtasks
         token = ""
-        if container_action == AlgorithmStepType.COMPUTE:
+        if AlgorithmStepType.is_compute(container_action):
             token = self.client.request_token_for_container(task["id"], task["image"])
             try:
                 token = token["container_token"]

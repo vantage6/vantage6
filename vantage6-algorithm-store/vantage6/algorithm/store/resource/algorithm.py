@@ -406,14 +406,11 @@ class Algorithms(AlgorithmBaseResource):
                         description:
                           type: string
                           description: Description of the function
-                        execution_type:
-                          type: string
-                          description: Type of function. Can be 'central' or
-                            'federated'
                         step_type:
                           type: string
                           description: Step type of the function. Can be 'data
-                            extraction', 'preprocessing', 'compute', or 'postprocessing'
+                            extraction', 'preprocessing', 'federated compute',
+                            'central compute', or 'postprocessing'
                         standalone:
                           type: boolean
                           description: Whether this function produces useful results
@@ -560,7 +557,6 @@ class Algorithms(AlgorithmBaseResource):
                 name=function["name"],
                 display_name=function.get("display_name", ""),
                 description=function.get("description", ""),
-                execution_type=function["execution_type"],
                 step_type=function["step_type"],
                 standalone=function.get("standalone", True),
                 algorithm_id=algorithm.id,
@@ -850,14 +846,11 @@ class Algorithm(AlgorithmBaseResource):
                         description:
                           type: string
                           description: Description of the function
-                        execution_type:
-                          type: string
-                          description: Type of function. Can be 'central' or
-                            'federated'
                         step_type:
                           type: string
                           description: Step type of the function. Can be 'data
-                            extraction', 'preprocessing', 'compute', or 'postprocessing'
+                            extraction', 'preprocessing', 'federated compute',
+                            'central compute', or 'postprocessing'
                         standalone:
                           type: boolean
                           description: Whether this function produces useful results
@@ -1040,7 +1033,6 @@ class Algorithm(AlgorithmBaseResource):
                 func = Function(
                     name=new_function["name"],
                     description=new_function.get("description", ""),
-                    execution_type=new_function["execution_type"],
                     step_type=new_function["step_type"],
                     standalone=new_function.get("standalone", True),
                     algorithm_id=id,

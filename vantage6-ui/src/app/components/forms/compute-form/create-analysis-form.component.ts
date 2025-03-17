@@ -18,7 +18,6 @@ import {
   ArgumentType,
   AlgorithmFunction,
   Argument,
-  FunctionExecutionType,
   AlgorithmFunctionExtended,
   ConditionalArgComparatorType
 } from 'src/app/models/api/algorithm.model';
@@ -111,7 +110,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   @Input() formTitle: string = '';
   @Input() sessionId?: string = '';
-  @Input() taskType?: AlgorithmStepType;
+  @Input() allowedTaskTypes?: AlgorithmStepType[];
 
   // TODO(BART/RIAN) RIAN: Somehow we need to be able to calculate which step is first and which is last in order to conditionally add the back or next button.
   @Input() availableSteps: AvailableSteps = {
@@ -137,7 +136,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   destroy$ = new Subject();
   routes = routePaths;
   argumentType = ArgumentType;
-  functionType = FunctionExecutionType;
   studyOrCollab = StudyOrCollab;
 
   sessions: BaseSession[] = [];
@@ -364,7 +362,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.filteredFunctions = this.functions.filter((func) => {
       const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
       const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
-      return [func.algorithm_name, func.execution_type, storeName, func.display_name, func.name].some((val) =>
+      return [func.algorithm_name, func.step_type, storeName, func.display_name, func.name].some((val) =>
         val?.toLowerCase()?.includes(value.toLowerCase())
       );
     });
@@ -378,7 +376,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   getFunctionOptionLabel(func: AlgorithmFunctionExtended): string {
     const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
     const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
-    return `${this.getDisplayName(func)} <div class="detail-txt"> | ${func.algorithm_name}, ${storeName}, ${func.execution_type}</div>`;
+    return `${this.getDisplayName(func)} <div class="detail-txt"> | ${func.algorithm_name}, ${storeName}, ${func.step_type}</div>`;
   }
 
   getAlgorithmFunctionSpec(func: AlgorithmFunctionExtended): string {
@@ -559,6 +557,10 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     );
   }
 
+  isFederatedStep(stepType: AlgorithmStepType): boolean {
+    return stepType !== AlgorithmStepType.CentralCompute;
+  }
+
   containsColumnArguments(): boolean {
     return this.function?.arguments.some((arg) => arg.type === this.argumentType.Column) || false;
   }
@@ -711,20 +713,17 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     const algorithmsObj = await this.algorithmService.getAlgorithms();
     this.algorithms = algorithmsObj;
     this.functions = algorithmsObj.flatMap((curAlgorithm) => {
-      return (
-        curAlgorithm.functions
-          // TODO v5+ remove the func.standalone === undefined check. After v5+ the standalone property should be set for all functions
-          .filter((func) => func.standalone || func.standalone === undefined)
-          .filter((func) => this.taskType ? func.step_type === this.taskType : true)
-          .map((func) => {
-            return {
-              ...func,
-              algorithm_id: curAlgorithm.id,
-              algorithm_name: curAlgorithm.name,
-              algorithm_store_id: curAlgorithm.algorithm_store_id
-            };
-          })
-      );
+      return curAlgorithm.functions
+        .filter((func) => func.standalone || func.standalone === undefined)
+        .filter((func) => (this.allowedTaskTypes ? this.allowedTaskTypes.includes(func.step_type) : true))
+        .map((func) => {
+          return {
+            ...func,
+            algorithm_id: curAlgorithm.id,
+            algorithm_name: curAlgorithm.name,
+            algorithm_store_id: curAlgorithm.algorithm_store_id
+          };
+        });
     });
     this.filteredFunctions = this.functions;
     this.node = await this.getOnlineNode();
