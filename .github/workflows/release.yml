@@ -150,6 +150,13 @@ jobs:
           PASSWORD: ${{ secrets.DOCKER_TOKEN }}
         run: helm registry login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
 
+      - name: Update Helm dependencies
+        run: |
+          helm dependency update charts/common
+          helm dependency update charts/node
+          helm dependency update charts/store
+          helm dependency update charts/server
+
       - name: Package Helm charts
         run: |
           helm package charts/common
