@@ -1853,7 +1853,8 @@ class UserClient(ClientBase):
                 and 'preprocessing' information.
             action: AlgorithmStepType, optional
                 Session action type to be performed by the task. If not provided, the
-                action from the algorithm store will be used. Suitable actions may be
+                action from the algorithm store will be used, if available. If it is not
+                available from either, there will be an error. Suitable actions may be
                 one of 'data extraction', 'preprocessing', 'federated compute',
                 'central compute' or 'postprocessing'.
             field: str, optional

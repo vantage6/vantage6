@@ -1107,8 +1107,7 @@ class SessionDataframes(SessionBase):
             )
         except Exception as e:
             dataframe.delete()
-            raise
-            # return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
+            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         if status_code != HTTPStatus.CREATED:
             dataframe.delete()
