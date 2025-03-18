@@ -6,6 +6,7 @@ import base64
 
 from typing import Tuple
 from pathlib import Path
+import uuid
 
 from kubernetes import client as k8s_client, config, watch
 from kubernetes.client import V1EnvVar
@@ -14,6 +15,8 @@ from kubernetes.client.rest import ApiException
 from vantage6.cli.context.node import NodeContext
 from vantage6.common import logger_name, get_database_config
 from vantage6.common.globals import (
+    DEFAULT_ALPINE_IMAGE,
+    DEFAULT_DOCKER_REGISTRY,
     NodePolicy,
     ContainerEnvNames,
     STRING_ENCODING,
@@ -91,6 +94,87 @@ class ContainerManager:
         self.batch_api = k8s_client.BatchV1Api()
         # K8S Core API instance
         self.core_api = k8s_client.CoreV1Api()
+        # namespace to run the tasks in
+        self.task_namespace = self.ctx.config["task_namespace"]
+
+        # labels to identify the task jobs of this node
+        self.task_job_labels = {"node_id": self.ctx.identifier}
+        self.task_job_label_selector = ",".join(
+            [f"{k}={v}" for k, v in self.task_job_labels.items()]
+        )
+
+    def ensure_task_namespace(self) -> bool:
+        """
+        Ensure that the namespace for the task exists and jobs can be created in it.
+        If it does not exist, try to create it
+
+        Returns
+        -------
+        bool
+            True if the namespace exists or was created and is writeable, False
+            otherwise
+        """
+        # TODO consider using hierarchical namespaces, it may be easier to create
+        # those in a large cluster environment
+        # https://kubernetes.io/blog/2020/08/14/introducing-hierarchical-namespaces/
+        task_namespace_exists = False
+        try:
+            self.core_api.read_namespace(self.task_namespace)
+            task_namespace_exists = True
+        except ApiException as exc:
+            # return False if the namespace exists but we cannot read it
+            if exc.status != 404:
+                return False
+
+        if not task_namespace_exists:
+            self.log.warning(
+                "Task namespace '%s' does not exist, creating it now.",
+                self.task_namespace,
+            )
+            namespace = k8s_client.V1Namespace(
+                metadata=k8s_client.V1ObjectMeta(name=self.task_namespace)
+            )
+            try:
+                self.core_api.create_namespace(namespace)
+            except ApiException as exc:
+                self.log.error(
+                    "Failed to create task namespace '%s': %s", self.task_namespace, exc
+                )
+                return False
+
+        # try to see if jobs can be created in the cluster - if not, tasks cannot be
+        # created so we return False
+        test_pod_name = str(uuid.uuid4())
+        try:
+            self.core_api.create_namespaced_pod(
+                namespace=self.task_namespace,
+                body=k8s_client.V1Pod(
+                    metadata=k8s_client.V1ObjectMeta(name=test_pod_name),
+                    spec=k8s_client.V1PodSpec(
+                        containers=[
+                            k8s_client.V1Container(
+                                # TODO ensure image is an image that can always be
+                                # pulled by the node
+                                name="test-container",
+                                image=(
+                                    f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_ALPINE_IMAGE}"
+                                ),
+                            )
+                        ]
+                    ),
+                ),
+            )
+        except ApiException as exc:
+            self.log.error(
+                "Failed to create test pod in task namespace '%s': %s",
+                self.task_namespace,
+                exc,
+            )
+            return False
+        # clean up the test pod
+        self.core_api.delete_namespaced_pod(test_pod_name, self.task_namespace)
+
+        return True
 
     def _setup_policies(self, config: dict) -> dict:
         """
@@ -303,7 +387,10 @@ class ContainerManager:
                 "action": str(action.value),
                 "session_id": str(session_id),
                 "df_name": df_details.get("name") if df_details else "",
+                "df_id": str(df_details.get("id")) if df_details else "",
+                "df_label": df_details.get("label") if df_details else "",
             },
+            labels=self.task_job_labels,
         )
 
         # Define the job
@@ -327,9 +414,9 @@ class ContainerManager:
         )
 
         self.log.info(
-            f"Creating namespaced K8S job for task_id={task_id} and run_id={run_id}."
+            "Creating namespaced K8S job for task_id=%s and run_id=%s.", task_id, run_id
         )
-        self.batch_api.create_namespaced_job(namespace="vantage6-node", body=job)
+        self.batch_api.create_namespaced_job(namespace=self.task_namespace, body=job)
 
         # Wait till the job is up and running. The job is considered to be running
         # when the POD created by the job reports at least a 'Running' state. The states
@@ -362,7 +449,8 @@ class ContainerManager:
         while True:
 
             pods = self.core_api.list_namespaced_pod(
-                namespace="vantage6-node", label_selector=f"app={run_io.container_name}"
+                namespace=self.task_namespace,
+                label_selector=f"app={run_io.container_name}",
             )
 
             if pods.items:
@@ -370,22 +458,25 @@ class ContainerManager:
                 # The container was created and has at least the `pending` state. Wait
                 # until it reports either an `active` or `failed` state.
                 self.log.info(
-                    f"{len(pods.items)} Job POD with label app={run_io.container_name} "
-                    "created  successfully on vantage6-node namespace. Waiting until it has "
-                    "a (k8S) running state."
+                    "Job POD (label %s) with %s items created successfully in %s "
+                    "namespace. Waiting until it is running...",
+                    run_io.container_name,
+                    len(pods.items),
+                    self.task_namespace,
                 )
-                status = self.__wait_until_pod_running(f"app={run_io.container_name}")
+                status = self.__wait_until_pod_running(
+                    label=f"app={run_io.container_name}"
+                )
                 self.log.info(
-                    f"Job POD with label app={run_io.container_name} is now on a "
-                    "running state."
+                    "Job POD (label %s) is now running!", run_io.container_name
                 )
 
                 return status
 
             elif time.time() - start_time > TASK_START_TIMEOUT_SECONDS:
                 self.log.error(
-                    "Time out while waiting Job POD with label "
-                    f"app={run_io.container_name} to report any state."
+                    "Time out waiting for Job POD (label %s) to start.",
+                    run_io.container_name,
                 )
                 return RunStatus.UNKNOWN_ERROR
 
@@ -411,8 +502,9 @@ class ContainerManager:
 
         for event in w.stream(
             func=self.core_api.list_namespaced_pod,
-            namespace="vantage6-node",
+            namespace=self.task_namespace,
             label_selector=label,
+            # TODO v5+ this timeout should be as a global. Is 120 seconds a good value?
             timeout_seconds=120,
         ):
             pod_phase = event["object"].status.phase
@@ -742,7 +834,6 @@ class ContainerManager:
             )
             ok = False
 
-        self.log.debug(self.databases.keys())
         if source_database["label"] not in self.databases.keys():
             self.log.error(
                 "The database used in the data extraction step does not exist."
@@ -966,7 +1057,8 @@ class ContainerManager:
             Whether or not algorithm container is currently running
         """
         pods = self.core_api.list_namespaced_pod(
-            namespace="vantage6-node", label_selector=f"app={label}"
+            namespace=self.task_namespace,
+            label_selector=f"app={label}",
         )
         return True if pods.items else False
 
@@ -989,8 +1081,10 @@ class ContainerManager:
         completed_job = False
         while not completed_job:
 
-            # Get all jobs from the vantage6-node namespace
-            jobs = self.batch_api.list_namespaced_job("vantage6-node")
+            # Get all jobs from the task namespace for this node
+            jobs = self.batch_api.list_namespaced_job(
+                self.task_namespace, label_selector=self.task_job_label_selector
+            )
             if not jobs.items:
                 time.sleep(1)
                 continue
@@ -1019,7 +1113,7 @@ class ContainerManager:
 
                 try:
                     logs = self.__get_job_pod_logs(
-                        run_io=run_io, namespace="vantage6-node"
+                        run_io=run_io, namespace=self.task_namespace
                     )
                 except Exception as e:
                     self.log.warning(
@@ -1027,10 +1121,13 @@ class ContainerManager:
                     )
                     logs = ["error while getting logs"]
 
+                # logs are saved as string instead of list[str]
+                logs = "\n".join(logs)
+
                 self.log.info(
-                    f"Sending results of run_id={run_io.run_id} "
-                    f"and task_id={job.metadata.annotations['task_id']} back to the "
-                    "server"
+                    "Sending results of run_id=%s and task_id=%s back to the server",
+                    run_io.run_id,
+                    job.metadata.annotations["task_id"],
                 )
 
                 result = Result(
@@ -1042,13 +1139,15 @@ class ContainerManager:
                     parent_id=job.metadata.annotations["task_parent_id"],
                 )
 
-                self.__delete_job_related_pods(run_io=run_io, namespace="vantage6-node")
+                self.__delete_job_related_pods(
+                    run_io=run_io, namespace=self.task_namespace
+                )
                 completed_job = True
 
         return result
 
-    def __get_job_pod_logs(self, run_io: str, namespace="vantage6-node") -> list[str]:
-        """ "
+    def __get_job_pod_logs(self, run_io: str, namespace: str) -> list[str]:
+        """
         Get the logs generated by the PODs created by a job.
 
         If there are multiple PODs created by the job (e.g., due to multiple failed
@@ -1071,7 +1170,7 @@ class ContainerManager:
 
             pod_log = self.core_api.read_namespaced_pod_log(
                 name=job_pod.metadata.name,
-                namespace="vantage6-node",
+                namespace=self.task_namespace,
                 _preload_content=True,
             )
 
@@ -1082,7 +1181,7 @@ class ContainerManager:
 
         return pods_tty_logs
 
-    def __delete_job_related_pods(self, run_io, namespace="v6-job"):
+    def __delete_job_related_pods(self, run_io: RunIO, namespace: str):
         """
         Deletes all the PODs created by a Kubernetes job in a given namespace
         """
@@ -1099,9 +1198,9 @@ class ContainerManager:
             namespace, label_selector=job_selector
         )
         for job_pod in job_pods_list.items:
-            self.__delete_job(job_pod.metadata.name, namespace)
+            self.__delete_pod(job_pod.metadata.name, namespace)
 
-    def __delete_job(self, job_name: str, namespace: str = "vantage6-node") -> None:
+    def __delete_job(self, job_name: str, namespace: str) -> None:
         """
         Deletes a job in a given namespace
 
@@ -1132,6 +1231,41 @@ class ContainerManager:
                 self.log.warning(
                     "Job %s not found in namespace %s, skipping deletion",
                     job_name,
+                    namespace,
+                )
+            else:
+                self.log.error("Exception when deleting namespaced job: %s", exc)
+
+    def __delete_pod(self, pod_name: str, namespace: str) -> None:
+        """
+        Deletes a job in a given namespace
+
+        Parameters
+        ----------
+        pod_name: str
+            Name of the job
+        namespace: str
+            Namespace where the job is located
+        """
+        self.log.info(
+            "Cleaning up kubernetes pod %s in namespace %s", pod_name, namespace
+        )
+        try:
+            # Check if the job exists before attempting to delete it
+            job = self.core_api.read_namespaced_pod(name=pod_name, namespace=namespace)
+            if job:
+                self.core_api.delete_namespaced_pod(name=pod_name, namespace=namespace)
+            else:
+                self.log.warning(
+                    "Pod %s not found in namespace %s, skipping deletion",
+                    pod_name,
+                    namespace,
+                )
+        except ApiException as exc:
+            if exc.status == 404:
+                self.log.warning(
+                    "Pod %s not found in namespace %s, skipping deletion",
+                    pod_name,
                     namespace,
                 )
             else:
@@ -1392,7 +1526,7 @@ class ContainerManager:
 #         the API is expected to return an 409 error code.
 #     """
 #     try:
-#         self.core_api.create_namespaced_persistent_volume_claim("vantage6-node", body=pvc)
+#         self.core_api.create_namespaced_persistent_volume_claim(self.task_namespace), body=pvc)
 #     except client.rest.ApiException as e:
 #         if e.status != 409:
 #             # TODO custom exceptions to decouple codebase from kubernetes

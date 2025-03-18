@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import hashlib
 import os.path
 
 from pathlib import Path
 
 from vantage6.common.context import AppContext
-from vantage6.common.globals import APPNAME, InstanceType
+from vantage6.common.globals import APPNAME, STRING_ENCODING, InstanceType
 from vantage6.cli.configuration_manager import NodeConfigurationManager
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli._version import __version__
@@ -51,6 +52,7 @@ class NodeContext(AppContext):
         )
         if print_log_header:
             self.log.info("vantage6 version '%s'", __version__)
+        self.identifier = self.__create_node_identifier()
 
     @classmethod
     def from_external_config_file(
@@ -247,3 +249,16 @@ class NodeContext(AppContext):
             URI to the database
         """
         return self.config["databases"][label]
+
+    def __create_node_identifier(self) -> str:
+        """
+        Create a unique identifier for the node.
+
+        Returns
+        -------
+        str
+            Unique identifier for the node
+        """
+        return hashlib.sha256(
+            self.config.get("api_key").encode(STRING_ENCODING)
+        ).hexdigest()[:16]
