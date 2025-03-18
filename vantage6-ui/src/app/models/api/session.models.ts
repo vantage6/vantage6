@@ -108,6 +108,7 @@ export interface CreateDataframe {
 
 interface CreateDataframeTask {
   image: string;
+  method: string;
   organizations: CreateTaskOrganization[];
   store_id?: number;
 }

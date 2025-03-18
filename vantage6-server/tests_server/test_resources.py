@@ -2944,8 +2944,6 @@ class TestResources(TestResourceBase):
         user = self.create_user()
         headers = self.login(user.username)
 
-        input_ = bytes_to_base64s(serialize({"method": "dummy"}))
-
         org = Organization()
         org.save()
         col = Collaboration(organizations=[org], encrypted=False)
@@ -2955,8 +2953,9 @@ class TestResources(TestResourceBase):
 
         # test non-existing collaboration
         task_json = {
+            "method": "dummy",
             "collaboration_id": 9999,
-            "organizations": [{"id": 9999, "input": input_}],
+            "organizations": [{"id": 9999}],
             "image": "some-image",
             "session_id": session.id,
         }
@@ -2964,7 +2963,7 @@ class TestResources(TestResourceBase):
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
         # task without any node created
-        task_json["organizations"] = [{"id": org.id, "input": input_}]
+        task_json["organizations"] = [{"id": org.id}]
         task_json["collaboration_id"] = col.id
         results = self.app.post("/api/task", headers=headers, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
@@ -2977,12 +2976,12 @@ class TestResources(TestResourceBase):
         org2.save()
 
         # test user outside the collaboration
-        task_json["organizations"] = [{"id": org2.id, "input": input_}]
+        task_json["organizations"] = [{"id": org2.id}]
         results = self.app.post("/api/task", headers=headers, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
 
         # user in the collaboration but still without any permissions
-        task_json["organizations"] = [{"id": org.id, "input": input_}]
+        task_json["organizations"] = [{"id": org.id}]
         results = self.app.post("/api/task", headers=headers, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
@@ -3014,7 +3013,7 @@ class TestResources(TestResourceBase):
         study = Study(organizations=[org], collaboration=col2)
         study.save()
         task_json["collaboration_id"] = col2.id
-        task_json["organizations"] = [{"id": org2.id, "input": input_}]
+        task_json["organizations"] = [{"id": org2.id}]
         results = self.app.post("/api/task", headers=headers, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
 
@@ -3044,7 +3043,6 @@ class TestResources(TestResourceBase):
         parent_res = Run(organization=org, task=parent_task, status=RunStatus.PENDING)
         parent_res.save()
 
-        input_ = bytes_to_base64s(serialize({"method": "dummy"}))
         headers = self.login_container(
             collaboration=col, organization=org, task=parent_task
         )
@@ -3054,28 +3052,26 @@ class TestResources(TestResourceBase):
         col2.save()
         node2 = Node(organization=org, collaboration=col2)
         node2.save()
+        task_json = {
+            "method": "dummy",
+            "organizations": [{"id": org.id}],
+            "collaboration_id": col2.id,
+            "image": "some-image",
+            "session_id": session.id,
+        }
         results = self.app.post(
             "/api/task",
             headers=headers,
-            json={
-                "organizations": [{"id": org.id, "input": input_}],
-                "collaboration_id": col2.id,
-                "image": "some-image",
-                "session_id": session.id,
-            },
+            json=task_json,
         )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test with correct parameters
+        task_json["collaboration_id"] = col.id
         results = self.app.post(
             "/api/task",
             headers=headers,
-            json={
-                "organizations": [{"id": org.id, "input": input_}],
-                "collaboration_id": col.id,
-                "image": "some-image",
-                "session_id": session.id,
-            },
+            json=task_json,
         )
         self.assertEqual(results.status_code, HTTPStatus.CREATED)
 
@@ -3085,12 +3081,7 @@ class TestResources(TestResourceBase):
         results = self.app.post(
             "/api/task",
             headers=headers,
-            json={
-                "organizations": [{"id": org.id, "input": input_}],
-                "collaboration_id": col.id,
-                "image": "some-image",
-                "session_id": session.id,
-            },
+            json=task_json,
         )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
@@ -3100,12 +3091,7 @@ class TestResources(TestResourceBase):
         results = self.app.post(
             "/api/task",
             headers=headers,
-            json={
-                "organizations": [{"id": org.id, "input": input_}],
-                "collaboration_id": col.id,
-                "image": "some-image",
-                "session_id": session.id,
-            },
+            json=task_json,
         )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 

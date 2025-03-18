@@ -54,7 +54,6 @@ export class TaskService {
       // TODO this may not always true: what if different runs have different inputs?
       if (input) {
         task.input = {
-          method: input.method || '',
           parameters: input.kwargs
             ? Object.keys(input.kwargs).map((key) => {
                 return {
@@ -147,5 +146,4 @@ export class TaskService {
     }
     return decodedInput;
   }
-
 }

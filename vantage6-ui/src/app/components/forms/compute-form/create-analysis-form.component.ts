@@ -294,17 +294,14 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
     await this.handleAlgorithmChange(algorithm.id, algorithm.algorithm_store_id);
     // set function step
-    if (!this.repeatedTask.input) return;
     const func =
       this.functions.find(
         (_) =>
-          _.name === this.repeatedTask?.input?.method &&
-          _.algorithm_id == algorithm.id &&
-          _.algorithm_store_id == algorithm.algorithm_store_id
+          _.name === this.repeatedTask?.method && _.algorithm_id == algorithm.id && _.algorithm_store_id == algorithm.algorithm_store_id
       ) || null;
     if (!func) return;
     this.functionForm.controls.algorithmFunctionSpec.setValue(this.getAlgorithmFunctionSpec(func));
-    await this.handleFunctionChange(this.repeatedTask.input?.method, algorithm.id, algorithm.algorithm_store_id);
+    await this.handleFunctionChange(this.repeatedTask.method, algorithm.id, algorithm.algorithm_store_id);
     if (!this.function) return;
     const organizationIDs = this.repeatedTask.runs.map((_) => _.organization?.id?.toString() ?? '').filter((value) => value);
     this.functionForm.controls.organizationIDs.setValue(organizationIDs);
@@ -420,8 +417,9 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   async submitTask(): Promise<void> {
     // setup input for task. Parse string to JSON if needed
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!this.function) return;
     const kwargs: any = {};
-    this.function?.arguments.forEach((arg) => {
+    this.function.arguments.forEach((arg) => {
       Object.keys(this.parameterForm.controls).forEach((control) => {
         if (control === arg.name) {
           const value = this.parameterForm.get(control)?.value;
@@ -444,7 +442,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       });
     });
     const input: CreateTaskInput = {
-      method: this.function?.name || '',
       kwargs: kwargs
     };
 
@@ -468,6 +465,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       name: this.functionForm.controls.taskName.value,
       description: this.functionForm.controls.description.value,
       image: image,
+      method: this.function.name,
       session_id: Number.parseInt(this.sessionForm.controls.sessionID.value),
       collaboration_id: this.collaboration?.id || -1,
       database: this.databaseForm.controls.database.value,

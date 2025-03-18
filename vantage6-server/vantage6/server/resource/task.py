@@ -798,7 +798,7 @@ class Tasks(TaskBase):
         databases = data.get("databases", [])
 
         # check the action of the task
-        action = Tasks.__check_action(data, action, algorithm)
+        action = Tasks.__check_action(data["method"], action, algorithm)
 
         # A task can be dependent on one or more other task(s). There are three cases:
         #
@@ -880,6 +880,7 @@ class Tasks(TaskBase):
             name=data.get("name", ""),
             description=data.get("description", ""),
             image=image_with_hash,
+            method=data["method"],
             init_org=init_org,
             algorithm_store=store,
             created_at=datetime.datetime.now(datetime.timezone.utc),
@@ -1153,15 +1154,16 @@ class Tasks(TaskBase):
 
     @staticmethod
     def __check_action(
-        data: dict, action: AlgorithmStepType | None, algorithm: dict
+        method: str, action: AlgorithmStepType | None, algorithm: dict
     ) -> AlgorithmStepType:
         """
-        Check the action of the task.
+        Check if the action of the task matches the action in the algorithm store. If
+        no action is provided, use the action from the algorithm store.
 
         Parameters
         ----------
-        data : dict
-            Data dictionary for the task request.
+        method : str
+            Method to be performed.
         action : AlgorithmStepType | None
             Action to be performed.
         algorithm : dict
@@ -1174,14 +1176,10 @@ class Tasks(TaskBase):
             algorithm store.
         """
         # note that input validation ensures that method is present
-        print(data["organizations"][0])
-        print(data["organizations"][0].get("input", {}))
-        algorithm_method = data["organizations"][0].get("input", {}).get("method")
-        try:
-            store_action = algorithm["functions"][algorithm_method]["step_type"]
-        except KeyError:
-            # we just use the action provided by the user
-            pass
+        algo_func = next(
+            (f for f in algorithm["functions"] if f["name"] == method), None
+        )
+        store_action = algo_func["step_type"] if algo_func else None
 
         if action and store_action and action != store_action:
             raise Exception(

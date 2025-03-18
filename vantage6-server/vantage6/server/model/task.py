@@ -39,6 +39,8 @@ class Task(Base):
         Description of the task
     image : str
         Name of the docker image that needs to be executed
+    method : str
+        Method to be performed
     collaboration_id : int
         Id of the collaboration that this task belongs to
     study_id : int
@@ -97,6 +99,7 @@ class Task(Base):
     name = Column(String)
     description = Column(String)
     image = Column(String)
+    method = Column(String)
     collaboration_id = Column(Integer, ForeignKey("collaboration.id"))
     study_id = Column(Integer, ForeignKey("study.id"))
     session_id = Column(Integer, ForeignKey("session.id"))

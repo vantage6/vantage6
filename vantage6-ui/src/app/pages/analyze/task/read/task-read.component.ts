@@ -206,7 +206,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
         const store = await this.algorithmStoreService.getAlgorithmStore(this.task.algorithm_store?.id.toString());
         this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image, store);
         // Please note, the function cannot be set if the input cannot be decoded. This will result in NO visualization and information about the function.
-        this.function = this.algorithm?.functions.find((_) => _.name === this.task?.input?.method) || null;
+        this.function = this.algorithm?.functions.find((_) => _.name === this.task?.method) || null;
         if (!this.selectedVisualization) {
           // by checking in if statement whether visualization was already set, we prevent
           // the visualization from being reset to the first one when the task is reloaded

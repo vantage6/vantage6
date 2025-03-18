@@ -94,14 +94,15 @@ export class DataframeCreateComponent implements OnInit, OnDestroy {
     // };
     let session_id: number = Number(this.sessionId);
     const dataframeInput: CreateDataframe = {
-      name: formCreateOutput?.name || '',
-      label: formCreateOutput?.database || '',
+      name: formCreateOutput.name,
+      label: formCreateOutput.database || '',
       //TODO(BART/RIAN) RIAN: Add component parameters for conditional 'Name', 'Label', 'Description' etc and process this in form-create.component
       // description: '',
       task: {
-        image: formCreateOutput.image || '',
-        store_id: formCreateOutput.store_id || -1,
-        organizations: formCreateOutput.organizations || []
+        image: formCreateOutput.image,
+        method: formCreateOutput.method,
+        store_id: formCreateOutput.store_id,
+        organizations: formCreateOutput.organizations
       }
     };
     const newDataframe = await this.sessionService.createDataframe(session_id, dataframeInput);

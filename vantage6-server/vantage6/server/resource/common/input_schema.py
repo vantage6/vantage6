@@ -123,14 +123,6 @@ def _validate_organizations(organizations: list[dict]) -> None:
     for organization in organizations:
         if "id" not in organization:
             raise ValidationError("Organization id is required for each organization")
-        if "input" not in organization:
-            raise ValidationError("Input is required for each organization")
-        if "method" not in organization["input"]:
-            raise ValidationError("Method is required for each organization input")
-    # ensure that same method is used for all organizations
-    methods = [org["input"]["method"] for org in organizations]
-    if not all(method == methods[0] for method in methods):
-        raise ValidationError("Same method must be used for all organizations")
 
 
 class _OnlyIdSchema(Schema):
@@ -431,6 +423,7 @@ class TaskInputSchema(_NameValidationSchema):
     name = fields.String()
     description = fields.String(validate=Length(max=_MAX_LEN_STR_LONG))
     image = fields.String(required=True, validate=Length(min=1))
+    method = fields.String(required=True)
     collaboration_id = fields.Integer(validate=Range(min=1))
     study_id = fields.Integer(validate=Range(min=1))
     store_id = fields.Integer(validate=Range(min=1))
@@ -650,6 +643,7 @@ class SessionTaskInputSchema(Schema):
 
     image = fields.String(required=True)
     store_id = fields.Integer(validate=Range(min=1))
+    method = fields.String(required=True)
 
     # This is a list of dictionaries, where each dictionary contains the
     # organization id and the organization's data extraction input (optional).

@@ -1803,7 +1803,8 @@ class UserClient(ClientBase):
             name: str,
             image: str,
             description: str,
-            input_: dict,
+            method: str,
+            input_: dict | None = None,
             session: int | None = None,
             collaboration: int | None = None,
             study: int | None = None,
@@ -1824,8 +1825,10 @@ class UserClient(ClientBase):
                 Docker image name which contains the algorithm
             description : str
                 Human readable description
-            input_ : dict
-                Algorithm input
+            method : str
+                Name of the method to be called
+            input_ : dict, optional
+                Algorithm input parameters
             session : int, optional
                 ID of the session to which this task belongs. If not set, the
                 session id of the client needs to be set. Default is None.
@@ -1916,6 +1919,7 @@ class UserClient(ClientBase):
                 "name": name,
                 "image": image,
                 "description": description,
+                "method": method,
                 "organizations": organization_json_list,
                 "databases": databases,
                 "session_id": session,

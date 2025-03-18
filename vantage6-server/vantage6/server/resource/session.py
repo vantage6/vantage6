@@ -327,6 +327,7 @@ class SessionBase(ServicesResources):
         self,
         session: db.Session,
         image: str,
+        method: str,
         organizations: dict,
         databases: list[dict],
         action: AlgorithmStepType,
@@ -345,6 +346,8 @@ class SessionBase(ServicesResources):
             Session to create the task for
         image : str
             Docker image to use for the task
+        method : str
+            Method to use for the task
         organizations : dict
             Organizations that need to execute the task
         databases : list[dict]
@@ -378,6 +381,7 @@ class SessionBase(ServicesResources):
             "name": f"Session initialization: {session.name}",
             "description": description,
             "image": image,
+            "method": method,
             "organizations": organizations,
             "databases": databases,
             "depends_on_ids": depends_on_ids,
@@ -1091,6 +1095,7 @@ class SessionDataframes(SessionBase):
             response, status_code = self.create_session_task(
                 session=session,
                 image=extraction_details["image"],
+                method=extraction_details["method"],
                 organizations=extraction_details["organizations"],
                 # TODO FM 10-7-2024: we should make a custom type for this
                 databases=[{"label": source_db_label, "type": "source"}],

@@ -5,12 +5,13 @@ from unittest.mock import patch, MagicMock
 import pandas as pd
 
 from vantage6.common.globals import ContainerEnvNames
-from vantage6.algorithm.tools import wrapper
+
+# from vantage6.algorithm.tools import wrapper
 
 MODULE_NAME = "algorithm_module"
 DATA = "column1,column2\n1,2"
 TOKEN = "This is a fake token"
-INPUT_PARAMETERS = {"method": "hello_world"}
+# INPUT_PARAMETERS = {"method": "hello_world"}
 SEPARATOR = "."
 SAMPLE_DB = pd.DataFrame([[1, 2]], columns=["column1", "column2"])
 

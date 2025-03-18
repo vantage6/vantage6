@@ -198,7 +198,7 @@
         </div>
         <div class="data-list__item" *ngIf="task.input">
           <b>{{ "task.function" | translate }}</b>
-          <span>{{ (function?.display_name ?? task.input.method) || "-" }}</span>
+          <span>{{ (function?.display_name ?? task.method) || "-" }}</span>
         </div>
       </div>
       <ng-container *ngIf="task.input?.parameters">
