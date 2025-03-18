@@ -121,7 +121,15 @@ class TaskSchema(HATEOASModelSchema):
             list[dict]
                 A list of dictionaries containing the database label and type.
         """
-        return [{"label": db.label, "type": db.type_} for db in obj.databases]
+        return [
+            {
+                "label": db.label,
+                "type": db.type_,
+                "dataframe_id": db.dataframe_id,
+                "dataframe_name": db.dataframe.name if db.dataframe else None,
+            }
+            for db in obj.databases
+        ]
 
 
 class ResultSchema(HATEOASModelSchema):

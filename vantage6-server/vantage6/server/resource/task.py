@@ -815,16 +815,9 @@ class Tasks(TaskBase):
         # is set by the session endpoints.
         dependent_tasks = []
         for database in databases:
-            for key in ["label", "type"]:
-                if key not in database:
-                    return {
-                        "msg": f"Database {key} missing! The dictionary "
-                        f"{database} should contain a '{key}' key"
-                    }, HTTPStatus.BAD_REQUEST
-
             # add last modification task to dependent tasks
             if database["type"] == TaskDatabaseType.DATAFRAME:
-                df = db.Dataframe.select(session, database["label"])
+                df = db.Dataframe.get(database["dataframe_id"])
                 if not df:
                     return {
                         "msg": f"Dataframe '{database['label']}' not found!"
@@ -910,8 +903,9 @@ class Tasks(TaskBase):
             # db.Task.get()). Task.id should be updated explicitly instead.
             task_db = db.TaskDatabase(
                 task_id=task.id,
-                label=database["label"],
-                type_=database["type"],
+                label=database.get("label"),
+                type_=database.get("type"),
+                dataframe_id=database.get("dataframe_id"),
             )
             task_db.save()
 

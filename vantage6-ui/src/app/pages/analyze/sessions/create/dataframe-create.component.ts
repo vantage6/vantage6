@@ -106,7 +106,7 @@ export class DataframeCreateComponent implements OnInit, OnDestroy {
     };
     const newDataframe = await this.sessionService.createDataframe(session_id, dataframeInput);
     if (newDataframe) {
-      this.router.navigate([routePaths.session, session_id]);
+      this.router.navigate([routePaths.task, newDataframe.last_session_task.id]);
     }
   }
 

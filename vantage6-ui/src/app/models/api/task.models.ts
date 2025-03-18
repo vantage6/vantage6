@@ -14,6 +14,11 @@ export enum TaskSortProperties {
   Name = 'name'
 }
 
+export enum TaskDatabaseType {
+  Dataframe = 'dataframe',
+  Source = 'source'
+}
+
 export enum TaskStatus {
   Pending = 'pending',
   Initializing = 'initializing',
@@ -126,6 +131,12 @@ export interface TaskResult {
   decoded_result?: object;
 }
 
+interface CreateTaskDatabase {
+  label?: string;
+  dataframe_id?: number;
+  type: TaskDatabaseType;
+}
+
 export interface CreateTask {
   name: string;
   description: string;
@@ -136,6 +147,7 @@ export interface CreateTask {
   store_id: number;
   server_url: string;
   organizations: CreateTaskOrganization[];
+  databases: CreateTaskDatabase[];
 }
 
 export interface KillTask {
@@ -150,17 +162,4 @@ export interface CreateTaskOrganization {
 export interface CreateTaskInput {
   method: string;
   kwargs: object;
-}
-
-export interface ColumnRetrievalInput {
-  collaboration_id: number;
-  db_label: string;
-  organizations: CreateTaskOrganization[];
-  query?: string;
-  sheet_name?: string;
-}
-
-// The result of the /column endpoint is either a task or a list of column names
-export interface ColumnRetrievalResult extends BaseTask {
-  columns?: string[];
 }

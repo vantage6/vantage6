@@ -173,8 +173,8 @@
             <ng-template matStepLabel>{{ "task-create.step-dataframe.title" | translate }}</ng-template>
             <mat-form-field *ngIf="dataframes.length > 0" subscriptSizing="dynamic">
               <mat-label>{{ "task.dataframe" | translate }}</mat-label>
-              <mat-select formControlName="dataframeName">
-                <mat-option *ngFor="let dataframe of dataframes" [value]="dataframe.name">
+              <mat-select formControlName="dataframeId">
+                <mat-option *ngFor="let dataframe of dataframes" [value]="dataframe.id">
                   {{ dataframe.name }}
                 </mat-option>
               </mat-select>

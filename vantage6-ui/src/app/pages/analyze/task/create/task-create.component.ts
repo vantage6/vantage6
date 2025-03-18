@@ -51,19 +51,19 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     });
   }
 
-  async onSubmitHandler(_: FormCreateOutput): Promise<void> {
-    const newDataframe: CreateTask = {
-      name: _?.name || '-',
-      description: _?.description || '-',
-      image: _.image || '-',
-      session_id: _.session_id || -1,
-      collaboration_id: _.collaboration_id || -1,
-      store_id: _.store_id || -1,
-      server_url: _.server_url || '-',
-      organizations: _.organizations || []
-      //TODO: Add preprocessing and filtering when backend is ready
+  async onSubmitHandler(createTaskForm: FormCreateOutput): Promise<void> {
+    const createTask: CreateTask = {
+      name: createTaskForm?.name || '-',
+      description: createTaskForm?.description || '-',
+      image: createTaskForm?.image || '-',
+      session_id: createTaskForm?.session_id || -1,
+      collaboration_id: createTaskForm?.collaboration_id || -1,
+      store_id: createTaskForm?.store_id || -1,
+      server_url: createTaskForm?.server_url || '-',
+      organizations: createTaskForm?.organizations || [],
+      databases: createTaskForm?.dataframes || []
     };
-    const newTask = await this.taskService.createTask(newDataframe);
+    const newTask = await this.taskService.createTask(createTask);
     if (newTask) {
       this.router.navigate([routePaths.task, newTask.id]);
     }
