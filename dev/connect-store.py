@@ -19,6 +19,8 @@ existing_urls = [store["url"] for store in existing_stores]
 
 # TODO make the path settable
 local_store_url = "http://localhost:7602/store"
+client.store.url = local_store_url
+client.store.store_id = 1
 if not local_store_url in existing_urls:
     store_response = client.store.create(
         algorithm_store_url=local_store_url,
@@ -30,7 +32,7 @@ else:
     store_response = client.store.list(name="Local store")["data"][0]
 
 # Remove existing algorithm
-client.store.url = store_response["url"]
+# client.store.url = store_response["url"]
 # This is broken, see issue: https://github.com/vantage6/vantage6/issues/1824
 # client.store.set(id_=store_response["id"])
 algorithms = client.algorithm.list(name="session basic example")["data"]
