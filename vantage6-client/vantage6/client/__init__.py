@@ -18,7 +18,7 @@ from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common import WhoAmI
 from vantage6.common.serialization import serialize
 from vantage6.common.client.utils import print_qr_code
-from vantage6.common.enum import RunStatus
+from vantage6.common.enum import AlgorithmStepType, RunStatus
 from vantage6.common.client.client_base import ClientBase
 from vantage6.client.filter import post_filtering
 from vantage6.client.utils import LogLevel
@@ -1803,13 +1803,15 @@ class UserClient(ClientBase):
             name: str,
             image: str,
             description: str,
-            input_: dict,
+            method: str,
+            input_: dict | None = None,
             session: int | None = None,
             collaboration: int | None = None,
             study: int | None = None,
             store: int | None = None,
             server_url: str | None = None,
             databases: list[dict] | None = None,
+            action: AlgorithmStepType | None = None,
         ) -> dict:
             """Create a new task
 
@@ -1824,8 +1826,10 @@ class UserClient(ClientBase):
                 Docker image name which contains the algorithm
             description : str
                 Human readable description
-            input_ : dict
-                Algorithm input
+            method : str
+                Name of the method to be called
+            input_ : dict, optional
+                Algorithm input parameters
             session : int, optional
                 ID of the session to which this task belongs. If not set, the
                 session id of the client needs to be set. Default is None.
@@ -1847,6 +1851,12 @@ class UserClient(ClientBase):
                 at least a 'label' key. Additional keys are 'query' (if using
                 SQL/SPARQL databases), 'sheet_name' (if using Excel databases),
                 and 'preprocessing' information.
+            action: AlgorithmStepType, optional
+                Session action type to be performed by the task. If not provided, the
+                action from the algorithm store will be used, if available. If it is not
+                available from either, there will be an error. Suitable actions may be
+                one of 'data extraction', 'preprocessing', 'federated compute',
+                'central compute' or 'postprocessing'.
             field: str, optional
                 Which data field to keep in the returned dict. For instance,
                 "field='name'" will only return the name of the task. Default is None.
@@ -1916,6 +1926,7 @@ class UserClient(ClientBase):
                 "name": name,
                 "image": image,
                 "description": description,
+                "method": method,
                 "organizations": organization_json_list,
                 "databases": databases,
                 "session_id": session,
@@ -1929,6 +1940,8 @@ class UserClient(ClientBase):
                 params["store_id"] = store
             if server_url:
                 params["server_url"] = server_url
+            if action:
+                params["action"] = action
 
             return self.parent.request(
                 "task",

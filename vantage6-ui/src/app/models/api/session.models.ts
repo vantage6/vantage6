@@ -26,7 +26,8 @@ export enum TaskDatabaseType {
 export enum AlgorithmStepType {
   Preprocessing = 'preprocessing',
   DataExtraction = 'data extraction',
-  Compute = 'compute',
+  FederatedCompute = 'federated compute',
+  CentralCompute = 'central compute',
   Postprocessing = 'postprocessing'
 }
 
@@ -113,6 +114,7 @@ export interface CreateDataframe {
 
 interface CreateDataframeTask {
   image: string;
+  method: string;
   organizations: CreateTaskOrganization[];
   store_id?: number;
 }

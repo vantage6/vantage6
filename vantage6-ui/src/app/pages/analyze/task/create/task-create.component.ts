@@ -51,19 +51,21 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     });
   }
 
-  async onSubmitHandler(createTaskForm: FormCreateOutput): Promise<void> {
-    const createTask: CreateTask = {
-      name: createTaskForm?.name || '-',
-      description: createTaskForm?.description || '-',
-      image: createTaskForm?.image || '-',
-      session_id: createTaskForm?.session_id || -1,
-      collaboration_id: createTaskForm?.collaboration_id || -1,
-      store_id: createTaskForm?.store_id || -1,
-      server_url: createTaskForm?.server_url || '-',
-      organizations: createTaskForm?.organizations || [],
-      databases: createTaskForm?.dataframes || []
+  async onSubmitHandler(formOutput: FormCreateOutput): Promise<void> {
+    const newDataframe: CreateTask = {
+      name: formOutput.name,
+      description: formOutput.description || '-',
+      image: formOutput.image,
+      method: formOutput.method,
+      session_id: formOutput.session_id,
+      // TODO I don't like passing -1 here, needs to be fixed
+      collaboration_id: formOutput.collaboration_id || -1,
+      organizations: formOutput.organizations,
+      store_id: formOutput.store_id,
+      server_url: formOutput.server_url,
+      databases: formOutput?.dataframes || []
     };
-    const newTask = await this.taskService.createTask(createTask);
+    const newTask = await this.taskService.createTask(newDataframe);
     if (newTask) {
       this.router.navigate([routePaths.task, newTask.id]);
     }

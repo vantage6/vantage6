@@ -732,7 +732,7 @@ class Run(SingleRunBase):
 
                 # Skip the mark as failed for tasks that are compute tasks, as these
                 # might still be able to run.
-                if dependent_task.action == AlgorithmStepType.COMPUTE:
+                if AlgorithmStepType.is_compute(dependent_task.action):
                     continue
 
                 log.debug(f"Marking dependent task {dependent_task.id} runs as failed.")

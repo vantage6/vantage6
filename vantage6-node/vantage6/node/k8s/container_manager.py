@@ -354,6 +354,7 @@ class ContainerManager:
         )
         env_vars[ContainerEnvNames.API_PATH.value] = ("",)
 
+        env_vars[ContainerEnvNames.ALGORITHM_METHOD.value] = task_info["method"]
         env_vars[ContainerEnvNames.FUNCTION_ACTION.value] = action.value
 
         # Encode the environment variables to avoid issues with special characters and

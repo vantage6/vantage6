@@ -43,8 +43,14 @@ class AlgorithmStepType(EnumBase):
 
     DATA_EXTRACTION = "data extraction"
     PREPROCESSING = "preprocessing"
-    COMPUTE = "compute"
+    FEDERATED_COMPUTE = "federated compute"
+    CENTRAL_COMPUTE = "central compute"
     POST_PROCESSING = "postprocessing"
+
+    @classmethod
+    def is_compute(cls, step_type: str) -> bool:
+        """Check if the step type is a compute step"""
+        return step_type in [cls.FEDERATED_COMPUTE.value, cls.CENTRAL_COMPUTE.value]
 
 
 class TaskDatabaseType(EnumBase):

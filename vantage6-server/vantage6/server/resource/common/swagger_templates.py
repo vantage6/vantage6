@@ -63,13 +63,13 @@ swagger_template = {
                 "example": {
                     "name": "human-readable-name",
                     "image": "hello-world",
+                    "method": "method-name",
                     "collaboration_id": 1,
                     "description": "human-readable-description",
                     "organizations": [
                         {
                             "id": 1,
                             "input": {
-                                "method": "method-name",
                                 "kwargs": {"key": "value"},
                                 "args": ["arg1", "arg2"],
                             },

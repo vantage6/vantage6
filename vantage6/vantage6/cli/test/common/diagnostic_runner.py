@@ -97,9 +97,7 @@ class DiagnosticRunner:
             name="test",
             description="Basic Diagnostic test",
             image=DIAGNOSTICS_IMAGE,
-            input_={
-                "method": "base_features",
-            },
+            method="base_features",
             organizations=self.organization_ids,
             databases=[{"label": "default"}],
         )
@@ -123,8 +121,8 @@ class DiagnosticRunner:
             name="test",
             description="VPN Diagnostic test",
             image=DIAGNOSTICS_IMAGE,
+            method="vpn_features",
             input_={
-                "method": "vpn_features",
                 "kwargs": {"other_nodes": self.organization_ids},
             },
             organizations=self.organization_ids,

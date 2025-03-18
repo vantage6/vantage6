@@ -131,7 +131,7 @@ def federated(func: callable) -> callable:
 
     @wraps(func)
     def wrapper(*args, **kwargs) -> callable:
-        _exit_if_action_mismatch(AlgorithmStepType.COMPUTE)
+        _exit_if_action_mismatch(AlgorithmStepType.FEDERATED_COMPUTE)
         result = func(*args, **kwargs)
         return result
 
@@ -143,7 +143,7 @@ def central(func: callable) -> callable:
 
     @wraps(func)
     def wrapper(*args, **kwargs) -> callable:
-        _exit_if_action_mismatch(AlgorithmStepType.COMPUTE)
+        _exit_if_action_mismatch(AlgorithmStepType.CENTRAL_COMPUTE)
         result = func(*args, **kwargs)
         return result
 

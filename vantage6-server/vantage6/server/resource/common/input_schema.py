@@ -5,7 +5,7 @@ import re
 from marshmallow import Schema, fields, ValidationError, validates, validates_schema
 from marshmallow.validate import Length, Range, OneOf
 
-from vantage6.common.enum import RunStatus, TaskDatabaseType
+from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskDatabaseType
 from vantage6.server.model.rule import Scope
 from vantage6.server.default_roles import DefaultRole
 from vantage6.server.model.common.utils import validate_password
@@ -423,6 +423,7 @@ class TaskInputSchema(_NameValidationSchema):
     name = fields.String()
     description = fields.String(validate=Length(max=_MAX_LEN_STR_LONG))
     image = fields.String(required=True, validate=Length(min=1))
+    method = fields.String(required=True)
     collaboration_id = fields.Integer(validate=Range(min=1))
     study_id = fields.Integer(validate=Range(min=1))
     store_id = fields.Integer(validate=Range(min=1))
@@ -434,6 +435,7 @@ class TaskInputSchema(_NameValidationSchema):
     databases = fields.List(fields.Dict(), allow_none=True)
     session_id = fields.Integer(validate=Range(min=1), required=True)
     dataframe_id = fields.Integer(validate=Range(min=1))
+    action = fields.String(validate=OneOf([s.value for s in AlgorithmStepType]))
 
     @validates_schema
     def validate_schema(self, data: dict, **kwargs) -> None:
@@ -653,6 +655,7 @@ class SessionTaskInputSchema(Schema):
 
     image = fields.String(required=True)
     store_id = fields.Integer(validate=Range(min=1))
+    method = fields.String(required=True)
 
     # This is a list of dictionaries, where each dictionary contains the
     # organization id and the organization's data extraction input (optional).

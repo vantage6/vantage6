@@ -58,6 +58,8 @@ export interface BaseTask {
   status: TaskStatus;
   session: BaseLink;
   image: string;
+  method: string;
+  input: TaskInput;
   init_org: BaseLink;
   init_user: BaseLink;
   algorithm_store?: BaseLink;
@@ -76,7 +78,8 @@ export interface Task {
   status: TaskStatus;
   session: BaseLink;
   image: string;
-  input?: TaskInput;
+  method: string;
+  input: TaskInput;
   init_org?: BaseOrganization;
   init_user?: BaseUser;
   runs: TaskRun[];
@@ -116,7 +119,6 @@ export interface RunNode {
 }
 
 interface TaskInput {
-  method: string;
   parameters: TaskParameter[];
 }
 
@@ -141,6 +143,7 @@ export interface CreateTask {
   name: string;
   description: string;
   image: string;
+  method: string;
   session_id: number;
   collaboration_id: number;
   study_id?: number;
@@ -160,6 +163,5 @@ export interface CreateTaskOrganization {
 }
 
 export interface CreateTaskInput {
-  method: string;
   kwargs: object;
 }

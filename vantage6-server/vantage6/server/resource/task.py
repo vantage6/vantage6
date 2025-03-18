@@ -585,7 +585,6 @@ class Tasks(TaskBase):
             self.socketio,
             self.r,
             self.config,
-            AlgorithmStepType.COMPUTE,
         )
 
     # TODO this function should be refactored to make it more readable
@@ -595,7 +594,7 @@ class Tasks(TaskBase):
         socketio: SocketIO,
         rules: RuleCollection,
         config: dict,
-        action: AlgorithmStepType,
+        action: AlgorithmStepType | None = None,
     ):
         """
         Create new task and algorithm runs. Send the task to the nodes.
@@ -746,6 +745,7 @@ class Tasks(TaskBase):
                 return {"msg": "Container-token is not valid"}, HTTPStatus.UNAUTHORIZED
 
         # get the algorithm store
+        algorithm = None
         if g.user:
             store_id = data.get("store_id")
             store = None
@@ -768,12 +768,14 @@ class Tasks(TaskBase):
                     }, HTTPStatus.FORBIDDEN
                 # get the algorithm from the algorithm store
                 try:
-                    image, digest = Tasks._get_image_and_hash_from_store(
+                    algorithm = Tasks._get_algorithm_from_store(
                         store=store,
                         image=image,
                         config=config,
                         server_url_from_request=data.get("server_url"),
                     )
+                    image = algorithm["image"]
+                    digest = algorithm["digest"]
                 except Exception as e:
                     log.exception("Error while getting image from store: %s", e)
                     return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
@@ -795,6 +797,9 @@ class Tasks(TaskBase):
 
         # Obtain the user requested database or dataframes
         databases = data.get("databases", [])
+
+        # check the action of the task
+        action = Tasks.__check_action(data, action, algorithm)
 
         # A task can be dependent on one or more other task(s). There are three cases:
         #
@@ -869,6 +874,7 @@ class Tasks(TaskBase):
             name=data.get("name", ""),
             description=data.get("description", ""),
             image=image_with_hash,
+            method=data["method"],
             init_org=init_org,
             algorithm_store=store,
             created_at=datetime.datetime.now(datetime.timezone.utc),
@@ -1059,6 +1065,8 @@ class Tasks(TaskBase):
         dummy_cryptor = DummyCryptor()
         for org in organizations_json_list:
             input_ = org.get("input")
+            if input_ is None:
+                continue
             decrypted_input = dummy_cryptor.decrypt_str_to_bytes(input_)
             is_input_readable = False
             try:
@@ -1086,12 +1094,12 @@ class Tasks(TaskBase):
         return True, ""
 
     @staticmethod
-    def _get_image_and_hash_from_store(
+    def _get_algorithm_from_store(
         store: db.AlgorithmStore,
         image: str,
         config: dict,
         server_url_from_request: str | None = None,
-    ) -> tuple[str, str]:
+    ) -> dict:
         """
         Determine the image and hash from the algorithm store.
 
@@ -1108,8 +1116,8 @@ class Tasks(TaskBase):
 
         Returns
         -------
-        tuple[str, str]
-            Image url and image hash digest.
+        dict
+            Algorithm object from algorithm store.
 
         Raises
         ------
@@ -1139,18 +1147,57 @@ class Tasks(TaskBase):
         except Exception as e:
             raise Exception("Algorithm not found in store!") from e
 
-        image = algorithm["image"]
-        digest = algorithm["digest"]
-        # TODO v5+ remove this check? The digest should always be present for an
-        # algorithm from stores started in v4.6 and higher
-        if image and not digest:
-            log.warning(
-                "Algorithm image %s does not have a digest in the algorithm store. Will"
-                " use it without digest.",
-                image,
+        return algorithm
+
+    @staticmethod
+    def __check_action(
+        request_data: dict, action: AlgorithmStepType | None, algorithm: dict | None
+    ) -> AlgorithmStepType:
+        """
+        Check if the action of the task matches the action in the algorithm store. If
+        no action is provided, use the action from the algorithm store.
+
+        Parameters
+        ----------
+        request_data : dict
+            Request data.
+        action : AlgorithmStepType | None
+            Action to be performed.
+        algorithm : dict | None
+            Algorithm object from algorithm store.
+
+        Raises
+        ------
+        Exception
+            If the action is not valid or does not match the action type in the
+            algorithm store.
+        """
+        method = request_data["method"]
+        if not action:
+            action = request_data.get("action")
+        # note that input validation ensures that method is present
+        store_action = None
+        if algorithm:
+            algo_func = next(
+                (f for f in algorithm["functions"] if f["name"] == method), None
             )
-            return image, None
-        return image, digest
+            store_action = algo_func["step_type"] if algo_func else None
+
+        if action and store_action and action != store_action:
+            raise Exception(
+                f"Action {action} does not match the action type in the "
+                f"algorithm store: {store_action}"
+            )
+        elif not action and not store_action:
+            raise Exception(
+                "No action type provided. Please provide an action that is one of: "
+                f"{AlgorithmStepType.list()}"
+            )
+
+        elif not action:
+            action = store_action
+
+        return action
 
 
 class Task(TaskBase):

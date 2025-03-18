@@ -96,10 +96,10 @@
               </mat-select>
             </mat-form-field>
             <div *ngIf="function">
-              <div class="field-description" *ngIf="function.execution_type === functionType.Central">
+              <div class="field-description" *ngIf="!isFederatedStep(function.step_type)">
                 {{ "task-create.step-function.description.organization-central" | translate }}
               </div>
-              <div class="field-description" *ngIf="function.execution_type === functionType.Federated">
+              <div class="field-description" *ngIf="isFederatedStep(function.step_type)">
                 {{ "task-create.step-function.description.organization-partial" | translate }}
               </div>
               <mat-form-field subscriptSizing="dynamic">
@@ -109,7 +109,7 @@
                 cannot be changed after initialization (see e.g.
                 https://stackoverflow.com/questions/51204450/error-cannot-change-multiple-mode-of-select-after-initialization)
                 -->
-                <div *ngIf="function.execution_type === functionType.Central; else partialOrgDropdown">
+                <div *ngIf="!isFederatedStep(function.step_type); else partialOrgDropdown">
                   <mat-select formControlName="organizationIDs" [compareWith]="compareIDsForSelection" [multiple]="false">
                     <mat-option *ngFor="let organization of organizations" [value]="organization.id.toString()">
                       {{ organization.name }}
@@ -194,8 +194,8 @@
               [form]="preprocessingForm"
               [functions]="algorithm?.select || []"
               [columns]="columns"
-              ></app-preprocessing-step>
-              <!-- (handleFirstPreprocessor)="retrieveColumns()" -->
+            ></app-preprocessing-step>
+            <!-- (handleFirstPreprocessor)="retrieveColumns()" -->
             <div>
               <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
               <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
@@ -205,12 +205,8 @@
         <mat-step *ngIf="shouldShowFilterStep && availableSteps.filter" [stepControl]="filterForm">
           <ng-template matStepLabel>{{ "task-create.step-filter.title" | translate }}</ng-template>
           <ng-container *ngIf="!isLoadingColumns; else loadingColumns">
-            <app-filter-step
-              [form]="filterForm"
-              [filters]="algorithm?.filter || []"
-              [columns]="columns"
-              ></app-filter-step>
-              <!-- (handleFirstPreprocessor)="retrieveColumns()" -->
+            <app-filter-step [form]="filterForm" [filters]="algorithm?.filter || []" [columns]="columns"></app-filter-step>
+            <!-- (handleFirstPreprocessor)="retrieveColumns()" -->
             <div>
               <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
               <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
