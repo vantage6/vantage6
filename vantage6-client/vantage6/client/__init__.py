@@ -18,7 +18,7 @@ from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common import WhoAmI
 from vantage6.common.serialization import serialize
 from vantage6.common.client.utils import print_qr_code
-from vantage6.common.enum import RunStatus
+from vantage6.common.enum import AlgorithmStepType, RunStatus
 from vantage6.common.client.client_base import ClientBase
 from vantage6.client.filter import post_filtering
 from vantage6.client.utils import LogLevel
@@ -1811,6 +1811,7 @@ class UserClient(ClientBase):
             store: int | None = None,
             server_url: str | None = None,
             databases: list[dict] | None = None,
+            action: AlgorithmStepType | None = None,
         ) -> dict:
             """Create a new task
 
@@ -1850,6 +1851,11 @@ class UserClient(ClientBase):
                 at least a 'label' key. Additional keys are 'query' (if using
                 SQL/SPARQL databases), 'sheet_name' (if using Excel databases),
                 and 'preprocessing' information.
+            action: AlgorithmStepType, optional
+                Session action type to be performed by the task. If not provided, the
+                action from the algorithm store will be used. Suitable actions may be
+                one of 'data extraction', 'preprocessing', 'federated compute',
+                'central compute' or 'postprocessing'.
             field: str, optional
                 Which data field to keep in the returned dict. For instance,
                 "field='name'" will only return the name of the task. Default is None.
@@ -1933,6 +1939,8 @@ class UserClient(ClientBase):
                 params["store_id"] = store
             if server_url:
                 params["server_url"] = server_url
+            if action:
+                params["action"] = action
 
             return self.parent.request(
                 "task",

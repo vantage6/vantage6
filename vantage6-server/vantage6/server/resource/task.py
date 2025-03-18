@@ -745,6 +745,7 @@ class Tasks(TaskBase):
                 return {"msg": "Container-token is not valid"}, HTTPStatus.UNAUTHORIZED
 
         # get the algorithm store
+        algorithm = None
         if g.user:
             store_id = data.get("store_id")
             store = None
@@ -798,7 +799,7 @@ class Tasks(TaskBase):
         databases = data.get("databases", [])
 
         # check the action of the task
-        action = Tasks.__check_action(data["method"], action, algorithm)
+        action = Tasks.__check_action(data, action, algorithm)
 
         # A task can be dependent on one or more other task(s). There are three cases:
         #
@@ -1064,6 +1065,8 @@ class Tasks(TaskBase):
         dummy_cryptor = DummyCryptor()
         for org in organizations_json_list:
             input_ = org.get("input")
+            if input_ is None:
+                continue
             decrypted_input = dummy_cryptor.decrypt_str_to_bytes(input_)
             is_input_readable = False
             try:
@@ -1148,7 +1151,7 @@ class Tasks(TaskBase):
 
     @staticmethod
     def __check_action(
-        method: str, action: AlgorithmStepType | None, algorithm: dict
+        request_data: dict, action: AlgorithmStepType | None, algorithm: dict | None
     ) -> AlgorithmStepType:
         """
         Check if the action of the task matches the action in the algorithm store. If
@@ -1156,11 +1159,11 @@ class Tasks(TaskBase):
 
         Parameters
         ----------
-        method : str
-            Method to be performed.
+        request_data : dict
+            Request data.
         action : AlgorithmStepType | None
             Action to be performed.
-        algorithm : dict
+        algorithm : dict | None
             Algorithm object from algorithm store.
 
         Raises
@@ -1169,19 +1172,29 @@ class Tasks(TaskBase):
             If the action is not valid or does not match the action type in the
             algorithm store.
         """
+        method = request_data["method"]
+        if not action:
+            action = request_data.get("action")
         # note that input validation ensures that method is present
-        algo_func = next(
-            (f for f in algorithm["functions"] if f["name"] == method), None
-        )
-        store_action = algo_func["step_type"] if algo_func else None
+        store_action = None
+        if algorithm:
+            algo_func = next(
+                (f for f in algorithm["functions"] if f["name"] == method), None
+            )
+            store_action = algo_func["step_type"] if algo_func else None
 
         if action and store_action and action != store_action:
             raise Exception(
                 f"Action {action} does not match the action type in the "
                 f"algorithm store: {store_action}"
             )
+        elif not action and not store_action:
+            raise Exception(
+                "No action type provided. Please provide an action that is one of: "
+                f"{AlgorithmStepType.list()}"
+            )
 
-        if not action:
+        elif not action:
             action = store_action
 
         return action

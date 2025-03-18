@@ -5,7 +5,7 @@ from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 
 from vantage6.common import logger_name
-from vantage6.common.enum import RunStatus
+from vantage6.common.enum import AlgorithmStepType, RunStatus
 from vantage6.common.serialization import serialize
 from vantage6.common import bytes_to_base64s
 from vantage6.backend.common import session as db_session
@@ -2958,6 +2958,7 @@ class TestResources(TestResourceBase):
             "organizations": [{"id": 9999}],
             "image": "some-image",
             "session_id": session.id,
+            "action": AlgorithmStepType.FEDERATED_COMPUTE,
         }
         results = self.app.post("/api/task", headers=headers, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
@@ -3058,6 +3059,7 @@ class TestResources(TestResourceBase):
             "collaboration_id": col2.id,
             "image": "some-image",
             "session_id": session.id,
+            "action": AlgorithmStepType.FEDERATED_COMPUTE,
         }
         results = self.app.post(
             "/api/task",
