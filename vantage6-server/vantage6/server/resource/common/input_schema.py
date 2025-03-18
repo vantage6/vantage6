@@ -123,6 +123,14 @@ def _validate_organizations(organizations: list[dict]) -> None:
     for organization in organizations:
         if "id" not in organization:
             raise ValidationError("Organization id is required for each organization")
+        if "input" not in organization:
+            raise ValidationError("Input is required for each organization")
+        if "method" not in organization["input"]:
+            raise ValidationError("Method is required for each organization input")
+    # ensure that same method is used for all organizations
+    methods = [org["input"]["method"] for org in organizations]
+    if not all(method == methods[0] for method in methods):
+        raise ValidationError("Same method must be used for all organizations")
 
 
 class _OnlyIdSchema(Schema):
