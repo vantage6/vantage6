@@ -166,10 +166,10 @@ jobs:
 
       - name: Push Helm charts
         run: |
-          helm push charts/common oci://harbor2.vantage6.ai/infrastructure
-          helm push charts/node oci://harbor2.vantage6.ai/infrastructure
-          helm push charts/store oci://harbor2.vantage6.ai/infrastructure
-          helm push charts/server oci://harbor2.vantage6.ai/infrastructure
+          helm push common-*.tgz oci://harbor2.vantage6.ai/infrastructure
+          helm push node-*.tgz oci://harbor2.vantage6.ai/infrastructure
+          helm push store-*.tgz oci://harbor2.vantage6.ai/infrastructure
+          helm push server-*.tgz oci://harbor2.vantage6.ai/infrastructure
 
   support-images:
     name: Build support images
