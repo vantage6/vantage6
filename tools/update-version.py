@@ -175,7 +175,7 @@ def update_version_docker_files(version: str) -> None:
             f.write(new_content)
 
 
-def update_helm_charts(version: str) -> None:
+def update_helm_charts(version: str, spec: str, build: int) -> None:
     """
     Update version in Helm charts
 
@@ -190,6 +190,19 @@ def update_helm_charts(version: str) -> None:
         Path("../charts/store/Chart.yaml"),
         Path("../charts/server/Chart.yaml"),
     ]
+    if spec == "final":
+        new_version = version
+    else:
+        if spec == "candidate":
+            spec_ = "rc"
+        elif spec == "beta":
+            spec_ = "b"
+        elif spec == "alpha":
+            spec_ = "a"
+        else:
+            raise ValueError(f"Invalid spec: {spec}")
+
+        new_version = f"{version}-{spec_}.{build}"
 
     for chart_file in chart_files:
         info(f"Updating version in {chart_file}")
@@ -198,15 +211,23 @@ def update_helm_charts(version: str) -> None:
 
             # Update appVersion
             content = re.sub(
-                r'appVersion: "[\d.]+"', f'appVersion: "{version}"', content
+                r'appVersion: "[\d.]+(-\w+(\.\d+)?)?"',
+                f'appVersion: "{new_version}"',
+                content,
             )
 
             # Update version
-            content = re.sub(r"version: [\d.]+", f"version: {version}", content)
+            content = re.sub(
+                r'version: "[\d.]+(-\w+(\.\d+)?)?"',
+                f'version: "{new_version}"',
+                content,
+            )
 
             # Update common dependency version if it exists
             content = re.sub(
-                r'(name: common\n\s+version: )"[\d.]+"', f'\\1"{version}"', content
+                r'(name: common\n\s+version: )"[\d.]+(-\w+(\.\d+)?)?"',
+                f'\\1"{new_version}"',
+                content,
             )
 
         with open(chart_file, "w") as f:
@@ -237,7 +258,7 @@ def set_version(spec: str, version: str, build: int, post: int) -> None:
     info("Version specs updated")
 
     update_version(version)
-    info("Vesion numbers updated")
+    info("Version numbers updated")
 
     update_build(str(build))
     info("Build number updated")
@@ -248,7 +269,7 @@ def set_version(spec: str, version: str, build: int, post: int) -> None:
     update_version_docker_files(version)
     info("Docker files updated")
 
-    update_helm_charts(version)
+    update_helm_charts(version, spec, build)
     info("Helm charts updated")
 
 

@@ -7,7 +7,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { StudyService } from 'src/app/services/study.service';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
-import { CreateDataframe, Session } from 'src/app/models/api/session.models';
+import { AlgorithmStepType, CreateDataframe, Session } from 'src/app/models/api/session.models';
 import { Collaboration } from 'src/app/models/api/collaboration.model';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { AvailableSteps, FormCreateOutput } from 'src/app/models/forms/create-form.model';
@@ -21,6 +21,7 @@ import { CreateAnalysisFormComponent } from 'src/app/components/forms/compute-fo
 })
 export class DataframeCreateComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
+  algorithmStepType = AlgorithmStepType;
 
   title: string = '';
   availableSteps: AvailableSteps = {

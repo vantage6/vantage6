@@ -18,10 +18,16 @@ export enum SessionScope {
   Own = 'own'
 }
 
-
 export enum TaskDatabaseType {
   Dataframe = 'dataframe',
   Source = 'source'
+}
+
+export enum AlgorithmStepType {
+  Preprocessing = 'preprocessing',
+  DataExtraction = 'data extraction',
+  Compute = 'compute',
+  Postprocessing = 'postprocessing'
 }
 
 export interface GetSessionParameters {

@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { getChipTypeForStatus, getStatusType, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
-import { Algorithm, AlgorithmFunction, Argument, ArgumentType, FunctionType } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmFunction, Argument, ArgumentType, FunctionExecutionType } from 'src/app/models/api/algorithm.model';
 import { Visualization } from 'src/app/models/api/visualization.model';
 import {
   Task,
@@ -111,7 +111,7 @@ import { SessionService } from 'src/app/services/session.service';
 export class TaskReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   @Input() id = '';
-  functionType = FunctionType;
+  functionType = FunctionExecutionType;
   printDate = printDate;
 
   destroy$ = new Subject();

@@ -18,7 +18,7 @@ import {
   ArgumentType,
   AlgorithmFunction,
   Argument,
-  FunctionType,
+  FunctionExecutionType,
   AlgorithmFunctionExtended,
   ConditionalArgComparatorType
 } from 'src/app/models/api/algorithm.model';
@@ -46,7 +46,7 @@ import { MAX_ATTEMPTS_RENEW_NODE, SECONDS_BETWEEN_ATTEMPTS_RENEW_NODE } from 'sr
 import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 import { EncryptionService } from 'src/app/services/encryption.service';
 import { environment } from 'src/environments/environment';
-import { BaseSession, Dataframe } from 'src/app/models/api/session.models';
+import { AlgorithmStepType, BaseSession, Dataframe } from 'src/app/models/api/session.models';
 import { SessionService } from 'src/app/services/session.service';
 import { AvailableSteps, FormCreateOutput } from 'src/app/models/forms/create-form.model';
 import { PageHeaderComponent } from '../../page-header/page-header.component';
@@ -111,6 +111,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   @Input() formTitle: string = '';
   @Input() sessionId?: string = '';
+  @Input() taskType?: AlgorithmStepType;
 
   // TODO(BART/RIAN) RIAN: Somehow we need to be able to calculate which step is first and which is last in order to conditionally add the back or next button.
   @Input() availableSteps: AvailableSteps = {
@@ -136,7 +137,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   destroy$ = new Subject();
   routes = routePaths;
   argumentType = ArgumentType;
-  functionType = FunctionType;
+  functionType = FunctionExecutionType;
   studyOrCollab = StudyOrCollab;
 
   sessions: BaseSession[] = [];
@@ -363,7 +364,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.filteredFunctions = this.functions.filter((func) => {
       const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
       const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
-      return [func.algorithm_name, func.type, storeName, func.display_name, func.name].some((val) =>
+      return [func.algorithm_name, func.execution_type, storeName, func.display_name, func.name].some((val) =>
         val?.toLowerCase()?.includes(value.toLowerCase())
       );
     });
@@ -377,7 +378,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   getFunctionOptionLabel(func: AlgorithmFunctionExtended): string {
     const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
     const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
-    return `${this.getDisplayName(func)} <div class="detail-txt"> | ${func.algorithm_name}, ${storeName}, ${func.type}</div>`;
+    return `${this.getDisplayName(func)} <div class="detail-txt"> | ${func.algorithm_name}, ${storeName}, ${func.execution_type}</div>`;
   }
 
   getAlgorithmFunctionSpec(func: AlgorithmFunctionExtended): string {
@@ -724,6 +725,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
         curAlgorithm.functions
           // TODO v5+ remove the func.standalone === undefined check. After v5+ the standalone property should be set for all functions
           .filter((func) => func.standalone || func.standalone === undefined)
+          .filter((func) => this.taskType ? func.step_type === this.taskType : true)
           .map((func) => {
             return {
               ...func,
