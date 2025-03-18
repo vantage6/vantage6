@@ -142,7 +142,7 @@ jobs:
           ref: ${{ env.branch }}
 
       - name: Set up Helm
-        uses: azure/setup-helm@v1
+        uses: azure/setup-helm@latest
 
       - name: Login to harbor2.vantage6.ai
         env:
