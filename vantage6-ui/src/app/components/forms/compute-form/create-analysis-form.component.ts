@@ -24,7 +24,7 @@ import {
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { BaseNode, Database, NodeStatus } from 'src/app/models/api/node.model';
-import { CreateTaskInput, Task } from 'src/app/models/api/task.models';
+import { CreateTaskInput, Task, TaskDatabaseType } from 'src/app/models/api/task.models';
 import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
 import { Router, RouterLink } from '@angular/router';
@@ -167,7 +167,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     sessionID: ['', Validators.required]
   });
   studyForm = this.fb.nonNullable.group({
-    studyOrCollabID: [{ value: '', disabled: false }, Validators.required]
+    studyOrCollabID: [{ value: '', disabled: false }]
   });
   functionForm = this.fb.nonNullable.group({
     algorithmFunctionSpec: ['', Validators.required],
@@ -180,7 +180,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     database: ['', Validators.required]
   });
   dataframeForm = this.fb.nonNullable.group({
-    dataframeName: ['', Validators.required]
+    dataframeId: ['', Validators.required]
   });
   preprocessingForm = this.fb.array([]);
   filterForm = this.fb.array([]);
@@ -397,6 +397,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       (this.availableSteps.study && this.studyForm.invalid) ||
       (this.availableSteps.function && this.functionForm.invalid) ||
       (this.availableSteps.database && this.databaseForm.invalid) ||
+      (this.availableSteps.dataframe && this.dataframeForm.invalid) ||
       (this.availableSteps.preprocessing && this.preprocessingForm.invalid) ||
       (this.availableSteps.filter && this.filterForm.invalid) ||
       (this.availableSteps.parameter && this.parameterForm.invalid)
@@ -481,6 +482,15 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
     if (this.studyForm.controls['studyOrCollabID'].value.startsWith(StudyOrCollab.Study)) {
       formCreateOutput.study_id = Number(this.studyForm.controls['studyOrCollabID'].value.substring(StudyOrCollab.Study.length));
+    }
+
+    if (this.shouldShowDatabaseStep) {
+      formCreateOutput.database = this.databaseForm.controls.database.value;
+    }
+
+    // TODO get this to work for algorithms that use multiple dataframes
+    if (this.shouldShowDataframeStep) {
+      formCreateOutput.dataframes = [{ dataframe_id: this.dataframeForm.controls.dataframeId.value, type: TaskDatabaseType.Dataframe }];
     }
 
     this.onSubmit.next(formCreateOutput);
@@ -738,6 +748,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     // set default for study step: full collaboration (this is not visible but required
     // if there are no studies defined to have a valid form)
     this.studyForm.controls['studyOrCollabID'].setValue(StudyOrCollab.Collaboration + this.collaboration?.id.toString());
+    this.updateStudyFormValidation();
     this.setOrganizations();
 
     this.studyForm.controls['studyOrCollabID'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (studyID) => {
@@ -776,12 +787,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
         this.studyForm.get('studyOrCollabID')?.disable();
         this.studyForm.controls['studyOrCollabID'].setValue(StudyOrCollab.Study + this.session.study.id.toString());
         this.handleStudyChange(this.session.study.id);
-      } else {
+      } else if (this.shouldShowStudyStep) {
         this.studyForm.get('studyOrCollabID')?.enable();
       }
       this.dataframes = await this.sessionService.getDataframes(this.session.id);
     }
-    this.dataframes;
+    this.updateStudyFormValidation();
     this.clearFunctionStep();
     this.clearDatabaseStep();
     this.clearPreprocessingStep();
@@ -912,5 +923,15 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
         this.snackBarService.showMessage(this.translateService.instant('task-create.step-database.error-db-update'));
       }
     }
+  }
+
+  private updateStudyFormValidation(): void {
+    const studyOrCollabControl = this.studyForm.get('studyOrCollabID');
+    if (this.shouldShowStudyStep) {
+      studyOrCollabControl?.setValidators(Validators.required);
+    } else {
+      studyOrCollabControl?.clearValidators();
+    }
+    studyOrCollabControl?.updateValueAndValidity();
   }
 }

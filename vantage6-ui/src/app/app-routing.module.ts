@@ -231,7 +231,7 @@ const routes: Routes = [
         data: {
           crumbs: [['algorithm-list.title', routePaths.algorithms], ['algorithm-read.crumb-title']]
         }
-      },
+      }
     ]
   },
   {

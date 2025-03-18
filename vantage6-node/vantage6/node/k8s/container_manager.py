@@ -714,7 +714,7 @@ class ContainerManager:
             self._validate_dataframes(databases_to_use, run_io)
 
             environment_variables[ContainerEnvNames.USER_REQUESTED_DATAFRAMES.value] = (
-                ",".join([db["name"] for db in databases_to_use])
+                ",".join([db["dataframe_name"] for db in databases_to_use])
             )
 
         return volumes, vol_mounts, environment_variables
@@ -781,12 +781,14 @@ class ContainerManager:
 
         # Validate that the requested dataframes exist. At this point they need to as
         # we are about to start the task.
-        requested_dataframes = {db["label"] for db in databases_to_use}
+        requested_dataframes = {db["dataframe_name"] for db in databases_to_use}
         available_dataframes = {
             file_.stem for file_ in Path(run_io.local_session_folder).glob("*.parquet")
         }
         # check that requested dataframes are a subset of available dataframes
-        if not requested_dataframes.issubset(available_dataframes):
+        if requested_dataframes and not requested_dataframes.issubset(
+            available_dataframes
+        ):
             self.log.error("Requested dataframe(s) not found in session folder.")
             self.log.debug("Requested dataframes: %s", requested_dataframes)
             self.log.debug("Available dataframes: %s", available_dataframes)

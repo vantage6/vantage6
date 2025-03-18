@@ -1,5 +1,5 @@
 import { BaseLink } from './base.model';
-import { CreateTaskOrganization } from './task.models';
+import { BaseTask, CreateTaskOrganization } from './task.models';
 import { BaseUser } from './user.model';
 
 export enum SessionLazyProperties {
@@ -24,6 +24,10 @@ export enum AlgorithmStepType {
   FederatedCompute = 'federated compute',
   CentralCompute = 'central compute',
   Postprocessing = 'postprocessing'
+}
+export enum TaskDatabaseType {
+  Dataframe = 'dataframe',
+  Source = 'source'
 }
 
 export interface GetSessionParameters {
@@ -98,6 +102,7 @@ export interface Dataframe {
   db_label: string;
   id: number;
   tasks: string;
+  last_session_task: BaseTask;
 }
 
 export interface CreateDataframe {

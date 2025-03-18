@@ -5,7 +5,7 @@ import re
 from marshmallow import Schema, fields, ValidationError, validates, validates_schema
 from marshmallow.validate import Length, Range, OneOf
 
-from vantage6.common.enum import RunStatus
+from vantage6.common.enum import RunStatus, TaskDatabaseType
 from vantage6.server.model.rule import Scope
 from vantage6.server.default_roles import DefaultRole
 from vantage6.server.model.common.utils import validate_password
@@ -460,15 +460,15 @@ class TaskInputSchema(_NameValidationSchema):
         _validate_organizations(organizations)
 
     @validates("databases")
-    def validate_databases(self, databases: list[dict]):
+    def validate_databases(self, databases: list[dict] | None):
         """
         Validate the databases in the input.
 
         Parameters
         ----------
-        databases : list[dict]
-            List of databases to validate. Each database must have at
-            least a database label.
+        databases : list[dict] | None
+            List of databases to validate. Each database must have at least a database
+            label or dataframe_id.
 
         Raises
         ------
@@ -478,16 +478,27 @@ class TaskInputSchema(_NameValidationSchema):
         if databases is None:
             return  # some algorithms don't use any database
         for database in databases:
-            if "label" not in database and "dataframe_id" not in database:
-                raise ValidationError(
-                    "Either label or dataframe_id is required for each database"
-                )
+            if "type" not in database:
+                raise ValidationError("Each database must have a 'type' key")
 
             allowed_keys = {"label", "type", "dataframe_id"}
             if not set(database.keys()).issubset(set(allowed_keys)):
                 raise ValidationError(
                     f"Database {database} contains unknown keys. Allowed keys "
                     f"are {allowed_keys}."
+                )
+
+            if database["type"] == TaskDatabaseType.DATAFRAME and not database.get(
+                "dataframe_id"
+            ):
+                raise ValidationError(
+                    "Database of type 'dataframe' must have a 'dataframe_id' key"
+                )
+            elif database["type"] != TaskDatabaseType.DATAFRAME and not database.get(
+                "label"
+            ):
+                raise ValidationError(
+                    f"Database of type '{database['type']}' must have a 'label' key"
                 )
 
 

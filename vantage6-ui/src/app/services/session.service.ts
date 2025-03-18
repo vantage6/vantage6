@@ -2,8 +2,6 @@ import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import {
   BaseSession,
-  ColumnRetrievalInput,
-  ColumnRetrievalResult,
   CreateDataframe,
   CreateSession,
   Dataframe,

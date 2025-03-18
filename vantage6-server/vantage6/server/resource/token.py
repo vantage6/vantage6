@@ -358,7 +358,11 @@ class ContainerToken(ServicesResources):
             "task_id": task_id,
             "image": claim_image,
             "databases": [
-                {"label": db_entry.database, "type": db_entry.type_}
+                {
+                    "label": db_entry.label,
+                    "type": db_entry.type_,
+                    "dataframe_id": db_entry.dataframe_id,
+                }
                 for db_entry in db_task.databases
             ],
         }
