@@ -295,29 +295,12 @@ class NodeCLITest(unittest.TestCase):
             result = runner.invoke(cli_node_restart, ["--name", "iknl"])
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.node.attach.time")
-    @patch("vantage6.cli.node.attach.print_log_worker")
-    @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.node.attach.check_docker_running", return_value=True)
-    def test_attach(self, check_docker, containers, log_worker, time_):
+    @patch("vantage6.cli.node.attach.attach_logs")
+    def test_attach(self, attach_logs):
         """Attach docker logs without errors."""
-        container1 = MagicMock()
-        container1.name = f"{APPNAME}-iknl-user"
-        containers.list.return_value = [container1]
-
-        log_worker.return_value = ""
-        time_.sleep.side_effect = KeyboardInterrupt()
-
         runner = CliRunner()
-        result = runner.invoke(cli_node_attach, ["--name", "iknl"])
-
-        self.assertEqual(
-            result.output,
-            "[info ] - Closing log file. Keyboard Interrupt.\n"
-            "[info ] - Note that your node is still running! Shut it down "
-            "with 'v6 node stop'\n",
-        )
-        self.assertEqual(result.exit_code, 0)
+        runner.invoke(cli_node_attach)
+        attach_logs.assert_called_once_with("app=node")
 
     @patch("vantage6.cli.node.clean.q")
     @patch("docker.DockerClient.volumes")
