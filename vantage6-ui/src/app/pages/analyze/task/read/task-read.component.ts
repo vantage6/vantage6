@@ -27,7 +27,7 @@ import { PermissionService } from 'src/app/services/permission.service';
 import { Subject, Subscription, takeUntil, timer } from 'rxjs';
 import { FileService } from 'src/app/services/file.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
-import { AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
+import { AlgorithmLogMsg, AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
 import {
   THRESHOLD_LONG_PARAMETER_TEXT,
   THRESHOLD_LONG_TEXT,
@@ -133,6 +133,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   canKill = false;
   algorithmNotFoundInStore = false;
   showAllChildTasks = false;
+  logs: { [runId: number]: string[] } = {};
 
   private nodeStatusUpdateSubscription?: Subscription;
   private taskStatusUpdateSubscription?: Subscription;
@@ -184,6 +185,10 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       .subscribe((nodeStatus: NodeOnlineStatusMsg | null) => {
         if (nodeStatus) this.onNodeStatusUpdate(nodeStatus);
       });
+
+    this.socketioConnectService.getAlgorithmLogUpdates().subscribe((logMsg: AlgorithmLogMsg | null) => {
+      if (logMsg) this.onLogUpdate(logMsg);
+    });
   }
 
   ngOnDestroy(): void {
@@ -221,6 +226,26 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       this.algorithmNotFoundInStore = true;
     }
     this.isLoading = false;
+  }
+
+  private onLogUpdate(logMsg: AlgorithmLogMsg): void {
+    // update logs of main and child task runs
+    [this.task, ...this.childTasks].forEach((task: Task | BaseTask | null) => {
+      if (!task) return;
+      const run = task.runs.find((run) => run.id === logMsg.run_id);
+      this.appendLog(run, logMsg);
+    });
+  }
+
+  private appendLog(run: TaskRun | undefined, logMsg: AlgorithmLogMsg) {
+    if (run) {
+      if (!run.log) {
+        run.log = '';
+      } else if (!run.log.endsWith('\n')) {
+        run.log += '\n';
+      }
+      run.log += `${logMsg.log}`;
+    }
   }
 
   async getMainTask(): Promise<Task> {
@@ -270,12 +295,25 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     return status === TaskStatus.Pending || status === TaskStatus.Initializing || status === TaskStatus.Active;
   }
 
-  openLog(log: string): void {
-    this.dialog.open(LogDialogComponent, {
+  openLog(run: TaskRun): void {
+    const dialogRef = this.dialog.open(LogDialogComponent, {
       width: '80vw',
       data: {
-        log: log
+        log: run.log || 'No logs available'
       }
+    });
+
+    const logSubscription = this.socketioConnectService.getAlgorithmLogUpdates().subscribe((logMsg: AlgorithmLogMsg | null) => {
+      if (logMsg && logMsg.run_id === run.id) {
+        if (!run.log) {
+          run.log = '';
+        }
+        dialogRef.componentInstance.data.log = run.log;
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(() => {
+      logSubscription.unsubscribe();
     });
   }
 

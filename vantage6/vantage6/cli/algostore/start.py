@@ -54,7 +54,7 @@ def cli_algo_store_start(
     Start the algorithm store server.
     """
     info("Starting algorithm store...")
-    docker_client = check_for_start(ctx, InstanceType.ALGORITHM_STORE)
+    docker_client = check_for_start(ctx, InstanceType.ALGORITHM_STORE.value)
 
     image = get_image(image, ctx, "algorithm-store", DEFAULT_ALGO_STORE_IMAGE)
 
@@ -91,7 +91,7 @@ def cli_algo_store_start(
         mounts=mounts,
         detach=True,
         labels={
-            f"{APPNAME}-type": InstanceType.ALGORITHM_STORE,
+            f"{APPNAME}-type": InstanceType.ALGORITHM_STORE.value,
             "name": ctx.config_file_name,
         },
         environment=environment_vars,

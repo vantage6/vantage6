@@ -14,6 +14,10 @@ class DefaultRole(str, Enum):
     ORG_ADMIN = "Organization Admin"
     COL_ADMIN = "Collaboration Admin"
 
+    @classmethod
+    def list(cls):
+        return list(map(lambda c: c.value, cls))
+
 
 # TODO BvB 22-06-07: we now have to pass this 'db' module as argument to a
 # function because that module has a connection to the database. This should
@@ -48,7 +52,6 @@ def get_default_roles(db) -> list[dict]:
         "name": DefaultRole.ROOT,
         "description": "Super role",
         "rules": db.Rule.get(),
-        "is_default_role": True,
     }
     # 2. Role for viewing organization resources
     VIEWER_RULES = [
@@ -75,7 +78,6 @@ def get_default_roles(db) -> list[dict]:
         "description": "Can manage their own account and view resources "
         "related to their organization",
         "rules": VIEWER_RULES,
-        "is_default_role": True,
     }
     # 3. Researcher role
     RESEARCHER_RULES = VIEWER_RULES + [
@@ -93,7 +95,6 @@ def get_default_roles(db) -> list[dict]:
         "description": "Can perform tasks, manage their own account, and "
         "view resources related to their organization",
         "rules": RESEARCHER_RULES,
-        "is_default_role": True,
     }
     # 4. Organization administrator role
     ORG_ADMIN_RULES = RESEARCHER_RULES + [
@@ -113,7 +114,6 @@ def get_default_roles(db) -> list[dict]:
         "description": "Can manage an organization including its users, roles, and nodes."
         " Also has all permissions of a researcher.",
         "rules": ORG_ADMIN_RULES,
-        "is_default_role": True,
     }
     # 4. Collaboration administrator role
     COLLAB_ADMIN_RULES = ORG_ADMIN_RULES + [
@@ -144,7 +144,6 @@ def get_default_roles(db) -> list[dict]:
         "description": "Can manage an collaboration including its organization and users."
         " Also has permissions of an organization admin.",
         "rules": COLLAB_ADMIN_RULES,
-        "is_default_role": True,
     }
     # Combine all in array
     return [SUPER_ROLE, VIEWER_ROLE, RESEARCHER_ROLE, ORG_ADMIN_ROLE, COLLAB_ADMIN_ROLE]

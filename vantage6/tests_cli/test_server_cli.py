@@ -133,7 +133,7 @@ class ServerCLITest(unittest.TestCase):
         """Stop server without errors."""
 
         container1 = MagicMock()
-        container1.name = f"{APPNAME}-iknl-system-{InstanceType.SERVER}"
+        container1.name = f"{APPNAME}-iknl-system-{InstanceType.SERVER.value}"
         containers.containers.list.return_value = [container1]
 
         runner = CliRunner()

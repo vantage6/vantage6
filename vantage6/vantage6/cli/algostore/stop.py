@@ -23,7 +23,7 @@ def cli_algo_store_stop(ctx: AlgorithmStoreContext, all_stores: bool):
     client = docker.from_env()
 
     running_stores = client.containers.list(
-        filters={"label": f"{APPNAME}-type={InstanceType.ALGORITHM_STORE}"}
+        filters={"label": f"{APPNAME}-type={InstanceType.ALGORITHM_STORE.value}"}
     )
 
     if not running_stores:

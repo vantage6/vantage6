@@ -1,4 +1,4 @@
-""" " Test /vantage6-server endpoints"""
+"""Test /vantage6-server endpoints"""
 
 import unittest
 from http import HTTPStatus

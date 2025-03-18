@@ -343,6 +343,7 @@ class Node:
             session_id=task["session"]["id"],
             token=token,
             databases_to_use=task.get("databases", []),
+            socketIO=self.socketIO,
         )
 
         # save task status to the server
