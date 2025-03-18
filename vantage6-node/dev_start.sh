@@ -8,11 +8,9 @@ if [ -z "$config_dir" ]; then
     exit 1
 fi
 
-# python_pids=()
 for config in $config_dir/*.yaml; do
     echo "Starting node with config: $config"
-    python /vantage6/vantage6-node/vantage6/dev_start.py $config &
-    # python_pids+=($!)
+    python /vantage6/vantage6-node/vantage6/dev_start.py "$config" &
 done
 
 # For development purposes, we put infinite sleep here. This has the advantage that
