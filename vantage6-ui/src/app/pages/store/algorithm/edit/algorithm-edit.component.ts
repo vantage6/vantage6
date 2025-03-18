@@ -74,7 +74,8 @@ export class AlgorithmEditComponent implements OnInit, OnDestroy {
           name: func.name,
           display_name: func.display_name,
           description: func.description,
-          type: func.type,
+          execution_type: func.execution_type,
+          step_type: func.step_type,
           standalone: func.standalone,
           arguments: func.arguments.map((arg) => {
             const conditionalArgName =

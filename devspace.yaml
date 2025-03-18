@@ -289,7 +289,7 @@ dev:
     restartHelper:
       inject: true
 
-    command: ["python", "/vantage6/vantage6-node/vantage6/dev_start.py", "/mnt/config/"]
+    command: ["bash", "/vantage6/vantage6-node/dev_start.sh", "/mnt/config/"]
 
 
 
@@ -325,12 +325,3 @@ commands:
   rebuild:
     description: "Rebuild all images for this project"
     command: devspace build
-
-
-# Define dependencies to other projects with a devspace.yaml
-# dependencies:
-#   api:
-#     git: https://...  # Git-based dependencies
-#     tag: v1.0.0
-#   ui:
-#     path: ./ui        # Path-based dependencies (for monorepos)

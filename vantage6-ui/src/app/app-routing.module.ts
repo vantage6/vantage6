@@ -25,7 +25,6 @@ import { CollaborationEditComponent } from './pages/admin/collaboration/edit/col
 import { UserEditComponent } from './pages/admin/user/edit/user-edit.component';
 import { ChangePasswordComponent } from './pages/auth/change-password/change-password.component';
 import { chosenCollaborationGuard } from './guards/chosenCollaboration.guard';
-import { TemplateTaskCreateComponent } from './pages/analyze/template-task/create/template-task-create.component';
 import { RoleListComponent } from './pages/admin/role/list/role-list.component';
 import { RoleReadComponent } from './pages/admin/role/read/role-read.component';
 import { RoleCreateComponent } from './pages/admin/role/create/role-create.component';
@@ -233,11 +232,6 @@ const routes: Routes = [
           crumbs: [['algorithm-list.title', routePaths.algorithms], ['algorithm-read.crumb-title']]
         }
       },
-      {
-        path: routerConfig.templateTaskCreate,
-        component: TemplateTaskCreateComponent,
-        canActivate: [authenticationGuard(), chosenCollaborationGuard()]
-      }
     ]
   },
   {

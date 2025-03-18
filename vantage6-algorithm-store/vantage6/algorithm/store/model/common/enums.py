@@ -10,7 +10,7 @@ class Partitioning(str, Enum):
     VERTICAL = "vertical"
 
 
-class FunctionType(str, Enum):
+class FunctionExecutionType(str, Enum):
     """Enum for function roles within the algorithm"""
 
     CENTRAL = "central"
