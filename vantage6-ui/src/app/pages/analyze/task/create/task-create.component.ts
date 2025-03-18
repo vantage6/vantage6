@@ -3,7 +3,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { routePaths } from 'src/app/routes';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TranslateService, TranslateModule, _ } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { AvailableSteps, FormCreateOutput } from 'src/app/models/forms/create-form.model';
 import { TaskService } from 'src/app/services/task.service';
