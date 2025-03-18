@@ -14,6 +14,11 @@ export enum TaskSortProperties {
   Name = 'name'
 }
 
+export enum TaskDatabaseType {
+  Dataframe = 'dataframe',
+  Source = 'source'
+}
+
 export enum TaskStatus {
   Pending = 'pending',
   Initializing = 'initializing',
@@ -126,6 +131,12 @@ export interface TaskResult {
   decoded_result?: object;
 }
 
+interface CreateTaskDatabase {
+  label?: string;
+  dataframe_id?: number;
+  type: TaskDatabaseType;
+}
+
 export interface CreateTask {
   name: string;
   description: string;
@@ -136,7 +147,7 @@ export interface CreateTask {
   store_id: number;
   server_url: string;
   organizations: CreateTaskOrganization[];
-  databases: any[];
+  databases: CreateTaskDatabase[];
 }
 
 export interface KillTask {

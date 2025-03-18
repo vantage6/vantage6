@@ -25,7 +25,7 @@ import {
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { BaseNode, Database, NodeStatus } from 'src/app/models/api/node.model';
-import { CreateTaskInput, Task } from 'src/app/models/api/task.models';
+import { CreateTaskInput, Task, TaskDatabaseType } from 'src/app/models/api/task.models';
 import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
 import { Router, RouterLink } from '@angular/router';
@@ -46,7 +46,7 @@ import { MAX_ATTEMPTS_RENEW_NODE, SECONDS_BETWEEN_ATTEMPTS_RENEW_NODE } from 'sr
 import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 import { EncryptionService } from 'src/app/services/encryption.service';
 import { environment } from 'src/environments/environment';
-import { BaseSession, Dataframe, TaskDatabaseType } from 'src/app/models/api/session.models';
+import { BaseSession, Dataframe } from 'src/app/models/api/session.models';
 import { SessionService } from 'src/app/services/session.service';
 import { AvailableSteps, FormCreateOutput } from 'src/app/models/forms/create-form.model';
 import { PageHeaderComponent } from '../../page-header/page-header.component';
