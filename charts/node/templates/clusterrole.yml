@@ -1,0 +1,30 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Release.Name }}-role
+  labels:
+{{- include "node.labels" . | nindent 4 }}
+rules:
+# The core permission needed since vantage6-node runs all algorithms as Kubernetes Jobs.
+# Needs full management capabilities (create/delete) and monitoring capabilities (get/list/watch) to track job status and completion.
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["create", "delete", "get", "list", "watch"]
+
+# While Jobs create pods, we need direct pod access to read their logs for algorithm output and debugging.
+# We only need read permissions since the Job controller manages the pods' lifecycle.
+- apiGroups: [""]
+  resources: ["pods", "pods/log"]
+  verbs: ["get", "list", "watch"]
+
+# Algorithms might need persistent storage to store temporary or output data.
+# The node needs to manage PVCs to provide this storage to algorithm containers.
+- apiGroups: [""]
+  resources: ["persistentvolumeclaims"]
+  verbs: ["create", "delete", "get", "list"]
+
+# Some algorithms might need network services for communication between components.
+# The node needs to be able to create and manage these services for algorithm networking requirements.
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["create", "delete", "get", "list"]
