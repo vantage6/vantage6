@@ -1,5 +1,4 @@
 import sys
-import threading
 import logging
 from pathlib import Path
 from vantage6.node.context import DockerNodeContext
@@ -23,20 +22,14 @@ def run_function(config):
 
 if __name__ == "__main__":
 
-    config_folder = Path(sys.argv[1]) if len(sys.argv) > 1 else None
-    if not config_folder:
-        log.critical("No config folder provided.")
+    config_file = Path(sys.argv[1]) if len(sys.argv) > 1 else None
+    if not config_file:
+        log.critical("No config file provided.")
         sys.exit(1)
 
-    configs = config_folder.glob("*.yaml")
-    configs = [str(config_path) for config_path in list(configs)]
-    threads = []
+    if not config_file.exists():
+        log.critical("Config file does not exist: %s", config_file)
+        sys.exit(1)
 
-    for config in configs:
-        log.info(f"Starting node with config: {config}")
-        thread = threading.Thread(target=run_function, args=(config,))
-        thread.start()
-        threads.append(thread)
-
-    for thread in threads:
-        thread.join()
+    log.info("Starting node with config: %s", config_file)
+    run_function(config_file)

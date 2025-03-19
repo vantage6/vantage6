@@ -7,10 +7,9 @@ from marshmallow import Schema, fields, ValidationError, validates, validates_sc
 import marshmallow.validate as validate
 from jsonschema import validate as json_validate
 
-from vantage6.common.enum import AlgorithmViewPolicies
+from vantage6.common.enum import AlgorithmStepType, AlgorithmViewPolicies
 from vantage6.algorithm.store.model.common.enums import (
     Partitioning,
-    FunctionType,
     ArgumentType,
     VisualizationType,
 )
@@ -67,22 +66,22 @@ class FunctionInputSchema(_NameDescriptionSchema):
     Schema for the input of a function.
     """
 
-    type_ = fields.String(required=True, data_key="type")
+    step_type = fields.String(required=True)
     display_name = fields.String(required=False)
     standalone = fields.Boolean(required=False)
     databases = fields.Nested("DatabaseInputSchema", many=True)
     arguments = fields.Nested("ArgumentInputSchema", many=True)
     ui_visualizations = fields.Nested("UIVisualizationInputSchema", many=True)
 
-    @validates("type_")
-    def validate_type(self, value):
+    @validates("step_type")
+    def validate_step_type(self, value: str) -> None:
         """
-        Validate that the type is one of the allowed values.
+        Validate that the step type is one of the allowed values.
         """
-        types = [f.value for f in FunctionType]
+        types = [f.value for f in AlgorithmStepType]
         if value not in types:
             raise ValidationError(
-                f"Function type '{value}' is not one of the allowed values {types}"
+                f"Function step type '{value}' is not one of the allowed values {types}"
             )
 
     @validates_schema

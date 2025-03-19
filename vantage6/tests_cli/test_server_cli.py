@@ -5,6 +5,7 @@ from pathlib import Path
 from click.testing import CliRunner
 
 from vantage6.common.globals import APPNAME, InstanceType
+from vantage6.cli.common.utils import attach_logs
 from vantage6.cli.server.start import cli_server_start
 from vantage6.cli.server.list import cli_server_configuration_list
 from vantage6.cli.server.files import cli_server_files
@@ -141,18 +142,38 @@ class ServerCLITest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.server.attach.time.sleep")
-    @patch("docker.DockerClient.containers")
-    def test_attach(self, containers, sleep):
-        """Attach log to the console without errors."""
-        container1 = MagicMock()
-        container1.name = f"{APPNAME}-iknl-system-{InstanceType.SERVER}"
-        containers.list.return_value = [container1]
-
-        sleep.side_effect = KeyboardInterrupt("Boom!")
-
+    @patch("vantage6.cli.server.attach.attach_logs")
+    def test_attach(self, attach_logs):
+        """Attach logs to the console without errors."""
         runner = CliRunner()
-        result = runner.invoke(cli_server_attach, ["--name", "iknl"])
+        result = runner.invoke(cli_server_attach)
 
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
+        attach_logs.assert_called_once_with(
+            "app=vantage6-server", "component=vantage6-server"
+        )
+
+    @patch("vantage6.cli.common.utils.Popen")
+    def test_attach_logs(self, mock_popen):
+        # Mock the Popen instance and its methods
+        mock_process = mock_popen.return_value
+        mock_process.wait.return_value = None
+
+        # Call the function with a sample label
+        attach_logs("app=node", "env=dev")
+
+        # Construct the expected command
+        expected_command = [
+            "devspace",
+            "logs",
+            "--follow",
+            "--label-selector",
+            "app=node,env=dev",
+        ]
+
+        # Verify that Popen was called with the expected command
+        mock_popen.assert_called_once_with(expected_command, stdout=None, stderr=None)
+
+        # Verify that wait was called on the process
+        mock_process.wait.assert_called_once()

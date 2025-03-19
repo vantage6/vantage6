@@ -62,8 +62,11 @@ def wrap_algorithm(log_traceback: bool = True) -> None:
     input_data = load_input(input_file)
 
     # make the actual call to the method/function
+    method = os.environ[ContainerEnvNames.ALGORITHM_METHOD.value]
     info("Dispatching ...")
-    output = _run_algorithm_method(input_data, module, log_traceback)
+    output = _run_algorithm_method(
+        method=method, input_data=input_data, module=module, log_traceback=log_traceback
+    )
 
     # write output from the method to mounted output file. Which will be
     # transferred back to the server by the node-instance.
@@ -74,19 +77,23 @@ def wrap_algorithm(log_traceback: bool = True) -> None:
 
 
 def _run_algorithm_method(
-    input_data: dict, module: str, log_traceback: bool = True
+    method: str,
+    module: str,
+    input_data: dict | None = None,
+    log_traceback: bool = True,
 ) -> Any:
     """
     Load the algorithm module and call the correct method to run an algorithm.
 
     Parameters
     ----------
-    input_data : dict
-        The input data that is passed to the algorithm. This should at least
-        contain the key 'method' which is the name of the method that should be
-        called. Other keys depend on the algorithm.
+    method : str
+        The name of the method that should be called.
     module : str
         The module that contains the algorithm.
+    input_data : dict | None
+        The input data that is passed to the algorithm. This contains the
+        parameters for the method.
     log_traceback: bool, optional
         Whether to print the full error message from algorithms or not, by
         default False. Algorithm developers should set this to False if
@@ -108,11 +115,10 @@ def _run_algorithm_method(
         exit(1)
 
     # get algorithm method and attempt to load it
-    method_name = input_data["method"]
     try:
-        method = getattr(lib, method_name)
+        method_fn = getattr(lib, method)
     except AttributeError:
-        error(f"Method '{method_name}' not found!\n")
+        error(f"Method '{method}' not found!\n")
         if log_traceback:
             error(traceback.print_exc())
         exit(1)
@@ -123,9 +129,9 @@ def _run_algorithm_method(
 
     # try to run the method
     try:
-        result = method(*args, **kwargs)
-    except Exception as e:
-        error(f"Error encountered while calling {method_name}: {e}")
+        result = method_fn(*args, **kwargs)
+    except Exception as exc:
+        error(f"Error encountered while calling {method}: {exc}")
         if log_traceback:
             error(traceback.print_exc())
         exit(1)

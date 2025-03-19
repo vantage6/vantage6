@@ -5,7 +5,7 @@ import re
 from marshmallow import Schema, fields, ValidationError, validates, validates_schema
 from marshmallow.validate import Length, Range, OneOf
 
-from vantage6.common.enum import RunStatus
+from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskDatabaseType
 from vantage6.server.model.rule import Scope
 from vantage6.server.default_roles import DefaultRole
 from vantage6.server.model.common.utils import validate_password
@@ -423,6 +423,7 @@ class TaskInputSchema(_NameValidationSchema):
     name = fields.String()
     description = fields.String(validate=Length(max=_MAX_LEN_STR_LONG))
     image = fields.String(required=True, validate=Length(min=1))
+    method = fields.String(required=True)
     collaboration_id = fields.Integer(validate=Range(min=1))
     study_id = fields.Integer(validate=Range(min=1))
     store_id = fields.Integer(validate=Range(min=1))
@@ -434,6 +435,7 @@ class TaskInputSchema(_NameValidationSchema):
     databases = fields.List(fields.Dict(), allow_none=True)
     session_id = fields.Integer(validate=Range(min=1), required=True)
     dataframe_id = fields.Integer(validate=Range(min=1))
+    action = fields.String(validate=OneOf([s.value for s in AlgorithmStepType]))
 
     @validates_schema
     def validate_schema(self, data: dict, **kwargs) -> None:
@@ -459,15 +461,15 @@ class TaskInputSchema(_NameValidationSchema):
         _validate_organizations(organizations)
 
     @validates("databases")
-    def validate_databases(self, databases: list[dict]):
+    def validate_databases(self, databases: list[dict] | None):
         """
         Validate the databases in the input.
 
         Parameters
         ----------
-        databases : list[dict]
-            List of databases to validate. Each database must have at
-            least a database label.
+        databases : list[dict] | None
+            List of databases to validate. Each database must have at least a database
+            label or dataframe_id.
 
         Raises
         ------
@@ -477,16 +479,27 @@ class TaskInputSchema(_NameValidationSchema):
         if databases is None:
             return  # some algorithms don't use any database
         for database in databases:
-            if "label" not in database and "dataframe_id" not in database:
-                raise ValidationError(
-                    "Either label or dataframe_id is required for each database"
-                )
+            if "type" not in database:
+                raise ValidationError("Each database must have a 'type' key")
 
             allowed_keys = {"label", "type", "dataframe_id"}
             if not set(database.keys()).issubset(set(allowed_keys)):
                 raise ValidationError(
                     f"Database {database} contains unknown keys. Allowed keys "
                     f"are {allowed_keys}."
+                )
+
+            if database["type"] == TaskDatabaseType.DATAFRAME and not database.get(
+                "dataframe_id"
+            ):
+                raise ValidationError(
+                    "Database of type 'dataframe' must have a 'dataframe_id' key"
+                )
+            elif database["type"] != TaskDatabaseType.DATAFRAME and not database.get(
+                "label"
+            ):
+                raise ValidationError(
+                    f"Database of type '{database['type']}' must have a 'label' key"
                 )
 
 
@@ -642,6 +655,7 @@ class SessionTaskInputSchema(Schema):
 
     image = fields.String(required=True)
     store_id = fields.Integer(validate=Range(min=1))
+    method = fields.String(required=True)
 
     # This is a list of dictionaries, where each dictionary contains the
     # organization id and the organization's data extraction input (optional).

@@ -51,17 +51,19 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     });
   }
 
-  async onSubmitHandler(_: FormCreateOutput): Promise<void> {
+  async onSubmitHandler(formOutput: FormCreateOutput): Promise<void> {
     const newDataframe: CreateTask = {
-      name: _?.name || '-',
-      description: _?.description || '-',
-      image: _.image || '-',
-      session_id: _.session_id || -1,
-      collaboration_id: _.collaboration_id || -1,
-      store_id: _.store_id || -1,
-      server_url: _.server_url || '-',
-      organizations: _.organizations || []
-      //TODO: Add preprocessing and filtering when backend is ready
+      name: formOutput.name,
+      description: formOutput.description || '-',
+      image: formOutput.image,
+      method: formOutput.method,
+      session_id: formOutput.session_id,
+      // TODO I don't like passing -1 here, needs to be fixed
+      collaboration_id: formOutput.collaboration_id || -1,
+      organizations: formOutput.organizations,
+      store_id: formOutput.store_id,
+      server_url: formOutput.server_url,
+      databases: formOutput?.dataframes || []
     };
     const newTask = await this.taskService.createTask(newDataframe);
     if (newTask) {

@@ -305,7 +305,7 @@ class TestAlgorithmResources(TestResources):
             "functions": [
                 {
                     "name": "test_function",
-                    "type": "central",
+                    "step_type": "central compute",
                     "databases": [
                         {"name": "test_database", "description": "test_description"}
                     ],
@@ -334,7 +334,7 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(rv.json["image"], "some-image")
         self.assertEqual(len(rv.json["functions"]), 1)
         self.assertEqual(rv.json["functions"][0]["name"], "test_function")
-        self.assertEqual(rv.json["functions"][0]["type"], "central")
+        self.assertEqual(rv.json["functions"][0]["step_type"], "central compute")
         self.assertEqual(len(rv.json["functions"][0]["databases"]), 1)
         self.assertEqual(
             rv.json["functions"][0]["databases"][0]["name"], "test_database"

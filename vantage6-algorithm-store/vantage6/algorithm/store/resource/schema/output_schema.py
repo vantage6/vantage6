@@ -60,8 +60,6 @@ class FunctionOutputSchema(HATEOASModelSchema):
     class Meta:
         model = Function
 
-    type_ = fields.String(data_key="type")
-
     databases = fields.Nested("DatabaseOutputSchema", many=True)
     arguments = fields.Nested("ArgumentOutputSchema", many=True)
     ui_visualizations = fields.Nested("UIVisualizationOutputSchema", many=True)

@@ -24,6 +24,12 @@ vars:
   TASK_NAMESPACE:
     question: "What is the task namespace for your development environment?"
     default: vantage6-tasks
+  SERVER_DATABASE_MOUNT_PATH:
+    question: "Where is your server database located on the host machine?"
+    default: ${PWD}/dev/data/db_pv_server
+  STORE_DATABASE_MOUNT_PATH:
+    question: "Where is your store database located on the host machine?"
+    default: ${PWD}/dev/data/db_pv_store
 
 pipelines:
 
@@ -126,7 +132,7 @@ deployments:
             secret: development-constant-secret!
 
         database:
-          volumePath: /mnt/data_server
+          volumePath: ${SERVER_DATABASE_MOUNT_PATH}
 
   # The store deployment contains the store and the database.
   vantage6-store:
@@ -158,7 +164,7 @@ deployments:
         #  users can probably use the same path as in the example below. Or any other
         #  path that is accessible by the Docker daemon.
         database:
-          volumePath: /mnt/data_store
+          volumePath: ${STORE_DATABASE_MOUNT_PATH}
 
   # The node deployment should not be 'deployed' only, it should only be deployed in
   # combination with the `dev` container (The node container that is started by the
@@ -289,11 +295,13 @@ dev:
       startContainer: true
       onUpload:
         restartContainer: true
+    logs:
+      enabled: true
 
     restartHelper:
       inject: true
 
-    command: ["python", "/vantage6/vantage6-node/vantage6/dev_start.py", "/mnt/config/"]
+    command: ["bash", "/vantage6/vantage6-node/dev_start.sh", "/mnt/config/"]
 
 
 
@@ -329,12 +337,3 @@ commands:
   rebuild:
     description: "Rebuild all images for this project"
     command: devspace build
-
-
-# Define dependencies to other projects with a devspace.yaml
-# dependencies:
-#   api:
-#     git: https://...  # Git-based dependencies
-#     tag: v1.0.0
-#   ui:
-#     path: ./ui        # Path-based dependencies (for monorepos)

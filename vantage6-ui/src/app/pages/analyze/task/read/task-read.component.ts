@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { getChipTypeForStatus, getStatusType, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
-import { Algorithm, AlgorithmFunction, Argument, ArgumentType, FunctionType } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmFunction, Argument, ArgumentType } from 'src/app/models/api/algorithm.model';
 import { Visualization } from 'src/app/models/api/visualization.model';
 import {
   Task,
@@ -63,7 +63,7 @@ import { ChipComponent } from '../../../../components/helpers/chip/chip.componen
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { OrderByPipe } from '../../../../pipes/order-by.pipe';
 import { OrderByTaskStatusPipe } from '../../../../pipes/order-by-status.pipe';
-import { Session } from 'src/app/models/api/session.models';
+import { AlgorithmStepType, Session } from 'src/app/models/api/session.models';
 import { SessionService } from 'src/app/services/session.service';
 
 @Component({
@@ -111,7 +111,7 @@ import { SessionService } from 'src/app/services/session.service';
 export class TaskReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   @Input() id = '';
-  functionType = FunctionType;
+  algorithmStepType = AlgorithmStepType;
   printDate = printDate;
 
   destroy$ = new Subject();
@@ -206,7 +206,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
         const store = await this.algorithmStoreService.getAlgorithmStore(this.task.algorithm_store?.id.toString());
         this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image, store);
         // Please note, the function cannot be set if the input cannot be decoded. This will result in NO visualization and information about the function.
-        this.function = this.algorithm?.functions.find((_) => _.name === this.task?.input?.method) || null;
+        this.function = this.algorithm?.functions.find((_) => _.name === this.task?.method) || null;
         if (!this.selectedVisualization) {
           // by checking in if statement whether visualization was already set, we prevent
           // the visualization from being reset to the first one when the task is reloaded

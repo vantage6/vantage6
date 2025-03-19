@@ -3,6 +3,7 @@ from colorama import Fore, Style
 import click
 from typing import Iterable
 import docker
+from subprocess import Popen
 
 
 from vantage6.common import warning, error
@@ -158,3 +159,17 @@ def get_name_from_container_name(container_name: str) -> str:
     # Container name is structured as: f"{APPNAME}-{name}-{post_fix}"
     # Take into account that name can contain '-'
     return "-".join(container_name.split("-")[1:-1])
+
+
+def attach_logs(*labels: list[str]) -> None:
+    """
+    Attach to the logs of the given labels.
+
+    Parameters
+    ----------
+    labels : list[str]
+        The labels to attach to
+    """
+    command = ["devspace", "logs", "--follow", "--label-selector", ",".join(labels)]
+    process = Popen(command, stdout=None, stderr=None)
+    process.wait()

@@ -7,7 +7,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { StudyService } from 'src/app/services/study.service';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
-import { CreateDataframe, Session } from 'src/app/models/api/session.models';
+import { AlgorithmStepType, CreateDataframe, Session } from 'src/app/models/api/session.models';
 import { Collaboration } from 'src/app/models/api/collaboration.model';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { AvailableSteps, FormCreateOutput } from 'src/app/models/forms/create-form.model';
@@ -21,6 +21,7 @@ import { CreateAnalysisFormComponent } from 'src/app/components/forms/compute-fo
 })
 export class DataframeCreateComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
+  algorithmStepType = AlgorithmStepType;
 
   title: string = '';
   availableSteps: AvailableSteps = {
@@ -93,19 +94,20 @@ export class DataframeCreateComponent implements OnInit, OnDestroy {
     // };
     let session_id: number = Number(this.sessionId);
     const dataframeInput: CreateDataframe = {
-      name: formCreateOutput?.name || '',
-      label: formCreateOutput?.database || '',
+      name: formCreateOutput.name,
+      label: formCreateOutput.database || '',
       //TODO(BART/RIAN) RIAN: Add component parameters for conditional 'Name', 'Label', 'Description' etc and process this in form-create.component
       // description: '',
       task: {
-        image: formCreateOutput.image || '',
-        store_id: formCreateOutput.store_id || -1,
-        organizations: formCreateOutput.organizations || []
+        image: formCreateOutput.image,
+        method: formCreateOutput.method,
+        store_id: formCreateOutput.store_id,
+        organizations: formCreateOutput.organizations
       }
     };
     const newDataframe = await this.sessionService.createDataframe(session_id, dataframeInput);
     if (newDataframe) {
-      this.router.navigate([routePaths.session, session_id]);
+      this.router.navigate([routePaths.task, newDataframe.last_session_task.id]);
     }
   }
 

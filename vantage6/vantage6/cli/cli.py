@@ -22,14 +22,11 @@ from vantage6.cli.node.set_api_key import cli_node_set_api_key
 from vantage6.cli.node.start import cli_node_start
 from vantage6.cli.node.stop import cli_node_stop
 from vantage6.cli.node.version import cli_node_version
-from vantage6.cli.dev.create import create_demo_network
-from vantage6.cli.dev.remove import remove_demo_network
-from vantage6.cli.dev.start import start_demo_network
-from vantage6.cli.dev.stop import stop_demo_network
 from vantage6.cli.algorithm.create import cli_algorithm_create
 from vantage6.cli.algorithm.update import cli_algorithm_update
 from vantage6.cli.test.feature_tester import cli_test_features
-from vantage6.cli.test.integration_test import cli_test_integration
+
+# from vantage6.cli.test.integration_test import cli_test_integration
 from vantage6.cli.algostore.attach import cli_algo_store_attach
 from vantage6.cli.algostore.new import cli_algo_store_new
 from vantage6.cli.algostore.start import cli_algo_store_start
@@ -93,11 +90,7 @@ def cli_dev() -> None:
     """
 
 
-# Define the commands for the dev group
-cli_dev.add_command(create_demo_network, name="create-demo-network")
-cli_dev.add_command(remove_demo_network, name="remove-demo-network")
-cli_dev.add_command(start_demo_network, name="start-demo-network")
-cli_dev.add_command(stop_demo_network, name="stop-demo-network")
+# TODO add commands for the dev group
 
 
 # Define the algorithm group
@@ -123,7 +116,7 @@ def cli_test() -> None:
 
 # Define the commands for the test group
 cli_test.add_command(cli_test_features, name="feature-test")
-cli_test.add_command(cli_test_integration, name="integration-test")
+# cli_test.add_command(cli_test_integration, name="integration-test")
 
 
 # Define the algorithm-store group

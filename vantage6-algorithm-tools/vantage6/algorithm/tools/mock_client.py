@@ -181,8 +181,9 @@ class MockAlgorithmClient:
 
         def create(
             self,
-            input_: dict,
+            method: str,
             organizations: list[int],
+            input_: dict | None = None,
             name: str = "mock",
             description: str = "mock",
         ) -> int:
@@ -216,10 +217,11 @@ class MockAlgorithmClient:
             module = import_module(self.parent.module_name)
 
             # extract method from lib and input
-            method_name = input_.get("method")
-            method = getattr(module, method_name)
+            method_fn = getattr(module, method)
 
             # get input
+            if not input_:
+                input_ = {}
             args = input_.get("args", [])
             kwargs = input_.get("kwargs", {})
 
@@ -238,14 +240,14 @@ class MockAlgorithmClient:
                 # detect which decorators are used and provide the mock client
                 # and/or mocked data that is required to the method
                 mocked_kwargs = {}
-                if getattr(method, "wrapped_in_algorithm_client_decorator", False):
+                if getattr(method_fn, "wrapped_in_algorithm_client_decorator", False):
                     mocked_kwargs["mock_client"] = client_copy
-                if getattr(method, "wrapped_in_data_decorator", False):
+                if getattr(method_fn, "wrapped_in_data_decorator", False):
                     # make a copy of the data to avoid modifying the original data of
                     # subsequent tasks
                     mocked_kwargs["mock_data"] = [d.copy() for d in data]
 
-                result = method(*args, **kwargs, **mocked_kwargs)
+                result = method_fn(*args, **kwargs, **mocked_kwargs)
 
                 self.last_result_id += 1
                 self.parent.results.append(

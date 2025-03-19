@@ -95,7 +95,7 @@ class Dataframe(Base):
         active_compute_tasks = db_session.scalars(
             select(models.Task)
             .join(models.TaskDatabase)
-            .filter(models.Task.action == AlgorithmStepType.COMPUTE.value)
+            .filter(AlgorithmStepType.is_compute(models.Task.action))
             .filter(models.Task.status == TaskStatus.WAITING.value)
             .filter(models.TaskDatabase.dataframe_id == self.id)
             .filter(models.Task.session_id == self.session_id)

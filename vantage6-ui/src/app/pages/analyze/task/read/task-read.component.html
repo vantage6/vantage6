@@ -93,7 +93,7 @@
     <mat-card-content>
       <div *ngFor="let result of task.results">
         <ng-container *ngIf="result.decoded_result && task.input; else resultDownload">
-          <b *ngIf="function?.type === functionType.Federated">{{ getRunForResult(result.id)?.node?.name }}</b>
+          <b *ngIf="function?.step_type !== algorithmStepType.CentralCompute">{{ getRunForResult(result.id)?.node?.name }}</b>
           <app-visualize-result
             [result]="result.decoded_result"
             [visualization]="selectedVisualization"
@@ -198,7 +198,7 @@
         </div>
         <div class="data-list__item" *ngIf="task.input">
           <b>{{ "task.function" | translate }}</b>
-          <span>{{ (function?.display_name ?? task.input.method) || "-" }}</span>
+          <span>{{ (function?.display_name ?? task.method) || "-" }}</span>
         </div>
       </div>
       <ng-container *ngIf="task.input?.parameters">

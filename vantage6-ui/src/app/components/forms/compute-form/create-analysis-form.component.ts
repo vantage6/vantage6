@@ -18,14 +18,13 @@ import {
   ArgumentType,
   AlgorithmFunction,
   Argument,
-  FunctionType,
   AlgorithmFunctionExtended,
   ConditionalArgComparatorType
 } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { BaseNode, Database, NodeStatus } from 'src/app/models/api/node.model';
-import { CreateTaskInput, Task } from 'src/app/models/api/task.models';
+import { CreateTaskInput, Task, TaskDatabaseType } from 'src/app/models/api/task.models';
 import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
 import { Router, RouterLink } from '@angular/router';
@@ -46,7 +45,7 @@ import { MAX_ATTEMPTS_RENEW_NODE, SECONDS_BETWEEN_ATTEMPTS_RENEW_NODE } from 'sr
 import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 import { EncryptionService } from 'src/app/services/encryption.service';
 import { environment } from 'src/environments/environment';
-import { BaseSession, Dataframe } from 'src/app/models/api/session.models';
+import { AlgorithmStepType, BaseSession, Dataframe } from 'src/app/models/api/session.models';
 import { SessionService } from 'src/app/services/session.service';
 import { AvailableSteps, FormCreateOutput } from 'src/app/models/forms/create-form.model';
 import { PageHeaderComponent } from '../../page-header/page-header.component';
@@ -111,6 +110,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   @Input() formTitle: string = '';
   @Input() sessionId?: string = '';
+  @Input() allowedTaskTypes?: AlgorithmStepType[];
 
   // TODO(BART/RIAN) RIAN: Somehow we need to be able to calculate which step is first and which is last in order to conditionally add the back or next button.
   @Input() availableSteps: AvailableSteps = {
@@ -136,7 +136,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   destroy$ = new Subject();
   routes = routePaths;
   argumentType = ArgumentType;
-  functionType = FunctionType;
   studyOrCollab = StudyOrCollab;
 
   sessions: BaseSession[] = [];
@@ -168,7 +167,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     sessionID: ['', Validators.required]
   });
   studyForm = this.fb.nonNullable.group({
-    studyOrCollabID: [{ value: '', disabled: false }, Validators.required]
+    studyOrCollabID: [{ value: '', disabled: false }]
   });
   functionForm = this.fb.nonNullable.group({
     algorithmFunctionSpec: ['', Validators.required],
@@ -181,7 +180,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     database: ['', Validators.required]
   });
   dataframeForm = this.fb.nonNullable.group({
-    dataframeName: ['', Validators.required]
+    dataframeId: ['', Validators.required]
   });
   preprocessingForm = this.fb.array([]);
   filterForm = this.fb.array([]);
@@ -295,17 +294,14 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
     await this.handleAlgorithmChange(algorithm.id, algorithm.algorithm_store_id);
     // set function step
-    if (!this.repeatedTask.input) return;
     const func =
       this.functions.find(
         (_) =>
-          _.name === this.repeatedTask?.input?.method &&
-          _.algorithm_id == algorithm.id &&
-          _.algorithm_store_id == algorithm.algorithm_store_id
+          _.name === this.repeatedTask?.method && _.algorithm_id == algorithm.id && _.algorithm_store_id == algorithm.algorithm_store_id
       ) || null;
     if (!func) return;
     this.functionForm.controls.algorithmFunctionSpec.setValue(this.getAlgorithmFunctionSpec(func));
-    await this.handleFunctionChange(this.repeatedTask.input?.method, algorithm.id, algorithm.algorithm_store_id);
+    await this.handleFunctionChange(this.repeatedTask.method, algorithm.id, algorithm.algorithm_store_id);
     if (!this.function) return;
     const organizationIDs = this.repeatedTask.runs.map((_) => _.organization?.id?.toString() ?? '').filter((value) => value);
     this.functionForm.controls.organizationIDs.setValue(organizationIDs);
@@ -363,7 +359,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.filteredFunctions = this.functions.filter((func) => {
       const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
       const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
-      return [func.algorithm_name, func.type, storeName, func.display_name, func.name].some((val) =>
+      return [func.algorithm_name, func.step_type, storeName, func.display_name, func.name].some((val) =>
         val?.toLowerCase()?.includes(value.toLowerCase())
       );
     });
@@ -377,7 +373,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   getFunctionOptionLabel(func: AlgorithmFunctionExtended): string {
     const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
     const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
-    return `${this.getDisplayName(func)} <div class="detail-txt"> | ${func.algorithm_name}, ${storeName}, ${func.type}</div>`;
+    return `${this.getDisplayName(func)} <div class="detail-txt"> | ${func.algorithm_name}, ${storeName}, ${func.step_type}</div>`;
   }
 
   getAlgorithmFunctionSpec(func: AlgorithmFunctionExtended): string {
@@ -401,6 +397,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       (this.availableSteps.study && this.studyForm.invalid) ||
       (this.availableSteps.function && this.functionForm.invalid) ||
       (this.availableSteps.database && this.databaseForm.invalid) ||
+      (this.availableSteps.dataframe && this.dataframeForm.invalid) ||
       (this.availableSteps.preprocessing && this.preprocessingForm.invalid) ||
       (this.availableSteps.filter && this.filterForm.invalid) ||
       (this.availableSteps.parameter && this.parameterForm.invalid)
@@ -421,8 +418,9 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   async submitTask(): Promise<void> {
     // setup input for task. Parse string to JSON if needed
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!this.function) return;
     const kwargs: any = {};
-    this.function?.arguments.forEach((arg) => {
+    this.function.arguments.forEach((arg) => {
       Object.keys(this.parameterForm.controls).forEach((control) => {
         if (control === arg.name) {
           const value = this.parameterForm.get(control)?.value;
@@ -445,7 +443,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       });
     });
     const input: CreateTaskInput = {
-      method: this.function?.name || '',
       kwargs: kwargs
     };
 
@@ -469,6 +466,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       name: this.functionForm.controls.taskName.value,
       description: this.functionForm.controls.description.value,
       image: image,
+      method: this.function.name,
       session_id: Number.parseInt(this.sessionForm.controls.sessionID.value),
       collaboration_id: this.collaboration?.id || -1,
       database: this.databaseForm.controls.database.value,
@@ -484,6 +482,15 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
     if (this.studyForm.controls['studyOrCollabID'].value.startsWith(StudyOrCollab.Study)) {
       formCreateOutput.study_id = Number(this.studyForm.controls['studyOrCollabID'].value.substring(StudyOrCollab.Study.length));
+    }
+
+    if (this.shouldShowDatabaseStep) {
+      formCreateOutput.database = this.databaseForm.controls.database.value;
+    }
+
+    // TODO get this to work for algorithms that use multiple dataframes
+    if (this.shouldShowDataframeStep) {
+      formCreateOutput.dataframes = [{ dataframe_id: this.dataframeForm.controls.dataframeId.value, type: TaskDatabaseType.Dataframe }];
     }
 
     this.onSubmit.next(formCreateOutput);
@@ -556,6 +563,10 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       (argument.type === this.argumentType.Column || argument.type === this.argumentType.ColumnList) &&
       (this.columns.length > 0 || this.isLoadingColumns)
     );
+  }
+
+  isFederatedStep(stepType: AlgorithmStepType): boolean {
+    return stepType !== AlgorithmStepType.CentralCompute;
   }
 
   containsColumnArguments(): boolean {
@@ -710,19 +721,17 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     const algorithmsObj = await this.algorithmService.getAlgorithms();
     this.algorithms = algorithmsObj;
     this.functions = algorithmsObj.flatMap((curAlgorithm) => {
-      return (
-        curAlgorithm.functions
-          // TODO v5+ remove the func.standalone === undefined check. After v5+ the standalone property should be set for all functions
-          .filter((func) => func.standalone || func.standalone === undefined)
-          .map((func) => {
-            return {
-              ...func,
-              algorithm_id: curAlgorithm.id,
-              algorithm_name: curAlgorithm.name,
-              algorithm_store_id: curAlgorithm.algorithm_store_id
-            };
-          })
-      );
+      return curAlgorithm.functions
+        .filter((func) => func.standalone || func.standalone === undefined)
+        .filter((func) => (this.allowedTaskTypes ? this.allowedTaskTypes.includes(func.step_type) : true))
+        .map((func) => {
+          return {
+            ...func,
+            algorithm_id: curAlgorithm.id,
+            algorithm_name: curAlgorithm.name,
+            algorithm_store_id: curAlgorithm.algorithm_store_id
+          };
+        });
     });
     this.filteredFunctions = this.functions;
     this.node = await this.getOnlineNode();
@@ -739,6 +748,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     // set default for study step: full collaboration (this is not visible but required
     // if there are no studies defined to have a valid form)
     this.studyForm.controls['studyOrCollabID'].setValue(StudyOrCollab.Collaboration + this.collaboration?.id.toString());
+    this.updateStudyFormValidation();
     this.setOrganizations();
 
     this.studyForm.controls['studyOrCollabID'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (studyID) => {
@@ -777,12 +787,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
         this.studyForm.get('studyOrCollabID')?.disable();
         this.studyForm.controls['studyOrCollabID'].setValue(StudyOrCollab.Study + this.session.study.id.toString());
         this.handleStudyChange(this.session.study.id);
-      } else {
+      } else if (this.shouldShowStudyStep) {
         this.studyForm.get('studyOrCollabID')?.enable();
       }
       this.dataframes = await this.sessionService.getDataframes(this.session.id);
     }
-    this.dataframes;
+    this.updateStudyFormValidation();
     this.clearFunctionStep();
     this.clearDatabaseStep();
     this.clearPreprocessingStep();
@@ -913,5 +923,15 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
         this.snackBarService.showMessage(this.translateService.instant('task-create.step-database.error-db-update'));
       }
     }
+  }
+
+  private updateStudyFormValidation(): void {
+    const studyOrCollabControl = this.studyForm.get('studyOrCollabID');
+    if (this.shouldShowStudyStep) {
+      studyOrCollabControl?.setValidators(Validators.required);
+    } else {
+      studyOrCollabControl?.clearValidators();
+    }
+    studyOrCollabControl?.updateValueAndValidity();
   }
 }

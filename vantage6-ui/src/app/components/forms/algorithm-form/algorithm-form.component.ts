@@ -14,7 +14,6 @@ import {
   ArgumentType,
   ConditionalArgComparatorType,
   FunctionForm,
-  FunctionType,
   PartitioningType
 } from 'src/app/models/api/algorithm.model';
 import { VisualizationType, getVisualizationSchema } from 'src/app/models/api/visualization.model';
@@ -36,42 +35,43 @@ import { MatRadioGroup, MatRadioButton } from '@angular/material/radio';
 import { AlertComponent } from '../../alerts/alert/alert.component';
 import { NumberOnlyDirective } from '../../../directives/numberOnly.directive';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { AlgorithmStepType } from 'src/app/models/api/session.models';
 
 @Component({
-    selector: 'app-algorithm-form',
-    templateUrl: './algorithm-form.component.html',
-    styleUrl: './algorithm-form.component.scss',
-    imports: [
-        MatCard,
-        MatCardHeader,
-        MatCardTitle,
-        MatCardContent,
-        ReactiveFormsModule,
-        MatFormField,
-        MatLabel,
-        MatInput,
-        MatButton,
-        MatSuffix,
-        NgIf,
-        MatSelect,
-        NgFor,
-        MatOption,
-        MatAccordion,
-        MatExpansionPanel,
-        MatExpansionPanelHeader,
-        MatExpansionPanelTitle,
-        MatExpansionPanelContent,
-        MatCheckbox,
-        MatTooltip,
-        MatRadioGroup,
-        MatRadioButton,
-        AlertComponent,
-        NumberOnlyDirective,
-        MatProgressSpinner,
-        TitleCasePipe,
-        KeyValuePipe,
-        TranslateModule
-    ]
+  selector: 'app-algorithm-form',
+  templateUrl: './algorithm-form.component.html',
+  styleUrl: './algorithm-form.component.scss',
+  imports: [
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardContent,
+    ReactiveFormsModule,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatButton,
+    MatSuffix,
+    NgIf,
+    MatSelect,
+    NgFor,
+    MatOption,
+    MatAccordion,
+    MatExpansionPanel,
+    MatExpansionPanelHeader,
+    MatExpansionPanelTitle,
+    MatExpansionPanelContent,
+    MatCheckbox,
+    MatTooltip,
+    MatRadioGroup,
+    MatRadioButton,
+    AlertComponent,
+    NumberOnlyDirective,
+    MatProgressSpinner,
+    TitleCasePipe,
+    KeyValuePipe,
+    TranslateModule
+  ]
 })
 export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   @Input() algorithm?: AlgorithmForm;
@@ -87,7 +87,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   isEdit: boolean = false;
   isLoading: boolean = true;
   partitionTypes = Object.values(PartitioningType);
-  functionTypes = Object.values(FunctionType);
+  functionStepTypes = Object.values(AlgorithmStepType);
   paramTypes = Object.values(ArgumentType);
   visualizationTypes = Object.values(VisualizationType);
   selectedFile: File | null = null;
@@ -133,7 +133,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     name: ['', [Validators.required]],
     display_name: [''],
     description: [''],
-    type: ['', [Validators.required]],
+    step_type: ['', [Validators.required]],
     hidden: [false],
     arguments: this.fb.nonNullable.array([this.argumentForm]),
     databases: this.fb.nonNullable.array([this.databaseForm]),
@@ -324,7 +324,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       functionFormGroup.controls['name'].setValue(func.name);
       functionFormGroup.controls['display_name'].setValue(func.display_name);
       functionFormGroup.controls['description'].setValue(func.description);
-      functionFormGroup.controls['type'].setValue(func.type);
+      functionFormGroup.controls['step_type'].setValue(func.step_type);
       functionFormGroup.controls['standalone'].setValue(func.standalone);
       if (func.arguments) {
         func.arguments.forEach((arg) => {
@@ -480,7 +480,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       name: ['', [Validators.required]],
       display_name: [''],
       description: [''],
-      type: ['', [Validators.required]],
+      step_type: ['', [Validators.required]],
       standalone: [true],
       arguments: this.fb.array([]),
       databases: this.fb.array([]),

@@ -406,13 +406,15 @@ class Algorithms(AlgorithmBaseResource):
                         description:
                           type: string
                           description: Description of the function
-                        type:
+                        step_type:
                           type: string
-                          description: Type of function. Can be 'central' or
-                            'federated'
+                          description: Step type of the function. Can be 'data
+                            extraction', 'preprocessing', 'federated compute',
+                            'central compute', or 'postprocessing'
                         standalone:
                           type: boolean
-                          description: Whether this function produces useful results when running it by itself
+                          description: Whether this function produces useful results
+                            when running it by itself
                         databases:
                           type: array
                           description: List of databases that this function
@@ -555,7 +557,7 @@ class Algorithms(AlgorithmBaseResource):
                 name=function["name"],
                 display_name=function.get("display_name", ""),
                 description=function.get("description", ""),
-                type_=function["type_"],
+                step_type=function["step_type"],
                 standalone=function.get("standalone", True),
                 algorithm_id=algorithm.id,
             )
@@ -844,13 +846,15 @@ class Algorithm(AlgorithmBaseResource):
                         description:
                           type: string
                           description: Description of the function
-                        type:
+                        step_type:
                           type: string
-                          description: Type of function. Can be 'central' or
-                            'federated'
+                          description: Step type of the function. Can be 'data
+                            extraction', 'preprocessing', 'federated compute',
+                            'central compute', or 'postprocessing'
                         standalone:
                           type: boolean
-                          description: Whether this function produces useful results when running it by itself
+                          description: Whether this function produces useful results
+                            when running it by itself
                         databases:
                           type: array
                           description: List of databases that this function
@@ -1029,7 +1033,7 @@ class Algorithm(AlgorithmBaseResource):
                 func = Function(
                     name=new_function["name"],
                     description=new_function.get("description", ""),
-                    type_=new_function["type"],
+                    step_type=new_function["step_type"],
                     standalone=new_function.get("standalone", True),
                     algorithm_id=id,
                 )
@@ -1043,7 +1047,7 @@ class Algorithm(AlgorithmBaseResource):
                         name=argument["name"],
                         display_name=argument.get("display_name", ""),
                         description=argument.get("description", ""),
-                        type_=argument["type"],
+                        type_=argument["type_"],
                         has_default_value=argument.get("has_default_value", False),
                         default_value=argument.get("default_value", None),
                         conditional_operator=argument.get("conditional_operator", None),
