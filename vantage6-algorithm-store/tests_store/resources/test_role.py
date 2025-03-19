@@ -114,30 +114,30 @@ class TestRoleResource(TestResources):
         )
         self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
-    # @patch("vantage6.algorithm.store.resource.request_validate_server_token")
-    # def test_role_delete(self, validate_token_mock):
-    #     server = self.setup_mock_and_server(validate_token_mock)
-    #     role = Role(name="test_role")
-    #     role.save()
+    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
+    def test_role_delete(self, validate_token_mock):
+        server = self.setup_mock_and_server(validate_token_mock)
+        role = Role(name="test_role")
+        role.save()
 
-    #     self.check_unauthorized(self.app.delete, f"/api/role/{role.id}")
+        self.check_unauthorized(self.app.delete, f"/api/role/{role.id}")
 
-    #     self.register_user(
-    #         server.id, USERNAME, user_rules=[Rule.get_by_("role", Operation.DELETE)]
-    #     )
+        self.register_user(
+            server.id, USERNAME, user_rules=[Rule.get_by_("role", Operation.DELETE)]
+        )
 
-    #     response = self.app.delete(f"/api/role/{role.id}", headers=HEADERS)
-    #     self.assertEqual(response.status_code, HTTPStatus.OK)
-    #     self.assertIsNone(Role.get(role.id))
+        response = self.app.delete(f"/api/role/{role.id}", headers=HEADERS)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertIsNone(Role.get(role.id))
 
-    # @patch("vantage6.algorithm.store.resource.request_validate_server_token")
-    # def test_role_delete_not_found(self, validate_token_mock):
-    #     server = self.setup_mock_and_server(validate_token_mock)
-    #     self.register_user(
-    #         server.id, USERNAME, user_rules=[Rule.get_by_("role", Operation.DELETE)]
-    #     )
-    #     response = self.app.delete("/api/role/9999", headers=HEADERS)
-    #     self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
+    def test_role_delete_not_found(self, validate_token_mock):
+        server = self.setup_mock_and_server(validate_token_mock)
+        self.register_user(
+            server.id, USERNAME, user_rules=[Rule.get_by_("role", Operation.DELETE)]
+        )
+        response = self.app.delete("/api/role/9999", headers=HEADERS)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
     # @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     # def test_add_rule_to_role(self, validate_token_mock):
