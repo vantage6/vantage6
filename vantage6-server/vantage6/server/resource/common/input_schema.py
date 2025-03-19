@@ -5,18 +5,13 @@ import re
 from marshmallow import Schema, fields, ValidationError, validates, validates_schema
 from marshmallow.validate import Length, Range, OneOf
 
-<<<<<<< HEAD
 from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskDatabaseType
 from vantage6.server.model.rule import Scope
-from vantage6.server.default_roles import DefaultRole
-=======
 from vantage6.backend.common.resource.input_schema import (
     MAX_LEN_NAME,
     MAX_LEN_STR_LONG,
     validate_name,
 )
-from vantage6.common.task_status import TaskStatus
->>>>>>> main
 from vantage6.server.model.common.utils import validate_password
 
 _MAX_LEN_STR_SHORT = 128

@@ -165,11 +165,7 @@ class Roles(AlgorithmStoreResources):
 
         tags: ["Role"]
         """
-<<<<<<< HEAD
-        q = select(db.Role)
-=======
-        query = g.session.query(db.Role)
->>>>>>> main
+        query = select(db.Role)
 
         args = request.args
 
