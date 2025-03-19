@@ -17,7 +17,8 @@ client.authenticate("root", "root")
 existing_stores = client.store.list().get("data", [])
 existing_urls = [store["url"] for store in existing_stores]
 
-# TODO make the path settable
+# URL should be retrieved from the store, see issue:
+# https://github.com/vantage6/vantage6/issues/1824
 local_store_url = "http://localhost:7602/store"
 client.store.url = local_store_url
 client.store.store_id = 1
@@ -32,8 +33,8 @@ else:
     store_response = client.store.list(name="Local store")["data"][0]
 
 # Remove existing algorithm
-# client.store.url = store_response["url"]
 # This is broken, see issue: https://github.com/vantage6/vantage6/issues/1824
+# client.store.url = store_response["url"]
 # client.store.set(id_=store_response["id"])
 algorithms = client.algorithm.list(name="session basic example")["data"]
 if len(algorithms) > 0:
@@ -41,8 +42,8 @@ if len(algorithms) > 0:
     client.algorithm.delete(id_=algorithms[0]["id"])
 
 client.algorithm.create(
-    name="session basic example",
-    description="A basic example of a session algorithm",
+    name="Session Basics",
+    description="A set of basic algorithms for a session management",
     image="harbor2.vantage6.ai/algorithms/session-basics:latest",
     vantage6_version="5.0.0",
     code_url="https://github.com/vantage6-ai/v6-session-basics",
