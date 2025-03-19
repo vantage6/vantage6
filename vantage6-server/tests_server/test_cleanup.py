@@ -1,11 +1,12 @@
 import unittest
 
 from datetime import datetime, timedelta, timezone
+from sqlalchemy import select
 
 from vantage6.server.model.run import Run
 from vantage6.server.model.base import Database, DatabaseSessionManager
 from vantage6.server.controller import cleanup
-from vantage6.common.task_status import TaskStatus
+from vantage6.common.enum import RunStatus
 
 
 class TestCleanupRunsIsolated(unittest.TestCase):
@@ -24,7 +25,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
             result="result",
             input="input",
             log="log should be preserved",
-            status=TaskStatus.COMPLETED,
+            status=RunStatus.COMPLETED,
         )
         self.session.add(run)
         self.session.commit()
@@ -42,7 +43,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
             finished_at=datetime.now(timezone.utc) - timedelta(days=10),
             result="result",
             input="input",
-            status=TaskStatus.COMPLETED,
+            status=RunStatus.COMPLETED,
         )
         self.session.add(run)
         self.session.commit()
@@ -59,7 +60,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
             finished_at=datetime.now(timezone.utc) - timedelta(days=31),
             result="result",
             input="input",
-            status=TaskStatus.FAILED,  # Not COMPLETED, so ineligible
+            status=RunStatus.FAILED,  # Not COMPLETED, so ineligible
         )
         self.session.add(run)
         self.session.commit()
@@ -76,7 +77,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
             finished_at=datetime.now(timezone.utc) - timedelta(days=40),
             result="result",
             input="input",
-            status=TaskStatus.COMPLETED,
+            status=RunStatus.COMPLETED,
         )
         self.session.add(run)
         self.session.commit()
@@ -103,37 +104,37 @@ class TestCleanupRunsCount(unittest.TestCase):
             finished_at=datetime.now(timezone.utc) - timedelta(days=31),
             result="result0",
             input="input0",
-            status=TaskStatus.COMPLETED,
+            status=RunStatus.COMPLETED,
         )
         run1 = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=200),
             result="result1",
             input="input1",
-            status=TaskStatus.COMPLETED,
+            status=RunStatus.COMPLETED,
         )
         run2 = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=10),
             result="result2",
             input="input2",
-            status=TaskStatus.COMPLETED,
+            status=RunStatus.COMPLETED,
         )
         run3 = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=10),
             result="result3",
             input="input3",
-            status=TaskStatus.PENDING,
+            status=RunStatus.PENDING,
         )
         run4 = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=31),
             result="result4",
             input="input4",
-            status=TaskStatus.FAILED,
+            status=RunStatus.FAILED,
         )
         run5 = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=10),
             result="result5",
             input="input5",
-            status=TaskStatus.ACTIVE,
+            status=RunStatus.ACTIVE,
         )
         self.session.add_all([run0, run1, run2, run3, run4, run5])
         self.session.commit()
@@ -152,8 +153,12 @@ class TestCleanupRunsCount(unittest.TestCase):
             self.session.refresh(run)
 
         # Query the DB to get cleaned up and non-cleaned up runs
-        cleaned_runs = self.session.query(Run).filter(Run.cleanup_at != None).all()
-        remaining_runs = self.session.query(Run).filter(Run.cleanup_at == None).all()
+        cleaned_runs = self.session.scalars(
+            select(Run).filter(Run.cleanup_at != None)
+        ).all()
+        remaining_runs = self.session.scalars(
+            select(Run).filter(Run.cleanup_at == None)
+        ).all()
 
         # We expect only run0 and run1 to have been cleaned up
         self.assertEqual(len(cleaned_runs), 2)
