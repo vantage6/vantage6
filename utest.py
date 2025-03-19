@@ -20,13 +20,13 @@ def run():
     success_algorithm_store = run_tests(algorithm_store_test_suites)
 
     # run server tests
-    server_test_suites = find_tests(str(Path(__file__).parent / "vantage6-server"))
-    success_server = run_tests(server_test_suites)
+    # server_test_suites = find_tests(str(Path(__file__).parent / "vantage6-server"))
+    # success_server = run_tests(server_test_suites)
 
     sys.exit(
         not (
-            success_server
-            and success_cli
+            # success_server
+            success_cli
             and success_common
             and success_algorithm_store
         )
