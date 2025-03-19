@@ -23,18 +23,24 @@ client.authenticate("root", "root")
 parser = argparse.ArgumentParser(
     description="Load basic fixtures for a given number of nodes"
 )
-parser.add_argument("--task-directory", type=str, help="Directory to store tasks on the host")
+parser.add_argument(
+    "--task-directory", type=str, help="Directory to store tasks on the host"
+)
 parser.add_argument(
     "--node-test-database-file", type=str, help="Path to the test database file"
 )
 parser.add_argument(
     "--number-of-nodes", type=int, default=2, help="Number of nodes to create"
 )
+parser.add_argument(
+    "--task-namespace", type=str, default="vantage6-tasks", help="Task namespace"
+)
 args = parser.parse_args()
 
 number_of_nodes = args.number_of_nodes
 task_directory = args.task_directory
 node_test_database_file = args.node_test_database_file
+task_namespace = args.task_namespace
 
 
 def create_organization(index):
@@ -75,7 +81,7 @@ def create_user(index, organization):
         return user
 
 
-def create_node(index, collaboration, organization):
+def create_node(index, collaboration, organization, task_namespace):
     name = f"node_{index}"
     if next(iter(client.node.list(name=name)["data"]), None):
         print(f"==> node `{name}` already exists")
@@ -108,6 +114,7 @@ def create_node(index, collaboration, organization):
                 "server_url": "http://vantage6-server-vantage6-server-service",
                 "task_dir": task_directory,
                 "api_path": "/server",
+                "task_namespace": task_namespace,
                 # TODO user defined config
             }
         )
@@ -149,4 +156,4 @@ else:
 
 print("=> Creating nodes")
 for i in range(number_of_nodes):
-    create_node(i, col_1, organizations[i])
+    create_node(i, col_1, organizations[i], task_namespace)

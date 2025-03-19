@@ -43,7 +43,7 @@ if len(algorithms) > 0:
 client.algorithm.create(
     name="session basic example",
     description="A basic example of a session algorithm",
-    image="harbor2.vantage6.ai/algorithms/session-basics:0.1.0",
+    image="harbor2.vantage6.ai/algorithms/session-basics:latest",
     vantage6_version="5.0.0",
     code_url="https://github.com/vantage6-ai/v6-session-basics",
     partitioning="horizontal",
