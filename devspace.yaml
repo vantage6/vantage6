@@ -150,17 +150,14 @@ deployments:
             review_own_algorithm: true
             assignReviewOwnAlgorithm: true
 
-        # This is the location of the database on the host system. Depending on the
-        # system that you use in combination with Docker Desktop, you should put a
-        # different path here.
+        # This is the location of the database on the host system. In case you are using
+        # Windows in combination with WSL, you should put a path here that is accessible
+        # by the Docker daemon. For example you can use the following path:
         #
-        # WSL
         #   volumePath: /run/desktop/mnt/host/wsl/[SOME_PATH]
-        # MacOS
-        #   volumePath: ???
-        # Linux
-        #  users can probably use the same path as in the example below. Or any other
-        #  path that is accessible by the Docker daemon.
+        #
+        # This creates a mount to the `/mnt/wsl/[SOME_PATH]` directory. Note that this
+        # directory is emptied when the WSL2 instance is restarted.
         database:
           volumePath: ${STORE_DATABASE_MOUNT_PATH}
 
