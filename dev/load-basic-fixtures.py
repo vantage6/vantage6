@@ -138,7 +138,7 @@ for i in range(1, number_of_nodes + 1):
 print("=> Creating users")
 users = []
 for i in range(1, number_of_nodes + 1):
-    users.append(create_user(i, organizations[i]))
+    users.append(create_user(i, organizations[i - 1]))
 
 print("=> Creating collaboration")
 
@@ -156,4 +156,4 @@ else:
 
 print("=> Creating nodes")
 for i in range(1, number_of_nodes + 1):
-    create_node(i, col_1, organizations[i], task_namespace)
+    create_node(i, col_1, organizations[i - 1], task_namespace)
