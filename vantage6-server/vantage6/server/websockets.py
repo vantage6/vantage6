@@ -5,11 +5,10 @@ import datetime as dt
 from flask import request, session
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from flask_socketio import Namespace, emit, join_room, leave_room
+from prometheus_client import Gauge
 
 from vantage6.backend.common.metrics import (
-    NODE_CPU_PERCENT,
-    NODE_MEMORY_PERCENT,
-    NODE_NUM_CONTAINERS,
+    METRICS,
 )
 from vantage6.common import logger_name
 from vantage6.common.globals import AuthStatus
@@ -301,11 +300,7 @@ class DefaultSocketNamespace(Namespace):
             Dictionary containing the node's configuration.
         """
         # only allow nodes to send this event
-        if session.type != "node":
-            self.log.warn(
-                "Only nodes can send node configuration updates! "
-                f"{session.type} {session.auth_id} is not allowed."
-            )
+        if not self._is_node():
             return
 
         node = db.Node.get(session.auth_id)
@@ -473,23 +468,36 @@ class DefaultSocketNamespace(Namespace):
         data: dict
             Dictionary containing node metrics.
         """
-        if session.type != "node":
-            self.log.warn(
-                "Only nodes can send metrics updates! "
-                f"{session.type} {session.auth_id} is not allowed."
-            )
+        if not self._is_node():
             return
 
-        node_id = session.auth_id
+        node = db.Node.get(session.auth_id)
 
-        # Update Prometheus metrics
-        NODE_CPU_PERCENT.labels(node_id=node_id).set(data.get("cpu_percent", 0))
-        NODE_MEMORY_PERCENT.labels(node_id=node_id).set(data.get("memory_percent", 0))
-        NODE_NUM_CONTAINERS.labels(node_id=node_id).set(
-            data.get("num_algorithm_containers", 0)
-        )
+        for key, metric in METRICS.items():
+            self._update_prometheus_metric(
+                metric, node.id, data.get(key, None), default=0.0
+            )
 
-        self.log.info(f"Updated metrics for node {node_id}")
+        self.log.info(f"Updated metrics for node {node.id}")
+
+    def _update_prometheus_metric(
+        metric: Gauge, node_id: int, value: float, default: float = 0.0
+    ) -> None:
+        """
+        Update a Prometheus metric with a given value.
+
+        Parameters
+        ----------
+        metric: prometheus_client.Gauge
+            The Prometheus metric to update.
+        node_id: int
+            The ID of the node.
+        value: Any
+            The value to set for the metric.
+        default: Any, optional
+            The default value to use if the provided value is None.
+        """
+        metric.labels(node_id=node_id).set(value if value is not None else default)
 
     @staticmethod
     def __is_identified_client() -> bool:

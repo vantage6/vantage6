@@ -181,6 +181,9 @@ def cli_server_start(
 
     info("Run Docker container")
     port_ = str(port or ctx.config["port"] or Ports.DEV_SERVER.value)
+    prometheus_exporter_port = ctx.config.get("prometheus", {}).get(
+        "exporter_port", 9100
+    )
     container = docker_client.containers.run(
         image,
         command=cmd,
@@ -191,7 +194,10 @@ def cli_server_start(
             "name": ctx.config_file_name,
         },
         environment=environment_vars,
-        ports={f"{internal_port}/tcp": (ip, port_)},
+        ports={
+            f"{internal_port}/tcp": (ip, port_),  # API port
+            f"{prometheus_exporter_port}/tcp": prometheus_exporter_port,
+        },
         name=ctx.docker_container_name,
         auto_remove=not keep,
         tty=True,

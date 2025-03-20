@@ -69,11 +69,14 @@ class PrometheusServer:
         """
         Update the Prometheus configuration file with the server address.
         """
-        server_host = self.ctx.config.get("host", "localhost")
-        server_port = self.ctx.config.get("port", 5000)
-        server_address = f"{server_host}:{server_port}"
 
         try:
+            prometheus_exporter_port = self.ctx.config.get("prometheus", {}).get(
+                "exporter_port", 9100
+            )
+            server_hostname = self.ctx.docker_container_name
+            server_address = f"{server_hostname}:{prometheus_exporter_port}"
+
             with open(self.config_file, "r") as f:
                 config = yaml.safe_load(f)
 
