@@ -37,7 +37,7 @@ def cli_server_stop(name: str, system_folders: bool, all_servers: bool):
     client = docker.from_env()
 
     running_servers = client.containers.list(
-        filters={"label": f"{APPNAME}-type={InstanceType.SERVER}"}
+        filters={"label": f"{APPNAME}-type={InstanceType.SERVER.value}"}
     )
 
     if not running_servers:
@@ -62,7 +62,7 @@ def cli_server_stop(name: str, system_folders: bool, all_servers: bool):
             return
     else:
         post_fix = "system" if system_folders else "user"
-        container_name = f"{APPNAME}-{name}-{post_fix}-{InstanceType.SERVER}"
+        container_name = f"{APPNAME}-{name}-{post_fix}-{InstanceType.SERVER.value}"
 
     if container_name not in running_server_names:
         error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running!")

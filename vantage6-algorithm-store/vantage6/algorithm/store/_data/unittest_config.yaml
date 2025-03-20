@@ -1,7 +1,7 @@
 logging:
     level: CRITICAL
     file: unittest.log
-    use_console: False
+    use_console: false
     backup_count: 5
     max_size: 1024
     format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"

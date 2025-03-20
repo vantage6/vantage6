@@ -136,7 +136,7 @@ class NodeContext(AppContext):
         Path
             Path to the data folder
         """
-        return AppContext.type_data_folder(InstanceType.NODE, system_folders)
+        return AppContext.type_data_folder(InstanceType.NODE.value, system_folders)
 
     @property
     def databases(self) -> dict:

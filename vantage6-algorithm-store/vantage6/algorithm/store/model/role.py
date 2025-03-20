@@ -1,5 +1,5 @@
 from __future__ import annotations
-from sqlalchemy import Column, Text, select
+from sqlalchemy import Column, Text, Boolean, select
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -31,6 +31,7 @@ class Role(Base, RoleInterface):
     # fields
     name = Column(Text)
     description = Column(Text)
+    is_default_role = Column(Boolean, default=False)
 
     # relationships
     rules = relationship(

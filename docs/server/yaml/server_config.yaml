@@ -34,7 +34,7 @@ uri: sqlite:///test.sqlite
 # This should be set to false in production as this allows to completely
 # wipe the database in a single command. Useful to set to true when
 # testing/developing.
-allow_drop_all: True
+allow_drop_all: true
 
 # Enable or disable two-factor authentication. If enabled, users will be
 # presented with a QR-code to scan with their phone the first time they log in.
@@ -58,7 +58,7 @@ logging:
   file: test.log
 
   # Whether the output is shown in the console or not
-  use_console: True
+  use_console: true
 
   # The number of log files that are kept, used by RotatingFileHandler
   backup_count: 5
@@ -118,6 +118,15 @@ email_token_validity_minutes: 60
 # hours, respectively)
 token_expires_hours: 6
 refresh_token_expires_hours: 48
+
+# a worker will run every hour and delete results from completed runs that are
+# older than the number of days specified here. Disabled by default.
+# Careful! Make sure you have regular backups of your database before enabling
+# this feature, as a wrong configuration could lead to data loss.
+runs_data_cleanup_days: 30
+# the cleanup worker will also delete the input of the runs if this is set to
+# true. False by default.
+runs_data_cleanup_include_input: false
 
 # If you have a server with a high workload, it is recommended to use
 # multiple server instances (horizontal scaling). If you do so, you also

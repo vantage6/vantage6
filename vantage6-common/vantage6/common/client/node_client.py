@@ -59,7 +59,7 @@ class NodeClient(ClientBase):
         organization_name = organization.get("name")
 
         self.whoami = WhoAmI(
-            type_=InstanceType.NODE,
+            type_=InstanceType.NODE.value,
             id_=id_,
             name=name,
             organization_id=organization_id,
