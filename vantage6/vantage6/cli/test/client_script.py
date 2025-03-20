@@ -2,13 +2,14 @@ import click
 
 from importlib.machinery import SourceFileLoader
 from pathlib import Path
-
+from requests.exceptions import ConnectionError
 from rich.console import Console
 
 from vantage6.cli.dev.create import create_demo_network
 from vantage6.cli.dev.remove import remove_demo_network
 from vantage6.cli.dev.start import start_demo_network
 from vantage6.cli.dev.stop import stop_demo_network
+from vantage6.cli.utils import error
 from vantage6.client import Client
 from vantage6.common.globals import Ports
 
@@ -110,7 +111,13 @@ def cli_test_client_script(
         )
 
     client = Client("http://localhost", Ports.DEV_SERVER.value, "/api")
-    client.authenticate("dev_admin", "password")
+    try:
+        client.authenticate("dev_admin", "password")
+    except ConnectionError:
+        error(
+            "Could not connect to the server. Please check if a dev network is running."
+        )
+        return None
 
     script_module = SourceFileLoader("test_script", script).load_module()
     test_class = script_module.get_test_class(client)
