@@ -8,10 +8,14 @@ build:
   apt_packages:
     - default-jdk
     - graphviz
-  
+
 python:
   install:
     - requirements: docs/requirements.txt
+
+sphinx:
+  # Path to Sphinx configuration file.
+  configuration: docs/conf.py
 
 # Build the docs in all formats (html, pdf, epub, etc.)
 formats: all

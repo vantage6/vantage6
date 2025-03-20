@@ -12,4 +12,4 @@ def cli_algo_store_configuration_list() -> None:
     """
     check_docker_running()
 
-    get_server_configuration_list(InstanceType.ALGORITHM_STORE)
+    get_server_configuration_list(InstanceType.ALGORITHM_STORE.value)

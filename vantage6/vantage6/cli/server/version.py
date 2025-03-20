@@ -22,10 +22,10 @@ def cli_server_version(name: str, system_folders: bool) -> None:
     check_docker_running()
     client = docker.from_env()
 
-    running_server_names = get_running_servers(client, InstanceType.SERVER)
+    running_server_names = get_running_servers(client, InstanceType.SERVER.value)
 
     name = get_server_name(
-        name, system_folders, running_server_names, InstanceType.SERVER
+        name, system_folders, running_server_names, InstanceType.SERVER.value
     )
 
     if name in running_server_names:

@@ -364,7 +364,7 @@ def get_image_name_wo_tag(image: str) -> str:
         return f"{registry}/{repository}"
 
 
-def get_manifest(
+def _get_manifest(
     full_image: str,
     registry_user: str | None = None,
     registry_password: str | None = None,
@@ -531,7 +531,12 @@ def _get_digest_via_manifest(
     str
         Digest of the image
     """
-    manifest_response = get_manifest(full_image, docker_username, docker_password)
+    try:
+        manifest_response = _get_manifest(full_image, docker_username, docker_password)
+    except ValueError as exc:
+        log.warning("Could not get manifest of image %s", full_image)
+        log.warning("Error: %s", exc)
+        return ""
     if "Docker-Content-Digest" in manifest_response.headers:
         return manifest_response.headers["Docker-Content-Digest"]
     else:

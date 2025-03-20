@@ -19,3 +19,9 @@ export interface NewTaskMsg {
   id: number;
   parent_id: number;
 }
+
+export interface AlgorithmLogMsg {
+  run_id: number;
+  task_id: number;
+  log: string;
+}

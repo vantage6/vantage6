@@ -7,6 +7,10 @@
           <b>{{ "general.description" | translate }}</b>
           <span>{{ role?.description }}</span>
         </div>
+        <div class="data-list__item">
+          <b>{{ "role-read.default-role" | translate }}</b>
+          <span>{{ getDefaultRoleLabel() }}</span>
+        </div>
       </div>
     </mat-card-content>
   </mat-card>
@@ -15,8 +19,30 @@
       <mat-tab-group dynamicHeight mat-stretch-tabs="false" mat-align-tabs="start">
         <mat-tab label="{{ 'role-read.tab.permissions' | translate }}">
           <div class="role-read__tab-content">
-            <div class="role-read__buttons"></div>
-            <app-permissions-matrix-store [fixedSelectedPrimary]="roleRules"> </app-permissions-matrix-store>
+            <div class="role-read__buttons">
+              <button *ngIf="editEnabled && !isEditing" mat-flat-button (click)="handleEnterEditMode()">
+                <mat-icon>edit</mat-icon>
+                <span>{{ "role-read.edit-permissions" | translate }}</span>
+              </button>
+              <button *ngIf="deleteEnabled" mat-flat-button color="warn" (click)="handleDeleteRole()">
+                <mat-icon>delete</mat-icon>
+                <span>{{ "general.delete" | translate }}</span>
+              </button>
+            </div>
+            <app-permissions-matrix-store
+              [fixedSelectedPrimary]="fixedSelectedRules"
+              [preselected]="preselectedRules"
+              [selectable]="selectableRules"
+              (changed)="handleChangedSelection($event)"
+            >
+            </app-permissions-matrix-store>
+
+            <app-role-submit-buttons
+              *ngIf="isEditing"
+              (submitted)="handleSubmitEdit()"
+              (cancelled)="handleCancelEdit()"
+              class="role-read__submit-buttons"
+            ></app-role-submit-buttons>
           </div>
         </mat-tab>
         <mat-tab label="{{ 'role-read.tab.users' | translate }}">

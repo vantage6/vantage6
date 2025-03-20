@@ -13,9 +13,12 @@ from flask_socketio import SocketIO
 from vantage6.common import logger_name
 from vantage6.backend.common.services_resources import BaseServicesResources
 from vantage6.server import db
-from vantage6.server.utils import obtain_auth_collaborations, obtain_auth_organization
 from vantage6.server.model.authenticatable import Authenticatable
-from vantage6.server.permission import PermissionManager
+from vantage6.server.permission import (
+    PermissionManager,
+    obtain_auth_collaborations,
+    obtain_auth_organization,
+)
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -237,36 +240,6 @@ with_user_or_node = only_for(
 with_user = only_for(("user",))
 with_node = only_for(("node",))
 with_container = only_for(("container",))
-
-
-def parse_datetime(
-    date: str | dt.datetime = None, default: dt.datetime = None
-) -> dt.datetime:
-    """
-    Utility function to parse a datetime string.
-
-    Parameters
-    ----------
-    date : str | datetime.datetime, optional
-        Datetime string
-    default : datetime.datetime, optional
-        Default datetime to return if `dt` is None
-
-    Returns
-    -------
-    datetime.datetime
-        Datetime object
-    """
-    if date:
-        if isinstance(date, str):
-            converter = "%Y-%m-%dT%H:%M:%S.%f"
-            if date.endswith("+00:00"):
-                converter += "%z"  # parse timezone
-            return dt.datetime.strptime(date, converter)
-        else:
-            # convert datetime to UTC
-            return date.astimezone(dt.timezone.utc)
-    return default
 
 
 def get_org_ids_from_collabs(auth: Authenticatable, collab_id: int = None) -> list[int]:

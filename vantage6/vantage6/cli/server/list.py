@@ -11,4 +11,5 @@ def cli_server_configuration_list() -> None:
     Print the available server configurations.
     """
     check_docker_running()
-    get_server_configuration_list(InstanceType.SERVER)
+
+    get_server_configuration_list(InstanceType.SERVER.value)
