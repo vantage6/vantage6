@@ -7,13 +7,12 @@ store.
 
 from vantage6.client import Client
 from pathlib import Path
+from vantage6.common.enum import AlgorithmStepType
 
 dev_dir = Path("dev") / ".data"
 dev_dir.mkdir(exist_ok=True)
-
 client = Client("http://localhost", 7601, "/server", log_level="error")
 client.authenticate("root", "root")
-
 existing_stores = client.store.list().get("data", [])
 existing_urls = [store["url"] for store in existing_stores]
 
@@ -53,9 +52,9 @@ client.algorithm.create(
             "name": "read_csv",
             "display_name": "Read CSV file",
             "standalone": True,
-            "description": "",
+            "description": "Read a CSV file to the local session storage",
             "ui_visualizations": [],
-            "type": "federated",
+            "step_type": AlgorithmStepType.DATA_EXTRACTION.value,
             "arguments": [],
             "databases": [{"description": "", "name": "Database"}],
         },
@@ -65,7 +64,7 @@ client.algorithm.create(
             "standalone": True,
             "description": "Change data type of particular column (e.g. string to int)",
             "ui_visualizations": [],
-            "type": "federated",
+            "step_type": AlgorithmStepType.PREPROCESSING.value,
             "arguments": [
                 {
                     "has_default_value": False,
@@ -92,9 +91,9 @@ client.algorithm.create(
             "name": "sum",
             "display_name": "Sum",
             "standalone": True,
-            "description": "",
+            "description": "Sum the values of a column",
             "ui_visualizations": [],
-            "type": "federated",
+            "step_type": AlgorithmStepType.FEDERATED_COMPUTE.value,
             "arguments": [
                 {
                     "has_default_value": False,
