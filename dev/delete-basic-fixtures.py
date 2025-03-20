@@ -22,6 +22,12 @@ for client_subclass_name in ("task", "node"):
         client_subclass.delete(entity["id"])
     print("==> Deleted", len(entities), f"{client_subclass_name}s")
 
+
+print("=> Deleting sessions & dataframes")
+for session in (sessions := client.session.list(per_page=999)["data"]):
+    client.session.delete(session["id"], delete_dependents=True)
+print("==> Deleted", len(sessions), "sessions")
+
 print("=> Deleting collaborations")
 for collab in (
     collabs := client.collaboration.list(per_page=999, scope="global")["data"]

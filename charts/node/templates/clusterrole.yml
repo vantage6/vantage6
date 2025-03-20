@@ -11,11 +11,11 @@ rules:
   resources: ["jobs"]
   verbs: ["create", "delete", "get", "list", "watch"]
 
-# While Jobs create pods, we need direct pod access to read their logs for algorithm output and debugging.
-# We only need read permissions since the Job controller manages the pods' lifecycle.
+# Need full pod access for test pod creation and log reading.
+# Create is needed for test pods, while get/list/watch are needed for monitoring.
 - apiGroups: [""]
   resources: ["pods", "pods/log"]
-  verbs: ["get", "list", "watch"]
+  verbs: ["create", "delete", "get", "list", "watch"]
 
 # Algorithms might need persistent storage to store temporary or output data.
 # The node needs to manage PVCs to provide this storage to algorithm containers.
@@ -28,3 +28,9 @@ rules:
 - apiGroups: [""]
   resources: ["services"]
   verbs: ["create", "delete", "get", "list"]
+
+# The node needs to be able to create and manage namespaces for task isolation.
+# This is used by the ensure_task_namespace() method.
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["create", "get", "list"]
