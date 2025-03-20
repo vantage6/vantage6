@@ -21,6 +21,9 @@ from vantage6.common.globals import Ports
     "--algorithm-image", type=str, default=None, help="Algorithm Docker image to use"
 )
 @click.option(
+    "--algorithm-input", type=dict, default=None, help="Algorithm input argument"
+)
+@click.option(
     "--create-dev-network",
     is_flag=True,
     help="Create a new dev network to run the test",
@@ -28,7 +31,7 @@ from vantage6.common.globals import Ports
 @click.option(
     "--start-dev-network",
     type=bool,
-    default=True,
+    default=False,
     help="Start a dev network to run the test",
 )
 @click.option(
@@ -58,11 +61,18 @@ from vantage6.common.globals import Ports
     help="Add a dataset to the nodes. The first argument is the label of the database, "
     "the second is the path to the dataset file.",
 )
+@click.option(
+    "--database",
+    type=str,
+    default=None,
+    help="Label of the database to be used for the test",
+)
 @click.pass_context
 def cli_test_client_script(
     click_ctx: click.Context,
     script: Path,
     algorithm_image: str,
+    algorithm_input: str,
     name: str,
     server_url: str,
     create_dev_network: bool,
@@ -70,12 +80,11 @@ def cli_test_client_script(
     image: str,
     keep: bool,
     add_dataset: list[tuple[str, Path]] = (),
+    database: str = None,
 ) -> None:
     """
-    Run a client script on the server.
-
-    This command will run a client script on the server. The script should be
-    located in the `client-scripts` directory of the vantage6 repository.
+    Run a script for testing an algorithm on a dev network.
+    The path to the script must be provided as an argument.
     """
     # create the network
     if create_dev_network:
@@ -104,10 +113,11 @@ def cli_test_client_script(
     client.authenticate("dev_admin", "password")
 
     script_module = SourceFileLoader("test_script", script).load_module()
+    test_class = script_module.get_test_class(client)
 
-    result = script_module.test(client, algorithm_image)
+    result = test_class.test(algorithm_image, algorithm_input, database)
 
-    if result["pass"]:
+    if result["passed"]:
         msg = ":heavy_check_mark: [green]Test passed[/green]"
     else:
         msg = ":x: [red]Test failed[/red]"
