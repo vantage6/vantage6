@@ -18,9 +18,7 @@ vars:
   NUMBER_OF_NODES:
     question: "How many nodes do you want to create for your development environment?"
     default: 2
-  TASK_NAMESPACE:
-    question: "What is the task namespace for your development environment?"
-    default: vantage6-tasks
+  TASK_NAMESPACE: vantage6-tasks
   SERVER_DATABASE_MOUNT_PATH:
     question: "Where is your server database located on the host machine?"
     default: ${PWD}/dev/data/db_pv_server
