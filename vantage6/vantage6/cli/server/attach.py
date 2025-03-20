@@ -29,17 +29,21 @@ def cli_server_attach(name: str, system_folders: bool) -> None:
     client = docker.from_env()
 
     running_servers = client.containers.list(
-        filters={"label": f"{APPNAME}-type={InstanceType.SERVER}"}
+        filters={"label": f"{APPNAME}-type={InstanceType.SERVER.value}"}
     )
     running_server_names = [node.name for node in running_servers]
 
     if not name:
-        name = q.select(
-            "Select the server you wish to attach:", choices=running_server_names
-        ).ask()
+        try:
+            name = q.select(
+                "Select the server you wish to attach:", choices=running_server_names
+            ).unsafe_ask()
+        except KeyboardInterrupt:
+            error("Aborted by user!")
+            return
     else:
         post_fix = "system" if system_folders else "user"
-        name = f"{APPNAME}-{name}-{post_fix}-{InstanceType.SERVER}"
+        name = f"{APPNAME}-{name}-{post_fix}-{InstanceType.SERVER.value}"
 
     if name in running_server_names:
         container = client.containers.get(name)

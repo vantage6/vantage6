@@ -8,7 +8,7 @@ describe('RoleReadComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [RoleReadComponent]
+      imports: [RoleReadComponent]
     });
     fixture = TestBed.createComponent(RoleReadComponent);
     component = fixture.componentInstance;

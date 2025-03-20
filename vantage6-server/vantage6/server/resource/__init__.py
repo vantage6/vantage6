@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import logging
 
 from functools import wraps
@@ -13,9 +13,12 @@ from flask_socketio import SocketIO
 from vantage6.common import logger_name
 from vantage6.backend.common.services_resources import BaseServicesResources
 from vantage6.server import db
-from vantage6.server.utils import obtain_auth_collaborations, obtain_auth_organization
 from vantage6.server.model.authenticatable import Authenticatable
-from vantage6.server.permission import PermissionManager
+from vantage6.server.permission import (
+    PermissionManager,
+    obtain_auth_collaborations,
+    obtain_auth_organization,
+)
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -210,7 +213,7 @@ def get_and_update_authenticatable_info(auth_id: int) -> db.Authenticatable:
         User or node database model
     """
     auth = db.Authenticatable.get(auth_id)
-    auth.last_seen = datetime.datetime.utcnow()
+    auth.last_seen = dt.datetime.now(dt.timezone.utc)
     auth.save()
     return auth
 
@@ -225,27 +228,6 @@ with_user_or_node = only_for(
 with_user = only_for(("user",))
 with_node = only_for(("node",))
 with_container = only_for(("container",))
-
-
-def parse_datetime(dt: str = None, default: datetime = None) -> datetime:
-    """
-    Utility function to parse a datetime string.
-
-    Parameters
-    ----------
-    dt : str
-        Datetime string
-    default : datetime
-        Default datetime to return if `dt` is None
-
-    Returns
-    -------
-    datetime
-        Datetime object
-    """
-    if dt:
-        return datetime.datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S.%f")
-    return default
 
 
 def get_org_ids_from_collabs(auth: Authenticatable, collab_id: int = None) -> list[int]:

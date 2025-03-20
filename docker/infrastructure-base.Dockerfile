@@ -1,6 +1,6 @@
 FROM python:3.10-slim-buster
 
-LABEL version="4.9"
+LABEL version="4.10"
 LABEL maintainer="Frank Martin <f.martin@iknl.nl>"
 
 # slim buster does not have gcc installed

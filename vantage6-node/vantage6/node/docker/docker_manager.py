@@ -8,6 +8,7 @@ results from finished containers.
 """
 
 import os
+from socket import SocketIO
 import time
 import logging
 import docker
@@ -221,7 +222,11 @@ class DockerManager(DockerBaseManager):
                 uri = self.__tasks_dir / os.path.basename(uri)
 
             if db_is_dir:
-                self.log.debug("Well waddaya know! We gots ourselves a folder!")
+                self.log.info(
+                    "Database folder from '%s' mounted at /mnt/%s",
+                    db_config["uri"],
+                    uri,
+                )
                 # Ignore all previouscomments about file locations: folders
                 # need to be mounted from the host.
                 uri = db_config["uri"]
@@ -584,6 +589,7 @@ class DockerManager(DockerBaseManager):
         tmp_vol_name: str,
         token: str,
         databases_to_use: list[str],
+        socketIO: SocketIO,
     ) -> tuple[TaskStatus, list[dict] | None]:
         """
         Checks if docker task is running. If not, creates DockerTaskManager to
@@ -643,6 +649,8 @@ class DockerManager(DockerBaseManager):
             requires_pull=self._policies.get(
                 NodePolicy.REQUIRE_ALGORITHM_PULL, DEFAULT_REQUIRE_ALGO_IMAGE_PULL
             ),
+            socketIO=socketIO,
+            collaboration_id=self.client.collaboration_id,
         )
 
         # attempt to kick of the task. If it fails do to unknown reasons we try

@@ -1,7 +1,7 @@
 import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
-import { PageEvent } from '@angular/material/paginator';
+import { PageEvent, MatPaginator } from '@angular/material/paginator';
 import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
@@ -15,6 +15,10 @@ import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 import { StoreUserService } from 'src/app/services/store-user.service';
 import { assignDevelopersToAlgorithms } from '../review.helper';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
+import { NgIf } from '@angular/common';
+import { TableComponent } from '../../../../components/table/table.component';
 
 enum TableRows {
   ID = 'id',
@@ -23,9 +27,10 @@ enum TableRows {
 }
 
 @Component({
-  selector: 'app-algorithm-in-review-list',
-  templateUrl: './algorithm-in-review-list.component.html',
-  styleUrl: './algorithm-in-review-list.component.scss'
+    selector: 'app-algorithm-in-review-list',
+    templateUrl: './algorithm-in-review-list.component.html',
+    styleUrl: './algorithm-in-review-list.component.scss',
+    imports: [PageHeaderComponent, MatCard, MatCardHeader, MatCardTitle, MatCardContent, NgIf, TableComponent, MatPaginator, TranslateModule]
 })
 export class AlgorithmInReviewListComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

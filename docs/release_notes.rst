@@ -1,6 +1,142 @@
 Release notes
 =============
 
+4.10.1
+-----
+
+*12 March 2025*
+
+- **Security**
+
+  - Updates of cryptography and prismjs
+    (`PR#1803 <https://github.com/vantage6/vantage6/pull/1803>`_,
+    `PR#1800 <https://github.com/vantage6/vantage6/pull/1800>`_).
+
+- **Feature**
+
+  - Algorithms now have live updates of the logging
+    (`Issue#1090 <https://github.com/vantage6/vantage6/issues/1090>`_).
+
+- **Bugfix**
+
+  - Fix bug in comparing UTC time with non-UTC time
+    (`PR#1807 <https://github.com/vantage6/vantage6/pull/1807>`_).
+  - Show functions with standalone field set to ``null`` in the UI
+    (`PR#1810 <https://github.com/vantage6/vantage6/pull/1810>`_).
+  - Fix pipeline to ensure RC support images are always built
+    (`PR#1810 <https://github.com/vantage6/vantage6/pull/1811>`_).
+
+4.10.0
+-----
+
+*7 March 2025*
+
+- **Feature**
+
+  - You can now create, edit and delete custom algorithm store roles
+    (`Issue#1090 <https://github.com/vantage6/vantage6/issues/1090>`_,
+    `PR#1728 <https://github.com/vantage6/vantage6/pull/1728>`_).
+  - Server administrator can define task input/results to be deleted after N days
+    (`Issue#1560 <https://github.com/vantage6/vantage6/issues/1560>`_,
+    `PR#1691 <https://github.com/vantage6/vantage6/pull/1691>`_).
+  - Algorithm developers can submit comments when they submit an algorithm
+    (`Issue#1589 <https://github.com/vantage6/vantage6/issues/1589>`_,
+    `PR#1661 <https://github.com/vantage6/vantage6/pull/1661>`_).
+  - Algorithm JSON arguments are better supported in the UI: you can upload a JSON file
+    and field is bigger and validates JSON
+    (`Issue#1327 <https://github.com/vantage6/vantage6/issues/1327>`_,
+    `PR#1721 <https://github.com/vantage6/vantage6/pull/1721>`_).
+  - Option to filter users by organization in the UI
+    (`Issue#1647 <https://github.com/vantage6/vantage6/issues/1647>`_,
+    `PR#1710 <https://github.com/vantage6/vantage6/pull/1710>`_).
+  - Support None/null values as conditional values for algorithm arguments
+    (`Issue#1652 <https://github.com/vantage6/vantage6/issues/1652>`_,
+    `PR#1715 <https://github.com/vantage6/vantage6/pull/1715>`_).
+  - Flag in algorithm store to indicate if an algorithm function should be runnable
+    by a user or not (`Issue#1093 <https://github.com/vantage6/vantage6/issues/1093>`_,
+    `PR#1690 <https://github.com/vantage6/vantage6/pull/1690>`_).
+  - Add option to register node on organization details page in the UI
+    (`Issue#1646 <https://github.com/vantage6/vantage6/issues/1646>`_,
+    `PR#1708 <https://github.com/vantage6/vantage6/pull/1708>`_).
+
+- **Change**
+
+  - Folder mounts that do not exist now generate an error on startup to be more clear
+    (`Issue#1651 <https://github.com/vantage6/vantage6/issues/1651>`_,
+    `PR#1706 <https://github.com/vantage6/vantage6/pull/1706>`_).
+  - Aborts (Ctrl+C) now immediately interrupt interactive CLI questionaires
+    (`Issue#1096 <https://github.com/vantage6/vantage6/issues/1096>`_,
+    `PR#1719 <https://github.com/vantage6/vantage6/pull/1719>`_).
+  - Change default policy for nodes to always pull algorithm images before running them
+    to True (`PR#1666 <https://github.com/vantage6/vantage6/pull/1666>`_).
+  - Consistently using UTC time throughout the code
+    (`Issue#1702 <https://github.com/vantage6/vantage6/issues/1702>`_,
+    `PR#1707 <https://github.com/vantage6/vantage6/pull/1707>`_).
+  - Prevent subtasks to be shown in UI when user searches tasks by name
+    (`Issue#1547 <https://github.com/vantage6/vantage6/issues/1547>`_,
+    `PR#1718 <https://github.com/vantage6/vantage6/pull/1718>`_).
+  - Show task created date in the UI
+    (`Issue#1620 <https://github.com/vantage6/vantage6/issues/1620>`_,
+    `PR#1712 <https://github.com/vantage6/vantage6/pull/1712>`_).
+  - Add buttons to submit new algorithms in more places in the UI
+    (`Issue#1591 <https://github.com/vantage6/vantage6/issues/1591>`_,
+    `PR#1704 <https://github.com/vantage6/vantage6/pull/1704>`_).
+  - Improve message about assigned algorithm reviewers when insufficient reviewers have
+    been assigned (`Issue#1670 <https://github.com/vantage6/vantage6/issues/1670>`_,
+    `PR#1724 <https://github.com/vantage6/vantage6/pull/1724>`_).
+  - Remove unused vnode-local commands
+    (`PR#1720 <https://github.com/vantage6/vantage6/pull/1720>`_).
+
+- **Bugfix**
+
+  - Create proper directories in `v6 dev create-demo-network` if they don't exist
+    (`Issue#1723 <https://github.com/vantage6/vantage6/issues/1723>`_,
+    `PR#1726 <https://github.com/vantage6/vantage6/pull/1726>`_).
+  - Prevent broken state when removing a dev network that is still running - force user
+    to stop it first (`Issue#1731 <https://github.com/vantage6/vantage6/issues/1731>`_,
+    `PR#1745 <https://github.com/vantage6/vantage6/pull/1745>`_).
+  - Prevent that algorithm logs in the UI are editable
+    (`Issue#1549 <https://github.com/vantage6/vantage6/issues/1549>`_,
+    `PR#1713 <https://github.com/vantage6/vantage6/pull/1713>`_).
+  - Make `v6 test feature-test` compatible with two-factor authentication
+    (`Issue#1017 <https://github.com/vantage6/vantage6/issues/1017>`_,
+    `PR#1703 <https://github.com/vantage6/vantage6/pull/1703>`_).
+  - Button to create algorithm store role was leading to wrong page
+    (`Issue#1590 <https://github.com/vantage6/vantage6/issues/1590>`_,
+    `PR#1728 <https://github.com/vantage6/vantage6/pull/1728>`_).
+  - Fix display of algorithm review breadcrumbs in UI
+    (`Issue#1537 <https://github.com/vantage6/vantage6/issues/1537>`_,
+    `PR#1711 <https://github.com/vantage6/vantage6/pull/1711>`_).
+  - Development configuration option whether all database tables should be dropped
+    was wrongly set as string, causing it not to work properly
+    (`PR#1776 <https://github.com/vantage6/vantage6/pull/1776>`_).
+  - Use string representation of enum values where necessary
+    (`PR#1780 <https://github.com/vantage6/vantage6/pull/1780>`_).
+  - Function `client.node.get()` deleted from the algorithm client because the algorithm
+    does not have permission to access this resource
+    (`Issue#1656 <https://github.com/vantage6/vantage6/issues/1656>`_,
+    `PR#1725 <https://github.com/vantage6/vantage6/pull/1725>`_).
+  - Prereleases no longer overwrite `latest` tag of algorithm-base image
+    (`Issue#1729 <https://github.com/vantage6/vantage6/issues/1729>`_,
+    `PR#1744 <https://github.com/vantage6/vantage6/pull/1744>`_).
+  - Prevent SyntaxWarning when running CLI for the first time
+    (`PR#1663 <https://github.com/vantage6/vantage6/pull/1663>`_).
+
+4.9.1
+-----
+
+*24 January 2025*
+
+- **Bugfix**
+
+  - Prevent crash of thread that refreshes the node token, thereby improving node
+    stability (`Issue#1669 <https://github.com/vantage6/vantage6/issues/1669>`_,
+    `PR#1694 <https://github.com/vantage6/vantage6/pull/1694>`_).
+  - Improve recognizing text-based 'true' values for policies in the algorithm store (
+    `PR#1687 <https://github.com/vantage6/vantage6/pull/1687>`_).
+  - For default list of str/float/int arguments, don't create superfluous form control
+    in the UI when creating a task (`PR#1688 <https://github.com/vantage6/vantage6/pull/1688>`_).
+
 4.9.0
 -----
 
@@ -82,7 +218,7 @@ Release notes
 - **Change**
 
   - Modify filename of PyPI packages to conform to PEP625
-   (`PR#1625 <https://github.com/vantage6/vantage6/pull/1625>`_).
+    (`PR#1625 <https://github.com/vantage6/vantage6/pull/1625>`_).
 
 - **Bugfix**
 

@@ -1,4 +1,4 @@
-""" Client for the algorithm container to communicate with the vantage6 server. """
+"""Client for the algorithm container to communicate with the vantage6 server."""
 
 import jwt
 import json as json_lib
@@ -626,23 +626,6 @@ class AlgorithmClient(ClientBase):
                 Dictionary containing the collaboration data.
             """
             return self.parent.request(f"collaboration/{self.parent.collaboration_id}")
-
-    class Node(ClientBase.SubClient):
-        """
-        Get information about the node.
-        """
-
-        def get(self) -> dict:
-            """
-            Get the node data.
-
-            Returns
-            -------
-            dict
-                Dictionary containing data on the node this algorithm is
-                running on.
-            """
-            return self.parent.request(f"node/{self.parent.node_id}")
 
     class Study(ClientBase.SubClient):
         """

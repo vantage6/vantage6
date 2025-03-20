@@ -5,7 +5,6 @@ import sys
 
 
 def run():
-
     # run common tests
     common_test_suites = find_tests(str(Path(__file__).parent / "vantage6-common"))
     success_common = run_tests(common_test_suites)

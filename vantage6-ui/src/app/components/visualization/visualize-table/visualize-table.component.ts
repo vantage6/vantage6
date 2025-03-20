@@ -1,14 +1,43 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { isNested } from 'src/app/helpers/utils.helper';
 import { parseDefaultPandasFormat } from 'src/app/helpers/visualization.helper';
 import { Visualization } from 'src/app/models/api/visualization.model';
 import { FileService } from 'src/app/services/file.service';
+import {
+  MatTable,
+  MatColumnDef,
+  MatHeaderCellDef,
+  MatHeaderCell,
+  MatCellDef,
+  MatCell,
+  MatHeaderRowDef,
+  MatHeaderRow,
+  MatRowDef,
+  MatRow
+} from '@angular/material/table';
+import { NgFor } from '@angular/common';
+import { MatButton } from '@angular/material/button';
 
 @Component({
-  selector: 'app-visualize-table',
-  templateUrl: './visualize-table.component.html',
-  styleUrls: ['./visualize-table.component.scss']
+    selector: 'app-visualize-table',
+    templateUrl: './visualize-table.component.html',
+    styleUrls: ['./visualize-table.component.scss'],
+    imports: [
+        MatTable,
+        NgFor,
+        MatColumnDef,
+        MatHeaderCellDef,
+        MatHeaderCell,
+        MatCellDef,
+        MatCell,
+        MatHeaderRowDef,
+        MatHeaderRow,
+        MatRowDef,
+        MatRow,
+        MatButton,
+        TranslateModule
+    ]
 })
 export class VisualizeTableComponent implements OnChanges {
   @Input() visualization?: Visualization | null;

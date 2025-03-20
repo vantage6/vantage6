@@ -21,12 +21,7 @@
         <mat-panel-title>{{ "task-read.card-status.title" | translate }}</mat-panel-title>
       </mat-expansion-panel-header>
       <h3>{{ "task-read.card-status.main-process-title" | translate }}</h3>
-      <div
-        [ngClass]="{
-          'status-info-container': true,
-          'status-info-container--small': isSmallTileView()
-        }"
-      >
+      <div [ngClass]="{ 'status-info-container': true, 'status-info-container--small': isSmallTileView() }">
         <app-status-info
           *ngFor="let run of task?.runs | orderByTaskStatus: 'status' : 'asc'"
           [type]="getStatusType(run.status)"
@@ -34,7 +29,7 @@
           nodeName="{{ run.node.name }}"
           [status]="getTaskStatusTranslation(run.status)"
         >
-          <button actions mat-raised-button [disabled]="!run.log" (click)="openLog(run.log)">
+          <button actions mat-raised-button (click)="openLog(run)">
             {{ "task-run.show-log" | translate }}
           </button>
           <span actionText *ngIf="run.node.status !== 'online' && isActive(run.status)">{{
@@ -45,10 +40,7 @@
       <div *ngIf="childTasks.length > 0">
         <h3>{{ "task-read.card-status.child-process-title" | translate }}</h3>
         <div
-          [ngClass]="{
-            'status-info-container': true,
-            'status-info-container--small': isSmallTileView()
-          }"
+          [ngClass]="{ 'status-info-container': true, 'status-info-container--small': isSmallTileView() }"
           *ngFor="
             let childTask of childTasks
               | orderBy: 'id'
@@ -62,7 +54,7 @@
             nodeName="{{ run.node.name }}"
             [status]="getTaskStatusTranslation(run.status)"
           >
-            <button actions mat-raised-button [disabled]="!run.log" (click)="openLog(run.log)">
+            <button actions mat-raised-button (click)="openLog(run)">
               {{ "task-run.show-log" | translate }}
             </button>
             <span actionText *ngIf="run.node.status !== 'online' && isActive(run.status)">{{
@@ -202,7 +194,7 @@
         </div>
         <div class="data-list__item" *ngIf="task.input">
           <b>{{ "task.function" | translate }}</b>
-          <span>{{ (this.function?.display_name ?? task.input.method) || "-" }}</span>
+          <span>{{ (function?.display_name ?? task.input.method) || "-" }}</span>
         </div>
       </div>
       <ng-container *ngIf="task.input?.parameters">
@@ -257,7 +249,7 @@
             </div>
           </div>
           <div class="run__actions">
-            <button mat-flat-button color="primary" *ngIf="run.log" (click)="openLog(run.log)">
+            <button actions mat-raised-button (click)="openLog(run)">
               {{ "task-run.show-log" | translate }}
             </button>
           </div>

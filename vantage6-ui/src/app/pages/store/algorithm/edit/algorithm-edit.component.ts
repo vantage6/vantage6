@@ -8,11 +8,17 @@ import { Algorithm, AlgorithmForm } from 'src/app/models/api/algorithm.model';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
+import { NgIf } from '@angular/common';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { AlgorithmFormComponent } from '../../../../components/forms/algorithm-form/algorithm-form.component';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'app-algorithm-edit',
-  templateUrl: './algorithm-edit.component.html',
-  styleUrl: './algorithm-edit.component.scss'
+    selector: 'app-algorithm-edit',
+    templateUrl: './algorithm-edit.component.html',
+    styleUrl: './algorithm-edit.component.scss',
+    imports: [NgIf, PageHeaderComponent, AlgorithmFormComponent, MatCard, MatCardContent, MatProgressSpinner]
 })
 export class AlgorithmEditComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
@@ -85,6 +91,7 @@ export class AlgorithmEditComponent implements OnInit, OnDestroy {
               conditional_on: conditionalArgName,
               conditional_operator: arg.conditional_operator,
               conditional_value: arg.conditional_value,
+              conditionalValueNull: arg.conditional_value === null ? 'true' : 'false',
               is_frontend_only: arg.is_frontend_only
             };
           }),

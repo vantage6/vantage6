@@ -68,7 +68,6 @@ class NodePolicy(str, Enum):
 
 
 class Ports(int, Enum):
-
     HTTP = 80
     HTTPS = 443
     DEV_SERVER = 7601
