@@ -51,7 +51,6 @@ JOB_POD_SESSION_FOLDER_PATH = "/app/session"
 # container.
 TASK_FILES_ROOT = "/app/tasks"
 DATABASE_BASE_PATH = "/app/databases/"
-KUBE_CONFIG_FILE_PATH = "/app/.kube/config"
 
 # Must be consistent with node pod configuration
 PROXY_SERVER_HOST = "http://v6proxy-subdomain.vantage6-node.svc.cluster.local"

@@ -10,9 +10,6 @@ vars:
   NODE_TEST_DATABASE_FILE:
     question: "Where is your test data for the node located?"
     default: ${PWD}/dev/olympic_athletes_2016.csv
-  KUBE_CONFIG:
-    question: "Where is your kube config from k8s located?"
-    default: ${DEVSPACE_USER_HOME}/.kube/config
   TASK_DIRECTORY:
     question: "Where is your task directory located on the host machine?"
     default: ${PWD}/.tasks
@@ -189,7 +186,6 @@ deployments:
             # - name: postgres
             #   uri: postgres://vantage6:vantage6@vantage6-vantage6-postgres:5432/vantage6
             #   type: other
-          kubeConfig: ${KUBE_CONFIG}
 
 
 # This is a list of `dev` containers that are based on the containers created by your deployments
