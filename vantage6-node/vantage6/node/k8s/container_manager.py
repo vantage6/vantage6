@@ -30,7 +30,6 @@ from vantage6.common.docker.addons import (
 from vantage6.common.client.node_client import NodeClient
 from vantage6.node.globals import (
     ENV_VARS_NOT_SETTABLE_BY_NODE,
-    KUBE_CONFIG_FILE_PATH,
     PROXY_SERVER_HOST,
     PROXY_SERVER_PORT,
     DATABASE_BASE_PATH,
@@ -68,15 +67,14 @@ class ContainerManager:
         self.ctx = ctx
         self.client = client
 
-        # Instanced within a pod
-        if not os.path.exists(KUBE_CONFIG_FILE_PATH):
-            raise ValueError(
-                "Kubernetes configuration file not found at ",
-                KUBE_CONFIG_FILE_PATH,
-            )
-
-        # Default mount location defined on POD configuration
-        config.load_kube_config(KUBE_CONFIG_FILE_PATH)
+        # When a pod runs in Kubernetes with a ServiceAccount, Kubernetes automatically
+        # mounts the service account credentials at
+        # /var/run/secrets/kubernetes.io/serviceaccount/.
+        try:
+            config.load_incluster_config()
+        except Exception as e:
+            self.log.exception("Error loading Kubernetes configuration")
+            raise e
 
         # The `local_data_dir` refers to the location where this node can write files
         # to. When this node instance needs to create a volume mount for a container,
