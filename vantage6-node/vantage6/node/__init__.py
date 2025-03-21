@@ -72,6 +72,8 @@ from vantage6.node.docker.squid import Squid
 # make sure the version is available
 from vantage6.node._version import __version__  # noqa: F401
 
+from vantage6.backend.common import metrics
+
 
 class VPNConnectMode(Enum):
     FIRST_TRY = 1
@@ -227,52 +229,63 @@ class Node:
             Dictionary containing system metadata.
         """
         metadata = {
-            "cpu_percent": psutil.cpu_percent(interval=1),
-            "memory_percent": psutil.virtual_memory().percent,
-            "num_algorithm_containers": len(self.__docker.active_tasks),
-            "os": os.name,
-            "platform": sys.platform,
-            "cpu_count": psutil.cpu_count(),
-            "memory_total": psutil.virtual_memory().total,
-            "memory_available": psutil.virtual_memory().available,
+            metrics.CPU_PERCENT.name: psutil.cpu_percent(interval=1),
+            metrics.MEMORY_PERCENT.name: psutil.virtual_memory().percent,
+            metrics.NUM_ALGORITHM_CONTAINERS.name: len(self.__docker.active_tasks),
+            metrics.OS.name: os.name,
+            metrics.PLATFORM.name: sys.platform,
+            metrics.CPU_COUNT.name: psutil.cpu_count(),
+            metrics.MEMORY_TOTAL.name: psutil.virtual_memory().total,
+            metrics.MEMORY_AVAILABLE.name: psutil.virtual_memory().available,
         }
 
-        metadata["gpu"] = self.__gather_gpu_metadata()
+        gpu_metadata = self.__gather_gpu_metadata()
+        if gpu_metadata:
+            metadata.update(gpu_metadata)
 
         return metadata
 
-    def __gather_gpu_metadata(self) -> list:
+    def __gather_gpu_metadata(self) -> dict | None:
         """
         Gather GPU metadata such as GPU name, load, memory usage, and temperature.
 
         Returns
         -------
-        list
-            List of dictionaries containing GPU metadata for each available GPU.
+        dict
+            Dictionary containing GPU-related metrics.
         """
-        gpu_metadata = []
+
         try:
             pynvml.nvmlInit()
             gpu_count = pynvml.nvmlDeviceGetCount()
+
+            gpu_metadata = {
+                metrics.GPU_COUNT.name: gpu_count,
+                metrics.GPU_LOAD.name: [],
+                metrics.GPU_MEMORY_USED.name: [],
+                metrics.GPU_MEMORY_FREE.name: [],
+                metrics.GPU_TEMPERATURE.name: [],
+            }
+
             for i in range(gpu_count):
                 handle = pynvml.nvmlDeviceGetHandleByIndex(i)
-                gpu_info = {
-                    "id": i,
-                    "name": pynvml.nvmlDeviceGetName(handle).decode("utf-8"),
-                    "load": pynvml.nvmlDeviceGetUtilizationRates(handle).gpu,
-                    "memory_total": pynvml.nvmlDeviceGetMemoryInfo(handle).total,
-                    "memory_used": pynvml.nvmlDeviceGetMemoryInfo(handle).used,
-                    "memory_free": pynvml.nvmlDeviceGetMemoryInfo(handle).free,
-                    "temperature": pynvml.nvmlDeviceGetTemperature(
-                        handle, pynvml.NVML_TEMPERATURE_GPU
-                    ),
-                }
-                gpu_metadata.append(gpu_info)
+                gpu_metadata[metrics.GPU_LOAD.name].append(
+                    pynvml.nvmlDeviceGetUtilizationRates(handle).gpu
+                )
+                gpu_metadata[metrics.GPU_MEMORY_USED.name].append(
+                    pynvml.nvmlDeviceGetMemoryInfo(handle).used
+                )
+                gpu_metadata[metrics.GPU_MEMORY_FREE.name].append(
+                    pynvml.nvmlDeviceGetMemoryInfo(handle).free
+                )
+                gpu_metadata[metrics.GPU_TEMPERATURE.name].append(
+                    pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
+                )
             pynvml.nvmlShutdown()
+            return gpu_metadata
         except pynvml.NVMLError as e:
-            gpu_metadata = [f"NVML Error: {str(e)}"]
-
-        return gpu_metadata
+            self.log.warning(f"Failed to gather GPU metadata: {e}")
+            return None
 
     def __proxy_server_worker(self) -> None:
         """

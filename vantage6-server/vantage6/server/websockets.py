@@ -473,31 +473,17 @@ class DefaultSocketNamespace(Namespace):
 
         node = db.Node.get(session.auth_id)
 
-        for key, metric in METRICS.items():
-            self._update_prometheus_metric(
-                metric, node.id, data.get(key, None), default=0.0
-            )
+        for metric_name, value in data.items():
+            if metric_name in METRICS:
+                if isinstance(value, list):
+                    for gpu_id, gpu_value in enumerate(value):
+                        METRICS[metric_name].labels(node_id=node.id, gpu_id=gpu_id).set(
+                            gpu_value
+                        )
+                else:
+                    METRICS[metric_name].labels(node_id=node.id).set(value)
 
         self.log.info(f"Updated metrics for node {node.id}")
-
-    def _update_prometheus_metric(
-        metric: Gauge, node_id: int, value: float, default: float = 0.0
-    ) -> None:
-        """
-        Update a Prometheus metric with a given value.
-
-        Parameters
-        ----------
-        metric: prometheus_client.Gauge
-            The Prometheus metric to update.
-        node_id: int
-            The ID of the node.
-        value: Any
-            The value to set for the metric.
-        default: Any, optional
-            The default value to use if the provided value is None.
-        """
-        metric.labels(node_id=node_id).set(value if value is not None else default)
 
     @staticmethod
     def __is_identified_client() -> bool:
