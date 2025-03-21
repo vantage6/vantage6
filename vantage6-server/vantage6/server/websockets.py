@@ -5,7 +5,6 @@ import datetime as dt
 from flask import request, session
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from flask_socketio import Namespace, emit, join_room, leave_room
-from prometheus_client import Gauge
 
 from vantage6.backend.common.metrics import (
     METRICS,
