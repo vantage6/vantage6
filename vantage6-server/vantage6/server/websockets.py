@@ -6,6 +6,9 @@ from flask import request, session
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from flask_socketio import Namespace, emit, join_room, leave_room
 
+from vantage6.backend.common.metrics import (
+    METRICS,
+)
 from vantage6.common import logger_name
 from vantage6.common.globals import AuthStatus
 from vantage6.common.task_status import has_task_failed
@@ -296,11 +299,7 @@ class DefaultSocketNamespace(Namespace):
             Dictionary containing the node's configuration.
         """
         # only allow nodes to send this event
-        if session.type != "node":
-            self.log.warn(
-                "Only nodes can send node configuration updates! "
-                f"{session.type} {session.auth_id} is not allowed."
-            )
+        if not self._is_node():
             return
 
         node = db.Node.get(session.auth_id)
@@ -458,6 +457,32 @@ class DefaultSocketNamespace(Namespace):
             run.log += log_message
         else:
             run.log = log_message
+
+    def on_node_metrics_update(self, data: dict) -> None:
+        """
+        Handle metrics sent by nodes and update Prometheus metrics.
+
+        Parameters
+        ----------
+        data: dict
+            Dictionary containing node metrics.
+        """
+        if not self._is_node():
+            return
+
+        node = db.Node.get(session.auth_id)
+
+        for metric_name, value in data.items():
+            if metric_name in METRICS:
+                if isinstance(value, list):
+                    for gpu_id, gpu_value in enumerate(value):
+                        METRICS[metric_name].labels(node_id=node.id, gpu_id=gpu_id).set(
+                            gpu_value
+                        )
+                else:
+                    METRICS[metric_name].labels(node_id=node.id).set(value)
+
+        self.log.info(f"Updated metrics for node {node.id}")
 
     @staticmethod
     def __is_identified_client() -> bool:

@@ -32,6 +32,8 @@ import queue
 import json
 import shutil
 import requests.exceptions
+import psutil
+import pynvml
 
 from pathlib import Path
 from threading import Thread
@@ -69,6 +71,8 @@ from vantage6.node.docker.squid import Squid
 
 # make sure the version is available
 from vantage6.node._version import __version__  # noqa: F401
+
+from vantage6.backend.common import metrics
 
 
 class VPNConnectMode(Enum):
@@ -197,7 +201,91 @@ class Node:
         t = Thread(target=self.__listening_worker, daemon=True)
         t.start()
 
+        self.log.debug("Start thread for sending system metadata")
+        t = Thread(target=self.__metadata_worker, daemon=True)
+        t.start()
+
         self.log.info("Init complete")
+
+    def __metadata_worker(self) -> None:
+        """
+        Periodically send system metadata to the server.
+        """
+        while True:
+            try:
+                metadata = self.__gather_system_metadata()
+                self.socketIO.emit("node_metrics_update", metadata, namespace="/tasks")
+            except Exception:
+                self.log.exception("Metadata thread had an exception")
+            time.sleep(PING_INTERVAL_SECONDS)
+
+    def __gather_system_metadata(self) -> dict:
+        """
+        Gather system metadata such as CPU, memory, OS, and GPU information.
+
+        Returns
+        -------
+        dict
+            Dictionary containing system metadata.
+        """
+        metadata = {
+            metrics.CPU_PERCENT.name: psutil.cpu_percent(interval=1),
+            metrics.MEMORY_PERCENT.name: psutil.virtual_memory().percent,
+            metrics.NUM_ALGORITHM_CONTAINERS.name: len(self.__docker.active_tasks),
+            metrics.OS.name: os.name,
+            metrics.PLATFORM.name: sys.platform,
+            metrics.CPU_COUNT.name: psutil.cpu_count(),
+            metrics.MEMORY_TOTAL.name: psutil.virtual_memory().total,
+            metrics.MEMORY_AVAILABLE.name: psutil.virtual_memory().available,
+        }
+
+        gpu_metadata = self.__gather_gpu_metadata()
+        if gpu_metadata:
+            metadata.update(gpu_metadata)
+
+        return metadata
+
+    def __gather_gpu_metadata(self) -> dict | None:
+        """
+        Gather GPU metadata such as GPU name, load, memory usage, and temperature.
+
+        Returns
+        -------
+        dict
+            Dictionary containing GPU-related metrics.
+        """
+
+        try:
+            pynvml.nvmlInit()
+            gpu_count = pynvml.nvmlDeviceGetCount()
+
+            gpu_metadata = {
+                metrics.GPU_COUNT.name: gpu_count,
+                metrics.GPU_LOAD.name: [],
+                metrics.GPU_MEMORY_USED.name: [],
+                metrics.GPU_MEMORY_FREE.name: [],
+                metrics.GPU_TEMPERATURE.name: [],
+            }
+
+            for i in range(gpu_count):
+                handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+                gpu_metadata[metrics.GPU_LOAD.name].append(
+                    pynvml.nvmlDeviceGetUtilizationRates(handle).gpu
+                )
+                gpu_metadata[metrics.GPU_MEMORY_USED.name].append(
+                    pynvml.nvmlDeviceGetMemoryInfo(handle).used
+                )
+                gpu_metadata[metrics.GPU_MEMORY_FREE.name].append(
+                    pynvml.nvmlDeviceGetMemoryInfo(handle).free
+                )
+                gpu_metadata[metrics.GPU_TEMPERATURE.name].append(
+                    pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
+                )
+            pynvml.nvmlShutdown()
+            return gpu_metadata
+        except pynvml.NVMLError as e:
+            self.log.warning(f"Failed to gather GPU metadata: {e}")
+            return None
 
     def __proxy_server_worker(self) -> None:
         """
