@@ -205,3 +205,12 @@ dev:
   # hostname `host.docker.internal` to refer to the host machine. On Linux, you
   # should normally use http://172.17.0.1.
   host_uri: http://host.docker.internal
+
+# Settings for the prometheus monitoring
+prometheus:
+  # Set to true to start Prometheus server when starting the server
+  start_with_server: false
+  # Set to true to enable the prometheus monitoring
+  enabled: true
+  # Port at which the prometheus exporter will be available on your local machine
+  exporter_port: 9100

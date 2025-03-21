@@ -18,7 +18,10 @@ from vantage6.common.docker.addons import (
 from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.common import split_rabbitmq_uri
 from vantage6.cli.context.server import ServerContext
-from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
+from vantage6.cli.globals import (
+    DEFAULT_SERVER_SYSTEM_FOLDERS,
+    PROMETHEUS_CONTAINER_NAME,
+)
 from vantage6.cli.server.common import get_server_context, stop_ui
 
 
@@ -117,3 +120,10 @@ def _stop_server_containers(
                 f"Stopped the {Fore.GREEN}{rabbit_container_name}"
                 f"{Style.RESET_ALL} container."
             )
+
+    if ctx.config.get("prometheus", {}).get("enabled"):
+        remove_container_if_exists(client, name=PROMETHEUS_CONTAINER_NAME)
+        info(
+            f"Stopped the {Fore.GREEN}{PROMETHEUS_CONTAINER_NAME}"
+            f"{Style.RESET_ALL} container."
+        )
