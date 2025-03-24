@@ -73,7 +73,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         self,
         name: str = None,
         url: str = None,
-        collaboration: int = None,
+        collaboration: int | None = None,
         page: int = 1,
         per_page: int = 10,
     ) -> list[dict]:
