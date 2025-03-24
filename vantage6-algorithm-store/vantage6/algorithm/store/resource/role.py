@@ -401,6 +401,10 @@ class RoleRules(AlgorithmStoreResources):
         """
         role = get_role(db, role_id)
         rule = get_rule(db, rule_id)
+        print(rule)
+        user = db.User.get(g.user.id)
+        print(user)
+        print(user.rules)
         self.permissions.check_user_rules([rule])
         role.rules.append(rule)
         role.save()

@@ -127,6 +127,11 @@ class PermissionManager(PermissionManagerBase):
         UnauthorizedError
         """
         for rule in rules:
+            print("check_user_rules")
+            for c in self.collections.values():
+                print(dir(c))
+            print(rule, rule.name, rule.operation)
+            print(self.collections[rule.name])
             if not self.collections[rule.name].has_permission(rule.operation):
                 raise UnauthorizedError(
                     f"You don't have the rule ({rule.name}, {rule.operation})"

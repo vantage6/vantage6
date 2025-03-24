@@ -150,8 +150,7 @@ class TestRoleResource(TestResources):
         self.register_user(
             server.id,
             USERNAME,
-            user_rules=[Rule.get_by_("role", Operation.EDIT)],
-            # user_roles=[role],
+            user_roles=[role],
         )
 
         response = self.app.post(f"/api/role/{role.id}/rule/{rule.id}", headers=HEADERS)

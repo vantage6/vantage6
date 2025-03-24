@@ -40,13 +40,9 @@ class TestResources(unittest.TestCase):
     @classmethod
     def tearDown(cls):
         # delete resources from database
-        # pylint: disable=expression-not-assigned
-        [p.delete() for p in Policy.get()]
-        [s.delete() for s in Vantage6Server.get()]
-        [u.delete() for u in User.get()]
-        [r.delete() for r in Role.get()]
-        [r.delete() for r in Review.get()]
-
+        session = DatabaseSessionManager.get_session()
+        for model in [Policy, Vantage6Server, User, Role, Review]:
+            session.query(model).delete()
         # unset session.session
         DatabaseSessionManager.clear_session()
 
