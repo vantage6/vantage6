@@ -392,7 +392,7 @@ class Organization(OrganizationBase):
             return {"msg": f"Organization id={id} not found!"}, HTTPStatus.NOT_FOUND
 
         # Check if auth has enough permissions
-        if not self.r.can_for_org(P.VIEW, id):
+        if not self.r.allowed_for_org(P.VIEW, id):
             return {
                 "msg": "You do not have permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
@@ -462,7 +462,7 @@ class Organization(OrganizationBase):
         if not organization:
             return {"msg": f"Organization with id={id} not found"}, HTTPStatus.NOT_FOUND
 
-        if not self.r.can_for_org(P.EDIT, id):
+        if not self.r.allowed_for_org(P.EDIT, id):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED

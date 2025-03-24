@@ -38,6 +38,8 @@ class Run(Base):
         Time when the task was started
     finished_at : datetime
         Time when the task was finished
+    cleanup_at : datetime
+        Time when the results were deleted as part of a cleanup
     status : str
         Status of the task
     log : str
@@ -66,6 +68,7 @@ class Run(Base):
     status = Column(Text)
     log = Column(Text)
     action = Column(Text)
+    cleanup_at = Column(DateTime, nullable=True)
 
     # relationships
     task = relationship("Task", back_populates="runs")
@@ -122,16 +125,16 @@ class Run(Base):
         # FIXME 2022-03-03 BvB: the following errors are not currently
         # forwarded to the user as request response. Make that happen.
         except NoResultFound:
-            log_.warn(
-                "No node exists for organization_id "
-                f"{self.organization_id} in the current collaboration!"
+            log_.warning(
+                "No node exists for organization_id %s in the current collaboration!",
+                self.organization_id,
             )
             return None
         except MultipleResultsFound:
             log_.error(
-                "Multiple nodes are registered for organization_id "
-                f"{self.organization_id} in the current collaboration. "
-                "Please delete all nodes but one."
+                "Multiple nodes are registered for organization_id %s in the current "
+                "collaboration. Please delete all nodes but one.",
+                self.organization_id,
             )
             raise
         return node

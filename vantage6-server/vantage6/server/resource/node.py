@@ -245,7 +245,7 @@ class Nodes(NodeBase):
         args = request.args
 
         if "organization_id" in args:
-            if not self.r.can_for_org(P.VIEW, int(args["organization_id"])):
+            if not self.r.allowed_for_org(P.VIEW, int(args["organization_id"])):
                 return {
                     "msg": "You lack the permission view nodes from the "
                     f'organization with id {args["organization_id"]}!'
@@ -405,7 +405,7 @@ class Nodes(NodeBase):
             }, HTTPStatus.NOT_FOUND
 
         # check permissions
-        if not self.r.can_for_org(P.CREATE, org_id):
+        if not self.r.allowed_for_org(P.CREATE, org_id):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
@@ -503,7 +503,7 @@ class Node(NodeBase):
             return {"msg": f"Node id={id} is not found!"}, HTTPStatus.NOT_FOUND
 
         # check permissions
-        if not self.r.can_for_org(P.VIEW, node.organization_id):
+        if not self.r.allowed_for_org(P.VIEW, node.organization_id):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
@@ -557,7 +557,7 @@ class Node(NodeBase):
         if not node:
             return {"msg": f"Node id={id} not found"}, HTTPStatus.NOT_FOUND
 
-        if not self.r.can_for_org(P.DELETE, node.organization_id):
+        if not self.r.allowed_for_org(P.DELETE, node.organization_id):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
@@ -647,7 +647,7 @@ class Node(NodeBase):
         if not node:
             return {"msg": f"Node id={id} not found!"}, HTTPStatus.NOT_FOUND
 
-        if not self.r.can_for_org(P.EDIT, node.organization_id):
+        if not self.r.allowed_for_org(P.EDIT, node.organization_id):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED

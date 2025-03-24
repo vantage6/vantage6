@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { GetStoreRoleParameters, StoreRole, StoreRoleLazyProperties } from '../models/api/store-role.model';
+import { GetStoreRoleParameters, StoreRole, StoreRoleCreate, StoreRoleForm, StoreRoleLazyProperties } from '../models/api/store-role.model';
 import { Pagination } from '../models/api/pagination.model';
 import { getLazyProperties } from '../helpers/api.helper';
 
@@ -29,5 +29,29 @@ export class StoreRoleService {
     await getLazyProperties(result, role, lazyProperties, this.apiService, store_url);
 
     return role;
+  }
+
+  async createRole(store_url: string, roleForm: StoreRoleForm): Promise<StoreRole> {
+      const roleCreate: StoreRoleCreate = {
+        ...roleForm
+      };
+      return await this.apiService.postForAlgorithmApi<StoreRole>(store_url, `/role`, roleCreate);
+    }
+
+  async patchRole(store_url: string, role: StoreRole): Promise<StoreRole | null> {
+    try {
+          const requestBody: StoreRoleForm = {
+            name: role.name,
+            description: role.description,
+            rules: role.rules.map((rule) => rule.id)
+          };
+          return await this.apiService.patchForAlgorithmApi<StoreRole>(store_url, `/role/${role.id}`, requestBody);
+        } catch {
+          return null;
+        }
+  }
+
+  async deleteRole(store_url: string, roleID: number): Promise<void> {
+    await this.apiService.deleteForAlgorithmApi(store_url, `/role/${roleID}?delete_dependents=true`);
   }
 }

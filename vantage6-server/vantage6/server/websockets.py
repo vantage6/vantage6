@@ -31,6 +31,14 @@ class DefaultSocketNamespace(Namespace):
 
     log = logging.getLogger(logger_name(__name__))
 
+    def _is_node(self) -> bool:
+        if session.type != "node":
+            self.log.warn(
+                "Only nodes can send algorithm updates! "
+                f"{session.type} {session.auth_id} is not allowed."
+            )
+        return session.type == "node"
+
     def on_connect(self) -> None:
         """
         A new incoming connection request from a client.
@@ -235,12 +243,7 @@ class DefaultSocketNamespace(Namespace):
                     "collaboration_id": 1
                 }
         """
-        # only allow nodes to send this event
-        if session.type != "node":
-            self.log.warn(
-                "Only nodes can send algorithm status changes! "
-                f"{session.type} {session.auth_id} is not allowed."
-            )
+        if not self._is_node():
             return
 
         run_id = data.get("run_id")
@@ -424,6 +427,53 @@ class DefaultSocketNamespace(Namespace):
                 namespace="/tasks",
                 room=room,
             )
+
+    def on_algorithm_log(self, data: dict) -> None:
+        """
+        Handle log messages from algorithm containers and log them in the server logs.
+
+        Parameters
+        ----------
+        data: Dict
+            Dictionary containing log message details.
+            It should look as follows:
+
+            .. code:: python
+
+                {
+                    "collaboration_id": 1,
+                    "run_id": 1,
+                    "task_id": 1,
+                    "log": "Log message"
+                }
+        """
+        if not self._is_node():
+            return
+
+        collaboration_id = data.get("collaboration_id")
+        run_id = data.get("run_id")
+        task_id = data.get("task_id")
+        log_message = data.get("log")
+
+        run = db.Run.get(run_id)
+        self._append_log(log_message, run)
+        run.save()
+
+        emit(
+            "algorithm_log",
+            {"run_id": run_id, "task_id": task_id, "log": log_message},
+            room=f"collaboration_{collaboration_id}",
+        )
+
+        self.__cleanup()
+
+    def _append_log(self, log_message, run):
+        if run.log:
+            if not run.log.endswith("\n"):
+                run.log += "\n"
+            run.log += log_message
+        else:
+            run.log = log_message
 
     @staticmethod
     def __is_identified_client() -> bool:

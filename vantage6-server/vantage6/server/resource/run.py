@@ -21,10 +21,10 @@ from vantage6.server.permission import (
 from vantage6.server.resource import (
     with_node,
     only_for,
-    parse_datetime,
     ServicesResources,
 )
 from vantage6.server.resource.common.input_schema import RunInputSchema
+from vantage6.server.utils import parse_datetime
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource.common.output_schema import (
     RunSchema,
@@ -158,7 +158,7 @@ class MultiRunBase(RunBase):
         q = select(db_Run)
 
         if "organization_id" in args:
-            if not self.r.can_for_org(P.VIEW, args["organization_id"]):
+            if not self.r.allowed_for_org(P.VIEW, args["organization_id"]):
                 return {
                     "msg": "You lack the permission to view runs for "
                     f'organization id={args["organization_id"]}!'
@@ -171,7 +171,7 @@ class MultiRunBase(RunBase):
                 return {
                     "msg": f'Task id={args["task_id"]} does not exist!'
                 }, HTTPStatus.BAD_REQUEST
-            elif not self.r.can_for_org(P.VIEW, task.init_org_id) and not (
+            elif not self.r.allowed_for_org(P.VIEW, task.init_org_id) and not (
                 self.r.v_own.can() and g.user.id == task.init_user_id
             ):
                 return {
@@ -560,7 +560,7 @@ class SingleRunBase(RunBase):
         if not run:
             return {"msg": f"Run id={id} not found!"}, HTTPStatus.NOT_FOUND
 
-        if not self.r.can_for_org(P.VIEW, run.task.init_org_id) and not (
+        if not self.r.allowed_for_org(P.VIEW, run.task.init_org_id) and not (
             self.r.v_own.can() and run.task.init_user_id == g.user.id
         ):
             return {
