@@ -5,7 +5,6 @@ from flask.globals import request
 from flask import g
 from flask_restful import Api
 from sqlalchemy import or_, select
-from marshmallow import ValidationError
 
 from vantage6.backend.common.resource.error_handling import (
     BadRequestError,
@@ -75,13 +74,6 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         path + "/<int:id>",
         endpoint="role_with_id",
         methods=("GET", "PATCH", "DELETE"),
-        resource_class_kwargs=services,
-    )
-    api.add_resource(
-        RoleRules,
-        path + "/<int:id>/rule/<int:rule_id>",
-        endpoint="role_rule_with_id",
-        methods=("DELETE", "POST"),
         resource_class_kwargs=services,
     )
 
@@ -648,118 +640,3 @@ class Role(RoleBase):
         role.delete()
 
         return {"msg": "Role removed from the database."}, HTTPStatus.OK
-
-
-class RoleRules(RoleBase):
-    @with_user
-    @handle_exceptions
-    def post(self, id, rule_id):
-        """Add a rule to a role.
-        ---
-        description: >-
-          Add a rule to a role given that the role exists already and that the
-          user has the permission to do so.\n
-
-          ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-          Description|\n
-          |--|--|--|--|--|--|\n
-          |Role|Global|Edit|❌|❌|Edit any role|\n
-          |Role|Collaboration|Edit|❌|❌|Edit any role in your collaborations
-          |\n
-          |Role|Organization|Edit|❌|❌|Edit any role in your organization|\n
-
-          Accessible to users.
-
-        parameters:
-          - in: path
-            name: id
-            schema:
-              type: integer
-            description: Role id
-            required: tr
-          - in: path
-            name: rule_id
-            schema:
-              type: integer
-            description: Rule id to add to role
-            required: tr
-
-        responses:
-          201:
-            description: Added rule to role
-          404:
-            description: Rule or role not found
-          401:
-            description: Unauthorized
-
-        security:
-          - bearerAuth: []
-
-        tags: ["Role"]
-        """
-        role = get_role(db, id)
-        rule = get_rule(db, rule_id)
-        self._validate_user_permission(P.EDIT, role.organization_id)
-        self.permissions.check_user_rules([rule])
-        role.rules.append(rule)
-        role.save()
-
-        return rule_schema.dump(role.rules, many=True), HTTPStatus.CREATED
-
-    @with_user
-    @handle_exceptions
-    def delete(self, id, rule_id):
-        """Removes rule from role.
-        ---
-        description: >-
-          Removes a rule from a role given the user has permission and the rule
-          id exists.\n
-
-          ### Permission Table\n
-          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
-          Description|\n
-          |--|--|--|--|--|--|\n
-          |Role|Global|Edit|❌|❌|Delete any rule in a role|\n
-          |Role|Collaboration|Edit|❌|❌|Delete any rule in roles in your
-          collaborations|\n
-          |Role|Organization|Edit|❌|❌|Delete any rule in roles in your
-          organization|\n
-
-          Accessible to users.
-
-        parameters:
-          - in: path
-            name: id
-            schema:
-              type: integer
-            description: Role id
-          - in: path
-            name: rule_id
-            schema:
-              type: integer
-            description: Rule id to delete from the role
-            required: true
-
-        responses:
-          200:
-            description: Ok
-          404:
-            description: Role or rule id not found
-          401:
-            description: Unauthorized
-
-        tags: ["Role"]
-        """
-        role = get_role(db, id)
-        rule = get_rule(db, rule_id)
-        self._validate_user_permission(P.EDIT, role.organization_id)
-        self.permissions.check_user_rules([rule])
-        if rule not in role.rules:
-            raise NotFoundError(
-                f"Rule with id={rule_id} is not part of role with id={id}"
-            )
-        role.rules.remove(rule)
-        role.save()
-
-        return rule_schema.dump(role.rules, many=True), HTTPStatus.OK
