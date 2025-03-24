@@ -21,7 +21,8 @@ existing_urls = [store["url"] for store in existing_stores]
 local_store_url = "http://localhost:7602/store"
 client.store.url = local_store_url
 client.store.store_id = 1
-if not local_store_url in existing_urls:
+if local_store_url not in existing_urls:
+    print("Registering local store")
     store_response = client.store.create(
         algorithm_store_url=local_store_url,
         name="Local store",
@@ -30,6 +31,14 @@ if not local_store_url in existing_urls:
     )
 else:
     store_response = client.store.list(name="Local store")["data"][0]
+
+# register also the other users in the local store
+users_in_store = client.store.user.list()["data"]
+all_users = client.user.list()["data"]
+for user in all_users:
+    if user["username"] not in [u["username"] for u in users_in_store]:
+        print(f"Registering user {user['username']} in local store")
+        client.store.user.register(username=user["username"], roles=[1])
 
 # Remove existing algorithm
 # This is broken, see issue: https://github.com/vantage6/vantage6/issues/1824
