@@ -1,5 +1,6 @@
 import docker
 from pathlib import Path
+from vantage6.cli.globals import PROMETHEUS_CONTAINER_NAME
 from vantage6.common import info, error
 import yaml
 
@@ -42,7 +43,7 @@ class PrometheusServer:
             return
 
         self.docker.containers.run(
-            name="prometheus",
+            name=PROMETHEUS_CONTAINER_NAME,
             image=self.image,
             volumes=volumes,
             ports=ports,
@@ -111,6 +112,6 @@ class PrometheusServer:
         Check if a Prometheus container is already running
         """
         try:
-            return self.docker.containers.get("prometheus")
+            return self.docker.containers.get(PROMETHEUS_CONTAINER_NAME)
         except docker.errors.NotFound:
             return None
