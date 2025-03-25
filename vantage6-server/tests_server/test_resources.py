@@ -4331,3 +4331,51 @@ class TestResources(unittest.TestCase):
         org2.delete()
         col.delete()
         study.delete()
+
+    def test_reset_api_key(self):
+        org = Organization(name="Test Organization")
+        org.save()
+        node, api_key = self.create_node(organization=org)
+
+        rule = Rule.get_by_("node", Scope.ORGANIZATION, Operation.EDIT)
+        headers = self.create_user_and_login(organization=org, rules=[rule])
+
+        response = self.app.post(
+            "/api/recover/node",
+            headers=headers,
+            json={"id": node.id},
+        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertIn("api_key", response.json)
+
+        # Test missing ID in the request body
+        response = self.app.post(
+            "/api/recover/node",
+            headers=headers,
+            json={},
+        )
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
+        self.assertIn("errors", response.json)
+
+        # Test node not found
+        response = self.app.post(
+            "/api/recover/node",
+            headers=headers,
+            json={"id": 9999},  # Non-existent node ID
+        )
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.assertEqual(response.json["msg"], "Node id=9999 is not found!")
+
+        # Test unauthorized access
+        headers = self.create_user_and_login()  # User without permissions
+        response = self.app.post(
+            "/api/recover/node",
+            headers=headers,
+            json={"id": node.id},
+        )
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertEqual(response.json["msg"], "You lack the permission to do that!")
+
+        # Cleanup
+        node.delete()
+        org.delete()

@@ -1,6 +1,18 @@
 Release notes
 =============
 
+4.10.2
+-----
+
+*25 March 2025*
+
+- **Bugfix**
+
+  - Fix bug in resetting API key
+    (`PR#1840 <https://github.com/vantage6/vantage6/pull/1840>`_).
+  - Fix release workflow to ensure proper branch is always used
+    (`PR#1836 <https://github.com/vantage6/vantage6/pull/1836>`_).
+
 4.10.1
 -----
 
