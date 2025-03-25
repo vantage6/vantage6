@@ -81,6 +81,27 @@ class Dataframe(Base):
             [RunStatus.has_finished(run.status) for run in self.last_session_task.runs]
         )
 
+    @staticmethod
+    def name_exists(name: str) -> bool:
+        """
+        Check if a dataframe with the given name exists in the session.
+
+        Parameters
+        ----------
+        name : str
+            Name of the dataframe to check
+
+        Returns
+        -------
+        bool
+            True if the dataframe with the given name exists, False otherwise
+        """
+        db_session = DatabaseSessionManager.get_session()
+        return (
+            db_session.scalars(select(Dataframe).filter_by(name=name)).first()
+            is not None
+        )
+
     @hybrid_property
     def active_compute_tasks(self) -> list[models.Task]:
         """
