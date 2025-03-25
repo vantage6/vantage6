@@ -21,6 +21,7 @@ spec:
     #   - ip: "172.17.0.1" # Default bridge network gateway for docker/k8s
     #     hostnames:
     #     - "host.docker.internal" # Defining it explicitly for environments where Docker is not installed
+      serviceAccountName: {{ .Release.Name }}-node-serviceaccount
       containers:
       - name: vantage6-node
         image: {{ .Values.node.image }}
@@ -31,8 +32,6 @@ spec:
         volumeMounts:
         - name: task-files-root
           mountPath: /app/tasks
-        - name: kube-config-file
-          mountPath: /app/.kube/config
         - name: config-volume
           mountPath: /app/config
         {{- range .Values.node.databases.fileBased }}
@@ -50,10 +49,6 @@ spec:
         hostPath:
           path: {{ .Values.node.taskDirHost }}
           type: DirectoryOrCreate
-      - name: kube-config-file
-        hostPath:
-          path: {{ .Values.node.kubeConfig }}
-          type: File
       - name: config-volume
         configMap:
           name: {{ .Release.Name }}-node-configmap
