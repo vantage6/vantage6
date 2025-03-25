@@ -620,7 +620,7 @@ class ResetAPIKey(ServicesResources):
             return {"msg": f"Node id={id_} is not found!"}, HTTPStatus.NOT_FOUND
 
         # check if user is allowed to edit the node
-        if not self.r.can_for_org(Operation.EDIT, node.organization_id):
+        if not self.r.allowed_for_org(Operation.EDIT, node.organization_id):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
