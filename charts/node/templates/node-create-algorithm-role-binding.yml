@@ -1,7 +1,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ .Release.Name }}-role-binding
+  name: {{ .Release.Name }}-node-create-algorithm-role-binding
   labels:
     {{- include "node.labels" . | nindent 4 }}
 subjects:
@@ -10,5 +10,5 @@ subjects:
   namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
-  name: {{ .Release.Name }}-node-role
+  name: {{ .Release.Name }}-node-create-algorithm-role
   apiGroup: rbac.authorization.k8s.io
