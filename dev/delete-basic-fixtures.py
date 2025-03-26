@@ -15,6 +15,11 @@ dev_dir.mkdir(exist_ok=True)
 client = Client("http://localhost", 7601, "/server", log_level="error")
 client.authenticate("root", "root")
 
+print("=> Deleting sessions & dataframes")
+for session in (sessions := client.session.list(per_page=999)["data"]):
+    client.session.delete(session["id"], delete_dependents=True)
+print("==> Deleted", len(sessions), "sessions")
+
 for client_subclass_name in ("task", "node"):
     client_subclass = getattr(client, client_subclass_name)
     print(f"=> Deleting {client_subclass_name}s")
@@ -22,11 +27,6 @@ for client_subclass_name in ("task", "node"):
         client_subclass.delete(entity["id"])
     print("==> Deleted", len(entities), f"{client_subclass_name}s")
 
-
-print("=> Deleting sessions & dataframes")
-for session in (sessions := client.session.list(per_page=999)["data"]):
-    client.session.delete(session["id"], delete_dependents=True)
-print("==> Deleted", len(sessions), "sessions")
 
 print("=> Deleting collaborations")
 for collab in (

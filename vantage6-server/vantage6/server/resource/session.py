@@ -302,6 +302,10 @@ class SessionBase(ServicesResources):
 
         op = "e" if operation == P.EDIT else "d"
 
+        if operation == P.DELETE:
+            if getattr(self.r, f"{op}_glo").can():
+                return True
+
         if (
             getattr(self.r, f"{op}_col").can()
             and session.collaboration_id in self.obtain_auth_collaboration_ids()
@@ -310,7 +314,7 @@ class SessionBase(ServicesResources):
 
         if (
             getattr(self.r, f"{op}_org").can()
-            and session.organization_id == self.obtain_organization_id()
+            and session.owner.organization_id == self.obtain_organization_id()
         ):
             return True
 
@@ -900,6 +904,11 @@ class Session(SessionBase):
                     " with the session."
                 )
             }, HTTPStatus.BAD_REQUEST
+
+        for dataframe in session.dataframes:
+            dataframe.delete()
+        for task in session.tasks:
+            task.delete()
 
         # This only deletes the session metadata from the server
         session.delete()
