@@ -154,12 +154,18 @@ class Task(Base):
         """
         return self.runs[-1].action if self.runs else None
 
+    # pylint: disable=no-self-argument
     @action.expression
     def action(cls):
         """
         SQL expression for the action hybrid property.
         """
-        return case([(cls.dataframe_id.is_(None), "compute")], else_="preprocess")
+        return (
+            select(models.Run.action)
+            .where(models.Run.task_id == cls.id)
+            .limit(1)
+            .scalar_subquery()
+        )
 
     # TODO update in v4+, with renaming to 'run'
     @hybrid_property

@@ -19,7 +19,7 @@ from vantage6.algorithm.store.resource.algorithm import AlgorithmBaseResource
 from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.model.algorithm import Algorithm
 from vantage6.algorithm.store.model.rule import Rule, Operation
-from vantage6.common.enum import StorePolicies, AlgorithmViewPolicies
+from vantage6.common.enum import AlgorithmStepType, StorePolicies, AlgorithmViewPolicies
 
 from ..base.unittest_base import MockResponse, TestResources
 
@@ -304,7 +304,7 @@ class TestAlgorithmResources(TestResources):
             "functions": [
                 {
                     "name": "test_function",
-                    "step_type": "central compute",
+                    "step_type": AlgorithmStepType.CENTRAL_COMPUTE,
                     "databases": [
                         {"name": "test_database", "description": "test_description"}
                     ],
