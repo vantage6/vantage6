@@ -205,34 +205,31 @@ class RunIO:
             Content of the output file
         """
 
-        match self.action:
+        if self.action in [
+            AlgorithmStepType.DATA_EXTRACTION,
+            AlgorithmStepType.PREPROCESSING,
+        ]:
+            try:
+                table = pq.read_table(self.output_file)
+            except Exception:
+                self.log.exception("Error reading output file")
+                return b"", RunStatus.UNEXPECTED_OUTPUT
 
-            case AlgorithmStepType.DATA_EXTRACTION | AlgorithmStepType.PREPROCESSING:
+            return b"", self._update_session(table)
 
-                try:
-                    table = pq.read_table(self.output_file)
-                except Exception:
-                    self.log.exception("Error reading output file")
-                    return b"", RunStatus.UNEXPECTED_OUTPUT
+        elif AlgorithmStepType.is_compute(self.action):
+            with open(self.output_file, "rb") as fp:
+                result = fp.read()
 
-                return b"", self._update_session(table)
-
-            case AlgorithmStepType.is_compute(self.action):
-
-                with open(self.output_file, "rb") as fp:
-                    result = fp.read()
-
-                self._update_session_state(
-                    self.action.value,
-                    None,
-                    "Algorithm completed successfully.",
-                )
-                return result, RunStatus.COMPLETED
-
-            case _:
-
-                self.log.error("Unknown action: %s", self.action)
-                return b"", RunStatus.UNKNOWN_ERROR
+            self._update_session_state(
+                self.action.value,
+                None,
+                "Algorithm completed successfully.",
+            )
+            return result, RunStatus.COMPLETED
+        else:
+            self.log.error("Unknown action: %s", self.action)
+            return b"", RunStatus.UNKNOWN_ERROR
 
     def _update_session(self, table: pa.Table) -> RunStatus:
         """
