@@ -30,7 +30,7 @@ parser.add_argument(
     "--node-test-database-file", type=str, help="Path to the test database file"
 )
 parser.add_argument(
-    "--number-of-nodes", type=int, default=2, help="Number of nodes to create"
+    "--number-of-nodes", type=int, default=3, help="Number of nodes to create"
 )
 parser.add_argument(
     "--task-namespace", type=str, default="vantage6-tasks", help="Task namespace"
