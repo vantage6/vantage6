@@ -1068,8 +1068,19 @@ class SessionDataframes(SessionBase):
         source_db_label = data["label"]
 
         # Create the dataframe
-        # TODO guarantee that the name is unique (there is an issue for this)
-        df_name = data.get("name", generate_name())
+        df_name = data.get("name")
+        if df_name:
+            if db.Dataframe.name_exists(df_name):
+                return {
+                    "msg": f"Dataframe with name {df_name} already exists. Duplicate "
+                    "names are not allowed because they are stored on nodes by that "
+                    "name."
+                }, HTTPStatus.BAD_REQUEST
+        else:
+            while True:
+                df_name = generate_name()
+                if not db.Dataframe.name_exists(df_name):
+                    break
         dataframe = db.Dataframe(
             session=session,
             name=df_name,
