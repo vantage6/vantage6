@@ -55,8 +55,7 @@ pipelines:
         vantage6-server-init \
         vantage6-store-init
       # TODO replace this with a retry mechanism
-      echo "Waiting for server to start... (30 seconds)"
-      sleep 30
+      echo "Waiting for server to start..."
       python dev/delete-basic-fixtures.py
       python dev/load-basic-fixtures.py \
         --number-of-nodes $NUMBER_OF_NODES \
