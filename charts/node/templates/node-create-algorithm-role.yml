@@ -36,4 +36,4 @@ rules:
 # This is used by the ensure_task_namespace() method.
 - apiGroups: [""]
   resources: ["namespaces"]
-  verbs: ["create", "get", "list"]
+  verbs: ["create", "get", "list", "watch"]
