@@ -53,6 +53,7 @@ RESOURCES = [
     "algorithm_store",
     "study",
     "session",
+    "dataframe",
 ]
 
 # Super user information. This user is only created if it is not in the
