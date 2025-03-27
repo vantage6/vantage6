@@ -75,22 +75,7 @@ swagger_template = {
                             },
                         }
                     ],
-                    "databases": [
-                        {
-                            "label": "database-label",
-                            "query": "SELECT * FROM table",
-                            "preprocessing": [
-                                {
-                                    "type": "filter_range",
-                                    "parameters": {
-                                        "column": "column-name",
-                                        "min": 0,
-                                        "max": 10,
-                                    },
-                                }
-                            ],
-                        }
-                    ],
+                    "databases": [{"label": "database-label"}],
                     "store_id": 1,
                 },
                 "required": ["image", "collaboration_id"],
