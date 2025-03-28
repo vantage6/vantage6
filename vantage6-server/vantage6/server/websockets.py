@@ -6,9 +6,6 @@ from flask import request, session
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from flask_socketio import Namespace, emit, join_room, leave_room
 
-from vantage6.backend.common.metrics import (
-    METRICS,
-)
 from vantage6.common import logger_name
 from vantage6.common.globals import AuthStatus
 from vantage6.common.task_status import has_task_failed
