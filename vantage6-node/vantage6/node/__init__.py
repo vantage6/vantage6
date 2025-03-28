@@ -229,14 +229,14 @@ class Node:
             Dictionary containing system metadata.
         """
         metadata = {
-            metrics.CPU_PERCENT.name: psutil.cpu_percent(interval=1),
-            metrics.MEMORY_PERCENT.name: psutil.virtual_memory().percent,
-            metrics.NUM_ALGORITHM_CONTAINERS.name: len(self.__docker.active_tasks),
-            metrics.OS.name: os.name,
-            metrics.PLATFORM.name: sys.platform,
-            metrics.CPU_COUNT.name: psutil.cpu_count(),
-            metrics.MEMORY_TOTAL.name: psutil.virtual_memory().total,
-            metrics.MEMORY_AVAILABLE.name: psutil.virtual_memory().available,
+            "cpu_percent": psutil.cpu_percent(interval=1),
+            "memory_percent": psutil.virtual_memory().percent,
+            "num_algorithm_containers": len(self.__docker.active_tasks),
+            "os": os.name,
+            "platform": sys.platform,
+            "cpu_count": psutil.cpu_count(),
+            "memory_total": psutil.virtual_memory().total,
+            "memory_available": psutil.virtual_memory().available,
         }
 
         gpu_metadata = self.__gather_gpu_metadata()
@@ -260,25 +260,25 @@ class Node:
             gpu_count = pynvml.nvmlDeviceGetCount()
 
             gpu_metadata = {
-                metrics.GPU_COUNT.name: gpu_count,
-                metrics.GPU_LOAD.name: [],
-                metrics.GPU_MEMORY_USED.name: [],
-                metrics.GPU_MEMORY_FREE.name: [],
-                metrics.GPU_TEMPERATURE.name: [],
+                "gpu_count": gpu_count,
+                "gpu_load": [],
+                "gpu_memory_used": [],
+                "gpu_memory_free": [],
+                "gpu_temperature": [],
             }
 
             for i in range(gpu_count):
                 handle = pynvml.nvmlDeviceGetHandleByIndex(i)
-                gpu_metadata[metrics.GPU_LOAD.name].append(
+                gpu_metadata["gpu_load"].append(
                     pynvml.nvmlDeviceGetUtilizationRates(handle).gpu
                 )
-                gpu_metadata[metrics.GPU_MEMORY_USED.name].append(
+                gpu_metadata["gpu_memory_used"].append(
                     pynvml.nvmlDeviceGetMemoryInfo(handle).used
                 )
-                gpu_metadata[metrics.GPU_MEMORY_FREE.name].append(
+                gpu_metadata["gpu_memory_free"].append(
                     pynvml.nvmlDeviceGetMemoryInfo(handle).free
                 )
-                gpu_metadata[metrics.GPU_TEMPERATURE.name].append(
+                gpu_metadata["gpu_temperature"].append(
                     pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
                 )
             pynvml.nvmlShutdown()

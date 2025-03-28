@@ -471,14 +471,16 @@ class DefaultSocketNamespace(Namespace):
         node = db.Node.get(session.auth_id)
 
         for metric_name, value in data.items():
-            if metric_name in self.metrics:
-                if isinstance(value, list):
-                    for gpu_id, gpu_value in enumerate(value):
-                        self.metrics[metric_name].labels(
-                            node_id=node.id, gpu_id=gpu_id
-                        ).set(gpu_value)
-                else:
-                    self.metrics[metric_name].labels(node_id=node.id).set(value)
+            try:
+                self.metrics.set_metric(
+                    metric_name=metric_name,
+                    value=value,
+                    labels={"node_id": node.id},
+                )
+            except ValueError as e:
+                self.log.warning(f"Invalid metric data: {e}")
+            except Exception as e:
+                self.log.error(f"Failed to process metric '{metric_name}': {e}")
 
         self.log.info(f"Updated metrics for node {node.id}")
 

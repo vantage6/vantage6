@@ -1,76 +1,118 @@
-from dataclasses import dataclass, fields
 import logging
-from typing import Any, Optional, Type
+from typing import Any, Type
 from prometheus_client import Gauge, start_http_server
 
 
-@dataclass
 class Metric:
     """
-    Represents a single metric with its name, expected type and description.
+    Represents a single metric with its name, expected type, and description.
     """
 
-    name: str
-    type: Type[Any]
-    description: str
+    def __init__(self, name: str, type_: Type[Any], description: str):
+        self.name = name
+        self.type = type_
+        self.description = description
 
 
-@dataclass
 class Metrics:
     """
-    Dataclass to define all system metrics with their names and expected types.
+    Class to manage all system metrics and their Prometheus gauges.
     """
 
-    CPU_PERCENT: Metric = Metric(
-        name="cpu_percent", type=float, description="CPU usage percentage"
-    )
-    MEMORY_PERCENT: Metric = Metric(
-        name="memory_percent", type=float, description="Memory usage percentage"
-    )
-    NUM_ALGORITHM_CONTAINERS: Metric = Metric(
-        name="num_algorithm_containers",
-        type=int,
-        description="Number of running algorithm containers",
-    )
-    OS: Metric = Metric(name="os", type=str, description="Operating system")
-    PLATFORM: Metric = Metric(name="platform", type=str, description="Platform")
-    CPU_COUNT: Metric = Metric(name="cpu_count", type=int, description="Number of CPUs")
-    MEMORY_TOTAL: Metric = Metric(
-        name="memory_total", type=int, description="Total memory"
-    )
-    MEMORY_AVAILABLE: Metric = Metric(
-        name="memory_available", type=int, description="Available memory"
-    )
-    GPU_COUNT: Optional[Metric] = Metric(
-        name="gpu_count", type=int, description="Number of GPUs"
-    )
-    GPU_LOAD: Optional[Metric] = Metric(
-        name="gpu_load", type=float, description="GPU load"
-    )
-    GPU_MEMORY_USED: Optional[Metric] = Metric(
-        name="gpu_memory_used", type=int, description="GPU memory used"
-    )
-    GPU_MEMORY_FREE: Optional[Metric] = Metric(
-        name="gpu_memory_free", type=int, description="GPU memory free"
-    )
-    GPU_TEMPERATURE: Optional[Metric] = Metric(
-        name="gpu_temperature", type=float, description="GPU temperature"
-    )
+    def __init__(self, labels: list[str]):
+        """
+        Initialize the Metrics class and create Prometheus gauges.
 
-    def create_gauges(self, labels: list[str]) -> dict:
-        gauges = {}
-        for field in fields(self):
-            metric = getattr(self, field.name)
-            if metric:
-                if "gpu" in metric.name:
-                    gauges[metric.name] = Gauge(
-                        metric.name, metric.description, labelnames=labels + ["gpu_id"]
-                    )
-                else:
-                    gauges[metric.name] = Gauge(
-                        metric.name, metric.description, labelnames=labels
-                    )
-        return gauges
+        Parameters
+        ----------
+        labels: list[str]
+            List of labels to be used for all metrics.
+        """
+        self.labels = labels
+        self.gauges = {}
+        self._initialize_metrics()
+
+    def _initialize_metrics(self) -> None:
+        """
+        Define all system metrics and create their corresponding Prometheus gauges.
+        """
+        metrics = [
+            Metric("cpu_percent", float, "CPU usage percentage"),
+            Metric("memory_percent", float, "Memory usage percentage"),
+            Metric(
+                "num_algorithm_containers",
+                int,
+                "Number of running algorithm containers",
+            ),
+            Metric("os", str, "Operating system"),
+            Metric("platform", str, "Platform"),
+            Metric("cpu_count", int, "Number of CPUs"),
+            Metric("memory_total", int, "Total memory"),
+            Metric("memory_available", int, "Available memory"),
+            Metric("gpu_count", int, "Number of GPUs"),
+            Metric("gpu_load", float, "GPU load"),
+            Metric("gpu_memory_used", int, "GPU memory used"),
+            Metric("gpu_memory_free", int, "GPU memory free"),
+            Metric("gpu_temperature", float, "GPU temperature"),
+        ]
+
+        for metric in metrics:
+            if "gpu" in metric.name:
+                self.gauges[metric.name] = Gauge(
+                    metric.name, metric.description, labelnames=self.labels + ["gpu_id"]
+                )
+            else:
+                self.gauges[metric.name] = Gauge(
+                    metric.name, metric.description, labelnames=self.labels
+                )
+
+    def set_metric(self, metric_name: str, value: Any, labels: dict) -> None:
+        """
+        Set the value of a metric, handling GPU-specific logic if necessary.
+
+        Parameters
+        ----------
+        metric_name: str
+            The name of the metric to set.
+        value: Any
+            The value to set for the metric.
+        labels: dict
+            A dictionary of labels to apply to the metric.
+        """
+        if metric_name not in self.gauges:
+            raise ValueError(f"Metric '{metric_name}' does not exist.")
+
+        gauge = self.gauges[metric_name]
+
+        if "gpu" in metric_name:
+            # GPU metrics must be lists
+            if not isinstance(value, list):
+                raise ValueError(
+                    f"Expected a list for GPU metric '{metric_name}', got {type(value).__name__}."
+                )
+            for gpu_id, gpu_value in enumerate(value):
+                gauge.labels(**labels, gpu_id=gpu_id).set(gpu_value)
+        else:
+            # Non-GPU metrics
+            gauge.labels(**labels).set(value)
+
+    def get_gauge(self, metric_name: str) -> Gauge:
+        """
+        Retrieve the Prometheus gauge for a given metric.
+
+        Parameters
+        ----------
+        metric_name: str
+            The name of the metric.
+
+        Returns
+        -------
+        Gauge
+            The Prometheus gauge for the metric.
+        """
+        if metric_name not in self.gauges:
+            raise ValueError(f"Metric '{metric_name}' does not exist.")
+        return self.gauges[metric_name]
 
 
 def start_prometheus_exporter(port: int = 9100) -> None:
@@ -83,21 +125,3 @@ def start_prometheus_exporter(port: int = 9100) -> None:
         logging.info(f"Prometheus exporter started on port {port}")
     except Exception as e:
         logging.error(f"Failed to start Prometheus exporter: {e}")
-
-
-def create_metrics(labels: list[str]) -> dict:
-    """
-    Factory function to create and return a dictionary of Prometheus gauges.
-
-    Parameters
-    ----------
-    labels: list[str]
-        List of labels to be used for the metrics.
-
-    Returns
-    -------
-    dict
-        Dictionary of Prometheus Gauge objects.
-    """
-    metrics = Metrics()
-    return metrics.create_gauges(labels=labels)
