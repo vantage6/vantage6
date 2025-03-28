@@ -28,6 +28,7 @@ class DefaultSocketNamespace(Namespace):
     """
 
     socketio = None
+    metrics = None
 
     log = logging.getLogger(logger_name(__name__))
 
@@ -296,11 +297,7 @@ class DefaultSocketNamespace(Namespace):
             Dictionary containing the node's configuration.
         """
         # only allow nodes to send this event
-        if session.type != "node":
-            self.log.warn(
-                "Only nodes can send node configuration updates! "
-                f"{session.type} {session.auth_id} is not allowed."
-            )
+        if not self._is_node():
             return
 
         node = db.Node.get(session.auth_id)
@@ -458,6 +455,34 @@ class DefaultSocketNamespace(Namespace):
             run.log += log_message
         else:
             run.log = log_message
+
+    def on_node_metrics_update(self, data: dict) -> None:
+        """
+        Handle metrics sent by nodes and update Prometheus metrics.
+
+        Parameters
+        ----------
+        data: dict
+            Dictionary containing node metrics.
+        """
+        if not self._is_node():
+            return
+
+        node = db.Node.get(session.auth_id)
+
+        for metric_name, value in data.items():
+            try:
+                self.metrics.set_metric(
+                    metric_name=metric_name,
+                    value=value,
+                    labels={"node_id": node.id},
+                )
+            except ValueError as e:
+                self.log.warning(f"Invalid metric data: {e}")
+            except Exception as e:
+                self.log.error(f"Failed to process metric '{metric_name}': {e}")
+
+        self.log.info(f"Updated metrics for node {node.id}")
 
     @staticmethod
     def __is_identified_client() -> bool:

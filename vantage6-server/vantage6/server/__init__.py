@@ -8,6 +8,7 @@ authenticated nodes and users via the socketIO server that is run here.
 
 import os
 from gevent import monkey
+from vantage6.backend.common.metrics import Metrics, start_prometheus_exporter
 
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
@@ -131,6 +132,7 @@ class ServerApp:
         # Setup the Flask-Mail client
         self.mail = MailService(self.app)
 
+        self.metrics = Metrics(labels=["node_id"])
         # Setup websocket channel
         self.socketio = self.setup_socket_connection()
 
@@ -183,6 +185,8 @@ class ServerApp:
         log.debug("Starting thread to set node status")
         t = Thread(target=self.__node_status_worker, daemon=True)
         t.start()
+
+        start_prometheus_exporter(port=self.ctx.config.get("prometheus_port", 8000))
 
         log.info("Initialization done")
 
@@ -278,6 +282,7 @@ class ServerApp:
 
         # FIXME: temporary fix to get socket object into the namespace class
         DefaultSocketNamespace.socketio = socketio
+        DefaultSocketNamespace.metrics = self.metrics
         socketio.on_namespace(DefaultSocketNamespace("/tasks"))
 
         return socketio
