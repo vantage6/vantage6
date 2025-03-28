@@ -132,6 +132,7 @@ class ServerApp:
         # Setup the Flask-Mail client
         self.mail = MailService(self.app)
 
+        self.metrics = create_metrics(labels=["node_id"])
         # Setup websocket channel
         self.socketio = self.setup_socket_connection()
 
@@ -186,7 +187,6 @@ class ServerApp:
         t.start()
 
         start_prometheus_exporter(port=self.ctx.config.get("prometheus_port", 8000))
-        self.metrics = create_metrics(labels=["node_id"])
 
         log.info("Initialization done")
 
