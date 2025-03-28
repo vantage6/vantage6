@@ -4379,3 +4379,64 @@ class TestResources(unittest.TestCase):
         # Cleanup
         node.delete()
         org.delete()
+
+    def test_get_task_status(self):
+        """Test the /api/task/<id>/status endpoint"""
+
+        # Test non-existent task
+        headers = self.create_user_and_login()
+        result = self.app.get("/api/task/9999/status", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
+
+        # Create organizations and collaboration
+        org = Organization()
+        org2 = Organization()
+        col = Collaboration(organizations=[org, org2])
+        col.save()
+
+        # Create a task
+        task = Task(collaboration=col, init_org=org)
+        task.save()
+
+        # Add runs to the task with valid statuses
+        run1 = Run(task=task, status=TaskStatus.ACTIVE.value)
+        run2 = Run(task=task, status=TaskStatus.PENDING.value)
+        run1.save()
+        run2.save()
+
+        # Test without permissions
+        headers = self.create_user_and_login()
+        result = self.app.get(f"/api/task/{task.id}/status", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # Test with collaboration permissions
+        rule = Rule.get_by_("task", Scope.COLLABORATION, Operation.VIEW)
+        headers = self.create_user_and_login(org, rules=[rule])
+        result = self.app.get(f"/api/task/{task.id}/status", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual(result.json["status"], TaskStatus.ACTIVE)
+
+        # Test with global permissions
+        rule = Rule.get_by_("task", Scope.GLOBAL, Operation.VIEW)
+        headers = self.create_user_and_login(rules=[rule])
+        result = self.app.get(f"/api/task/{task.id}/status", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual(result.json["status"], TaskStatus.ACTIVE)
+
+        # Test with organization permissions (should fail for other organizations)
+        rule = Rule.get_by_("task", Scope.ORGANIZATION, Operation.VIEW)
+        headers = self.create_user_and_login(org2, rules=[rule])
+        result = self.app.get(f"/api/task/{task.id}/status", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # Test with organization permissions (should succeed for the same organization)
+        headers = self.create_user_and_login(org, rules=[rule])
+        result = self.app.get(f"/api/task/{task.id}/status", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual(result.json["status"], TaskStatus.ACTIVE)
+
+        # Cleanup
+        task.delete()
+        org.delete()
+        org2.delete()
+        col.delete()
