@@ -68,8 +68,8 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         resource_class_kwargs=services,
     )
     api.add_resource(
-        TaskStatus,
-        path + "/<int:id>/status",
+        TaskStatusEndpoint,
+        path + "/<int:task_id>/status",
         endpoint="task_status",
         methods=("GET",),
         resource_class_kwargs=services,
@@ -1228,11 +1228,11 @@ class Task(TaskBase):
             child_task.delete()
 
 
-class TaskStatus(TaskBase):
+class TaskStatusEndpoint(TaskBase):
     """Resource for /api/task/<id>/status"""
 
     @only_for(("user", "node", "container"))
-    def get(self, id: int):
+    def get(self, task_id: int):
         """Get task status
         ---
         description: >-
@@ -1279,18 +1279,18 @@ class TaskStatus(TaskBase):
 
         tags: ["Task"]
         """
-        task = db.Task.get(id)
+        task = db.Task.get(task_id)
         if not task:
-            log.error(f"Task with id={id} not found.")
-            return {"msg": f"Task id={id} not found"}, HTTPStatus.NOT_FOUND
+            log.error(f"Task with id={task_id} not found.")
+            return {"msg": f"Task id={task_id} not found"}, HTTPStatus.NOT_FOUND
 
         if not self._has_permission_to_view_task(task):
-            log.error(f"Unauthorized access to task id={id}.")
+            log.error(f"Unauthorized access to task id={task_id}.")
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        log.info(f"Returning status for task id={id}: {task.status}")
+        log.info(f"Returning status for task id={task_id}: {task.status}")
         return {"status": task.status}, HTTPStatus.OK
 
     def _has_permission_to_view_task(self, task: db.Task) -> bool:
