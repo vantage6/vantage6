@@ -73,10 +73,6 @@ class Metrics:
         return gauges
 
 
-metrics = Metrics()
-METRICS = metrics.create_gauges(labels=["node_id"])
-
-
 def start_prometheus_exporter(port: int = 9100) -> None:
     """
     Start the Prometheus exporter to expose metrics.
@@ -87,3 +83,21 @@ def start_prometheus_exporter(port: int = 9100) -> None:
         logging.info(f"Prometheus exporter started on port {port}")
     except Exception as e:
         logging.error(f"Failed to start Prometheus exporter: {e}")
+
+
+def create_metrics(labels: list[str]) -> dict:
+    """
+    Factory function to create and return a dictionary of Prometheus gauges.
+
+    Parameters
+    ----------
+    labels: list[str]
+        List of labels to be used for the metrics.
+
+    Returns
+    -------
+    dict
+        Dictionary of Prometheus Gauge objects.
+    """
+    metrics = Metrics()
+    return metrics.create_gauges(labels=labels)

@@ -31,6 +31,7 @@ class DefaultSocketNamespace(Namespace):
     """
 
     socketio = None
+    metrics = None
 
     log = logging.getLogger(logger_name(__name__))
 
@@ -473,14 +474,14 @@ class DefaultSocketNamespace(Namespace):
         node = db.Node.get(session.auth_id)
 
         for metric_name, value in data.items():
-            if metric_name in METRICS:
+            if metric_name in self.metrics:
                 if isinstance(value, list):
                     for gpu_id, gpu_value in enumerate(value):
-                        METRICS[metric_name].labels(node_id=node.id, gpu_id=gpu_id).set(
-                            gpu_value
-                        )
+                        self.metrics[metric_name].labels(
+                            node_id=node.id, gpu_id=gpu_id
+                        ).set(gpu_value)
                 else:
-                    METRICS[metric_name].labels(node_id=node.id).set(value)
+                    self.metrics[metric_name].labels(node_id=node.id).set(value)
 
         self.log.info(f"Updated metrics for node {node.id}")
 

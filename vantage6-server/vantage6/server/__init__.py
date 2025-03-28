@@ -8,7 +8,7 @@ authenticated nodes and users via the socketIO server that is run here.
 
 import os
 from gevent import monkey
-from vantage6.backend.common.metrics import start_prometheus_exporter
+from vantage6.backend.common.metrics import create_metrics, start_prometheus_exporter
 
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
@@ -186,6 +186,7 @@ class ServerApp:
         t.start()
 
         start_prometheus_exporter(port=self.ctx.config.get("prometheus_port", 8000))
+        self.metrics = create_metrics(labels=["node_id"])
 
         log.info("Initialization done")
 
@@ -281,6 +282,7 @@ class ServerApp:
 
         # FIXME: temporary fix to get socket object into the namespace class
         DefaultSocketNamespace.socketio = socketio
+        DefaultSocketNamespace.metrics = self.metrics
         socketio.on_namespace(DefaultSocketNamespace("/tasks"))
 
         return socketio
