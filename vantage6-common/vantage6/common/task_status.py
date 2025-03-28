@@ -1,4 +1,9 @@
 from enum import Enum
+import itertools
+import sys
+import time
+
+MAX_INTERVAL = 300
 
 
 class TaskStatus(str, Enum):
@@ -66,3 +71,39 @@ def has_task_finished(status: TaskStatus) -> bool:
         True if task has finished or failed, False otherwise
     """
     return has_task_failed(status) or status == TaskStatus.COMPLETED
+
+
+def wait_for_task_completion(request_func, task_id: int, interval: float = 1) -> None:
+    """
+    Utility function to wait for a task to complete.
+
+    Parameters
+    ----------
+    request_func : Callable
+        Function to make requests to the server.
+    task_id : int
+        ID of the task to wait for.
+    interval : float
+        Initial interval in seconds between status checks.
+    max_interval : float
+        Maximum interval in seconds between status checks.
+    """
+    animation = itertools.cycle(["|", "/", "-", "\\"])
+    t = time.time()
+
+    while True:
+        response = request_func(f"task/{task_id}/status")
+        status = response.get("status")
+
+        if has_task_finished(status):
+            sys.stdout.write("\rDone!                  ")
+            break
+
+        frame = next(animation)
+        sys.stdout.write(
+            f"\r{frame} Waiting for task {task_id} ({int(time.time()-t)}s)"
+        )
+        sys.stdout.flush()
+
+        time.sleep(interval)
+        interval = min(interval * 1.5, MAX_INTERVAL)
