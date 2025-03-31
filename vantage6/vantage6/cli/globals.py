@@ -47,8 +47,8 @@ COMMUNITY_STORE = "https://store.cotopaxi.vantage6.ai/api"
 class DefaultDatasets(str, Enum):
     """Enum containing default datasets"""
 
-    DEFAULT = "olympic_athletes_2016.csv"
-    KM_DATASET = "km_dataset.csv"
+    OLYMPIC_ATHLETES = "olympic_athletes_2016.csv"
+    KAPLAN_MEIER_TEST = "km_dataset.csv"
 
 
 class ServerType(str, Enum):
