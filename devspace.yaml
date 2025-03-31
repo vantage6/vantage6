@@ -125,6 +125,8 @@ deployments:
             level: DEBUG
           jwt:
             secret: development-constant-secret!
+        ui:
+          image: ${UI_IMAGE}
 
         database:
           volumePath: ${SERVER_DATABASE_MOUNT_PATH}
@@ -205,6 +207,28 @@ dev:
       - port: 7602:7602
         # bindAddress: ${PORTS_BIND_ADDRESS}
 
+  # This puts the server container in development mode. It syncs the local files with
+  # the container and starts the server in development mode. Code changes will be
+  # hot-reloaded and a port forward is created to access the server.
+  vantage6-server:
+    imageSelector: ${SERVER_IMAGE}
+    sync:
+    - path: ./vantage6/:/vantage6/vantage6/
+      disableDownload: true
+    - path: ./vantage6-common/:/vantage6/vantage6-common/
+      disableDownload: true
+    - path: ./vantage6-backend-common/:/vantage6/vantage6-backend-common/
+      disableDownload: true
+    - path: ./vantage6-server/:/vantage6/vantage6-server/
+      disableDownload: true
+      startContainer: true
+    command: ["/bin/sh", "/vantage6/vantage6-server/dev_server.sh"]
+    ports:
+    - port: 7601:7601
+        # bindAddress: ${PORTS_BIND_ADDRESS}
+    logs:
+      enabled: true
+
   vantage6-store:
     imageSelector: ${STORE_IMAGE}
     ports:
@@ -223,30 +247,6 @@ dev:
       startContainer: true
     command: ["/bin/sh", "/vantage6/vantage6-algorithm-store/dev_store.sh"]
 
-  # This puts the server container in development mode. It syncs the local files with
-  # the container and starts the server in development mode. Code changes will be
-  # hot-reloaded and a port forward is created to access the server.
-  vantage6-server:
-    imageSelector: ${SERVER_IMAGE}
-    sync:
-    - path: ./vantage6/:/vantage6/vantage6/
-      disableDownload: true
-    - path: ./vantage6-common/:/vantage6/vantage6-common/
-      disableDownload: true
-    - path: ./vantage6-backend-common/:/vantage6/vantage6-backend-common/
-      disableDownload: true
-    - path: ./vantage6-server/:/vantage6/vantage6-server/
-      disableDownload: true
-      startContainer: true
-    command: ["/bin/sh", "/vantage6/vantage6-server/dev_server.sh"]
-    proxyCommands:
-      - command: devspace
-      - command: kubectl
-    ports:
-      - port: 7601:7601
-        # bindAddress: ${PORTS_BIND_ADDRESS}
-    logs:
-      enabled: true
 
   # This puts the store container in development mode.
   vantage6-ui:
