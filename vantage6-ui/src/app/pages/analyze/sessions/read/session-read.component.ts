@@ -11,25 +11,17 @@ import { Subject, Subscription, takeUntil } from 'rxjs';
 import { printDate } from 'src/app/helpers/general.helper';
 import { StudyService } from 'src/app/services/study.service';
 import { Study } from 'src/app/models/api/study.model';
-import { Dataframe, GetDataframeParameters, Session, SessionLazyProperties } from 'src/app/models/api/session.models';
+import { GetDataframeParameters, Session, SessionLazyProperties } from 'src/app/models/api/session.models';
 import { SessionService } from 'src/app/services/session.service';
 import { User } from 'src/app/models/api/user.model';
 import { UserService } from 'src/app/services/user.service';
-import { PaginationLinks } from 'src/app/models/api/pagination.model';
-import { MatPaginator, PageEvent } from '@angular/material/paginator';
+import { PageEvent } from '@angular/material/paginator';
 import { PageHeaderComponent } from 'src/app/components/page-header/page-header.component';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatIcon } from '@angular/material/icon';
 import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
-import {
-  MatAccordion,
-  MatExpansionPanel,
-  MatExpansionPanelHeader,
-  MatExpansionPanelTitle,
-  MatExpansionPanelContent
-} from '@angular/material/expansion';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
-import { NgFor, NgIf } from '@angular/common';
+import { NgIf } from '@angular/common';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { TableData } from 'src/app/models/application/table.model';
 import { SearchRequest, TableComponent } from 'src/app/components/table/table.component';
@@ -49,15 +41,8 @@ import { getApiSearchParameters } from 'src/app/helpers/api.helper';
     MatCardHeader,
     MatCardContent,
     MatCardTitle,
-    MatExpansionPanel,
-    MatAccordion,
-    MatExpansionPanelHeader,
-    MatExpansionPanelTitle,
-    MatExpansionPanelContent,
     MatProgressSpinner,
-    MatPaginator,
     NgIf,
-    NgFor,
     PageHeaderComponent,
     MatIconButton,
     MatMenuItem,
@@ -141,7 +126,7 @@ export class SessionReadComponent implements OnInit, OnDestroy {
       columns: [
         { id: 'id', label: this.translateService.instant('general.id') },
         { id: 'name', label: this.translateService.instant('general.name'), searchEnabled: true },
-        { id: 'db', label: this.translateService.instant('session.dataframes.db_label_short'), searchEnabled: true },
+        { id: 'db', label: this.translateService.instant('session.dataframes.db-label-short'), searchEnabled: true },
         { id: 'ready', label: this.translateService.instant('session.dataframes.ready') }
       ],
       rows: dataframeResponse.data.map((_) => ({

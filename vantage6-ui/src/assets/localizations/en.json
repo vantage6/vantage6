@@ -27,7 +27,8 @@
     "false": "False",
     "parameter": "Parameter",
     "show_more": "Show more",
-    "show_less": "Show less"
+    "show_less": "Show less",
+    "details-title": "Details"
   },
   "resources": {
     "collaboration": "Collaboration",
@@ -110,12 +111,15 @@
     "dataframes": {
       "title": "Dataframes",
       "add": "Create dataframe",
-      "db_label_short": "Database used",
-      "db_label": "Database used to create this dataframe",
+      "db-label-short": "Database used",
+      "db-label": "Database used to create this dataframe",
       "ready": "Ready to use?",
       "last_session_task": "Last task executed on this dataframe",
       "columns": "Columns"
     }
+  },
+  "dataframe-read": {
+    "title": "Dataframe {{name}}"
   },
   "task": {
     "session": "Session",
