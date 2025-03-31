@@ -45,17 +45,44 @@
   </mat-card>
   <mat-card>
     <mat-card-header>
+      <mat-card-title>{{ "dataframe-read.columns.title" | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div *ngFor="let columnAlert of columnAlerts">
+        <app-alert [label]="columnAlert" class="node-alert"></app-alert>
+      </div>
+      <app-table *ngIf="!isLoading && dataframeColumnsTable" [data]="dataframeColumnsTable" [isLoading]="isLoading"></app-table>
+      <app-alert
+        *ngIf="!dataframeColumnsTable && !isLoading"
+        class="node-alert"
+        label="{{ 'dataframe-read.columns.no-columns' | translate }}"
+      ></app-alert>
+    </mat-card-content>
+  </mat-card>
+  <mat-card>
+    <mat-card-header>
       <mat-card-title>{{ "dataframe-read.tasks-table.title" | translate }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
       <app-table
+        *ngIf="!isLoading && dataframeTasksTable"
         [data]="dataframeTasksTable"
         (rowClick)="handleTaskTableClick($event)"
         [isLoading]="isLoading"
         (searchChanged)="handleSearchChanged($event)"
       ></app-table>
+      <app-alert
+        *ngIf="!dataframeTasksTable && !isLoading"
+        class="node-alert"
+        label="{{ 'dataframe-read.tasks-table.no-tasks' | translate }}"
+      ></app-alert>
     </mat-card-content>
-    <mat-paginator (page)="handlePageEvent($event)" [length]="pagination?.total" pageSize="10" [hidePageSize]="true"></mat-paginator>
+    <mat-paginator
+      (page)="handleTaskTablePageEvent($event)"
+      [length]="paginationTaskTable?.total"
+      pageSize="10"
+      [hidePageSize]="true"
+    ></mat-paginator>
   </mat-card>
 </ng-container>
 <ng-template #loading>

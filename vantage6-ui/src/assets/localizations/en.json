@@ -121,6 +121,18 @@
   },
   "dataframe-read": {
     "title": "Dataframe {{name}}",
+    "columns": {
+      "title": "Dataframe columns",
+      "no-columns": "No columns are available for this dataframe.",
+      "name": "Column name",
+      "node-names": "Available on nodes",
+      "type": "Column type",
+      "alerts": {
+        "no-columns-for-node": "The node '{{node}}' does not have any columns available for this dataframe.",
+        "missing-column": "The column '{{column}}' is not available on the node '{{node}}'.",
+        "mixed-types": "The column '{{column}}' has different data types on different nodes. Types found: {{types}}."
+      }
+    },
     "tasks-table": {
       "title": "Tasks using this dataframe",
       "no-tasks": "No tasks are using this dataframe."

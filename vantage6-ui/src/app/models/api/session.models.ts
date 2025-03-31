@@ -87,13 +87,25 @@ export interface ColumnRetrievalResult extends BaseSession {
   columns?: string[];
 }
 
+interface DataframeColumn {
+  name: string;
+  dtype: string;
+  node_id: number;
+}
+
+export interface DataframeColumnTableDisplay {
+  name: string;
+  type: string;
+  node_names: string[];
+}
+
 export interface Dataframe {
   name: string;
   db_label: string;
   id: number;
   tasks: string;
   last_session_task: BaseTask;
-  columns: string[];
+  columns: DataframeColumn[];
   ready: boolean;
   session: BaseLink;
 }
