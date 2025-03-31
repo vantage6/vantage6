@@ -307,7 +307,7 @@ to start the existing network configuration and run the test script on it:
 
 .. code:: bash
 
-   v6 test client-script --script /path/to/test_script.py --start-dev-network true --name my_network
+   v6 test client-script --script /path/to/test_script.py --start-dev-network --name my_network
 
 If a the ``--start-dev-network`` and the ``--create-dev-network`` arguments are not specified,
 the test script will be executed on the running dev network, if active.
