@@ -211,7 +211,8 @@ dev:
   # the container and starts the server in development mode. Code changes will be
   # hot-reloaded and a port forward is created to access the server.
   vantage6-server:
-    imageSelector: ${SERVER_IMAGE}
+    labelSelector:
+      component: vantage6-server
     sync:
     - path: ./vantage6/:/vantage6/vantage6/
       disableDownload: true
@@ -265,7 +266,8 @@ dev:
   # node code. We leverage the `restartHelper` and `onUpload.restartContainer` to
   # restart the node container (with multiple nodes) when the code changes.
   vantage6-node:
-    imageSelector: ${NODE_IMAGE}
+    labelSelector:
+      component: node
     sync:
     - path: ./vantage6/:/vantage6/vantage6/
       disableDownload: true
