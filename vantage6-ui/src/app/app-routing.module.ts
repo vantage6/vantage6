@@ -65,6 +65,7 @@ import { SessionCreateComponent } from './pages/analyze/sessions/create/session-
 import { SessionReadComponent } from './pages/analyze/sessions/read/session-read.component';
 import { DataframeCreateComponent } from './pages/analyze/sessions/create/dataframe-create.component';
 import { StoreRoleCreateComponent } from './pages/store/role/create/store-role-create.component';
+import { DataframeReadComponent } from './pages/analyze/sessions/read/dataframe-read/dataframe-read.component';
 
 const routes: Routes = [
   {
@@ -172,6 +173,14 @@ const routes: Routes = [
       {
         path: routerConfig.session,
         component: SessionReadComponent,
+        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        data: {
+          crumbs: [['session-list.title', routePaths.sessions], ['resources.session']]
+        }
+      },
+      {
+        path: routerConfig.sessionDataframe,
+        component: DataframeReadComponent,
         canActivate: [authenticationGuard(), chosenCollaborationGuard()],
         data: {
           crumbs: [['session-list.title', routePaths.sessions], ['resources.session']]

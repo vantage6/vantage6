@@ -5,6 +5,7 @@ import {
   CreateDataframe,
   CreateSession,
   Dataframe,
+  GetDataframeParameters,
   GetSessionParameters,
   Session,
   SessionLazyProperties
@@ -40,8 +41,12 @@ export class SessionService {
     return result.data;
   }
 
-  async getPaginatedDataframes(sessionId: number, currentPage: number): Promise<Pagination<Dataframe>> {
-    return await this.apiService.getForApiWithPagination<any>(`/session/${sessionId}/dataframe`, currentPage);
+  async getPaginatedDataframes(
+    sessionId: number,
+    currentPage: number,
+    parameters?: GetDataframeParameters
+  ): Promise<Pagination<Dataframe>> {
+    return await this.apiService.getForApiWithPagination<any>(`/session/${sessionId}/dataframe`, currentPage, parameters);
   }
 
   async getDataframe(dataframeID: number): Promise<Dataframe> {

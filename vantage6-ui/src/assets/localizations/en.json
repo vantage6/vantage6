@@ -109,7 +109,12 @@
     "created-at": "Created",
     "dataframes": {
       "title": "Dataframes",
-      "add": "Create dataframe"
+      "add": "Create dataframe",
+      "db_label_short": "Database used",
+      "db_label": "Database used to create this dataframe",
+      "ready": "Ready to use?",
+      "last_session_task": "Last task executed on this dataframe",
+      "columns": "Columns"
     }
   },
   "task": {
@@ -600,7 +605,7 @@
     "title": "Create study"
   },
   "store-role-create": {
-    "title":"Add a new role to the algorithm store"
+    "title": "Add a new role to the algorithm store"
   },
   "algorithm-store-add": {
     "title": "Add algorithm store to your collaboration",

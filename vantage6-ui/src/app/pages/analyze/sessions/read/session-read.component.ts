@@ -11,7 +11,7 @@ import { Subject, Subscription, takeUntil } from 'rxjs';
 import { printDate } from 'src/app/helpers/general.helper';
 import { StudyService } from 'src/app/services/study.service';
 import { Study } from 'src/app/models/api/study.model';
-import { Dataframe, Session, SessionLazyProperties } from 'src/app/models/api/session.models';
+import { Dataframe, GetDataframeParameters, Session, SessionLazyProperties } from 'src/app/models/api/session.models';
 import { SessionService } from 'src/app/services/session.service';
 import { User } from 'src/app/models/api/user.model';
 import { UserService } from 'src/app/services/user.service';
@@ -21,10 +21,19 @@ import { PageHeaderComponent } from 'src/app/components/page-header/page-header.
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatIcon } from '@angular/material/icon';
 import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
-import { MatAccordion, MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelTitle, MatExpansionPanelContent } from '@angular/material/expansion';
+import {
+  MatAccordion,
+  MatExpansionPanel,
+  MatExpansionPanelHeader,
+  MatExpansionPanelTitle,
+  MatExpansionPanelContent
+} from '@angular/material/expansion';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { NgFor, NgIf } from '@angular/common';
 import { MatButton, MatIconButton } from '@angular/material/button';
+import { TableData } from 'src/app/models/application/table.model';
+import { SearchRequest, TableComponent } from 'src/app/components/table/table.component';
+import { getApiSearchParameters } from 'src/app/helpers/api.helper';
 
 @Component({
   selector: 'app-session-read',
@@ -52,7 +61,8 @@ import { MatButton, MatIconButton } from '@angular/material/button';
     PageHeaderComponent,
     MatIconButton,
     MatMenuItem,
-    MatButton
+    MatButton,
+    TableComponent
   ]
 })
 export class SessionReadComponent implements OnInit, OnDestroy {
@@ -66,9 +76,8 @@ export class SessionReadComponent implements OnInit, OnDestroy {
   currentPage: number = 1;
 
   session: Session | null = null;
-  dataframes: Dataframe[] = [];
-  dataframePaginagion: PaginationLinks | null = null;
-  selectedDataframe?: Dataframe;
+  dataframeTable: TableData | undefined;
+  getDataframeParameters: GetDataframeParameters = {};
   study: Study | null = null;
   owner: User | null = null;
   isLoading = true;
@@ -121,15 +130,41 @@ export class SessionReadComponent implements OnInit, OnDestroy {
     this.isLoading = false;
   }
 
-  async getDataframes() {
-    const dataframeResponse = await this.sessionService.getPaginatedDataframes(Number.parseInt(this.id), this.currentPage);
-    this.dataframes = dataframeResponse.data;
-    this.dataframePaginagion = this.dataframePaginagion;
+  async getDataframes(): Promise<void> {
+    this.isLoading = true;
+    const dataframeResponse = await this.sessionService.getPaginatedDataframes(
+      Number.parseInt(this.id),
+      this.currentPage,
+      this.getDataframeParameters
+    );
+    this.dataframeTable = {
+      columns: [
+        { id: 'id', label: this.translateService.instant('general.id') },
+        { id: 'name', label: this.translateService.instant('general.name'), searchEnabled: true },
+        { id: 'db', label: this.translateService.instant('session.dataframes.db_label_short'), searchEnabled: true },
+        { id: 'ready', label: this.translateService.instant('session.dataframes.ready') }
+      ],
+      rows: dataframeResponse.data.map((_) => ({
+        id: _.id.toString(),
+        columnData: {
+          id: _.id,
+          name: _.name,
+          db: _.db_label,
+          ready: _.ready ? this.translateService.instant('general.yes') : this.translateService.instant('general.no')
+        }
+      }))
+    };
+    this.isLoading = false;
   }
 
-  async handleDataframeChange(dfID: number): Promise<void> {
-    // TODO(BART/RIAN) RIAN: When the backend response is customized the additional information about the dataframe needs to be processed here and in the template.
-    this.selectedDataframe = await this.sessionService.getDataframe(dfID);
+  handleDataframeTableClick(id: string): void {
+    this.router.navigate([routePaths.sessionDataframe, id]);
+  }
+
+  public handleSearchChanged(searchRequests: SearchRequest[]): void {
+    this.getDataframeParameters = getApiSearchParameters<GetDataframeParameters>(searchRequests);
+    this.currentPage = 1;
+    this.getDataframes();
   }
 
   async addDataframe() {
