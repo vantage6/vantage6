@@ -31,8 +31,7 @@ from vantage6.common.globals import Ports
 )
 @click.option(
     "--start-dev-network",
-    type=bool,
-    default=False,
+    is_flag=True,
     help="Start a dev network to run the test",
 )
 @click.option(
