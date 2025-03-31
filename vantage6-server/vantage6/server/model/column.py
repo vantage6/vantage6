@@ -1,4 +1,4 @@
-from sqlalchemy import Column as Column_, Integer, ForeignKey, String, and_, select
+from sqlalchemy import Column as Column_, Integer, ForeignKey, String, and_, delete
 from sqlalchemy.orm import relationship
 
 from vantage6.server.model.base import Base, DatabaseSessionManager
@@ -53,11 +53,10 @@ class Column(Base):
             ID of the dataframe to remove all columns from
         """
         session = DatabaseSessionManager.get_session()
-        session.scalars(
-            select(cls).filter(
-                and_(cls.dataframe_id == dataframe_id, cls.node_id == node_id)
-            )
-        ).delete()
+        stmt = delete(cls).where(
+            and_(cls.dataframe_id == dataframe_id, cls.node_id == node_id)
+        )
+        session.execute(stmt)
         session.commit()
 
     def __repr__(self):
