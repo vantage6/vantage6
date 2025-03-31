@@ -103,6 +103,7 @@
     }
   },
   "session": {
+    "title": "Session {{name}}",
     "delete-title": "Are you sure you want to delete session '{{name}}'?",
     "delete-content": "This operation cannot be undone.",
     "name": "Name",
@@ -119,7 +120,11 @@
     }
   },
   "dataframe-read": {
-    "title": "Dataframe {{name}}"
+    "title": "Dataframe {{name}}",
+    "tasks-table": {
+      "title": "Tasks using this dataframe",
+      "no-tasks": "No tasks are using this dataframe."
+    }
   },
   "task": {
     "session": "Session",

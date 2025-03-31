@@ -21,7 +21,7 @@
   <ng-container *ngIf="!isLoading && session; else loading">
     <mat-card *ngIf="!isLoading">
       <mat-card-header>
-        <mat-card-title>{{ "general.general" | translate }}</mat-card-title>
+        <mat-card-title>{{ "session.title" | translate: { name: session.name } }}</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <div class="data-list">
@@ -62,6 +62,7 @@
           [isLoading]="isLoading"
           (searchChanged)="handleSearchChanged($event)"
         ></app-table>
+        <mat-paginator (page)="handlePageEvent($event)" [length]="pagination?.total" pageSize="10" [hidePageSize]="true"></mat-paginator>
       </mat-card-content>
     </mat-card>
   </ng-container>

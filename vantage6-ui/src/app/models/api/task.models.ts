@@ -49,6 +49,7 @@ export interface GetTaskParameters {
   include?: string;
   is_user_created?: number;
   status?: TaskStatus;
+  dataframe_id?: number;
 }
 
 export interface BaseTask {

@@ -43,6 +43,20 @@
       </div>
     </mat-card-content>
   </mat-card>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ "dataframe-read.tasks-table.title" | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <app-table
+        [data]="dataframeTasksTable"
+        (rowClick)="handleTaskTableClick($event)"
+        [isLoading]="isLoading"
+        (searchChanged)="handleSearchChanged($event)"
+      ></app-table>
+    </mat-card-content>
+    <mat-paginator (page)="handlePageEvent($event)" [length]="pagination?.total" pageSize="10" [hidePageSize]="true"></mat-paginator>
+  </mat-card>
 </ng-container>
 <ng-template #loading>
   <mat-card>

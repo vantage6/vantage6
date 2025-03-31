@@ -15,7 +15,7 @@ import { GetDataframeParameters, Session, SessionLazyProperties } from 'src/app/
 import { SessionService } from 'src/app/services/session.service';
 import { User } from 'src/app/models/api/user.model';
 import { UserService } from 'src/app/services/user.service';
-import { PageEvent } from '@angular/material/paginator';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { PageHeaderComponent } from 'src/app/components/page-header/page-header.component';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatIcon } from '@angular/material/icon';
@@ -26,6 +26,7 @@ import { MatButton, MatIconButton } from '@angular/material/button';
 import { TableData } from 'src/app/models/application/table.model';
 import { SearchRequest, TableComponent } from 'src/app/components/table/table.component';
 import { getApiSearchParameters } from 'src/app/helpers/api.helper';
+import { PaginationLinks } from 'src/app/models/api/pagination.model';
 
 @Component({
   selector: 'app-session-read',
@@ -47,7 +48,8 @@ import { getApiSearchParameters } from 'src/app/helpers/api.helper';
     MatIconButton,
     MatMenuItem,
     MatButton,
-    TableComponent
+    TableComponent,
+    MatPaginator
   ]
 })
 export class SessionReadComponent implements OnInit, OnDestroy {
@@ -62,6 +64,8 @@ export class SessionReadComponent implements OnInit, OnDestroy {
 
   session: Session | null = null;
   dataframeTable: TableData | undefined;
+  pagination: PaginationLinks | null = null;
+
   getDataframeParameters: GetDataframeParameters = {};
   study: Study | null = null;
   owner: User | null = null;
@@ -122,6 +126,7 @@ export class SessionReadComponent implements OnInit, OnDestroy {
       this.currentPage,
       this.getDataframeParameters
     );
+    this.pagination = dataframeResponse.links;
     this.dataframeTable = {
       columns: [
         { id: 'id', label: this.translateService.instant('general.id') },
