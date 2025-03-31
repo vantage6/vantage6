@@ -109,8 +109,6 @@ export class DataframeReadComponent implements OnInit, OnDestroy {
   private async setDataframeColumnsTable(): Promise<void> {
     if (!this.dataframe || this.chosenCollaborationService.collaboration$.value === null) return;
     this.nodes = await this.nodeService.getNodes({ session_id: this.dataframe.session.id.toString() });
-    this.dataframe.columns[0].dtype = 'Something else';
-    delete this.dataframe.columns[1];
 
     // condense array to go from [{name: x, node_id: 1, dtype: string}, {name: x, node_id: 2, dtype: string}] to
     // [{name: x, node_names: [1,2], dtype: string}]
