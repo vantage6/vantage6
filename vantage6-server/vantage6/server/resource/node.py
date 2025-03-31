@@ -189,6 +189,11 @@ class Nodes(NodeBase):
               type: integer
             description: Study id
           - in: query
+            name: session_id
+            schema:
+              type: integer
+            description: Filter nodes by session they are involved in
+          - in: query
             name: status
             schema:
               type: string
@@ -244,6 +249,23 @@ class Nodes(NodeBase):
         auth_org_id = self.obtain_organization_id()
         args = request.args
 
+        session_filter = {}
+        if "session_id" in args:
+            session = db.Session.get(args["session_id"])
+            if not session:
+                return {
+                    "msg": f"Session id={args['session_id']} does not exist"
+                }, HTTPStatus.NOT_FOUND
+            if not self.r.can_for_col(P.VIEW, session.collaboration_id):
+                return {
+                    "msg": "You lack the permission view nodes from "
+                    f"collaboration with id {session.collaboration_id}!"
+                }, HTTPStatus.UNAUTHORIZED
+            if session.study_id:
+                session_filter["study_id"] = session.study_id
+            else:
+                session_filter["collaboration_id"] = session.collaboration_id
+
         if "organization_id" in args:
             if not self.r.allowed_for_org(P.VIEW, int(args["organization_id"])):
                 return {
@@ -252,8 +274,12 @@ class Nodes(NodeBase):
                 }, HTTPStatus.UNAUTHORIZED
             q = q.filter(db.Node.organization_id == args["organization_id"])
 
-        if "collaboration_id" in args:
-            collaboration_id = int(args["collaboration_id"])
+        if "collaboration_id" in args or session_filter.get("collaboration_id"):
+            collaboration_id = (
+                int(args["collaboration_id"])
+                if "collaboration_id" in args
+                else session_filter["collaboration_id"]
+            )
             if not self.r.can_for_col(P.VIEW, collaboration_id):
                 return {
                     "msg": "You lack the permission view nodes from the "
@@ -261,8 +287,12 @@ class Nodes(NodeBase):
                 }, HTTPStatus.UNAUTHORIZED
             q = q.filter(db.Node.collaboration_id == collaboration_id)
 
-        if "study_id" in args:
-            study_id = int(args["study_id"])
+        if "study_id" in args or session_filter.get("study_id"):
+            study_id = (
+                int(args["study_id"])
+                if "study_id" in args
+                else session_filter["study_id"]
+            )
             study = db.Study.get(study_id)
             if not self.r.can_for_col(P.VIEW, study.collaboration_id):
                 return {
