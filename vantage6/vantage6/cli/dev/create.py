@@ -200,6 +200,21 @@ def generate_node_configs(
             (default_dataset.name.lower(), data_directory / default_dataset.value)
         )
 
+    # Check for duplicate dataset labels
+    seen_labels = set()
+    duplicates = [
+        label
+        for label in [dataset[0] for dataset in extra_datasets]
+        if (label in seen_labels or seen_labels.add(label))
+    ]
+
+    if len(duplicates) > 0:
+        error(
+            f"Duplicate dataset labels found: {duplicates}. "
+            f"Please make sure all dataset labels are unique."
+        )
+        exit(1)
+
     # create the data files for the nodes and get the path and label for each dataset
     for dataset in extra_datasets:
         node_data_files.append(create_node_data_files(num_nodes, server_name, dataset))
