@@ -218,34 +218,9 @@ class MultiRunBase(RunBase):
         #       Runs that are finished
         #
         if args.get("state") == TaskStatusQueryOptions.OPEN.value:
-            q = q.filter(
-                and_(
-                    or_(
-                        db.Task.depends_on == None,
-                        and_(
-                            db.Task.depends_on != None,
-                            ~db.Task.depends_on.any(
-                                db.Task.runs.any(db.Run.finished_at.is_(None))
-                            ),
-                        ),
-                    ),
-                    db_Run.finished_at.is_(None),
-                )
-            )
-
+            q = q.filter(db.Task.is_open)
         elif args.get("state") == TaskStatusQueryOptions.WAITING.value:
-            q = q.filter(
-                and_(
-                    or_(
-                        db.Task.depends_on == None,
-                        db.Task.depends_on.any(
-                            db.Task.runs.any(db.Run.finished_at.is_(None))
-                        ),
-                    ),
-                    db_Run.finished_at.is_(None),
-                )
-            )
-
+            q = q.filter(db.Task.is_waiting)
         elif args.get("state") == TaskStatusQueryOptions.FINISHED.value:
             q = q.filter(db_Run.finished_at.isnot(None))
 

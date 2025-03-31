@@ -227,6 +227,64 @@ class Task(Base):
 
         return select([status_case]).where(models.Run.task_id == cls.id).label("status")
 
+    @hybrid_property
+    def is_open(self) -> bool:
+        """
+        Whether a task fulfills conditions for TaskStatusQueryOptions.OPEN
+
+        Returns
+        -------
+        bool
+            If a task is open
+        """
+        # A task is open if it has no dependencies or all dependencies are finished,
+        # AND at least one run is alive
+        no_deps = len(self.depends_on) == 0
+        deps_finished = self.depends_on.any(models.Run.finished_at.is_(None)) == False
+        alive_run = any(run.finished_at is None for run in self.runs)
+        return (no_deps or deps_finished) and alive_run
+
+    @is_open.expression
+    def is_open(cls):
+        """
+        SQL expression for the is_open hybrid property.
+        """
+        no_deps = ~cls.depends_on.any()
+        deps_finished = ~cls.depends_on.any(
+            cls.runs.any(models.Run.finished_at.is_(None))
+        )
+        alive_run = cls.runs.any(models.Run.finished_at.is_(None))
+        return (no_deps | deps_finished) & alive_run
+
+    @hybrid_property
+    def is_waiting(self) -> bool:
+        """
+        Whether a task fulfills conditions for TaskStatusQueryOptions.WAITING
+
+        Returns
+        -------
+        bool
+            If a task is waiting
+        """
+        # A task is waiting if it has dependencies and dependencies are not all
+        # finished, AND at least one run is not finished
+        deps = len(self.depends_on) == 0
+        deps_finished = self.depends_on.any(models.Run.finished_at.is_(None)) == False
+        waiting_run = any(run.finished_at is None for run in self.runs)
+        return deps and not deps_finished and waiting_run
+
+    @is_waiting.expression
+    def is_waiting(cls) -> bool:
+        """
+        SQL expression for the is_waiting hybrid property.
+        """
+        deps = cls.depends_on.any()
+        deps_finished = ~cls.depends_on.any(
+            cls.runs.any(models.Run.finished_at.is_(None))
+        )
+        waiting_run = cls.runs.any(models.Run.finished_at.is_(None))
+        return deps & ~deps_finished & waiting_run
+
     @classmethod
     def next_job_id(cls) -> int:
         """
