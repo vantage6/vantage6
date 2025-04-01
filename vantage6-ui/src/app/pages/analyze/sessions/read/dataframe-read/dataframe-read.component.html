@@ -51,7 +51,13 @@
       <div *ngFor="let columnAlert of columnAlerts">
         <app-alert [label]="columnAlert" class="node-alert"></app-alert>
       </div>
-      <app-table *ngIf="!isLoading && dataframeColumnsTable" [data]="dataframeColumnsTable" [isLoading]="isLoading"></app-table>
+      <app-table *ngIf="!isLoading && dataframeColumnsTable" [data]="dataframeColumnsTablePage" [isLoading]="isLoading"></app-table>
+      <mat-paginator
+        (page)="handleColumnTablePageEvent($event)"
+        [length]="dataframeColumnsTable?.rows?.length"
+        pageSize="5"
+        [hidePageSize]="true"
+      ></mat-paginator>
       <app-alert
         *ngIf="!dataframeColumnsTable && !isLoading"
         class="node-alert"

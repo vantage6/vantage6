@@ -55,8 +55,8 @@ export class DataframeReadComponent implements OnInit, OnDestroy {
   destroy$ = new Subject();
 
   dataframeColumnsTable: TableData | undefined;
+  dataframeColumnsTablePage: TableData | undefined;
   currentPageColumnTable: number = 1;
-  paginationColumnTable: PaginationLinks | null = null;
   columnAlerts: string[] = [];
 
   dataframeTasksTable: TableData | undefined;
@@ -150,6 +150,23 @@ export class DataframeReadComponent implements OnInit, OnDestroy {
         };
       })
     };
+
+    this.setDataframeColumnsTablePage();
+  }
+
+  private setDataframeColumnsTablePage() {
+    const pageSize = 10;
+    if (this.dataframeColumnsTable) {
+      this.dataframeColumnsTablePage = {
+        columns: this.dataframeColumnsTable.columns,
+        rows: this.dataframeColumnsTable.rows.slice((this.currentPageColumnTable - 1) * pageSize, this.currentPageColumnTable * pageSize)
+      };
+    }
+  }
+
+  handleColumnTablePageEvent(e: PageEvent) {
+    this.currentPageColumnTable = e.pageIndex + 1;
+    this.setDataframeColumnsTablePage();
   }
 
   private compileColumnWarnings(columnData: DataframeColumnTableDisplay[]) {
