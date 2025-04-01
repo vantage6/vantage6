@@ -59,7 +59,7 @@ export class SessionService {
   }
 
   async createDataframe(sessionId: number, createDataframe: CreateDataframe): Promise<Dataframe> {
-    return await this.apiService.postForApi<any>(`/session/${sessionId}/dataframe`, createDataframe);
+    return await this.apiService.postForApi<Dataframe>(`/session/${sessionId}/dataframe`, createDataframe);
   }
 
   async createPreprocessingTask(dataframeId: number, preprocessTask: DataframePreprocess): Promise<Dataframe> {
