@@ -756,7 +756,16 @@ class Run(SingleRunBase):
 
         self.socketio.emit(
             "algorithm_status_change",
-            {"job_id": run.id, "status": run.status},
+            {
+                "run_id": run.id,
+                "status": run.status,
+                "task_id": run.task.id,
+                "job_id": run.task.job_id,
+                "collaboration_id": run.task.collaboration.id,
+                "node_id": run.node.id,
+                "organization_id": run.organization.id,
+                "parent_id": run.task.parent_id,
+            },
             namespace="/tasks",
             room=f"collaboration_{run.task.collaboration.id}",
         )
