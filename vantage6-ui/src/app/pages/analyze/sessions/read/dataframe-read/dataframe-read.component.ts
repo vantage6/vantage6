@@ -2,7 +2,7 @@ import { DatePipe, NgFor, NgIf } from '@angular/common';
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
 import { MatIcon } from '@angular/material/icon';
-import { MatMenu, MatMenuTrigger } from '@angular/material/menu';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -25,27 +25,33 @@ import { TaskService } from 'src/app/services/task.service';
 import { AlertComponent } from '../../../../../components/alerts/alert/alert.component';
 import { BaseNode } from 'src/app/models/api/node.model';
 import { NodeService } from 'src/app/services/node.service';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
+import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatLabel } from '@angular/material/form-field';
 
 @Component({
   selector: 'app-dataframe-read',
   templateUrl: './dataframe-read.component.html',
-  styleUrl: './dataframe-read.component.scss',
+  styleUrls: ['./dataframe-read.component.scss'],
   imports: [
-    PageHeaderComponent,
-    MatIcon,
-    MatMenuTrigger,
-    TranslateModule,
-    MatMenu,
-    NgIf,
+    AlertComponent,
     MatCard,
-    MatCardContent,
-    MatProgressSpinner,
     MatCardHeader,
     MatCardTitle,
-    TableComponent,
+    MatCardContent,
+    MatIcon,
+    MatIconButton,
+    MatMenuTrigger,
+    MatMenu,
+    MatMenuItem,
+    MatProgressSpinner,
     MatPaginator,
-    AlertComponent,
-    NgFor
+    NgIf,
+    NgFor,
+    PageHeaderComponent,
+    TableComponent,
+    TranslateModule
   ]
 })
 export class DataframeReadComponent implements OnInit, OnDestroy {
@@ -71,6 +77,7 @@ export class DataframeReadComponent implements OnInit, OnDestroy {
   canEdit = false;
 
   constructor(
+    private dialog: MatDialog,
     private translateService: TranslateService,
     private activatedRoute: ActivatedRoute,
     private sessionService: SessionService,
@@ -104,6 +111,34 @@ export class DataframeReadComponent implements OnInit, OnDestroy {
       await Promise.all([this.getDataframeTasks(), this.setDataframeColumnsTable()]);
     }
     this.isLoading = false;
+  }
+
+  handleNewPreprocessingStep(): void {}
+
+  handleDelete(): void {
+    if (!this.dataframe) return;
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: this.translateService.instant('dataframe-read.delete-dialog.title', { name: this.dataframe.name }),
+        content: this.translateService.instant('dataframe-read.delete-dialog.content'),
+        confirmButtonText: this.translateService.instant('general.delete'),
+        confirmButtonType: 'warn'
+      }
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(async (result) => {
+        if (result === true) {
+          if (!this.dataframe) return;
+          this.isLoading = true;
+          const sessionId = this.dataframe.session.id;
+          await this.sessionService.deleteDataframe(this.dataframe.id);
+          this.router.navigate([routePaths.session, sessionId]);
+        }
+      });
   }
 
   private async setDataframeColumnsTable(): Promise<void> {

@@ -133,6 +133,10 @@
         "mixed-types": "The column '{{column}}' has different data types on different nodes. Types found: {{types}}."
       }
     },
+    "delete-dialog": {
+      "title": "Are you sure you want to delete the dataframe '{{name}}'?",
+      "content": "This operation cannot be undone."
+    },
     "tasks-table": {
       "title": "Tasks using this dataframe",
       "no-tasks": "No tasks are using this dataframe."
