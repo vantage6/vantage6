@@ -1,28 +1,33 @@
+import subprocess
+import sys
+
 import click
 
-from importlib.machinery import SourceFileLoader
 from pathlib import Path
-from requests.exceptions import ConnectionError
+
 from rich.console import Console
 
 from vantage6.cli.dev.create import create_demo_network
 from vantage6.cli.dev.remove import remove_demo_network
 from vantage6.cli.dev.start import start_demo_network
 from vantage6.cli.dev.stop import stop_demo_network
-from vantage6.cli.utils import error
-from vantage6.client import Client
 from vantage6.common.globals import Ports
+
+test_file_path = Path(__file__).parent / "algo_test_scripts" / "algo_test_script.py"
 
 
 @click.command()
 @click.option(
-    "--script", type=str, required=True, help="Path of the script to test the algorithm"
+    "--script",
+    type=str,
+    default=test_file_path,
+    help="Path of the script to test the algorithm. If a script is not provided, the default script is used.",
 )
 @click.option(
-    "--algorithm-image", type=str, default=None, help="Algorithm Docker image to use"
-)
-@click.option(
-    "--algorithm-input", type=dict, default=None, help="Algorithm input argument"
+    "--task-arguments",
+    type=str,
+    default=None,
+    help="Arguments to be provided to Task.create function. If --script is provided, this should not be set.",
 )
 @click.option(
     "--create-dev-network",
@@ -61,18 +66,11 @@ from vantage6.common.globals import Ports
     help="Add a dataset to the nodes. The first argument is the label of the database, "
     "the second is the path to the dataset file.",
 )
-@click.option(
-    "--database",
-    type=str,
-    default=None,
-    help="Label of the database to be used for the test",
-)
 @click.pass_context
 def cli_test_client_script(
     click_ctx: click.Context,
     script: Path,
-    algorithm_image: str,
-    algorithm_input: str,
+    task_arguments: str,
     name: str,
     server_url: str,
     create_dev_network: bool,
@@ -80,12 +78,16 @@ def cli_test_client_script(
     image: str,
     keep: bool,
     add_dataset: list[tuple[str, Path]] = (),
-    database: str = None,
-) -> None:
+) -> int:
     """
     Run a script for testing an algorithm on a dev network.
     The path to the script must be provided as an argument.
     """
+    if script is None and task_arguments is None:
+        raise click.UsageError("--script or --task-arguments must be set.")
+    elif script != test_file_path and task_arguments:
+        raise click.UsageError("--script and --task-arguments cannot be set together.")
+
     # create the network
     if create_dev_network:
         click_ctx.invoke(
@@ -109,21 +111,16 @@ def cli_test_client_script(
             node_image=image,
         )
 
-    client = Client("http://localhost", Ports.DEV_SERVER.value, "/api")
-    try:
-        client.authenticate("dev_admin", "password")
-    except ConnectionError:
-        error(
-            "Could not connect to the server. Please check if a dev network is running."
-        )
-        return None
+    # run the test script and get the result
+    if not task_arguments:
+        subprocess_args = ["python", script]
+    else:
+        subprocess_args = ["python", script, task_arguments]
 
-    script_module = SourceFileLoader("test_script", script).load_module()
-    test_class = script_module.get_test_class(client)
+    result = subprocess.run(subprocess_args, stdout=sys.stdout, stderr=sys.stderr)
 
-    result = test_class.test(algorithm_image, algorithm_input, database)
-
-    if result["passed"]:
+    # check the exit code. If the test passed, it should be 0
+    if result.returncode == 0:
         msg = ":heavy_check_mark: [green]Test passed[/green]"
     else:
         msg = ":x: [red]Test failed[/red]"
@@ -136,4 +133,4 @@ def cli_test_client_script(
         click_ctx.invoke(stop_demo_network, name=name)
         click_ctx.invoke(remove_demo_network, name=name)
 
-    return result
+    return result.returncode

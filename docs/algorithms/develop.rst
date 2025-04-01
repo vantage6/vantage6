@@ -283,16 +283,26 @@ the following CLI command:
 
 .. code:: bash
 
-   v6 test client-script --script /path/to/test_script.py --create-dev-network
+   v6 test client-script --create-dev-network
 
-This will create a dev network and run the test script indicated in the path on the
-latest version of the vantage6 infrastructure. After running, the network will be
-stopped and removed unless you specify otherwise by setting ``--keep true`` in the command.
+This will create a dev network and run the test script included in the repository on the
+latest version of the vantage6 infrastructure.
+To let the script run the algorithm, the arguments needed by the task should be added to
+``algo_test_arguments.py``, The arguments can be passed directly to the command:
 
-The test script should contain the code to create and run a client task and to assess
-the result. If you create your algorithm using the algorithm template, you will find
-a pre-made test script in the ``tests`` folder. This script must be adapted to the
-specific algorithm.
+.. code:: bash
+
+   v6 test client-script --task-arguments "{ 'collaboration': 1, 'organizations': [1], 'name': 'task_name', 'image': 'my_image', 'description': '', 'input_': { 'method': 'my_method', 'args': [], 'kwargs': {'column_name': 'my_column'}}, 'databases': [{'label': 'db_label'}]}"
+
+or a custom test script can be used by running:
+
+.. code:: bash
+
+   v6 test client-script --create-dev-network --script path/to/test_script.py
+
+After running, the network will be stopped and removed unless you specify otherwise by setting
+``--keep true`` in the command.
+
 
 If a dataset different from the default ones is needed, it can be included in the
 dev network by specifying the label and the path to the dataset in the ``--add-dataset``
