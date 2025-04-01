@@ -9,6 +9,7 @@ import { AvailableSteps, FormCreateOutput } from 'src/app/models/forms/create-fo
 import { TaskService } from 'src/app/services/task.service';
 import { CreateTask } from 'src/app/models/api/task.models';
 import { CreateAnalysisFormComponent } from 'src/app/components/forms/compute-form/create-analysis-form.component';
+import { AlgorithmStepType } from 'src/app/models/api/session.models';
 
 @Component({
   selector: 'app-task-create',
@@ -20,6 +21,7 @@ import { CreateAnalysisFormComponent } from 'src/app/components/forms/compute-fo
 export class TaskCreateComponent implements OnInit, OnDestroy {
   title: string = '';
   sessionId: string = '';
+  algorithmStepType = AlgorithmStepType;
 
   destroy$ = new Subject();
 

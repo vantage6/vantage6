@@ -1,6 +1,7 @@
 <app-create-form
   [formTitle]="title"
   [availableSteps]="availableSteps"
+  [allowedTaskTypes]="[algorithmStepType.FederatedCompute, algorithmStepType.CentralCompute]"
   (onCancel)="onCancelHandler()"
   (onSubmit)="onSubmitHandler($event)"
 ></app-create-form>
