@@ -1,0 +1,94 @@
+<ng-container *ngIf="!isLoading && dataframe; else loading">
+  <app-page-header title="{{ 'dataframe-read.title' | translate: { name: dataframe.name } }}">
+    <!-- <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="canEdit || canDelete">
+      <mat-icon>more_vert</mat-icon>
+    </button>
+    <mat-menu #menu="matMenu"> -->
+    <!-- <button mat-menu-item *ngIf="canCreate" (click)="newAnalysis()">
+      <mat-icon>science</mat-icon>
+      <span>{{ "links.new-analysis" | translate }}</span>
+    </button>
+    <button mat-menu-item *ngIf="canEdit" (click)="handleEdit()">
+      <mat-icon>edit</mat-icon>
+      <span>{{ "general.edit" | translate }}</span>
+    </button>
+    <button mat-menu-item *ngIf="canDelete" (click)="handleDelete()">
+      <mat-icon>delete</mat-icon>
+      <span>{{ "general.delete" | translate }}</span>
+    </button> -->
+    <!-- </mat-menu> -->
+  </app-page-header>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ "general.details-title" | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="data-list">
+        <div class="data-list__item">
+          <b>{{ "general.id" | translate }}</b>
+          <span>{{ dataframe.id || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "general.name" | translate }}</b>
+          <span>{{ dataframe.name || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "session.dataframes.db-label" | translate }}</b>
+          <span>{{ dataframe.db_label }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "session.dataframes.ready" | translate }}</b>
+          <span>{{ dataframe.ready ? ("general.yes" | translate) : ("general.no" | translate) }}</span>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ "dataframe-read.columns.title" | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div *ngFor="let columnAlert of columnAlerts">
+        <app-alert [label]="columnAlert" class="node-alert"></app-alert>
+      </div>
+      <app-table *ngIf="!isLoading && dataframeColumnsTable" [data]="dataframeColumnsTable" [isLoading]="isLoading"></app-table>
+      <app-alert
+        *ngIf="!dataframeColumnsTable && !isLoading"
+        class="node-alert"
+        label="{{ 'dataframe-read.columns.no-columns' | translate }}"
+      ></app-alert>
+    </mat-card-content>
+  </mat-card>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ "dataframe-read.tasks-table.title" | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <app-table
+        *ngIf="!isLoading && dataframeTasksTable"
+        [data]="dataframeTasksTable"
+        (rowClick)="handleTaskTableClick($event)"
+        [isLoading]="isLoading"
+        (searchChanged)="handleSearchChanged($event)"
+      ></app-table>
+      <app-alert
+        *ngIf="!dataframeTasksTable && !isLoading"
+        class="node-alert"
+        label="{{ 'dataframe-read.tasks-table.no-tasks' | translate }}"
+      ></app-alert>
+    </mat-card-content>
+    <mat-paginator
+      (page)="handleTaskTablePageEvent($event)"
+      [length]="paginationTaskTable?.total"
+      pageSize="10"
+      [hidePageSize]="true"
+    ></mat-paginator>
+  </mat-card>
+</ng-container>
+<ng-template #loading>
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-template>

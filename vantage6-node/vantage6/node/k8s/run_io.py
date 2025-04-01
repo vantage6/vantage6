@@ -280,7 +280,7 @@ class RunIO:
             {"name": field.name, "dtype": str(field.type)} for field in table.schema
         ]
         self.client.request(
-            f"/session/dataframe/{self.df_id}",
+            f"/session/dataframe/{self.df_id}/column",
             method="post",
             json=columns_info,
         )

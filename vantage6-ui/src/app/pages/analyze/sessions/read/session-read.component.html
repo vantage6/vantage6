@@ -21,7 +21,7 @@
   <ng-container *ngIf="!isLoading && session; else loading">
     <mat-card *ngIf="!isLoading">
       <mat-card-header>
-        <mat-card-title>{{ "general.general" | translate }}</mat-card-title>
+        <mat-card-title>{{ "session.title" | translate: { name: session.name } }}</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <div class="data-list">
@@ -56,34 +56,13 @@
         </button>
       </mat-card-header>
       <mat-card-content>
-        <mat-accordion class="card-accordion">
-          <mat-expansion-panel *ngFor="let dataframe of dataframes" (opened)="handleDataframeChange(dataframe.id)">
-            <mat-expansion-panel-header>
-              <mat-panel-title>{{ dataframe.name }}</mat-panel-title>
-            </mat-expansion-panel-header>
-            <ng-template matExpansionPanelContent>
-              <mat-spinner *ngIf="!selectedDataframe" diameter="48"></mat-spinner>
-              <ng-container *ngIf="selectedDataframe">
-                <div class="data-list">
-                  <div class="data-list__item data-list__item--full">
-                    <b>{{ "general.id" | translate }}</b>
-                    <span>{{ selectedDataframe.id || "-" }}</span>
-                  </div>
-                  <button mat-flat-button color="warn" (click)="deleteDataframe(selectedDataframe.id)">
-                    <mat-icon>delete</mat-icon>
-                    <span>{{ "general.delete" | translate }}</span>
-                  </button>
-                </div>
-              </ng-container>
-            </ng-template>
-          </mat-expansion-panel>
-        </mat-accordion>
-        <mat-paginator
-          (page)="handlePageEvent($event)"
-          [length]="dataframePaginagion?.total"
-          pageSize="10"
-          [hidePageSize]="true"
-        ></mat-paginator>
+        <app-table
+          [data]="dataframeTable"
+          (rowClick)="handleDataframeTableClick($event)"
+          [isLoading]="isLoading"
+          (searchChanged)="handleSearchChanged($event)"
+        ></app-table>
+        <mat-paginator (page)="handlePageEvent($event)" [length]="pagination?.total" pageSize="10" [hidePageSize]="true"></mat-paginator>
       </mat-card-content>
     </mat-card>
   </ng-container>
