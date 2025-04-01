@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { routePaths } from 'src/app/routes';
 import { SessionService } from 'src/app/services/session.service';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
-import { Subject, takeUntil } from 'rxjs';
+import { combineLatest, Subject, takeUntil } from 'rxjs';
 import { StudyService } from 'src/app/services/study.service';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
@@ -24,7 +24,6 @@ export class DataframePreprocessComponent implements OnInit, OnDestroy {
   algorithmStepType = AlgorithmStepType;
 
   title: string = '';
-  // TODO remove preprocessing and filter steps
   availableSteps: AvailableSteps = {
     session: false,
     study: false,
@@ -57,13 +56,12 @@ export class DataframePreprocessComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.activatedRoute.params.pipe(takeUntil(this.destroy$)).subscribe(async (params) => {
+    combineLatest([
+      this.activatedRoute.params.pipe(takeUntil(this.destroy$)),
+      this.chosenCollaborationService.isInitialized$.pipe(takeUntil(this.destroy$))
+    ]).subscribe(([params, initialized]) => {
       this.dfId = params['dfId'];
       this.sessionId = params['sessionId'];
-      // TODO Need to reinitialize the dataframe and session when the user changes the session?
-    });
-
-    this.chosenCollaborationService.isInitialized$.pipe(takeUntil(this.destroy$)).subscribe((initialized) => {
       if (initialized) {
         this.initData();
       }
