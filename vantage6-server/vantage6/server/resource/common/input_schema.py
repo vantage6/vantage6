@@ -647,8 +647,13 @@ class DataframeInitInputSchema(Schema):
     task = fields.Nested(SessionTaskInputSchema, required=True)
 
 
-class DataframeStepInputSchema(Schema):
-    """Schema for validating input for creating a new dataframe step in a session."""
+class DataframePreprocessingInputSchema(Schema):
+    """
+    Schema for validating input for creating a new dataframe preprocessing step in
+    a session.
+    """
+
+    dataframe_id = fields.Integer(required=True, validate=Range(min=1))
 
     # Task metadata that is executed on the node for session extension, which is a
     # pre-processing task

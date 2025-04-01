@@ -59,6 +59,9 @@
         class="node-alert"
         label="{{ 'dataframe-read.columns.no-columns' | translate }}"
       ></app-alert>
+      <button mat-flat-button color="primary" (click)="handleNewPreprocessingStep()">
+        <mat-icon>edit</mat-icon>{{ "dataframe-read.columns.add-preprocessing" | translate }}
+      </button>
     </mat-card-content>
   </mat-card>
   <mat-card>

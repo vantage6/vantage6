@@ -28,7 +28,6 @@ import { NodeService } from 'src/app/services/node.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { MatButton, MatIconButton } from '@angular/material/button';
-import { MatLabel } from '@angular/material/form-field';
 
 @Component({
   selector: 'app-dataframe-read',
@@ -36,6 +35,7 @@ import { MatLabel } from '@angular/material/form-field';
   styleUrls: ['./dataframe-read.component.scss'],
   imports: [
     AlertComponent,
+    MatButton,
     MatCard,
     MatCardHeader,
     MatCardTitle,
@@ -57,6 +57,7 @@ import { MatLabel } from '@angular/material/form-field';
 export class DataframeReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   @Input() id = '';
+  public sessionId: string = '';
 
   destroy$ = new Subject();
 
@@ -94,7 +95,8 @@ export class DataframeReadComponent implements OnInit, OnDestroy {
 
     // subscribe to reload task data when url changes (i.e. other task is viewed)
     this.activatedRoute.params.pipe(takeUntil(this.destroy$)).subscribe(async (params) => {
-      this.id = params['id'];
+      this.id = params['dfId'];
+      this.sessionId = params['sessionId'];
       this.isLoading = true;
       await this.initData();
     });
@@ -113,7 +115,9 @@ export class DataframeReadComponent implements OnInit, OnDestroy {
     this.isLoading = false;
   }
 
-  handleNewPreprocessingStep(): void {}
+  handleNewPreprocessingStep(): void {
+    this.router.navigate([routePaths.sessionDataframePreprocess.replace(':dfId', this.id).replace(':sessionId', this.sessionId)]);
+  }
 
   handleDelete(): void {
     if (!this.dataframe) return;

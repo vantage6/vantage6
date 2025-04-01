@@ -21,7 +21,5 @@ export interface AvailableSteps {
   function: boolean;
   database: boolean;
   dataframe: boolean;
-  preprocessing: boolean;
-  filter: boolean;
   parameter: boolean;
 }

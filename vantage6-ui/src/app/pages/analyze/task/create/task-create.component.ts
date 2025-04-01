@@ -30,8 +30,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
     function: true,
     database: false,
     dataframe: true,
-    preprocessing: true,
-    filter: true,
     parameter: true
   };
 
