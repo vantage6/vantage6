@@ -272,8 +272,8 @@ class NodeInputSchema(_NameValidationSchema):
         """
         try:
             ipaddress.ip_address(ip)
-        except ValueError:
-            raise ValidationError("IP address is not valid")
+        except ValueError as exc:
+            raise ValidationError(f"IP address {ip} is not a valid IP address") from exc
 
 
 class OrganizationInputSchema(_NameValidationSchema):
@@ -628,9 +628,29 @@ class SessionInputSchema(Schema):
 
     collaboration_id = fields.Integer(required=True, validate=Range(min=1))
     study_id = fields.Integer(validate=Range(min=1), allow_none=True)
-    scope = fields.String(
-        required=True, validate=OneOf(Scope.list()), dump_default=Scope.OWN.value
-    )
+    scope = fields.String(required=True, dump_default=Scope.OWN.value)
+
+    @validates("scope")
+    def validate_scope(self, scope: str):
+        """
+        Validate the scope in the input.
+
+        Parameters
+        ----------
+        scope : str
+            Scope to validate.
+
+        Raises
+        ------
+        ValidationError
+            If the scope is not valid.
+        """
+        allowed_scopes = set(Scope.list()) - {Scope.GLOBAL.name.lower()}
+        if scope not in allowed_scopes:
+            raise ValidationError(
+                f"Session scope '{scope}' is not valid. Allowed values are: "
+                f"{allowed_scopes}."
+            )
 
 
 class DataframeInitInputSchema(Schema):

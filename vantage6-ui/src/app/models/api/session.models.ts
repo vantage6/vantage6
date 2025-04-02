@@ -12,7 +12,6 @@ export enum SessionSortProperties {
 }
 
 export enum SessionScope {
-  Global = 'global',
   Collaboration = 'collaboration',
   Organization = 'organization',
   Own = 'own'
