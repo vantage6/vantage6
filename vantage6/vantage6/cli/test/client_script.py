@@ -13,14 +13,14 @@ from vantage6.cli.dev.start import start_demo_network
 from vantage6.cli.dev.stop import stop_demo_network
 from vantage6.common.globals import Ports
 
-test_file_path = Path(__file__).parent / "algo_test_scripts" / "algo_test_script.py"
+TEST_FILE_PATH = Path(__file__).parent / "algo_test_scripts" / "algo_test_script.py"
 
 
 @click.command()
 @click.option(
     "--script",
-    type=str,
-    default=test_file_path,
+    type=click.Path(),
+    default=TEST_FILE_PATH,
     help="Path of the script to test the algorithm. If a script is not provided, the default script is used.",
 )
 @click.option(
@@ -85,7 +85,10 @@ def cli_test_client_script(
     """
     if script is None and task_arguments is None:
         raise click.UsageError("--script or --task-arguments must be set.")
-    elif script != test_file_path and task_arguments:
+    elif script != TEST_FILE_PATH and task_arguments:
+        print(f"Script: {script}")
+        print(f"Test file path: {TEST_FILE_PATH}")
+
         raise click.UsageError("--script and --task-arguments cannot be set together.")
 
     # create the network
