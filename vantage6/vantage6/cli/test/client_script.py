@@ -1,7 +1,7 @@
+import click
+import json
 import subprocess
 import sys
-
-import click
 
 from pathlib import Path
 
@@ -86,10 +86,14 @@ def cli_test_client_script(
     if script is None and task_arguments is None:
         raise click.UsageError("--script or --task-arguments must be set.")
     elif script != TEST_FILE_PATH and task_arguments:
-        print(f"Script: {script}")
-        print(f"Test file path: {TEST_FILE_PATH}")
-
         raise click.UsageError("--script and --task-arguments cannot be set together.")
+
+    # Check if the task_arguments is a valid JSON string
+    if task_arguments:
+        try:
+            json.loads(task_arguments.replace("'", '"'))
+        except json.JSONDecodeError:
+            raise click.UsageError("task-arguments must be a valid JSON string.")
 
     # create the network
     if create_dev_network:
