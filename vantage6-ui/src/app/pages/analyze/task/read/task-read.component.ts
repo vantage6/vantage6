@@ -24,7 +24,7 @@ import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confi
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
-import { Subject, Subscription, takeUntil, timer } from 'rxjs';
+import { BehaviorSubject, Subject, Subscription, takeUntil, timer } from 'rxjs';
 import { FileService } from 'src/app/services/file.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { AlgorithmLogMsg, AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
@@ -117,6 +117,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   destroy$ = new Subject();
   waitTaskComplete$ = new Subject();
   routes = routePaths;
+  algorithmStatusUpdateQueue = new BehaviorSubject<AlgorithmStatusChangeMsg[]>([]);
 
   visualization = new FormControl(0);
 
@@ -172,7 +173,15 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     this.taskStatusUpdateSubscription = this.socketioConnectService
       .getAlgorithmStatusUpdates()
       .subscribe((statusUpdate: AlgorithmStatusChangeMsg | null) => {
-        if (statusUpdate) this.onAlgorithmStatusUpdate(statusUpdate);
+        if (statusUpdate) {
+          // while loading, build up a queue of status updates so that they are executed
+          // in order. If no longer loading, execute the status update immediately.
+          if (this.isLoading || this.algorithmStatusUpdateQueue.value.length > 0) {
+            this.algorithmStatusUpdateQueue.next([...this.algorithmStatusUpdateQueue.value, statusUpdate]);
+          } else {
+            this.onAlgorithmStatusUpdate(statusUpdate);
+          }
+        }
       });
 
     // subscribe to new tasks
@@ -225,6 +234,14 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       // here.
       this.algorithmNotFoundInStore = true;
     }
+    // Now that everything is initialized, empty the queue of status updates
+    // and process all updates. Wait 50 ms in between to allow the UI to update.
+    this.algorithmStatusUpdateQueue.value.forEach((statusUpdate) => {
+      this.onAlgorithmStatusUpdate(statusUpdate);
+      setTimeout(() => {
+        this.algorithmStatusUpdateQueue.next(this.algorithmStatusUpdateQueue.value.slice(1));
+      }, 50);
+    });
     this.isLoading = false;
   }
 
@@ -440,7 +457,6 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   }
 
   private async onAlgorithmStatusUpdate(statusUpdate: AlgorithmStatusChangeMsg): Promise<void> {
-    await this.waitUntilInitialized();
     // Update status of child tasks
     this.childTasks.forEach((task: BaseTask) => {
       if (task.id === statusUpdate.task_id) {

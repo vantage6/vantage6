@@ -76,7 +76,6 @@ export class SocketioConnectService {
     this.socket?.on('algorithm_log', (data: AlgorithmLogMsg) => {
       this.algoLogUpdate$.next(data);
     });
-    
   }
 
   public getNodeStatusUpdates() {
