@@ -14,6 +14,8 @@ from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.model.rule import Operation, Scope
 from vantage6.server.model.base import DatabaseSessionManager
 
+from vantage6.backend.common.metrics import Metrics
+
 ALL_NODES_ROOM = "all_nodes"
 
 
@@ -31,6 +33,11 @@ class DefaultSocketNamespace(Namespace):
     metrics = None
 
     log = logging.getLogger(logger_name(__name__))
+
+    def __init__(self, namespace, socketio, metrics: Metrics) -> None:
+        super().__init__(namespace)
+        self.socketio = socketio
+        self.metrics = metrics
 
     def _is_node(self) -> bool:
         if session.type != "node":

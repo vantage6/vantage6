@@ -280,10 +280,8 @@ class ServerApp:
                 always_connect=True,
             )
 
-        # FIXME: temporary fix to get socket object into the namespace class
-        DefaultSocketNamespace.socketio = socketio
-        DefaultSocketNamespace.metrics = self.metrics
-        socketio.on_namespace(DefaultSocketNamespace("/tasks"))
+        namespace = DefaultSocketNamespace("/tasks", socketio, self.metrics)
+        socketio.on_namespace(namespace)
 
         return socketio
 
