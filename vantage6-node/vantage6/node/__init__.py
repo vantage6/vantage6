@@ -72,8 +72,6 @@ from vantage6.node.docker.squid import Squid
 # make sure the version is available
 from vantage6.node._version import __version__  # noqa: F401
 
-from vantage6.backend.common import metrics
-
 
 class VPNConnectMode(Enum):
     FIRST_TRY = 1
@@ -99,6 +97,7 @@ class Node:
     def __init__(self, ctx: NodeContext | DockerNodeContext):
         self.log = logging.getLogger(logger_name(__name__))
         self.ctx = ctx
+        self.gpu_metadata_available = True
 
         # Initialize the node. If it crashes, shut down the parts that started
         # already
@@ -239,9 +238,10 @@ class Node:
             "memory_available": psutil.virtual_memory().available,
         }
 
-        gpu_metadata = self.__gather_gpu_metadata()
-        if gpu_metadata:
-            metadata.update(gpu_metadata)
+        if self.gpu_metadata_available:
+            gpu_metadata = self.__gather_gpu_metadata()
+            if gpu_metadata:
+                metadata.update(gpu_metadata)
 
         return metadata
 
@@ -285,6 +285,7 @@ class Node:
             return gpu_metadata
         except pynvml.NVMLError as e:
             self.log.warning(f"Failed to gather GPU metadata: {e}")
+            self.gpu_metadata_available = False
             return None
 
     def __proxy_server_worker(self) -> None:

@@ -29,9 +29,6 @@ class DefaultSocketNamespace(Namespace):
     functions in this class are called to execute the corresponding action.
     """
 
-    socketio = None
-    metrics = None
-
     log = logging.getLogger(logger_name(__name__))
 
     def __init__(self, namespace, socketio, metrics: Metrics) -> None:
@@ -477,12 +474,18 @@ class DefaultSocketNamespace(Namespace):
 
         node = db.Node.get(session.auth_id)
 
+        os_label = data.pop("os", "unknown")
+        platform_label = data.pop("platform", "unknown")
         for metric_name, value in data.items():
             try:
                 self.metrics.set_metric(
                     metric_name=metric_name,
                     value=value,
-                    labels={"node_id": node.id},
+                    labels={
+                        "node_id": node.id,
+                        "os": os_label,
+                        "platform": platform_label,
+                    },
                 )
             except ValueError as e:
                 self.log.warning(f"Invalid metric data: {e}")

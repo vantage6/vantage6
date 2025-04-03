@@ -44,8 +44,6 @@ class Metrics:
                 int,
                 "Number of running algorithm containers",
             ),
-            Metric("os", str, "Operating system"),
-            Metric("platform", str, "Platform"),
             Metric("cpu_count", int, "Number of CPUs"),
             Metric("memory_total", int, "Total memory"),
             Metric("memory_available", int, "Available memory"),
