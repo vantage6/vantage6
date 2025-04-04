@@ -1,3 +1,4 @@
+import yaml
 import docker
 from pathlib import Path
 from vantage6.cli.globals import (
@@ -6,7 +7,6 @@ from vantage6.cli.globals import (
     PROMETHEUS_CONFIG,
 )
 from vantage6.common import info, error
-import yaml
 
 
 class PrometheusServer:
