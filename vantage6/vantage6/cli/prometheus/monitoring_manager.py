@@ -4,7 +4,6 @@ import yaml
 import docker
 from pathlib import Path
 from vantage6.cli.globals import (
-    PROMETHEUS_CONTAINER_NAME,
     DEFAULT_PROMETHEUS_IMAGE,
     PROMETHEUS_CONFIG,
 )
@@ -60,7 +59,7 @@ class PrometheusServer:
             return
 
         self.docker.containers.run(
-            name=PROMETHEUS_CONTAINER_NAME,
+            name=self.ctx.docker_container_name,
             image=self.image,
             volumes=volumes,
             ports=ports,
@@ -134,6 +133,6 @@ class PrometheusServer:
             The Prometheus container object if it is running, or None if no such container exists.
         """
         try:
-            return self.docker.containers.get(PROMETHEUS_CONTAINER_NAME)
+            return self.docker.containers.get(self.ctx.docker_container_name)
         except docker.errors.NotFound:
             return None

@@ -60,6 +60,18 @@ class ServerContext(BaseServerContext):
         return f"{APPNAME}-{self.name}-{self.scope}-{ServerType.V6SERVER}"
 
     @property
+    def prometheus_container_name(self) -> str:
+        """
+        Get the name of the Prometheus Docker container for this server.
+
+        Returns
+        -------
+        str
+            Prometheus container name, unique to this server instance.
+        """
+        return f"{APPNAME}-prometheus"
+
+    @property
     def prometheus_dir(self) -> Path:
         """
         Get the Prometheus directory path.
