@@ -43,6 +43,9 @@ DIAGNOSTICS_IMAGE = "harbor2.vantage6.ai/algorithms/diagnostic"
 COMMUNITY_STORE = "https://store.cotopaxi.vantage6.ai/api"
 
 PROMETHEUS_CONTAINER_NAME = f"{APPNAME}-prometheus"
+DEFAULT_PROMETHEUS_IMAGE = "prom/prometheus"
+PROMETHEUS_CONFIG = "prometheus.yml"
+PROMETHEUS_DIR = "prometheus"
 
 
 class ServerType(str, Enum):

@@ -1,12 +1,12 @@
 import docker
 from pathlib import Path
-from vantage6.cli.globals import PROMETHEUS_CONTAINER_NAME
+from vantage6.cli.globals import (
+    PROMETHEUS_CONTAINER_NAME,
+    DEFAULT_PROMETHEUS_IMAGE,
+    PROMETHEUS_CONFIG,
+)
 from vantage6.common import info, error
 import yaml
-
-DEFAULT_PROMETHEUS_IMAGE = "prom/prometheus"
-PROMETHEUS_CONFIG = "prometheus.yml"
-PROMETHEUS_DIR = "prometheus"
 
 
 class PrometheusServer:
@@ -20,7 +20,7 @@ class PrometheusServer:
         self.docker = docker.from_env()
         self.image = image if image else DEFAULT_PROMETHEUS_IMAGE
         self.config_file = Path(self.ctx.data_dir / PROMETHEUS_CONFIG)
-        self.data_dir = Path(self.ctx.data_dir / PROMETHEUS_DIR)
+        self.data_dir = self.ctx.prometheus_dir
 
     def start(self):
         """
