@@ -25,6 +25,7 @@ from vantage6.cli.common.start import (
     mount_source,
     pull_infra_image,
 )
+from vantage6.server.globals import DEFAULT_PROMETHEUS_EXPORTER_PORT
 
 
 @click.command()
@@ -182,7 +183,7 @@ def cli_server_start(
     info("Run Docker container")
     port_ = str(port or ctx.config["port"] or Ports.DEV_SERVER.value)
     prometheus_exporter_port = ctx.config.get("prometheus", {}).get(
-        "exporter_port", 9100
+        "exporter_port", DEFAULT_PROMETHEUS_EXPORTER_PORT
     )
     container = docker_client.containers.run(
         image,

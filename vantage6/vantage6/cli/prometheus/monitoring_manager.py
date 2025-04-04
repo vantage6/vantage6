@@ -1,5 +1,6 @@
 from vantage6.cli.context.server import ServerContext
 from vantage6.common.docker.network_manager import NetworkManager
+from vantage6.server.globals import DEFAULT_PROMETHEUS_EXPORTER_PORT
 import yaml
 import docker
 from pathlib import Path
@@ -89,7 +90,7 @@ class PrometheusServer:
 
         try:
             prometheus_exporter_port = self.ctx.config.get("prometheus", {}).get(
-                "exporter_port", 9100
+                "exporter_port", DEFAULT_PROMETHEUS_EXPORTER_PORT
             )
             server_hostname = self.ctx.docker_container_name
             server_address = f"{server_hostname}:{prometheus_exporter_port}"

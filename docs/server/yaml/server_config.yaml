@@ -206,11 +206,12 @@ dev:
   # should normally use http://172.17.0.1.
   host_uri: http://host.docker.internal
 
-# Settings for the prometheus monitoring
-prometheus:
-  # Set to true to start Prometheus server when starting the server
+# Settings for enabling monitoring of vantage6 nodes resource usage (e.g. CPU, memory). 
+# This is done using Prometheus. There are two components to this:
+# 1. The Prometheus exporter (running as part of the vantage6 server), which collects the metrics from the nodes.
+# 2. The Prometheus server (running as a separate Docker container), which scrapes the metrics exposed by the Prometheus exporter and stores them.
+# The exporter is started by default when the server starts. The Prometheus server can be started separately.
+  # Set to true to start the Prometheus server when starting the server
   start_with_server: false
-  # Set to true to enable the prometheus monitoring
-  enabled: true
-  # Port at which the prometheus exporter will be available on your local machine
-  exporter_port: 9100
+  # The port on which the Prometheus exporter will be available. This is the port that the Prometheus server will scrape.
+  exporter_port: 7603
