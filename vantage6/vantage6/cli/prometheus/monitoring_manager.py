@@ -1,3 +1,5 @@
+from vantage6.cli.context.server import ServerContext
+from vantage6.common.docker.network_manager import NetworkManager
 import yaml
 import docker
 from pathlib import Path
@@ -14,7 +16,22 @@ class PrometheusServer:
     Manages the Prometheus Docker container
     """
 
-    def __init__(self, ctx, network_mgr, image=None):
+    def __init__(
+        self, ctx: ServerContext, network_mgr: NetworkManager, image: str = None
+    ):
+        """
+        Initialize the PrometheusServer instance.
+
+        Parameters
+        ----------
+        ctx : ServerContext
+            The server context containing configuration and paths.
+        network_mgr : NetworkManager
+            The network manager responsible for managing Docker networks.
+        image : str, optional
+            The Docker image to use for the Prometheus container. If not provided,
+            the default Prometheus image will be used.
+        """
         self.ctx = ctx
         self.network_mgr = network_mgr
         self.docker = docker.from_env()
