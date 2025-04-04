@@ -190,10 +190,12 @@ def wait_for_nodes(client, node_names, timeout=20, poll_interval=1):
         target_nodes = set(node_names)
         start_time = time.time()
         while time.time() - start_time < timeout:
+            log.debug("Checking for online nodes...")
             response = client.node.list(is_online=True)
             # FIXME: Ignoring pagination here
             nodes = response.get("data", [])
             online_node_names = {node.get("name") for node in nodes}
+            log.debug(f"Online node names: {online_node_names}")
 
             missing_nodes = target_nodes - online_node_names
             if not missing_nodes:
@@ -226,12 +228,14 @@ def wait_for_server(server_url, server_port=80, server_api="/api", timeout=60):
     dict or None
         The response JSON if it contains "version", otherwise None.
     """
-    url = f"{server_url}:{server_port}{server_api}"
+    url = f"{server_url}:{server_port}{server_api}/version"
     start_time = time.time()
 
     while time.time() - start_time < timeout:
         try:
+            log.debug(f"Checking server at {url}...")
             response = requests.get(url, timeout=5)
+            log.debug(f"Server response: {response.status_code}")
             if response.status_code == 200:
                 data = response.json()
                 if "version" in data:
