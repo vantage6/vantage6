@@ -61,6 +61,7 @@ from vantage6.server.resource.common.output_schema import HATEOASModelSchema
 from vantage6.server.globals import (
     APPNAME,
     ACCESS_TOKEN_EXPIRES_HOURS,
+    DEFAULT_PROMETHEUS_EXPORTER_PORT,
     RESOURCES,
     RESOURCES_PATH,
     SUPER_USER_INFO,
@@ -186,7 +187,11 @@ class ServerApp:
         t = Thread(target=self.__node_status_worker, daemon=True)
         t.start()
 
-        start_prometheus_exporter(port=self.ctx.config.get("prometheus_port", 9100))
+        start_prometheus_exporter(
+            port=self.ctx.config.get(
+                "prometheus_port", DEFAULT_PROMETHEUS_EXPORTER_PORT
+            )
+        )
 
         log.info("Initialization done")
 
