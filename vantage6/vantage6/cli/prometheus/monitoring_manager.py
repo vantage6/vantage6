@@ -124,9 +124,14 @@ class PrometheusServer:
             error(f"Failed to update Prometheus configuration: {e}")
             raise
 
-    def _get_container(self):
+    def _get_container(self) -> docker.models.containers.Container | None:
         """
-        Check if a Prometheus container is already running
+        Check if a Prometheus container is already running.
+
+        Returns
+        -------
+        docker.models.containers.Container or None
+            The Prometheus container object if it is running, or None if no such container exists.
         """
         try:
             return self.docker.containers.get(PROMETHEUS_CONTAINER_NAME)
