@@ -1,5 +1,5 @@
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChildren } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, ValidationErrors, Validators, ReactiveFormsModule } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, ValidationErrors, Validators, ReactiveFormsModule, FormControl } from '@angular/forms';
 import {
   MatExpansionPanel,
   MatAccordion,
@@ -251,6 +251,12 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     const conditionalArgName = parameterFormGroup.controls['conditional_on'].value;
     return (functionFormGroup.controls['arguments'] as FormArray).controls.find((control) => control.value.name === conditionalArgName)
       ?.value.type;
+  }
+
+  hasDefaultValueChanges(hasDefaultValue: boolean, defaultValueControl: FormControl<string>): void {
+    if (!hasDefaultValue) {
+      defaultValueControl.setValue('');
+    }
   }
 
   addDatabase(functionFormGroup: FormGroup): void {

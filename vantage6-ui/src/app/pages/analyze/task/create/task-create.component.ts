@@ -55,6 +55,7 @@ import { NumberOnlyDirective } from '../../../../directives/numberOnly.directive
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { HighlightedTextPipe } from '../../../../pipes/highlighted-text.pipe';
+import { isArgumentWithAllowedValues } from 'src/app/helpers/algorithm.helper';
 
 @Component({
     selector: 'app-task-create',
@@ -145,6 +146,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   preprocessingForm = this.fb.array([]);
   filterForm = this.fb.array([]);
   parameterForm: FormGroup = this.fb.nonNullable.group({});
+  isArgumentWithAllowedValues = isArgumentWithAllowedValues;
 
   private nodeStatusUpdateSubscription?: Subscription;
 
@@ -195,6 +197,10 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnDestroy(): void {
     this.destroy$.next(true);
     this.nodeStatusUpdateSubscription?.unsubscribe();
+  }
+  
+  shouldShowAllowedValuesDropdown(argument: Argument): boolean {
+    return (argument.allowed_values?.length ?? 0) > 0;
   }
 
   get shouldShowStudyStep(): boolean {
@@ -514,7 +520,8 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       !this.shouldShowColumnDropdown(argument) &&
       !this.shouldShowOrganizationDropdown(argument) &&
       !this.shouldShowParameterBooleanInput(argument) &&
-      !this.shouldShowParameterJsonInput(argument)
+      !this.shouldShowParameterJsonInput(argument) &&
+      !this.shouldShowAllowedValuesDropdown(argument)
     );
   }
 

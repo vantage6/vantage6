@@ -25,7 +25,13 @@ export class AlgorithmService {
         return await this.getAlgorithmsForAlgorithmStore(algorithmStore, params);
       })
     );
-    // combine the list of lists of algorithms
+    
+    for(const algorithms of results) {
+      algorithms.forEach((algorithm) => {
+        algorithm = this.parseAllowedValues(algorithm);
+      });
+    }
+    
     return results.reduce((accumulator, val) => accumulator.concat(val), []);
   }
 
@@ -53,15 +59,8 @@ export class AlgorithmService {
   }
 
   async getAlgorithm(algorithm_store_url: string, id: string, lazyProperties: AlgorithmLazyProperties[] = []): Promise<Algorithm> {
-    const result = await this.apiService.getForAlgorithmApi<Algorithm>(algorithm_store_url, `/algorithm/${id}`);
-
-    result.functions.forEach((func) => {
-      func.arguments.forEach((arg) => {
-        arg.allowed_values = arg.allowed_values?.map((value) => {
-          return (value as any).value;
-        });
-      });
-    });
+    let result = await this.apiService.getForAlgorithmApi<Algorithm>(algorithm_store_url, `/algorithm/${id}`);
+    result = this.parseAllowedValues(result);
 
     const algorithm: Algorithm = { ...result, reviews: [] };
     await getLazyProperties(result, algorithm, lazyProperties, this.apiService, algorithm_store_url);
@@ -71,7 +70,7 @@ export class AlgorithmService {
 
   async getAlgorithmByUrl(imageUrl: string, store: AlgorithmStore): Promise<Algorithm | null> {
     const result = await this.getAlgorithmsForAlgorithmStore(store, { image: imageUrl });
-    // const result = await this.getAlgorithmsForAlgorithmStore(store, { image: imageUrl });
+    
     if (result.length === 0) {
       return null;
     }
@@ -165,5 +164,16 @@ export class AlgorithmService {
       });
     });
     return algorithmForm;
+  }
+
+  private parseAllowedValues(algorithm: Algorithm): Algorithm {
+    algorithm.functions.forEach((func) => {
+        func.arguments.forEach((arg) => {
+          arg.allowed_values = arg.allowed_values?.map((value) => {
+            return (value as any).value;
+          });
+        });
+      });
+    return algorithm;
   }
 }
