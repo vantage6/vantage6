@@ -7,7 +7,7 @@ import { MatIcon } from '@angular/material/icon';
 @Component({
   selector: 'app-mat-chip-form',
   templateUrl: './mat-chip-form.component.html',
-  styleUrl: './mat-chip-form.component.scss',
+  styleUrls: ['./mat-chip-form.component.scss'],
   imports: [MatFormFieldModule, MatLabel, MatChipRow, MatIcon, MatChipGrid, MatChipInput, ReactiveFormsModule]
 })
 export class MatChipFormComponent {
