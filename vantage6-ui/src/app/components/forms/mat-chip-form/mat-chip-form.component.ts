@@ -11,15 +11,15 @@ import { MatIcon } from '@angular/material/icon';
   imports: [MatFormFieldModule, MatLabel, MatChipRow, MatIcon, MatChipGrid, MatChipInput, ReactiveFormsModule]
 })
 export class MatChipFormComponent {
-  @Input() initalValues!: string[];
+  @Input() initialValues!: string[];
   @Input() formcontrol!: FormControl<any>;
   @Input() placeholder = 'placeholder';
   @Input() label = 'label';
 
-  readonly values = signal(this.initalValues);
+  readonly values = signal(this.initialValues);
 
   ngOnInit() {
-    this.values.set(this.initalValues);
+    this.values.set(this.initialValues);
   }
 
   removeTemplateKeyword(keyword: string) {

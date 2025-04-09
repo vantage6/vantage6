@@ -138,7 +138,7 @@
                             [label]="'algorithm.function.argument.allowed_values' | translate"
                             [placeholder]="'algorithm.function.argument.allowed_values_placeholder' | translate"
                             [formcontrol]="parameterFormGroup.controls.allowed_values"
-                            [initalValues]="parameterFormGroup.controls.allowed_values.value"></app-mat-chip-form>
+                            [initialValues]="parameterFormGroup.controls.allowed_values.value"></app-mat-chip-form>
                         </div>
                         <mat-radio-group (change)="hasDefaultValueChanges($event.value, parameterFormGroup.controls['default_value'])" formControlName="has_default_value">
                           <mat-label>{{ "algorithm.function.argument.has_default" | translate }}</mat-label>
