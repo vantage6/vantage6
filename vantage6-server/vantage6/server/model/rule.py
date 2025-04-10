@@ -26,6 +26,8 @@ class Scope(str, Enumerate):
     COLLABORATION = "col"
     GLOBAL = "glo"
 
+    # TODO this list gives the *names* of the scopes, not the values. That is confusing.
+    # Should we rename it?
     @classmethod
     def list(cls) -> list[str]:
         """

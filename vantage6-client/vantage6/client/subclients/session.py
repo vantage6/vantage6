@@ -114,8 +114,8 @@ class SessionSubClient(ClientBase.SubClient):
         name : str, optional
             The new name of the session. By default None.
         scope : str, optional
-            The new scope of the session. Possible values are ``global``,
-            ``collaboration``, ``organization`` and ``own``. By default None.
+            The new scope of the session. Possible values are ``collaboration``,
+            ``organization`` and ``own``. By default None.
         display : bool, optional
             Print the result in a table. By default False.
 
@@ -162,7 +162,7 @@ class SessionSubClient(ClientBase.SubClient):
             The study ID of the session. In case this is set, the dataframes in this
             session will be scoped to the study.
         scope: str
-            The scope of the session. Possible values are ``global``, ``collaboration``,
+            The scope of the session. Possible values are ``collaboration``,
             ``organization`` and ``own``. In case not set, the ``own`` scope is used.
         display: bool, optional
             Print the result in a table. By default False.

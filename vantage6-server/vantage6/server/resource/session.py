@@ -728,8 +728,8 @@ class Session(SessionBase):
                     description: Name of the session
                   scope:
                     type: string
-                    description: Scope of the session, possible values are GLOBAL,
-                        COLLABORATION, ORGANIZATION, OWN
+                    description: Scope of the session, possible values are
+                      'collaboration', 'organization' and 'own'
 
         responses:
           200:
