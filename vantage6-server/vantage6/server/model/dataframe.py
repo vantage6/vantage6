@@ -117,7 +117,7 @@ class Dataframe(Base):
             select(models.Task)
             .join(models.TaskDatabase)
             .filter(AlgorithmStepType.is_compute(models.Task.action))
-            .filter(models.Task.status == TaskStatus.WAITING.value)
+            .filter(models.Task.is_waiting)
             .filter(models.TaskDatabase.dataframe_id == self.id)
             .filter(models.Task.session_id == self.session_id)
         ).all()

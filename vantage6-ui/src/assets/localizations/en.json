@@ -124,6 +124,7 @@
     "columns": {
       "title": "Dataframe columns",
       "no-columns": "No columns are available for this dataframe.",
+      "add-preprocessing": "Add preprocessing step",
       "name": "Column name",
       "node-names": "Available on nodes",
       "type": "Column type",
@@ -133,10 +134,17 @@
         "mixed-types": "The column '{{column}}' has different data types on different nodes. Types found: {{types}}."
       }
     },
+    "delete-dialog": {
+      "title": "Are you sure you want to delete the dataframe '{{name}}'?",
+      "content": "This operation cannot be undone."
+    },
     "tasks-table": {
       "title": "Tasks using this dataframe",
       "no-tasks": "No tasks are using this dataframe."
     }
+  },
+  "preprocessing": {
+    "title": "Add preprocessing step to dataframe '{{name}}'"
   },
   "task": {
     "session": "Session",

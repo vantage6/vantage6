@@ -28,9 +28,7 @@ import { CreateTaskInput, Task, TaskDatabaseType } from 'src/app/models/api/task
 import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
 import { Router, RouterLink } from '@angular/router';
-import { PreprocessingStepComponent } from './steps/preprocessing-step/preprocessing-step.component';
 import { addParameterFormControlsForFunction } from 'src/app/pages/analyze/task/task.helper';
-import { FilterStepComponent } from './steps/filter-step/filter-step.component';
 import { NodeService } from 'src/app/services/node.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
@@ -73,8 +71,6 @@ import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
   imports: [
     PageHeaderComponent,
     AlertComponent,
-    PreprocessingStepComponent,
-    FilterStepComponent,
     MatCard,
     MatCardContent,
     MatIcon,
@@ -111,6 +107,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   @Input() formTitle: string = '';
   @Input() sessionId?: string = '';
   @Input() allowedTaskTypes?: AlgorithmStepType[];
+  @Input() dataframe?: Dataframe | null = null;
 
   // TODO(BART/RIAN) RIAN: Somehow we need to be able to calculate which step is first and which is last in order to conditionally add the back or next button.
   @Input() availableSteps: AvailableSteps = {
@@ -119,18 +116,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     function: false,
     database: false,
     dataframe: false,
-    preprocessing: false,
-    filter: false,
     parameter: false
   };
 
   @Output() public onSubmit: EventEmitter<FormCreateOutput> = new EventEmitter<FormCreateOutput>();
   @Output() public onCancel: EventEmitter<void> = new EventEmitter();
 
-  @ViewChild(PreprocessingStepComponent)
-  preprocessingStep?: PreprocessingStepComponent;
-  @ViewChild(FilterStepComponent)
-  filterStep?: FilterStepComponent;
   @ViewChild('stepper') private myStepper: MatStepper | null = null;
 
   destroy$ = new Subject();
@@ -182,8 +173,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   dataframeForm = this.fb.nonNullable.group({
     dataframeId: ['', Validators.required]
   });
-  preprocessingForm = this.fb.array([]);
-  filterForm = this.fb.array([]);
   parameterForm: FormGroup = this.fb.nonNullable.group({});
 
   private nodeStatusUpdateSubscription?: Subscription;
@@ -248,16 +237,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   get shouldShowDatabaseStep(): boolean {
     return !this.function || (!!this.function?.databases && this.function.databases.length > 0);
-  }
-
-  get shouldShowPreprocessorStep(): boolean {
-    if (!this.algorithm || !this.function) return true;
-    return this.algorithm.select !== undefined && this.algorithm.select.length > 0 && this.shouldShowDatabaseStep;
-  }
-
-  get shouldShowFilterStep(): boolean {
-    if (!this.algorithm || !this.function) return true;
-    return this.algorithm.filter !== undefined && this.algorithm.filter.length > 0 && this.shouldShowDatabaseStep;
   }
 
   get shouldShowParameterStep(): boolean {
@@ -398,8 +377,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       (this.availableSteps.function && this.functionForm.invalid) ||
       (this.availableSteps.database && this.databaseForm.invalid) ||
       (this.availableSteps.dataframe && this.dataframeForm.invalid) ||
-      (this.availableSteps.preprocessing && this.preprocessingForm.invalid) ||
-      (this.availableSteps.filter && this.filterForm.invalid) ||
       (this.availableSteps.parameter && this.parameterForm.invalid)
     );
   }
@@ -765,6 +742,20 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
         this.handleFunctionChange(String(functionName), Number(algorithmID), Number(algorithmStoreID));
       });
 
+    // set columns if dataframe is already set (for preprocessing tasks)
+    if (this.dataframe) {
+      this.setColumns(this.dataframe);
+    }
+    // set columns if dataframe is selected
+    this.dataframeForm.controls['dataframeId'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (dataframeID) => {
+      const dataframe = this.dataframes.find((_) => _.id === Number(dataframeID));
+      if (dataframe) {
+        this.setColumns(dataframe);
+      } else {
+        this.columns = [];
+      }
+    });
+
     this.nodeStatusUpdateSubscription = this.socketioConnectService
       .getNodeStatusUpdates()
       .subscribe((nodeStatusUpdate: NodeOnlineStatusMsg | null) => {
@@ -777,9 +768,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.isDataInitialized = true;
   }
 
+  setColumns(dataframe: Dataframe) {
+    this.columns = dataframe.columns.map((col) => col.name);
+  }
+
   private async handleSessionChange(sessionID: string): Promise<void> {
-    const sessionIDInt = Number.parseInt(this.sessionForm.controls.sessionID.value) || null;
-    this.session = this.sessions?.find((session) => session.id === sessionIDInt) || null;
+    this.session = this.sessions?.find((session) => session.id === Number(sessionID)) || null;
     this.studyForm.controls.studyOrCollabID.reset();
     this.isStudyCompleted = false;
     if (this.session) {
@@ -795,8 +789,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.updateStudyFormValidation();
     this.clearFunctionStep();
     this.clearDatabaseStep();
-    this.clearPreprocessingStep();
-    this.clearFilterStep();
     this.clearParameterStep();
   }
 
@@ -818,8 +810,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     //Clear form
     this.clearFunctionStep();
     this.clearDatabaseStep();
-    this.clearPreprocessingStep();
-    this.clearFilterStep();
     this.clearParameterStep();
 
     //Get selected algorithm
@@ -830,8 +820,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     //Clear form
     this.clearFunctionStep(); //Also clear function step, so user needs to reselect organization
     this.clearDatabaseStep();
-    this.clearPreprocessingStep(); // this depends on the database, so it should be cleared
-    this.clearFilterStep();
     this.clearParameterStep();
 
     //Get selected function
@@ -879,15 +867,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   // TODO this function might be removed
   private clearDatabaseStep(): void {}
-
-  private clearPreprocessingStep(): void {
-    this.preprocessingStep?.clear();
-    this.columns = [];
-  }
-
-  private clearFilterStep(): void {
-    this.filterStep?.clear();
-  }
 
   private clearParameterStep(): void {
     this.parameterForm = this.fb.nonNullable.group({});

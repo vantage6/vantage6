@@ -3,11 +3,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { routePaths } from 'src/app/routes';
 import { SessionService } from 'src/app/services/session.service';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
-import { Subject, takeUntil } from 'rxjs';
+import { combineLatest, Subject, takeUntil } from 'rxjs';
 import { StudyService } from 'src/app/services/study.service';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
-import { AlgorithmStepType, CreateDataframe, Session } from 'src/app/models/api/session.models';
+import { AlgorithmStepType, Dataframe, DataframePreprocess, Session } from 'src/app/models/api/session.models';
 import { Collaboration } from 'src/app/models/api/collaboration.model';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { AvailableSteps, FormCreateOutput } from 'src/app/models/forms/create-form.model';
@@ -15,11 +15,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { CreateAnalysisFormComponent } from 'src/app/components/forms/compute-form/create-analysis-form.component';
 
 @Component({
-  selector: 'app-dataframe-create',
-  templateUrl: './dataframe-create.component.html',
+  selector: 'app-dataframe-preprocess',
+  templateUrl: './dataframe-preprocess.component.html',
   imports: [CreateAnalysisFormComponent]
 })
-export class DataframeCreateComponent implements OnInit, OnDestroy {
+export class DataframePreprocessComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   algorithmStepType = AlgorithmStepType;
 
@@ -28,7 +28,7 @@ export class DataframeCreateComponent implements OnInit, OnDestroy {
     session: false,
     study: false,
     function: true,
-    database: true,
+    database: false,
     dataframe: false,
     parameter: true
   };
@@ -36,7 +36,9 @@ export class DataframeCreateComponent implements OnInit, OnDestroy {
   destroy$ = new Subject();
 
   public sessionId?: string;
+  public dfId?: string;
 
+  dataframe: Dataframe | null = null;
   session: Session | null = null;
   study_id: number | null = null;
   collaboration?: Collaboration | null = null;
@@ -54,12 +56,12 @@ export class DataframeCreateComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.title = this.translateService.instant('session.dataframes.add');
-    this.activatedRoute.params.pipe(takeUntil(this.destroy$)).subscribe(async (params) => {
+    combineLatest([
+      this.activatedRoute.params.pipe(takeUntil(this.destroy$)),
+      this.chosenCollaborationService.isInitialized$.pipe(takeUntil(this.destroy$))
+    ]).subscribe(([params, initialized]) => {
+      this.dfId = params['dfId'];
       this.sessionId = params['sessionId'];
-    });
-
-    this.chosenCollaborationService.isInitialized$.pipe(takeUntil(this.destroy$)).subscribe((initialized) => {
       if (initialized) {
         this.initData();
       }
@@ -68,34 +70,19 @@ export class DataframeCreateComponent implements OnInit, OnDestroy {
 
   private async initData(): Promise<void> {
     this.collaboration = this.chosenCollaborationService.collaboration$.value;
+    this.dataframe = await this.sessionService.getDataframe(Number(this.dfId));
+    this.title = this.translateService.instant('preprocessing.title', {
+      name: this.dataframe?.name || ''
+    });
     this.session = await this.sessionService.getSession(Number(this.sessionId));
     this.algorithms = await this.algorithmService.getAlgorithms();
     this.study_id = this.session?.study?.id ?? null;
   }
 
   async onSubmitHandler(formCreateOutput: FormCreateOutput): Promise<void> {
-    // TODO(BART/RIAN) RIAN: Change the create dataframe form input to include the required input fields.
-    // TODO(BART/RIAN) RIAN: Change the create dataframe api parameters and modify the code below. Also add extra UI components to sessions / read to display the extra dataframe information.
-    //
-    // const newDataframe: CreateTask = {
-    //   name: formCreateOutput?.name || '',
-    //   label: '#! add label info',
-    //   description: '',
-    //   image: formCreateOutput.image || '',
-    //   session_id: Number(this.sessionId) || -1,
-    //   collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
-    //   store_id: formCreateOutput.store_id || -1,
-    //   server_url: formCreateOutput.server_url || '',
-    //   databases: formCreateOutput.databases || [],
-    //   organizations: formCreateOutput.organizations || []
-    //   //TODO: Add preprocessing and filtering when backend is ready
-    // };
-    let session_id: number = Number(this.sessionId);
-    const dataframeInput: CreateDataframe = {
-      name: formCreateOutput.name,
-      label: formCreateOutput.database || '',
-      //TODO(BART/RIAN) RIAN: Add component parameters for conditional 'Name', 'Label', 'Description' etc and process this in form-create.component
-      // description: '',
+    if (!this.dataframe) return;
+    const dataframeInput: DataframePreprocess = {
+      dataframe_id: this.dataframe.id,
       task: {
         image: formCreateOutput.image,
         method: formCreateOutput.method,
@@ -103,14 +90,14 @@ export class DataframeCreateComponent implements OnInit, OnDestroy {
         organizations: formCreateOutput.organizations
       }
     };
-    const newDataframe = await this.sessionService.createDataframe(session_id, dataframeInput);
+    const newDataframe = await this.sessionService.createPreprocessingTask(this.dataframe.id, dataframeInput);
     if (newDataframe) {
       this.router.navigate([routePaths.task, newDataframe.last_session_task.id]);
     }
   }
 
   onCancelHandler(): void {
-    this.router.navigate([routePaths.session, this.sessionId]);
+    this.router.navigate([routePaths.sessionDataframe, this.dfId]);
   }
 
   ngOnDestroy(): void {

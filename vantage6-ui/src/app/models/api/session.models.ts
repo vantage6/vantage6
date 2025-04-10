@@ -113,10 +113,15 @@ export interface Dataframe {
 export interface CreateDataframe {
   name: string;
   label: string;
-  task: CreateDataframeTask;
+  task: DataframeTask;
 }
 
-interface CreateDataframeTask {
+export interface DataframePreprocess {
+  dataframe_id: number;
+  task: DataframeTask;
+}
+
+interface DataframeTask {
   image: string;
   method: string;
   organizations: CreateTaskOrganization[];

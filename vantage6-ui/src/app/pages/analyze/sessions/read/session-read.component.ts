@@ -148,7 +148,7 @@ export class SessionReadComponent implements OnInit, OnDestroy {
   }
 
   handleDataframeTableClick(id: string): void {
-    this.router.navigate([routePaths.sessionDataframe, id]);
+    this.router.navigate([routePaths.sessionDataframe.replace(':sessionId', this.id), id]);
   }
 
   public handleSearchChanged(searchRequests: SearchRequest[]): void {

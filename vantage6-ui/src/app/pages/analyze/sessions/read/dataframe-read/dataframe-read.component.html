@@ -1,22 +1,18 @@
 <ng-container *ngIf="!isLoading && dataframe; else loading">
   <app-page-header title="{{ 'dataframe-read.title' | translate: { name: dataframe.name } }}">
-    <!-- <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="canEdit || canDelete">
+    <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="canEdit || canDelete">
       <mat-icon>more_vert</mat-icon>
     </button>
-    <mat-menu #menu="matMenu"> -->
-    <!-- <button mat-menu-item *ngIf="canCreate" (click)="newAnalysis()">
-      <mat-icon>science</mat-icon>
-      <span>{{ "links.new-analysis" | translate }}</span>
-    </button>
-    <button mat-menu-item *ngIf="canEdit" (click)="handleEdit()">
-      <mat-icon>edit</mat-icon>
-      <span>{{ "general.edit" | translate }}</span>
-    </button>
-    <button mat-menu-item *ngIf="canDelete" (click)="handleDelete()">
-      <mat-icon>delete</mat-icon>
-      <span>{{ "general.delete" | translate }}</span>
-    </button> -->
-    <!-- </mat-menu> -->
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item *ngIf="canEdit" (click)="handleNewPreprocessingStep()">
+        <mat-icon>edit</mat-icon>
+        <span>{{ "general.edit" | translate }}</span>
+      </button>
+      <button mat-menu-item *ngIf="canDelete" (click)="handleDelete()">
+        <mat-icon>delete</mat-icon>
+        <span>{{ "general.delete" | translate }}</span>
+      </button>
+    </mat-menu>
   </app-page-header>
   <mat-card>
     <mat-card-header>
@@ -51,12 +47,21 @@
       <div *ngFor="let columnAlert of columnAlerts">
         <app-alert [label]="columnAlert" class="node-alert"></app-alert>
       </div>
-      <app-table *ngIf="!isLoading && dataframeColumnsTable" [data]="dataframeColumnsTable" [isLoading]="isLoading"></app-table>
+      <app-table *ngIf="!isLoading && dataframeColumnsTable" [data]="dataframeColumnsTablePage" [isLoading]="isLoading"></app-table>
+      <mat-paginator
+        (page)="handleColumnTablePageEvent($event)"
+        [length]="dataframeColumnsTable?.rows?.length"
+        pageSize="10"
+        [hidePageSize]="true"
+      ></mat-paginator>
       <app-alert
         *ngIf="!dataframeColumnsTable && !isLoading"
         class="node-alert"
         label="{{ 'dataframe-read.columns.no-columns' | translate }}"
       ></app-alert>
+      <button mat-flat-button color="primary" (click)="handleNewPreprocessingStep()">
+        <mat-icon>edit</mat-icon>{{ "dataframe-read.columns.add-preprocessing" | translate }}
+      </button>
     </mat-card-content>
   </mat-card>
   <mat-card>

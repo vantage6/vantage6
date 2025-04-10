@@ -14,7 +14,7 @@ from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource import only_for, with_user, with_node
 from vantage6.server.resource.common.input_schema import (
     DataframeInitInputSchema,
-    DataframeStepInputSchema,
+    DataframePreprocessingInputSchema,
     DataframeNodeUpdateSchema,
 )
 from vantage6.server.resource.common.output_schema import (
@@ -79,7 +79,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
 dataframe_schema = DataframeSchema()
 
 dataframe_init_input_schema = DataframeInitInputSchema()
-dataframe_step_input_schema = DataframeStepInputSchema()
+dataframe_preprocessing_input_schema = DataframePreprocessingInputSchema()
 
 dataframe_node_update_schema = DataframeNodeUpdateSchema()
 
@@ -507,7 +507,7 @@ class DataframePreprocessing(SessionBase):
 
         dataframe_step = request.get_json(silent=True)
         try:
-            dataframe_step = dataframe_step_input_schema.load(dataframe_step)
+            dataframe_step = dataframe_preprocessing_input_schema.load(dataframe_step)
         except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
@@ -548,7 +548,7 @@ class DataframePreprocessing(SessionBase):
         response, status_code = self.create_session_task(
             session=session,
             databases=[
-                {"label": dataframe.db_label, "type": TaskDatabaseType.DATAFRAME}
+                {"dataframe_id": dataframe.id, "type": TaskDatabaseType.DATAFRAME}
             ],
             description=description,
             depends_on_ids=[rt.id for rt in requires_tasks],
