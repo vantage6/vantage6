@@ -62,8 +62,13 @@ import { ReviewSubmitComponent } from './pages/store/algorithms-in-review/review
 import { MyPendingAlgorithmsComponent } from './pages/store/algorithms-in-review/my-pending-algorithms/my-pending-algorithms.component';
 import { OldAlgorithmListComponent } from './pages/store/algorithm/old-list/old-algorithm-list.component';
 import { StoreRoleCreateComponent } from './pages/store/role/create/store-role-create.component';
+import {CommunityStoreComponent} from "./layouts/community-store/community-store.component";
 
 const routes: Routes = [
+  {
+    path: routerConfig.communityStore,
+    component: CommunityStoreComponent,
+  },
   {
     path: 'auth',
     component: LayoutLoginComponent,
