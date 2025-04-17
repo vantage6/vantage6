@@ -1,3 +1,5 @@
+# Optional, by default the Release.Namespace is used
+# namespace: vantage6-node
 node:
 
   apiKey: put-your-api-key-here
