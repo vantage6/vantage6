@@ -158,6 +158,11 @@ jobs:
           PASSWORD: ${{ secrets.DOCKER_TOKEN }}
         run: helm registry login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
 
+      - name: Install helm cm-push and add chartmuseum as a repository
+        run: |
+          helm plugin install https://github.com/chartmuseum/helm-push
+          helm repo add v6-harbor-infrastructure https://harbor2.vantage6.ai/chartrepo/infrastructure --username $USERNAME --password $PASSWORD
+
       - name: Update Helm dependencies
         run: |
           helm dependency update charts/common
@@ -174,10 +179,10 @@ jobs:
 
       - name: Push Helm charts
         run: |
-          helm push common-*.tgz oci://harbor2.vantage6.ai/infrastructure
-          helm push node-*.tgz oci://harbor2.vantage6.ai/infrastructure
-          helm push store-*.tgz oci://harbor2.vantage6.ai/infrastructure
-          helm push server-*.tgz oci://harbor2.vantage6.ai/infrastructure
+          helm cm-push common-*.tgz v6-harbor-infrastructure
+          helm cm-push node-*.tgz v6-harbor-infrastructure
+          helm cm-push store-*.tgz v6-harbor-infrastructure
+          helm cm-push server-*.tgz v6-harbor-infrastructure
 
   support-images:
     name: Build support images
