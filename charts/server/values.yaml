@@ -1,6 +1,7 @@
 # Override the chart name
 nameOverride: vantage6-server
-
+# Optional, by default the Release.Namespace is used
+# defaultNamespace: vantage6-server
 server:
   # The description of the server
   description: Vantage6 server version 5

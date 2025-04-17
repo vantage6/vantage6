@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Release.Name }}-vantage6-frontend-service
-  namespace: {{ .Release.Namespace | quote }}
+  namespace: {{ .Values.defaultNamespace | default .Release.Namespace }}
 spec:
   selector:
 {{ include "vantage6.matchLabels" . | indent 4 }}

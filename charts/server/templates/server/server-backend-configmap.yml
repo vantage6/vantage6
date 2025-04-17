@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-vantage6-server-config
-  namespace: {{ .Release.Namespace | quote }}
+  namespace: {{ .Values.defaultNamespace | default .Release.Namespace }}
 data:
   config.yaml: |
     algorithm_stores: []

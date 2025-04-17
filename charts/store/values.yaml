@@ -1,3 +1,5 @@
+# Optional, by default the Release.Namespace is used
+# defaultNamespace: vantage6-server
 store:
   replications: 1
 
