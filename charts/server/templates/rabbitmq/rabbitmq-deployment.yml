@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}-rabbitmq-deployment
-  namespace: {{ .Values.defaultNamespace | default .Release.Namespace }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "vantage6.labels" . | indent 4 }}
     component: rabbitmq

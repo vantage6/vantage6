@@ -2,7 +2,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ .Release.Name }}-postgres-pvc
-  namespace: {{ .Values.defaultNamespace | default .Release.Namespace }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
 spec:
   accessModes:
     - ReadWriteOnce

@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-node-configmap
-  namespace: {{ .Values.defaultNamespace | default .Release.Namespace }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
 data:
   config.yml: |
     api_key: {{ .Values.node.apiKey }}
