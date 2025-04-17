@@ -2,7 +2,7 @@
 
 </app-page-header>
 <ng-container *ngIf="!isLoading; else loading">
-    <app-display-algorithms [algorithms]="algorithms"></app-display-algorithms>
+    <app-algorithm-table [algorithms]="algorithms"></app-algorithm-table>
     <mat-card *ngIf="algorithms.length === 0">
         <mat-card-content>
             <p>{{ "algorithm-list.no-algorithms" | translate }}</p>

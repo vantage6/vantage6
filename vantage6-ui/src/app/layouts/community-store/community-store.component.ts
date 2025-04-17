@@ -7,11 +7,11 @@ import {PageHeaderComponent} from "../../components/page-header/page-header.comp
 import {MatCard, MatCardContent} from "@angular/material/card";
 import {MatProgressSpinner} from "@angular/material/progress-spinner";
 import {TranslatePipe} from "@ngx-translate/core";
+import {Algorithm} from "../../models/api/algorithm.model";
 
 import {
-    DisplayAlgorithmsComponent
-} from "../../components/algorithm/display-algorithms/display-algorithms.component";
-import {Algorithm} from "../../models/api/algorithm.model";
+    AlgorithmTableComponent
+} from "../../components/algorithm/algorithm-table/algorithm-table.component";
 
 @Component({
     selector: 'app-community-store',
@@ -23,7 +23,7 @@ import {Algorithm} from "../../models/api/algorithm.model";
         MatCardContent,
         MatProgressSpinner,
         TranslatePipe,
-        DisplayAlgorithmsComponent
+        AlgorithmTableComponent
     ],
     styleUrl: './community-store.component.scss'
 })
