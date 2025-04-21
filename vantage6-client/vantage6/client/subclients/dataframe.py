@@ -131,13 +131,7 @@ class DataFrameSubClient(ClientBase.SubClient):
         orgs = self.parent.organization.list(**params)
         organizations = [(o["id"], o["public_key"]) for o in orgs["data"]]
 
-        # Data will be serialized in JSON.
-        #serialized_input = serialize(input_)
-
-        #TODO HC-I don't understand where to get this value from
         serialized_input = serialize(input_)
-
-
 
         # Encrypt the input per organization using that organization's
         # public key.
