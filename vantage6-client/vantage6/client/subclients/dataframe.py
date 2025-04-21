@@ -70,6 +70,7 @@ class DataFrameSubClient(ClientBase.SubClient):
         label:str,
         image:str,
         method:str,
+        input_:dict,
         session:int|None=None,           
         store_id:int|None=None,        
         name:str|None=None,
@@ -86,7 +87,12 @@ class DataFrameSubClient(ClientBase.SubClient):
             The name of the image that will be used to retrieve the data from the
             source database.
         method: str
-            (*Still not sure how to describe this parameter*)
+            Method to use for creating the dataframe
+        input_: dict
+            The input for the dataframe creation. It should include
+            the arguments of the given method (kwargs)
+        name: str
+            Name that can be used in within the session
         session : int
             The session ID in which the dataframe is located. When not provided, the
             session ID of the client is used when it is set. In case the session ID is
@@ -126,7 +132,12 @@ class DataFrameSubClient(ClientBase.SubClient):
         organizations = [(o["id"], o["public_key"]) for o in orgs["data"]]
 
         # Data will be serialized in JSON.
-        # serialized_input = serialize(input_)
+        #serialized_input = serialize(input_)
+
+        #TODO HC-I don't understand where to get this value from
+        serialized_input = serialize(input_)
+
+
 
         # Encrypt the input per organization using that organization's
         # public key.
@@ -135,11 +146,9 @@ class DataFrameSubClient(ClientBase.SubClient):
             organization_json_list.append(
                 {
                     "id": org_id,
-                    # Not sure what is expected to go here. According to the
-                    # schema (common.input_schema.SessionTaskInputSchema) only the id is required
-                    #"input": self.parent.cryptor.encrypt_bytes_to_str(
-                    #    serialized_input, pub_key
-                    #),
+                    "input": self.parent.cryptor.encrypt_bytes_to_str(
+                        serialized_input, pub_key
+                    ),
                 }
             )
 
