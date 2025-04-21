@@ -66,14 +66,14 @@ class DataFrameSubClient(ClientBase.SubClient):
 
     @post_filtering(iterable=False)
     def create(
-        self,     
-        label:str,
-        image:str,
-        method:str,
-        input_:dict,
-        session:int|None=None,           
-        store_id:int|None=None,        
-        name:str|None=None,
+        self,
+        label: str,
+        image: str,
+        method: str,
+        input_: dict,
+        session: int | None = None,
+        store_id: int | None = None,
+        name: str | None = None,
         display=False,
     ) -> dict:
         """
@@ -82,7 +82,7 @@ class DataFrameSubClient(ClientBase.SubClient):
         Parameters
         ----------
         label : str
-            Database label that is specified in the node configuration file.            
+            Database label that is specified in the node configuration file.
         image : str
             The name of the image that will be used to retrieve the data from the
             source database.
@@ -147,7 +147,7 @@ class DataFrameSubClient(ClientBase.SubClient):
             )
 
         request_payload = {
-            "label":label,
+            "label": label,
             "task": {
                 "method": method,
                 "image": image,
@@ -160,11 +160,8 @@ class DataFrameSubClient(ClientBase.SubClient):
         if store_id is not None:
             request_payload["task"]["store_id"] = store_id
 
-
         df = self.parent.request(
-            f"session/{session_id}/dataframe",
-            method="POST",
-            json=request_payload
+            f"session/{session_id}/dataframe", method="POST", json=request_payload
         )
 
         if display:
