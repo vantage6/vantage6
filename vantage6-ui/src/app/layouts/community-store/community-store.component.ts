@@ -12,6 +12,8 @@ import {Algorithm} from "../../models/api/algorithm.model";
 import {
     AlgorithmTableComponent
 } from "../../components/algorithm/algorithm-table/algorithm-table.component";
+import {MatToolbar, MatToolbarRow} from "@angular/material/toolbar";
+import {routePaths} from "../../routes";
 
 @Component({
     selector: 'app-community-store',
@@ -23,7 +25,9 @@ import {
         MatCardContent,
         MatProgressSpinner,
         TranslatePipe,
-        AlgorithmTableComponent
+        AlgorithmTableComponent,
+        MatToolbar,
+        MatToolbarRow,
     ],
     styleUrl: './community-store.component.scss'
 })
@@ -53,4 +57,5 @@ export class CommunityStoreComponent implements OnInit {
         }
     }
 
+    protected readonly routes = routePaths;
 }

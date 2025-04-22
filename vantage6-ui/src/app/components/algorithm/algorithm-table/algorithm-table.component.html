@@ -3,8 +3,24 @@
        class="mat-elevation-z8">
     @for (column of columnsToDisplay; track column) {
         <ng-container matColumnDef="{{column}}">
-            <th mat-header-cell *matHeaderCellDef>{{ column }}</th>
-            <td mat-cell *matCellDef="let element">{{ element[column] }}</td>
+            @if (column === 'code_url' || column === 'documentation_url') {
+                <th mat-header-cell *matHeaderCellDef>{{ column }}</th>
+                <td mat-cell *matCellDef="let element">
+                    <a href="{{ element[column] }}">{{ element[column] }} </a>
+                </td>
+            }@else if (column === 'image'){
+                <th mat-header-cell *matHeaderCellDef>{{ column }}</th>
+                <td mat-cell *matCellDef="let element">
+                   <code>{{ element[column] }}</code>
+                </td>
+            }@else if (column === 'submitted_at' || column === 'approved_at'){
+                <th mat-header-cell *matHeaderCellDef>{{ column }}</th>
+                <td mat-cell *matCellDef="let element">{{ element[column]|date:'medium' }}</td>
+            } @else {
+
+                <th mat-header-cell *matHeaderCellDef>{{ column }}</th>
+                <td mat-cell *matCellDef="let element">{{ element[column] }}</td>
+            }
         </ng-container>
     }
     <ng-container matColumnDef="expand">
@@ -30,21 +46,21 @@
                 <div class="algorithm-detail">
 
                     <div class="algorithm-description">{{ element.description }}
-                    <h4 class="algorithm-functions-header">Functions</h4>
-                    <mat-list >
-                        @for (func of element.functions; track func) {
-                            <mat-list-item>
+                        <h4 class="algorithm-functions-header">Functions</h4>
+                        <mat-list>
+                            @for (func of element.functions; track func) {
+                                <mat-list-item>
                                 <span class="algorithm-function-name">
                                     {{ func.display_name ? func.display_name : func.name }}:
                                 </span>
-                                <span class="algorithm-function-description">
+                                    <span class="algorithm-function-description">
                                     {{ func.description }}
                                 </span>
 
-                            </mat-list-item>
-                        }
-                    </mat-list>
-                </div>
+                                </mat-list-item>
+                            }
+                        </mat-list>
+                    </div>
                 </div>
             </div>
         </td>

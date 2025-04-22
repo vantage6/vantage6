@@ -1,1 +1,7 @@
 @import "src/app/styles/config.scss";
+
+.logo {
+  width: 25%;
+  height: auto; /* maintains aspect ratio */
+  padding: 10px
+}

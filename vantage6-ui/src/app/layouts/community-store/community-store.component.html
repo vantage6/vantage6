@@ -1,4 +1,12 @@
-<app-page-header title="{{ 'resources.algorithms' | translate }}">
+<mat-toolbar color="primary" class="toolbar">
+    <mat-toolbar-row>
+        <a href="https://vantage6.ai">
+            <img src="/assets/images/logo.png" class="logo" alt="vantage6"/>
+        </a>
+    </mat-toolbar-row>
+</mat-toolbar>
+
+<app-page-header title="Community Store">
 
 </app-page-header>
 <ng-container *ngIf="!isLoading; else loading">
