@@ -7,9 +7,12 @@ vars:
   NODE_IMAGE: harbor2.vantage6.ai/infrastructure/node
   STORE_IMAGE: harbor2.vantage6.ai/infrastructure/algorithm-store
   UI_IMAGE: harbor2.vantage6.ai/infrastructure/ui
-  NODE_TEST_DATABASE_FILE:
-    question: "Where is your test data for the node located?"
-    default: ${PWD}/dev/olympic_athletes_2016.csv
+  NODE_TEST_DATABASE_MOUNT_PATH:
+    question: "Where is the parent folder where the node test data is located on the host machine?"
+    default: ${PWD}/dev
+  NODE_TEST_DATABASE_NAME:
+    question: "What is the name of your node test data file?"
+    default: olympic_athletes_2016.csv
   TASK_DIRECTORY:
     question: "Where is your task directory located on the host machine?"
     default: ${PWD}/.tasks
@@ -68,7 +71,7 @@ pipelines:
       python dev/load-basic-fixtures.py \
         --number-of-nodes $NUMBER_OF_NODES \
         --task-directory $TASK_DIRECTORY \
-        --node-test-database-file $NODE_TEST_DATABASE_FILE \
+        --node-test-database-file $NODE_TEST_DATABASE_MOUNT_PATH/$NODE_TEST_DATABASE_NAME \
         --task-namespace $TASK_NAMESPACE
       python dev/connect-store.py
       stop_dev --all
@@ -193,8 +196,11 @@ deployments:
           databases:
             fileBased:
             - name: default
-              uri: ${NODE_TEST_DATABASE_FILE}
+              uri: ${NODE_TEST_DATABASE_MOUNT_PATH}/${NODE_TEST_DATABASE_NAME}
               type: csv
+              volumePath: ${NODE_TEST_DATABASE_MOUNT_PATH}
+              originalName: ${NODE_TEST_DATABASE_NAME}
+          k8sNodeName: ${K8S_NODE_NAME}
             # serviceBased:
             # - name: postgres
             #   uri: postgres://vantage6:vantage6@vantage6-vantage6-postgres:5432/vantage6
