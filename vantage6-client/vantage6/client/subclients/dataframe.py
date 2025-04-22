@@ -172,7 +172,7 @@ class DataFrameSubClient(ClientBase.SubClient):
         return df
 
     @post_filtering(iterable=False)
-    def preprocess(self, id_: int, image: str, method:str,input_: dict) -> dict:
+    def preprocess(self, id_: int, image: str, method: str, input_: dict) -> dict:
         """
         Modify a dataframe in a session.
 
@@ -207,17 +207,16 @@ class DataFrameSubClient(ClientBase.SubClient):
             self.parent.log.error(f"An error occurred while fetching dataframe {id_}")
             return
 
-
         if dataframe["study"]:
             params = {"study": dataframe["study"]}
         elif dataframe["collaboration"] and dataframe["collaboration"]["id"]:
             collaboration_id = dataframe["collaboration"]["id"]
             params = {"collaboration": collaboration_id}
         else:
-           self.parent.log.error(
-               f"No study or collaboration id defined in dataframe {id_}"
-           )
-           return
+            self.parent.log.error(
+                f"No study or collaboration id defined in dataframe {id_}"
+            )
+            return
 
         org = self.parent.organization.list(**params)
         organizations = [(o["id"], o["public_key"]) for o in org["data"]]
