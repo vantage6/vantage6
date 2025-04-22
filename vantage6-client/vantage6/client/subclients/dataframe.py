@@ -72,7 +72,7 @@ class DataFrameSubClient(ClientBase.SubClient):
         method: str,
         input_: dict,
         session: int | None = None,
-        store_id: int | None = None,
+        store: int | None = None,
         name: str | None = None,
         display=False,
     ) -> dict:
@@ -87,16 +87,18 @@ class DataFrameSubClient(ClientBase.SubClient):
             The name of the image that will be used to retrieve the data from the
             source database.
         method: str
-            Method to use for creating the dataframe
+            The method from the algorithm's image to be used for creating the dataframe
         input_: dict
             The input for the dataframe creation. It should include
             the arguments of the given method (kwargs)
         name: str
             Name that can be used in within the session
-        session : int
+        session : int, optional
             The session ID in which the dataframe is located. When not provided, the
             session ID of the client is used when it is set. In case the session ID is
             not set, an error is printed.
+        store: int, optional
+            The algorithm store where the algorithm image is registered
         display : bool, optional
             Whether to print the dataframe details. By default False.
 
@@ -157,8 +159,8 @@ class DataFrameSubClient(ClientBase.SubClient):
 
         if name is not None:
             request_payload["name"] = name
-        if store_id is not None:
-            request_payload["task"]["store_id"] = store_id
+        if store is not None:
+            request_payload["task"]["store_id"] = store
 
         df = self.parent.request(
             f"session/{session_id}/dataframe", method="POST", json=request_payload
