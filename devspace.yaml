@@ -30,6 +30,9 @@ vars:
   STORE_DATABASE_MOUNT_PATH:
     question: "Where is your store database located on the host machine?"
     default: ${PWD}/dev/data/db_pv_store
+  K8S_NODE_NAME:
+    question: "What is the name of the k8s node where the databases are running?"
+    default: docker-desktop
 
 pipelines:
 
@@ -136,6 +139,7 @@ deployments:
 
         database:
           volumePath: ${SERVER_DATABASE_MOUNT_PATH}
+          k8sNodeName: ${K8S_NODE_NAME}
 
   # The store deployment contains the store and the database.
   vantage6-store:
@@ -167,6 +171,7 @@ deployments:
         # directory is emptied when the WSL2 instance is restarted.
         database:
           volumePath: ${STORE_DATABASE_MOUNT_PATH}
+          k8sNodeName: ${K8S_NODE_NAME}
 
   # The node deployment should not be 'deployed' only, it should only be deployed in
   # combination with the `dev` container (The node container that is started by the
