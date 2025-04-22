@@ -46,9 +46,8 @@ spec:
         persistentVolumeClaim:
           claimName: {{ .Release.Name }}-vantage6-node-database-pvc
       - name: task-files-root
-        hostPath:
-          path: {{ .Values.node.taskDirHost }}
-          type: DirectoryOrCreate
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-vantage6-node-task-pvc
       - name: config-volume
         configMap:
           name: {{ .Release.Name }}-node-configmap
