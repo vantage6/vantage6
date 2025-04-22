@@ -172,7 +172,7 @@ class DataFrameSubClient(ClientBase.SubClient):
         return df
 
     @post_filtering(iterable=False)
-    def preprocess(self, id_: int, image: str, input_: dict) -> dict:
+    def preprocess(self, id_: int, image: str, method:str,input_: dict) -> dict:
         """
         Modify a dataframe in a session.
 
@@ -190,6 +190,8 @@ class DataFrameSubClient(ClientBase.SubClient):
             The ID of the dataframe.
         image : str
             The name of the image that will be used to preprocess the dataframe.
+        method: str
+            Method on the algorithm image to be used to preprocess the dataframe
         input_: dict
             The input for the dataframe preprocessing.
 
@@ -205,19 +207,17 @@ class DataFrameSubClient(ClientBase.SubClient):
             self.parent.log.error(f"An error occurred while fetching dataframe {id_}")
             return
 
-        session = dataframe.get("session")
-        if not session:
-            self.parent.log.error(
-                f"Could not fetch session {dataframe['session_id']} from dataframe"
-            )
-            return
 
-        if session.get("study"):
-            study_id = session["study"]["id"]
-            params = {"study": study_id}
-        else:
-            collaboration_id = session["collaboration"]["id"]
+        if dataframe["study"]:
+            params = {"study": dataframe["study"]}
+        elif dataframe["collaboration"] and dataframe["collaboration"]["id"]:
+            collaboration_id = dataframe["collaboration"]["id"]
             params = {"collaboration": collaboration_id}
+        else:
+           self.parent.log.error(
+               f"No study or collaboration id defined in dataframe {id_}"
+           )
+           return
 
         org = self.parent.organization.list(**params)
         organizations = [(o["id"], o["public_key"]) for o in org["data"]]
@@ -241,7 +241,9 @@ class DataFrameSubClient(ClientBase.SubClient):
             f"session/dataframe/{id_}/preprocess",
             method="POST",
             json={
+                "dataframe_id": id_,
                 "task": {
+                    "method": method,
                     "image": image,
                     "organizations": organization_json_list,
                 },
