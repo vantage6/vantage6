@@ -10,6 +10,7 @@ spec:
     storage: 10Gi
   accessModes:
     - ReadWriteOnce
+  storageClassName: local-storage
   persistentVolumeReclaimPolicy: Retain
   {{- range .Values.node.databases.fileBased }}
   local:

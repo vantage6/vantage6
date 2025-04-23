@@ -9,6 +9,7 @@ spec:
   resources:
     requests:
       storage: 10Gi
+  storageClassName: local-storage
   selector:
     matchLabels:
       type: local-tasks
