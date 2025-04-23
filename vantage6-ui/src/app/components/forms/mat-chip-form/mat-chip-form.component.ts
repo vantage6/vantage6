@@ -1,4 +1,4 @@
-import { Component, Input, signal } from '@angular/core';
+import { Component, Input, OnInit, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRow, MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule, MatLabel } from '@angular/material/form-field';
@@ -10,7 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
   styleUrls: ['./mat-chip-form.component.scss'],
   imports: [MatIconModule, MatChipsModule, MatFormFieldModule, MatLabel, MatChipRow, MatChipGrid, MatChipInput, ReactiveFormsModule]
 })
-export class MatChipFormComponent {
+export class MatChipFormComponent implements OnInit {
   @Input() initialValues!: string[];
   @Input() formcontrol!: FormControl<unknown>;
   @Input() placeholder = 'placeholder';
