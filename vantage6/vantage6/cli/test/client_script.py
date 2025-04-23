@@ -83,7 +83,7 @@ def cli_test_client_script(
     Run a script for testing an algorithm on a dev network.
     The path to the script must be provided as an argument.
     """
-    if script is None and task_arguments is None:
+    if not (script or task_arguments):
         raise click.UsageError("--script or --task-arguments must be set.")
     elif script != TEST_FILE_PATH and task_arguments:
         raise click.UsageError("--script and --task-arguments cannot be set together.")

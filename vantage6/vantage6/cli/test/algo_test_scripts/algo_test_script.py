@@ -20,7 +20,7 @@ def create_and_run_task(client: Client, task_args: dict, algo_name: str = "algor
             The client instance to use for creating and running the task.
         task_args: dict
             The arguments to pass to the task creation method.
-        algo_name: str
+        algo_name: str, optional
             The name of the algorithm for logging purposes. Default is "algorithm".
 
     Raises
@@ -45,7 +45,7 @@ def create_and_run_task(client: Client, task_args: dict, algo_name: str = "algor
         exit(1)
 
 
-def run_test(custom_args: dict = None):
+def run_test(custom_args: dict | None = None):
     """
     Run a test by creating and running tasks using the provided arguments.
 
