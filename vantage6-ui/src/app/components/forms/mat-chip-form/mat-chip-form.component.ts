@@ -1,18 +1,18 @@
 import { Component, Input, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRow } from '@angular/material/chips';
+import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRow, MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule, MatLabel } from '@angular/material/form-field';
-import { MatIcon } from '@angular/material/icon';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-mat-chip-form',
   templateUrl: './mat-chip-form.component.html',
   styleUrls: ['./mat-chip-form.component.scss'],
-  imports: [MatFormFieldModule, MatLabel, MatChipRow, MatIcon, MatChipGrid, MatChipInput, ReactiveFormsModule]
+  imports: [MatIconModule, MatChipsModule, MatFormFieldModule, MatLabel, MatChipRow, MatChipGrid, MatChipInput, ReactiveFormsModule]
 })
 export class MatChipFormComponent {
   @Input() initialValues!: string[];
-  @Input() formcontrol!: FormControl<any>;
+  @Input() formcontrol!: FormControl<unknown>;
   @Input() placeholder = 'placeholder';
   @Input() label = 'label';
 

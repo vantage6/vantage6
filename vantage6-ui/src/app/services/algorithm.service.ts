@@ -7,6 +7,7 @@ import { Pagination } from 'src/app/models/api/pagination.model';
 import { ChosenStoreService } from './chosen-store.service';
 import { isListTypeArgument } from '../helpers/algorithm.helper';
 import { getLazyProperties } from '../helpers/api.helper';
+import { AllowedArgumentValue } from '../models/api/allowed-argument-value.model';
 
 @Injectable({
   providedIn: 'root'
@@ -28,7 +29,7 @@ export class AlgorithmService {
     
     for(const algorithms of results) {
       algorithms.forEach((algorithm) => {
-        algorithm = this.parseAllowedValues(algorithm);
+        this.parseAllowedValues(algorithm);
       });
     }
     
@@ -168,12 +169,12 @@ export class AlgorithmService {
 
   private parseAllowedValues(algorithm: Algorithm): Algorithm {
     algorithm.functions.forEach((func) => {
-        func.arguments.forEach((arg) => {
-          arg.allowed_values = arg.allowed_values?.map((value) => {
-            return (value as any).value;
-          });
+      func.arguments.forEach((arg) => {
+        arg.allowed_values = arg.allowed_values?.map((value) => {
+          return (value as unknown as AllowedArgumentValue).value;
         });
       });
+    });
     return algorithm;
   }
 }
