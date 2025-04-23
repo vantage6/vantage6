@@ -1,5 +1,5 @@
 from __future__ import annotations
-from sqlalchemy import Column, String, ForeignKey, Integer, Boolean, ARRAY
+from sqlalchemy import Column, String, ForeignKey, Integer, Boolean
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager

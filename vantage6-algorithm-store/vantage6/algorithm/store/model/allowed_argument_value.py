@@ -7,7 +7,7 @@ from vantage6.algorithm.store.model.base import Base
 class AllowedArgumentValue(Base):
     """
     Table that describes which values are allowed for a specific argument.
-    Allowed values are applicable if the argument is of type 'int', 'string' or 'float'.
+    Allowed values are applicable if the argument is of type `int`, `string` or `float`.
 
     Each of these values is linked to an argument that is available in the
     class:`~.model.argument.Argument`

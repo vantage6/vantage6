@@ -449,8 +449,10 @@ class Algorithms(AlgorithmBaseResource):
                                   'float_list', 'boolean', 'json', 'column',
                                   'column_list', 'organization' or 'organization_list'
                               allowed_values:
-                                type: string[]
+                                type: array
                                 description: An optional list of allowed values for the argument
+                                items:
+                                  type: string
                               has_default_value:
                                 type: boolean
                                 description: Whether the argument has a default
