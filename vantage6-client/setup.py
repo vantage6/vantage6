@@ -32,7 +32,7 @@ setup(
     packages=find_namespace_packages(),
     python_requires=">=3.10",
     install_requires=[
-        "PyJWT==2.6.0",
+        "pyjwt==2.10.1",
         "pyfiglet==0.8.post1",
         f'vantage6-common=={version_ns["__version__"]}',
     ],

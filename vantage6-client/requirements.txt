@@ -1,2 +1,2 @@
-PyJWT==2.6.0
+pyjwt==2.10.1
 pyfiglet==0.8.post1
