@@ -108,7 +108,6 @@ def create_node(index, collaboration, organization, task_namespace):
         node_config = template.render(
             {
                 "api_key": node["api_key"],  # Use the API key from node creation
-                "databases": {"default": node_test_database_file},
                 "logging": {"file": f"node_{index}.log"},  # Use index in log file name
                 "port": 80,
                 "server_url": "http://vantage6-server-vantage6-server-service",
