@@ -699,7 +699,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.algorithms = algorithmsObj;
     this.functions = algorithmsObj.flatMap((curAlgorithm) => {
       return curAlgorithm.functions
-        .filter((func) => func.standalone || func.standalone === undefined)
+        .filter((func) => func.standalone)
         .filter((func) => (this.allowedTaskTypes ? this.allowedTaskTypes.includes(func.step_type) : true))
         .map((func) => {
           return {
