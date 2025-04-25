@@ -170,10 +170,8 @@ deployments:
     helm:
       chart:
         name: ./charts/node
-      # we do not care about any of the values for this deployment. We just want a
-      # deployment which will not exit immediately. Once the dev-mode is started we
-      # start a separate thread in the same container. See the env section in the dev
-      # where the database environment variables are set.
+      # See the env section in the dev section where the database environment variables
+      # are set.
       values:
         node:
           databases:
@@ -182,6 +180,7 @@ deployments:
               uri: ${NODE_TEST_DATABASE_FILE}
               type: csv
             serviceBased: []
+          taskDirHost: ${TASK_DIRECTORY}
 
 
 # This is a list of `dev` containers that are based on the containers created by your deployments
