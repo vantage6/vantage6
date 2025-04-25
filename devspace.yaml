@@ -59,8 +59,6 @@ pipelines:
       run_dependencies --all
       ensure_pull_secrets --all
       create_deployments \
-        vantage6-shared
-      create_deployments \
         vantage6-server
       create_deployments \
         vantage6-store
@@ -83,7 +81,6 @@ pipelines:
       run_dependencies --all
       ensure_pull_secrets --all
       create_deployments \
-        vantage6-shared \
         vantage6-server \
         vantage6-store
       start_dev \
@@ -208,11 +205,6 @@ deployments:
             # - name: postgres
             #   uri: postgres://vantage6:vantage6@vantage6-vantage6-postgres:5432/vantage6
             #   type: other
-
-  vantage6-shared:
-    helm:
-      chart:
-        name: ./charts/shared
 
 # This is a list of `dev` containers that are based on the containers created by your deployments
 dev:
