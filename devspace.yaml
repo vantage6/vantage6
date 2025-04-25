@@ -48,9 +48,9 @@ pipelines:
       run_dependencies --all
       ensure_pull_secrets --all
       create_deployments \
-        vantage6-server
-      create_deployments \
-        vantage6-store
+        vantage6-server \
+        vantage6-store \
+        vantage6-auth
       start_dev \
         vantage6-server-init \
         vantage6-store-init
@@ -71,11 +71,13 @@ pipelines:
       ensure_pull_secrets --all
       create_deployments \
         vantage6-server \
-        vantage6-store
+        vantage6-store \
+        vantage6-auth
       start_dev \
         vantage6-server \
         vantage6-ui \
-        vantage6-store
+        vantage6-store \
+        vantage6-auth
 
   node:
     run: |-
@@ -109,6 +111,27 @@ images:
 
 # This is a list of `deployments` that DevSpace can create for this project
 deployments:
+
+  vantage6-auth:
+    helm:
+      chart:
+        name: keycloak
+        repo: https://charts.bitnami.com/bitnami
+        version: 17.0.0
+        # version: latest
+      values:
+        auth:
+          adminUser: admin
+          adminPassword: admin
+        service:
+          type: ClusterIP
+        # Add any other Keycloak configuration you need
+        postgresql:
+          enabled: true  # Use built-in PostgreSQL
+          auth:
+            postgresPassword: postgres
+            password: keycloak
+            database: keycloak
 
   # The server deployment contains the server, database, rabbit mq and the UI. The
   # store is deployed separately as it can have an many-to-many relationship with the
@@ -205,6 +228,12 @@ dev:
     ports:
       - port: 7602:7602
         # bindAddress: ${PORTS_BIND_ADDRESS}
+
+  vantage6-auth:
+    labelSelector:
+      component: vantage6-auth
+    ports:
+      - port: 8080:8080
 
   # This puts the server container in development mode. It syncs the local files with
   # the container and starts the server in development mode. Code changes will be
