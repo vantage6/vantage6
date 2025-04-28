@@ -289,3 +289,7 @@ task_dir: C:\Users\<your-user>\AppData\Local\vantage6\node\mydir
 # for other organizations in your collaboration to understand why a task
 # is not completed. Obviously, no sensitive data is shared. Default true
 share_config: true
+
+# Whether or not to share algorithm logs with the server. Otherwise they will
+# only be displayed as part of the node logs. Default is false.
+share_logs: false
