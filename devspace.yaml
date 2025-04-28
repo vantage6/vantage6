@@ -231,7 +231,7 @@ dev:
 
   vantage6-auth:
     labelSelector:
-      component: vantage6-auth
+      app.kubernetes.io/instance: vantage6-auth
     ports:
       - port: 8080:8080
 
