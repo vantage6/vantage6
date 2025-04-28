@@ -480,8 +480,13 @@ class Node:
         file. If the server rejects for any reason -other than a wrong API key-
         serveral attempts are taken to retry.
         """
-
-        api_key = self.config.get("api_key")
+        api_key = os.environ.get("V6_API_KEY")
+        if not api_key:
+            self.log.critical(
+                "No API key found in environment variables. Make sure to set the "
+                "'V6_API_KEY' environment variable."
+            )
+            exit(1)
 
         success = False
         i = 0
