@@ -117,8 +117,8 @@ deployments:
       chart:
         name: keycloak
         repo: https://charts.bitnami.com/bitnami
-        version: 17.0.0
-        # version: latest
+        # note that version must be specified. Available versions are available at https://artifacthub.io/api/v1/packages/helm/bitnami/keycloak/feed/rss
+        version: 24.6.1
       values:
         auth:
           adminUser: admin
