@@ -350,7 +350,7 @@ class ContainerManager:
         env_vars[ContainerEnvNames.PORT.value] = os.environ.get(
             "PROXY_SERVER_PORT", str(PROXY_SERVER_PORT)
         )
-        env_vars[ContainerEnvNames.API_PATH.value] = ("",)
+        env_vars[ContainerEnvNames.API_PATH.value] = ""
 
         env_vars[ContainerEnvNames.ALGORITHM_METHOD.value] = task_info["method"]
         env_vars[ContainerEnvNames.FUNCTION_ACTION.value] = action.value
