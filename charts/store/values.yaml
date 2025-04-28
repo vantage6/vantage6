@@ -34,6 +34,10 @@ store:
 
   logging:
     level: INFO
+  
+  # TODO: merge the dev section with policies.dev?
+  dev:
+    host_uri: host.docker.internal
 
 database:
   # The image of the database

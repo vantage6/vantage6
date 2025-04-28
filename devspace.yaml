@@ -13,8 +13,13 @@ vars:
   TASK_DIRECTORY:
     question: "Where is your task directory located on the host machine?"
     default: ${PWD}/.tasks
+  HOST_URI:
+    question: "What is the ip address of your host machine?"
+    default: host.docker.internal
   #set to 0.0.0.0 to make the dev environment (ui, api) accessible from outside
-  # PORTS_BIND_ADDRESS: "127.0.0.1"
+  PORTS_BIND_ADDRESS:
+    question: "What is the bind ip address of your ports? [Bind to 'localhost' if using docker, otherwise the suggested address]"
+    default: ${HOST_URI}
   NUMBER_OF_NODES:
     question: "How many nodes do you want to create for your development environment?"
     default: 3
@@ -124,6 +129,8 @@ deployments:
             level: DEBUG
           jwt:
             secret: development-constant-secret!
+          dev:
+            host_uri: ${HOST_URI}
         ui:
           image: ${UI_IMAGE}
 
@@ -147,6 +154,8 @@ deployments:
             disable_review: true
             review_own_algorithm: true
             assignReviewOwnAlgorithm: true
+          dev:
+            host_uri: ${HOST_URI}
 
         # This is the location of the database on the host system. In case you are using
         # Windows in combination with WSL, you should put a path here that is accessible
@@ -196,7 +205,9 @@ dev:
     imageSelector: ${SERVER_IMAGE}
     ports:
       - port: 7601:7601
-        # bindAddress: ${PORTS_BIND_ADDRESS}
+        bindAddress: localhost
+      - port: 7601:7601
+        bindAddress: ${PORTS_BIND_ADDRESS}
 
   # We use this to enable the server and the store to be coupled. We need a port to talk
   # to as the ingress is not deployed yet.
@@ -204,7 +215,9 @@ dev:
     imageSelector: ${STORE_IMAGE}
     ports:
       - port: 7602:7602
-        # bindAddress: ${PORTS_BIND_ADDRESS}
+        bindAddress: localhost
+      - port: 7602:7602
+        bindAddress: ${PORTS_BIND_ADDRESS}
 
   # This puts the server container in development mode. It syncs the local files with
   # the container and starts the server in development mode. Code changes will be
@@ -225,7 +238,9 @@ dev:
     command: ["/bin/sh", "/vantage6/vantage6-server/dev_server.sh"]
     ports:
     - port: 7601:7601
-        # bindAddress: ${PORTS_BIND_ADDRESS}
+      bindAddress: localhost
+    - port: 7601:7601
+      bindAddress: ${PORTS_BIND_ADDRESS}
     logs:
       enabled: true
 
@@ -233,7 +248,9 @@ dev:
     imageSelector: ${STORE_IMAGE}
     ports:
       - port: 7602:7602
-        # bindAddress: ${PORTS_BIND_ADDRESS}
+        bindAddress: localhost
+      - port: 7602:7602
+        bindAddress: ${PORTS_BIND_ADDRESS}
 
     sync:
     - path: ./vantage6/:/vantage6/vantage6/
@@ -259,7 +276,7 @@ dev:
       disableDownload: true
     ports:
       - port: 7600:4200
-        # bindAddress: ${PORTS_BIND_ADDRESS}
+        bindAddress: localhost
 
   # Where as we could hot-reload the server code using wsgi, we cannot do this with the
   # node code. We leverage the `restartHelper` and `onUpload.restartContainer` to
