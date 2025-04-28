@@ -1,12 +1,18 @@
-import { Injectable } from '@angular/core';
-import { ApiService } from './api.service';
-import { Algorithm, AlgorithmForm, AlgorithmLazyProperties, ArgumentType } from 'src/app/models/api/algorithm.model';
-import { ChosenCollaborationService } from './chosen-collaboration.service';
-import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
-import { Pagination } from 'src/app/models/api/pagination.model';
-import { ChosenStoreService } from './chosen-store.service';
-import { isListTypeArgument } from '../helpers/algorithm.helper';
-import { getLazyProperties } from '../helpers/api.helper';
+import {Injectable} from '@angular/core';
+import {ApiService} from './api.service';
+import {
+  Algorithm,
+  AlgorithmForm,
+  AlgorithmLazyProperties,
+  ArgumentType
+} from 'src/app/models/api/algorithm.model';
+import {ChosenCollaborationService} from './chosen-collaboration.service';
+import {AlgorithmStore} from 'src/app/models/api/algorithmStore.model';
+import {Pagination} from 'src/app/models/api/pagination.model';
+import {ChosenStoreService} from './chosen-store.service';
+import {isListTypeArgument} from '../helpers/algorithm.helper';
+import {getLazyProperties} from '../helpers/api.helper';
+import {environment} from "../../environments/environment";
 
 @Injectable({
   providedIn: 'root'
@@ -29,6 +35,26 @@ export class AlgorithmService {
     return results.reduce((accumulator, val) => accumulator.concat(val), []);
   }
 
+  async getAlgorithmsForCommunityStore(params: object = {}): Promise<Algorithm[]> {
+    const algorithmStore = this.getCommunityStore();
+
+    return await this.getAlgorithmsForAlgorithmStore(algorithmStore, params)
+  }
+
+  async getAlgorithmForCommunityStore(id: string,  lazyProperties: AlgorithmLazyProperties[] = []){
+    const algorithmStore = this.getCommunityStore()
+
+    return await this.getAlgorithm(algorithmStore.url, id, lazyProperties)
+  }
+
+  getCommunityStore(): AlgorithmStore {
+    return {
+      id: -1, name: "community store",
+      url: environment.community_store_url,
+      collaborations: [],
+      all_collaborations: true
+    }
+  }
   async getAlgorithmsForAlgorithmStore(algorithmStore: AlgorithmStore, params: object = {}): Promise<Algorithm[]> {
     const result = await this.apiService.getForAlgorithmApi<Pagination<Algorithm>>(`${algorithmStore.url}`, '/algorithm', {
       per_page: 9999,

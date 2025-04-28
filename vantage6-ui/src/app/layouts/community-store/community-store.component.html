@@ -9,13 +9,8 @@
 <app-page-header title="Community Store">
 
 </app-page-header>
-<ng-container *ngIf="!isLoading; else loading">
-    <app-algorithm-table [algorithms]="algorithms"></app-algorithm-table>
-    <mat-card *ngIf="algorithms.length === 0">
-        <mat-card-content>
-            <p>{{ "algorithm-list.no-algorithms" | translate }}</p>
-        </mat-card-content>
-    </mat-card>
+<ng-container>
+    <router-outlet></router-outlet>
 </ng-container>
 <ng-template #loading>
     <mat-spinner diameter="48"></mat-spinner>
